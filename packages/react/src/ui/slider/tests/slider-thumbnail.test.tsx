@@ -43,6 +43,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
     })),
     updateSrc: vi.fn(),
     connect: vi.fn(),
+    disconnectImg: vi.fn(),
     destroy: vi.fn(),
   }),
 }));
@@ -119,19 +120,30 @@ describe('Slider.Thumbnail', () => {
     expect(el?.hasAttribute('data-hidden')).toBe(true);
   });
 
-  it('renders a default img child element', () => {
+  it('leaves image composition to the caller', () => {
     const { container } = render(
       <SliderRoot>
         <Slider.Thumbnail.Root data-testid="thumbnail" />
       </SliderRoot>
     );
 
-    const el = container.querySelector('[data-testid="thumbnail"]');
-    const img = el?.querySelector('img');
+    expect(container.querySelector('[data-testid="thumbnail"] img')).toBeNull();
+  });
 
-    expect(img).toBeTruthy();
-    expect(img?.getAttribute('aria-hidden')).toBe('true');
-    expect(img?.getAttribute('decoding')).toBe('async');
+  it('renders sibling presentation layers beside the image', () => {
+    const { container } = render(
+      <SliderRoot>
+        <Slider.Thumbnail.Root data-testid="thumbnail">
+          <Slider.Thumbnail.Image />
+          <div data-testid="overlay" />
+        </Slider.Thumbnail.Root>
+      </SliderRoot>
+    );
+
+    const el = container.querySelector('[data-testid="thumbnail"]');
+
+    expect(el?.querySelector('img')).toBeTruthy();
+    expect(el?.querySelector('[data-testid="overlay"]')).toBeTruthy();
   });
 
   it('accepts thumbnails prop', () => {
@@ -142,7 +154,9 @@ describe('Slider.Thumbnail', () => {
 
     const { container } = render(
       <SliderRoot>
-        <Slider.Thumbnail.Root data-testid="thumbnail" thumbnails={thumbnails} />
+        <Slider.Thumbnail.Root data-testid="thumbnail" thumbnails={thumbnails}>
+          <Slider.Thumbnail.Image />
+        </Slider.Thumbnail.Root>
       </SliderRoot>
     );
 
@@ -157,11 +171,9 @@ describe('Slider.Thumbnail', () => {
   it('forwards crossOrigin to inner img', () => {
     const { container } = render(
       <SliderRoot>
-        <Slider.Thumbnail.Root
-          data-testid="thumbnail"
-          crossOrigin="anonymous"
-          thumbnails={[{ url: 'thumb.jpg', startTime: 0 }]}
-        />
+        <Slider.Thumbnail.Root data-testid="thumbnail" thumbnails={[{ url: 'thumb.jpg', startTime: 0 }]}>
+          <Slider.Thumbnail.Image crossOrigin="anonymous" />
+        </Slider.Thumbnail.Root>
       </SliderRoot>
     );
 

@@ -7,7 +7,7 @@ definition: sketched
 # Errors
 
 Engine-side error surfacing: a structured error emitted as encountered,
-a *derived* fatal verdict, and the adapter mapping that turns a fatal
+a _derived_ fatal verdict, and the adapter mapping that turns a fatal
 error into a DOM `MediaError`. The first scope is **unsupported-source
 detection** — the cases where SPF cannot play a source that the
 HLS.js-backed sibling media can, surfaced as a clear failure instead of
@@ -18,14 +18,14 @@ cluster owns the surface; this doc owns the representation, the
 fatal-vs-non-fatal derivation, and the adapter boundary, while each
 producing feature owns its own detection. Foundation in the same sense
 [capability-probing](./capability-probing.md) already describes — that
-doc lists an "error-surfacing primitive" under *Foundational
-primitives* without owning it, and [network-resilience](./network-resilience.md)
+doc lists an "error-surfacing primitive" under _Foundational
+primitives_ without owning it, and [network-resilience](./network-resilience.md)
 carries "retry-exhaustion error surfacing" as an open question. Both
 consume what this doc defines.
 
 Primarily a **Player feature** in the framing from
 [clusters.md § Feature classification axes](./clusters.md#media-src-vs-player-vs-borderline)
-— no source plays *because* of it. The unsupported-case detection half
+— no source plays _because_ of it. The unsupported-case detection half
 carries **Media-src** weight, though: failing clearly rather than
 stalling silently is a correctness difference, not an additive one.
 
@@ -37,16 +37,16 @@ Absorbs the previously-bracketed candidate `unsupported-case-error-mapping`
 
 ## Status
 
-**Phases 1–4 implemented** (the PRD's *Error Notices* ask for
+**Phases 1–4 implemented** (the PRD's _Error Notices_ ask for
 unsupported-source detection). Phase 5 is **partially** implemented — the
 two degraded-but-playable cases are detected and announced, but to a
-console rather than as emitted conditions, because the *Non-fatal
-destination* open question below is unresolved. Phases 6–8 (runtime,
+console rather than as emitted conditions, because the _Non-fatal
+destination_ open question below is unresolved. Phases 6–8 (runtime,
 retry-exhaustion, pipeline producers) are not.
 
 - **Causes vs verdicts is the shipped shape, and it's load-bearing.**
-  *Causes* are per-rendition and non-fatal, reported as each media
-  playlist resolves through an injected seam. *Verdicts* are per type
+  _Causes_ are per-rendition and non-fatal, reported as each media
+  playlist resolves through an injected seam. _Verdicts_ are per type
   and fatal, reported when a type's candidate set actually empties.
   Keeping them apart is what makes a mixed source correct by
   construction: an unplayable rendition reports a cause, gets pruned, a
@@ -58,7 +58,7 @@ retry-exhaustion, pipeline producers) are not.
   fatal (`FATAL_SVTA_CODES`). This follows the doc's own reasoning
   below — the same condition is fatal in one composition and a notice
   in another.
-- **The surfaced *code* is composed from the verdict plus its causes; the
+- **The surfaced _code_ is composed from the verdict plus its causes; the
   copy is not the engine's at all.** A verdict only says a type emptied,
   which doesn't distinguish "we don't implement this" from "everything
   failed at once." So when the sequence holds a cause the engine has no
@@ -68,14 +68,14 @@ retry-exhaustion, pipeline producers) are not.
   localized text it owns. This is what makes SVTA stacking load-bearing
   in the first cut rather than merely allowed: the adapter reads the
   causes to pick the code.
-  An earlier draft had the *engine* compose viewer-facing English from
+  An earlier draft had the _engine_ compose viewer-facing English from
   verdict + unanimous per-type cause (`FATAL_SVTA_MESSAGES`,
   `FATAL_SVTA_MESSAGES_BY_CAUSE`, `resolveFatalMessage`) — deleted.
   Reporting a code instead moved the copy to the layer that owns
   presentation and localization, and got viewer-facing strings out of the
   engine bundle.
 - **Cause matching is sequence-wide, not per type.** `hasUnsupportedFeatureCause`
-  asks whether *anything* reported is an unimplemented-capability cause,
+  asks whether _anything_ reported is an unimplemented-capability cause,
   deliberately not whether a cause matches the verdict's track type: an
   encrypted audio-only source empties audio, an encrypted video source
   empties video, and both are the same answer to a viewer. This replaced
@@ -94,7 +94,7 @@ retry-exhaustion, pipeline producers) are not.
   (`TODO(error-management)`) and `resolve-track.ts`'s swallowed resolve
   rejection are still unreported — phase 6, deliberately, because a
   single failed live reload is not fatal and that question isn't
-  settled. Phase 2 replaced *one* of `track-switching`'s two
+  settled. Phase 2 replaced _one_ of `track-switching`'s two
   `console.error`s; the other is an internal invariant assertion, not
   an error surface.
 
@@ -104,12 +104,12 @@ retry-exhaustion, pipeline producers) are not.
   generic fallback.** `packages/core` maps 99001 → `errors.unplayable`,
   localized across every shipped locale. But the engine now reports an
   empty `message` by design, and `MEDIA_ERROR_TRANSLATIONS` knows no
-  other SVTA code, so a fatal verdict that *isn't* explained by an
+  other SVTA code, so a fatal verdict that _isn't_ explained by an
   unimplemented-capability cause resolves to "An unexpected error
   occurred." The concrete case is an all-CDN cooldown emptying a type:
   2011 surfaces with no cause beside it, and the viewer is told nothing
   useful. Previously the engine's own English covered this; the fix is
-  the *extensible code lookup* open question below, not restoring engine
+  the _extensible code lookup_ open question below, not restoring engine
   copy. Bounded in practice — the shipped detection paths (MPEG-TS, DRM)
   always report a cause first.
 - **`message` is empty and must stay that way.** `resolveErrorDialogDescription`
@@ -120,12 +120,12 @@ retry-exhaustion, pipeline producers) are not.
   `message: string` and `MediaError` normalizes to `''` itself.
 - **Mixed-container sources.** `applyContainerMimeType` relabels a whole
   type from one playlist, which Apple's authoring spec makes wrong in
-  general: §1.5 + §9.22 require HEVC to be fMP4 *and* recommend a
+  general: §1.5 + §9.22 require HEVC to be fMP4 _and_ recommend a
   192 kbit/s H.264 TS variant, so a conformant HEVC ladder is
   necessarily mixed-container. Accepted for a CMAF-first target and
   documented at that function.
 - **A fatal audio verdict fails a source whose video plays.** 2012 is in
-  `FATAL_SVTA_CODES`, so an all-encrypted or all-TS *audio* group fails
+  `FATAL_SVTA_CODES`, so an all-encrypted or all-TS _audio_ group fails
   the source even when video is fine. Correct for the Mux shapes in
   scope (muxed or uniformly-encoded), wrong for a source meant to play
   video-only.
@@ -135,7 +135,7 @@ retry-exhaustion, pipeline producers) are not.
   `MEDIA_ERR_*`. What's missing is an extensible code lookup above the
   engine, not a type. (This used to read as a dependency inversion:
   `@videojs/media` depended on `@videojs/spf`, so the adapter satisfied
-  `ErrorLike` *structurally* rather than importing it. That direction is
+  `ErrorLike` _structurally_ rather than importing it. That direction is
   now reversed — the Medias live in `@videojs/spf` and import the real
   type.)
 - **Source-swap carry-forward.** `collectErrors` clears on exit from
@@ -152,23 +152,24 @@ retry-exhaustion, pipeline producers) are not.
 
 **Scope slices** — the phases are mechanisms, not content complexity
 or spec-baseline tiers. Phases 1–5 are the first cut (the PRD's
-*Error Notices* ask); 6–8 are named so the surface isn't designed
+_Error Notices_ ask); 6–8 are named so the surface isn't designed
 without them in view.
 
-| Phase | What | SVTA | Status | Notes |
-|---|---|---|---|---|
-| Error representation + emission | The error shape (SVTA category + index, plus context: track type, URL, the constraint or tag that triggered it) and the mechanism producers emit onto. Emission is **stacked** per SVTA Principle 6 — many errors across the timeline, most non-fatal — not a single latched slot | category+index | **Implemented** | Foundation for every later phase. Landed as an append-only sequence in a slot owned by `collectErrors`, with severity decided above it |
-| Capability-pruned-to-empty surfacing | Replace both `track-switching.ts` `console.error`s. When a type *has* tracks but the hard-constraint pre-pass pruned every one, emit rather than only clearing the selection. Container/TS falls out for free — it reaches this site via `canPlayTrack` asserting `NON_FMP4_CONTAINER_MIMES` unplayable | 1004 / 1005 → 2011 / 2012 | **Implemented** (one of two `console.error`s — the other is an invariant assertion) | The convergence point for two distinct causes (unsupported container, undecodable codec) and one transient one (every CDN in failover cooldown). Stacking carries the cause code before the outcome code, preserving what the replaced `console.error` string held — and the causes now also decide which code the adapter surfaces. The existing `hasTracksOfType` guard already separates "no tracks of this type" (legitimate) from "all pruned" (error) |
-| DRM detection via `EXT-X-KEY` | Recognize an encrypted source and fail clearly rather than appending undecryptable segments. New parser surface — `EXT-X-KEY` is unparsed today | 4008 | **Implemented** — media-playlist detection only | The one first-cut producer needing parser work. Placement decides *when* the verdict lands: `EXT-X-KEY` in the media playlist means post-track-resolution; `EXT-X-SESSION-KEY` in the multivariant would allow pre-resolution. Detection only — actually playing encrypted content is [drm-support](./drm-support.md) |
-| Fatal derivation + adapter mapping | Derive a single fatal verdict from the emitted sequence; map it to `MediaError` at the adapter and dispatch `error`. Per-source reset. Only fatal errors reach the adapter | → 99001 → `MediaError` code | **Implemented**, plus cause-driven code substitution | Direct precedent: `packages/hlsjs-video/src/errors.ts:46` is `if (!data.fatal) return;`, and `native-hls/errors.ts:54` hard-codes `fatal: true`. Both are mixins owning `error: MediaError \| null`, dispatching `ErrorEvent`, clearing per source. Fatality is derived here, not asserted by producers — see *Likely cross-cutting impact*. The adapter surfaces a *code*, never prose; `packages/core` maps it to localized copy |
-| Degraded-but-playable notices | The non-fatal tier: sources that play but aren't fully supported — LL-HLS (plays as standard live), DVR/EVENT (plays as simple live). Emit without failing | 2039 | **Partially implemented** — detected and announced, to a console rather than as emitted conditions | The PRD's "feature that doesn't exist on the Media in use" case where the answer is "it plays, but not the way you asked." `parseMediaPlaylist` detects both (`lowLatency`, `playlistType === 'EVENT'`) and the adapter warns once per source. Neither reaches `errors` as a 2039, because *Non-fatal destination* is unresolved — so nothing observable carries them yet. Depends on [ll-hls-support](./ll-hls-support.md) / [dvr-event-stream-support](./dvr-event-stream-support.md) for what "not fully supported" means per source |
-| Runtime producers *(later)* | The three swallowed sites: manifest fetch/parse failure, and a live media-playlist reload rejection | 2014 / 2005 / 2017 | **Not implemented** | Deferred deliberately — these are runtime, not the PRD's ask. The live-reload one forces the recoverable-vs-fatal question immediately (a single failed reload is not fatal), which is why it isn't first |
-| Retry-exhaustion intake *(later)* | Receive [network-resilience](./network-resilience.md)'s retry-exhaustion verdict as an emitted error | 3008 + 5-digit HTTP | **Not implemented** | That doc's open question "retry-exhaustion error surfacing — state slot vs callback vs both" resolves against this feature's phase 1 |
-| Pipeline + accessibility producers *(later)* | MSE append/quota/remove, decode, out-of-memory; text-track parse/render | 2007 / 2008 / 2022–2028, 5001 / 5002 | **Not implemented** | Pulls in [buffer-management](./buffer-management.md) and [subtitles](./subtitles.md) scope |
+| Phase                                        | What                                                                                                                                                                                                                                                                                                    | SVTA                                 | Status                                                                                             | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error representation + emission              | The error shape (SVTA category + index, plus context: track type, URL, the constraint or tag that triggered it) and the mechanism producers emit onto. Emission is **stacked** per SVTA Principle 6 — many errors across the timeline, most non-fatal — not a single latched slot                       | category+index                       | **Implemented**                                                                                    | Foundation for every later phase. Landed as an append-only sequence in a slot owned by `collectErrors`, with severity decided above it                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Capability-pruned-to-empty surfacing         | Replace both `track-switching.ts` `console.error`s. When a type _has_ tracks but the hard-constraint pre-pass pruned every one, emit rather than only clearing the selection. Container/TS falls out for free — it reaches this site via `canPlayTrack` asserting `NON_FMP4_CONTAINER_MIMES` unplayable | 1004 / 1005 → 2011 / 2012            | **Implemented** (one of two `console.error`s — the other is an invariant assertion)                | The convergence point for two distinct causes (unsupported container, undecodable codec) and one transient one (every CDN in failover cooldown). Stacking carries the cause code before the outcome code, preserving what the replaced `console.error` string held — and the causes now also decide which code the adapter surfaces. The existing `hasTracksOfType` guard already separates "no tracks of this type" (legitimate) from "all pruned" (error)                                                                             |
+| DRM detection via `EXT-X-KEY`                | Recognize an encrypted source and fail clearly rather than appending undecryptable segments. New parser surface — `EXT-X-KEY` is unparsed today                                                                                                                                                         | 4008                                 | **Implemented** — media-playlist detection only                                                    | The one first-cut producer needing parser work. Placement decides _when_ the verdict lands: `EXT-X-KEY` in the media playlist means post-track-resolution; `EXT-X-SESSION-KEY` in the multivariant would allow pre-resolution. Detection only — actually playing encrypted content is [drm-support](./drm-support.md)                                                                                                                                                                                                                   |
+| Fatal derivation + adapter mapping           | Derive a single fatal verdict from the emitted sequence; map it to `MediaError` at the adapter and dispatch `error`. Per-source reset. Only fatal errors reach the adapter                                                                                                                              | → 99001 → `MediaError` code          | **Implemented**, plus cause-driven code substitution                                               | Direct precedent: `packages/adapters/hlsjs-video/src/errors.ts:46` is `if (!data.fatal) return;`, and `native-hls/errors.ts:54` hard-codes `fatal: true`. Both are mixins owning `error: MediaError \| null`, dispatching `ErrorEvent`, clearing per source. Fatality is derived here, not asserted by producers — see _Likely cross-cutting impact_. The adapter surfaces a _code_, never prose; `packages/core` maps it to localized copy                                                                                             |
+| Degraded-but-playable notices                | The non-fatal tier: sources that play but aren't fully supported — LL-HLS (plays as standard live), DVR/EVENT (plays as simple live). Emit without failing                                                                                                                                              | 2039                                 | **Partially implemented** — detected and announced, to a console rather than as emitted conditions | The PRD's "feature that doesn't exist on the Media in use" case where the answer is "it plays, but not the way you asked." `parseMediaPlaylist` detects both (`lowLatency`, `playlistType === 'EVENT'`) and the adapter warns once per source. Neither reaches `errors` as a 2039, because _Non-fatal destination_ is unresolved — so nothing observable carries them yet. Depends on [ll-hls-support](./ll-hls-support.md) / [dvr-event-stream-support](./dvr-event-stream-support.md) for what "not fully supported" means per source |
+| Runtime producers _(later)_                  | The three swallowed sites: manifest fetch/parse failure, and a live media-playlist reload rejection                                                                                                                                                                                                     | 2014 / 2005 / 2017                   | **Not implemented**                                                                                | Deferred deliberately — these are runtime, not the PRD's ask. The live-reload one forces the recoverable-vs-fatal question immediately (a single failed reload is not fatal), which is why it isn't first                                                                                                                                                                                                                                                                                                                               |
+| Retry-exhaustion intake _(later)_            | Receive [network-resilience](./network-resilience.md)'s retry-exhaustion verdict as an emitted error                                                                                                                                                                                                    | 3008 + 5-digit HTTP                  | **Not implemented**                                                                                | That doc's open question "retry-exhaustion error surfacing — state slot vs callback vs both" resolves against this feature's phase 1                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Pipeline + accessibility producers _(later)_ | MSE append/quota/remove, decode, out-of-memory; text-track parse/render                                                                                                                                                                                                                                 | 2007 / 2008 / 2022–2028, 5001 / 5002 | **Not implemented**                                                                                | Pulls in [buffer-management](./buffer-management.md) and [subtitles](./subtitles.md) scope                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ## What's in scope vs out of scope
 
 **In scope:**
+
 - Phases 1–5 above
 - SVTA 2070 category+index as the internal error identity
 - The fatal-vs-non-fatal derivation, and the invariant that only fatal
@@ -183,10 +184,11 @@ without them in view.
 
 **Out of scope (separate candidate features — all consumers or
 producers, not this feature):**
+
 - **[network-resilience](./network-resilience.md)** — retry, backoff,
-  circuit-breaking, token refresh. This feature carries the *verdict*
+  circuit-breaking, token refresh. This feature carries the _verdict_
   when recovery is exhausted; it owns no retry policy.
-- **[container-support](./container-support.md)** — actually *playing*
+- **[container-support](./container-support.md)** — actually _playing_
   MPEG-TS (transmuxer). This feature surfaces that we can't.
 - **[drm-support](./drm-support.md)** — EME, license handling. This
   feature only detects that a source needs it.
@@ -196,17 +198,18 @@ producers, not this feature):**
   their recovery escalation is theirs.
 
 **Out of scope (different architectural layer):**
+
 - User-facing error message text and i18n. `MediaError` already carries
   `defaultMessages`, and `packages/core`'s `error-dialog` +
   `error-dialog-i18n` own presentation.
 - The PRD's mux.com "are you using features SPF doesn't support?" page
   and the Current/Next docs toggle. Docs and tooling; they may reuse
-  the same detection *rules* conceptually, but nothing in SPF.
+  the same detection _rules_ conceptually, but nothing in SPF.
 - Error transport to QoE / analytics backends. SVTA 2070 puts this out
   of its own scope too ("Dictating how the errors flow, i.e. capturing
   is out of scope").
 - Any SPF awareness of what the HLS.js-backed sibling supports. SPF can
-  report *what it can't do*; "the other version can" is composed above.
+  report _what it can't do_; "the other version can" is composed above.
 
 ## Implementation surface
 
@@ -221,36 +224,36 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 
 **Behaviors:**
 
-| Behavior | File | Responsibility |
-|---|---|---|
-| `collectErrors` | `playback/behaviors/collect-errors.ts` | Owns the `errors` slot and its per-source lifecycle. No effects, no policy — a lifecycle owner, not an error handler. Same slot-owner-vs-writer split as `setupFailoverMonitor` / `failedCdns` |
-| `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack` | `playback/behaviors/track-switching.ts` | Report the **verdict** (2011 / 2012) when a type has renditions but constraints pruned every one. Per-variant `noSupportedTrackCode`; text supplies none, since absent subtitles aren't a failure. Reports generically — it never reads a constraint's state, so it doesn't know *why* the set emptied |
-| `selectVideoTrack` | `playback/behaviors/select-tracks.ts` | The *pinned* variant. `entry` stays the only thing that ever **selects**; a sibling `effects` entry on the same `presentation-resolved` state only ever **de**selects, dropping a pick the constraints turned against. Keeping selection out of the reaction is what separates this from `switchVideoTrack` — a re-pick here would make it that behavior with extra steps — but it must *be* a reaction, since container and encryption are only known once a media playlist resolves, after `entry` ran. It reports nothing itself: whatever made the pick unplayable already reported its own cause (1004 / 4008), more specific than a verdict and already logged. A pick naming a track the manifest never offered is left alone, preserving the module's external-writes contract |
-| `reportAbsentTrackType` | `playback/behaviors/collect-errors.ts` | The failures with no cause behind them: a source offering **no** renditions of a type the composition needs, and a ladder the capability pre-pass prunes to nothing. Neither resolves anything, so `reportUnsupportedTrackConditions` never runs and no cause exists to be more specific than a verdict. Shaped as a *constraint* rather than config so a composition opts in by adding it to `constraints` and one that doesn't pays nothing — it never actually constrains, returning its input untouched. Belongs at the **tail** of the chain, where an empty input means "nothing playable here" — both shapes at once, which is what 2011 denotes. Idempotent, because the chain runs inside a `computed` that re-derives on every `presentation` write while the sequence keeps duplicates |
-| `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `playback/behaviors/resolve-track.ts` | Call the `reportUnsupportedTrackConditions` seam post-parse, reporting **causes** per rendition as it resolves — before committing the parsed track |
+| Behavior                                                       | File                                    | Responsibility                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collectErrors`                                                | `playback/behaviors/collect-errors.ts`  | Owns the `errors` slot and its per-source lifecycle. No effects, no policy — a lifecycle owner, not an error handler. Same slot-owner-vs-writer split as `setupFailoverMonitor` / `failedCdns`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack`    | `playback/behaviors/track-switching.ts` | Report the **verdict** (2011 / 2012) when a type has renditions but constraints pruned every one. Per-variant `noSupportedTrackCode`; text supplies none, since absent subtitles aren't a failure. Reports generically — it never reads a constraint's state, so it doesn't know _why_ the set emptied                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `selectVideoTrack`                                             | `playback/behaviors/select-tracks.ts`   | The _pinned_ variant. `entry` stays the only thing that ever **selects**; a sibling `effects` entry on the same `presentation-resolved` state only ever **de**selects, dropping a pick the constraints turned against. Keeping selection out of the reaction is what separates this from `switchVideoTrack` — a re-pick here would make it that behavior with extra steps — but it must _be_ a reaction, since container and encryption are only known once a media playlist resolves, after `entry` ran. It reports nothing itself: whatever made the pick unplayable already reported its own cause (1004 / 4008), more specific than a verdict and already logged. A pick naming a track the manifest never offered is left alone, preserving the module's external-writes contract            |
+| `reportAbsentTrackType`                                        | `playback/behaviors/collect-errors.ts`  | The failures with no cause behind them: a source offering **no** renditions of a type the composition needs, and a ladder the capability pre-pass prunes to nothing. Neither resolves anything, so `reportUnsupportedTrackConditions` never runs and no cause exists to be more specific than a verdict. Shaped as a _constraint_ rather than config so a composition opts in by adding it to `constraints` and one that doesn't pays nothing — it never actually constrains, returning its input untouched. Belongs at the **tail** of the chain, where an empty input means "nothing playable here" — both shapes at once, which is what 2011 denotes. Idempotent, because the chain runs inside a `computed` that re-derives on every `presentation` write while the sequence keeps duplicates |
+| `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `playback/behaviors/resolve-track.ts`   | Call the `reportUnsupportedTrackConditions` seam post-parse, reporting **causes** per rendition as it resolves — before committing the parsed track                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 **Helpers and seams:**
 
-| Export | File | Status |
-|---|---|---|
-| `emitError(state, error)` | `playback/behaviors/collect-errors.ts` | The write seam. Lives with the slot it writes; no-ops when no owner is composed, so a reporter needn't know whether collection is composed. `ErrorEmitterState` is the optional-slot contract |
-| `reportUnsupportedTrackConditions` | `playback/primitives/report-track-conditions.ts` | The default `ReportUnsupportedTrackConditions` implementation — reports MPEG-TS container (1004/1005) and encryption (4008), each tagged with `trackType` and `trackId`. Scoped to the capability-pruned types (video, audio): text runs no `canPlayTrack` pre-pass, so a cause reported against it could never be matched by an exclusion or followed by a verdict. Injected, so a composition that never ships TS can drop the check |
-| `canPlayTrack` | `media/dom/capabilities.ts` | Prunes non-fMP4 containers and encrypted renditions, so every reported cause has a corresponding exclusion |
-| `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted` | `media/hls/parse-media-playlist.ts` | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS |
-| `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency` | `media/hls/parse-media-playlist.ts` | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped |
-| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only |
-| `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE`, `UNPLAYABLE_SOURCE_MESSAGE`, and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes. The generic one exists for a composition whose failures don't all reduce to a missing feature — see the background adapter below |
+| Export                                                                                          | File                                             | Status                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `emitError(state, error)`                                                                       | `playback/behaviors/collect-errors.ts`           | The write seam. Lives with the slot it writes; no-ops when no owner is composed, so a reporter needn't know whether collection is composed. `ErrorEmitterState` is the optional-slot contract                                                                                                                                                                                                                                          |
+| `reportUnsupportedTrackConditions`                                                              | `playback/primitives/report-track-conditions.ts` | The default `ReportUnsupportedTrackConditions` implementation — reports MPEG-TS container (1004/1005) and encryption (4008), each tagged with `trackType` and `trackId`. Scoped to the capability-pruned types (video, audio): text runs no `canPlayTrack` pre-pass, so a cause reported against it could never be matched by an exclusion or followed by a verdict. Injected, so a composition that never ships TS can drop the check |
+| `canPlayTrack`                                                                                  | `media/dom/capabilities.ts`                      | Prunes non-fMP4 containers and encrypted renditions, so every reported cause has a corresponding exclusion                                                                                                                                                                                                                                                                                                                             |
+| `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted`                                        | `media/hls/parse-media-playlist.ts`              | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS                                                                                                                                                                                |
+| `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency`                                       | `media/hls/parse-media-playlist.ts`              | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped                                                                                                                                                                                                                          |
+| `firstFatal` / `hasUnsupportedFeatureCause`                                                     | `playback/adapters/hls-video/error-surface.ts`   | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the _policy_ — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only                                                                                                                                                                  |
+| `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE`, `UNPLAYABLE_SOURCE_MESSAGE`, and the two notice strings | `playback/primitives/error-messages.ts`          | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes. The generic one exists for a composition whose failures don't all reduce to a missing feature — see the background adapter below                                                                                                                                            |
 
 **Adapters** — `playback/adapters/hls-video/mixin.ts`,
 `hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
 `FATAL_SVTA_CODES` (its fatality allow-list — the audio-only set is
 narrower, since it composes no video selection and so can never report
-2011; the background set is *wider*, and § below says why), the `error`
+2011; the background set is _wider_, and § below says why), the `error`
 getter, and the `'error'` dispatch. First fatal wins, latched so a later
 append doesn't re-fire, and clearing rides `collectErrors`' per-source
 reset rather than a source-change hook of its own.
 
-All three latch on the *reported* code rather than the surfaced one,
+All three latch on the _reported_ code rather than the surfaced one,
 because the two can differ: where the sequence holds an
 unimplemented-capability cause, the surfaced code becomes 99001 and the
 condition is logged with the sequence attached; the `message` stays
@@ -269,33 +272,33 @@ that this engine can't, so there is no sibling to name.
 **The console half diverges, though: it logs on every fatal condition, not only
 a substituted one, and logs the generic sentence.** Both follow from causes being
 fatal here. The other two adapters log only when they substitute 99001, which is
-sound where every fatal condition *is* a verdict about a missing feature; here a
+sound where every fatal condition _is_ a verdict about a missing feature; here a
 verdict can instead mean the source carries no video at all, which would otherwise
 reach a developer as a bare 2011 with nothing said about it. And a message naming
 one missing feature would be wrong for exactly that case, so
 `UNPLAYABLE_SOURCE_MESSAGE` names all three broadly instead. Nor does it defer the
-*why* to the conditions: an `SvtaError` is a code and its context, and nothing on
+_why_ to the conditions: an `SvtaError` is a code and its context, and nothing on
 this path sets `message`, so pointing a developer at them for prose they don't
 carry is what made the earlier wording confusing. One unconditional log also costs
 a branch less than one per case.
 
-Having *a* surface at all matters more here than
+Having _a_ surface at all matters more here than
 elsewhere: on Chromium and WebKit (2026-08-14) every unplayable source in this
-composition is a *silent stall* with `HTMLMediaElement.error` null at
+composition is a _silent stall_ with `HTMLMediaElement.error` null at
 `readyState 0`, since nothing in MSE reports it either. Chromium accepts MPEG-TS
 appends into a `video/mp4` SourceBuffer, fires `update` (not `error`), and
 buffers nothing; WebKit demuxes the TS outright. No SourceBuffer error, no
 MediaSource error, no element error on either. The reported sequence, its console
 output, and this surface are the only failure signals that exist.
 
-**And in the pinned variant a cause *is* a verdict**, which is why 1004 and 4008
+**And in the pinned variant a cause _is_ a verdict**, which is why 1004 and 4008
 join 2011 in its fatal set. Elsewhere a cause is context — one unplayable
 rendition doesn't fail a source whose others still play, and a verdict follows if
-the type empties. Here only the *pinned* rendition's playlist is ever resolved, so
+the type empties. Here only the _pinned_ rendition's playlist is ever resolved, so
 a cause can only be about the pick itself, and dropping that pick is final:
 `selectVideoTrack` never re-picks, and `switchVideoTrack` isn't composed. Measured
 in the sandbox on Chromium (2026-08-17): an MPEG-TS source reports 1004 alone and
-an encrypted one 4008 alone — no verdict behind either, because the *other*
+an encrypted one 4008 alone — no verdict behind either, because the _other_
 renditions were never resolved and so were never pruned, leaving the candidate set
 non-empty while the pick is gone. A verdict-only allow-list left both as silent
 stalls, which is exactly what this surface exists to prevent. Both then map to
@@ -320,7 +323,7 @@ delegates an `error` getter — one eager listener on a Media it owns for life,
 rather than `CustomMediaElement`'s bridge-on-first-`addEventListener`, which is
 more machinery than a single event is worth. The React component re-dispatches on
 the `<video>` node instead, so React's own event plumbing invokes `onError` with
-the synthetic event it is typed for; a handler there learns *that* the source
+the synthetic event it is typed for; a handler there learns _that_ the source
 won't play, and the console and `engine.state.errors` hold which condition it was.
 
 `alternativeMediaSuggestion` is a static seam on the video adapter: a
@@ -350,10 +353,10 @@ back to.
 media element's `'error'` event and clears on `'emptied'` → `selectError`
 → `media-error-dialog`. `resolveErrorDialogDescription` maps 99001 to
 `errors.unplayable` — copy deliberately distinct from `errors.source`,
-which blames the viewer's *browser*; here the browser is fine and this
+which blames the viewer's _browser_; here the browser is fine and this
 player can't play the source. Any other SVTA code has no mapping and an
-empty `message`, so it resolves to the generic fallback (see *Known
-limitations*).
+empty `message`, so it resolves to the generic fallback (see _Known
+limitations_).
 
 ## Verification
 
@@ -380,7 +383,7 @@ limitations*).
     reads the same as capability rejection); nothing for a type with no
     tracks; 2012 for the audio variant; nothing for text
   - `packages/spf/src/playback/behaviors/tests/select-tracks.test.ts` →
-    *capability constraint + verdict* — prunes an undecodable rendition
+    _capability constraint + verdict_ — prunes an undecodable rendition
     before the chain picks; no pick plus 2011 when every rendition is
     undecodable; **clears a pick already made when a later container
     relabel prunes every rendition** (the warm path the pinned variant
@@ -388,8 +391,8 @@ limitations*).
     contract); nothing reported for a presentation with no video tracks;
     passes everything through with no probe wired
   - `packages/spf/src/playback/engines/hls/tests/engine-background-video.test.ts`
-    → *errors* — declares the slot; makes no pick for an unplayable
-    container *without* reporting a verdict (the 1004 cause covers it);
+    → _errors_ — declares the slot; makes no pick for an unplayable
+    container _without_ reporting a verdict (the 1004 cause covers it);
     reports 2011 for a source with no video renditions at all; reports that
     **once**, not per presentation write; clears on src unload
   - `packages/spf/src/media/dom/tests/capabilities.test.ts` — encrypted
@@ -404,7 +407,7 @@ limitations*).
     reports unsupported DRM through the seam for an encrypted playlist;
     nothing for a playable rendition; nothing when no seam is wired
   - `packages/spf/src/playback/adapters/hls-video/tests/mixin.test.ts` →
-    *error surface* — fatal condition surfaces as an `ErrorLike` and
+    _error surface_ — fatal condition surfaces as an `ErrorLike` and
     fires `'error'`; first fatal wins; non-fatal reports stay in the
     sequence only; fires once per distinct condition; clears on
     per-source reset; reporter context passes through as `data`. For code
@@ -412,14 +415,14 @@ limitations*).
     99001, including when the cause sits on a different track type than
     the verdict; a verdict with nothing unsupported behind it keeps its
     own code; neither code carries viewer-facing prose; a cause appended
-    *after* the verdict surfaced doesn't re-fire; a reporter-supplied
+    _after_ the verdict surfaced doesn't re-fire; a reporter-supplied
     message is preferred when there is one. For the console half: logged
     once, with the conditions attached, silent for a verdict with no
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
   - `packages/spf/src/playback/adapters/hls-background-video/tests/mixin.test.ts`
-    → *error surface* — nothing before a report; a verdict with no cause
-    behind it keeps its own code and fires `'error'`; a *cause* with no
+    → _error surface_ — nothing before a report; a verdict with no cause
+    behind it keeps its own code and fires `'error'`; a _cause_ with no
     verdict behind it surfaces too, for container and encryption alike (the
     pinned-variant rule above), substituted to 99001 with the reporter's
     context carried through; 2039 stays out of it; the explanation is logged
@@ -449,7 +452,7 @@ limitations*).
     source reports nothing; MPEG-TS surfaces 99001 with an empty
     `message`; **the sequence holds 1004 with no 2011 behind it**, the
     pinned-variant shape a `select-tracks` refactor would otherwise change
-    unnoticed; the *encrypted* source surfaces the same 99001 over a 4008;
+    unnoticed; the _encrypted_ source surfaces the same 99001 over a 4008;
     an audio-only ladder keeps its own 2011 with no substitution; a source
     change back to fMP4 clears the error and plays; and React's `onError`
     fires. The load-bearing one is **the inner `<video>` staying at
@@ -464,7 +467,7 @@ limitations*).
   presets — `hls-audio-only-ts` (MPEG-TS) and `hls-drm-unlicensed` (the
   DRM asset with no license path), each labelled with the error it should
   produce. `SPF_HLS_SOURCE_IDS` is what keeps the unlicensed DRM
-  source reachable there while the presets that *can* license DRM get the
+  source reachable there while the presets that _can_ license DRM get the
   playable variants instead. The two SPF background presets
   (`hls-background-video`, `mux-background-video`) take the same source
   list, so the same failing shapes reach the pinned variant. Walked on
@@ -489,7 +492,7 @@ limitations*).
 
 Things this feature forces decisions on, not just additions. Written
 before implementation; the entries phases 1–4 settled are recorded under
-*Open questions → Resolved*, and the reasoning below is what they were
+_Open questions → Resolved_, and the reasoning below is what they were
 settled against.
 
 - **Emission shape, and the prior art against a stored flag.**
@@ -501,18 +504,18 @@ settled against.
   owner deriving the resolved verdict — structurally the resolution
   [clusters.md § Multi-writer state slots](./clusters.md#multi-writer-state-slots)
   already records for `userTextTrackSelection` (many inputs → shared
-  slot → single deriving owner). Not settled; see *Open questions*.
+  slot → single deriving owner). Not settled; see _Open questions_.
 - **Fatality is derived, not intrinsic.** SVTA excludes severity from
   the code deliberately: "impact varies with player implementation,
   breaking the consistency of a specific error mapping to single code."
   The same holds inside SPF for a sharper reason — whether a condition
-  is fatal depends on the *composition*: which features are present,
+  is fatal depends on the _composition_: which features are present,
   what defensive behavior is composed, and whether a degraded
   experience is acceptable. The same missing capability is fatal in one
   composition and a 2039 notice in another. So fatality cannot be a
   property of the error, and producers must not assert it.
 - **Not another writer in the selection chain.** Phase 2 reads the
-  *outcome* of the hard-constraint pre-pass; it adds no constraint and
+  _outcome_ of the hard-constraint pre-pass; it adds no constraint and
   writes no `selected*TrackId`. That keeps it outside the
   [constraint + filter](./clusters.md#constraint--filter) pattern
   rather than becoming a participant in it — worth stating because the
@@ -525,7 +528,7 @@ settled against.
   (a new behavior, a precondition state, a `reschedule` composition)
   is unresolved.
 - **Removing `track-switching.ts`'s `console.error`s without losing
-  information.** The current messages name *which* selection key and
+  information.** The current messages name _which_ selection key and
   that constraints did the pruning. Emitting only the outcome code
   (2011/2012) drops the cause; stacking a cause code first (1004
   unsupported format vs 2013 no matching codec vs a transient CDN
@@ -533,7 +536,7 @@ settled against.
   stacked shape earns its complexity.
 - **SVTA as internal vocabulary carries version risk.** The spec was
   published 2026-07-08 and its own §Target implementation recommends
-  players *map to* it rather than refactor onto it. Adopting it
+  players _map to_ it rather than refactor onto it. Adopting it
   internally means spec revisions become internal-contract revisions.
   It also has at least one concrete ambiguity to pin: §Approach
   describes a category-unknown network error as `0300` while the error
@@ -573,18 +576,18 @@ settled against.
   Whether the general form is a registry consumers can extend, a mapping
   at the adapter, or a `MediaError` subclass carrying both codes is still
   open. Until then every unmapped code resolves to the generic fallback
-  (see *Known limitations*).
+  (see _Known limitations_).
 - **SVTA version pinning.** What "we target SVTA 2070" means when the
   spec revises — pin a revision, or track and migrate? Interacts with
   the zero-padding ambiguity above.
 - **Unknown-code fallbacks.** When a producer knows the category but
-  not the specific error, SVTA reserves category-000; fully unknown is
-  0999. Whether SPF ever legitimately emits these, or whether an
+  not the specific error, SVTA reserves category-000; fully unknown is 0999. Whether SPF ever legitimately emits these, or whether an
   unmapped error is a bug.
 - **Container detection depth.** Response `Content-Type` and body
   magic-byte probing are unimplemented. The `EXT-X-MAP`-absence plus
   extension heuristic covers Mux's shapes; whether non-Mux sources
   need more is deferred until a case appears.
+
 ### Resolved during phases 1–4 implementation
 
 Kept for traceability.
@@ -592,12 +595,12 @@ Kept for traceability.
 - **Emission shape** → an append-only sequence in one slot, owned by
   `collectErrors`, with the resolved verdict derived above the engine.
   The SVTA-P5 "stateless" tension resolves in favor of the sequence: P5
-  argues against *centralized error logic maintaining stream state*, not
+  argues against _centralized error logic maintaining stream state_, not
   against recording what was observed. No ring buffer — the per-source
   reset bounds growth.
 - **Where the fatal derivation lives** → the adapter. The one argument
   for engine-level was halting downstream work on a fatal verdict; that's
-  in *Likely cross-cutting impact* but isn't a phase, so it stayed out of
+  in _Likely cross-cutting impact_ but isn't a phase, so it stayed out of
   scope.
 - **Cause + outcome, or outcome only** → both, and stacking is
   load-bearing rather than merely allowed: the adapter reads the causes to
@@ -612,13 +615,12 @@ Kept for traceability.
   with `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` moved the wording to
   `packages/core`, where it is localized like every other player string,
   and left the engine reporting only codes and structured context.
-  Deciding *which* code still belongs at the adapter, because that's where
+  Deciding _which_ code still belongs at the adapter, because that's where
   fatality is decided and the causes are visible.
 - **Why a custom code rather than a standard one** → the standard codes
-  available describe either narrower or wider things. Causes (1004/1005,
-  4008) say what one rendition hit; verdicts (2011/2012) say a type
+  available describe either narrower or wider things. Causes (1004/1005, 4008) say what one rendition hit; verdicts (2011/2012) say a type
   emptied without saying why that's unfixable. And 2039 "Manifest feature
-  unsupported" covers features that are unsupported but still *playable* —
+  unsupported" covers features that are unsupported but still _playable_ —
   LL-HLS degrading to standard live is a 2039 — so overloading it for a
   fatal condition would make it useless for the phase-5 notices it
   belongs on.
@@ -639,7 +641,7 @@ Kept for traceability.
 - **Per-source reset semantics** → single error slot, cleared per source
   by `collectErrors`, answering
   [source-replacement](./source-replacement.md)'s "single error vs
-  per-source" question. The adapter fires no event on *clear*, which
+  per-source" question. The adapter fires no event on _clear_, which
   raised whether a stale dialog could strand: it doesn't. The inner media
   element's native `emptied` is re-dispatched by the host, so
   `errorFeature`'s reset path fires (E2E-verified on Chromium and WebKit).
@@ -653,10 +655,10 @@ Kept for traceability.
 
 ## Related features
 
-- **[capability-probing](./capability-probing.md)** *(closest
-  relationship)* — produces the pruned-to-empty condition phase 2
+- **[capability-probing](./capability-probing.md)** _(closest
+  relationship)_ — produces the pruned-to-empty condition phase 2
   surfaces, and currently lists the error-surfacing primitive under its
-  own *Foundational primitives*. Its "Unsupported-case error surfacing"
+  own _Foundational primitives_. Its "Unsupported-case error surfacing"
   phase row defers to the candidate this doc absorbs, and its removed
   `noPlayable*` flag is the constraining prior art.
 - **[network-resilience](./network-resilience.md)** — consumer. Its
@@ -707,13 +709,13 @@ Kept for traceability.
   §Error category, §Error index, §Target implementation (translation
   sub-component)
 - [PRD: Video.js v10 `<MuxVideo>` and Legacy Formats](https://app.notion.com/p/38f97a7f89d080979189db5d688f7e74)
-  — *Error Notices* is the motivating requirement; *Considered
-  solutions* covers why feature-support detection (not just CMAF vs TS)
+  — _Error Notices_ is the motivating requirement; _Considered
+  solutions_ covers why feature-support detection (not just CMAF vs TS)
   drives it
 - `packages/media/src/core/media-error.ts` — the `MediaError` contract
   phase 4 maps onto (codes 1–5 + `MEDIA_ERR_CUSTOM`, `fatal`,
   `context`, `data`, default messages)
-- `packages/hlsjs-video/src/errors.ts`,
+- `packages/adapters/hlsjs-video/src/errors.ts`,
   `packages/media/src/dom/native-hls/errors.ts` — the adapter mixin
   precedent, including the fatal-only filter
 - [clusters.md § Multi-writer state slots](./clusters.md#multi-writer-state-slots)

@@ -1,20 +1,22 @@
-import type { ThumbnailCore, ThumbnailFetchPriority, ThumbnailImage } from '@videojs/core';
-import type { CSSProperties, RefObject } from 'react';
-import { createContext, useContext } from 'react';
+import type { ThumbnailCore, ThumbnailState } from '@videojs/core';
+import { createContext, type CSSProperties, type ProviderProps, type RefCallback, useContext } from 'react';
 
-interface ThumbnailContextValue {
-  fetchPriority: ThumbnailFetchPriority | undefined;
-  imgRef: RefObject<HTMLImageElement | null>;
-  imgStyle: CSSProperties | undefined;
-  loading: HTMLImageElement['loading'] | undefined;
-  resolvedCrossOrigin: HTMLImageElement['crossOrigin'] | undefined;
-  state: ThumbnailCore.State;
-  thumbnail: ThumbnailImage | undefined;
+export interface ThumbnailContextValue {
+  core: ThumbnailCore;
+  state: ThumbnailState;
+  src: string | undefined;
+  imageStyle: CSSProperties | undefined;
+  /** CORS mode inherited from the media element, supplied only for `<track>`-sourced thumbnails. */
+  inheritedCrossOrigin: ThumbnailCore.ImageProps['crossOrigin'];
+  /** Attach to the image so the root can track its loading lifecycle. */
+  imageRef: RefCallback<HTMLImageElement>;
 }
 
 const ThumbnailContext = createContext<ThumbnailContextValue | null>(null);
 
-export const ThumbnailProvider = ThumbnailContext.Provider;
+export function ThumbnailProvider({ value, children }: ProviderProps<ThumbnailContextValue>) {
+  return <ThumbnailContext.Provider value={value}>{children}</ThumbnailContext.Provider>;
+}
 
 export function useThumbnailContext(): ThumbnailContextValue {
   const ctx = useContext(ThumbnailContext);

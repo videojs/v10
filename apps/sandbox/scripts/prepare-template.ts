@@ -16,18 +16,37 @@ function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
 
-/** Names of the workspace packages marked private. */
-function privateWorkspacePackages(): Set<string> {
-  const names = new Set<string>();
+/** Package manifests under `packages/`, descending one level into bucket directories such as `adapters/`. */
+function workspaceManifestFiles(): string[] {
   const packagesDir = resolve(workspaceDir, 'packages');
+  const manifests: string[] = [];
 
   for (const entry of readdirSync(packagesDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
 
-    // A directory without a manifest is not a package; the tree keeps a placeholder or two.
     const manifestFile = resolve(packagesDir, entry.name, 'package.json');
-    if (!existsSync(manifestFile)) continue;
 
+    if (existsSync(manifestFile)) {
+      manifests.push(manifestFile);
+      continue;
+    }
+
+    // A directory without a manifest is a bucket of packages or a placeholder.
+    for (const child of readdirSync(resolve(packagesDir, entry.name), { withFileTypes: true })) {
+      const childManifest = resolve(packagesDir, entry.name, child.name, 'package.json');
+
+      if (child.isDirectory() && existsSync(childManifest)) manifests.push(childManifest);
+    }
+  }
+
+  return manifests;
+}
+
+/** Names of the workspace packages marked private. */
+function privateWorkspacePackages(): Set<string> {
+  const names = new Set<string>();
+
+  for (const manifestFile of workspaceManifestFiles()) {
     const { name, private: isPrivate = false } = readJson<{ name: string; private?: boolean }>(manifestFile);
 
     if (isPrivate) names.add(name);

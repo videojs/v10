@@ -1,0 +1,60 @@
+{
+  "name": "@videojs/wistia-video",
+  "version": "10.0.0-beta.32",
+  "description": "Wistia playback adapter for Video.js",
+  "keywords": [
+    "media",
+    "video",
+    "videojs",
+    "wistia"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/adapters/wistia-video"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/dev/index.d.ts",
+      "browser": {
+        "development": "./dist/dev/index.js",
+        "default": "./dist/default/index.js"
+      },
+      "default": "./dist/default/server.js"
+    },
+    "./helpers": {
+      "types": "./dist/dev/helpers.d.ts",
+      "development": "./dist/dev/helpers.js",
+      "default": "./dist/default/helpers.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:watch": "vp pack --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+  },
+  "dependencies": {
+    "@videojs/media": "workspace:*",
+    "@videojs/utils": "workspace:*",
+    "@wistia/wistia-player": "0.7.12"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,17 +1,30 @@
 ---
 title: Customize skins
-description: Learn the public customization surface for packaged Video.js skins and when to eject
+description: Style a packaged Video.js skin or copy its source to change controls, layout, styles, and interactions
 ---
 
+import Aside from '@/components/Aside.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import RegistryCatalog from '@/components/registry/RegistryCatalog.astro';
+import RegistryCommand from '@/components/registry/RegistryCommand.astro';
+import RegistryStyling from '@/components/registry/RegistryStyling.astro';
+import ShadcnCommand from '@/components/registry/ShadcnCommand.astro';
 
-Video.js v10 comes with two pre-built skins: Default and Minimal. Start with their public CSS custom properties. When you need to change controls, layout, or interactions, eject the closest skin by copying its code into your project and making it your own.
+Start with the path that matches the change you want:
 
-## Basic customization
+| If you want to… | Use this path |
+| --------------- | ------------- |
+| Change colors, typography, sizing, or how the poster fills the player | [Style a packaged skin](#style-a-packaged-skin). The skin stays in the Video.js package, and you set its supported CSS properties. |
+| Add, remove, rearrange, or deeply restyle controls; change layout or interactions | [Eject and edit a skin](#eject-and-edit-a-skin). Ejecting copies the skin's source files into your project so you can change them. |
 
-Set these CSS custom properties directly on the skin:
+## Style a packaged skin
+
+Use a packaged skin's public settings to match it to your site without copying its source into your project.
+
+### Set the skin's styles
+
+Packaged skins expose [CSS custom properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) for their supported visual changes. Set them on the skin or any element that contains it:
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -40,18 +53,26 @@ Set these CSS custom properties directly on the skin:
 
 </FrameworkCase>
 
-| Property Name | Description | Type | Example |
-| ------------- | ----------- | ---- | ------- |
-| `--media-accent-color` | The color of slider fills and accented controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
-| `--media-accent-text-color` | The color of text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
-| `--media-border-radius` | The border radius of the media player | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
-| `--media-scale-unit` | The base sizing unit for skin spacing and icons | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
+| Property name | What it changes | Value | Example |
+| ------------- | --------------- | ----- | ------- |
+| `--media-accent-color` | Slider fills, highlighted controls and menu items, and primary actions | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
+| `--media-accent-text-color` | Text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
+| `--media-border-color` | The hairline around the player | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `transparent` |
+| `--media-border-radius` | The player corner radius | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
+| `--media-font-family` | The player interface font stack | A valid [font-family value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/font-family) | `Roboto, sans-serif` |
+| `--media-object-fit` | How the media and poster fill the player | A valid [object-fit value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit) | `cover` |
+| `--media-object-position` | Where the media and poster sit when they do not fill the player | A valid [object-position value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-position) | `top` |
+| `--media-scale-unit` | The base size for skin spacing, icons, and text | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
 
-If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). You only need to set it when you want to override that result.
+If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). Set it only when you want a different result.
 
-### Set the audio color scheme
+The skins use [`Inter`](https://rsms.me/inter/) when your page loads it and fall back to the system UI font. Video.js does not load the webfont for you. Set `--media-font-family` to use another font.
 
-The audio skins adapt their main palette for light and dark mode using [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark). It uses the inherited [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/color-scheme), so set `color-scheme` on the player or an ancestor:
+The media element and poster share `--media-object-fit` and `--media-object-position`, so a `cover` poster stays aligned with `cover` video. See <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
+
+### Set the color scheme
+
+The audio skins adapt their main palette for light and dark mode using [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark). They read the inherited [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/color-scheme), so set it on the player or an element that contains it:
 
 ```css
 :root {
@@ -59,11 +80,11 @@ The audio skins adapt their main palette for light and dark mode using [`light-d
 }
 ```
 
-The video skins keep their dark control presentation in both color schemes.
+The video skins keep their dark controls in both color schemes. Only their hairline border follows the scheme, and `--media-border-color` replaces it.
 
-### Scale with the document font size
+### Scale from the document font size
 
-Vanilla CSS and Tailwind skins use `--media-scale-unit` as the base for control spacing and icon sizes. Vanilla CSS skins also use it for font sizes. It defaults to `16px`, so player sizing does not change with the document root font size or the app's Tailwind spacing scale. Set it to `1rem` on the player or an ancestor to make the UI scale with the document root font size:
+The skins derive control spacing, icon sizes, and text from `--media-scale-unit`. It defaults to `16px`, so the player does not change with the document root font size or your app's Tailwind spacing scale. Set it to `1rem` to make the interface scale from the document root font size:
 
 ```css
 .player {
@@ -71,11 +92,13 @@ Vanilla CSS and Tailwind skins use `--media-scale-unit` as the base for control 
 }
 ```
 
+In fullscreen, the skins increase the unit up to 1.75 times on displays 1920 pixels and wider. This keeps controls legible from a distance.
+
 You can also add your own class names to the skins.
 
-## Where packaged customization stops
+### Know where packaged styling stops
 
-The four properties above are the public styling controls for packaged skins. Don't depend on the elements, classnames, or other custom properties inside a packaged skin. They may change between releases.
+The properties above are the public styling settings for packaged skins. Do not depend on the elements, class names, or other custom properties inside a packaged skin. They may change between releases.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -91,106 +114,97 @@ Packaged video skins also let you replace the poster through the `renderPoster` 
 
 See <DocsLink slug="reference/poster">Poster</DocsLink>.
 
-For anything deeper, eject instead of reaching into the packaged skin. There are no packaged-skin options for adding, removing, or rearranging controls, or replacing its built-in feedback and interactions. Seek buttons are a common example: the audio skins include 10-second skip-back and skip-forward buttons, but the video skins ship without them. To add rewind and fast-forward controls to a video skin, eject it and place a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> in the control bar.
+Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. To make those changes, [eject the closest skin](#eject-and-edit-a-skin) and edit its source.
 
-## Eject a skin
+## Eject and edit a skin
 
-Eject as soon as the packaged skin no longer matches the player you need. Once ejected, removing a control is removing a component, and changing an overlay or interaction is editing code you own.
+If a packaged skin is close to the interface you want, eject it and edit the copy in your project. Ejecting turns the skin's controls, layout, styles, and interactions into app code that you own.
 
-An ejected skin is app code, so its markup, class names, and styles are yours to change. If none of the packaged skins is a useful starting point, build a custom UI from the player, container, and individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> instead.
+Video.js publishes the skin source in a catalog of installable files. The [`shadcn` CLI](https://ui.shadcn.com/docs/cli) is the command-line tool that copies those files into your project, whether you use React or HTML.
 
-Soon, we'll have a CLI that ejects skins in your preferred framework and style. For now, we invite you to try these copy-paste-ready implementations.
+<Aside type="note">
+Commit your work before installing or updating source. You can then review every file the CLI adds or replaces.
+</Aside>
 
-To eject a skin:
+### Set up the `shadcn` CLI
 
-1. Choose the closest implementation below.
-2. Copy every file shown for your framework into your project.
-3. Replace the packaged skin with the copied component or player markup, then edit the files you own.
+If your project does not have a `components.json` configuration file, create one:
 
-{/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
+<ShadcnCommand action="init" />
 
-#### Default video skin
+### Choose how the skin is styled
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-video-react" />
+Each React skin is available with Tailwind CSS 4 classes or with a plain stylesheet, labeled Vanilla CSS. Choose the form your project uses. Skin names stay the same.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-video" />
+HTML skins use plain stylesheets, labeled Vanilla CSS. Each skin includes markup that renders directly in the page, a module that registers its custom elements, and a stylesheet.
 </FrameworkCase>
 
-#### Default audio skin
+<RegistryStyling />
+
+### Connect the CLI to Video.js
+
+Run this command once. It saves `@videojs` as a short prefix in `components.json`, so later commands can use names such as `@videojs/video`:
+
+<RegistryCommand />
+
+### Install a skin
+
+Install the skin closest to the interface you want. Default skins use the preset name, and Minimal skins add `-minimal`:
+
+<ShadcnCommand action="add @videojs/video" />
+
+<RegistryCatalog />
+
+The paths in the table start from the component location configured in `components.json`. The background video skin cannot be ejected.
+
+### Use the installed skin
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-audio-react" />
+The skin's files are under `components/videojs/skins/<preset>`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-audio" />
+The skin's files are under `components/videojs/skins/<preset>`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
 </FrameworkCase>
 
-#### Minimal video skin
+### Edit the installed files
+
+Start with the file that owns the change you want:
+
+| Goal | Where to start |
+| ---- | -------------- |
+| Add, remove, or rearrange controls | `skin.tsx` in React or `skin.html` in HTML |
+| Change colors, surfaces, shadows, sizes, or motion across the skin | `components/videojs/styles/theme.css` |
+| Change one control's appearance | That control's classes or stylesheet |
+| Change one control's interaction | That control's module |
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-video-react" />
+The files for the control bar, gestures, keyboard shortcuts, settings menu, and status indicators are composed from `skin.tsx`. The UI components they use are installed as source too, so you can open and change each button or slider.
+
+- **Tailwind CSS.** Components use utility classes. The install adds the theme keys, utilities, and variants to your main CSS file. The skins require Tailwind CSS 4.3 or later and its default configuration. If your project prefixes Tailwind classes, update the installed components.
+- **Vanilla CSS.** Components use class names that start with `media-`, and the skin's `skin.css` stylesheet styles them.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-video" />
+The `skin.html` file contains the layout. The `skin.ts` module registers the custom elements and loads `skin.css`. Elements use class names that start with `media-`; change a class in `skin.html` or a rule in the stylesheet to change one part of the interface.
 </FrameworkCase>
 
-#### Minimal audio skin
+### Inspect or update an ejected skin
 
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-audio-react" />
-</FrameworkCase>
+Use the CLI's `search` command to find source and `view` to inspect it before installation:
 
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-audio" />
-</FrameworkCase>
+```bash
+npx shadcn@latest search @videojs --query volume
+npx shadcn@latest view @videojs/video
+```
 
-#### Default live video skin
+Installed files belong to your project, so an update replaces your local copy. Commit your changes, reinstall with `--overwrite`, and review the resulting version-control diff before keeping it:
 
-The live skins swap the duration and current-time displays for a Live button. They build on the live presets, so the player reports live-edge state.
+```bash
+npx shadcn@latest add @videojs/video --overwrite
+```
 
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-live-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-live-video" />
-</FrameworkCase>
-
-#### Default live audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-live-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-live-audio" />
-</FrameworkCase>
-
-#### Minimal live video skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-live-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-live-video" />
-</FrameworkCase>
-
-#### Minimal live audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-live-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-live-audio" />
-</FrameworkCase>
-
-## Related guides
-
-- <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>
+To understand how skins fit into Video.js, read <DocsLink slug="concepts/skins">Skins</DocsLink>. To create a control instead of editing one, follow <DocsLink slug="how-to/build-your-own-component">Build your own component</DocsLink>.
