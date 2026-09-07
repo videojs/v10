@@ -29,12 +29,15 @@ Embeds pass a `template` that renders the provider's `<iframe>` from the element
 
 ```ts
 import { createMediaElement } from '@videojs/html';
+import { escapeHtml } from '@videojs/utils/string';
 import { VimeoAdapter } from '@videojs/vimeo-video';
 
 export class MyVimeoVideo extends createMediaElement(VimeoAdapter, {
-  template: (attrs) => `<iframe part="iframe" src="${attrs.src ?? ''}" allowfullscreen></iframe>`,
+  template: (attrs) => `<iframe part="iframe" src="${escapeHtml(attrs.src ?? '')}" allowfullscreen></iframe>`,
 }) {}
 ```
+
+The template is written to the shadow root with `innerHTML`, so escape any attribute value you interpolate.
 
 The template is also the element's static `template`, so a subclass can override it the same way.
 
