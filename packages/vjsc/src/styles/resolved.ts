@@ -2,8 +2,8 @@ import { realpath } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { twMerge } from 'cn';
 import { type OutputChunk, rolldown } from 'rolldown';
-import { twMerge } from 'tailwind-merge';
 
 import { toArray } from '../utils/array';
 import { splitClassNames } from './class-names';
