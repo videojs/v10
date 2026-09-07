@@ -227,8 +227,6 @@ export default function MuxUploaderPanel() {
           >
             <MuxLogo className="h-3.5 w-auto" />
           </a>
-          <span aria-hidden="true">·</span>
-          Free account required
         </span>
       </MuxUploaderDrop>
 
