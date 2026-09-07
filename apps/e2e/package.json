@@ -25,6 +25,7 @@
     "@playwright/test": "^1.52.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@videojs/cdn": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/html": "workspace:*",
     "@videojs/icons": "workspace:*",
