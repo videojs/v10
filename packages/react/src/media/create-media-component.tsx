@@ -1,10 +1,10 @@
 'use client';
 
 import type { EngineAdapter, Media } from '@videojs/media';
+import type { AdapterHost } from '@videojs/media/dom';
 import type {
   AudioHTMLAttributes,
   ForwardRefExoticComponent,
-  HTMLAttributes,
   IframeHTMLAttributes,
   PropsWithoutRef,
   ReactNode,
@@ -19,27 +19,35 @@ import { useComposedRefs } from '../utils/use-composed-refs';
 import { useMediaInstance } from '../utils/use-media-instance';
 import { useSyncProps } from '../utils/use-sync-props';
 
-/** An adapter class: constructible without arguments, attachable to a target, with its defaults as a static. */
+/** An adapter class: constructible without arguments, declaring the element it drives, with its defaults as a static. */
 export interface MediaAdapterConstructor {
   new (): Media & EngineAdapter;
+  readonly host: AdapterHost;
   readonly defaultProps: object;
 }
 
-/** The element an adapter attaches to, read off its `attach()` signature. */
-export type MediaAdapterTarget<Adapter extends MediaAdapterConstructor> =
-  InstanceType<Adapter> extends { attach(target: infer Target): unknown } ? NonNullable<Target> : never;
+/**
+ * The element an adapter renders into, read off its static `host`.
+ *
+ * `HTMLVideoAdapter` types its host as `'video' | 'audio'` so an adapter built on it can re-host in an `<audio>`;
+ * anything not narrowed to `'audio'` or `'iframe'` is therefore a video. Checked non-distributively so the union
+ * resolves to one element rather than to a union of elements.
+ */
+export type MediaAdapterTarget<Adapter extends MediaAdapterConstructor> = [Adapter['host']] extends ['iframe']
+  ? HTMLIFrameElement
+  : [Adapter['host']] extends ['audio']
+    ? HTMLAudioElement
+    : HTMLVideoElement;
 
 /** The adapter's props: the keys of its static `defaultProps`. */
 export type MediaAdapterProps<Adapter extends MediaAdapterConstructor> = Adapter['defaultProps'];
 
-/** The native attributes of the element an adapter attaches to. */
+/** The native attributes of the element an adapter renders into. */
 export type MediaTargetAttributes<Target> = Target extends HTMLIFrameElement
   ? IframeHTMLAttributes<HTMLIFrameElement>
-  : Target extends { readonly videoWidth: number }
+  : Target extends HTMLVideoElement
     ? VideoHTMLAttributes<HTMLVideoElement>
-    : Target extends { readonly volume: number }
-      ? AudioHTMLAttributes<HTMLAudioElement>
-      : HTMLAttributes<HTMLElement>;
+    : AudioHTMLAttributes<HTMLAudioElement>;
 
 /** Props of a component built by `createMediaComponent`: the target's attributes plus the adapter's props. */
 export type MediaComponentProps<Adapter extends MediaAdapterConstructor> = Omit<
@@ -90,7 +98,8 @@ export interface MediaComponentOptions {
  * returns: a `<video>`, an `<audio>`, or an embed's `<iframe>`. It is what the built-in `HlsJsVideo`, `MuxVideo`, and
  * `VimeoVideo` components are made of.
  *
- * @param Adapter - Adapter class with a static `defaultProps`, for example `HlsJsAdapter` from `@videojs/hlsjs-video`.
+ * @param Adapter - Adapter class with static `host` and `defaultProps`, for example `HlsJsAdapter` from
+ *   `@videojs/hlsjs-video`.
  * @param render - Renders the target element from the adapter, the native props, the children, and the attach ref.
  * @param options - `displayName` for React DevTools. Defaults to the adapter's class name.
  */

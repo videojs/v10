@@ -43,7 +43,7 @@ export const MyVimeoVideo = createMediaComponent(VimeoAdapter, ({ adapter, props
 ));
 ```
 
-Props matching the adapter's `defaultProps` are synced onto the adapter and reset to their defaults when omitted. Every other prop and the forwarded ref go to the rendered element, whose attribute type follows from the adapter's `attach()` target. Every built-in media component except `WistiaVideo` and `HlsBackgroundVideo` is created this way.
+Props matching the adapter's `defaultProps` are synced onto the adapter and reset to their defaults when omitted. Every other prop and the forwarded ref go to the rendered element, whose attribute and ref types follow from the adapter's static `host`: `'video'`, `'audio'`, or `'iframe'`. Every built-in media component except `WistiaVideo` and `HlsBackgroundVideo` is created this way.
 
 ## Who needs this
 
