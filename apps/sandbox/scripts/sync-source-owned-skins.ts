@@ -20,6 +20,9 @@ const presets = ['video', 'audio', 'live-video', 'live-audio'] as const;
 const variants = ['', '-minimal'] as const;
 
 const inWorkspace = existsSync(resolve(workspaceDir, 'pnpm-workspace.yaml'));
+/** The Shadcn `cn` helper on the packages the Sandbox depends on, kept even after the registry's `utils` item runs. */
+const CN_UTILS = `import { clsx, type ClassValue } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n`;
+
 const localRegistry = existsSync(resolve(registryDir, 'react/registry.json'));
 const server = localRegistry ? createServer() : undefined;
 const address = server
@@ -113,6 +116,9 @@ async function installCatalog(install: (typeof installs)[number], address: strin
     await cp(resolve(root, 'src/components/videojs'), destination, { recursive: true });
 
     if (install.catalog.startsWith('react')) {
+      // The registry's `utils` item overwrites the fixture's `cn` with whatever Shadcn ships today, and that may
+      // import a package the Sandbox never installs. The copied helpers keep the `cn` built from what it does.
+      await writeFile(resolve(root, 'src/lib/utils.ts'), CN_UTILS);
       await cp(resolve(root, 'src/lib'), resolve(destination, '../../lib'), { recursive: true });
     }
 
@@ -179,10 +185,7 @@ async function writeFixture(root: string, address: string, alias: string): Promi
   await writeFile(resolve(root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
   await writeFile(resolve(root, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
   await writeFile(resolve(root, 'src/index.css'), '@import "./components/videojs/styles/theme.css";\n');
-  await writeFile(
-    resolve(root, 'src/lib/utils.ts'),
-    `import { clsx, type ClassValue } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n`
-  );
+  await writeFile(resolve(root, 'src/lib/utils.ts'), CN_UTILS);
 }
 
 async function runCommand(
