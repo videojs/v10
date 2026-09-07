@@ -21,6 +21,7 @@ export interface MobileNavProps {
   currentPath: string;
   children?: React.ReactNode;
   compact?: boolean;
+  /** Version chip beside the logo. `undefined` renders the default chip; `null` hides it. */
   pill?: React.ReactNode;
 }
 
@@ -60,10 +61,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
             <a
               href="/"
-              className={clsx(
-                'flex items-center',
-                compact ? 'h-5 gap-2 sm:h-6 sm:gap-3' : 'h-7 gap-3 lg:h-10 lg:gap-4'
-              )}
+              className={clsx('flex items-end', compact ? 'h-5 gap-2 sm:h-6 sm:gap-3' : 'h-7 gap-3 lg:h-10 lg:gap-4')}
             >
               {compact ? (
                 <>
@@ -74,7 +72,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                 <Logo height="100%" className="w-auto" />
               )}
               <span className="sr-only">Video.js video player</span>
-              {pill ? pill : <BetaPill className="hidden sm:inline-flex" />}
+              {pill === undefined ? <BetaPill className="hidden sm:inline-flex" /> : pill}
             </a>
             <Dialog.Close
               className={clsx(
@@ -120,7 +118,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                     className={className}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {link.label} {link.external ? <ArrowUpRight className="size-[1em]" aria-hidden="true" /> : null}
+                    {link.label} {link.external ? <ArrowUpRight className="size-4" aria-hidden="true" /> : null}
                   </a>
                 );
               })}

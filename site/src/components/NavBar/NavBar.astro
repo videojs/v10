@@ -12,6 +12,8 @@ import MobileNav from './MobileNav';
 
 export interface Props {
   class?: string;
+  /** Show the version chip beside the logo. The homepage hides it. */
+  pill?: boolean;
 }
 
 type NavLink = {
@@ -28,7 +30,7 @@ const navLinks: NavLink[] = [
 const currentPath = Astro.url.pathname;
 const isDocsActive = currentPath.startsWith('/docs');
 const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
-const { class: className } = Astro.props;
+const { class: className, pill = true } = Astro.props;
 ---
 
 <nav
@@ -39,18 +41,18 @@ const { class: className } = Astro.props;
     className,
   ]}
 >
-  <a href="/" class="flex h-7 items-center gap-3 lg:h-10 lg:gap-4">
+  <a href="/" class="flex h-7 items-end gap-3 lg:h-10 lg:gap-4">
     <Logo height="100%" />
     <span class="sr-only">Video.js video player</span>
-    <BetaPill className="hidden sm:inline-flex" />
+    {pill && <BetaPill className="hidden sm:inline-flex" />}
   </a>
-  <Search client:load className="mr-4 ml-auto sm:self-center" />
+  <Search client:load className="mr-2 ml-auto sm:self-center" />
   {/* Desktop nav links */}
   <div class="hidden md:flex">
     <GetStartedLink
       client:idle
       className={clsx(
-        "flex items-center rounded-xs px-5 py-2 font-display font-bold uppercase intent:bg-hover",
+        "flex items-center rounded-xs px-4 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
       aria-current={isDocsActive ? "page" : undefined}
     >
@@ -61,12 +63,12 @@ const { class: className } = Astro.props;
         <a
           href={link.href}
           class:list={[
-            "flex items-center rounded-xs px-5 py-2 font-display font-bold uppercase intent:bg-hover",
+            "flex items-center rounded-xs px-4 py-2 font-display font-bold uppercase intent:bg-hover",
           ]}
         >
           {link.label}{" "}
           {link.external ? (
-            <ArrowUpRight className="size-[1em]" aria-hidden="true" />
+            <ArrowUpRight className="size-4" aria-hidden="true" />
           ) : null}
         </a>
       ))
@@ -74,28 +76,28 @@ const { class: className } = Astro.props;
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(
-        "flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-hover",
+        "flex items-center rounded-xs px-2.5 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
       aria-label="Discord"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Discord width="1.5em" height="1.5em" />
+      <Discord className="size-6" />
     </a>
     <a
       href={GITHUB_REPO_URL}
       class={clsx(
-        "flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-hover",
+        "flex items-center rounded-xs px-2.5 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
       aria-label="GitHub"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <GitHub width="1.5em" height="1.5em" />
+      <GitHub className="size-6" />
     </a>
   </div>
 
-  <MobileNav client:idle navLinks={navLinks} currentPath={currentPath}>
+  <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} pill={pill ? undefined : null}>
     <slot name="mobile-nav" />
   </MobileNav>
 </nav>

@@ -307,8 +307,20 @@
 }
 
 /* Squircle corners where supported; falls back to the element's border-radius. */
+/*
+ * Squircle corners read much flatter than a circular arc of the same radius, so the utility also scales the radius
+ * tokens on the element. `rounded-*` reads these variables, so `rounded-lg corner-squircle` picks up the larger value
+ * without changing the class.
+ */
 @utility corner-squircle {
   @supports (corner-shape: squircle) {
+    --radius-sm: 0.35rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.7rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.375rem;
+    --radius-3xl: 2rem;
+
     corner-shape: squircle;
   }
 }

@@ -71,7 +71,7 @@ export default function SegmentedControl<T extends string = string>({
               'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold',
               option.disabled || disabled ? 'cursor-wait' : 'cursor-pointer',
               isPressed
-                ? 'bg-surface-raised font-semibold text-faded-black dark:text-manila-light shadow-xs'
+                ? 'bg-surface-raised font-semibold text-faded-black dark:text-manila-light shadow-xs ring-1 ring-line'
                 : 'text-muted intent:text-faded-black dark:intent:text-manila-light'
             )}
           >

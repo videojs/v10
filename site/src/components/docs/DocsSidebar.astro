@@ -16,9 +16,14 @@ type Props = {
   docTitles: Map<string, string>;
   docStabilities: Map<string, DocStability | undefined>;
   class?: string;
+  /**
+   * Give the active link's indicator a view-transition name so it slides between pages of the same section. Only one
+   * rendered sidebar per page may opt in; duplicate names would cancel the transition.
+   */
+  animateIndicator?: boolean;
 };
 
-const { framework, docTitles, docStabilities, class: className } = Astro.props;
+const { framework, docTitles, docStabilities, class: className, animateIndicator = false } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 const currentPath = Astro.url.pathname;
 
@@ -35,6 +40,12 @@ function containsActivePath(item: SidebarItemType): boolean {
 const tabs = filteredSidebar.filter(isSection);
 const looseItems = filteredSidebar.filter((item) => !isSection(item));
 const activeTab = tabs.find(containsActivePath) ?? tabs[0];
+
+// Scoped to the section so switching sections fades instead of sliding the indicator across unrelated lists.
+const indicatorTransitionName =
+  animateIndicator && activeTab
+    ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    : undefined;
 
 const TAB_ICONS = {
   Guide: BookIcon,
@@ -60,9 +71,9 @@ const TAB_ICONS = {
                 href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
-                  "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-1.5 text-p3 select-none",
+                  "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
                   isActive
-                    ? "bg-surface-raised font-semibold text-faded-black shadow-xs dark:text-manila-light"
+                    ? "bg-surface-raised font-semibold text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
                     : "text-muted intent:text-faded-black dark:intent:text-manila-light",
                 ]}
               >
@@ -74,7 +85,7 @@ const TAB_ICONS = {
                 )}
                 <span class="flex-1">{tab.sidebarLabel}</span>
                 {tab.devOnly && (
-                  <span class="rounded-md corner-squircle bg-orange/12 px-1.5 py-0.5 font-mono text-p4 leading-none text-orange dark:bg-orange/15">
+                  <span class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 text-p4 leading-none font-medium text-muted ring-1 ring-line">
                     dev only
                   </span>
                 )}
@@ -88,7 +99,13 @@ const TAB_ICONS = {
   <nav aria-label="Docs sidebar" class="px-6 pt-8 pb-6">
     {
       activeTab?.contents.map((item) => (
-        <SidebarItem item={item} framework={framework} docTitles={docTitles} docStabilities={docStabilities} />
+        <SidebarItem
+          item={item}
+          framework={framework}
+          docTitles={docTitles}
+          docStabilities={docStabilities}
+          indicatorTransitionName={indicatorTransitionName}
+        />
       ))
     }
     {

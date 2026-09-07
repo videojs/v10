@@ -79,7 +79,8 @@
   gap: calc(var(--spacing) * 2);
   align-items: center;
   width: auto;
-  height: calc(var(--spacing) * 8);
+  /* Same height as the site's select triggers, so it sits level with the nav links. */
+  height: calc(var(--spacing) * 9);
   padding: 0 calc(var(--spacing) * 2);
   margin: 0;
   font-family: inherit;
@@ -95,6 +96,10 @@
 @supports (corner-shape: squircle) {
   .DocSearch-Button,
   .DocSearch-Button .DocSearch-Button-Key {
+    /* Match the `corner-squircle` utility, which scales radius tokens to keep the squircle visible. */
+    --radius-md: 0.5rem;
+    --radius-lg: 0.7rem;
+
     corner-shape: squircle;
   }
 }

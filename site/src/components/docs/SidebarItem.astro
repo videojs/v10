@@ -14,19 +14,22 @@ type Props = {
   docTitles: Map<string, string>;
   docStabilities: Map<string, DocStability | undefined>;
   depth?: number;
+  /** View-transition name for the active link's indicator; see `DocsSidebar`. */
+  indicatorTransitionName?: string;
 };
 
-const { item, framework, docTitles, docStabilities, depth = 0 } = Astro.props;
+const { item, framework, docTitles, docStabilities, depth = 0, indicatorTransitionName } = Astro.props;
 const currentPath = Astro.url.pathname;
 const isHidden = !isSection(item) && !isLink(item) && item.hidden === true;
 const stability = !isSection(item) && !isLink(item) ? docStabilities.get(item.slug) : undefined;
 const isActive = !isSection(item) && !isLink(item) && `/docs/framework/${framework}/${item.slug}` === currentPath;
 
+// The active indicator is a separate element rather than the link's own border so a view transition can move it.
 const linkClass = [
-  "-ml-px flex items-center gap-2 border-l py-1.5 pl-4 text-p3 select-none",
+  "relative -ml-px flex items-center gap-2 border-l border-transparent py-1.5 pl-4 text-p3 leading-5 select-none",
   isActive
-    ? "border-orange font-semibold text-faded-black dark:text-manila-light"
-    : "border-transparent text-muted intent:border-line-strong intent:text-faded-black dark:intent:text-manila-light",
+    ? "font-semibold text-faded-black dark:text-manila-light"
+    : "text-muted intent:border-line-strong intent:text-faded-black dark:intent:text-manila-light",
 ];
 ---
 
@@ -46,6 +49,7 @@ const linkClass = [
                 docTitles={docTitles}
                 docStabilities={docStabilities}
                 depth={depth + 1}
+                indicatorTransitionName={indicatorTransitionName}
               />
             </li>
           ))}
@@ -68,6 +72,7 @@ const linkClass = [
                 docTitles={docTitles}
                 docStabilities={docStabilities}
                 depth={depth + 1}
+                indicatorTransitionName={indicatorTransitionName}
               />
             </li>
           ))}
@@ -82,7 +87,7 @@ const linkClass = [
     >
       {item.devOnly ? "[Dev only] " : ""}
       <span class="min-w-0 flex-1">{item.sidebarLabel}</span>
-      <ArrowUpRight className="size-3.5 shrink-0" aria-hidden="true" />
+      <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
     </a>
   ) : (
     <a
@@ -91,6 +96,13 @@ const linkClass = [
       style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
       href={`/docs/framework/${framework}/${item.slug}`}
     >
+      {isActive && (
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-0 -left-px w-px bg-orange"
+          style={indicatorTransitionName ? `view-transition-name: ${indicatorTransitionName}` : undefined}
+        />
+      )}
       {item.devOnly ? "[Dev only] " : ""}
       <span class="min-w-0 flex-1">
         {item.sidebarLabel || docTitles.get(item.slug) || item.slug}

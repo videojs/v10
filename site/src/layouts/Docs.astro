@@ -44,7 +44,9 @@ const docsSidebarId = 'docs-sidebar';
     class:list={[
       "grid min-h-screen grid-cols-1",
       "md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols)",
-      "[--nav-h:calc(var(--spacing)*13)] sm:[--nav-h:calc(var(--spacing)*13.5)]",
+      // The extra pixel is the nav's bottom border, so the content box stays an even height and 36px controls centre on
+      // whole pixels.
+      "[--nav-h:calc(var(--spacing)*13+1px)] sm:[--nav-h:calc(var(--spacing)*13.5+1px)]",
     ]}
     style={{
       "--md-grid-cols": `calc(var(--spacing) * 70) minmax(0,1fr)`,
@@ -67,7 +69,13 @@ const docsSidebarId = 'docs-sidebar';
       class="scrollbar-thin sticky z-10 hidden flex-col overflow-y-scroll border-line md:flex md:border-r"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
-      <DocsSidebar framework={framework} docTitles={docTitles} docStabilities={docStabilities} class="flex-1">
+      <DocsSidebar
+        framework={framework}
+        docTitles={docTitles}
+        docStabilities={docStabilities}
+        class="flex-1"
+        animateIndicator
+      >
         <Selectors
           client:idle
           currentFramework={framework}

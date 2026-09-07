@@ -1,6 +1,5 @@
 ---
 import MuxLogoSmall from '@/assets/logos/mux-small.svg?react';
-import BetaPill from '@/components/BetaPill';
 import HeroVideo from '@/components/home/HeroVideo';
 import { MUX_URL } from '@/consts';
 
@@ -13,12 +12,8 @@ const { poster } = Astro.props;
 
 <header
   class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
-  style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
+  style="--grid-template-areas: 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
 >
-  <BetaPill
-    className="mb-7 justify-self-center sm:hidden"
-    style={{ gridArea: "pill" }}
-  />
   <h1
     class="pointer-events-none z-10 mb-5 w-full self-center justify-self-center text-center font-display text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-h15 md:text-manila-light md:[grid-area:var(--md-grid-area)] lg:text-h1"
     style="--grid-area: title; --md-grid-area: video;"
