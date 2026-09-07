@@ -1,4 +1,4 @@
-import type { Media } from '@videojs/media/dom';
+import { AdapterAttachment, type Media, renderHost } from '@videojs/media/dom';
 import { HlsBackgroundVideoAdapter, type HlsVideoMediaError } from '@videojs/spf/hls-background-video';
 import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
@@ -58,14 +58,17 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   }
 
   #media = new HlsBackgroundVideoAdapter();
+  #attachment = new AdapterAttachment(this, this.#media, () => this.video);
 
   constructor() {
     super();
 
-    if (!this.shadowRoot) {
-      this.attachShadow((this.constructor as typeof HlsBackgroundVideo).shadowRootOptions);
+    const ctor = this.constructor as typeof HlsBackgroundVideo;
 
-      const attrs = {
+    renderHost(
+      this,
+      ctor.template,
+      {
         ...namedNodeMapToObject(this.attributes),
         muted: '',
         loop: '',
@@ -73,18 +76,15 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
         playsinline: '',
         disableremoteplayback: '',
         disablepictureinpicture: '',
-      };
-
-      this.shadowRoot!.innerHTML = backgroundVideoTemplate(attrs);
-    }
+      },
+      ctor.shadowRootOptions
+    );
 
     // Neither Chrome nor Firefox honor a `muted` attribute set after
     // `document.createElement`, and autoplay is refused without it. Attaching is
     // what sets the property — along with the rest of the fixed behavior — so
     // nothing here needs to repeat it.
-    const video = this.video;
-
-    if (video) this.#media.attach(video);
+    this.#attachment.attach();
 
     // Re-fired rather than bridged on demand the way `CustomMediaElement` does
     // it: one listener for the one event this element has, on a Media it owns
@@ -99,14 +99,7 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback?.();
-
-    if (this.hasAttribute('keep-alive')) return;
-
-    // Deferred so a synchronous reparent (remove then insert) doesn't tear down
-    // the engine, matching `CustomMediaElement`.
-    queueMicrotask(() => {
-      if (!this.isConnected) this.#media.destroy();
-    });
+    this.#attachment.release();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {

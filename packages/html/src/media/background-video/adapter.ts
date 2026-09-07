@@ -1,4 +1,4 @@
-import type { Media } from '@videojs/media/dom';
+import { type Media, renderHost } from '@videojs/media/dom';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
@@ -6,7 +6,8 @@ import { backgroundVideoTemplate } from './template';
 
 const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
-// Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
+// Not a `CustomMediaElement`: a background video has no adapter and needs one attribute, not the full media API. It
+// renders through the same `renderHost` the media elements use.
 export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static template = backgroundVideoTemplate;
@@ -17,10 +18,12 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
   constructor() {
     super();
 
-    if (!this.shadowRoot) {
-      this.attachShadow((this.constructor as typeof BackgroundVideo).shadowRootOptions);
+    const ctor = this.constructor as typeof BackgroundVideo;
 
-      const attrs = {
+    renderHost(
+      this,
+      ctor.template,
+      {
         ...namedNodeMapToObject(this.attributes),
         ...(!this.hasAttribute('nomuted') && { muted: '' }),
         ...(!this.hasAttribute('noloop') && { loop: '' }),
@@ -28,10 +31,9 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
         playsinline: '',
         disableremoteplayback: '',
         disablepictureinpicture: '',
-      };
-
-      this.shadowRoot!.innerHTML = backgroundVideoTemplate(attrs);
-    }
+      },
+      ctor.shadowRootOptions
+    );
 
     // Neither Chrome or Firefox support setting the muted attribute
     // after using document.createElement.
