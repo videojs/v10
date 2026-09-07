@@ -14,6 +14,16 @@ export interface CopyButtonProps {
   timeout?: number;
 }
 
+/** Read the target's text without UI chrome such as a code frame's "Show more" control. */
+function getCopyText(target: Element): string {
+  // SAFETY: cloning an Element yields an Element of the same type.
+  const clone = target.cloneNode(true) as Element;
+
+  clone.querySelectorAll('[data-copy-ignore]').forEach((node) => node.remove());
+
+  return clone.textContent || '';
+}
+
 export default function CopyButton({ children, copied, copyFrom, className, style, timeout = 2000 }: CopyButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -34,7 +44,7 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
           const target = container.querySelector(copyFrom.target);
 
           if (target) {
-            text = target?.textContent || '';
+            text = getCopyText(target);
           } else {
             console.warn(
               `CopyButton: No target found for selector "${copyFrom.target}" within container "${copyFrom.container}"`
