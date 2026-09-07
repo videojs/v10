@@ -42,6 +42,25 @@ export function derivedAttributes(defaultProps: object): AttributeConfigs {
   return configs;
 }
 
+/**
+ * The adapter's props as an element's initial attributes set them: `defaultProps` with each declared attribute that is
+ * present coerced over it. What a template needs to build an embed URL before the adapter has attached.
+ */
+export function propsFromAttributes<Adapter extends { readonly defaultProps: object }>(
+  Adapter: Adapter,
+  attrs: Record<string, string>
+): Adapter['defaultProps'] {
+  const props: Record<string, unknown> = { ...Adapter.defaultProps };
+
+  for (const [prop, config] of Object.entries(derivedAttributes(Adapter.defaultProps))) {
+    const attribute = config.attribute!;
+
+    if (attribute in attrs) props[prop] = coerceAttribute(attrs[attribute]!, config);
+  }
+
+  return props as Adapter['defaultProps'];
+}
+
 /** Coerce an attribute string to the type its config declares. */
 export function coerceAttribute(value: string | null, config: AttributeConfig): unknown {
   if (config.type === Boolean) return value !== null;

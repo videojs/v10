@@ -1,55 +1,18 @@
 import { buildCloudflareIframeSrc, CloudflareAdapter } from '@videojs/cloudflare-video';
-import { escapeHtml } from '@videojs/utils/string';
+import { propsFromAttributes } from '@videojs/media/dom';
 
 import { createMediaElement } from '../create-media-element';
+import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const initialSrc = buildCloudflareIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
-  const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+  const props = propsFromAttributes(CloudflareAdapter, attrs);
 
-  return /*html*/ `
-    <style>
-      :host {
-        display: inline-block;
-        min-width: 300px;
-        min-height: 150px;
-        position: relative;
-      }
-      iframe {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-      }
-      :host(:not([controls])) {
-        pointer-events: none;
-      }
-    </style>
-    <iframe
-      part="iframe"
-      ${srcAttr}
-      allow="accelerometer; fullscreen; autoplay; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
-      frameborder="0"
-      width="100%"
-      height="100%"
-      referrerpolicy="${escapeHtml(attrs.referrerpolicy ?? '')}"
-    ></iframe>
-  `;
+  return embedTemplate({
+    src: buildCloudflareIframeSrc(props.src, props),
+    allow: 'accelerometer; fullscreen; autoplay; encrypted-media; gyroscope; picture-in-picture',
+    attributes: { allowfullscreen: '' },
+  });
 };
-
-function templateAttrsToEmbedProps(attrs: Record<string, string>) {
-  return {
-    autoplay: attrs.autoplay !== undefined,
-    defaultMuted: attrs.muted !== undefined,
-    loop: attrs.loop !== undefined,
-    controls: attrs.controls !== undefined,
-    preload: (attrs.preload as 'none' | 'metadata' | 'auto' | undefined) ?? 'metadata',
-    // The Stream embed paints the poster itself, so it is part of the URL.
-    poster: attrs.poster ?? '',
-  };
-}
 
 export class CloudflareVideoElement extends createMediaElement(CloudflareAdapter, { template }) {
   static readonly tagName = 'cloudflare-video';
