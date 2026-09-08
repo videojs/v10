@@ -14,6 +14,6 @@ export const shared = {
   ol: 'list-decimal list-outside pl-4 space-y-1 leading-relaxed',
   p: 'my-4 leading-relaxed',
   prose: 'mx-auto max-w-3xl',
-  strong: 'font-bold',
+  strong: 'font-semibold',
   ul: 'list-disc list-outside pl-4 space-y-1 leading-relaxed',
 } as const;

@@ -18,7 +18,7 @@ function OverlayWrapper({ children, className }: { children: React.ReactNode; cl
   return (
     <div
       className={clsx(
-        'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xs px-6 text-center',
+        'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl corner-squircle px-6 text-center',
         'bg-manila-light/95 backdrop-blur-sm dark:bg-faded-black/95',
         className
       )}
@@ -45,7 +45,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'needs_login') {
     return (
       <OverlayWrapper>
-        <p className="text-p3 font-bold">
+        <p className="text-p3 font-semibold">
           To upload this video to{' '}
           <a href={MUX_URL} target="_blank" rel="noopener" className="intent:decoration-gold underline">
             Mux
@@ -55,7 +55,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
-          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold transition select-none"
+          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
         >
           Sign up or log in
         </button>
@@ -77,7 +77,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
       <OverlayWrapper>
         <div className="flex items-center gap-2">
           <CheckCircle className="text-orange size-4" aria-hidden="true" />
-          <p className="font-bold">Ready to play</p>
+          <p className="font-semibold">Ready to play</p>
         </div>
         <p className="text-p3 text-center">
           See code below, or{' '}

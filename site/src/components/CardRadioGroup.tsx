@@ -59,14 +59,14 @@ export default function CardRadioGroup<T extends string = string>({
             disabled={option.disabled}
             className={clsx(
               'group relative flex min-w-0 text-left transition duration-150 ease-out select-none',
-              'rounded-xs border bg-surface',
+              'rounded-xl corner-squircle border bg-surface',
               layout === 'tile' ? 'flex-col gap-3 p-4' : 'items-center gap-3 p-3',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
               option.disabled
                 ? 'cursor-not-allowed opacity-50'
-                : 'cursor-pointer intent:-translate-y-0.5 motion-reduce:intent:translate-y-0',
+                : 'cursor-pointer intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
               isSelected
-                ? 'border-orange bg-surface-raised ring-1 ring-orange'
+                ? 'border-orange bg-surface-raised shadow-sm ring-1 ring-orange'
                 : 'border-line intent:border-line-strong'
             )}
           >
@@ -74,7 +74,7 @@ export default function CardRadioGroup<T extends string = string>({
             <span
               aria-hidden="true"
               className={clsx(
-                'flex shrink-0 items-center justify-center self-start rounded-xs border border-line',
+                'flex shrink-0 items-center justify-center self-start rounded-lg corner-squircle border border-line',
                 'bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light',
                 layout === 'tile' ? 'size-12' : 'size-10'
               )}

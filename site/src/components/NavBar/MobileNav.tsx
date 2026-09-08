@@ -32,7 +32,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
       <Dialog.Trigger
         className={clsx(
           'md:hidden',
-          'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
+          'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-md corner-squircle'
         )}
         aria-label="Open navigation menu"
       >
@@ -76,7 +76,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
             </a>
             <Dialog.Close
               className={clsx(
-                'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
+                'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-md corner-squircle'
               )}
               aria-label="Close navigation menu"
             >

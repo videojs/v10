@@ -166,7 +166,12 @@ export default function MuxUploaderPanel() {
   }, []);
 
   return (
-    <div className="border-line-strong bg-surface relative isolate w-full overflow-hidden rounded-xs border-2 border-dashed">
+    <div className="corner-squircle border-line-strong bg-surface relative isolate w-full overflow-hidden rounded-xl border border-dashed">
+      {/* Soft brand glow so the drop zone reads as a destination, not another form field. */}
+      <div
+        aria-hidden="true"
+        className="from-orange/12 to-magenta/12 dark:from-orange/10 dark:to-magenta/10 pointer-events-none absolute inset-0 -z-10 bg-linear-to-br via-transparent"
+      />
       <MuxUploader
         // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
@@ -187,11 +192,11 @@ export default function MuxUploaderPanel() {
         overlayText="Let it go"
       >
         <span slot="heading" className="flex flex-col items-center gap-4">
-          <span className="border-line bg-surface-raised text-orange dark:bg-faded-black flex size-14 items-center justify-center rounded-xs border">
+          <span className="corner-squircle border-line bg-surface-raised text-orange dark:bg-faded-black flex size-14 items-center justify-center rounded-2xl border shadow-xs">
             <CloudUpload className="size-6" aria-hidden="true" />
           </span>
           <span className="flex flex-col gap-1">
-            <span className="text-p15 font-bold text-balance">Drop a video to host it for free on Mux</span>
+            <span className="text-p15 font-semibold text-balance">Drop a video to host it for free on Mux</span>
             <span className="text-muted text-p3 text-balance">
               We transcode it into an HLS stream and set it as your source above.
             </span>
@@ -203,7 +208,7 @@ export default function MuxUploaderPanel() {
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold transition select-none"
+            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
           >
             Select a file
           </button>

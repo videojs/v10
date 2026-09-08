@@ -45,7 +45,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
       className={twMerge(
         clsx(
           // The panel background fills the whole frame; the header sits flush on top of it with a hairline divider.
-          'overflow-hidden flex flex-col my-8 rounded-xs border border-faded-black/10 dark:border-line',
+          'overflow-hidden flex flex-col my-8 rounded-lg corner-squircle border border-faded-black/10 dark:border-line',
           variant === 'compact'
             ? 'bg-faded-black dark:bg-soot text-manila-light'
             : 'bg-manila-light dark:bg-faded-black',
@@ -256,10 +256,10 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         )}
         <span className="relative">
           {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
-          <span className="invisible font-bold" aria-hidden="true" data-search-ignore data-llms-ignore>
+          <span className="invisible font-semibold" aria-hidden="true" data-search-ignore data-llms-ignore>
             {children}
           </span>
-          <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
+          <span className={clsx('absolute top-0 left-0', isActive && 'font-semibold')}>{children}</span>
         </span>
       </button>
     </div>

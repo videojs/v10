@@ -39,12 +39,12 @@ const renderTitle = title ?? defaultTitles[type];
 <aside
   class={twMerge(
     clsx(
-      // The border shares the band's hue so the band's edge stays crisp instead of being wrapped in grey.
-      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-xs border",
-      type === "note" && "border-magenta",
-      type === "tip" && "border-magenta",
-      type === "caution" && "border-orange",
-      type === "danger" && "border-red",
+      // The inset ring shares the band's hue so the band's edge stays crisp instead of being wrapped in a grey border.
+      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-lg corner-squircle ring-1 ring-inset",
+      type === "note" && "ring-magenta/40",
+      type === "tip" && "ring-magenta/40",
+      type === "caution" && "ring-orange/40",
+      type === "danger" && "ring-red/40",
     ),
     className,
   )}
@@ -74,7 +74,7 @@ const renderTitle = title ?? defaultTitles[type];
       />
     </div>
     <div class="min-w-0 flex-1">
-      <p class="mb-2 font-bold">{renderTitle}</p>
+      <p class="mb-2 font-semibold">{renderTitle}</p>
       <div class="[&>*:last-child]:mb-0! [&>.my-4]:my-2 [&>.my-8]:my-4">
         <slot />
       </div>

@@ -33,13 +33,13 @@ function getSection(slug: string): string | undefined {
     prev ? (
       <a
         href={getGuideUrl(framework, prev.slug)}
-        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
+        class="grid items-center gap-x-2 rounded-lg corner-squircle border border-manila-dark p-4 dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p4 text-muted" style="grid-area: direction;">
           Previous{getSection(prev.slug) && <> · {getSection(prev.slug)}</>}
         </div>
-        <div class="text-p2 font-bold text-balance" style="grid-area: title">
+        <div class="text-p2 font-semibold text-balance" style="grid-area: title">
           {prev.sidebarLabel || docTitles.get(prev.slug)}
         </div>
         <div style="grid-area: icon">
@@ -54,13 +54,13 @@ function getSection(slug: string): string | undefined {
     next ? (
       <a
         href={getGuideUrl(framework, next.slug)}
-        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 text-right dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
+        class="grid items-center gap-x-2 rounded-lg corner-squircle border border-manila-dark p-4 text-right dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p4 text-muted" style="grid-area: direction;">
           {getSection(next.slug) && <>{getSection(next.slug)} · </>}Next
         </div>
-        <div class="text-p2 font-bold text-balance" style="grid-area: title">
+        <div class="text-p2 font-semibold text-balance" style="grid-area: title">
           {next.sidebarLabel || docTitles.get(next.slug)}
         </div>
         <div style="grid-area: icon">

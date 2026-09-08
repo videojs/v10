@@ -86,12 +86,12 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                       class="grid grid-cols-(--grid-cols) gap-x-6 gap-y-3"
                       style="--grid-cols: auto 1fr"
                     >
-                      <dt class="font-bold">Feature bundle</dt>
+                      <dt class="font-semibold">Feature bundle</dt>
                       <dd>
                         <MarkdownCode>{preset.featureBundle}</MarkdownCode>
                       </dd>
 
-                      <dt class="font-bold">Features</dt>
+                      <dt class="font-semibold">Features</dt>
                       <dd>
                         {preset.features.length > 0
                           ? listFormat
@@ -119,7 +119,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                           : "–"}
                       </dd>
 
-                      <dt class="font-bold">Skins</dt>
+                      <dt class="font-semibold">Skins</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
                           {preset.react.skins.length > 0
@@ -154,7 +154,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                         </FrameworkCase>
                       </dd>
 
-                      <dt class="font-bold">Default media element</dt>
+                      <dt class="font-semibold">Default media element</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
                           <MarkdownCode>{`<${preset.react.mediaElement}>`}</MarkdownCode>

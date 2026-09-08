@@ -3,6 +3,7 @@ import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import clsx from 'clsx';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton';
+import Breadcrumbs from '@/components/docs/Breadcrumbs.astro';
 import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
 import EditPageButton from '@/components/docs/EditPageButton.astro';
@@ -14,7 +15,15 @@ import { PRODUCTION_URL } from '@/consts';
 import DocsLayout from '@/layouts/Docs.astro';
 import type { SupportedFramework } from '@/types/docs';
 import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
-import { filterSidebar, getAdjacentGuides, getAllGuideSlugs, getSectionsForGuide } from '@/utils/docs/sidebar';
+import {
+  filterSidebar,
+  findFirstGuide,
+  findGuideBySlug,
+  getAdjacentGuides,
+  getAllGuideSlugs,
+  getSectionsForGuide,
+} from '@/utils/docs/sidebar';
+import { isSection } from '@/types/docs';
 import { getDocTitle, isCodeIdentifier } from '@/utils/docs/title';
 import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
 
@@ -87,6 +96,16 @@ const sections = getSectionsForGuide(slug, filteredSidebar);
 const category = sections[1] ?? sections[0];
 const eyebrow = sections.at(-1);
 
+// Breadcrumbs: the tab links to its first page, inner sections are labels, and the page itself closes the trail.
+const tab = filteredSidebar.filter(isSection).find((item) => item.sidebarLabel === sections[0]);
+const crumbs = [
+  ...sections.map((label, index) => ({
+    label,
+    href: index === 0 && tab ? `/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}` : undefined,
+  })),
+  { label: findGuideBySlug(slug, filteredSidebar)?.sidebarLabel ?? getDocTitle(doc, framework) },
+];
+
 // Build JSON-LD schema for TechArticle
 const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createTechArticleSchema({
@@ -135,11 +154,22 @@ const jsonLdSchema = createTechArticleSchema({
         data-site="docs"
         data-category={category}
       >
-        <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-10 pb-8">
-          <div class="mb-3 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
-            {eyebrow && <p class="font-display text-h4 uppercase text-orange select-none">{eyebrow}</p>}
-            <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
-          </div>
+        <div
+          class="mx-auto flex max-w-3xl items-center justify-between gap-4 pt-6"
+          data-llms-ignore
+          data-search-ignore
+        >
+          <Breadcrumbs crumbs={crumbs} />
+          <CopyMarkdownButton client:idle className="shrink-0" />
+        </div>
+        <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-8 pb-8">
+          {
+            eyebrow && (
+              <p class="mb-3 font-display text-h4 uppercase text-orange select-none" data-llms-ignore data-search-ignore>
+                {eyebrow}
+              </p>
+            )
+          }
           <div class="mb-4 flex flex-wrap items-center gap-3">
             <H2Markdown
               as="h1"

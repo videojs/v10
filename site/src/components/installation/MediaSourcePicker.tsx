@@ -107,7 +107,7 @@ export default function MediaSourcePicker() {
             value={$sourceUrl}
             onChange={(e) => sourceUrl.set(e.target.value)}
             placeholder="https://stream.mux.com/….m3u8"
-            className="border-line bg-surface text-p3 placeholder:text-muted intent:border-line-strong focus-visible:border-line-strong focus-visible:outline-gold h-10 w-full rounded-xs border pr-3 pl-9 focus-visible:outline-2 focus-visible:outline-offset-1"
+            className="corner-squircle border-line bg-surface text-p3 placeholder:text-muted intent:border-line-strong focus-visible:border-line-strong focus-visible:outline-gold h-10 w-full rounded-lg border pr-3 pl-9 shadow-xs focus-visible:outline-2 focus-visible:outline-offset-1"
           />
         </div>
         <p className="text-muted text-p4" aria-live="polite">

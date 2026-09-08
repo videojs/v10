@@ -86,16 +86,18 @@
   color: var(--color-muted);
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-lg);
   transition:
     border-color 150ms ease,
     background-color 150ms ease;
 }
 
 @supports (corner-shape: squircle) {
+  .DocSearch-Button,
   .DocSearch-Button .DocSearch-Button-Key {
     /* Match the `corner-squircle` utility, which scales radius tokens to keep the squircle visible. */
     --radius-md: 0.5rem;
+    --radius-lg: 0.7rem;
 
     corner-shape: squircle;
   }

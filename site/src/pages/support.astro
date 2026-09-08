@@ -56,7 +56,7 @@ const tiles = [
     >
       {
         tiles.map((tile) => (
-          <div class="row-span-3 grid grid-rows-subgrid rounded-xs border border-faded-black p-5 dark:border-manila-light">
+          <div class="row-span-3 grid grid-rows-subgrid rounded-lg corner-squircle border border-faded-black p-5 dark:border-manila-light">
             <h2 class="font-display text-h3 leading-tight text-faded-black uppercase dark:text-manila-light">
               {tile.title}
             </h2>
@@ -76,13 +76,13 @@ const tiles = [
                 href={tile.cta.href}
                 target="_blank"
                 rel="noopener"
-                class="mt-5 inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 bg-manila-50 px-4 py-2.5 text-p3 dark:border-line dark:bg-warm-gray intent:bg-hover"
+                class="mt-5 inline-flex items-center gap-1 self-end rounded-md corner-squircle border border-manila-75 bg-manila-50 px-4 py-2.5 text-p3 dark:border-line dark:bg-warm-gray intent:bg-hover"
               >
                 {tile.cta.label}
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </a>
             ) : (
-              <span class="mt-5 inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 px-4 py-2.5 text-p3 text-warm-gray dark:border-line dark:text-manila-dark">
+              <span class="mt-5 inline-flex items-center gap-1 self-end rounded-md corner-squircle border border-manila-75 px-4 py-2.5 text-p3 text-warm-gray dark:border-line dark:text-manila-dark">
                 {tile.cta.label}
               </span>
             )}

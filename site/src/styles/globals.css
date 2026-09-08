@@ -118,32 +118,32 @@
   --text-h1: 3.75rem; /* 60px */
   --text-h1--line-height: 1.1;
   --text-h1--letter-spacing: var(--tracking-tightest);
-  --text-h1--font-weight: var(--font-weight-bold);
+  --text-h1--font-weight: var(--font-weight-semibold);
 
   --text-h15: 2.375rem; /* 38px */
   --text-h15--line-height: 1.1;
   --text-h15--letter-spacing: var(--tracking-tightest);
-  --text-h15--font-weight: var(--font-weight-bold);
+  --text-h15--font-weight: var(--font-weight-semibold);
 
   --text-h2: 1.75rem; /* 28px */
   --text-h2--line-height: 1;
   --text-h2--letter-spacing: var(--tracking-tighter);
-  --text-h2--font-weight: var(--font-weight-bold);
+  --text-h2--font-weight: var(--font-weight-semibold);
 
   --text-h25: 1.5rem; /* 24px */
   --text-h25--line-height: 1;
   --text-h25--letter-spacing: var(--tracking-tighter);
-  --text-h25--font-weight: var(--font-weight-bold);
+  --text-h25--font-weight: var(--font-weight-semibold);
 
   --text-h3: 1.125rem; /* 18px */
   --text-h3--line-height: 1;
   --text-h3--letter-spacing: var(--tracking-normal);
-  --text-h3--font-weight: var(--font-weight-bold);
+  --text-h3--font-weight: var(--font-weight-semibold);
 
   --text-h4: 0.875rem; /* 14px */
   --text-h4--line-height: 1;
   --text-h4--letter-spacing: var(--tracking-normal);
-  --text-h4--font-weight: var(--font-weight-bold);
+  --text-h4--font-weight: var(--font-weight-semibold);
 
   --text-h5: 0.875rem; /* 14px */
   --text-h5--line-height: 1;

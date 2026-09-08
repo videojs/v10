@@ -73,7 +73,7 @@ const cells = colspan + (toggleColumn ? 1 : 0);
     hasDetail && (
       <tr id={`${id}-detail`} hidden>
         <td colspan={cells} class="px-3 pt-0 pb-4 sm:px-4">
-          <div class="overflow-x-auto rounded-xs bg-faded-black px-4 py-3 scrollbar-thin dark:bg-soot">
+          <div class="overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
             <ServerCode code={detailedType!} lang="ts" />
           </div>
         </td>

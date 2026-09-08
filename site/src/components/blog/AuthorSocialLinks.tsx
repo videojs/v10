@@ -70,7 +70,7 @@ export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksP
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${config.label} profile`}
-                  className="intent:text-warm-gray dark:intent:text-manila-50 inline-flex items-center justify-center rounded-xs p-2"
+                  className="intent:text-warm-gray dark:intent:text-manila-50 corner-squircle inline-flex items-center justify-center rounded-md p-2"
                 >
                   <Icon className="size-4" aria-hidden="true" />
                 </a>
