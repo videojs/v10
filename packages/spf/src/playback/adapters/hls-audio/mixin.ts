@@ -15,13 +15,13 @@ import {
   type HlsAudioEngineState,
 } from '../../engines/hls/engine-audio-only';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
-import type { HlsVideoSource } from '../hls-video/mixin';
 import {
   firstFatal,
   type HlsVideoMediaError,
   hasUnsupportedFeatureCause,
   withAlternativeMediaSuggestion,
 } from '../hls-video/error-surface';
+import type { HlsVideoSource } from '../hls-video/mixin';
 
 export interface HlsAudioAdapterProps {
   src: string;
@@ -248,13 +248,11 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     /**
-     * Structured source, the same shape the video flavor takes so one object
-     * serves either.
+     * Structured source, the same shape the video flavor takes so one object serves either.
      *
-     * `drm` is accepted and inert: this engine composes no EME. It is kept in
-     * the shape rather than removed so a source can be handed to both flavors —
-     * and because Mux encrypts video renditions and leaves audio clear, so a
-     * protected playback ID plays here regardless.
+     * `drm` is accepted and inert: this engine composes no EME. It is kept in the shape rather than removed so a source
+     * can be handed to both flavors — and because Mux encrypts video renditions and leaves audio clear, so a protected
+     * playback ID plays here regardless.
      *
      * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
      */

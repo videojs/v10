@@ -7,7 +7,8 @@
 //                                     CDMs (Edge on Windows has Widevine AND
 //                                     PlayReady; unfiltered, Widevine wins).
 import { restrictDrmSystems, SOURCES } from '@app/shared/sources';
-import type { DrmSystemsConfig, HlsVideoEngineSignals } from '@videojs/spf/hls';
+import type { DrmSystemsConfig } from '@videojs/spf/drm';
+import type { HlsVideoEngineSignals } from '@videojs/spf/hls';
 import { createHlsVideoEngine } from '@videojs/spf/hls';
 
 const video = document.getElementById('video') as HTMLVideoElement;

@@ -15,7 +15,7 @@ import { type MuxAdapterProps, MuxMixin } from './mixin';
  * exactly as an engine with no EME does.
  */
 export class MuxVideoAdapter extends MuxMixin(HlsVideoAdapter) {
-  static override readonly defaultProps: Omit<HlsVideoAdapterProps, 'src'> & MuxAdapterProps = {
+  static override readonly defaultProps: Omit<HlsVideoAdapterProps, 'src' | 'source'> & MuxAdapterProps = {
     ...HlsVideoAdapter.defaultProps,
     src: '',
     source: null,
