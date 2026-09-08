@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Graph } from 'vjsc/graph';
 
 import type { SkinModuleMeta } from '../../../src/meta.ts';
+import { skinSourceDirectory } from '../../skin.ts';
 import { createReactPackageSkins } from '../react.ts';
 
 describe('createReactPackageSkins', () => {
@@ -61,8 +62,8 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
 
   for (const theme of ['default', 'minimal'] as const) {
     for (const preset of ['audio', 'live-audio', 'live-video', 'video'] as const) {
-      const skin = `${theme}-${preset}`;
-      const rootId = `${root}/skins/${skin}/skin.tsx?skin=${skin}&style=css&target=react`;
+      const skin = `${theme}-${preset}` as const;
+      const rootId = `${root}/skins/${skinSourceDirectory(skin)}/skin.tsx?skin=${skin}&style=css&target=react`;
       const buttonId = `${root}/components/button.tsx?skin=${skin}&style=css&target=react`;
       const themedId = `${root}/components/themed.tsx?skin=${skin}&style=css&target=react`;
       const labelId = `${root}/components/label.tsx?skin=${skin}&style=css&target=react`;
@@ -74,8 +75,8 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
 
       modules.set(rootId, {
         id: rootId,
-        filename: `${root}/skins/${skin}/skin.tsx`,
-        sourcePath: `skins/${skin}/skin.tsx`,
+        filename: `${root}/skins/${skinSourceDirectory(skin)}/skin.tsx`,
+        sourcePath: `skins/${skinSourceDirectory(skin)}/skin.tsx`,
         params: { skin, style: 'css', target: 'react' },
         source: rootSource,
         imports: [

@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dirname, '../suites/player/app/src/pages');
 const SOURCE_VIDEO_SKIN = relative(
   OUT_DIR,
-  resolve(__dirname, '../../../packages/skins/src/skins/default-video/skin.tsx')
+  resolve(__dirname, '../../../packages/skins/src/skins/default/video/skin.tsx')
 ).replaceAll('\\', '/');
 
 // ---------------------------------------------------------------------------
