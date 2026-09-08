@@ -8,7 +8,7 @@ export default styles({
       utilities: 'gap-px',
     },
     captionsMenu: {
-      utilities: 'media-max-compact:hidden',
+      utilities: 'media-max-lg:hidden',
     },
   },
 });

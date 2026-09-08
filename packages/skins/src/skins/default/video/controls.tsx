@@ -33,7 +33,7 @@ export function DefaultVideoControls() {
             </$.Controls.Group>
 
             <ButtonTooltip side="top">
-              <CaptionsButton className={styles.captionsButton} />
+              <CaptionsButton className={controlsStyles.captionsButton} />
             </ButtonTooltip>
             <VideoSettingsMenu className={styles.settingsButton} />
           </$.Controls.Group>

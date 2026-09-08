@@ -14,9 +14,13 @@ export default styles({
       utilities: [
         'group/slider relative flex flex-1 cursor-pointer items-center justify-center outline-hidden',
         'rounded-media-pill',
-        'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))] data-[orientation=horizontal]:min-w-20',
-        'data-[orientation=vertical]:h-20 data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
+        'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))]',
+        'data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
       ],
+      variants: {
+        default: 'data-[orientation=horizontal]:min-w-18 data-[orientation=vertical]:h-18',
+        minimal: 'data-[orientation=horizontal]:min-w-20 data-[orientation=vertical]:h-20',
+      },
     },
     track: {
       utilities: [
@@ -71,7 +75,7 @@ export default styles({
     preview: {
       utilities: [
         'group/preview relative h-1 [--media-slider-preview-max-height:var(--media-slider-preview-max-width)]',
-        'media-wide:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
+        'media-2xl:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
         'before:pointer-events-none before:absolute before:z-1 before:-translate-1/2 before:scale-50 before:opacity-0',
         'before:transition-[opacity,scale] before:duration-media-slow before:ease-out',
         'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
@@ -79,16 +83,17 @@ export default styles({
       variants: {
         default: [
           'min-w-(--media-slider-preview-max-width)',
-          '[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
+          '[--media-slider-preview-max-width:min(--spacing(32),100cqi)]',
+          '@min-[30rem]/media-root:[--media-slider-preview-max-width:min(--spacing(40),100cqi)]',
           'before:top-1/2 before:left-1/2 before:size-1 before:rounded-media-control before:bg-current',
         ],
         minimal: [
           'min-w-full',
           '[--media-slider-preview-max-width:min(--spacing(28),100cqi)]',
-          'media-compact:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
+          'media-lg:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
           '[--media-preview-end-inset:calc(100cqi-100%)]',
           '[--media-preview-left:clamp(calc(var(--media-slider-preview-max-width)/2),var(--media-slider-pointer),calc(100%-var(--media-slider-preview-max-width)/2+var(--media-preview-end-inset)))]',
-          'media-wide:[--media-preview-left:var(--media-slider-pointer)]',
+          'media-2xl:[--media-preview-left:var(--media-slider-pointer)]',
           'before:bg-current/35',
           'data-[orientation=horizontal]:before:top-1/2 data-[orientation=horizontal]:before:left-(--media-slider-pointer)',
           'data-[orientation=horizontal]:before:h-5 data-[orientation=horizontal]:before:w-px',

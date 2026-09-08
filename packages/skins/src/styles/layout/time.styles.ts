@@ -22,13 +22,13 @@ export default styles({
       },
     },
     currentValue: {
-      utilities: 'hidden media-wide:inline',
+      utilities: 'hidden media-2xl:inline',
     },
     separator: {
-      utilities: 'hidden media-wide:inline media-wide:text-current/60',
+      utilities: 'hidden media-2xl:inline media-2xl:text-current/60',
     },
     durationValue: {
-      utilities: 'tabular-nums media-wide:text-current/60',
+      utilities: 'tabular-nums media-2xl:text-current/60',
     },
   },
 });
