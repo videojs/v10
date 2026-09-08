@@ -293,29 +293,32 @@ describe('buildKeySystemConfigurations', () => {
     ).toEqual([
       ['HW_SECURE_ALL', 'SW_SECURE_CRYPTO'],
       ['SW_SECURE_DECODE', 'SW_SECURE_CRYPTO'],
-      [undefined, undefined],
+      ['SW_SECURE_CRYPTO', 'SW_SECURE_CRYPTO'],
     ]);
   });
 
-  // The rung below the top tier is why the ladder exists. EME accepts or refuses a
-  // configuration as a unit, so pairing one video tier with an audio tier means an
-  // unavailable video tier discards the audio tier too. Measured on macOS Chrome
-  // (Widevine L3): `HW_SECURE_ALL` is refused, and without a middle rung both
-  // levels fell through to the unstamped configuration — which is exactly the
-  // "recommended that a robustness level be specified" warning.
-  it('keeps naming tiers on the rung below the top one', () => {
+  // The reason the ladder has a floor instead of an unstamped last resort.
+  // Chromium warns for any *requested* configuration that omits `robustness`, not
+  // only the one it accepts — measured four ways against a real CDM: the same
+  // ladder warns with a trailing unstamped entry and is silent without it, while
+  // the accepted configuration is identical either way. So a stamped rung winning
+  // is not enough; nothing in the list may be unstamped.
+  it('offers no unstamped configuration when the module names tiers', () => {
     const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
 
-    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE, robustness: 'SW_SECURE_DECODE' }]);
-    expect(configs[1]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE, robustness: 'SW_SECURE_CRYPTO' }]);
+    for (const config of configs) {
+      for (const capability of [...(config.videoCapabilities ?? []), ...(config.audioCapabilities ?? [])]) {
+        expect(capability.robustness).toBeTruthy();
+      }
+    }
   });
 
-  // Last resort, so a CDM that refuses every tier still negotiates.
-  it('ends on an unstamped configuration', () => {
+  // The weakest tier stands in for the unstamped entry, so a CDM without the
+  // stronger rungs still negotiates rather than being refused.
+  it('ends the ladder on the weakest tier', () => {
     const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
 
-    expect(configs.at(-1)?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE }]);
-    expect(configs.at(-1)?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
+    expect(configs.at(-1)?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE, robustness: 'SW_SECURE_CRYPTO' }]);
   });
 
   // A shorter audio list clamps to its last entry rather than dropping out, so the
@@ -323,18 +326,21 @@ describe('buildKeySystemConfigurations', () => {
   it('clamps the shorter tier list across the longer one', () => {
     const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
 
-    expect(configs.slice(0, 2).map((config) => config.audioCapabilities?.[0]?.robustness)).toEqual([
+    expect(configs.map((config) => config.audioCapabilities?.[0]?.robustness)).toEqual([
+      'SW_SECURE_CRYPTO',
       'SW_SECURE_CRYPTO',
       'SW_SECURE_CRYPTO',
     ]);
   });
 
   // An audio-only source still gets a stamped rung: the tier lives on the audio
-  // capability, so counting rungs off video alone would leave it unnamed.
+  // capability, so counting rungs off video alone would leave it unnamed. One rung,
+  // because the audio ladder has one tier — the video rungs have nothing to carry.
   it('offers the tier for an audio-only source', () => {
     const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [], audio: [AUDIO_TYPE] });
 
-    expect(configs.map((config) => config.audioCapabilities?.[0]?.robustness)).toEqual(['SW_SECURE_CRYPTO', undefined]);
+    expect(configs.map((config) => config.audioCapabilities?.[0]?.robustness)).toEqual(['SW_SECURE_CRYPTO']);
+    expect(configs[0]?.videoCapabilities).toBeUndefined();
   });
 
   it('leaves robustness unset for a module with no preferred tier', () => {
@@ -355,10 +361,10 @@ describe('buildKeySystemConfigurations', () => {
     ).toEqual([
       ['cbcs', 'HW_SECURE_ALL'],
       ['cbcs', 'SW_SECURE_DECODE'],
-      ['cbcs', undefined],
+      ['cbcs', 'SW_SECURE_CRYPTO'],
       [undefined, 'HW_SECURE_ALL'],
       [undefined, 'SW_SECURE_DECODE'],
-      [undefined, undefined],
+      [undefined, 'SW_SECURE_CRYPTO'],
     ]);
   });
 
