@@ -1,36 +1,22 @@
 'use client';
 
-import type { HlsJsAdapterProps } from '@videojs/hlsjs-video';
-import { MuxAudioAdapter, type MuxAudioAdapterProps } from '@videojs/mux-audio';
-import { type AudioHTMLAttributes, forwardRef, type ReactNode } from 'react';
+import { MuxAudioAdapter } from '@videojs/mux-audio';
 
-import { useAttachMedia } from '../../utils/use-attach-media';
-import { useComposedRefs } from '../../utils/use-composed-refs';
-import { useMediaInstance } from '../../utils/use-media-instance';
-import { useSyncProps } from '../../utils/use-sync-props';
+import { createMediaComponent, type MediaComponentProps } from '../create-media-component';
 
-// `source` comes from `MuxAudioAdapterProps` only: `MuxSource` extends `HlsSource` with
-// Mux identity fields, so the narrower type has to win.
-export interface MuxAudioProps
-  extends
-    Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsJsAdapterProps | keyof MuxAudioAdapterProps>,
-    Partial<Omit<HlsJsAdapterProps, 'source'>>,
-    Partial<MuxAudioAdapterProps> {
-  children?: ReactNode;
-}
+export type MuxAudioProps = MediaComponentProps<typeof MuxAudioAdapter>;
 
-export const MuxAudio = forwardRef<HTMLAudioElement, MuxAudioProps>(function MuxAudio({ children, ...props }, ref) {
-  const media = useMediaInstance(MuxAudioAdapter);
-  const attachRef = useAttachMedia(media);
-  const composedRef = useComposedRefs(attachRef, ref);
-  const htmlProps = useSyncProps(media, props, MuxAudioAdapter.defaultProps);
-
-  return (
-    <audio ref={composedRef} {...htmlProps}>
-      {children}
-    </audio>
-  );
-});
+export const MuxAudio = createMediaComponent(
+  MuxAudioAdapter,
+  ({ props, children, ref }) => {
+    return (
+      <audio ref={ref} {...props}>
+        {children}
+      </audio>
+    );
+  },
+  { displayName: 'MuxAudio' }
+);
 
 export namespace MuxAudio {
   export type Props = MuxAudioProps;

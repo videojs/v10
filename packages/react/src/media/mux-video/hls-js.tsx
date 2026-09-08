@@ -1,38 +1,24 @@
 'use client';
 
-import type { HlsJsAdapterProps } from '@videojs/hlsjs-video';
-import { MuxVideoAdapter, type MuxVideoAdapterProps } from '@videojs/mux-video';
-import { forwardRef, type ReactNode, type VideoHTMLAttributes } from 'react';
+import { MuxVideoAdapter } from '@videojs/mux-video';
 
-import { useAttachMedia } from '../../utils/use-attach-media';
-import { useComposedRefs } from '../../utils/use-composed-refs';
-import { useMediaInstance } from '../../utils/use-media-instance';
-import { useSyncProps } from '../../utils/use-sync-props';
+import { createMediaComponent, type MediaComponentProps } from '../create-media-component';
 import { MuxStoryboard } from './storyboard';
 
-// `source` comes from `MuxVideoAdapterProps` only: `MuxSource` extends `HlsSource` with
-// Mux identity fields, so the narrower type has to win.
-export interface MuxVideoProps
-  extends
-    Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsJsAdapterProps | keyof MuxVideoAdapterProps>,
-    Partial<Omit<HlsJsAdapterProps, 'source'>>,
-    Partial<MuxVideoAdapterProps> {
-  children?: ReactNode;
-}
+export type MuxVideoProps = MediaComponentProps<typeof MuxVideoAdapter>;
 
-export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
-  const media = useMediaInstance(MuxVideoAdapter);
-  const attachRef = useAttachMedia(media);
-  const composedRef = useComposedRefs(attachRef, ref);
-  const htmlProps = useSyncProps(media, props, MuxVideoAdapter.defaultProps);
-
-  return (
-    <video ref={composedRef} {...htmlProps}>
-      <MuxStoryboard media={media} />
-      {children}
-    </video>
-  );
-});
+export const MuxVideo = createMediaComponent(
+  MuxVideoAdapter,
+  ({ adapter, props, children, ref }) => {
+    return (
+      <video ref={ref} {...props}>
+        <MuxStoryboard media={adapter} />
+        {children}
+      </video>
+    );
+  },
+  { displayName: 'MuxVideo' }
+);
 
 export namespace MuxVideo {
   export type Props = MuxVideoProps;
