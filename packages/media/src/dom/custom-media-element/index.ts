@@ -1,7 +1,6 @@
-export * from './attach-adapter';
-export * from './attributes';
+export { AdapterAttachment } from './attach-adapter';
+export { propsFromAttributes } from './attributes';
 export * from './custom-media-element';
-export * from './element-surface';
-export * from './media-children';
-export * from './render-host';
+export { MediaChildren } from './media-children';
+export { type HostElementConstructor, renderHost } from './render-host';
 export * from './templates';

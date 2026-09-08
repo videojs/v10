@@ -8,26 +8,35 @@ export class AdapterAttachment {
   #host: HTMLElement;
   #adapter: PlaybackAdapter;
   #target: () => Element | null;
+  #onDestroy: (() => void) | undefined;
 
   /**
    * @param host - The custom element that owns the adapter.
    * @param adapter - The adapter to keep attached.
    * @param target - Resolves the element to attach to; re-run on every `attach()`.
+   * @param onDestroy - Runs after the adapter is destroyed, for whatever else the host tied to its lifetime.
    */
-  constructor(host: HTMLElement, adapter: PlaybackAdapter, target: () => Element | null) {
+  constructor(host: HTMLElement, adapter: PlaybackAdapter, target: () => Element | null, onDestroy?: () => void) {
     this.#host = host;
     this.#adapter = adapter;
     this.#target = target;
+    this.#onDestroy = onDestroy;
   }
 
-  /** Attach to the current target if it changed. Call after construction and whenever the target may have moved. */
-  attach(): void {
+  /**
+   * Attach to the current target if it changed. Call after construction and whenever the target may have moved.
+   *
+   * @returns Whether the adapter moved to a different target.
+   */
+  attach(): boolean {
     const target = this.#target();
-    if (target === this.#adapter.target) return;
+    if (target === this.#adapter.target) return false;
 
     if (this.#adapter.target) this.#adapter.detach();
 
     this.#adapter.attach(target);
+
+    return true;
   }
 
   /**
@@ -38,7 +47,10 @@ export class AdapterAttachment {
     if (this.#host.hasAttribute('keep-alive')) return;
 
     queueMicrotask(() => {
-      if (!this.#host.isConnected) this.#adapter.destroy();
+      if (this.#host.isConnected) return;
+
+      this.#adapter.destroy();
+      this.#onDestroy?.();
     });
   }
 }

@@ -51,6 +51,12 @@ export class MediaChildren {
     }
   }
 
+  /** Stop following the children. Call it when the host is done for good; the clones are left where they are. */
+  disconnect(): void {
+    this.#observer.disconnect();
+    this.#clones.clear();
+  }
+
   #syncAttributes(mutations: MutationRecord[]): void {
     for (const { type, target, attributeName } of mutations) {
       if (type !== 'attributes' || !attributeName) continue;
@@ -59,7 +65,11 @@ export class MediaChildren {
       const clone = this.#clones.get(child);
       if (!clone) continue;
 
-      clone.setAttribute(attributeName, child.getAttribute(attributeName) ?? '');
+      const value = child.getAttribute(attributeName);
+
+      if (value === null) clone.removeAttribute(attributeName);
+      else clone.setAttribute(attributeName, value);
+
       enableDefaultTrack(clone);
     }
   }

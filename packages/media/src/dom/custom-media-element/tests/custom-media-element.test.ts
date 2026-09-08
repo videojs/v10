@@ -104,13 +104,22 @@ class TestAudioAdapter extends HTMLAudioAdapter {
 /** An embed adapter: no native element, so only its `defaultProps` become attributes. */
 class TestEmbedAdapter extends EventTarget {
   static readonly host = 'iframe' as const;
-  static readonly defaultProps = { src: '', autoplay: false, defaultMuted: false, muted: false, source: null };
+  static readonly defaultProps = {
+    src: '',
+    autoplay: false,
+    defaultMuted: false,
+    muted: false,
+    playsInline: true,
+    source: null,
+  };
 
   target: EventTarget | null = null;
 
   #src = '';
   #autoplay = false;
+  #defaultMuted = false;
   #muted = false;
+  #playsInline = true;
 
   get src() {
     return this.#src;
@@ -128,6 +137,14 @@ class TestEmbedAdapter extends EventTarget {
     this.#autoplay = value;
   }
 
+  get defaultMuted() {
+    return this.#defaultMuted;
+  }
+
+  set defaultMuted(value: boolean) {
+    this.#defaultMuted = value;
+  }
+
   get muted() {
     return this.#muted;
   }
@@ -136,12 +153,42 @@ class TestEmbedAdapter extends EventTarget {
     this.#muted = value;
   }
 
+  get playsInline() {
+    return this.#playsInline;
+  }
+
+  set playsInline(value: boolean) {
+    this.#playsInline = value;
+  }
+
   attach(target: EventTarget | null) {
     this.target = target;
   }
 
   detach() {
     this.target = null;
+  }
+
+  destroy() {}
+}
+
+/** An adapter written with public fields rather than accessors, as a third party might. */
+class TestFieldAdapter extends HTMLVideoAdapter {
+  static readonly defaultProps = { src: '', debug: false, latencyMode: 'normal', bufferSeconds: 30 };
+
+  debug = false;
+  latencyMode = 'normal';
+  bufferSeconds = 30;
+
+  destroy() {}
+}
+
+/** An adapter that lists a read-only property among its defaults. */
+class TestReadOnlyAdapter extends HTMLVideoAdapter {
+  static readonly defaultProps = { src: '', engineName: 'test' };
+
+  get engineName() {
+    return 'test';
   }
 
   destroy() {}
@@ -161,6 +208,7 @@ const defineVideoElement = () => define('test-video', CustomMediaElement(TestVid
 const defineVideoElementWithOptions = () => define('test-video', CustomMediaElement(TestVideoAdapterWithOptions));
 const defineAudioElement = () => define('test-audio', CustomMediaElement(TestAudioAdapter));
 const defineEmbedElement = () => define('test-embed', CustomMediaElement(TestEmbedAdapter));
+const defineFieldElement = () => define('test-video', CustomMediaElement(TestFieldAdapter));
 
 function create(def: { Ctor: new () => any; tag: string }) {
   const el = new def.Ctor();
@@ -245,6 +293,31 @@ describe('CustomMediaElement', () => {
       expect(el.target).toBe(child);
     });
 
+    it('ignores a slotted element that is not the host tag', () => {
+      const el = create(defineVideoElement());
+      const div = document.createElement('div');
+
+      div.slot = 'media';
+      el.append(div);
+      expect(el.target).toBe(el.shadowRoot!.querySelector('video'));
+    });
+
+    it('replays the attributes already set onto a target that arrives later', () => {
+      const el = create(defineVideoElement());
+      const slotted = document.createElement('video');
+
+      el.setAttribute('controlslist', 'nodownload');
+      el.setAttribute('preload', 'none');
+      el.setAttribute('muted', '');
+      slotted.slot = 'media';
+      el.append(slotted);
+      el.shadowRoot!.querySelector('slot[name="media"]')!.dispatchEvent(new Event('slotchange', { bubbles: true }));
+
+      expect(slotted.getAttribute('controlslist')).toBe('nodownload');
+      expect(slotted.preload).toBe('none');
+      expect(slotted.muted).toBe(true);
+    });
+
     it('re-attaches the adapter when a slotted media element appears after construction', () => {
       const el = create(defineVideoElement());
       const shadowVideo = el.shadowRoot!.querySelector('video')!;
@@ -302,6 +375,18 @@ describe('CustomMediaElement', () => {
       expect(observed.sort()).toEqual(['autoplay', 'muted', 'src']);
     });
 
+    it('keeps a boolean that defaults to true property-only', () => {
+      // An HTML boolean attribute cannot say "absent means true", so `<x playsinline>` could never turn it off.
+      const el = create(defineEmbedElement());
+
+      expect(el.hasAttribute('playsinline')).toBe(false);
+      expect(el.playsInline).toBe(true);
+
+      el.playsInline = false;
+      expect(el.adapter.playsInline).toBe(false);
+      expect(el.hasAttribute('playsinline')).toBe(false);
+    });
+
     it('derives one attribute per primitive default and none for objects or playback state', () => {
       const observed = defineVideoElementWithOptions().Ctor.observedAttributes;
 
@@ -356,6 +441,39 @@ describe('CustomMediaElement', () => {
       expect(el.getAttribute('latency-mode')).toBe('low');
       expect(el.getAttribute('src')).toBe('https://example.com/video.m3u8');
       expect(el.adapter.src).toBe('https://example.com/video.m3u8');
+    });
+
+    it('reach an adapter that keeps them as fields rather than accessors', () => {
+      const el = create(defineFieldElement());
+
+      el.setAttribute('debug', '');
+      el.setAttribute('latency-mode', 'low');
+      expect(el.adapter.debug).toBe(true);
+      expect(el.adapter.latencyMode).toBe('low');
+
+      el.bufferSeconds = 60;
+      expect(el.getAttribute('buffer-seconds')).toBe('60');
+      expect(el.adapter.bufferSeconds).toBe(60);
+      expect(el.bufferSeconds).toBe(60);
+    });
+
+    it('only reflect a property the adapter exposes read-only', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const el = create(define('test-video', CustomMediaElement(TestReadOnlyAdapter)));
+
+      el.setAttribute('engine-name', 'other');
+
+      expect(el.adapter.engineName).toBe('test');
+      expect(el.engineName).toBe('other');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('engineName'));
+      warn.mockRestore();
+    });
+
+    it('fall back to the default for a number that does not parse', () => {
+      const el = create(defineVideoElementWithOptions());
+
+      el.setAttribute('buffer-seconds', 'lots');
+      expect(el.adapter.bufferSeconds).toBe(30);
     });
 
     it('do not reach the inner element', () => {
@@ -429,16 +547,29 @@ describe('CustomMediaElement', () => {
       expect(el.target!.hasAttribute('crossorigin')).toBe(false);
     });
 
-    it('share the muted attribute between muted and defaultMuted', () => {
+    it('give the muted attribute to defaultMuted and seed the muted state with it', () => {
       const el = create(defineVideoElement());
+
+      el.setAttribute('muted', '');
+      expect(el.defaultMuted).toBe(true);
+      expect(el.muted).toBe(true);
+
+      // `muted` is live state, as in HTML: changing it leaves the attribute and `defaultMuted` alone.
+      el.muted = false;
+      expect(el.hasAttribute('muted')).toBe(true);
+      expect(el.defaultMuted).toBe(true);
+
+      el.defaultMuted = false;
+      expect(el.hasAttribute('muted')).toBe(false);
+    });
+
+    it('write defaultMuted on an embed that stores it apart from muted', () => {
+      const el = create(defineEmbedElement());
 
       el.defaultMuted = true;
       expect(el.hasAttribute('muted')).toBe(true);
-      expect(el.muted).toBe(true);
-
-      el.muted = false;
-      expect(el.hasAttribute('muted')).toBe(false);
-      expect(el.defaultMuted).toBe(false);
+      expect(el.adapter.defaultMuted).toBe(true);
+      expect(el.adapter.muted).toBe(true);
     });
 
     it('are rendered into the template at construction, minus the ones the adapter owns', () => {
@@ -453,9 +584,11 @@ describe('CustomMediaElement', () => {
       expect(video.getAttribute('poster')).toBe('poster.jpg');
       expect(video.getAttribute('crossorigin')).toBe('anonymous');
       expect(video.hasAttribute('src')).toBe(false);
-      expect(video.hasAttribute('muted')).toBe(false);
       expect(video.hasAttribute('class')).toBe(false);
       expect(video.hasAttribute('volume')).toBe(false);
+      // `muted` went through the adapter as `defaultMuted`, which the inner element reflects itself.
+      expect(video.defaultMuted).toBe(true);
+      expect(video.muted).toBe(true);
     });
 
     it('are not mirrored by an embed, whose template gets them all instead', () => {
@@ -555,6 +688,34 @@ describe('CustomMediaElement', () => {
       el.addEventListener('play', handler);
       el.removeEventListener('play', handler);
       el.target!.dispatchEvent(new Event('play'));
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('forwards a composed event the adapter raises itself, and keeps the subclass and its detail', () => {
+      const el = create(defineVideoElement());
+      const custom = vi.fn();
+      const error = vi.fn();
+
+      el.addEventListener('adapterready', custom);
+      el.addEventListener('error', error);
+      el.adapter.dispatchEvent(new CustomEvent('adapterready', { composed: true, detail: { engine: 'x' } }));
+      el.adapter.dispatchEvent(new ErrorEvent('error', { message: 'boom' }));
+
+      expect(custom).toHaveBeenCalledOnce();
+      expect((custom.mock.calls[0]![0] as CustomEvent).detail).toEqual({ engine: 'x' });
+      expect(error).toHaveBeenCalledOnce();
+      expect((error.mock.calls[0]![0] as ErrorEvent).message).toBe('boom');
+    });
+
+    it('stops forwarding once the adapter is destroyed', async () => {
+      const el = create(defineVideoElement());
+      const handler = vi.fn();
+
+      el.addEventListener('play', handler);
+      el.remove();
+      await Promise.resolve();
+      el.adapter.dispatchEvent(new Event('play'));
 
       expect(handler).not.toHaveBeenCalled();
     });

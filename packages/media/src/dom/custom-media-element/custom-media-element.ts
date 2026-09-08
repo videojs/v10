@@ -5,7 +5,7 @@ import { type AdapterHost, type AttributeConfigs } from '../html-media-adapter';
 import { videoContentAttributes } from '../html-video-adapter';
 import { AdapterAttachment } from './attach-adapter';
 import { attributeName, buildRoutes, coerceAttribute, derivedAttributes } from './attributes';
-import { bridgeEvent, forwardAdapter, reflectAttributes } from './element-surface';
+import { bridgeEvent, forwardAdapter, reflectAttributes, unbridgeEvents } from './element-surface';
 import { MediaChildren } from './media-children';
 import { initialAttributes, renderHost } from './render-host';
 import { defaultTemplate, type MediaTemplate } from './templates';
@@ -56,8 +56,8 @@ const nativeAttributes: Record<AdapterHost, AttributeConfigs> = {
  *
  * The element renders the adapter's `host` in its shadow root, attaches the adapter to it, and is the adapter to its
  * callers: every method, accessor, and event comes through. Its content attributes are the host's native ones plus one
- * for each primitive in the adapter's `defaultProps`; an attribute the adapter can set writes the adapter, and any
- * other native attribute is copied onto the inner element. `<track>` and `<source>` children reach a native host too.
+ * for each primitive in the adapter's `defaultProps`; an attribute the adapter owns writes the adapter, and any other
+ * native attribute is copied onto the inner element. `<track>` and `<source>` children reach a native host too.
  *
  * @param Adapter - Adapter class with static `host` and `defaultProps`.
  * @param options - The shadow template, for elements that render more than the bare host.
@@ -70,7 +70,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
   const native = nativeAttributes[tag];
   const passthrough = tag !== 'iframe';
   const nativeNames = new Set(Object.entries(native).map(([prop, config]) => attributeName(prop, config)));
-  const routes = buildRoutes({ ...native, ...derivedAttributes(Adapter.defaultProps) }, Adapter);
+  const routes = buildRoutes(native, derivedAttributes(Adapter.defaultProps), Adapter);
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static template = options.template ?? defaultTemplate(tag);
@@ -81,8 +81,16 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     }
 
     #adapter = new Adapter();
-    #attachment = new AdapterAttachment(this, this.#adapter, () => this.target);
     #children = passthrough ? new MediaChildren(this, () => this.target) : null;
+    #attachment = new AdapterAttachment(
+      this,
+      this.#adapter,
+      () => this.target,
+      () => {
+        unbridgeEvents(this);
+        this.#children?.disconnect();
+      }
+    );
 
     constructor() {
       super();
@@ -91,7 +99,9 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
 
       this.#attachment.attach();
       this.shadowRoot!.addEventListener('slotchange', () => {
-        this.#attachment.attach();
+        // A target that arrives later has seen none of the attributes already on the element.
+        if (this.#attachment.attach()) this.#hydrate();
+
         this.#children?.sync();
       });
 
@@ -103,13 +113,13 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     }
 
     /**
-     * The element the adapter plays through: a child slotted as `media`, else a child of the host's tag, else the one
-     * rendered in the shadow root. Only direct children count, so a `<video>` nested in slotted content is not
-     * adopted.
+     * The element the adapter plays through: a child of the host's tag slotted as `media`, else a child of the host's
+     * tag, else the one rendered in the shadow root. Only direct children of the right tag count, so a `<video>` nested
+     * in slotted content, or a `<div slot="media">`, is not adopted.
      */
     get target(): HTMLElement | null {
       return (
-        this.querySelector(`:scope > [slot=media]`) ??
+        this.querySelector(`:scope > ${tag}[slot=media]`) ??
         this.querySelector(`:scope > ${tag}`) ??
         this.shadowRoot?.querySelector(tag) ??
         null
@@ -137,10 +147,26 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     }
 
     attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+      if (oldValue !== newValue) this.#apply(name, newValue);
+    }
+
+    /** Replay every observed attribute onto the current target, after the target changed underneath them. */
+    #hydrate(): void {
+      for (const name of routes.observed) {
+        if (this.hasAttribute(name)) this.#apply(name, this.getAttribute(name));
+      }
+    }
+
+    #apply(name: string, value: string | null): void {
       const owner = routes.ownerOf.get(name);
 
       if (owner) {
-        if (oldValue !== newValue) this.#adapter[owner] = coerceAttribute(newValue, routes.configOf.get(name)!);
+        const config = routes.configOf.get(name)!;
+        const coerced = coerceAttribute(value, config);
+
+        this.#adapter[owner] = coerced;
+
+        if (config.state && config.state in this.#adapter) this.#adapter[config.state] = coerced;
 
         return;
       }
@@ -148,16 +174,16 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
       // Anything else the host understands is the inner element's business; a subclass's own attributes are not.
       if (!passthrough || !nativeNames.has(name)) return;
 
-      if (newValue === null) {
+      if (value === null) {
         this.target?.removeAttribute(name);
-      } else if (this.target?.getAttribute(name) !== newValue) {
-        this.target?.setAttribute(name, newValue);
+      } else if (this.target?.getAttribute(name) !== value) {
+        this.target?.setAttribute(name, value);
       }
     }
   }
 
-  reflectAttributes(CustomMedia.prototype, routes);
   forwardAdapter(CustomMedia.prototype, Adapter, routes);
+  reflectAttributes(CustomMedia.prototype, routes);
 
   return CustomMedia as any;
 }

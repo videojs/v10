@@ -54,6 +54,29 @@ describe('MediaChildren', () => {
     expect(video.querySelector('source')?.getAttribute('src')).toBe('c.mp4');
   });
 
+  it('removes an attribute from the clone when it leaves the child', async () => {
+    const { host, video, children } = createHost();
+
+    host.innerHTML = '<track kind="chapters" default src="chapters.vtt" />';
+    children.sync();
+    host.querySelector('track')!.removeAttribute('default');
+    await new Promise((resolve) => queueMicrotask(() => resolve(undefined)));
+
+    expect(video.querySelector('track')!.hasAttribute('default')).toBe(false);
+  });
+
+  it('stops following the children once disconnected', async () => {
+    const { host, video, children } = createHost();
+
+    host.innerHTML = '<source src="a.mp4" />';
+    children.sync();
+    children.disconnect();
+    host.querySelector('source')!.setAttribute('src', 'c.mp4');
+    await new Promise((resolve) => queueMicrotask(() => resolve(undefined)));
+
+    expect(video.querySelector('source')?.getAttribute('src')).toBe('a.mp4');
+  });
+
   it('enables a default chapters track that the browser left disabled', () => {
     const { host, video, children } = createHost();
     const textTrack = { mode: 'disabled' };
