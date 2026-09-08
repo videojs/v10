@@ -170,20 +170,24 @@ export interface KeySystemModule {
    */
   readonly initDataTypes?: readonly string[];
   /**
-   * Video robustness offered ahead of the CDM's default. Naming it as a preference (an extra configuration, not a
-   * retry) means a device that has the tier negotiates it while one that doesn't still gets access rather than a
-   * refusal.
-   */
-  readonly preferredVideoRobustness?: string;
-  /**
-   * Audio robustness, offered on the same fallback as {@link preferredVideoRobustness} — both tiers are named on the
-   * preferred configuration and both are dropped from the fallback, so a CDM that refuses either still negotiates
-   * rather than being refused.
+   * Video robustness tiers, strongest first. Each becomes one configuration, so a device that has the top tier
+   * negotiates it and one that doesn't descends the ladder instead of being refused.
    *
-   * Worth naming even though the audio tier rarely differs by device: Chromium warns on any capability that omits
-   * `robustness`, and an unspecified level leaves the choice to the CDM, which is free to change it between versions.
+   * A ladder rather than a single preference because EME accepts or refuses a configuration **as a unit**: pairing one
+   * video tier with an audio tier means an unavailable video tier discards the audio tier with it, and both
+   * capabilities fall through to the unstamped configuration. Measured on macOS Chrome (Widevine L3), where
+   * `HW_SECURE_ALL` is refused: a single-preference pair left both levels unspecified.
    */
-  readonly preferredAudioRobustness?: string;
+  readonly videoRobustnessTiers?: readonly string[];
+  /**
+   * Audio robustness tiers, strongest first, paired rung-for-rung with {@link videoRobustnessTiers}. A shorter list
+   * clamps to its last entry, which is the usual shape — the audio tier rarely varies by device even where the video
+   * tier does.
+   *
+   * Worth naming at all because Chromium warns on any capability that omits `robustness`, and an unspecified level
+   * leaves the choice to the CDM, which is free to change it between versions.
+   */
+  readonly audioRobustnessTiers?: readonly string[];
   /**
    * Whether to offer an encryption-scheme-unstamped fallback configuration alongside the stamped one. Defaults to
    * `true`. Windows PlayReady is why it exists: it decrypts cbcs content but refuses a cbcs-stamped configuration,

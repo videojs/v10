@@ -73,9 +73,9 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
  * - **Declared encryption scheme** (see `declaredEncryptionScheme`), stamped on every capability, then dropped when the
  *   module keeps `schemeFallback`. CDMs that honour the member negotiate the exact scheme; CDMs that refuse it outright
  *   still negotiate instead of failing the request.
- * - **Robustness** (`preferredVideoRobustness` / `preferredAudioRobustness`), then unset. Both tiers ride one axis: named
- *   together on the preferred configuration, dropped together on the fallback, so a CDM that refuses either still
- *   negotiates.
+ * - **Robustness** (`videoRobustnessTiers` / `audioRobustnessTiers`), strongest rung first, then unset. One configuration
+ *   per rung: a device without the top tier descends to the next rather than falling straight through to an unstamped
+ *   configuration, which is what leaves a level unspecified. Unset stays last so nothing is refused outright.
  *
  * Scheme is the outer preference because a mismatched scheme risks failing decode outright, whereas a lower robustness
  * tier only means weaker content protection.
@@ -85,21 +85,23 @@ export function buildKeySystemConfigurations(
   contentTypes: { video: readonly string[]; audio: readonly string[] },
   encryptionScheme?: 'cbcs' | 'cenc'
 ): MediaKeySystemConfiguration[] {
-  const configuration = (scheme?: 'cbcs' | 'cenc', withRobustness = false): MediaKeySystemConfiguration => {
+  // A shorter list clamps to its last entry, so one audio tier serves every video rung.
+  const tierAt = (tiers: readonly string[] | undefined, rung: number): string | undefined =>
+    tiers === undefined || tiers.length === 0 ? undefined : tiers[Math.min(rung, tiers.length - 1)];
+
+  const configuration = (scheme?: 'cbcs' | 'cenc', rung?: number): MediaKeySystemConfiguration => {
     const capability = (robustness: string | undefined) => (contentType: string) => ({
       contentType,
       ...(scheme !== undefined && { encryptionScheme: scheme }),
-      ...(withRobustness && robustness !== undefined && { robustness }),
+      ...(robustness !== undefined && { robustness }),
     });
+    const video = rung === undefined ? undefined : tierAt(module_.videoRobustnessTiers, rung);
+    const audio = rung === undefined ? undefined : tierAt(module_.audioRobustnessTiers, rung);
 
     return {
       initDataTypes: [...(module_.initDataTypes ?? ['cenc'])],
-      ...(contentTypes.video.length > 0 && {
-        videoCapabilities: contentTypes.video.map(capability(module_.preferredVideoRobustness)),
-      }),
-      ...(contentTypes.audio.length > 0 && {
-        audioCapabilities: contentTypes.audio.map(capability(module_.preferredAudioRobustness)),
-      }),
+      ...(contentTypes.video.length > 0 && { videoCapabilities: contentTypes.video.map(capability(video)) }),
+      ...(contentTypes.audio.length > 0 && { audioCapabilities: contentTypes.audio.map(capability(audio)) }),
     };
   };
 
@@ -109,14 +111,16 @@ export function buildKeySystemConfigurations(
       : module_.schemeFallback === false
         ? [encryptionScheme]
         : [encryptionScheme, undefined];
-  // Only worth a second entry when some capability would actually carry a tier — otherwise the
-  // two configurations would be identical.
-  const carriesRobustness =
-    (module_.preferredVideoRobustness !== undefined && contentTypes.video.length > 0) ||
-    (module_.preferredAudioRobustness !== undefined && contentTypes.audio.length > 0);
-  const robustnessPasses = carriesRobustness ? [true, false] : [false];
+  // One rung per tier a present capability could carry, then `undefined` for the unstamped last
+  // resort. A module naming no tier for the types on offer gets that entry alone — otherwise the
+  // configurations would be identical.
+  const rungCount = Math.max(
+    contentTypes.video.length > 0 ? (module_.videoRobustnessTiers?.length ?? 0) : 0,
+    contentTypes.audio.length > 0 ? (module_.audioRobustnessTiers?.length ?? 0) : 0
+  );
+  const rungs: Array<number | undefined> = [...Array.from({ length: rungCount }, (_, rung) => rung), undefined];
 
-  return schemes.flatMap((scheme) => robustnessPasses.map((withRobustness) => configuration(scheme, withRobustness)));
+  return schemes.flatMap((scheme) => rungs.map((rung) => configuration(scheme, rung)));
 }
 
 /**
