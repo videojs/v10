@@ -37,11 +37,12 @@ describe('createPlayer', () => {
 
     assertType<CreatePlayerResult<AudioPlayerStore>>(result);
 
-    const store = new result.PlayerElement().store;
+    const player = new result.PlayerElement();
 
-    assertType<number | undefined>(store.error?.code);
-    assertType<string | undefined>(store.error?.message);
-    assertType<() => void>(store.dismissError);
+    assertType<number | undefined>(player.error?.code);
+    assertType<string | undefined>(player.error?.message);
+    assertType<() => void>(player.dismissError);
+    assertType<() => void>(player.subscribe(() => {}));
   });
 
   it('resolves spread video features to VideoPlayerStore', () => {
@@ -60,8 +61,10 @@ describe('createPlayer', () => {
     });
 
     const result = createPlayer({ features: [customFeature] });
+    const player = new result.PlayerElement();
 
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
+    assertType<boolean>(player.custom);
   });
 
   it('infers config properties from selected features', () => {
@@ -72,6 +75,10 @@ describe('createPlayer', () => {
 
     // The store calls this `title`; on an element that name is the tooltip.
     assertType<string | null | undefined>(metadataPlayer.contentTitle);
+    assertType<string>(metadataPlayer.title);
+    assertType<string | null | undefined>(metadataPlayer.poster);
+    assertType<string>(metadataPlayer.store.title);
+    assertType<string>(metadataPlayer.store.poster);
 
     // @ts-expect-error metadata properties are absent when the feature is absent.
     plainPlayer.contentTitle;
@@ -116,18 +123,26 @@ describe('createPlayer', () => {
     // Extended features fall through to the generic overload
     assertType<CreatePlayerResult<PlayerStore<[...typeof videoFeatures, typeof analyticsFeature]>>>(result);
 
-    // The store has both video and analytics state
-    const store = new result.PlayerElement().store;
+    // The player has both video and analytics state
+    const player = new result.PlayerElement();
 
-    assertType<boolean>(store.paused);
-    assertType<number>(store.volume);
-    assertType<string[]>(store.events);
+    assertType<boolean>(player.paused);
+    assertType<number>(player.volume);
+    assertType<string[]>(player.events);
+    assertType<Promise<void>>(player.play());
+
+    // @ts-expect-error Direct state is read-only; use the feature action.
+    player.paused = false;
   });
 
   it('resolves background features to generic PlayerStore', () => {
     const result = createPlayer({ features: backgroundFeatures });
+    const player = new result.PlayerElement();
 
     assertType<CreatePlayerResult<PlayerStore<[]>>>(result);
+
+    // @ts-expect-error Playback state is absent without the playback feature.
+    void player.paused;
   });
 
   it('resolves extended audio features to generic PlayerStore', () => {
@@ -143,10 +158,10 @@ describe('createPlayer', () => {
       features: [...audioFeatures, analyticsFeature],
     });
 
-    const store = new result.PlayerElement().store;
+    const player = new result.PlayerElement();
 
-    assertType<boolean>(store.paused);
-    assertType<number>(store.volume);
-    assertType<string[]>(store.events);
+    assertType<boolean>(player.paused);
+    assertType<number>(player.volume);
+    assertType<string[]>(player.events);
   });
 });

@@ -44,7 +44,7 @@ export const metadataFeature = definePlayerFeature({
       action: SET_USER_POSTER,
       state: USER_POSTER,
     },
-  } satisfies PlayerFeatureConfig<MetadataSourceState>,
+  } as const satisfies PlayerFeatureConfig<MetadataSourceState>,
   state: ({ set }): MetadataSourceState => ({
     [MEDIA_TITLE]: undefined,
     [USER_TITLE]: undefined,

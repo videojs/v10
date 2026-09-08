@@ -8,12 +8,13 @@ import {
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
+import type { StateChange, SubscribeOptions } from '@videojs/store';
 import { isNull } from '@videojs/utils/predicate';
 import { camelCase, kebabCase } from '@videojs/utils/string';
 
-import type { PlayerElementConstructor } from '../store/types';
 import { UIElement } from '../ui/ui-element';
 import type { ContainerContext, MediaContext, PlayerContext } from './context';
+import type { PlayerElementConstructor } from './types';
 
 export interface CreatePlayerElementOptions<Store extends PlayerStore> {
   playerContext: PlayerContext<Store>;
@@ -32,6 +33,15 @@ interface ConfigInput {
   attribute: string;
   entry: PlayerFeatureConfig[string];
 }
+
+const reservedStoreAccessorKeys = new Set([
+  'enableUpdating',
+  'hasUpdated',
+  'isUpdatePending',
+  'requestFullscreen',
+  'title',
+]);
+const hasOwnProp = Object.prototype.hasOwnProperty;
 
 function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
   return Object.entries(config).map(([key, entry]) => {
@@ -54,6 +64,8 @@ export function createPlayerElement<Store extends PlayerStore>(
   options: CreatePlayerElementOptions<Store>
 ): typeof UIElement {
   const inputs = resolveInputs(options.config);
+  const storeAccessorKeys = new Set<string>();
+  const inputProperties = new Set(inputs.map(({ property }) => property));
 
   class ConfiguredPlayerElement extends UIElement {
     static properties = {
@@ -71,6 +83,11 @@ export function createPlayerElement<Store extends PlayerStore>(
     #mediaRegistrations: Registration<Media>[] = [];
     #containerRegistrations: Registration<MediaContainer>[] = [];
     #observer = new MutationObserver(() => this.#syncNativeMedia());
+
+    constructor() {
+      super();
+      this.#installStoreAccessors();
+    }
 
     #registerMedia = (media: Media): (() => void) => {
       const registration = { value: media };
@@ -129,8 +146,13 @@ export function createPlayerElement<Store extends PlayerStore>(
       return this.#store;
     }
 
+    subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
+      return this.store.subscribe(callback, options);
+    }
+
     override connectedCallback(): void {
       this.#connected = true;
+      this.#installStoreAccessors();
       super.connectedCallback();
       this.#syncInitialConfig();
       this.#playerProvider.setValue(this.store);
@@ -249,6 +271,27 @@ export function createPlayerElement<Store extends PlayerStore>(
       }
 
       this.#configuredStore = store;
+    }
+
+    #installStoreAccessors(): void {
+      for (const key of Object.keys(this.store.state)) {
+        if (inputProperties.has(key) || reservedStoreAccessorKeys.has(key)) continue;
+
+        if (!storeAccessorKeys.has(key)) {
+          if (key in ConfiguredPlayerElement.prototype) continue;
+
+          Object.defineProperty(ConfiguredPlayerElement.prototype, key, {
+            get(this: ConfiguredPlayerElement) {
+              return this.store[key];
+            },
+            configurable: true,
+          });
+          storeAccessorKeys.add(key);
+        }
+
+        // Direct state is read-only, so an assignment made before upgrade or connection must not shadow its accessor.
+        if (hasOwnProp.call(this, key)) Reflect.deleteProperty(this, key);
+      }
     }
   }
 

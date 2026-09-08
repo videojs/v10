@@ -1,6 +1,7 @@
 import {
   audioFeatures,
   backgroundFeatures,
+  definePlayerFeature,
   features,
   metadataFeature,
   type PopupGroup,
@@ -49,6 +50,57 @@ describe('createPlayer', () => {
     expect(player.store.attach).toBeInstanceOf(Function);
     expect(player.store.subscribe).toBeInstanceOf(Function);
     expect(player.store.destroy).toBeInstanceOf(Function);
+  });
+
+  it('exposes store state, actions, and subscriptions directly', async () => {
+    interface CounterState {
+      count: number;
+      increment(): void;
+    }
+
+    const counterFeature = definePlayerFeature({
+      state: ({ set }): CounterState => ({
+        count: 0,
+        increment() {
+          set({ count: 1 });
+        },
+      }),
+    });
+    const { PlayerElement } = createPlayer({ features: [counterFeature] });
+
+    // SAFETY: The tag is registered with this configured PlayerElement immediately before creation.
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const callback = vi.fn();
+
+    const unsubscribe = player.subscribe(callback);
+
+    expect(player.count).toBe(0);
+
+    player.increment();
+    await vi.waitFor(() => expect(player.count).toBe(1));
+    expect(callback).toHaveBeenCalled();
+
+    unsubscribe();
+  });
+
+  it('removes direct state assignments made before connection', () => {
+    const counterFeature = definePlayerFeature({
+      state: () => ({ count: 0 }),
+    });
+    const { PlayerElement } = createPlayer({ features: [counterFeature] });
+
+    // SAFETY: The tag is registered with this configured PlayerElement immediately before creation.
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+
+    Object.defineProperty(player, 'count', {
+      value: 42,
+      writable: true,
+      configurable: true,
+    });
+
+    document.body.append(player);
+
+    expect(player.count).toBe(0);
   });
 
   it('PlayerElement is a valid custom element class', () => {
@@ -230,6 +282,7 @@ describe('createPlayer', () => {
 
     expect(player.contentTitle).toBe('Attribute title');
     expect(player.store.title).toBe('Attribute title');
+    expect(player.poster).toBeUndefined();
     expect(PlayerElement.observedAttributes).toContain('content-title');
 
     player.contentTitle = 'Property title';
@@ -269,6 +322,17 @@ describe('createPlayer', () => {
 
     expect(player.getAttribute('title')).toBe('Tooltip');
     expect(player.store.title).toBe('');
+  });
+
+  it('keeps native element members ahead of direct store members', () => {
+    const { PlayerElement } = createPlayer({ features: [features.fullscreen, metadataFeature] });
+
+    // SAFETY: The tag is registered with this configured PlayerElement immediately before creation.
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+
+    expect(Object.getOwnPropertyDescriptor(PlayerElement.prototype, 'requestFullscreen')).toBeUndefined();
+    expect(Object.getOwnPropertyDescriptor(PlayerElement.prototype, 'title')).toBeUndefined();
+    expect(player.requestFullscreen).not.toBe(player.store.requestFullscreen);
   });
 
   it('applies orientation lock configuration through attributes and properties', async () => {
