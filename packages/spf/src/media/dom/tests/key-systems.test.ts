@@ -75,7 +75,7 @@ describe('widevineKeySystem', () => {
     // The second rung matters: macOS Chrome refuses `HW_SECURE_ALL`, and without
     // somewhere to descend to, both levels fall through to an unstamped
     // configuration.
-    expect(widevineKeySystem.videoRobustnessTiers).toEqual(['HW_SECURE_ALL', 'SW_SECURE_DECODE']);
+    expect(widevineKeySystem.videoRobustnessTiers).toEqual(['HW_SECURE_ALL', 'SW_SECURE_DECODE', 'SW_SECURE_CRYPTO']);
     expect(widevineKeySystem.audioRobustnessTiers).toEqual(['SW_SECURE_CRYPTO']);
     expect(widevineKeySystem.licenseRequest).toBeUndefined();
   });
