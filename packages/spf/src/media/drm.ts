@@ -172,9 +172,18 @@ export interface KeySystemModule {
   /**
    * Video robustness offered ahead of the CDM's default. Naming it as a preference (an extra configuration, not a
    * retry) means a device that has the tier negotiates it while one that doesn't still gets access rather than a
-   * refusal. Audio is deliberately left at the CDM's default — no audio tier is worth a failed negotiation.
+   * refusal.
    */
   readonly preferredVideoRobustness?: string;
+  /**
+   * Audio robustness, offered on the same fallback as {@link preferredVideoRobustness} — both tiers are named on the
+   * preferred configuration and both are dropped from the fallback, so a CDM that refuses either still negotiates
+   * rather than being refused.
+   *
+   * Worth naming even though the audio tier rarely differs by device: Chromium warns on any capability that omits
+   * `robustness`, and an unspecified level leaves the choice to the CDM, which is free to change it between versions.
+   */
+  readonly preferredAudioRobustness?: string;
   /**
    * Whether to offer an encryption-scheme-unstamped fallback configuration alongside the stamped one. Defaults to
    * `true`. Windows PlayReady is why it exists: it decrypts cbcs content but refuses a cbcs-stamped configuration,

@@ -36,6 +36,10 @@ export const widevineKeySystem: KeySystemModule = {
   keySystem: 'com.widevine.alpha',
   keyFormats: ['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed'],
   preferredVideoRobustness: 'HW_SECURE_ALL',
+  // `SW_SECURE_CRYPTO` is Widevine's baseline audio tier — every CDM that plays
+  // protected audio at all has it, so it costs no negotiations in practice while
+  // still naming a level rather than leaving it to the CDM.
+  preferredAudioRobustness: 'SW_SECURE_CRYPTO',
   toInitData: (uri) => {
     const initData = initDataFromKeyUri(uri);
 
