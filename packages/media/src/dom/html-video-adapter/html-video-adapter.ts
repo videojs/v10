@@ -23,9 +23,7 @@ export const videoContentAttributes: AttributeConfigs = {
 };
 
 export class HTMLVideoAdapter extends HTMLMediaAdapter<HTMLVideoTargetLike, VideoEvents> implements Video {
-  // Typed to admit `'audio'` so an adapter built on the video base can override it and play in an `<audio>`, as the
-  // hls.js-backed `MuxAudioAdapter` does. Element façades treat anything not narrowed to `'audio'` as a video.
-  static readonly host: 'video' | 'audio' = 'video';
+  static readonly host = 'video';
 
   get poster() {
     return getMediaProp(this, 'poster') ?? '';
