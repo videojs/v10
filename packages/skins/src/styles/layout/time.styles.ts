@@ -8,11 +8,12 @@ export default styles({
       utilities: 'flex items-center gap-1',
     },
     value: {
-      utilities: 'tabular-nums',
+      utilities: 'tabular-nums transition-opacity duration-media-slow ease-out data-unavailable:opacity-50',
     },
     toggle: {
       utilities: [
         'cursor-pointer rounded-sm tabular-nums focus-ring-media',
+        'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
         'transition-[outline-color,outline-offset] duration-media-fast ease-out',
         'focus-visible:outline-media-ring focus-visible:outline-offset-2',
       ],
@@ -28,7 +29,8 @@ export default styles({
       utilities: 'hidden media-wide:inline media-wide:text-current/60',
     },
     durationValue: {
-      utilities: 'tabular-nums media-wide:text-current/60',
+      utilities:
+        'tabular-nums transition-opacity duration-media-slow ease-out data-unavailable:opacity-50 media-wide:text-current/60',
     },
   },
 });

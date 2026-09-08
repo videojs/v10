@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Perjungti praėjusį ir likusį laiką.',
     toggleDuration: 'Perjungti trukmę ir likusį laiką.',
     position: '{current} / {duration}',
+    unknown: 'Medija neįkelta, laikas nežinomas.',
   },
   playback: {
     rate: 'Atkūrimo greitis {rate}',

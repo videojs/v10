@@ -18,6 +18,7 @@ function createState(overrides: Partial<LiveButtonState> = {}): LiveButtonState 
   return {
     live: false,
     liveEdge: false,
+    disabled: false,
     label: '',
     ...overrides,
   };
@@ -34,7 +35,9 @@ describe('LiveButtonCore', () => {
 
     it('accepts constructor props', () => {
       const core = new LiveButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+
+      core.setMedia(createMediaState());
+      const attrs = core.getAttrs(core.getState());
 
       expect(attrs['aria-disabled']).toBe('true');
     });
@@ -49,6 +52,19 @@ describe('LiveButtonCore', () => {
 
       expect(state.live).toBe(false);
       expect(state.liveEdge).toBe(false);
+    });
+
+    it('is enabled when the live edge is seekable', () => {
+      const core = new LiveButtonCore();
+
+      core.setMedia(
+        createMediaState({
+          targetLiveWindow: 0,
+          seekable: [[0, 100]],
+        })
+      );
+
+      expect(core.getState().disabled).toBe(false);
     });
 
     it('reports live for low-latency live (`targetLiveWindow === 0`)', () => {
@@ -201,7 +217,7 @@ describe('LiveButtonCore', () => {
 
     it('sets aria-disabled when disabled', () => {
       const core = new LiveButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState({ live: true }));
+      const attrs = core.getAttrs(createState({ live: true, disabled: true }));
 
       expect(attrs['aria-disabled']).toBe('true');
     });

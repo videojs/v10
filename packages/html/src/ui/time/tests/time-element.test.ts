@@ -1,7 +1,7 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
-import type { MediaTimeState } from '@videojs/media';
+import type { MediaBufferState, MediaTimeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -50,14 +50,18 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
   throw error;
 }
 
-function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaTimeState>({
+type TimeState = MediaTimeState & MediaBufferState;
+
+function createTimeStore(overrides: Partial<TimeState> = {}): AnyPlayerStore {
+  return createStore<unknown>()<TimeState>({
     name: 'time',
     state: () => ({
       currentTime: 90,
       duration: 300,
       seeking: false,
       seek: vi.fn(),
+      buffered: [],
+      seekable: [],
       ...overrides,
     }),
   }) as unknown as AnyPlayerStore;
@@ -86,7 +90,7 @@ class TestPlayerProviderElement extends UIElement {
 defineElement('test-time-player', TestPlayerProviderElement);
 defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 
-async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: Partial<MediaTimeState>) {
+async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: Partial<TimeState>) {
   const provider = document.createElement('test-time-player') as TestPlayerProviderElement;
   const time = createElement(TimeElement);
 
@@ -117,6 +121,54 @@ afterEach(() => {
 });
 
 describe('TimeElement', () => {
+  it('is unavailable when the time range is unknown', async () => {
+    const { time } = await setup({}, undefined, { duration: 0, seekable: [] });
+
+    expect(time.hasAttribute('data-unavailable')).toBe(true);
+    expect(time.hasAttribute('data-disabled')).toBe(false);
+    expect(time.getAttribute('aria-label')).toBe('Media not loaded, unknown time.');
+    expect(time.hasAttribute('datetime')).toBe(false);
+  });
+
+  it('is enabled when a seekable range is available', async () => {
+    const { time } = await setup({}, undefined, { duration: 0, seekable: [[10, 120]] });
+
+    expect(time.hasAttribute('data-unavailable')).toBe(false);
+  });
+
+  it('removes unavailable toggles from the tab order', async () => {
+    const { time } = await setup({ toggle: true }, undefined, { duration: 0, seekable: [] });
+
+    expect(time.hasAttribute('data-disabled')).toBe(true);
+    expect(time.hasAttribute('data-unavailable')).toBe(false);
+    expect(time.getAttribute('role')).toBe('button');
+    expect(time.getAttribute('aria-disabled')).toBe('true');
+    expect(time.getAttribute('tabindex')).toBe('-1');
+
+    time.click();
+    await time.updateComplete;
+
+    expect(time.getAttribute('data-type')).toBe('current');
+  });
+
+  it('switches between unavailable and disabled attributes with toggle', async () => {
+    const { time } = await setup({}, undefined, { duration: 0, seekable: [] });
+
+    time.toggle = true;
+    await time.updateComplete;
+
+    expect(time.hasAttribute('data-disabled')).toBe(true);
+    expect(time.hasAttribute('data-unavailable')).toBe(false);
+    expect(time.getAttribute('aria-disabled')).toBe('true');
+
+    time.toggle = false;
+    await time.updateComplete;
+
+    expect(time.hasAttribute('data-disabled')).toBe(false);
+    expect(time.hasAttribute('data-unavailable')).toBe(true);
+    expect(time.hasAttribute('aria-disabled')).toBe(false);
+  });
+
   it('reflects toggle from the attribute', async () => {
     const { time } = await setup();
 

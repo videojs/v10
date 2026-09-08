@@ -337,10 +337,12 @@ for (const skins of ['package', 'registry'] as const) {
     await page.goto(`${SANDBOX_BASE}/html-video/?${query}`, { waitUntil: 'domcontentloaded' });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
-    const slider = page.getByRole('slider', { name: 'Seek' }).first();
+    const slider = root.locator(SELECTORS.timeSlider).first();
+    const thumb = root.getByRole('slider', { name: 'Seek' }).first();
 
     await expect(root).toBeVisible({ timeout: 15_000 });
     await expect(slider).toBeVisible();
+    await expect(thumb).toBeEnabled({ timeout: 15_000 });
 
     const sliderBox = await slider.boundingBox();
     if (!sliderBox) throw new Error('Time slider is not visible');

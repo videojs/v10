@@ -54,6 +54,7 @@ export default {
     toggleElapsed: '経過時間と残り時間を切り替えます。',
     toggleDuration: '再生時間と残り時間を切り替えます。',
     position: '{duration}の{current}',
+    unknown: 'メディアが読み込まれていないため、時間は不明です。',
   },
   playback: {
     rate: '再生レート {rate}',

@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Zwischen verstrichener und verbleibender Zeit wechseln.',
     toggleDuration: 'Zwischen Dauer und verbleibender Zeit wechseln.',
     position: '{current} von {duration}',
+    unknown: 'Medien nicht geladen, unbekannte Zeit.',
   },
   playback: {
     rate: 'Wiedergabegeschwindigkeit {rate}',

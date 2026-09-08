@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'बितेको समय र बाँकी समयबीच टगल गर्नुहोस्।',
     toggleDuration: 'अवधि र बाँकी समयबीच टगल गर्नुहोस्।',
     position: '{duration} मध्ये {current}',
+    unknown: 'मिडिया लोड भएको छैन, समय अज्ञात छ।',
   },
   playback: {
     rate: 'प्लेब्याक दर {rate}',

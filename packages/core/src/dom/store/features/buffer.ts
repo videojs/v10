@@ -23,6 +23,8 @@ export const bufferFeature = definePlayerFeature({
 
     sync();
 
+    listen(media, 'loadedmetadata', sync, { signal });
+    listen(media, 'durationchange', sync, { signal });
     listen(media, 'progress', sync, { signal });
     listen(media, 'emptied', sync, { signal });
   },
