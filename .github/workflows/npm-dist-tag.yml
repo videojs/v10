@@ -55,8 +55,17 @@ jobs:
               continue
             fi
             name=$(jq -r '.name' "$manifest")
-            npm dist-tag add "${name}@${VERSION}" "$TAG"
+            if ! npm dist-tag add "${name}@${VERSION}" "$TAG"; then
+              failed="${failed} ${name}"
+            fi
           done
+
+          # One package rejecting the tag (usually an npm ownership gap on that
+          # package alone) must not leave the rest of the release untagged.
+          if [ -n "$failed" ]; then
+            echo "::error::Failed to move '${TAG}' to ${VERSION} on:${failed}"
+            exit 1
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ inputs.version }}
