@@ -208,9 +208,18 @@ function setupSegmentLoading<
         // no-op. Selection changes while still in `'metadata-only'` are
         // intentionally not followed.
         entry: () => {
-          const track = selectedTrack.get()!;
+          // Re-checked rather than asserted, even though `derivedStateSignal`
+          // already required both. `monitor` and this handler are separate
+          // effects over the same signals, and the flush order between them is
+          // the scheduler's dirty-notification order, not registration order —
+          // so a track that un-resolves can reach here before the transition to
+          // `'preconditions-unmet'` lands. Returning is safe: the effect re-runs
+          // when a track resolves again.
+          const track = selectedTrack.get();
+          const loader = context[loaderKey].get();
+          if (!track || !loader) return;
 
-          context[loaderKey].get()!.send({ type: 'load', track });
+          loader.send({ type: 'load', track });
         },
       },
       'full-range': {
@@ -218,12 +227,19 @@ function setupSegmentLoading<
         // crossings. The loader and `currentTime` are peeked — the
         // boundary-dedup signal already handles re-firing policy.
         effects: () => {
-          const track = selectedTrack.get()!;
+          // Guarded for the reason given on `'metadata-only'`'s entry: this
+          // effect tracks `selectedTrack` directly, so it can re-fire on the
+          // very change that should be transitioning the machine out of this
+          // state, and would otherwise dispatch a load with no track.
+          const track = selectedTrack.get();
 
           segmentBoundarySignal.get();
+          const loader = peek(context[loaderKey]);
+          if (!track || !loader) return;
+
           const currentTime = peek(state.currentTime) ?? 0;
 
-          peek(context[loaderKey])!.send({
+          loader.send({
             type: 'load',
             track,
             range: { start: currentTime, end: currentTime + bufferDuration },
