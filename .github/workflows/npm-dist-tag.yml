@@ -37,14 +37,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # setup-node reads `packageManager` from package.json and expects pnpm on
-      # PATH for its cache, so install it first even though the job only runs npm.
-      - uses: pnpm/action-setup@v4
-
+      # setup-node reads `packageManager` from package.json and would try to
+      # cache a pnpm store this job never creates. It only runs npm, so opt out.
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
       # Mirrors the publish filter in cd.yml (./packages/**): top-level packages
       # plus the adapters/ and extensions/ buckets. Private workspace packages
