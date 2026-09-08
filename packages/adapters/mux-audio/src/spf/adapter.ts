@@ -21,7 +21,7 @@ import { HlsAudioAdapter, type HlsAudioAdapterProps } from '@videojs/spf/hls-aud
  * known shortcoming on the video flavor, which shares the derivation.
  */
 export class MuxAudioAdapter extends MuxMixin(HlsAudioAdapter) {
-  static override readonly defaultProps: Omit<HlsAudioAdapterProps, 'src'> & MuxAdapterProps = {
+  static override readonly defaultProps: Omit<HlsAudioAdapterProps, 'src' | 'source'> & MuxAdapterProps = {
     ...HlsAudioAdapter.defaultProps,
     src: '',
     source: null,
