@@ -248,19 +248,6 @@ export async function captureRendering(
   return { name, image: await target.screenshot({ ...CAPTURE_OPTIONS, mask: [...mask] }) };
 }
 
-/** Assert one rendering against its stored baseline and return that same paint as the reference for its sibling. */
-export async function snapshotReference(
-  target: Locator,
-  name: string,
-  options: RenderingOptions = {}
-): Promise<VisualCapture> {
-  await alignToPixelGrid(target);
-  await settleFonts(target);
-  await expect(target).toHaveScreenshot(name, { mask: [...(options.mask ?? [])] });
-
-  return captureRendering(target, name, options);
-}
-
 /** Assert that one rendering matches a reference captured from the same page, pixel for pixel within tolerance. */
 export async function expectSameRendering(
   testInfo: TestInfo,
@@ -284,7 +271,7 @@ export interface RenderingParityOptions {
   readonly mask?: (panel: SkinPanel) => readonly Locator[];
 }
 
-/** Hold the CSS panel to its baseline, then hold the Tailwind panel to that same CSS paint. */
+/** Capture the CSS panel, then hold the Tailwind panel to that same paint. */
 export async function expectRenderingParity(
   testInfo: TestInfo,
   comparison: SkinComparison,
@@ -293,7 +280,7 @@ export async function expectRenderingParity(
 ) {
   if (before) for (const panel of comparison.panels) await before(panel);
 
-  const reference = await snapshotReference(target(comparison.css), name, { mask: mask?.(comparison.css) });
+  const reference = await captureRendering(target(comparison.css), name, { mask: mask?.(comparison.css) });
 
   await expectSameRendering(testInfo, reference, target(comparison.tailwind), { mask: mask?.(comparison.tailwind) });
 }
@@ -451,6 +438,28 @@ export async function controlsVisibilityContract(controls: Locator) {
 
     return { hidden, visible };
   });
+}
+
+/**
+ * Hold the media at one mid-range volume before a volume shortcut. The indicator shakes and reports the level it lands
+ * on, so two panels only agree when the key moves them both away from the same level and neither reaches a boundary.
+ */
+export async function presetVolume({ section }: SkinPanel, level = 0.5) {
+  const video = section.locator('video').first();
+
+  // The shortcut steps from the store's volume, which follows the element through `volumechange`. The store's listener
+  // registered first, so a listener added now runs after it, and its microtask lands after the store has flushed.
+  await video.evaluate(
+    (element: HTMLVideoElement, value) =>
+      new Promise<void>((resolve) => {
+        if (element.volume === value && !element.muted) return resolve();
+
+        element.addEventListener('volumechange', () => queueMicrotask(resolve), { once: true });
+        element.muted = false;
+        element.volume = value;
+      }),
+    level
+  );
 }
 
 /** Triggers keyboard feedback and verifies its rendered-presence lifecycle. */

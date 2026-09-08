@@ -1,7 +1,7 @@
-export * from './audio-host';
+export * from './html-audio-adapter';
 export * from './custom-media-element';
-export * from './media-host';
+export * from './html-media-adapter';
 export * from './media-played-ranges';
 export * from './types';
 export { createTimeRange, serializeEmbedParams } from './utils';
-export * from './video-host';
+export * from './html-video-adapter';

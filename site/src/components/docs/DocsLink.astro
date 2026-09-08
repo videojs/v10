@@ -6,8 +6,10 @@ import A from '../typography/A.astro';
 
 interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   slug: string;
+  /** Heading ID within the target guide. */
+  anchor?: string;
 }
-const { slug, class: className } = Astro.props;
+const { slug, anchor, class: className } = Astro.props;
 
 const { framework: paramFramework } = Astro.params;
 
@@ -15,10 +17,11 @@ if (!paramFramework || !isValidFramework(paramFramework)) {
   throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
 }
 
-const { url: href } = resolveDocsLinkUrl({
+const { url } = resolveDocsLinkUrl({
   targetSlug: slug,
   contextFramework: paramFramework,
 });
+const href = anchor ? `${url}#${anchor}` : url;
 ---
 
 <A href={href} class={className ?? undefined}><slot /></A>

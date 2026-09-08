@@ -9,7 +9,7 @@ date: 2026-05-21
 
 ## What this directory is for
 
-Use-case compositions are engine *variants*: the engine is composed this way to serve a specific delivery scenario. Same composition assembly + adapter pair, distinguished from the default `createHlsVideoEngine` + `HlsVideoMediaElement` by which behaviors are subtracted, added, swapped, or default-tuned.
+Use-case compositions are engine *variants*: the engine is composed this way to serve a specific delivery scenario. Same composition assembly + adapter pair, distinguished from the default `createHlsVideoEngine` + `HlsVideoAdapterCore` by which behaviors are subtracted, added, swapped, or default-tuned.
 
 Each use case doc captures the variant assembly. Notion originally framed these as a Case-1 (Media-src composition) + Case-2 (Player composition) split — source-shape correctness versus delivery-mode choice. In practice, when both cases ship the *same* engine factory (which they do for the audio-only and video-only families), they consolidate into a single use-case doc with a *Variant-decision signal source* section that names both paths (adapter-upfront for the Case-2 framing, detect-from-parser for the Case-1 framing). When they don't share an implementation, separate docs.
 

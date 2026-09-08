@@ -1,0 +1,20 @@
+---
+import Pill from '@/components/Pill';
+import type { DocStability } from '@/types/docs';
+
+type Props = {
+  stability: DocStability;
+};
+
+const { stability } = Astro.props;
+const labels = {
+  beta: 'Beta',
+} satisfies Record<DocStability, string>;
+---
+
+<Pill
+  size="compact"
+  className="h-5 shrink-0 px-2 font-display-compact uppercase sm:h-5 sm:px-2"
+>
+  {labels[stability]}
+</Pill>

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
-import { HlsJsMedia } from '@videojs/hlsjs-video';
-import { MuxMedia } from '@videojs/mux-video';
+import { HlsJsAdapter } from '@videojs/hlsjs-video';
+import { MuxVideoAdapter } from '@videojs/mux-video';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
@@ -11,9 +11,9 @@ import { MuxVideo } from '../mux-video';
  * the real media rather than spying on whichever internal setter happens to write it.
  */
 function renderWithMedia(ui: ReactElement) {
-  const source = vi.spyOn(MuxMedia.prototype, 'source', 'set');
+  const source = vi.spyOn(MuxVideoAdapter.prototype, 'source', 'set');
   const result = render(ui);
-  const media = source.mock.contexts[0] as MuxMedia;
+  const media = source.mock.contexts[0] as MuxVideoAdapter;
 
   source.mockRestore();
   return { ...result, media };
@@ -28,7 +28,7 @@ describe('MuxVideo', () => {
   });
 
   it('does not rewrite src when an equivalent source object is re-rendered', () => {
-    const src = vi.spyOn(HlsJsMedia.prototype, 'src', 'set');
+    const src = vi.spyOn(HlsJsAdapter.prototype, 'src', 'set');
 
     const { rerender } = render(<MuxVideo source={{ playbackId: 'abc123', preferPlayback: 'native' }} />);
 
@@ -139,7 +139,7 @@ describe('MuxVideo', () => {
   });
 
   it('does not add a storyboard track for live streams', () => {
-    const streamType = vi.spyOn(MuxMedia.prototype, 'streamType', 'get').mockReturnValue('live');
+    const streamType = vi.spyOn(MuxVideoAdapter.prototype, 'streamType', 'get').mockReturnValue('live');
 
     const { container } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 

@@ -74,7 +74,7 @@ Primary:
 Secondary:
 
 - Existing engine factory + adapter as templates (`createHlsVideoEngine`
-  and `HlsVideoMediaElement` — the canonical pair the variant parallels).
+  and `HlsVideoAdapterCore` — the canonical pair the variant parallels).
 - `internal/decisions/*.md` — past tactical decisions.
 
 Downstream skills routed-to:
@@ -366,17 +366,17 @@ After Step 1's report:
   effectively unconsumable through the existing player surface. Ask
   the user (multi-select `AskUserQuestion`) which downstream layers
   to bundle into this pass:
-  - **Media wrapper** — `packages/media/src/dom/<key>/`
-    (~5 LOC; applies the SPF mixin to `HTMLVideoElementHost`). The
+  - **Media wrapper** — `packages/spf/src/playback/adapters/<key>/`
+    (~5 LOC; applies the SPF mixin to `HTMLVideoAdapter`). The
     minimum bridge between the SPF adapter and the player packages.
-    Worked example: `hls-video/media.ts` →
-    `class HlsVideoMedia extends HlsVideoMediaMixin(HTMLVideoElementHost) {}`.
+    Worked example: `hls-video/adapter.ts` →
+    `class HlsVideoAdapter extends HlsVideoMixin(HTMLVideoAdapter) {}`.
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
     (~5 LOC; wraps the media host in `CustomMediaElement` +
     `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
     + `packages/cdn/src/media/<key>-video.ts` for the CDN entry.
-    Worked example: `hls-video/media.ts` →
-    `class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoMedia)) {}`.
+    Worked example: `hls-video/adapter.ts` →
+    `class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoAdapter)) {}`.
   - **React component** — `packages/react/src/media/<key>-video/`
     (~37 LOC; React adapter exposing props matching the HTML
     surface). Pairs with the HTML custom element.
@@ -422,8 +422,8 @@ typical for use-case implementations:
 - **Engine variant factory creation** (new) — typically the first chunk;
   parallels `createHlsVideoEngine` shape with the composition mechanism
   applied (subtract / add / swap / configure).
-- **Adapter creation** (new) — parallels `HlsVideoMediaElement` /
-  `HlsVideoMediaMixin`; uses `shareSignals` unchanged.
+- **Adapter creation** (new) — parallels `HlsVideoAdapterCore` /
+  `HlsVideoMixin`; uses `shareSignals` unchanged.
 - **Constituent feature implementation chunks** (if bundling per Step
   2) — route to `/implement-spf-feature`.
 - **Use-case-specific behavior creation** (if any) — route to
@@ -438,15 +438,15 @@ typical for use-case implementations:
 
 **Implementation-scope-extension layers (opt-in per Step 2):**
 
-- **Media wrapper** — `packages/media/src/dom/<key>/media.ts`
-  applying the SPF mixin to `HTMLVideoElementHost` (or audio host for
+- **Media wrapper** — `packages/spf/src/playback/adapters/<key>/adapter.ts`
+  applying the SPF mixin to `HTMLVideoAdapter` (or audio host for
   audio-only variants), exported through the adjacent `index.ts`; ~5 LOC.
 - **HTML custom element + define entry + CDN entry** —
-  `packages/html/src/media/<key>-video/media.ts`,
+  `packages/html/src/media/<key>-video/adapter.ts`,
   `packages/html/src/define/media/<key>-video.ts`,
   `packages/cdn/src/media/<key>-video.ts`. Inline implementation;
   ~5 LOC + boilerplate.
-- **React component** — `packages/react/src/media/<key>-video/media.tsx`
+- **React component** — `packages/react/src/media/<key>-video/adapter.tsx`
   exposing the props surface; ~37 LOC. Inline implementation.
 - **Sandbox demo(s)** — `apps/sandbox/templates/{html,react}-<key>-video/`
   (each ~50–80 LOC). **Write to `templates/`, not `src/`** (which is
@@ -517,7 +517,7 @@ Iterate per chunk:
    - **Engine variant factory creation** — handle inline (typically; the
      factory shape parallels `createHlsVideoEngine`).
    - **Adapter creation** — handle inline (typically; the adapter shape
-     parallels `HlsVideoMediaElement` + `HlsVideoMediaMixin`).
+     parallels `HlsVideoAdapterCore` + `HlsVideoMixin`).
    - **New use-case-specific behavior** → route to `/create-spf-behavior`.
    - **Behavior update (purpose changing)** → route to
      `/change-spf-behavior`.

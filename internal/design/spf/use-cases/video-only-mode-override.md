@@ -141,7 +141,7 @@ Phase 1 baseline:
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
   used with an alternative adapter shape. The variant ships its own
   `HlsVideoOnlyMediaElement`-style adapter parallel to
-  `HlsVideoMediaElement`. The `shareSignals` mechanism + mixin pattern
+  `HlsVideoAdapterCore`. The `shareSignals` mechanism + mixin pattern
   compose unchanged.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is.
   `MediaSource` + `endOfStream` gate compose unchanged across variants. The
@@ -166,11 +166,11 @@ Phase 2 (when relevant):
 ## Customer-policy surface
 
 The variant ships as an **independent adapter** parallel to
-`HlsVideoMediaElement`:
+`HlsVideoAdapterCore`:
 
 ```ts
 // Default (mixed AV delivery)
-const player = new HlsVideoMediaElement();
+const player = new HlsVideoAdapterCore();
 player.src = mixedSourceUrl;
 
 // Video-only mode override
@@ -193,13 +193,13 @@ The variant composes identically regardless of signal source. Two paths
 exist; both target the same engine factory:
 
 **1. Adapter-upfront (target Phase 1).** Selecting
-`HlsVideoOnlyMediaElement` over `HlsVideoMediaElement` *is* the
+`HlsVideoOnlyMediaElement` over `HlsVideoAdapterCore` *is* the
 variant choice. No detect-from-parser logic, no runtime config branch.
 Used by consumers that know they want video-only delivery (the
 delivery-mode-choice scenarios in *Target delivery context*).
 
 **2. Detect-from-parser (future).** A routing-from-default-adapter path
-where `HlsVideoMediaElement` (or a higher-level adapter) detects a
+where `HlsVideoAdapterCore` (or a higher-level adapter) detects a
 video-only source shape from the parsed presentation
 (`presentation.audioTracks` empty) and switches its internal engine
 factory to the video-only variant for that source. Targets the
@@ -250,7 +250,7 @@ implementation pass landed the shared-factory pattern (see that doc's
   composing the audio-side behaviors out, so the answer informs the
   rollout plan more than the variant's correctness.
 - **Adapter naming.** Lean: `HlsVideoOnlyMediaElement` to mirror the
-  audio-axis sibling's `HlsAudioMediaElement` (which landed in
+  audio-axis sibling's `HlsAudioAdapterCore` (which landed in
   Phase 1 of that use case). Aligns with the existing
   `Simple{Variant}HlsMediaElement` naming pattern in
   `packages/spf/src/playback/engines/hls/`.
@@ -279,7 +279,7 @@ implementation pass landed the shared-factory pattern (see that doc's
 
 - **[`video-abr`](../features/video-abr.md)** — constituent baseline.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
-  constituent; variant adapter parallels `HlsVideoMediaElement`.
+  constituent; variant adapter parallels `HlsVideoAdapterCore`.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — constituent;
   composes unchanged. Firefox `mozHasAudio` cross-type invariant verification
   is Phase 1 scope.

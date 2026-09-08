@@ -18,6 +18,13 @@ export default styles({
         'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
         'after:shadow-[inset_0_0_0_1px_var(--media-frame-border)] [&:fullscreen]:after:hidden',
       ],
+      variants: {
+        // The HTML skin slots the page's media, which the base `video` rule cannot reach across the shadow boundary.
+        'shadow-dom': [
+          '[&>slot::slotted(video)]:m-0 [&>slot::slotted(video)]:block [&>slot::slotted(video)]:h-full [&>slot::slotted(video)]:w-full',
+          '[&>slot::slotted(video)]:max-w-full [&>slot::slotted(video)]:rounded-[inherit] [&>slot::slotted(video)]:object-media',
+        ],
+      },
     },
   },
 });

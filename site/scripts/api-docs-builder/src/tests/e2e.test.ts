@@ -1474,7 +1474,7 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - Attribute classification: standard attributes remain an MDN-linked list;
 //     Video.js-specific attributes use their corresponding host definitions.
 //   - Methods: native media methods are extracted ONCE per media type from the
-//     shared base host classes (media-host + video-host/audio-host).
+//     shared base host classes (html-media-adapter + html-video-adapter/html-audio-adapter).
 //   - Properties: the inherited native surface is compact, while source-authored
 //     definitions retain types, defaults, and descriptions.
 //   - Event buckets: custom (@fires-tagged) events live ONLY in `custom`, never
@@ -1602,7 +1602,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts native media methods from the shared base host classes', () => {
       const ref = findElement('SimpleVideo')!.reference;
 
-      // Video methods = media-host methods + video-host methods, deduped + sorted.
+      // Video methods = html-media-adapter methods + html-video-adapter methods, deduped + sorted.
       // Lifecycle methods (attach/detach/destroy) and accessors are excluded.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play', 'requestFullscreen']);
     });
@@ -1610,9 +1610,9 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts native passthrough properties from the shared base host classes', () => {
       const ref = findElement('SimpleVideo')!.reference;
 
-      // Video native properties = media-host + video-host accessors, filtered to
+      // Video native properties = html-media-adapter + html-video-adapter accessors, filtered to
       // genuine native members and deduped against hostProperties. `currentTime`
-      // and `volume` come from media-host; `videoWidth` is video-only.
+      // and `volume` come from html-media-adapter; `videoWidth` is video-only.
       expect(ref.platforms.html.properties.native).toEqual(['currentTime', 'videoWidth', 'volume']);
       // Video.js-specific base accessors receive full definitions instead.
       expect(ref.platforms.html.properties.native).not.toContain('streamType');
@@ -1896,7 +1896,7 @@ describe('Media element pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
   //
   // A media element whose host extends another host (mirrors
-  // MuxVideoMedia extending HlsMedia). The builder must walk the
+  // MuxVideoAdapter extending HlsMedia). The builder must walk the
   // extends chain to include inherited properties. Child properties
   // override parent definitions.
 
@@ -1948,14 +1948,34 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.engine.readonly).toBe(true);
     });
 
-    it('resolves spread defaults through the parent defaultProps import', () => {
-      // extendingMediaDefaultProps = { ...complexMediaDefaultProps, ... } —
-      // the builder must follow the spread to the imported object literal.
+    it('resolves spread defaults through the parent host static defaultProps', () => {
+      // ExtendingHost.defaultProps = { ...ComplexHost.defaultProps, ... } —
+      // the builder must follow the spread to the parent's static literal.
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
 
       expect(props.src.default).toBe("''");
       expect(props.debug.default).toBe('false');
       expect(props.streamType.default).toBe("'unknown'");
+    });
+
+    it('extracts the React surface from a static defaultProps that spreads the parent host', () => {
+      const react = findElement('ExtendingVideo')!.reference.platforms.react;
+
+      expect(react).toMatchObject({ target: 'video', acceptsNativeProps: true });
+      expect(Object.keys(react!.props).sort()).toEqual([
+        'config',
+        'debug',
+        'maxResolution',
+        'playbackId',
+        'preferPlayback',
+        'preload',
+        'src',
+        'streamType',
+        'tokens',
+        'type',
+      ]);
+      expect(react!.props.maxResolution.default).toBe('1080');
+      expect(react!.props.streamType.default).toBe("'unknown'");
     });
 
     it('extracts own defaults alongside spread defaults', () => {
@@ -2125,13 +2145,13 @@ describe('Media element pipeline (end-to-end)', () => {
   //
   // An audio element whose host's only mixin lives in a different workspace
   // package (spf), reached through that package's barrel file — mirrors
-  // HlsAudioMedia extending HlsAudioMediaMixin from @videojs/spf/hls.
+  // HlsAudioAdapter extending HlsAudioMixin from @videojs/spf/hls.
   //
   // Also exercises:
   //   - @fires-declared event descriptions for events outside the native
   //     contract (audiomodechange also has a dispatch site, manifestparsed does
   //     not — the @fires tag alone surfaces both)
-  //   - Defaults co-located with the mixin (spfAudioOnlyMediaDefaultProps)
+  //   - Defaults on the mixin's inner class (SpfAudioOnly.defaultProps)
   //   - AudioEvents capability contract
 
   describe('SpfAudio (cross-package mixin, audio host)', () => {
@@ -2205,7 +2225,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts audio methods from the shared base host (no video-only methods)', () => {
       const ref = findElement('SpfAudio')!.reference;
 
-      // Audio methods = media-host methods + audio-host methods. The fixture
+      // Audio methods = html-media-adapter methods + html-audio-adapter methods. The fixture
       // audio host adds none, so video-only methods (requestFullscreen) are absent.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play']);
       expect(ref.platforms.html.methods).not.toContain('requestFullscreen');
@@ -2214,7 +2234,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts native properties from the shared base host (no video-only props)', () => {
       const ref = findElement('SpfAudio')!.reference;
 
-      // Audio native properties = media-host accessors only (audio host adds
+      // Audio native properties = html-media-adapter accessors only (audio host adds
       // none), filtered to native members and deduped against hostProperties
       // (src is re-declared by the mixin). videoWidth is video-only → absent.
       expect(ref.platforms.html.properties.native).toEqual(['currentTime', 'volume']);

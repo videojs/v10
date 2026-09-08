@@ -1,5 +1,5 @@
 import { ContextProvider } from '@videojs/element/context';
-import { getMediaComponents, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
 import { MuxDataExtension as MuxDataExtensionBase } from '@videojs/mux-data';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
@@ -22,7 +22,7 @@ customElements.define('test-mux-data-provider', TestMediaProvider);
 customElements.define('test-mux-data', MuxDataExtension);
 
 function setup() {
-  const host = new HTMLVideoElementHost();
+  const host = new HTMLVideoAdapter();
   const provider = new TestMediaProvider();
   const el = new MuxDataExtension();
 
@@ -41,7 +41,7 @@ afterEach(() => {
 
 describe('MuxDataExtension', () => {
   it('registers when parsed into a connected player that already has media', () => {
-    const host = new HTMLVideoElementHost();
+    const host = new HTMLVideoAdapter();
     const provider = new TestMediaProvider();
 
     document.body.append(provider);
@@ -49,7 +49,7 @@ describe('MuxDataExtension', () => {
 
     provider.innerHTML = '<test-mux-data></test-mux-data>';
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
   it('leaves the component to the base class lazy getter', () => {
@@ -58,12 +58,12 @@ describe('MuxDataExtension', () => {
     // context callback registers the component from within that constructor.
     expect(Object.getOwnPropertyNames(new MuxDataExtension())).not.toContain('component');
   });
-  it('registers a MuxDataExtension component with the media host from context', () => {
+  it('registers a MuxDataExtension component with the media adapter from context', () => {
     const { host, provider } = setup();
 
     provider.setMedia(host as unknown as Media);
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
   it('forwards attributes to the component', () => {
@@ -77,7 +77,7 @@ describe('MuxDataExtension', () => {
     el.setAttribute('debug', '');
     el.setAttribute('disable-cookies', '');
 
-    const component = getMediaComponents(host).get(MuxDataExtensionBase)!;
+    const component = getMediaExtensions(host).get(MuxDataExtensionBase)!;
 
     expect(component.envKey).toBe('test-key');
     expect(component.playerSoftwareName).toBe('mux-video');
@@ -97,7 +97,7 @@ describe('MuxDataExtension', () => {
 
     el.metadata = metadata;
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
   });
 
   it('removes the component when the element disconnects', () => {
@@ -107,6 +107,6 @@ describe('MuxDataExtension', () => {
 
     el.remove();
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)).toBeUndefined();
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeUndefined();
   });
 });

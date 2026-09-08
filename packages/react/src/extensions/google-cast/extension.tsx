@@ -3,7 +3,7 @@
 import { GoogleCastExtension, type GoogleCastExtensionProps } from '@videojs/google-cast';
 import type { ReactNode } from 'react';
 
-import { useMediaComponent } from '../../utils/use-media-component';
+import { useMediaExtension } from '../../utils/use-media-extension';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export type GoogleCastProps = Partial<GoogleCastExtensionProps>;
@@ -23,7 +23,7 @@ export type GoogleCastProps = Partial<GoogleCastExtensionProps>;
  *   ```;
  */
 export function GoogleCast(props: GoogleCastProps): ReactNode {
-  const component = useMediaComponent(GoogleCastExtension);
+  const component = useMediaExtension(GoogleCastExtension);
 
   useSyncProps(component, props, GoogleCastExtension.defaultProps);
 

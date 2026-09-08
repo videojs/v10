@@ -38,7 +38,7 @@ engine's loading-semantics contract.
 | Extended preload values | External writes of non-W3C values (e.g. `'canplay'`) are sticky on `state.preload`: the DOM-side read won't overwrite them, the state-side write won't push them to the DOM | Consumer-extension point; no shipped consumer reads extended values today |
 | Default backfill | `state.preload` is never `undefined` in steady state. When neither the DOM attribute nor external code supplies a value, backfilled from `config.defaultPreload` (default `'metadata'`, matching the HTMLMediaElement element default) | Resolves the empty-state ambiguity at most one place: `syncPreload`'s read effect |
 | DOM-triggered load activation | DOM `play` and `seeking` events on the attached media element flip `state.loadActivated` to true. Immediate-true on entry if `!el.paused \|\| el.seeking` — covers autoplay, native-controls play, and direct-DOM-`play()` paths the engine wasn't the source of | `trackLoadTriggers`; mirrors native HTMLMediaElement preload-override semantics |
-| Programmatic load activation | External code writes `state.loadActivated = true` directly — the canonical path in `@videojs/spf/hls` is `HlsVideoMediaMixin.play()`, which signals playback intent before invoking the element's `.play()`. Co-writer with `trackLoadTriggers`; same downstream effect | Multi-writer with intentionally orthogonal decision domains: DOM-event-driven vs programmatic-intent-driven |
+| Programmatic load activation | External code writes `state.loadActivated = true` directly — the canonical path in `@videojs/spf/hls` is `HlsVideoMixin.play()`, which signals playback intent before invoking the element's `.play()`. Co-writer with `trackLoadTriggers`; same downstream effect | Multi-writer with intentionally orthogonal decision domains: DOM-event-driven vs programmatic-intent-driven |
 | Per-source reset | `state.loadActivated` resets to `false` when source identity changes (URL or `mediaElement` swap, including direct in-place replacement with no `undefined` intermediate). New source starts at its appropriate preload mode regardless of the previous source's activation history | Sticky-per-source-identity; not sticky-per-engine |
 
 ## What's not implemented
@@ -103,7 +103,7 @@ behaviors are composed at the top of the pipeline, before
     listeners, plus immediate-true on entry if `!el.paused || el.seeking`.
     Writes `false` on source-identity reset.
   - **Adapter / external code** writes `true` directly to signal
-    programmatic intent (canonical path: `HlsVideoMediaMixin.play()`).
+    programmatic intent (canonical path: `HlsVideoMixin.play()`).
 - `state.presentation` — read-only by these behaviors; the URL field is
   used by both to detect source identity changes (`syncPreload` for
   attach-time DOM-read re-firing; `trackLoadTriggers` for the per-source
@@ -139,7 +139,7 @@ point of having a single config knob.
   - `apps/sandbox/src/spf-segment-loading/` — main SPF demo; exercises
     preload-aware loading end-to-end
   - `apps/sandbox/src/hls-video-html/` / `hls-video-react/` — adapter
-    integration paths showing how `HlsVideoMediaMixin.play()` writes
+    integration paths showing how `HlsVideoMixin.play()` writes
     `loadActivated` programmatically alongside the DOM path
 
 ## Open questions
@@ -155,7 +155,7 @@ point of having a single config knob.
   also need a corresponding gate in `resolvePresentation` / the
   segment-load FSM.
 - **Multi-writer factoring on `loadActivated`.** Today: DOM listener
-  (`trackLoadTriggers`) + programmatic adapter (`HlsVideoMediaMixin.play()`).
+  (`trackLoadTriggers`) + programmatic adapter (`HlsVideoMixin.play()`).
   Two writers, one slot, intentionally orthogonal. As the multi-writer
   pattern accumulates data points (`selectedTextTrackId` is the other
   current concordant slot; `selectedAudioTrackId` is the proposed

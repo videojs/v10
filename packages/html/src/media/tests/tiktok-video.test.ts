@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { TikTokVideo } from '../tiktok-video/media';
+import { TikTokVideo } from '../tiktok-video/adapter';
 
 const SRC = 'https://www.tiktok.com/@videojs/video/7273420104193772846';
 

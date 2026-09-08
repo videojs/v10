@@ -54,6 +54,12 @@
   to = "/docs/framework/:framework/reference/hls-audio"
   status = 301
 
+# useMediaComponent was renamed to useMediaExtension, taking the reference slug with it
+[[redirects]]
+  from = "/docs/framework/:framework/reference/use-media-component"
+  to = "/docs/framework/:framework/reference/use-media-extension"
+  status = 301
+
 # Redirect old theme demo pages to home
 [[redirects]]
   from = "/city"

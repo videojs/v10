@@ -2,6 +2,7 @@ import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 import type {
+  EngineAdapter,
   MediaAudioTrackCapability,
   MediaBufferCapability,
   MediaContentDataCapability,
@@ -190,4 +191,16 @@ export function isQuerySelectorAllCapable<Element = unknown>(
   return (
     isObject(value) && 'querySelectorAll' in value && isFunction((value as Record<string, unknown>).querySelectorAll)
   );
+}
+
+/**
+ * Whether `value` is an adapter fronting a JS playback engine (an hls.js instance, a dash.js player, an SPF
+ * composition). Narrows to the caller's type so an adapter keeps its own members alongside `engine`.
+ */
+export function isEngineAdapter<T>(value: T): value is T & EngineAdapter {
+  if (!isObject(value)) return false;
+
+  const adapter = value as Record<string, unknown>;
+
+  return 'engine' in adapter && isFunction(adapter.destroy);
 }

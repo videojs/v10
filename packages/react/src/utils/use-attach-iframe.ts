@@ -1,8 +1,8 @@
-import type { MediaEngineHost } from '@videojs/media';
+import type { EngineAdapter } from '@videojs/media';
 import type { RefCallback } from 'react';
 import { useCallback } from 'react';
 
-export function useAttachIframe<T extends HTMLIFrameElement>(media: MediaEngineHost): RefCallback<T> {
+export function useAttachIframe<T extends HTMLIFrameElement>(media: EngineAdapter): RefCallback<T> {
   return useCallback(
     (element: T | null) => {
       if (element) media.attach?.(element);

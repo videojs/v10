@@ -10,7 +10,7 @@ import { useDestroy } from './use-destroy';
  * Instantiates the media class once, attaches it to the player on mount, and safely detaches on unmount using a
  * functional updater to avoid race conditions when swapping media components (e.g. DashVideo → HlsJsVideo).
  *
- * An optional `setup` callback runs once on mount — e.g. to add media components via `addMediaComponent`. Components
+ * An optional `setup` callback runs once on mount — e.g. to add media components via `addMediaExtension`. Components
  * registered there are destroyed together with the media instance on unmount (`media.destroy()` destroys all of its
  * registered components).
  *

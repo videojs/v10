@@ -15,11 +15,11 @@ import {
   openSourceComparison,
   popupAncestor,
   popupContract,
+  presetVolume,
   type SkinCase,
   skinCases,
   type SkinComparison,
   type SkinPanel,
-  snapshotReference,
   type SourceComparison,
   surfaceContract,
   waitForStableText,
@@ -124,7 +124,7 @@ for (const variant of CASES) {
     const name = `${variant.framework}-${variant.skin}-fullscreen.png`;
     const { css, tailwind } = await openVariants(page, variant, 800);
     const cssContract = await enterFullscreen(css.root);
-    const reference = await snapshotReference(css.root, name);
+    const reference = await captureRendering(css.root, name);
 
     await exitFullscreen(page);
 
@@ -158,11 +158,13 @@ for (const variant of CASES) {
     const contracts = [];
 
     for (const panel of comparison.panels) {
-      contracts.push({
-        captions: await feedbackContract(panel, 'c', '[data-status="captions-on"], [data-status="captions-off"]'),
-        playback: await feedbackContract(panel, 'k', '[data-status="play"], [data-status="pause"]'),
-        volume: await feedbackContract(panel, 'ArrowUp', '[data-level]:not([role])'),
-      });
+      const captions = await feedbackContract(panel, 'c', '[data-status="captions-on"], [data-status="captions-off"]');
+      const playback = await feedbackContract(panel, 'k', '[data-status="play"], [data-status="pause"]');
+
+      await presetVolume(panel);
+      const volume = await feedbackContract(panel, 'ArrowUp', '[data-level]:not([role])');
+
+      contracts.push({ captions, playback, volume });
     }
 
     expect(contracts[1]!).toEqual(contracts[0]!);

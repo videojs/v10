@@ -151,8 +151,8 @@ const shareSignals = makeShareSignals<BackgroundVideoEngineState, BackgroundVide
  * unplayable source here is a silent stall — an unsupported container, encryption this engine can't decrypt, and an
  * undecodable codec all leave `HTMLMediaElement.error` null on both Chromium and WebKit.
  *
- * Native `loop` / `muted` / `autoplay` are adapter concerns and live on `HlsBackgroundVideoMediaElement` rather than
- * the engine.
+ * Native `loop` / `muted` / `autoplay` are adapter concerns and live on `HlsBackgroundVideoAdapterCore` rather than the
+ * engine.
  *
  * @example
  *   ```ts

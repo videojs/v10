@@ -69,7 +69,7 @@ Choose the narrowest base that provides the lifecycle your element needs:
 | `HTMLElement` | Browser custom element callbacks only | Elements that manage their own state and cleanup |
 | `ReactiveElement` | Reactive properties, batched updates, and reactive controller callbacks | Reactive elements that do not need permanent destruction |
 | `UIElement` | `ReactiveElement` plus delayed permanent destruction | Custom player controls and other interactive player UI |
-| `CustomMediaElement(...)` with `MediaAttachMixin` | A media host lifecycle plus player registration | Custom playback engines and media elements |
+| `CustomMediaElement(...)` with `MediaAttachMixin` | A media adapter lifecycle plus player registration | Custom playback engines and media elements |
 | `PlayerElement` | The `UIElement` lifecycle plus store context and attachment ownership | Player roots |
 
 Use `UIElement` for most custom controls. Use the specialized bases when your element owns a player store or media provider.
@@ -78,7 +78,7 @@ Use `UIElement` for most custom controls. Use the specialized bases when your el
 
 `PlayerElement` follows the `UIElement` lifecycle. It detaches the store's current media target immediately in `disconnectedCallback()`, but keeps the store so a brief move can reconnect with its state intact. It destroys the store only from `destroyCallback()`.
 
-Built-in custom media elements compose `CustomMediaElement(...)` with <DocsLink slug="reference/media-attach-mixin">`MediaAttachMixin`</DocsLink>. `CustomMediaElement` queues one microtask after disconnection and destroys its media host only if it remains disconnected. This protects a synchronous move, but not a longer detached period. Its `keep-alive` attribute skips that automatic media-host destruction.
+Built-in custom media elements compose `CustomMediaElement(...)` with <DocsLink slug="reference/media-attach-mixin">`MediaAttachMixin`</DocsLink>. `CustomMediaElement` queues one microtask after disconnection and destroys its media adapter only if it remains disconnected. This protects a synchronous move, but not a longer detached period. Its `keep-alive` attribute skips that automatic media-adapter destruction.
 
 Player roots use the configured <DocsLink slug="reference/player">`PlayerElement`</DocsLink> returned by `createPlayer`.
 

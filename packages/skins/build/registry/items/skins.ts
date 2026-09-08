@@ -134,18 +134,19 @@ export function skinModuleTarget(
     return `${skinDirectory(skin)}/ui/${component}`;
   }
 
-  const match = /^skins\/([^/]+)\/(.+)$/.exec(sourcePath);
-  if (!match) throw new Error(`Unsupported registry source: \`${sourcePath}\`.`);
+  if (!sourcePath.startsWith('skins/')) throw new Error(`Unsupported registry source: \`${sourcePath}\`.`);
 
-  const [, owner, filename] = match;
-  if (owner && isSkinName(owner)) return `${skinDirectory(owner)}/${filename}`;
+  const match = /^skins\/([^/]+)\/([^/]+)\/(.+)$/.exec(sourcePath);
+  if (!match) return sourcePath;
 
-  // A preset directory such as `skins/audio` serves both of its themes and is also the default theme's own directory.
-  // Each theme compiles the module with its own variants, so the Minimal theme keeps its copy beside its skin instead
-  // of overwriting the default theme's.
-  if (owner && isSkinPreset(owner)) return `${skinDirectory(skin)}/${filename}`;
+  const [, theme, preset, filename] = match;
+  const owner = `${theme}-${preset}`;
+  if (isSkinName(owner)) return `${skinDirectory(owner)}/${filename}`;
 
-  return `skins/${owner}/${filename}`;
+  // Preset-shared modules compile with each theme's variants and stay beside that skin.
+  if (theme === 'shared' && preset && isSkinPreset(preset)) return `${skinDirectory(skin)}/${filename}`;
+
+  return sourcePath;
 }
 
 function skinDocs(

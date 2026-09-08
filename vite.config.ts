@@ -32,6 +32,8 @@ const ignoredPaths = [
   '**/packages/cdn/src/locales/**',
   '**/styles/vjs.css',
   '**/packages/*/types/**',
+  '**/packages/adapters/*/types/**',
+  '**/packages/extensions/*/types/**',
   'packages/core/src/core/ui/components.generated.ts',
   'tools/oxlint/anti-slop/**',
 ];
@@ -158,13 +160,7 @@ export default defineConfig({
       'prepare:dev': {
         command: 'node -e ""',
         cache: false,
-        dependsOn: [
-          'site#api-docs:generate',
-          'site#ejected-skins',
-          'site#cdn-manifest',
-          '@videojs/sandbox#setup',
-          '@videojs/skins#generate',
-        ],
+        dependsOn: ['site#api-docs:generate', 'site#cdn-manifest', '@videojs/sandbox#setup', '@videojs/skins#generate'],
       },
       'typecheck:workspace': {
         command: 'tsgo --build',

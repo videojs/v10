@@ -57,7 +57,7 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/cloudflare-video": {
+    "packages/adapters/cloudflare-video": {
       "component": "@videojs/cloudflare-video",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -69,7 +69,7 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/dash-video": {
+    "packages/adapters/dash-video": {
       "component": "@videojs/dash-video",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -81,13 +81,13 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/google-cast": {
+    "packages/extensions/google-cast": {
       "component": "@videojs/google-cast",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/hlsjs-video": {
+    "packages/adapters/hlsjs-video": {
       "component": "@videojs/hlsjs-video",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -111,25 +111,25 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/mux-audio": {
+    "packages/adapters/mux-audio": {
       "component": "@videojs/mux-audio",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/mux-data": {
+    "packages/extensions/mux-data": {
       "component": "@videojs/mux-data",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/mux-video": {
+    "packages/adapters/mux-video": {
       "component": "@videojs/mux-video",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/native-hls-video": {
+    "packages/adapters/native-hls-video": {
       "component": "@videojs/native-hls-video",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -141,7 +141,7 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/shaka-video": {
+    "packages/adapters/shaka-video": {
       "component": "@videojs/shaka-video",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -159,7 +159,7 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/spotify-audio": {
+    "packages/adapters/spotify-audio": {
       "component": "@videojs/spotify-audio",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -171,13 +171,13 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/tiktok-video": {
+    "packages/adapters/tiktok-video": {
       "component": "@videojs/tiktok-video",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/twitch-video": {
+    "packages/adapters/twitch-video": {
       "component": "@videojs/twitch-video",
       "prerelease": true,
       "prerelease-type": "rc",
@@ -189,19 +189,19 @@
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/vimeo-video": {
+    "packages/adapters/vimeo-video": {
       "component": "@videojs/vimeo-video",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/wistia-video": {
+    "packages/adapters/wistia-video": {
       "component": "@videojs/wistia-video",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
     },
-    "packages/youtube-video": {
+    "packages/adapters/youtube-video": {
       "component": "@videojs/youtube-video",
       "prerelease": true,
       "prerelease-type": "rc",

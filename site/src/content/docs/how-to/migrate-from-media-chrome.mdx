@@ -284,7 +284,7 @@ The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-
 
 ## Themes become skins
 
-Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
+Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">eject its skin</DocsLink>, rather than authoring a template.
 
 <FrameworkCase frameworks={["html"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.
@@ -295,7 +295,7 @@ Keep the skin when its CSS variables and content slots cover your changes. Build
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React skins do not use Shadow DOM. Use `render` props when you build individual controls. Eject a ready-made skin when you need to change its control set or layout.
+React skins do not use Shadow DOM. Use `render` props when you build individual controls. Install a ready-made skin's source when you need to change its control set or layout.
 </FrameworkCase>
 
 ## Control the player imperatively
@@ -350,7 +350,7 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 ### Disable autohide (`autohide="-1"`)
 
-Packaged skins don't expose an autohide switch. Eject the closest skin and remove its hidden-control styles. That's safer than overriding internal selectors in a skin you don't own.
+Packaged skins don't expose an autohide switch. Install the closest skin's source and remove its hidden-control styles. That's safer than overriding internal selectors in a skin you don't own.
 
 ### Breakpoints
 

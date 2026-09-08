@@ -2,19 +2,22 @@
 import GithubSlugger from 'github-slugger';
 import { ArrowUpRight } from 'lucide-react';
 import DropdownIcon from '@/assets/icons/dropdown-arrow.svg?react';
-import type { SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
+import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
+import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
 
 type Props = {
   item: SidebarItemType;
   framework: SupportedFramework;
   docTitles: Map<string, string>;
+  docStabilities: Map<string, DocStability | undefined>;
   depth?: number;
 };
 
-const { item, framework, docTitles, depth = 0 } = Astro.props;
+const { item, framework, docTitles, docStabilities, depth = 0 } = Astro.props;
 const currentPath = Astro.url.pathname;
 const slugger = new GithubSlugger();
+const stability = !isSection(item) && !isLink(item) ? docStabilities.get(item.slug) : undefined;
 
 // Helper to check if this item or any of its children contains the active path
 function containsActivePath(item: SidebarItemType): boolean {
@@ -70,10 +73,11 @@ function getGroupRotate(depth: number) {
           "flex items-center gap-4 py-2 text-faded-black dark:text-manila-light",
           "cursor-pointer",
           depth === 0
-            ? "font-display text-h4 leading-tight uppercase"
+            ? "font-display text-h4 uppercase font-bold"
             : "text-p3",
-          depth > 0 && "border-l pl-4",
-          isActive ? "border-orange" : "border-manila-75 dark:border-warm-gray",
+          depth > 0 && "pl-4",
+          depth > 0 && isActive &&
+            "relative before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-orange",
           getGroupMargin(depth),
         ]}
         style={
@@ -82,17 +86,23 @@ function getGroupRotate(depth: number) {
       >
         <span class="flex-1">{item.sidebarLabel}</span>
         <DropdownIcon
-          width={"0.65rem"}
+          width={"0.5rem"}
           className={getGroupRotate(depth)}
           aria-hidden="true"
         />
       </summary>
-      <div>
+      <div class="relative">
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-0 w-px bg-manila-75 dark:bg-warm-gray"
+          style={`left: calc(var(--spacing) * ${depth * 4})`}
+        />
         {item.contents.map((contentItem) => (
           <Astro.self
             item={contentItem}
             framework={framework}
             docTitles={docTitles}
+            docStabilities={docStabilities}
             depth={depth + 1}
           />
         ))}
@@ -104,7 +114,7 @@ function getGroupRotate(depth: number) {
         "flex items-center gap-1.5 py-2 text-p3 text-faded-black dark:text-manila-light",
         "cursor-pointer",
         depth === 0 && "font-bold",
-        depth > 0 && "border-l border-manila-75 pl-4 dark:border-warm-gray",
+        depth > 0 && "pl-4",
       ]}
       style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
       href={item.href}
@@ -120,15 +130,19 @@ function getGroupRotate(depth: number) {
         "flex items-center gap-4 py-2 text-p3 text-faded-black dark:text-manila-light",
         "cursor-pointer",
         depth === 0 && "font-bold",
-        depth > 0 && "border-l pl-4",
+        depth > 0 && "pl-4",
         depth > 0 && isActive && "font-bold",
-        isActive ? "border-orange" : "border-manila-75 dark:border-warm-gray",
+        depth > 0 && isActive &&
+          "relative before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-orange",
       ]}
       style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
       href={`/docs/framework/${framework}/${item.slug}`}
     >
       {item.devOnly ? "[Dev only] " : ""}
-      {item.sidebarLabel || docTitles.get(item.slug) || item.slug}
+      <span class="min-w-0 flex-1">
+        {item.sidebarLabel || docTitles.get(item.slug) || item.slug}
+      </span>
+      {stability && <ApiStabilityBadge stability={stability} />}
     </a>
   )
 }
