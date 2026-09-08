@@ -32,6 +32,52 @@ jobs:
       - name: Install dependencies (cache warm-up)
         run: pnpm install --frozen-lockfile
 
+  package_test_selection:
+    name: Select package tests
+    runs-on: ubuntu-latest
+    outputs:
+      has_standard_tests: ${{ steps.selection.outputs.has_standard_tests }}
+      matrix: ${{ steps.selection.outputs.matrix }}
+      run_spf: ${{ steps.selection.outputs.run_spf }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Test package selector
+        run: node --test .github/scripts/tests/package-test-matrix.test.js
+
+      - name: Select affected package tests
+        id: selection
+        env:
+          CHANGED_FILE_COUNT: ${{ github.event.pull_request.changed_files }}
+          EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" && "$CHANGED_FILE_COUNT" -lt 3000 ]]; then
+            selection=$(
+              gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate \
+                --jq '.[] | .filename, (.previous_filename // empty)' |
+                node .github/scripts/package-test-matrix.js
+            )
+          else
+            selection=$(node .github/scripts/package-test-matrix.js --all)
+          fi
+
+          jq . <<<"$selection"
+          {
+            echo "has_standard_tests=$(jq -r '.hasStandardTests' <<<"$selection")"
+            echo "matrix=$(jq -c '.matrix' <<<"$selection")"
+            echo "run_spf=$(jq -r '.runSpf' <<<"$selection")"
+          } >> "$GITHUB_OUTPUT"
+
   lint:
     needs: install
     runs-on: ubuntu-latest
@@ -93,42 +139,13 @@ jobs:
         run: pnpm typecheck
 
   test:
-    needs: install
-    name: Test (${{ matrix.package }})
+    needs: [install, package_test_selection]
+    if: needs.package_test_selection.outputs.has_standard_tests == 'true'
+    name: Test packages (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        package:
-          - '@videojs/cli'
-          - '@videojs/cdn'
-          - 'vjsc'
-          - '@videojs/core'
-          - '@videojs/icons'
-          - '@videojs/media'
-          - '@videojs/mux'
-          - '@videojs/cloudflare-video'
-          - '@videojs/spotify-audio'
-          - '@videojs/tiktok-video'
-          - '@videojs/twitch-video'
-          - '@videojs/youtube-video'
-          - '@videojs/native-hls-video'
-          - '@videojs/dash-video'
-          - '@videojs/google-cast'
-          - '@videojs/hlsjs-video'
-          - '@videojs/mux-audio'
-          - '@videojs/mux-data'
-          - '@videojs/mux-video'
-          - '@videojs/shaka-video'
-          - '@videojs/vimeo-video'
-          - '@videojs/wistia-video'
-          - '@videojs/skins'
-          - '@videojs/store'
-          - '@videojs/utils'
-          - '@videojs/element'
-          - '@videojs/html'
-          - '@videojs/react'
-          - '@videojs/sandbox'
+      matrix: ${{ fromJSON(needs.package_test_selection.outputs.matrix) }}
 
     steps:
       - name: Checkout code
@@ -154,10 +171,20 @@ jobs:
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
-      - name: Test package
-        run: pnpm exec vp run "${{ matrix.package }}#test:ci"
+      - name: Test packages
+        env:
+          PACKAGES: ${{ toJSON(matrix.packages) }}
+        run: |
+          filters=()
+          while IFS= read -r package; do
+            filters+=(--filter "$package")
+          done < <(jq -r '.[]' <<<"$PACKAGES")
+
+          pnpm exec vp run --fail-if-no-match "${filters[@]}" test:ci
 
   test-spf:
+    needs: package_test_selection
+    if: needs.package_test_selection.outputs.run_spf == 'true'
     name: Test (@videojs/spf)
     runs-on: ubuntu-latest
     container:
