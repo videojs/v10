@@ -120,7 +120,7 @@ for (const { platform, skin, styling, skins } of CASES) {
       thumbnail.evaluate((element) => {
         const image = element.shadowRoot?.querySelector('img') ?? element.querySelector('img');
 
-        if (!(element instanceof HTMLElement) || !(image instanceof HTMLElement)) {
+        if (!(element instanceof HTMLElement) || !(image instanceof HTMLImageElement)) {
           throw new Error('Expected the thumbnail host and image to be HTML elements.');
         }
 
@@ -128,6 +128,7 @@ for (const { platform, skin, styling, skins } of CASES) {
         const imageRect = image.getBoundingClientRect();
 
         return {
+          loaded: image.complete && image.naturalWidth > 0,
           width: element.offsetWidth,
           height: element.offsetHeight,
           maxWidth: parseFloat(getComputedStyle(element).maxWidth),
@@ -135,6 +136,16 @@ for (const { platform, skin, styling, skins } of CASES) {
           bottomGap: rect.bottom - imageRect.bottom,
         };
       });
+
+    // No loading attribute also matches the empty state before thumbnail cues arrive.
+    await expect(async () => {
+      const box = await measure();
+
+      expect(box.loaded).toBe(true);
+      expect(box.width).toBeGreaterThan(0);
+      expect(box.height).toBeGreaterThan(0);
+      expect(box.maxWidth - box.width).toBeLessThanOrEqual(2);
+    }).toPass({ timeout: 15_000 });
 
     const before = await measure();
 
@@ -146,23 +157,20 @@ for (const { platform, skin, styling, skins } of CASES) {
 
     // Fullscreen widens the preview through a container query, and the tile has to grow to fill it — less the 1px
     // anti-fringe inset on each edge.
-    await expect.poll(async () => (await measure()).maxWidth).toBeGreaterThan(before.maxWidth);
-    await expect
-      .poll(async () => {
-        const box = await measure();
+    await expect(async () => {
+      const after = await measure();
 
-        return box.maxWidth - box.width;
-      })
-      .toBeLessThanOrEqual(2);
-    await expect.poll(async () => (await measure()).width).toBeGreaterThan(before.width);
-
-    const after = await measure();
-
-    // Aspect ratio survives the resize, so the tile is neither cropped nor letterboxed.
-    expect(Math.abs(after.width / after.height - before.width / before.height)).toBeLessThan(0.02);
-    // The sprite still covers the container that clips it.
-    expect(after.rightGap).toBeLessThanOrEqual(0);
-    expect(after.bottomGap).toBeLessThanOrEqual(0);
+      expect(after.loaded).toBe(true);
+      expect(after.maxWidth).toBeGreaterThan(before.maxWidth);
+      expect(after.maxWidth - after.width).toBeLessThanOrEqual(2);
+      expect(after.width).toBeGreaterThan(before.width);
+      expect(after.height).toBeGreaterThan(0);
+      // Aspect ratio survives the resize, so the tile is neither cropped nor letterboxed.
+      expect(Math.abs(after.width / after.height - before.width / before.height)).toBeLessThan(0.02);
+      // The sprite still covers the container that clips it.
+      expect(after.rightGap).toBeLessThanOrEqual(0);
+      expect(after.bottomGap).toBeLessThanOrEqual(0);
+    }).toPass({ timeout: 10_000 });
   });
 }
 
