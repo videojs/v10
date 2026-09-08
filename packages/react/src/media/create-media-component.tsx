@@ -26,16 +26,10 @@ export interface MediaAdapterConstructor {
   readonly defaultProps: object;
 }
 
-/**
- * The element an adapter renders into, read off its static `host`.
- *
- * `HTMLVideoAdapter` types its host as `'video' | 'audio'` so an adapter built on it can re-host in an `<audio>`;
- * anything not narrowed to `'audio'` or `'iframe'` is therefore a video. Checked non-distributively so the union
- * resolves to one element rather than to a union of elements.
- */
-export type MediaAdapterTarget<Adapter extends MediaAdapterConstructor> = [Adapter['host']] extends ['iframe']
+/** The element an adapter renders into, read off its static `host`. */
+export type MediaAdapterTarget<Adapter extends MediaAdapterConstructor> = Adapter['host'] extends 'iframe'
   ? HTMLIFrameElement
-  : [Adapter['host']] extends ['audio']
+  : Adapter['host'] extends 'audio'
     ? HTMLAudioElement
     : HTMLVideoElement;
 
