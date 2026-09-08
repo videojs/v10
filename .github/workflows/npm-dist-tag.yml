@@ -42,11 +42,12 @@ jobs:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
-      # Private workspace packages (icons, skins, vjsc) are never published, so
-      # they have nothing to tag.
+      # Mirrors the publish filter in cd.yml (./packages/**): top-level packages
+      # plus the adapters/ and extensions/ buckets. Private workspace packages
+      # (icons, skins, mux) are never published, so they have nothing to tag.
       - name: Move dist-tag on every public package
         run: |
-          for manifest in packages/*/package.json; do
+          for manifest in packages/*/package.json packages/*/*/package.json; do
             if [ "$(jq -r '.private // false' "$manifest")" = "true" ]; then
               continue
             fi
