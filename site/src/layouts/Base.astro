@@ -26,9 +26,11 @@ interface Props {
    * Pin the color-block easter egg behind the page so it is only revealed when the document rubber-bands past its
    * end. The page content is painted above it, so nothing shows until the user overscrolls.
    */
-  easterEgg?: boolean;
+  easterEgg?: boolean | 'thin';
+  /** Extra classes for the pinned color blocks, for example to keep them under one column of a layout. */
+  easterEggClass?: string;
 }
-const { canonical, suffix, easterEgg = false } = Astro.props;
+const { canonical, suffix, easterEgg = false, easterEggClass } = Astro.props;
 const canonicalURL = canonical || new URL(Astro.url.pathname, PRODUCTION_URL).href;
 
 const { title, description, image, twitterImage, withCompact } = Astro.props;
@@ -165,7 +167,16 @@ const fullTitle =
       "selection:bg-gold selection:text-faded-black",
     ]}
   >
-    {easterEgg && <FooterEasterEgg fixed data-overscroll-reveal />}
+    {
+      easterEgg && (
+        <FooterEasterEgg
+          fixed
+          variant={easterEgg === "thin" ? "extra-short" : "normal"}
+          class={easterEggClass}
+          data-overscroll-reveal
+        />
+      )
+    }
     <div
       class:list={[
         // BaseUI requires body.relative and div.isolate
@@ -200,6 +211,10 @@ const fullTitle =
 
             let offset = 0;
             let releaseTimer;
+            // The reveal only arms on a fresh gesture that starts while the page is already at its end. A fast scroll
+            // that lands on the end keeps delivering wheel events without a gap, and those must not pull.
+            let lastWheelAt = 0;
+            const GESTURE_GAP_MS = 250;
 
             const atPageEnd = () =>
               window.innerHeight + window.scrollY >=
@@ -219,7 +234,12 @@ const fullTitle =
             window.addEventListener(
               "wheel",
               (event) => {
-                const pulling = event.deltaY > 0 && atPageEnd();
+                const now = performance.now();
+                const freshGesture = now - lastWheelAt > GESTURE_GAP_MS;
+
+                lastWheelAt = now;
+
+                const pulling = event.deltaY > 0 && atPageEnd() && (freshGesture || offset > 0);
                 if (!pulling && offset === 0) return;
 
                 const max = reveal.offsetHeight;

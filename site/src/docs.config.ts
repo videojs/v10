@@ -69,6 +69,14 @@ export const sidebar: Sidebar = [
         ],
       },
       {
+        sidebarLabel: 'Customize',
+        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
+        contents: [
+          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
+          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
+        ],
+      },
+      {
         sidebarLabel: 'Playback',
         llmsDescription:
           'Guides for one player capability each: the recommended setup, how it works, browser constraints, variations, and troubleshooting.',
@@ -88,14 +96,6 @@ export const sidebar: Sidebar = [
           { slug: 'guides/remember-user-preferences', sidebarLabel: 'User preferences' },
           { slug: 'guides/add-a-background-video', sidebarLabel: 'Background video' },
           { slug: 'guides/internationalize-the-player', sidebarLabel: 'Internationalization' },
-        ],
-      },
-      {
-        sidebarLabel: 'Customize',
-        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
-        contents: [
-          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
-          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
         ],
       },
       {

@@ -79,26 +79,23 @@
   gap: calc(var(--spacing) * 2);
   align-items: center;
   width: auto;
-  /* Same height as the site's select triggers, so it sits level with the nav links. */
-  height: calc(var(--spacing) * 9);
+  height: calc(var(--spacing) * 8);
   padding: 0 calc(var(--spacing) * 2);
   margin: 0;
   font-family: inherit;
   color: var(--color-muted);
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xs);
   transition:
     border-color 150ms ease,
     background-color 150ms ease;
 }
 
 @supports (corner-shape: squircle) {
-  .DocSearch-Button,
   .DocSearch-Button .DocSearch-Button-Key {
     /* Match the `corner-squircle` utility, which scales radius tokens to keep the squircle visible. */
     --radius-md: 0.5rem;
-    --radius-lg: 0.7rem;
 
     corner-shape: squircle;
   }
@@ -195,8 +192,9 @@
 }
 
 @media (width >= 40rem) {
+  /* Fills its wrapper, which caps at 180px and shrinks when the nav gets crowded (see `Search.tsx`). */
   .DocSearch-Button {
-    width: calc(var(--spacing) * 60);
+    width: 100%;
     padding: 0 calc(var(--spacing) * 2) 0 calc(var(--spacing) * 3);
   }
 
@@ -210,12 +208,6 @@
 
   .DocSearch-Button-Keys {
     display: flex;
-  }
-}
-
-@media (width >= 64rem) {
-  .DocSearch-Button {
-    width: calc(var(--spacing) * 72);
   }
 }
 

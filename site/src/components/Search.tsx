@@ -19,9 +19,10 @@ interface SearchProps {
 export default function Search({ className }: SearchProps) {
   const framework = useStore(currentFramework);
 
-  // A flex wrapper keeps the button's box on whole pixels; an inline strut would add a half-pixel line box.
+  // A flex wrapper keeps the button's box on whole pixels; an inline strut would add a half-pixel line box. From `sm`
+  // up it asks for 180px but may shrink so the nav links never wrap.
   return (
-    <div className={clsx('flex', className)}>
+    <div className={clsx('flex min-w-0 sm:w-full sm:max-w-45', className)}>
       <DocSearch
         appId={DOCSEARCH_APP_ID}
         apiKey={DOCSEARCH_API_KEY}
@@ -40,7 +41,7 @@ export default function Search({ className }: SearchProps) {
           },
         ]}
         translations={{
-          button: { buttonText: 'Search documentation...', buttonAriaLabel: 'Search documentation' },
+          button: { buttonText: 'Search...', buttonAriaLabel: 'Search documentation' },
         }}
         getMissingResultsUrl={({ query }) =>
           `${GITHUB_REPO_URL}issues/new?title=${encodeURIComponent(`Search: no results for "${query}"`)}&labels=search`

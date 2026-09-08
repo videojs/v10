@@ -4,7 +4,8 @@ import type { ReactNode } from 'react';
 import Css3Logo from '@/assets/logos/brands/css3.svg?react';
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
-import SegmentedControl from '@/components/SegmentedControl';
+import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
+import { Select, type SelectOption } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
@@ -85,32 +86,37 @@ export function Selectors({ currentFramework, currentSlug, className }: Selector
     icon: FRAMEWORK_ICONS[fw],
   }));
 
-  const styleOptions = FRAMEWORK_STYLES[currentFramework].map((st) => ({
-    value: st,
-    label: STYLE_LABELS[st],
-    icon: STYLE_ICONS[st],
-  }));
+  // Tailwind skins are on the roadmap; the disabled entry tells readers the styling axis exists without linking anywhere.
+  const styleOptions: SelectOption<AnySupportedStyle | 'tailwind'>[] = [
+    ...FRAMEWORK_STYLES[currentFramework].map((st) => ({
+      value: st,
+      label: STYLE_LABELS[st],
+      icon: STYLE_ICONS[st],
+    })),
+    { value: 'tailwind', label: 'Tailwind (coming soon)', icon: <TailwindLogo className="size-4" />, disabled: true },
+  ];
 
   return (
     <div className={className ?? 'border-line border-b px-6 py-5'}>
       <div className="mx-auto grid w-full max-w-3xl gap-4 sm:grid-cols-2 md:grid-cols-1">
         <div className="grid gap-1.5">
-          <SegmentedControl
+          <Select
             value={currentFramework}
-            onChange={handleFrameworkChange}
+            onChange={(next) => next && handleFrameworkChange(next)}
             options={frameworkOptions}
             aria-label="Select framework"
             data-testid="select-framework"
+            className="w-full"
           />
         </div>
         <div className="grid gap-1.5">
-          <SegmentedControl
+          <Select
             value={hydrationSafeCurrentStyle}
-            onChange={handleStyleChange}
+            onChange={(next) => next && next !== 'tailwind' && handleStyleChange(next)}
             options={styleOptions}
             aria-label="Select style"
             data-testid="select-style"
-            disabled={!isHydrated}
+            className="w-full"
           />
         </div>
       </div>
