@@ -4,7 +4,6 @@
   "tag-separator": "@",
   "include-component-in-tag": true,
   "include-v-in-tag": false,
-  "release-as": "10.0.0-rc.1",
   "plugins": [
     {
       "type": "node-workspace",
