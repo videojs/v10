@@ -35,11 +35,15 @@ export function initDataFromKeyUri(uri: string): Uint8Array<ArrayBuffer> | undef
 export const widevineKeySystem: KeySystemModule = {
   keySystem: 'com.widevine.alpha',
   keyFormats: ['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed'],
-  preferredVideoRobustness: 'HW_SECURE_ALL',
-  // `SW_SECURE_CRYPTO` is Widevine's baseline audio tier — every CDM that plays
-  // protected audio at all has it, so it costs no negotiations in practice while
-  // still naming a level rather than leaving it to the CDM.
-  preferredAudioRobustness: 'SW_SECURE_CRYPTO',
+  // `HW_SECURE_ALL` is the L1 hardware tier; `SW_SECURE_DECODE` is the L3 rung
+  // below it, which is what a desktop CDM without L1 actually has — measured
+  // accepted on macOS Chrome, where `HW_SECURE_ALL` and `HW_SECURE_DECODE` are
+  // both refused. Without that rung the ladder fell straight through to the
+  // unstamped configuration and left both levels unspecified.
+  videoRobustnessTiers: ['HW_SECURE_ALL', 'SW_SECURE_DECODE'],
+  // One entry, clamped across both rungs: `SW_SECURE_CRYPTO` is Widevine's
+  // baseline audio tier and every CDM that plays protected audio has it.
+  audioRobustnessTiers: ['SW_SECURE_CRYPTO'],
   toInitData: (uri) => {
     const initData = initDataFromKeyUri(uri);
 

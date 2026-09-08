@@ -71,8 +71,12 @@ describe('widevineKeySystem', () => {
     expect(widevineKeySystem.toInitData?.('skd://mux?keyId=abc')).toBeUndefined();
   });
 
-  it('prefers the L1 hardware tier and transforms no license request of its own', () => {
-    expect(widevineKeySystem.preferredVideoRobustness).toBe('HW_SECURE_ALL');
+  it('descends from the L1 tier to the software rung, and transforms no license request of its own', () => {
+    // The second rung matters: macOS Chrome refuses `HW_SECURE_ALL`, and without
+    // somewhere to descend to, both levels fall through to an unstamped
+    // configuration.
+    expect(widevineKeySystem.videoRobustnessTiers).toEqual(['HW_SECURE_ALL', 'SW_SECURE_DECODE']);
+    expect(widevineKeySystem.audioRobustnessTiers).toEqual(['SW_SECURE_CRYPTO']);
     expect(widevineKeySystem.licenseRequest).toBeUndefined();
   });
 });
