@@ -285,14 +285,33 @@ describe('buildKeySystemConfigurations', () => {
     expect(buildKeySystemConfigurations(playReadyKeySystem, { video: [VIDEO_TYPE], audio: [] })).toHaveLength(1);
   });
 
-  it("prefers the module's video robustness, with an unrobust fallback", () => {
+  it("prefers the module's robustness tiers, with an unrobust fallback", () => {
     const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
 
     expect(configs).toHaveLength(2);
     expect(configs[0]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE, robustness: 'HW_SECURE_ALL' }]);
+    expect(configs[0]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE, robustness: 'SW_SECURE_CRYPTO' }]);
+  });
+
+  // Both tiers ride one axis: the fallback drops audio's as well as video's, so a
+  // CDM that refuses either still negotiates instead of being refused. Naming a
+  // level on every capability is also what stops Chromium warning about it.
+  it('drops both robustness tiers together on the fallback configuration', () => {
+    const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
+
     expect(configs[1]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE }]);
-    // Audio stays at the CDM's default in both — no tier is worth a failed negotiation.
-    expect(configs[0]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
+    expect(configs[1]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
+  });
+
+  // An audio-only source still gets the pair: the tier lives on the audio
+  // capability, so gating the second configuration on video alone would leave it
+  // unnamed — and warned about — for every audio-only DRM source.
+  it('offers the tier for an audio-only source', () => {
+    const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [], audio: [AUDIO_TYPE] });
+
+    expect(configs).toHaveLength(2);
+    expect(configs[0]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE, robustness: 'SW_SECURE_CRYPTO' }]);
+    expect(configs[1]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
   });
 
   it('leaves robustness unset for a module with no preferred tier', () => {

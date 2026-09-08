@@ -73,7 +73,9 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
  * - **Declared encryption scheme** (see `declaredEncryptionScheme`), stamped on every capability, then dropped when the
  *   module keeps `schemeFallback`. CDMs that honour the member negotiate the exact scheme; CDMs that refuse it outright
  *   still negotiate instead of failing the request.
- * - **Video robustness** (`preferredVideoRobustness`), then unset.
+ * - **Robustness** (`preferredVideoRobustness` / `preferredAudioRobustness`), then unset. Both tiers ride one axis: named
+ *   together on the preferred configuration, dropped together on the fallback, so a CDM that refuses either still
+ *   negotiates.
  *
  * Scheme is the outer preference because a mismatched scheme risks failing decode outright, whereas a lower robustness
  * tier only means weaker content protection.
@@ -83,20 +85,21 @@ export function buildKeySystemConfigurations(
   contentTypes: { video: readonly string[]; audio: readonly string[] },
   encryptionScheme?: 'cbcs' | 'cenc'
 ): MediaKeySystemConfiguration[] {
-  const configuration = (scheme?: 'cbcs' | 'cenc', robustness?: string): MediaKeySystemConfiguration => {
-    const capability = (contentType: string) => ({
+  const configuration = (scheme?: 'cbcs' | 'cenc', withRobustness = false): MediaKeySystemConfiguration => {
+    const capability = (robustness: string | undefined) => (contentType: string) => ({
       contentType,
       ...(scheme !== undefined && { encryptionScheme: scheme }),
-    });
-    const videoCapability = (contentType: string) => ({
-      ...capability(contentType),
-      ...(robustness !== undefined && { robustness }),
+      ...(withRobustness && robustness !== undefined && { robustness }),
     });
 
     return {
       initDataTypes: [...(module_.initDataTypes ?? ['cenc'])],
-      ...(contentTypes.video.length > 0 && { videoCapabilities: contentTypes.video.map(videoCapability) }),
-      ...(contentTypes.audio.length > 0 && { audioCapabilities: contentTypes.audio.map(capability) }),
+      ...(contentTypes.video.length > 0 && {
+        videoCapabilities: contentTypes.video.map(capability(module_.preferredVideoRobustness)),
+      }),
+      ...(contentTypes.audio.length > 0 && {
+        audioCapabilities: contentTypes.audio.map(capability(module_.preferredAudioRobustness)),
+      }),
     };
   };
 
@@ -106,13 +109,14 @@ export function buildKeySystemConfigurations(
       : module_.schemeFallback === false
         ? [encryptionScheme]
         : [encryptionScheme, undefined];
-  // Only worth a second entry when there are video capabilities to carry it — otherwise the two
-  // configurations would be identical.
-  const preferredRobustness = module_.preferredVideoRobustness;
-  const robustnessLevels =
-    preferredRobustness !== undefined && contentTypes.video.length > 0 ? [preferredRobustness, undefined] : [undefined];
+  // Only worth a second entry when some capability would actually carry a tier — otherwise the
+  // two configurations would be identical.
+  const carriesRobustness =
+    (module_.preferredVideoRobustness !== undefined && contentTypes.video.length > 0) ||
+    (module_.preferredAudioRobustness !== undefined && contentTypes.audio.length > 0);
+  const robustnessPasses = carriesRobustness ? [true, false] : [false];
 
-  return schemes.flatMap((scheme) => robustnessLevels.map((robustness) => configuration(scheme, robustness)));
+  return schemes.flatMap((scheme) => robustnessPasses.map((withRobustness) => configuration(scheme, withRobustness)));
 }
 
 /**
