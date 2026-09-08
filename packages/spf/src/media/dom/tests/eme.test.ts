@@ -119,6 +119,56 @@ describe('requestKeySystemAccess', () => {
     spy.mockRestore();
   });
 
+  // The availability half of the robustness ladder. The stamped pass names a tier on
+  // every capability so nothing warns; this pass exists so a CDM holding none of
+  // those tiers still gets access instead of failing to build a session at all.
+  it('retries unstamped when every candidate refuses the stamped ladder', async () => {
+    const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
+    const access = {} as MediaKeySystemAccess;
+
+    // Refuse anything naming a robustness; accept once it is dropped.
+    spy.mockImplementation(async (_keySystem, configs) => {
+      const named = [...configs].some((config) =>
+        [...(config.videoCapabilities ?? []), ...(config.audioCapabilities ?? [])].some((c) => c.robustness)
+      );
+      if (named) throw new Error('no such tier');
+
+      return access;
+    });
+
+    const result = await requestKeySystemAccess([widevineKeySystem], { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
+
+    expect(result?.access).toBe(access);
+    // Stamped first, unstamped only after it was refused.
+    const stamped = spy.mock.calls.map(([, configs]) =>
+      [...configs].some((config) => config.videoCapabilities?.some((capability) => capability.robustness))
+    );
+
+    expect(stamped[0]).toBe(true);
+    expect(stamped.at(-1)).toBe(false);
+    spy.mockRestore();
+  });
+
+  it('does not retry unstamped when the ladder is accepted', async () => {
+    const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
+
+    spy.mockResolvedValue({} as MediaKeySystemAccess);
+
+    await requestKeySystemAccess([widevineKeySystem], { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
+
+    // One call, and every configuration in it names a tier — nothing unstamped is
+    // ever requested on the happy path, which is what keeps Chromium quiet.
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    for (const config of [...spy.mock.calls[0]![1]]) {
+      for (const capability of [...(config.videoCapabilities ?? []), ...(config.audioCapabilities ?? [])]) {
+        expect(capability.robustness).toBeTruthy();
+      }
+    }
+
+    spy.mockRestore();
+  });
+
   it('resolves undefined when every candidate is refused, or none were given', async () => {
     const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
 
