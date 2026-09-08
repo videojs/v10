@@ -1101,9 +1101,12 @@ function serializeDefault(expression: Expression, file: SourceFile, project: Oxc
 /** Live playback state has no content attribute, even when an adapter lists a default for it. */
 const STATE_PROPS = new Set(['muted', 'volume', 'currentTime', 'playbackRate']);
 
-/** Whether a serialized default is a boolean, number, or string, and so becomes an attribute. */
+/**
+ * Whether a serialized default becomes an attribute: a `false` boolean, a number, or a string. A boolean that defaults
+ * to `true` stays property-only, since an absent attribute cannot mean `true`.
+ */
 function isPrimitiveDefault(value: string): boolean {
-  return value === 'true' || value === 'false' || /^-?\d/.test(value) || /^['"`]/.test(value);
+  return value === 'false' || /^-?\d/.test(value) || /^['"`]/.test(value);
 }
 
 function primitiveTypeOf(value: string): string {

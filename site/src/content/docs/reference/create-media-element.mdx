@@ -45,7 +45,7 @@ The template is also the element's static `template`, so a subclass can override
 
 ## Attributes
 
-Each primitive in the adapter's `defaultProps` becomes a content attribute of the same type, named by its WHATWG spelling where one exists and kebab-case otherwise: `src`, `preload`, `stream-type`. Removing the attribute resets the property to its default. Object properties such as `source` are property-only. This is the rule the React `createMediaComponent` factory applies to props, so both façades expose the same surface from one declaration.
+Each primitive in the adapter's `defaultProps` becomes a content attribute of the same type, named by its WHATWG spelling where one exists and kebab-case otherwise: `src`, `preload`, `stream-type`. Removing the attribute resets the property to its default. Object properties such as `source` stay property-only, and so does a boolean that defaults to `true`, since an absent attribute cannot mean `true`. The `muted` attribute belongs to `defaultMuted`, as in HTML, and seeds the `muted` state when it changes. This is the rule the React `createMediaComponent` factory applies to props, so both façades expose the same surface from one declaration.
 
 A `<video>` or `<audio>` host also accepts the attributes its native element understands, such as `controls`, `muted`, and `crossorigin`. Ones the adapter can set go through the adapter; the rest are copied onto the inner element. An `<iframe>` host accepts only what its adapter declares, since nothing is mirrored onto the frame.
 
