@@ -254,7 +254,14 @@ describe('createSlider', () => {
       const onPressEnd = vi.fn();
       const onDragStart = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onPressStart, onPressEnd, onDragStart }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          onPressStart,
+          onPressEnd,
+          onDragStart,
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
@@ -447,7 +454,11 @@ describe('createSlider', () => {
       expect(slider.input.current.dragging).toBe(true);
 
       // Stale: buttons = 0, mouse pointer
-      firePointerMove(slider, { clientX: 100, buttons: 0, pointerType: 'mouse' });
+      firePointerMove(slider, {
+        clientX: 100,
+        buttons: 0,
+        pointerType: 'mouse',
+      });
       flush();
 
       expect(slider.input.current.dragging).toBe(false);
@@ -469,7 +480,11 @@ describe('createSlider', () => {
       expect(slider.input.current.dragging).toBe(true);
 
       // Touch with buttons=0 should NOT trigger stale drag detection
-      firePointerMove(slider, { clientX: 100, buttons: 0, pointerType: 'touch' });
+      firePointerMove(slider, {
+        clientX: 100,
+        buttons: 0,
+        pointerType: 'touch',
+      });
       flush();
 
       expect(slider.input.current.dragging).toBe(true);
@@ -553,7 +568,13 @@ describe('createSlider', () => {
 
     it('ArrowLeft decrements by step', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 50,
+          getStepPercent: () => 1,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowLeft'));
 
@@ -564,7 +585,13 @@ describe('createSlider', () => {
 
     it('ArrowUp increments by step', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 5, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 50,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowUp'));
 
@@ -575,7 +602,13 @@ describe('createSlider', () => {
 
     it('ArrowDown decrements by step', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 5, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 50,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowDown'));
 
@@ -605,7 +638,11 @@ describe('createSlider', () => {
     it('PageUp increments by large step', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(
-        createOptions({ getPercent: () => 50, getLargeStepPercent: () => 10, onValueChange })
+        createOptions({
+          getPercent: () => 50,
+          getLargeStepPercent: () => 10,
+          onValueChange,
+        })
       );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('PageUp'));
@@ -618,7 +655,11 @@ describe('createSlider', () => {
     it('PageDown decrements by large step', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(
-        createOptions({ getPercent: () => 50, getLargeStepPercent: () => 10, onValueChange })
+        createOptions({
+          getPercent: () => 50,
+          getLargeStepPercent: () => 10,
+          onValueChange,
+        })
       );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('PageDown'));
@@ -652,12 +693,62 @@ describe('createSlider', () => {
 
     it('clamps to 0-100 range', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 99, getStepPercent: () => 5, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 99,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
       expect(onValueChange).toHaveBeenCalledWith(100);
 
+      slider.destroy();
+    });
+
+    it('steps from the last value while a key repeats', () => {
+      const onValueChange = vi.fn();
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 80,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
+
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { repeat: true }));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { repeat: true }));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { repeat: true }));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { repeat: true }));
+
+      expect(onValueChange.mock.calls.map(([percent]) => percent)).toEqual([85, 90, 95, 100, 100]);
+
+      slider.destroy();
+    });
+
+    it('steps from the latest pointer value while a key repeats', () => {
+      const onValueChange = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          getPercent: () => 50,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
+
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 160 }));
+      firePointerMove(slider, { clientX: 120 });
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { repeat: true }));
+
+      expect(onValueChange.mock.calls.map(([percent]) => percent)).toEqual([55, 80, 60, 65]);
+
+      firePointerUp(slider, { clientX: 120 });
       slider.destroy();
     });
 
@@ -721,7 +812,13 @@ describe('createSlider', () => {
     it('rounds before stepping to prevent drift', () => {
       const onValueChange = vi.fn();
       // Simulate a value between steps (e.g., from a drag that landed at 47.3)
-      const slider = createSlider(createOptions({ getPercent: () => 47.3, getStepPercent: () => 5, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 47.3,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
@@ -737,7 +834,13 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
 
       document.documentElement.dir = 'rtl';
-      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 50,
+          getStepPercent: () => 1,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
@@ -750,7 +853,13 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
 
       document.documentElement.dir = 'rtl';
-      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 50,
+          getStepPercent: () => 1,
+          onValueChange,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowLeft'));
 
@@ -838,7 +947,12 @@ describe('createSlider', () => {
   describe('orientation', () => {
     it('computes percent from Y axis for vertical orientation', () => {
       const el = createMockElement({ top: 0, height: 100 });
-      const slider = createSlider(createOptions({ getElement: () => el, getOrientation: () => 'vertical' }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          getOrientation: () => 'vertical',
+        })
+      );
 
       // vertical: 0% at bottom (y=100), 100% at top (y=0)
       slider.rootProps.onPointerDown(pointerEvent({ clientY: 25 }));
@@ -851,7 +965,12 @@ describe('createSlider', () => {
 
     it('computes percent from X axis for horizontal orientation', () => {
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, getOrientation: () => 'horizontal' }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          getOrientation: () => 'horizontal',
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
@@ -954,7 +1073,11 @@ describe('createSlider', () => {
       onValueCommit.mockClear();
 
       // Stale drag: buttons = 0, mouse pointer
-      firePointerMove(slider, { clientX: 100, buttons: 0, pointerType: 'mouse' });
+      firePointerMove(slider, {
+        clientX: 100,
+        buttons: 0,
+        pointerType: 'mouse',
+      });
 
       expect(onValueCommit).toHaveBeenCalledOnce();
       // Last drag percent was 40% (80/200) — the stale move doesn't update it.
@@ -1027,7 +1150,13 @@ describe('createSlider', () => {
 
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          onValueChange,
+          changeThrottle: 100,
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
@@ -1051,7 +1180,13 @@ describe('createSlider', () => {
 
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          onValueChange,
+          changeThrottle: 100,
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
@@ -1080,7 +1215,13 @@ describe('createSlider', () => {
     it('does not throttle onValueChange when changeThrottle is 0', () => {
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 0 }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          onValueChange,
+          changeThrottle: 0,
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
@@ -1100,7 +1241,13 @@ describe('createSlider', () => {
 
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          onValueChange,
+          changeThrottle: 100,
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
@@ -1130,7 +1277,13 @@ describe('createSlider', () => {
 
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueChange, changeThrottle: 100 }));
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          onValueChange,
+          changeThrottle: 100,
+        })
+      );
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueChange.mockClear();
@@ -1151,7 +1304,13 @@ describe('createSlider', () => {
 
     it('does not throttle keyboard changes', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, onValueChange, changeThrottle: 100 }));
+      const slider = createSlider(
+        createOptions({
+          getPercent: () => 50,
+          onValueChange,
+          changeThrottle: 100,
+        })
+      );
 
       slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 

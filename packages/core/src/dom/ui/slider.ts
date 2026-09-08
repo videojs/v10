@@ -103,6 +103,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     pointerDownX = 0,
     pointerDownY = 0,
     lastDragPercent = 0,
+    lastKeyPercent: number | null = null,
     committedOnRelease = false,
     pointingOnRelease = false;
 
@@ -194,8 +195,15 @@ export function createSlider(options: SliderOptions): SliderApi {
       pointerDownX = event.clientX;
       pointerDownY = event.clientY;
       lastDragPercent = percent;
-      input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
+      lastKeyPercent = percent;
+      input.patch({
+        pointing: true,
+        pointerPercent: percent,
+        dragPercent: percent,
+      });
+
       options.onPressStart?.();
+
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
@@ -225,7 +233,12 @@ export function createSlider(options: SliderOptions): SliderApi {
         }
 
         lastDragPercent = percent;
-        input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
+        lastKeyPercent = percent;
+        input.patch({
+          dragging: true,
+          dragPercent: percent,
+          pointerPercent: percent,
+        });
 
         if (startingDrag) options.onDragStart?.();
 
@@ -291,7 +304,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const stepPercent = options.getStepPercent();
       const largeStepPercent = options.getLargeStepPercent();
-      const currentPercent = options.getPercent();
+      const currentPercent = event.repeat && !isNull(lastKeyPercent) ? lastKeyPercent : options.getPercent();
 
       // Round to nearest step before stepping to prevent drift from pointer drags.
       const rounded = roundToStep(currentPercent, stepPercent, 0);
@@ -329,8 +342,14 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       if (newPercent !== null) {
         event.preventDefault();
+
         newPercent = clamp(newPercent, 0, 100);
-        input.patch({ pointerPercent: newPercent, dragPercent: newPercent, pointing: false });
+        lastKeyPercent = newPercent;
+        input.patch({
+          pointerPercent: newPercent,
+          dragPercent: newPercent,
+          pointing: false,
+        });
         options.onValueChange?.(newPercent);
         options.onValueCommit?.(newPercent);
       }
@@ -371,7 +390,10 @@ export function createSlider(options: SliderOptions): SliderApi {
     stopObservingResize = observeResize(options.getElement(), () => options.onResize!());
   }
 
-  const rootStyle: SliderRootStyle = { touchAction: 'none', userSelect: 'none' };
+  const rootStyle: SliderRootStyle = {
+    touchAction: 'none',
+    userSelect: 'none',
+  };
 
   return {
     input,
@@ -385,6 +407,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       abort.abort();
       stopObservingResize?.();
       releaseCapture();
+
       cleanup();
     },
   };

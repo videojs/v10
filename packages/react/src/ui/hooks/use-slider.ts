@@ -134,6 +134,11 @@ export function useSlider<State extends SliderState = SliderState>(
     (element = rootElementRef.current) => {
       if (!element) return;
 
+      const { dragging, pointing } = slider.input.current;
+      // Keyboard values come from the controlled state. Applying them here would
+      // briefly write the previous value before the caller handles the key.
+      if (!dragging && !pointing) return;
+
       const next = optionsRef.current.computeState(slider.input.current);
 
       applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
