@@ -280,6 +280,31 @@ Things this feature probably forces decisions on, not just additions:
   modules (one per sub-issue) handle the system-specific logic; the
   shared EME pipeline calls into them via a uniform interface.
 
+## Verification
+
+Unit tests cover the key-system configuration the engine builds, including the invariant that a
+negotiation offers no unstamped capability. That invariant is not self-evident, so it is worth stating
+why it exists: Chromium warns "It is recommended that a robustness level be specified" for **any
+configuration in the requested list** that omits `robustness` — not only the one it accepts. Reading the
+accepted configuration instead is what let three separate fixes ship believing the warning was gone.
+
+Confirming the warning is actually absent needs a real CDM, so it lives in an opt-in E2E suite:
+
+```bash
+pnpm test:e2e:drm
+```
+
+`apps/e2e/suites/drm` negotiates against a real Widevine CDM and asserts both halves — every requested
+capability names a tier, and Chromium logs no robustness warning. It borrows the CDM from a local Google
+Chrome install and runs headed, because a CDM will not provision otherwise; where Chrome is absent the
+suite skips itself rather than failing. It is deliberately outside `test:all`, since hosted CI cannot
+satisfy it.
+
+The `drmContext` fixture in that suite owns the launch recipe — a persistent profile with the CDM copied
+in, and the component updater left enabled. Four simpler shapes were measured and all reach ClearKey
+only; the fixture's own comment records them, so a second DRM test inherits a working CDM rather than
+rediscovering it.
+
 ## Open questions
 
 - **Variant-decision signal source.** Adapter-upfront opt-in (consumer
