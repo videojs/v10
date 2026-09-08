@@ -96,7 +96,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         disabled={disabled}
         onClick={handleCopy}
         className={clsx(
-          'inline-flex h-8 items-center gap-1.5 rounded-lg corner-squircle border border-line bg-surface px-2.5 text-p3 whitespace-nowrap shadow-xs select-none',
+          'inline-flex h-8 items-center gap-1.5 rounded-xs border border-line bg-surface px-2.5 text-p3 whitespace-nowrap select-none',
           'intent:border-line-strong intent:text-faded-black dark:intent:text-manila-light text-muted',
           'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold',
           state.status === 'loading' && 'opacity-70',

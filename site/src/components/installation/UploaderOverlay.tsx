@@ -18,7 +18,7 @@ function OverlayWrapper({ children, className }: { children: React.ReactNode; cl
   return (
     <div
       className={clsx(
-        'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl corner-squircle px-6 text-center',
+        'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xs px-6 text-center',
         'bg-manila-light/95 backdrop-blur-sm dark:bg-faded-black/95',
         className
       )}
@@ -55,7 +55,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
-          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
+          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold transition select-none"
         >
           Sign up or log in
         </button>

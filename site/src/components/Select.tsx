@@ -38,7 +38,7 @@ export function Select<T extends string = string>({
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex h-9 min-w-0 items-center gap-2 rounded-lg corner-squircle border border-line bg-surface px-3 text-left text-p3 shadow-xs',
+            'inline-flex h-9 min-w-0 items-center gap-2 rounded-xs border border-line bg-surface px-3 text-left text-p3',
             'intent:border-line-strong data-[popup-open]:border-line-strong cursor-pointer select-none',
             'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold'
           ),
@@ -59,10 +59,10 @@ export function Select<T extends string = string>({
       </BaseSelect.Trigger>
 
       <BaseSelect.Portal>
-        <BaseSelect.Positioner sideOffset={6} className="z-50 outline-none">
+        <BaseSelect.Positioner sideOffset={6} alignItemWithTrigger={false} className="z-50 outline-none">
           <BaseSelect.Popup
             className={clsx(
-              'origin-(--transform-origin) overflow-y-auto scrollbar-thin rounded-lg corner-squircle border border-line bg-surface-raised dark:bg-soot p-1 text-p3 shadow-lg',
+              'origin-(--transform-origin) overflow-y-auto scrollbar-thin rounded-xs border border-line-strong bg-surface-raised dark:bg-soot p-1 text-p3',
               'transition duration-150 ease-out starting-style:scale-95 starting-style:opacity-0 ending-style:scale-95 ending-style:opacity-0 ending-style:duration-100',
               'motion-reduce:transition-none'
             )}
@@ -80,7 +80,7 @@ export function Select<T extends string = string>({
                   value={option.value}
                   disabled={option.disabled}
                   className={clsx(
-                    'relative flex items-center gap-2 rounded-md corner-squircle py-1.5 pr-8 pl-2 outline-none select-none',
+                    'relative flex items-center gap-2 rounded-xs py-1.5 pr-8 pl-2 outline-none select-none',
                     option.disabled
                       ? 'opacity-50 cursor-default'
                       : 'cursor-pointer data-[highlighted]:bg-surface dark:data-[highlighted]:bg-warm-gray'

@@ -39,12 +39,12 @@ const renderTitle = title ?? defaultTitles[type];
 <aside
   class={twMerge(
     clsx(
-      // The inset ring shares the band's hue so the band's edge stays crisp instead of being wrapped in a grey border.
-      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-lg corner-squircle ring-1 ring-inset",
-      type === "note" && "ring-magenta/40",
-      type === "tip" && "ring-magenta/40",
-      type === "caution" && "ring-orange/40",
-      type === "danger" && "ring-red/40",
+      // The border shares the band's hue so the band's edge stays crisp instead of being wrapped in grey.
+      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-xs border",
+      type === "note" && "border-magenta",
+      type === "tip" && "border-magenta",
+      type === "caution" && "border-orange",
+      type === "danger" && "border-red",
     ),
     className,
   )}

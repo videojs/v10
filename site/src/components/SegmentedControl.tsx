@@ -51,7 +51,7 @@ export default function SegmentedControl<T extends string = string>({
       data-testid={dataTestId}
       className={twMerge(
         clsx(
-          'grid w-full grid-flow-col auto-cols-fr gap-1 rounded-lg corner-squircle border border-line bg-surface p-1',
+          'grid w-full grid-flow-col auto-cols-fr gap-1 rounded-xs border border-line bg-surface p-1',
           disabled && 'opacity-60'
         ),
         className
@@ -67,11 +67,11 @@ export default function SegmentedControl<T extends string = string>({
             disabled={option.disabled}
             aria-label={option['aria-label']}
             className={clsx(
-              'flex min-w-0 items-center justify-center gap-2 rounded-md corner-squircle px-3 py-1.5 text-p3 leading-none whitespace-nowrap select-none',
+              'flex min-w-0 items-center justify-center gap-2 rounded-xs px-3 py-1.5 text-p3 leading-none whitespace-nowrap select-none',
               'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold',
               option.disabled || disabled ? 'cursor-wait' : 'cursor-pointer',
               isPressed
-                ? 'bg-surface-raised font-semibold text-faded-black dark:text-manila-light shadow-xs ring-1 ring-line'
+                ? 'bg-surface-raised font-semibold text-faded-black dark:text-manila-light ring-1 ring-line-strong'
                 : 'text-muted intent:text-faded-black dark:intent:text-manila-light'
             )}
           >

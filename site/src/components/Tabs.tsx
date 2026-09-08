@@ -45,7 +45,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
       className={twMerge(
         clsx(
           // The panel background fills the whole frame; the header sits flush on top of it with a hairline divider.
-          'overflow-hidden flex flex-col my-8 rounded-lg corner-squircle border border-faded-black/10 dark:border-line',
+          'overflow-hidden flex flex-col my-8 rounded-xs border border-faded-black/10 dark:border-line',
           variant === 'compact'
             ? 'bg-faded-black dark:bg-soot text-manila-light'
             : 'bg-manila-light dark:bg-faded-black',
@@ -368,7 +368,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
     >
       <div
         ref={contentRef}
-        className={clsx('overflow-x-auto scrollbar-thin px-6 py-4', collapsed && 'overflow-y-hidden')}
+        className={clsx('overflow-x-auto scrollbar-thin px-7 py-5', collapsed && 'overflow-y-hidden')}
         style={collapsed ? { maxHeight: COLLAPSED_MAX_HEIGHT } : undefined}
       >
         {children}

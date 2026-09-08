@@ -33,7 +33,7 @@ const scopedCss = cssFile && scopeId ? `@scope ([data-demo-scope="${scopeId}"]) 
 ---
 
 <div
-  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-lg corner-squircle border border-line-strong dark:border-line"
+  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border border-line-strong dark:border-line"
 >
   {scopedCss && <style is:inline set:html={scopedCss} />}
   <div

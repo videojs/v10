@@ -61,7 +61,7 @@ const TAB_ICONS = {
   {
     tabs.length > 1 && (
       <nav aria-label="Docs sections" class="px-6 pt-5">
-        <div class="mx-auto grid w-full max-w-3xl gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
+        <div class="mx-auto grid w-full max-w-3xl gap-1 rounded-xs border border-line bg-surface p-1">
           {tabs.map((tab) => {
             const isActive = tab === activeTab;
             const Icon = TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS];
@@ -71,9 +71,9 @@ const TAB_ICONS = {
                 href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
-                  "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
+                  "flex items-center gap-2.5 rounded-xs px-3 py-2 text-p3 leading-5 select-none",
                   isActive
-                    ? "bg-surface-raised font-semibold text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
+                    ? "bg-surface-raised font-semibold text-faded-black ring-1 ring-line-strong dark:text-manila-light"
                     : "text-muted intent:text-faded-black dark:intent:text-manila-light",
                 ]}
               >
