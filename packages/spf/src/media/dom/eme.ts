@@ -134,25 +134,60 @@ export function buildKeySystemConfigurations(
  *
  * Reports the module rather than the request string that won: license-server lookup and message shaping key off the
  * configured `keySystem`, not off the variant a CDM happened to accept.
+ *
+ * Two passes, and the order is the whole point. The first asks with the module's robustness ladder, which names a tier
+ * on every capability — Chromium warns about any _requested_ configuration that omits one, so a warning-free
+ * negotiation cannot carry an unstamped entry alongside the stamped ones. The second pass asks unstamped, and runs only
+ * when every candidate refused the first: a CDM that has none of the named tiers then still gets access. That trades
+ * the warning back for playback exactly where it is the price of playing at all, instead of everywhere.
  */
 export async function requestKeySystemAccess(
   keySystems: readonly KeySystemModule[],
   contentTypes: { video: readonly string[]; audio: readonly string[] },
   encryptionScheme?: 'cbcs' | 'cenc'
 ): Promise<{ module: KeySystemModule; access: MediaKeySystemAccess } | undefined> {
-  for (const module_ of keySystems) {
-    const configurations = buildKeySystemConfigurations(module_, contentTypes, encryptionScheme);
-
+  const attempt = async (module_: KeySystemModule, configurations: MediaKeySystemConfiguration[]) => {
     for (const variant of module_.requestVariants ?? [module_.keySystem]) {
       try {
-        return { module: module_, access: await navigator.requestMediaKeySystemAccess(variant, configurations) };
+        return await navigator.requestMediaKeySystemAccess(variant, configurations);
       } catch {
-        // Refused — try the next variant / candidate.
+        // Refused — try the next variant.
       }
     }
+
+    return undefined;
+  };
+
+  for (const module_ of keySystems) {
+    const access = await attempt(module_, buildKeySystemConfigurations(module_, contentTypes, encryptionScheme));
+    if (access) return { module: module_, access };
+  }
+
+  // Unstamped retry. `unstampedRobustness` strips the tiers rather than rebuilding, so the scheme
+  // preference and every other member stay exactly as the module declared them.
+  for (const module_ of keySystems) {
+    const configurations = buildKeySystemConfigurations(module_, contentTypes, encryptionScheme).map(
+      unstampedRobustness
+    );
+    const access = await attempt(module_, configurations);
+    if (access) return { module: module_, access };
   }
 
   return undefined;
+}
+
+/** The same configuration with every capability's robustness dropped. */
+function unstampedRobustness(configuration: MediaKeySystemConfiguration): MediaKeySystemConfiguration {
+  const strip = (capabilities: MediaKeySystemMediaCapability[] | undefined) =>
+    capabilities?.map(({ robustness: _robustness, ...rest }) => rest);
+  const video = strip(configuration.videoCapabilities);
+  const audio = strip(configuration.audioCapabilities);
+
+  return {
+    ...configuration,
+    ...(video && { videoCapabilities: video }),
+    ...(audio && { audioCapabilities: audio }),
+  };
 }
 
 /**
