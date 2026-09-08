@@ -73,9 +73,10 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
  * - **Declared encryption scheme** (see `declaredEncryptionScheme`), stamped on every capability, then dropped when the
  *   module keeps `schemeFallback`. CDMs that honour the member negotiate the exact scheme; CDMs that refuse it outright
  *   still negotiate instead of failing the request.
- * - **Robustness** (`videoRobustnessTiers` / `audioRobustnessTiers`), strongest rung first, then unset. One configuration
- *   per rung: a device without the top tier descends to the next rather than falling straight through to an unstamped
- *   configuration, which is what leaves a level unspecified. Unset stays last so nothing is refused outright.
+ * - **Robustness** (`videoRobustnessTiers` / `audioRobustnessTiers`), strongest rung first. One configuration per rung,
+ *   and nothing unstamped behind them: a device without the top tier descends the ladder, and the weakest rung is the
+ *   fallback. Chromium warns for any _requested_ configuration that omits `robustness` — including one it never accepts
+ *   — so the ladder ends at a tier every CDM has rather than at an unstamped entry.
  *
  * Scheme is the outer preference because a mismatched scheme risks failing decode outright, whereas a lower robustness
  * tier only means weaker content protection.
@@ -111,14 +112,17 @@ export function buildKeySystemConfigurations(
       : module_.schemeFallback === false
         ? [encryptionScheme]
         : [encryptionScheme, undefined];
-  // One rung per tier a present capability could carry, then `undefined` for the unstamped last
-  // resort. A module naming no tier for the types on offer gets that entry alone — otherwise the
-  // configurations would be identical.
+  // One rung per tier a present capability could carry, and **no unstamped rung behind them**.
+  // Chromium warns for any *requested* configuration that omits `robustness`, not just the one it
+  // accepts, so a trailing unstamped entry warns even when a stamped rung wins — measured against a
+  // real CDM. The ladder's own floor is the fallback instead. A module naming no tier at all still
+  // gets a single unstamped configuration, because it has nothing else to ask for.
   const rungCount = Math.max(
     contentTypes.video.length > 0 ? (module_.videoRobustnessTiers?.length ?? 0) : 0,
     contentTypes.audio.length > 0 ? (module_.audioRobustnessTiers?.length ?? 0) : 0
   );
-  const rungs: Array<number | undefined> = [...Array.from({ length: rungCount }, (_, rung) => rung), undefined];
+  const rungs: Array<number | undefined> =
+    rungCount > 0 ? Array.from({ length: rungCount }, (_, rung) => rung) : [undefined];
 
   return schemes.flatMap((scheme) => rungs.map((rung) => configuration(scheme, rung)));
 }
