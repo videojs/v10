@@ -1500,12 +1500,21 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(names).toEqual([
         'BarrelVideo',
         'ComplexVideo',
+        'EmbedAudio',
         'EmbedVideo',
         'ExtendingVideo',
         'MixinVideo',
         'SimpleVideo',
         'SpfAudio',
       ]);
+    });
+
+    it('discovers elements built with createMediaElement as well as CustomMediaElement', () => {
+      // SimpleVideo composes through the factory, MixinVideo through the factory with an options object, and
+      // ComplexVideo through CustomMediaElement directly; each target comes from the host's static `host`.
+      expect(findElement('SimpleVideo')!.reference.platforms.html.target).toBe('video');
+      expect(findElement('MixinVideo')!.reference.platforms.html.target).toBe('video');
+      expect(findElement('ComplexVideo')!.reference.platforms.html.target).toBe('video');
     });
 
     it('does not treat the UI container as a media element', () => {
@@ -1518,7 +1527,7 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(7);
+      expect(results.length).toBe(8);
     });
 
     it('follows nested public index barrels without including sibling implementations', () => {
@@ -1856,6 +1865,15 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(Object.keys(react!.props).sort()).toEqual(['autoplay', 'source', 'src']);
     });
 
+    it('classifies an iframe-backed element as audio from its media class name', () => {
+      const audio = findElement('EmbedAudio')!.reference;
+      const video = findElement('EmbedVideo')!.reference;
+
+      expect(audio.platforms.html.target).toBe('iframe');
+      expect(audio.mediaType).toBe('audio');
+      expect(video.mediaType).toBe('video');
+    });
+
     it('extracts engine options by following the source property type', () => {
       const ref = findElement('EmbedVideo')!.reference;
 
@@ -2160,6 +2178,17 @@ describe('Media element pipeline (end-to-end)', () => {
 
       expect(ref.tagName).toBe('spf-audio');
       expect(ref.mediaType).toBe('audio');
+    });
+
+    it('takes the media attributes of the audio host as standard and none of the video ones', () => {
+      const attributes = findElement('SpfAudio')!.reference.platforms.html.attributes;
+
+      expect(attributes.standard).toContain('src');
+      expect(attributes.standard).toContain('controls');
+      expect(attributes.standard).toContain('muted');
+      expect(attributes.standard).not.toContain('poster');
+      expect(attributes.standard).not.toContain('playsinline');
+      expect(attributes.custom['preload']).toBeUndefined();
     });
 
     it('resolves the mixin through another package barrel', () => {

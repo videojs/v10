@@ -33,6 +33,8 @@ import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } f
  *   new value.
  */
 export class TikTokAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host = 'iframe';
+
   static readonly defaultProps: TikTokAdapterProps = {
     src: '',
     autoplay: false,

@@ -24,6 +24,8 @@ import type { YouTubeAdapterProps } from './props';
 import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from './source';
 
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host = 'iframe';
+
   static readonly defaultProps: YouTubeAdapterProps = {
     src: '',
     autoplay: false,

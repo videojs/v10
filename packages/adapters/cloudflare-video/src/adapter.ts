@@ -16,6 +16,8 @@ import { type CloudflareStreamApi, type CloudflareStreamPlayerApi, loadCloudflar
  *   new value.
  */
 export class CloudflareAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host = 'iframe';
+
   static readonly defaultProps: CloudflareAdapterProps = {
     src: '',
     autoplay: false,

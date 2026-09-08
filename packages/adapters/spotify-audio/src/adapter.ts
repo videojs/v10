@@ -22,6 +22,8 @@ import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from '.
  *   new value.
  */
 export class SpotifyAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host = 'iframe';
+
   static readonly defaultProps: SpotifyAdapterProps = {
     src: '',
     autoplay: false,

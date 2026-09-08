@@ -35,6 +35,8 @@ import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './so
  *   new value.
  */
 export class TwitchAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host = 'iframe';
+
   static readonly defaultProps: TwitchAdapterProps = {
     src: '',
     autoplay: false,

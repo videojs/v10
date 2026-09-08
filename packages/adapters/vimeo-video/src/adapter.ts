@@ -65,6 +65,8 @@ export interface VimeoAdapterProps {
  *   for the new value.
  */
 export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host = 'iframe';
+
   static readonly defaultProps: VimeoAdapterProps = {
     src: '',
     autoplay: false,

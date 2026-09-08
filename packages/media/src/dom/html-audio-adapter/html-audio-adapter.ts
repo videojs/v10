@@ -1,4 +1,14 @@
 import type { Audio, AudioEvents } from '../../core/types';
-import { HTMLMediaAdapter, type HTMLMediaTargetLike } from '../html-media-adapter';
+import {
+  type AttributeConfigs,
+  HTMLMediaAdapter,
+  type HTMLMediaTargetLike,
+  mediaContentAttributes,
+} from '../html-media-adapter';
 
-export class HTMLAudioAdapter extends HTMLMediaAdapter<HTMLMediaTargetLike, AudioEvents> implements Audio {}
+/** The content attributes an `<audio>` accepts: the media ones and nothing more. */
+export const audioContentAttributes: AttributeConfigs = mediaContentAttributes;
+
+export class HTMLAudioAdapter extends HTMLMediaAdapter<HTMLMediaTargetLike, AudioEvents> implements Audio {
+  static readonly host = 'audio';
+}

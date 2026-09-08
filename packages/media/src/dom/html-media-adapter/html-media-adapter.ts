@@ -19,6 +19,49 @@ export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
 }
 
+/**
+ * The native element an adapter drives, declared as its static `host`.
+ *
+ * Element façades read it to know what to render and attach to: `<video>` and `<audio>` for media adapters, `<iframe>`
+ * for embeds that drive an external player.
+ */
+export type AdapterHost = 'video' | 'audio' | 'iframe';
+
+/** How a property maps to the content attribute that drives it. */
+export interface AttributeConfig {
+  type: BooleanConstructor | NumberConstructor | StringConstructor;
+  /** The attribute name when it is not the lowercased property name. */
+  attribute?: string;
+  /** The value the property takes when the attribute is removed, when that is not the empty string. */
+  empty?: unknown;
+  /**
+   * A live-state property written alongside the owner. A `muted` attribute is `defaultMuted` by the HTML spec, but the
+   * page that writes it means to start muted, so it steers `muted` too.
+   */
+  state?: string;
+}
+
+export type AttributeConfigs = Record<string, AttributeConfig>;
+
+/**
+ * The content attributes every native media element accepts, keyed by the property that reflects each one.
+ *
+ * `defaultMuted` owns the `muted` attribute, as in HTML, and seeds the `muted` state with it: a `<video muted>` starts
+ * muted, and toggling the attribute later mutes and unmutes the way the property does.
+ */
+export const mediaContentAttributes: AttributeConfigs = {
+  autoplay: { type: Boolean },
+  controls: { type: Boolean },
+  controlsList: { type: String },
+  crossOrigin: { type: String, empty: null },
+  defaultMuted: { type: Boolean, attribute: 'muted', state: 'muted' },
+  disableRemotePlayback: { type: Boolean },
+  loading: { type: String },
+  loop: { type: Boolean },
+  preload: { type: String, empty: null },
+  src: { type: String, empty: '' },
+};
+
 /** An {@link HTMLMediaAdapter} over any target and event map: the shape extensions and element façades share. */
 export type AnyHTMLMediaAdapter<Target extends HTMLMediaTargetLike = any> = HTMLMediaAdapter<Target, any>;
 
@@ -37,6 +80,16 @@ export interface MediaExtensionConstructor<T extends MediaExtension = MediaExten
 export interface MediaExtensions extends Map<MediaExtensionConstructor, MediaExtension> {
   get<T extends MediaExtension>(component: MediaExtensionConstructor<T>): T | undefined;
   set<T extends MediaExtension>(component: MediaExtensionConstructor<T>, instance: T): this;
+}
+
+const forwardedEvents = new WeakSet<Event>();
+
+/**
+ * Whether an event is an adapter's copy of one its target element dispatched. A composed copy already reached any
+ * element wrapping the target through the shadow boundary, so a bridge can leave it alone.
+ */
+export function isForwardedEvent(event: Event): boolean {
+  return forwardedEvents.has(event);
 }
 
 export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
@@ -119,7 +172,10 @@ export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends
   }
 
   #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    const copy = new (event.constructor as typeof Event)(event.type, event);
+
+    forwardedEvents.add(copy);
+    this.dispatchEvent(copy);
   };
 
   /**

@@ -1,0 +1,69 @@
+---
+title: createMediaElement
+description: Build a custom media element around a playback adapter that registers with the player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+## Import
+
+```ts
+import { createMediaElement } from "@videojs/html";
+```
+
+## Usage
+
+Pass an adapter class. The returned element renders the adapter's host element in its shadow root, drives it through the adapter, and registers itself with the surrounding <DocsLink slug="reference/player">player</DocsLink> on connect. Everything the element exposes comes from two statics every adapter declares: `host`, which is `'video'` for `HlsJsAdapter`, `'audio'` for `HlsAudioAdapter`, and `'iframe'` for the embed adapters, and `defaultProps`, which names the adapter's configurable properties and their defaults.
+
+```ts
+import { createMediaElement } from '@videojs/html';
+import { HlsJsAdapter } from '@videojs/hlsjs-video';
+
+export class MyHlsVideoElement extends createMediaElement(HlsJsAdapter) {
+  static readonly tagName = 'my-hls-video';
+}
+
+customElements.define(MyHlsVideoElement.tagName, MyHlsVideoElement);
+```
+
+Embeds pass a `template` that renders the provider's `<iframe>` from the element's initial attributes:
+
+```ts
+import { createMediaElement } from '@videojs/html';
+import { escapeHtml } from '@videojs/utils/string';
+import { VimeoAdapter } from '@videojs/vimeo-video';
+
+export class MyVimeoVideoElement extends createMediaElement(VimeoAdapter, {
+  template: (attrs) => `<iframe part="iframe" src="${escapeHtml(attrs.src ?? '')}" allowfullscreen></iframe>`,
+}) {}
+```
+
+The template is written to the shadow root with `innerHTML`, so escape any attribute value you interpolate.
+
+The template is also the element's static `template`, so a subclass can override it the same way.
+
+## Attributes
+
+Each primitive in the adapter's `defaultProps` becomes a content attribute of the same type, named by its WHATWG spelling where one exists and kebab-case otherwise: `src`, `preload`, `stream-type`. Removing the attribute resets the property to its default. Object properties such as `source` stay property-only, and so does a boolean that defaults to `true`, since an absent attribute cannot mean `true`. The `muted` attribute belongs to `defaultMuted`, as in HTML, and seeds the `muted` state when it changes. This is the rule the React `createMediaComponent` factory applies to props, so both façades expose the same surface from one declaration.
+
+A `<video>` or `<audio>` host also accepts the attributes its native element understands, such as `controls`, `muted`, and `crossorigin`. Ones the adapter can set go through the adapter; the rest are copied onto the inner element. An `<iframe>` host accepts only what its adapter declares, since nothing is mirrored onto the frame.
+
+```ts
+class LowLatencyAdapter extends HTMLVideoAdapter {
+  static readonly host = 'video';
+  static readonly defaultProps = { src: '', debug: false, latencyMode: 'normal' };
+}
+
+customElements.define('ll-video', createMediaElement(LowLatencyAdapter));
+// <ll-video src="…" debug latency-mode="low" controls></ll-video>
+// `debug` and `latency-mode` reach the adapter; `controls` reaches the <video>.
+```
+
+Every built-in media element except `<wistia-video>` and `<background-video>` is created this way. Subclass the result to add element behavior, such as extra observed attributes.
+
+## Who needs this
+
+Use `createMediaElement` to expose an adapter as a custom element, for example a third-party engine that implements the `@videojs/media` contract. For an element that already renders its own media, or whose media is not a native `<video>` or `<audio>`, apply <DocsLink slug="reference/media-attach-mixin">MediaAttachMixin</DocsLink> to it directly.
+
+<UtilReference util="createMediaElement" />

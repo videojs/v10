@@ -2,11 +2,29 @@ import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from 
 import { isFunction } from '@videojs/utils/predicate';
 
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
-import { getMediaProp, HTMLMediaAdapter, type HTMLMediaTargetLike, setMediaProp } from '../html-media-adapter';
+import {
+  type AttributeConfigs,
+  getMediaProp,
+  HTMLMediaAdapter,
+  type HTMLMediaTargetLike,
+  mediaContentAttributes,
+  setMediaProp,
+} from '../html-media-adapter';
 
 export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
 
+/** The content attributes a `<video>` accepts: the media ones plus its own. */
+export const videoContentAttributes: AttributeConfigs = {
+  ...mediaContentAttributes,
+  autoPictureInPicture: { type: Boolean },
+  disablePictureInPicture: { type: Boolean },
+  playsInline: { type: Boolean },
+  poster: { type: String, empty: '' },
+};
+
 export class HTMLVideoAdapter extends HTMLMediaAdapter<HTMLVideoTargetLike, VideoEvents> implements Video {
+  static readonly host = 'video';
+
   get poster() {
     return getMediaProp(this, 'poster') ?? '';
   }

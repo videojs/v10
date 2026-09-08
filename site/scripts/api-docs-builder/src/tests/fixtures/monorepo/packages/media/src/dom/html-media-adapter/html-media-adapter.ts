@@ -57,3 +57,17 @@ export class HTMLMediaAdapter {
     return '';
   }
 }
+
+/** The content attributes every native media element accepts, keyed by the property that reflects each one. */
+export const mediaContentAttributes = {
+  autoplay: { type: Boolean },
+  controls: { type: Boolean },
+  controlsList: { type: String },
+  crossOrigin: { type: String },
+  defaultMuted: { type: Boolean, attribute: 'muted' },
+  disableRemotePlayback: { type: Boolean },
+  loading: { type: String },
+  loop: { type: Boolean },
+  preload: { type: String },
+  src: { type: String },
+};

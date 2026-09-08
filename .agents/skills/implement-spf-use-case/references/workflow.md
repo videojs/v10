@@ -442,7 +442,7 @@ typical for use-case implementations:
   applying the SPF mixin to `HTMLVideoAdapter` (or audio host for
   audio-only variants), exported through the adjacent `index.ts`; ~5 LOC.
 - **HTML custom element + define entry + CDN entry** —
-  `packages/html/src/media/<key>-video/adapter.ts`,
+  `packages/html/src/media/<key>-video/element.ts`,
   `packages/html/src/define/media/<key>-video.ts`,
   `packages/cdn/src/media/<key>-video.ts`. Inline implementation;
   ~5 LOC + boilerplate.

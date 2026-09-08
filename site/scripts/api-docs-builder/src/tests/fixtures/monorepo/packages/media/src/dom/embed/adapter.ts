@@ -2,6 +2,8 @@
 import type { EmbedSource } from './source';
 
 export class EmbedHost extends EventTarget {
+  static readonly host = 'iframe';
+
   static readonly defaultProps = {
     src: '',
     autoplay: false,
