@@ -641,9 +641,9 @@ describe('HlsVideoAdapterCore', () => {
     });
   });
 
-  describe('HlsVideoMediaElement > structured source', () => {
+  describe('HlsVideoAdapterCore > structured source', () => {
     it('derives src from source.src', () => {
-      const media = new HlsVideoMediaElement();
+      const media = new HlsVideoAdapterCore();
 
       media.source = { src: 'https://example.com/a.m3u8' };
 
@@ -654,7 +654,7 @@ describe('HlsVideoAdapterCore', () => {
     it('announces sourcechange on a host that can dispatch', () => {
       // The standalone element has no EventTarget base, which is why the adapter
       // optional-chains `dispatchEvent`; hosts supply one.
-      class EventfulMedia extends HlsVideoMediaMixin(EventTarget) {}
+      class EventfulMedia extends HlsVideoMixin(EventTarget) {}
       const media = new EventfulMedia();
       const changes: Event[] = [];
 
@@ -668,7 +668,7 @@ describe('HlsVideoAdapterCore', () => {
     });
 
     it('replaces the source when a bare src is assigned, dropping its licensing', () => {
-      const media = new HlsVideoMediaElement();
+      const media = new HlsVideoAdapterCore();
 
       media.source = { src: 'https://example.com/a.m3u8', drm: { 'com.widevine.alpha': { licenseUrl: 'https://l' } } };
 
@@ -680,7 +680,7 @@ describe('HlsVideoAdapterCore', () => {
     });
 
     it('clears the presentation when the source is dropped', () => {
-      const media = new HlsVideoMediaElement();
+      const media = new HlsVideoAdapterCore();
 
       media.source = { src: 'https://example.com/a.m3u8' };
       media.source = null;
@@ -691,7 +691,7 @@ describe('HlsVideoAdapterCore', () => {
     });
 
     it('keeps playing when only the licensing half of a source changes', () => {
-      const media = new HlsVideoMediaElement();
+      const media = new HlsVideoAdapterCore();
 
       media.source = { src: 'https://example.com/a.m3u8' };
       const before = media.engine.state.presentation.get();
@@ -944,7 +944,7 @@ describe('HlsVideoAdapterCore', () => {
     });
 
     it('surfaces the same code for non-DRM clear-key encryption', async () => {
-      const media = new TestMedia();
+      const media = new TestAdapter();
 
       // AES-128 clear-key: the cause is the unsupported encryption method, not a
       // DRM system, but the viewer's situation — unplayable, unfixable here — is

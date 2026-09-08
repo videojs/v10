@@ -1,5 +1,4 @@
 import {
-  createMuxDrmSystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
@@ -9,6 +8,8 @@ import {
 } from '@videojs/mux';
 import { shallowEqual } from '@videojs/utils/object';
 import type { Constructor } from '@videojs/utils/types';
+
+import { createMuxDrmSystems } from '../drm';
 
 export interface MuxAdapterProps {
   src: string;
@@ -145,10 +146,14 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
   // key-system map — an index signature over `DrmSystemConfig` — has no place
   // for. Intersecting the two would make every Mux source unassignable.
   //
-  // Statics are sourced from `Base`, so this mixin's own needs adding back to
-  // the type or callers can't read it.
+  // `defaultProps` is dropped from `Base` for the same reason: it is keyed by the
+  // base's props, so leaving it in would reintroduce that `source` intersection
+  // through the static side.
+  //
+  // Statics are otherwise sourced from `Base`, so this mixin's own need adding
+  // back to the type or callers can't read them.
   return MuxImpl as unknown as Constructor<Omit<InstanceType<Base>, 'source'> & MuxAdapterAPI> &
-    Omit<Base, 'prototype'> & {
+    Omit<Base, 'prototype' | 'defaultProps'> & {
       readonly alternativeMediaSuggestion: string | undefined;
       readonly defaultProps: MuxAdapterProps;
     };

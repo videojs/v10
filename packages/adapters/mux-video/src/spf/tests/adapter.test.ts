@@ -1,3 +1,4 @@
+import { type DrmSystemsConfig, resolveDrmUrl } from '@videojs/spf/drm';
 /**
  * SPF-backed MuxVideoAdapter tests.
  *
@@ -7,44 +8,70 @@
  */
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { resolveDrmUrl } from '@videojs/spf/drm';
-import { createHlsVideoEngine } from '@videojs/spf/hls';
-
 import { MuxVideoAdapter } from '../adapter';
+import { MuxMixin } from '../mixin';
 
-// Real engine, spied construction — the DRM config an Adapter hands over is not
-// readable back off a `Composition`, and these assertions are about what it
-// passes rather than what the engine then does with it.
-vi.mock('@videojs/spf/hls', async () => {
-  const actual = await vi.importActual<typeof import('@videojs/spf/hls')>('@videojs/spf/hls');
-  return { ...actual, createHlsVideoEngine: vi.fn(actual.createHlsVideoEngine) };
-});
-
-// Header `{"alg":"HS256"}`, body sets `aud`, empty signature — unpadded
-// base64url, so it survives a query string untouched.
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature — unpadded base64url, so it survives a query string
+// untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
-/**
- * Resolve one key system's license server off the `drm` config the most recently
- * constructed Adapter handed the engine — which is what the engine itself would do
- * when the CDM asks.
- */
-function licenseUrl(keySystem: string): string | undefined {
-  const calls = vi.mocked(createHlsVideoEngine).mock.calls;
-  const drm = calls[calls.length - 1]![0]!.drm!;
-
-  return resolveDrmUrl(drm[keySystem]?.licenseUrl);
+/** The generic source `MuxMixin` projects Mux identity onto. */
+interface ProjectedSource {
+  src?: string | undefined;
+  drm?: DrmSystemsConfig | undefined;
 }
 
-function serverCertificateUrl(keySystem: string): string | undefined {
-  const calls = vi.mocked(createHlsVideoEngine).mock.calls;
-  const drm = calls[calls.length - 1]![0]!.drm!;
+/**
+ * A stand-in for the real base, recording what `MuxMixin` hands down.
+ *
+ * The base lives in `@videojs/spf/hls-video`, a separate bundle from the engine entry, so the engine it builds cannot
+ * be spied on from this package. What this package contributes to licensing is the projection itself — the merged `drm`
+ * — and that is what the DRM tests below assert. Turning a `drm` entry into a license request is the base's own job,
+ * covered by `@videojs/spf`'s tests.
+ */
+class RecordingBase {
+  static readonly defaultProps = { src: '', source: null };
+  /** Bases constructed, which is also engines built: the real base builds one per instance. */
+  static constructions = 0;
 
-  return resolveDrmUrl(drm[keySystem]?.serverCertificateUrl);
+  /** The source last projected onto the base, or `null` once it is cleared. */
+  projected: ProjectedSource | null = null;
+
+  #src = '';
+
+  constructor() {
+    RecordingBase.constructions += 1;
+  }
+
+  get src(): string {
+    return this.#src;
+  }
+
+  set src(value: string) {
+    this.#src = value;
+  }
+
+  set source(value: ProjectedSource | null) {
+    this.projected = value;
+    this.#src = value?.src ?? '';
+  }
+}
+
+const ProbeMuxVideoAdapter = MuxMixin(RecordingBase);
+
+type ProbeAdapter = InstanceType<typeof ProbeMuxVideoAdapter>;
+
+/** One key system's license server, off the `drm` the Adapter projected. */
+function licenseUrl(media: ProbeAdapter, keySystem: string): string | undefined {
+  return resolveDrmUrl(media.projected?.drm?.[keySystem]?.licenseUrl);
+}
+
+function serverCertificateUrl(media: ProbeAdapter, keySystem: string): string | undefined {
+  return resolveDrmUrl(media.projected?.drm?.[keySystem]?.serverCertificateUrl);
 }
 
 describe('MuxVideoAdapter', () => {
@@ -268,53 +295,63 @@ describe('MuxVideoAdapter DRM', () => {
   const token = fakeJwt({ aud: 'd' });
 
   it('derives Mux license servers from a drm token', () => {
-    const media = new MuxVideoAdapter();
+    const media = new ProbeMuxVideoAdapter();
+
     media.source = { playbackId: 'abc123', drm: { token } };
 
-    expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/abc123?token=${token}`);
-    expect(serverCertificateUrl('com.apple.fps')).toBe(
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
+      `https://license.mux.com/license/widevine/abc123?token=${token}`
+    );
+    expect(serverCertificateUrl(media, 'com.apple.fps')).toBe(
       `https://license.mux.com/appcert/fairplay/abc123?token=${token}`
     );
   });
 
   it('resolves no license server for a source carrying no DRM', () => {
-    const media = new MuxVideoAdapter();
+    const media = new ProbeMuxVideoAdapter();
+
     media.source = { playbackId: 'abc123' };
 
-    // What makes an encrypted rendition prune rather than negotiate: every key
-    // system is named, none resolves.
-    expect(licenseUrl('com.widevine.alpha')).toBeUndefined();
-    expect(licenseUrl('com.apple.fps')).toBeUndefined();
-    expect(licenseUrl('com.microsoft.playready')).toBeUndefined();
+    // What makes an encrypted rendition prune rather than negotiate: nothing is
+    // named, so the base's resolvers have nothing to resolve.
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBeUndefined();
+    expect(licenseUrl(media, 'com.apple.fps')).toBeUndefined();
+    expect(licenseUrl(media, 'com.microsoft.playready')).toBeUndefined();
   });
 
   it('prefers a license server the source names outright over the derived one', () => {
-    const media = new MuxVideoAdapter();
+    const media = new ProbeMuxVideoAdapter();
+
     media.source = {
       playbackId: 'abc123',
       drm: { token, 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
     };
 
-    expect(licenseUrl('com.widevine.alpha')).toBe('https://license.example.com/widevine');
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe('https://license.example.com/widevine');
     // Systems it doesn't name still come from the token.
-    expect(licenseUrl('com.microsoft.playready')).toBe(
+    expect(licenseUrl(media, 'com.microsoft.playready')).toBe(
       `https://license.mux.com/license/playready/abc123?token=${token}`
     );
   });
 
   it('follows the source without rebuilding the engine', () => {
-    const media = new MuxVideoAdapter();
-    const before = vi.mocked(createHlsVideoEngine).mock.calls.length;
+    const media = new ProbeMuxVideoAdapter();
+    const before = RecordingBase.constructions;
 
     media.source = { playbackId: 'abc123', drm: { token } };
-    expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/abc123?token=${token}`);
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
+      `https://license.mux.com/license/widevine/abc123?token=${token}`
+    );
 
     media.source = { playbackId: 'def456', drm: { token } };
-    expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/def456?token=${token}`);
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
+      `https://license.mux.com/license/widevine/def456?token=${token}`
+    );
 
     media.source = null;
-    expect(licenseUrl('com.widevine.alpha')).toBeUndefined();
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBeUndefined();
 
-    expect(vi.mocked(createHlsVideoEngine).mock.calls.length).toBe(before);
+    // The base — and so the engine it builds — was never reconstructed.
+    expect(RecordingBase.constructions).toBe(before);
   });
 });

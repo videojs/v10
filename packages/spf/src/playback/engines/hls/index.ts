@@ -1,8 +1,3 @@
-// The `source.drm`-shaped license-server contract the engine's `drm` config
-// takes — accepts `@videojs/media`'s shape, so adapter-held configs pass
-// through without the package dependency, and additionally takes a resolver
-// per URL for license servers only known once a source is set.
-export type { DrmSystemConfig, DrmSystemsConfig, DrmUrl } from '../../../media/drm';
 // The unit of DRM composability: one value per key system, carrying that
 // system's whole contribution to negotiation, init data, and license shaping.
 // `config.keySystems` is public, so without these a consumer could neither

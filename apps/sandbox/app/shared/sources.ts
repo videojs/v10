@@ -1,4 +1,5 @@
 import type { MuxSource } from '@videojs/mux-video';
+import type { DrmSystemsConfig } from '@videojs/spf/drm';
 
 import { getMuxAssetId } from './mux';
 
@@ -23,8 +24,14 @@ export interface SandboxSource {
    * derived URL.
    */
   poster?: string;
-  /** Structured source, for what a plain `url` cannot express. Takes precedence. */
-  source?: MuxSource;
+  /**
+   * Structured source, for what a plain `url` cannot express. Takes precedence.
+   *
+   * `drm` widens Mux's authoring input to SPF's per-system config as an alternative: a third-party provider names its
+   * own license server and, like Axinom, may authenticate the request with `headers` that Mux's token-derived shape has
+   * no field for.
+   */
+  source?: Omit<MuxSource, 'drm'> & { drm?: MuxSource['drm'] | DrmSystemsConfig };
   chapters?: readonly ChapterTrack[];
 }
 
