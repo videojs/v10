@@ -10,7 +10,7 @@ export default function ReactInstallTabs() {
 
   return (
     <TabsRoot>
-      <TabsList label="Installation">
+      <TabsList label="Installation" analytics={{ block: 'react-install', framework: 'react' }}>
         <Tab value="npm" initial>
           npm
         </Tab>

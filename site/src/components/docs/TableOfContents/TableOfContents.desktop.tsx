@@ -22,7 +22,12 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
   };
 
   return (
-    <nav ref={navRef} aria-label="On this page" className={clsx('', className)}>
+    <nav
+      ref={navRef}
+      aria-label="On this page"
+      data-ph-capture-attribute-location="docs-toc"
+      className={clsx('', className)}
+    >
       <div className="py-8 pr-6">
         <h2 className="text-p3 mb-3 font-bold">On this page</h2>
         <ul className="space-y-3">

@@ -18,7 +18,7 @@ export default function ReactCreateCodeBlock() {
 
   return (
     <TabsRoot maxWidth={false}>
-      <TabsList label="React implementation">
+      <TabsList label="React implementation" analytics={{ block: 'react-create', framework: 'react' }}>
         <Tab value="react" initial>
           ./components/player/index.tsx
         </Tab>

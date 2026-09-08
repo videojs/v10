@@ -62,6 +62,22 @@ pnpm -F site astro check
 - React context does not cross Astro islands.
 - Never expose `context.locals.accessToken` to client code. Auth and Mux integration are only for the installation uploader; trace the middleware and server actions before changing that flow.
 
+## Analytics
+
+PostHog loads production-only from `src/components/Posthog.astro`. It runs cookieless, so there is no durable person:
+never call `identify`, `alias`, or any person-property API. `register()` super properties last for one page load, so
+`Posthog.astro` re-registers `docs_framework` and `docs_style` from storage on every load, and components re-register
+after a change.
+
+- Custom events go through `src/utils/analytics.ts`. Add a name to `ANALYTICS_EVENTS` and its properties to
+  `AnalyticsEventProperties` rather than passing a bare string.
+- Tag clickable markup declaratively with three `data-ph-capture-attribute-*` names, which PostHog reads from the
+  clicked element or any ancestor: `location` for the region (`nav`, `footer-docs`, `hero`, `docs-sidebar`,
+  `install-page`, `mux-uploader`, …), `cta` for a specific call-to-action (`get-started`, `edit-page`, `mux-login`, …),
+  and `destination` for outbound or cross-section links (`mux`, `github`, `discord`, `docs`, `blog`, `external`).
+- Put `location` on a container and `cta`/`destination` on the individual anchor or button.
+- Never send upload IDs, playback IDs, tokens, or free-form user text beyond a search query.
+
 ## API references
 
 Generated reference JSON is gitignored and rebuilt by `pnpm -F site api-docs`, dev, and build. Do not hand-edit it. Change the TypeScript/JSDoc input or the builder, run the generator, and inspect the output. Keep the builder E2E suite passing.

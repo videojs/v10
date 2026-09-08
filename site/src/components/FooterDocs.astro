@@ -11,12 +11,14 @@ type NavLink = {
   href: string;
   label: string;
   external?: boolean;
+  /** Analytics `destination` for autocaptured clicks; omitted for same-section pages. */
+  destination?: 'blog' | 'external';
 };
 const navLinks: NavLink[] = [
-  { href: '/blog', label: 'Blog' },
+  { href: '/blog', label: 'Blog', destination: 'blog' },
   { href: '/changelog', label: 'Changelog' },
   { href: '/privacy', label: 'Privacy' },
-  { href: 'https://legacy.videojs.org', label: 'V8', external: true },
+  { href: 'https://legacy.videojs.org', label: 'V8', external: true, destination: 'external' },
 ];
 
 type Props = {
@@ -26,6 +28,7 @@ const { class: className } = Astro.props;
 ---
 
 <footer
+  data-ph-capture-attribute-location="footer-docs"
   class:list={[
     "@container mt-30 grid gap-3 pb-11 @4xl:mt-32 @4xl:pt-0",
     className,
@@ -42,6 +45,8 @@ const { class: className } = Astro.props;
       >
         <GetStartedLink
           client:idle
+          data-ph-capture-attribute-cta="view-docs"
+          data-ph-capture-attribute-destination="docs"
           className="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
         >
           Docs
@@ -50,6 +55,7 @@ const { class: className } = Astro.props;
           navLinks.map((link) => (
             <a
               href={link.href}
+              data-ph-capture-attribute-destination={link.destination}
               class="flex items-center gap-1.5 rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
             >
               {link.label}{" "}
@@ -65,6 +71,7 @@ const { class: className } = Astro.props;
             href={DISCORD_INVITE_URL}
             class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
             aria-label="Discord"
+            data-ph-capture-attribute-destination="discord"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -74,6 +81,7 @@ const { class: className } = Astro.props;
             href={GITHUB_REPO_URL}
             class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
             aria-label="GitHub"
+            data-ph-capture-attribute-destination="github"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -89,6 +97,7 @@ const { class: className } = Astro.props;
           href={DISCORD_INVITE_URL}
           class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
           aria-label="Discord"
+          data-ph-capture-attribute-destination="discord"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -98,6 +107,7 @@ const { class: className } = Astro.props;
           href={GITHUB_REPO_URL}
           class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
           aria-label="GitHub"
+          data-ph-capture-attribute-destination="github"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -120,6 +130,7 @@ const { class: className } = Astro.props;
       <br class="@5xl:hidden" />
       Video hosting and streaming <a
         href={MUX_URL}
+        data-ph-capture-attribute-destination="mux"
         class="underline intent:decoration-gold"
         >sponsored by Mux.
       </a>
