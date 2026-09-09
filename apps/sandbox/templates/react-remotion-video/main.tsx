@@ -9,6 +9,7 @@ import { type Demo, type DemoId, DEMOS, readDemoFromUrl, writeDemoToUrl } from '
 import type { RemotionSource } from './remotion-adapter';
 import { RemotionVideo } from './remotion-video';
 import { SkinPicker } from './skin-picker';
+import { SHARED_FILES, SourceViewer } from './source-viewer';
 
 const INPUT_CLASS =
   'rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-900';
@@ -48,6 +49,7 @@ function App() {
     () => DEMOS[readDemoFromUrl()].defaultInputProps ?? {}
   );
   const demo: Demo = DEMOS[demoId];
+  const files = useMemo(() => [demo.file, ...SHARED_FILES], [demo]);
 
   // Same composition, new input props: the adapter treats that as a live update, not a new source.
   const source = useMemo<RemotionSource>(
@@ -74,6 +76,7 @@ function App() {
       </VideoPlayer>
       <InputPropsForm demo={demo} values={inputProps} onChange={setInputProps} />
       <p className="max-w-[56rem] text-center text-sm text-neutral-600 dark:text-neutral-400">{demo.blurb}</p>
+      <SourceViewer files={files} />
     </div>
   );
 }

@@ -52,6 +52,8 @@ export interface Demo {
   /** One line on what the demo is meant to show about Remotion inside Video.js. */
   readonly blurb: string;
   readonly source: RemotionSource;
+  /** The composition's file in this template, shown first in the source viewer. */
+  readonly file: string;
   readonly fields?: readonly DemoField[];
   readonly defaultInputProps?: Record<string, unknown>;
 }
@@ -64,6 +66,7 @@ const DEMO_TABLE = {
   scenes: {
     label: 'Scenes → chapters',
     blurb: 'Six <Sequence> scenes surfaced as chapter markers in the time slider; seek, rate, and replay round-trip.',
+    file: 'composition.tsx',
     source: {
       id: 'scenes',
       component: DemoComposition,
@@ -78,6 +81,7 @@ const DEMO_TABLE = {
     label: 'Input props + captions',
     blurb:
       'Edit the name and colour while it plays: input props update live. Captions are drawn by the composition and toggled from the Video.js captions menu.',
+    file: 'greeting.tsx',
     source: {
       id: 'greeting',
       component: asComposition(Greeting),
@@ -98,6 +102,7 @@ const DEMO_TABLE = {
     label: 'Mux video + overlays',
     blurb:
       'A Mux MP4 decoded by @remotion/media with motion-graphics overlays. Buffering flows into the Video.js buffering indicator; mute and volume apply to the composition audio.',
+    file: 'mux-overlay.tsx',
     source: {
       id: 'mux-overlay',
       component: asComposition(MuxOverlay),
@@ -112,6 +117,7 @@ const DEMO_TABLE = {
     label: 'Buffer state hand-off',
     blurb:
       'Scene two holds playback with useBufferState() for four seconds; the store goes waiting and the skin shows its own buffering indicator.',
+    file: 'buffer-stall.tsx',
     source: {
       id: 'buffer-stall',
       component: asComposition(BufferStall),
