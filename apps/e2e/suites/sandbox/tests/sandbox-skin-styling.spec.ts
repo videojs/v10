@@ -111,6 +111,7 @@ for (const { platform, skin, styling, skins } of CASES) {
     const thumbnail = root.locator(SELECTORS.thumbnail).first();
 
     await expect(root).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('slider', { name: 'Seek' }).first()).toBeEnabled();
     await slider.hover();
     await expect(thumbnail).toBeAttached({ timeout: 15_000 });
     await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 15_000 });
@@ -345,10 +346,12 @@ for (const skins of ['package', 'registry'] as const) {
     await page.goto(`${SANDBOX_BASE}/html-video/?${query}`, { waitUntil: 'domcontentloaded' });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
-    const slider = page.getByRole('slider', { name: 'Seek' }).first();
+    const slider = root.locator(SELECTORS.timeSlider).first();
+    const thumb = root.getByRole('slider', { name: 'Seek' }).first();
 
     await expect(root).toBeVisible({ timeout: 15_000 });
     await expect(slider).toBeVisible();
+    await expect(thumb).toBeEnabled({ timeout: 15_000 });
 
     const sliderBox = await slider.boundingBox();
     if (!sliderBox) throw new Error('Time slider is not visible');

@@ -1,4 +1,10 @@
-import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '@videojs/media';
+import {
+  getTimeRangeEnd,
+  hasTimeRange,
+  type MediaBufferState,
+  type MediaPlaybackState,
+  type MediaTimeState,
+} from '@videojs/media';
 import { toPercent } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
@@ -6,7 +12,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { Text } from '../../i18n';
 import { seekText } from '../../i18n/text/slider';
-import { positionText } from '../../i18n/text/time';
+import { positionText, unknownText } from '../../i18n/text/time';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/core';
 
 export interface TimeSliderProps extends SliderProps {
@@ -63,10 +69,11 @@ export class TimeSliderCore extends SliderCore {
 
   getState(): TimeSliderState {
     const media = this.#media!;
-    const { duration, currentTime, seeking, buffered } = media;
+    const { currentTime, seeking, buffered } = media;
+    const duration = getTimeRangeEnd(media);
 
     // Override min/max for time domain, forwarding all user props so disabled/thumbAlignment aren't lost.
-    super.setProps({ ...this.#props, min: 0, max: duration });
+    super.setProps({ ...this.#props, disabled: this.#props.disabled || !hasTimeRange(media), min: 0, max: duration });
 
     const base = super.getSliderState(currentTime);
 
@@ -98,6 +105,8 @@ export class TimeSliderCore extends SliderCore {
   }
 
   getValueText(state: TimeSliderState): Text | string {
+    if (state.duration <= 0) return unknownText;
+
     return Number.isFinite(state.duration) ? positionText : this.getValueTextParams(state).current;
   }
 

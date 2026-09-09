@@ -106,7 +106,7 @@ export interface MediaSeekCapability {
 
 export type MediaPreloadType = '' | 'none' | 'metadata' | 'auto';
 
-const MediaReadyState = {
+export const MediaReadyState = {
   HAVE_NOTHING: 0,
   HAVE_METADATA: 1,
   HAVE_CURRENT_DATA: 2,

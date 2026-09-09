@@ -1,3 +1,4 @@
+// oxlint-disable anti-slop/no-known-value-widening
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -210,6 +211,31 @@ function serveAppShell(): Plugin {
   };
 }
 
+function sandboxHeadPlugin(): Plugin {
+  return {
+    name: 'sandbox-head',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'meta',
+          attrs: { charset: 'UTF-8' },
+          injectTo: 'head-prepend',
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
+          injectTo: 'head-prepend',
+        },
+        {
+          tag: 'link',
+          attrs: { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css', crossorigin: true },
+          injectTo: 'head',
+        },
+      ];
+    },
+  };
+}
+
 /** The sandbox config, plus the skins preset's contribution when the workspace overlay supplies one. */
 export function createSandboxConfig(skinsSource?: SkinsSource) {
   return defineConfig({
@@ -283,6 +309,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       // under `packages/skins/src` would otherwise send that JSX to the compiler's own runtime.
       react({ jsxImportSource: 'react' }),
       serveAppShell(),
+      sandboxHeadPlugin(),
     ],
     resolve: {
       alias: {
@@ -310,6 +337,18 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       // The Sandbox can load every media adapter and generated React skin. Prebundle their runtime dependencies before
       // serving so discovering a new route cannot hot-reload an already mounted player graph during development or E2E.
       include: [
+        '@base-ui/react/button',
+        '@base-ui/react/dialog',
+        '@base-ui/react/input',
+        '@base-ui/react/merge-props',
+        '@base-ui/react/select',
+        '@base-ui/react/separator',
+        '@base-ui/react/slider',
+        '@base-ui/react/switch',
+        '@base-ui/react/toggle',
+        '@base-ui/react/toggle-group',
+        '@base-ui/react/tooltip',
+        '@base-ui/react/use-render',
         '@videojs/html > @videojs/element > @lit/context',
         '@videojs/media > dashjs',
         '@videojs/media > hls.js',

@@ -384,7 +384,11 @@ export async function buttonInteractionContract(page: Page, button: Locator) {
       };
     });
 
+  // Establish keyboard focus in this frame instead of inheriting its last pointer modality.
   await button.focus();
+  await button.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(button).toBeFocused();
   await page.waitForTimeout(200);
   const focus = await inspect();
 

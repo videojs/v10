@@ -25,8 +25,9 @@ async function getPreviewFrame(page: Page, path: string): Promise<Frame> {
 
 /** The width control lives in the options panel, which opens closed. */
 async function openOptions(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Options' }).click();
+  await page.getByRole('button', { name: 'Options', exact: true }).click();
   await expect(page.getByRole('complementary', { name: 'Options' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close options', exact: true })).toBeFocused();
 }
 
 async function playerWidth(scope: Page | Frame): Promise<number> {
@@ -41,6 +42,33 @@ async function playerWidth(scope: Page | Frame): Promise<number> {
 }
 
 test.describe('Sandbox shell controls', () => {
+  for (const width of [320, 1280]) {
+    test(`select menus keep option labels within the popup at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`);
+
+      for (const name of ['Media', 'Source']) {
+        await page.getByRole('combobox', { name, exact: true }).click();
+        const popup = page.locator('[data-slot="select-content"][data-open]');
+
+        await expect(popup).toBeVisible();
+        await expect(async () => {
+          const bounds = await popup.boundingBox();
+
+          expect(bounds).not.toBeNull();
+          expect(bounds!.x).toBeGreaterThanOrEqual(0);
+          expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+          const clipped = await popup
+            .getByRole('option')
+            .evaluateAll((options) => options.some((option) => option.scrollWidth > option.clientWidth));
+
+          expect(clipped).toBe(false);
+        }).toPass();
+        await page.keyboard.press('Escape');
+      }
+    });
+  }
+
   test('the width control sizes the player in the preview', async ({ page }) => {
     await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&width=480&${QUERY}`, {
       waitUntil: 'domcontentloaded',
@@ -52,10 +80,12 @@ test.describe('Sandbox shell controls', () => {
 
     const slider = page.getByRole('slider', { name: 'Width' });
 
-    await expect(slider).toHaveValue('480');
+    await expect(slider).toHaveAttribute('aria-valuenow', '480');
     await expect.poll(() => playerWidth(frame)).toBe(480);
 
-    await slider.fill('640');
+    await slider.press('ArrowRight');
+    await expect(slider).toHaveAttribute('aria-valuetext', '481 pixels');
+    await page.getByRole('spinbutton', { name: 'Width in pixels' }).fill('640');
 
     await expect(page).toHaveURL(/[?&]width=640(?:&|$)/);
     await expect.poll(() => playerWidth(frame)).toBe(640);
@@ -67,7 +97,7 @@ test.describe('Sandbox shell controls', () => {
     const frame = await getPreviewFrame(page, '/react-audio/');
 
     await openOptions(page);
-    await expect(page.getByRole('slider', { name: 'Width' })).toHaveValue('576');
+    await expect(page.getByRole('slider', { name: 'Width' })).toHaveAttribute('aria-valuenow', '576');
     await expect.poll(() => playerWidth(frame)).toBe(576);
     await expect(page).not.toHaveURL(/[?&]width=/);
   });
@@ -106,17 +136,73 @@ test.describe('Sandbox shell controls', () => {
     await expect(root).toHaveCSS('direction', 'ltr');
 
     await openOptions(page);
-    await page.getByLabel('Direction').selectOption('rtl');
+    await page.getByRole('combobox', { name: 'Direction', exact: true }).click();
+    await page.getByRole('option', { name: 'Right to left', exact: true }).click();
 
     await expect(frame.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(root).toHaveCSS('direction', 'rtl');
     await expect(page).toHaveURL(/[?&]dir=rtl(?:&|$)/);
 
-    await page.getByLabel('Color scheme').selectOption('light');
+    await page.getByRole('combobox', { name: 'Color scheme', exact: true }).click();
+    await page.getByRole('option', { name: 'Light', exact: true }).click();
 
     await expect(page.locator('html')).toHaveAttribute('data-color-scheme', 'light');
     await expect(frame.locator('html')).toHaveAttribute('data-color-scheme', 'light');
     await expect(frame.locator('html')).toHaveCSS('color-scheme', 'light');
     await expect(page).toHaveURL(/[?&]scheme=light(?:&|$)/);
+  });
+
+  test('switches and grouped language options retain their settings', async ({ page }) => {
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`);
+    await openOptions(page);
+    const loop = page.getByRole('switch', { name: 'Loop', exact: true });
+
+    await loop.press('Space');
+    await expect(loop).toBeChecked();
+    await expect(page).toHaveURL(/[?&]loop=1(?:&|$)/);
+    await page.getByRole('combobox', { name: 'Language', exact: true }).click();
+    await expect(page.getByRole('group', { name: 'Built-in packs', exact: true })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Browser API only', exact: true })).toBeAttached();
+    await page.getByRole('option', { name: 'French', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]locale=fr(?:&|$)/);
+  });
+
+  test('closing the sidebar restores focus and excludes its controls from tab order', async ({ page }) => {
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`);
+    await openOptions(page);
+    await page.getByRole('button', { name: 'Close options', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Options', exact: true })).toBeFocused();
+    await expect(page.getByRole('slider', { name: 'Width', exact: true })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Options', exact: true })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('mobile options use a dialog that returns focus on Escape', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`);
+    const trigger = page.getByRole('button', { name: 'Options', exact: true });
+
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: 'Options', exact: true });
+
+    await expect(dialog).toBeVisible();
+    await dialog.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
+
+  test('pointer changes snap at breakpoints without trapping keyboard adjustments', async ({ page }) => {
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&width=800&${QUERY}`);
+    await openOptions(page);
+    const slider = page.getByRole('slider', { name: 'Width', exact: true });
+    const track = await page.locator('[data-slot="slider"]').boundingBox();
+    if (!track) throw new Error('Expected a width slider track.');
+
+    await page.locator('[data-slot="slider"]').click({
+      position: { x: track.width * ((516 - 240) / (1360 - 240)), y: track.height / 2 },
+    });
+    await expect(slider).toHaveAttribute('aria-valuenow', '512');
+    await slider.press('ArrowRight');
+    await expect(slider).toHaveAttribute('aria-valuenow', '513');
   });
 });

@@ -13,6 +13,7 @@ export default styles({
     root: {
       utilities: [
         'group/slider relative flex flex-1 cursor-pointer items-center justify-center outline-hidden',
+        'data-disabled:pointer-events-none',
         'rounded-media-pill',
         'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))]',
         'data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
