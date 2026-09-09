@@ -38,6 +38,7 @@
     "@videojs/youtube-video": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.5",
+    "radix-ui": "^1.6.7",
     "react-resizable-panels": "^4.12.4"
   },
   "devDependencies": {
