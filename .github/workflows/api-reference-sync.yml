@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.merge_commit_sha }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.1.0
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'

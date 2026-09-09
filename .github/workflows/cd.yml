@@ -56,7 +56,7 @@ jobs:
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6.1.0
 
       - uses: actions/setup-node@v5
         if: ${{ steps.release.outputs.releases_created == 'true' }}
