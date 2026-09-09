@@ -57,14 +57,16 @@ export function SelectField({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {optionGroups
-            ? optionGroups.map((group) => (
-                <SelectGroup key={group.label}>
-                  <SelectLabel>{group.label}</SelectLabel>
-                  {items(group.options)}
-                </SelectGroup>
-              ))
-            : items(options)}
+          {optionGroups ? (
+            optionGroups.map((group) => (
+              <SelectGroup key={group.label}>
+                <SelectLabel>{group.label}</SelectLabel>
+                {items(group.options)}
+              </SelectGroup>
+            ))
+          ) : (
+            <SelectGroup>{items(options)}</SelectGroup>
+          )}
         </SelectContent>
       </Select>
     </>
