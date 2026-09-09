@@ -1,6 +1,7 @@
 import { PosterCore, PosterDataAttrs, type PosterImageLoadState } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectMetadata, selectPlayback } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
+import { findComposedElement, isHTMLImageElement } from '@videojs/utils/dom';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/controller';
@@ -20,31 +21,6 @@ img {
 img:not([src]) {
   visibility: hidden;
 }`;
-
-/** What an element composes: whatever fills a slot, or the element's own children. */
-function composedChildren(element: Element): Element[] {
-  if (element instanceof HTMLSlotElement) {
-    const assigned = element.assignedElements();
-    if (assigned.length > 0) return assigned;
-  }
-
-  return [...element.children];
-}
-
-/**
- * The first image an element composes. A skin forwards its own `<slot name="poster">` in, so the image is a slot or two
- * down and may be wrapped in a `<picture>` or a framework image component.
- */
-function findImage(element: Element): HTMLImageElement | null {
-  for (const child of composedChildren(element)) {
-    if (child instanceof HTMLImageElement) return child;
-
-    const nested = findImage(child);
-    if (nested) return nested;
-  }
-
-  return null;
-}
 
 /**
  * Whether anything already points this image somewhere, which answers both whether the author owns the source and
@@ -171,7 +147,8 @@ export class PosterElement extends UIElement {
 
     const { src } = this.#core.getState();
 
-    this.#adopt(findImage(this) ?? this.#fallback);
+    // A skin forwards its own `<slot name="poster">` in, so the image may sit a slot or two down inside a `<picture>`.
+    this.#adopt(findComposedElement(this, isHTMLImageElement) ?? this.#fallback);
     this.#applySource(src);
 
     this.#core.setImageLoadState(this.#loadState);

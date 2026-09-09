@@ -9,7 +9,7 @@ import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
-import { listen } from '@videojs/utils/dom';
+import { findComposedElement, isHTMLImageElement, listen } from '@videojs/utils/dom';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/controller';
@@ -24,28 +24,6 @@ img,
 ::slotted(img) {
   display: block;
 }`;
-
-/** What an element composes: whatever fills a slot, or the element's own children. */
-function composedChildren(element: Element): Element[] {
-  if (element instanceof HTMLSlotElement) {
-    const assigned = element.assignedElements();
-    if (assigned.length > 0) return assigned;
-  }
-
-  return [...element.children];
-}
-
-/** Find the first image composed inside the thumbnail, including through a forwarding slot. */
-function findImage(element: Element): HTMLImageElement | null {
-  for (const child of composedChildren(element)) {
-    if (child instanceof HTMLImageElement) return child;
-
-    const nested = findImage(child);
-    if (nested) return nested;
-  }
-
-  return null;
-}
 
 /** The image the element draws when none is supplied, reachable from outside as `::part(image)`. */
 function createFallbackImage(): HTMLImageElement {
@@ -179,7 +157,7 @@ export class ThumbnailElement extends UIElement {
     }
 
     const thumbnail = this.#core.findActiveThumbnail(this.#thumbnails, this.time);
-    const img = findImage(this) ?? this.#fallback;
+    const img = findComposedElement(this, isHTMLImageElement) ?? this.#fallback;
 
     this.#adopt(img);
 
