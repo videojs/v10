@@ -234,7 +234,8 @@ describe('Component pipeline (end-to-end)', () => {
   //
   // Parts are discovered from index.parts.ts exports:
   //   - PRIMARY PART: The part whose React source instantiates the
-  //     component's own Core class (matches `new {Name}Core\b`).
+  //     component's own Core class (matches `new {Name}Core\b`). When
+  //     no part does, or several do, the part named `Root` is chosen.
   //     Gets: shared core Props/State, data-attrs, CSS vars, root tagName.
   //   - SUB-PARTS: All other parts. Get: their own tagName (if element
   //     file exists), description from React JSDoc, shared data-attrs
@@ -401,6 +402,62 @@ describe('Component pipeline (end-to-end)', () => {
       // parts not listed in @parts are untouched
       expect(parts.track!.dataAttributes).toEqual({});
       expect(parts.indicator!.dataAttributes['data-emphasized']).toBeUndefined();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // MULTI-PART WITH A SHARED SOURCE FILE: OptionGroup
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Option groups export Root, Options, and Value from one `component.tsx`
+  // and drive the core through hooks, so no React source constructs it.
+  //   - Part kebabs derive from the export names instead of the shared
+  //     file name, so the parts do not collapse into one record.
+  //   - `Root` becomes the primary part by fallback and gets the core
+  //     data plus the component's `element.ts` (tag name and events).
+  //   - Descriptions and sub-part props resolve by local export name
+  //     inside the shared file.
+
+  describe('OptionGroup (multi-part, shared source file)', () => {
+    it('keeps one part per export', () => {
+      const ref = findComponent('OptionGroup')!.reference;
+
+      expect(ref.props).toEqual({});
+      expect(ref.platforms).toEqual({});
+      expect(Object.keys(ref.parts!).sort()).toEqual(['options', 'root', 'value']);
+    });
+
+    it('falls back to Root as the primary part', () => {
+      const root = findComponent('OptionGroup')!.reference.parts!.root!;
+
+      expect(root.name).toBe('Root');
+      expect(root.description).toBe(
+        'Owns option state and shares it with an enclosing menu. Does not render a DOM element.'
+      );
+      expect(root.props.label).toMatchObject({ type: 'string', default: "''" });
+      expect(root.props.formatOption).toMatchObject({ type: 'function' });
+      expect(root.state.value).toMatchObject({ type: 'string' });
+      expect(root.dataAttributes['data-value']).toMatchObject({ description: 'The selected option value.' });
+      expect(root.platforms.html).toEqual({
+        tagName: 'media-option-group',
+        events: [{ name: 'value-change', description: 'Emitted when the selected option changes.' }],
+      });
+      expect(root.platforms.react).toEqual({});
+    });
+
+    it('resolves sub-parts by export name inside the shared file', () => {
+      const parts = findComponent('OptionGroup')!.reference.parts!;
+
+      expect(parts.options!.description).toBe('Renders items for the available options.');
+      expect(parts.options!.props.renderItem).toMatchObject({
+        type: '((value: string) => unknown)',
+        frameworks: ['react'],
+      });
+      expect(parts.options!.platforms).toEqual({ react: {} });
+
+      expect(parts.value!.description).toBe('Displays the selected option label.');
+      expect(parts.value!.props.className).toMatchObject({ type: 'string' });
+      expect(parts.value!.platforms).toEqual({ react: {} });
     });
   });
 

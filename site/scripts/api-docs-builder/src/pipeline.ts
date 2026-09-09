@@ -32,7 +32,7 @@ import type {
   PropDef,
   StateDef,
 } from './types.js';
-import { kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
+import { kebabToPascal, log, partKebabFromSource, pascalToKebab, sortProps } from './utils.js';
 
 // ─── Overrides ─────────────────────────────────────────────────────
 
@@ -320,33 +320,42 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
   const componentKebab = source.kebab;
   const htmlDir = path.join(htmlUiPath, componentKebab);
 
+  // Parts that share one source file (`./component` exporting Root, Options, and Value) are named after
+  // their export; a file-derived kebab would collide and collapse them into a single part.
+  const sharedSources = new Set(
+    localExports.map((part) => part.source).filter((value, index, all) => all.indexOf(value) !== index)
+  );
+
   const parts: PartSource[] = [];
 
   for (const partExport of localExports) {
-    const kebab = partKebabFromSource(partExport.source, componentKebab);
+    const kebab = sharedSources.has(partExport.source)
+      ? pascalToKebab(partExport.name)
+      : partKebabFromSource(partExport.source, componentKebab);
 
     const partElement = resolvePartElement(htmlDir, componentKebab, partExport.source, kebab);
 
     const reactFile = path.join(path.dirname(source.partsIndexPath!), `${partExport.source.replace('./', '')}.tsx`);
     const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
 
-    const isPrimary = !!reactPath && instantiatesCore(reactPath, source.name);
-
-    const subPartUsesDataAttrs = !isPrimary && !!reactPath && usesDataAttrs(reactPath);
-
-    const part: PartSource = {
+    parts.push({
       name: partExport.name,
       localName: partExport.localName,
       kebab,
-      isPrimary,
-      htmlPath: partElement?.path ?? (isPrimary ? source.htmlPath : undefined),
+      isPrimary: !!reactPath && instantiatesCore(reactPath, source.name),
+      htmlPath: partElement?.path,
       htmlElementName: partElement?.className,
       reactPath,
-      dataAttrsPath: subPartUsesDataAttrs ? source.dataAttrsPath : undefined,
-      dataAttrsComponentName: subPartUsesDataAttrs ? source.name : undefined,
-    };
+    });
+  }
 
-    parts.push(part);
+  selectPrimaryPart(parts, source);
+
+  for (const part of parts) {
+    if (part.isPrimary || !part.reactPath || !usesDataAttrs(part.reactPath)) continue;
+
+    part.dataAttrsPath = source.dataAttrsPath;
+    part.dataAttrsComponentName = source.name;
   }
 
   if (nonLocalExports.length > 0) {
@@ -405,21 +414,22 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
     }
   }
 
-  const primaryCount = parts.filter((p) => p.isPrimary).length;
-
-  if (primaryCount > 1) {
-    let foundFirst = false;
-
-    for (const p of parts) {
-      if (p.isPrimary) {
-        if (foundFirst) p.isPrimary = false;
-
-        foundFirst = true;
-      }
-    }
-  }
-
   return parts.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+}
+
+// Exactly one local part carries the shared core data and the component's root element. Several parts
+// qualify when they share a source file that constructs the core; none qualifies when the React parts
+// drive the core through hooks instead of constructing it. Both cases fall back to the `Root` part.
+function selectPrimaryPart(parts: PartSource[], source: ComponentSource): void {
+  const primaries = parts.filter((part) => part.isPrimary);
+  const root = parts.find((part) => part.name === 'Root');
+
+  const primary = primaries.length === 0 ? root : (primaries.find((part) => part.name === 'Root') ?? primaries[0]);
+  if (!primary) return;
+
+  for (const part of parts) part.isPrimary = part === primary;
+
+  primary.htmlPath ??= source.htmlPath;
 }
 
 // ─── Component Reference Building ──────────────────────────────────

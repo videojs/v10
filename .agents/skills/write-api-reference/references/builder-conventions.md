@@ -58,7 +58,9 @@ The same map covers media elements whose PascalCase name doesn't kebab-case to t
 
 **Single-part fallback**: When filtering leaves only one part (typically Root), the component uses single-part mode — the remaining part's props/state/data-attrs are promoted to the top level, not nested under `parts`.
 
-**Primary part identification**: The part whose React source file instantiates the component's Core class (matches `new \w+Core\(`). The primary part receives the shared core props/state/data-attrs/css-vars.
+**Primary part identification**: The part whose React source file instantiates the component's Core class (matches `new {Name}Core`). When no part does (the parts drive the core through hooks) or several do (they share one source file), the part exported as `Root` is primary. The primary part receives the shared core props/state/data-attrs/css-vars and the component's `element.ts`.
+
+**Shared source files**: Parts may be exported from one file (`export { XRoot as Root, XOptions as Options, XValue as Value } from './component'`). Their kebabs then derive from the export names (`root`, `options`, `value`) rather than the file name, and descriptions and `{LocalName}Props` resolve by local export name inside that file.
 
 **Non-primary parts**: Each gets its own element file at `packages/html/src/ui/{name}/{part}.ts` (e.g., `time/group.ts`). Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`). A nested React part source such as `./chapters/title` is honored when the same folder exists on the HTML side; otherwise the part is looked up flat in the component directory.
 
