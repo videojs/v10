@@ -58,6 +58,24 @@ If the user is active, or if the video is paused, this component will show contr
 
 User activity is tracked via pointer movement, keyboard input, and focus events on the player container. On touch devices, a quick tap toggles visibility. `mouseleave` immediately sets the user as inactive.
 
+`visibility` selects between the two modes. The default, `auto`, follows the player's controls visibility state as described above. `always` keeps the controls visible and reports the user as active regardless of playback or idle state, and works without the controls feature. The idle delay itself is not configurable.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Controls.Root visibility="always">
+  <Controls.Content>...</Controls.Content>
+</Controls.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-controls visibility="always">
+  <media-controls-content>...</media-controls-content>
+</media-controls>
+```
+</FrameworkCase>
+
 ## Styling
 
 `Controls.Root` is a state and context provider. `Controls.Content` / `<media-controls-content>` renders the interactive controls surface and receives its DOM props, ref, and controls state data attributes.

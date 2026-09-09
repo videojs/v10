@@ -375,7 +375,7 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
 | `poster` / `data-poster` | Set `poster` on `<video-player>` or `VideoPlayer`. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
-| `hideControls` | Preset skins auto-hide controls based on activity. The delay is currently not configurable. |
+| `hideControls` | Preset skins auto-hide controls based on activity. `hideControls: false` maps to `visibility="always"` on the controls component in a custom or ejected skin; the delay is currently not configurable. |
 | `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#eject-a-skin) to remove or change them. |
 | `keyboard` | Preset video skins include common hotkeys. [Eject the skin](#eject-a-skin) to remove or change them. |
 | `tooltips` | Preset skins include tooltips for common controls. [Eject the skin](#eject-a-skin) to customize them. |
@@ -503,5 +503,5 @@ For changes to controls, layout, or icons, eject the skin into your project. Its
 - Plyr's full-window fullscreen fallback has no matching Video.js feature. This was designed as a fallback when the Fullscreen API wasn't supported, but given [browser support for fullscreen is around 96%](https://caniuse.com/fullscreen), it's unlikely to be required.
 - Plain MP4 source arrays with `size` metadata do not automatically create a quality menu. Use Mux, HLS, or DASH for adaptive quality when possible. A simpler source-driven quality menu may be considered later.
 - Preset skins segment the time slider and show chapter titles when the media includes a default `<track kind="chapters">`. Dedicated cue-point APIs are not complete yet; see [#1442](https://github.com/videojs/v10/issues/1442).
-- The controls auto-hide delay and disabled state are not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)).
+- The controls auto-hide delay is not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)). Disabling auto-hide is possible with `visibility="always"` on the controls component, but not from a preset skin's attributes.
 - Native controls are not automatically removed when custom controls load; see [#1160](https://github.com/videojs/v10/issues/1160).
