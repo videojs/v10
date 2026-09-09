@@ -1,13 +1,26 @@
 import { COMPARE_LAYOUTS, type CompareLayout, type ComparePanel } from '@app/compare';
+import { Button } from '@app/components/ui/button';
+import { Label } from '@app/components/ui/label';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@app/components/ui/resizable';
+import { Switch } from '@app/components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@app/components/ui/toggle-group';
 import { LAYOUT_LABELS } from '@app/labels';
 import type { MediaId } from '@app/media';
 import type { CaptionsMode } from '@app/shared/captions';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
+import { observeResize } from '@videojs/utils/dom';
+import { Fragment, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { type ReportInput, buildReport } from './report';
+
+// Brand marks from Simple Icons (CC0).
+const CSS_ICON =
+  'M1.5 0h21l-1.91 21.563L11.977 24l-8.565-2.438L1.5 0zm17.09 4.413L5.41 4.41l.213 2.622 10.125.002-.255 2.716h-6.64l.24 2.573h6.182l-.366 3.523-2.91.804-2.956-.81-.188-2.11h-2.61l.29 3.855L12 19.288l5.373-1.53L18.59 4.414z';
+const TAILWIND_ICON =
+  'M12.001,4.8c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 C13.666,10.618,15.027,12,18.001,12c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C16.337,6.182,14.976,4.8,12.001,4.8z M6.001,12c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 c1.177,1.194,2.538,2.576,5.512,2.576c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C10.337,13.382,8.976,12,6.001,12z';
 
 /** Everything the frames share; the panels carry what differs. */
 export interface FrameParams {
@@ -28,6 +41,7 @@ export interface FrameParams {
 }
 
 type PreviewProps = {
+  onToolbarResize: (height: number) => void;
   panels: readonly ComparePanel[];
   layout: CompareLayout;
   onLayoutChange: (layout: CompareLayout) => void;
@@ -76,17 +90,12 @@ function buildUrl(panel: ComparePanel, params: FrameParams, bustCache = false): 
   return `${pagePath(panel, params.media)}?${query}`;
 }
 
-const LAYOUT_CLASSES: Record<CompareLayout, string> = {
-  row: 'grid-cols-2 grid-rows-1 overflow-hidden',
-  column: 'grid-cols-1 auto-rows-[40rem] overflow-y-auto',
-  auto: 'grid-cols-1 auto-rows-[40rem] overflow-y-auto @5xl:grid-cols-2 @5xl:grid-rows-1 @5xl:auto-rows-auto @5xl:overflow-hidden',
-};
-
 /**
  * The preview area: the skin controls and the preview actions, then one frame, or two framed panels laid out by
  * `layout`.
  */
 export function Preview({
+  onToolbarResize,
   panels,
   layout,
   onLayoutChange,
@@ -98,6 +107,30 @@ export function Preview({
   onFrame,
   onFrameLoad,
 }: PreviewProps) {
+  const previewRef = useRef<HTMLElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+
+    return observeResize(toolbar, () => onToolbarResize(toolbar.getBoundingClientRect().height));
+  }, [onToolbarResize]);
+  const [wide, setWide] = useState(false);
+  const orientation = layout === 'row' || (layout === 'auto' && wide) ? 'horizontal' : 'vertical';
+
+  useEffect(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+
+    // Match the previous 64rem container breakpoint, including sidebar width changes.
+    const breakpoint = 64 * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+
+    return observeResize(preview, ([entry]) => {
+      if (entry) setWide(entry.contentRect.width >= breakpoint);
+    });
+  }, []);
+
   const comparing = panels.length > 1;
   const single = panels[0];
   const buildPreviewReport = () =>
@@ -111,8 +144,11 @@ export function Preview({
     });
 
   return (
-    <main className="@container flex min-h-0 flex-1 flex-col bg-zinc-50 dark:bg-zinc-900">
-      <div className="flex min-h-10 shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-zinc-200 bg-white px-4 py-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+    <main ref={previewRef} className="bg-muted/40 flex min-h-0 min-w-0 flex-1 flex-col">
+      <div
+        ref={toolbarRef}
+        className="border-border bg-background flex min-h-10 shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-4 py-1.5"
+      >
         {controls}
         {/* The selection in words stays in the tree for assistive technology and tests; the controls say it visually. */}
         <p className="sr-only" data-testid="selection-summary">
@@ -130,17 +166,40 @@ export function Preview({
           <ReportButton build={buildPreviewReport} errors={report.errors.length} />
         </div>
       </div>
-      <div className={comparing ? `grid min-h-0 flex-1 gap-3 p-3 ${LAYOUT_CLASSES[layout]}` : 'flex min-h-0 flex-1'}>
-        {panels.map((panel) => (
-          <PreviewPanel
-            key={`${panel.id}:${pagePath(panel, params.media)}:${panel.styling}:${panel.skins}`}
-            panel={panel}
-            params={params}
-            comparing={comparing}
-            onFrame={onFrame}
-            onFrameLoad={onFrameLoad}
-          />
-        ))}
+      <div className={comparing ? 'min-h-0 flex-1 p-3' : 'min-h-0 flex-1'}>
+        {comparing ? (
+          <ResizablePanelGroup orientation={orientation}>
+            {panels.map((panel, index) => (
+              <Fragment key={`${panel.id}:${pagePath(panel, params.media)}:${panel.styling}:${panel.skins}`}>
+                {index > 0 && (
+                  <ResizableHandle
+                    withHandle
+                    aria-label="Resize comparison panels"
+                    onPointerDown={(event) => {
+                      // Capture before the first move can enter a player iframe.
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                    }}
+                    className="mx-1.5 aria-[orientation=horizontal]:mx-0 aria-[orientation=horizontal]:my-1.5"
+                  />
+                )}
+                <ResizablePanel id={panel.id} defaultSize="50%" minSize="20%">
+                  <PreviewPanel panel={panel} params={params} comparing onFrame={onFrame} onFrameLoad={onFrameLoad} />
+                </ResizablePanel>
+              </Fragment>
+            ))}
+          </ResizablePanelGroup>
+        ) : (
+          single && (
+            <PreviewPanel
+              key={`${single.id}:${pagePath(single, params.media)}:${single.styling}:${single.skins}`}
+              panel={single}
+              params={params}
+              comparing={false}
+              onFrame={onFrame}
+              onFrameLoad={onFrameLoad}
+            />
+          )
+        )}
       </div>
     </main>
   );
@@ -169,20 +228,27 @@ function PreviewPanel({ panel, params, comparing, onFrame, onFrameLoad }: Previe
 
     previousLocaleRef.current = params.locale;
     setIframeUrl(buildUrl(panel, params, reloadOnLocale));
-  }, [params.locale, reloadOnLocale]);
+  }, [params, panel, reloadOnLocale]);
 
   return (
     <section
       data-panel={panel.id}
       className={
         comparing
-          ? 'flex min-h-0 flex-col overflow-hidden rounded-lg bg-white ring ring-zinc-200 dark:bg-zinc-950 dark:ring-zinc-800'
-          : 'relative flex min-h-0 flex-1 flex-col'
+          ? 'bg-card border-border flex h-full min-h-0 flex-col overflow-hidden rounded-xl border'
+          : 'relative flex h-full min-h-0 flex-1 flex-col'
       }
     >
       {comparing && (
-        <header className="flex h-8 shrink-0 items-center justify-between px-3 text-xs font-medium text-zinc-600 dark:text-zinc-300">
-          <span>{panel.label}</span>
+        <header className="text-muted-foreground border-border/75 flex h-11 shrink-0 items-center justify-between border-b border-dashed pr-1.5 pl-3 text-sm">
+          <span className="inline-flex items-center gap-1.5">
+            {(panel.id === 'css' || panel.id === 'tailwind') && (
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4" aria-hidden="true">
+                <path d={panel.id === 'css' ? CSS_ICON : TAILWIND_ICON} />
+              </svg>
+            )}
+            {panel.label}
+          </span>
           <OpenLink href={buildUrl(panel, params)} />
         </header>
       )}
@@ -200,35 +266,17 @@ function PreviewPanel({ panel, params, comparing, onFrame, onFrameLoad }: Previe
 
 function OpenLink({ href }: { href: string }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-white bg-clip-border px-2.5 text-xs font-medium text-zinc-600 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-white/10 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-      title="Open in new tab"
+    <Button
+      variant="outline"
+      size="sm"
+      nativeButton={false}
+      role="link"
+      render={<a href={href} target="_blank" rel="noopener noreferrer" title="Open in new tab" />}
     >
-      Open
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-3"
-        aria-hidden="true"
-      >
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-        <polyline points="15 3 21 3 21 9" />
-        <line x1="10" x2="21" y1="14" y2="3" />
-      </svg>
-    </a>
+      Open <ArrowTopRightOnSquareIcon className="size-4" aria-hidden="true" />
+    </Button>
   );
 }
-
-const CHROME_BUTTON =
-  'inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-white bg-clip-border px-2.5 text-xs font-medium text-zinc-600 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-white/10 dark:hover:bg-zinc-800 dark:hover:text-zinc-50';
 
 /**
  * Copies a markdown report for bug reports and shows it in a dialog, so it can be read or selected when the clipboard
@@ -254,7 +302,7 @@ function ReportButton({ build, errors }: { build: () => string; errors: number }
 
   return (
     <>
-      <button type="button" onClick={() => void open()} className={CHROME_BUTTON}>
+      <Button type="button" variant="outline" size="sm" onClick={() => void open()}>
         Report
         {errors > 0 && (
           <span
@@ -264,24 +312,24 @@ function ReportButton({ build, errors }: { build: () => string; errors: number }
             {errors}
           </span>
         )}
-      </button>
+      </Button>
       <dialog
         ref={dialogRef}
         aria-label="Preview report"
-        className="m-auto w-[min(48rem,90vw)] rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-lg backdrop:bg-black/40 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+        className="border-border bg-background text-foreground m-auto w-[min(48rem,90vw)] rounded-lg border p-4 shadow-lg backdrop:bg-black/40"
       >
         <div className="mb-2 flex items-center justify-between gap-3">
           <p className="text-sm font-medium">{copied ? 'Copied to the clipboard.' : 'Select and copy the report.'}</p>
-          <button type="button" onClick={() => dialogRef.current?.close()} className={CHROME_BUTTON}>
+          <Button type="button" variant="outline" size="sm" onClick={() => dialogRef.current?.close()}>
             Close
-          </button>
+          </Button>
         </div>
         <textarea
           readOnly
           value={report}
           aria-label="Report markdown"
           rows={12}
-          className="w-full resize-y rounded-md border border-zinc-200 bg-zinc-50 p-2 font-mono text-xs text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+          className="border-border bg-muted text-foreground w-full resize-y rounded-md border p-2 font-mono text-xs"
         />
       </dialog>
     </>
@@ -294,16 +342,10 @@ function MirrorToggle({ value, onChange }: { value: boolean; onChange: (mirror: 
 
   return (
     <div className="flex shrink-0 items-center gap-1.5">
-      <input
-        id={id}
-        type="checkbox"
-        checked={value}
-        onChange={(event) => onChange(event.target.checked)}
-        className="size-3.5 cursor-pointer rounded border-zinc-300 accent-zinc-950 dark:border-zinc-700 dark:accent-zinc-50"
-      />
-      <label htmlFor={id} className="cursor-pointer text-xs font-medium text-zinc-600 dark:text-zinc-300">
+      <Switch id={id} checked={value} onCheckedChange={onChange} />
+      <Label htmlFor={id} className="text-muted-foreground cursor-pointer font-normal">
         Mirror playback
-      </label>
+      </Label>
     </div>
   );
 }
@@ -311,23 +353,25 @@ function MirrorToggle({ value, onChange }: { value: boolean; onChange: (mirror: 
 /** Side by side, stacked, or whichever fits: the panels' arrangement while comparing. */
 function LayoutToggle({ value, onChange }: { value: CompareLayout; onChange: (layout: CompareLayout) => void }) {
   return (
-    <div
-      role="radiogroup"
+    <ToggleGroup
+      multiple={false}
+      spacing={0}
+      value={[value]}
+      onValueChange={(next) => {
+        const layout = COMPARE_LAYOUTS.find((layout) => layout === next[0]);
+
+        if (layout) onChange(layout);
+      }}
       aria-label="Compare layout"
-      className="flex shrink-0 gap-0.5 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800"
+      size="sm"
+      variant="outline"
+      className="shrink-0"
     >
       {COMPARE_LAYOUTS.map((layout) => (
-        <button
-          key={layout}
-          type="button"
-          role="radio"
-          aria-checked={layout === value}
-          onClick={() => onChange(layout)}
-          className="rounded px-2 py-0.5 text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-950 aria-checked:bg-white aria-checked:text-zinc-950 aria-checked:shadow-xs dark:text-zinc-300 dark:hover:text-zinc-50 dark:aria-checked:bg-zinc-950 dark:aria-checked:text-zinc-50"
-        >
+        <ToggleGroupItem key={layout} value={layout}>
           {LAYOUT_LABELS[layout]}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }

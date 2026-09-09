@@ -57,7 +57,7 @@ test.describe('Sandbox mirror', () => {
       await expect.poll(() => frame.evaluate(() => (document.querySelector('video')?.readyState ?? 0) >= 1)).toBe(true);
     }
 
-    await expect(page.getByLabel('Mirror playback')).toBeChecked();
+    await expect(page.getByRole('switch', { name: 'Mirror playback' })).toBeChecked();
 
     // Play in the html panel; the react panel follows.
     await html.getByRole('button', { name: 'Play' }).click();
@@ -89,7 +89,7 @@ test.describe('Sandbox mirror', () => {
     const html = await getPanelFrame(page, 'html');
     const react = await getPanelFrame(page, 'react');
 
-    await expect(page.getByLabel('Mirror playback')).not.toBeChecked();
+    await expect(page.getByRole('switch', { name: 'Mirror playback' })).not.toBeChecked();
     await expect(page.locator('iframe[data-panel="html"]')).not.toHaveAttribute('src', /mirror=1/);
 
     await expect(html.getByRole('group', { name: 'Media player' }).first()).toBeVisible({ timeout: 15_000 });

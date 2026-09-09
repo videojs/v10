@@ -1,3 +1,4 @@
+import version from '@app/version';
 import { describe, expect, it } from 'vitest';
 
 import { buildReport, describeError, PREFERENCE_QUERIES, type Preferences } from '../shell/report';
@@ -21,6 +22,7 @@ describe('buildReport', () => {
       [
         '## Video.js sandbox preview',
         '- URL: http://localhost:5173/?platform=react&media=video',
+        `- Version: ${version}`,
         '- Build: feat/sandbox-playground @ abc1234',
         '- Selection: React · Video · Default · CSS · from the package · 896px · MP4 - Dancing Dude',
         '- Browser: Probe/1.0',

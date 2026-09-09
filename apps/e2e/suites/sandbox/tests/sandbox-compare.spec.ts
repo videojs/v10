@@ -88,7 +88,7 @@ test.describe('Sandbox compare', () => {
 
     expect(htmlBox && reactBox && htmlBox.y + htmlBox.height <= reactBox.y).toBe(true);
     expect(htmlBox && reactBox && Math.abs(htmlBox.x - reactBox.x) < 2).toBe(true);
-    await expect(page.getByRole('radio', { name: 'Stacked' })).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByRole('button', { name: 'Stacked' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('states the selection and switches compare off for a media without a skin choice', async ({ page }) => {
@@ -101,10 +101,66 @@ test.describe('Sandbox compare', () => {
     );
     await expect(page.locator('iframe[data-panel]')).toHaveCount(2);
 
-    await page.getByLabel('Media').selectOption('background-video');
+    await page.getByRole('combobox', { name: 'Media', exact: true }).click();
+    await page.getByRole('option', { name: 'Background Video', exact: true }).click();
 
     await expect(page.locator('iframe[data-panel]')).toHaveCount(1);
     await expect(page).not.toHaveURL(/[?&]compare=/);
     await expect(page.getByTestId('selection-summary')).toHaveText(/React · Background Video · fixed source/);
+  });
+
+  test('the layout group supports keyboard selection and keeps a selected segment', async ({ page }) => {
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&compare=platform&${QUERY}`);
+    const stacked = page.getByRole('button', { name: 'Stacked', exact: true });
+
+    await page.getByRole('button', { name: 'Auto', exact: true }).focus();
+    await page.keyboard.press('End');
+    await expect(stacked).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(stacked).toHaveAttribute('aria-pressed', 'true');
+    await expect(page).toHaveURL(/[?&]layout=column(?:&|$)/);
+    await stacked.click();
+    await expect(stacked).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  for (const layout of ['row', 'column']) {
+    test(`resizes ${layout} comparisons by keyboard and pointer without reloading players`, async ({ page }) => {
+      await page.setViewportSize({ width: 1400, height: 900 });
+      await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&compare=platform&layout=${layout}&${QUERY}`);
+      const frame = await getPanelFrame(page, 'html');
+
+      await playerBox(frame);
+      const divider = page.getByRole('separator', { name: 'Resize comparison panels' });
+
+      await expect(divider).toHaveAttribute('aria-orientation', layout === 'row' ? 'vertical' : 'horizontal');
+      await expect(divider).toHaveAttribute('aria-valuenow', '50');
+      await divider.press(layout === 'row' ? 'ArrowRight' : 'ArrowDown');
+      await expect.poll(async () => Number(await divider.getAttribute('aria-valuenow'))).toBeGreaterThan(50);
+      const before = Number(await divider.getAttribute('aria-valuenow'));
+      const box = await divider.boundingBox();
+      if (!box) throw new Error('Expected a comparison divider.');
+
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + (layout === 'row' ? 100 : 0), y + (layout === 'column' ? 100 : 0), { steps: 10 });
+      await page.mouse.up();
+      await expect.poll(async () => Number(await divider.getAttribute('aria-valuenow'))).toBeGreaterThan(before);
+      expect(await getPanelFrame(page, 'html')).toBe(frame);
+    });
+  }
+
+  test('auto changes the resize direction with the available preview width', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&compare=platform&${QUERY}`);
+    const frame = await getPanelFrame(page, 'html');
+    const divider = page.getByRole('separator', { name: 'Resize comparison panels' });
+
+    await expect(divider).toHaveAttribute('aria-orientation', 'vertical');
+    await page.setViewportSize({ width: 800, height: 900 });
+    await expect(divider).toHaveAttribute('aria-orientation', 'horizontal');
+    expect(await getPanelFrame(page, 'html')).toBe(frame);
   });
 });
