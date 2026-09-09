@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 import { defineCollection, reference } from 'astro:content';
@@ -8,8 +10,13 @@ import { FeatureReferenceSchema } from './types/feature-reference';
 import { MediaReferenceSchema } from './types/media-reference';
 import { PresetReferenceSchema } from './types/preset-reference';
 import { UtilReferenceSchema } from './types/util-reference';
-import { defaultGitService } from './utils/gitService';
+import { createGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
+
+// One history walk of the content directory serves every entry. Lookups use the absolute `filePath` the loader
+// passes to `parseData`, so they do not depend on the working directory Astro runs from or on `generateId` rewrites.
+const CONTENT_ROOT = fileURLToPath(new URL('./content/', import.meta.url));
+const gitService = createGitService(CONTENT_ROOT);
 
 /**
  * Extract date from filename in format: YYYY-MM-DD-slug.mdx Throws an error if the filename doesn't match the expected
@@ -38,8 +45,7 @@ const blog = defineCollection({
       const pubDate = extractDateFromFilename(originalEntry);
 
       // Get updatedDate from git history (last modification date)
-      const filePath = `site/src/content/blog/${originalEntry}`;
-      const updatedDate = await defaultGitService.getLastModifiedDate(filePath);
+      const updatedDate = entry.filePath ? await gitService.getLastModifiedDate(entry.filePath) : null;
 
       // Return transformed entry with added fields
       return {
@@ -72,10 +78,9 @@ const docs = defineCollection({
   loader: globWithParser({
     base: './src/content/docs',
     pattern: '**/*.mdx',
-    parser: async (entry, originalEntry) => {
+    parser: async (entry) => {
       // Get updatedDate from git history
-      const filePath = `site/src/content/docs/${originalEntry}`;
-      const updatedDate = await defaultGitService.getLastModifiedDate(filePath);
+      const updatedDate = entry.filePath ? await gitService.getLastModifiedDate(entry.filePath) : null;
 
       // Return transformed entry with added field if updatedDate exists
       return {
