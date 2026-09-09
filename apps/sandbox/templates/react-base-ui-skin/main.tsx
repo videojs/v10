@@ -1,26 +1,24 @@
 import '@app/styles.css';
+import {
+  HarnessToolbar,
+  PlayerFrame,
+  SelectedMedia,
+  selectedPoster,
+  useLibrarySkinSelection,
+} from '@app/shared/react/library-skin-harness';
 import { VideoPlayer } from '@app/shared/react/players';
-import { SOURCES } from '@app/shared/sources';
+import { SelectField } from '@app/shell/select';
 import { Container } from '@videojs/react';
-import { Video } from '@videojs/react/video';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { HooksApproachControls } from './approach-hooks';
 import { RenderApproachControls } from './approach-render';
-import {
-  type Approach,
-  APPROACHES,
-  Frame,
-  readApproach,
-  SELECT_CLASS,
-  useSandboxSource,
-  writeApproach,
-} from './shared';
+import { type Approach, APPROACHES, readApproach, writeApproach } from './shared';
 
 function App() {
   const [approach, setApproach] = useState<Approach>(readApproach);
-  const { source, mediaProps } = useSandboxSource();
+  const selection = useLibrarySkinSelection();
   const current = APPROACHES.find((entry) => entry.value === approach)!;
 
   const select = (next: Approach) => {
@@ -30,23 +28,21 @@ function App() {
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      <label className="flex items-center gap-2 text-sm">
-        Approach
-        <select className={SELECT_CLASS} value={approach} onChange={(event) => select(event.target.value as Approach)}>
-          {APPROACHES.map((entry) => (
-            <option key={entry.value} value={entry.value}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <VideoPlayer>
-        <Frame>
+      <HarnessToolbar selection={selection}>
+        <SelectField
+          label="Approach"
+          value={approach}
+          onChange={(value) => select(value as Approach)}
+          options={APPROACHES.map((entry) => ({ value: entry.value, label: entry.label }))}
+        />
+      </HarnessToolbar>
+      <VideoPlayer poster={selectedPoster(selection.source)}>
+        <PlayerFrame>
           <Container className="group/player relative size-full">
-            <Video className="block size-full" src={SOURCES[source].url} {...mediaProps} playsInline crossOrigin="" />
+            <SelectedMedia selection={selection} />
             {approach === 'render' ? <RenderApproachControls /> : <HooksApproachControls />}
           </Container>
-        </Frame>
+        </PlayerFrame>
       </VideoPlayer>
       <p className="max-w-[56rem] text-center text-sm text-neutral-600 dark:text-neutral-400">{current.blurb}</p>
     </div>

@@ -337,6 +337,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       // The Sandbox can load every media adapter and generated React skin. Prebundle their runtime dependencies before
       // serving so discovering a new route cannot hot-reload an already mounted player graph during development or E2E.
       include: [
+        '@base-ui/react/alert-dialog',
         '@base-ui/react/button',
         '@base-ui/react/dialog',
         '@base-ui/react/input',
@@ -352,9 +353,10 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         '@base-ui/react/tooltip',
         '@base-ui/react/use-render',
         '@videojs/html > @videojs/element > @lit/context',
-        '@videojs/media > dashjs',
-        '@videojs/media > hls.js',
-        '@videojs/media > mux-embed',
+        '@videojs/dash-video > dashjs',
+        '@videojs/hlsjs-video > hls.js',
+        '@videojs/mux-data > mux-embed',
+        '@videojs/shaka-video > shaka-player',
         'radix-ui',
         'react',
         'react-dom',
