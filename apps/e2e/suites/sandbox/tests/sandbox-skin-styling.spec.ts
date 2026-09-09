@@ -111,6 +111,7 @@ for (const { platform, skin, styling, skins } of CASES) {
     const thumbnail = root.locator(SELECTORS.thumbnail).first();
 
     await expect(root).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('slider', { name: 'Seek' }).first()).toBeEnabled();
     await slider.hover();
     await expect(thumbnail).toBeAttached({ timeout: 15_000 });
     await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 15_000 });

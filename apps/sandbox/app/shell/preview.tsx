@@ -12,7 +12,7 @@ import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandb
 import type { SourceId } from '@app/shared/sources';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
 import { observeResize } from '@videojs/utils/dom';
-import { Fragment, type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { Fragment, type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { type ReportInput, buildReport } from './report';
 
@@ -119,12 +119,14 @@ export function Preview({
   const [wide, setWide] = useState(false);
   const orientation = layout === 'row' || (layout === 'auto' && wide) ? 'horizontal' : 'vertical';
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
 
-    // Match the previous 64rem container breakpoint, including sidebar width changes.
+    // Split comparisons side by side when the preview has at least 64rem of space.
     const breakpoint = 64 * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+
+    setWide(preview.getBoundingClientRect().width >= breakpoint);
 
     return observeResize(preview, ([entry]) => {
       if (entry) setWide(entry.contentRect.width >= breakpoint);

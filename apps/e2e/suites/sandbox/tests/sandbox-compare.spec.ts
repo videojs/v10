@@ -152,6 +152,32 @@ test.describe('Sandbox compare', () => {
     });
   }
 
+  for (const width of [800, 1400]) {
+    test(`auto chooses its initial direction at ${width}px before resize delivery`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.addInitScript(() => {
+        const Observer = window.ResizeObserver;
+
+        window.ResizeObserver = class extends Observer {
+          constructor(callback: ResizeObserverCallback) {
+            super((entries, observer) => {
+              // Hold back the preview measurement while other components resize normally.
+              const remaining = entries.filter((entry) => entry.target.tagName !== 'MAIN');
+
+              if (remaining.length) callback(remaining, observer);
+            });
+          }
+        };
+      });
+      await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&compare=platform&${QUERY}`);
+
+      await expect(page.getByRole('separator', { name: 'Resize comparison panels' })).toHaveAttribute(
+        'aria-orientation',
+        width >= 1024 ? 'vertical' : 'horizontal'
+      );
+    });
+  }
+
   test('auto changes the resize direction with the available preview width', async ({ page }) => {
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&compare=platform&${QUERY}`);

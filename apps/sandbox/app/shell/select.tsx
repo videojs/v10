@@ -20,7 +20,6 @@ export type SelectFieldProps = {
   options?: readonly Option[];
   optionGroups?: readonly { label: string; options: readonly Option[] }[];
   disabled?: boolean;
-  size?: 'md' | 'sm';
 };
 
 export function SelectField({

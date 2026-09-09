@@ -166,7 +166,6 @@ export function SkinControls({
     <div className="flex min-w-0 items-center gap-3 overflow-x-auto px-1 py-1">
       <Select
         label="Skin"
-        size="sm"
         value={skin}
         onChange={(v) => onSkinChange(v as Skin)}
         options={SKIN_OPTIONS.map((s) => ({ value: s, label: SKIN_LABELS[s] }))}
@@ -175,7 +174,6 @@ export function SkinControls({
 
       <Select
         label="Styling"
-        size="sm"
         value={styling}
         onChange={(v) => onStylingChange(v as Styling)}
         options={stylings.map((s) => ({
@@ -187,7 +185,6 @@ export function SkinControls({
 
       <Select
         label="Skins from"
-        size="sm"
         value={skins}
         onChange={(v) => onSkinsChange(v as SkinSource)}
         options={SKIN_SOURCES.map((value) => ({
@@ -200,7 +197,6 @@ export function SkinControls({
 
       <Select
         label="Compare"
-        size="sm"
         value={compare}
         onChange={(v) => onCompareChange(v as CompareMode)}
         options={compareOptions.map((option) => ({ ...option }))}
