@@ -1,5 +1,7 @@
 # @videojs/shaka-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 The Video.js playback adapter for [Shaka Player](https://github.com/shaka-project/shaka-player). Install it with the
 HTML or React package when your player uses Shaka.
 

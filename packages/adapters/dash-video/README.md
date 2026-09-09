@@ -1,5 +1,7 @@
 # @videojs/dash-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 The Video.js playback adapter for [dash.js](https://github.com/Dash-Industry-Forum/dash.js). Install it with the HTML
 or React package when your player uses DASH playback.
 

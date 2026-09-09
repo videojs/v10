@@ -1,5 +1,7 @@
 # @videojs/wistia-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 The Video.js playback adapter for Wistia. It owns the supported `@wistia/wistia-player` runtime and exposes
 `WistiaAdapter` for low-level use.
 

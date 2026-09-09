@@ -1,5 +1,7 @@
 # @videojs/native-hls-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 Native HLS playback adapter for Video.js, for browsers that play HLS themselves. It exposes the adapter, its props, and defaults; the HTML and React façades live in `@videojs/html` and
 `@videojs/react`.
 

@@ -1,5 +1,7 @@
 # @videojs/hlsjs-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 The Video.js playback adapter for [hls.js](https://github.com/video-dev/hls.js). It owns the supported hls.js runtime,
 browser playback implementation, and compatibility tests. `@videojs/mux-video` builds on it.
 

@@ -1,5 +1,7 @@
 # @videojs/cloudflare-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 Cloudflare Stream playback adapter for Video.js. It exposes the adapter, its props, and defaults; the HTML and React façades live in `@videojs/html` and
 `@videojs/react`.
 

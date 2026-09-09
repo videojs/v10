@@ -1,5 +1,7 @@
 # @videojs/mux-video
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 The Video.js playback adapter for Mux-hosted video, over [hls.js](https://github.com/video-dev/hls.js). It owns the Mux
 source model (playback IDs, tokens, DRM, posters, storyboards) and builds on `@videojs/hlsjs-video`, which owns the
 hls.js runtime.

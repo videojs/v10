@@ -1,5 +1,7 @@
 # @videojs/cdn
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 Browser-ready Video.js bundles for script-tag and self-hosted installations. This package assembles the HTML player,
 selected playback adapters, shared chunks, source maps, and standalone stylesheets in one build graph.
 

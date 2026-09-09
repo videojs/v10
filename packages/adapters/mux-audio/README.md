@@ -1,5 +1,7 @@
 # @videojs/mux-audio
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 The Video.js playback adapter for Mux-hosted audio, over [hls.js](https://github.com/video-dev/hls.js). `MuxAudioAdapter`
 extends the Mux video adapter from `@videojs/mux-video` and plays through an `<audio>` element, so audio installs by the
 media it plays.

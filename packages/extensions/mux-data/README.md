@@ -1,5 +1,7 @@
 # @videojs/mux-data
 
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
+
 Mux Data telemetry for Video.js. This package owns the supported `mux-embed` runtime and can monitor native playback,
 hls.js, dash.js, and other Video.js Media implementations without installing a playback engine.
 It is an extension: it adds behavior to whichever media the player is playing.
