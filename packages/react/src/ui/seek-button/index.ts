@@ -1,1 +1,1 @@
-export * from './seek-button';
+export * from './component';

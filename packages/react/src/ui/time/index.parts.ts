@@ -1,3 +1,3 @@
-export { Group, type GroupProps } from './time-group';
-export { Separator, type SeparatorProps } from './time-separator';
-export { Value, type ValueProps } from './time-value';
+export { Group, type GroupProps } from './group';
+export { Separator, type SeparatorProps } from './separator';
+export { Value, type ValueProps } from './value';

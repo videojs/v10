@@ -14,4 +14,4 @@
  */
 
 export { Thumb, type ThumbProps, Track, type TrackProps } from '../slider/index.parts';
-export { Root, type RootProps } from './volume-slider-root';
+export { Root, type RootProps } from './root';

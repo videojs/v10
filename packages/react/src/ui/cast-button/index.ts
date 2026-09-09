@@ -1,1 +1,1 @@
-export * from './cast-button';
+export * from './component';

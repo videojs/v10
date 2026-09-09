@@ -76,7 +76,7 @@ export {
   type PlayerProps,
 } from './player/create-player';
 // UI
-export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
+export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/component';
 export { AlertDialog } from './ui/alert-dialog';
 export {
   type AudioTrackOption,
@@ -85,8 +85,8 @@ export {
   useAudioTrackOptions,
 } from './ui/audio-track';
 export { AudioTrackRadioGroupLegacy as AudioTrackRadioGroup } from './ui/audio-track-radio-group';
-export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
-export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';
+export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/component';
+export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/component';
 export {
   CaptionsRadioGroupLegacy as CaptionsRadioGroup,
   type CaptionsOption,
@@ -94,39 +94,39 @@ export {
   type CaptionsOptionsResult,
   useCaptionsOptions,
 } from './ui/captions-radio-group';
-export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
+export { CastButton, type CastButtonProps } from './ui/cast-button/component';
 export { Controls } from './ui/controls';
-export type { ControlsContentProps } from './ui/controls/controls-content';
-export type { ControlsGroupProps } from './ui/controls/controls-group';
-export type { ControlsRootProps } from './ui/controls/controls-root';
+export type { ControlsContentProps } from './ui/controls/content';
+export type { ControlsGroupProps } from './ui/controls/group';
+export type { ControlsRootProps } from './ui/controls/root';
 export { Dialog, type DialogContextValue, useDialogContext } from './ui/dialog';
 export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from './ui/error-dialog';
-export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
-export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from './ui/gesture/gesture';
+export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/component';
+export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from './ui/gesture/component';
 export { type UseDoubleTapGestureOptions, useDoubleTapGesture } from './ui/gesture/use-doubletap-gesture';
 export { type UseTapGestureOptions, useTapGesture } from './ui/gesture/use-tap-gesture';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
-export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
+export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/component';
 export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
 export { useHotkeyShortcut } from './ui/hotkey/use-hotkey-shortcut';
-export { LiveButton, type LiveButtonProps } from './ui/live-button/live-button';
+export { LiveButton, type LiveButtonProps } from './ui/live-button/component';
 export { Menu, type MenuContextValue, useMenuContext, useOptionalMenuContext } from './ui/menu';
-export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
-export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
-export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
+export { MuteButton, type MuteButtonProps } from './ui/mute-button/component';
+export { PiPButton, type PiPButtonProps } from './ui/pip-button/component';
+export { PlayButton, type PlayButtonProps } from './ui/play-button/component';
 export {
   type PlaybackRateOption,
   type PlaybackRateOptionsProps,
   type PlaybackRateOptionsResult,
   usePlaybackRateOptions,
 } from './ui/playback-rate';
-export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
+export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/component';
 export { PlaybackRateRadioGroupLegacy as PlaybackRateRadioGroup } from './ui/playback-rate-radio-group';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster } from './ui/poster';
-export type { PosterImageProps } from './ui/poster/poster-image';
-export type { PosterRootProps } from './ui/poster/poster-root';
+export type { PosterImageProps } from './ui/poster/image';
+export type { PosterRootProps } from './ui/poster/root';
 export {
   type QualityOption,
   type QualityOptionsProps,
@@ -134,42 +134,39 @@ export {
   useQualityOptions,
 } from './ui/quality';
 export { QualityRadioGroupLegacy as QualityRadioGroup } from './ui/quality-radio-group';
-export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';
+export { SeekButton, type SeekButtonProps } from './ui/seek-button/component';
 export { SeekIndicator } from './ui/seek-indicator';
-export type { SeekIndicatorRootProps } from './ui/seek-indicator/seek-indicator-root';
-export type { SeekIndicatorValueProps } from './ui/seek-indicator/seek-indicator-value';
+export type { SeekIndicatorRootProps } from './ui/seek-indicator/root';
+export type { SeekIndicatorValueProps } from './ui/seek-indicator/value';
 export { Slider } from './ui/slider';
-export type { SliderBufferProps } from './ui/slider/slider-buffer';
-export type { SliderFillProps } from './ui/slider/slider-fill';
-export type { SliderRootProps } from './ui/slider/slider-root';
-export type { SliderThumbProps } from './ui/slider/slider-thumb';
-export type { SliderThumbnailProps } from './ui/slider/slider-thumbnail';
-export type { SliderTrackProps } from './ui/slider/slider-track';
-export type { SliderValueProps } from './ui/slider/slider-value';
-export { StatusAnnouncer, type StatusAnnouncerProps } from './ui/status-announcer/status-announcer';
+export type { SliderBufferProps } from './ui/slider/buffer';
+export type { SliderFillProps } from './ui/slider/fill';
+export type { SliderRootProps } from './ui/slider/root';
+export type { SliderThumbProps } from './ui/slider/thumb';
+export type { SliderThumbnailProps } from './ui/slider/thumbnail';
+export type { SliderTrackProps } from './ui/slider/track';
+export type { SliderValueProps } from './ui/slider/value';
+export { StatusAnnouncer, type StatusAnnouncerProps } from './ui/status-announcer/component';
 export { StatusIndicator } from './ui/status-indicator';
-export type { StatusIndicatorRootProps } from './ui/status-indicator/status-indicator-root';
-export type { StatusIndicatorValueProps } from './ui/status-indicator/status-indicator-value';
+export type { StatusIndicatorRootProps } from './ui/status-indicator/root';
+export type { StatusIndicatorValueProps } from './ui/status-indicator/value';
 export { Thumbnail } from './ui/thumbnail';
-export type { ThumbnailImageProps } from './ui/thumbnail/thumbnail-image';
-export type { ThumbnailRootProps } from './ui/thumbnail/thumbnail-root';
+export type { ThumbnailImageProps } from './ui/thumbnail/image';
+export type { ThumbnailRootProps } from './ui/thumbnail/root';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
-export type {
-  TimeSliderChapterTitleProps,
-  TimeSliderChapterTitleState,
-} from './ui/time-slider/time-slider-chapters/time-slider-chapter-title';
+export type { TimeSliderChapterTitleProps, TimeSliderChapterTitleState } from './ui/time-slider/chapter-title';
 export type {
   TimeSliderChapterState,
   TimeSliderChaptersProps,
   TimeSliderChaptersState,
-} from './ui/time-slider/time-slider-chapters/time-slider-chapters';
-export { Title, type TitleProps } from './ui/title/title';
+} from './ui/time-slider/chapters';
+export { Title, type TitleProps } from './ui/title/component';
 export { Tooltip, type TooltipContent, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeIndicator } from './ui/volume-indicator';
-export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';
-export type { VolumeIndicatorRootProps } from './ui/volume-indicator/volume-indicator-root';
-export type { VolumeIndicatorValueProps } from './ui/volume-indicator/volume-indicator-value';
+export type { VolumeIndicatorFillProps } from './ui/volume-indicator/fill';
+export type { VolumeIndicatorRootProps } from './ui/volume-indicator/root';
+export type { VolumeIndicatorValueProps } from './ui/volume-indicator/value';
 export { VolumePopover } from './ui/volume-popover';
 export { VolumeSlider } from './ui/volume-slider';
 // Utilities

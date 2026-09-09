@@ -9,8 +9,8 @@
  * - Marker: nested sub-part with an HTML element
  */
 
-export { Fill, type FillProps } from './gauge-fill';
-export { Indicator, type IndicatorProps } from './gauge-indicator';
-export { Label, type LabelProps } from './gauge-label';
-export { Marker, type MarkerProps } from './gauge-parts/gauge-marker';
-export { Track, type TrackProps } from './gauge-track';
+export { Fill, type FillProps } from './fill';
+export { Indicator, type IndicatorProps } from './indicator';
+export { Label, type LabelProps } from './label';
+export { Marker, type MarkerProps } from './gauge-parts/marker';
+export { Track, type TrackProps } from './track';
