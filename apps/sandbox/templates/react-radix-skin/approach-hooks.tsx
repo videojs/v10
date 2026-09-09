@@ -55,7 +55,7 @@ import {
   useTranslator,
 } from '@videojs/react';
 import { AlertDialog, DropdownMenu, Popover, Slider, Toggle, Tooltip } from 'radix-ui';
-import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
+import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   BACKDROP_CLASS,
@@ -284,13 +284,43 @@ function SeekSlider() {
 }
 
 /**
+ * Hover-open state that survives the pointer crossing the gap between a trigger and its portaled content: leaving
+ * either side starts a short timer that entering the other side cancels.
+ */
+function useHoverOpen(closeDelay = 150) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancel = () => {
+    if (timer.current !== null) clearTimeout(timer.current);
+
+    timer.current = null;
+  };
+
+  const onPointerEnter = () => {
+    cancel();
+    setOpen(true);
+  };
+
+  const onPointerLeave = () => {
+    cancel();
+    timer.current = setTimeout(() => setOpen(false), closeDelay);
+  };
+
+  useEffect(() => cancel, []);
+
+  return { open, setOpen, hoverProps: { onPointerEnter, onPointerLeave } };
+}
+
+/**
  * Mute toggle with a hover volume popover. No tooltip here: the popover is what hover shows, as in the default skin.
- * Radix Popover has no hover-open, so it is controlled from pointer enter/leave on a wrapper.
+ * Radix Popover has no hover-open, so it is controlled from pointer enter/leave on the trigger wrapper and the
+ * content.
  */
 function VolumeControl() {
   const volume = usePlayer(selectVolume);
   const container = useContainer();
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, hoverProps } = useHoverOpen();
   const t = useTranslator();
 
   if (!volume || volume.mutedAvailability === 'unsupported') return null;
@@ -307,7 +337,7 @@ function VolumeControl() {
   const label = t(volume.muted ? unmuteText : muteText);
 
   return (
-    <span onPointerEnter={() => setOpen(true)} onPointerLeave={() => setOpen(false)} className="inline-flex">
+    <span {...hoverProps} className="inline-flex">
       <Popover.Root open={open && volume.volumeAvailability === 'available'} onOpenChange={setOpen}>
         <Popover.Anchor asChild>
           <Toggle.Root
@@ -325,6 +355,7 @@ function VolumeControl() {
             sideOffset={8}
             onOpenAutoFocus={(event) => event.preventDefault()}
             data-interactive=""
+            {...hoverProps}
             className={`${POPUP_CLASS} flex h-36 items-center px-3 py-3`}
           >
             <Slider.Root
