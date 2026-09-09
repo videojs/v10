@@ -107,7 +107,7 @@ Two features describe liveness:
 
 The <DocsLink slug="reference/feature-time">time feature</DocsLink> adjusts for live playback: `duration` reports the live edge (the end of the seekable range) and keeps growing as the stream continues.
 
-LiveButton reads this state: it renders as an active "go to live" control while playback is behind the edge, seeks to the edge on activation, and goes inactive at the edge.
+LiveButton reads this state: it renders as an active "go to live" control while playback is behind the edge, seeks to the edge on activation, and goes inactive at the edge. Until the media reports a `seekable` range — before metadata loads, or for non-live media — the button is disabled (`data-disabled`) because there is no edge to seek to. Custom live UIs should treat "behind the edge" and "actionable" as separate states.
 
 ## Availability and constraints
 

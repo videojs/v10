@@ -45,6 +45,8 @@ import basicUsageHtmlTs from "@/components/docs/demos/live-button/html/css/Basic
 
 LiveButton indicates whether playback is at the live edge and acts as a "go to live" control. While playback is behind the edge, clicking seeks to the live edge — the end of the last `seekable` range. At the edge the button goes inactive (`aria-disabled`) and clicking is a no-op.
 
+The button is also disabled whenever it has no live edge to seek to: the media is not live, the `seekable` ranges are still empty (before metadata loads, for example), or the last range ends at `Infinity`. It reports `disabled` in its state, sets `data-disabled`, and ignores activation until a seek target exists. Passing `disabled` forces the same state.
+
 The button combines three player features: <DocsLink slug="reference/feature-live">live</DocsLink> for `liveEdgeStart` and `targetLiveWindow`, <DocsLink slug="reference/feature-time">time</DocsLink> for `currentTime` and the `seek()` action, and <DocsLink slug="reference/feature-buffer">buffer</DocsLink> for `seekable`. All three are included in the `liveVideoFeatures` and `liveAudioFeatures` presets, and the packaged live skins include the button.
 
 Media counts as live while `targetLiveWindow` is not `NaN`. That value is how far behind the live edge viewers can seek: `0` means the stream is watchable only at the edge, and `Infinity` means the stream keeps its recording seekable so viewers can rewind and catch up, like a DVR. For on-demand media the button reports neither `live` nor `liveEdge` and stays inert.
@@ -61,13 +63,15 @@ See <DocsLink slug="how-to/play-live-streams">Play live streams</DocsLink> for h
 |-----------|--------|-------------|
 | `data-live` | Present / absent | Present when the stream is live (or DVR) |
 | `data-live-edge` | Present / absent | Present when playback is at the live edge |
+| `data-disabled` | Present / absent | Present when the button is non-interactive (mirrors `aria-disabled`) |
 
-Use `data-live-edge` to color the button red at the edge and gray behind it:
+Use `data-live-edge` to color the button red at the edge and gray behind it, and `data-disabled` to fade it while no live-edge target is available:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
 media-live-button { color: gray; }
 media-live-button[data-live-edge] { color: red; }
+media-live-button[data-disabled] { opacity: 0.5; }
 ```
 </FrameworkCase>
 
@@ -77,12 +81,13 @@ React renders a `<button>` element with the same data attributes. Add a `classNa
 ```css
 .live-button { color: gray; }
 .live-button[data-live-edge] { color: red; }
+.live-button[data-disabled] { opacity: 0.5; }
 ```
 </FrameworkCase>
 
 ## Accessibility
 
-Renders a `<button>` with an automatic `aria-label` that updates based on state: "Playing live" at the live edge, "Seek to live edge" while behind it. Override with the `label` prop, which accepts a text descriptor, literal string, or function returning either. A text descriptor contains an opaque translation key and English fallback, for example `{ key: 'live.playing', text: 'Playing live' }`. When the button is disabled or playback is at the live edge, `aria-disabled="true"` is set. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+Renders a `<button>` with an automatic `aria-label` that updates based on state: "Playing live" at the live edge, "Seek to live edge" while behind it. Override with the `label` prop, which accepts a text descriptor, literal string, or function returning either. A text descriptor contains an opaque translation key and English fallback, for example `{ key: 'live.playing', text: 'Playing live' }`. When the button is disabled — explicitly, or because no live-edge seek target is available yet — or playback is at the live edge, `aria-disabled="true"` is set and activation is ignored. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
 
 ## Examples
 
