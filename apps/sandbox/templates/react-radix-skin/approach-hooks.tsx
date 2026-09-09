@@ -1,29 +1,37 @@
 // SPIKE approach 2 with Radix: Radix primitives and Radix Icons render and interact; Video.js supplies state and
-// actions through `usePlayer(selector)`, the store's action methods, availability flags, the option hooks, and the
-// text-track feature's chapter and thumbnail cues. Laid out to match the default video skin.
+// actions through `usePlayer(selector)`, the store's action methods, availability flags, the option hooks, the
+// text-track feature's chapter and thumbnail cues, and its i18n text tokens so the wording matches the default skin.
 
 import { PlayerBehaviors } from '@app/shared/react/library-skin-harness';
 import {
+  ChatBubbleIcon,
   CheckIcon,
   ChevronRightIcon,
+  CopyIcon,
   DesktopIcon,
   EnterFullScreenIcon,
   ExitFullScreenIcon,
-  ExitIcon,
   GearIcon,
+  GlobeIcon,
+  MixerHorizontalIcon,
   PauseIcon,
   PlayIcon,
-  ResetIcon,
+  ReloadIcon,
   SpeakerLoudIcon,
   SpeakerModerateIcon,
   SpeakerOffIcon,
   SpeakerQuietIcon,
-  StackIcon,
-  TextIcon,
-  TextNoneIcon,
+  StopwatchIcon,
   UpdateIcon,
 } from '@radix-ui/react-icons';
 import { mapCuesToThumbnails, ThumbnailCore } from '@videojs/core';
+import { startText as airplayStartText, stopText as airplayStopText } from '@videojs/core/i18n/text/airplay';
+import { muteText, pauseText, playText, replayText, unmuteText } from '@videojs/core/i18n/text/buttons';
+import { disableText as captionsDisableText, enableText as captionsEnableText } from '@videojs/core/i18n/text/captions';
+import { enterText as fullscreenEnterText, exitText as fullscreenExitText } from '@videojs/core/i18n/text/fullscreen';
+import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
+import { enterText as pipEnterText, exitText as pipExitText } from '@videojs/core/i18n/text/pip';
+import { showDurationText, showRemainingText } from '@videojs/core/i18n/text/time';
 import {
   selectBuffer,
   selectControls,
@@ -43,6 +51,7 @@ import {
   usePlaybackRateOptions,
   usePlayer,
   useQualityOptions,
+  useTranslator,
 } from '@videojs/react';
 import { AlertDialog, DropdownMenu, Popover, Slider, Toggle, Tooltip } from 'radix-ui';
 import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
@@ -66,7 +75,7 @@ import {
   TOOLTIP_CLASS,
 } from './shared';
 
-/** Radix tooltip with a Video.js hotkey hint; the label is hand-written, the shortcut comes from the container. */
+/** Radix tooltip with a Video.js hotkey hint; the label is translated with the same tokens the default skin uses. */
 function HotkeyTooltip({ label, action, children }: { label: string; action?: string; children: ReactElement }) {
   const container = useContainer();
   const shortcut = useHotkeyShortcut(action);
@@ -130,9 +139,11 @@ function ErrorAlert() {
 
 function PlayToggle() {
   const playback = usePlayer(selectPlayback);
+  const t = useTranslator();
+
   if (!playback) return null;
 
-  const label = playback.ended ? 'Replay' : playback.paused ? 'Play' : 'Pause';
+  const label = t(playback.ended ? replayText : playback.paused ? playText : pauseText);
 
   return (
     <HotkeyTooltip label={label} action="togglePaused">
@@ -142,7 +153,7 @@ function PlayToggle() {
         aria-label={label}
         onClick={() => void playback.togglePaused()}
       >
-        {playback.ended ? <ResetIcon /> : playback.paused ? <PlayIcon /> : <PauseIcon />}
+        {playback.ended ? <ReloadIcon /> : playback.paused ? <PlayIcon /> : <PauseIcon />}
       </button>
     </HotkeyTooltip>
   );
@@ -260,6 +271,7 @@ function VolumeControl() {
   const volume = usePlayer(selectVolume);
   const container = useContainer();
   const [open, setOpen] = useState(false);
+  const t = useTranslator();
 
   if (!volume || volume.mutedAvailability === 'unsupported') return null;
 
@@ -272,7 +284,7 @@ function VolumeControl() {
         : level < 0.67
           ? SpeakerModerateIcon
           : SpeakerLoudIcon;
-  const label = volume.muted ? 'Unmute' : 'Mute';
+  const label = t(volume.muted ? unmuteText : muteText);
 
   return (
     <span onPointerEnter={() => setOpen(true)} onPointerLeave={() => setOpen(false)} className="inline-flex">
@@ -328,39 +340,47 @@ function CurrentTime() {
   return <time className={TIME_CLASS}>{formatTime(time.currentTime)}</time>;
 }
 
-/** Remaining time that toggles to duration on click, like `Time.Value type="remaining" toggle`. */
+/** Remaining time that toggles to duration on click, worded like `Time.Value type="remaining" toggle`. */
 function RemainingTime() {
   const time = usePlayer(selectTime);
   const [remaining, setRemaining] = useState(true);
+  const t = useTranslator();
 
   if (!time) return null;
+
+  const shown = remaining ? `-${formatTime(time.duration - time.currentTime)}` : formatTime(time.duration);
 
   return (
     <button
       type="button"
       className={`${TIME_CLASS} cursor-pointer`}
-      aria-label={remaining ? 'Show duration' : 'Show remaining time'}
+      aria-label={t(remaining ? showDurationText : showRemainingText, { duration: shown })}
       onClick={() => setRemaining((current) => !current)}
     >
-      <time>{remaining ? `-${formatTime(time.duration - time.currentTime)}` : formatTime(time.duration)}</time>
+      <time>{shown}</time>
     </button>
   );
 }
 
+/** Radix Icons has no closed-caption glyph; the speech bubble serves the button and the menu, pressed = showing. */
 function CaptionsToggle() {
   const textTrack = usePlayer(selectTextTrack);
-  const hasTracks = textTrack?.textTrackList.some((t) => t.kind === 'subtitles' || t.kind === 'captions');
+  const hasTracks = textTrack?.textTrackList.some((track) => track.kind === 'subtitles' || track.kind === 'captions');
+  const t = useTranslator();
+
   if (!textTrack || !hasTracks) return null;
 
+  const label = t(textTrack.subtitlesShowing ? captionsDisableText : captionsEnableText);
+
   return (
-    <HotkeyTooltip label={textTrack.subtitlesShowing ? 'Disable captions' : 'Enable captions'} action="toggleSubtitles">
+    <HotkeyTooltip label={label} action="toggleSubtitles">
       <Toggle.Root
         className={ICON_BUTTON_CLASS}
-        aria-label="Captions"
+        aria-label={label}
         pressed={textTrack.subtitlesShowing}
         onPressedChange={() => textTrack.toggleSubtitles()}
       >
-        {textTrack.subtitlesShowing ? <TextIcon /> : <TextNoneIcon />}
+        <ChatBubbleIcon />
       </Toggle.Root>
     </HotkeyTooltip>
   );
@@ -368,8 +388,9 @@ function CaptionsToggle() {
 
 interface OptionSubmenuProps {
   icon: ReactNode;
+  /** The default skin's menu wording, so both players read the same. */
+  label: string;
   options: {
-    label: string;
     value: string;
     selectedLabel: string;
     options: readonly { value: string; label: ReactNode; disabled: boolean }[];
@@ -379,7 +400,7 @@ interface OptionSubmenuProps {
 }
 
 /** One Radix submenu per Video.js option hook, like the default skin's settings submenus; `hidden` gates it. */
-function OptionSubmenu({ icon, options }: OptionSubmenuProps) {
+function OptionSubmenu({ icon, label, options }: OptionSubmenuProps) {
   const container = useContainer();
 
   if (!options || options.hidden || options.options.length === 0) return null;
@@ -388,7 +409,7 @@ function OptionSubmenu({ icon, options }: OptionSubmenuProps) {
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className={MENU_TRIGGER_ITEM_CLASS}>
         <span className="[&_svg]:size-4">{icon}</span>
-        {options.label}
+        {label}
         <span className={MENU_HINT_CLASS}>
           {options.selectedLabel}
           <ChevronRightIcon />
@@ -417,41 +438,51 @@ function OptionSubmenu({ icon, options }: OptionSubmenuProps) {
   );
 }
 
+/**
+ * Settings menu with the default skin's four submenus and wording. Icons: sliders for quality (the skin uses switches),
+ * a globe for audio language (the skin uses a speech glyph), a stopwatch for speed (the skin uses a speedometer).
+ */
 function SettingsMenu() {
   const container = useContainer();
   const quality = useQualityOptions();
   const audio = useAudioTrackOptions();
   const rates = usePlaybackRateOptions();
   const captions = useCaptionsOptions();
+  const t = useTranslator();
 
   return (
     <DropdownMenu.Root modal={false}>
-      <HotkeyTooltip label="Settings">
+      <HotkeyTooltip label={t(settingsText)}>
         <DropdownMenu.Trigger asChild>
-          <button type="button" className={ICON_BUTTON_CLASS} aria-label="Settings">
+          <button type="button" className={ICON_BUTTON_CLASS} aria-label={t(settingsText)}>
             <GearIcon />
           </button>
         </DropdownMenu.Trigger>
       </HotkeyTooltip>
       <DropdownMenu.Portal container={container}>
         <DropdownMenu.Content side="top" align="end" sideOffset={8} className={`${POPUP_CLASS} min-w-56`}>
-          <OptionSubmenu icon={<StackIcon />} options={quality} />
-          <OptionSubmenu icon={<SpeakerLoudIcon />} options={audio} />
-          <OptionSubmenu icon={<UpdateIcon />} options={rates} />
-          <OptionSubmenu icon={<TextIcon />} options={captions} />
+          <OptionSubmenu icon={<MixerHorizontalIcon />} label={t(qualityText)} options={quality} />
+          <OptionSubmenu icon={<GlobeIcon />} label={t(audioText)} options={audio} />
+          <OptionSubmenu icon={<StopwatchIcon />} label={t(speedText)} options={rates} />
+          <OptionSubmenu icon={<ChatBubbleIcon />} label={t(captionsText)} options={captions} />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );
 }
 
-/** One remote-playback button for the skin's Cast/AirPlay pair; hidden when unsupported, disabled when unavailable. */
+/**
+ * One remote-playback button for the skin's Cast/AirPlay pair, worded as AirPlay because the remote-playback feature is
+ * what drives Video.js's AirPlayButton; hidden when unsupported, disabled when unavailable.
+ */
 function RemotePlaybackToggle() {
   const remote = usePlayer(selectRemotePlayback);
+  const t = useTranslator();
+
   if (!remote || remote.remotePlaybackAvailability === 'unsupported') return null;
 
   const connected = remote.remotePlaybackState === 'connected';
-  const label = connected ? 'Stop remote playback' : 'Play on another device';
+  const label = t(connected ? airplayStopText : airplayStartText);
 
   return (
     <HotkeyTooltip label={label}>
@@ -468,12 +499,14 @@ function RemotePlaybackToggle() {
   );
 }
 
-/** Radix Icons has no picture-in-picture glyph; StackIcon stands in. */
+/** Radix Icons has no picture-in-picture glyph; CopyIcon's overlapping frames are the nearest, pressed = in PiP. */
 function PiPToggle() {
   const pip = usePlayer(selectPiP);
+  const t = useTranslator();
+
   if (!pip || pip.pipAvailability === 'unsupported') return null;
 
-  const label = pip.pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
+  const label = t(pip.pip ? pipExitText : pipEnterText);
 
   return (
     <HotkeyTooltip label={label} action="togglePictureInPicture">
@@ -484,7 +517,7 @@ function PiPToggle() {
         disabled={pip.pipAvailability === 'unavailable'}
         onPressedChange={() => void pip.togglePictureInPicture()}
       >
-        {pip.pip ? <ExitIcon /> : <StackIcon />}
+        <CopyIcon />
       </Toggle.Root>
     </HotkeyTooltip>
   );
@@ -492,9 +525,11 @@ function PiPToggle() {
 
 function FullscreenToggle() {
   const fullscreen = usePlayer(selectFullscreen);
+  const t = useTranslator();
+
   if (!fullscreen || fullscreen.fullscreenAvailability === 'unsupported') return null;
 
-  const label = fullscreen.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
+  const label = t(fullscreen.fullscreen ? fullscreenExitText : fullscreenEnterText);
 
   return (
     <HotkeyTooltip label={label} action="toggleFullscreen">

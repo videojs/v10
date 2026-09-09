@@ -12,8 +12,12 @@ toolbar (Approach, Media, Source, Captions) from `@app/shared/react/library-skin
 Laid out to the default skin's metrics: a 44px pill bar inset 12px with a bottom gradient behind it, 36px round buttons
 with 18px icons, 13px tabular time, a 4px track with a 12px thumb that appears on hover.
 
-- **Icons** come from `@radix-ui/react-icons`. Radix has no picture-in-picture or cast glyph; `StackIcon` and
-  `DesktopIcon` stand in.
+- **Icons** come from `@radix-ui/react-icons`, one per concept and shared between button and menu: speech bubble for
+  captions, overlapping frames (`CopyIcon`) for picture-in-picture, sliders (`MixerHorizontalIcon`) for quality, a
+  globe for audio language, a stopwatch for speed, a desktop for remote playback. Radix has no closed-caption,
+  picture-in-picture, cast, or speedometer glyph, so those are the nearest stand-ins.
+- **Wording** comes from the same i18n text tokens the default skin uses (`@videojs/core/i18n/text/*`) through
+  `useTranslator()`, so labels, tooltips, and menu headings read identically and translate with the locale.
 - **Settings** is a `DropdownMenu` with one `Sub` per option hook (quality, audio, speed, captions), each showing the
   current value in the trigger like the default skin's submenus; a hook's `hidden` flag removes its submenu.
 - **Seek slider** is a Radix `Slider` fed by the time, buffer, and text-track features. Radix has no pointer-position
