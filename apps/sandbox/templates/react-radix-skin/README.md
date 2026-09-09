@@ -16,6 +16,9 @@ with 18px icons, 13px tabular time, a 4px track with a 12px thumb that appears o
   captions, overlapping frames (`CopyIcon`) for picture-in-picture, sliders (`MixerHorizontalIcon`) for quality, a
   globe for audio language, a stopwatch for speed, a desktop for remote playback. Radix has no closed-caption,
   picture-in-picture, cast, or speedometer glyph, so those are the nearest stand-ins.
+- **On/off state** swaps the icon where Radix has a pair (speaker levels, fullscreen, PiP enter → `ExitIcon`) and
+  otherwise underlines the icon while active (captions showing, remote playback connected), the way YouTube marks
+  captions; the inactive icon sits at 80% opacity.
 - **Wording** comes from the same i18n text tokens the default skin uses (`@videojs/core/i18n/text/*`) through
   `useTranslator()`, so labels, tooltips, and menu headings read identically and translate with the locale.
 - **Settings** is a `DropdownMenu` with one `Sub` per option hook (quality, audio, speed, captions), each showing the

@@ -11,6 +11,7 @@ import {
   DesktopIcon,
   EnterFullScreenIcon,
   ExitFullScreenIcon,
+  ExitIcon,
   GearIcon,
   GlobeIcon,
   MixerHorizontalIcon,
@@ -90,6 +91,25 @@ function HotkeyTooltip({ label, action, children }: { label: string; action?: st
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>
+  );
+}
+
+/**
+ * Radix Icons has one glyph for captions and remote playback, so the "on" state gets a short underline beneath the
+ * icon, the way YouTube marks captions. Where Radix has a paired glyph (fullscreen, PiP, speaker levels) the icon
+ * swaps.
+ */
+function ActiveIcon({ on, children }: { on: boolean; children: ReactNode }) {
+  return (
+    <span
+      className={`relative inline-flex ${
+        on
+          ? 'after:absolute after:-bottom-1.5 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-white'
+          : 'opacity-80'
+      }`}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -362,7 +382,7 @@ function RemainingTime() {
   );
 }
 
-/** Radix Icons has no closed-caption glyph; the speech bubble serves the button and the menu, pressed = showing. */
+/** Radix Icons has no closed-caption glyph; the speech bubble serves the button and the menu, underlined while showing. */
 function CaptionsToggle() {
   const textTrack = usePlayer(selectTextTrack);
   const hasTracks = textTrack?.textTrackList.some((track) => track.kind === 'subtitles' || track.kind === 'captions');
@@ -380,7 +400,9 @@ function CaptionsToggle() {
         pressed={textTrack.subtitlesShowing}
         onPressedChange={() => textTrack.toggleSubtitles()}
       >
-        <ChatBubbleIcon />
+        <ActiveIcon on={textTrack.subtitlesShowing}>
+          <ChatBubbleIcon />
+        </ActiveIcon>
       </Toggle.Root>
     </HotkeyTooltip>
   );
@@ -493,13 +515,18 @@ function RemotePlaybackToggle() {
         disabled={remote.remotePlaybackAvailability === 'unavailable'}
         onPressedChange={() => void remote.toggleRemotePlayback()}
       >
-        <DesktopIcon />
+        <ActiveIcon on={connected}>
+          <DesktopIcon />
+        </ActiveIcon>
       </Toggle.Root>
     </HotkeyTooltip>
   );
 }
 
-/** Radix Icons has no picture-in-picture glyph; CopyIcon's overlapping frames are the nearest, pressed = in PiP. */
+/**
+ * Radix Icons has no picture-in-picture glyph; overlapping frames (CopyIcon) enter it, an arrow leaving a frame
+ * (ExitIcon) exits.
+ */
 function PiPToggle() {
   const pip = usePlayer(selectPiP);
   const t = useTranslator();
@@ -517,7 +544,7 @@ function PiPToggle() {
         disabled={pip.pipAvailability === 'unavailable'}
         onPressedChange={() => void pip.togglePictureInPicture()}
       >
-        <CopyIcon />
+        {pip.pip ? <ExitIcon /> : <CopyIcon />}
       </Toggle.Root>
     </HotkeyTooltip>
   );
