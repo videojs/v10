@@ -1,5 +1,6 @@
 import { defineComponent } from 'vjsc/components';
 
+import type { ThumbnailImageProps, ThumbnailProps } from '../thumbnail/core';
 import type { SliderPreviewProps, SliderProps } from './core';
 import { SliderDataAttrs } from './data';
 
@@ -19,10 +20,11 @@ export default defineComponent({
     Fill: defineComponent(),
     Buffer: defineComponent(),
     Thumb: defineComponent(),
+    // The slider supplies `time` from its pointer value, so the root part never accepts it.
     Thumbnail: defineComponent({
       parts: {
-        Root: defineComponent(),
-        Image: defineComponent(),
+        Root: defineComponent<Omit<ThumbnailProps, 'time'>>(),
+        Image: defineComponent<ThumbnailImageProps>(),
       },
     }),
     Preview: defineComponent<SliderPreviewProps>(),

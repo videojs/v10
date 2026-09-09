@@ -43,6 +43,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
     })),
     updateSrc: vi.fn(),
     connect: vi.fn(),
+    disconnectImg: vi.fn(),
     destroy: vi.fn(),
   }),
 }));
@@ -130,6 +131,21 @@ describe('SliderThumbnail', () => {
     expect(img).toBeTruthy();
     expect(img?.getAttribute('aria-hidden')).toBe('true');
     expect(img?.getAttribute('decoding')).toBe('async');
+  });
+
+  it('renders overlay children beside the image', () => {
+    const { container } = render(
+      <SliderRoot>
+        <SliderThumbnail data-testid="thumbnail">
+          <div data-testid="overlay" />
+        </SliderThumbnail>
+      </SliderRoot>
+    );
+
+    const el = container.querySelector('[data-testid="thumbnail"]');
+
+    expect(el?.querySelector('img')).toBeTruthy();
+    expect(el?.querySelector('[data-testid="overlay"]')).toBeTruthy();
   });
 
   it('accepts thumbnails prop', () => {

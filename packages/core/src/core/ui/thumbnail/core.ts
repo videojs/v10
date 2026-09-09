@@ -1,4 +1,5 @@
 import { findLastAtOrBefore } from '@videojs/utils/array';
+import { isNull, isUndefined } from '@videojs/utils/predicate';
 
 import type {
   ThumbnailConstraints,
@@ -12,6 +13,11 @@ import type {
 export interface ThumbnailProps {
   /** Time in seconds to display the thumbnail for. */
   time?: number | undefined;
+  /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
+  thumbnails?: ThumbnailImage[] | undefined;
+}
+
+export interface ThumbnailImageProps {
   /**
    * CORS setting forwarded to the inner `<img>`.
    *
@@ -127,6 +133,24 @@ export class ThumbnailCore {
     };
   }
 
+  /**
+   * Resolve the CORS mode the image should request with.
+   *
+   * `null` opts out and drops the attribute. Any other explicit value wins, including `''`, which the CORS-settings
+   * attribute reads as Anonymous. Otherwise the inherited mode applies, which renderers supply only for
+   * `<track>`-sourced thumbnails since a list set directly may point at a host unrelated to the media element.
+   */
+  resolveCrossOrigin(
+    explicit: ThumbnailCrossOrigin | undefined,
+    inherited: ThumbnailCrossOrigin | undefined
+  ): Exclude<ThumbnailCrossOrigin, null> | undefined {
+    if (isNull(explicit)) return undefined;
+
+    if (!isUndefined(explicit)) return explicit;
+
+    return inherited ?? undefined;
+  }
+
   getState(loading: boolean, error: boolean, thumbnail: ThumbnailImage | undefined): ThumbnailState {
     return {
       loading,
@@ -146,6 +170,8 @@ export class ThumbnailCore {
 }
 
 export namespace ThumbnailCore {
-  export type Props = ThumbnailProps;
+  export type Props = ThumbnailProps & ThumbnailImageProps;
+  export type RootProps = ThumbnailProps;
+  export type ImageProps = ThumbnailImageProps;
   export type State = ThumbnailState;
 }
