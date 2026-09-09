@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
+import { TooltipLabelElement } from '../../ui/tooltip/label';
 
 safeDefine(TooltipLabelElement);
 

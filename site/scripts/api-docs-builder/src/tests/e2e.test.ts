@@ -443,7 +443,7 @@ describe('Component pipeline (end-to-end)', () => {
       expect(root.props.orientation).toBeDefined();
       // State comes from VolumeSliderState
       expect(root.state.volume).toBeDefined();
-      // HTML tag comes from volume-slider-element.ts
+      // HTML tag comes from volume-slider/element.ts
       expect(root.platforms.html).toEqual({ tagName: 'media-volume-slider' });
       expect(root.platforms.react).toEqual({});
     });
@@ -452,7 +452,7 @@ describe('Component pipeline (end-to-end)', () => {
       const thumb = findComponent('VolumeSlider')!.reference.parts!.thumb!;
 
       expect(thumb.name).toBe('Thumb');
-      // HTML tag comes from SLIDER's element file (slider-thumb-element.ts),
+      // HTML tag comes from SLIDER's element file (slider/thumb.ts),
       // not volume-slider's directory
       expect(thumb.platforms.html).toEqual({ tagName: 'media-slider-thumb' });
       expect(thumb.platforms.react).toEqual({});

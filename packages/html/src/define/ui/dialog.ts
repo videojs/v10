@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { DialogElement } from '../../ui/dialog/dialog-element';
+import { DialogElement } from '../../ui/dialog/element';
 
 safeDefine(DialogElement);
 

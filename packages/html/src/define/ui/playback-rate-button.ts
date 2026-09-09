@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
+import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/element';
 
 safeDefine(PlaybackRateButtonElement);
 

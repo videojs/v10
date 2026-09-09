@@ -13,7 +13,7 @@ the documented API patterns; it does not invoke the TypeScript compiler.
 | Core | `packages/core/src/core/ui/{name}/core.ts` | Props, State, defaultProps |
 | Data attrs | `packages/core/src/core/ui/{name}/data.ts` | Data attribute definitions |
 | CSS vars | `packages/core/src/core/ui/{name}/vars.ts` | CSS custom property definitions (optional) |
-| HTML element | `packages/html/src/ui/{name}/{name}-element.ts` | Custom element with `static tagName` |
+| HTML element | `packages/html/src/ui/{name}/element.ts` | Custom element with `static tagName` |
 | React parts | `packages/react/src/ui/{name}/index.parts.ts` | Multi-part detection (optional) |
 
 Every file in a component directory uses a simple role name (`core.ts`, `data.ts`, `vars.ts`, `component.ts`);
@@ -60,7 +60,7 @@ The same map covers media elements whose PascalCase name doesn't kebab-case to t
 
 **Primary part identification**: The part whose React source file instantiates the component's Core class (matches `new \w+Core\(`). The primary part receives the shared core props/state/data-attrs/css-vars.
 
-**Non-primary parts**: Each gets its own element file at `{name}-{part}-element.ts`. Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`).
+**Non-primary parts**: Each gets its own element file at `packages/html/src/ui/{name}/{part}.ts` (e.g., `time/group.ts`). Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`). A nested React part source such as `./chapters/title` is honored when the same folder exists on the HTML side; otherwise the part is looked up flat in the component directory.
 
 **Framework-divergent parts**: All parts get `platforms.react`. Parts with a matching HTML element file also get `platforms.html`. The renderer filters parts by framework — React-only parts are hidden in HTML docs.
 

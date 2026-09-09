@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { ControlsBackdropElement } from '../../ui/controls/controls-backdrop-element';
+import { ControlsBackdropElement } from '../../ui/controls/backdrop';
 
 safeDefine(ControlsBackdropElement);
 

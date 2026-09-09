@@ -7,7 +7,7 @@ import type {
 } from '@videojs/core/dom';
 import { assertType, describe, it } from 'vitest';
 
-import type { PlayerController as PlayerControllerInstance } from '../../player/player-controller';
+import type { PlayerController as PlayerControllerInstance } from '../../player/controller';
 import type { UIElement } from '../../ui/ui-element';
 import { PlayerController as AudioPlayerController } from '../audio';
 import { PlayerController as BackgroundPlayerController } from '../background';

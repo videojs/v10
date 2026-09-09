@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
+import { CaptionsButtonElement } from '../../ui/captions-button/element';
 
 safeDefine(CaptionsButtonElement);
 

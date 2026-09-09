@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
+import { TimeSliderElement } from '../../ui/time-slider/element';
 
 safeDefine(TimeSliderElement);
 

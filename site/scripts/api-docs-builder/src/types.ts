@@ -51,6 +51,8 @@ export interface PartSource {
   isPrimary: boolean;
   /** Path to HTML element file. */
   htmlPath?: string;
+  /** Element class name inside `htmlPath` for non-primary parts (e.g., "SliderTrackElement"). */
+  htmlElementName?: string;
   /** Path to React component file (for JSDoc description extraction). */
   reactPath?: string;
   /** Path to data.ts for shared data attributes (sub-parts only). */

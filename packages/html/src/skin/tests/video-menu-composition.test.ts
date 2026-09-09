@@ -10,15 +10,15 @@ import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../player/context';
-import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
-import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
-import { MenuContentElement } from '../../ui/menu/menu-content-element';
-import { MenuElement } from '../../ui/menu/menu-element';
-import { MenuItemElement } from '../../ui/menu/menu-item-element';
-import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
-import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
-import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
-import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
+import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/element';
+import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/element';
+import { MenuContentElement } from '../../ui/menu/content';
+import { MenuElement } from '../../ui/menu/element';
+import { MenuItemElement } from '../../ui/menu/item';
+import { MenuRadioGroupElement } from '../../ui/menu/radio-group';
+import { MenuRadioItemElement } from '../../ui/menu/radio-item';
+import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/element';
+import { QualityRadioGroupElement } from '../../ui/quality-radio-group/element';
 import { UIElement } from '../../ui/ui-element';
 
 type MenuMediaState = MediaAudioTrackState & MediaPlaybackRateState & MediaQualityState & MediaTextTrackState;

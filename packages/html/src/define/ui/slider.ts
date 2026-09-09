@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { SliderElement } from '../../ui/slider/slider-element';
+import { SliderElement } from '../../ui/slider/element';
 
 safeDefine(SliderElement);
 

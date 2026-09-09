@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MenuItemIndicatorElement } from '../../ui/menu/menu-item-indicator-element';
+import { MenuItemIndicatorElement } from '../../ui/menu/item-indicator';
 
 safeDefine(MenuItemIndicatorElement);
 

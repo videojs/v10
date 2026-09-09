@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
+import { MenuRadioItemElement } from '../../ui/menu/radio-item';
 
 safeDefine(MenuRadioItemElement);
 

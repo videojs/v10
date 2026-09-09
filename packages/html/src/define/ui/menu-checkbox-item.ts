@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
+import { MenuCheckboxItemElement } from '../../ui/menu/checkbox-item';
 
 safeDefine(MenuCheckboxItemElement);
 

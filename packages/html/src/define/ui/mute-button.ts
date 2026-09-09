@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
+import { MuteButtonElement } from '../../ui/mute-button/element';
 
 safeDefine(MuteButtonElement);
 

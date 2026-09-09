@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MenuItemElement } from '../../ui/menu/menu-item-element';
+import { MenuItemElement } from '../../ui/menu/item';
 
 safeDefine(MenuItemElement);
 
