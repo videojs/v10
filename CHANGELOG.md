@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-rc.2] - 2026-09-09
+
+### 🚀 Features
+- *(react)* [**breaking**] Make poster composable ([#2563](https://github.com/videojs/v10/pull/2563)) by [@mihar-22](https://github.com/mihar-22)
+- *(react)* [**breaking**] Make thumbnail composable ([#2566](https://github.com/videojs/v10/pull/2566)) by [@mihar-22](https://github.com/mihar-22)
+- *(react)* [**breaking**] Make slider thumbnail composable ([#2568](https://github.com/videojs/v10/pull/2568)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Handle controls before media metadata ([#2525](https://github.com/videojs/v10/pull/2525)) by [@sampotts](https://github.com/sampotts)
+- *(html)* [**breaking**] Make thumbnail images composable ([#2572](https://github.com/videojs/v10/pull/2572)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🐛 Bug Fixes
+- *(ci)* Comment on open prs for e2e failures ([#2653](https://github.com/videojs/v10/pull/2653)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Misc styles fixes ([#2558](https://github.com/videojs/v10/pull/2558)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Stabilize slider keyboard input ([#2553](https://github.com/videojs/v10/pull/2553)) by [@sampotts](https://github.com/sampotts)
+- *(test)* Wait for fullscreen thumbnail geometry ([#2654](https://github.com/videojs/v10/pull/2654)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Use finite radius to fix Safari clip-path bug ([#2679](https://github.com/videojs/v10/pull/2679)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Keep shared-source react parts in the api reference ([#2682](https://github.com/videojs/v10/pull/2682)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Expand namespace re-exports into nested api reference parts ([#2683](https://github.com/videojs/v10/pull/2683)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Style poster and slider thumbnail shadow hosts in webkit ([#2693](https://github.com/videojs/v10/pull/2693)) by [@luwes](https://github.com/luwes)
+
+### 🚜 Refactor
+- *(core)* Use simple file names in ui directories ([#2671](https://github.com/videojs/v10/pull/2671)) by [@mihar-22](https://github.com/mihar-22)
+- *(sandbox)* Use shadcn base ui components ([#2668](https://github.com/videojs/v10/pull/2668)) by [@sampotts](https://github.com/sampotts)
+- *(html)* Use simple file names in ui and player directories ([#2673](https://github.com/videojs/v10/pull/2673)) by [@mihar-22](https://github.com/mihar-22)
+- *(react)* Use simple file names in ui directories ([#2674](https://github.com/videojs/v10/pull/2674)) by [@mihar-22](https://github.com/mihar-22)
+- *(sandbox)* Spell out the player markup in the html templates ([#2691](https://github.com/videojs/v10/pull/2691)) by [@luwes](https://github.com/luwes)
+
+### 📚 Documentation
+- *(site)* Document compound react radio group parts ([#2688](https://github.com/videojs/v10/pull/2688)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Document always-visible controls ([#2687](https://github.com/videojs/v10/pull/2687)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Describe container-scoped error dialog modality ([#2686](https://github.com/videojs/v10/pull/2686)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Use playback adapter terminology in react media hooks ([#2685](https://github.com/videojs/v10/pull/2685)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Describe slider thumbnail props in the timeline previews guide ([#2681](https://github.com/videojs/v10/pull/2681)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Document disabled and unavailable time and live button states ([#2680](https://github.com/videojs/v10/pull/2680)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Add changelog prose for 10.0.0-rc.1 ([#2694](https://github.com/videojs/v10/pull/2694)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+
+### ⚙️ Miscellaneous Tasks
+- *(cd)* Drop the rc.1 release-as pin and fix the dist-tag workflow ([#2660](https://github.com/videojs/v10/pull/2660)) by [@decepulis](https://github.com/decepulis)
+- *(ci)* Run affected package tests in grouped jobs ([#2651](https://github.com/videojs/v10/pull/2651)) by [@mihar-22](https://github.com/mihar-22)
+- *(dist-tag)* Tag every package before failing on the ones npm rejected ([#2662](https://github.com/videojs/v10/pull/2662)) by [@decepulis](https://github.com/decepulis)
+- *(changelog-prose)* Give the prose job 60 minutes ([#2689](https://github.com/videojs/v10/pull/2689)) by [@decepulis](https://github.com/decepulis)
+- *(changelog-prose)* Pre-fetch context and let the workflow open the PR ([#2690](https://github.com/videojs/v10/pull/2690)) by [@decepulis](https://github.com/decepulis)
+- *(root)* Upgrade workspace and ci to pnpm 12 ([#2695](https://github.com/videojs/v10/pull/2695)) by [@mihar-22](https://github.com/mihar-22)
+- Run vp through a file so forwarding output cannot hit EAGAIN ([#2697](https://github.com/videojs/v10/pull/2697)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-rc.1] - 2026-09-08
 
 ### 🚀 Features
@@ -102,6 +146,9 @@ All notable changes to this project will be documented in this file.
 - *(preview)* Skip pnpm's lockfile check when publishing previews ([#2630](https://github.com/videojs/v10/pull/2630)) by [@mihar-22](https://github.com/mihar-22)
 - *(cd)* Restore the GitHub App token and valid YAML in the release workflow ([#2632](https://github.com/videojs/v10/pull/2632)) by [@decepulis](https://github.com/decepulis)
 - *(cd)* Prepare the 10.0.0-rc.1 release ([#2599](https://github.com/videojs/v10/pull/2599)) by [@decepulis](https://github.com/decepulis)
+
+### New Contributors
+* @videojs-release[bot] made their first contribution in [#2617](https://github.com/videojs/v10/pull/2617)
 
 ## [@videojs/core@10.0.0-beta.32] - 2026-08-26
 
@@ -1943,6 +1990,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-rc.2]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.1...@videojs/core@10.0.0-rc.2
 [@videojs/core@10.0.0-rc.1]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.32...@videojs/core@10.0.0-rc.1
 [@videojs/core@10.0.0-beta.32]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.31...@videojs/core@10.0.0-beta.32
 [@videojs/core@10.0.0-beta.31]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.30...@videojs/core@10.0.0-beta.31
