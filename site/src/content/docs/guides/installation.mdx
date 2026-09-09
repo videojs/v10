@@ -7,6 +7,7 @@ import JSPicker from '@/components/installation/JSPicker.astro';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import InstallationPreview from '@/components/installation/InstallationPreview';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
@@ -96,6 +97,10 @@ The default presets work well for general website playback. The live presets sui
 
 <ContentWidth margins="lg">
   <SkinPickerSection />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <InstallationPreview client:visible />
 </ContentWidth>
 
 ## Choose your media source
