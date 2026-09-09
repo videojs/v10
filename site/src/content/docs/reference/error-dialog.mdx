@@ -98,7 +98,11 @@ React renders the backdrop and popup as separate DOM elements. Add a `className`
 
 ## Accessibility
 
-The popup uses `role="alertdialog"` and `aria-modal="true"`. Its title and description are connected with `aria-labelledby` and `aria-describedby`. Focus stays within the popup and content outside it is inert while the error is open. Pressing <kbd>Escape</kbd> or activating the close part dismisses the error.
+The popup uses `role="alertdialog"`. Its title and description are connected with `aria-labelledby` and `aria-describedby`.
+
+Modality is scoped to the player container rather than the page. While the error is open, the rest of the container is inert and focus that lands elsewhere inside it returns to the popup, but content outside the player stays interactive and `aria-modal` is omitted. Only when the popup renders outside the container does the dialog fall back to document-wide modality: `aria-modal="true"`, <kbd>Tab</kbd> cycling within the popup, and everything outside it inert.
+
+Pressing <kbd>Escape</kbd> or activating the close part dismisses the error.
 
 ## Examples
 
