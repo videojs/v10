@@ -8,13 +8,15 @@ import FrameworkCase from '../FrameworkCase.astro';
 interface Props {
   component: string;
   html: string;
+  /** React entry point to import from when the component is not exported from the package root. */
+  reactFrom?: string;
 }
 
-const { component, html } = Astro.props;
+const { component, html, reactFrom = '@videojs/react' } = Astro.props;
 
 const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
   {
-    code: `import { ${component} } from '@videojs/react';`,
+    code: `import { ${component} } from '${reactFrom}';`,
     framework: 'react',
     lang: 'tsx',
   },
