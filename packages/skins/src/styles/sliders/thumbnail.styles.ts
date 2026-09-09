@@ -19,6 +19,12 @@ export default styles({
           'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-(image:--media-thumbnail-gradient)',
         ],
         minimal: '[left:var(--media-preview-left,var(--media-slider-pointer))]',
+        // An image slotted in from outside the skin cannot carry the image class, so the root styles it.
+        'shadow-dom': [
+          '[&>slot::slotted(img)]:block [&>slot::slotted(img)]:transition-opacity',
+          '[&>slot::slotted(img)]:duration-media-base [&>slot::slotted(img)]:ease-out',
+          '[&[data-loading]>slot::slotted(img)]:opacity-0',
+        ],
       },
     },
     image: {

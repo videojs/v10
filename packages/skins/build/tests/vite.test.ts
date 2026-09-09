@@ -22,6 +22,8 @@ const htmlAudioSettingsMenuUrl =
 const volumePopoverUrl = `/../src/components/controls/volume-popover.tsx${reactTarget}`;
 const htmlPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
 const reactPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
+const htmlTimeSliderUrl = '/../src/components/sliders/time-slider.tsx?style=tailwind&target=html&skin=default-video';
+const reactTimeSliderUrl = '/../src/components/sliders/time-slider.tsx?style=tailwind&target=react&skin=default-video';
 // The Minimal controls reach across to the volume popover trigger with `group-has-*`, a tracked parity gap.
 const minimalControlsUrl = '/../src/skins/minimal/video/controls.tsx?style=tailwind&target=react&skin=minimal-video';
 const buttonStyles = resolve(packageDir, 'src/styles/buttons/button.styles.ts');
@@ -235,6 +237,17 @@ describe('Skins Vite workflow', () => {
 
     expect(html?.code).toContain('[&>slot::slotted(img)]:layer-media');
     expect(react?.code).not.toContain('::slotted');
+  }, 30_000);
+
+  it('slots the thumbnail image and styles a slotted one only for HTML targets', async () => {
+    const html = await server.transformRequest(htmlTimeSliderUrl);
+    const react = await server.transformRequest(reactTimeSliderUrl);
+
+    expect(html?.code).toMatch(/name:\s*"thumbnail"/);
+    expect(html?.code).toContain('[&>slot::slotted(img)]:block');
+    expect(html?.code).toContain('[&[data-loading]>slot::slotted(img)]:opacity-0');
+    expect(react?.code).not.toContain('::slotted');
+    expect(react?.code).not.toContain('"thumbnail"');
   }, 30_000);
 
   it('hides source-less poster images for both targets', async () => {

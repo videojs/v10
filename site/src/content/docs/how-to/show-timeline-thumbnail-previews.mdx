@@ -38,7 +38,18 @@ Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image s
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-`<media-slider-thumbnail>` draws its own image unless you supply an `<img>` child; set `crossorigin`, `loading`, or `fetchpriority` on the element itself.
+`<media-slider-thumbnail>` draws its own image unless you supply an `<img>` child; set `crossorigin`, `loading`, or `fetchpriority` on the element itself, or on the image you supply. Inside a packaged skin, an `<img slot="thumbnail">` replaces the image the skin carries, so those attributes go on it:
+
+```html
+<video-player>
+  <video-skin>
+    <video src="video.mp4" crossorigin="anonymous">
+      <track kind="metadata" label="thumbnails" src="storyboard.vtt" default />
+    </video>
+    <img slot="thumbnail" alt="" loading="lazy" fetchpriority="low" />
+  </video-skin>
+</video-player>
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

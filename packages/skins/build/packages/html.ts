@@ -183,7 +183,7 @@ export function createSourceOwnedHtml(template: string): string {
 
   return template
     .replace(mediaSlot, '<!-- Add a compatible media element here. -->')
-    .replace(/<slot name="poster">\s*([\s\S]*?)\s*<\/slot>/, '$1')
+    .replace(/<slot name="[^"]+">\s*([\s\S]*?)\s*<\/slot>/g, '$1')
     .replaceAll('&amp;', '&')
     .replaceAll('&gt;', '>')
     .replaceAll('&lt;', '<');

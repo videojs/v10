@@ -98,7 +98,7 @@ A same-origin track needs none of this.
 
 ## Behavior
 
-The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle. In React, render that image with `Thumbnail.Image`. In HTML, the `<img>` child is optional: leave it out and `<media-thumbnail>` draws an image of its own in its shadow DOM; supply one to replace it and compose overlays or loading indicators beside it.
+The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle. In React, render that image with `Thumbnail.Image`. In HTML, the `<img>` child is optional: leave it out and `<media-thumbnail>` draws an image of its own in its shadow DOM; supply one to replace it and compose overlays or loading indicators beside it. Any `crossorigin`, `loading`, or `fetchpriority` the supplied image already carries is yours and wins over the element's own attributes; the rest are filled in.
 
 Supported source formats:
 
