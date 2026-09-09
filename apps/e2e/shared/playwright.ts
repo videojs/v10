@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const CI = Boolean(process.env.CI);
+/** Pull requests retry once: a second retry mostly re-records video and traces for the same flake. */
+const RETRIES = process.env.GITHUB_EVENT_NAME === 'pull_request' ? 1 : 2;
 const e2eDir = resolve(import.meta.dirname, '..');
 
 /** Apply the shared reporting, retry, trace, and screenshot policy to one E2E suite. */
@@ -11,7 +13,7 @@ export function suiteConfig(name: string): PlaywrightTestConfig {
     snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
     outputDir: resolve(e2eDir, 'test-results', name),
     timeout: 60_000,
-    retries: CI ? 2 : 0,
+    retries: CI ? RETRIES : 0,
     fullyParallel: true,
     reporter: CI
       ? [['html', { open: 'never', outputFolder: resolve(e2eDir, 'playwright-report', name) }], ['github'], ['blob']]

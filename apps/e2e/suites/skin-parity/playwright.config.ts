@@ -7,6 +7,11 @@ import { suiteConfig } from '../../shared/playwright.ts';
 /** CI shards the suite per preset; one value restricts the run to that preset's spec. */
 const preset = process.env.VJSC_SKIN_PRESET;
 
+/**
+ * Generator correctness: one authored skin rendered through CSS and through Tailwind, and through the authored and the
+ * packaged source, has to agree. A test belongs here only when it compares two panels of the same skin; a skin behavior
+ * with one expected outcome belongs in the `player` suite, where it also runs on WebKit.
+ */
 export default defineConfig({
   ...suiteConfig('skin-parity'),
   testDir: resolve(import.meta.dirname, 'tests'),

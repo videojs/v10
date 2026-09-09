@@ -2,6 +2,7 @@ export interface StyleOutputRule {
   className: string;
   candidates: readonly string[];
   scopeRoot: boolean;
+  shadowHost: boolean;
 }
 
 export interface StyleOutputFile {

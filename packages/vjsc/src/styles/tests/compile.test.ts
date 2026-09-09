@@ -177,6 +177,33 @@ describe('compileStyles', () => {
     expect(css).toContain('.media-poster > slot::slotted(img:not([src]))');
     expect(css).toMatch(/}\s*\.media-poster > slot::slotted/);
   });
+
+  it('emits shadow host rules outside the scope without changing specificity or conditions', async () => {
+    const thumbnail = {
+      ...rule('image', 'media-thumbnail-image', ['block', 'data-loading:opacity-0', 'sm:flex']),
+      shadowHost: true,
+    };
+    const spinner = rule('spinner', 'media-thumbnail-spinner', ['absolute']);
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([thumbnail, spinner]),
+      scope: '.media-skin-video',
+      variants: [],
+    });
+    const css = styles.get('buttons.css') ?? '';
+    const scopeEnd = css.indexOf('\n  }\n');
+    const scoped = css.slice(0, scopeEnd);
+    const unscoped = css.slice(scopeEnd);
+
+    expect(scoped).toContain('@scope (.media-skin-video)');
+    expect(scoped).toContain('.media-thumbnail-spinner');
+    expect(scoped).not.toContain('.media-thumbnail-image');
+    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail-image {');
+    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail-image[data-loading] {');
+    expect(unscoped).toMatch(
+      /@media[^{}]+\{\s*:where\(\.media-skin-video\) \.media-thumbnail-image \{\s*display: flex;/
+    );
+  });
 });
 
 function rule(
@@ -192,6 +219,7 @@ function rule(
     file: 'buttons.css',
     layer: 'videojs.components',
     scopeRoot: false,
+    shadowHost: false,
     utilityGroups: utilities,
     utilities,
     variantGroups,

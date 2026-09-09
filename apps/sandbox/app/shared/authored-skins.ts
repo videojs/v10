@@ -11,69 +11,69 @@ type AuthoredKey = `${'react' | 'html'}/${SkinPreset}/${Skin}/${Styling}`;
  */
 const authoredSkins = {
   'react/video/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-video/skin.tsx?style=css&target=react&skin=default-video'),
+    import('../../../../packages/skins/src/skins/default/video/skin.tsx?style=css&target=react&skin=default-video'),
   'react/video/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-video/skin.tsx?style=tailwind&target=react&skin=default-video'),
+    import('../../../../packages/skins/src/skins/default/video/skin.tsx?style=tailwind&target=react&skin=default-video'),
   'react/video/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-video/skin.tsx?style=css&target=react&skin=minimal-video'),
+    import('../../../../packages/skins/src/skins/minimal/video/skin.tsx?style=css&target=react&skin=minimal-video'),
   'react/video/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-video/skin.tsx?style=tailwind&target=react&skin=minimal-video'),
+    import('../../../../packages/skins/src/skins/minimal/video/skin.tsx?style=tailwind&target=react&skin=minimal-video'),
   'react/live-video/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-live-video/skin.tsx?style=css&target=react&skin=default-live-video'),
+    import('../../../../packages/skins/src/skins/default/live-video/skin.tsx?style=css&target=react&skin=default-live-video'),
   'react/live-video/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-live-video/skin.tsx?style=tailwind&target=react&skin=default-live-video'),
+    import('../../../../packages/skins/src/skins/default/live-video/skin.tsx?style=tailwind&target=react&skin=default-live-video'),
   'react/live-video/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-video/skin.tsx?style=css&target=react&skin=minimal-live-video'),
+    import('../../../../packages/skins/src/skins/minimal/live-video/skin.tsx?style=css&target=react&skin=minimal-live-video'),
   'react/live-video/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-video/skin.tsx?style=tailwind&target=react&skin=minimal-live-video'),
+    import('../../../../packages/skins/src/skins/minimal/live-video/skin.tsx?style=tailwind&target=react&skin=minimal-live-video'),
   'react/audio/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-audio/skin.tsx?style=css&target=react&skin=default-audio'),
+    import('../../../../packages/skins/src/skins/default/audio/skin.tsx?style=css&target=react&skin=default-audio'),
   'react/audio/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-audio/skin.tsx?style=tailwind&target=react&skin=default-audio'),
+    import('../../../../packages/skins/src/skins/default/audio/skin.tsx?style=tailwind&target=react&skin=default-audio'),
   'react/audio/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-audio/skin.tsx?style=css&target=react&skin=minimal-audio'),
+    import('../../../../packages/skins/src/skins/minimal/audio/skin.tsx?style=css&target=react&skin=minimal-audio'),
   'react/audio/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-audio/skin.tsx?style=tailwind&target=react&skin=minimal-audio'),
+    import('../../../../packages/skins/src/skins/minimal/audio/skin.tsx?style=tailwind&target=react&skin=minimal-audio'),
   'react/live-audio/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-live-audio/skin.tsx?style=css&target=react&skin=default-live-audio'),
+    import('../../../../packages/skins/src/skins/default/live-audio/skin.tsx?style=css&target=react&skin=default-live-audio'),
   'react/live-audio/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-live-audio/skin.tsx?style=tailwind&target=react&skin=default-live-audio'),
+    import('../../../../packages/skins/src/skins/default/live-audio/skin.tsx?style=tailwind&target=react&skin=default-live-audio'),
   'react/live-audio/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-audio/skin.tsx?style=css&target=react&skin=minimal-live-audio'),
+    import('../../../../packages/skins/src/skins/minimal/live-audio/skin.tsx?style=css&target=react&skin=minimal-live-audio'),
   'react/live-audio/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-audio/skin.tsx?style=tailwind&target=react&skin=minimal-live-audio'),
+    import('../../../../packages/skins/src/skins/minimal/live-audio/skin.tsx?style=tailwind&target=react&skin=minimal-live-audio'),
   'html/video/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-video/skin.tsx?style=css&target=html&skin=default-video'),
+    import('../../../../packages/skins/src/skins/default/video/skin.tsx?style=css&target=html&skin=default-video'),
   'html/video/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-video/skin.tsx?style=tailwind&target=html&skin=default-video'),
+    import('../../../../packages/skins/src/skins/default/video/skin.tsx?style=tailwind&target=html&skin=default-video'),
   'html/video/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-video/skin.tsx?style=css&target=html&skin=minimal-video'),
+    import('../../../../packages/skins/src/skins/minimal/video/skin.tsx?style=css&target=html&skin=minimal-video'),
   'html/video/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video'),
+    import('../../../../packages/skins/src/skins/minimal/video/skin.tsx?style=tailwind&target=html&skin=minimal-video'),
   'html/live-video/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-live-video/skin.tsx?style=css&target=html&skin=default-live-video'),
+    import('../../../../packages/skins/src/skins/default/live-video/skin.tsx?style=css&target=html&skin=default-live-video'),
   'html/live-video/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-live-video/skin.tsx?style=tailwind&target=html&skin=default-live-video'),
+    import('../../../../packages/skins/src/skins/default/live-video/skin.tsx?style=tailwind&target=html&skin=default-live-video'),
   'html/live-video/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-video/skin.tsx?style=css&target=html&skin=minimal-live-video'),
+    import('../../../../packages/skins/src/skins/minimal/live-video/skin.tsx?style=css&target=html&skin=minimal-live-video'),
   'html/live-video/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-video/skin.tsx?style=tailwind&target=html&skin=minimal-live-video'),
+    import('../../../../packages/skins/src/skins/minimal/live-video/skin.tsx?style=tailwind&target=html&skin=minimal-live-video'),
   'html/audio/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-audio/skin.tsx?style=css&target=html&skin=default-audio'),
+    import('../../../../packages/skins/src/skins/default/audio/skin.tsx?style=css&target=html&skin=default-audio'),
   'html/audio/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-audio/skin.tsx?style=tailwind&target=html&skin=default-audio'),
+    import('../../../../packages/skins/src/skins/default/audio/skin.tsx?style=tailwind&target=html&skin=default-audio'),
   'html/audio/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-audio/skin.tsx?style=css&target=html&skin=minimal-audio'),
+    import('../../../../packages/skins/src/skins/minimal/audio/skin.tsx?style=css&target=html&skin=minimal-audio'),
   'html/audio/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-audio/skin.tsx?style=tailwind&target=html&skin=minimal-audio'),
+    import('../../../../packages/skins/src/skins/minimal/audio/skin.tsx?style=tailwind&target=html&skin=minimal-audio'),
   'html/live-audio/default/css': () =>
-    import('../../../../packages/skins/src/skins/default-live-audio/skin.tsx?style=css&target=html&skin=default-live-audio'),
+    import('../../../../packages/skins/src/skins/default/live-audio/skin.tsx?style=css&target=html&skin=default-live-audio'),
   'html/live-audio/default/tailwind': () =>
-    import('../../../../packages/skins/src/skins/default-live-audio/skin.tsx?style=tailwind&target=html&skin=default-live-audio'),
+    import('../../../../packages/skins/src/skins/default/live-audio/skin.tsx?style=tailwind&target=html&skin=default-live-audio'),
   'html/live-audio/minimal/css': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-audio/skin.tsx?style=css&target=html&skin=minimal-live-audio'),
+    import('../../../../packages/skins/src/skins/minimal/live-audio/skin.tsx?style=css&target=html&skin=minimal-live-audio'),
   'html/live-audio/minimal/tailwind': () =>
-    import('../../../../packages/skins/src/skins/minimal-live-audio/skin.tsx?style=tailwind&target=html&skin=minimal-live-audio'),
+    import('../../../../packages/skins/src/skins/minimal/live-audio/skin.tsx?style=tailwind&target=html&skin=minimal-live-audio'),
 } satisfies Record<AuthoredKey, () => Promise<object>>;
 
 /** The export a compiled skin module carries, such as `DefaultLiveVideoSkin`; the same name on both targets. */

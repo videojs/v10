@@ -422,6 +422,7 @@ function rule(tokenPath: readonly string[], className: string, utilities: readon
     file: 'buttons.css',
     layer: 'videojs.components',
     scopeRoot: false,
+    shadowHost: false,
     utilityGroups: utilities,
     utilities,
     variantGroups: {},

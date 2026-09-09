@@ -15,7 +15,8 @@ export default defineConfig({
       },
       'prepare:player': {
         command: 'pnpm generate-pages',
-        dependsOn: workspaceTaskDependencies(),
+        // The CDN pages import the bundles the cdn package packs, which its plain `build` task does not produce.
+        dependsOn: [...workspaceTaskDependencies(), '@videojs/cdn#build:cdn'],
         input: testInputs,
         output: ['suites/player/app/src/index.html', 'suites/player/app/src/pages/**'],
       },

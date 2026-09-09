@@ -3,7 +3,7 @@ import { bundleStyles, relativeImport, rewriteImports, stripStyleImports } from 
 
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import { skinCatalogEntry } from '../catalog.ts';
-import { skinBaseStylesheet, skinPresets } from '../skin.ts';
+import { skinBaseStylesheet, skinPresets, skinSourceDirectory } from '../skin.ts';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { addCopiedFiles, addGenerated, generatedFiles } from './utils.ts';
@@ -116,7 +116,7 @@ function reactModulePath(
   module: GraphModule<SkinModuleMeta>,
   sharedSourcePaths: ReadonlySet<string>
 ): string {
-  const ownedPrefix = `skins/${skin.root.meta.name}/`;
+  const ownedPrefix = `skins/${skinSourceDirectory(skin.root.meta.name)}/`;
 
   if (module.sourcePath.startsWith(ownedPrefix)) {
     return `${internalRoot}/${skin.root.meta.name}/${module.sourcePath.slice(ownedPrefix.length)}`;
