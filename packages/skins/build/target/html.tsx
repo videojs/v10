@@ -153,10 +153,6 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   const Button = element('button');
   const Div = element('div');
   const Img = element('img');
-  // Both thumbnail elements adopt a light-DOM image and fill in its source, so the part is a plain `img`.
-  const thumbnailImage = ({ props }: { props: object }) => (
-    <Img alt="" aria-hidden="true" decoding="async" {...props} />
-  );
   const Slot = element('slot');
   const Span = element('span');
   const Sup = element('sup');
@@ -164,6 +160,12 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   const I18nText = element('media-text', {
     import: { from: '@videojs/html/i18n', sideEffect: true },
   });
+
+  // Both thumbnail elements adopt a light-DOM image and fill in its source, so the part is a plain `img`.
+  const thumbnailImage = ({ props }: { props: object }) => (
+    <Img alt="" aria-hidden="true" decoding="async" {...props} />
+  );
+
   const optionTemplate: TemplateTargetDefinition = {
     render: ({ children }) => <HtmlTemplate>{children}</HtmlTemplate>,
     parts: {
