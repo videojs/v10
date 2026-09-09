@@ -237,6 +237,70 @@ describe('ThumbnailElement', () => {
     expect(first.hasAttribute('src')).toBe(false);
   });
 
+  describe('image attributes', () => {
+    it('fills loading and fetchpriority in from its own properties', async () => {
+      const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+      const img = document.createElement('img');
+
+      Object.defineProperty(img, 'complete', { value: false, configurable: true });
+      thumbnail.setAttribute('loading', 'lazy');
+      thumbnail.setAttribute('fetchpriority', 'low');
+      thumbnail.append(img);
+      document.body.append(thumbnail);
+      await thumbnail.updateComplete;
+
+      expect(img.getAttribute('loading')).toBe('lazy');
+      expect(img.getAttribute('fetchpriority')).toBe('low');
+    });
+
+    it('leaves attributes the supplied image already carries alone', async () => {
+      const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+      const img = document.createElement('img');
+
+      Object.defineProperty(img, 'complete', { value: false, configurable: true });
+      img.setAttribute('crossorigin', 'use-credentials');
+      img.setAttribute('loading', 'lazy');
+      img.setAttribute('fetchpriority', 'low');
+      thumbnail.setAttribute('crossorigin', 'anonymous');
+      thumbnail.append(img);
+      document.body.append(thumbnail);
+      await thumbnail.updateComplete;
+
+      expect(img.getAttribute('crossorigin')).toBe('use-credentials');
+      expect(img.getAttribute('loading')).toBe('lazy');
+      expect(img.getAttribute('fetchpriority')).toBe('low');
+
+      // Ownership is settled at adoption, so a later property change still yields to the author.
+      thumbnail.loading = 'eager';
+      await thumbnail.updateComplete;
+
+      expect(img.getAttribute('loading')).toBe('lazy');
+    });
+
+    it('removes only the attributes it set when an image steps aside', async () => {
+      const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+      const first = document.createElement('img');
+
+      Object.defineProperty(first, 'complete', { value: false, configurable: true });
+      first.setAttribute('loading', 'lazy');
+      thumbnail.setAttribute('fetchpriority', 'low');
+      thumbnail.append(first);
+      document.body.append(thumbnail);
+      await thumbnail.updateComplete;
+
+      expect(first.getAttribute('fetchpriority')).toBe('low');
+
+      const second = document.createElement('img');
+
+      Object.defineProperty(second, 'complete', { value: false, configurable: true });
+      first.replaceWith(second);
+
+      await vi.waitFor(() => expect(second.getAttribute('fetchpriority')).toBe('low'));
+      expect(first.hasAttribute('fetchpriority')).toBe(false);
+      expect(first.getAttribute('loading')).toBe('lazy');
+    });
+  });
+
   describe('crossorigin', () => {
     it('inherits the media element CORS mode when unset', async () => {
       await expect(renderCrossOrigin('anonymous')).resolves.toBe('anonymous');
@@ -273,6 +337,25 @@ describe('ThumbnailElement', () => {
       });
 
       expect(attribute).toBe('');
+    });
+
+    it('prefers a value the supplied image carries over the inherited one', async () => {
+      const provider = document.createElement('test-thumbnail-player') as TestPlayerProviderElement;
+      const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+      const img = document.createElement('img');
+
+      img.setAttribute('crossorigin', 'use-credentials');
+      provider.setStore(createTextTrackStore('anonymous'));
+      thumbnail.append(img);
+      provider.append(thumbnail);
+      document.body.append(provider);
+
+      for (let index = 0; index < 5; index++) {
+        await thumbnail.updateComplete;
+        await nextFrame();
+      }
+
+      expect(img.getAttribute('crossorigin')).toBe('use-credentials');
     });
 
     it('does not inherit for thumbnails supplied directly', async () => {

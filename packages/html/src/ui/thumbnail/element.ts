@@ -25,6 +25,14 @@ img,
   display: block;
 }`;
 
+/**
+ * Image attributes the element fills in from its own properties. Ones already on an image when it is adopted are the
+ * author's and are left alone, so an `<img slot="thumbnail" loading="lazy">` keeps its settings inside a skin.
+ */
+const IMAGE_ATTRIBUTES = ['crossorigin', 'loading', 'fetchpriority'] as const;
+
+type ImageAttribute = (typeof IMAGE_ATTRIBUTES)[number];
+
 /** The image the element draws when none is supplied, reachable from outside as `::part(image)`. */
 function createFallbackImage(): HTMLImageElement {
   const img = document.createElement('img');
@@ -42,7 +50,9 @@ function createFallbackImage(): HTMLImageElement {
  *
  * The element owns `src` and `srcset` on the active image. Left empty, it draws an image of its own in its shadow root.
  * Supply an `<img>` child instead — `<media-thumbnail time="12"><img alt=""></media-thumbnail>` — to compose overlays
- * or loading indicators beside the image the element controls.
+ * or loading indicators beside the image the element controls. Any `crossorigin`, `loading`, or `fetchpriority` the
+ * child already carries wins over the element's own; the rest are filled in. Inside a skin, an `<img slot="thumbnail">`
+ * of yours replaces the one the skin carries.
  */
 export class ThumbnailElement extends UIElement {
   static readonly tagName = 'media-thumbnail';
@@ -70,6 +80,8 @@ export class ThumbnailElement extends UIElement {
 
   #slots: AbortController | null = null;
   #img: HTMLImageElement | null = null;
+  /** Attributes `#img` already carried when adopted, which the author owns. */
+  #authored = new Set<ImageAttribute>();
   #thumbnails: ThumbnailImage[] = [];
   #externalThumbnails: ThumbnailImage[] | undefined;
   #lastTextTrack: MediaTextTrackState | undefined;
@@ -160,13 +172,7 @@ export class ThumbnailElement extends UIElement {
     const img = findComposedElement(this, isHTMLImageElement) ?? this.#fallback;
 
     this.#adopt(img);
-
-    // Sync img attributes from element properties.
-    applyElementProps(img, {
-      crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
-      loading: this.loading,
-      fetchpriority: this.fetchPriority,
-    });
+    this.#applyImageAttributes(img, textTrack);
 
     // Track src changes via the thumbnail API.
     this.#api?.updateSrc(thumbnail?.url);
@@ -208,6 +214,19 @@ export class ThumbnailElement extends UIElement {
     return this.#externalThumbnails ? undefined : textTrack?.thumbnailTrackCrossOrigin;
   }
 
+  /** Sync image attributes from element properties, leaving the ones the author put on the image alone. */
+  #applyImageAttributes(img: HTMLImageElement, textTrack: MediaTextTrackState | undefined): void {
+    const props: Partial<Record<ImageAttribute, string | undefined>> = {
+      crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
+      loading: this.loading,
+      fetchpriority: this.fetchPriority,
+    };
+
+    for (const name of this.#authored) delete props[name];
+
+    applyElementProps(img, props);
+  }
+
   #applyResize(result: ThumbnailResizeResult): void {
     this.style.width = `${result.containerWidth}px`;
     this.style.height = `${result.containerHeight}px`;
@@ -245,9 +264,16 @@ export class ThumbnailElement extends UIElement {
       this.#resetStyles();
       previous.removeAttribute('src');
       previous.removeAttribute('srcset');
+
+      for (const name of IMAGE_ATTRIBUTES) {
+        if (!this.#authored.has(name)) previous.removeAttribute(name);
+      }
     }
 
+    // Ownership is settled once, when an image becomes active: after the first
+    // sync the attributes we set would themselves look authored.
     this.#img = next;
+    this.#authored = new Set(next ? IMAGE_ATTRIBUTES.filter((name) => next.hasAttribute(name)) : []);
     this.#imageAttributes.disconnect();
 
     if (next && next !== this.#fallback) {
