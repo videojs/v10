@@ -22,8 +22,8 @@ export interface PosterState {
   error: boolean;
 }
 
-/** Framework-neutral poster component props. */
-export interface PosterProps {
+/** Framework-neutral poster image props. */
+export interface PosterImageProps {
   src?: string | undefined;
 }
 

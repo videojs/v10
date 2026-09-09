@@ -1,10 +1,10 @@
 import { flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { TooltipGroupCore } from '../../../../core/ui/tooltip/group-core';
-import { createPopupGroup } from '../../popover/popup-group';
-import { createTestPopover } from '../../popover/tests/popover-helpers';
-import { createTestTooltip } from './tooltip-helpers';
+import { TooltipGroupCore } from '../../../../core/ui/tooltip/group';
+import { createPopupGroup } from '../../popover/group';
+import { createTestPopover } from '../../popover/tests/helpers';
+import { createTestTooltip } from './helpers';
 
 describe('createTooltip', () => {
   it('starts closed', () => {

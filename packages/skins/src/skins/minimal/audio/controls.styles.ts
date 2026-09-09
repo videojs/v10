@@ -7,7 +7,7 @@ export default styles({
     timeSliderGroup: {
       utilities: [
         '@container/audio-time-controls flex min-w-0 flex-1 flex-row-reverse items-center gap-3',
-        'media-wide:flex-row',
+        'media-2xl:flex-row',
       ],
     },
   },

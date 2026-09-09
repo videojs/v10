@@ -124,7 +124,9 @@ export {
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export { PlaybackRateRadioGroupLegacy as PlaybackRateRadioGroup } from './ui/playback-rate-radio-group';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
-export { Poster, type PosterProps } from './ui/poster/poster';
+export { Poster } from './ui/poster';
+export type { PosterImageProps } from './ui/poster/poster-image';
+export type { PosterRootProps } from './ui/poster/poster-root';
 export {
   type QualityOption,
   type QualityOptionsProps,
@@ -141,14 +143,16 @@ export type { SliderBufferProps } from './ui/slider/slider-buffer';
 export type { SliderFillProps } from './ui/slider/slider-fill';
 export type { SliderRootProps } from './ui/slider/slider-root';
 export type { SliderThumbProps } from './ui/slider/slider-thumb';
-export type { SliderThumbnailProps } from './ui/slider/slider-thumbnail';
+export type { SliderThumbnailRootProps } from './ui/slider/slider-thumbnail/slider-thumbnail-root';
 export type { SliderTrackProps } from './ui/slider/slider-track';
 export type { SliderValueProps } from './ui/slider/slider-value';
 export { StatusAnnouncer, type StatusAnnouncerProps } from './ui/status-announcer/status-announcer';
 export { StatusIndicator } from './ui/status-indicator';
 export type { StatusIndicatorRootProps } from './ui/status-indicator/status-indicator-root';
 export type { StatusIndicatorValueProps } from './ui/status-indicator/status-indicator-value';
-export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
+export { Thumbnail } from './ui/thumbnail';
+export type { ThumbnailImageProps } from './ui/thumbnail/thumbnail-image';
+export type { ThumbnailRootProps } from './ui/thumbnail/thumbnail-root';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
 export type {

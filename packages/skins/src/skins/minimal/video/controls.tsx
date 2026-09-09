@@ -38,7 +38,7 @@ export function MinimalVideoControls() {
 
           <$.Controls.Group className={styles.end}>
             <ButtonTooltip side="top">
-              <CaptionsButton />
+              <CaptionsButton className={controlsStyles.captionsButton} />
             </ButtonTooltip>
             <VideoSettingsMenu />
             <$.Controls.Group className={styles.trailing}>

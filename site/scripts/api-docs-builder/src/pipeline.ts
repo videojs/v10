@@ -133,48 +133,47 @@ function buildHtmlPlatform(htmlData: HtmlExtraction): NonNullable<PartReference[
 
 // ─── Discovery ─────────────────────────────────────────────────────
 
-// Extra data-attrs files in a component dir ({qualifier}-data.ts)
-// declare their target parts with a `@parts item, radio-item` JSDoc tag on
-// the exported const. They cover attrs a DOM layer applies to part elements
-// directly, which the per-part stateAttrMap heuristic can't see (e.g.
-// item-data.ts applied by create-menu).
-function dataAttrsComponentName(fileBasename: string, componentKebab: string): string {
-  const qualifier = fileBasename.replace(/-data\.ts$/, '');
-
-  return kebabToPascal(`${componentKebab}-${qualifier}`);
-}
-
-function discoverExtraDataAttrs(componentDir: string, componentKebab: string): ExtraDataAttrsSource[] {
+// Extra data-attrs files in a component dir declare their target parts with
+// a `@parts item, radio-item` JSDoc tag on an exported `*DataAttrs` const.
+// They cover attrs a DOM layer applies to part elements directly, which the
+// per-part stateAttrMap heuristic can't see (e.g. menu/item.ts applied by
+// dom/ui/menu/menu.ts). Any simple file name works; discovery keys off the
+// tag, not the file name.
+function discoverExtraDataAttrs(componentDir: string): ExtraDataAttrsSource[] {
   const extras: ExtraDataAttrsSource[] = [];
 
-  for (const file of fs.readdirSync(componentDir)) {
-    if (!file.endsWith('-data.ts')) continue;
+  for (const entry of fs.readdirSync(componentDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.ts') || entry.name === 'data.ts') continue;
 
-    const filePath = path.join(componentDir, file);
-    const exportName = `${dataAttrsComponentName(file, componentKebab)}DataAttrs`;
+    const filePath = path.join(componentDir, entry.name);
     const content = fs.readFileSync(filePath, 'utf-8');
+    if (!content.includes('@parts')) continue;
+
     const parsed = parseSync(filePath, content);
     const sourceFile = { filePath, source: content, program: parsed.program, comments: parsed.comments };
-    let tagValue: string | undefined;
 
     for (const statement of parsed.program.body) {
-      const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
+      if (statement.type !== 'ExportNamedDeclaration') continue;
+
+      const declaration = statement.declaration;
       if (declaration?.type !== 'VariableDeclaration') continue;
 
-      const declaresExport = declaration.declarations.some((entry) => staticName(entry.id) === exportName);
+      const exportName = declaration.declarations
+        .map((declarator) => staticName(declarator.id))
+        .find((name) => name?.endsWith('DataAttrs'));
+      if (!exportName) continue;
 
-      if (declaresExport) tagValue = getJSDocTag(sourceFile, declaration, 'parts');
+      const tagValue = getJSDocTag(sourceFile, declaration, 'parts');
+      if (!tagValue) continue;
+
+      const parts = tagValue
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (parts.length === 0) continue;
+
+      extras.push({ path: filePath, exportName, parts });
     }
-
-    if (!tagValue) continue;
-
-    const parts = tagValue
-      .split(',')
-      .map((part) => part.trim())
-      .filter(Boolean);
-    if (parts.length === 0) continue;
-
-    extras.push({ path: filePath, parts });
   }
 
   return extras;
@@ -237,7 +236,7 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
 
     if (fs.existsSync(partsIndexFile)) source.partsIndexPath = partsIndexFile;
 
-    const extraDataAttrs = discoverExtraDataAttrs(componentDir, dir.name);
+    const extraDataAttrs = discoverExtraDataAttrs(componentDir);
 
     if (extraDataAttrs.length > 0) source.extraDataAttrs = extraDataAttrs;
 
@@ -506,11 +505,11 @@ function buildMultiPartReference(
   }
 
   for (const extra of source.extraDataAttrs ?? []) {
-    const componentName = dataAttrsComponentName(path.basename(extra.path), source.kebab);
+    const componentName = extra.exportName.replace(/DataAttrs$/, '');
     const extraData = extractDataAttrs(extra.path, program, componentName);
 
     if (!extraData) {
-      log.warn(`No ${componentName}DataAttrs export found in ${extra.path}; skipping @parts merge`);
+      log.warn(`No ${extra.exportName} export found in ${extra.path}; skipping @parts merge`);
       continue;
     }
 

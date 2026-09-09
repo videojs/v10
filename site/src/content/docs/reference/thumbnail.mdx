@@ -52,7 +52,9 @@ That track is cross-origin, and a cross-origin `<track>` only loads when the med
       default
     />
   </Video>
-  <Thumbnail time={12} />
+  <Thumbnail.Root time={12}>
+    <Thumbnail.Image />
+  </Thumbnail.Root>
   ```
 </FrameworkCase>
 
@@ -80,19 +82,21 @@ A same-origin track needs none of this.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Thumbnail time={12} />
+  <Thumbnail.Root>
+    <Thumbnail.Image />
+  </Thumbnail.Root>
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <media-thumbnail time="12"></media-thumbnail>
+  <media-thumbnail></media-thumbnail>
   ```
 </FrameworkCase>
 
 ## Behavior
 
-`Thumbnail` resolves an image for the current `time`.
+`Thumbnail.Root` resolves an image for the current `time`. `Thumbnail.Image` renders the selected image and reports its loading lifecycle to the root.
 
 Supported source formats:
 
@@ -112,7 +116,9 @@ Opt out to fetch them without CORS:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Thumbnail time={12} crossOrigin={null} />
+<Thumbnail.Root time={12}>
+  <Thumbnail.Image crossOrigin={null} />
+</Thumbnail.Root>
 ```
 </FrameworkCase>
 
@@ -150,18 +156,36 @@ media-thumbnail[data-error] {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders a `<div>` element. Add a `className` to style it:
+React renders a root `<div>` around an `<img>`. State attributes belong to `Thumbnail.Root`, while image attributes and `render` belong to `Thumbnail.Image`:
+
+```tsx
+<Thumbnail.Root className="media-thumbnail" time={12}>
+  <Thumbnail.Image className="media-thumbnail-image" loading="eager" />
+  <div className="media-thumbnail-overlay" aria-hidden />
+</Thumbnail.Root>
+```
+
+The root clips to the selected tile while the image inside spans the whole sprite sheet, so anything after the image in flow lands past the clip edge. Position the root and lay overlays over it:
 
 ```css
-.thumbnail[data-hidden] {
+.media-thumbnail {
+  position: relative;
+}
+
+.media-thumbnail-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.media-thumbnail[data-hidden] {
   display: none;
 }
 
-.thumbnail[data-loading] {
+.media-thumbnail[data-loading] {
   opacity: 0.6;
 }
 
-.thumbnail[data-error] {
+.media-thumbnail[data-error] {
   outline: 1px solid #ef4444;
 }
 ```
@@ -169,7 +193,7 @@ React renders a `<div>` element. Add a `className` to style it:
 
 ## Accessibility
 
-`Thumbnail` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
+`Thumbnail.Root` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
 
 ## Examples
 

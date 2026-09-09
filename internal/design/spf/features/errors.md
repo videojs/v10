@@ -201,7 +201,7 @@ producers, not this feature):**
 
 - User-facing error message text and i18n. `MediaError` already carries
   `defaultMessages`, and `packages/core`'s `error-dialog` +
-  `error-dialog-i18n` own presentation.
+  `error-dialog/i18n` own presentation.
 - The PRD's mux.com "are you using features SPF doesn't support?" page
   and the Current/Next docs toggle. Docs and tooling; they may reuse
   the same detection _rules_ conceptually, but nothing in SPF.
@@ -570,7 +570,7 @@ settled against.
   nothing consumes them, and the phase-5 notices bypass the sequence
   entirely for a `console.warn`. Blocks finishing phase 5.
 - **Extensible code lookup above the engine.** Partially answered: 99001
-  is mapped by hand in `error-dialog-i18n`, which proves the shape works
+  is mapped by hand in `error-dialog/i18n`, which proves the shape works
   but doesn't generalize — each new SVTA code needs core edited, and core
   hard-codes the numeric literal because it can't depend on `@videojs/spf`.
   Whether the general form is a registry consumers can extend, a mapping

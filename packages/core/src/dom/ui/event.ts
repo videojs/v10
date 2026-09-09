@@ -7,6 +7,7 @@ export interface UIEvent {
 
 export interface UIKeyboardEvent extends UIEvent {
   key: string;
+  repeat?: boolean;
   shiftKey: boolean;
   ctrlKey: boolean;
   altKey: boolean;

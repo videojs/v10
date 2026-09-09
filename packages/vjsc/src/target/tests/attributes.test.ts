@@ -9,6 +9,14 @@ describe('htmlAttributeName', () => {
     expect(htmlAttributeName('xlinkHref')).toBe('xlink:href');
   });
 
+  it('lowercases HTML attributes spelled as one word', () => {
+    expect(htmlAttributeName('crossOrigin')).toBe('crossorigin');
+    expect(htmlAttributeName('fetchPriority')).toBe('fetchpriority');
+    expect(htmlAttributeName('srcSet')).toBe('srcset');
+    expect(htmlAttributeName('tabIndex')).toBe('tabindex');
+    expect(htmlAttributeName('ariaLabel')).toBe('aria-label');
+  });
+
   it('preserves case-sensitive SVG names while kebab-casing presentation attributes', () => {
     expect(htmlAttributeName('viewBox')).toBe('viewBox');
     expect(htmlAttributeName('preserveAspectRatio')).toBe('preserveAspectRatio');

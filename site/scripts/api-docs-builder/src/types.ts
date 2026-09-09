@@ -75,12 +75,14 @@ export interface ComponentSource {
   htmlPath?: string;
   /** Path to index.parts.ts (if multi-part) */
   partsIndexPath?: string;
-  /** Extra part-scoped data-attrs files ({qualifier}-data.ts with a `@parts` tag) */
+  /** Extra part-scoped data-attrs files (an exported `*DataAttrs` const with a `@parts` tag) */
   extraDataAttrs?: ExtraDataAttrsSource[];
 }
 
 export interface ExtraDataAttrsSource {
   path: string;
+  /** Exported `*DataAttrs` const that carries the `@parts` tag */
+  exportName: string;
   /** Part kebabs listed in the `@parts` JSDoc tag on the file's export */
   parts: string[];
 }

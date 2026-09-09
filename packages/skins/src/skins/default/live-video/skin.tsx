@@ -13,14 +13,14 @@ import { DefaultLiveVideoControls } from './controls';
 
 export interface DefaultLiveVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
-  renderPoster?: PropsOf<typeof Poster>['children'];
+  renderPoster?: PropsOf<typeof Poster>['renderImage'];
 }
 
 export function DefaultLiveVideoSkin({ children, className, renderPoster, ...props }: DefaultLiveVideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="default" data-preset="live-video" {...props}>
       <Slot>{children}</Slot>
-      <Poster>{renderPoster}</Poster>
+      <Poster renderImage={renderPoster} />
       <BufferingIndicator />
       <ErrorDialog />
       <DefaultLiveVideoControls />

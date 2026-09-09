@@ -45,8 +45,9 @@ The builder relies on file naming conventions to discover components:
 | React component | `packages/react/src/ui/{name}/` | `packages/react/src/ui/play-button/` |
 | Multi-part detection | `index.parts.ts` | `packages/react/src/ui/slider/index.parts.ts` |
 
-Qualified helpers keep their qualifier, such as `segments-core.ts`. Additional part-scoped data attribute files use
-`{qualifier}-data.ts`, such as `item-data.ts`.
+Every file in a component directory uses a simple role name; helpers drop the folder prefix, such as
+`slider/segments.ts`. Additional part-scoped data attribute files also use a simple name, such as `menu/item.ts`, and
+are discovered by the `@parts` JSDoc tag on an exported const whose name ends in `DataAttrs`.
 
 If the builder output is missing or incomplete, check that your files match these conventions. See `.agents/skills/write-api-reference/references/builder-conventions.md` for the full list.
 

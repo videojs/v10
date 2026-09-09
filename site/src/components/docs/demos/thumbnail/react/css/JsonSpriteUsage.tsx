@@ -27,5 +27,9 @@ const THUMBNAILS = [
 ];
 
 export default function JsonSpriteUsage() {
-  return <Thumbnail thumbnails={THUMBNAILS} time={12} style={{ maxWidth: 240 }} />;
+  return (
+    <Thumbnail.Root thumbnails={THUMBNAILS} time={12} style={{ maxWidth: 240 }}>
+      <Thumbnail.Image />
+    </Thumbnail.Root>
+  );
 }

@@ -66,7 +66,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
             from: source,
             name: component,
             path: propsPath,
-            children: component === 'Poster' && path.length === 0 ? 'render' : undefined,
+            children: component === 'Poster' && path.at(-1) === 'Image' ? 'render' : undefined,
           },
         });
       },
@@ -86,21 +86,8 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         VolumePopover: {
           Trigger: ({ props, children }) => <target.VolumePopover.Trigger render={children} {...props} />,
         },
-        Poster: ({ props, children }) => <target.Poster render={children} {...props} />,
-        Slider: {
-          Thumbnail: {
-            Root: Div,
-            Image: imported({
-              from: '@videojs/react',
-              name: 'Slider',
-              path: ['Thumbnail'],
-              props: {
-                from: '@videojs/react',
-                name: 'Slider',
-                path: ['ThumbnailProps'],
-              },
-            }),
-          },
+        Poster: {
+          Image: ({ props, children }) => <target.Poster.Image render={children} {...props} />,
         },
         Tooltip: {
           Trigger: ({ props, children }) => <target.Tooltip.Trigger render={children} {...props} />,

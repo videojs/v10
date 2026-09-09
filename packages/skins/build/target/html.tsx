@@ -65,6 +65,9 @@ const componentParts: ComponentPartNameMap = {
     Popup: 'Popover',
     Arrow: 'Popover',
   },
+  Poster: {
+    Root: 'Poster',
+  },
   PlaybackRateRadioGroup: {
     Options: 'PlaybackRateRadioGroup',
   },
@@ -85,6 +88,9 @@ const componentParts: ComponentPartNameMap = {
     'Thumbnail.Image': 'SliderThumbnail',
     Preview: 'SliderPreview',
     Value: 'SliderValue',
+  },
+  Thumbnail: {
+    Root: 'Thumbnail',
   },
   StatusIndicator: {
     Root: 'StatusIndicator',
@@ -245,13 +251,9 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
             </target.VolumePopover.Popup>,
           ];
         },
-        Poster: ({ props }) => (
-          <target.Poster {...props}>
-            <Slot name="poster">
-              <Img alt="" decoding="async" />
-            </Slot>
-          </target.Poster>
-        ),
+        Poster: {
+          Image: ({ props }) => <Img alt="" decoding="async" {...props} />,
+        },
         PlaybackRateRadioGroup: {
           Root: unwrap(),
           Value: ({ props }) => <Span data-part="value" {...props} />,
@@ -264,6 +266,20 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
           Thumbnail: {
             Root: Div,
           },
+        },
+        // `<media-thumbnail>` draws its image in a shadow root, so the image part's attributes ride on the host and
+        // its class name has no element to land on until the image moves into light DOM.
+        Thumbnail: ({ props, parts }) => {
+          const image = parts.Image.props;
+
+          return (
+            <target.Thumbnail.Root
+              {...props}
+              crossOrigin={image.crossOrigin}
+              loading={image.loading}
+              fetchPriority={image.fetchPriority}
+            />
+          );
         },
         Tooltip: ({ props, parts, id }) => {
           const trigger = id('trigger');

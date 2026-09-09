@@ -1,3 +1,4 @@
+import version from '@app/version';
 import { isString } from '@videojs/utils/predicate';
 import { useEffect, useState } from 'react';
 
@@ -79,6 +80,7 @@ export function buildReport(input: ReportInput): string {
   return [
     '## Video.js sandbox preview',
     `- URL: ${input.url}`,
+    `- Version: ${version}`,
     `- Build: ${input.build.branch} @ ${input.build.commit}`,
     `- Selection: ${input.summary}`,
     ...(panels.length > 0 ? ['- Panels:', ...panels] : []),

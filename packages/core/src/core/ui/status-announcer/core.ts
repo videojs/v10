@@ -1,10 +1,10 @@
 import { createState } from '@videojs/store';
 
-import type { IndicatorCoreProps } from '../indicator/indicator-lifecycle';
-import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/indicator-lifecycle';
-import type { MediaSnapshot } from '../input-action/input-action';
-import { DEFAULT_STATUS_ANNOUNCER_LABELS, type StatusAnnouncerLabels } from './status-announcer-labels';
-import { deriveStatusAnnouncement, deriveVolumeAnnouncement } from './status-announcer-status';
+import type { IndicatorCoreProps } from '../indicator/lifecycle';
+import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/lifecycle';
+import type { MediaSnapshot } from '../input-action';
+import { DEFAULT_STATUS_ANNOUNCER_LABELS, type StatusAnnouncerLabels } from './labels';
+import { deriveStatusAnnouncement, deriveVolumeAnnouncement } from './status';
 
 const ANNOUNCEMENT_DEBOUNCE = 200;
 

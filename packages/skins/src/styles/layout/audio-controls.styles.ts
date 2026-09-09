@@ -9,10 +9,10 @@ export default styles({
     },
     content: {
       utilities:
-        'relative z-20 flex items-center rounded-media-controls bg-media-controls p-1 text-media-controls-foreground text-shadow-media',
+        'relative z-20 flex items-center rounded-media-controls bg-media-controls text-media-controls-foreground text-shadow-media',
       variants: {
-        default: 'surface-media after:surface-media-inset',
-        minimal: 'gap-2 shadow-media-hairline',
+        default: 'p-0.5 media-lg:p-1 surface-media after:surface-media-inset',
+        minimal: 'gap-2 p-1 shadow-media-hairline',
       },
     },
     start: {

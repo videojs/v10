@@ -23,14 +23,14 @@ export default styles({
       },
     },
     currentValue: {
-      utilities: 'hidden media-wide:inline',
+      utilities: 'hidden media-2xl:inline',
     },
     separator: {
-      utilities: 'hidden media-wide:inline media-wide:text-current/60',
+      utilities: 'hidden media-2xl:inline media-2xl:text-current/60',
     },
     durationValue: {
       utilities:
-        'tabular-nums transition-opacity duration-media-slow ease-out data-unavailable:opacity-50 media-wide:text-current/60',
+        'tabular-nums transition-opacity duration-media-slow ease-out data-unavailable:opacity-50 media-2xl:text-current/60',
     },
   },
 });
