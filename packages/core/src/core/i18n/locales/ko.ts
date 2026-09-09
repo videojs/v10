@@ -54,6 +54,7 @@ export default {
     toggleElapsed: '경과 시간과 남은 시간 사이를 전환합니다.',
     toggleDuration: '재생 시간과 남은 시간 사이를 전환합니다.',
     position: '{duration} 중 {current}',
+    unknown: '미디어를 불러오지 못했습니다. 재생 시간을 확인할 수 없습니다.',
   },
   playback: {
     rate: '재생 속도 {rate}',

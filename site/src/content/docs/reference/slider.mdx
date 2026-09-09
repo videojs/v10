@@ -46,6 +46,9 @@ import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPrevi
     </Slider.Track>
     <Slider.Thumb />
     <Slider.Preview>
+      <Slider.Thumbnail.Root>
+        <Slider.Thumbnail.Image />
+      </Slider.Thumbnail.Root>
       <Slider.Value type="pointer" />
     </Slider.Preview>
   </Slider.Root>
@@ -69,6 +72,8 @@ import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPrevi
 ## Behavior
 
 The base Slider provides a generic range input. It manages value, pointer tracking, and drag interactions. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> extend this with media-specific bindings. TimeSlider also provides parts for rendering chapter ranges and the chapter at the current interaction position.
+
+`Slider.Thumbnail.Root` supplies the pointer value to the thumbnail. Render `Slider.Thumbnail.Image` inside it for the controlled image; other children can provide loading indicators or overlays.
 
 The slider supports vertical orientation via the `orientation` prop (defaults to `"horizontal"`).
 

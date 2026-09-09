@@ -9,6 +9,7 @@ import {
   type SkinSelection,
   summarizeSelection,
 } from '@app/compare';
+import { SidebarProvider } from '@app/components/ui/sidebar';
 import { PLATFORMS, SKIN_SOURCES, STYLINGS } from '@app/constants';
 import { COMPARE_LABELS } from '@app/labels';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
@@ -27,7 +28,7 @@ import {
 import { skinSourceAvailable, skinStylings, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
 import type { Platform, SkinSource, Styling } from '@app/types';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { Navbar, SkinControls } from './navbar';
 import { OptionsPanel } from './options-panel';
@@ -144,6 +145,7 @@ export function App() {
   const [mirror, setMirror] = useState(initial.mirror);
   const [errors, setErrors] = useState<readonly RelayedError[]>([]);
   const [optionsOpen, setOptionsOpen] = useState(readOptionsOpen);
+  const [toolbarHeight, setToolbarHeight] = useState(48);
   const optionsId = useId();
   const preferences = usePreferences();
 
@@ -403,17 +405,9 @@ export function App() {
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
-  const handleOptionsToggle = useCallback(() => {
-    setOptionsOpen((open) => {
-      storeOptionsOpen(!open);
-
-      return !open;
-    });
-  }, []);
-
-  const handleOptionsClose = useCallback(() => {
-    storeOptionsOpen(false);
-    setOptionsOpen(false);
+  const handleOptionsChange = useCallback((open: boolean) => {
+    storeOptionsOpen(open);
+    setOptionsOpen(open);
   }, []);
 
   // Picking a styling an explicit source does not publish hands the choice back to that styling's default source.
@@ -459,7 +453,12 @@ export function App() {
   });
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <SidebarProvider
+      open={optionsOpen}
+      onOpenChange={handleOptionsChange}
+      className="bg-background text-foreground h-screen min-h-0 flex-col overflow-hidden"
+      style={{ '--sidebar-width': '19rem' } as CSSProperties}
+    >
       <Navbar
         platform={platform}
         onPlatformChange={setPlatform}
@@ -471,11 +470,10 @@ export function App() {
         platforms={PLATFORMS}
         sources={SOURCES}
         optionsId={optionsId}
-        optionsOpen={optionsOpen}
-        onOptionsToggle={handleOptionsToggle}
       />
       <div className="flex min-h-0 flex-1">
         <Preview
+          onToolbarResize={setToolbarHeight}
           panels={panels}
           layout={layout}
           onLayoutChange={setLayout}
@@ -502,35 +500,33 @@ export function App() {
           onFrame={handleFrame}
           onFrameLoad={handleFrameLoad}
         />
-        {optionsOpen && (
-          <OptionsPanel
-            id={optionsId}
-            onClose={handleOptionsClose}
-            width={playerWidth}
-            onWidthChange={setWidth}
-            widthDisabled={!resizable}
-            scheme={scheme}
-            onSchemeChange={setScheme}
-            direction={direction}
-            onDirectionChange={setDirection}
-            locale={locale}
-            onLocaleChange={setLocale}
-            accentColor={accentColor}
-            onAccentColorChange={setAccentColor}
-            autoplay={autoplay}
-            onAutoplayChange={setAutoplay}
-            muted={muted}
-            onMutedChange={setMuted}
-            loop={loop}
-            onLoopChange={setLoop}
-            preload={preload}
-            onPreloadChange={setPreload}
-            captions={captions}
-            onCaptionsChange={setCaptions}
-            preferences={preferences}
-          />
-        )}
+        <OptionsPanel
+          headerHeight={toolbarHeight}
+          id={optionsId}
+          width={playerWidth}
+          onWidthChange={setWidth}
+          widthDisabled={!resizable}
+          scheme={scheme}
+          onSchemeChange={setScheme}
+          direction={direction}
+          onDirectionChange={setDirection}
+          locale={locale}
+          onLocaleChange={setLocale}
+          accentColor={accentColor}
+          onAccentColorChange={setAccentColor}
+          autoplay={autoplay}
+          onAutoplayChange={setAutoplay}
+          muted={muted}
+          onMutedChange={setMuted}
+          loop={loop}
+          onLoopChange={setLoop}
+          preload={preload}
+          onPreloadChange={setPreload}
+          captions={captions}
+          onCaptionsChange={setCaptions}
+          preferences={preferences}
+        />
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

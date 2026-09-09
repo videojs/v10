@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Txandakatu igarotako denboraren eta geratzen den denboraren artean.',
     toggleDuration: 'Txandakatu iraupenaren eta geratzen den denboraren artean.',
     position: '{current} / {duration}',
+    unknown: 'Multimedia ez da kargatu, ordu ezezaguna.',
   },
   playback: {
     rate: 'Abiadura {rate}',

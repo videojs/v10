@@ -143,7 +143,7 @@ export type { SliderBufferProps } from './ui/slider/buffer';
 export type { SliderFillProps } from './ui/slider/fill';
 export type { SliderRootProps } from './ui/slider/root';
 export type { SliderThumbProps } from './ui/slider/thumb';
-export type { SliderThumbnailProps } from './ui/slider/thumbnail';
+export type { SliderThumbnailRootProps } from './ui/slider/thumbnail/root';
 export type { SliderTrackProps } from './ui/slider/track';
 export type { SliderValueProps } from './ui/slider/value';
 export { StatusAnnouncer, type StatusAnnouncerProps } from './ui/status-announcer/component';

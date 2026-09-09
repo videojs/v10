@@ -71,12 +71,13 @@ export class PiPButtonCore {
   getState(): PiPButtonState {
     const media = this.#media!;
     const availability = media.pipAvailability;
+    const actionable = media.pip || availability === 'available';
 
     this.state.patch({
       pip: media.pip,
       availability,
-      disabled: this.#props.disabled || availability !== 'available',
-      hidden: availability !== 'available',
+      disabled: this.#props.disabled || !actionable,
+      hidden: !actionable,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 

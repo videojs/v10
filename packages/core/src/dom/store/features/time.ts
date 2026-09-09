@@ -1,5 +1,10 @@
-import type { MediaTimeState } from '@videojs/media';
-import { hasMetadata, isMediaBufferCapable, isMediaSeekCapable, isMediaSourceCapable } from '@videojs/media';
+import {
+  hasMetadata,
+  isMediaBufferCapable,
+  isMediaSeekCapable,
+  isMediaSourceCapable,
+  type MediaTimeState,
+} from '@videojs/media';
 import { listen, onEvent } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
 
