@@ -7,11 +7,15 @@ import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 createHtmlSandbox({
   player: 'video',
   live: true,
-  poster: 'image',
-  media: ({ src, attrs, chapters, storyboard }) => html`
-    <hls-video${src} ${attrs} playsinline crossorigin>
-      ${chapters}
-      ${storyboard}
-    </hls-video>
+  render: ({ playerTag, skinTag, src, attrs, chapters, storyboard, poster }) => html`
+    <${playerTag}>
+      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+        <hls-video${src} ${attrs} playsinline crossorigin>
+          ${chapters}
+          ${storyboard}
+        </hls-video>
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
+      </${skinTag}>
+    </${playerTag}>
   `,
 });

@@ -7,5 +7,11 @@ import { BACKGROUND_VIDEO_SRC } from '@app/shared/sources';
 
 createHtmlSandbox({
   player: 'background',
-  media: () => html`<background-video src="${BACKGROUND_VIDEO_SRC}" crossorigin></background-video>`,
+  render: () => html`
+    <background-video-player>
+      <background-video-skin>
+        <background-video src="${BACKGROUND_VIDEO_SRC}" crossorigin></background-video>
+      </background-video-skin>
+    </background-video-player>
+  `,
 });

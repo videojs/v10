@@ -6,5 +6,11 @@ import { YOUTUBE_VIDEO_SRC } from '@app/shared/sources';
 
 createHtmlSandbox({
   player: 'video',
-  media: () => html`<youtube-video class="block h-full w-full" src="${YOUTUBE_VIDEO_SRC}" playsinline></youtube-video>`,
+  render: ({ skinTag }) => html`
+    <video-player>
+      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+        <youtube-video class="block h-full w-full" src="${YOUTUBE_VIDEO_SRC}" playsinline></youtube-video>
+      </${skinTag}>
+    </video-player>
+  `,
 });

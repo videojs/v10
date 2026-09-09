@@ -6,5 +6,11 @@ import { TWITCH_VIDEO_SRC } from '@app/shared/sources';
 
 createHtmlSandbox({
   player: 'video',
-  media: () => html`<twitch-video class="block h-full w-full" src="${TWITCH_VIDEO_SRC}" playsinline></twitch-video>`,
+  render: ({ skinTag }) => html`
+    <video-player>
+      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+        <twitch-video class="block h-full w-full" src="${TWITCH_VIDEO_SRC}" playsinline></twitch-video>
+      </${skinTag}>
+    </video-player>
+  `,
 });

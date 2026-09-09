@@ -3,7 +3,6 @@ import { escapeHtml } from '@videojs/utils/string';
 
 import { applyCaptionTracks } from '../captions';
 import { findMediaTag } from '../media-element';
-import { PLAYER_FRAME_CLASSES } from '../player-frame';
 import {
   getDirection,
   getInitialPlaybackOverrides,
@@ -29,11 +28,19 @@ export type HtmlSandboxPlayer = 'video' | 'audio' | 'background';
 /** A source assigned as an object, for what a `src` attribute cannot carry: tokens, license servers, engine options. */
 export type HtmlSandboxSource = MuxSource | ({ src: string } & PlaybackOverrides);
 
-/** What a template's media markup can read: the shell's selections plus what the runtime derived from them. */
+/** What a template's markup can read: the shell's selections plus what the runtime derived from them. */
 export interface HtmlSandboxContext {
   readonly state: Readonly<SandboxState>;
   /** The live player and skin variants are in use for this render. */
   readonly live: boolean;
+  /** The player element for this render, such as `video-player` or `live-audio-player`. */
+  readonly playerTag: string;
+  /** The skin element the shell selected and the runtime registered, such as `video-skin` or `audio-minimal-skin`. */
+  readonly skinTag: string;
+  /** The source's poster URL, safe to interpolate into an attribute, or empty when it has none. */
+  readonly poster: string;
+  /** A tiny blurred rendition of the poster for a blur-up placeholder, attribute-safe, or empty when there is none. */
+  readonly placeholder: string;
   /** The selected source's plain URL, or empty when it has none. */
   readonly url: string;
   /** ` src="…"` for the media element, or empty when the source has to be assigned as an object after render. */
@@ -53,18 +60,12 @@ export interface HtmlSandboxOptions {
   /** Switch to the live player and skin while the selected source is live. Leave off for media that cannot play one. */
   readonly live?: boolean;
   /**
-   * How the poster reaches the skin. `image` slots the source's poster image after the media. `derived` hands the URL
-   * to the player and slots a blurred placeholder before the media instead, for media that derives its poster from
-   * `src`. Neither renders by default.
-   */
-  readonly poster?: 'image' | 'derived';
-  /**
    * Fold the query-string playback overrides into the initial source. That forces the object form, so the engine is
    * built with them rather than reconfigured afterwards.
    */
   readonly playbackOverrides?: boolean;
-  /** The media element and any media components beside it, inside the skin. */
-  readonly media: (context: HtmlSandboxContext) => string;
+  /** The whole player as a consumer would write it: the player element, the skin, and the media inside it. */
+  readonly render: (context: HtmlSandboxContext) => string;
   /** Runs once the markup is in the document, for what an attribute cannot carry: assigning `context.source`. */
   readonly attach?: (context: HtmlSandboxContext) => void;
 }
@@ -120,60 +121,34 @@ function describeSource(state: SandboxState, playbackOverrides: boolean) {
   };
 }
 
-function createContext(options: HtmlSandboxOptions, state: SandboxState, live: boolean): HtmlSandboxContext {
+function playerTagFor(player: HtmlSandboxPlayer, live: boolean): string {
+  if (player === 'background') return 'background-video-player';
+
+  return live ? `live-${player}-player` : `${player}-player`;
+}
+
+function createContext(
+  options: HtmlSandboxOptions,
+  state: SandboxState,
+  live: boolean,
+  skinTag: string
+): HtmlSandboxContext {
   const { url, src, source } = describeSource(state, options.playbackOverrides === true);
 
   return {
     state,
     live,
+    playerTag: playerTagFor(options.player, live),
+    skinTag,
     url,
     src,
     source,
     attrs: renderMediaAttrs(state),
     chapters: renderChapters(getChapters(state.source)),
     storyboard: renderStoryboard(getStoryboardSrc(state.source)),
+    poster: escapeHtml(getPosterSrc(state.source) ?? ''),
+    placeholder: escapeHtml(getPlaceholderSrc(state.source) ?? ''),
   };
-}
-
-function renderPlayer(options: HtmlSandboxOptions, skinTag: string, context: HtmlSandboxContext): string {
-  const { player, poster } = options;
-  const { live, state } = context;
-  const posterSrc = poster === undefined ? undefined : getPosterSrc(state.source);
-  const placeholder = poster === 'derived' ? getPlaceholderSrc(state.source) : undefined;
-  const children = html`
-    ${placeholder ? `<img slot="poster" alt="" crossorigin style="background: url('${escapeHtml(placeholder)}') var(--media-object-position, center) / contain no-repeat">` : ''}
-    ${options.media(context)}
-    ${poster === 'image' && posterSrc ? html`<img slot="poster" src="${escapeHtml(posterSrc)}" alt="Video poster" crossorigin />` : ''}
-  `;
-
-  if (player === 'background') {
-    return html`
-      <background-video-player>
-        <${skinTag}>${children}</${skinTag}>
-      </background-video-player>
-    `;
-  }
-
-  if (player === 'audio') {
-    const playerTag = live ? 'live-audio-player' : 'audio-player';
-
-    return html`
-      <div class="${PLAYER_FRAME_CLASSES.audio}">
-        <${playerTag}>
-          <${skinTag}>${children}</${skinTag}>
-        </${playerTag}>
-      </div>
-    `;
-  }
-
-  const playerTag = live ? 'live-video-player' : 'video-player';
-  const posterAttr = poster === 'derived' && posterSrc ? ` poster="${escapeHtml(posterSrc)}"` : '';
-
-  return html`
-    <${playerTag}${posterAttr}>
-      <${skinTag} class="${PLAYER_FRAME_CLASSES.video}">${children}</${skinTag}>
-    </${playerTag}>
-  `;
 }
 
 function getRoot(): HTMLElement {
@@ -184,9 +159,10 @@ function getRoot(): HTMLElement {
 }
 
 /**
- * Mount a preview page: read the shell's selections, load the skin they name, render the player around the template's
- * media markup, and render again as the shell streams changes. A locale change applies in place through `<media-i18n>`
- * once the player is up; a direction change renders again, since the provider owns the pinned `dir`.
+ * Mount a preview page: read the shell's selections, load the skin they name, render the template's player markup with
+ * the tags and sources they resolve to, and render again as the shell streams changes. A locale change applies in place
+ * through `<media-i18n>` once the player is up; a direction change renders again, since the provider owns the pinned
+ * `dir`.
  */
 export function createHtmlSandbox(options: HtmlSandboxOptions): void {
   const state = readSandboxState('html');
@@ -202,11 +178,11 @@ export function createHtmlSandbox(options: HtmlSandboxOptions): void {
     const skinTag = await loadLatest(() => loadSkinTag(options.player, state, live));
     if (!skinTag) return;
 
-    const context = createContext(options, state, live);
+    const context = createContext(options, state, live, skinTag);
 
     const template = document.createElement('template');
 
-    template.innerHTML = wrapSandboxHtmlI18n(renderPlayer(options, skinTag, context));
+    template.innerHTML = wrapSandboxHtmlI18n(options.render(context));
 
     // Subtitle tracks are the page's to add, so a template never has to spell them out. They go in while the markup is
     // still inert: a custom media element reads its tracks when it upgrades, not when children arrive later.

@@ -46,6 +46,24 @@
   }
 }
 
+/*
+ * The shell's width control sizes the player through `--sandbox-player-width` (see `shared/player-frame.ts`). The html
+ * templates frame their player with the classes a consumer would write, `max-w-4xl` and `max-w-xl`, and these unlayered
+ * rules cap them at the control's width instead, falling back to those same widths when a page is opened without one.
+ * React pages take the equivalent classes through `VideoSkinComponent` and `AudioSkinComponent`. The CDN page puts
+ * `<media-i18n>` inside the player rather than around it, hence the second selector.
+ */
+#root :is(video-player, live-video-player) > :not(media-i18n),
+#root :is(video-player, live-video-player) > media-i18n > * {
+  max-width: var(--sandbox-player-width, 56rem);
+  /* Keep centred controls on device pixels instead of the fractional height produced by aspect-ratio. */
+  height: round(nearest, calc(min(var(--sandbox-player-width, 56rem), 100vw - 1rem) * 9 / 16), 2px) !important;
+}
+
+#root :has(> :is(audio-player, live-audio-player)) {
+  max-width: var(--sandbox-player-width, 36rem);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

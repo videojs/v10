@@ -16,8 +16,9 @@ export function defaultPlayerWidth(player: MediaPlayer): number {
 }
 
 /**
- * How a preview frames its player: centred, and capped by the shell's width control through `--sandbox-player-width`,
- * with the skin's own cap when a page is opened without one.
+ * How the React skin components frame their player: centred, and capped by the shell's width control through
+ * `--sandbox-player-width`, with the skin's own cap when a page is opened without one. The html templates write the
+ * plain `max-w-4xl` and `max-w-xl` classes a consumer would, and `styles.css` caps those the same way.
  */
 export const PLAYER_FRAME_CLASSES = {
   // Keep centred controls on device pixels instead of the fractional height produced by aspect-ratio.

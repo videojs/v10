@@ -7,5 +7,13 @@ import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 createHtmlSandbox({
   player: 'audio',
   live: true,
-  media: ({ src, attrs }) => html`<hls-audio${src} ${attrs} crossorigin></hls-audio>`,
+  render: ({ playerTag, skinTag, src, attrs }) => html`
+    <div class="mx-auto w-full max-w-xl">
+      <${playerTag}>
+        <${skinTag}>
+          <hls-audio${src} ${attrs} crossorigin></hls-audio>
+        </${skinTag}>
+      </${playerTag}>
+    </div>
+  `,
 });

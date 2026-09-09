@@ -23,13 +23,18 @@ import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 createHtmlSandbox({
   player: 'video',
   live: true,
-  poster: 'derived',
-  media: ({ src, attrs }) => html`
-    <!-- The storyboard track is derived automatically from the Mux src. -->
-    <mux-video${src} ${attrs} playsinline crossorigin></mux-video>
-    <!-- Opt-in media components; no env key is needed for Mux-hosted sources. -->
-    <mux-data player-software-name="mux-video"></mux-data>
-    <google-cast></google-cast>
+  render: ({ playerTag, skinTag, src, attrs, poster, placeholder }) => html`
+    <${playerTag}${poster ? ` poster="${poster}"` : ''}>
+      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+        <!-- The player fills in the poster; the slotted image paints a blurred placeholder underneath while it loads. -->
+        ${placeholder ? html`<img slot="poster" alt="" crossorigin style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat" />` : ''}
+        <!-- The storyboard track is derived automatically from the Mux src. -->
+        <mux-video${src} ${attrs} playsinline crossorigin></mux-video>
+        <!-- Opt-in media components; no env key is needed for Mux-hosted sources. -->
+        <mux-data player-software-name="mux-video"></mux-data>
+        <google-cast></google-cast>
+      </${skinTag}>
+    </${playerTag}>
   `,
   // A source carrying signed tokens has no room in the `src` attribute, so it is
   // assigned as an object instead. `source.drm` is accepted but inert here: SPF

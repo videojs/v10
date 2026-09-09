@@ -6,5 +6,11 @@ import { VIMEO_VIDEO_SRC } from '@app/shared/sources';
 
 createHtmlSandbox({
   player: 'video',
-  media: () => html`<vimeo-video class="block h-full w-full" src="${VIMEO_VIDEO_SRC}" playsinline></vimeo-video>`,
+  render: ({ skinTag }) => html`
+    <video-player>
+      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+        <vimeo-video class="block h-full w-full" src="${VIMEO_VIDEO_SRC}" playsinline></vimeo-video>
+      </${skinTag}>
+    </video-player>
+  `,
 });

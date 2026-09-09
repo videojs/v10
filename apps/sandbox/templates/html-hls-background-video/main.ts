@@ -20,5 +20,11 @@ import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 
 createHtmlSandbox({
   player: 'background',
-  media: ({ src }) => html`<hls-background-video${src} crossorigin></hls-background-video>`,
+  render: ({ src }) => html`
+    <background-video-player>
+      <background-video-skin>
+        <hls-background-video${src} crossorigin></hls-background-video>
+      </background-video-skin>
+    </background-video-player>
+  `,
 });

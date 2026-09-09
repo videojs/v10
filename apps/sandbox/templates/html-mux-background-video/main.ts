@@ -20,7 +20,11 @@ import { withMuxMaxResolution } from '@app/shared/sources';
 
 createHtmlSandbox({
   player: 'background',
-  media: ({ url }) => html`
-    <mux-background-video src="${withMuxMaxResolution(url, '720p')}" crossorigin></mux-background-video>
+  render: ({ url }) => html`
+    <background-video-player>
+      <background-video-skin>
+        <mux-background-video src="${withMuxMaxResolution(url, '720p')}" crossorigin></mux-background-video>
+      </background-video-skin>
+    </background-video-player>
   `,
 });

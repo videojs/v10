@@ -10,7 +10,6 @@ import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
 import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { findMediaTag } from '@app/shared/media-element';
-import { PLAYER_FRAME_CLASSES } from '@app/shared/player-frame';
 import {
   getDirection,
   getInitialLocale,
@@ -364,7 +363,7 @@ async function render() {
 
   if (descriptor.player === 'audio') {
     root.innerHTML = html`
-      <div class="${PLAYER_FRAME_CLASSES.audio}">
+      <div class="mx-auto w-full max-w-xl">
         ${wrapCdnPlayerI18n(
           playerTag,
           html`
@@ -380,7 +379,7 @@ async function render() {
   }
 
   const skin = html`
-    <${skinTag} class="${PLAYER_FRAME_CLASSES.video}">
+    <${skinTag} class="mx-auto aspect-video max-w-4xl">
       <${mediaTag} ${mediaClassAttr} ${sourceAttr} ${mediaAttrs} playsinline ${crossoriginAttr}>
         ${skinnedVideo ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}

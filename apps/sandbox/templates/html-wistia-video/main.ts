@@ -6,5 +6,11 @@ import { WISTIA_VIDEO_SRC } from '@app/shared/sources';
 
 createHtmlSandbox({
   player: 'video',
-  media: () => html`<wistia-video class="block h-full w-full" src="${WISTIA_VIDEO_SRC}" playsinline></wistia-video>`,
+  render: ({ skinTag }) => html`
+    <video-player>
+      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+        <wistia-video class="block h-full w-full" src="${WISTIA_VIDEO_SRC}" playsinline></wistia-video>
+      </${skinTag}>
+    </video-player>
+  `,
 });

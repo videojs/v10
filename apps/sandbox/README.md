@@ -54,6 +54,8 @@ import { SOURCES } from '@app/shared/sources';
 
 See `templates/html-video/main.ts` for a minimal reference, or `templates/react-video/main.tsx` for a React one.
 
+Each html template spells out its player the way a consumer would — the player element, the skin, and the media inside it. `createHtmlSandbox` only supplies what the shell varies: `skinTag`, the live `playerTag`, the source and poster URLs, and the attributes the Options panel controls. The markup inside `render` can be copied as is, with `${skinTag}` replaced by a skin's tag such as `video-skin`.
+
 ## Syncing changes back to templates
 
 When you've made improvements in `src/` that should become the new baseline:
