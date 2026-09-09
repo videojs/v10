@@ -16,9 +16,10 @@ the documented API patterns; it does not invoke the TypeScript compiler.
 | HTML element | `packages/html/src/ui/{name}/{name}-element.ts` | Custom element with `static tagName` |
 | React parts | `packages/react/src/ui/{name}/index.parts.ts` | Multi-part detection (optional) |
 
-Qualified core helpers retain the qualifier, such as `segments-core.ts`. Additional part-scoped data attribute
-files use `{qualifier}-data.ts`, such as `item-data.ts`, and export the full component-qualified name
-(`MenuItemDataAttrs`).
+Every file in a component directory uses a simple role name (`core.ts`, `data.ts`, `vars.ts`, `component.ts`);
+helpers drop the folder prefix, such as `slider/segments.ts`. Additional part-scoped data attribute files also use a
+simple name, such as `menu/item.ts`. The builder discovers them by the `@parts` JSDoc tag on an exported const whose
+name ends in `DataAttrs` (`MenuItemDataAttrs`), not by file name.
 
 ## Naming Requirements
 

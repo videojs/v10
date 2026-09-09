@@ -14,9 +14,9 @@
  * gauge/ — Multi-part component. Exercises: primary part detection via Core instantiation, sub-parts with/without HTML
  * elements, React-only parts (no platforms.html), sub-part data-attr inheritance (stateAttrMap heuristic), non-boolean
  * type inference (number, string literal union via type alias), extra @parts-tagged data-attrs files attaching to the
- * listed parts (label-data.ts). slider/ — Base multi-part component. Exercises: base component whose parts are
- * re-exported by domain variants. volume-slider/ — Domain variant. Exercises: re-exported parts from slider,
- * origin-based element + data-attr resolution, re-exported parts are never primary, always multi-part (no fallback).
+ * listed parts (label.ts). slider/ — Base multi-part component. Exercises: base component whose parts are re-exported
+ * by domain variants. volume-slider/ — Domain variant. Exercises: re-exported parts from slider, origin-based element +
+ * data-attr resolution, re-exported parts are never primary, always multi-part (no fallback).
  *
  * Utils (already existing fixtures for hooks, controllers, selectors, etc.): Exercises: hook discovery, controller
  * discovery, @public context, create* factory, mixin display name stripping, selector discovery,
@@ -381,11 +381,11 @@ describe('Component pipeline (end-to-end)', () => {
       expect(marker.platforms.react).toEqual({});
     });
 
-    // Extra data-attrs files ({qualifier}-data.ts, next to the main data.ts)
-    // declare their target parts with a
-    // @parts JSDoc tag. This covers attrs that a DOM layer applies to
+    // Extra data-attrs files (any simple name next to the main data.ts)
+    // declare their target parts with a @parts JSDoc tag on an exported
+    // *DataAttrs const. This covers attrs that a DOM layer applies to
     // parts directly, invisible to the per-part stateAttrMap heuristic
-    // (e.g. item-data.ts applied by create-menu.ts).
+    // (e.g. menu/item.ts applied by dom/ui/menu/menu.ts).
     it('extra @parts-tagged data-attrs file attaches to listed parts', () => {
       const parts = findComponent('Gauge')!.reference.parts!;
 
