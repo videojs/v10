@@ -353,6 +353,10 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         '@videojs/media > dashjs',
         '@videojs/media > hls.js',
         '@videojs/media > mux-embed',
+        // Remotion spike (templates/react-remotion-video): pure ESM, but `noDiscovery` means nothing loads unlisted.
+        '@remotion/media',
+        '@remotion/player',
+        'remotion',
         'react',
         'react-dom',
         'react-dom/client',
