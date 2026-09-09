@@ -19,8 +19,12 @@
   --color-media-backdrop: var(--media-backdrop);
 
   /* Player layout breakpoints, measured against the `media-root` container. */
-  --container-media-compact: 32rem;
-  --container-media-wide: 42rem;
+  --container-media-xs: 20rem;
+  --container-media-sm: 24rem;
+  --container-media-md: 28rem;
+  --container-media-lg: 32rem;
+  --container-media-xl: 36rem;
+  --container-media-2xl: 42rem;
   --container-media-dialog: var(--media-dialog-max-width);
 
   /* Type scale in player spacing units so it grows with `--media-scale-unit`. */
@@ -111,30 +115,86 @@
   }
 }
 
-/* Player at or above the compact breakpoint. */
-@custom-variant media-compact {
-  @container media-root (width >= theme(--container-media-compact)) {
+/* Player at or above the xs breakpoint. */
+@custom-variant media-xs {
+  @container media-root (width >= theme(--container-media-xs)) {
     @slot;
   }
 }
 
-/* Player below the compact breakpoint. */
-@custom-variant media-max-compact {
-  @container media-root (width < theme(--container-media-compact)) {
+/* Player below the xs breakpoint. */
+@custom-variant media-max-xs {
+  @container media-root (width < theme(--container-media-xs)) {
     @slot;
   }
 }
 
-/* Player at or above the wide breakpoint. */
-@custom-variant media-wide {
-  @container media-root (width >= theme(--container-media-wide)) {
+/* Player at or above the sm breakpoint. */
+@custom-variant media-sm {
+  @container media-root (width >= theme(--container-media-sm)) {
     @slot;
   }
 }
 
-/* Player below the wide breakpoint. */
-@custom-variant media-max-wide {
-  @container media-root (width < theme(--container-media-wide)) {
+/* Player below the sm breakpoint. */
+@custom-variant media-max-sm {
+  @container media-root (width < theme(--container-media-sm)) {
+    @slot;
+  }
+}
+
+/* Player at or above the md breakpoint. */
+@custom-variant media-md {
+  @container media-root (width >= theme(--container-media-md)) {
+    @slot;
+  }
+}
+
+/* Player below the md breakpoint. */
+@custom-variant media-max-md {
+  @container media-root (width < theme(--container-media-md)) {
+    @slot;
+  }
+}
+
+/* Player at or above the lg breakpoint. */
+@custom-variant media-lg {
+  @container media-root (width >= theme(--container-media-lg)) {
+    @slot;
+  }
+}
+
+/* Player below the lg breakpoint. */
+@custom-variant media-max-lg {
+  @container media-root (width < theme(--container-media-lg)) {
+    @slot;
+  }
+}
+
+/* Player at or above the xl breakpoint. */
+@custom-variant media-xl {
+  @container media-root (width >= theme(--container-media-xl)) {
+    @slot;
+  }
+}
+
+/* Player below the xl breakpoint. */
+@custom-variant media-max-xl {
+  @container media-root (width < theme(--container-media-xl)) {
+    @slot;
+  }
+}
+
+/* Player at or above the 2xl breakpoint. */
+@custom-variant media-2xl {
+  @container media-root (width >= theme(--container-media-2xl)) {
+    @slot;
+  }
+}
+
+/* Player below the 2xl breakpoint. */
+@custom-variant media-max-2xl {
+  @container media-root (width < theme(--container-media-2xl)) {
     @slot;
   }
 }

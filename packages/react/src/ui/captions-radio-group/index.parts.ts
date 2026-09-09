@@ -7,4 +7,4 @@ export {
   type CaptionsRadioGroupRootProps as RootProps,
   CaptionsRadioGroupValue as Value,
   type CaptionsRadioGroupValueProps as ValueProps,
-} from './captions-radio-group';
+} from './component';

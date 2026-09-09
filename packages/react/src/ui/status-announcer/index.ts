@@ -1,1 +1,1 @@
-export * from './status-announcer';
+export * from './component';

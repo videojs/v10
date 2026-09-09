@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
+import { DialogBackdropElement } from '../../ui/dialog/backdrop';
 
 safeDefine(DialogBackdropElement);
 

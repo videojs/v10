@@ -267,23 +267,25 @@ Ejecting a skin changes nothing about the first two approaches: the player's `po
 
 <FrameworkCase frameworks={["react"]}>
 
-Poster renders an `<img>` and fills its `src` from the player, so `srcSet`, `sizes`, `loading`, and the rest of the image attributes are yours. Provide your own `src` or `srcSet` and Video.js leaves the image alone.
+`Poster.Root` owns visibility and loading state. `Poster.Image` renders the image and fills its `src` from the player, so `srcSet`, `sizes`, `loading`, and the rest of the image attributes are yours. Provide your own `src` or `srcSet` and Video.js leaves the image alone.
 
-When your UI already includes Poster, apply a placeholder through its `render` prop:
+When your UI already includes Poster, apply a placeholder through the image's `render` prop:
 
 ```tsx
-<Poster
-  render={(props) => (
-    <img
-      {...props}
-      style={{
-        ...props.style,
-        background:
-          "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
-      }}
-    />
-  )}
-/>
+<Poster.Root>
+  <Poster.Image
+    render={(props) => (
+      <img
+        {...props}
+        style={{
+          ...props.style,
+          background:
+            "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
+        }}
+      />
+    )}
+  />
+</Poster.Root>
 ```
 
 </FrameworkCase>

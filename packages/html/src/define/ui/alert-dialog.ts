@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { AlertDialogElement } from '../../ui/alert-dialog/alert-dialog-element';
+import { AlertDialogElement } from '../../ui/alert-dialog/element';
 
 safeDefine(AlertDialogElement);
 

@@ -6,18 +6,19 @@ export default styles({
   rules: {
     root: {
       utilities: [
-        'pointer-events-none layer-media object-media',
+        'pointer-events-none layer-media',
         'transition-opacity duration-media-slower not-data-visible:opacity-0',
-        '[&:is(img):not([src]):not([srcset])]:invisible',
-        '[&_img]:layer-media [&_img]:object-media',
       ],
       variants: {
+        // An image slotted in from outside the skin cannot carry the image class, so the root sizes it.
         'shadow-dom': [
-          '[&>slot>img:not([src]):not([srcset])]:invisible',
           '[&>slot::slotted(img:not([src]):not([srcset]))]:invisible',
           '[&>slot::slotted(img)]:layer-media [&>slot::slotted(img)]:object-media',
         ],
       },
+    },
+    image: {
+      utilities: ['layer-media object-media', '[&:not([src]):not([srcset])]:invisible'],
     },
   },
 });

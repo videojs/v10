@@ -21,7 +21,7 @@ import { isBoolean, isObject } from '@videojs/utils/predicate';
 
 import { i18nContext } from '../i18n/context';
 import { I18nController } from '../i18n/controller';
-import type { PlayerController } from '../player/player-controller';
+import type { PlayerController } from '../player/controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { UIElement } from './ui-element';
 

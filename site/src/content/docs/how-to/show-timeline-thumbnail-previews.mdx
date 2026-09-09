@@ -31,7 +31,15 @@ With <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, the storyboard tr
 
 ## Recommended approach
 
-Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer; the thumbnail reads the pointer time from the slider, so it takes no props.
+Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
+
+<FrameworkCase frameworks={["react"]}>
+Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image settings such as `crossOrigin`, `loading`, and `fetchPriority` on the image part.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-slider-thumbnail>` draws its own image unless you supply an `<img>` child; set `crossorigin`, `loading`, or `fetchpriority` on the element itself.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -94,6 +102,7 @@ Regenerate the storyboard with a larger frame size, or split giant sprite sheets
 ## Related components
 
 - <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>
+- <DocsLink slug="reference/slider">Slider</DocsLink>
 - <DocsLink slug="reference/time-slider">Time slider</DocsLink>
 
 ## Related API

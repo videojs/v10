@@ -132,9 +132,8 @@ async function writeFixture(root: string, address: string, alias: string): Promi
       '@videojs/core': '*',
       '@videojs/html': '10.0.0-beta.32',
       '@videojs/react': '10.0.0-beta.32',
-      clsx: '*',
+      cn: '*',
       react: '*',
-      'tailwind-merge': '*',
     },
   };
   const components = {
@@ -179,10 +178,7 @@ async function writeFixture(root: string, address: string, alias: string): Promi
   await writeFile(resolve(root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
   await writeFile(resolve(root, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
   await writeFile(resolve(root, 'src/index.css'), '@import "./components/videojs/styles/theme.css";\n');
-  await writeFile(
-    resolve(root, 'src/lib/utils.ts'),
-    `import { clsx, type ClassValue } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n`
-  );
+  await writeFile(resolve(root, 'src/lib/utils.ts'), "export { cn } from 'cn';\n");
 }
 
 async function runCommand(

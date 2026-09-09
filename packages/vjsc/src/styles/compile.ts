@@ -65,7 +65,14 @@ function compileKey(
     variants,
     options.ruleClassNames ? [...options.ruleClassNames] : null,
     [...groupOwners].sort(([left], [right]) => left.localeCompare(right)),
-    selected.map((rule) => [rule.className, rule.file, rule.layer, rule.scopeRoot, utilitiesForRule(rule, variants)]),
+    selected.map((rule) => [
+      rule.className,
+      rule.file,
+      rule.layer,
+      rule.scopeRoot,
+      rule.shadowHost,
+      utilitiesForRule(rule, variants),
+    ]),
     options.ruleClassNames ? null : [...new Set(options.styles.rules.map((rule) => rule.file))].sort(),
   ]);
 }
@@ -157,7 +164,7 @@ function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: re
     );
   }
 
-  return { className: rule.className, candidates, scopeRoot: rule.scopeRoot };
+  return { className: rule.className, candidates, scopeRoot: rule.scopeRoot, shadowHost: rule.shadowHost };
 }
 
 /** Each relationship marker must have exactly one owner before its consumers can be scoped to it. */

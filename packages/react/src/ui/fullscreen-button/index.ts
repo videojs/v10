@@ -1,1 +1,1 @@
-export { FullscreenButton, type FullscreenButtonProps } from './fullscreen-button';
+export { FullscreenButton, type FullscreenButtonProps } from './component';

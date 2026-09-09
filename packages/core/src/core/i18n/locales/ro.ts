@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Comută între timpul scurs și timpul rămas.',
     toggleDuration: 'Comută între durată și timpul rămas.',
     position: '{current} din {duration}',
+    unknown: 'Fișierul media nu s-a încărcat, durată necunoscută.',
   },
   playback: {
     rate: 'Rată de redare {rate}',

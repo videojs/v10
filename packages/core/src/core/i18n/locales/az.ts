@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Keçən vaxt və qalan vaxt arasında keçid edin.',
     toggleDuration: 'Müddət və qalan vaxt arasında keçid edin.',
     position: '{current} / {duration}',
+    unknown: 'Media yüklənməyib, vaxt məlum deyil.',
   },
   playback: {
     rate: 'Oynatma sürəti {rate}',

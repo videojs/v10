@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Alterna tra il tempo trascorso e il tempo rimanente.',
     toggleDuration: 'Alterna tra la durata e il tempo rimanente.',
     position: '{current} di {duration}',
+    unknown: 'Contenuto multimediale non caricato, tempo sconosciuto.',
   },
   playback: {
     rate: 'Velocità di riproduzione {rate}',

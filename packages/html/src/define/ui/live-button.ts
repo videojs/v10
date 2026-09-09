@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { LiveButtonElement } from '../../ui/live-button/live-button-element';
+import { LiveButtonElement } from '../../ui/live-button/element';
 
 safeDefine(LiveButtonElement);
 

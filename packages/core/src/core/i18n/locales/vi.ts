@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Chuyển đổi giữa thời gian đã phát và thời gian còn lại.',
     toggleDuration: 'Chuyển đổi giữa thời lượng và thời gian còn lại.',
     position: '{current} của {duration}',
+    unknown: 'Phương tiện không tải được, thời gian không xác định.',
   },
   playback: {
     rate: 'Tỉ lệ phát lại {rate}',

@@ -1,1 +1,1 @@
-export { LiveButton, type LiveButtonProps } from './live-button';
+export { LiveButton, type LiveButtonProps } from './component';

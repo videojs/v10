@@ -51,8 +51,7 @@ describe('VideoSkin', () => {
   it('draws its own poster image', () => {
     const { container } = render(<VideoSkin />, { wrapper: wrapper() });
 
-    // The skin reaches the poster as a direct child, so it carries no class of its own.
-    const img = container.querySelector('.media-skin[data-preset="video"] > img');
+    const img = container.querySelector('.media-poster > img.media-poster-image');
 
     expect(img?.getAttribute('src')).toBe('poster.jpg');
   });
@@ -67,7 +66,7 @@ describe('VideoSkin', () => {
 
     const custom = container.querySelector('[data-testid="custom"]');
 
-    expect(container.querySelectorAll('.media-skin[data-preset="video"] > img')).toHaveLength(1);
+    expect(container.querySelectorAll('.media-poster > img')).toHaveLength(1);
     expect(custom?.getAttribute('src')).toBe('poster.jpg');
     expect(custom?.getAttribute('style')).toContain('poster-placeholder.jpg');
   });
@@ -77,7 +76,7 @@ describe('VideoSkin', () => {
       wrapper: wrapper(),
     });
 
-    expect(container.querySelector('.media-skin[data-preset="video"] > img')).toBeNull();
+    expect(container.querySelector('.media-poster > img')).toBeNull();
 
     const custom = container.querySelector('[data-testid="custom"]');
 

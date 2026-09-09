@@ -7,4 +7,4 @@ export {
   type QualityRadioGroupRootProps as RootProps,
   QualityRadioGroupValue as Value,
   type QualityRadioGroupValueProps as ValueProps,
-} from './quality-radio-group';
+} from './component';

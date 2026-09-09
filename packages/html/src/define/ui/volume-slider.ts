@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { VolumeSliderElement } from '../../ui/volume-slider/volume-slider-element';
+import { VolumeSliderElement } from '../../ui/volume-slider/element';
 
 safeDefine(VolumeSliderElement);
 

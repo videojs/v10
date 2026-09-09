@@ -1,6 +1,6 @@
 {
   "name": "@videojs/skins",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-rc.1",
   "private": true,
   "description": "Canonical VJSC skin sources and delivery generators for Video.js",
   "keywords": [
@@ -33,7 +33,7 @@
     "@videojs/icons": "workspace:*",
     "@videojs/utils": "workspace:*",
     "@vitejs/plugin-react": "^6.0.4",
-    "clsx": "^2.1.1",
+    "cn": "^0.2.5",
     "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
     "mux-embed": "5.17.10",

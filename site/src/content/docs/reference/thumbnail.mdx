@@ -52,7 +52,9 @@ That track is cross-origin, and a cross-origin `<track>` only loads when the med
       default
     />
   </Video>
-  <Thumbnail time={12} />
+  <Thumbnail.Root time={12}>
+    <Thumbnail.Image />
+  </Thumbnail.Root>
   ```
 </FrameworkCase>
 
@@ -80,19 +82,23 @@ A same-origin track needs none of this.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Thumbnail time={12} />
+  <Thumbnail.Root>
+    <Thumbnail.Image />
+  </Thumbnail.Root>
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <media-thumbnail time="12"></media-thumbnail>
+  <media-thumbnail>
+    <img alt="" decoding="async" />
+  </media-thumbnail>
   ```
 </FrameworkCase>
 
 ## Behavior
 
-`Thumbnail` resolves an image for the current `time`.
+The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle. In React, render that image with `Thumbnail.Image`. In HTML, the `<img>` child is optional: leave it out and `<media-thumbnail>` draws an image of its own in its shadow DOM; supply one to replace it and compose overlays or loading indicators beside it.
 
 Supported source formats:
 
@@ -112,7 +118,9 @@ Opt out to fetch them without CORS:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Thumbnail time={12} crossOrigin={null} />
+<Thumbnail.Root time={12}>
+  <Thumbnail.Image crossOrigin={null} />
+</Thumbnail.Root>
 ```
 </FrameworkCase>
 
@@ -147,21 +155,61 @@ media-thumbnail[data-error] {
   outline: 1px solid #ef4444;
 }
 ```
+
+The image the element draws is exposed as a part. An `<img>` you supply is an ordinary child, so style it as a descendant:
+
+```css
+media-thumbnail::part(image),
+media-thumbnail > img {
+  border-radius: 4px;
+}
+```
+
+The element clips to the selected tile while the image inside spans the whole sprite sheet, so anything after the image in flow lands past the clip edge. Position the element and lay overlays over it:
+
+```css
+media-thumbnail {
+  position: relative;
+}
+
+media-thumbnail > .overlay {
+  position: absolute;
+  inset: 0;
+}
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders a `<div>` element. Add a `className` to style it:
+React renders a root `<div>` around an `<img>`. State attributes belong to `Thumbnail.Root`, while image attributes and `render` belong to `Thumbnail.Image`:
+
+```tsx
+<Thumbnail.Root className="media-thumbnail" time={12}>
+  <Thumbnail.Image className="media-thumbnail-image" loading="eager" />
+  <div className="media-thumbnail-overlay" aria-hidden />
+</Thumbnail.Root>
+```
+
+The root clips to the selected tile while the image inside spans the whole sprite sheet, so anything after the image in flow lands past the clip edge. Position the root and lay overlays over it:
 
 ```css
-.thumbnail[data-hidden] {
+.media-thumbnail {
+  position: relative;
+}
+
+.media-thumbnail-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.media-thumbnail[data-hidden] {
   display: none;
 }
 
-.thumbnail[data-loading] {
+.media-thumbnail[data-loading] {
   opacity: 0.6;
 }
 
-.thumbnail[data-error] {
+.media-thumbnail[data-error] {
   outline: 1px solid #ef4444;
 }
 ```
@@ -169,7 +217,7 @@ React renders a `<div>` element. Add a `className` to style it:
 
 ## Accessibility
 
-`Thumbnail` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
+`Thumbnail.Root` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
 
 ## Examples
 

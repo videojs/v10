@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { TitleElement } from '../../ui/title/title-element';
+import { TitleElement } from '../../ui/title/element';
 
 safeDefine(TitleElement);
 

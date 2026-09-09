@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
@@ -12,6 +12,7 @@ import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
   afterEach(() => {
+    cleanup();
     document.documentElement.removeAttribute('lang');
   });
 

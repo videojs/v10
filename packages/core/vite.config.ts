@@ -33,7 +33,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
       file: 'vjsc',
       declaration: mode === 'dev',
       source: '@videojs/core/vjsc',
-      include: ['./src/core/ui/*/*-component.ts'],
+      include: ['./src/core/ui/*/component.ts'],
     }),
   ],
   entry: {

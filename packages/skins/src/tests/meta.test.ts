@@ -1,14 +1,14 @@
 import { readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve, sep } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
 import { skinStyles } from '../meta';
 
 const skinsDir = resolve(import.meta.dirname, '../skins');
-const skinDirectories = readdirSync(skinsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && readdirSync(resolve(skinsDir, entry.name)).includes('skin.tsx'))
-  .map((entry) => entry.name)
+const skinDirectories = readdirSync(skinsDir, { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile() && entry.name === 'skin.tsx')
+  .map((entry) => relative(skinsDir, entry.parentPath).split(sep).join('-'))
   .sort();
 
 describe('skinStyles', () => {

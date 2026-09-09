@@ -28,5 +28,5 @@ export type BaseVideoSkinProps<T = unknown> = BaseSkinProps<T> & {
    *   />
    *   ```;
    */
-  renderPoster?: Poster.Props['render'];
+  renderPoster?: Poster.ImageProps['render'];
 };

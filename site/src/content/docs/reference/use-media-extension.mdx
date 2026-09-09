@@ -27,6 +27,6 @@ function CustomMuxData() {
 }
 ```
 
-The hook creates one instance, follows media changes, and destroys the extension on unmount. A plain `<video>` element is not a media-extension host, so registration is skipped for it.
+The hook creates one instance, registers it when a media adapter is available, follows media changes, and destroys the extension on unmount. A plain `<video>` element is not a media adapter and cannot carry extensions, so registration is skipped for it.
 
 <UtilReference util="useMediaExtension" />

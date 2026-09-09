@@ -1,4 +1,4 @@
-import type { SkinName, SkinStyle } from '../src/meta.ts';
+import { type SkinName, type SkinStyle, skinStyles } from '../src/meta.ts';
 
 export const skinPresets = ['audio', 'live-audio', 'live-video', 'video'] as const;
 
@@ -11,6 +11,13 @@ export function skinPreset(name: SkinName): SkinPreset {
   if (!isSkinPreset(preset)) throw new Error(`Unsupported Skin preset: \`${name}\`.`);
 
   return preset;
+}
+
+/** Directory of an authored skin relative to `src/skins`. */
+export function skinSourceDirectory(name: SkinName): string {
+  const { theme, preset } = skinStyles[name];
+
+  return `${theme}/${preset}`;
 }
 
 /** Resolve the stable source-owned directory for a Skin. */

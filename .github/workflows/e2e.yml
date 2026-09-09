@@ -13,9 +13,83 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pull requests run the browser suites when they touch code the suites render; the `test:e2e` label forces them.
+  changes:
+    name: Changed areas
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      player: ${{ steps.filter.outputs.player }}
+      skins: ${{ steps.filter.outputs.skins }}
+    steps:
+      - name: Detect e2e-relevant changes
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate --jq '.[].filename')
+          flag() {
+            if grep -Eq "$2" <<<"$files"; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi
+          }
+          # The player suite renders the built packages; skin parity compiles the authored skins in the sandbox.
+          flag player '^(apps/e2e/|apps/sandbox/|packages/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
+          flag skins '^(apps/e2e/(shared|suites/skin-parity)/|apps/sandbox/|packages/(skins|vjsc|html|react)/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
+
+  # Every browser job replays this run's Vite Task cache, so the packages, CDN bundles, generated skins, and sandbox
+  # setup compile once per run instead of once per job.
+  build:
+    name: Build for browser suites
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e') || contains(github.event.pull_request.labels.*.name, 'record:snapshots')) }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Build packages and CDN bundles
+        run: pnpm build:packages && pnpm build:cdn
+
+      - name: Prepare the e2e pages, generated skins, and sandbox
+        run: pnpm exec vp run '@videojs/e2e#prepare:player' && pnpm exec vp run '@videojs/skins#generate' && pnpm exec vp run '@videojs/sandbox#setup'
+
+      - name: Save Vite Task cache
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+
   e2e:
     name: E2E (${{ matrix.browser }})
-    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'test:e2e')
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
@@ -23,7 +97,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, webkit]
+        # WebKit doubles the wall time, so pull requests run Chromium only and main covers both.
+        browser: ${{ fromJSON(github.event_name == 'push' && '["chromium", "webkit"]' || '["chromium"]') }}
 
     steps:
       - name: Checkout code
@@ -45,25 +120,16 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
           restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
-      - name: Build packages
-        run: pnpm build:packages
-
-      - name: Build CDN bundles
-        run: pnpm build:cdn
-
-      - name: Generate E2E test pages
-        run: pnpm --dir apps/e2e generate-pages
+      - name: Replay the build
+        run: pnpm build:packages && pnpm build:cdn && pnpm exec vp run '@videojs/e2e#prepare:player'
 
       - name: Run E2E tests
         run: pnpm --dir apps/e2e exec playwright test --config suites/player/playwright.config.ts --project=vite-${{ matrix.browser }}
-
-      - name: Run sandbox E2E tests
-        if: matrix.browser == 'chromium'
-        run: pnpm exec vp run '@videojs/e2e#test:sandbox'
 
       - name: Upload test report
         if: always()
@@ -81,9 +147,63 @@ jobs:
           path: apps/e2e/test-results/
           retention-days: 7
 
+  sandbox:
+    name: Sandbox
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Run sandbox E2E tests
+        run: pnpm exec vp run '@videojs/e2e#test:sandbox'
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-sandbox
+          path: apps/e2e/playwright-report/sandbox/
+          retention-days: 14
+
+      - name: Upload test traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-sandbox
+          path: apps/e2e/test-results/sandbox/
+          retention-days: 7
+
   skin-parity:
     name: Skin parity (${{ matrix.preset }})
-    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'test:e2e')
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
@@ -113,8 +233,9 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
           restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Run skin parity E2E tests
@@ -136,6 +257,58 @@ jobs:
         with:
           name: playwright-traces-skin-parity-${{ matrix.preset }}
           path: apps/e2e/test-results/skin-parity/
+          retention-days: 7
+
+  # Baselines only match when recorded in the image the suites run in. Label a pull request `record:snapshots` to
+  # record the player visual specs here; download the artifact, copy the `*-snapshots` directories into place, and
+  # commit them.
+  snapshots:
+    name: Record snapshots
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && contains(github.event.pull_request.labels.*.name, 'record:snapshots') }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Replay the build
+        run: pnpm build:packages && pnpm build:cdn && pnpm exec vp run '@videojs/e2e#prepare:player'
+
+      - name: Record player visual snapshots
+        working-directory: apps/e2e
+        run: pnpm exec playwright test --config suites/player/playwright.config.ts visual --update-snapshots --project=vite-chromium --project=vite-webkit
+
+      - name: Upload snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-snapshots
+          path: apps/e2e/suites/player/tests/**/*-snapshots/
           retention-days: 7
 
   registry:

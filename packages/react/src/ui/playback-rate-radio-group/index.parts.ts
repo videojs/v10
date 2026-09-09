@@ -7,4 +7,4 @@ export {
   type PlaybackRateRadioGroupRootProps as RootProps,
   PlaybackRateRadioGroupValue as Value,
   type PlaybackRateRadioGroupValueProps as ValueProps,
-} from './playback-rate-radio-group';
+} from './component';

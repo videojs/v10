@@ -10,8 +10,10 @@ export {
 export {
   type ElementPredicate,
   type ElementTypePredicate,
+  findComposedElement,
   findElementChild,
   followElementPath,
+  getComposedChildren,
   getElementChildren,
 } from './children';
 export { getDevicePixelRatio, watchDevicePixelRatio } from './device-pixel-ratio';
@@ -67,7 +69,14 @@ export {
   tryHidePopover,
   tryShowPopover,
 } from './popover';
-export { isDocument, isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement, isShadowRoot } from './predicates';
+export {
+  isDocument,
+  isHTMLAudioElement,
+  isHTMLImageElement,
+  isHTMLMediaElement,
+  isHTMLVideoElement,
+  isShadowRoot,
+} from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { loadScript } from './script';
 export { applyShadowStyles, createShadowStyle, ensureGlobalStyle, type ShadowStyle } from './shadow-styles';

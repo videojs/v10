@@ -40,7 +40,7 @@
 
     /* Controls. */
     --media-control-corner-shape: round;
-    --media-control-radius: calc(infinity * 1px);
+    --media-control-radius: 99px;
     --media-control-size: calc(var(--media-spacing) * 9);
     --media-controls-radius: var(--media-control-radius);
     --media-default-accent-color: oklch(1 0 0);

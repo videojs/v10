@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MenuSeparatorElement } from '../../ui/menu/menu-separator-element';
+import { MenuSeparatorElement } from '../../ui/menu/separator';
 
 safeDefine(MenuSeparatorElement);
 

@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { MenuGroupLabelElement } from '../../ui/menu/menu-group-label-element';
+import { MenuGroupLabelElement } from '../../ui/menu/group-label';
 
 safeDefine(MenuGroupLabelElement);
 

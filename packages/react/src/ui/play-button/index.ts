@@ -1,1 +1,1 @@
-export { PlayButton, type PlayButtonProps } from './play-button';
+export { PlayButton, type PlayButtonProps } from './component';

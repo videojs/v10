@@ -65,6 +65,9 @@ const componentParts: ComponentPartNameMap = {
     Popup: 'Popover',
     Arrow: 'Popover',
   },
+  Poster: {
+    Root: 'Poster',
+  },
   PlaybackRateRadioGroup: {
     Options: 'PlaybackRateRadioGroup',
   },
@@ -82,9 +85,11 @@ const componentParts: ComponentPartNameMap = {
     Buffer: 'SliderBuffer',
     Thumb: 'SliderThumb',
     'Thumbnail.Root': 'SliderThumbnail',
-    'Thumbnail.Image': 'SliderThumbnail',
     Preview: 'SliderPreview',
     Value: 'SliderValue',
+  },
+  Thumbnail: {
+    Root: 'Thumbnail',
   },
   StatusIndicator: {
     Root: 'StatusIndicator',
@@ -155,6 +160,12 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   const I18nText = element('media-text', {
     import: { from: '@videojs/html/i18n', sideEffect: true },
   });
+
+  // Both thumbnail elements adopt a light-DOM image and fill in its source, so the part is a plain `img`.
+  const thumbnailImage = ({ props }: { props: object }) => (
+    <Img alt="" aria-hidden="true" decoding="async" {...props} />
+  );
+
   const optionTemplate: TemplateTargetDefinition = {
     render: ({ children }) => <HtmlTemplate>{children}</HtmlTemplate>,
     parts: {
@@ -245,13 +256,9 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
             </target.VolumePopover.Popup>,
           ];
         },
-        Poster: ({ props }) => (
-          <target.Poster {...props}>
-            <Slot name="poster">
-              <Img alt="" decoding="async" />
-            </Slot>
-          </target.Poster>
-        ),
+        Poster: {
+          Image: ({ props }) => <Img alt="" decoding="async" {...props} />,
+        },
         PlaybackRateRadioGroup: {
           Root: unwrap(),
           Value: ({ props }) => <Span data-part="value" {...props} />,
@@ -262,8 +269,11 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         },
         Slider: {
           Thumbnail: {
-            Root: Div,
+            Image: thumbnailImage,
           },
+        },
+        Thumbnail: {
+          Image: thumbnailImage,
         },
         Tooltip: ({ props, parts, id }) => {
           const trigger = id('trigger');

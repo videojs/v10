@@ -797,7 +797,7 @@ Ordered roughly by how many migrations they'll touch.
 
 - Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer looks you can eject, but it's a real difference if you shipped `theme="classic"`.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
-- The controls auto-hide delay isn't configurable, and there's no disabled state for the controls ([#1728](https://github.com/videojs/v10/issues/1728)).
+- The controls auto-hide delay isn't configurable ([#1728](https://github.com/videojs/v10/issues/1728)). Always-visible controls are available through `visibility="always"` on the controls component in a custom or ejected skin.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide.
 - Smaller conveniences without homes yet: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)). Unmuting from zero volume already restores a sensible level, so Mux Player's smart-unmute behavior carries over.
 

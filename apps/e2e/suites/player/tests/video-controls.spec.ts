@@ -275,9 +275,13 @@ for (const { name, path } of UI_VIDEO_PAGES) {
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
         if (!actual) return;
 
+        // The store clears `waiting` once playback advances past the stall, so hold the clock where the stall began.
+        const stalledAt = actual.currentTime;
+
         Object.defineProperties(actual, {
           paused: { configurable: true, get: () => false },
           readyState: { configurable: true, get: () => HTMLMediaElement.HAVE_CURRENT_DATA },
+          currentTime: { configurable: true, get: () => stalledAt, set: () => {} },
         });
         actual.dispatchEvent(new Event('waiting'));
       }, SELECTORS.media);

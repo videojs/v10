@@ -41,6 +41,8 @@ export interface LiveButtonState extends ButtonState {
   live: boolean;
   /** Whether playback is at the live edge. */
   liveEdge: boolean;
+  /** Whether seeking to the live edge is temporarily unavailable. */
+  disabled: boolean;
 }
 
 /**
@@ -61,6 +63,7 @@ export class LiveButtonCore {
   readonly state = createState<LiveButtonState>({
     live: false,
     liveEdge: false,
+    disabled: true,
     label: '',
   });
 
@@ -85,7 +88,7 @@ export class LiveButtonCore {
   }
 
   getAttrs(state: LiveButtonState) {
-    const inactive = this.#props.disabled || state.liveEdge;
+    const inactive = state.disabled || state.liveEdge;
 
     return {
       'aria-label': this.getLabel(state),
@@ -101,8 +104,9 @@ export class LiveButtonCore {
     const media = this.#media!;
     const live = isLiveMedia(media);
     const liveEdge = live && this.#isAtLiveEdge(media);
+    const disabled = this.#props.disabled || !live || liveEdgeTarget(media) == null;
 
-    this.state.patch({ live, liveEdge });
+    this.state.patch({ live, liveEdge, disabled });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
@@ -110,7 +114,9 @@ export class LiveButtonCore {
 
   /** Seek to the Seekable Live Edge. No-op when not live or already at edge. */
   async seekToLive(media: LiveButtonMediaState): Promise<void> {
-    if (this.#props.disabled) return;
+    this.setMedia(media);
+
+    if (this.getState().disabled) return;
 
     if (!isLiveMedia(media)) return;
 

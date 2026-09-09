@@ -7,6 +7,11 @@ export interface PartExport {
   name: string;
   localName: string;
   source: string;
+  /**
+   * `named` for `export { X as Y } from './y'`; `namespace` for `export * as Y from './y/index.parts'`, whose source is
+   * a nested parts index rather than a component file.
+   */
+  kind: 'named' | 'namespace';
 }
 
 /** Extract value re-exports from a React index.parts.ts file. */
@@ -17,6 +22,15 @@ export function extractParts(filePath: string, project: OxcProject): PartExport[
   const parts: PartExport[] = [];
 
   for (const statement of file.program.body) {
+    if (statement.type === 'ExportAllDeclaration') {
+      if (!statement.exported || statement.exportKind === 'type') continue;
+
+      const name = moduleName(statement.exported);
+
+      parts.push({ name, localName: name, source: statement.source.value, kind: 'namespace' });
+      continue;
+    }
+
     if (statement.type !== 'ExportNamedDeclaration' || !statement.source || statement.exportKind === 'type') continue;
 
     for (const specifier of statement.specifiers) {
@@ -26,6 +40,7 @@ export function extractParts(filePath: string, project: OxcProject): PartExport[
         name: moduleName(specifier.exported),
         localName: moduleName(specifier.local),
         source: statement.source.value,
+        kind: 'named',
       });
     }
   }

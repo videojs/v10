@@ -261,7 +261,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 | `playbackRates` | not configurable yet ([#1404](https://github.com/videojs/v10/issues/1404)) |
 | `textTrackSettings` | no equivalent; see [Known gaps](#known-gaps) |
 | `spatialNavigation` | no equivalent; see [Known gaps](#known-gaps) |
-| `inactivityTimeout` | not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)) |
+| `inactivityTimeout` | delay not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)); `inactivityTimeout: 0` maps to `visibility="always"` on the controls component |
 | `errorDisplay`, `notSupportedMessage` | the skins include an error dialog |
 | `ModalDialog` | compose a <DocsLink slug="reference/dialog">Dialog</DocsLink>; your application controls media playback when it opens and closes |
 
@@ -659,7 +659,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the default HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
-- The controls auto-hide delay isn't configurable, so v8's `inactivityTimeout` has no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)).
+- The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom or ejected skin.
 - No full-window fullscreen fallback. v8 had one for browsers without the Fullscreen API; [support is around 96%](https://caniuse.com/fullscreen) now.
 - Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality; picking renditions by resolution won't be added ([#1415](https://github.com/videojs/v10/issues/1415)).
 - Two skins, and no runtime theme switch.

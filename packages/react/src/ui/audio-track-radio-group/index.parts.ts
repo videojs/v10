@@ -7,4 +7,4 @@ export {
   type AudioTrackRadioGroupRootProps as RootProps,
   AudioTrackRadioGroupValue as Value,
   type AudioTrackRadioGroupValueProps as ValueProps,
-} from './audio-track-radio-group';
+} from './component';

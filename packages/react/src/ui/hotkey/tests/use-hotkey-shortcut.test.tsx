@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { createMockStore } from '../../../testing/mocks';
-import { Hotkey } from '../hotkey';
+import { Hotkey } from '../component';
 import { useHotkeyShortcut } from '../use-hotkey-shortcut';
 
 function createContextValue(container: HTMLElement): PlayerContextValue {

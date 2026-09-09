@@ -147,7 +147,7 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | Media Chrome attribute | Video.js v10 | How |
 |---|---|---|
 | `audio` | the audio preset | Choose an audio player and audio skin rather than toggling at runtime. |
-| `autohide` | `media-controls` (built in) | Controls auto-hide after inactivity automatically. The delay is currently fixed; see [Known gaps](#known-gaps). |
+| `autohide` | `media-controls` (built in) | Controls auto-hide after inactivity automatically. `autohide="-1"` becomes `visibility="always"` on `media-controls`; the delay is currently fixed, see [Known gaps](#known-gaps). |
 | `fullscreenelement` | `media-container` | Fullscreen targets the container element. |
 | `gesturesdisabled` | `media-gesture disabled`, or omit | Disable per gesture element, or leave the gestures out. |
 | `nohotkeys` | `media-hotkey disabled`, or omit | Disable per hotkey element, or leave them out. |
@@ -231,12 +231,14 @@ React buttons do not include visible content either. Use a button's `render` pro
 <FrameworkCase frameworks={["react"]}>
 These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="concepts/ui-components">UI components</DocsLink> concept for the full set.
 
-`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster` renders the image and accepts image attributes such as `alt`, `srcSet`, and `sizes`:
+`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster.Root` owns its state and `Poster.Image` accepts image attributes such as `alt`, `srcSet`, and `sizes`:
 
 ```tsx
 <VideoPlayer poster="/poster.jpg">
   <Container>
-    <Poster alt="" />
+    <Poster.Root>
+      <Poster.Image alt="" />
+    </Poster.Root>
   </Container>
 </VideoPlayer>
 ```
@@ -336,7 +338,7 @@ Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; the
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated; see [Workarounds](#workarounds).
 
-- No configurable `autohide` delay or disable switch (`autohide="-1"`), and no `autohideovercontrols` ([#1728](https://github.com/videojs/v10/issues/1728))
+- No configurable `autohide` delay and no `autohideovercontrols` ([#1728](https://github.com/videojs/v10/issues/1728)). Disabling autohide (`autohide="-1"`) is covered by `visibility="always"` on `media-controls`; see [Workarounds](#workarounds).
 - No `defaultduration` placeholder before the media loads ([#1729](https://github.com/videojs/v10/issues/1729))
 - Volume and muted preferences are not persisted across sessions, so Media Chrome's `novolumepref` and `nomutedpref` opt-outs have nothing to opt out of ([#944](https://github.com/videojs/v10/issues/944)). Video.js can choose an initial subtitle track from the locale, but it does not yet remember the viewer's later language choice ([#1786](https://github.com/videojs/v10/issues/1786)).
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
@@ -350,7 +352,7 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 ### Disable autohide (`autohide="-1"`)
 
-Packaged skins don't expose an autohide switch. Install the closest skin's source and remove its hidden-control styles. That's safer than overriding internal selectors in a skin you don't own.
+Set `visibility="always"` on `media-controls` (or `Controls.Root` in React) and the controls stay visible regardless of activity. Packaged skins don't expose that attribute; to keep a preset skin's look, <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink> and set it on the skin's controls element rather than overriding internal selectors in a skin you don't own.
 
 ### Breakpoints
 

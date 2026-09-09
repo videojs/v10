@@ -20,6 +20,8 @@ export function defaultPlayerWidth(player: MediaPlayer): number {
  * with the skin's own cap when a page is opened without one.
  */
 export const PLAYER_FRAME_CLASSES = {
-  video: 'mx-auto aspect-video max-w-[var(--sandbox-player-width,56rem)]',
+  // Keep centred controls on device pixels instead of the fractional height produced by aspect-ratio.
+  video:
+    'mx-auto aspect-video max-w-[var(--sandbox-player-width,56rem)] h-[round(nearest,calc(min(var(--sandbox-player-width,56rem),100vw-1rem)*9/16),2px)]!',
   audio: 'mx-auto w-full max-w-[var(--sandbox-player-width,36rem)]',
 } as const;

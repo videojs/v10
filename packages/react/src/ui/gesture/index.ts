@@ -1,1 +1,1 @@
-export * from './gesture';
+export * from './component';

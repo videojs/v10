@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import type { MediaSnapshot } from '../../input-action/input-action';
+import type { MediaSnapshot } from '../../input-action';
 import { StatusAnnouncerCore } from '../core';
 
 describe('StatusAnnouncerCore', () => {

@@ -15,6 +15,12 @@ import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  discoverWorkspacePackages,
+  isMainCiTestPackage,
+  SPECIAL_TEST_PACKAGES,
+} from '../../.github/scripts/package-test-matrix.js';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 
@@ -71,14 +77,15 @@ function readPackageJson(dir) {
 function checkCiTestCoverage() {
   const warnings = [];
   const ciText = readText(join(ROOT, '.github/workflows/ci.yml'));
-
-  // Collect package names from the test matrix.
-  const matrixMatch = ciText.match(/matrix:\s*\n\s*package:\s*\n((?:\s*-\s*'[^']+'\s*\n)+)/);
   const testedInCi = new Set();
+  const hasDynamicPackageTests =
+    ciText.includes('node .github/scripts/package-test-matrix.js') &&
+    ciText.includes('matrix.packages') &&
+    ciText.includes('test:ci');
 
-  if (matrixMatch) {
-    for (const m of matrixMatch[1].matchAll(/'([^']+)'/g)) {
-      testedInCi.add(m[1]);
+  if (hasDynamicPackageTests) {
+    for (const pkg of discoverWorkspacePackages(ROOT)) {
+      if (isMainCiTestPackage(pkg) && !SPECIAL_TEST_PACKAGES.has(pkg.name)) testedInCi.add(pkg.name);
     }
   }
 

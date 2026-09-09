@@ -10,6 +10,8 @@
     "test": "vp test run"
   },
   "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@heroicons/react": "^2.2.0",
     "@videojs/cdn": "workspace:*",
     "@videojs/cloudflare-video": "workspace:*",
     "@videojs/core": "workspace:*",
@@ -34,8 +36,9 @@
     "@videojs/vimeo-video": "workspace:*",
     "@videojs/wistia-video": "workspace:*",
     "@videojs/youtube-video": "workspace:*",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.5.0"
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.2.5",
+    "react-resizable-panels": "^4.12.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

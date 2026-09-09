@@ -81,8 +81,8 @@ describe('createPlayer', () => {
     const { PlayerController } = createPlayer({ features: videoFeatures });
     const host = null as unknown as UIElement;
 
-    assertType<import('../player-controller').PlayerController<VideoPlayerStore>>(new PlayerController(host));
-    assertType<import('../player-controller').PlayerController<VideoPlayerStore, boolean>>(
+    assertType<import('../controller').PlayerController<VideoPlayerStore>>(new PlayerController(host));
+    assertType<import('../controller').PlayerController<VideoPlayerStore, boolean>>(
       new PlayerController(host, (state) => state.paused)
     );
   });

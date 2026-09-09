@@ -5,7 +5,7 @@ import type { PopoverInput } from '../../../core/ui/popover/core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
-import type { PopupGroup, PopupGroupCloseReason } from './popup-group';
+import type { PopupGroup, PopupGroupCloseReason } from './group';
 
 export type PopoverOpenChangeReason =
   | 'click'

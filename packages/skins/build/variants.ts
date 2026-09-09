@@ -9,7 +9,7 @@ import {
   skinStyles,
 } from '../src/meta.ts';
 import { registryTargets } from './registry/targets.ts';
-import { type SkinPreset, skinPreset, skinPresets } from './skin.ts';
+import { type SkinPreset, skinPreset, skinPresets, skinSourceDirectory } from './skin.ts';
 
 export type SkinFramework = 'html' | 'react';
 export type SkinStyling = 'css' | 'tailwind';
@@ -40,7 +40,7 @@ const publishedSkins = Object.keys(skinStyles).filter(isSkinName);
 
 /** The variants one authored module is compiled for. Skin-owned modules compile for their skin only. */
 export function variantsFor(filename: string): readonly SkinVariant[] {
-  const ownedSkin = publishedSkins.find((name) => filename.includes(`/skins/${name}/`));
+  const ownedSkin = publishedSkins.find((name) => filename.includes(`/skins/${skinSourceDirectory(name)}/`));
 
   return registryTargets.map(({ framework, styling }) => {
     if (ownedSkin) return { target: framework, style: styling, skin: ownedSkin };
