@@ -16,7 +16,12 @@ export const SHARED_FILES = ['remotion-adapter.ts', 'remotion-video.tsx', 'demos
 
 type Highlighted = { file: string; html: string | null; code: string };
 
-async function loadSource(file: string): Promise<Highlighted> {
+// One load per file for the page's lifetime: raw text and highlighting are both cached, so revisiting a tab is
+// synchronous and the panel never has to show a placeholder for a file it has already rendered.
+const pending = new Map<string, Promise<Highlighted>>();
+const ready = new Map<string, Highlighted>();
+
+async function highlight(file: string): Promise<Highlighted> {
   const load = RAW_SOURCES[`./${file}`];
   if (!load) return { file, html: null, code: `// ${file} is not part of this template.` };
 
@@ -38,6 +43,20 @@ async function loadSource(file: string): Promise<Highlighted> {
   }
 }
 
+function loadSource(file: string): Promise<Highlighted> {
+  let promise = pending.get(file);
+
+  if (!promise) {
+    promise = highlight(file).then((loaded) => {
+      ready.set(file, loaded);
+      return loaded;
+    });
+    pending.set(file, promise);
+  }
+
+  return promise;
+}
+
 function githubUrl(file: string) {
   const ref =
     __SANDBOX_BRANCH__ === 'unknown' || __SANDBOX_BRANCH__ === 'HEAD' ? __SANDBOX_COMMIT__ : __SANDBOX_BRANCH__;
@@ -50,19 +69,32 @@ const ACTIVE_TAB_CLASS = 'bg-neutral-900 text-white hover:bg-neutral-900 dark:bg
 
 export function SourceViewer({ files }: { files: readonly string[] }) {
   const [active, setActive] = useState(files[0] ?? '');
-  const [source, setSource] = useState<Highlighted | null>(null);
+  // Start from the cache so a revisit renders in the same commit as the tab change; otherwise keep showing the previous
+  // file until the next one is ready, which is what stops the panel from collapsing to a placeholder between tabs.
+  const [source, setSource] = useState<Highlighted | null>(() => ready.get(files[0] ?? '') ?? null);
 
   // A demo switch changes the first file; follow it.
   useEffect(() => {
     setActive(files[0] ?? '');
   }, [files]);
 
+  // Warm every tab in the background so the first click on each is also instant.
+  useEffect(() => {
+    for (const file of files) void loadSource(file);
+  }, [files]);
+
   useEffect(() => {
     if (!active) return;
 
+    const cached = ready.get(active);
+
+    if (cached) {
+      setSource(cached);
+      return;
+    }
+
     let cancelled = false;
 
-    setSource(null);
     void loadSource(active).then((loaded) => {
       if (!cancelled) setSource(loaded);
     });
@@ -71,6 +103,8 @@ export function SourceViewer({ files }: { files: readonly string[] }) {
       cancelled = true;
     };
   }, [active]);
+
+  const stale = source !== null && source.file !== active;
 
   if (files.length === 0) return null;
 
@@ -97,7 +131,9 @@ export function SourceViewer({ files }: { files: readonly string[] }) {
           Open on GitHub ↗
         </a>
       </div>
-      <div className="mt-2 max-h-[32rem] overflow-auto rounded-lg border border-neutral-200 text-[13px] leading-snug dark:border-neutral-800 [&_pre]:m-0 [&_pre]:p-4">
+      <div
+        className={`mt-2 max-h-[32rem] min-h-[12rem] overflow-auto rounded-lg border border-neutral-200 text-[13px] leading-snug transition-opacity dark:border-neutral-800 [&_pre]:m-0 [&_pre]:p-4 ${stale ? 'opacity-60' : ''}`}
+      >
         {source === null ? (
           <pre className="p-4 text-neutral-500">Loading {active}…</pre>
         ) : source.html ? (
