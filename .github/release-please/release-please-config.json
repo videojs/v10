@@ -30,6 +30,7 @@
         "@videojs/mux-video",
         "@videojs/native-hls-video",
         "@videojs/react",
+        "@videojs/react-native",
         "@videojs/shaka-video",
         "@videojs/skins",
         "@videojs/spf",
@@ -144,6 +145,12 @@
     },
     "packages/react": {
       "component": "@videojs/react",
+      "prerelease": true,
+      "prerelease-type": "rc",
+      "versioning": "prerelease"
+    },
+    "packages/react-native": {
+      "component": "@videojs/react-native",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
