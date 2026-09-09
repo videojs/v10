@@ -2,7 +2,9 @@
 
 Two ways to put Video.js 10 behind a third-party component library, side by side on one page, at feature parity with
 the default video skin. The toolbar mirrors the shell: **Approach** (`approach=render|hooks`), **Media**, **Source**,
-and **Captions** (the sandbox's synthetic caption tracks). All four travel in the URL. The media, source, and captions
+**Captions** (the sandbox's synthetic caption tracks), and **Language**. All five travel in the URL; the page sits inside
+`SandboxI18nProvider`. The hooks flavor here still hard-codes its English labels; see the Radix template for the
+translated version. The media, source, and captions
 pickers, the media component per media id, and the default skin's hotkeys and gestures live in
 `@app/shared/react/library-skin-harness`, shared with the Radix template.
 

@@ -25,7 +25,14 @@ import {
   StopwatchIcon,
   UpdateIcon,
 } from '@radix-ui/react-icons';
-import { mapCuesToThumbnails, ThumbnailCore } from '@videojs/core';
+import {
+  getErrorDialogDismissText,
+  getErrorDialogTitleText,
+  mapCuesToThumbnails,
+  resolveErrorDialogDescription,
+  ThumbnailCore,
+} from '@videojs/core';
+import { translateText } from '@videojs/core/i18n';
 import { startText as airplayStartText, stopText as airplayStopText } from '@videojs/core/i18n/text/airplay';
 import { muteText, pauseText, playText, replayText, unmuteText } from '@videojs/core/i18n/text/buttons';
 import { disableText as captionsDisableText, enableText as captionsEnableText } from '@videojs/core/i18n/text/captions';
@@ -54,7 +61,7 @@ import {
   useQualityOptions,
   useTranslator,
 } from '@videojs/react';
-import { AlertDialog, DropdownMenu, Popover, Slider, Toggle, Tooltip } from 'radix-ui';
+import { Dialog, DropdownMenu, Popover, Slider, Toggle, Tooltip } from 'radix-ui';
 import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -132,28 +139,41 @@ function BufferingSpinner() {
   );
 }
 
-/** Radix AlertDialog driven by the error feature; dismissing calls `dismissError()`. */
+/**
+ * Error dialog driven by the error feature, scoped to the player like Video.js's `ErrorDialog`. Radix `AlertDialog` is
+ * always page-modal (it hides and blocks everything outside), so this is a non-modal `Dialog` with `role="alertdialog"`
+ * whose outside interactions are ignored; its backdrop is our own, since Radix renders `Overlay` only when modal.
+ * Title, description, and dismiss label come from the same text helpers Video.js's dialog uses.
+ */
 function ErrorAlert() {
   const error = usePlayer(selectError);
   const container = useContainer();
+  const t = useTranslator();
 
   if (!error) return null;
 
+  const open = error.error !== null;
+
   return (
-    <AlertDialog.Root open={error.error !== null} onOpenChange={(open) => !open && error.dismissError()}>
-      <AlertDialog.Portal container={container}>
-        <AlertDialog.Overlay className="absolute inset-0 z-50 bg-black/60" />
-        <AlertDialog.Content className={DIALOG_CLASS}>
-          <AlertDialog.Title className="text-base font-semibold">Playback error</AlertDialog.Title>
-          <AlertDialog.Description className="text-sm text-white/80">
-            {error.error?.message ?? 'Something went wrong.'}
-          </AlertDialog.Description>
+    <Dialog.Root modal={false} open={open} onOpenChange={(next) => !next && error.dismissError()}>
+      <Dialog.Portal container={container}>
+        {open ? <div className="absolute inset-0 z-50 bg-black/60" /> : null}
+        <Dialog.Content
+          role="alertdialog"
+          data-interactive=""
+          onInteractOutside={(event) => event.preventDefault()}
+          className={DIALOG_CLASS}
+        >
+          <Dialog.Title className="text-base font-semibold">{translateText(getErrorDialogTitleText(), t)}</Dialog.Title>
+          <Dialog.Description className="text-sm text-white/80">
+            {translateText(resolveErrorDialogDescription(error.error), t)}
+          </Dialog.Description>
           <div className="flex justify-end">
-            <AlertDialog.Action className={TEXT_BUTTON_CLASS}>Dismiss</AlertDialog.Action>
+            <Dialog.Close className={TEXT_BUTTON_CLASS}>{translateText(getErrorDialogDismissText(), t)}</Dialog.Close>
           </div>
-        </AlertDialog.Content>
-      </AlertDialog.Portal>
-    </AlertDialog.Root>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

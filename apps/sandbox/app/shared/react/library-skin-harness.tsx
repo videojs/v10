@@ -4,6 +4,7 @@
 
 import { MEDIA, type MediaId, mediaSources } from '@app/media';
 import { applyCaptionTracks, CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
+import { SANDBOX_LOCALE_OPTION_GROUPS, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { findMediaElement } from '@app/shared/media-element';
 import {
   DEFAULT_SOURCE,
@@ -21,6 +22,7 @@ import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from 'rea
 
 import { Chapters } from './chapters';
 import { Storyboard } from './storyboard';
+import { useLocale } from './use-locale';
 import { useSandbox } from './use-sandbox';
 
 // Engines load on selection, so the page pays only for the one it plays.
@@ -139,9 +141,21 @@ export interface HarnessToolbarProps {
   children?: ReactNode;
 }
 
-/** Shell-style selects for media, source, and captions, plus whatever the template adds (its approach picker). */
+function isLocaleTag(value: string): value is SandboxLocaleTag {
+  // SAFETY: widening to `string[]` only relaxes the `includes` parameter; the predicate is decided by the membership test.
+  return (SANDBOX_LOCALE_TAGS as readonly string[]).includes(value);
+}
+
+/** Shell-style selects for media, source, captions, and language, plus whatever the template adds (its approach picker). */
 export function HarnessToolbar({ selection, children }: HarnessToolbarProps) {
   const { media, source, captions, setMedia, setSource, setCaptions } = selection;
+  const locale = useLocale();
+
+  const setLocale = (next: SandboxLocaleTag) => {
+    writeParams({ locale: next });
+    // The same message the shell streams; `SandboxI18nProvider` picks it up through `useLocale()`.
+    window.postMessage({ type: 'locale-change', locale: next }, '*');
+  };
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm">
@@ -169,6 +183,14 @@ export function HarnessToolbar({ selection, children }: HarnessToolbarProps) {
           if (isCaptionsMode(value)) setCaptions(value);
         }}
         options={CAPTIONS_MODES.map((mode) => ({ value: mode, label: CAPTIONS_LABELS[mode] }))}
+      />
+      <SelectField
+        label="Language"
+        value={locale}
+        onChange={(value) => {
+          if (isLocaleTag(value)) setLocale(value);
+        }}
+        optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
       />
     </div>
   );

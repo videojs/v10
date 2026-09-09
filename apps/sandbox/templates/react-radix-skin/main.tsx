@@ -7,6 +7,7 @@ import {
   useLibrarySkinSelection,
 } from '@app/shared/react/library-skin-harness';
 import { VideoPlayer } from '@app/shared/react/players';
+import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { SelectField } from '@app/shell/select';
 import { Container } from '@videojs/react';
 import { useState } from 'react';
@@ -27,25 +28,27 @@ function App() {
   };
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
-      <HarnessToolbar selection={selection}>
-        <SelectField
-          label="Approach"
-          value={approach}
-          onChange={(value) => select(value as Approach)}
-          options={APPROACHES.map((entry) => ({ value: entry.value, label: entry.label }))}
-        />
-      </HarnessToolbar>
-      <VideoPlayer poster={selectedPoster(selection.source)}>
-        <PlayerFrame>
-          <Container className="group/player relative size-full">
-            <SelectedMedia selection={selection} />
-            {approach === 'render' ? <RenderApproachControls /> : <HooksApproachControls />}
-          </Container>
-        </PlayerFrame>
-      </VideoPlayer>
-      <p className="max-w-[56rem] text-center text-sm text-neutral-600 dark:text-neutral-400">{current.blurb}</p>
-    </div>
+    <SandboxI18nProvider>
+      <div className="flex w-full flex-col items-center gap-4">
+        <HarnessToolbar selection={selection}>
+          <SelectField
+            label="Approach"
+            value={approach}
+            onChange={(value) => select(value as Approach)}
+            options={APPROACHES.map((entry) => ({ value: entry.value, label: entry.label }))}
+          />
+        </HarnessToolbar>
+        <VideoPlayer poster={selectedPoster(selection.source)}>
+          <PlayerFrame>
+            <Container className="group/player relative size-full">
+              <SelectedMedia selection={selection} />
+              {approach === 'render' ? <RenderApproachControls /> : <HooksApproachControls />}
+            </Container>
+          </PlayerFrame>
+        </VideoPlayer>
+        <p className="max-w-[56rem] text-center text-sm text-neutral-600 dark:text-neutral-400">{current.blurb}</p>
+      </div>
+    </SandboxI18nProvider>
   );
 }
 

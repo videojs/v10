@@ -15,7 +15,7 @@ export const APPROACHES: readonly { value: Approach; label: string; blurb: strin
     value: 'hooks',
     label: 'Radix primitives + Video.js hooks',
     blurb:
-      'Radix Slider, DropdownMenu with submenus, Tooltip, Popover, Toggle, AlertDialog, and Radix Icons, fed by usePlayer(selector) state, store actions, availability flags, and the option hooks. The seek slider derives hover time, chapter title, and storyboard thumbnails from the text-track feature.',
+      'Radix Slider, DropdownMenu with submenus, Tooltip, Popover, Toggle, a player-scoped Dialog, and Radix Icons, fed by usePlayer(selector) state, store actions, availability flags, the option hooks, and useTranslator() for every label. The seek slider derives hover time, chapter title, and storyboard thumbnails from the text-track feature.',
   },
 ];
 

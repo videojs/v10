@@ -1,10 +1,11 @@
 # React + Radix skin (spike)
 
 Same shape as `react-base-ui-skin`: one page, two approaches, feature parity with the default video skin, and the shared
-toolbar (Approach, Media, Source, Captions) from `@app/shared/react/library-skin-harness`.
+toolbar (Approach, Media, Source, Captions, Language) from `@app/shared/react/library-skin-harness`. Both pages sit
+inside `SandboxI18nProvider`, so the `locale` param and the shell's `locale-change` message drive Video.js i18n.
 
 - **render** — Video.js components own behaviour, state, and accessibility; Radix primitives go in through `render`.
-- **hooks** — Radix primitives (`radix-ui` umbrella: Slider, DropdownMenu, Tooltip, Popover, Toggle, AlertDialog) and
+- **hooks** — Radix primitives (`radix-ui` umbrella: Slider, DropdownMenu, Tooltip, Popover, Toggle, Dialog) and
   Radix Icons own rendering and interaction; Video.js supplies state, actions, availability, and the text-track cues.
 
 ## The hooks flavor, all in on Radix
@@ -30,6 +31,10 @@ with 18px icons, 13px tabular time, a 4px track with a 12px thumb that appears o
 - **Mute** has no tooltip because hover opens the volume popover, as in the default skin. Radix Popover has no
   hover-open, so the popover is controlled from pointer enter/leave on a wrapper and the click stays the mute toggle.
 - **Disabled buttons** show `cursor: not-allowed`.
+- **Error dialog** is a non-modal Radix `Dialog` with `role="alertdialog"`, portaled into the container with its own
+  backdrop and outside interactions ignored, so it covers the player and nothing else, like Video.js's `ErrorDialog`.
+  Its title, description, and dismiss label come from the core's error-dialog text helpers
+  (`getErrorDialogTitleText`, `resolveErrorDialogDescription`, `getErrorDialogDismissText`) through `translateText`.
 
 ## What Radix added to the picture
 
@@ -42,7 +47,11 @@ with 18px icons, 13px tabular time, a 4px track with a 12px thumb that appears o
    `data-state="on|off"` with the popover's `data-state="closed|open"`.
 4. **Radix DropdownMenu opens on `pointerdown`**, not `click`; programmatic `.click()` does nothing.
 5. **Radix Slider takes `number[]`** and puts `role="slider"` on the thumb `span`; `PageUp` fires `onValueCommit`.
-6. **Portals** need `container={useContainer()}` for tooltips, menus, submenus, popovers, and the alert dialog.
+6. **Portals** need `container={useContainer()}` for tooltips, menus, submenus, popovers, and the dialog.
+7. **Radix `AlertDialog` is always page-modal.** It hides everything else from assistive tech, locks scroll, and
+   disables outside pointer events for the whole document, where Video.js's `ErrorDialog` scopes modality to the
+   player. Only `Dialog` exposes `modal={false}`, and non-modal `Dialog` renders no `Overlay`, so the backdrop and the
+   "ignore outside clicks" behaviour are hand-rolled.
 
 ## Friction found (Video.js side, from this flavor)
 
