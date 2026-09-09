@@ -243,6 +243,10 @@ describe('Component pipeline (end-to-end)', () => {
   //     React props from `{LocalName}Props` interface.
   //   - REACT-ONLY PARTS: Sub-parts with no matching HTML element file.
   //     Get platforms.react but NOT platforms.html.
+  //   - NAMESPACE PARTS: `export * as Preview from './preview/index.parts'`
+  //     expands the nested index into `Preview.Root`, `Preview.Label`, ...
+  //     keyed `preview-root`, `preview-label`. The nested Root maps to the
+  //     element file named after the namespace (`slider/preview.ts`).
   //
   // Non-boolean data-attr types are inferred from StateAttrMap<State>:
   //   - number → type: "number"
@@ -462,6 +466,46 @@ describe('Component pipeline (end-to-end)', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────
+  // MULTI-PART WITH A NAMESPACE RE-EXPORT: Slider
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // slider/index.parts.ts re-exports `./preview/index.parts` as the
+  // `Preview` namespace. Its nested exports become dotted parts:
+  //   - Preview.Root → slider/preview.ts (element named after the namespace)
+  //   - Preview.Label → gauge/label.tsx (nested re-export of another
+  //     component's React-only part)
+
+  describe('Slider (multi-part with a namespace re-export)', () => {
+    it('expands the namespace into dotted parts', () => {
+      const parts = findComponent('Slider')!.reference.parts!;
+
+      expect(Object.keys(parts).sort()).toEqual(['preview-label', 'preview-root', 'root', 'thumb', 'track']);
+    });
+
+    it('nested Root resolves the element named after the namespace', () => {
+      const root = findComponent('Slider')!.reference.parts!['preview-root']!;
+
+      expect(root.name).toBe('Preview.Root');
+      expect(root.description).toBe('Positions preview content at the slider pointer.');
+      expect(root.props.offset).toMatchObject({
+        type: 'number',
+        description: 'Distance between the preview and the track, in pixels.',
+        frameworks: ['react'],
+      });
+      expect(root.platforms.html).toEqual({ tagName: 'media-slider-preview' });
+      expect(root.platforms.react).toEqual({});
+    });
+
+    it('nested re-export of another component stays React-only', () => {
+      const label = findComponent('Slider')!.reference.parts!['preview-label']!;
+
+      expect(label.name).toBe('Preview.Label');
+      expect(label.description).toBe('An accessible label for the gauge value. Renders a `<span>` element.');
+      expect(label.platforms).toEqual({ react: {} });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
   // MULTI-PART WITH RE-EXPORTS: VolumeSlider
   // ─────────────────────────────────────────────────────────────────
   //
@@ -490,6 +534,15 @@ describe('Component pipeline (end-to-end)', () => {
       expect(ref.parts!.root).toBeDefined();
       expect(ref.parts!.thumb).toBeDefined();
       expect(ref.parts!.track).toBeDefined();
+    });
+
+    it('re-exported namespace (Preview) expands from the slider origin', () => {
+      const parts = findComponent('VolumeSlider')!.reference.parts!;
+
+      expect(parts['preview-root']!.name).toBe('Preview.Root');
+      expect(parts['preview-root']!.platforms.html).toEqual({ tagName: 'media-slider-preview' });
+      expect(parts['preview-label']!.name).toBe('Preview.Label');
+      expect(parts['preview-label']!.platforms).toEqual({ react: {} });
     });
 
     it('local primary part (Root) gets VolumeSlider core data', () => {

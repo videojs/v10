@@ -16,7 +16,7 @@ import { extractDataAttrs } from './data-attrs-handler.js';
 import { abbreviateType } from './formatter.js';
 import { extractHtml } from './html-handler.js';
 import { getJSDocTag, OxcProject, staticName } from './oxc-project.js';
-import { extractPartDescription, extractParts, extractSubPartProps } from './parts-handler.js';
+import { extractPartDescription, extractParts, extractSubPartProps, type PartExport } from './parts-handler.js';
 import type {
   ComponentReference,
   ComponentSource,
@@ -313,9 +313,10 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
   const partExports = extractParts(source.partsIndexPath, program);
   if (partExports.length === 0) return [];
 
-  const localExports = partExports.filter((p) => p.source.startsWith('./'));
-  const nonLocalExports = partExports.filter((p) => !p.source.startsWith('./'));
-  if (localExports.length === 0 && nonLocalExports.length === 0) return [];
+  const namedExports = partExports.filter((p) => p.kind === 'named');
+  const localExports = namedExports.filter((p) => p.source.startsWith('./'));
+  const nonLocalExports = namedExports.filter((p) => !p.source.startsWith('./'));
+  const namespaceExports = partExports.filter((p) => p.kind === 'namespace' && p.source.startsWith('./'));
 
   const componentKebab = source.kebab;
   const htmlDir = path.join(htmlUiPath, componentKebab);
@@ -358,6 +359,12 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
     part.dataAttrsComponentName = source.name;
   }
 
+  for (const namespaceExport of namespaceExports) {
+    parts.push(
+      ...discoverNamespaceParts(namespaceExport, source.partsIndexPath, componentKebab, htmlDir, coreUiPath, program)
+    );
+  }
+
   if (nonLocalExports.length > 0) {
     const bySource = new Map<string, typeof nonLocalExports>();
 
@@ -383,6 +390,13 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
       for (const reExport of exports) {
         const originExport = originExports.find((o) => o.name === reExport.name);
         if (!originExport) continue;
+
+        if (originExport.kind === 'namespace') {
+          parts.push(
+            ...discoverNamespaceParts(originExport, originPartsFile, originKebab, originHtmlDir, coreUiPath, program)
+          );
+          continue;
+        }
 
         const kebab = partKebabFromSource(originExport.source, originKebab);
 
@@ -415,6 +429,63 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
   }
 
   return parts.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+}
+
+// A namespace re-export (`export * as Thumbnail from './thumbnail/index.parts'`) groups nested parts that render
+// as `Slider.Thumbnail.Root` and `Slider.Thumbnail.Image`. The nested index sits in a folder named after the
+// namespace; its `Root` maps to the element file of that name (`slider/thumbnail.ts`), other nested parts to
+// `{namespace}-{part}.ts`. Nested exports may point outside the component (`../../thumbnail/image`); those parts
+// take their React file, and any data attributes, from the component that owns that file.
+function discoverNamespaceParts(
+  namespaceExport: PartExport,
+  partsIndexPath: string,
+  componentKebab: string,
+  htmlDir: string,
+  coreUiPath: string,
+  program: OxcProject
+): PartSource[] {
+  const nestedIndexFile = path.resolve(path.dirname(partsIndexPath), `${namespaceExport.source}.ts`);
+  if (!fs.existsSync(nestedIndexFile)) return [];
+
+  const namespaceKebab = pascalToKebab(namespaceExport.name);
+  const nestedDir = path.dirname(nestedIndexFile);
+  const parts: PartSource[] = [];
+
+  for (const nestedExport of extractParts(nestedIndexFile, program)) {
+    if (nestedExport.kind !== 'named') continue;
+
+    const partKebab = partKebabFromSource(nestedExport.source, namespaceKebab);
+    const elementBasename = nestedExport.name === 'Root' ? namespaceKebab : `${namespaceKebab}-${partKebab}`;
+    const partElement = resolvePartElement(
+      htmlDir,
+      componentKebab,
+      `./${namespaceKebab}/${partKebab}`,
+      elementBasename
+    );
+
+    const reactFile = path.resolve(nestedDir, `${nestedExport.source}.tsx`);
+    const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
+
+    const ownerKebab = reactPath ? path.basename(path.dirname(reactPath)) : componentKebab;
+    const ownerDataAttrsFile = path.join(coreUiPath, ownerKebab, 'data.ts');
+    const ownsDataAttrs = !!reactPath && usesDataAttrs(reactPath) && fs.existsSync(ownerDataAttrsFile);
+
+    parts.push({
+      name: `${namespaceExport.name}.${nestedExport.name}`,
+      localName: nestedExport.localName,
+      kebab: `${namespaceKebab}-${partKebab}`,
+      isPrimary: false,
+      htmlPath: partElement?.path,
+      htmlElementName: partElement?.className,
+      reactPath,
+      dataAttrsPath: ownsDataAttrs ? ownerDataAttrsFile : undefined,
+      dataAttrsComponentName: ownsDataAttrs ? kebabToPascal(ownerKebab) : undefined,
+    });
+  }
+
+  return parts.sort(
+    (a, b) => Number(b.kebab === `${namespaceKebab}-root`) - Number(a.kebab === `${namespaceKebab}-root`)
+  );
 }
 
 // Exactly one local part carries the shared core data and the component's root element. Several parts

@@ -64,6 +64,8 @@ The same map covers media elements whose PascalCase name doesn't kebab-case to t
 
 **Non-primary parts**: Each gets its own element file at `packages/html/src/ui/{name}/{part}.ts` (e.g., `time/group.ts`). Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`). A nested React part source such as `./chapters/title` is honored when the same folder exists on the HTML side; otherwise the part is looked up flat in the component directory.
 
+**Namespace parts**: `export * as Thumbnail from './thumbnail/index.parts'` groups nested parts that render as `Slider.Thumbnail.Root` and `Slider.Thumbnail.Image` (part ids `thumbnail-root`, `thumbnail-image`). The nested index lives in a folder named after the namespace. Its `Root` maps to the element file of the same name (`slider/thumbnail.ts`, class `SliderThumbnailElement`); other nested parts map to `{namespace}-{part}.ts`. Nested exports may point at another component's file (`../../thumbnail/image`); that part is React-only unless an element file matches, and inherits data attributes from the component that owns the file. Domain variants may re-export the namespace (`export { Thumbnail } from '../slider/index.parts'`) and receive the same nested parts.
+
 **Framework-divergent parts**: All parts get `platforms.react`. Parts with a matching HTML element file also get `platforms.html`. The renderer filters parts by framework — React-only parts are hidden in HTML docs.
 
 **Part descriptions**: Extracted from JSDoc on the React component export:
