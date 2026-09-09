@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.1...@videojs/utils@10.0.0-rc.2) (2026-09-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **html:** make thumbnail images composable ([#2572](https://github.com/videojs/v10/issues/2572))
+
+### Features
+
+* **html:** make thumbnail images composable ([#2572](https://github.com/videojs/v10/issues/2572)) ([6dfdce5](https://github.com/videojs/v10/commit/6dfdce50a8717573268841dbc6ed8c2b02b9108d))
+
+
+### Bug Fixes
+
+* **skin:** misc styles fixes ([#2558](https://github.com/videojs/v10/issues/2558)) ([cd963b7](https://github.com/videojs/v10/commit/cd963b7f2cc7f4dddf225aa08afa04908ec353e7))
+
 ## [10.0.0-rc.1](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.32...@videojs/utils@10.0.0-rc.1) (2026-09-08)
 
 

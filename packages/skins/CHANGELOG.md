@@ -1,5 +1,40 @@
 # Changelog
 
+## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-rc.1...@videojs/skins@10.0.0-rc.2) (2026-09-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **html:** make thumbnail images composable ([#2572](https://github.com/videojs/v10/issues/2572))
+* **react:** make slider thumbnail composable ([#2568](https://github.com/videojs/v10/issues/2568))
+* **react:** make thumbnail composable ([#2566](https://github.com/videojs/v10/issues/2566))
+* **react:** make poster composable ([#2563](https://github.com/videojs/v10/issues/2563))
+
+### Features
+
+* **html:** make thumbnail images composable ([#2572](https://github.com/videojs/v10/issues/2572)) ([6dfdce5](https://github.com/videojs/v10/commit/6dfdce50a8717573268841dbc6ed8c2b02b9108d))
+* **packages:** handle controls before media metadata ([#2525](https://github.com/videojs/v10/issues/2525)) ([feed475](https://github.com/videojs/v10/commit/feed475b42186340162b92e3366f132729b6b0f9))
+* **react:** make poster composable ([#2563](https://github.com/videojs/v10/issues/2563)) ([def9bf2](https://github.com/videojs/v10/commit/def9bf21d39cce091bf31c1b36651fceb8c25687))
+* **react:** make slider thumbnail composable ([#2568](https://github.com/videojs/v10/issues/2568)) ([03fdbc6](https://github.com/videojs/v10/commit/03fdbc628350b3eab41be209f3ea99a2415f4ab8))
+* **react:** make thumbnail composable ([#2566](https://github.com/videojs/v10/issues/2566)) ([55b36ab](https://github.com/videojs/v10/commit/55b36ab31a07ae54ca084bd470a61cfc760a8e13))
+
+
+### Bug Fixes
+
+* **packages:** stabilize slider keyboard input ([#2553](https://github.com/videojs/v10/issues/2553)) ([bd9d946](https://github.com/videojs/v10/commit/bd9d9466df1a9c0cf2fb1fbbf5ed0dfe6302d2c6))
+* **skin:** misc styles fixes ([#2558](https://github.com/videojs/v10/issues/2558)) ([cd963b7](https://github.com/videojs/v10/commit/cd963b7f2cc7f4dddf225aa08afa04908ec353e7))
+* **skin:** style poster and slider thumbnail shadow hosts in webkit ([#2693](https://github.com/videojs/v10/issues/2693)) ([0a40865](https://github.com/videojs/v10/commit/0a40865edb1de28a933487cfb0dfffede23ba076))
+* **skin:** use finite radius to fix Safari clip-path bug ([#2679](https://github.com/videojs/v10/issues/2679)) ([4074a4a](https://github.com/videojs/v10/commit/4074a4a1989f0b83abeed549a4efb7bb0c2530fe))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-rc.2
+    * @videojs/icons bumped to 10.0.0-rc.2
+    * @videojs/utils bumped to 10.0.0-rc.2
+
 ## [10.0.0-rc.1](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.32...@videojs/skins@10.0.0-rc.1) (2026-09-08)
 
 

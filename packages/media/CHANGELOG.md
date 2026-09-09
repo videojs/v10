@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-rc.1...@videojs/media@10.0.0-rc.2) (2026-09-09)
+
+
+### Features
+
+* **packages:** handle controls before media metadata ([#2525](https://github.com/videojs/v10/issues/2525)) ([feed475](https://github.com/videojs/v10/commit/feed475b42186340162b92e3366f132729b6b0f9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-rc.2
+
 ## [10.0.0-rc.1](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.32...@videojs/media@10.0.0-rc.1) (2026-09-08)
 
 

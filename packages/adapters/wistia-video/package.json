@@ -1,6 +1,6 @@
 {
   "name": "@videojs/wistia-video",
-  "version": "10.0.0-rc.1",
+  "version": "10.0.0-rc.2",
   "description": "Wistia playback adapter for Video.js",
   "keywords": [
     "media",
