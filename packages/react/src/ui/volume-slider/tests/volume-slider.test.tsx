@@ -289,6 +289,21 @@ describe('VolumeSliderRoot wheel handling', () => {
     expect(mockVolumeState.setVolume).toHaveBeenCalled();
   });
 
+  it('steps volume by the default wheel step', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <VolumeSliderRoot />
+      </Wrapper>
+    );
+
+    const el = container.querySelector('[data-orientation]') as HTMLElement;
+
+    // Volume starts at 0.8 and the default wheel step is 5%, so scrolling up lands on 0.85 rather than NaN.
+    el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    expect(mockVolumeState.setVolume).toHaveBeenLastCalledWith(expect.closeTo(0.85, 10));
+  });
+
   it('attaches wheel handling when volume appears after initial null', () => {
     // Start with no volume — component returns null.
     mutableVolume.current = null;
