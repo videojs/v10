@@ -86,6 +86,9 @@ const componentParts: ComponentPartNameMap = {
     Preview: 'SliderPreview',
     Value: 'SliderValue',
   },
+  Thumbnail: {
+    Root: 'Thumbnail',
+  },
   StatusIndicator: {
     Root: 'StatusIndicator',
     Value: 'StatusIndicatorValue',
@@ -264,6 +267,20 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
           Thumbnail: {
             Root: Div,
           },
+        },
+        // `<media-thumbnail>` draws its image in a shadow root, so the image part's attributes ride on the host and
+        // its class name has no element to land on until the image moves into light DOM.
+        Thumbnail: ({ props, parts }) => {
+          const image = parts.Image.props;
+
+          return (
+            <target.Thumbnail.Root
+              {...props}
+              crossOrigin={image.crossOrigin}
+              loading={image.loading}
+              fetchPriority={image.fetchPriority}
+            />
+          );
         },
         Tooltip: ({ props, parts, id }) => {
           const trigger = id('trigger');
