@@ -27,7 +27,9 @@ with 18px icons, 13px tabular time, a 4px track with a 12px thumb that appears o
 - **Seek slider** is a Radix `Slider` fed by the time, buffer, and text-track features. Radix has no pointer-position
   API, so hover time is derived from the root's rect, and from it the chapter title (`chaptersCues`) and storyboard
   tile (`thumbnailCues` + `thumbnailTrackSrc` through `mapCuesToThumbnails` and `ThumbnailCore` from `@videojs/core`).
-  Chapter boundaries are drawn as gaps on the track.
+  The track is drawn as one rounded segment per chapter with transparent 4px gaps, using the core's
+  `normalizeChapterCues` partition (which fills gaps between cues), and the hovered segment grows to 7px. The chapter
+  title (truncated) and time stack over the bottom of the thumbnail at the default skin's offsets.
 - **Mute** has no tooltip because hover opens the volume popover, as in the default skin. Radix Popover has no
   hover-open, so the popover is controlled from pointer enter/leave on a wrapper and the click stays the mute toggle.
 - **Disabled buttons** show `cursor: not-allowed`.
@@ -60,7 +62,8 @@ with 18px icons, 13px tabular time, a 4px track with a 12px thumb that appears o
   playback. The exemption is the `data-interactive` attribute the gesture layer checks (Video.js's `Controls.Content`
   sets it); the bar and the volume popover carry it now.
 - **No pointer-position or preview seam for foreign sliders.** Hover time, chapter title, and thumbnail had to be
-  derived by hand from the root's rect and the text-track cues; the core's `mapCuesToThumbnails` and `ThumbnailCore`
-  did the sprite math.
+  derived by hand from the root's rect and the text-track cues; the core's `mapCuesToThumbnails`, `ThumbnailCore`, and
+  `normalizeChapterCues` did the sprite and partition math, so the pure pieces are reusable even where the compound is
+  not.
 
 Everything in the Base UI README about Video.js-side friction and the parity table applies unchanged.

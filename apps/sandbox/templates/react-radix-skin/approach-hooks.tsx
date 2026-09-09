@@ -29,6 +29,7 @@ import {
   getErrorDialogDismissText,
   getErrorDialogTitleText,
   mapCuesToThumbnails,
+  normalizeChapterCues,
   resolveErrorDialogDescription,
   ThumbnailCore,
 } from '@videojs/core';
@@ -200,6 +201,8 @@ function PlayToggle() {
 }
 
 const PREVIEW_WIDTH = 160;
+/** Transparent gap between chapter track segments, as in the default skin. */
+const CHAPTER_GAP = 4;
 const thumbnailCore = new ThumbnailCore();
 
 /**
@@ -224,13 +227,15 @@ function SeekSlider() {
   const value = dragValue ?? time.currentTime;
   const bufferedEnd = buffer?.buffered.at(-1)?.[1] ?? 0;
   const hoverTime = hover === null ? null : hover * duration;
-  const chapter =
-    hoverTime === null
-      ? undefined
-      : textTrack?.chaptersCues.find((cue) => hoverTime >= cue.startTime && hoverTime < cue.endTime);
   const thumbnail = hoverTime === null ? undefined : thumbnailCore.findActiveThumbnail(thumbnails, hoverTime);
   const thumbnailScale = thumbnail?.width ? PREVIEW_WIDTH / thumbnail.width : 1;
-  const boundaries = (textTrack?.chaptersCues ?? []).filter((cue) => cue.endTime < duration);
+
+  // The core's partition of the timeline: one segment per chapter cue plus fillers for any gaps, so the track is
+  // contiguous whatever the cues cover. The hovered segment supplies the chapter title.
+  const segments = normalizeChapterCues(textTrack?.chaptersCues ?? [], 0, duration);
+  const hoveredSegment =
+    hoverTime === null ? undefined : segments.find((segment) => hoverTime >= segment.start && hoverTime < segment.end);
+  const chapterTitle = hoveredSegment?.cue?.text;
 
   return (
     <Slider.Root
@@ -252,19 +257,29 @@ function SeekSlider() {
       }}
       onPointerLeave={() => setHover(null)}
     >
-      <Slider.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-white/20">
-        <div
-          className="absolute inset-y-0 left-0 bg-white/20"
-          style={{ width: `${(bufferedEnd / duration) * 100}%` }}
-        />
-        <Slider.Range className="absolute h-full bg-white" />
-        {boundaries.map((cue) => (
-          <span
-            key={cue.startTime}
-            className="absolute inset-y-0 w-1 -translate-x-1/2 bg-black/70"
-            style={{ left: `${(cue.endTime / duration) * 100}%` }}
-          />
-        ))}
+      {/* Radix's Track is the pointer surface; the visible track is drawn per chapter so the 4px gaps stay transparent. */}
+      <Slider.Track className="relative flex h-1 w-full grow items-center">
+        {segments.map(({ key, start, end }, index) => {
+          const isFirst = index === 0;
+          const isLast = index === segments.length - 1;
+          const span = end - start;
+          const highlighted = hoveredSegment?.key === key;
+          const fraction = (t: number) => `${Math.min(1, Math.max(0, (t - start) / span)) * 100}%`;
+
+          return (
+            <div
+              key={key}
+              className={`absolute overflow-hidden rounded-full bg-white/20 transition-[height] duration-300 ${highlighted ? 'h-[7px]' : 'h-1'}`}
+              style={{
+                left: `calc(${(start / duration) * 100}% + ${isFirst ? 0 : CHAPTER_GAP / 2}px)`,
+                width: `calc(${(span / duration) * 100}% - ${(isFirst ? 0 : CHAPTER_GAP / 2) + (isLast ? 0 : CHAPTER_GAP / 2)}px)`,
+              }}
+            >
+              <div className="absolute inset-y-0 left-0 bg-white/20" style={{ width: fraction(bufferedEnd) }} />
+              <div className="absolute inset-y-0 left-0 bg-white" style={{ width: fraction(value) }} />
+            </div>
+          );
+        })}
       </Slider.Track>
       <Slider.Thumb
         aria-label="Seek"
@@ -273,14 +288,16 @@ function SeekSlider() {
       />
       {hoverTime !== null ? (
         <div
-          className="pointer-events-none absolute bottom-full mb-3 flex -translate-x-1/2 flex-col items-center gap-1"
+          className="pointer-events-none absolute bottom-0 -translate-x-1/2"
           style={{
             left: `clamp(${PREVIEW_WIDTH / 2}px, ${hover! * 100}%, calc(100% - ${PREVIEW_WIDTH / 2}px))`,
+            width: PREVIEW_WIDTH,
           }}
         >
+          {/* Thumbnail sits 36px above the track; the label sits 42px above it, over the thumbnail's bottom gradient. */}
           {thumbnail?.width && thumbnail.height ? (
             <div
-              className="relative overflow-hidden rounded-lg border border-white/20 bg-black shadow-lg"
+              className="absolute bottom-9 left-0 overflow-hidden rounded-xl bg-black/90 shadow-lg after:pointer-events-none after:absolute after:inset-0 after:bg-gradient-to-t after:from-black/50 after:via-black/10 after:to-transparent"
               style={{ width: PREVIEW_WIDTH, height: thumbnail.height * thumbnailScale }}
             >
               <img
@@ -293,8 +310,8 @@ function SeekSlider() {
               />
             </div>
           ) : null}
-          <div className="rounded-md bg-white px-2 py-1 text-xs font-medium text-neutral-900 shadow">
-            {chapter ? <span className="mr-1 text-neutral-500">{chapter.text}</span> : null}
+          <div className="absolute bottom-[42px] left-0 flex w-full flex-col items-center text-[13px] text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+            {chapterTitle ? <span className="w-full truncate px-3 text-center">{chapterTitle}</span> : null}
             <span className="tabular-nums">{formatTime(hoverTime)}</span>
           </div>
         </div>
