@@ -178,15 +178,19 @@ describe('compileStyles', () => {
     expect(css).toMatch(/}\s*\.media-poster > slot::slotted/);
   });
 
-  it('emits shadow host rules outside the scope without changing specificity or conditions', async () => {
+  it('repeats shadow host rules outside the scope without changing specificity or conditions', async () => {
     const thumbnail = {
-      ...rule('image', 'media-thumbnail-image', ['block', 'data-loading:opacity-0', 'sm:flex']),
+      ...rule('root', 'media-thumbnail', ['block', 'group/thumbnail', 'data-loading:opacity-0', 'sm:flex']),
+      shadowHost: true,
+    };
+    const image = {
+      ...rule('image', 'media-thumbnail-image', ['group-data-loading/thumbnail:opacity-0']),
       shadowHost: true,
     };
     const spinner = rule('spinner', 'media-thumbnail-spinner', ['absolute']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      styles: resolvedStyles([thumbnail, spinner]),
+      styles: resolvedStyles([thumbnail, image, spinner]),
       scope: '.media-skin-video',
       variants: [],
     });
@@ -197,12 +201,17 @@ describe('compileStyles', () => {
 
     expect(scoped).toContain('@scope (.media-skin-video)');
     expect(scoped).toContain('.media-thumbnail-spinner');
-    expect(scoped).not.toContain('.media-thumbnail-image');
-    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail-image {');
-    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail-image[data-loading] {');
-    expect(unscoped).toMatch(
-      /@media[^{}]+\{\s*:where\(\.media-skin-video\) \.media-thumbnail-image \{\s*display: flex;/
+    expect(scoped).toContain('.media-thumbnail {');
+    expect(scoped).toContain('.media-thumbnail[data-loading] {');
+    // The relationship keeps its nested scope inside the block, and reads as a plain descendant in the copy.
+    expect(scoped).toMatch(/@scope \(\.media-thumbnail\) \{\s*&\[data-loading\] \.media-thumbnail-image \{/);
+    expect(unscoped).not.toContain('.media-thumbnail-spinner');
+    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail {');
+    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail[data-loading] {');
+    expect(unscoped).toContain(
+      ':where(.media-skin-video) :where(.media-thumbnail)[data-loading] .media-thumbnail-image {'
     );
+    expect(unscoped).toMatch(/@media[^{}]+\{\s*:where\(\.media-skin-video\) \.media-thumbnail \{\s*display: flex;/);
   });
 });
 

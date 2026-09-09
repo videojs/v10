@@ -105,6 +105,8 @@ export default styles({
       },
     },
     previewContent: {
+      // Also carried by `<media-slider-thumbnail>`, which hosts a shadow root.
+      shadowHost: true,
       utilities: [
         'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-media-hidden-preview-offset scale-media-hidden-preview opacity-0',
         'origin-bottom blur-media-hidden',

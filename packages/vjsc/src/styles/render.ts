@@ -89,22 +89,23 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
 }
 
 /**
- * Keep the rules `@scope` cannot serve outside the scope block. Slotted nodes sit outside a shadow tree's CSS scope,
- * and WebKit never matches a scoped rule whose subject hosts a shadow root; those rules take the scope root as an
- * ancestor instead. Conditional at-rules retain their conditions when their matching rules move.
+ * Keep the rules `@scope` cannot serve outside the scope block. Slotted nodes sit outside a shadow tree's CSS scope, so
+ * their rules move out. WebKit never matches a scoped rule whose subject hosts a shadow root or is slotted into one, so
+ * a rule on a shadow host class is emitted twice: the scoped rule stays for engines that match it, and a copy with the
+ * scope root as a zero-specificity ancestor follows for WebKit. The copy never outranks the original, so the cascade
+ * elsewhere is unchanged. Conditional at-rules retain their conditions when their matching rules move or copy.
  */
 function splitUnscopedRules(css: string, scope: string, shadowHostClasses: ReadonlySet<string>) {
   let hasSlottedRules = false;
   let hasShadowHostRules = false;
-  const isShadowHostRule = (rule: Rule) => isShadowHostStyleRule(rule, shadowHostClasses);
+  const isShadowHostRule = (rule: Rule) => !isSlottedStyleRule(rule) && isShadowHostStyleRule(rule, shadowHostClasses);
   const scoped = filterCssRules(css, (rule) => {
     const slotted = isSlottedStyleRule(rule);
-    const shadowHost = !slotted && isShadowHostRule(rule);
 
     hasSlottedRules ||= slotted;
-    hasShadowHostRules ||= shadowHost;
+    hasShadowHostRules ||= isShadowHostRule(rule);
 
-    return !slotted && !shadowHost;
+    return !slotted;
   });
 
   const slotted = hasSlottedRules ? filterCssRules(css, isSlottedStyleRule) : '';
@@ -198,12 +199,28 @@ function filterNestedRules(rules: readonly Rule[], include: (rule: Rule) => bool
   return filtered;
 }
 
-/** A rule whose selectors all start from a class of an element that hosts a shadow root. */
+/**
+ * A rule with a selector whose subject carries a shadow host class. The subject is the last compound, so a relationship
+ * selector such as `:where(.owner)[data-x] .subject` counts by its `.subject`, and a pseudo-element on the subject is
+ * looked past.
+ */
 function isShadowHostStyleRule(rule: Rule, shadowHostClasses: ReadonlySet<string>): boolean {
   return (
     rule.type === 'style' &&
-    rule.value.selectors.every((selector) => selector[0]?.type === 'class' && shadowHostClasses.has(selector[0].name))
+    rule.value.selectors.some((selector) =>
+      subjectCompound(selector).some((component) => component.type === 'class' && shadowHostClasses.has(component.name))
+    )
   );
+}
+
+function subjectCompound(selector: Selector): Selector {
+  let start = 0;
+
+  for (const [index, component] of selector.entries()) {
+    if (component.type === 'combinator') start = index + 1;
+  }
+
+  return selector.slice(start).filter((component) => component.type !== 'pseudo-element');
 }
 
 function isSlottedStyleRule(rule: Rule): boolean {
