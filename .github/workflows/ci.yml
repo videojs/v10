@@ -181,7 +181,7 @@ jobs:
             filters+=(--filter "$package")
           done < <(jq -r '.[]' <<<"$PACKAGES")
 
-          pnpm exec vp run --fail-if-no-match "${filters[@]}" test:ci
+          .github/scripts/run-logged.sh test-packages pnpm exec vp run --fail-if-no-match "${filters[@]}" test:ci
 
   test-spf:
     needs: package_test_selection
@@ -217,7 +217,7 @@ jobs:
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Test SPF
-        run: pnpm exec vp run @videojs/spf#test:ci
+        run: .github/scripts/run-logged.sh test-spf pnpm exec vp run @videojs/spf#test:ci
 
   workspace:
     needs: install

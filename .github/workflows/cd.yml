@@ -89,15 +89,15 @@ jobs:
 
       - name: Clean
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm clean
+        run: .github/scripts/run-logged.sh clean pnpm clean
 
       - name: Build
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm build:packages
+        run: .github/scripts/run-logged.sh build-packages pnpm build:packages
 
       - name: Build CDN bundles
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm build:cdn
+        run: .github/scripts/run-logged.sh build-cdn pnpm build:cdn
 
       # Fail before publishing rather than ship bundles that reach out to a public
       # CDN at runtime, which would break self-hosted and archive installs.
@@ -115,11 +115,11 @@ jobs:
       # The site task and CLI dependency graph let Vite Task reuse the package builds here.
       - name: Build site (required by html/react prepack and CLI)
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm build:site
+        run: .github/scripts/run-logged.sh build-site pnpm build:site
 
       - name: Build CLI
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm build:cli
+        run: .github/scripts/run-logged.sh build-cli pnpm build:cli
 
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
