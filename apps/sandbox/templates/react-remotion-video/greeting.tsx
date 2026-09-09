@@ -72,7 +72,8 @@ function Hello({ name }: { name: string }) {
 
   return (
     <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center', color: 'white' }}>
-      <div style={{ transform: `translateY(${translate}px)`, textAlign: 'center' }}>
+      {/* Fade with the rise so the first frame, which doubles as the poster, does not show the title peeking in. */}
+      <div style={{ transform: `translateY(${translate}px)`, opacity: rise, textAlign: 'center' }}>
         <div style={{ fontSize: 96, fontWeight: 800, letterSpacing: -3 }}>Hi {name || 'there'}!</div>
         <div style={{ fontSize: 40, opacity: 0.8, marginTop: 12 }}>Your favourite colour is</div>
       </div>
