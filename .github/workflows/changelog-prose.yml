@@ -350,4 +350,8 @@ jobs:
         with:
           name: changelog-prose-context-${{ steps.version.outputs.version }}
           path: ${{ env.CONTEXT_DIR }}
-          if-no-files-found: ignore
+          # The context dir is a dotdir; upload-artifact skips hidden paths
+          # unless told otherwise, and the debug artifact is the whole point
+          # of this step after a timed-out Codex run.
+          include-hidden-files: true
+          if-no-files-found: warn
