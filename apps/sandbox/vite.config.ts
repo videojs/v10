@@ -357,6 +357,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         '@videojs/hlsjs-video > hls.js',
         '@videojs/mux-data > mux-embed',
         '@videojs/shaka-video > shaka-player',
+        '@radix-ui/react-icons',
         'radix-ui',
         'react',
         'react-dom',

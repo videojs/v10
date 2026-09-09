@@ -1,8 +1,29 @@
-// SPIKE approach 2 with Radix: Radix primitives render and interact; Video.js supplies state and actions through
-// `usePlayer(selector)`, the store's action methods, availability flags, and the option hooks. Feature parity with the
-// default video skin where a hook-fed Radix primitive can reach it; gaps are called out inline as "Gap:".
+// SPIKE approach 2 with Radix: Radix primitives and Radix Icons render and interact; Video.js supplies state and
+// actions through `usePlayer(selector)`, the store's action methods, availability flags, the option hooks, and the
+// text-track feature's chapter and thumbnail cues. Laid out to match the default video skin.
 
 import { PlayerBehaviors } from '@app/shared/react/library-skin-harness';
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  DesktopIcon,
+  EnterFullScreenIcon,
+  ExitFullScreenIcon,
+  ExitIcon,
+  GearIcon,
+  PauseIcon,
+  PlayIcon,
+  ResetIcon,
+  SpeakerLoudIcon,
+  SpeakerModerateIcon,
+  SpeakerOffIcon,
+  SpeakerQuietIcon,
+  StackIcon,
+  TextIcon,
+  TextNoneIcon,
+  UpdateIcon,
+} from '@radix-ui/react-icons';
+import { mapCuesToThumbnails, ThumbnailCore } from '@videojs/core';
 import {
   selectBuffer,
   selectControls,
@@ -23,40 +44,25 @@ import {
   usePlayer,
   useQualityOptions,
 } from '@videojs/react';
-import {
-  AirPlayEnterIcon,
-  AirPlayExitIcon,
-  CaptionsOffIcon,
-  CaptionsOnIcon,
-  CheckIcon,
-  FullscreenEnterIcon,
-  FullscreenExitIcon,
-  GearIcon,
-  PauseIcon,
-  PipEnterIcon,
-  PipExitIcon,
-  PlayIcon,
-  RestartIcon,
-  SpinnerIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-  VolumeOffIcon,
-} from '@videojs/react/icons';
 import { AlertDialog, DropdownMenu, Popover, Slider, Toggle, Tooltip } from 'radix-ui';
-import { type ReactElement, type ReactNode, useState } from 'react';
+import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 
 import {
+  BACKDROP_CLASS,
   BAR_CLASS,
   BAR_HIDDEN_CLASS,
   DIALOG_CLASS,
   formatTime,
   ICON_BUTTON_CLASS,
+  MENU_HINT_CLASS,
   MENU_ITEM_CLASS,
-  MENU_LABEL_CLASS,
+  MENU_TRIGGER_ITEM_CLASS,
   OVERLAY_CLASS,
   POPUP_CLASS,
-  ROW_CLASS,
+  SECONDARY_GROUP_CLASS,
   TEXT_BUTTON_CLASS,
+  TIME_CLASS,
+  TIME_GROUP_CLASS,
   TOOLTIP_CLASS,
 } from './shared';
 
@@ -69,7 +75,7 @@ function HotkeyTooltip({ label, action, children }: { label: string; action?: st
     <Tooltip.Root>
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
       <Tooltip.Portal container={container}>
-        <Tooltip.Content side="top" sideOffset={6} className={TOOLTIP_CLASS}>
+        <Tooltip.Content side="top" sideOffset={8} className={TOOLTIP_CLASS}>
           {label}
           {shortcut.shortcut ? <span className="ml-1 text-neutral-500">{shortcut.shortcut}</span> : null}
         </Tooltip.Content>
@@ -88,12 +94,11 @@ function PosterOverlay() {
 
 function BufferingSpinner() {
   const playback = usePlayer(selectPlayback);
-  // Gap: the Video.js indicator debounces short stalls; this shows immediately.
   if (!playback?.waiting) return null;
 
   return (
     <div className={OVERLAY_CLASS}>
-      <SpinnerIcon className="size-14 animate-spin" />
+      <UpdateIcon className="size-12 animate-spin" />
     </div>
   );
 }
@@ -137,43 +142,50 @@ function PlayToggle() {
         aria-label={label}
         onClick={() => void playback.togglePaused()}
       >
-        {playback.ended ? <RestartIcon /> : playback.paused ? <PlayIcon /> : <PauseIcon />}
+        {playback.ended ? <ResetIcon /> : playback.paused ? <PlayIcon /> : <PauseIcon />}
       </button>
     </HotkeyTooltip>
   );
 }
 
-function BufferedRange() {
-  const time = usePlayer(selectTime);
-  const buffer = usePlayer(selectBuffer);
-  const end = buffer?.buffered.at(-1)?.[1] ?? 0;
-  if (!time || !end) return null;
-
-  return (
-    <div
-      className="absolute inset-y-0 left-0 bg-white/30"
-      style={{ width: `${Math.min(100, (end / time.duration) * 100)}%` }}
-    />
-  );
-}
+const PREVIEW_WIDTH = 160;
+const thumbnailCore = new ThumbnailCore();
 
 /**
- * Radix Slider takes `number[]`; the drag value is held locally and `onValueCommit` seeks once. Gap: no pointer
- * preview, so no storyboard thumbnail or chapter title on hover, and no chapter segments.
+ * Radix Slider fed by the time, buffer, and text-track features. Radix has no pointer-position API, so hover time is
+ * derived from the root's rect; from that the chapter title (`chaptersCues`) and storyboard tile (`thumbnailCues` via
+ * the core's media-fragment parser) are looked up. Chapter boundaries are drawn as gaps on the track.
  */
 function SeekSlider() {
   const time = usePlayer(selectTime);
+  const buffer = usePlayer(selectBuffer);
+  const textTrack = usePlayer(selectTextTrack);
   const [dragValue, setDragValue] = useState<number | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  const thumbnails = useMemo(
+    () => mapCuesToThumbnails(textTrack?.thumbnailCues ?? [], textTrack?.thumbnailTrackSrc ?? undefined),
+    [textTrack?.thumbnailCues, textTrack?.thumbnailTrackSrc]
+  );
 
   if (!time || !Number.isFinite(time.duration) || time.duration <= 0) return null;
 
+  const { duration } = time;
   const value = dragValue ?? time.currentTime;
+  const bufferedEnd = buffer?.buffered.at(-1)?.[1] ?? 0;
+  const hoverTime = hover === null ? null : hover * duration;
+  const chapter =
+    hoverTime === null
+      ? undefined
+      : textTrack?.chaptersCues.find((cue) => hoverTime >= cue.startTime && hoverTime < cue.endTime);
+  const thumbnail = hoverTime === null ? undefined : thumbnailCore.findActiveThumbnail(thumbnails, hoverTime);
+  const thumbnailScale = thumbnail?.width ? PREVIEW_WIDTH / thumbnail.width : 1;
+  const boundaries = (textTrack?.chaptersCues ?? []).filter((cue) => cue.endTime < duration);
 
   return (
     <Slider.Root
-      className="group/slider relative flex h-5 w-full touch-none items-center select-none"
+      className="group/slider relative flex h-8 grow touch-none items-center select-none"
       min={0}
-      max={time.duration}
+      max={duration}
       step={0.1}
       value={[value]}
       onValueChange={([next]) => setDragValue(next ?? null)}
@@ -182,23 +194,67 @@ function SeekSlider() {
 
         if (next !== undefined) void time.seek(next);
       }}
+      onPointerMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+
+        setHover(Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)));
+      }}
+      onPointerLeave={() => setHover(null)}
     >
-      <Slider.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-white/25 transition-[height] group-hover/slider:h-1.5">
-        <BufferedRange />
+      <Slider.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-white/20">
+        <div
+          className="absolute inset-y-0 left-0 bg-white/20"
+          style={{ width: `${(bufferedEnd / duration) * 100}%` }}
+        />
         <Slider.Range className="absolute h-full bg-white" />
+        {boundaries.map((cue) => (
+          <span
+            key={cue.startTime}
+            className="absolute inset-y-0 w-1 -translate-x-1/2 bg-black/70"
+            style={{ left: `${(cue.endTime / duration) * 100}%` }}
+          />
+        ))}
       </Slider.Track>
       <Slider.Thumb
         aria-label="Seek"
         aria-valuetext={formatTime(value)}
-        className="block size-3.5 rounded-full border border-white/40 bg-white opacity-0 shadow transition-opacity group-hover/slider:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+        className="block size-3 rounded-full bg-white opacity-0 shadow transition-opacity group-hover/slider:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none data-[state=active]:opacity-100"
       />
+      {hoverTime !== null ? (
+        <div
+          className="pointer-events-none absolute bottom-full mb-3 flex -translate-x-1/2 flex-col items-center gap-1"
+          style={{
+            left: `clamp(${PREVIEW_WIDTH / 2}px, ${hover! * 100}%, calc(100% - ${PREVIEW_WIDTH / 2}px))`,
+          }}
+        >
+          {thumbnail?.width && thumbnail.height ? (
+            <div
+              className="relative overflow-hidden rounded-lg border border-white/20 bg-black shadow-lg"
+              style={{ width: PREVIEW_WIDTH, height: thumbnail.height * thumbnailScale }}
+            >
+              <img
+                alt=""
+                src={thumbnail.url}
+                className="absolute top-0 left-0 max-w-none origin-top-left"
+                style={{
+                  transform: `scale(${thumbnailScale}) translate(-${thumbnail.coords?.x ?? 0}px, -${thumbnail.coords?.y ?? 0}px)`,
+                }}
+              />
+            </div>
+          ) : null}
+          <div className="rounded-md bg-white px-2 py-1 text-xs font-medium text-neutral-900 shadow">
+            {chapter ? <span className="mr-1 text-neutral-500">{chapter.text}</span> : null}
+            <span className="tabular-nums">{formatTime(hoverTime)}</span>
+          </div>
+        </div>
+      ) : null}
     </Slider.Root>
   );
 }
 
 /**
- * Friction: Radix Popover has no hover-open, and a click on the trigger would collide with mute. The popover is
- * controlled from pointer enter/leave on a wrapper, so click stays the mute toggle.
+ * Mute toggle with a hover volume popover. No tooltip here: the popover is what hover shows, as in the default skin.
+ * Radix Popover has no hover-open, so it is controlled from pointer enter/leave on a wrapper.
  */
 function VolumeControl() {
   const volume = usePlayer(selectVolume);
@@ -207,30 +263,36 @@ function VolumeControl() {
 
   if (!volume || volume.mutedAvailability === 'unsupported') return null;
 
-  const level = volume.muted || volume.volume === 0 ? 'off' : volume.volume < 0.5 ? 'low' : 'high';
-  const Icon = level === 'off' ? VolumeOffIcon : level === 'low' ? VolumeLowIcon : VolumeHighIcon;
+  const level = volume.muted || volume.volume === 0 ? 0 : volume.volume;
+  const Icon =
+    level === 0
+      ? SpeakerOffIcon
+      : level < 0.34
+        ? SpeakerQuietIcon
+        : level < 0.67
+          ? SpeakerModerateIcon
+          : SpeakerLoudIcon;
   const label = volume.muted ? 'Unmute' : 'Mute';
 
   return (
     <span onPointerEnter={() => setOpen(true)} onPointerLeave={() => setOpen(false)} className="inline-flex">
       <Popover.Root open={open && volume.volumeAvailability === 'available'} onOpenChange={setOpen}>
-        <HotkeyTooltip label={label} action="toggleMuted">
-          <Popover.Anchor asChild>
-            <Toggle.Root
-              className={ICON_BUTTON_CLASS}
-              aria-label={label}
-              pressed={volume.muted}
-              onPressedChange={() => volume.toggleMuted()}
-            >
-              <Icon />
-            </Toggle.Root>
-          </Popover.Anchor>
-        </HotkeyTooltip>
+        <Popover.Anchor asChild>
+          <Toggle.Root
+            className={ICON_BUTTON_CLASS}
+            aria-label={label}
+            pressed={volume.muted}
+            onPressedChange={() => volume.toggleMuted()}
+          >
+            <Icon />
+          </Toggle.Root>
+        </Popover.Anchor>
         <Popover.Portal container={container}>
           <Popover.Content
             side="top"
-            sideOffset={6}
+            sideOffset={8}
             onOpenAutoFocus={(event) => event.preventDefault()}
+            data-interactive=""
             className={`${POPUP_CLASS} flex h-36 items-center px-3 py-3`}
           >
             <Slider.Root
@@ -244,12 +306,12 @@ function VolumeControl() {
               }}
               className="relative flex h-full w-5 touch-none flex-col items-center select-none"
             >
-              <Slider.Track className="relative h-full w-1 grow overflow-hidden rounded-full bg-white/25">
+              <Slider.Track className="relative h-full w-1 grow overflow-hidden rounded-full bg-white/20">
                 <Slider.Range className="absolute w-full bg-white" />
               </Slider.Track>
               <Slider.Thumb
                 aria-label="Volume"
-                className="block size-3.5 rounded-full border border-white/40 bg-white shadow focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+                className="block size-3 rounded-full bg-white shadow focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
               />
             </Slider.Root>
           </Popover.Content>
@@ -259,25 +321,29 @@ function VolumeControl() {
   );
 }
 
-function TimeReadout() {
+function CurrentTime() {
+  const time = usePlayer(selectTime);
+  if (!time) return null;
+
+  return <time className={TIME_CLASS}>{formatTime(time.currentTime)}</time>;
+}
+
+/** Remaining time that toggles to duration on click, like `Time.Value type="remaining" toggle`. */
+function RemainingTime() {
   const time = usePlayer(selectTime);
   const [remaining, setRemaining] = useState(true);
 
   if (!time) return null;
 
   return (
-    <div className="ml-1 text-sm tabular-nums">
-      <time>{formatTime(time.currentTime)}</time>
-      <span className="text-white/60"> / </span>
-      <button
-        type="button"
-        className="cursor-pointer text-white/60 hover:text-white"
-        aria-label={remaining ? 'Show duration' : 'Show remaining time'}
-        onClick={() => setRemaining((value) => !value)}
-      >
-        <time>{remaining ? `-${formatTime(time.duration - time.currentTime)}` : formatTime(time.duration)}</time>
-      </button>
-    </div>
+    <button
+      type="button"
+      className={`${TIME_CLASS} cursor-pointer`}
+      aria-label={remaining ? 'Show duration' : 'Show remaining time'}
+      onClick={() => setRemaining((current) => !current)}
+    >
+      <time>{remaining ? `-${formatTime(time.duration - time.currentTime)}` : formatTime(time.duration)}</time>
+    </button>
   );
 }
 
@@ -294,45 +360,60 @@ function CaptionsToggle() {
         pressed={textTrack.subtitlesShowing}
         onPressedChange={() => textTrack.toggleSubtitles()}
       >
-        {textTrack.subtitlesShowing ? <CaptionsOnIcon /> : <CaptionsOffIcon />}
+        {textTrack.subtitlesShowing ? <TextIcon /> : <TextNoneIcon />}
       </Toggle.Root>
     </HotkeyTooltip>
   );
 }
 
-interface OptionGroupProps {
-  label: string;
+interface OptionSubmenuProps {
+  icon: ReactNode;
   options: {
+    label: string;
     value: string;
+    selectedLabel: string;
     options: readonly { value: string; label: ReactNode; disabled: boolean }[];
     setValue: (value: string) => void;
     hidden: boolean;
   } | null;
 }
 
-/** One Radix radio group per Video.js option hook; the hook's `hidden` flag is the availability gate. */
-function OptionGroup({ label, options }: OptionGroupProps) {
+/** One Radix submenu per Video.js option hook, like the default skin's settings submenus; `hidden` gates it. */
+function OptionSubmenu({ icon, options }: OptionSubmenuProps) {
+  const container = useContainer();
+
   if (!options || options.hidden || options.options.length === 0) return null;
 
   return (
-    <DropdownMenu.Group>
-      <DropdownMenu.Label className={MENU_LABEL_CLASS}>{label}</DropdownMenu.Label>
-      <DropdownMenu.RadioGroup value={options.value} onValueChange={options.setValue}>
-        {options.options.map((option) => (
-          <DropdownMenu.RadioItem
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-            className={MENU_ITEM_CLASS}
-          >
-            <DropdownMenu.ItemIndicator className="absolute left-2 flex size-4 items-center justify-center [&_svg]:size-3.5">
-              <CheckIcon />
-            </DropdownMenu.ItemIndicator>
-            {option.label}
-          </DropdownMenu.RadioItem>
-        ))}
-      </DropdownMenu.RadioGroup>
-    </DropdownMenu.Group>
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger className={MENU_TRIGGER_ITEM_CLASS}>
+        <span className="[&_svg]:size-4">{icon}</span>
+        {options.label}
+        <span className={MENU_HINT_CLASS}>
+          {options.selectedLabel}
+          <ChevronRightIcon />
+        </span>
+      </DropdownMenu.SubTrigger>
+      <DropdownMenu.Portal container={container}>
+        <DropdownMenu.SubContent sideOffset={6} className={`${POPUP_CLASS} min-w-44`}>
+          <DropdownMenu.RadioGroup value={options.value} onValueChange={options.setValue}>
+            {options.options.map((option) => (
+              <DropdownMenu.RadioItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+                className={MENU_ITEM_CLASS}
+              >
+                <DropdownMenu.ItemIndicator className="absolute left-2 flex size-4 items-center justify-center">
+                  <CheckIcon />
+                </DropdownMenu.ItemIndicator>
+                {option.label}
+              </DropdownMenu.RadioItem>
+            ))}
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Sub>
   );
 }
 
@@ -353,23 +434,18 @@ function SettingsMenu() {
         </DropdownMenu.Trigger>
       </HotkeyTooltip>
       <DropdownMenu.Portal container={container}>
-        <DropdownMenu.Content
-          side="top"
-          align="end"
-          sideOffset={6}
-          className={`${POPUP_CLASS} max-h-[min(70vh,20rem)] min-w-56 overflow-y-auto`}
-        >
-          <OptionGroup label="Quality" options={quality} />
-          <OptionGroup label="Audio" options={audio} />
-          <OptionGroup label="Speed" options={rates} />
-          <OptionGroup label="Captions" options={captions} />
+        <DropdownMenu.Content side="top" align="end" sideOffset={8} className={`${POPUP_CLASS} min-w-56`}>
+          <OptionSubmenu icon={<StackIcon />} options={quality} />
+          <OptionSubmenu icon={<SpeakerLoudIcon />} options={audio} />
+          <OptionSubmenu icon={<UpdateIcon />} options={rates} />
+          <OptionSubmenu icon={<TextIcon />} options={captions} />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );
 }
 
-/** One remote-playback button standing in for the skin's Cast and AirPlay pair; gated on availability. */
+/** One remote-playback button for the skin's Cast/AirPlay pair; hidden when unsupported, disabled when unavailable. */
 function RemotePlaybackToggle() {
   const remote = usePlayer(selectRemotePlayback);
   if (!remote || remote.remotePlaybackAvailability === 'unsupported') return null;
@@ -386,12 +462,13 @@ function RemotePlaybackToggle() {
         disabled={remote.remotePlaybackAvailability === 'unavailable'}
         onPressedChange={() => void remote.toggleRemotePlayback()}
       >
-        {connected ? <AirPlayExitIcon /> : <AirPlayEnterIcon />}
+        <DesktopIcon />
       </Toggle.Root>
     </HotkeyTooltip>
   );
 }
 
+/** Radix Icons has no picture-in-picture glyph; StackIcon stands in. */
 function PiPToggle() {
   const pip = usePlayer(selectPiP);
   if (!pip || pip.pipAvailability === 'unsupported') return null;
@@ -407,7 +484,7 @@ function PiPToggle() {
         disabled={pip.pipAvailability === 'unavailable'}
         onPressedChange={() => void pip.togglePictureInPicture()}
       >
-        {pip.pip ? <PipExitIcon /> : <PipEnterIcon />}
+        {pip.pip ? <ExitIcon /> : <StackIcon />}
       </Toggle.Root>
     </HotkeyTooltip>
   );
@@ -427,7 +504,7 @@ function FullscreenToggle() {
         pressed={fullscreen.fullscreen}
         onPressedChange={() => void fullscreen.toggleFullscreen()}
       >
-        {fullscreen.fullscreen ? <FullscreenExitIcon /> : <FullscreenEnterIcon />}
+        {fullscreen.fullscreen ? <ExitFullScreenIcon /> : <EnterFullScreenIcon />}
       </Toggle.Root>
     </HotkeyTooltip>
   );
@@ -436,29 +513,33 @@ function FullscreenToggle() {
 export function HooksApproachControls() {
   const controls = usePlayer(selectControls);
   const visible = controls?.controlsVisible ?? true;
+  const hidden = visible ? '' : BAR_HIDDEN_CLASS;
 
   return (
     <>
       <PosterOverlay />
       <BufferingSpinner />
       <ErrorAlert />
+      <div className={`${BACKDROP_CLASS} ${visible ? '' : 'opacity-0'}`} />
       <Tooltip.Provider delayDuration={300}>
-        <div className={`${BAR_CLASS} ${visible ? '' : BAR_HIDDEN_CLASS}`} data-visible={visible || undefined}>
-          <SeekSlider />
-          <div className={ROW_CLASS}>
-            <PlayToggle />
-            <VolumeControl />
-            <TimeReadout />
-            <div className="grow" />
-            <CaptionsToggle />
-            <SettingsMenu />
+        {/* `data-interactive` is what the container's tap/double-tap gestures skip, as Video.js's Controls.Content sets. */}
+        <div className={`${BAR_CLASS} ${hidden}`} data-visible={visible || undefined} data-interactive="">
+          <PlayToggle />
+          <VolumeControl />
+          <div className={TIME_GROUP_CLASS}>
+            <CurrentTime />
+            <SeekSlider />
+            <RemainingTime />
+          </div>
+          <CaptionsToggle />
+          <SettingsMenu />
+          <div className={SECONDARY_GROUP_CLASS}>
             <RemotePlaybackToggle />
             <PiPToggle />
             <FullscreenToggle />
           </div>
         </div>
       </Tooltip.Provider>
-      {/* Gap: no exported hook for the transient seek/volume/status indicators. */}
       <PlayerBehaviors />
     </>
   );

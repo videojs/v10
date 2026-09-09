@@ -244,7 +244,7 @@ function VolumeControl() {
       {volume.volumeAvailability === 'available' ? (
         <Popover.Portal container={container}>
           <Popover.Positioner side="top" sideOffset={6}>
-            <Popover.Popup className={`${POPUP_CLASS} flex h-36 items-center px-3 py-3`}>
+            <Popover.Popup data-interactive="" className={`${POPUP_CLASS} flex h-36 items-center px-3 py-3`}>
               <Slider.Root
                 aria-label="Volume"
                 orientation="vertical"
@@ -454,7 +454,11 @@ export function HooksApproachControls() {
       <BufferingSpinner />
       <ErrorAlert />
       <Tooltip.Provider delay={300}>
-        <div className={`${BAR_CLASS} ${visible ? '' : BAR_HIDDEN_CLASS}`} data-visible={visible || undefined}>
+        <div
+          className={`${BAR_CLASS} ${visible ? '' : BAR_HIDDEN_CLASS}`}
+          data-visible={visible || undefined}
+          data-interactive=""
+        >
           <SeekSlider />
           <div className={ROW_CLASS}>
             <PlayToggle />
