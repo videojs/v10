@@ -1,0 +1,192 @@
+---
+title: 'Use Video.js with Radix UI'
+description: 'Build a player UI from Radix primitives, with Video.js supplying state, actions, and platform availability through hooks.'
+---
+
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+import PlayAndMuteDemo from '@/components/docs/demos/radix-ui/react/css/PlayAndMute';
+import playAndMuteTsx from '@/components/docs/demos/radix-ui/react/css/PlayAndMute.tsx?raw';
+import playAndMuteCss from '@/components/docs/demos/radix-ui/react/css/PlayAndMute.css?raw';
+import SeekSliderDemo from '@/components/docs/demos/radix-ui/react/css/SeekSlider';
+import seekSliderTsx from '@/components/docs/demos/radix-ui/react/css/SeekSlider.tsx?raw';
+import seekSliderCss from '@/components/docs/demos/radix-ui/react/css/SeekSlider.css?raw';
+import SettingsMenuDemo from '@/components/docs/demos/radix-ui/react/css/SettingsMenu';
+import settingsMenuTsx from '@/components/docs/demos/radix-ui/react/css/SettingsMenu.tsx?raw';
+import settingsMenuCss from '@/components/docs/demos/radix-ui/react/css/SettingsMenu.css?raw';
+import RadixPlayerDemo from '@/components/docs/demos/radix-ui/react/css/RadixPlayer';
+import radixPlayerTsx from '@/components/docs/demos/radix-ui/react/css/RadixPlayer.tsx?raw';
+import radixPlayerCss from '@/components/docs/demos/radix-ui/react/css/RadixPlayer.css?raw';
+
+Build your player controls from [Radix Primitives](https://www.radix-ui.com/primitives) and let Video.js drive them: <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> supplies state, the <DocsLink slug="concepts/features">features</DocsLink> supply actions and availability, and the option hooks supply menu contents. Radix is the worked example; the same seams apply to any headless React library.
+
+<CustomUiNote />
+
+Install Radix and its icon set alongside `@videojs/react`:
+
+```bash
+npm install radix-ui @radix-ui/react-icons
+```
+
+## Drive a Radix primitive from player state
+
+Wrap your media in <DocsLink slug="reference/player">`<VideoPlayer>`</DocsLink> and <DocsLink slug="reference/player-container">`<Container>`</DocsLink>, then read a feature with `usePlayer` and a selector. The feature object holds both the state and the actions, so a Radix `Toggle` needs nothing else: `pressed` comes from state, and the change handler calls the action.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: playAndMuteTsx, lang: "tsx" },
+      { title: "App.css", code: playAndMuteCss, lang: "css" },
+    ]}>
+      <PlayAndMuteDemo client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+Two details carry through every control in this guide:
+
+- **Guard the feature.** A selector returns `undefined` when the player was built without that feature, so return `null` before reading it.
+- **Read the availability flag.** Platform-dependent features expose `*Availability` properties. The mute toggle returns `null` when `mutedAvailability` is `'unsupported'`, the same rule Video.js's own <DocsLink slug="reference/mute-button">MuteButton</DocsLink> follows. Use `'unavailable'` for `disabled`.
+
+Radix ships no Button primitive, so the play button is a plain `<button>` with the same class. The `aria-label` is yours to set on both.
+
+## Add a seek slider
+
+Radix `Slider` takes an array of values. Feed it `currentTime` and `duration` from the <DocsLink slug="reference/feature-time">time feature</DocsLink>, keep the pointer value in local state while dragging, and call `seek()` on commit. The buffered range comes from the <DocsLink slug="reference/feature-buffer">buffer feature</DocsLink> and is drawn as a plain `<div>` under Radix's `Range`.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: seekSliderTsx, lang: "tsx" },
+      { title: "App.css", code: seekSliderCss, lang: "css" },
+    ]}>
+      <SeekSliderDemo client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+Radix places `role="slider"` on the `Thumb`, so `aria-label` and `aria-valuetext` go there.
+
+## Build a settings menu from the option hooks
+
+Video.js exposes each settings list as a hook that returns the same shape: `value`, `selectedLabel`, `options`, `setValue`, and `hidden`. That shape maps onto a Radix `DropdownMenu.RadioGroup`, so one submenu component serves <DocsLink slug="reference/use-quality-options">`useQualityOptions`</DocsLink>, <DocsLink slug="reference/use-audio-track-options">`useAudioTrackOptions`</DocsLink>, <DocsLink slug="reference/use-playback-rate-options">`usePlaybackRateOptions`</DocsLink>, and <DocsLink slug="reference/use-captions-options">`useCaptionsOptions`</DocsLink>.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: settingsMenuTsx, lang: "tsx" },
+      { title: "App.css", code: settingsMenuCss, lang: "css" },
+    ]}>
+      <SettingsMenuDemo client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+Two things to notice:
+
+- **`hidden` is the availability gate for menus.** It is `true` when there is nothing to choose: one rendition, one audio track, no caption tracks. The demo's HLS source has several renditions and one audio track, so Quality shows and Audio does not.
+- **Portal into the player.** Radix portals to `document.body` by default, which is outside the fullscreen element, so a menu opened in fullscreen would not appear. Pass the element from <DocsLink slug="reference/use-container">`useContainer`</DocsLink> as `container` on every `Portal`: menus, submenus, tooltips, popovers, and dialogs.
+
+## Full example
+
+A player at feature parity with the default video skin: tooltips with hotkey hints, a hover volume popover, a seek slider with chapters and storyboard thumbnails, captions, settings, remote playback, picture-in-picture, fullscreen, a buffering indicator, an error dialog, auto-hiding controls, keyboard shortcuts, and click-to-toggle. Every label comes from the same translated text Video.js uses, so it reads identically to the default skin and follows the player's locale.
+
+The thumbnail and chapter math, the error copy, and the text tokens come from `@videojs/core`, which `@videojs/react` depends on. Add it to your own dependencies to import it directly:
+
+```bash
+npm install @videojs/core
+```
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "RadixPlayer.tsx", code: radixPlayerTsx, lang: "tsx" },
+      { title: "RadixPlayer.css", code: radixPlayerCss, lang: "css" },
+    ]}>
+      <RadixPlayerDemo client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+- **State and actions.** `usePlayer(selector)` subscribes to one feature and re-renders when it changes. The returned object carries that feature's actions, so a control never needs the whole store. See <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink> for the selector list.
+- **Availability.** Volume, fullscreen, picture-in-picture, and remote playback report `'available'`, `'unavailable'`, or `'unsupported'`. The example hides on `'unsupported'` and disables on `'unavailable'`, matching the default skin.
+- **Option hooks.** The four `use*Options` hooks are the seam for a foreign menu. They own the selection logic; Radix owns the menu.
+- **Container portals.** `useContainer()` returns the element that goes fullscreen. Portaling into it keeps popups inside the player and inside the scoped stylesheet.
+- **Gestures and `data-interactive`.** <DocsLink slug="reference/gesture">`Gesture`</DocsLink> listens on the container natively, before React handlers run, so `event.stopPropagation()` in a Radix handler does not stop a tap from toggling playback. The container skips any element that has the `data-interactive` attribute, which Video.js's own `Controls.Content` sets. The example sets it on the bar, the volume popover, and the dialog.
+- **Text.** <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink> returns `t`, which accepts the text tokens under `@videojs/core/i18n/text/*`. The same tokens power the default skin, so wording and translations match without extra work. The error dialog uses `getErrorDialogTitleText`, `resolveErrorDialogDescription`, and `getErrorDialogDismissText`, the helpers behind <DocsLink slug="reference/error-dialog">ErrorDialog</DocsLink>.
+- **Chapters and thumbnails.** The <DocsLink slug="reference/feature-text-tracks">text track feature</DocsLink> exposes `chaptersCues`, `thumbnailCues`, and `thumbnailTrackSrc`. `normalizeChapterCues` partitions the timeline into contiguous segments, filling gaps between cues. `mapCuesToThumbnails` and `ThumbnailCore.findActiveThumbnail` resolve the storyboard tile for a time.
+- **Auto-hide.** The <DocsLink slug="reference/feature-controls">controls feature</DocsLink> reports `controlsVisible` from user activity on the container. The bar and its backdrop fade on that flag.
+
+## Availability and constraints
+
+- **Radix `AlertDialog` is page-modal.** It hides the rest of the document from assistive technology, locks scroll, and blocks outside pointer events. Video.js's `ErrorDialog` scopes all of that to the player. Use `Dialog` with `modal={false}` and `role="alertdialog"`, ignore outside interaction with `onInteractOutside`, and paint your own scrim, since a non-modal `Dialog` renders no `Overlay`.
+- **Radix `Slider` exposes no pointer position.** Hover time comes from the root's bounding rect in `onPointerMove`. Video.js's <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> provides it as `--media-slider-pointer` and `data-pointing`; a foreign slider has to derive it.
+- **Radix `Popover` has no hover-open.** The volume popover is controlled from pointer enter and leave on both the trigger wrapper and the content, with a short delay so the pointer can cross the gap between them.
+- **Radix `DropdownMenu` opens on `pointerdown`,** not `click`. Tests that call `element.click()` will not open it; dispatch pointer events instead.
+- **Radix has no Button primitive.** Plain `<button>` elements share a class with the `Toggle` roots.
+- **Popups take no controls lock.** Video.js popups keep the controls visible while open. A Radix menu does not, so the bar can fade under an open menu after the inactivity delay. Read `controlsVisible` and hold the menu open, or skip auto-hide while a popup is open, if that matters to you.
+- **Radix Icons has no closed-caption, picture-in-picture, cast, or speedometer glyph.** The example uses the nearest stand-ins and marks on/off state with an underline where Radix has a single glyph.
+
+## Common variations
+
+### Mix in Video.js components
+
+Nothing requires an all-or-nothing choice. Video.js components and Radix primitives read the same store, so you can place <DocsLink slug="reference/poster">`Poster`</DocsLink>, <DocsLink slug="reference/buffering-indicator">`BufferingIndicator`</DocsLink>, or a complete <DocsLink slug="reference/time-slider">`TimeSlider`</DocsLink> next to Radix buttons inside the same `Container`. The <DocsLink slug="concepts/ui-components">UI components</DocsLink> page covers restyling those with CSS.
+
+### Use another headless library
+
+The seams are library-agnostic: controlled state from a selector, actions from the feature object, `hidden` from the option hooks, `useContainer()` for portals, and `data-interactive` on anything the gesture layer should ignore. Base UI, React Aria, and similar libraries slot in the same way; only the primitive names and the modality and hover behaviors differ.
+
+## Troubleshooting
+
+### Clicking the slider or a button also toggles playback
+
+A `Gesture` on the container saw the tap. Put `data-interactive=""` on the control bar, and on any portaled surface such as a popover or dialog. Stopping propagation in React does not help because the gesture listens natively on the container.
+
+### Menus and tooltips disappear in fullscreen
+
+They are portaled to `document.body`, which is outside the fullscreen element. Pass `container={useContainer()}` to every Radix `Portal`.
+
+### The error dialog dims the whole page
+
+You are using `AlertDialog`, which is always page-modal. Switch to `Dialog` with `modal={false}` and `role="alertdialog"`, as in the full example.
+
+### The settings menu is empty or a submenu is missing
+
+Each option hook sets `hidden` when there is nothing to choose. Quality needs a source with several renditions, such as HLS or DASH; audio needs more than one audio track; captions need at least one `subtitles` or `captions` track.
+
+### The volume popover closes before the pointer reaches it
+
+The trigger and the portaled content are separate elements with a gap between them. Attach the hover handlers to both and close on a short timer, as `useHoverOpen` does in the full example.
+
+## Related components
+
+- <DocsLink slug="reference/player-container">Player container</DocsLink>
+- <DocsLink slug="reference/hotkey">Hotkey</DocsLink>
+- <DocsLink slug="reference/gesture">Gesture</DocsLink>
+- <DocsLink slug="reference/error-dialog">ErrorDialog</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/use-player">usePlayer</DocsLink>
+- <DocsLink slug="reference/use-container">useContainer</DocsLink>
+- <DocsLink slug="reference/use-hotkey-shortcut">useHotkeyShortcut</DocsLink>
+- <DocsLink slug="reference/use-translator">useTranslator</DocsLink>
+- <DocsLink slug="reference/use-quality-options">useQualityOptions</DocsLink>
+- <DocsLink slug="reference/use-audio-track-options">useAudioTrackOptions</DocsLink>
+- <DocsLink slug="reference/use-playback-rate-options">usePlaybackRateOptions</DocsLink>
+- <DocsLink slug="reference/use-captions-options">useCaptionsOptions</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>
+- <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="how-to/show-timeline-thumbnail-previews">Show timeline thumbnail previews</DocsLink>
+- <DocsLink slug="how-to/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>
+- <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink>
