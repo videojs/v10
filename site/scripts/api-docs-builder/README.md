@@ -24,19 +24,20 @@ TypeScript Sources (core/html/media/react/store packages)
 
 ### Building
 
-The builder runs automatically before dev/build through the site's Vite+ tasks:
+The builder runs through the site's Vite+ tasks:
 
 ```bash
 # Run manually
 pnpm -F site api-docs
 
 # Runs automatically on:
-pnpm dev:site
 pnpm build:site
+pnpm dev                   # root dev, via dev:prepare
+pnpm dev:site --prepare    # or plain dev:site when the output is missing
 ```
 
 The manual command also runs the required package builds. `api-docs:generate` is
-the internal generation task used by Turbo after those dependencies are ready.
+the internal generation task Vite+ runs after those dependencies are ready.
 
 ### In MDX
 

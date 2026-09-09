@@ -21,7 +21,7 @@
     "build": "vp run -r build",
     "clean": "vp run -r --no-cache clean",
     "commitlint": "commitlint --config ./commitlint.config.js --edit",
-    "dev:site": "vp run site#dev",
+    "dev:site": "node --import tsx site/scripts/dev.ts",
     "dev": "pnpm dev:prepare && VP_PACK_WATCH=true vp run --fail-if-no-match --filter='./packages/**' --filter='./apps/*' --filter='./site' --parallel --ignore-depends-on --no-cache dev",
     "dev:prepare": "vp run -w prepare:dev",
     "dev:packages": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cli' build && VP_PACK_WATCH=true vp run --fail-if-no-match --filter='./packages/**' --parallel --ignore-depends-on --no-cache dev",

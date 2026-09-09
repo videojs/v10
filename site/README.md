@@ -46,17 +46,18 @@ Mostly a standard [Astro](https://astro.build/) project.
 
 If you're in the monorepo's root...
 
-| Command           | Action                                      |
-| :---------------- | :------------------------------------------ |
-| `pnpm dev:site`   | Starts local dev server at `localhost:4321` |
-| `pnpm build:site` | Build the production site to `site/dist/`   |
+| Command                   | Action                                                                                                                                  |
+| :------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev:site`           | Starts local dev server at `localhost:4321`; generates API references, the CDN manifest, and package builds only when they are missing |
+| `pnpm dev:site --prepare` | Same, but regenerates API references and rebuilds packages first (after changing package source or JSDoc)                            |
+| `pnpm build:site`         | Build the production site to `site/dist/`                                                                                            |
 
 If you're in `site/`...
 
 | Command              | Action                                           |
 | :------------------- | :----------------------------------------------- |
 | `pnpm install`       | Installs dependencies                            |
-| `pnpm exec vp run dev`   | Starts local dev server at `localhost:4321`  |
+| `pnpm exec vp run dev`   | Starts local dev server at `localhost:4321` (expects generated content; run `pnpm exec vp run dev:prepare` first) |
 | `pnpm exec vp run build` | Build your production site to `./dist/`      |
 | `pnpm astro preview`     | Preview your build locally, before deploying |
 | `pnpm api-docs`      | Regenerate API reference JSON from TypeScript    |
