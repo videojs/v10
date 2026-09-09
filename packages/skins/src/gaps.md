@@ -15,8 +15,3 @@ This file tracks known parity and anatomy work carried forward from the retired 
 - Gap: VJSC keeps the Minimal volume thumb visible, but it does not show a sticky mute tooltip while the volume popover is open and compact layouts retain the wider trigger-to-slider gap.
 - Affected: Minimal Video skin; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Compose a sticky button tooltip around the Minimal volume-popover trigger, use zero side offset with internal horizontal padding, and add VJSC matrix coverage for the tooltip and popover remaining visible together.
-
-## Deferred anatomy considerations
-
-These selectors currently preserve observable parity. Keep them as known ownership concerns rather than introducing new anatomy solely to remove a diagnostic warning.
-
