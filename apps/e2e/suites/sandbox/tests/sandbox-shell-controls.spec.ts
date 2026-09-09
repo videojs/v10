@@ -42,6 +42,33 @@ async function playerWidth(scope: Page | Frame): Promise<number> {
 }
 
 test.describe('Sandbox shell controls', () => {
+  for (const width of [320, 1280]) {
+    test(`select menus keep option labels within the popup at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`);
+
+      for (const name of ['Media', 'Source']) {
+        await page.getByRole('combobox', { name, exact: true }).click();
+        const popup = page.locator('[data-slot="select-content"][data-open]');
+
+        await expect(popup).toBeVisible();
+        await expect(async () => {
+          const bounds = await popup.boundingBox();
+
+          expect(bounds).not.toBeNull();
+          expect(bounds!.x).toBeGreaterThanOrEqual(0);
+          expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+          const clipped = await popup
+            .getByRole('option')
+            .evaluateAll((options) => options.some((option) => option.scrollWidth > option.clientWidth));
+
+          expect(clipped).toBe(false);
+        }).toPass();
+        await page.keyboard.press('Escape');
+      }
+    });
+  }
+
   test('the width control sizes the player in the preview', async ({ page }) => {
     await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&width=480&${QUERY}`, {
       waitUntil: 'domcontentloaded',
