@@ -44,7 +44,7 @@ jobs:
   prose:
     if: github.event_name == 'workflow_dispatch' && startsWith(inputs.tag_name, '@videojs/core@')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       actions: read
       contents: write
