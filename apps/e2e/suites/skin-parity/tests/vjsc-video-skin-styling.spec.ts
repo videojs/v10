@@ -485,7 +485,7 @@ test('React chapter segments match across styles and retain their generated rang
             orientation: element.getAttribute('data-orientation'),
             segment: getComputedStyle(element).clipPath,
             start: element.style.getPropertyValue('--media-slider-chapter-start'),
-            track: track && getComputedStyle(track).clipPath !== 'none' ? 'clipped' : 'none',
+            track: track && getComputedStyle(track, '::before').clipPath !== 'none' ? 'clipped' : 'none',
           };
         })
       )

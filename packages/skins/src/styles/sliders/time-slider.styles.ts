@@ -21,7 +21,7 @@ export default styles({
     chapterTrack: {
       utilities: [
         'transition-[height,width] duration-media-slow ease-out',
-        'data-[orientation=horizontal]:clip-media-chapter-track-x data-[orientation=vertical]:clip-media-chapter-track-y',
+        'data-[orientation=horizontal]:before:clip-media-chapter-track-x data-[orientation=vertical]:before:clip-media-chapter-track-y',
         'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
         'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
       ],

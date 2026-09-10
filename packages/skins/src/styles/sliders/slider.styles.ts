@@ -1,7 +1,10 @@
 import { styles } from 'vjsc/styles';
 
 const trackLayer = [
-  'pointer-events-none absolute rounded-[inherit]',
+  'pointer-events-none absolute inset-0 before:absolute before:inset-0 before:rounded-media-control',
+  'data-[orientation=horizontal]:before:left-(--media-slider-layer-start) data-[orientation=horizontal]:before:right-(--media-slider-layer-end)',
+  'data-[orientation=vertical]:before:top-(--media-slider-layer-end) data-[orientation=vertical]:before:bottom-(--media-slider-layer-start)',
+  'before:transition-[left,right,top,bottom] before:duration-[inherit] before:ease-out',
   'transition-[clip-path] duration-media-slider ease-out',
   'group-data-dragging/slider:duration-0 group-data-seeking/slider:duration-0 group-focus-within/slider:duration-0',
 ] as const;
@@ -25,18 +28,16 @@ export default styles({
     },
     track: {
       utilities: [
-        'relative isolate w-full select-none overflow-hidden rounded-media-pill bg-current/20',
+        'relative isolate w-full select-none rounded-media-pill before:pointer-events-none before:absolute before:inset-0 before:rounded-media-control before:bg-current/20',
         'data-[orientation=horizontal]:h-1 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1',
       ],
     },
     fill: {
       utilities: [
         ...trackLayer,
-        'bg-media-primary',
-        'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
+        'before:bg-media-primary',
         'data-[orientation=horizontal]:clip-media-x-[--media-slider-fill]',
         'group-data-dragging/slider:data-[orientation=horizontal]:clip-media-x-[--media-slider-pointer]',
-        'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
         'data-[orientation=vertical]:clip-media-y-[--media-slider-fill]',
         'group-data-dragging/slider:data-[orientation=vertical]:clip-media-y-[--media-slider-pointer]',
       ],
@@ -44,10 +45,8 @@ export default styles({
     buffer: {
       utilities: [
         ...trackLayer,
-        'bg-current/20',
-        'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
+        'before:bg-current/20',
         'data-[orientation=horizontal]:clip-media-x-[--media-slider-buffer]',
-        'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
         'data-[orientation=vertical]:clip-media-y-[--media-slider-buffer]',
       ],
     },

@@ -428,6 +428,14 @@ export const vars = {
     kind: 'runtime',
     description: 'Buffered percentage published by Slider and consumed by the Skin.',
   },
+  '--media-slider-layer-start': {
+    kind: 'internal',
+    description: 'Start inset of a painted slider layer, including its chapter gap.',
+  },
+  '--media-slider-layer-end': {
+    kind: 'internal',
+    description: 'End inset of a painted slider layer, limited by progress and its chapter gap.',
+  },
   '--media-slider-chapter-end': {
     kind: 'runtime',
     description: 'Chapter end percentage published by Time Slider and consumed by the Skin.',

@@ -21,8 +21,6 @@ export function defaultPlayerWidth(player: MediaPlayer): number {
  * plain `max-w-4xl` and `max-w-xl` classes a consumer would, and `styles.css` caps those the same way.
  */
 export const PLAYER_FRAME_CLASSES = {
-  // Keep centred controls on device pixels instead of the fractional height produced by aspect-ratio.
-  video:
-    'mx-auto aspect-video max-w-[var(--sandbox-player-width,56rem)] h-[round(nearest,calc(min(var(--sandbox-player-width,56rem),100vw-1rem)*9/16),2px)]!',
+  video: 'mx-auto aspect-video max-w-[var(--sandbox-player-width,56rem)]',
   audio: 'mx-auto w-full max-w-[var(--sandbox-player-width,36rem)]',
 } as const;

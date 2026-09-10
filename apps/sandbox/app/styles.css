@@ -56,8 +56,6 @@
 #root :is(video-player, live-video-player) > :not(media-i18n),
 #root :is(video-player, live-video-player) > media-i18n > * {
   max-width: var(--sandbox-player-width, 56rem);
-  /* Keep centred controls on device pixels instead of the fractional height produced by aspect-ratio. */
-  height: round(nearest, calc(min(var(--sandbox-player-width, 56rem), 100vw - 1rem) * 9 / 16), 2px) !important;
 }
 
 #root :has(> :is(audio-player, live-audio-player)) {

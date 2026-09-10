@@ -333,12 +333,26 @@
 
 /* Horizontal slider layer clipped to a progress variable, for example `clip-media-x-[--media-slider-fill]`. */
 @utility clip-media-x-* {
-  clip-path: inset(0 calc(100% - var(--value([*]))) 0 0 round var(--media-control-radius));
+  --media-slider-layer-start: calc(
+    var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0)
+  );
+  --media-slider-layer-end: max(
+    calc(100% - var(--value([*]))),
+    calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
+  );
+  clip-path: inset(-1px calc(var(--media-slider-layer-end) - 1px) -1px calc(var(--media-slider-layer-start) - 1px));
 }
 
 /* Vertical slider layer clipped to a progress variable. */
 @utility clip-media-y-* {
-  clip-path: inset(calc(100% - var(--value([*]))) 0 0 0 round var(--media-control-radius));
+  --media-slider-layer-start: calc(
+    var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0)
+  );
+  --media-slider-layer-end: max(
+    calc(100% - var(--value([*]))),
+    calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
+  );
+  clip-path: inset(calc(var(--media-slider-layer-end) - 1px) -1px calc(var(--media-slider-layer-start) - 1px) -1px);
 }
 
 /* Horizontal chapter segment clipped to its start and end. */
@@ -353,18 +367,14 @@
 
 /* Horizontal chapter track with the inter-chapter gap and rounded ends. */
 @utility clip-media-chapter-track-x {
-  clip-path: inset(
-    0 calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
-      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) round
-      var(--media-control-radius)
-  );
+  left: calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start));
+  right: calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end));
+  clip-path: inset(-1px);
 }
 
 /* Vertical chapter track with the inter-chapter gap and rounded ends. */
 @utility clip-media-chapter-track-y {
-  clip-path: inset(
-    calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
-      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) 0 round
-      var(--media-control-radius)
-  );
+  top: calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end));
+  bottom: calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start));
+  clip-path: inset(-1px);
 }
