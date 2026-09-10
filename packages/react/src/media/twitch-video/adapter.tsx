@@ -5,10 +5,11 @@ import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface TwitchVideoProps extends Partial<TwitchAdapterProps> {
+export interface TwitchVideoProps extends Partial<TwitchAdapterProps>, MediaEventProps<TwitchAdapter> {
   children?: ReactNode;
 }
 
@@ -29,10 +30,9 @@ export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(funct
         buildTwitchIframeSrc(props.src || props.source?.src || '', { ...TwitchAdapter.defaultProps, ...props })
       : ''
   );
-  const iframeProps = useSyncProps<TwitchAdapterProps, Record<string, unknown>>(
+  const iframeProps = useMediaEvents(
     media,
-    props,
-    TwitchAdapter.defaultProps
+    useSyncProps<TwitchAdapterProps, Record<string, unknown>>(media, props, TwitchAdapter.defaultProps)
   );
 
   return (

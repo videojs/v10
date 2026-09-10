@@ -5,10 +5,11 @@ import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface CloudflareVideoProps extends Partial<CloudflareAdapterProps> {
+export interface CloudflareVideoProps extends Partial<CloudflareAdapterProps>, MediaEventProps<CloudflareAdapter> {
   children?: ReactNode;
 }
 
@@ -31,10 +32,9 @@ export const CloudflareVideo = forwardRef<HTMLIFrameElement, CloudflareVideoProp
       defaultMuted: !!(props.defaultMuted || props.muted),
     })
   );
-  const iframeProps = useSyncProps<CloudflareAdapterProps, Record<string, unknown>>(
+  const iframeProps = useMediaEvents(
     media,
-    props,
-    CloudflareAdapter.defaultProps
+    useSyncProps<CloudflareAdapterProps, Record<string, unknown>>(media, props, CloudflareAdapter.defaultProps)
   );
 
   return (

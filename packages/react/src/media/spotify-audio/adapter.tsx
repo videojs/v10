@@ -5,10 +5,11 @@ import { type CSSProperties, forwardRef, type ReactNode, useState } from 'react'
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface SpotifyAudioProps extends Partial<SpotifyAdapterProps> {
+export interface SpotifyAudioProps extends Partial<SpotifyAdapterProps>, MediaEventProps<SpotifyAdapter> {
   children?: ReactNode;
 }
 
@@ -24,10 +25,9 @@ export const SpotifyAudio = forwardRef<HTMLIFrameElement, SpotifyAudioProps>(fun
     // `source.src` is the only other way to name an entity, so honor it when `src` is absent.
     buildSpotifyIframeSrc(props.src || props.source?.src || '', { ...SpotifyAdapter.defaultProps, ...props })
   );
-  const { style, ...iframeProps } = useSyncProps<SpotifyAdapterProps, Record<string, unknown>>(
+  const { style, ...iframeProps } = useMediaEvents(
     media,
-    props,
-    SpotifyAdapter.defaultProps
+    useSyncProps<SpotifyAdapterProps, Record<string, unknown>>(media, props, SpotifyAdapter.defaultProps)
   ) as Record<string, unknown> & { style?: CSSProperties };
 
   return (

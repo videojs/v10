@@ -5,10 +5,11 @@ import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface TikTokVideoProps extends Partial<TikTokAdapterProps> {
+export interface TikTokVideoProps extends Partial<TikTokAdapterProps>, MediaEventProps<TikTokAdapter> {
   children?: ReactNode;
 }
 
@@ -31,10 +32,9 @@ export const TikTokVideo = forwardRef<HTMLIFrameElement, TikTokVideoProps>(funct
       defaultMuted: !!(props.defaultMuted || props.muted),
     })
   );
-  const iframeProps = useSyncProps<TikTokAdapterProps, Record<string, unknown>>(
+  const iframeProps = useMediaEvents(
     media,
-    props,
-    TikTokAdapter.defaultProps
+    useSyncProps<TikTokAdapterProps, Record<string, unknown>>(media, props, TikTokAdapter.defaultProps)
   );
 
   return (

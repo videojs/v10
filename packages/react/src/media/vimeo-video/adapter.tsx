@@ -5,10 +5,11 @@ import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface VimeoVideoProps extends Partial<VimeoAdapterProps> {
+export interface VimeoVideoProps extends Partial<VimeoAdapterProps>, MediaEventProps<VimeoAdapter> {
   children?: ReactNode;
 }
 
@@ -24,7 +25,10 @@ export const VimeoVideo = forwardRef<HTMLIFrameElement, VimeoVideoProps>(functio
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildVimeoIframeSrc(props.src || props.source?.src || '', { ...VimeoAdapter.defaultProps, ...props })
   );
-  const iframeProps = useSyncProps<VimeoAdapterProps, Record<string, unknown>>(media, props, VimeoAdapter.defaultProps);
+  const iframeProps = useMediaEvents(
+    media,
+    useSyncProps<VimeoAdapterProps, Record<string, unknown>>(media, props, VimeoAdapter.defaultProps)
+  );
 
   return (
     <iframe

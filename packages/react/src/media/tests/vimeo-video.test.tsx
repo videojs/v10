@@ -1,5 +1,7 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vite-plus/test';
+import { VimeoAdapter } from '@videojs/vimeo-video';
+import type { ReactElement } from 'react';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { VimeoVideo } from '../vimeo-video';
 
@@ -7,6 +9,16 @@ import { VimeoVideo } from '../vimeo-video';
 async function flushDeferredEmbed(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+/** Render and capture the media instance the component attached its iframe to. */
+function renderWithMedia(ui: ReactElement) {
+  const attach = vi.spyOn(VimeoAdapter.prototype, 'attach');
+  const result = render(ui);
+  const media = attach.mock.contexts[0] as VimeoAdapter;
+
+  attach.mockRestore();
+  return { ...result, media };
 }
 
 describe('VimeoVideo', () => {
@@ -29,5 +41,21 @@ describe('VimeoVideo', () => {
     await flushDeferredEmbed();
 
     expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/1181503036');
+  });
+
+  it('routes media event props to the media rather than the iframe', () => {
+    const onPlay = vi.fn((event: Event) => event.currentTarget);
+    const onTimeUpdate = vi.fn();
+    const { container, media } = renderWithMedia(
+      <VimeoVideo src="https://vimeo.com/1181503036" onPlay={onPlay} onTimeUpdate={onTimeUpdate} />
+    );
+
+    media.dispatchEvent(new Event('play'));
+    media.dispatchEvent(new Event('timeupdate'));
+
+    expect(onPlay).toHaveBeenCalledTimes(1);
+    expect(onPlay).toHaveReturnedWith(media);
+    expect(onTimeUpdate).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('iframe')!.hasAttribute('onplay')).toBe(false);
   });
 });
