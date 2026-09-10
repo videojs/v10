@@ -132,7 +132,7 @@ export function skinModuleTarget(
   if (sourcePath.startsWith('components/')) {
     const component = sourcePath.slice('components/'.length);
 
-    return `${skinDirectory(skin)}/ui/${component}`;
+    return `${skinDirectory(skin)}/components/${component}`;
   }
 
   if (!sourcePath.startsWith('skins/')) throw new Error(`Unsupported registry source: \`${sourcePath}\`.`);

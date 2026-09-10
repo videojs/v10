@@ -20,7 +20,7 @@ export interface SkinCatalogEntry {
   readonly tags: { readonly css: string; readonly tailwind: string };
   /** Shadcn registry item name, such as `video` or `video-minimal`. */
   readonly registryItem: string;
-  /** Registry installation directory relative to the components path, such as `skins/video/minimal`. */
+  /** Registry installation directory relative to the components path, such as `skins/video/default`. */
   readonly directory: string;
 }
 

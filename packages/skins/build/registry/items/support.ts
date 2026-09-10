@@ -83,9 +83,7 @@ export function utilsItem(target: RegistryTarget): RegistryModuleItem<SkinModule
     group: 'support',
     filename: 'resolve-class-name.ts',
     target: 'lib/resolve-class-name.ts',
-    imports: {
-      '@videojs/utils/style': '@/lib/utils',
-    },
+    paths: { install: '@', import: '@' },
   };
 }
 

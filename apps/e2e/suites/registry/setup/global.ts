@@ -257,7 +257,7 @@ async function exerciseRegistryCli(
 
   await Promise.all(
     skins.map((skin) => {
-      const skinDir = skin === 'video' ? 'skins/video' : 'skins/video/minimal';
+      const skinDir = skin === 'video' ? 'skins/video/default' : 'skins/video/minimal';
 
       return readFile(resolve(projectDir, `src/components/videojs/${skinDir}/skin.${extension}`), 'utf8');
     })

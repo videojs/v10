@@ -22,7 +22,7 @@ describe('skinModuleTarget', () => {
   it('places the skin root and its components under the skin directory', () => {
     expect(skinModuleTarget(root, root, 'minimal-audio')).toBe('skins/audio/minimal/skin.tsx');
     expect(skinModuleTarget(graphModule('components/sliders/slider.tsx'), root, 'minimal-audio')).toBe(
-      'skins/audio/minimal/ui/sliders/slider.tsx'
+      'skins/audio/minimal/components/sliders/slider.tsx'
     );
   });
 
@@ -37,7 +37,7 @@ describe('skinModuleTarget', () => {
 
     expect(skinModuleTarget(timeSlider, root, 'minimal-audio')).toBe('skins/audio/minimal/time-slider.tsx');
     expect(skinModuleTarget(timeSlider, graphModule('skins/default/audio/skin.tsx'), 'default-audio')).toBe(
-      'skins/audio/time-slider.tsx'
+      'skins/audio/default/time-slider.tsx'
     );
   });
 

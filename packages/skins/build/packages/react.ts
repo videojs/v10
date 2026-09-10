@@ -3,6 +3,7 @@ import { bundleStyles, relativeImport, rewriteImports, stripStyleImports } from 
 
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import { skinCatalogEntry } from '../catalog.ts';
+import { skinClassNameMergeImport } from '../imports.ts';
 import { skinBaseStylesheet, skinPresets, skinSourceDirectory } from '../skin.ts';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
@@ -45,6 +46,8 @@ export async function createReactPackageSkins(
 
     for (const module of candidates) {
       const source = rewriteImports(graph, module, ({ dependency, reference }) => {
+        if (reference.specifier === skinClassNameMergeImport) return '@videojs/utils/style';
+
         const frameworkImport = reactFrameworkImport(reference.specifier);
         if (frameworkImport) return relativeImport(destination, frameworkImport);
 

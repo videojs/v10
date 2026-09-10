@@ -20,11 +20,12 @@ export function skinSourceDirectory(name: SkinName): string {
   return `${theme}/${preset}`;
 }
 
-/** Resolve the stable source-owned directory for a Skin. */
+/** Resolve the stable preset-and-theme directory for a Skin. */
 export function skinDirectory(name: SkinName): string {
   const preset = skinPreset(name);
+  const { theme } = skinStyles[name];
 
-  return name.startsWith('minimal-') ? `skins/${preset}/minimal` : `skins/${preset}`;
+  return `skins/${preset}/${theme}`;
 }
 
 /** Runtime stylesheet entry carrying the shared tokens plus one preset's tokens, relative to `src/styles`. */

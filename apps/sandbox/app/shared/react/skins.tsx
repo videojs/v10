@@ -66,23 +66,23 @@ const packageSkins: Record<
  */
 const registrySkins: Record<Styling, Record<SkinKey, Loader>> = {
   tailwind: {
-    'video/default': () => import('@app/_generated/components/videojs/skins/video/skin'),
+    'video/default': () => import('@app/_generated/components/videojs/skins/video/default/skin'),
     'video/minimal': () => import('@app/_generated/components/videojs/skins/video/minimal/skin'),
-    'live-video/default': () => import('@app/_generated/components/videojs/skins/live-video/skin'),
+    'live-video/default': () => import('@app/_generated/components/videojs/skins/live-video/default/skin'),
     'live-video/minimal': () => import('@app/_generated/components/videojs/skins/live-video/minimal/skin'),
-    'audio/default': () => import('@app/_generated/components/videojs/skins/audio/skin'),
+    'audio/default': () => import('@app/_generated/components/videojs/skins/audio/default/skin'),
     'audio/minimal': () => import('@app/_generated/components/videojs/skins/audio/minimal/skin'),
-    'live-audio/default': () => import('@app/_generated/components/videojs/skins/live-audio/skin'),
+    'live-audio/default': () => import('@app/_generated/components/videojs/skins/live-audio/default/skin'),
     'live-audio/minimal': () => import('@app/_generated/components/videojs/skins/live-audio/minimal/skin'),
   },
   css: {
-    'video/default': () => import('@css/components/videojs/skins/video/skin'),
+    'video/default': () => import('@css/components/videojs/skins/video/default/skin'),
     'video/minimal': () => import('@css/components/videojs/skins/video/minimal/skin'),
-    'live-video/default': () => import('@css/components/videojs/skins/live-video/skin'),
+    'live-video/default': () => import('@css/components/videojs/skins/live-video/default/skin'),
     'live-video/minimal': () => import('@css/components/videojs/skins/live-video/minimal/skin'),
-    'audio/default': () => import('@css/components/videojs/skins/audio/skin'),
+    'audio/default': () => import('@css/components/videojs/skins/audio/default/skin'),
     'audio/minimal': () => import('@css/components/videojs/skins/audio/minimal/skin'),
-    'live-audio/default': () => import('@css/components/videojs/skins/live-audio/skin'),
+    'live-audio/default': () => import('@css/components/videojs/skins/live-audio/default/skin'),
     'live-audio/minimal': () => import('@css/components/videojs/skins/live-audio/minimal/skin'),
   },
 };

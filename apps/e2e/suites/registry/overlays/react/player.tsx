@@ -1,8 +1,8 @@
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { VideoPlayer } from '@videojs/react/video';
 
+import { DefaultVideoSkin } from '@/components/videojs/skins/video/default/skin';
 import { MinimalVideoSkin } from '@/components/videojs/skins/video/minimal/skin';
-import { DefaultVideoSkin } from '@/components/videojs/skins/video/skin';
 
 import { MediaProbe } from './media-probe';
 

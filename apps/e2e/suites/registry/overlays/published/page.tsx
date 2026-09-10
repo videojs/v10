@@ -1,6 +1,6 @@
 import { Video, VideoPlayer } from '@videojs/react/video';
 
-import { DefaultVideoSkin } from '@/components/videojs/skins/video/skin';
+import { DefaultVideoSkin } from '@/components/videojs/skins/video/default/skin';
 
 export default function Home() {
   return (

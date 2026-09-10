@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Graph } from 'vjsc/graph';
 
 import type { SkinModuleMeta } from '../../../src/meta.ts';
+import { skinClassNameMergeImport } from '../../imports.ts';
 import { skinSourceDirectory } from '../../skin.ts';
 import { createReactPackageSkins } from '../react.ts';
 
@@ -30,6 +31,9 @@ describe('createReactPackageSkins', () => {
     );
     expect(files.get('packages/react/src/internal/skins/shared/components/button.tsx')).not.toContain(
       '@videojs/react/ui/playback-rate-radio-group'
+    );
+    expect(files.get('packages/react/src/internal/skins/shared/components/button.tsx')).toContain(
+      `import { cn } from '@videojs/utils/style'`
     );
     expect(files.get('packages/react/src/internal/skins/default-video/components/themed.tsx')).toContain('default');
     expect(files.get('packages/react/src/internal/skins/minimal-video/components/themed.tsx')).toContain('minimal');
@@ -70,8 +74,7 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
       const rootSource = `import { Button } from '../../components/button';\nimport { Label } from '../../components/label';\nimport { Themed } from '../../components/themed';\nexport function ${pascalCase(theme)}${pascalCase(preset)}Skin() { return <><Button /><Label />{Themed}</>; }`;
       const labelSource =
         "import { Themed } from './themed';\nexport function Label() { return <span>{Themed}</span>; }";
-      const buttonSource =
-        "import { PlayButton } from '@videojs/react';\nimport { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';\nexport function Button() { return <PlaybackRateRadioGroup.Root><PlayButton /></PlaybackRateRadioGroup.Root>; }";
+      const buttonSource = `import { PlayButton } from '@videojs/react';\nimport { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';\nimport { cn } from '${skinClassNameMergeImport}';\nexport function Button() { return <PlaybackRateRadioGroup.Root className={cn('button')}><PlayButton /></PlaybackRateRadioGroup.Root>; }`;
 
       modules.set(rootId, {
         id: rootId,
@@ -102,6 +105,7 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
         imports: [
           importReference(buttonSource, '@videojs/react'),
           importReference(buttonSource, '@videojs/react/ui/playback-rate-radio-group'),
+          importReference(buttonSource, skinClassNameMergeImport),
         ],
         styles: { files: [], assets: [] },
       });

@@ -13,8 +13,8 @@ type SkinLoader = () => Promise<readonly [RegistrySkinModule, unknown]>;
 const registrySkins = {
   'video/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/video/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/video/skin'),
+      import('@app/_generated/html/components/videojs/skins/video/default/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/video/default/skin'),
     ]),
   'video/minimal': () =>
     Promise.all([
@@ -23,8 +23,8 @@ const registrySkins = {
     ]),
   'live-video/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-video/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-video/skin'),
+      import('@app/_generated/html/components/videojs/skins/live-video/default/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-video/default/skin'),
     ]),
   'live-video/minimal': () =>
     Promise.all([
@@ -33,8 +33,8 @@ const registrySkins = {
     ]),
   'audio/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/audio/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/audio/skin'),
+      import('@app/_generated/html/components/videojs/skins/audio/default/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/audio/default/skin'),
     ]),
   'audio/minimal': () =>
     Promise.all([
@@ -43,8 +43,8 @@ const registrySkins = {
     ]),
   'live-audio/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-audio/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-audio/skin'),
+      import('@app/_generated/html/components/videojs/skins/live-audio/default/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-audio/default/skin'),
     ]),
   'live-audio/minimal': () =>
     Promise.all([

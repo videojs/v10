@@ -1,9 +1,9 @@
 import '@videojs/html/video/player';
 import '@videojs/html/media/hlsjs-video';
+import defaultSkin from '@/components/videojs/skins/video/default/skin.html?raw';
+import '@/components/videojs/skins/video/default/skin';
 import minimalSkin from '@/components/videojs/skins/video/minimal/skin.html?raw';
 import '@/components/videojs/skins/video/minimal/skin';
-import defaultSkin from '@/components/videojs/skins/video/skin.html?raw';
-import '@/components/videojs/skins/video/skin';
 
 import './style.css';
 
