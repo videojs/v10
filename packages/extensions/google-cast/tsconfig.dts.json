@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": false,
     "incremental": false,
+    "declarationMap": false,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "useDefineForClassFields": false,
     "types": ["chromecast-caf-sender"]
