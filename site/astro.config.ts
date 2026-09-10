@@ -30,6 +30,7 @@ import { satteriCdnVersion } from './src/utils/satteriCdnVersion';
 import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
 import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
 import { satteriReadingTime } from './src/utils/satteriReadingTime';
+import { satteriRelatedLinks } from './src/utils/satteriRelatedLinks';
 import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
 import { shikiStripPreStyle } from './src/utils/shikiStripPreStyle';
 
@@ -151,7 +152,13 @@ export default defineConfig({
     // independently of the Markdown processor, so highlighting is configured
     // here while the processor's custom transforms live in `mdastPlugins`.
     processor: satteri({
-      mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCdnVersion(), satteriCodeFrame()],
+      mdastPlugins: [
+        satteriReadingTime(),
+        satteriConditionalHeadings(),
+        satteriCdnVersion(),
+        satteriCodeFrame(),
+        satteriRelatedLinks(),
+      ],
     }),
   },
 

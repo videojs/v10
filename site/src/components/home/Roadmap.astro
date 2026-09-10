@@ -1,7 +1,17 @@
 ---
+import { getCollection } from 'astro:content';
 import clsx from 'clsx';
 import Check from '@/assets/icons/check.svg?react';
 import { AnimatedBars } from './AnimatedBars';
+
+const [latest] = (await getCollection('changelog')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+// Changelog dates are calendar days parsed as UTC midnight; format in UTC so the day never shifts with the build host.
+const releaseDate = latest?.data.date.toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 const milestones = [
   {
@@ -46,6 +56,24 @@ const milestones = [
     >
       Roadmap
     </h2>
+    {
+      latest && (
+        <p class="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-p3 text-muted">
+          <span>Latest release</span>
+          <a
+            href={`/changelog/${latest.id}`}
+            class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 font-mono text-p4 text-faded-black ring-1 ring-line intent:text-orange dark:text-manila-light"
+          >
+            v{latest.data.version}
+          </a>
+          <span>{releaseDate}</span>
+          <span aria-hidden="true">·</span>
+          <a href="/changelog" class="underline intent:decoration-gold">
+            Changelog
+          </a>
+        </p>
+      )
+    }
   </header>
 
   <div class="relative mb-20 h-full lg:mb-30">

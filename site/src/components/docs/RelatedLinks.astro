@@ -1,0 +1,56 @@
+---
+import { getCollection } from 'astro:content';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
+import { isValidFramework } from '@/types/docs';
+import { resolveDocsLinkUrl } from '@/utils/docs/routing';
+import type { RelatedLink } from '@/utils/satteriRelatedLinks';
+
+/**
+ * Card grid for the "Related …" sections at the end of guides. `satteriRelatedLinks` produces it from the authored
+ * DocsLink list; each card adds the target page's description.
+ */
+interface Props {
+  /** JSON-encoded `RelatedLink[]`, serialised by the MDAST plugin. */
+  items: string;
+}
+
+const { framework: paramFramework } = Astro.params;
+
+if (!paramFramework || !isValidFramework(paramFramework)) {
+  throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
+}
+
+// SAFETY: the plugin is the only producer of this attribute and always serialises `RelatedLink[]`.
+const items = JSON.parse(Astro.props.items) as RelatedLink[];
+const docs = await getCollection('docs');
+const descriptions = new Map(docs.map((doc) => [doc.id, doc.data.description]));
+
+const cards = items.map((item) => {
+  const { url } = resolveDocsLinkUrl({ targetSlug: item.slug, contextFramework: paramFramework });
+
+  return {
+    href: item.anchor ? `${url}#${item.anchor}` : url,
+    label: item.label,
+    description: descriptions.get(item.slug),
+  };
+});
+---
+
+<ul class="mx-auto my-6 grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+  {
+    cards.map((card) => (
+      <li>
+        <a
+          href={card.href}
+          class="flex h-full items-center justify-between gap-4 rounded-lg corner-squircle border border-manila-dark p-4 no-underline dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
+        >
+          <span class="min-w-0">
+            <span class="block font-semibold">{card.label}</span>
+            {card.description && <span class="mt-1 line-clamp-2 block text-p3 text-muted">{card.description}</span>}
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden="true" />
+        </a>
+      </li>
+    ))
+  }
+</ul>

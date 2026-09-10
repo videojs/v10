@@ -1,0 +1,32 @@
+{
+  "measuredAt": "2026-09-10",
+  "compression": "brotli",
+  "baseline": {
+    "label": "Video.js 8",
+    "version": "8.24.0",
+    "initial": 167548,
+    "total": 167548
+  },
+  "presets": [
+    {
+      "label": "React video player",
+      "initial": 51823,
+      "total": 110062
+    },
+    {
+      "label": "HTML video player",
+      "initial": 64308,
+      "total": 122547
+    },
+    {
+      "label": "React audio player",
+      "initial": 40452,
+      "total": 98691
+    },
+    {
+      "label": "HTML background video",
+      "initial": 11848,
+      "total": 70087
+    }
+  ]
+}

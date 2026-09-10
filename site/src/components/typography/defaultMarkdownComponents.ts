@@ -1,3 +1,4 @@
+import RelatedLinks from '../docs/RelatedLinks.astro';
 import A from './A.astro';
 import Blockquote from './Blockquote.astro';
 import CodeFrame from './CodeFrame.astro';
@@ -42,6 +43,7 @@ const defaultMarkdownComponents = {
   img: Img,
   code: MarkdownCode,
   CodeFrame,
+  RelatedLinks,
   table: Table,
   thead: Thead,
   tbody: Tbody,

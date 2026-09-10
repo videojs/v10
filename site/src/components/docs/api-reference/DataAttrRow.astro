@@ -1,5 +1,6 @@
 ---
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import AnchorLink from './AnchorLink.astro';
 import DetailRow from './DetailRow.astro';
 import InlineCode from './InlineCode.astro';
 
@@ -26,7 +27,10 @@ const id = `${componentName}-attr-${name}`;
   toggleColumn={toggleColumn}
 >
   <td>
-    <MarkdownCode>{name}</MarkdownCode>
+    <span class="inline-flex items-center whitespace-nowrap">
+      <MarkdownCode>{name}</MarkdownCode>
+      <AnchorLink id={id} name={name} />
+    </span>
   </td>
   <td class="w-full">
     {type ? <InlineCode code={type} /> : <span class="text-muted">—</span>}

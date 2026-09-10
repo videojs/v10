@@ -1,5 +1,6 @@
 ---
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import AnchorLink from './AnchorLink.astro';
 import DetailRow from './DetailRow.astro';
 import InlineCode from './InlineCode.astro';
 import { getPropReferenceNames } from './prop-reference-names';
@@ -47,10 +48,13 @@ const showAttribute = Boolean(attributeName && attributeName !== propertyName);
   toggleColumn={toggleColumn}
 >
   <td>
-    <MarkdownCode>
-      {propertyName}
-      {required && <span class="text-orange">*</span>}
-    </MarkdownCode>
+    <span class="inline-flex items-center whitespace-nowrap">
+      <MarkdownCode>
+        {propertyName}
+        {required && <span class="text-orange">*</span>}
+      </MarkdownCode>
+      <AnchorLink id={id} name={propertyName} />
+    </span>
     {
       showAttribute && (
         <div class="mt-1.5 text-p4 text-muted">
