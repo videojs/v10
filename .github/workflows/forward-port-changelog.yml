@@ -9,9 +9,9 @@ name: Forward-port changelog and blog
 # This job closes that gap. It runs after the release is finished, touches only
 # the changelog folder and the blog's content and asset folders, and pushes to
 # site/v10 rather than main, so it cannot delay, block, or re-trigger a release.
-# Anything else under site/ still waits for the next release, or for a manual run
-# of publish-site.yml. A blog post that imports a component new to main needs
-# that route too, since only these folders are copied.
+# Anything else under site/ still waits for the next release, or for a hand
+# cherry-pick onto site/v10. A blog post that imports a component new to main
+# needs that route too, since only these folders are copied.
 
 on:
   push:
