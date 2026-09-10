@@ -39,7 +39,7 @@ const htmlTarget = defineComponentTarget<typeof schema>()(({ element }) => ({
 const definitionSource = `
   import { defineRenderTarget } from 'vjsc/components';
   import * as $ from '@fixture/components';
-  export const Button = defineRenderTarget(['media-button']);
+  export const Button = defineRenderTarget(['media-button', 'grid p-0']);
   export const PlayButton = ({ className }) => <$.PlayButton $render={Button} className={[className]} />;
 `;
 
@@ -50,7 +50,7 @@ describe('renderTargetPlugin', () => {
     expect(source).toContain('import type { ComponentProps } from "react";');
     expect(source).toContain('export type ButtonProps = ComponentProps<"button">;');
     expect(source).toContain('export function Button({ className, ...props }: ButtonProps)');
-    expect(source).toContain('<button className={["media-button", className]} {...props} />');
+    expect(source).toContain('<button className={["media-button", "grid p-0", className]} {...props} />');
     expect(source).toContain('render={<Button />}');
     expect(source).not.toContain('$render');
   });
@@ -58,7 +58,7 @@ describe('renderTargetPlugin', () => {
   it('lowers style render targets to HTML class names', async () => {
     const source = await transform(definitionSource, htmlTarget);
 
-    expect(source).toContain('export const Button = "media-button";');
+    expect(source).toContain('export const Button = "media-button grid p-0";');
     expect(source).toContain('className={[Button, [className]]}');
   });
 

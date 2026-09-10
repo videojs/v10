@@ -375,7 +375,7 @@ function transformStyles(
       edits.push({
         start: node.start,
         end: node.end,
-        content: renderStyleRule(rule, options, isListItem(node, parent)),
+        content: renderStyleRule(rule, options, styleReferenceContext(node, parent)),
       });
       referencedRules.add(rule.className);
       transformedRanges.push([node.start, node.end]);
@@ -453,21 +453,33 @@ function readAccessPath(expression: Expression): string[] | undefined {
   return undefined;
 }
 
-function renderStyleRule(rule: ResolvedStyleRule, options: StyleTransformOptions, listItem: boolean): string {
+type StyleReferenceContext = 'jsx' | 'list' | 'value';
+
+function renderStyleRule(
+  rule: ResolvedStyleRule,
+  options: StyleTransformOptions,
+  context: StyleReferenceContext
+): string {
   const utilityGroups = utilityGroupsForRule(rule, options.variants);
   const groups = options.mode === 'css' || utilityGroups.length === 0 ? [rule.className] : utilityGroups;
   const values = groups.filter(Boolean);
 
-  if (listItem) return values.length > 0 ? values.map((value) => JSON.stringify(value)).join(', ') : '""';
+  if (context === 'list') return values.length > 0 ? values.map((value) => JSON.stringify(value)).join(', ') : '""';
+
+  if (context === 'jsx' && values.length > 1) {
+    return `[${values.map((value) => JSON.stringify(value)).join(', ')}]`;
+  }
 
   return JSON.stringify(values.join(' '));
 }
 
-function isListItem(expression: Expression, parent: Node | null): boolean {
-  return Boolean(
+function styleReferenceContext(expression: Expression, parent: Node | null): StyleReferenceContext {
+  const listItem =
     (parent?.type === 'ArrayExpression' && parent.elements.includes(expression)) ||
-    (parent?.type === 'CallExpression' && parent.arguments.includes(expression))
-  );
+    (parent?.type === 'CallExpression' && parent.arguments.includes(expression));
+  if (listItem) return 'list';
+
+  return parent?.type === 'JSXExpressionContainer' ? 'jsx' : 'value';
 }
 
 function assertNoUntransformedReferences(

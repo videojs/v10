@@ -24,7 +24,7 @@ interface RenderTargetDefinition {
   readonly exported: boolean;
   readonly local: string;
   readonly name: string;
-  readonly className: string;
+  readonly className: readonly string[];
   readonly start: number;
   readonly end: number;
 }
@@ -186,8 +186,8 @@ function readDefinition(
   };
 }
 
-function readClassName(value: CallExpression['arguments'][number] | undefined): string | undefined {
-  if (value?.type === 'Literal' && typeof value.value === 'string') return value.value;
+function readClassName(value: CallExpression['arguments'][number] | undefined): readonly string[] | undefined {
+  if (value?.type === 'Literal' && typeof value.value === 'string') return [value.value];
 
   if (value?.type !== 'ArrayExpression') return undefined;
 
@@ -195,7 +195,7 @@ function readClassName(value: CallExpression['arguments'][number] | undefined): 
     element?.type === 'Literal' && typeof element.value === 'string' ? element.value : undefined
   );
 
-  return parts.every((part) => part !== undefined) ? parts.join(' ') : undefined;
+  return parts.every((part) => part !== undefined) ? parts : undefined;
 }
 
 function importedFactories(ast: Program): ReadonlySet<string> {
@@ -322,7 +322,7 @@ function renderDefinition(
   }
 
   if (resolved.target.jsx.attributes === 'html') {
-    return `${prefix}const ${definition.local} = ${JSON.stringify(definition.className)};`;
+    return `${prefix}const ${definition.local} = ${JSON.stringify(definition.className.join(' '))};`;
   }
 
   const element = renderTargetElement(resolved.element, { target: resolved.target, imports: runtimeImports });
@@ -337,7 +337,9 @@ function renderDefinition(
     );
   }
 
-  return `${prefix}type ${definition.local}Props = ${props};\n\n${prefix}function ${definition.local}({ className, ...props }: ${definition.local}Props) {\n  return <${element} className={[${JSON.stringify(definition.className)}, className]} {...props} />;\n}`;
+  const classes = [...definition.className.map((className) => JSON.stringify(className)), 'className'];
+
+  return `${prefix}type ${definition.local}Props = ${props};\n\n${prefix}function ${definition.local}({ className, ...props }: ${definition.local}Props) {\n  return <${element} className={[${classes.join(', ')}]} {...props} />;\n}`;
 }
 
 function lowerRenderDirective(

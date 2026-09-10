@@ -162,6 +162,14 @@ describe('stylePlugin', () => {
     expect(source).toContain('buttonClass = "grid p-0"');
   });
 
+  it('preserves authored utility groups in direct JSX class values', async () => {
+    const { source } = await transform(
+      `import styles from './fixtures/button.styles'; export const root = <div className={styles.button} />;`
+    );
+
+    expect(source).toContain('className={["grid", "p-0"]}');
+  });
+
   it('preserves semantic hooks without utilities in Tailwind output', async () => {
     const hookStyles = createResolvedStyles([rule(['root'], 'video-controls', [])]);
     const { source } = await transform(
