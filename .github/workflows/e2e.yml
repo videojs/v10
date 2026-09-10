@@ -87,7 +87,7 @@ jobs:
           key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   e2e:
-    name: E2E (${{ matrix.browser }})
+    name: E2E (${{ matrix.browser }}${{ matrix.shards > 1 && format(' {0}/{1}', matrix.shard, matrix.shards) || '' }})
     needs: [changes, build]
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
@@ -96,9 +96,9 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
-      matrix:
-        # WebKit doubles the wall time, so pull requests run Chromium only and main covers both.
-        browser: ${{ fromJSON(github.event_name == 'push' && '["chromium", "webkit"]' || '["chromium"]') }}
+      # WebKit takes more than twice Chromium's wall time, so pull requests run Chromium only and main covers both,
+      # splitting WebKit in two so it finishes with the other jobs.
+      matrix: ${{ fromJSON(github.event_name == 'push' && '{"include":[{"browser":"chromium","shard":1,"shards":1},{"browser":"webkit","shard":1,"shards":2},{"browser":"webkit","shard":2,"shards":2}]}' || '{"include":[{"browser":"chromium","shard":1,"shards":1}]}') }}
 
     steps:
       - name: Checkout code
@@ -129,13 +129,13 @@ jobs:
         run: pnpm build:packages && pnpm build:cdn && pnpm exec vp run '@videojs/e2e#prepare:player'
 
       - name: Run E2E tests
-        run: pnpm --dir apps/e2e exec playwright test --config suites/player/playwright.config.ts --project=vite-${{ matrix.browser }}
+        run: pnpm --dir apps/e2e exec playwright test --config suites/player/playwright.config.ts --project=vite-${{ matrix.browser }} --shard=${{ matrix.shard }}/${{ matrix.shards }}
 
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report-${{ matrix.browser }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
           path: apps/e2e/playwright-report/
           retention-days: 14
 
@@ -143,7 +143,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces-${{ matrix.browser }}
+          name: playwright-traces-${{ matrix.browser }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
           path: apps/e2e/test-results/
           retention-days: 7
 
@@ -201,7 +201,7 @@ jobs:
           retention-days: 7
 
   skin-parity:
-    name: Skin parity (${{ matrix.preset }})
+    name: Skin parity (${{ matrix.preset }}${{ matrix.shards > 1 && format(' {0}/{1}', matrix.shard, matrix.shards) || '' }})
     needs: [changes, build]
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
@@ -211,7 +211,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        preset: [video, live-video, audio, live-audio]
+        # The video preset carries twice the cases of the others, so it runs as two slices.
+        include:
+          - { preset: video, shard: 1, shards: 2 }
+          - { preset: video, shard: 2, shards: 2 }
+          - { preset: live-video, shard: 1, shards: 1 }
+          - { preset: audio, shard: 1, shards: 1 }
+          - { preset: live-audio, shard: 1, shards: 1 }
 
     steps:
       - name: Checkout code
@@ -242,12 +248,13 @@ jobs:
         run: pnpm exec vp run '@videojs/e2e#test:skin-parity'
         env:
           VJSC_SKIN_PRESET: ${{ matrix.preset }}
+          VJSC_SKIN_SHARD: ${{ matrix.shard }}/${{ matrix.shards }}
 
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-skin-parity-${{ matrix.preset }}
+          name: playwright-report-skin-parity-${{ matrix.preset }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
           path: apps/e2e/playwright-report/skin-parity/
           retention-days: 14
 
@@ -255,7 +262,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces-skin-parity-${{ matrix.preset }}
+          name: playwright-traces-skin-parity-${{ matrix.preset }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
           path: apps/e2e/test-results/skin-parity/
           retention-days: 7
 
@@ -316,7 +323,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
 
