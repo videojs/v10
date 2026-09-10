@@ -47,12 +47,13 @@ Wrap your media in <DocsLink slug="reference/player">`<VideoPlayer>`</DocsLink> 
   </StyleCase>
 </FrameworkCase>
 
-Two details carry through every control in this guide:
+Three details carry through every control in this guide:
 
 - **Guard the feature.** A selector returns `undefined` when the player was built without that feature, so return `null` before reading it.
 - **Read the availability flag.** Platform-dependent features expose `*Availability` properties. The mute toggle returns `null` when `mutedAvailability` is `'unsupported'`, the same rule Video.js's own <DocsLink slug="reference/mute-button">MuteButton</DocsLink> follows. Use `'unavailable'` for `disabled`.
+- **Translate the labels.** Radix renders no text of its own, so every `aria-label` is yours to set. <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink> returns `t`, which accepts the text tokens under `@videojs/core/i18n/text/*`: `playText`, `muteText`, `settingsText`, and the rest. They are the same tokens the default skin uses, so your controls read identically and switch language with the player's locale. See <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink> for setting that locale.
 
-Radix ships no Button primitive, so the play button is a plain `<button>` with the same class. The `aria-label` is yours to set on both.
+Radix ships no Button primitive, so the play button is a plain `<button>` with the same class as the `Toggle`.
 
 ## Add a seek slider
 
@@ -69,7 +70,7 @@ Radix `Slider` takes an array of values. Feed it `currentTime` and `duration` fr
   </StyleCase>
 </FrameworkCase>
 
-Radix places `role="slider"` on the `Thumb`, so `aria-label` and `aria-valuetext` go there. `formatTime` takes the duration as a guide so `0:05` and `12:05` render at the same width, the way the built-in <DocsLink slug="reference/time">Time</DocsLink> component does.
+Radix places `role="slider"` on the `Thumb`, so the translated `aria-label` and the `aria-valuetext` go there. `formatTime` takes the duration as a guide so `0:05` and `12:05` render at the same width, the way the built-in <DocsLink slug="reference/time">Time</DocsLink> component does.
 
 ## Build a settings menu from the option hooks
 
@@ -93,7 +94,7 @@ Two things to notice:
 
 ## Full example
 
-A player at feature parity with the default video skin: tooltips with hotkey hints, a hover volume popover, a seek slider with chapters and storyboard thumbnails, captions, settings, remote playback, picture-in-picture, fullscreen, a buffering indicator, an error dialog, auto-hiding controls, keyboard shortcuts, and click-to-toggle. Every label comes from the same translated text Video.js uses, so it reads identically to the default skin and follows the player's locale.
+A player at feature parity with the default video skin: tooltips with hotkey hints, a hover volume popover, a seek slider with chapters and storyboard thumbnails, captions, settings, remote playback, picture-in-picture, fullscreen, a buffering indicator, an error dialog, auto-hiding controls, keyboard shortcuts, and click-to-toggle. The error dialog's title, description, and dismiss label come from the same helpers Video.js's own dialog uses, so those translate too.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -113,7 +114,7 @@ A player at feature parity with the default video skin: tooltips with hotkey hin
 - **Option hooks.** The four `use*Options` hooks are the seam for a foreign menu. They own the selection logic; Radix owns the menu.
 - **Container portals.** `useContainer()` returns the element that goes fullscreen. Portaling into it keeps popups inside the player and inside the scoped stylesheet.
 - **Gestures and `data-interactive`.** <DocsLink slug="reference/gesture">`Gesture`</DocsLink> listens on the container natively, before React handlers run, so `event.stopPropagation()` in a Radix handler does not stop a tap from toggling playback. The container skips any element that has the `data-interactive` attribute, which Video.js's own `Controls.Content` sets. The example sets it on the bar, the volume popover, and the dialog.
-- **Text.** <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink> returns `t`, which accepts the text tokens under `@videojs/core/i18n/text/*`. The same tokens power the default skin, so wording and translations match without extra work. The error dialog uses `getErrorDialogTitleText`, `resolveErrorDialogDescription`, and `getErrorDialogDismissText`, the helpers behind <DocsLink slug="reference/error-dialog">ErrorDialog</DocsLink>.
+- **Text.** `t` from `useTranslator` accepts a text token or a plain string key and returns the string for the active locale. The error dialog uses `getErrorDialogTitleText`, `resolveErrorDialogDescription`, and `getErrorDialogDismissText`, the helpers behind <DocsLink slug="reference/error-dialog">ErrorDialog</DocsLink>.
 - **Chapters and thumbnails.** The <DocsLink slug="reference/feature-text-tracks">text track feature</DocsLink> exposes `chaptersCues`, `thumbnailCues`, and `thumbnailTrackSrc`. `normalizeChapterCues` partitions the timeline into contiguous segments, filling gaps between cues. `mapCuesToThumbnails` and `ThumbnailCore.findActiveThumbnail` resolve the storyboard tile for a time.
 - **Auto-hide.** The <DocsLink slug="reference/feature-controls">controls feature</DocsLink> reports `controlsVisible` from user activity on the container. The bar and its backdrop fade on that flag.
 

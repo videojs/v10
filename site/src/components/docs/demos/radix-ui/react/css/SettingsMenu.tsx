@@ -9,6 +9,8 @@ import {
   PlayIcon,
   StopwatchIcon,
 } from '@radix-ui/react-icons';
+import { pauseText, playText } from '@videojs/core/i18n/text/buttons';
+import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
 import {
   Container,
   selectPlayback,
@@ -19,6 +21,7 @@ import {
   usePlayer,
   useQualityOptions,
 } from '@videojs/react';
+import { useTranslator } from '@videojs/react/i18n';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { VideoPlayer } from '@videojs/react/video';
 import { DropdownMenu } from 'radix-ui';
@@ -26,13 +29,15 @@ import type { ReactNode } from 'react';
 
 function PlayButton() {
   const playback = usePlayer(selectPlayback);
+  const t = useTranslator();
+
   if (!playback) return null;
 
   return (
     <button
       type="button"
       className="radix-player__button"
-      aria-label={playback.paused ? 'Play' : 'Pause'}
+      aria-label={t(playback.paused ? playText : pauseText)}
       onClick={() => playback.togglePaused()}
     >
       {playback.paused ? <PlayIcon /> : <PauseIcon />}
@@ -89,20 +94,21 @@ function SettingsMenu() {
   const audio = useAudioTrackOptions();
   const rates = usePlaybackRateOptions();
   const captions = useCaptionsOptions();
+  const t = useTranslator();
 
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className="radix-player__button" aria-label="Settings">
+        <button type="button" className="radix-player__button" aria-label={t(settingsText)}>
           <GearIcon />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal container={container}>
         <DropdownMenu.Content className="radix-player__menu" side="top" align="end" sideOffset={8}>
-          <OptionSubmenu icon={<MixerHorizontalIcon />} label="Quality" options={quality} />
-          <OptionSubmenu icon={<GlobeIcon />} label="Audio" options={audio} />
-          <OptionSubmenu icon={<StopwatchIcon />} label="Speed" options={rates} />
-          <OptionSubmenu icon={<ChatBubbleIcon />} label="Captions" options={captions} />
+          <OptionSubmenu icon={<MixerHorizontalIcon />} label={t(qualityText)} options={quality} />
+          <OptionSubmenu icon={<GlobeIcon />} label={t(audioText)} options={audio} />
+          <OptionSubmenu icon={<StopwatchIcon />} label={t(speedText)} options={rates} />
+          <OptionSubmenu icon={<ChatBubbleIcon />} label={t(captionsText)} options={captions} />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

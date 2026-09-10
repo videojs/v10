@@ -1,5 +1,8 @@
 import { PauseIcon, PlayIcon } from '@radix-ui/react-icons';
+import { pauseText, playText } from '@videojs/core/i18n/text/buttons';
+import { seekText } from '@videojs/core/i18n/text/slider';
 import { Container, selectBuffer, selectPlayback, selectTime, usePlayer } from '@videojs/react';
+import { useTranslator } from '@videojs/react/i18n';
 import { Video, VideoPlayer } from '@videojs/react/video';
 import { formatTime } from '@videojs/utils/time';
 import { Slider } from 'radix-ui';
@@ -7,13 +10,15 @@ import { useState } from 'react';
 
 function PlayButton() {
   const playback = usePlayer(selectPlayback);
+  const t = useTranslator();
+
   if (!playback) return null;
 
   return (
     <button
       type="button"
       className="radix-player__button"
-      aria-label={playback.paused ? 'Play' : 'Pause'}
+      aria-label={t(playback.paused ? playText : pauseText)}
       onClick={() => playback.togglePaused()}
     >
       {playback.paused ? <PlayIcon /> : <PauseIcon />}
@@ -24,6 +29,7 @@ function PlayButton() {
 function SeekSlider() {
   const time = usePlayer(selectTime);
   const buffer = usePlayer(selectBuffer);
+  const t = useTranslator();
   // While dragging, show the pointer value; the seek happens on commit so playback does not stutter.
   const [dragValue, setDragValue] = useState<number | null>(null);
 
@@ -52,7 +58,7 @@ function SeekSlider() {
       </Slider.Track>
       <Slider.Thumb
         className="radix-player__thumb"
-        aria-label="Seek"
+        aria-label={t(seekText)}
         aria-valuetext={formatTime(value, time.duration)}
       />
     </Slider.Root>

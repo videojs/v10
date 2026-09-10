@@ -34,7 +34,9 @@ import { disableText as captionsDisableText, enableText as captionsEnableText } 
 import { enterText as fullscreenEnterText, exitText as fullscreenExitText } from '@videojs/core/i18n/text/fullscreen';
 import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
 import { enterText as pipEnterText, exitText as pipExitText } from '@videojs/core/i18n/text/pip';
+import { seekText } from '@videojs/core/i18n/text/slider';
 import { showDurationText, showRemainingText } from '@videojs/core/i18n/text/time';
+import { labelText as volumeText } from '@videojs/core/i18n/text/volume';
 import {
   Container,
   Gesture,
@@ -190,7 +192,7 @@ function VolumeControl() {
               <Slider.Track className="radix-player__volume-track">
                 <Slider.Range className="radix-player__volume-range" />
               </Slider.Track>
-              <Slider.Thumb className="radix-player__thumb radix-player__thumb--always" aria-label="Volume" />
+              <Slider.Thumb className="radix-player__thumb radix-player__thumb--always" aria-label={t(volumeText)} />
             </Slider.Root>
           </Popover.Content>
         </Popover.Portal>
@@ -211,6 +213,7 @@ function SeekSlider() {
   const textTrack = usePlayer(selectTextTrack);
   const [dragValue, setDragValue] = useState<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const t = useTranslator();
   const thumbnails = useMemo(
     () => mapCuesToThumbnails(textTrack?.thumbnailCues ?? [], textTrack?.thumbnailTrackSrc ?? undefined),
     [textTrack?.thumbnailCues, textTrack?.thumbnailTrackSrc]
@@ -274,7 +277,11 @@ function SeekSlider() {
           );
         })}
       </Slider.Track>
-      <Slider.Thumb className="radix-player__thumb" aria-label="Seek" aria-valuetext={formatTime(value, duration)} />
+      <Slider.Thumb
+        className="radix-player__thumb"
+        aria-label={t(seekText)}
+        aria-valuetext={formatTime(value, duration)}
+      />
       {hoverTime !== null ? (
         <div
           className="radix-player__preview"
