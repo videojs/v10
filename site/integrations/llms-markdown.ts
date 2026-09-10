@@ -20,6 +20,7 @@ interface PageEntry {
 
 export default function llmsMarkdown(): AstroIntegration {
   let siteUrl = '';
+  const turndown = createTurndown();
 
   return {
     name: 'llms-markdown',
@@ -27,64 +28,31 @@ export default function llmsMarkdown(): AstroIntegration {
       'astro:config:done': ({ config }) => {
         siteUrl = config.site?.replace(/\/$/, '') ?? '';
       },
+      // Production writes `<page>.md` twins at build time. The dev server has no build step, so convert the rendered
+      // page on request instead; this keeps "Copy page" and "View as Markdown" working locally.
+      'astro:server:setup': ({ server }) => {
+        server.middlewares.use(async (req, res, next) => {
+          const pathname = (req.url ?? '').split('?')[0] ?? '';
+          if (!pathname.endsWith('.md')) return next();
+
+          const pagePath = pathname.slice(0, -'.md'.length) || '/';
+
+          try {
+            const response = await fetch(`http://${req.headers.host}${pagePath}`, { headers: { accept: 'text/html' } });
+            if (!response.ok) return next();
+
+            const page = convertPage(await response.text(), turndown);
+            if (!page) return next();
+
+            res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+            res.end(page.markdown + generatePageFooter(pagePath.slice(1), page.framework, siteUrl));
+          } catch (error) {
+            next(error);
+          }
+        });
+      },
       'astro:build:done': async ({ dir, pages, logger }) => {
         const siteDir = fileURLToPath(dir);
-        const turndown = new TurndownService({
-          headingStyle: 'atx',
-          codeBlockStyle: 'fenced',
-          emDelimiter: '*',
-        });
-
-        // Ensure [data-llms-only] content passes through despite hidden attribute
-        turndown.addRule('llms-only', {
-          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-llms-only') !== null,
-          replacement: (content) => content,
-        });
-
-        // Wrap [data-cli-replace] content with text markers the CLI can find and replace
-        turndown.addRule('cli-replace', {
-          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
-          replacement: (content, node) => {
-            const id = (node as Element).getAttribute('data-cli-replace');
-
-            return `\n<!-- cli:replace ${id} -->\n${content}\n<!-- /cli:replace ${id} -->\n`;
-          },
-        });
-
-        // Wrap [data-cli-omit] content with text markers the CLI strips from its output
-        turndown.addRule('cli-omit', {
-          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
-          replacement: (content, node) => {
-            const id = (node as Element).getAttribute('data-cli-omit');
-
-            return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
-          },
-        });
-
-        // Flatten docs link cards, whose block markup nests inside the <a>, into list items.
-        // Emitting a single leading/trailing newline keeps a run of adjacent cards as one tight list.
-        turndown.addRule('docs-link-card', {
-          filter: (node) => node.nodeType === 1 && hasClass(node as Element, 'docs-link-card'),
-          replacement: (_content, node) => {
-            const link = (node as Element).querySelector('a[href]');
-            if (!link) return '';
-
-            // Card body is either <span>title</span> or <div><div>title</div><div>description</div></div>,
-            // followed by a chevron icon.
-            const body = Array.from(link.children).find((child) => child.tagName.toLowerCase() !== 'svg');
-            const blocks = body ? Array.from(body.children) : [];
-            const hasDescription = blocks.length > 1;
-
-            const title = collapseWhitespace((hasDescription ? blocks[0] : body)?.textContent);
-            if (!title) return '';
-
-            const description = hasDescription ? collapseWhitespace(blocks[1]?.textContent) : '';
-            const href = link.getAttribute('href') ?? '';
-
-            return description ? `\n- [${title}](${href}): ${description}\n` : `\n- [${title}](${href})\n`;
-          },
-        });
-
         // Track pages for their llms.txt indexes
         const docsPages: PageEntry[] = [];
         const blogPages: PageEntry[] = [];
@@ -104,51 +72,10 @@ export default function llmsMarkdown(): AstroIntegration {
             const htmlPath = join(siteDir, pathname, 'index.html');
             const html = await readFile(htmlPath, 'utf-8');
 
-            // linkedom is a lightweight DOM-compatible parser — no CSS engine,
-            // no script execution, just enough DOM to run querySelector/cloneNode.
-            const { document } = parseHTML(html);
+            const page = convertPage(html, turndown);
+            if (!page) return;
 
-            // Check if page has llms content
-            const contentElements = document.querySelectorAll('[data-llms-content]');
-
-            if (contentElements.length === 0) {
-              // No llms content, skip silently
-              return;
-            }
-
-            // For each content element, strip non-content elements before conversion
-            const contentParts: string[] = [];
-
-            contentElements.forEach((contentEl) => {
-              const clone = contentEl.cloneNode(true) as Element;
-              const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
-
-              ignoreElements.forEach((el) => el.remove());
-
-              // Remove script and style tags (includes Astro island hydration scripts)
-              for (const tag of clone.querySelectorAll('script, style')) {
-                tag.remove();
-              }
-
-              contentParts.push(clone.innerHTML);
-            });
-
-            // Combine all content parts
-            const combinedHtml = contentParts.join('\n\n');
-            const markdown = turndown.turndown(combinedHtml);
-
-            // Extract title and description for llms.txt index
-            const titleElement = document.querySelector('h1');
-            const title = titleElement?.textContent?.trim() || 'Untitled';
-
-            const descriptionAttr = contentElements[0]?.getAttribute('data-llms-description');
-            const description = descriptionAttr || undefined;
-
-            const sortAttr = contentElements[0]?.getAttribute('data-llms-sort');
-            const sort = sortAttr || undefined;
-
-            const frameworkAttr = contentElements[0]?.getAttribute('data-framework');
-            const framework = frameworkAttr || undefined;
+            const { markdown, title, description, sort, framework } = page;
 
             // Write markdown file as sibling to the directory
             // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
@@ -253,6 +180,121 @@ export default function llmsMarkdown(): AstroIntegration {
       },
     },
   };
+}
+
+function createTurndown(): TurndownService {
+  const turndown = new TurndownService({
+    headingStyle: 'atx',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+  });
+
+  // Ensure [data-llms-only] content passes through despite hidden attribute
+  turndown.addRule('llms-only', {
+    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-llms-only') !== null,
+    replacement: (content) => content,
+  });
+
+  // Wrap [data-cli-replace] content with text markers the CLI can find and replace
+  turndown.addRule('cli-replace', {
+    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
+    replacement: (content, node) => {
+      const id = (node as Element).getAttribute('data-cli-replace');
+
+      return `\n<!-- cli:replace ${id} -->\n${content}\n<!-- /cli:replace ${id} -->\n`;
+    },
+  });
+
+  // Wrap [data-cli-omit] content with text markers the CLI strips from its output
+  turndown.addRule('cli-omit', {
+    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
+    replacement: (content, node) => {
+      const id = (node as Element).getAttribute('data-cli-omit');
+
+      return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
+    },
+  });
+
+  // Flatten docs link cards, whose block markup nests inside the <a>, into list items.
+  // Emitting a single leading/trailing newline keeps a run of adjacent cards as one tight list.
+  turndown.addRule('docs-link-card', {
+    filter: (node) => node.nodeType === 1 && hasClass(node as Element, 'docs-link-card'),
+    replacement: (_content, node) => {
+      const link = (node as Element).querySelector('a[href]');
+      if (!link) return '';
+
+      // Card body is either <span>title</span> or <div><div>title</div><div>description</div></div>,
+      // followed by a chevron icon.
+      const body = Array.from(link.children).find((child) => child.tagName.toLowerCase() !== 'svg');
+      const blocks = body ? Array.from(body.children) : [];
+      const hasDescription = blocks.length > 1;
+
+      const title = collapseWhitespace((hasDescription ? blocks[0] : body)?.textContent);
+      if (!title) return '';
+
+      const description = hasDescription ? collapseWhitespace(blocks[1]?.textContent) : '';
+      const href = link.getAttribute('href') ?? '';
+
+      return description ? `\n- [${title}](${href}): ${description}\n` : `\n- [${title}](${href})\n`;
+    },
+  });
+
+  return turndown;
+}
+
+interface ConvertedPage {
+  markdown: string;
+  title: string;
+  description?: string;
+  sort?: string;
+  framework?: string;
+}
+
+/** Convert a rendered page's `[data-llms-content]` regions to Markdown, or `null` when the page has none. */
+function convertPage(html: string, turndown: TurndownService): ConvertedPage | null {
+  // linkedom is a lightweight DOM-compatible parser — no CSS engine,
+  // no script execution, just enough DOM to run querySelector/cloneNode.
+  const { document } = parseHTML(html);
+
+  // Check if page has llms content
+  const contentElements = document.querySelectorAll('[data-llms-content]');
+  if (contentElements.length === 0) return null;
+
+  // For each content element, strip non-content elements before conversion
+  const contentParts: string[] = [];
+
+  contentElements.forEach((contentEl) => {
+    const clone = contentEl.cloneNode(true) as Element;
+    const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
+
+    ignoreElements.forEach((el) => el.remove());
+
+    // Remove script and style tags (includes Astro island hydration scripts)
+    for (const tag of clone.querySelectorAll('script, style')) {
+      tag.remove();
+    }
+
+    contentParts.push(clone.innerHTML);
+  });
+
+  // Combine all content parts
+  const combinedHtml = contentParts.join('\n\n');
+  const markdown = turndown.turndown(combinedHtml);
+
+  // Extract title and description for llms.txt index
+  const titleElement = document.querySelector('h1');
+  const title = titleElement?.textContent?.trim() || 'Untitled';
+
+  const descriptionAttr = contentElements[0]?.getAttribute('data-llms-description');
+  const description = descriptionAttr || undefined;
+
+  const sortAttr = contentElements[0]?.getAttribute('data-llms-sort');
+  const sort = sortAttr || undefined;
+
+  const frameworkAttr = contentElements[0]?.getAttribute('data-framework');
+  const framework = frameworkAttr || undefined;
+
+  return { markdown, title, description, sort, framework };
 }
 
 /** Element.classList is not implemented consistently across DOM shims, so read the attribute directly. */
