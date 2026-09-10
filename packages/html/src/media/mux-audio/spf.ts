@@ -1,10 +1,9 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { MuxAudioAdapter } from '@videojs/mux-audio/spf';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { audioHost, createMediaElement } from '../create-media-element';
 import { MuxAudioMixin } from './mixin';
 
-const MuxAudioBase = MuxAudioMixin(MediaAttachMixin(CustomMediaElement('audio', MuxAudioAdapter)));
+const MuxAudioBase = MuxAudioMixin(createMediaElement({ Adapter: MuxAudioAdapter, host: audioHost }));
 
 /**
  * `<mux-audio>` over the SPF audio-only Mux Media instead of the hls.js-backed one.
@@ -15,5 +14,10 @@ const MuxAudioBase = MuxAudioMixin(MediaAttachMixin(CustomMediaElement('audio', 
  *
  * The engine underneath is the subtractive audio-only one, so only the audio renditions of the playback ID are fetched
  * — unlike the hls.js-backed flavor, which runs the full engine and downloads video renditions it never plays.
+ *
+ * @mediaType audio
+ * @mediaTarget audio
  */
-export class MuxAudio extends MuxAudioBase {}
+export class MuxAudioElement extends MuxAudioBase {
+  static readonly tagName = 'mux-audio';
+}

@@ -39,6 +39,16 @@ export interface MediaExtensions extends Map<MediaExtensionConstructor, MediaExt
   set<T extends MediaExtension>(component: MediaExtensionConstructor<T>, instance: T): this;
 }
 
+const forwardedEvents = new WeakSet<Event>();
+
+/**
+ * Whether an event is an adapter's copy of one its target element dispatched. A composed copy already reached any
+ * element wrapping the target through the shadow boundary, so a bridge can leave it alone.
+ */
+export function isForwardedEvent(event: Event): boolean {
+  return forwardedEvents.has(event);
+}
+
 export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
   implements CommonMedia
@@ -119,7 +129,10 @@ export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends
   }
 
   #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    const copy = new (event.constructor as typeof Event)(event.type, event);
+
+    forwardedEvents.add(copy);
+    this.dispatchEvent(copy);
   };
 
   /**

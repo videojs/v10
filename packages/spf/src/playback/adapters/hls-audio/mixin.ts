@@ -1,3 +1,4 @@
+import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
@@ -26,6 +27,7 @@ export interface HlsAudioAdapterProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
+  streamType: MediaStreamType;
 }
 
 export interface HlsAudioAdapterAPI extends HlsAudioAdapterProps {
@@ -69,6 +71,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       src: '',
       preload: '',
       disableRemotePlayback: false,
+      streamType: MediaStreamTypes.UNKNOWN,
     };
 
     /**

@@ -1,10 +1,9 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { MuxVideoAdapter } from '@videojs/mux-video/spf';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement, videoHost } from '../create-media-element';
 import { MuxVideoMixin } from './mixin';
 
-const MuxVideoBase = MuxVideoMixin(MediaAttachMixin(CustomMediaElement('video', MuxVideoAdapter)));
+const MuxVideoBase = MuxVideoMixin(createMediaElement({ Adapter: MuxVideoAdapter, host: videoHost }));
 
 /**
  * `<mux-video>` over the SPF-backed Mux Media instead of the hls.js-backed one.
@@ -12,5 +11,10 @@ const MuxVideoBase = MuxVideoMixin(MediaAttachMixin(CustomMediaElement('video', 
  * Shares its name with the flavor in `./hls-js` on purpose: the import path picks the engine, and nothing else about
  * the surface moves. Deliberately not exported from this directory's barrel, so importing one flavor never pulls the
  * other's engine in with it.
+ *
+ * @mediaType video
+ * @mediaTarget video
  */
-export class MuxVideo extends MuxVideoBase {}
+export class MuxVideoElement extends MuxVideoBase {
+  static readonly tagName = 'mux-video';
+}

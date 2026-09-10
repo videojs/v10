@@ -18,6 +18,7 @@ import { abbreviateType, formatDetailedType } from './formatter.js';
 import {
   expressionText,
   getJSDocDescription,
+  getJSDocTag,
   type NamedDeclaration,
   type OxcProject,
   OxcProject as Project,
@@ -40,7 +41,7 @@ import type {
   ReactMediaReference,
 } from './types.js';
 
-const HOST_BASE_CLASSES = new Set(['HTMLMediaAdapter', 'HTMLVideoAdapter', 'HTMLAudioAdapter', 'EventTarget']);
+const ADAPTER_BASE_CLASSES = new Set(['HTMLMediaAdapter', 'HTMLVideoAdapter', 'HTMLAudioAdapter', 'EventTarget']);
 const EXCLUDED_METHOD_NAMES = new Set([
   'attach',
   'detach',
@@ -104,8 +105,8 @@ interface MediaElementSource {
   className: string;
   tagName: string;
   mediaFilePath: string;
-  hostFilePath: string;
-  hostClassName: string;
+  adapterFilePath: string;
+  adapterClassName: string;
   mediaType: 'video' | 'audio';
   targetTag: MediaTargetTag;
 }
@@ -115,7 +116,7 @@ interface StaticMediaProperty {
   attribute: string;
 }
 
-interface HostExtraction {
+interface AdapterExtraction {
   properties: Record<string, HostPropertyDef>;
   files: string[];
 }
@@ -131,13 +132,9 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const sources = discoverMediaElements(monorepoRoot, project);
   if (sources.length === 0) return [];
 
-  const customMediaPath = path.join(
-    monorepoRoot,
-    'packages/media/src/dom/custom-media-element/custom-media-element.ts'
-  );
-  if (!fs.existsSync(customMediaPath)) return [];
+  const templatesPath = path.join(monorepoRoot, 'packages/media/src/dom/custom-media-element/templates.ts');
+  if (!fs.existsSync(templatesPath)) return [];
 
-  const staticProperties = extractStaticProperties(customMediaPath, project);
   const mediaTypesPath = path.join(monorepoRoot, 'packages/media/src/core/types.ts');
   const videoEvents = extractEventsFromTypes(mediaTypesPath, 'VideoEvents', project);
   const audioEvents = extractEventsFromTypes(mediaTypesPath, 'AudioEvents', project);
@@ -145,51 +142,63 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     ...extractEventsFromTypes(mediaTypesPath, 'MediaStreamTypeEvents', project),
     ...extractEventsFromTypes(mediaTypesPath, 'MediaLiveEvents', project),
   ]);
-  const mediaHostPath = path.join(monorepoRoot, 'packages/media/src/dom/html-media-adapter/html-media-adapter.ts');
-  const videoHostPath = path.join(monorepoRoot, 'packages/media/src/dom/html-video-adapter/html-video-adapter.ts');
-  const audioHostPath = path.join(monorepoRoot, 'packages/media/src/dom/html-audio-adapter/html-audio-adapter.ts');
-  const baseMethods = extractPublicMethodNames(mediaHostPath, 'HTMLMediaAdapter', project);
-  const videoMethods = mergeNames(baseMethods, extractPublicMethodNames(videoHostPath, 'HTMLVideoAdapter', project));
-  const audioMethods = mergeNames(baseMethods, extractPublicMethodNames(audioHostPath, 'HTMLAudioAdapter', project));
+  const mediaAdapterPath = path.join(monorepoRoot, 'packages/media/src/dom/html-media-adapter/html-media-adapter.ts');
+  const videoAdapterPath = path.join(monorepoRoot, 'packages/media/src/dom/html-video-adapter/html-video-adapter.ts');
+  const audioAdapterPath = path.join(monorepoRoot, 'packages/media/src/dom/html-audio-adapter/html-audio-adapter.ts');
+  const hostAttributesPath = path.join(monorepoRoot, 'packages/media/src/dom/custom-media-element/host-attributes.ts');
+  const baseMethods = extractPublicMethodNames(mediaAdapterPath, 'HTMLMediaAdapter', project);
+  const videoMethods = mergeNames(baseMethods, extractPublicMethodNames(videoAdapterPath, 'HTMLVideoAdapter', project));
+  const audioMethods = mergeNames(baseMethods, extractPublicMethodNames(audioAdapterPath, 'HTMLAudioAdapter', project));
   const nativeNames = collectNativeMemberNames();
-  const baseHost = extractHostProperties(mediaHostPath, 'HTMLMediaAdapter', project, nativeNames);
-  const videoHost = extractHostProperties(videoHostPath, 'HTMLVideoAdapter', project, nativeNames);
-  const audioHost = extractHostProperties(audioHostPath, 'HTMLAudioAdapter', project, nativeNames);
-  const videoBaseSurface = { ...baseHost.properties, ...videoHost.properties };
-  const audioBaseSurface = { ...baseHost.properties, ...audioHost.properties };
-  const videoCSSVars = cssVarsRecord(extractCSSVars(customMediaPath, project, 'Video'));
-  const audioCSSVars = cssVarsRecord(extractCSSVars(customMediaPath, project, 'Audio'));
+  const baseAdapter = extractAdapterProperties(mediaAdapterPath, 'HTMLMediaAdapter', project, nativeNames);
+  const videoAdapter = extractAdapterProperties(videoAdapterPath, 'HTMLVideoAdapter', project, nativeNames);
+  const audioAdapter = extractAdapterProperties(audioAdapterPath, 'HTMLAudioAdapter', project, nativeNames);
+  const videoBaseSurface = { ...baseAdapter.properties, ...videoAdapter.properties };
+  const audioBaseSurface = { ...baseAdapter.properties, ...audioAdapter.properties };
+  const videoCSSVars = cssVarsRecord(extractCSSVars(templatesPath, project, 'Video'));
+  const audioCSSVars = cssVarsRecord(extractCSSVars(templatesPath, project, 'Audio'));
+  // The content attributes each built-in host accepts, declared by the host layer.
+  const nativeAttributes = {
+    video: extractAttributeConfigs(hostAttributesPath, 'videoContentAttributes', project),
+    audio: extractAttributeConfigs(hostAttributesPath, 'audioContentAttributes', project),
+    iframe: [],
+  };
   const results: MediaElementResult[] = [];
 
   for (const source of sources) {
-    const host = extractHostProperties(source.hostFilePath, source.hostClassName, project, nativeNames);
+    const adapter = extractAdapterProperties(source.adapterFilePath, source.adapterClassName, project, nativeNames);
     const baseSurface =
       source.targetTag === 'video' ? videoBaseSurface : source.targetTag === 'audio' ? audioBaseSurface : {};
-    const publicProperties = { ...baseSurface, ...host.properties };
+    const publicProperties = { ...baseSurface, ...adapter.properties };
     const propertyDefinitions: Record<string, HostPropertyDef> = {};
 
     for (const [name, definition] of Object.entries(baseSurface)) {
       if (!definition.overridesNative) propertyDefinitions[name] = definition;
     }
 
-    Object.assign(propertyDefinitions, host.properties);
+    Object.assign(propertyDefinitions, adapter.properties);
 
-    const standardAttributes: string[] = [];
+    // Standard attributes are the host's native ones. Custom attributes derive from the adapter's `defaultProps`, one
+    // per primitive default, the same rule the element applies at runtime.
+    const native = nativeAttributes[source.targetTag];
+    const standardAttributes = native.map(({ attribute }) => attribute);
+    const nativeAttributeOf = new Map(native.map(({ property, attribute }) => [property, attribute]));
     const customAttributes: Record<string, HostPropertyDef> = {};
 
-    for (const { property, attribute } of staticProperties) {
+    for (const [property, value] of collectFileDefaults(source.adapterFilePath, project)) {
+      if (STATE_PROPS.has(property) || !isPrimitiveDefault(value)) continue;
+
+      const attribute = nativeAttributeOf.get(property) ?? attributeNameFor(property, nativeAttributes.video);
+      if (standardAttributes.includes(attribute)) continue;
+
       const definition = publicProperties[property];
 
-      if (source.targetTag === 'iframe') {
-        if (definition) customAttributes[attribute] = { ...definition, readonly: false };
-      } else if (definition && !definition.overridesNative) {
-        customAttributes[attribute] = { ...definition, readonly: false };
-      } else {
-        standardAttributes.push(attribute);
-      }
+      customAttributes[attribute] = definition
+        ? { ...definition, readonly: false, default: value }
+        : { type: primitiveTypeOf(value), readonly: false, default: value };
     }
 
-    const files = [...new Set(host.files)];
+    const files = [...new Set(adapter.files)];
     const fires = collectFires(files, project);
     const dispatched = collectDispatchedEvents(files, project);
     const contractEvents = source.mediaType === 'video' ? videoEvents : audioEvents;
@@ -214,10 +223,10 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       source.targetTag === 'video' ? videoMethods : source.targetTag === 'audio' ? audioMethods : [];
     const methods = mergeNames(
       baseMethodNames,
-      extractPublicMethodNames(source.hostFilePath, source.hostClassName, project)
+      extractPublicMethodNames(source.adapterFilePath, source.adapterClassName, project)
     );
     const nativeProperties = Object.entries(baseSurface)
-      .filter(([name, definition]) => definition.overridesNative && !(name in host.properties))
+      .filter(([name, definition]) => definition.overridesNative && !(name in adapter.properties))
       .map(([name]) => name)
       .sort();
     const react = extractReactReference(monorepoRoot, source, project, publicProperties);
@@ -268,42 +277,93 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
       const file = project.source(filePath);
       if (!file) continue;
 
-      for (const statement of file.program.body) {
-        if (statement.type !== 'ExportNamedDeclaration' || statement.declaration?.type !== 'ClassDeclaration') continue;
-
-        const declaration = statement.declaration;
+      for (const candidate of registeredElements(file, project)) {
+        const { file: elementFile, declaration } = candidate;
         const name = declaration.id?.name;
         const tagName = staticStringClassProperty(declaration, 'tagName');
-        const base = declaration.superClass;
-        if (!name || !tagName || base?.type !== 'Identifier') continue;
+        if (!name || !tagName) continue;
 
-        const mediaDeclaration = project.resolveName(filePath, base.name);
-        if (!mediaDeclaration || mediaDeclaration.declaration.type !== 'ClassDeclaration') continue;
+        // The element class composes the factory in its own extends clause; an older shape subclassed a media class
+        // declared elsewhere, so follow one identifier up when the composition is not here.
+        let composition = findCustomMediaComposition(elementFile, declaration, project);
+        let mediaDeclaration = { file: elementFile, declaration };
 
-        const composition = findCustomMediaComposition(mediaDeclaration.file, mediaDeclaration.declaration, project);
+        if (!composition && declaration.superClass?.type === 'Identifier') {
+          const base = project.resolveName(elementFile.filePath, declaration.superClass.name);
+          if (!base || base.declaration.type !== 'ClassDeclaration') continue;
+
+          mediaDeclaration = { file: base.file, declaration: base.declaration };
+          composition = findCustomMediaComposition(base.file, base.declaration, project);
+        }
+
         if (!composition) continue;
 
-        const host = project.resolveName(mediaDeclaration.file.filePath, composition.hostClassName);
-        if (!host || host.declaration.type !== 'ClassDeclaration') continue;
+        const adapter = project.resolveName(mediaDeclaration.file.filePath, composition.adapterClassName);
+        if (!adapter || adapter.declaration.type !== 'ClassDeclaration') continue;
 
-        // The composition may name the host through an import alias; property extraction needs the declared name.
-        const hostClassName = host.declaration.id?.name ?? composition.hostClassName;
+        // The composition may name the adapter through an import alias; property extraction needs the declared name.
+        const adapterClassName = adapter.declaration.id?.name ?? composition.adapterClassName;
+        const mediaType = getJSDocTag(elementFile, declaration, 'mediaType');
+        const targetTag = getJSDocTag(elementFile, declaration, 'mediaTarget');
+        if ((mediaType !== 'video' && mediaType !== 'audio') || !isMediaTargetTag(targetTag)) continue;
+
+        const className = stripElementSuffix(name);
 
         sources.push({
           defineFilePath: filePath,
-          className: stripElementSuffix(name),
+          className,
           tagName,
           mediaFilePath: mediaDeclaration.file.filePath,
-          hostFilePath: host.file.filePath,
-          hostClassName,
-          mediaType: composition.mediaType,
-          targetTag: composition.targetTag,
+          adapterFilePath: adapter.file.filePath,
+          adapterClassName,
+          mediaType,
+          targetTag,
         });
       }
     }
   }
 
   return sources;
+}
+
+/**
+ * The element classes a define file registers: what it passes to `safeDefine()`, resolved to the class declaration in
+ * the media directory, plus any class it declares itself with a static `tagName`.
+ */
+function registeredElements(file: SourceFile, project: OxcProject): { file: SourceFile; declaration: Class }[] {
+  const elements: { file: SourceFile; declaration: Class }[] = [];
+  const seen = new Set<string>();
+
+  for (const statement of file.program.body) {
+    if (
+      statement.type === 'ExpressionStatement' &&
+      statement.expression.type === 'CallExpression' &&
+      statement.expression.callee.type === 'Identifier' &&
+      statement.expression.callee.name === 'safeDefine' &&
+      statement.expression.arguments[0]?.type === 'Identifier'
+    ) {
+      const resolved = project.resolveName(file.filePath, statement.expression.arguments[0].name);
+      const key = resolved && `${resolved.file.filePath}#${statement.expression.arguments[0].name}`;
+
+      if (resolved?.declaration.type === 'ClassDeclaration' && key && !seen.has(key)) {
+        seen.add(key);
+        elements.push({ file: resolved.file, declaration: resolved.declaration });
+      }
+
+      continue;
+    }
+
+    if (statement.type === 'ExportNamedDeclaration' && statement.declaration?.type === 'ClassDeclaration') {
+      const key = `${file.filePath}#${statement.declaration.id?.name}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        elements.push({ file, declaration: statement.declaration });
+      }
+    }
+  }
+
+  return elements;
 }
 
 function publicImplementationFiles(entryPath: string, project: OxcProject, visited: Set<string>): string[] {
@@ -326,11 +386,13 @@ function publicImplementationFiles(entryPath: string, project: OxcProject, visit
   return [absolute, ...reexports];
 }
 
+const MEDIA_ELEMENT_FACTORIES = new Set(['CustomMediaElement', 'createMediaElement']);
+
 function findCustomMediaComposition(
   file: SourceFile,
   declaration: Class,
   project: OxcProject
-): { hostClassName: string; mediaType: 'video' | 'audio'; targetTag: MediaTargetTag } | undefined {
+): { adapterClassName: string } | undefined {
   const expressions: Expression[] = [];
 
   if (declaration.superClass) expressions.push(resolveLocalExpression(file, declaration.superClass, project));
@@ -342,37 +404,23 @@ function findCustomMediaComposition(
   }
 
   for (const expression of expressions) {
-    let found: { hostClassName: string; mediaType: 'video' | 'audio'; targetTag: MediaTargetTag } | undefined;
+    let found: { adapterClassName: string } | undefined;
 
     walkAst(expression, (node) => {
       if (found || node.type !== 'CallExpression' || node.callee.type !== 'Identifier') return;
 
-      if (node.callee.name !== 'CustomMediaElement' || node.arguments.length < 2) return;
+      if (!MEDIA_ELEMENT_FACTORIES.has(node.callee.name) || node.arguments.length < 1) return;
 
-      const target = node.arguments[0];
-      const host = node.arguments[1];
+      const argument = node.arguments[0];
+      if (!argument || argument.type === 'SpreadElement') return;
 
-      if (
-        !target ||
-        target.type !== 'Literal' ||
-        typeof target.value !== 'string' ||
-        !['video', 'audio', 'iframe'].includes(target.value) ||
-        !host ||
-        host.type !== 'Identifier'
-      ) {
-        return;
-      }
+      const config = unwrapObjectExpression(argument);
+      const adapter = config?.properties.find(
+        (property) => property.type === 'Property' && staticName(property.key) === 'Adapter'
+      );
+      if (adapter?.type !== 'Property' || adapter.value.type !== 'Identifier') return;
 
-      const targetTag = target.value as MediaTargetTag;
-
-      found = {
-        hostClassName: host.name,
-        targetTag,
-        mediaType:
-          targetTag === 'audio' || (targetTag === 'iframe' && declaration.id?.name.endsWith('Audio'))
-            ? 'audio'
-            : 'video',
-      };
+      found = { adapterClassName: adapter.value.name };
     });
 
     if (found) return found;
@@ -381,12 +429,16 @@ function findCustomMediaComposition(
   return undefined;
 }
 
-function extractHostProperties(
+function isMediaTargetTag(value: string | undefined): value is MediaTargetTag {
+  return value === 'video' || value === 'audio' || value === 'iframe';
+}
+
+function extractAdapterProperties(
   filePath: string,
   className: string,
   project: OxcProject,
   nativeNames: Set<string>
-): HostExtraction {
+): AdapterExtraction {
   const properties: Record<string, HostPropertyDef> = {};
   const files: string[] = [];
 
@@ -452,7 +504,7 @@ function walkExtends(
   const value = resolveLocalExpression(file, expression, project);
 
   if (value.type === 'Identifier') {
-    if (!HOST_BASE_CLASSES.has(value.name)) {
+    if (!ADAPTER_BASE_CLASSES.has(value.name)) {
       walkClassSurface(file.filePath, value.name, project, properties, nativeNames, files, visited);
     }
 
@@ -612,7 +664,7 @@ function extractEngineOptions(
   source: MediaElementSource,
   project: OxcProject
 ): Record<string, EngineOptionDef[]> | undefined {
-  const sourceType = findAccessorType(source.hostFilePath, source.hostClassName, 'source', project);
+  const sourceType = findAccessorType(source.adapterFilePath, source.adapterClassName, 'source', project);
   if (!sourceType) return undefined;
 
   const engineType = propertyType(project, nonNullable(sourceType), 'engine');
@@ -1004,38 +1056,76 @@ function serializeDefault(expression: Expression, file: SourceFile, project: Oxc
   return undefined;
 }
 
-function extractStaticProperties(filePath: string, project: OxcProject): StaticMediaProperty[] {
-  const file = project.source(filePath);
-  if (!file) return [];
+/** Live playback state has no content attribute, even when an adapter lists a default for it. */
+const STATE_PROPS = new Set(['muted', 'volume', 'currentTime', 'playbackRate']);
+
+/**
+ * Whether a serialized default becomes an attribute: a `false` boolean, a number, or a string. A boolean that defaults
+ * to `true` stays property-only, since an absent attribute cannot mean `true`.
+ */
+function isPrimitiveDefault(value: string): boolean {
+  return value === 'false' || /^-?\d/.test(value) || /^['"`]/.test(value);
+}
+
+function primitiveTypeOf(value: string): string {
+  if (value === 'true' || value === 'false') return 'boolean';
+
+  return /^-?\d/.test(value) ? 'number' : 'string';
+}
+
+/** The attribute a derived property reflects through: its WHATWG spelling if the video host names it, else kebab-case. */
+function attributeNameFor(property: string, video: StaticMediaProperty[]): string {
+  return (
+    video.find((entry) => entry.property === property)?.attribute ??
+    property.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
+  );
+}
+
+/**
+ * The `{ property: { type, attribute? } }` entries of an exported attribute-config const, following spreads of other
+ * consts such as `videoContentAttributes` spreading `mediaContentAttributes`.
+ */
+function extractAttributeConfigs(filePath: string, constName: string, project: OxcProject): StaticMediaProperty[] {
+  const declaration = project.resolveName(filePath, constName);
+  if (declaration?.declaration.type !== 'VariableDeclarator' || !declaration.declaration.init) return [];
+
+  // `audioContentAttributes = mediaContentAttributes` names another const rather than spelling its own literal.
+  const initializer = unwrapExpression(declaration.declaration.init);
+
+  if (initializer.type === 'Identifier') {
+    return extractAttributeConfigs(declaration.file.filePath, initializer.name, project);
+  }
+
+  const resolved = resolveConstObject(filePath, constName, project);
+  if (!resolved) return [];
 
   const properties: StaticMediaProperty[] = [];
 
-  walkAst(file.program, (node) => {
-    if (node.type !== 'PropertyDefinition' || !node.static || staticName(node.key) !== 'properties' || !node.value) {
-      return;
+  for (const property of resolved.object.properties) {
+    if (property.type === 'SpreadElement') {
+      if (property.argument.type === 'Identifier') {
+        properties.push(...extractAttributeConfigs(resolved.file.filePath, property.argument.name, project));
+      }
+
+      continue;
     }
 
-    const object = unwrapObjectExpression(node.value);
-    if (!object) return;
+    if (property.type !== 'Property' || property.kind !== 'init') continue;
 
-    for (const property of object.properties) {
-      if (property.type !== 'Property' || property.kind !== 'init') continue;
+    const name = staticName(property.key);
+    if (!name) continue;
 
-      const name = staticName(property.key);
-      if (!name) continue;
+    const config = unwrapObjectExpression(property.value);
+    const attributeProperty = config?.properties.find(
+      (entry) => entry.type === 'Property' && staticName(entry.key) === 'attribute'
+    );
+    const attribute =
+      attributeProperty?.type === 'Property' && attributeProperty.value.type === 'Literal'
+        ? attributeProperty.value.value
+        : undefined;
 
-      const config = unwrapObjectExpression(property.value);
-      const attributeProperty = config?.properties.find(
-        (entry) => entry.type === 'Property' && staticName(entry.key) === 'attribute'
-      );
-      const attribute =
-        attributeProperty?.type === 'Property' && attributeProperty.value.type === 'Literal'
-          ? attributeProperty.value.value
-          : undefined;
-
-      properties.push({ property: name, attribute: typeof attribute === 'string' ? attribute : name.toLowerCase() });
-    }
-  });
+    properties.push({ property: name, attribute: typeof attribute === 'string' ? attribute : name.toLowerCase() });
+  }
 
   return properties;
 }
@@ -1063,8 +1153,6 @@ function extractReactReference(
   })[0];
   const file = reactSource && 'file' in reactSource ? reactSource.file : reactSource;
   if (!file) return undefined;
-
-  const filePath = file.filePath;
 
   let target: MediaTargetTag | undefined;
   let acceptsNativeProps = false;

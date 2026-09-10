@@ -9,7 +9,7 @@ import {
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BackgroundVideo } from '../../media/background-video';
+import { BackgroundVideoElement } from '../../media/background-video';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { ContainerElement } from '../../ui/container/element';
 import { UIElement } from '../../ui/ui-element';
@@ -186,7 +186,7 @@ describe('createPlayer', () => {
   it('does not retain disconnected context media as a native fallback', async () => {
     const { PlayerElement } = createPlayer({ features: backgroundFeatures });
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
-    const background = document.createElement(defineTestElement(BackgroundVideo));
+    const background = document.createElement(defineTestElement(BackgroundVideoElement));
     const video = document.createElement('video');
 
     video.slot = 'media';

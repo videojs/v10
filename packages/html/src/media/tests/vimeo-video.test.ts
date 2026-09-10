@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { VimeoVideo } from '../vimeo-video/adapter';
+import { VimeoVideoElement } from '../vimeo-video/element';
 
 let tagCounter = 0;
 
 function defineVimeoVideo(): string {
   const tag = `test-vimeo-video-${tagCounter++}`;
 
-  customElements.define(tag, class extends VimeoVideo {});
+  customElements.define(tag, class extends VimeoVideoElement {});
   return tag;
 }
 
@@ -21,7 +21,7 @@ async function flushDeferredEmbed(): Promise<void> {
   await Promise.resolve();
 }
 
-describe('VimeoVideo', () => {
+describe('VimeoVideoElement', () => {
   it('builds the embed for a src set after the element is created', async () => {
     const tag = defineVimeoVideo();
 
