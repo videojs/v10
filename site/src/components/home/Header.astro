@@ -58,6 +58,35 @@ const { poster } = Astro.props;
   </p>
 </header>
 
+<script is:inline>
+  // Start the title-first reveal once the poster is decoded, or after a short grace period if it never arrives.
+  (() => {
+    const header = document.querySelector("[data-hero-reveal]");
+    if (!header) return;
+
+    const poster = header.querySelector("[data-hero-video] img");
+    let fallback;
+    const ready = () => {
+      if (header.hasAttribute("data-hero-ready")) return;
+
+      clearTimeout(fallback);
+
+      // Keep the title-first beat at ~900ms from navigation, but never add it on top of a slow poster.
+      header.style.setProperty("--hero-delay", `${Math.max(0, 900 - performance.now())}ms`);
+      header.setAttribute("data-hero-ready", "");
+    };
+
+    if (!poster || poster.complete) {
+      ready();
+      return;
+    }
+
+    poster.addEventListener("load", ready, { once: true });
+    poster.addEventListener("error", ready, { once: true });
+    fallback = setTimeout(ready, 2500);
+  })();
+</script>
+
 <style>
   /*
    * Title-first reveal. The headline paints alone on the page colour, then the video fades in beneath it while the
@@ -73,16 +102,32 @@ const { poster } = Astro.props;
       --hero-title-from: var(--color-manila-light);
     }
 
+    /* Paused until the poster has loaded, so the fade always reveals an image rather than an empty frame. */
     [data-hero-video] {
-      animation: hero-video-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) 900ms both;
+      animation: hero-video-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--hero-delay, 900ms) both paused;
     }
 
     [data-hero-title] {
-      animation: hero-title-in 1100ms ease 900ms both;
+      animation: hero-title-in 1100ms ease var(--hero-delay, 900ms) both paused;
     }
 
     [data-hero-title-outline] {
-      animation: hero-outline-in 1100ms ease 900ms both;
+      animation: hero-outline-in 1100ms ease var(--hero-delay, 900ms) both paused;
+    }
+
+    [data-hero-ready] [data-hero-video],
+    [data-hero-ready] [data-hero-title],
+    [data-hero-ready] [data-hero-title-outline] {
+      animation-play-state: running;
+    }
+  }
+
+  /* Without scripting nothing can flip the ready flag; show the finished hero instead of a paused animation. */
+  @media (scripting: none) {
+    [data-hero-video],
+    [data-hero-title],
+    [data-hero-title-outline] {
+      animation: none;
     }
   }
 

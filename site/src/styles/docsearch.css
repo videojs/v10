@@ -151,8 +151,46 @@
 .DocSearch-Button-Keys {
   display: none;
   gap: var(--spacing);
-  min-width: 0;
+  /* Reserve the two keys' width so the trigger does not reflow when they arrive. */
+  min-width: calc(var(--spacing) * 13);
   margin-left: calc(var(--spacing) * 2);
+  justify-content: flex-end;
+}
+
+/*
+ * DocSearch only knows the platform's modifier key after hydration, so the server renders an empty keys container.
+ * Show two blank key shapes until then, and fade the real keys in over them instead of popping.
+ */
+.DocSearch-Button-Keys:empty::before,
+.DocSearch-Button-Keys:empty::after {
+  display: block;
+  width: calc(var(--spacing) * 6);
+  height: calc(var(--spacing) * 5);
+  content: "";
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.dark .DocSearch-Button-Keys:empty::before,
+.dark .DocSearch-Button-Keys:empty::after {
+  background: var(--color-warm-gray);
+}
+
+.DocSearch-Button .DocSearch-Button-Key {
+  animation: docsearch-key-in 240ms ease-out both;
+}
+
+@keyframes docsearch-key-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .DocSearch-Button .DocSearch-Button-Key {
+    animation: none;
+  }
 }
 
 .DocSearch-Button-Key,
