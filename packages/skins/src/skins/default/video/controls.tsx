@@ -1,4 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
+import type { PropsOf } from 'vjsc/components';
 
 import { AirPlayButton } from '../../../components/buttons/airplay-button';
 import { ButtonTooltip } from '../../../components/buttons/button-tooltip';
@@ -14,7 +15,11 @@ import timeStyles from '../../../styles/layout/time.styles';
 import { VideoSettingsMenu } from '../../shared/video/settings-menu';
 import styles from './controls.styles';
 
-export function DefaultVideoControls() {
+export interface DefaultVideoControlsProps {
+  renderThumbnail?: PropsOf<typeof TimeSlider>['renderThumbnail'];
+}
+
+export function DefaultVideoControls({ renderThumbnail }: DefaultVideoControlsProps = {}) {
   return (
     <$.Controls.Root>
       <$.Controls.Backdrop className={controlsStyles.backdrop} />
@@ -28,7 +33,7 @@ export function DefaultVideoControls() {
 
             <$.Controls.Group className={styles.timeSliderGroup}>
               <$.Time.Value className={[timeStyles.value, styles.timeValue]} type="current" />
-              <TimeSlider />
+              <TimeSlider renderThumbnail={renderThumbnail} />
               <$.Time.Value className={[timeStyles.toggle, styles.timeValue]} type="remaining" toggle />
             </$.Controls.Group>
 

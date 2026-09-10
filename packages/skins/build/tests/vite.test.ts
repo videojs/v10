@@ -248,6 +248,8 @@ describe('Skins Vite workflow', () => {
     expect(html?.code).toContain('[&[data-loading]>slot::slotted(img)]:opacity-0');
     expect(react?.code).not.toContain('::slotted');
     expect(react?.code).not.toContain('"thumbnail"');
+    // React has no slot to fill, so the same override arrives as the image's `render` prop instead.
+    expect(react?.code).toMatch(/_jsxDEV\(SliderPrimitive\.Thumbnail\.Image, \{\s+render: renderThumbnail/);
   }, 30_000);
 
   it('hides source-less poster images for both targets', async () => {

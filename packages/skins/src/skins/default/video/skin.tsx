@@ -14,9 +14,16 @@ import { DefaultVideoControls } from './controls';
 export interface DefaultVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
   renderPoster?: PropsOf<typeof Poster>['renderImage'];
+  renderThumbnail?: PropsOf<typeof DefaultVideoControls>['renderThumbnail'];
 }
 
-export function DefaultVideoSkin({ children, className, renderPoster, ...props }: DefaultVideoSkinProps = {}) {
+export function DefaultVideoSkin({
+  children,
+  className,
+  renderPoster,
+  renderThumbnail,
+  ...props
+}: DefaultVideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="default" data-preset="video" {...props}>
       <Slot>{children}</Slot>
@@ -24,7 +31,7 @@ export function DefaultVideoSkin({ children, className, renderPoster, ...props }
       <BufferingIndicator />
       <ErrorDialog />
 
-      <DefaultVideoControls />
+      <DefaultVideoControls renderThumbnail={renderThumbnail} />
 
       <VideoHotkeys />
       <VideoGestures />

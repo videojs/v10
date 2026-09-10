@@ -38,6 +38,8 @@ function App() {
               />
             ) : undefined
           }
+          // Replaces the skin's preview image so it can carry its own loading hints; the skin still fills in the frame.
+          renderThumbnail={<img alt="" decoding="async" fetchPriority="low" />}
           live={live}
         >
           {/* The storyboard track is derived automatically from the Mux src. */}

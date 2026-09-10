@@ -34,7 +34,11 @@ With <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, the storyboard tr
 Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
 
 <FrameworkCase frameworks={["react"]}>
-Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image settings such as `crossOrigin`, `loading`, and `fetchPriority` on the image part.
+Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image settings such as `crossOrigin`, `loading`, and `fetchPriority` on the image part. Inside a packaged skin, pass `renderThumbnail` to draw the image yourself; the skin still supplies `src` and sizing:
+
+```tsx
+<VideoSkin renderThumbnail={<img alt="" loading="lazy" fetchPriority="low" />} />
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>

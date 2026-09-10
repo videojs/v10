@@ -188,6 +188,7 @@ type VideoSkinComponentProps = { live?: boolean } & VideoSkinProps;
 export function VideoSkinComponent({
   live = false,
   className = PLAYER_FRAME_CLASSES.video,
+  renderThumbnail,
   ...props
 }: VideoSkinComponentProps) {
   const { skin, styling, skins, source, captions } = useSandbox();
@@ -203,8 +204,17 @@ export function VideoSkinComponent({
 
   if (!Component) return null;
 
+  // The live skin has no time slider, so it takes no thumbnail override; the prop would land on its container.
+  const thumbnailProps: Pick<VideoSkinProps, 'renderThumbnail'> = live ? {} : { renderThumbnail };
+
   // SAFETY: React 19 hands `ref` to a function component as a prop, and every skin spreads its props onto the container.
-  return createElement(Component, { ...props, ...directionProps, className, ref: rootRef } as VideoSkinProps);
+  return createElement(Component, {
+    ...props,
+    ...thumbnailProps,
+    ...directionProps,
+    className,
+    ref: rootRef,
+  } as VideoSkinProps);
 }
 
 type AudioSkinComponentProps = { live?: boolean } & AudioSkinProps;

@@ -71,6 +71,33 @@ describe('VideoSkin', () => {
     expect(custom?.getAttribute('style')).toContain('poster-placeholder.jpg');
   });
 
+  it('lets renderThumbnail draw the slider preview image', () => {
+    const { container } = render(
+      <VideoSkin renderThumbnail={<img data-testid="custom" fetchPriority="low" loading="lazy" alt="" />} />,
+      {
+        // The time slider only renders with the time and buffer features present.
+        wrapper: wrapper({
+          controlsVisible: true,
+          userActive: true,
+          requestControlsLock: () => () => {},
+          currentTime: 0,
+          duration: 100,
+          seeking: false,
+          seek: async () => {},
+          buffered: [],
+          seekable: [],
+        }),
+      }
+    );
+
+    const custom = container.querySelector('.media-slider-thumbnail > [data-testid="custom"]');
+
+    expect(container.querySelectorAll('.media-slider-thumbnail > img')).toHaveLength(1);
+    expect(custom?.getAttribute('fetchpriority')).toBe('low');
+    expect(custom?.getAttribute('loading')).toBe('lazy');
+    expect(custom?.classList.contains('media-slider-thumbnail-image')).toBe(true);
+  });
+
   it('lets renderPoster draw something that is not an image', () => {
     const { container } = render(<VideoSkin renderPoster={(props) => <div {...props} data-testid="custom" />} />, {
       wrapper: wrapper(),

@@ -76,6 +76,7 @@ export async function createReactPackageSkins(
         generatedComponent,
         importSource: relativeImport(`${publicRoot}/${publicName}.tsx`, generatedRoot),
         video: skin.preset.endsWith('video'),
+        live: skin.preset.startsWith('live'),
       })
     );
     addGenerated(
@@ -189,9 +190,11 @@ function reactSkinWrapper(options: {
   readonly generatedComponent: string;
   readonly importSource: string;
   readonly video: boolean;
+  /** Live skins have no time slider, so they take no thumbnail render override. */
+  readonly live: boolean;
 }): string {
   const props = `${options.component}Props`;
-  const base = options.video ? 'BaseVideoSkinProps' : 'BaseSkinProps';
+  const base = options.video ? (options.live ? 'BaseVideoSkinProps' : 'OnDemandVideoSkinProps') : 'BaseSkinProps';
 
   return `'use client';
 

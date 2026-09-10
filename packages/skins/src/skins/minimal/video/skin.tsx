@@ -14,9 +14,16 @@ import { MinimalVideoControls } from './controls';
 export interface MinimalVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
   renderPoster?: PropsOf<typeof Poster>['renderImage'];
+  renderThumbnail?: PropsOf<typeof MinimalVideoControls>['renderThumbnail'];
 }
 
-export function MinimalVideoSkin({ children, className, renderPoster, ...props }: MinimalVideoSkinProps = {}) {
+export function MinimalVideoSkin({
+  children,
+  className,
+  renderPoster,
+  renderThumbnail,
+  ...props
+}: MinimalVideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="minimal" data-preset="video" {...props}>
       <Slot>{children}</Slot>
@@ -24,7 +31,7 @@ export function MinimalVideoSkin({ children, className, renderPoster, ...props }
       <BufferingIndicator />
       <ErrorDialog />
 
-      <MinimalVideoControls />
+      <MinimalVideoControls renderThumbnail={renderThumbnail} />
 
       <VideoHotkeys />
       <VideoGestures />

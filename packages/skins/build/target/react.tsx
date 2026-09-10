@@ -50,6 +50,10 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
     },
   };
 
+  // Image parts take their authored children as the `render` override, so a skin can draw its own image.
+  const rendersImageChildren = (component: string, path: readonly string[]) =>
+    path.at(-1) === 'Image' && (component === 'Poster' || component === 'Slider' || component === 'Thumbnail');
+
   return {
     source: '@videojs/core/vjsc',
     components: {
@@ -66,7 +70,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
             from: source,
             name: component,
             path: propsPath,
-            children: component === 'Poster' && path.at(-1) === 'Image' ? 'render' : undefined,
+            children: rendersImageChildren(component, path) ? 'render' : undefined,
           },
         });
       },
@@ -88,6 +92,14 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         },
         Poster: {
           Image: ({ props, children }) => <target.Poster.Image render={children} {...props} />,
+        },
+        Slider: {
+          Thumbnail: {
+            Image: ({ props, children }) => <target.Slider.Thumbnail.Image render={children} {...props} />,
+          },
+        },
+        Thumbnail: {
+          Image: ({ props, children }) => <target.Thumbnail.Image render={children} {...props} />,
         },
         Tooltip: {
           Trigger: ({ props, children }) => <target.Tooltip.Trigger render={children} {...props} />,
