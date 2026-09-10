@@ -60,20 +60,9 @@ import {
 import { isText, useTranslator } from '@videojs/react/i18n';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { VideoPlayer } from '@videojs/react/video';
+import { formatTime } from '@videojs/utils/time';
 import { Dialog, DropdownMenu, Popover, Slider, Toggle, Tooltip } from 'radix-ui';
 import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-
-function formatTime(seconds: number) {
-  if (!Number.isFinite(seconds)) return '0:00';
-
-  const total = Math.floor(Math.max(0, seconds));
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const rest = String(total % 60).padStart(2, '0');
-  const mm = hours > 0 ? String(minutes).padStart(2, '0') : String(minutes);
-
-  return `${hours > 0 ? `${hours}:` : ''}${mm}:${rest}`;
-}
 
 // Tooltip with the hotkey hint the default skin shows. Portal into the container so it follows the player into fullscreen.
 function HotkeyTooltip({ label, action, children }: { label: string; action?: string; children: ReactElement }) {
@@ -285,7 +274,7 @@ function SeekSlider() {
           );
         })}
       </Slider.Track>
-      <Slider.Thumb className="radix-player__thumb" aria-label="Seek" aria-valuetext={formatTime(value)} />
+      <Slider.Thumb className="radix-player__thumb" aria-label="Seek" aria-valuetext={formatTime(value, duration)} />
       {hoverTime !== null ? (
         <div
           className="radix-player__preview"
@@ -307,7 +296,7 @@ function SeekSlider() {
           ) : null}
           <div className="radix-player__preview-label">
             {hovered?.cue ? <span className="radix-player__preview-chapter">{hovered.cue.text}</span> : null}
-            <span>{formatTime(hoverTime)}</span>
+            <span>{formatTime(hoverTime, duration)}</span>
           </div>
         </div>
       ) : null}
@@ -319,7 +308,7 @@ function CurrentTime() {
   const time = usePlayer(selectTime);
   if (!time) return null;
 
-  return <span className="radix-player__time">{formatTime(time.currentTime)}</span>;
+  return <span className="radix-player__time">{formatTime(time.currentTime, time.duration)}</span>;
 }
 
 // Remaining time that toggles to the duration on click, worded like the default skin's time display.
@@ -330,7 +319,9 @@ function RemainingTime() {
 
   if (!time) return null;
 
-  const shown = remaining ? `-${formatTime(time.duration - time.currentTime)}` : formatTime(time.duration);
+  const shown = remaining
+    ? `-${formatTime(time.duration - time.currentTime, time.duration)}`
+    : formatTime(time.duration);
 
   return (
     <button

@@ -26,10 +26,10 @@ Build your player controls from [Radix Primitives](https://www.radix-ui.com/prim
 
 <CustomUiNote />
 
-Install Radix and its icon set alongside `@videojs/react`:
+Install Radix and its icon set alongside `@videojs/react`. The examples also import two packages `@videojs/react` depends on but does not re-export: `@videojs/utils` for `formatTime`, the digital time formatter the built-in time components use, and `@videojs/core` for the translated text tokens and the thumbnail and chapter helpers.
 
 ```bash
-npm install radix-ui @radix-ui/react-icons
+npm install radix-ui @radix-ui/react-icons @videojs/core @videojs/utils
 ```
 
 ## Drive a Radix primitive from player state
@@ -69,7 +69,7 @@ Radix `Slider` takes an array of values. Feed it `currentTime` and `duration` fr
   </StyleCase>
 </FrameworkCase>
 
-Radix places `role="slider"` on the `Thumb`, so `aria-label` and `aria-valuetext` go there.
+Radix places `role="slider"` on the `Thumb`, so `aria-label` and `aria-valuetext` go there. `formatTime` takes the duration as a guide so `0:05` and `12:05` render at the same width, the way the built-in <DocsLink slug="reference/time">Time</DocsLink> component does.
 
 ## Build a settings menu from the option hooks
 
@@ -94,12 +94,6 @@ Two things to notice:
 ## Full example
 
 A player at feature parity with the default video skin: tooltips with hotkey hints, a hover volume popover, a seek slider with chapters and storyboard thumbnails, captions, settings, remote playback, picture-in-picture, fullscreen, a buffering indicator, an error dialog, auto-hiding controls, keyboard shortcuts, and click-to-toggle. Every label comes from the same translated text Video.js uses, so it reads identically to the default skin and follows the player's locale.
-
-The thumbnail and chapter math, the error copy, and the text tokens come from `@videojs/core`, which `@videojs/react` depends on. Add it to your own dependencies to import it directly:
-
-```bash
-npm install @videojs/core
-```
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>

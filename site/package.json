@@ -34,6 +34,7 @@
     "@videojs/core": "workspace:*",
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
+    "@videojs/utils": "workspace:*",
     "astro": "^7.1.3",
     "clsx": "^2.1.1",
     "es-toolkit": "^1.32.0",

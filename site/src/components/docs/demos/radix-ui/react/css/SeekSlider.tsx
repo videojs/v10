@@ -1,18 +1,9 @@
 import { PauseIcon, PlayIcon } from '@radix-ui/react-icons';
 import { Container, selectBuffer, selectPlayback, selectTime, usePlayer } from '@videojs/react';
 import { Video, VideoPlayer } from '@videojs/react/video';
+import { formatTime } from '@videojs/utils/time';
 import { Slider } from 'radix-ui';
 import { useState } from 'react';
-
-function formatTime(seconds: number) {
-  if (!Number.isFinite(seconds)) return '0:00';
-
-  const total = Math.floor(Math.max(0, seconds));
-  const minutes = Math.floor(total / 60);
-  const rest = String(total % 60).padStart(2, '0');
-
-  return `${minutes}:${rest}`;
-}
 
 function PlayButton() {
   const playback = usePlayer(selectPlayback);
@@ -59,7 +50,11 @@ function SeekSlider() {
         <div className="radix-player__buffer" style={{ width: `${(bufferedEnd / time.duration) * 100}%` }} />
         <Slider.Range className="radix-player__range" />
       </Slider.Track>
-      <Slider.Thumb className="radix-player__thumb" aria-label="Seek" aria-valuetext={formatTime(value)} />
+      <Slider.Thumb
+        className="radix-player__thumb"
+        aria-label="Seek"
+        aria-valuetext={formatTime(value, time.duration)}
+      />
     </Slider.Root>
   );
 }
@@ -70,7 +65,7 @@ function TimeDisplay() {
 
   return (
     <span className="radix-player__time">
-      {formatTime(time.currentTime)} / {formatTime(time.duration)}
+      {formatTime(time.currentTime, time.duration)} / {formatTime(time.duration)}
     </span>
   );
 }
