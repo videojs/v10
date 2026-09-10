@@ -21,6 +21,16 @@ export const registryConsumerSkins = skinCatalog
   .filter((entry) => entry.preset === 'video')
   .map((entry) => entry.registryItem);
 
+/** Smallest consumer that proves generated source works with the exact package versions published to npm. */
+export const publishedRegistryConsumerProject = {
+  name: 'next-react-tailwind-published',
+  directory: 'next-react-tailwind-published',
+  framework: 'react',
+  styling: 'tailwind',
+  bundler: 'next',
+  port: 5315,
+} as const satisfies RegistryConsumerProject;
+
 /** External projects exercised against the local, hosted registry output. */
 export const registryConsumerProjects = [
   {

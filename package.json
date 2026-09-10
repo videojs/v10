@@ -39,6 +39,7 @@
     "test:e2e:sandbox": "vp run '@videojs/e2e#test:sandbox'",
     "test:e2e:skins": "vp run '@videojs/e2e#test:skin-parity'",
     "test:e2e:registry": "vp run '@videojs/e2e#test:registry'",
+    "test:e2e:registry:published": "vp run '@videojs/e2e#test:registry:published'",
     "test:e2e:update": "pnpm --dir apps/e2e test:update",
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
     "test:shadcn": "vp run @videojs/skins#validate:shadcn",

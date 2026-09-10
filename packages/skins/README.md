@@ -35,16 +35,16 @@ Follow one skin from source to output.
 - [`themes/minimal.css`](./src/styles/themes/minimal.css), [`themes/video.css`](./src/styles/themes/video.css), and [`themes/audio.css`](./src/styles/themes/audio.css) override tokens per theme and preset.
 - [`themes/preferences.css`](./src/styles/themes/preferences.css) collapses durations and neutralizes hidden-state values under reduced motion, and switches backdrop filters off under reduced transparency.
 - [`base.video.css`](./src/styles/base.video.css) and [`base.audio.css`](./src/styles/base.audio.css) are the preset entries each skin stylesheet starts from.
-- [`vars.ts`](./src/styles/vars.ts) classifies every token as public, runtime, or internal and feeds the registry docs. [`utilities.ts`](./src/styles/utilities.ts) describes every shared utility, variant, and computed theme key.
+- [`vars.ts`](./src/styles/vars.ts) classifies every token as public, runtime, or internal. [`utilities.ts`](./src/styles/utilities.ts) describes every shared utility, variant, and computed theme key.
 
 ## Tailwind entry files
 
 Three files in [`src/styles/`](./src/styles) chain together. Only the first ships to consumers.
 
-| File                                                            | Purpose                                                                                                                                                                                                                     | Used by                                                                                        |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [`tailwind.css`](./src/styles/tailwind.css)       | The design system: theme keys that alias `--media-*` tokens, shared `@utility` recipes, and `media-*` variants. No Tailwind import and no `@source`, so it works inside a consumer's own setup.                              | Both entries below, the registry theme item, the docs generator, and the catalog tests.       |
-| [`tailwind.compiler.css`](./src/styles/tailwind.compiler.css)   | The build design system. Imports Tailwind, base, captions, presets, and the shared file, and aliases `--spacing` to the scaled media unit. No `@source`: the compiler applies class lists directly and never scans files. | [`build/transform.ts`](./build/transform.ts) and the registry theme test.                      |
+| File                                                          | Purpose                                                                                                                                                                                                              | Used by                                                                   |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [`tailwind.css`](./src/styles/tailwind.css)                   | The design system: theme keys that alias `--media-*` tokens, shared `@utility` recipes, and `media-*` variants. No Tailwind import and no `@source`, so it works inside a consumer's own setup.                           | Both entries below, the registry theme item, and the catalog tests.       |
+| [`tailwind.compiler.css`](./src/styles/tailwind.compiler.css) | The build design system. Imports Tailwind, base, captions, presets, and the shared file, and aliases `--spacing` to the scaled media unit. No `@source`: the compiler applies class lists directly and never scans files. | [`build/transform.ts`](./build/transform.ts) and the registry theme test. |
 
 Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `utilities.ts`, and prefer a token plus theme key over a literal. The [component skill](../../.agents/skills/create-vjsc-component/SKILL.md) has the full rules.
 
@@ -55,6 +55,8 @@ Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `util
 - Skin implementations into the ignored `packages/html/src/internal/skins/` and `packages/react/src/internal/skins/` folders, plus preset registrations and stylesheets under `packages/html/src/define/` and the background preset under `packages/react/src/presets/`, through [`build/packages/`](./build/packages).
 - Shadcn source registries for React with Tailwind, React with CSS, and HTML into `dist/registry/source/r/`, from the items in [`build/registry/items/`](./build/registry/items) and the targets in [`build/registry/targets.ts`](./build/registry/targets.ts).
 - The hosted registry in `dist/shadcn/` through `build:shadcn`, which [`netlify.toml`](./netlify.toml) publishes.
+
+The normal registry E2E packs the current workspace packages so source and package changes can be tested before release. The Netlify production build additionally runs `pnpm test:e2e:registry:published` from the workspace root. That smoke test creates a fresh Next app, installs one skin through the stock Shadcn CLI, and builds it against the registry's exact npm package pins without local overrides. It is expected to pass only after those package versions have been published. To compare unreleased registry source with the newest package cut locally, run the same command with `VIDEOJS_REGISTRY_PACKAGE_TAG=latest`; production leaves that override unset.
 
 ## Commands
 

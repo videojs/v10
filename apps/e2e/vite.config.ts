@@ -46,6 +46,11 @@ export default defineConfig({
         dependsOn: ['@videojs/skins#build:shadcn', '@videojs/react#build', '@videojs/html#build'],
         cache: false,
       },
+      'test:registry:published': {
+        command: 'node --import tsx suites/registry/setup/published.ts',
+        dependsOn: ['@videojs/skins#build:shadcn'],
+        cache: false,
+      },
     },
   },
 });

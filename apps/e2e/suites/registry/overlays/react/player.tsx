@@ -1,17 +1,10 @@
-'use client';
-
-import { useMedia } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { VideoPlayer } from '@videojs/react/video';
 
 import { MinimalVideoSkin } from '@/components/videojs/skins/video/minimal/skin';
 import { DefaultVideoSkin } from '@/components/videojs/skins/video/skin';
 
-function MediaProbe() {
-  const media = useMedia();
-
-  return <output data-media-probe data-attached={media ? 'true' : 'false'} />;
-}
+import { MediaProbe } from './media-probe';
 
 export function Player() {
   return (
