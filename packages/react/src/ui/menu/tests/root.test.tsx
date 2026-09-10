@@ -459,6 +459,22 @@ describe('MenuContent', () => {
     expect(screen.queryByTestId('quality-content')).toBeNull();
   });
 
+  it('shows a popup kept mounted for option state when it opens', async () => {
+    render(<MountedOptionMenuFixture />);
+
+    const popup = screen.getByTestId('settings-popup');
+    const showPopover = vi.fn();
+
+    Object.defineProperty(popup, 'showPopover', { configurable: true, value: showPopover });
+    fireEvent.click(screen.getByTestId('settings-trigger'));
+
+    await waitFor(() => {
+      expect(showPopover).toHaveBeenCalled();
+      expect(popup.hasAttribute('hidden')).toBe(false);
+      expect(popup.hasAttribute('data-starting-style')).toBe(true);
+    });
+  });
+
   it('includes the root trigger in sequential focus', () => {
     render(
       <MenuRoot>

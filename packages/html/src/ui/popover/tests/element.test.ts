@@ -21,6 +21,25 @@ afterEach(() => {
 });
 
 describe('PopoverElement', () => {
+  it('applies starting styles before showing the popup', async () => {
+    const popover = createPopover();
+    const startingStates: boolean[] = [];
+    const showPopover = vi.fn(() => {
+      startingStates.push(popover.hasAttribute('data-starting-style'));
+    });
+
+    Object.defineProperty(popover, 'showPopover', { configurable: true, value: showPopover });
+    document.body.append(popover);
+    await popover.updateComplete;
+
+    popover.open = true;
+    await popover.updateComplete;
+    await Promise.resolve();
+
+    expect(showPopover).toHaveBeenCalled();
+    expect(startingStates.every(Boolean)).toBe(true);
+  });
+
   it('assigns safe identity to an adjacent source-owned trigger', async () => {
     const firstTrigger = document.createElement('button');
     const firstPopover = createPopover();
