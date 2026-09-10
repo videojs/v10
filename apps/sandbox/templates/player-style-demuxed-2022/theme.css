@@ -1,0 +1,463 @@
+/*
+ * Demuxed 2022, ported from `@player.style/demuxed-2022` (media-chrome) to Video.js 10 elements.
+ *
+ * Light DOM through the sandbox's `defineTemplateSkin`, so every rule is scoped under `.ps-demuxed` by hand. A
+ * packaged skin would scope with `@scope (.media-skin[data-theme="demuxed-2022"])`, as the generated skins do.
+ */
+
+.ps-demuxed {
+  --ps-accent: #7596cc;
+  --ps-button: #fff;
+  --ps-track: rgb(0 0 0 / 0.4);
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-demuxed / inline-size;
+
+  background: #000;
+  color: #fff;
+  font-family: sofia-pro, sans-serif;
+  line-height: 1;
+}
+
+.ps-demuxed > video,
+.ps-demuxed > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+/* The theme's signature bottom scrim, carried over as the same inlined image. */
+.ps-gradient {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 200px;
+  padding-top: 37px;
+  pointer-events: none;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAACqCAYAAABsziWkAAAAAXNSR0IArs4c6QAAAQVJREFUOE9lyNdHBQAAhfHb3nvvuu2997jNe29TJJEkkkgSSSSJJJJEEkkiifRH5jsP56Xz8PM5gcC/xfDEmjhKxEOCSaREEiSbFEqkQppJpzJMJiWyINvkUCIX8kw+JQqg0BRRxaaEEqVQZsopUQGVpooS1VBjglStqaNEPTSYRko0QbNpoUQrtJl2qsN0UqILuk0PJXqhz/RTYgAGzRA1bEYoMQpjZpwSExAyk5SYgmkzQ82aOUqEIWKilJiHBbNIiSVYhhVYhTVYhw3YhC3Yhh3YhT3YhwM4hCM4hhM4hTM4hwu4hCu4hhu4hTu4hwd4hCd4hhd4hTd4hw/4hC/4hh/4/QM2/id28uIEJAAAAABJRU5ErkJggg==");
+  background-position: bottom;
+  background-repeat: repeat-x;
+}
+
+/* --- Buttons --- */
+
+.ps-small {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--ps-button);
+  color: #000;
+  cursor: pointer;
+}
+
+.ps-small:hover {
+  box-shadow: 0 0 0 2px var(--ps-accent);
+}
+
+.ps-small .ps-icon {
+  position: absolute;
+  width: 100%;
+  height: 20px;
+  overflow: hidden;
+  fill: currentcolor;
+}
+
+.ps-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-big {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.8);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-big:hover {
+  box-shadow: 0 0 0 2px var(--ps-accent);
+}
+
+.ps-big .ps-icon {
+  height: 64px;
+  fill: #fff;
+}
+
+/*
+ * media-chrome drops a control whose feature the platform does not offer. v10 keeps it and reports the reason, then
+ * leaves the decision to the skin — and it splits the reason in two: `data-hidden` when the API is missing entirely,
+ * `data-availability="unavailable"` when the API exists but has nothing to offer (Chrome with no Cast device on the
+ * network). media-chrome collapses both, so matching it means hiding both.
+ */
+.ps-small[data-hidden],
+.ps-big[data-hidden],
+.ps-small[data-availability="unavailable"],
+.ps-small[data-availability="unsupported"] {
+  display: none;
+}
+
+/* Icon state. v10 exposes these as data attributes where media-chrome used named slots. */
+.ps-pause-icon,
+.ps-cc-on,
+.ps-vol-off,
+.ps-vol-low,
+.ps-vol-medium {
+  display: none;
+}
+
+media-play-button:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+media-play-button:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+media-captions-button[data-active] .ps-cc-off {
+  display: none;
+}
+
+media-captions-button[data-active] .ps-cc-on {
+  display: block;
+}
+
+.ps-small[data-volume-level="off"] .ps-vol-high,
+.ps-small[data-volume-level="low"] .ps-vol-high,
+.ps-small[data-volume-level="medium"] .ps-vol-high {
+  display: none;
+}
+
+.ps-small[data-volume-level="off"] .ps-vol-off,
+.ps-small[data-volume-level="low"] .ps-vol-low,
+.ps-small[data-volume-level="medium"] .ps-vol-medium {
+  display: block;
+}
+
+/* --- Top chrome --- */
+
+.ps-top {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: row-reverse;
+  width: calc(100% - 36px);
+  padding-right: 36px;
+}
+
+.ps-top .ps-small {
+  margin: 32px 8px;
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  margin: 30px;
+  padding: 10px 14px;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.2);
+}
+
+.ps-bar > :first-child {
+  margin: 0 5px 0 0;
+}
+
+.ps-bar > :last-child {
+  margin: 0 0 0 5px;
+}
+
+.ps-time {
+  min-width: 92px;
+  padding: 0 6px 3px 8px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Time slider --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  flex: 1;
+  height: 32px;
+  margin: 0 8px 0 0;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 6px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--ps-track);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: rgb(255 255 255 / 0.3);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: #fff;
+}
+
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--ps-accent);
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin: 0 0 8px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+/* --- Volume, revealed on hover the way the original rotates it out of the mute button --- */
+
+.ps-volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+}
+
+.ps-volume-range {
+  position: absolute;
+  top: -75px;
+  left: -52px;
+  width: 122px;
+  height: 34px;
+  overflow: hidden;
+  border-left: 16px solid transparent;
+  border-radius: 0 9999px 9999px 0;
+  background: rgb(0 0 0 / 0.2);
+  transform: rotate(-90deg);
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-volume:hover .ps-volume-range,
+.ps-volume:focus-within .ps-volume-range {
+  opacity: 1;
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  width: 80px;
+  height: 100%;
+  margin-inline: 12px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 6px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--ps-track);
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: #fff;
+}
+
+.ps-vthumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--ps-accent);
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.85);
+  text-align: center;
+}
+
+.ps-dialog-description {
+  font-size: 0.875em;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--ps-button);
+  color: #000;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}
+
+/*
+ * Below the original's `sm:600` breakpoint the bar goes flat and the secondary controls drop out. media-chrome read
+ * `breakpointsm` in the template; here it is a container query, which is how the packaged v10 skins do it too.
+ */
+@container ps-demuxed (inline-size < 600px) {
+  /* The original drops the pill and lets the bar sit flat on the scrim. It stays pinned to the bottom either way. */
+  .ps-bar {
+    margin: 0;
+    padding: 22px 15px;
+    background: transparent;
+  }
+
+  .ps-time,
+  .ps-volume-range {
+    display: none;
+  }
+
+  .ps-bar .ps-small {
+    display: none;
+    width: 48px;
+    height: 48px;
+  }
+
+  .ps-bar .ps-small .ps-icon {
+    transform: scale(1.4);
+  }
+
+  .ps-bar .ps-fullscreen {
+    display: flex;
+  }
+
+  .ps-top {
+    width: calc(100% - 13px);
+    padding-right: 13px;
+  }
+
+  .ps-top .ps-small {
+    display: flex;
+    margin: 22px 7px;
+  }
+}
