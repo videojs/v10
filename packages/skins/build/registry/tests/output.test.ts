@@ -30,15 +30,30 @@ describe('React registry output', () => {
   it('keeps project utilities and skin-owned modules in their intended boundaries', () => {
     const helper = items.get('_resolve-class-name');
     const playButton = readItemRoot(items.get('play-button')!);
+    const defaultSkin = readItemRoot(items.get('video')!);
     const defaultTargets = items.get('video')?.files?.map((file) => file.target) ?? [];
     const minimalTargets = items.get('video-minimal')?.files?.map((file) => file.target) ?? [];
+    const themeTargets = items.get('_style-theme')?.files?.map((file) => file.target) ?? [];
 
     expect(helper?.files?.map((file) => file.target)).toEqual(['@/lib/resolve-class-name.ts']);
     expect(playButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
     expect(playButton).toContain(`import { cn } from '@/lib/utils';`);
     expect(playButton).not.toContain(`{ cn, resolveClassName }`);
+    expect(playButton).toContain(`import '../styles/base.css';`);
+    expect(defaultSkin).toContain(`import '../../../styles/base.video.css';`);
     expect(defaultTargets).toContain('@components/videojs/skins/video/default/skin.tsx');
     expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/sliders/slider.tsx');
+    expect(themeTargets).toEqual([
+      '@components/videojs/styles/base.audio.css',
+      '@components/videojs/styles/base.css',
+      '@components/videojs/styles/base.video.css',
+      '@components/videojs/styles/captions.css',
+      '@components/videojs/styles/themes/audio.css',
+      '@components/videojs/styles/themes/minimal.css',
+      '@components/videojs/styles/themes/preferences.css',
+      '@components/videojs/styles/themes/theme.css',
+      '@components/videojs/styles/themes/video.css',
+    ]);
   });
 
   it('preserves utility groups as readable generated class-name arguments', () => {

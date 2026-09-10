@@ -6,7 +6,7 @@ import type { RegistryCreatedItem, RegistryModuleItem } from 'vjsc/shadcn';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { skinCatalogEntry } from '../../catalog.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
-import { isSkinPreset, skinDirectory, skinPreset } from '../../skin.ts';
+import { isSkinPreset, skinBaseStylesheet, skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
@@ -23,7 +23,7 @@ export async function htmlSkinItem(
   const template = createSourceOwnedHtml(skin.template);
 
   const styleTarget = `${directory}/skin.css`;
-  const themeImport = relativeRegistryImport(`${directory}/skin.ts`, 'styles/theme.css');
+  const themeImport = relativeRegistryImport(`${directory}/skin.ts`, `styles/${skinBaseStylesheet(skin.preset)}`);
   const styleImport = relativeRegistryImport(`${directory}/skin.ts`, styleTarget);
 
   // The shared theme item must load before the skin's own scoped rules.
@@ -110,7 +110,7 @@ export function skinItem(
     directives: ['use client'],
     target: (candidate, root) => skinModuleTarget(candidate, root, skin),
     stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css` } : undefined,
-    theme: true,
+    theme: `styles/${skinBaseStylesheet(preset)}`,
   };
 }
 

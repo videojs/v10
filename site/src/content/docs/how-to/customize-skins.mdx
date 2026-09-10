@@ -163,11 +163,11 @@ The paths in the table start from the component location configured in `componen
 ### Use the installed skin
 
 <FrameworkCase frameworks={["react"]}>
-The skin's files are under `components/videojs/skins/<preset>`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
+The skin's files are under `components/videojs/skins/<preset>/<theme>`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The skin's files are under `components/videojs/skins/<preset>`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
+The skin's files are under `components/videojs/skins/<preset>/<theme>`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
 </FrameworkCase>
 
 ### Edit the installed files
@@ -177,7 +177,8 @@ Start with the file that owns the change you want:
 | Goal | Where to start |
 | ---- | -------------- |
 | Add, remove, or rearrange controls | `skin.tsx` in React or `skin.html` in HTML |
-| Change colors, surfaces, shadows, sizes, or motion across the skin | `components/videojs/styles/theme.css` |
+| Change default colors, surfaces, shadows, sizes, or motion across skins | `components/videojs/styles/themes/theme.css` |
+| Change only the Minimal theme or one media preset | `components/videojs/styles/themes/minimal.css`, `video.css`, or `audio.css` |
 | Change one control's appearance | That control's classes or stylesheet |
 | Change one control's interaction | That control's module |
 

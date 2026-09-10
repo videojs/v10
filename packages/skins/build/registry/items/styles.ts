@@ -13,10 +13,21 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
 
   return {
     theme: {
-      target: 'styles/theme.css',
-      include: ['./styles/base.css', './styles/captions.css', './styles/themes/video.css', './styles/themes/audio.css'],
+      name: '_style-theme',
+      target: 'styles/base.css',
+      files: {
+        './styles/base.audio.css': 'styles/base.audio.css',
+        './styles/base.css': 'styles/base.css',
+        './styles/base.video.css': 'styles/base.video.css',
+        './styles/captions.css': 'styles/captions.css',
+        './styles/themes/audio.css': 'styles/themes/audio.css',
+        './styles/themes/minimal.css': 'styles/themes/minimal.css',
+        './styles/themes/preferences.css': 'styles/themes/preferences.css',
+        './styles/themes/theme.css': 'styles/themes/theme.css',
+        './styles/themes/video.css': 'styles/themes/video.css',
+      },
       title: 'Video.js media theme',
-      description: 'Scoped media tokens, resets, preferences, and Tailwind compiler integration.',
+      description: 'Editable media tokens, resets, preferences, presets, and Tailwind compiler integration.',
       docs: themeDocs(target),
       tailwind: target.styling === 'tailwind' ? './styles/tailwind.css' : undefined,
       meta,
