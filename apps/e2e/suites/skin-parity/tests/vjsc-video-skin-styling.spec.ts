@@ -25,6 +25,19 @@ const WIDTHS = [320, 800] as const;
 const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
 const CONTROLS_SELECTOR = '.video-controls';
+/**
+ * The poster root in every skin: the HTML element, or the React `div` carrying `data-loaded`, which no other component
+ * exposes. The Tailwind output emits no semantic class for it, so a class selector misses that panel. `preparePanel`
+ * waits for the loaded state, so contracts can rely on the attribute being present.
+ */
+const POSTER_SELECTOR = 'media-poster, [data-loaded]';
+const LAYOUT_SELECTORS = [CONTROLS_SELECTOR, POSTER_SELECTOR] as const;
+/**
+ * The spinner icon inside the slider preview's thumbnail, relative to the slider root. Playwright's child combinator
+ * pierces the `<media-slider-thumbnail>` shadow root, where a `<slot>` is also a last child, so the element type keeps
+ * the match to the icon.
+ */
+const THUMBNAIL_SPINNER_SELECTOR = ':scope > :last-child > :first-child > :is(svg, media-icon)';
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps poster sizing and fit in sync`, async ({ page }) => {
@@ -745,7 +758,7 @@ async function preparePanel({ root }: SkinPanel, width: number) {
   await expect(root).toHaveAttribute('data-controls-visible', '');
   await expect(root.getByRole('button', { name: 'Play' })).toBeVisible();
 
-  const poster = root.locator('.media-poster[data-loaded], media-poster[data-loaded]').first();
+  const poster = root.locator('[data-loaded]').first();
 
   await expect(poster).toBeVisible();
   await expect(poster).toHaveCSS('opacity', '1');
@@ -753,6 +766,9 @@ async function preparePanel({ root }: SkinPanel, width: number) {
     'data-availability',
     'available'
   );
+  // Controls render before media metadata: the seek slider stays disabled, time text shows placeholders, and
+  // picture-in-picture hides until it lands. Both panels must be past that phase before any contract is compared.
+  await expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled({ timeout: 20_000 });
   await root.dispatchEvent('pointermove', { pointerType: 'mouse' });
   await expect
     .poll(() =>
@@ -1458,8 +1474,24 @@ async function enableCaptions({ root, section }: SkinPanel) {
     element.pause();
     element.currentTime = 2;
   });
+  // Cues activate when the seek completes, which waits on media data from the network while the showing track fetches
+  // its cues in parallel. The media may also carry a thumbnails metadata track, so look the caption track up by kind.
   await expect
-    .poll(() => video.evaluate((element: HTMLVideoElement) => element.textTracks[0]?.activeCues?.length ?? 0))
+    .poll(
+      () =>
+        video.evaluate((element: HTMLVideoElement) => {
+          const track = [...element.textTracks].find(
+            ({ kind, mode }) => (kind === 'subtitles' || kind === 'captions') && mode === 'showing'
+          );
+          const active = track?.activeCues?.length ?? 0;
+
+          // Cues that land after the seek completed only activate on the next one.
+          if (track?.cues?.length && !active && !element.seeking) element.currentTime = 2;
+
+          return active;
+        }),
+      { timeout: 20_000 }
+    )
     .toBeGreaterThan(0);
   await root.page().waitForTimeout(100);
 }
@@ -1545,7 +1577,7 @@ async function sharedMotionContract(root: Locator) {
     });
   const controls = root.locator(CONTROLS_SELECTOR).first();
   const button = root.getByRole('button', { name: 'Play', exact: true });
-  const poster = root.locator(':scope > .media-poster, :scope > media-poster').first();
+  const poster = root.locator(POSTER_SELECTOR).first();
   const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
   const playIconCandidates = await root
     .getByRole('button', { name: 'Play', exact: true })
@@ -1587,7 +1619,7 @@ async function sharedMotionContract(root: Locator) {
   const fill = chapterTrack.locator(':scope > :last-child');
   const preview = slider.locator(':scope > :last-child > :last-child');
   const previewRoot = slider.locator(':scope > :last-child');
-  const thumbnailSpinner = slider.locator(':scope > :last-child > :first-child > :last-child');
+  const thumbnailSpinner = slider.locator(THUMBNAIL_SPINNER_SELECTOR);
   const pseudoTransition = (target: Locator, pseudo: '::before' | '::after') =>
     target.evaluate((element, pseudoElement) => {
       const style = getComputedStyle(element, pseudoElement);
@@ -1892,7 +1924,7 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
       })
     )
   );
-  const poster = root.locator(':scope > .media-poster, :scope > media-poster').first();
+  const poster = root.locator(POSTER_SELECTOR).first();
   const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
   const seekThumb = root.getByRole('slider', { name: 'Seek' });
   const seekSlider = seekThumb.locator('..');
@@ -1903,7 +1935,7 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
     .first();
   const fill = chapterTrack.locator(':scope > :last-child');
   const preview = seekSlider.locator(':scope > :last-child > :last-child');
-  const thumbnailSpinner = seekSlider.locator(':scope > :last-child > :first-child > :last-child');
+  const thumbnailSpinner = seekSlider.locator(THUMBNAIL_SPINNER_SELECTOR);
   const thumbnailSpinnerMotion = await inspect(thumbnailSpinner);
 
   const rootMotion = {
@@ -1958,7 +1990,7 @@ async function rtlMenuContract(root: Locator, submenu: Locator) {
 }
 
 async function layoutContract(root: Locator) {
-  return root.evaluate((element, controlsSelector) => {
+  return root.evaluate((element, [controlsSelector, posterSelector]) => {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (
@@ -2006,7 +2038,7 @@ async function layoutContract(root: Locator) {
 
     return {
       root: inspect(element),
-      poster: inspect(query('.media-poster[data-loaded], media-poster[data-loaded]'), { includeRadius: false }),
+      poster: inspect(query(posterSelector), { includeRadius: false }),
       controls: inspect(query(controlsSelector), { includeGap: false }),
       primary: inspect(play?.parentElement ?? null, { includeGap: false }),
       timeline: inspect(seek?.parentElement?.parentElement ?? null, {
@@ -2028,7 +2060,7 @@ async function layoutContract(root: Locator) {
         query('[role="button"][aria-label="Enter fullscreen"], [role="button"][aria-label="Exit fullscreen"]')
       ),
     };
-  }, CONTROLS_SELECTOR);
+  }, LAYOUT_SELECTORS);
 }
 
 async function openSettingsMenu(root: Locator): Promise<Locator> {
@@ -2476,7 +2508,7 @@ async function popupContract(root: Locator, popup: Locator) {
 }
 
 async function skinContract(root: Locator) {
-  return root.evaluate((element: HTMLElement) => {
+  return root.evaluate((element: HTMLElement, posterSelector) => {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const relativeRect = (rect: DOMRect) => ({
@@ -2489,7 +2521,7 @@ async function skinContract(root: Locator) {
     const mute = element.querySelector<HTMLElement>('[role="button"][aria-label="Mute"]');
     const seek = element.querySelector<HTMLElement>('[role="slider"][aria-label="Seek"]');
     const controls = play?.closest<HTMLElement>('[data-interactive], media-controls');
-    const poster = element.querySelector<HTMLElement>('.media-poster, media-poster');
+    const poster = element.querySelector<HTMLElement>(posterSelector);
 
     const inspect = (target: HTMLElement | null | undefined) => {
       if (!target) return null;
@@ -2532,7 +2564,7 @@ async function skinContract(root: Locator) {
         controlRadius: rootStyle.getPropertyValue('--media-control-radius').trim(),
       },
     };
-  });
+  }, POSTER_SELECTOR);
 }
 
 function snapshotName(variant: SkinCase, width: number): string {
