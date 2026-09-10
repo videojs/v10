@@ -81,7 +81,10 @@ export type RegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'nam
 };
 
 export interface RegistryStylesOptions {
+  /** Primary shared theme item imported when a source item sets `theme: true`. */
   readonly theme?: RegistryThemeOptions | undefined;
+  /** Additional theme items selected when a source item's `theme` names one of their stylesheet targets. */
+  readonly themes?: readonly RegistryThemeOptions[] | undefined;
   /** Directory that receives compiled VJSC style files, or explicit installed paths by filename. */
   readonly files?: string | Readonly<Record<string, string>> | undefined;
 }

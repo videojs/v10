@@ -119,6 +119,64 @@ describe('createShadcnRegistryFiles', () => {
       'components/example/skins/video-minimal/ui/rate-button.tsx',
     ]);
   });
+
+  it('selects the registry theme item that owns a source theme target', async () => {
+    const graph = fixtureGraph();
+    const files = await createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'block') return null;
+
+          const theme = module.params.theme;
+
+          return {
+            name: `video-${theme}`,
+            type: 'registry:block',
+            title: `Video ${theme}`,
+            description: `Video ${theme}.`,
+            group: 'skins',
+            target(candidate, root) {
+              return candidate.id === root.id
+                ? `skins/video/${theme}.tsx`
+                : `skins/video/${theme}/${candidate.sourcePath}`;
+            },
+            theme: `styles/${theme}.css`,
+          };
+        },
+      },
+      styles: {
+        theme: {
+          name: '_style-default',
+          title: 'Default theme',
+          description: 'Default theme.',
+          target: 'styles/default.css',
+        },
+        themes: [
+          {
+            name: '_style-minimal',
+            title: 'Minimal theme',
+            description: 'Minimal theme.',
+            target: 'styles/minimal.css',
+          },
+        ],
+      },
+    });
+    const defaultItem = registryItem(files, 'skins/registry.json', 'video-default');
+    const minimalItem = registryItem(files, 'skins/registry.json', 'video-minimal');
+
+    expect(defaultItem.registryDependencies).toEqual(['@example/_style-default']);
+    expect(minimalItem.registryDependencies).toEqual(['@example/_style-minimal']);
+    expect(sourceFile(files, 'skins/files/video-default/skins/video/default.tsx')).toMatch(
+      /^import '\.\.\/\.\.\/styles\/default\.css';/
+    );
+    expect(sourceFile(files, 'skins/files/video-minimal/skins/video/minimal.tsx')).toMatch(
+      /^import '\.\.\/\.\.\/styles\/minimal\.css';/
+    );
+  });
 });
 
 function fixtureGraph(): Graph<FixtureMeta> {

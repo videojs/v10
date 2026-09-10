@@ -206,8 +206,8 @@ async function describeStyleItems<Meta extends ModuleMeta>(
     }
   }
 
-  if (styles.theme) {
-    const { target, include, files, name = styleItemName(target), tailwind, ...manifest } = styles.theme;
+  for (const theme of registryThemes(styles)) {
+    const { target, include, files, name = styleItemName(target), tailwind, ...manifest } = theme;
     const preservedFiles = preservedStyleFiles(files);
 
     if (include && preservedFiles.length > 0) {
@@ -249,7 +249,7 @@ async function describeStyleItems<Meta extends ModuleMeta>(
       title: `${options.name} ${label} styles`,
       description: `Shared ${label} styles installed with the source modules that use them.`,
       docs: 'Installed automatically with source modules that use these styles.',
-      meta: options.styles?.theme?.meta,
+      meta: registryThemes(options.styles)[0]?.meta,
       build: { kind: 'style', group: 'support', modules, target, asset },
     });
   }
@@ -453,19 +453,22 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   const dependencies = new Set<string>();
   const targets = new Set<string>();
 
-  if (styles?.theme && (hasStyles || item.build.theme)) {
-    const themeTarget = typeof item.build.theme === 'string' ? item.build.theme : styles.theme.target;
-    const themeFiles = styles.theme.files ? Object.values(styles.theme.files) : [];
+  const themes = registryThemes(styles);
+
+  if (themes.length > 0 && (hasStyles || item.build.theme)) {
+    const theme = resolveRegistryTheme(themes, item.build.theme, item.name);
+    const themeTarget = item.build.theme === true || item.build.theme === false ? theme.target : item.build.theme;
+    const themeFiles = theme.files ? Object.values(theme.files) : [];
 
     if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
       throw new Error(
-        `Shadcn item \`${item.name}\` imports a stylesheet outside the shared theme: \`${themeTarget}\`.`
+        `Shadcn item \`${item.name}\` imports a stylesheet outside its registry theme: \`${themeTarget}\`.`
       );
     }
 
     targets.add(themeTarget);
 
-    if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(styles.theme));
+    if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(theme));
   }
 
   if (item.build.stylesheet) {
@@ -765,8 +768,34 @@ function styleItemName(target: string): string {
   return `_style-${basename(target, '.css')}`;
 }
 
-function themeItemName(theme: NonNullable<RegistryStylesOptions['theme']>): string {
+function themeItemName(theme: RegistryThemeOptions): string {
   return theme.name ?? styleItemName(theme.target);
+}
+
+function registryThemes(styles: RegistryStylesOptions | undefined): readonly RegistryThemeOptions[] {
+  return [...(styles?.theme ? [styles.theme] : []), ...(styles?.themes ?? [])];
+}
+
+function resolveRegistryTheme(
+  themes: readonly RegistryThemeOptions[],
+  selection: boolean | string,
+  itemName: string
+): RegistryThemeOptions {
+  if (selection === true || selection === false) return themes[0]!;
+
+  const matches = themes.filter(
+    (theme) => theme.target === selection || Object.values(theme.files ?? {}).includes(selection)
+  );
+
+  if (matches.length === 0) {
+    throw new Error(`Shadcn item \`${itemName}\` references an unknown registry theme target: \`${selection}\`.`);
+  }
+
+  if (matches.length > 1) {
+    throw new Error(`Shadcn item \`${itemName}\` has an ambiguous registry theme target: \`${selection}\`.`);
+  }
+
+  return matches[0]!;
 }
 
 function preservedStyleFiles(files: RegistryThemeOptions['files']): PreservedStyleFile[] {
@@ -791,8 +820,8 @@ function styleAssetItemName(asset: string): string {
 function validateOptions<Meta extends ModuleMeta>(options: VjscRegistryOptions<Meta>): void {
   validateRegistryPaths(options.paths, 'Shadcn registry');
 
-  if (options.styles?.theme?.tailwind) {
-    validateRelativePath(options.styles.theme.tailwind, 'Shadcn registry Tailwind source');
+  for (const theme of registryThemes(options.styles)) {
+    if (theme.tailwind) validateRelativePath(theme.tailwind, 'Shadcn registry Tailwind source');
   }
 }
 
