@@ -1,10 +1,12 @@
 ---
 
 import H4 from './H4.astro';
+import HeadingAnchor from './HeadingAnchor.astro';
 
-const props = Astro.props;
+const { class: className, id, ...props } = Astro.props;
 ---
 
-<H4 as="h4" {...props}>
+<H4 as="h4" class:list={["group", className]} {id} {...props}>
   <slot />
+  {id && <HeadingAnchor id={id} class="size-6" />}
 </H4>

@@ -1,0 +1,29 @@
+---
+import LinkIcon from '@/assets/icons/link.svg?react';
+
+/**
+ * Hover-revealed permalink for a prose heading. The heading carries the `group` class, so the icon appears while it is
+ * hovered and stays visible when focused. Hidden from search, Markdown export, and the copy-page output.
+ */
+interface Props {
+  id: string;
+  class?: string;
+}
+
+const { id, class: className } = Astro.props;
+---
+
+<a
+  href={`#${id}`}
+  aria-label="Link to this section"
+  data-llms-ignore
+  data-search-ignore
+  data-copy-ignore
+  class:list={[
+    "ml-2 inline-flex items-center justify-center rounded-md align-middle text-muted no-underline opacity-0 transition-opacity",
+    "group-hover:opacity-100 focus-visible:opacity-100 intent:text-orange",
+    className ?? "size-6",
+  ]}
+>
+  <LinkIcon className="size-4" aria-hidden="true" />
+</a>

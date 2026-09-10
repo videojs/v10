@@ -1,10 +1,12 @@
 ---
 
 import H3 from './H3.astro';
+import HeadingAnchor from './HeadingAnchor.astro';
 
-const { class: className, ...props } = Astro.props;
+const { class: className, id, ...props } = Astro.props;
 ---
 
-<H3 as="h3" class:list={["mt-12", className]} {...props}>
+<H3 as="h3" class:list={["mt-12", "group", className]} {id} {...props}>
   <slot />
+  {id && <HeadingAnchor id={id} class="size-6" />}
 </H3>
