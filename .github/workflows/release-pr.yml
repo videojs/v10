@@ -7,9 +7,10 @@ on:
 
 # release-please force-pushes the release branch on every merge to main, and each
 # push starts a fresh run here that rewrites the changelog for the branch as it
-# now stands. Back-to-back merges used to queue runs behind each other, and the
-# stale one could land its changelog commit last. Only the newest run matters, so
-# cancel any run still going when a new push arrives.
+# now stands. Each run regenerates everything from scratch, so only the run for
+# the newest push can produce the right changelog: cancel any run still going
+# when a new push arrives, rather than letting a run for an older branch state
+# finish after it and commit a stale changelog.
 concurrency:
   group: release-pr
   cancel-in-progress: true
