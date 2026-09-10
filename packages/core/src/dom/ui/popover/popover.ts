@@ -189,6 +189,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
       tryShowPopover(popupEl);
     });
+
     options.group?.()?.open(groupMember);
 
     opening.then(() => {
