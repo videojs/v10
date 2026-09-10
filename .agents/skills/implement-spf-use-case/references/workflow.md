@@ -372,11 +372,11 @@ After Step 1's report:
     Worked example: `hls-video/adapter.ts` →
     `class HlsVideoAdapter extends HlsVideoMixin(HTMLVideoAdapter) {}`.
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
-    (~5 LOC; wraps the media host in `CustomMediaElement` +
-    `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
+    (~5 LOC; builds the adapter with `createMediaElement` and an explicit
+    host policy) + `packages/html/src/define/media/<key>-video.ts`
     + `packages/cdn/src/media/<key>-video.ts` for the CDN entry.
-    Worked example: `hls-video/adapter.ts` →
-    `class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoAdapter)) {}`.
+    Worked example: `hls-video/element.ts` →
+    `class HlsVideoElement extends createMediaElement({ Adapter: HlsVideoAdapter, host: videoHost }) {}`.
   - **React component** — `packages/react/src/media/<key>-video/`
     (~37 LOC; React adapter exposing props matching the HTML
     surface). Pairs with the HTML custom element.
