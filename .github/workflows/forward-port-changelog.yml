@@ -1,13 +1,17 @@
-name: Forward-port changelog
+name: Forward-port changelog and blog
 
 # The release job copies main onto site/v10 as its last step, and the changelog
 # prose bot only starts once that release is published. So prose always lands on
 # main after production has already moved, and used to need a hand cherry-pick to
-# reach videojs.org.
+# reach videojs.org. Blog posts have the same problem whenever they merge between
+# releases: nothing moved them to production until the next cut.
 #
 # This job closes that gap. It runs after the release is finished, touches only
-# the changelog folder, and pushes to site/v10 rather than main, so it cannot
-# delay, block, or re-trigger a release.
+# the changelog folder and the blog's content and asset folders, and pushes to
+# site/v10 rather than main, so it cannot delay, block, or re-trigger a release.
+# Anything else under site/ still waits for the next release, or for a manual run
+# of publish-site.yml. A blog post that imports a component new to main needs
+# that route too, since only these folders are copied.
 
 on:
   push:
@@ -15,6 +19,8 @@ on:
       - main
     paths:
       - 'site/src/content/changelog/**'
+      - 'site/src/content/blog/**'
+      - 'site/src/assets/blog/**'
 
 concurrency:
   group: forward-port-changelog
@@ -43,7 +49,7 @@ jobs:
           ref: site/v10
           fetch-depth: 0
 
-      - name: Copy the changelog from main onto site/v10
+      - name: Copy the changelog and blog from main onto site/v10
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -63,21 +69,30 @@ jobs:
             # created on the release branch and reaches main when the release PR
             # merges. So there is nothing here to reconcile, and no unreleased
             # changelog to leak into production.
-            rm -rf site/src/content/changelog
-            git checkout origin/main -- site/src/content/changelog
-            git add -A site/src/content/changelog
+            #
+            # Blog posts publish the moment they merge to main. A post that is not
+            # ready for videojs.org stays on a branch, or sets `devOnly: true` in
+            # its frontmatter so the production build leaves it out. Posts keep
+            # their images under src/assets/blog, so that folder travels with them.
+            folders='site/src/content/changelog site/src/content/blog site/src/assets/blog'
+            # shellcheck disable=SC2086
+            rm -rf $folders
+            # shellcheck disable=SC2086
+            git checkout origin/main -- $folders
+            # shellcheck disable=SC2086
+            git add -A $folders
 
             if git diff --cached --quiet; then
-              echo "site/v10 changelog already matches main — nothing to do"
+              echo "site/v10 changelog and blog already match main — nothing to do"
               exit 0
             fi
 
-            git commit -m 'chore(site): forward-port changelog to site/v10'
+            git commit -m 'chore(site): forward-port changelog and blog to site/v10'
             if git push origin HEAD:site/v10; then
               exit 0
             fi
             echo "::notice::site/v10 moved under us (attempt ${attempt}) — retrying"
           done
 
-          echo "::error::Could not push the changelog to site/v10 after 3 attempts"
+          echo "::error::Could not push the changelog and blog to site/v10 after 3 attempts"
           exit 1

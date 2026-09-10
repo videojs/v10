@@ -1,0 +1,50 @@
+name: Publish site
+
+# videojs.org deploys from site/v10, and only the release job moves that branch:
+# it force-pushes main onto site/v10 as its last step. Changelog prose and blog
+# posts are forward-ported by forward-port-changelog.yml, but every other site
+# change merged between releases (docs fixes, guides, components) waits for the
+# next cut, or for a hand cherry-pick onto site/v10.
+#
+# Dispatch this workflow to publish main to videojs.org now, the same way a
+# release does. It refuses to run while main documents packages that are not on
+# npm yet: from the moment the release PR merges until the release job finishes
+# publishing, main's version is ahead of npm, and pushing then would put docs for
+# unreleased packages on production. The release job covers that window itself.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # Always publish main, whichever branch the workflow was dispatched from.
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check that main matches the packages on npm
+        run: |
+          MAIN_VERSION=$(jq -r '.version' packages/core/package.json)
+          NPM_VERSION=$(npm view @videojs/core dist-tags.latest)
+
+          if [ "$MAIN_VERSION" != "$NPM_VERSION" ]; then
+            echo "::error::main is at @videojs/core@${MAIN_VERSION} but npm latest is ${NPM_VERSION}. A release is in flight; it will publish the site itself when it finishes."
+            exit 1
+          fi
+
+          echo "main and npm both at @videojs/core@${MAIN_VERSION}"
+
+      - name: Push main onto site/v10
+        run: |
+          git push origin HEAD:refs/heads/site/v10 --force
+          echo "Published main ($(git rev-parse --short HEAD)) to site/v10" >> "$GITHUB_STEP_SUMMARY"

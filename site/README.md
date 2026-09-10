@@ -77,9 +77,9 @@ The site deploys via Netlify from two branches:
 
 On each release, the CD workflow force-pushes `main` to `site/v10`, keeping production docs in sync with published packages.
 
-**Changelog prose** arrives too late for that force-push. The prose bot only starts once the release is published, so its PR lands on `main` after production has already moved. The [Forward-port changelog](../.github/workflows/forward-port-changelog.yml) workflow closes the gap: whenever anything under `src/content/changelog/` changes on `main`, it copies that folder onto `site/v10`. No cherry-pick needed.
+**Changelog prose and blog posts** arrive between releases. The prose bot only starts once the release is published, so its PR lands on `main` after production has already moved, and blog posts merge whenever they are ready. The [Forward-port changelog and blog](../.github/workflows/forward-port-changelog.yml) workflow closes the gap: whenever anything under `src/content/changelog/`, `src/content/blog/`, or `src/assets/blog/` changes on `main`, it copies those folders onto `site/v10`. No cherry-pick needed. A blog post that merges before it should be public needs `devOnly: true` in its frontmatter, and a post that imports a component new to `main` needs the publish workflow below instead, since only those folders are copied.
 
-**Fixing a typo without cutting a release:** Land the fix on `main` first, then cherry-pick to `site/v10`. The next release's force-push already includes the fix (since it came from `main`), so nothing gets lost. Treat `site/v10` as bot-owned — it is rewritten from `main` on every release, so anything pushed there that isn't also on `main` disappears at the next cut.
+**Publishing anything else without cutting a release:** Land the change on `main` first, then run the [Publish site](../.github/workflows/publish-site.yml) workflow from the Actions tab. It force-pushes `main` onto `site/v10` exactly like a release does, and refuses while a release is in flight (when `main`'s package version is ahead of npm). Treat `site/v10` as bot-owned — it is rewritten from `main` on every release and every publish, so anything pushed there that isn't also on `main` disappears at the next one.
 
 ## Environment Variables
 
