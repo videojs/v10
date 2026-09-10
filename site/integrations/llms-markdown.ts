@@ -16,6 +16,7 @@ interface PageEntry {
   description?: string;
   sort?: string;
   framework?: string;
+  markdown?: string;
 }
 
 export default function llmsMarkdown(): AstroIntegration {
@@ -41,7 +42,7 @@ export default function llmsMarkdown(): AstroIntegration {
             const response = await fetch(`http://${req.headers.host}${pagePath}`, { headers: { accept: 'text/html' } });
             if (!response.ok) return next();
 
-            const page = convertPage(await response.text(), turndown);
+            const page = convertPage(await response.text(), turndown, siteUrl);
             if (!page) return next();
 
             res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
@@ -72,7 +73,7 @@ export default function llmsMarkdown(): AstroIntegration {
             const htmlPath = join(siteDir, pathname, 'index.html');
             const html = await readFile(htmlPath, 'utf-8');
 
-            const page = convertPage(html, turndown);
+            const page = convertPage(html, turndown, siteUrl);
             if (!page) return;
 
             const { markdown, title, description, sort, framework } = page;
@@ -87,7 +88,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
-              docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework });
+              docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework, markdown });
             } else if (pathname.startsWith('blog/')) {
               blogPages.push({ pathname: `/${pathname}`, title, description, sort });
             } else if (pathname.startsWith('changelog/')) {
@@ -140,6 +141,11 @@ export default function llmsMarkdown(): AstroIntegration {
 
           await mkdir(dirname(subIndexPath), { recursive: true });
           await writeFile(subIndexPath, subIndex, 'utf-8');
+
+          // One file with every page, for tools that ingest a corpus rather than follow an index.
+          const fullPath = join(siteDir, 'docs', 'framework', fw, 'llms-full.txt');
+
+          await writeFile(fullPath, generateDocsFull(fw, fwPages, siteUrl), 'utf-8');
         }
 
         // Write blog sub-index
@@ -215,6 +221,22 @@ function createTurndown(): TurndownService {
     },
   });
 
+  // Shiki renders `<pre data-language>`; keep the language on the fence so agents know what they are reading.
+  turndown.addRule('highlighted-code', {
+    filter: (node) => node.nodeName === 'PRE' && node.getAttribute('data-language') !== null,
+    replacement: (_content, node) => {
+      // SAFETY: the filter only matches `<pre>` elements.
+      const pre = node as Element;
+      const code = (pre.textContent ?? '').replace(/\n$/, '');
+
+      // A fence must be longer than any backtick run inside the code, or a nested ``` would close it early.
+      const longestRun = Math.max(2, ...Array.from(code.matchAll(/`+/g), (match) => match[0].length));
+      const fence = '`'.repeat(longestRun + 1);
+
+      return `\n\n${fence}${pre.getAttribute('data-language')}\n${code}\n${fence}\n\n`;
+    },
+  });
+
   // Flatten docs link cards, whose block markup nests inside the <a>, into list items.
   // Emitting a single leading/trailing newline keeps a run of adjacent cards as one tight list.
   turndown.addRule('docs-link-card', {
@@ -251,7 +273,7 @@ interface ConvertedPage {
 }
 
 /** Convert a rendered page's `[data-llms-content]` regions to Markdown, or `null` when the page has none. */
-function convertPage(html: string, turndown: TurndownService): ConvertedPage | null {
+function convertPage(html: string, turndown: TurndownService, siteUrl: string): ConvertedPage | null {
   // linkedom is a lightweight DOM-compatible parser — no CSS engine,
   // no script execution, just enough DOM to run querySelector/cloneNode.
   const { document } = parseHTML(html);
@@ -274,6 +296,9 @@ function convertPage(html: string, turndown: TurndownService): ConvertedPage | n
       tag.remove();
     }
 
+    flattenTabs(clone);
+    absolutizeUrls(clone, siteUrl);
+
     contentParts.push(clone.innerHTML);
   });
 
@@ -295,6 +320,56 @@ function convertPage(html: string, turndown: TurndownService): ConvertedPage | n
   const framework = frameworkAttr || undefined;
 
   return { markdown, title, description, sort, framework };
+}
+
+/**
+ * Tab groups render every panel in the HTML, so a Markdown reader would see the tab labels as stray words followed by
+ * anonymous blocks. Replace each group with its panels in order, each introduced by its label. A single code frame
+ * whose label is just the language keeps only the fence, since the fence already carries it.
+ */
+function flattenTabs(root: Element): void {
+  for (const group of Array.from(root.querySelectorAll('[data-tabs-root]')).reverse()) {
+    const labels = new Map<string, string>();
+
+    for (const tab of group.querySelectorAll('[role="tab"]')) {
+      labels.set(tab.getAttribute('data-value') ?? '', collapseWhitespace(tab.textContent));
+    }
+
+    const panels = Array.from(group.querySelectorAll('[role="tabpanel"]'));
+    const parts: string[] = [];
+
+    for (const panel of panels) {
+      const label = labels.get(panel.getAttribute('data-value') ?? '') ?? '';
+      const language = panel.querySelector('pre[data-language]')?.getAttribute('data-language');
+      const showLabel = label && (panels.length > 1 || label !== language);
+
+      if (showLabel) parts.push(`<p><strong>${escapeHtml(label)}</strong></p>`);
+
+      parts.push(panel.innerHTML);
+    }
+
+    const replacement = group.ownerDocument.createElement('div');
+
+    replacement.innerHTML = parts.join('\n');
+    group.replaceWith(replacement);
+  }
+}
+
+/** Root-relative links are meaningless once the Markdown leaves the site, so pin them to the canonical origin. */
+function absolutizeUrls(root: Element, siteUrl: string): void {
+  if (!siteUrl) return;
+
+  for (const link of root.querySelectorAll('a[href^="/"]')) {
+    link.setAttribute('href', `${siteUrl}${link.getAttribute('href')}`);
+  }
+
+  for (const image of root.querySelectorAll('img[src^="/"]')) {
+    image.setAttribute('src', `${siteUrl}${image.getAttribute('src')}`);
+  }
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /** Element.classList is not implemented consistently across DOM shims, so read the attribute directly. */
@@ -345,7 +420,8 @@ function generateRootIndex(
   content += `## Documentation\n\n`;
 
   for (const fw of [...frameworks].sort()) {
-    content += `- [${capitalize(fw)} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)\n`;
+    content += `- [${capitalize(fw)} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)`;
+    content += ` ([complete in one file](${siteUrl}/docs/framework/${fw}/llms-full.txt))\n`;
   }
 
   content += `\n`;
@@ -379,7 +455,43 @@ function generateRootIndex(
 function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10 — ${capitalize(framework)} Documentation\n\n`;
 
-  // Build slug → page lookup
+  content += `> Every page below is also available as Markdown at its \`.md\` URL. `;
+  content += `The whole set in one file: ${siteUrl}/docs/framework/${framework}/llms-full.txt\n\n`;
+
+  // Get sidebar filtered for this framework (production only)
+  if (!isValidFramework(framework)) return content;
+
+  const filtered = filterSidebarForLlms(sidebar, framework);
+
+  content += renderSidebarToMarkdown(filtered, pagesBySlug(framework, pages), siteUrl);
+  content += generateIndexFooter(siteUrl);
+
+  return content;
+}
+
+/** Every docs page for a framework in sidebar order, concatenated into one Markdown document. */
+function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string): string {
+  let content = `# Video.js v10 — ${capitalize(framework)} Documentation (complete)\n\n`;
+
+  content += `> Every ${capitalize(framework)} docs page in one file. `;
+  content += `Index with descriptions: ${siteUrl}/docs/framework/${framework}/llms.txt\n`;
+
+  // Get sidebar filtered for this framework (production only)
+  if (!isValidFramework(framework)) return content;
+
+  const bySlug = pagesBySlug(framework, pages);
+
+  for (const slug of sidebarSlugs(filterSidebarForLlms(sidebar, framework))) {
+    const page = bySlug.get(slug);
+    if (!page?.markdown) continue;
+
+    content += `\n---\n\n<!-- Source: ${siteUrl}${page.pathname} -->\n\n${page.markdown.trim()}\n`;
+  }
+
+  return content;
+}
+
+function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEntry> {
   const prefix = `/docs/framework/${framework}/`;
   const pageBySlug = new Map<string, PageEntry>();
 
@@ -391,15 +503,15 @@ function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: strin
     }
   }
 
-  // Get sidebar filtered for this framework (production only)
-  if (!isValidFramework(framework)) return content;
+  return pageBySlug;
+}
 
-  const filtered = filterSidebarForLlms(sidebar, framework);
+function sidebarSlugs(items: Sidebar): string[] {
+  return items.flatMap((item) => {
+    if (isSection(item)) return sidebarSlugs(item.contents);
 
-  content += renderSidebarToMarkdown(filtered, pageBySlug, siteUrl);
-  content += generateIndexFooter(siteUrl);
-
-  return content;
+    return isLink(item) ? [] : [item.slug];
+  });
 }
 
 function renderSidebarToMarkdown(
