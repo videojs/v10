@@ -1,56 +1,22 @@
-import '@app/styles.css';
-import './theme.css';
-import '@videojs/html/i18n';
-import '@videojs/html/video/player';
-import '@videojs/html/icons/element/default';
-import '@videojs/html/ui/container';
-import '@videojs/html/ui/poster';
-import '@videojs/html/ui/gesture';
-import '@videojs/html/ui/hotkey';
-import '@videojs/html/ui/error-dialog';
-import '@videojs/html/ui/dialog-backdrop';
-import '@videojs/html/ui/dialog-popup';
-import '@videojs/html/ui/dialog-title';
-import '@videojs/html/ui/dialog-description';
-import '@videojs/html/ui/dialog-close';
-import '@videojs/html/ui/play-button';
-import '@videojs/html/ui/mute-button';
-import '@videojs/html/ui/time-slider';
-import '@videojs/html/ui/slider-track';
-import '@videojs/html/ui/slider-buffer';
-import '@videojs/html/ui/slider-fill';
-import '@videojs/html/ui/slider-preview';
-import '@videojs/html/ui/slider-thumbnail';
-import '@videojs/html/ui/slider-value';
-import { defineTemplateSkin } from '@app/shared/html/registry-skins';
-import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
-
-import markup from './theme.html?raw';
-
 /**
- * The theme is markup plus a stylesheet, stamped into an element the same way an ejected registry skin is. The authored
- * markup keeps a bare `<slot>` where the media goes and the poster's own `<img>` as its target.
+ * Three modes on one page. Without `panel` the page is the comparison shell; with it the page is a single player, which
+ * is what each of the shell's frames loads.
  *
- * The page names this tag itself rather than the shell's `skinTag`, since the shell's picker only knows the packaged
- * skins.
+ * The split matters: media-chrome and `@videojs/html` register eleven of the same custom element names, and whichever
+ * loads first silently wins. Keeping each stack in its own module _and_ its own frame is what makes the two renderable
+ * at the same time.
+ *
+ * Every import here is dynamic for that reason, which leaves nothing to mark the file a module — hence the bare `export
+ * {}`, without which top-level `await` is a type error.
  */
-const skinTag = defineTemplateSkin('player-style-instaplay-skin', {
-  markup,
-  media: (container) => container.querySelector('slot:not([name])'),
-  poster: (container) => container.querySelector('media-poster img'),
-});
+export {};
 
-createHtmlSandbox({
-  player: 'video',
-  render: ({ src, attrs, chapters, storyboard, poster }) => html`
-    <video-player>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
-        <video${src} ${attrs} playsinline crossorigin>
-          ${chapters}
-          ${storyboard}
-        </video>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
-      </${skinTag}>
-    </video-player>
-  `,
-});
+const panel = new URLSearchParams(location.search).get('panel');
+
+if (panel === 'media-chrome') {
+  await import('./panel-media-chrome');
+} else if (panel === 'videojs') {
+  await import('./panel-videojs');
+} else {
+  await import('./compare');
+}
