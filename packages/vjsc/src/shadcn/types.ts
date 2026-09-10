@@ -39,8 +39,8 @@ export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = Distribut
   readonly paths?: Partial<RegistryPaths> | undefined;
   /** Bundle the module closure's generated CSS into one installed stylesheet. */
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
-  /** Import the configured shared theme from this item's root module. */
-  readonly theme?: boolean | undefined;
+  /** Import the configured shared theme, or a specific installed stylesheet from that theme item. */
+  readonly theme?: boolean | string | undefined;
 };
 
 /** A file-backed Shadcn item which is not owned by one transformed graph module. */
@@ -68,10 +68,14 @@ export interface RegistryItemsOptions<Meta extends ModuleMeta = ModuleMeta> {
 }
 
 export type RegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'name' | 'type'> & {
+  /** Registry item name. Defaults to the target filename prefixed with `_style-`. */
+  readonly name?: string | undefined;
   /** Installed path of the shared theme stylesheet. */
   readonly target: string;
-  /** Authored CSS files relative to the VJSC graph root. */
+  /** Authored CSS files relative to the VJSC graph root, bundled into `target`. */
   readonly include?: readonly string[] | undefined;
+  /** Authored CSS sources and installed targets to preserve as separate editable files. */
+  readonly files?: Readonly<Record<string, string>> | undefined;
   /** Tailwind CSS source whose `@theme inline`, `@utility`, and `@custom-variant` rules extend the registry item. */
   readonly tailwind?: string | undefined;
 };

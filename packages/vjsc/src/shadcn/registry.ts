@@ -1,4 +1,5 @@
-import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { basename, dirname, isAbsolute, posix, relative, resolve as resolvePath } from 'node:path';
 
 import { type Registry, type RegistryItem, registryItemSchema, registrySchema } from 'shadcn/schema';
 
@@ -17,6 +18,7 @@ import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
 import { readTailwindRegistryTheme } from './tailwind';
 import type {
   RegistryModuleTarget,
+  RegistryThemeOptions,
   RegistryStylesheetOutput,
   RegistryStylesOptions,
   VjscRegistryOptions,
@@ -34,7 +36,12 @@ interface SourceBuild<Meta extends ModuleMeta> {
   readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly paths?: { readonly install?: string | undefined; readonly import?: string | undefined } | undefined;
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
-  readonly theme: boolean;
+  readonly theme: boolean | string;
+}
+
+interface PreservedStyleFile {
+  readonly source: string;
+  readonly target: string;
 }
 
 interface StyleBuild<Meta extends ModuleMeta> {
@@ -43,6 +50,7 @@ interface StyleBuild<Meta extends ModuleMeta> {
   readonly modules: readonly GraphModule<Meta>[];
   readonly target: string;
   readonly include?: readonly string[] | undefined;
+  readonly files?: readonly PreservedStyleFile[] | undefined;
   readonly asset?: string | undefined;
 }
 
@@ -199,7 +207,17 @@ async function describeStyleItems<Meta extends ModuleMeta>(
   }
 
   if (styles.theme) {
-    const { target, include, tailwind, ...manifest } = styles.theme;
+    const { target, include, files, name = styleItemName(target), tailwind, ...manifest } = styles.theme;
+    const preservedFiles = preservedStyleFiles(files);
+
+    if (include && preservedFiles.length > 0) {
+      throw new Error('Shadcn registry theme cannot bundle `include` files and preserve `files` at the same time.');
+    }
+
+    if (preservedFiles.length > 0 && !preservedFiles.some((file) => file.target === target)) {
+      throw new Error(`Shadcn registry theme files do not include their target: \`${target}\`.`);
+    }
+
     const tailwindTheme = tailwind ? await readTailwindRegistryTheme(graph.root, tailwind) : undefined;
     const cssVars = tailwindTheme
       ? {
@@ -210,12 +228,12 @@ async function describeStyleItems<Meta extends ModuleMeta>(
     const css = tailwindTheme ? { ...tailwindTheme.css, ...manifest.css } : manifest.css;
 
     items.push({
-      name: styleItemName(target),
+      name,
       type: 'registry:style',
       ...manifest,
       cssVars,
       css,
-      build: { kind: 'style', group: 'support', modules: [], target, include },
+      build: { kind: 'style', group: 'support', modules: [], target, include, files: preservedFiles },
     });
   }
 
@@ -436,9 +454,18 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   const targets = new Set<string>();
 
   if (styles?.theme && (hasStyles || item.build.theme)) {
-    targets.add(styles.theme.target);
+    const themeTarget = typeof item.build.theme === 'string' ? item.build.theme : styles.theme.target;
+    const themeFiles = styles.theme.files ? Object.values(styles.theme.files) : [];
 
-    if (styles.theme.target !== item.build.stylesheet?.target) dependencies.add(styleItemName(styles.theme.target));
+    if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
+      throw new Error(
+        `Shadcn item \`${item.name}\` imports a stylesheet outside the shared theme: \`${themeTarget}\`.`
+      );
+    }
+
+    targets.add(themeTarget);
+
+    if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(styles.theme));
   }
 
   if (item.build.stylesheet) {
@@ -488,6 +515,26 @@ async function buildStyleItem<Meta extends ModuleMeta>(
   graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<BuiltItem> {
+  if (item.build.files && item.build.files.length > 0) {
+    const sourceFiles = new Map<string, string>();
+    const files = await Promise.all(
+      item.build.files.map(async (file): Promise<RegistryFile> => {
+        const path = posix.join('files', item.name, normalizePath(file.target));
+        const target = posix.join(normalizePath(options.paths.install), normalizePath(file.target));
+        const content = await readFile(resolvePath(graph.root, file.source), 'utf8');
+
+        addUnique(sourceFiles, path, content, 'source');
+        return { path, target, type: 'registry:style' };
+      })
+    );
+
+    return {
+      group: normalizeGroup(item.build.group),
+      sourceFiles,
+      manifest: buildManifest(item, options, files),
+    };
+  }
+
   const css = await registryStyles(
     item.name,
     item.build.modules,
@@ -716,6 +763,23 @@ function styleItemName(target: string): string {
   validateRelativePath(target, 'Shadcn registry style target');
 
   return `_style-${basename(target, '.css')}`;
+}
+
+function themeItemName(theme: NonNullable<RegistryStylesOptions['theme']>): string {
+  return theme.name ?? styleItemName(theme.target);
+}
+
+function preservedStyleFiles(files: RegistryThemeOptions['files']): PreservedStyleFile[] {
+  if (!files) return [];
+
+  return Object.entries(files)
+    .map(([source, target]) => {
+      validateRelativePath(source, 'Shadcn registry theme source');
+      validateRelativePath(target, 'Shadcn registry theme target');
+
+      return { source, target };
+    })
+    .sort((left, right) => left.target.localeCompare(right.target));
 }
 
 function styleAssetItemName(asset: string): string {
