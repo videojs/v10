@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { FullConfig } from '@playwright/test';
-import { isString } from '@videojs/utils/predicate';
+import { isPlainObject, isString } from '@videojs/utils/predicate';
 
 import {
   publishedRegistryConsumerProject,
@@ -297,14 +297,17 @@ async function applyOverlay(project: RegistryConsumerProject, projectDir: string
 
 /** Build a fresh Next app against the registry's exact npm pins, without workspace tarballs or package overrides. */
 export async function verifyPublishedRegistry(): Promise<void> {
-  await rm(generatedDir, { recursive: true, force: true });
   await mkdir(generatedDir, { recursive: true });
 
   const started = performance.now();
   const project = publishedRegistryConsumerProject;
   const projectDir = resolve(generatedDir, project.directory);
   const packageTag = process.env.VIDEOJS_REGISTRY_PACKAGE_TAG;
-  const registry = createRegistryServer({}, packageTag);
+
+  await rm(projectDir, { recursive: true, force: true });
+
+  const overrides = packageTag ? await resolvePublishedPackageOverrides(registryPath(project), packageTag) : {};
+  const registry = createRegistryServer(overrides);
 
   try {
     const registryUrl = await listen(registry);
@@ -528,11 +531,7 @@ function packageClosure(roots: ReadonlySet<string>, packages: ReadonlyMap<string
   return required;
 }
 
-function createRegistryServer(overrides: Readonly<Record<string, string>>, packageTag?: string): Server {
-  if (packageTag && !/^[0-9A-Za-z][0-9A-Za-z._-]*$/.test(packageTag)) {
-    throw new Error(`Invalid npm package tag or version ${packageTag}.`);
-  }
-
+function createRegistryServer(overrides: Readonly<Record<string, string>>): Server {
   return createServer(async (request, response) => {
     const pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname;
     const path = resolve(registryDir, `.${pathname}`);
@@ -555,17 +554,13 @@ function createRegistryServer(overrides: Readonly<Record<string, string>>, packa
     }
 
     response.setHeader('content-type', 'application/json; charset=utf-8');
-    response.end(withRegistryPackages(source, overrides, packageTag));
+    response.end(withRegistryPackages(source, overrides));
   });
 }
 
-function withRegistryPackages(
-  source: string,
-  overrides: Readonly<Record<string, string>>,
-  packageTag?: string
-): string {
-  // SAFETY: hosted registry files have already passed Shadcn schema validation. This local server only replaces exact
-  // package pins with their packed workspace artifacts before the stock CLI consumes the document.
+function withRegistryPackages(source: string, overrides: Readonly<Record<string, string>>): string {
+  // SAFETY: hosted registry files have already passed Shadcn schema validation. This local server only replaces their
+  // exact package pins with the requested workspace artifacts or published versions before the stock CLI consumes it.
   const document = JSON.parse(source) as { dependencies?: string[] };
   if (!document.dependencies) return source;
 
@@ -573,10 +568,47 @@ function withRegistryPackages(
     const match = /^(@videojs\/[^@]+)@/.exec(dependency);
     const local = match?.[1] ? overrides[match[1]] : undefined;
 
-    return local ?? (match?.[1] && packageTag ? `${match[1]}@${packageTag}` : dependency);
+    return local ?? dependency;
   });
 
   return `${JSON.stringify(document)}\n`;
+}
+
+async function resolvePublishedPackageOverrides(
+  directory: string,
+  tag: string
+): Promise<Readonly<Record<string, string>>> {
+  if (!/^[0-9A-Za-z][0-9A-Za-z._-]*$/.test(tag)) throw new Error(`Invalid npm package tag or version ${tag}.`);
+
+  const packageNames = new Set<string>();
+  const path = resolve(registryDir, directory);
+
+  for (const entry of await readdir(path, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.json') || entry.name === 'catalog.json') continue;
+
+    const document: unknown = JSON.parse(await readFile(resolve(path, entry.name), 'utf8'));
+    if (!isPlainObject(document) || !Array.isArray(document.dependencies)) continue;
+
+    for (const dependency of document.dependencies) {
+      if (!isString(dependency)) continue;
+
+      const match = /^(@videojs\/[^@]+)@/.exec(dependency);
+
+      if (match?.[1]) packageNames.add(match[1]);
+    }
+  }
+
+  const resolved = await Promise.all(
+    [...packageNames].sort().map(async (name) => {
+      const result = await run('npm', ['view', `${name}@${tag}`, 'version', '--json']);
+      const version: unknown = JSON.parse(result.stdout);
+      if (!isString(version)) throw new Error(`Could not resolve an exact npm version for ${name}@${tag}.`);
+
+      return [name, `${name}@${version}`] as const;
+    })
+  );
+
+  return Object.fromEntries(resolved);
 }
 
 async function listen(server: Server): Promise<string> {
