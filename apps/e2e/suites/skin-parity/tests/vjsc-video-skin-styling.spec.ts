@@ -27,6 +27,26 @@ const BUFFERING_INDICATOR_SELECTOR =
 const CONTROLS_SELECTOR = '.video-controls';
 
 for (const variant of CASES) {
+  test(`${variant.framework} ${variant.skin} keeps poster sizing and fit in sync`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, width: 800 }, async () => {});
+
+    for (const { root } of panels) {
+      const image = root.locator('img').first();
+
+      await image.evaluate((element: HTMLImageElement) => {
+        element.removeAttribute('srcset');
+        element.src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200"><rect width="100" height="200" fill="red"/></svg>')}`;
+      });
+      await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalHeight)).toBe(200);
+      await expect(image).toHaveCSS('object-fit', 'contain');
+      await expect(image).toHaveCSS('object-position', '50% 50%');
+      expect(await frameRect(image)).toEqual(await frameRect(root));
+
+      await root.evaluate((element: HTMLElement) => element.style.setProperty('--media-object-fit', 'cover'));
+      await expect(image).toHaveCSS('object-fit', 'cover');
+    }
+  });
+
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind layout in sync`, async ({ page }) => {
     for (const width of WIDTHS) {
       const { css, tailwind } = await openVariants(page, variant, width);
