@@ -43,6 +43,7 @@ describe('createShadcnRegistryFiles', () => {
             title: name,
             description: `${name}.`,
             group: 'skins',
+            directives: ['use client'],
             target(candidate, root) {
               return candidate.id === root.id ? `skins/${name}/skin.tsx` : `skins/${name}/ui/button.tsx`;
             },
@@ -55,6 +56,8 @@ describe('createShadcnRegistryFiles', () => {
 
     expect(defaultItem.registryDependencies).toEqual(['@example/button']);
     expect(defaultItem.files).toHaveLength(1);
+    expect(defaultItem.directives).toBeUndefined();
+    expect(sourceFile(files, 'skins/files/video/skins/video/skin.tsx')).toMatch(/^"use client";\n\n/);
     expect(minimalItem.registryDependencies).toBeUndefined();
     expect(minimalItem.files.map((file: { target: string }) => file.target)).toEqual([
       'components/example/skins/video-minimal/skin.tsx',
@@ -220,4 +223,11 @@ function registryItem(files: Awaited<ReturnType<typeof createShadcnRegistryFiles
   if (!item) throw new Error(`Missing registry item: ${name}`);
 
   return item;
+}
+
+function sourceFile(files: Awaited<ReturnType<typeof createShadcnRegistryFiles>>, path: string): string {
+  const file = files.find((candidate) => candidate.path === path);
+  if (!file) throw new Error(`Missing source file: ${path}`);
+
+  return file.content;
 }

@@ -28,6 +28,7 @@ interface SourceBuild<Meta extends ModuleMeta> {
   readonly kind: 'source';
   readonly module: GraphModule<Meta>;
   readonly group: string;
+  readonly directives: readonly string[];
   readonly target: RegistryModuleTarget<Meta>;
   readonly filename?: string | undefined;
   readonly imports?: Readonly<Record<string, string>> | undefined;
@@ -144,11 +145,12 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
     const resolved = await options.items.resolve({ graph, module });
     if (!resolved) continue;
 
-    const { group, target, filename, imports, stylesheet, theme, ...item } = resolved;
+    const { group, directives, target, filename, imports, stylesheet, theme, ...item } = resolved;
     const build: SourceBuild<Meta> = {
       kind: 'source',
       module,
       group,
+      directives: directives ?? [],
       target,
       ...(filename ? { filename } : {}),
       ...(imports ? { imports } : {}),
@@ -390,6 +392,8 @@ async function buildPublishedItem<Meta extends ModuleMeta>(
 
           source = addStyleImport(source, relativeImport(module.target, stylesheetTarget));
         }
+
+        source = addDirectives(source, item.build.directives);
       }
 
       addUnique(sourceFiles, path, source, 'source');
@@ -575,6 +579,15 @@ function addStyleImport(source: string, specifier: string): string {
   const statement = `import '${specifier}';\n`;
 
   return pragma.test(source) ? source.replace(pragma, `$1\n${statement}`) : `${statement}\n${source}`;
+}
+
+function addDirectives(source: string, directives: readonly string[]): string {
+  if (directives.length === 0) return source;
+
+  const pragma = /^(\/\*\* @jsxImportSource [^*]+\*\/\s*)/;
+  const statements = [...new Set(directives)].map((directive) => `${JSON.stringify(directive)};`).join('\n');
+
+  return pragma.test(source) ? source.replace(pragma, `$1\n${statements}\n\n`) : `${statements}\n\n${source}`;
 }
 
 function createLayout<Meta extends ModuleMeta>(

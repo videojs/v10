@@ -107,6 +107,7 @@ export function skinItem(
     registryDependencies: reactHelperDependency(target),
     meta: registryMeta,
     group: 'skins',
+    directives: ['use client'],
     target: (candidate, root) => skinModuleTarget(candidate, root, skin),
     stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css` } : undefined,
     theme: true,
@@ -159,18 +160,16 @@ function skinDocs(
   const component = exportedComponentName(module);
   const preset = skinPreset(skin);
   const player = `${pascalCase(preset)}Player`;
-  const media = preset.endsWith('audio') ? 'HlsAudio' : 'HlsJsVideo';
-  const mediaEntry = preset.endsWith('audio') ? 'hls-audio' : 'hlsjs-video';
+  const media = preset.endsWith('audio') ? 'Audio' : 'Video';
 
   if (target.framework === 'html') {
     return `Installs editable ${meta.title} source under \`${registryPaths.install}/${directory}\` together with the shared theme stylesheet. Requires \`${packageRequirements.html}\`; import the matching Player and media registrations before using the installed light-DOM template.`;
   }
 
-  return `Requires \`${packageRequirements.react}\`, which is installed with this item.
+  return `Requires \`${packageRequirements.react}\`, which is installed with this item. The native media element below handles browser-supported sources; [install a playback adapter](https://videojs.org/docs/concepts/media-sources/) for HLS, DASH, embeds, or another engine.
 
 \`\`\`tsx
-import { ${media} } from '@videojs/react/media/${mediaEntry}';
-import { ${player} } from '@videojs/react/${preset}';
+import { ${media}, ${player} } from '@videojs/react/${preset}';
 
 import { ${component} } from '${registryPaths.import}/${directory}/skin';
 

@@ -20,6 +20,8 @@ export interface RegistryStylesheetOutput {
 export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = DistributiveOmit<RegistryItem, 'files'> & {
   /** Included registry path, such as `components` or `blocks`. */
   readonly group: string;
+  /** JavaScript directives prepended to the installed root module. */
+  readonly directives?: readonly string[] | undefined;
   /** Root-module target relative to the configured installation directory. */
   readonly target: RegistryModuleTarget<Meta>;
   /** Installed filename for the root module. Defaults to its source filename. */

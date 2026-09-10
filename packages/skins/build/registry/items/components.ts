@@ -4,7 +4,7 @@ import type { RegistryModuleItem } from 'vjsc/shadcn';
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { skinModuleSourcePath } from '../../config.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
-import { registryPaths, type RegistryTarget } from '../targets.ts';
+import type { RegistryTarget } from '../targets.ts';
 import { reactHelperDependency } from './support.ts';
 
 export function componentItem(
@@ -30,6 +30,7 @@ export function componentItem(
     registryDependencies: reactHelperDependency(target),
     meta: registryMeta,
     group: 'ui',
+    directives: ['use client'],
     target: `ui/${meta.name}.tsx`,
     theme: true,
   };
@@ -57,13 +58,5 @@ function componentDocs(
 ): string {
   const component = exportedComponentName(module);
 
-  return `Installs \`${registryPaths.import}/ui/${meta.name}.tsx\` for use inside a compatible Video.js Player or Skin.
-
-\`\`\`tsx
-import { ${component} } from '${registryPaths.import}/ui/${meta.name}';
-
-export function Controls() {
-  return <${component} />;
-}
-\`\`\``;
+  return `[\`${component}\` reference](https://videojs.org/docs/reference/${meta.name}/).`;
 }
