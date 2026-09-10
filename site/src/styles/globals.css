@@ -225,6 +225,41 @@
   --hover: var(--color-warm-gray);
 }
 
+/*
+ * Appearance preferences, applied to <html> by ThemeInit before paint and kept in sync by `stores/appearance.ts`.
+ * The accent swaps the token every orange utility reads, with a darker value in light mode where the brighter brand
+ * colours would not pass on manila. The soft tone lifts the three dark surfaces a step without touching light mode.
+ */
+html[data-accent="gold"] {
+  --color-orange: #a86a00;
+}
+
+html.dark[data-accent="gold"] {
+  --color-orange: var(--color-gold);
+}
+
+html[data-accent="magenta"] {
+  --color-orange: var(--color-magenta);
+}
+
+html.dark[data-accent="magenta"] {
+  --color-orange: #e0608c;
+}
+
+html[data-accent="red"] {
+  --color-orange: var(--color-red);
+}
+
+html.dark[data-accent="red"] {
+  --color-orange: #ff5d5e;
+}
+
+html.dark[data-tone="soft"] {
+  --color-faded-black: #1d1b1a;
+  --color-soot: #26231f;
+  --color-warm-gray: #2f2b28;
+}
+
 @custom-variant intent (&:hover, &:focus-within);
 @custom-variant supports-container {
   @supports (container: size) {

@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
 import CompactLogo from '@/assets/logos/vjs.svg?react';
+import { AppearanceControls } from '@/components/AppearanceMenu';
 import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 
@@ -144,6 +145,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                 GitHub
               </a>
             </nav>
+            <AppearanceControls className="px-5 pb-6" />
             <p className="text-p2 mt-auto p-6 text-center">The open source player for the web</p>
           </div>
         </Dialog.Popup>

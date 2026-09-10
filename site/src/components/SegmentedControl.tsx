@@ -19,7 +19,10 @@ export interface SegmentedControlProps<T = string> {
   options: SegmentedOption<T>[];
   'aria-label': string;
   className?: string;
+  /** The control cannot be used right now; shows a not-allowed cursor. */
   disabled?: boolean;
+  /** The control is not ready yet, for example before hydration; shows a wait cursor. */
+  pending?: boolean;
   'data-testid'?: string;
 }
 
@@ -34,8 +37,11 @@ export default function SegmentedControl<T extends string = string>({
   'aria-label': ariaLabel,
   className,
   disabled,
+  pending = false,
   'data-testid': dataTestId,
 }: SegmentedControlProps<T>) {
+  const inactive = disabled || pending;
+
   return (
     <ToggleGroup
       value={value ? [value] : []}
@@ -46,13 +52,13 @@ export default function SegmentedControl<T extends string = string>({
         // SAFETY: every Toggle receives an option value of type T, so the group can only report those back.
         onChange(next[0] as T);
       }}
-      disabled={disabled}
+      disabled={inactive}
       aria-label={ariaLabel}
       data-testid={dataTestId}
       className={twMerge(
         clsx(
           'grid w-full grid-flow-col auto-cols-fr gap-1 rounded-lg corner-squircle border border-line bg-surface p-1',
-          disabled && 'opacity-60'
+          inactive && 'opacity-60'
         ),
         className
       )}
@@ -69,7 +75,7 @@ export default function SegmentedControl<T extends string = string>({
             className={clsx(
               'flex min-w-0 items-center justify-center gap-2 rounded-md corner-squircle px-3 py-1.5 text-p3 leading-none whitespace-nowrap select-none',
               'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold',
-              option.disabled || disabled ? 'cursor-wait' : 'cursor-pointer',
+              pending ? 'cursor-wait' : option.disabled || disabled ? 'cursor-not-allowed' : 'cursor-pointer',
               isPressed
                 ? 'bg-surface-raised font-semibold text-faded-black dark:text-manila-light shadow-xs ring-1 ring-line'
                 : 'text-muted intent:text-faded-black dark:intent:text-manila-light'

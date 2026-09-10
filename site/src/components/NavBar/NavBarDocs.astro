@@ -5,6 +5,7 @@ import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
 import CompactLogo from '@/assets/logos/vjs.svg?react';
+import AppearanceMenu from '@/components/AppearanceMenu';
 import BetaPill from '@/components/BetaPill';
 import Search from '@/components/Search';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL, VJS10_VERSION } from '@/consts';
@@ -78,6 +79,7 @@ const { class: className } = Astro.props;
         </a>
       ))
     }
+    <AppearanceMenu client:idle className="self-center" />
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(

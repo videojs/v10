@@ -4,6 +4,7 @@ import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
+import AppearanceMenu from '@/components/AppearanceMenu';
 import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import Search from '../Search';
@@ -73,6 +74,7 @@ const { class: className, pill = true } = Astro.props;
         </a>
       ))
     }
+    <AppearanceMenu client:idle />
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(
