@@ -29,6 +29,19 @@ function renderPlayer(ui: React.ReactElement): HTMLElement {
 }
 
 describe('WistiaVideo', () => {
+  it('routes media event props to the element, which React wires only for <video> and <audio>', () => {
+    const onPlay = vi.fn((event: Event) => event.currentTarget);
+    const onTimeUpdate = vi.fn();
+    const player = renderPlayer(<WistiaVideo src={SRC} onPlay={onPlay} onTimeUpdate={onTimeUpdate} />);
+
+    player.dispatchEvent(new Event('play'));
+    player.dispatchEvent(new Event('timeupdate'));
+
+    expect(onPlay).toHaveBeenCalledTimes(1);
+    expect(onPlay).toHaveReturnedWith(player);
+    expect(onTimeUpdate).toHaveBeenCalledTimes(1);
+  });
+
   it('resolves a Wistia URL to the media id the player wants', () => {
     expect(renderPlayer(<WistiaVideo src={SRC} />).getAttribute('media-id')).toBe('oifkgmxnkb');
   });

@@ -28,8 +28,15 @@ import {
 
 import { useMediaAttach } from '../../player/context';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventPropName, type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 
-export interface WistiaVideoProps extends Partial<Omit<WistiaAdapterProps, 'source'>>, HTMLAttributes<WistiaPlayer> {
+// React only wires `onPlay` and friends to `<video>` and `<audio>`, so on a custom element they are routed by hand and
+// carry the element's own `Event` rather than a synthetic one.
+export interface WistiaVideoProps
+  extends
+    Partial<Omit<WistiaAdapterProps, 'source'>>,
+    Omit<HTMLAttributes<WistiaPlayer>, MediaEventPropName>,
+    MediaEventProps<WistiaPlayer> {
   /** Wistia's own options, `mediaId` among them: everything the player understands that a media does not. */
   source?: WistiaSource | null;
 }
@@ -78,7 +85,9 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
     },
     [setMedia]
   );
-  const composedRef = useComposedRefs(attachRef, ref);
+  // The element is the media, so it is what the event props listen to.
+  const { ref: eventsRef, props: elementProps } = useMediaEvents(rest);
+  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
   // A Wistia URL is accepted where a media id is expected, the way every other media here accepts a `src`.
   const { mediaId, ...options } = source ?? {};
@@ -103,7 +112,7 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
       // Wistia's own options last, so a source reaches anything the props above do not name.
       ...options,
     }),
-    ...rest,
+    ...elementProps,
     style: { ...wistiaPlayerStyle(controls), ...style },
     ref: composedRef,
     children,

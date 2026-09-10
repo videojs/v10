@@ -5,10 +5,11 @@ import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
+import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface CloudflareVideoProps extends Partial<CloudflareAdapterProps> {
+export interface CloudflareVideoProps extends Partial<CloudflareAdapterProps>, MediaEventProps<CloudflareAdapter> {
   children?: ReactNode;
 }
 
@@ -18,8 +19,6 @@ export const CloudflareVideo = forwardRef<HTMLIFrameElement, CloudflareVideoProp
 ) {
   const media = useMediaInstance(CloudflareAdapter);
   const props: Partial<CloudflareAdapterProps> & Record<string, unknown> = { ...rawProps };
-  const attachRef = useAttachIframe(media);
-  const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildCloudflareIframeSrc(props.src || props.source?.src || '', {
@@ -31,11 +30,13 @@ export const CloudflareVideo = forwardRef<HTMLIFrameElement, CloudflareVideoProp
       defaultMuted: !!(props.defaultMuted || props.muted),
     })
   );
-  const iframeProps = useSyncProps<CloudflareAdapterProps, Record<string, unknown>>(
-    media,
-    props,
-    CloudflareAdapter.defaultProps
+  const { ref: eventsRef, props: iframeProps } = useMediaEvents(
+    useSyncProps<CloudflareAdapterProps, Record<string, unknown>>(media, props, CloudflareAdapter.defaultProps),
+    media
   );
+  const attachRef = useAttachIframe(media);
+  // Listeners first: `attach()` dispatches `loadstart` synchronously.
+  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
   return (
     <iframe

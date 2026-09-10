@@ -68,7 +68,7 @@ for (const { platform, skin, styling, skins } of CASES) {
     const styles = await root.evaluate((element) => {
       const accent = 'rgb(18, 52, 86)';
       const fillUsesAccent = [...element.querySelectorAll<HTMLElement>('[data-orientation]')].some(
-        (part) => getComputedStyle(part).backgroundColor === accent
+        (part) => getComputedStyle(part, '::before').backgroundColor === accent
       );
       const style = getComputedStyle(element);
 

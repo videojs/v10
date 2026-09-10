@@ -156,6 +156,16 @@ describe('createMediaReferenceModel', () => {
 
     expect(model.platforms.react!.sections.some((section) => section.key === 'events')).toBe(false);
   });
+
+  it('keeps React events for an iframe media that routes them to its adapter', () => {
+    const ref = makeRef();
+
+    ref.platforms.react!.target = 'iframe';
+    ref.platforms.react!.acceptsNativeProps = false;
+    const model = createMediaReferenceModel('YouTubeVideo', ref)!;
+
+    expect(model.platforms.react!.sections.some((section) => section.key === 'events')).toBe(true);
+  });
 });
 
 describe('buildMediaReferenceTocHeadings', () => {

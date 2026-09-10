@@ -176,6 +176,12 @@ export { useAttachMedia } from './utils/use-attach-media';
 export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
 export { useDestroy } from './utils/use-destroy';
 export { useLatestRef } from './utils/use-latest-ref';
+export {
+  type MediaEventHandler,
+  type MediaEventPropName,
+  type MediaEventProps,
+  useMediaEvents,
+} from './utils/use-media-events';
 export { useMediaExtension } from './utils/use-media-extension';
 export { useMediaInstance } from './utils/use-media-instance';
 export { renderElement } from './utils/use-render';

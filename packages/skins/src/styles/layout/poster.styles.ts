@@ -16,6 +16,8 @@ export default styles({
         'shadow-dom': [
           '[&>slot::slotted(img:not([src]):not([srcset]))]:invisible',
           '[&>slot::slotted(img)]:layer-media [&>slot::slotted(img)]:object-media',
+          // Page resets such as Tailwind's `img { height: auto }` outrank normal slotted styles.
+          '[&>slot::slotted(img)]:h-full!',
         ],
       },
     },
