@@ -151,7 +151,7 @@ async function configurePackage(projectDir: string, overrides: Readonly<Record<s
       {
         ...manifest,
         private: true,
-        packageManager: 'pnpm@11.17.0',
+        packageManager: 'pnpm@12.3.4',
         dependencies: {
           ...manifest.dependencies,
           ...Object.fromEntries(overlayDependencies.map((name) => [name, overrides[name]])),
