@@ -6,6 +6,7 @@ import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import FormattedDate from '@/components/FormattedDate.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import Blog from '@/layouts/Blog.astro';
+import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection('changelog');
@@ -26,6 +27,7 @@ const description =
 ---
 
 <Blog title={[title, "Changelog"]} description={description}>
+  <MarkdownAlternate slot="head" />
   <article
     class="@container text-p2 sm:text-p15"
     data-search-content
