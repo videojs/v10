@@ -15,7 +15,7 @@ import { COMPARE_LABELS } from '@app/labels';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
 import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
+import { ASPECT_RATIOS, type AspectRatio, defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
 import {
   COLOR_SCHEMES,
   type ColorScheme,
@@ -86,6 +86,7 @@ function readParams() {
     accentColor: params.get('accent')?.trim() ?? '',
     locale: readOption(SANDBOX_LOCALE_TAGS, params.get('locale'), DEFAULT_SANDBOX_LOCALE),
     width: readWidth(params.get('width')),
+    ratio: readOption(ASPECT_RATIOS, params.get('ratio'), '16:9'),
     scheme: readOption(COLOR_SCHEMES, params.get('scheme'), 'auto'),
     direction: readOption(TEXT_DIRECTIONS, params.get('dir'), 'auto'),
     compare: readOption(COMPARE_AXES, params.get('compare'), 'off'),
@@ -117,6 +118,7 @@ function storeOptionsOpen(open: boolean): void {
 function postPreferences(target: Window, params: FrameParams): void {
   target.postMessage({ type: 'accent-change', accent: params.accentColor }, '*');
   target.postMessage({ type: 'width-change', width: params.width }, '*');
+  target.postMessage({ type: 'ratio-change', ratio: params.ratio }, '*');
   target.postMessage({ type: 'scheme-change', scheme: params.scheme }, '*');
   target.postMessage({ type: 'dir-change', dir: params.direction }, '*');
   target.postMessage({ type: 'mirror-change', mirror: params.mirror }, '*');
@@ -138,6 +140,7 @@ export function App() {
   const [accentColor, setAccentColor] = useState(initial.accentColor);
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
   const [width, setWidth] = useState(initial.width);
+  const [ratio, setRatio] = useState<AspectRatio>(initial.ratio);
   const [scheme, setScheme] = useState<ColorScheme>(initial.scheme);
   const [direction, setDirection] = useState<TextDirection>(initial.direction);
   const [compare, setCompare] = useState<CompareMode>(initial.compare);
@@ -190,6 +193,7 @@ export function App() {
     captions,
     accentColor,
     playerWidth,
+    ratio,
     scheme,
     direction,
     mirroring: false,
@@ -208,6 +212,7 @@ export function App() {
     locale,
     accentColor,
     width: playerWidth,
+    ratio,
     scheme,
     direction,
     mirror: mirroring,
@@ -236,6 +241,8 @@ export function App() {
 
     if (width !== undefined) params.set('width', String(width));
 
+    if (ratio !== '16:9') params.set('ratio', ratio);
+
     if (skins !== undefined) params.set('skins', skins);
 
     if (compare !== 'off') {
@@ -262,6 +269,7 @@ export function App() {
     accentColor,
     locale,
     width,
+    ratio,
     scheme,
     direction,
     compare,
@@ -304,6 +312,8 @@ export function App() {
 
     if (previous.playerWidth !== playerWidth) post({ type: 'width-change', width: playerWidth });
 
+    if (previous.ratio !== ratio) post({ type: 'ratio-change', ratio });
+
     if (previous.scheme !== scheme) post({ type: 'scheme-change', scheme });
 
     if (previous.direction !== direction) post({ type: 'dir-change', dir: direction });
@@ -320,11 +330,26 @@ export function App() {
       captions,
       accentColor,
       playerWidth,
+      ratio,
       scheme,
       direction,
       mirroring,
     };
-  }, [skin, source, autoplay, muted, loop, preload, captions, accentColor, playerWidth, scheme, direction, mirroring]);
+  }, [
+    skin,
+    source,
+    autoplay,
+    muted,
+    loop,
+    preload,
+    captions,
+    accentColor,
+    playerWidth,
+    ratio,
+    scheme,
+    direction,
+    mirroring,
+  ]);
 
   // Keep the last few errors the frames relay, tagged with the panel they came from, for the report.
   useEffect(() => {
@@ -506,6 +531,9 @@ export function App() {
           width={playerWidth}
           onWidthChange={setWidth}
           widthDisabled={!resizable}
+          ratio={ratio}
+          onRatioChange={setRatio}
+          ratioDisabled={descriptor.player !== 'video'}
           scheme={scheme}
           onSchemeChange={setScheme}
           direction={direction}

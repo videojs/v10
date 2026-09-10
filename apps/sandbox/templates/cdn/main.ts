@@ -379,7 +379,7 @@ async function render() {
   }
 
   const skin = html`
-    <${skinTag} class="mx-auto aspect-video max-w-4xl">
+    <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
       <${mediaTag} ${mediaClassAttr} ${sourceAttr} ${mediaAttrs} playsinline ${crossoriginAttr}>
         ${skinnedVideo ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}

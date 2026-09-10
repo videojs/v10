@@ -6,6 +6,7 @@ import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 
 import { CAPTIONS_MODES, type CaptionsMode } from './captions';
 import { setDocumentDirection } from './i18n/document-locale';
+import { ASPECT_RATIOS, type AspectRatio } from './player-frame';
 import { defaultSkinSource } from './skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from './sources';
 
@@ -200,6 +201,10 @@ function parseWidth(value: unknown): number | undefined {
   return Number.isFinite(width) && width > 0 ? width : undefined;
 }
 
+function parseAspectRatio(value: unknown): AspectRatio | undefined {
+  return isOneOf(ASPECT_RATIOS, value) ? value : undefined;
+}
+
 function parseScheme(value: unknown): ColorScheme | undefined {
   return isOneOf(COLOR_SCHEMES, value) ? value : undefined;
 }
@@ -232,6 +237,13 @@ preference('accent', parseAccent, (accent) => {
 preference('width', parseWidth, (width) => {
   if (width) style.setProperty('--sandbox-player-width', `${width}px`);
   else style.removeProperty('--sandbox-player-width');
+});
+
+preference('ratio', parseAspectRatio, (ratio) => {
+  document.documentElement.dataset.aspectRatio = ratio ?? '16:9';
+
+  if (ratio && ratio !== 'intrinsic') style.setProperty('--sandbox-player-ratio', ratio.replace(':', ' / '));
+  else style.removeProperty('--sandbox-player-ratio');
 });
 
 // `color-scheme` and the `dark:` variant both key off this attribute; see `styles.css`.

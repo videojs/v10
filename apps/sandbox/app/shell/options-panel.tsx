@@ -16,7 +16,7 @@ import { Slider } from '@app/components/ui/slider';
 import { Switch } from '@app/components/ui/switch';
 import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { PLAYER_WIDTH } from '@app/shared/player-frame';
+import { ASPECT_RATIOS, type AspectRatio, PLAYER_WIDTH } from '@app/shared/player-frame';
 import {
   COLOR_SCHEMES,
   type ColorScheme,
@@ -38,6 +38,9 @@ export type OptionsPanelProps = {
   width: number;
   onWidthChange: (value: number) => void;
   widthDisabled: boolean;
+  ratio: AspectRatio;
+  onRatioChange: (value: AspectRatio) => void;
+  ratioDisabled: boolean;
   scheme: ColorScheme;
   onSchemeChange: (value: ColorScheme) => void;
   direction: TextDirection;
@@ -87,6 +90,9 @@ export function OptionsPanel({
   width,
   onWidthChange,
   widthDisabled,
+  ratio,
+  onRatioChange,
+  ratioDisabled,
   scheme,
   onSchemeChange,
   direction,
@@ -161,6 +167,13 @@ export function OptionsPanel({
       <SidebarContent className="gap-0">
         <Section title="Preview">
           <WidthControl value={width} onChange={onWidthChange} disabled={widthDisabled} />
+          <SelectField
+            label="Aspect ratio"
+            value={ratio}
+            onChange={(value) => onRatioChange(value as AspectRatio)}
+            disabled={ratioDisabled}
+            options={ASPECT_RATIOS.map((value) => ({ value, label: value === 'intrinsic' ? 'Intrinsic' : value }))}
+          />
           <SelectField
             id={schemeId}
             label="Color scheme"

@@ -25,7 +25,7 @@ createHtmlSandbox({
   live: true,
   render: ({ playerTag, skinTag, src, attrs, poster, placeholder }) => html`
     <${playerTag}${poster ? ` poster="${poster}"` : ''}>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <!-- The player fills in the poster; the slotted image paints a blurred placeholder underneath while it loads. -->
         ${placeholder ? html`<img slot="poster" alt="" crossorigin style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat" />` : ''}
         <!-- The storyboard track is derived automatically from the Mux src. -->

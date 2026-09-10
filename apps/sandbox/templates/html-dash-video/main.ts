@@ -8,7 +8,7 @@ createHtmlSandbox({
   player: 'video',
   render: ({ skinTag, src, attrs, storyboard, poster }) => html`
     <video-player>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <dash-video${src} ${attrs} playsinline crossorigin>${storyboard}</dash-video>
         <!-- Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
              SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the

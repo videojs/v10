@@ -8,7 +8,7 @@ createHtmlSandbox({
   player: 'video',
   render: ({ skinTag }) => html`
     <video-player>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <!-- The host element floors itself at TikTok's portrait 325x578; clear that so it fits a landscape box. -->
         <tiktok-video class="block h-full min-h-0 w-full min-w-0" src="${TIKTOK_VIDEO_SRC}" playsinline></tiktok-video>
       </${skinTag}>

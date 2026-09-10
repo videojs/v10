@@ -8,6 +8,7 @@ import { LAYOUT_LABELS } from '@app/labels';
 import type { MediaId } from '@app/media';
 import type { CaptionsMode } from '@app/shared/captions';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
+import type { AspectRatio } from '@app/shared/player-frame';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
@@ -34,6 +35,7 @@ export interface FrameParams {
   readonly locale: SandboxLocaleTag;
   readonly accentColor: string;
   readonly width: number;
+  readonly ratio: AspectRatio;
   readonly scheme: ColorScheme;
   readonly direction: TextDirection;
   /** Mirror playback between compare panels. */
@@ -75,6 +77,7 @@ function buildUrl(panel: ComparePanel, params: FrameParams, bustCache = false): 
     preload: params.preload,
     locale: params.locale,
     width: String(params.width),
+    ratio: params.ratio,
     scheme: params.scheme,
     dir: params.direction,
   });
