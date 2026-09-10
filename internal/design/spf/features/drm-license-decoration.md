@@ -1,6 +1,6 @@
 ---
-status: draft
-date: 2026-08-28
+status: implemented
+date: 2026-09-10
 definition: sketched
 ---
 
@@ -188,7 +188,9 @@ than unwound.
 5. ✅ **Apply — certificate:** `setup-media-keys` composes module→source over the
    cert request/response through `fetchDrm`; cert auth rides in via
    `certificateRequest`. *(`fed5735e2`)*
-6. **Helpers:** `detectFairPlayCkc` (raw/base64/`<ckc>`XML/JSON → raw) and
+6. ✅ **Helpers:** `detectFairPlayCkc` (raw/base64/`<ckc>`XML/JSON → raw) and
    `unwrapJsonLicense`, exported + unit-tested against Shaka's known shapes.
-7. **Composition invariant:** the new config still materializes only in DRM engine
-   variants — droppability test unchanged.
+   *(`48336ee53`; `formEncodeLicenseRequest` followed in `7dfc8a44b`)*
+7. ✅ **Composition invariant:** the new config still materializes only in DRM engine
+   variants — droppability test unchanged
+   (`playback/engines/hls/tests/engine-drm-optional.test-d.ts`).

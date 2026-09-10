@@ -1,6 +1,6 @@
 ---
-status: draft
-date: 2026-08-20
+status: partial
+date: 2026-09-10
 definition: coarse
 ---
 
