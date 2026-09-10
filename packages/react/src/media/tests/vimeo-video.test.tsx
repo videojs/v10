@@ -58,4 +58,12 @@ describe('VimeoVideo', () => {
     expect(onTimeUpdate).toHaveBeenCalledTimes(1);
     expect(container.querySelector('iframe')!.hasAttribute('onplay')).toBe(false);
   });
+
+  it('delivers the loadstart the media dispatches while attaching', () => {
+    const onLoadStart = vi.fn();
+
+    render(<VimeoVideo src="https://vimeo.com/1181503036" onLoadStart={onLoadStart} />);
+
+    expect(onLoadStart).toHaveBeenCalledTimes(1);
+  });
 });

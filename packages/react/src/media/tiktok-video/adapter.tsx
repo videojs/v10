@@ -19,8 +19,6 @@ export const TikTokVideo = forwardRef<HTMLIFrameElement, TikTokVideoProps>(funct
 ) {
   const media = useMediaInstance(TikTokAdapter);
   const props: Partial<TikTokAdapterProps> & Record<string, unknown> = { ...rawProps };
-  const attachRef = useAttachIframe(media);
-  const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildTikTokIframeSrc(props.src || props.source?.src || '', {
@@ -32,10 +30,13 @@ export const TikTokVideo = forwardRef<HTMLIFrameElement, TikTokVideoProps>(funct
       defaultMuted: !!(props.defaultMuted || props.muted),
     })
   );
-  const iframeProps = useMediaEvents(
-    media,
-    useSyncProps<TikTokAdapterProps, Record<string, unknown>>(media, props, TikTokAdapter.defaultProps)
+  const { ref: eventsRef, props: iframeProps } = useMediaEvents(
+    useSyncProps<TikTokAdapterProps, Record<string, unknown>>(media, props, TikTokAdapter.defaultProps),
+    media
   );
+  const attachRef = useAttachIframe(media);
+  // Listeners first: `attach()` dispatches `loadstart` synchronously.
+  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
   return (
     <iframe

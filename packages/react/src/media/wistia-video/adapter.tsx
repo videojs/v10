@@ -75,21 +75,19 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
   ref
 ) {
   const setMedia = useMediaAttach();
-  // The element is the media, so it is what the event props listen to, once there is one.
-  const [player, setPlayer] = useState<WistiaPlayer | null>(null);
 
   const attachRef = useCallback<RefCallback<WistiaPlayer>>(
     (element) => {
       // No cast: this is where Wistia's real class is held to the contract the normalizer describes.
       if (element) normalizeWistiaPlayer(element);
 
-      setPlayer(element);
       setMedia?.(element as never);
     },
     [setMedia]
   );
-  const composedRef = useComposedRefs(attachRef, ref);
-  const elementProps = useMediaEvents(player, rest);
+  // The element is the media, so it is what the event props listen to.
+  const { ref: eventsRef, props: elementProps } = useMediaEvents(rest);
+  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
   // A Wistia URL is accepted where a media id is expected, the way every other media here accepts a `src`.
   const { mediaId, ...options } = source ?? {};

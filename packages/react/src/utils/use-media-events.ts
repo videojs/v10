@@ -1,5 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
-import { useEffect } from 'react';
+import { type RefCallback, useCallback, useRef } from 'react';
 
 import { useLatestRef } from './use-latest-ref';
 
@@ -58,16 +58,21 @@ export type MediaEventProps<Target extends EventTarget = EventTarget> = {
  * Route standard media event props to a playback adapter that dispatches media events on itself.
  *
  * React only wires `onPlay`, `onTimeUpdate`, and friends to `<video>` and `<audio>`; on an `<iframe>` they go nowhere.
- * This splits those props out, subscribes them on the adapter, and returns everything else for the rendered element.
- * Listeners are bound once per adapter and always call the latest handler, so re-renders never resubscribe.
+ * This splits those props out, subscribes them on the adapter, and returns everything else for the rendered element
+ * along with a ref for that element. Listeners bind from the ref rather than an effect: adapters dispatch `loadstart`
+ * (or `error`) synchronously inside `attach()`, and effects run after every ref has fired, so an effect-bound
+ * `onLoadStart` would miss the initial load. Compose the ref ahead of the one that attaches the media so the listeners
+ * are in place first. Listeners bind once per adapter and always call the latest handler, so re-renders never
+ * resubscribe.
  *
- * @param media - Adapter that dispatches the standard media events, or `null` while there is none to listen to yet.
  * @param props - Component props, which may include media event handlers.
+ * @param media - Adapter that dispatches the standard media events. Omit it when the rendered element is the media
+ *   itself, such as a third-party web component; the listeners then bind to whatever the ref receives.
  */
-export function useMediaEvents<Target extends EventTarget, Props extends Record<string, unknown>>(
-  media: Target | null,
-  props: Props
-): Omit<Props, MediaEventPropName> {
+export function useMediaEvents<Props extends Record<string, unknown>>(
+  props: Props,
+  media?: EventTarget | null
+): useMediaEvents.Result<Props> {
   const handlers: Partial<Record<MediaEventPropName, unknown>> = {};
   const rest: Record<string, unknown> = {};
 
@@ -77,24 +82,45 @@ export function useMediaEvents<Target extends EventTarget, Props extends Record<
   }
 
   const handlersRef = useLatestRef(handlers);
+  // React 18 signals detach by calling the ref with `null` and ignores the returned cleanup, so the controller is kept
+  // where that call can reach it.
+  const controllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    if (!media) return;
+  const ref = useCallback<RefCallback<EventTarget>>(
+    (element) => {
+      controllerRef.current?.abort();
+      controllerRef.current = null;
 
-    const controller = new AbortController();
+      const target = element && (media ?? element);
+      if (!target) return;
 
-    for (const prop of MEDIA_EVENT_PROP_NAMES) {
-      const listener = (event: Event) => {
-        const handler = handlersRef.current[prop];
+      const controller = new AbortController();
 
-        if (isFunction(handler)) handler(event);
-      };
+      controllerRef.current = controller;
 
-      media.addEventListener(MEDIA_EVENT_PROPS[prop], listener, { signal: controller.signal });
-    }
+      for (const prop of MEDIA_EVENT_PROP_NAMES) {
+        const listener = (event: Event) => {
+          const handler = handlersRef.current[prop];
 
-    return () => controller.abort();
-  }, [media, handlersRef]);
+          if (isFunction(handler)) handler(event);
+        };
 
-  return rest as Omit<Props, MediaEventPropName>;
+        target.addEventListener(MEDIA_EVENT_PROPS[prop], listener, { signal: controller.signal });
+      }
+
+      return () => controller.abort();
+    },
+    [media, handlersRef]
+  );
+
+  return { ref, props: rest as Omit<Props, MediaEventPropName> };
+}
+
+export namespace useMediaEvents {
+  export interface Result<Props> {
+    /** Ref for the rendered element; compose it ahead of the ref that attaches the media. */
+    ref: RefCallback<EventTarget>;
+    /** The props left over once the media event handlers are taken out. */
+    props: Omit<Props, MediaEventPropName>;
+  }
 }

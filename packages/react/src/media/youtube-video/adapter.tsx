@@ -19,16 +19,17 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
 ) {
   const media = useMediaInstance(YouTubeAdapter);
   const props: Partial<YouTubeAdapterProps> & Record<string, unknown> = { ...rawProps };
-  const attachRef = useAttachIframe(media);
-  const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildYouTubeIframeSrc(props.src || props.source?.src || '', { ...YouTubeAdapter.defaultProps, ...props })
   );
-  const iframeProps = useMediaEvents(
-    media,
-    useSyncProps<YouTubeAdapterProps, Record<string, unknown>>(media, props, YouTubeAdapter.defaultProps)
+  const { ref: eventsRef, props: iframeProps } = useMediaEvents(
+    useSyncProps<YouTubeAdapterProps, Record<string, unknown>>(media, props, YouTubeAdapter.defaultProps),
+    media
   );
+  const attachRef = useAttachIframe(media);
+  // Listeners first: `attach()` dispatches `loadstart` synchronously.
+  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
   return (
     <iframe

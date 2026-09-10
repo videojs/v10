@@ -19,8 +19,6 @@ export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(funct
 ) {
   const media = useMediaInstance(TwitchAdapter);
   const props: Partial<TwitchAdapterProps> & Record<string, unknown> = { ...rawProps };
-  const attachRef = useAttachIframe(media);
-  const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
     // Server rendering has no `location` to name as the embed's parent, and Twitch
     // refuses to play in a page its URL never named. Rendering no `src` leaves the
@@ -30,10 +28,13 @@ export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(funct
         buildTwitchIframeSrc(props.src || props.source?.src || '', { ...TwitchAdapter.defaultProps, ...props })
       : ''
   );
-  const iframeProps = useMediaEvents(
-    media,
-    useSyncProps<TwitchAdapterProps, Record<string, unknown>>(media, props, TwitchAdapter.defaultProps)
+  const { ref: eventsRef, props: iframeProps } = useMediaEvents(
+    useSyncProps<TwitchAdapterProps, Record<string, unknown>>(media, props, TwitchAdapter.defaultProps),
+    media
   );
+  const attachRef = useAttachIframe(media);
+  // Listeners first: `attach()` dispatches `loadstart` synchronously.
+  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
   return (
     <iframe
