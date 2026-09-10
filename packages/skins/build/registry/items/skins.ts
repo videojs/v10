@@ -6,11 +6,11 @@ import type { RegistryCreatedItem, RegistryModuleItem } from 'vjsc/shadcn';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { skinCatalogEntry } from '../../catalog.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
-import { isSkinPreset, skinBaseStylesheet, skinDirectory, skinPreset } from '../../skin.ts';
+import { isSkinPreset, skinBaseStylesheet, skinDirectory, skinPreset, skinStyleItemName } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
-import { reactHelperDependency, themeStyleDependency } from './support.ts';
+import { reactHelperDependency } from './support.ts';
 
 export async function htmlSkinItem(
   skin: RenderedHtmlSkin,
@@ -23,10 +23,13 @@ export async function htmlSkinItem(
   const template = createSourceOwnedHtml(skin.template);
 
   const styleTarget = `${directory}/skin.css`;
-  const themeImport = relativeRegistryImport(`${directory}/skin.ts`, `styles/${skinBaseStylesheet(skin.preset)}`);
+  const themeImport = relativeRegistryImport(
+    `${directory}/skin.ts`,
+    `styles/${skinBaseStylesheet(skin.preset, skin.theme)}`
+  );
   const styleImport = relativeRegistryImport(`${directory}/skin.ts`, styleTarget);
 
-  // The shared theme item must load before the skin's own scoped rules.
+  // The shared and preset theme items must load before the skin's own scoped rules.
   const registration = `import '${themeImport}';\nimport '${styleImport}';\n\n${createHtmlSkinRegistration(
     template,
     skin.modules,
@@ -50,7 +53,7 @@ export async function htmlSkinItem(
       path: 'skin.css',
       target: `${registryPaths.install}/${directory}/skin.css`,
       type: 'registry:style',
-      // Theme tokens, resets, and presets ship once through the shared theme item.
+      // Theme tokens, resets, and preset styles ship through the skin's registry dependency closure.
       content: await bundleStyles(graph, skin.modules, { label: name }),
     },
   ];
@@ -63,7 +66,7 @@ export async function htmlSkinItem(
     categories: ['media', 'skins', skin.preset],
     docs: skinDocs(skin.root, meta, meta.name, target, directory),
     dependencies: ['@videojs/html'],
-    registryDependencies: [themeStyleDependency],
+    registryDependencies: [`@videojs/${skinStyleItemName(skin.preset, skin.theme)}`],
     files,
     meta: {
       role: 'skin',
@@ -110,7 +113,7 @@ export function skinItem(
     directives: ['use client'],
     target: (candidate, root) => skinModuleTarget(candidate, root, skin),
     stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css` } : undefined,
-    theme: `styles/${skinBaseStylesheet(preset)}`,
+    theme: `styles/${skinBaseStylesheet(preset, theme)}`,
   };
 }
 

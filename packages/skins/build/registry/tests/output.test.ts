@@ -31,28 +31,52 @@ describe('React registry output', () => {
     const helper = items.get('_resolve-class-name');
     const playButton = readItemRoot(items.get('play-button')!);
     const defaultSkin = readItemRoot(items.get('video')!);
+    const minimalSkin = readItemRoot(items.get('video-minimal')!);
     const defaultTargets = items.get('video')?.files?.map((file) => file.target) ?? [];
     const minimalTargets = items.get('video-minimal')?.files?.map((file) => file.target) ?? [];
-    const themeTargets = items.get('_style-theme')?.files?.map((file) => file.target) ?? [];
 
     expect(helper?.files?.map((file) => file.target)).toEqual(['@lib/resolve-class-name.ts']);
     expect(playButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
     expect(playButton).toContain(`import { cn } from '@/lib/utils';`);
     expect(playButton).not.toContain(`{ cn, resolveClassName }`);
     expect(playButton).toContain(`import '../styles/base.css';`);
-    expect(defaultSkin).toContain(`import '../../../styles/base.video.css';`);
+    expect(defaultSkin).toContain(`import '../../../styles/video/base.css';`);
+    expect(minimalSkin).toContain(`import '../../../styles/video/minimal.css';`);
     expect(defaultTargets).toContain('@components/videojs/skins/video/default/skin.tsx');
     expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/sliders/slider.tsx');
-    expect(themeTargets).toEqual([
-      '@components/videojs/styles/base.audio.css',
+    expect(styleTargets(items, 'video')).toEqual([
       '@components/videojs/styles/base.css',
-      '@components/videojs/styles/base.video.css',
-      '@components/videojs/styles/captions.css',
-      '@components/videojs/styles/themes/audio.css',
+      '@components/videojs/styles/themes/preferences.css',
+      '@components/videojs/styles/themes/theme.css',
+      '@components/videojs/styles/video/base.css',
+      '@components/videojs/styles/video/captions.css',
+      '@components/videojs/styles/video/theme.css',
+    ]);
+    expect(styleTargets(items, 'video-minimal')).toEqual([
+      '@components/videojs/styles/base.css',
       '@components/videojs/styles/themes/minimal.css',
       '@components/videojs/styles/themes/preferences.css',
       '@components/videojs/styles/themes/theme.css',
-      '@components/videojs/styles/themes/video.css',
+      '@components/videojs/styles/video/base.css',
+      '@components/videojs/styles/video/captions.css',
+      '@components/videojs/styles/video/minimal.css',
+      '@components/videojs/styles/video/theme.css',
+    ]);
+    expect(styleTargets(items, 'audio')).toEqual([
+      '@components/videojs/styles/audio/base.css',
+      '@components/videojs/styles/audio/theme.css',
+      '@components/videojs/styles/base.css',
+      '@components/videojs/styles/themes/preferences.css',
+      '@components/videojs/styles/themes/theme.css',
+    ]);
+    expect(styleTargets(items, 'audio-minimal')).toEqual([
+      '@components/videojs/styles/audio/base.css',
+      '@components/videojs/styles/audio/minimal.css',
+      '@components/videojs/styles/audio/theme.css',
+      '@components/videojs/styles/base.css',
+      '@components/videojs/styles/themes/minimal.css',
+      '@components/videojs/styles/themes/preferences.css',
+      '@components/videojs/styles/themes/theme.css',
     ]);
   });
 
@@ -114,6 +138,18 @@ function itemClosure(items: ReadonlyMap<string, RegistryItem>, root: string): Re
   }
 
   return names;
+}
+
+function styleTargets(items: ReadonlyMap<string, RegistryItem>, root: string): string[] {
+  const targets = new Set<string>();
+
+  for (const name of itemClosure(items, root)) {
+    for (const file of items.get(name)?.files ?? []) {
+      if (file.target?.includes('/styles/') && file.target.endsWith('.css')) targets.add(file.target);
+    }
+  }
+
+  return [...targets].sort();
 }
 
 function readItemRoot(item: RegistryItem): string {

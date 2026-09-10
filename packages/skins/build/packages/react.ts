@@ -87,7 +87,7 @@ export async function createReactPackageSkins(
       `${publicRoot}/${publicName}.css`,
       await bundleStyles(graph, skin.modules, {
         label: `${skin.theme}-${skin.preset}`,
-        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset)}`],
+        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
       })
     );
   }

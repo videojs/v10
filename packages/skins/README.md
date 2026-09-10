@@ -32,9 +32,10 @@ Follow one skin from source to output.
 [`base.css`](./src/styles/base.css) fixes the cascade: `base.theme` holds tokens and `base.preferences` overrides them, so a reduced motion, reduced transparency, or forced colors preference wins regardless of selector specificity.
 
 - [`themes/theme.css`](./src/styles/themes/theme.css) declares every default token, grouped by colors, shadows, controls, motion, popups, sliders, and frame.
-- [`themes/minimal.css`](./src/styles/themes/minimal.css), [`themes/video.css`](./src/styles/themes/video.css), and [`themes/audio.css`](./src/styles/themes/audio.css) override tokens per theme and preset.
+- [`themes/minimal.css`](./src/styles/themes/minimal.css) overrides tokens only for Minimal skins.
+- [`video/theme.css`](./src/styles/video/theme.css) and [`audio/theme.css`](./src/styles/audio/theme.css) override tokens per media preset.
 - [`themes/preferences.css`](./src/styles/themes/preferences.css) collapses durations and neutralizes hidden-state values under reduced motion, and switches backdrop filters off under reduced transparency.
-- [`base.video.css`](./src/styles/base.video.css) and [`base.audio.css`](./src/styles/base.audio.css) are the preset entries each skin stylesheet starts from.
+- [`video/base.css`](./src/styles/video/base.css) and [`audio/base.css`](./src/styles/audio/base.css) are the default preset entries. Their adjacent `minimal.css` entries add only the Minimal token layer.
 - [`vars.ts`](./src/styles/vars.ts) classifies every token as public, runtime, or internal. [`utilities.ts`](./src/styles/utilities.ts) describes every shared utility, variant, and computed theme key.
 
 ## Tailwind entry files

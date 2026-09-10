@@ -41,7 +41,7 @@ export async function createHtmlPackageSkins(
       `${root}/skin.css`,
       await bundleStyles(graph, skin.modules, {
         label: name,
-        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset)}`],
+        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
       })
     );
   }

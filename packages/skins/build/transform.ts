@@ -46,7 +46,7 @@ export function createStyleOptions(config: SkinTransformConfig): StyleTransformO
         variants,
         stylesheet: {
           input: resolve(stylesDir, 'tailwind.compiler.css'),
-          base: resolve(stylesDir, skinBaseStylesheet(skin?.preset ?? 'video')),
+          base: resolve(stylesDir, skinBaseStylesheet(skin?.preset ?? 'video', skin?.theme)),
           scope: skin?.scope ?? '.media-skin',
         },
       };

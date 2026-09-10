@@ -2,9 +2,10 @@
 
 @import "tailwindcss" theme(inline);
 @import "./base.css";
-@import "./captions.css";
-@import "./themes/video.css";
-@import "./themes/audio.css";
+@import "./video/captions.css";
+@import "./video/theme.css";
+@import "./audio/theme.css";
+@import "./themes/minimal.css";
 @import "./tailwind.css";
 
 @theme inline {
