@@ -20,20 +20,36 @@ function compile(source: string): string {
   return code;
 }
 
-const related = `## Related guides
+const related = `## Related components
+
+- <DocsLink slug="components/play-button">Play button</DocsLink>
+
+## Related guides
 
 - <DocsLink slug="concepts/features">Features</DocsLink>
 - <DocsLink slug="guides/autoplay" anchor="how-it-works">Autoplay</DocsLink>
 `;
 
 describe('satteriRelatedLinks', () => {
-  it('replaces a DocsLink list under a Related heading with RelatedLinks', () => {
+  it('folds the related sections into one heading with a labelled grid per group', () => {
     const code = compile(related);
 
-    expect(code).toContain('RelatedLinks');
+    expect(code.match(/_jsx\(RelatedLinks/g)?.length).toBe(2);
+    expect(code).toContain('Related pages');
+    expect(code).not.toContain('Related components');
+    expect(code).not.toContain('Related guides');
+    expect(code).toContain('label: "Components"');
+    expect(code).toContain('label: "Guides"');
     expect(code).toContain('concepts/features');
     expect(code).toContain('how-it-works');
     expect(code).not.toContain('DocsLink');
+  });
+
+  it('gives a bare Related heading no group label', () => {
+    const code = compile('## Related\n\n- <DocsLink slug="concepts/features">Features</DocsLink>\n');
+
+    expect(code).toContain('Related pages');
+    expect(code).not.toContain('label:');
   });
 
   it('leaves lists under other headings alone', () => {
@@ -43,9 +59,10 @@ describe('satteriRelatedLinks', () => {
     expect(code).toContain('DocsLink');
   });
 
-  it('leaves a related list alone when an item is not a lone DocsLink', () => {
+  it('leaves a related section alone when an item is not a lone DocsLink', () => {
     const code = compile('## Related guides\n\n- <DocsLink slug="concepts/features">Features</DocsLink> and more\n');
 
     expect(code).not.toContain('RelatedLinks');
+    expect(code).toContain('Related guides');
   });
 });

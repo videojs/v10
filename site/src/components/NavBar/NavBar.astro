@@ -47,7 +47,7 @@ const { class: className, pill = true } = Astro.props;
     <span class="sr-only">Video.js video player</span>
     {pill && <BetaPill className="hidden sm:inline-flex" />}
   </a>
-  <Search client:load className="mr-2 ml-auto sm:self-center" />
+  <Search client:idle className="mr-2 ml-auto sm:self-center" />
   {/* Desktop nav links */}
   <div class="hidden md:flex">
     <GetStartedLink

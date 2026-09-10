@@ -154,10 +154,10 @@ export default defineConfig({
     processor: satteri({
       mdastPlugins: [
         satteriReadingTime(),
+        satteriRelatedLinks(),
         satteriConditionalHeadings(),
         satteriCdnVersion(),
         satteriCodeFrame(),
-        satteriRelatedLinks(),
       ],
     }),
   },

@@ -47,7 +47,7 @@ const { class: className } = Astro.props;
     <span class="sr-only">Video.js video player</span>
     <BetaPill compact label={`v${VJS10_VERSION}`} />
   </a>
-  <Search client:load className="mr-2 xs:mr-4 ml-auto sm:self-center" />
+  <Search client:idle className="mr-2 xs:mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}
   <div class="hidden h-full md:flex">
     <GetStartedLink

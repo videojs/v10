@@ -12,6 +12,8 @@ import type { RelatedLink } from '@/utils/satteriRelatedLinks';
 interface Props {
   /** JSON-encoded `RelatedLink[]`, serialised by the MDAST plugin. */
   items: string;
+  /** Group name shown above the grid, such as "Components" or "Guides". */
+  label?: string;
 }
 
 const { framework: paramFramework } = Astro.params;
@@ -22,6 +24,7 @@ if (!paramFramework || !isValidFramework(paramFramework)) {
 
 // SAFETY: the plugin is the only producer of this attribute and always serialises `RelatedLink[]`.
 const items = JSON.parse(Astro.props.items) as RelatedLink[];
+const { label } = Astro.props;
 const docs = await getCollection('docs');
 const descriptions = new Map(docs.map((doc) => [doc.id, doc.data.description]));
 
@@ -36,7 +39,9 @@ const cards = items.map((item) => {
 });
 ---
 
-<ul class="mx-auto my-6 grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+<section class="mx-auto my-6 w-full max-w-3xl">
+  {label && <h3 class="mb-3 font-display text-h4 uppercase text-muted select-none">{label}</h3>}
+  <ul class="grid gap-4 sm:grid-cols-2">
   {
     cards.map((card) => (
       <li>
@@ -53,4 +58,5 @@ const cards = items.map((item) => {
       </li>
     ))
   }
-</ul>
+  </ul>
+</section>
