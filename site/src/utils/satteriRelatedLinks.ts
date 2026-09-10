@@ -1,5 +1,5 @@
 import type { MdastContent } from 'satteri';
-import { defineMdastPlugin, type MdastPluginInput } from 'satteri';
+import { defineMdastPlugin } from 'satteri';
 
 import type { MdastVisitorContext } from './satteriAstroData';
 
@@ -126,7 +126,7 @@ function groupLabel(headingText: string): string | undefined {
  * A heading and list are only converted when every item is a lone DocsLink; anything else is left alone. The plugin is
  * a factory so the "first related heading" state resets per document.
  */
-export function satteriRelatedLinks(): MdastPluginInput {
+export function satteriRelatedLinks() {
   return () => {
     let renamedHeading = false;
 
