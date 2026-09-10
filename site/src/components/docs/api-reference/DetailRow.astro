@@ -71,16 +71,43 @@ const cells = colspan + (toggleColumn ? 1 : 0);
   }
   {
     hasDetail && (
-      <tr id={`${id}-detail`} hidden>
-        <td colspan={cells} class="px-3 pt-0 pb-4 sm:px-4">
-          <div class="overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
-            <ServerCode code={detailedType!} lang="ts" />
+      <tr id={`${id}-detail`}>
+        <td colspan={cells} class="px-3 py-0 sm:px-4">
+          {/* Rows cannot animate height, so the panel collapses through a 0fr → 1fr grid track instead of `hidden`. */}
+          <div data-apiref-detail aria-hidden="true" inert>
+            <div class="min-h-0 overflow-hidden">
+              <div class="mb-4 overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
+                <ServerCode code={detailedType!} lang="ts" />
+              </div>
+            </div>
           </div>
         </td>
       </tr>
     )
   }
 </tbody>
+
+<style>
+  [data-apiref-detail] {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 200ms ease;
+  }
+
+  [data-expanded] [data-apiref-detail] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-apiref-detail] {
+      transition: none;
+    }
+  }
+</style>
 
 <script>
   document
@@ -95,11 +122,14 @@ const cells = colspan + (toggleColumn ? 1 : 0);
 
         if (group) group.toggleAttribute("data-expanded", !expanded);
 
-        const detail = document.getElementById(
-          button.getAttribute("aria-controls")!,
-        );
+        const panel = document
+          .getElementById(button.getAttribute("aria-controls")!)
+          ?.querySelector<HTMLElement>("[data-apiref-detail]");
 
-        if (detail) detail.hidden = expanded;
+        if (panel) {
+          panel.toggleAttribute("inert", expanded);
+          panel.setAttribute("aria-hidden", String(expanded));
+        }
       });
     });
 
