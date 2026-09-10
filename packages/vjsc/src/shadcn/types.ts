@@ -9,6 +9,13 @@ export type RegistryModuleTarget<Meta extends ModuleMeta = ModuleMeta> =
   | string
   | ((module: GraphModule<Meta>, root: GraphModule<Meta>) => string);
 
+export interface RegistryPaths {
+  /** Registry installation directory, such as `@components/videojs`. */
+  readonly install: string;
+  /** Absolute module specifier for imports, such as `@/components/videojs`. */
+  readonly import: string;
+}
+
 export interface RegistryStylesheetOutput {
   /** Installed path of the stylesheet bundled from this item's module closure. */
   readonly target: string;
@@ -28,6 +35,8 @@ export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = Distribut
   readonly filename?: string | undefined;
   /** Import replacements applied while packaging this item. */
   readonly imports?: Readonly<Record<string, string>> | undefined;
+  /** Item-specific installation and import roots. Defaults to the registry paths. */
+  readonly paths?: Partial<RegistryPaths> | undefined;
   /** Bundle the module closure's generated CSS into one installed stylesheet. */
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
   /** Import the configured shared theme from this item's root module. */
@@ -77,10 +86,7 @@ export interface VjscRegistryOptions<Meta extends ModuleMeta = ModuleMeta> {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
-  readonly paths: {
-    readonly install: string;
-    readonly import: string;
-  };
+  readonly paths: RegistryPaths;
   /** Directory below the Rolldown output root where this catalog is emitted. */
   readonly output?: string | undefined;
   /** Format each editable source before it is emitted. */

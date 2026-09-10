@@ -43,6 +43,32 @@ describe('vjscRegistryPlugin', () => {
     expect(output.output.some((item) => item.type === 'chunk')).toBe(false);
   });
 
+  it('supports item-specific installation and import roots', async () => {
+    const root = setup({
+      'components/root.tsx': `import { Helper } from './helper'; export function Root() { return <main>{Helper}</main>; } ${meta('root', 'block')}`,
+      'components/helper.tsx': `export const Helper = <aside/>; ${meta('helper', 'support')}`,
+    });
+    const output = await build(root, {
+      items: {
+        resolve({ module }) {
+          const item = describeItem(module);
+          if (item?.name !== 'helper') return item;
+
+          return {
+            ...item,
+            target: 'lib/helper.tsx',
+            paths: { install: '@', import: '@' },
+          };
+        },
+      },
+    });
+    const rootItem = registryItem(output, 'items', 'root');
+    const helperItem = registryItem(output, 'items', 'helper');
+
+    expect(helperItem.files.map((file: { target: string }) => file.target)).toEqual(['@/lib/helper.tsx']);
+    expect(registryFile(output, 'items', rootItem, '/root.tsx')).toContain(`from '@/lib/helper'`);
+  });
+
   it('keeps transformed identities and dependencies selection-specific', async () => {
     const root = setup({
       'components/root.tsx': `import { Child } from './child'; export function Root() { return <main>{Child}</main>; } ${meta('root', 'block')}`,

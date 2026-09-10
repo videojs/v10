@@ -32,6 +32,7 @@ interface SourceBuild<Meta extends ModuleMeta> {
   readonly target: RegistryModuleTarget<Meta>;
   readonly filename?: string | undefined;
   readonly imports?: Readonly<Record<string, string>> | undefined;
+  readonly paths?: { readonly install?: string | undefined; readonly import?: string | undefined } | undefined;
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
   readonly theme: boolean;
 }
@@ -145,7 +146,7 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
     const resolved = await options.items.resolve({ graph, module });
     if (!resolved) continue;
 
-    const { group, directives, target, filename, imports, stylesheet, theme, ...item } = resolved;
+    const { group, directives, target, filename, imports, paths, stylesheet, theme, ...item } = resolved;
     const build: SourceBuild<Meta> = {
       kind: 'source',
       module,
@@ -154,6 +155,7 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
       target,
       ...(filename ? { filename } : {}),
       ...(imports ? { imports } : {}),
+      ...(paths ? { paths } : {}),
       ...(stylesheet ? { stylesheet } : {}),
       theme: theme ?? false,
     };
@@ -600,7 +602,7 @@ function createLayout<Meta extends ModuleMeta>(
   const outputPaths = new Map<string, string>();
   const targets = new Map<string, string>();
   const rootFilename = normalizePath(item.build.filename ?? basename(root.sourcePath));
-  const installRoot = normalizePath(options.paths.install);
+  const installRoot = normalizePath(item.build.paths?.install ?? options.paths.install);
   const rootTarget = installedTarget(item, root, root, options);
 
   for (const module of modules) {
@@ -685,7 +687,7 @@ function publishedImport<Meta extends ModuleMeta>(
 ): string {
   const target = targetForModule(publication.item, publication.module, publication.module);
 
-  return posix.join(options.paths.import, stripScriptExtension(target));
+  return posix.join(publication.item.build.paths?.import ?? options.paths.import, stripScriptExtension(target));
 }
 
 function installedTarget<Meta extends ModuleMeta>(
@@ -694,7 +696,9 @@ function installedTarget<Meta extends ModuleMeta>(
   root: GraphModule<Meta>,
   options: VjscRegistryOptions<Meta>
 ): string {
-  return posix.join(normalizePath(options.paths.install), normalizePath(targetForModule(item, module, root)));
+  const installRoot = item.build.paths?.install ?? options.paths.install;
+
+  return posix.join(normalizePath(installRoot), normalizePath(targetForModule(item, module, root)));
 }
 
 function targetForModule<Meta extends ModuleMeta>(
@@ -721,15 +725,7 @@ function styleAssetItemName(asset: string): string {
 }
 
 function validateOptions<Meta extends ModuleMeta>(options: VjscRegistryOptions<Meta>): void {
-  for (const [name, value] of Object.entries(options.paths)) {
-    if (name === 'import') continue;
-
-    validateRelativePath(value, `Shadcn registry ${name} path`);
-  }
-
-  if (!options.paths.import || options.paths.import.startsWith('.')) {
-    throw new Error(`Shadcn registry import path must be an absolute module specifier.`);
-  }
+  validateRegistryPaths(options.paths, 'Shadcn registry');
 
   if (options.styles?.theme?.tailwind) {
     validateRelativePath(options.styles.theme.tailwind, 'Shadcn registry Tailwind source');
@@ -748,6 +744,8 @@ function validateItems<Meta extends ModuleMeta>(items: readonly (SourceItem<Meta
     assertNoCollision(names, item.name, owner, 'item name');
 
     if (item.build.kind === 'source') {
+      if (item.build.paths) validateRegistryPaths(item.build.paths, `Shadcn item ${item.name}`);
+
       assertNoCollision(modules, item.build.module.id, item.name, 'module publication');
     }
   }
@@ -853,6 +851,17 @@ function validateRelativePath(path: string, label: string): void {
     escapesRoot(normalized)
   ) {
     throw new Error(`${label} must be a non-empty relative path: \`${path}\`.`);
+  }
+}
+
+function validateRegistryPaths(
+  paths: { readonly install?: string | undefined; readonly import?: string | undefined },
+  label: string
+): void {
+  if (paths.install !== undefined) validateRelativePath(paths.install, `${label} install path`);
+
+  if (paths.import !== undefined && (!paths.import || paths.import.startsWith('.'))) {
+    throw new Error(`${label} import path must be an absolute module specifier.`);
   }
 }
 
