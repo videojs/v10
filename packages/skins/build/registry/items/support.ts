@@ -82,8 +82,8 @@ export function utilsItem(target: RegistryTarget): RegistryModuleItem<SkinModule
     } satisfies VideojsRegistryMeta,
     group: 'support',
     filename: 'resolve-class-name.ts',
-    target: 'lib/resolve-class-name.ts',
-    paths: { install: '@', import: '@' },
+    target: 'resolve-class-name.ts',
+    paths: { install: '@lib', import: '@/lib' },
   };
 }
 

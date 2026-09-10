@@ -56,8 +56,8 @@ describe('vjscRegistryPlugin', () => {
 
           return {
             ...item,
-            target: 'lib/helper.tsx',
-            paths: { install: '@', import: '@' },
+            target: 'helper.tsx',
+            paths: { install: '@lib', import: '@/lib' },
           };
         },
       },
@@ -65,7 +65,7 @@ describe('vjscRegistryPlugin', () => {
     const rootItem = registryItem(output, 'items', 'root');
     const helperItem = registryItem(output, 'items', 'helper');
 
-    expect(helperItem.files.map((file: { target: string }) => file.target)).toEqual(['@/lib/helper.tsx']);
+    expect(helperItem.files.map((file: { target: string }) => file.target)).toEqual(['@lib/helper.tsx']);
     expect(registryFile(output, 'items', rootItem, '/root.tsx')).toContain(`from '@/lib/helper'`);
   });
 

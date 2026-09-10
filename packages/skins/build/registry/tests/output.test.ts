@@ -35,7 +35,7 @@ describe('React registry output', () => {
     const minimalTargets = items.get('video-minimal')?.files?.map((file) => file.target) ?? [];
     const themeTargets = items.get('_style-theme')?.files?.map((file) => file.target) ?? [];
 
-    expect(helper?.files?.map((file) => file.target)).toEqual(['@/lib/resolve-class-name.ts']);
+    expect(helper?.files?.map((file) => file.target)).toEqual(['@lib/resolve-class-name.ts']);
     expect(playButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
     expect(playButton).toContain(`import { cn } from '@/lib/utils';`);
     expect(playButton).not.toContain(`{ cn, resolveClassName }`);
