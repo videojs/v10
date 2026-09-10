@@ -3,8 +3,8 @@ name: Forward-port changelog and blog
 # The release job copies main onto site/v10 as its last step, and the changelog
 # prose bot only starts once that release is published. So prose always lands on
 # main after production has already moved, and used to need a hand cherry-pick to
-# reach videojs.org. Blog posts have the same problem whenever they merge between
-# releases: nothing moved them to production until the next cut.
+# reach videojs.org. Blog posts land on main whenever they are ready, usually
+# between releases, and production has to pick them up the same way.
 #
 # This job closes that gap. It runs after the release is finished, touches only
 # the changelog folder and the blog's content and asset folders, and pushes to
