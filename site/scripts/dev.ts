@@ -1,10 +1,10 @@
 /**
- * Start the docs site dev server without replaying the whole workspace task graph.
+ * Start the docs site dev server.
  *
- * `vp run site#dev` used to depend on `api-docs:generate` and `cdn-manifest`, which depend on every workspace package
- * build. Even with every task cached, Vite+ spent ~16s discovering configs and replaying 34 cache hits before `astro
- * dev` ran. Astro itself is ready in a few seconds, so this launcher only runs that graph (`site#dev:prepare`) when
- * generated content or the workspace builds Astro imports are missing, or when asked to with `--prepare`.
+ * Astro is ready in a few seconds, while the Vite+ graph behind `site#dev:prepare` (API reference JSON, the CDN
+ * manifest, and every workspace package build) costs several seconds even when fully cached, because each hit restores
+ * its outputs. This launcher runs that graph only when generated content or the workspace builds Astro imports are
+ * missing, or when asked to with `--prepare`, and otherwise starts `astro dev` directly.
  *
  * Any other arguments are forwarded to `astro dev`, for example `pnpm dev:site --port 4399`.
  */

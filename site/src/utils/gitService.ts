@@ -43,9 +43,8 @@ export function parseLastModifiedDates(log: string): Map<string, Date> {
 /**
  * Create a git service that answers per-file lookups from one history walk of `scope`.
  *
- * A separate `git log -1 -- <file>` per content entry walks the full history hundreds of times and dominated a cold
- * Astro content sync. One `--name-only` log over the content directory costs a single walk, and results are keyed by
- * absolute path so the lookup does not depend on the process working directory (Vite+ runs Astro from `site/`).
+ * One `--name-only` log over `scope` costs a single history walk no matter how many entries ask. Results are keyed by
+ * absolute path, so lookups do not depend on the working directory Astro is launched from.
  *
  * @param scope Absolute directory whose history should be loaded. Files outside it resolve to `null`.
  * @param git Git client; defaults to simple-git in the current working directory, which only needs to be inside the
