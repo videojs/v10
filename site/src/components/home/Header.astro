@@ -11,14 +11,17 @@ const { poster } = Astro.props;
 ---
 
 <header
-  class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
+  data-hero-reveal
+  class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:pt-6 md:pb-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
   style="--grid-template-areas: 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
 >
   <h1
+    data-hero-title
     class="pointer-events-none z-10 mb-5 w-full self-center justify-self-center text-center font-display text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-h15 md:text-manila-light md:[grid-area:var(--md-grid-area)] lg:text-h1"
     style="--grid-area: title; --md-grid-area: video;"
   >
     The Open Source Player <br class="lg:hidden" /><span
+      data-hero-title-outline
       class="text-stroke-faded-black md:text-stroke-manila-light dark:text-stroke-manila-light"
       >for the Web</span
     >
@@ -33,6 +36,7 @@ const { poster } = Astro.props;
   </p>
 
   <div
+    data-hero-video
     class="relative mb-3 aspect-2/1 md:mb-4 md:aspect-1180/570"
     style="grid-area:video"
   >
@@ -53,3 +57,64 @@ const { poster } = Astro.props;
     </a>
   </p>
 </header>
+
+<style>
+  /*
+   * Title-first reveal. The headline paints alone on the page colour, then the video fades in beneath it while the
+   * headline turns light to sit on the footage. Only where the title overlays the video (md and up), and only for
+   * people who have not asked for reduced motion.
+   */
+  @media (width >= 48rem) and (prefers-reduced-motion: no-preference) {
+    [data-hero-reveal] {
+      --hero-title-from: var(--color-faded-black);
+    }
+
+    :global(.dark) [data-hero-reveal] {
+      --hero-title-from: var(--color-manila-light);
+    }
+
+    [data-hero-video] {
+      animation: hero-video-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) 900ms both;
+    }
+
+    [data-hero-title] {
+      animation: hero-title-in 1100ms ease 900ms both;
+    }
+
+    [data-hero-title-outline] {
+      animation: hero-outline-in 1100ms ease 900ms both;
+    }
+  }
+
+  @keyframes hero-video-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.99);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes hero-title-in {
+    from {
+      color: var(--hero-title-from);
+    }
+
+    to {
+      color: var(--color-manila-light);
+    }
+  }
+
+  @keyframes hero-outline-in {
+    from {
+      -webkit-text-stroke-color: var(--hero-title-from);
+    }
+
+    to {
+      -webkit-text-stroke-color: var(--color-manila-light);
+    }
+  }
+</style>
