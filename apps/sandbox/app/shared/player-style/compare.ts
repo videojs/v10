@@ -103,11 +103,13 @@ export function mountCompare(theme: PlayerStyleTheme): void {
 
       option.value = name;
       option.textContent = PLAYER_STYLE_THEMES[name].label;
-      option.selected = name === theme.name;
 
       return option;
     })
   );
+
+  // Set after insertion: `selected` on a detached option does not survive being appended.
+  picker.value = theme.name;
 
   picker.addEventListener('change', () => {
     const params = new URLSearchParams(location.search);

@@ -32,4 +32,6 @@ export const PORTED_THEMES: readonly PlayerStyleThemeName[] = [
   'instaplay',
   'notflix',
   'reelplay',
+  'tailwind-audio',
+  'winamp',
 ];

@@ -1,0 +1,81 @@
+<media-container class="media-skin ps-winamp" data-theme="winamp" data-preset="video">
+  <div class="ps-container">
+    <div class="ps-window">
+      <div class="ps-wtop">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <div class="ps-wcenter">
+        <div class="ps-wleft"></div>
+        <div class="ps-wmiddle">
+          <div class="ps-screen">
+            <slot></slot>
+            <media-poster class="ps-poster"><img alt="" decoding="async" /></media-poster>
+          </div>
+        </div>
+        <div class="ps-wright"></div>
+      </div>
+      <div class="ps-wbottom">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <!--
+      In the original this whole cluster sits outside `media-controller` and binds back to it with
+      `mediacontroller="controller"`. v10 resolves state through DOM ancestry with no id binding, so the controls simply
+      live under the player; `media-container` need only wrap the video region.
+    -->
+    <div class="ps-wrapper">
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+
+      <div class="ps-controls">
+        <media-seek-button class="ps-cbtn ps-prev" seconds="-10"><div></div></media-seek-button>
+        <media-play-button class="ps-cbtn ps-play"><div></div></media-play-button>
+        <media-play-button class="ps-cbtn ps-pause"><div></div></media-play-button>
+        <media-play-button class="ps-cbtn ps-stop"><div></div></media-play-button>
+        <media-seek-button class="ps-cbtn ps-next" seconds="10"><div></div></media-seek-button>
+        <media-fullscreen-button class="ps-cbtn ps-fs"><div></div></media-fullscreen-button>
+      </div>
+
+      <media-time-group class="ps-time">
+        <media-time type="current"></media-time>
+      </media-time-group>
+
+      <media-time-slider class="ps-posbar">
+        <media-slider-track class="ps-postrack"></media-slider-track>
+        <media-slider-thumb class="ps-posthumb"></media-slider-thumb>
+      </media-time-slider>
+
+      <media-volume-slider class="ps-volume">
+        <media-slider-track class="ps-voltrack"></media-slider-track>
+        <media-slider-thumb class="ps-volthumb"></media-slider-thumb>
+      </media-volume-slider>
+
+      <img class="ps-header" alt="" />
+      <img class="ps-display" alt="" />
+
+      <div class="ps-eq"></div>
+      <div class="ps-pl"></div>
+      <div class="ps-loop"></div>
+
+      <media-captions-button class="ps-shuffle"><div></div></media-captions-button>
+
+      <div class="ps-balance"></div>
+      <div class="ps-monoster">
+        <div></div>
+        <div></div>
+      </div>
+
+      <div class="ps-marquee"><span>Video.js 10, it really whips the llama's ass!</span></div>
+      <div class="ps-kbps">192</div>
+      <div class="ps-khz">44</div>
+
+      <media-play-button class="ps-indicator"><div></div></media-play-button>
+      <media-play-button class="ps-vu"><div></div></media-play-button>
+    </div>
+  </div>
+</media-container>

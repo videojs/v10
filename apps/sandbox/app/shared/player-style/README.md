@@ -20,8 +20,11 @@ something systemic that would have invalidated earlier pixel work, so polishing 
 | notflix | yes | Control-bar icons look slightly small; bar spacing |
 | reelplay | yes | Transport buttons tighter and smaller than the original; volume slider narrower |
 | tailwind-audio | yes | Not yet checked beyond the resting state |
-| winamp | no | Blocked: its assets are Nullsoft's original skin bitmaps and font, not Mux artwork |
+| winamp | yes | Video window narrower than the original; transport row spacing |
 | x-mas, sutro, sutro-audio, vimeonova, yt, minimal, microvideo | no | — |
+
+Winamp references its artwork from player.style over a pinned CDN rather than copying the bitmaps in — the same
+reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
 
 `minimal` and `microvideo` each branch on stream type, so both become two skins.
 
