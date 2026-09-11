@@ -11,6 +11,7 @@ import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
   FRAMEWORK_STYLES,
+  getDefaultStyle,
   isValidFramework,
   isValidStyleForFramework,
   STYLE_LABELS,
@@ -18,7 +19,6 @@ import {
 } from '@/types/docs';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
-import useIsHydrated from '@/utils/useIsHydrated';
 
 const FRAMEWORK_ICONS = {
   react: <ReactLogo className="size-4" />,
@@ -37,8 +37,11 @@ interface SelectorProps {
 
 export function Selectors({ currentFramework, currentSlug, className }: SelectorProps) {
   const currentStyle = useStore(styleStore);
-  const isHydrated = useIsHydrated();
-  const hydrationSafeCurrentStyle = isHydrated ? currentStyle : null;
+
+  // The store is empty on the server and on the client's first render alike, so both fall back to the framework's
+  // default style. That keeps the markup identical through hydration and stops the trigger flashing empty on every
+  // page load; PreferenceUpdater then swaps in the stored choice if it differs.
+  const displayedStyle = currentStyle ?? getDefaultStyle(currentFramework);
 
   const handleFrameworkChange = (newFramework: SupportedFramework) => {
     if (!isValidFramework(newFramework) || newFramework === currentFramework) return;
@@ -111,7 +114,7 @@ export function Selectors({ currentFramework, currentSlug, className }: Selector
         </div>
         <div className="grid gap-1.5">
           <Select
-            value={hydrationSafeCurrentStyle}
+            value={displayedStyle}
             onChange={(next) => next && next !== 'tailwind' && handleStyleChange(next)}
             options={styleOptions}
             aria-label="Select style"
