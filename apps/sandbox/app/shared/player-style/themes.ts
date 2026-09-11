@@ -38,4 +38,5 @@ export const PORTED_THEMES: readonly PlayerStyleThemeName[] = [
   'vimeonova',
   'winamp',
   'x-mas',
+  'yt',
 ];
