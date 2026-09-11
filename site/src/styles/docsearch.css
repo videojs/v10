@@ -1,7 +1,8 @@
 @import "@docsearch/css/dist/style.css";
 /* ── Light theme ── */
 :root {
-  --docsearch-primary-color: var(--color-gold);
+  /* The accent token follows the appearance menu, so search highlights match the chosen brand colour. */
+  --docsearch-primary-color: var(--color-orange);
   --docsearch-text-color: var(--color-faded-black);
   --docsearch-secondary-text-color: var(--color-soot);
   --docsearch-background-color: var(--color-manila-50);
@@ -13,9 +14,9 @@
   --docsearch-searchbox-focus-background: var(--color-manila-light);
   --docsearch-hit-background: var(--color-manila-light);
   --docsearch-hit-color: var(--color-faded-black);
-  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-gold) 15%, var(--color-manila-light));
+  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-orange) 15%, var(--color-manila-light));
   --docsearch-highlight-color: var(--color-orange);
-  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-gold) 10%, transparent);
+  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-orange) 10%, transparent);
   --docsearch-focus-color: var(--color-gold);
   --docsearch-subtle-color: var(--color-manila-75);
   --docsearch-muted-color: var(--color-manila-dark);
@@ -53,9 +54,9 @@
   --docsearch-searchbox-focus-background: var(--color-soot);
   --docsearch-hit-background: var(--color-warm-gray);
   --docsearch-hit-color: var(--color-manila-light);
-  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-gold) 10%, var(--color-warm-gray));
-  --docsearch-highlight-color: var(--color-gold);
-  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-gold) 10%, transparent);
+  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-orange) 12%, var(--color-warm-gray));
+  --docsearch-highlight-color: var(--color-orange);
+  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-orange) 10%, transparent);
   --docsearch-focus-color: var(--color-gold);
   --docsearch-subtle-color: var(--line);
   --docsearch-muted-color: var(--muted);
@@ -363,5 +364,5 @@
 .DocSearch-Hit mark,
 .DocSearch-Hit[aria-selected="true"] mark {
   color: currentColor;
-  text-decoration-color: var(--color-gold);
+  text-decoration-color: var(--color-orange);
 }
