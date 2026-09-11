@@ -33,6 +33,7 @@ export const PORTED_THEMES: readonly PlayerStyleThemeName[] = [
   'notflix',
   'reelplay',
   'sutro',
+  'sutro-audio',
   'tailwind-audio',
   'winamp',
   'x-mas',

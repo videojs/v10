@@ -1,0 +1,298 @@
+/*
+ * Sutro Audio, ported from `@player.style/sutro-audio` (media-chrome) to Video.js 10 elements.
+ *
+ * Like Sutro, the original delegates most of its look to media-chrome's built-in control styling through `--media-*`
+ * variables, so the port authors the control sizing and slider parts itself off the same `--base` scale.
+ */
+
+.ps-sutro-audio {
+  --ps-base: 20px;
+  --ps-primary: #fff;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  container: ps-sutro-audio / inline-size;
+
+  border-radius: 16px;
+  background: #17507b;
+  color: var(--ps-primary);
+  font-size: calc(0.75 * var(--ps-base));
+  font-family: Roboto, Arial, sans-serif;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+@container ps-sutro-audio (inline-size >= 480px) {
+  .ps-sutro-audio {
+    min-height: 84px;
+  }
+}
+
+.ps-sutro-audio > audio,
+.ps-sutro-audio > [slot="media"] {
+  display: none;
+}
+
+/* The two blurred shapes that tint the background. */
+.ps-bg1,
+.ps-bg2 {
+  position: absolute;
+  top: 50%;
+  width: 50%;
+  height: 100%;
+  max-height: 132px;
+  transform: translateY(-50%);
+  filter: blur(80px);
+  mix-blend-mode: plus-lighter;
+  opacity: 0.24;
+  pointer-events: none;
+}
+
+.ps-bg2 {
+  right: 0;
+}
+
+.ps-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(0.75 * var(--ps-base));
+  padding: calc(0.6 * var(--ps-base));
+}
+
+/* Dragging the scrubber dims everything else, as in the original. */
+.ps-info,
+.ps-bar {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.ps-sutro-audio:has(.ps-big-range[data-dragging]) .ps-info,
+.ps-sutro-audio:has(.ps-big-range[data-dragging]) .ps-bar {
+  opacity: 0.4;
+}
+
+/* --- Artwork and titles --- */
+
+.ps-info {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: calc(0.6 * var(--ps-base));
+  min-width: 0;
+}
+
+.ps-info-poster {
+  position: relative;
+  flex: none;
+  width: calc(2.6 * var(--ps-base));
+  height: calc(2.6 * var(--ps-base));
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.25);
+}
+
+.ps-info-poster img,
+.ps-info-poster ::slotted(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ps-poster-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgb(0 0 0 / 0.25), transparent);
+  pointer-events: none;
+}
+
+.ps-info-text {
+  min-width: 0;
+}
+
+.ps-title,
+.ps-byline {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ps-title {
+  font-size: 1em;
+  font-weight: 500;
+}
+
+.ps-byline {
+  margin-top: 0.35em;
+  font-size: 0.85em;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.ps-title:not(:has(*))::after,
+.ps-byline:not(:has(*))::after {
+  content: "";
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(0.2 * var(--ps-base));
+}
+
+.ps-button {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: calc(2 * var(--ps-base));
+  height: calc(2 * var(--ps-base));
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ps-button:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.ps-button[data-hidden],
+.ps-button[data-availability="unavailable"],
+.ps-button[data-availability="unsupported"] {
+  display: none;
+}
+
+.ps-rate {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+/* v10's rate button has no text of its own; it reports the value as `data-rate`. */
+.ps-rate::after {
+  content: attr(data-rate) "x";
+}
+
+.ps-icon {
+  width: calc(1.2 * var(--ps-base));
+  height: calc(1.2 * var(--ps-base));
+  fill: none;
+  stroke: var(--ps-primary);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- Times row --- */
+
+.ps-times {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(0.4 * var(--ps-base));
+}
+
+.ps-time-display {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.ps-small-range {
+  position: relative;
+  display: block;
+  width: calc(6 * var(--ps-base));
+  height: calc(1.2 * var(--ps-base));
+  touch-action: none;
+  cursor: pointer;
+}
+
+@container ps-sutro-audio (inline-size < 480px) {
+  .ps-times .ps-small-range {
+    display: none;
+  }
+}
+
+/* --- Sliders --- */
+
+.ps-big-range {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(0.9 * var(--ps-base));
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: calc(0.125 * var(--ps-base));
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.25);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: rgb(255 255 255 / 0.35);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: calc(0.6 * var(--ps-base));
+  height: calc(0.6 * var(--ps-base));
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  transition: transform 0.1s;
+}
+
+.ps-big-range:hover .ps-thumb,
+.ps-big-range[data-interactive] .ps-thumb,
+.ps-small-range:hover .ps-thumb,
+.ps-small-range[data-interactive] .ps-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin-bottom: 0.4em;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-preview-time {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}

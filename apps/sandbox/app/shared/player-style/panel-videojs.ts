@@ -20,7 +20,12 @@ export function mountPortedPanel(theme: PlayerStyleTheme, markup: string): void 
   const skinTag = defineTemplateSkin(portedTagName(theme), {
     markup,
     media: (container) => container.querySelector('slot:not([name])'),
-    poster: (container) => container.querySelector('media-poster img'),
+    /*
+     * Video themes wrap the image in `media-poster`; audio themes place it themselves behind a named slot. Accept
+     * either, or the slotted image is dropped and the artwork never appears.
+     */
+    poster: (container) =>
+      container.querySelector('media-poster img') ?? container.querySelector('slot[name="poster"]'),
   });
 
   const playerTag = theme.player === 'audio' ? 'audio-player' : 'video-player';
