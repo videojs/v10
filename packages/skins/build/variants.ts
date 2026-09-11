@@ -21,6 +21,7 @@ export type SkinStyling = 'css' | 'tailwind';
 export interface SkinVariant {
   readonly target: SkinFramework;
   readonly style: SkinStyling;
+  readonly theme: SkinStyle['theme'];
   readonly skin?: SkinName | undefined;
 }
 
@@ -37,17 +38,25 @@ export type SkinRootModule = GraphModule<SkinMeta & { readonly name: SkinName }>
 };
 
 const publishedSkins = Object.keys(skinStyles).filter(isSkinName);
+const representativeSkins = {
+  default: 'default-video',
+  minimal: 'minimal-video',
+} as const satisfies Record<SkinStyle['theme'], SkinName>;
 
 /** The variants one authored module is compiled for. Skin-owned modules compile for their skin only. */
 export function variantsFor(filename: string): readonly SkinVariant[] {
   const ownedSkin = publishedSkins.find((name) => filename.includes(`/skins/${skinSourceDirectory(name)}/`));
 
-  return registryTargets.map(({ framework, styling }) => {
-    if (ownedSkin) return { target: framework, style: styling, skin: ownedSkin };
+  return registryTargets.flatMap(({ framework, styling, theme }): SkinVariant[] => {
+    if (ownedSkin) {
+      return skinStyles[ownedSkin].theme === theme
+        ? [{ target: framework, style: styling, theme, skin: ownedSkin }]
+        : [];
+    }
 
     return framework === 'html'
-      ? { target: framework, style: styling, skin: 'default-video' }
-      : { target: framework, style: styling };
+      ? [{ target: framework, style: styling, theme, skin: representativeSkins[theme] }]
+      : [{ target: framework, style: styling, theme }];
   });
 }
 
@@ -57,31 +66,48 @@ export function parseVariant(parameters: URLSearchParams): SkinVariant | null {
   const style = parameters.get('style');
   if ((target !== 'react' && target !== 'html') || (style !== 'tailwind' && style !== 'css')) return null;
 
+  const theme = parameters.get('theme');
+  if (theme !== 'default' && theme !== 'minimal') return null;
+
   const requested = parameters.get('skin');
   const skin = requested && isSkinName(requested) ? requested : undefined;
   if (requested && !skin) return null;
 
+  if (skin && skinStyles[skin].theme !== theme) return null;
+
   if (!skin && target !== 'react') return null;
 
-  return { target, ...(skin ? { skin } : {}), style };
+  return skin ? { target, skin, style, theme } : { target, style, theme };
 }
 
 /** The query parameters that select a variant. */
 export function variantParams(variant: SkinVariant): Readonly<Record<string, string>> {
-  return { target: variant.target, ...(variant.skin ? { skin: variant.skin } : {}), style: variant.style };
+  const parameters: Record<string, string> = {
+    target: variant.target,
+    style: variant.style,
+    theme: variant.theme,
+  };
+
+  if (variant.skin) parameters.skin = variant.skin;
+
+  return parameters;
 }
 
 /** Collect every skin root compiled for one framework and styling, with its module closure, sorted by skin name. */
-export function skinRoots(graph: Graph<SkinModuleMeta>, variant: Pick<SkinVariant, 'target' | 'style'>): SkinRoot[] {
+export function skinRoots(
+  graph: Graph<SkinModuleMeta>,
+  variant: Pick<SkinVariant, 'target' | 'style'> & Partial<Pick<SkinVariant, 'theme'>>
+): SkinRoot[] {
   const roots = [...graph.modules.values()].filter(
     (module): module is SkinRootModule =>
       module.meta?.type === 'skin' &&
       isSkinName(module.meta.name) &&
       module.params.target === variant.target &&
       module.params.style === variant.style &&
+      (variant.theme === undefined || module.params.theme === variant.theme) &&
       module.params.skin === module.meta.name
   );
-  const expected = skinPresets.length * 2;
+  const expected = skinPresets.length * (variant.theme === undefined ? 2 : 1);
 
   if (roots.length !== expected) {
     throw new Error(`Expected ${expected} ${variant.target} ${variant.style} Skin roots, received ${roots.length}.`);

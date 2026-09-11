@@ -20,12 +20,9 @@ export function skinSourceDirectory(name: SkinName): string {
   return `${theme}/${preset}`;
 }
 
-/** Resolve the stable preset-and-theme directory for a Skin. */
+/** Resolve the stable registry directory for a Skin preset. The selected catalog owns the theme. */
 export function skinDirectory(name: SkinName): string {
-  const preset = skinPreset(name);
-  const { theme } = skinStyles[name];
-
-  return `skins/${preset}/${theme}`;
+  return skinPreset(name);
 }
 
 /** Runtime stylesheet entry carrying the shared, preset, and optional Minimal tokens relative to `src/styles`. */

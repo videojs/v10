@@ -8,25 +8,30 @@ import { skinSourceDirectory } from '../skin.ts';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(import.meta.dirname, 'vite.config.ts');
-const reactTarget = '?style=css&target=react&skin=default-video';
+const reactTarget = '?style=css&target=react&skin=default-video&theme=default';
 const defaultSkinUrl = `/../src/skins/default/video/skin.tsx${reactTarget}`;
 const defaultControlsUrl = `/../src/skins/default/video/layout/controls.tsx${reactTarget}`;
-const htmlContainerUrl = '/../src/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
+const htmlContainerUrl =
+  '/../src/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video&theme=minimal';
 const playButtonUrl = `/../src/components/buttons/play-button.tsx${reactTarget}`;
 const settingsMenuUrl = `/../src/components/menus/settings-menu.tsx${reactTarget}`;
 const reactCaptionsMenuUrl =
-  '/../src/components/menus/captions-menu.tsx?style=css&target=react&skin=default-live-video';
-const htmlCaptionsMenuUrl = '/../src/components/menus/captions-menu.tsx?style=css&target=html&skin=default-live-video';
+  '/../src/components/menus/captions-menu.tsx?style=css&target=react&skin=default-live-video&theme=default';
+const htmlCaptionsMenuUrl =
+  '/../src/components/menus/captions-menu.tsx?style=css&target=html&skin=default-live-video&theme=default';
 const htmlAudioSettingsMenuUrl =
-  '/../src/skins/shared/audio/menus/settings-menu.tsx?style=css&target=html&skin=default-audio';
+  '/../src/skins/shared/audio/menus/settings-menu.tsx?style=css&target=html&skin=default-audio&theme=default';
 const volumePopoverUrl = `/../src/components/menus/volume-popover.tsx${reactTarget}`;
-const htmlPosterUrl = '/../src/components/display/poster.tsx?style=tailwind&target=html&skin=default-video';
-const reactPosterUrl = '/../src/components/display/poster.tsx?style=tailwind&target=react&skin=default-video';
-const htmlTimeSliderUrl = '/../src/components/sliders/time-slider.tsx?style=tailwind&target=html&skin=default-video';
-const reactTimeSliderUrl = '/../src/components/sliders/time-slider.tsx?style=tailwind&target=react&skin=default-video';
-// The Minimal controls reach across to the volume popover trigger with `group-has-*`, a tracked parity gap.
+const htmlPosterUrl =
+  '/../src/components/display/poster.tsx?style=tailwind&target=html&skin=default-video&theme=default';
+const reactPosterUrl =
+  '/../src/components/display/poster.tsx?style=tailwind&target=react&skin=default-video&theme=default';
+const htmlTimeSliderUrl =
+  '/../src/components/sliders/time-slider.tsx?style=tailwind&target=html&skin=default-video&theme=default';
+const reactTimeSliderUrl =
+  '/../src/components/sliders/time-slider.tsx?style=tailwind&target=react&skin=default-video&theme=default';
 const minimalControlsUrl =
-  '/../src/skins/minimal/video/layout/controls.tsx?style=tailwind&target=react&skin=minimal-video';
+  '/../src/skins/minimal/video/layout/controls.tsx?style=tailwind&target=react&skin=minimal-video&theme=minimal';
 const buttonStyles = resolve(packageDir, 'src/styles/buttons/button.styles.ts');
 const controlsStyles = resolve(packageDir, 'src/skins/default/video/layout/controls.styles.ts');
 const designStyles = resolve(packageDir, 'src/styles/base.css');
@@ -45,50 +50,50 @@ const skins = [
 ] as const;
 const skinContracts = {
   'default-video': {
-    exportName: 'DefaultVideoSkin',
+    exportName: 'VideoSkin',
     theme: 'default',
     preset: 'video',
     stylesheet: 'video/controls.css',
   },
   'minimal-video': {
-    exportName: 'MinimalVideoSkin',
+    exportName: 'VideoSkin',
     theme: 'minimal',
     preset: 'video',
     stylesheet: 'video/controls.css',
   },
   'default-live-video': {
-    exportName: 'DefaultLiveVideoSkin',
+    exportName: 'LiveVideoSkin',
     theme: 'default',
     preset: 'live-video',
     stylesheet: 'live-video/controls.css',
   },
   'minimal-live-video': {
-    exportName: 'MinimalLiveVideoSkin',
+    exportName: 'LiveVideoSkin',
     theme: 'minimal',
     preset: 'live-video',
     stylesheet: 'live-video/controls.css',
   },
   // Live audio controls are fully shared with the audio controls module.
   'default-live-audio': {
-    exportName: 'DefaultLiveAudioSkin',
+    exportName: 'LiveAudioSkin',
     theme: 'default',
     preset: 'live-audio',
     stylesheet: 'audio/controls.css',
   },
   'minimal-live-audio': {
-    exportName: 'MinimalLiveAudioSkin',
+    exportName: 'LiveAudioSkin',
     theme: 'minimal',
     preset: 'live-audio',
     stylesheet: 'audio/controls.css',
   },
   'default-audio': {
-    exportName: 'DefaultAudioSkin',
+    exportName: 'AudioSkin',
     theme: 'default',
     preset: 'audio',
     stylesheet: 'audio/controls.css',
   },
   'minimal-audio': {
-    exportName: 'MinimalAudioSkin',
+    exportName: 'AudioSkin',
     theme: 'minimal',
     preset: 'audio',
     stylesheet: 'audio/controls.css',
@@ -130,7 +135,9 @@ describe('Skins Vite workflow', () => {
   it('resolves queried skin source directly', async () => {
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
 
-    expect(resolved?.id).toContain('/src/skins/default/video/skin.tsx?skin=default-video&style=css&target=react');
+    expect(resolved?.id).toContain(
+      '/src/skins/default/video/skin.tsx?skin=default-video&style=css&target=react&theme=default'
+    );
   }, 30_000);
 
   it('reports VJSC style diagnostics through the Vite logger', async () => {
@@ -198,7 +205,9 @@ describe('Skins Vite workflow', () => {
     const settingsMenu = await server.transformRequest(htmlAudioSettingsMenuUrl);
     const code = settingsMenu?.code ?? '';
 
-    expect(code).toContain('/components/buttons/playback-rate-button.tsx?skin=default-audio&style=css&target=html');
+    expect(code).toContain(
+      '/components/buttons/playback-rate-button.tsx?skin=default-audio&style=css&target=html&theme=default'
+    );
     expect(code).toMatch(/_jsxDEV\(PlaybackRateButton, \{\s+commandfor:[\s\S]*?className/);
     expect(code).not.toContain('media-menu-resizable-popup');
   }, 30_000);
@@ -357,9 +366,13 @@ describe('Skins Vite workflow', () => {
 });
 
 function skinUrl(variant: (typeof variants)[number]): string {
-  return `/../src/skins/${skinSourceDirectory(variant.skin)}/skin.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
+  const { theme } = skinContracts[variant.skin];
+
+  return `/../src/skins/${skinSourceDirectory(variant.skin)}/skin.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}&theme=${theme}`;
 }
 
 function controlsUrl(variant: (typeof variants)[number]): string {
-  return `/../src/skins/${skinSourceDirectory(variant.skin)}/layout/controls.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
+  const { theme } = skinContracts[variant.skin];
+
+  return `/../src/skins/${skinSourceDirectory(variant.skin)}/layout/controls.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}&theme=${theme}`;
 }

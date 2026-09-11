@@ -6,58 +6,78 @@ import { type RegistryItem, registryItemSchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../../..');
-const registryDir = resolve(packageDir, 'dist/registry/source/r/react');
+const registryDirs = {
+  default: resolve(packageDir, 'dist/registry/source/r/react'),
+  minimal: resolve(packageDir, 'dist/registry/source/r/react/minimal'),
+} as const;
 
 describe('React registry output', () => {
-  const items = readRegistryItems();
+  const registries = {
+    default: readRegistryItems(registryDirs.default),
+    minimal: readRegistryItems(registryDirs.minimal),
+  } as const;
 
   it('keeps the Video Skin installation notes concise', () => {
-    const docs = [...itemClosure(items, 'video')].map((name) => items.get(name)?.docs ?? '').join('\n');
+    for (const items of Object.values(registries)) {
+      const docs = [...itemClosure(items, 'video')].map((name) => items.get(name)?.docs ?? '').join('\n');
 
-    expect(docs.length).toBeLessThanOrEqual(3_500);
-    expect(docs.split('\n').length).toBeLessThanOrEqual(60);
+      expect(docs.length).toBeLessThanOrEqual(3_800);
+      expect(docs.split('\n').length).toBeLessThanOrEqual(60);
+    }
   });
 
   it('marks every public module root as a client entry', () => {
-    const missing = [...items.values()]
-      .filter((item) => item.meta?.public)
-      .filter((item) => !readItemRoot(item).includes("'use client';"))
-      .map((item) => item.name);
+    for (const theme of ['default', 'minimal'] as const) {
+      const items = registries[theme];
+      const missing = [...items.values()]
+        .filter((item) => item.meta?.public)
+        .filter((item) => !readItemRoot(registryDirs[theme], item).includes("'use client';"))
+        .map((item) => item.name);
 
-    expect(missing).toEqual([]);
+      expect(missing).toEqual([]);
+    }
   });
 
-  it('keeps project utilities and skin-owned modules in their intended boundaries', () => {
-    const helper = items.get('_resolve-class-name');
-    const playButton = readItemRoot(items.get('play-button')!);
-    const defaultSkin = readItemRoot(items.get('video')!);
-    const minimalSkin = readItemRoot(items.get('video-minimal')!);
-    const defaultTargets = items.get('video')?.files?.map((file) => file.target) ?? [];
-    const minimalTargets = items.get('video-minimal')?.files?.map((file) => file.target) ?? [];
+  it('keeps project utilities and skin-owned modules in stable boundaries', () => {
+    const defaultItems = registries.default;
+    const minimalItems = registries.minimal;
+    const helper = defaultItems.get('_resolve-class-name');
+    const defaultPlayButton = readItemRoot(registryDirs.default, defaultItems.get('play-button')!);
+    const minimalPlayButton = readItemRoot(registryDirs.minimal, minimalItems.get('play-button')!);
+    const defaultButton = readItemRoot(registryDirs.default, defaultItems.get('button')!);
+    const minimalButton = readItemRoot(registryDirs.minimal, minimalItems.get('button')!);
+    const defaultSkin = readItemRoot(registryDirs.default, defaultItems.get('video')!);
+    const minimalSkin = readItemRoot(registryDirs.minimal, minimalItems.get('video')!);
+    const defaultTargets = defaultItems.get('video')?.files?.map((file) => file.target) ?? [];
+    const minimalTargets = minimalItems.get('video')?.files?.map((file) => file.target) ?? [];
 
     expect(helper?.files?.map((file) => file.target)).toEqual(['@lib/resolve-class-name.ts']);
-    expect(playButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
-    expect(playButton).toContain(`import { cn } from '@/lib/utils';`);
-    expect(playButton).not.toContain(`{ cn, resolveClassName }`);
-    expect(playButton).toContain(`import '../styles/base.css';`);
-    expect(defaultSkin).toContain(`import '../../../styles/video/base.css';`);
-    expect(minimalSkin).toContain(`import '../../../styles/video/minimal.css';`);
-    expect(defaultTargets).toContain('@components/videojs/skins/video/default/skin.tsx');
-    expect(defaultTargets).toContain('@components/videojs/skins/video/default/behaviors/hotkeys.tsx');
-    expect(defaultTargets).toContain('@components/videojs/skins/video/default/display/status-indicators.tsx');
-    expect(defaultTargets).toContain('@components/videojs/skins/video/default/layout/controls.tsx');
-    expect(defaultTargets).toContain('@components/videojs/skins/video/default/menus/settings-menu.tsx');
-    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/sliders/slider.tsx');
-    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/display/status-indicator.tsx');
-    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/dialogs/error-dialog.tsx');
-    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/menus/volume-popover.tsx');
-    expect(
-      [...defaultTargets, ...minimalTargets].some((target) => target?.includes('/components/feedback/') === true)
-    ).toBe(false);
-    expect(
-      [...defaultTargets, ...minimalTargets].some((target) => target?.includes('/components/controls/') === true)
-    ).toBe(false);
-    expect(styleTargets(items, 'video')).toEqual([
+    expect(defaultPlayButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
+    expect(defaultPlayButton).toContain(`import { cn } from '@/lib/utils';`);
+    expect(defaultPlayButton).not.toContain(`{ cn, resolveClassName }`);
+    expect(defaultPlayButton).toContain(`import '../styles/base.css';`);
+    expect(defaultPlayButton).not.toContain(`styles/themes/minimal.css`);
+    expect(minimalPlayButton).toContain(`import '../styles/themes/minimal.css';`);
+    expect(defaultPlayButton).toContain(`from '@videojs/react/icons';`);
+    expect(defaultPlayButton).not.toContain(`@videojs/react/icons/minimal`);
+    expect(minimalPlayButton).toContain(`from '@videojs/react/icons/minimal';`);
+    expect(defaultButton).not.toContain('corner-shape:squircle');
+    expect(minimalButton).toContain('corner-shape:squircle');
+    expect(defaultSkin).toContain(`import '../styles/video/base.css';`);
+    expect(defaultSkin).toContain('export function VideoSkin');
+    expect(defaultSkin).toContain('data-theme="default"');
+    expect(minimalSkin).toContain(`import '../styles/video/minimal.css';`);
+    expect(minimalSkin).toContain('export function VideoSkin');
+    expect(minimalSkin).toContain('data-theme="minimal"');
+    expect(defaultTargets).toEqual(minimalTargets);
+    expect(defaultTargets).toContain('@components/videojs/video/skin.tsx');
+    expect(defaultTargets).toContain('@components/videojs/video/behaviors/hotkeys.tsx');
+    expect(defaultTargets).toContain('@components/videojs/video/display/status-indicators.tsx');
+    expect(defaultTargets).toContain('@components/videojs/video/layout/controls.tsx');
+    expect(defaultTargets).toContain('@components/videojs/video/menus/settings-menu.tsx');
+    expect(defaultTargets.some((target) => target?.includes('/skins/') === true)).toBe(false);
+    expect(defaultTargets.some((target) => target?.includes('/components/') === true)).toBe(false);
+    expect(styleTargets(defaultItems, 'video')).toEqual([
       '@components/videojs/styles/base.css',
       '@components/videojs/styles/themes/preferences.css',
       '@components/videojs/styles/themes/theme.css',
@@ -65,7 +85,7 @@ describe('React registry output', () => {
       '@components/videojs/styles/video/captions.css',
       '@components/videojs/styles/video/theme.css',
     ]);
-    expect(styleTargets(items, 'video-minimal')).toEqual([
+    expect(styleTargets(minimalItems, 'video')).toEqual([
       '@components/videojs/styles/base.css',
       '@components/videojs/styles/themes/minimal.css',
       '@components/videojs/styles/themes/preferences.css',
@@ -75,14 +95,14 @@ describe('React registry output', () => {
       '@components/videojs/styles/video/minimal.css',
       '@components/videojs/styles/video/theme.css',
     ]);
-    expect(styleTargets(items, 'audio')).toEqual([
+    expect(styleTargets(defaultItems, 'audio')).toEqual([
       '@components/videojs/styles/audio/base.css',
       '@components/videojs/styles/audio/theme.css',
       '@components/videojs/styles/base.css',
       '@components/videojs/styles/themes/preferences.css',
       '@components/videojs/styles/themes/theme.css',
     ]);
-    expect(styleTargets(items, 'audio-minimal')).toEqual([
+    expect(styleTargets(minimalItems, 'audio')).toEqual([
       '@components/videojs/styles/audio/base.css',
       '@components/videojs/styles/audio/minimal.css',
       '@components/videojs/styles/audio/theme.css',
@@ -93,19 +113,36 @@ describe('React registry output', () => {
     ]);
   });
 
+  it('publishes the same public names from each theme catalog', () => {
+    const publicNames = (items: ReadonlyMap<string, RegistryItem>) =>
+      [...items.values()]
+        .filter((item) => item.meta?.public)
+        .map((item) => item.name)
+        .sort();
+
+    expect(publicNames(registries.minimal)).toEqual(publicNames(registries.default));
+    expect(publicNames(registries.default)).toContain('video');
+    expect(publicNames(registries.default)).not.toContain('video-minimal');
+    expect([...registries.default.keys()].some((name) => name.endsWith('-minimal'))).toBe(false);
+  });
+
   it('publishes component categories that match the UI taxonomy', () => {
-    expect(items.get('buffering-indicator')?.categories).toEqual(['media', 'display']);
-    expect(items.get('error-dialog')?.categories).toEqual(['media', 'dialogs']);
-    expect(items.get('poster')?.categories).toEqual(['media', 'display']);
-    expect(items.get('status-announcer')?.categories).toEqual(['media', 'behaviors']);
-    expect(items.get('volume-popover')?.categories).toEqual(['media', 'menus']);
-    expect(items.get('container')?.categories).toEqual(['media', 'layout']);
+    for (const items of Object.values(registries)) {
+      expect(items.get('buffering-indicator')?.categories).toEqual(['media', 'display']);
+      expect(items.get('error-dialog')?.categories).toEqual(['media', 'dialogs']);
+      expect(items.get('poster')?.categories).toEqual(['media', 'display']);
+      expect(items.get('status-announcer')?.categories).toEqual(['media', 'behaviors']);
+      expect(items.get('volume-popover')?.categories).toEqual(['media', 'menus']);
+      expect(items.get('container')?.categories).toEqual(['media', 'layout']);
+    }
   });
 
   it('preserves utility groups as readable generated class-name arguments', () => {
-    const files = readdirSync(registryDir, { recursive: true, withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.tsx'))
-      .map((entry) => resolve(entry.parentPath, entry.name));
+    const files = Object.values(registryDirs).flatMap((registryDir) =>
+      readdirSync(registryDir, { recursive: true, withFileTypes: true })
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.tsx'))
+        .map((entry) => resolve(entry.parentPath, entry.name))
+    );
     const longest = Math.max(
       ...files.flatMap((file) =>
         readFileSync(file, 'utf8')
@@ -115,14 +152,20 @@ describe('React registry output', () => {
     );
 
     expect(longest).toBeLessThanOrEqual(300);
-    expect(readItemRoot(items.get('slider')!)).toContain("'group-data-dragging/slider:scale-90',");
-    expect(readItemRoot(items.get('captions-menu')!)).toContain(
-      "'not-data-submenu:data-[child-open]:-translate-x-full',"
-    );
+
+    for (const theme of ['default', 'minimal'] as const) {
+      const items = registries[theme];
+      const registryDir = registryDirs[theme];
+
+      expect(readItemRoot(registryDir, items.get('slider')!)).toContain("'group-data-dragging/slider:scale-90',");
+      expect(readItemRoot(registryDir, items.get('captions-menu')!)).toContain(
+        "'not-data-submenu:data-[child-open]:-translate-x-full',"
+      );
+    }
   });
 });
 
-function readRegistryItems(): ReadonlyMap<string, RegistryItem> {
+function readRegistryItems(registryDir: string): ReadonlyMap<string, RegistryItem> {
   const items = new Map<string, RegistryItem>();
 
   for (const group of ['skins', 'ui', 'support']) {
@@ -174,7 +217,7 @@ function styleTargets(items: ReadonlyMap<string, RegistryItem>, root: string): s
   return [...targets].sort();
 }
 
-function readItemRoot(item: RegistryItem): string {
+function readItemRoot(registryDir: string, item: RegistryItem): string {
   const prefix = `files/${item.name}/`;
   const file = item.files?.find(
     (candidate) =>

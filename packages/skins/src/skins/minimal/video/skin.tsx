@@ -11,19 +11,19 @@ import { VideoStatusIndicators } from '../../shared/video/display/status-indicat
 import videoSkinStyles from '../../shared/video/skin.styles';
 import { MinimalVideoControls } from './layout/controls';
 
-export interface MinimalVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface VideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
   renderPoster?: PropsOf<typeof Poster>['renderImage'];
   renderThumbnail?: PropsOf<typeof MinimalVideoControls>['renderThumbnail'];
 }
 
-export function MinimalVideoSkin({
+export function VideoSkin({
   children,
   className,
   renderPoster,
   renderThumbnail,
   ...props
-}: MinimalVideoSkinProps = {}) {
+}: VideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="minimal" data-preset="video" {...props}>
       <Slot>{children}</Slot>

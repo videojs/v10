@@ -133,9 +133,7 @@ export function skinModuleTarget(
   const sourcePath = module.sourcePath;
 
   if (sourcePath.startsWith('components/')) {
-    const component = sourcePath.slice('components/'.length);
-
-    return `${skinDirectory(skin)}/components/${component}`;
+    throw new Error(`Reusable registry component was not published independently: \`${sourcePath}\`.`);
   }
 
   if (!sourcePath.startsWith('skins/')) throw new Error(`Unsupported registry source: \`${sourcePath}\`.`);
@@ -149,6 +147,8 @@ export function skinModuleTarget(
 
   // Preset-shared modules compile with each theme's variants and stay beside that skin.
   if (theme === 'shared' && preset && isSkinPreset(preset)) return `${skinDirectory(skin)}/${filename}`;
+
+  if (theme === 'shared' && preset && filename) return `${skinDirectory(skin)}/${preset}/${filename}`;
 
   return sourcePath;
 }

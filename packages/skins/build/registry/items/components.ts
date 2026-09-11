@@ -17,6 +17,7 @@ export function componentItem(
     role: 'component',
     framework: 'react',
     styling: target.styling,
+    theme: target.theme,
     public: true,
   } satisfies VideojsRegistryMeta;
 
@@ -32,7 +33,7 @@ export function componentItem(
     group: 'ui',
     directives: ['use client'],
     target: `ui/${meta.name}.tsx`,
-    theme: true,
+    theme: target.theme === 'minimal' ? ['styles/base.css', 'styles/themes/minimal.css'] : true,
   };
 }
 

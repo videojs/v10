@@ -59,6 +59,8 @@ Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `util
 
 The normal registry E2E packs the current workspace packages so source and package changes can be tested before release. The Netlify production build additionally runs `pnpm test:e2e:registry:published` from the workspace root. That smoke test creates a fresh Next app, installs one skin through the stock Shadcn CLI, and builds it against the registry's exact npm package pins without local overrides. It is expected to pass only after those package versions have been published. To compare unreleased registry source with the newest package cut locally, run the same command with `VIDEOJS_REGISTRY_PACKAGE_TAG=latest`; production leaves that override unset.
 
+Each framework and styling has a default catalog and a `/minimal` catalog. Both publish the same item names (`video`, `audio`, `live-video`, and `live-audio`) and install to the same preset paths under `components/videojs/`. A project chooses one theme by pointing its Shadcn namespace at one catalog; the default catalog keeps the shorter URL. Shared UI always installs under `components/videojs/ui/`, while preset composition stays under its preset directory.
+
 ## Commands
 
 Run these from `packages/skins`.

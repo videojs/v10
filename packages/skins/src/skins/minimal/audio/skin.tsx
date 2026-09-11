@@ -8,11 +8,11 @@ import audioSkinStyles from '../../shared/audio/skin.styles';
 import { PlaybackHotkeys } from '../../shared/behaviors/playback-hotkeys';
 import { MinimalAudioControls } from './layout/controls';
 
-export interface MinimalAudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface AudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
 }
 
-export function MinimalAudioSkin({ children, className, ...props }: MinimalAudioSkinProps = {}) {
+export function AudioSkin({ children, className, ...props }: AudioSkinProps = {}) {
   return (
     <Container className={[audioSkinStyles.root, className]} data-theme="minimal" data-preset="audio" {...props}>
       <Slot>{children}</Slot>

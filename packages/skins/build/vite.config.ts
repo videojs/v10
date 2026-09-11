@@ -66,6 +66,7 @@ export const skinBuildConfig: PackUserConfig = {
         meta: {
           framework: target.framework,
           style: target.styling,
+          theme: target.theme,
         },
         items: registryItems(target),
         styles: registryStyles(target),
@@ -78,7 +79,11 @@ export const skinBuildConfig: PackUserConfig = {
           this.emitFile({
             type: 'asset',
             fileName: `${target.output}/catalog.json`,
-            source: `${JSON.stringify(skinCatalog, null, 2)}\n`,
+            source: `${JSON.stringify(
+              skinCatalog.filter((skin) => skin.theme === target.theme),
+              null,
+              2
+            )}\n`,
           });
         }
       },

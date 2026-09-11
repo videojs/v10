@@ -9,7 +9,7 @@ import { reactComponentTarget } from './react.tsx';
 const iconTargets = new Map<string, ComponentTarget>();
 
 export function createComponentTargets(config: SkinTransformConfig): readonly ComponentTarget[] {
-  const family = config.skin ? skinStyles[config.skin].theme : 'default';
+  const family = config.skin ? skinStyles[config.skin].theme : config.theme;
   const key = `${config.target}:${family}`;
   let icons = iconTargets.get(key);
 

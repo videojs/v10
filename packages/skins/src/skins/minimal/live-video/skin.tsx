@@ -11,12 +11,12 @@ import { LiveVideoStatusIndicators } from '../../shared/live-video/display/statu
 import videoSkinStyles from '../../shared/video/skin.styles';
 import { MinimalLiveVideoControls } from './layout/controls';
 
-export interface MinimalLiveVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface LiveVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
   renderPoster?: PropsOf<typeof Poster>['renderImage'];
 }
 
-export function MinimalLiveVideoSkin({ children, className, renderPoster, ...props }: MinimalLiveVideoSkinProps = {}) {
+export function LiveVideoSkin({ children, className, renderPoster, ...props }: LiveVideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="minimal" data-preset="live-video" {...props}>
       <Slot>{children}</Slot>

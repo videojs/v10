@@ -25,12 +25,15 @@ export function resolveSkinComponents(module: TransformModule): readonly Compone
 export function resolveSkinStyles(module: TransformModule): StyleTransformOptions | null {
   const config = parseVariant(module.params);
 
-  return config ? createStyleOptions(config) : null;
+  return config ? createStyleOptions(config, module.filename.includes('/components/') ? 'theme' : 'skin') : null;
 }
 
-export function createStyleOptions(config: SkinTransformConfig): StyleTransformOptions {
+export function createStyleOptions(
+  config: SkinTransformConfig,
+  scope: 'skin' | 'theme' = 'skin'
+): StyleTransformOptions {
   const skin = config.skin ? skinStyles[config.skin] : undefined;
-  const variants: string[] = skin ? [skin.theme] : ['default'];
+  const variants: string[] = [config.theme];
 
   if (skin) variants.push(skin.preset);
 
@@ -46,8 +49,11 @@ export function createStyleOptions(config: SkinTransformConfig): StyleTransformO
         variants,
         stylesheet: {
           input: resolve(stylesDir, 'tailwind.compiler.css'),
-          base: resolve(stylesDir, skinBaseStylesheet(skin?.preset ?? 'video', skin?.theme)),
-          scope: skin?.scope ?? '.media-skin',
+          base: resolve(
+            stylesDir,
+            scope === 'theme' ? 'base.css' : skinBaseStylesheet(skin?.preset ?? 'video', skin?.theme)
+          ),
+          scope: scope === 'theme' ? `.media-skin[data-theme="${config.theme}"]` : (skin?.scope ?? '.media-skin'),
         },
       };
 }

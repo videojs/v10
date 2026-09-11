@@ -11,19 +11,19 @@ import { VideoStatusIndicators } from '../../shared/video/display/status-indicat
 import videoSkinStyles from '../../shared/video/skin.styles';
 import { DefaultVideoControls } from './layout/controls';
 
-export interface DefaultVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface VideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
   renderPoster?: PropsOf<typeof Poster>['renderImage'];
   renderThumbnail?: PropsOf<typeof DefaultVideoControls>['renderThumbnail'];
 }
 
-export function DefaultVideoSkin({
+export function VideoSkin({
   children,
   className,
   renderPoster,
   renderThumbnail,
   ...props
-}: DefaultVideoSkinProps = {}) {
+}: VideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="default" data-preset="video" {...props}>
       <Slot>{children}</Slot>

@@ -8,11 +8,11 @@ import audioSkinStyles from '../../shared/audio/skin.styles';
 import { LivePlaybackHotkeys } from '../../shared/behaviors/live-playback-hotkeys';
 import { DefaultLiveAudioControls } from './layout/controls';
 
-export interface DefaultLiveAudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface LiveAudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
 }
 
-export function DefaultLiveAudioSkin({ children, className, ...props }: DefaultLiveAudioSkinProps = {}) {
+export function LiveAudioSkin({ children, className, ...props }: LiveAudioSkinProps = {}) {
   return (
     <Container className={[audioSkinStyles.root, className]} data-theme="default" data-preset="live-audio" {...props}>
       <Slot>{children}</Slot>
