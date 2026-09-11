@@ -13,43 +13,43 @@ type SkinLoader = () => Promise<readonly [RegistrySkinModule, unknown]>;
 const registrySkins = {
   'video/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/video/default/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/video/default/skin'),
+      import('@registry-html-default/components/videojs/video/skin.html?raw'),
+      import('@registry-html-default/components/videojs/video/skin'),
     ]),
   'video/minimal': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/video/minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/video/minimal/skin'),
+      import('@registry-html-minimal/components/videojs/video/skin.html?raw'),
+      import('@registry-html-minimal/components/videojs/video/skin'),
     ]),
   'live-video/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-video/default/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-video/default/skin'),
+      import('@registry-html-default/components/videojs/live-video/skin.html?raw'),
+      import('@registry-html-default/components/videojs/live-video/skin'),
     ]),
   'live-video/minimal': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-video/minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-video/minimal/skin'),
+      import('@registry-html-minimal/components/videojs/live-video/skin.html?raw'),
+      import('@registry-html-minimal/components/videojs/live-video/skin'),
     ]),
   'audio/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/audio/default/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/audio/default/skin'),
+      import('@registry-html-default/components/videojs/audio/skin.html?raw'),
+      import('@registry-html-default/components/videojs/audio/skin'),
     ]),
   'audio/minimal': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/audio/minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/audio/minimal/skin'),
+      import('@registry-html-minimal/components/videojs/audio/skin.html?raw'),
+      import('@registry-html-minimal/components/videojs/audio/skin'),
     ]),
   'live-audio/default': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-audio/default/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-audio/default/skin'),
+      import('@registry-html-default/components/videojs/live-audio/skin.html?raw'),
+      import('@registry-html-default/components/videojs/live-audio/skin'),
     ]),
   'live-audio/minimal': () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-audio/minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-audio/minimal/skin'),
+      import('@registry-html-minimal/components/videojs/live-audio/skin.html?raw'),
+      import('@registry-html-minimal/components/videojs/live-audio/skin'),
     ]),
 } satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
 

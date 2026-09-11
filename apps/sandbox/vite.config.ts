@@ -80,6 +80,9 @@ function describeGit(...args: string[]): string {
  */
 export interface SkinsSource {
   readonly plugins: PluginOption[];
+  readonly resolve: {
+    readonly alias: { readonly find: string | RegExp; readonly replacement: string }[];
+  };
   readonly optimizeDeps: { readonly exclude: string[] };
 }
 
@@ -295,7 +298,8 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       // Setup installs the registry skins from the local build inside the workspace; elsewhere they exist only when the
       // hosted registry answered. The dev server and build load this file after setup, so the check is current.
       __REGISTRY_SKINS__: JSON.stringify(
-        hasWorkspace || existsSync(resolve(__dirname, 'app/_generated/components/videojs/skins'))
+        hasWorkspace ||
+          existsSync(resolve(__dirname, 'app/_generated/registry/react-tailwind-default/components/videojs'))
       ),
       __SANDBOX_BRANCH__: JSON.stringify(describeGit('rev-parse', '--abbrev-ref', 'HEAD')),
       __SANDBOX_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
@@ -318,14 +322,32 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       sandboxHeadPlugin(),
     ],
     resolve: {
-      alias: {
-        '@': resolve(__dirname, 'app/_generated'),
-        // The registry's React CSS catalog, installed beside the Tailwind one under its own alias so the two never share files.
-        '@css': resolve(__dirname, 'app/_generated/css'),
-        '@app': resolve(__dirname, 'app'),
-        '@videojs/cdn/i18n': cdnI18nRegistry,
-        ...(existsSync(cdnSandboxMainTemplate) ? { [cdnSandboxMainSrc]: cdnSandboxMainTemplate } : {}),
-      },
+      alias: [
+        {
+          find: '@registry-react-tailwind-default',
+          replacement: resolve(__dirname, 'app/_generated/registry/react-tailwind-default'),
+        },
+        {
+          find: '@registry-react-tailwind-minimal',
+          replacement: resolve(__dirname, 'app/_generated/registry/react-tailwind-minimal'),
+        },
+        {
+          find: '@registry-react-css-default',
+          replacement: resolve(__dirname, 'app/_generated/registry/react-css-default'),
+        },
+        {
+          find: '@registry-react-css-minimal',
+          replacement: resolve(__dirname, 'app/_generated/registry/react-css-minimal'),
+        },
+        { find: '@registry-html-default', replacement: resolve(__dirname, 'app/_generated/registry/html-default') },
+        { find: '@registry-html-minimal', replacement: resolve(__dirname, 'app/_generated/registry/html-minimal') },
+        { find: '@app', replacement: resolve(__dirname, 'app') },
+        { find: '@videojs/cdn/i18n', replacement: cdnI18nRegistry },
+        ...(existsSync(cdnSandboxMainTemplate)
+          ? [{ find: cdnSandboxMainSrc, replacement: cdnSandboxMainTemplate }]
+          : []),
+        ...(skinsSource?.resolve.alias ?? []),
+      ],
       conditions: ['development', 'import', 'module', 'browser', 'default'],
       // Authored skins import the framework packages from inside `packages/skins`, which depends on neither; dedupe
       // resolves them from here, which is also what keeps one copy of each in the page.

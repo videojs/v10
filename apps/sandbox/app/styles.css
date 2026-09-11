@@ -3,8 +3,7 @@
 
 @source "../app";
 @source "../templates";
-@source "./_generated/components";
-@source "./_generated/html";
+@source "./_generated/registry";
 
 /* The shell's scheme control pins `data-color-scheme`; without it the operating system decides. */
 :root {
