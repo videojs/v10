@@ -4,6 +4,7 @@ import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useSandbox } from '@app/shared/react/use-sandbox';
 import { getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { Title } from '@videojs/react';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
 import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video/spf';
@@ -47,6 +48,8 @@ function App() {
           }
           live={live}
         >
+          {/* The title Mux publishes for the asset, loaded into `contentData.title`; see react-mux-video. */}
+          <Title className="sandbox-media-title" />
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
             {...(muxSource ? { source: muxSource } : { src: url ?? '' })}

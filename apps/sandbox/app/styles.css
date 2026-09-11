@@ -56,6 +56,18 @@
   aspect-ratio: auto;
 }
 
+/* The skins don't place the title; the Mux pages overlay it to show the one the media loads for the asset. */
+.sandbox-media-title {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  padding: 0.75rem 1rem 2.5rem;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.7), transparent);
+  color: white;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 #root :has(> :is(audio-player, live-audio-player)) {
   max-width: var(--sandbox-player-width, 36rem);
 }

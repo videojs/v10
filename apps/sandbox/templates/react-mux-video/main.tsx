@@ -5,6 +5,7 @@ import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useSandbox } from '@app/shared/react/use-sandbox';
 import { getChapters, getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { Title } from '@videojs/react';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
 import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
@@ -42,6 +43,9 @@ function App() {
           renderThumbnail={<img alt="" decoding="async" fetchPriority="low" />}
           live={live}
         >
+          {/* The skins don't place the title; this overlay shows the one Mux publishes for the asset, which the
+              media loads into `contentData.title`. Nothing sets `title` on the player, so what appears is the asset's own. */}
+          <Title className="sandbox-media-title" />
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
             {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
