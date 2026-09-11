@@ -14,9 +14,6 @@ import {
 } from '@app/components/ui/sidebar';
 import { Slider } from '@app/components/ui/slider';
 import { Switch } from '@app/components/ui/switch';
-import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
-import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { ASPECT_RATIOS, type AspectRatio, PLAYER_WIDTH } from '@app/shared/player-frame';
 import {
   COLOR_SCHEMES,
   type ColorScheme,
@@ -24,7 +21,10 @@ import {
   type PreloadValue,
   TEXT_DIRECTIONS,
   type TextDirection,
-} from '@app/shared/sandbox-listener';
+} from '@app/constants';
+import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
+import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
+import { ASPECT_RATIOS, type AspectRatio, PLAYER_WIDTH } from '@app/shared/player-frame';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { type ReactNode, useId, useRef } from 'react';
 

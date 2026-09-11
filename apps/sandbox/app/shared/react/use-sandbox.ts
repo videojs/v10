@@ -1,9 +1,5 @@
-import {
-  onSandboxStateChange,
-  type PreloadValue,
-  readSandboxState,
-  type SandboxState,
-} from '@app/shared/sandbox-listener';
+import type { PreloadValue } from '@app/constants';
+import { onSandboxStateChange, readSandboxState, type SandboxState } from '@app/shared/sandbox-listener';
 import { useEffect, useState } from 'react';
 
 import { installSandboxMirror } from './../sandbox-mirror';

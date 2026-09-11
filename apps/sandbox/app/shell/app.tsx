@@ -10,21 +10,23 @@ import {
   summarizeSelection,
 } from '@app/compare';
 import { SidebarProvider } from '@app/components/ui/sidebar';
-import { PLATFORMS, SKIN_SOURCES, STYLINGS } from '@app/constants';
+import {
+  COLOR_SCHEMES,
+  type ColorScheme,
+  DEFAULT_PRELOAD,
+  PLATFORMS,
+  PRELOAD_VALUES,
+  type PreloadValue,
+  SKIN_SOURCES,
+  STYLINGS,
+  TEXT_DIRECTIONS,
+  type TextDirection,
+} from '@app/constants';
 import { COMPARE_LABELS } from '@app/labels';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
 import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { ASPECT_RATIOS, type AspectRatio, defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
-import {
-  COLOR_SCHEMES,
-  type ColorScheme,
-  DEFAULT_PRELOAD,
-  PRELOAD_VALUES,
-  type PreloadValue,
-  TEXT_DIRECTIONS,
-  type TextDirection,
-} from '@app/shared/sandbox-listener';
 import { skinSourceAvailable, skinStylings, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
 import type { Platform, SkinSource, Styling } from '@app/types';

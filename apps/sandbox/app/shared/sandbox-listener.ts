@@ -1,4 +1,18 @@
-import { SKIN_SOURCES, SKINS, STYLINGS } from '@app/constants';
+import {
+  COLOR_SCHEMES,
+  type ColorScheme,
+  DEFAULT_PRELOAD,
+  PREFER_PLAYBACK_VALUES,
+  type PreferPlaybackValue,
+  PRELOAD_VALUES,
+  type PreloadValue,
+  RESOLUTION_PATTERN,
+  SKIN_SOURCES,
+  SKINS,
+  STYLINGS,
+  TEXT_DIRECTIONS,
+  type TextDirection,
+} from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Platform, Skin, SkinSource, Styling } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
@@ -9,24 +23,6 @@ import { setDocumentDirection } from './i18n/document-locale';
 import { ASPECT_RATIOS, type AspectRatio } from './player-frame';
 import { defaultSkinSource } from './skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from './sources';
-
-export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
-export type PreloadValue = (typeof PRELOAD_VALUES)[number];
-export const DEFAULT_PRELOAD: PreloadValue = 'metadata';
-
-// Any `{height}p`, not just the rungs `MediaResolution` names.
-const RESOLUTION_PATTERN = /^\d+p$/;
-
-export const PREFER_PLAYBACK_VALUES = ['mse', 'native'] as const;
-export type PreferPlaybackValue = (typeof PREFER_PLAYBACK_VALUES)[number];
-
-/** `auto` follows the operating system. */
-export const COLOR_SCHEMES = ['auto', 'light', 'dark'] as const;
-export type ColorScheme = (typeof COLOR_SCHEMES)[number];
-
-/** `auto` follows the locale. */
-export const TEXT_DIRECTIONS = ['auto', 'ltr', 'rtl'] as const;
-export type TextDirection = (typeof TEXT_DIRECTIONS)[number];
 
 const params = new URLSearchParams(window.location.search);
 
