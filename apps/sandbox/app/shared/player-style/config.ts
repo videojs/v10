@@ -29,6 +29,21 @@ export interface PlayerStyleTheme {
   readonly aspectRatio?: string;
 }
 
+/**
+ * Apply the theme's own source default to a set of params, reporting whether anything changed.
+ *
+ * A live port compared against an on-demand source shows neither side's live branch, and the sandbox's global default
+ * is on-demand. Both the comparison shell and a panel loaded on its own go through here, so a panel URL means the same
+ * thing whether the shell built it or someone opened it directly.
+ */
+export function applyThemeDefaults(params: URLSearchParams, theme: PlayerStyleTheme): boolean {
+  if (theme.defaultSource === undefined || params.has('source')) return false;
+
+  params.set('source', theme.defaultSource);
+
+  return true;
+}
+
 /** The published theme, pinned, straight from a CDN. */
 export function themeModuleUrl(theme: PlayerStyleTheme): string {
   return `https://cdn.jsdelivr.net/npm/@player.style/${theme.package ?? theme.name}@${theme.version}/+esm`;

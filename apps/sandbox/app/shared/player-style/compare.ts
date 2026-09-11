@@ -1,5 +1,6 @@
 import '@app/styles.css';
-import type { PlayerStyleTheme } from './config';
+import { applyThemeDefaults, type PlayerStyleTheme } from './config';
+import { hasReactSkin } from './panel-react';
 import { PLAYER_STYLE_THEMES, PORTED_THEMES } from './themes';
 
 /**
@@ -52,11 +53,12 @@ function frameUrl(theme: PlayerStyleTheme, id: string, mirror: boolean): string 
   params.delete('layout');
   params.set('panel', id);
 
-  // A live port compared against a on-demand source shows neither side's live branch.
-  if (theme.defaultSource !== undefined && !params.has('source')) params.set('source', theme.defaultSource);
+  applyThemeDefaults(params, theme);
 
   if (mirror) params.set('mirror', '1');
   else params.delete('mirror');
+
+  if (new URLSearchParams(location.search).get('impl') === 'react') params.set('impl', 'react');
 
   return `./?${params}`;
 }
@@ -72,6 +74,7 @@ export function mountCompare(theme: PlayerStyleTheme): void {
 
   let layout = readLayout();
   let mirror = readMirror();
+  let impl = new URLSearchParams(location.search).get('impl') === 'react';
 
   root.className = 'flex min-h-screen flex-col';
   root.innerHTML = `
@@ -89,6 +92,14 @@ export function mountCompare(theme: PlayerStyleTheme): void {
         <input type="checkbox" data-mirror ${mirror ? 'checked' : ''} />
         Mirror playback
       </label>
+      ${
+        hasReactSkin(theme.name)
+          ? `<label class="flex items-center gap-1.5 text-xs">
+               <input type="checkbox" data-impl ${impl ? 'checked' : ''} />
+               React port
+             </label>`
+          : ''
+      }
       <a class="text-muted-foreground ml-auto text-xs underline" href="../">All themes</a>
     </header>
     <div class="bg-muted/40 min-h-0 flex-1 gap-px" data-panels></div>
@@ -183,6 +194,19 @@ export function mountCompare(theme: PlayerStyleTheme): void {
   mirrorInput.addEventListener('change', () => {
     mirror = mirrorInput.checked;
     writeUrl(layout, mirror);
+    loadFrames();
+  });
+
+  // Which implementation the ported frame mounts. The reference frame is unaffected.
+  root.querySelector<HTMLInputElement>('[data-impl]')?.addEventListener('change', (event) => {
+    impl = (event.target as HTMLInputElement).checked;
+
+    const params = new URLSearchParams(location.search);
+
+    if (impl) params.set('impl', 'react');
+    else params.delete('impl');
+
+    history.replaceState(null, '', `?${params}`);
     loadFrames();
   });
 
