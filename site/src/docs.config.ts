@@ -114,6 +114,15 @@ export const sidebar: Sidebar = [
     llmsDescription: 'API reference for skins, media components, extensions, and interface components.',
     contents: [
       {
+        sidebarLabel: 'Layout',
+        llmsDescription: 'API reference for the components that establish a player and lay out its interface.',
+        contents: [
+          { slug: 'components/player' },
+          { slug: 'components/player-container' },
+          { slug: 'components/controls' },
+        ],
+      },
+      {
         sidebarLabel: 'Skins',
         llmsDescription: 'API reference for the packaged skins each preset ships.',
         contents: [
@@ -158,15 +167,6 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Extensions',
         llmsDescription: 'API reference for extensions that connect external services to the player.',
         contents: [{ slug: 'components/google-cast' }, { slug: 'components/mux-data' }],
-      },
-      {
-        sidebarLabel: 'Layout',
-        llmsDescription: 'API reference for the components that establish a player and lay out its interface.',
-        contents: [
-          { slug: 'components/player' },
-          { slug: 'components/player-container' },
-          { slug: 'components/controls' },
-        ],
       },
       {
         sidebarLabel: 'Buttons',
