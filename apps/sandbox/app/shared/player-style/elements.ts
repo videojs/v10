@@ -10,6 +10,8 @@ import '@videojs/html/icons/element/default';
 // The presets register `<video-player>` and `<audio-player>`, which provide the store every UI element below
 // reads from. Without one the controls render but never receive state.
 import '@videojs/html/audio/player';
+import '@videojs/html/live-audio/player';
+import '@videojs/html/live-video/player';
 import '@videojs/html/video/player';
 // A live port plays HLS, so the media element has to be one that can.
 import '@videojs/html/media/hls-video';

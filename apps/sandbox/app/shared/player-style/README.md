@@ -35,9 +35,16 @@ Winamp references its artwork from player.style over a pinned CDN rather than co
 reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
 
 `minimal` and `microvideo` each branch on stream type, so both are two skins — the on-demand port plus a `-live`
-sibling on the `live-video` preset, compared against the same published package. The originals branch *again* on
-whether the stream has a target live window; v10 exposes no equivalent to select on, so the live ports render the DVR
-shape and the no-DVR variant is unported.
+sibling on the `live-video` preset, compared against the same published package.
+
+The originals branch *again* on whether the stream has a target live window. v10 does model this: `targetLiveWindow`
+is in store state (`0` standard latency, `Infinity` DVR, `NaN` on-demand) and the live button already reads it. What
+it does not do is reflect it as a data attribute, and a static skin selects on attributes, not store state — so these
+ports render the DVR shape unconditionally. v10's own live skins sidestep the question entirely by carrying no
+scrubber at all.
+
+Only one live source exists in the sandbox (`hls-live`), and it reports `targetLiveWindow: 0` — standard latency, a
+seekable window of about twenty seconds. Exercising the DVR branch needs a DVR stream added to `SOURCES`.
 
 **What "checked" currently means.** Every port was compared at one width, one source, paused, with no captions and no
 menu open. Hover states, playback, menus and the narrow breakpoints are unverified across the board. Treat a blank
