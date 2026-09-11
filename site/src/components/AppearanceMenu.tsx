@@ -28,8 +28,8 @@ const THEME_OPTIONS = [
 ] satisfies { value: ThemePreference; label: string; icon: ReactNode }[];
 
 const TONE_OPTIONS = [
-  { value: 'deep', label: 'Deep' },
   { value: 'soft', label: 'Soft' },
+  { value: 'deep', label: 'Deep' },
 ] satisfies { value: Tone; label: string }[];
 
 /**

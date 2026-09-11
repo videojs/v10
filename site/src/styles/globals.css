@@ -90,9 +90,9 @@
   --color-white: white;
   --color-black: black;
 
-  --color-faded-black: #151414;
-  --color-soot: #1b1a1a;
-  --color-warm-gray: #242322;
+  --color-faded-black: #1e1d1d;
+  --color-soot: #32302f;
+  --color-warm-gray: #403c38;
   --color-manila-dark: #bfb39e;
   --color-manila-75: #ccc3ab;
   --color-manila-50: #dcd2bb;
@@ -228,7 +228,7 @@
 /*
  * Appearance preferences, applied to <html> by ThemeInit before paint and kept in sync by `stores/appearance.ts`.
  * The accent swaps the token every orange utility reads, with a darker value in light mode where the brighter brand
- * colours would not pass on manila. The soft tone lifts the three dark surfaces a step without touching light mode.
+ * colours would not pass on manila. The deep tone drops the three dark surfaces a step without touching light mode.
  */
 html[data-accent="gold"] {
   --color-orange: #a86a00;
@@ -254,10 +254,10 @@ html.dark[data-accent="red"] {
   --color-orange: #ff5d5e;
 }
 
-html.dark[data-tone="soft"] {
-  --color-faded-black: #1d1b1a;
-  --color-soot: #26231f;
-  --color-warm-gray: #2f2b28;
+html.dark[data-tone="deep"] {
+  --color-faded-black: #151414;
+  --color-soot: #1b1a1a;
+  --color-warm-gray: #242322;
 }
 
 @custom-variant intent (&:hover, &:focus-within);

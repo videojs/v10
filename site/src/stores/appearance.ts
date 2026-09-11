@@ -4,7 +4,7 @@ import { ACCENT_KEY, THEME_KEY, TONE_KEY } from '@/consts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
 export const ACCENTS = ['orange', 'gold', 'magenta', 'red'] as const;
-export const TONES = ['deep', 'soft'] as const;
+export const TONES = ['soft', 'deep'] as const;
 
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 export type Accent = (typeof ACCENTS)[number];
@@ -14,7 +14,7 @@ export type Tone = (typeof TONES)[number];
 const THEME_COLORS = {
   light: '#ebe4c1',
   deep: '#151414',
-  soft: '#1d1b1a',
+  soft: '#1e1d1d',
 } as const;
 
 // Storage is absent during server rendering; every access goes through this optional handle.
@@ -56,7 +56,7 @@ function preferenceAtom<T extends string>(key: string, valid: readonly T[], fall
 
 export const themePreference = preferenceAtom<ThemePreference>(THEME_KEY, THEME_PREFERENCES, 'system');
 export const accent = preferenceAtom<Accent>(ACCENT_KEY, ACCENTS, 'orange');
-export const tone = preferenceAtom<Tone>(TONE_KEY, TONES, 'deep');
+export const tone = preferenceAtom<Tone>(TONE_KEY, TONES, 'soft');
 
 export function resolveTheme(preference: ThemePreference): 'light' | 'dark' {
   if (preference !== 'system') return preference;

@@ -40,9 +40,9 @@ import { ACCENT_KEY, THEME_KEY, TONE_KEY } from '@/consts';
 
     // Accent and dark tone ride the same pre-paint path; see stores/appearance.ts for the values.
     const accents = ["orange", "gold", "magenta", "red"];
-    const tones = ["deep", "soft"];
+    const tones = ["soft", "deep"];
     const accent = accents.includes(localStorage[accentKey]) ? localStorage[accentKey] : "orange";
-    const tone = tones.includes(localStorage[toneKey]) ? localStorage[toneKey] : "deep";
+    const tone = tones.includes(localStorage[toneKey]) ? localStorage[toneKey] : "soft";
 
     document.documentElement.dataset.accent = accent;
     document.documentElement.dataset.tone = tone;
@@ -50,7 +50,7 @@ import { ACCENT_KEY, THEME_KEY, TONE_KEY } from '@/consts';
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
     if (themeColorMeta) {
-      const darkColor = tone === "soft" ? "#1d1b1a" : "#151414";
+      const darkColor = tone === "deep" ? "#151414" : "#1e1d1d";
 
       themeColorMeta.setAttribute("content", isDark ? darkColor : "#ebe4c1");
     }
