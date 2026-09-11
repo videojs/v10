@@ -5,7 +5,6 @@ import GitHub from '@/assets/logos/github.svg?react';
 import LogoMonoVersion from '@/assets/logos/videojs-mono.svg?react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL, MUX_URL } from '@/consts';
 import GetStartedLink from './NavBar/GetStartedLink';
-import { ThemeToggle } from './ThemeToggle';
 
 type NavLink = {
   href: string;
@@ -103,9 +102,6 @@ const { class: className } = Astro.props;
         >
           <GitHub className="size-6" />
         </a>
-        <div class="ml-auto">
-          <ThemeToggle client:idle />
-        </div>
       </div>
     </nav>
 
