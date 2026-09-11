@@ -167,11 +167,6 @@ export default function MuxUploaderPanel() {
 
   return (
     <div className="corner-squircle border-line-strong bg-surface relative isolate w-full overflow-hidden rounded-xl border border-dashed">
-      {/* Soft brand glow so the drop zone reads as a destination, not another form field. */}
-      <div
-        aria-hidden="true"
-        className="from-orange/12 to-magenta/12 dark:from-orange/10 dark:to-magenta/10 pointer-events-none absolute inset-0 -z-10 bg-linear-to-br via-transparent"
-      />
       <MuxUploader
         // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
@@ -192,7 +187,7 @@ export default function MuxUploaderPanel() {
         overlayText="Let it go"
       >
         <span slot="heading" className="flex flex-col items-center gap-4">
-          <span className="corner-squircle border-line bg-surface-raised text-orange dark:bg-faded-black flex size-14 items-center justify-center rounded-2xl border shadow-xs">
+          <span className="corner-squircle border-orange/25 bg-orange/10 text-orange flex size-14 items-center justify-center rounded-2xl border">
             <CloudUpload className="size-6" aria-hidden="true" />
           </span>
           <span className="flex flex-col gap-1">
