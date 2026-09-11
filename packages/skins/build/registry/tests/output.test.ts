@@ -10,6 +10,10 @@ const registryDirs = {
   default: resolve(packageDir, 'dist/registry/source/r/react'),
   minimal: resolve(packageDir, 'dist/registry/source/r/react/minimal'),
 } as const;
+const cssRegistryDirs = {
+  default: resolve(packageDir, 'dist/registry/source/r/react/css'),
+  minimal: resolve(packageDir, 'dist/registry/source/r/react/css/minimal'),
+} as const;
 
 describe('React registry output', () => {
   const registries = {
@@ -134,6 +138,45 @@ describe('React registry output', () => {
       expect(items.get('status-announcer')?.categories).toEqual(['media', 'behaviors']);
       expect(items.get('volume-popover')?.categories).toEqual(['media', 'menus']);
       expect(items.get('container')?.categories).toEqual(['media', 'layout']);
+    }
+  });
+
+  it('links registry metadata to published framework routes', () => {
+    for (const items of Object.values(registries)) {
+      for (const item of items.values()) {
+        expect(item.docs ?? '').not.toMatch(/videojs\.org\/docs\/(?:concepts|how-to|reference)\//);
+      }
+
+      expect(items.get('container')?.docs).toContain('/docs/framework/react/reference/player-container/');
+      expect(items.get('button')?.docs).toContain('/docs/framework/react/how-to/customize-skins/');
+      expect(items.get('_style-theme')?.docs).toContain(`data-theme="${items.get('_style-theme')?.meta?.theme}"`);
+      expect(items.get('video')?.docs).toContain('/docs/framework/react/concepts/media-sources/');
+    }
+  });
+
+  it('imports the preset theme before each React CSS skin stylesheet', () => {
+    for (const theme of ['default', 'minimal'] as const) {
+      const items = readRegistryItems(cssRegistryDirs[theme]);
+
+      for (const preset of ['audio', 'live-audio', 'live-video', 'video'] as const) {
+        const source = readItemRoot(cssRegistryDirs[theme], items.get(preset)!);
+        const media = preset.endsWith('audio') ? 'audio' : 'video';
+        const base = `../styles/${media}/${theme === 'minimal' ? 'minimal' : 'base'}.css`;
+
+        expect(source.indexOf(base), `${theme}/${preset}`).toBeGreaterThanOrEqual(0);
+        expect(source.indexOf(base), `${theme}/${preset}`).toBeLessThan(source.indexOf('./skin.css'));
+      }
+    }
+  });
+
+  it('keeps Minimal tokens before media preset overrides', () => {
+    for (const media of ['audio', 'video'] as const) {
+      const source = readFileSync(
+        resolve(cssRegistryDirs.minimal, `support/files/_style-${media}-minimal/styles/${media}/minimal.css`),
+        'utf8'
+      );
+
+      expect(source).toBe(`@import "../themes/minimal.css";\n@import "./base.css";\n`);
     }
   });
 

@@ -5,11 +5,13 @@ import { vjscPlugin } from 'vjsc/vite';
 
 import { iconElementSourcePlugin } from '../../icons/vjsc/vite.ts';
 import { skinMetaDefaults } from './config.ts';
+import { skinClassNameMergeImport } from './imports.ts';
 import { resolveSkinComponents, resolveSkinStyles } from './transform.ts';
 
 const packageDir = resolve(import.meta.dirname, '..');
 const reactSourceDir = resolve(packageDir, '../react/src');
 const htmlSourceDir = resolve(packageDir, '../html/src');
+const utilsStyleSource = resolve(packageDir, '../utils/src/style/index.ts');
 
 export interface SkinsSourceOptions {
   /** Register the Tailwind candidate manifest so a consumer's Tailwind entry can import `vjsc:candidates`. */
@@ -27,7 +29,7 @@ export type SkinsSourcePlugin = PluginOption;
 export interface SkinsSourceConfig {
   readonly plugins: SkinsSourcePlugin[];
   readonly resolve: {
-    readonly alias: { readonly find: RegExp; readonly replacement: string }[];
+    readonly alias: { readonly find: string | RegExp; readonly replacement: string }[];
     readonly dedupe: string[];
   };
   readonly optimizeDeps: {
@@ -41,16 +43,19 @@ export interface SkinsSourceConfig {
  * framework plugins such as `react()` or `tailwindcss()`, `define` values, and dev-only helpers.
  */
 export function createSkinsSourceConfig(options: SkinsSourceOptions = {}): SkinsSourceConfig {
-  const alias =
-    options.frameworks === 'source'
-      ? [
-          { find: /^@\//, replacement: `${reactSourceDir}/` },
-          { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
-          { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: resolve(htmlSourceDir, 'icons/element') },
-          { find: /^@videojs\/html\/icons(?=\/|$)/, replacement: resolve(htmlSourceDir, 'icons') },
-          { find: /^@videojs\/html(?=\/|$)/, replacement: resolve(htmlSourceDir, 'define') },
-        ]
-      : [];
+  const alias: { find: string | RegExp; replacement: string }[] = [
+    { find: skinClassNameMergeImport, replacement: utilsStyleSource },
+  ];
+
+  if (options.frameworks === 'source') {
+    alias.push(
+      { find: /^@\//, replacement: `${reactSourceDir}/` },
+      { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
+      { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: resolve(htmlSourceDir, 'icons/element') },
+      { find: /^@videojs\/html\/icons(?=\/|$)/, replacement: resolve(htmlSourceDir, 'icons') },
+      { find: /^@videojs\/html(?=\/|$)/, replacement: resolve(htmlSourceDir, 'define') }
+    );
+  }
 
   // SAFETY: the compiler and icon plugins are Vite plugins typed against the compiler's own Vite copy. Comparing that
   // shape with this package's plugin type exceeds the checker's depth limit, while the runtime objects are the same.

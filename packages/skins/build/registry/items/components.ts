@@ -3,9 +3,21 @@ import type { RegistryModuleItem } from 'vjsc/shadcn';
 
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { skinModuleSourcePath } from '../../config.ts';
+import { registryDocsUrl } from '../docs.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
 import { reactHelperDependency } from './support.ts';
+
+const customizationOnlyComponents = new Set([
+  'audio-track-menu',
+  'button',
+  'captions-menu',
+  'captions-submenu',
+  'playback-rate-submenu',
+  'quality-menu',
+  'radio-item',
+  'settings-menu',
+]);
 
 export function componentItem(
   module: GraphModule<SkinModuleMeta>,
@@ -27,7 +39,7 @@ export function componentItem(
     title: meta.title,
     description: meta.description,
     categories: ['media', category],
-    docs: componentDocs(module, meta),
+    docs: componentDocs(module, meta, target),
     registryDependencies: reactHelperDependency(target),
     meta: registryMeta,
     group: 'ui',
@@ -55,9 +67,16 @@ function componentCategory(filename: string): string {
 
 function componentDocs(
   module: GraphModule<SkinModuleMeta>,
-  meta: Extract<SkinModuleMeta, { type: 'component' }>
+  meta: Extract<SkinModuleMeta, { type: 'component' }>,
+  target: RegistryTarget
 ): string {
   const component = exportedComponentName(module);
 
-  return `[\`${component}\` reference](https://videojs.org/docs/reference/${meta.name}/).`;
+  if (customizationOnlyComponents.has(meta.name)) {
+    return `See [Customize skins](${registryDocsUrl(target, 'how-to/customize-skins')}).`;
+  }
+
+  const slug = meta.name === 'container' ? 'player-container' : meta.name;
+
+  return `[\`${component}\` reference](${registryDocsUrl(target, `reference/${slug}`)}).`;
 }

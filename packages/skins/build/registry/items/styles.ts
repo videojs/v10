@@ -1,5 +1,6 @@
 import type { RegistryStylesOptions } from 'vjsc/shadcn';
 
+import { registryDocsUrl } from '../docs.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
 
@@ -13,9 +14,8 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
   } satisfies VideojsRegistryMeta;
 
   const shared = {
-    docs: themeDocs(target),
     meta,
-  } satisfies Pick<NonNullable<RegistryStylesOptions['theme']>, 'docs' | 'meta'>;
+  } satisfies Pick<NonNullable<RegistryStylesOptions['theme']>, 'meta'>;
 
   const themes = [
     {
@@ -74,6 +74,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
   return {
     theme: {
       ...shared,
+      docs: themeContextDocs(target),
       name: '_style-theme',
       target: 'styles/base.css',
       files: {
@@ -90,9 +91,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
   };
 }
 
-/** Keep transitive CLI output compact; the customization guide owns the complete token and utility catalog. */
-function themeDocs(target: RegistryTarget): string {
-  const styling = target.styling === 'tailwind' ? 'Tailwind theme keys and utilities' : 'CSS variables';
-
-  return `Installed automatically with Video.js skins and UI components. See [Customize skins](https://videojs.org/docs/how-to/customize-skins/) for the available ${styling}.`;
+/** Keep this on the shared theme item so transitive CLI output includes the contract only once. */
+function themeContextDocs(target: RegistryTarget): string {
+  return `Installed automatically with Video.js skins and UI components. Use UI components inside an installed skin, or set \`data-theme="${target.theme}"\` and \`data-preset\` on a custom \`Container\`. See [Customize skins](${registryDocsUrl(target, 'how-to/customize-skins')}) for theme customization.`;
 }

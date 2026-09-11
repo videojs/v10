@@ -7,6 +7,7 @@ import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/met
 import { skinCatalogEntry } from '../../catalog.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
 import { isSkinPreset, skinBaseStylesheet, skinDirectory, skinPreset, skinStyleItemName } from '../../skin.ts';
+import { registryDocsUrl } from '../docs.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
@@ -169,7 +170,7 @@ function skinDocs(
     return `Installs editable ${meta.title} source under \`${registryPaths.install}/${directory}\` together with the shared theme stylesheet. Requires \`${packageRequirements.html}\`; import the matching Player and media registrations before using the installed light-DOM template.`;
   }
 
-  return `Requires \`${packageRequirements.react}\`, which is installed with this item. The native media element below handles browser-supported sources; [install a playback adapter](https://videojs.org/docs/concepts/media-sources/) for HLS, DASH, embeds, or another engine.
+  return `Requires \`${packageRequirements.react}\`, which is installed with this item. The native media element below handles browser-supported sources; [install a playback adapter](${registryDocsUrl(target, 'concepts/media-sources')}) for HLS, DASH, embeds, or another engine.
 
 \`\`\`tsx
 import { ${media}, ${player} } from '@videojs/react/${preset}';

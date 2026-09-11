@@ -2,21 +2,12 @@ import { resolve } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { normalizePath } from 'vite';
 import { defineConfig } from 'vite-plus';
-import { vjscPlugin } from 'vjsc/vite';
 
-import { iconElementSourcePlugin } from '../../../icons/vjsc/vite.ts';
-import { skinMetaDefaults } from '../config.ts';
-import { skinClassNameMergeImport } from '../imports.ts';
-import { resolveSkinComponents, resolveSkinStyles } from '../transform.ts';
+import { createSkinsSourceConfig } from '../vite.ts';
 
 const packageDir = resolve(import.meta.dirname, '../..');
-const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
-const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
-const htmlIconDir = normalizePath(resolve(packageDir, '../html/src/icons'));
-const htmlIconElementDir = normalizePath(resolve(packageDir, '../html/src/icons/element'));
-const utilsStyleSource = normalizePath(resolve(packageDir, '../utils/src/style/index.ts'));
+const skins = createSkinsSourceConfig({ tailwind: true, frameworks: 'source' });
 
 /**
  * Dev server the Vite workflow tests boot. It carries the compiler pipeline the skins playground ran before the
@@ -27,29 +18,10 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
   },
-  plugins: [
-    iconElementSourcePlugin(),
-    vjscPlugin({
-      transform: {
-        components: resolveSkinComponents,
-        styles: resolveSkinStyles,
-      },
-      candidates: true,
-      meta: { defaults: skinMetaDefaults },
-    }),
-    tailwindcss(),
-    react({ jsxImportSource: 'react' }),
-  ],
+  plugins: [...skins.plugins, tailwindcss(), react({ jsxImportSource: 'react' })],
   resolve: {
-    alias: [
-      { find: /^@\//, replacement: `${reactSourceDir}/` },
-      { find: skinClassNameMergeImport, replacement: utilsStyleSource },
-      { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
-      { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
-      { find: /^@videojs\/html\/icons(?=\/|$)/, replacement: htmlIconDir },
-      { find: /^@videojs\/html(?=\/|$)/, replacement: htmlDefineDir },
-    ],
+    ...skins.resolve,
     conditions: ['development', 'import', 'module', 'browser', 'default'],
-    dedupe: ['react', 'react-dom'],
   },
+  optimizeDeps: skins.optimizeDeps,
 });
