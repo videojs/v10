@@ -33,31 +33,38 @@ export interface RegistrySkin {
   readonly directory: string;
 }
 
-/**
- * The skins the registry publishes, in the order of the skin reference pages. Background video stays a package skin.
- * Mirrors `skinCatalog` in `packages/skins/build/catalog.ts`.
- */
-export const REGISTRY_SKINS: readonly RegistrySkin[] = (
+export const REGISTRY_PRESETS = (
   [
     ['video', 'Video'],
     ['audio', 'Audio'],
     ['live-video', 'Live Video'],
     ['live-audio', 'Live Audio'],
   ] as const
-).flatMap(([preset, label]) => [
+).map(([preset, label]) => ({
+  item: preset,
+  label,
+  preset,
+  directory: `${REGISTRY_INSTALL_DIRECTORY}/${preset}`,
+}));
+
+/**
+ * The skins the registry publishes, in the order of the skin reference pages. Background video stays a package skin.
+ * Mirrors `skinCatalog` in `packages/skins/build/catalog.ts`.
+ */
+export const REGISTRY_SKINS: readonly RegistrySkin[] = REGISTRY_PRESETS.flatMap(({ preset, label, directory }) => [
   {
     item: preset,
     label: `Default ${label}`,
     preset,
     theme: 'default',
-    directory: `${REGISTRY_INSTALL_DIRECTORY}/${preset}`,
+    directory,
   },
   {
     item: preset,
     label: `Minimal ${label}`,
     preset,
     theme: 'minimal',
-    directory: `${REGISTRY_INSTALL_DIRECTORY}/${preset}`,
+    directory,
   },
 ]);
 

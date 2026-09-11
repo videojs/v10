@@ -191,6 +191,8 @@ Start with the file that owns the change you want:
 <FrameworkCase frameworks={["react"]}>
 The files for the control bar, gestures, keyboard shortcuts, settings menu, and status indicators are composed from `skin.tsx`. The UI components they use are installed as source too, so you can open and change each button or slider.
 
+The installed skin sets `data-theme` and `data-preset` on its `Container`. Keep those attributes when you replace `skin.tsx` or compose the installed UI components into a custom player. They select the theme and media-specific rules from the catalog you installed.
+
 - **Tailwind CSS.** Components use utility classes. The install adds the theme keys, utilities, and variants to your main CSS file. The skins require Tailwind CSS 4.3 or later and its default configuration. If your project prefixes Tailwind classes, update the installed components.
 - **Vanilla CSS.** Components use class names that start with `media-`, and the skin's `skin.css` stylesheet styles them.
 </FrameworkCase>

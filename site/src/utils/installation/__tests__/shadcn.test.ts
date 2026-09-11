@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   defaultRegistryStyling,
+  REGISTRY_PRESETS,
   REGISTRY_SKINS,
   registryInstallCommands,
   registryNamespaceUrl,
@@ -110,6 +111,7 @@ describe('registrySkinSelection', () => {
 
 describe('REGISTRY_SKINS', () => {
   it('names every published skin', () => {
+    expect(REGISTRY_PRESETS.map((skin) => skin.item)).toEqual(['video', 'audio', 'live-video', 'live-audio']);
     expect(REGISTRY_SKINS.map((skin) => skin.item)).toEqual([
       'video',
       'video',
