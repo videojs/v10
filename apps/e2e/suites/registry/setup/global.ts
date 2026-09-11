@@ -257,9 +257,7 @@ async function exerciseRegistryCli(
 
   await Promise.all(
     skins.map((skin) => {
-      const skinDir = skin === 'video' ? 'skins/video/default' : 'skins/video/minimal';
-
-      return readFile(resolve(projectDir, `src/components/videojs/${skinDir}/skin.${extension}`), 'utf8');
+      return readFile(resolve(projectDir, `src/components/videojs/${skin}/skin.${extension}`), 'utf8');
     })
   );
 
@@ -460,9 +458,9 @@ async function registryPackageRoots(): Promise<Set<string>> {
 }
 
 function registryPath(project: RegistryConsumerProject): string {
-  if (project.framework === 'html') return 'html';
+  const target = project.framework === 'html' ? 'html' : project.styling === 'css' ? 'react/css' : 'react';
 
-  return project.styling === 'css' ? 'react/css' : 'react';
+  return project.theme === 'minimal' ? `${target}/minimal` : target;
 }
 
 /** Package directories under `packages/`, descending one level into bucket directories such as `adapters/`. */
