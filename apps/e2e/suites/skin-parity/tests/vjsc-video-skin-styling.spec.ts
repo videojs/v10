@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { testRtlLayout } from './rtl';
 import {
   captureRendering,
   closeMenus,
@@ -38,6 +39,8 @@ const LAYOUT_SELECTORS = [CONTROLS_SELECTOR, POSTER_SELECTOR] as const;
  * the match to the icon.
  */
 const THUMBNAIL_SPINNER_SELECTOR = ':scope > :last-child > :first-child > :is(svg, media-icon)';
+
+testRtlLayout(CASES);
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps poster sizing and fit in sync`, async ({ page }) => {
@@ -392,6 +395,24 @@ for (const variant of CASES) {
       }
     });
   }
+
+  test(`${variant.framework} ${variant.skin} animates the settings gear across styles`, async ({ page }) => {
+    const { panels } = await openVariants(page, variant, 800);
+
+    for (const { root } of panels) {
+      const icon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
+
+      await icon.evaluate((element) => {
+        element.addEventListener('transitionrun', (event) => {
+          if ((event as TransitionEvent).propertyName === 'rotate') element.setAttribute('data-rotation-started', '');
+        });
+      });
+      await openSettingsMenu(root);
+
+      await expect(icon).toHaveAttribute('data-rotation-started', '');
+      await expect(icon).toHaveCSS('rotate', '90deg');
+    }
+  });
 
   test(`${variant.framework} ${variant.skin} keeps settings menu styling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-settings-menu.png`;
@@ -750,7 +771,7 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
     const { panels } = await openVariants(page, variant, 800);
 
     for (const panel of panels) {
-      const { root, style } = panel;
+      const { root } = panel;
       const contract = await sharedMotionContract(root);
 
       expect(contract).toEqual({
@@ -773,11 +794,9 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
           { display: 'block', duration: '0.15s', opacity: '0', properties: ['opacity', 'scale'], scale: '0' },
         ],
         poster: { duration: '0.25s', properties: ['opacity'] },
-        // Known gap: the settings trigger icon carries both the icon-swap and the rotation transitions, and the CSS
-        // output lets the swap rule win while the Tailwind utility order keeps the rotation.
         settingsIcon: {
           duration: '0.15s',
-          properties: style === 'css' ? ['opacity', 'scale'] : ['transform', 'translate', 'scale', 'rotate'],
+          properties: ['transform', 'translate', 'scale', 'rotate'],
         },
         slider: {
           buffer: { duration: '0s', properties: ['all'] },
@@ -908,7 +927,7 @@ async function openPackagedVariants(page: Page, variant: SkinCase, width: number
 async function preparePanel({ root }: SkinPanel, width: number) {
   await expect(root).toBeVisible();
   await expect(root).toHaveAttribute('data-controls-visible', '');
-  await expect(root.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(root.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
 
   const poster = root.locator('[data-loaded]').first();
 

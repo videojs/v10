@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { testRtlLayout } from './rtl';
 import {
   buttonInteractionContract,
   captureRendering,
@@ -26,6 +27,8 @@ import {
 
 const CASES = skinCases('audio');
 const WIDTHS = [384, 672] as const;
+
+testRtlLayout(CASES);
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {

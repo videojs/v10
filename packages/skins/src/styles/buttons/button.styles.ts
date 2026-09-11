@@ -1,5 +1,7 @@
 import { styles } from 'vjsc/styles';
 
+const icon = 'col-start-1 row-start-1 size-media-icon drop-shadow-media-icon [text-shadow:inherit]';
+
 export default styles({
   file: 'buttons.css',
   prefix: 'media-button',
@@ -19,11 +21,11 @@ export default styles({
         minimal: 'supports-[corner-shape:squircle]:rounded-2xl',
       },
     },
+    iconBase: {
+      utilities: icon,
+    },
     icon: {
-      utilities: [
-        'col-start-1 row-start-1 size-media-icon drop-shadow-media-icon [text-shadow:inherit]',
-        'transition-[opacity,scale] duration-media-base ease-out',
-      ],
+      utilities: [icon, 'transition-[opacity,scale] duration-media-base ease-out'],
     },
   },
 });
