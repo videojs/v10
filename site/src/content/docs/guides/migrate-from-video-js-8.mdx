@@ -564,7 +564,7 @@ player.store.state.toggleFullscreen();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, <DocsLink slug="api/use-media">`useMedia`</DocsLink> returns the Video.js media object.
+Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, `useMedia` returns the Video.js media object.
 </FrameworkCase>
 
 Swapping sources is the change most likely to surprise you. There's no `player.src()`; you set `src` on the media element, or replace the media element entirely, and the UI follows. Changing formats is changing tags.

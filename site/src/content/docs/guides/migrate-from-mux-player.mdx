@@ -656,7 +656,7 @@ Video.js does not replace the preset after reading the HLS playlist. Render the 
 
 The live preset does not include the <DocsLink slug="api/feature-stream-type">stream type feature</DocsLink>. Add `streamTypeFeature` to a custom player when you need `streamType` in player state.
 
-The HLS media object also reads `'live'` or `'on-demand'` from the playlist. In React, get that object with <DocsLink slug="api/use-media">`useMedia`</DocsLink>. In HTML, read `streamType` from `<mux-video>`.
+The HLS media object also reads `'live'` or `'on-demand'` from the playlist. In React, get that object with `useMedia`. In HTML, read `streamType` from `<mux-video>`.
 
 #### A live stream has a finite duration
 
@@ -760,8 +760,8 @@ The SPF flavor doesn't license DRM ([#1776](https://github.com/videojs/v10/issue
 | Mux Player | Video.js v10 |
 |---|---|
 | `media.nativeEl` | `ref.current` from a `ref` on the media component |
-| the Video.js media object | <DocsLink slug="api/use-media">`useMedia()`</DocsLink> inside the player |
-| the hls.js instance | the media object's `.engine`, reached through <DocsLink slug="api/use-media">`useMedia`</DocsLink>, on the hls.js-backed flavor |
+| the Video.js media object | `useMedia()` inside the player |
+| the hls.js instance | the media object's `.engine`, reached through `useMedia`, on the hls.js-backed flavor |
 | `prefer-playback` | `source.preferPlayback`, or pick <DocsLink slug="components/native-hls-video">native HLS</DocsLink> outright |
 </FrameworkCase>
 

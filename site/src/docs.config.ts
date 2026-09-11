@@ -245,7 +245,7 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'API',
     llmsDescription:
-      'API reference for the player factory, store, features, media, menus, overlays, gestures, translation tools, and utilities.',
+      'API reference for the player factory, store, features, menus, overlays, gestures, translation tools, and utilities.',
     contents: [
       {
         sidebarLabel: 'Player',
@@ -301,18 +301,6 @@ export const sidebar: Sidebar = [
           { slug: 'api/feature-text-tracks' },
           { slug: 'api/feature-time' },
           { slug: 'api/feature-volume' },
-        ],
-      },
-      {
-        sidebarLabel: 'Media',
-        llmsDescription: 'API reference for reaching the media element and attaching media or extensions to it.',
-        contents: [
-          { slug: 'api/use-media', frameworks: ['react'] },
-          { slug: 'api/use-media-instance', frameworks: ['react'] },
-          { slug: 'api/use-media-attach', frameworks: ['react'] },
-          { slug: 'api/use-attach-media', frameworks: ['react'] },
-          { slug: 'api/use-media-extension', frameworks: ['react'] },
-          { slug: 'api/media-attach-mixin', frameworks: ['html'] },
         ],
       },
       {

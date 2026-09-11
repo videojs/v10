@@ -446,7 +446,7 @@ export function AppVideoPlayer() {
 
 The same hook selects actions: `usePlayer((state) => state.togglePaused)` returns a function you can call from your own UI.
 
-When you need the element itself, put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so `ref.current.play()` works the way Plyr's underlying element did. For the Video.js media object, call <DocsLink slug="api/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+When you need the element itself, put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so `ref.current.play()` works the way Plyr's underlying element did. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
