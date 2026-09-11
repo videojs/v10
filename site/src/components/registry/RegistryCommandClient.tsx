@@ -5,6 +5,7 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { registryStyling } from '@/stores/registry';
 import {
   type RegistryFramework,
+  type RegistryTheme,
   registryInstallCommands,
   resolveRegistryStyling,
   SHADCN_RUNNERS,
@@ -17,6 +18,8 @@ interface Props {
   items: readonly string[];
   /** Show one package manager instead of tabs, for pages that already asked. */
   runner?: ShadcnRunner | undefined;
+  /** Theme catalog to register. The default theme uses the shortest registry URL. */
+  theme?: RegistryTheme | undefined;
 }
 
 const RUNNERS = Object.keys(SHADCN_RUNNERS) as ShadcnRunner[];
@@ -25,7 +28,7 @@ const RUNNERS = Object.keys(SHADCN_RUNNERS) as ShadcnRunner[];
  * The Shadcn commands one install needs: `registry add` points the `@videojs` namespace at the styling catalog the
  * page's select box chose, then `add` installs the items.
  */
-export default function RegistryCommandClient({ framework, items, runner }: Props) {
+export default function RegistryCommandClient({ framework, items, runner, theme = 'default' }: Props) {
   const $styling = useStore(registryStyling);
   const styling = resolveRegistryStyling(framework, $styling);
   const runners = runner ? [runner] : RUNNERS;
@@ -41,7 +44,7 @@ export default function RegistryCommandClient({ framework, items, runner }: Prop
       </TabsList>
       {runners.map((candidate, index) => (
         <TabsPanel key={candidate} value={candidate} initial={index === 0}>
-          <ClientCode code={registryInstallCommands(candidate, framework, styling, items)} lang="bash" />
+          <ClientCode code={registryInstallCommands(candidate, framework, styling, items, theme)} lang="bash" />
         </TabsPanel>
       ))}
     </TabsRoot>

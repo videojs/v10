@@ -2,6 +2,7 @@ import { getInstallationPreset, type Skin, type UseCase } from './types';
 
 export type RegistryFramework = 'html' | 'react';
 export type RegistryStyling = 'css' | 'tailwind';
+export type RegistryTheme = 'default' | 'minimal';
 export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 /** Where `packages/skins` publishes its hosted registry; see its `netlify.toml`. */
@@ -23,11 +24,11 @@ export const REGISTRY_STYLING_LABELS: Record<RegistryStyling, string> = {
 };
 
 export interface RegistrySkin {
-  /** Registry item name, such as `video` or `video-minimal`. */
+  /** Registry item name, such as `video` or `live-audio`. */
   readonly item: string;
   readonly label: string;
   readonly preset: 'audio' | 'live-audio' | 'live-video' | 'video';
-  readonly theme: 'default' | 'minimal';
+  readonly theme: RegistryTheme;
   /** Where the skin installs, relative to the components alias. */
   readonly directory: string;
 }
@@ -49,14 +50,14 @@ export const REGISTRY_SKINS: readonly RegistrySkin[] = (
     label: `Default ${label}`,
     preset,
     theme: 'default',
-    directory: `${REGISTRY_INSTALL_DIRECTORY}/skins/${preset}`,
+    directory: `${REGISTRY_INSTALL_DIRECTORY}/${preset}`,
   },
   {
-    item: `${preset}-minimal`,
+    item: preset,
     label: `Minimal ${label}`,
     preset,
     theme: 'minimal',
-    directory: `${REGISTRY_INSTALL_DIRECTORY}/skins/${preset}/minimal`,
+    directory: `${REGISTRY_INSTALL_DIRECTORY}/${preset}`,
   },
 ]);
 
@@ -75,8 +76,13 @@ export function resolveRegistryStyling(framework: RegistryFramework, styling: Re
 }
 
 /** The `{name}` template Shadcn stores in `components.json` for one catalog. */
-export function registryNamespaceUrl(framework: RegistryFramework, styling: RegistryStyling): string {
-  const catalog = framework === 'react' && styling === 'css' ? 'react/css' : framework;
+export function registryNamespaceUrl(
+  framework: RegistryFramework,
+  styling: RegistryStyling,
+  theme: RegistryTheme = 'default'
+): string {
+  const target = framework === 'react' && styling === 'css' ? 'react/css' : framework;
+  const catalog = theme === 'minimal' ? `${target}/minimal` : target;
 
   return `${REGISTRY_ORIGIN}/r/${catalog}/{name}.json`;
 }
@@ -89,9 +95,10 @@ export function shadcnCommand(runner: ShadcnRunner, action: string): string {
 export function shadcnRegistryAddCommand(
   runner: ShadcnRunner,
   framework: RegistryFramework,
-  styling: RegistryStyling
+  styling: RegistryStyling,
+  theme: RegistryTheme = 'default'
 ): string {
-  return shadcnCommand(runner, `registry add ${REGISTRY_NAMESPACE}=${registryNamespaceUrl(framework, styling)}`);
+  return shadcnCommand(runner, `registry add ${REGISTRY_NAMESPACE}=${registryNamespaceUrl(framework, styling, theme)}`);
 }
 
 export function shadcnAddCommand(runner: ShadcnRunner, items: readonly string[]): string {
@@ -103,20 +110,28 @@ export function registryInstallCommands(
   runner: ShadcnRunner,
   framework: RegistryFramework,
   styling: RegistryStyling,
-  items: readonly string[]
+  items: readonly string[],
+  theme: RegistryTheme = 'default'
 ): string {
-  const commands = [shadcnRegistryAddCommand(runner, framework, styling)];
+  const commands = [shadcnRegistryAddCommand(runner, framework, styling, theme)];
 
   if (items.length > 0) commands.push(shadcnAddCommand(runner, items));
 
   return commands.join('\n');
 }
 
-/** The catalog name for an installation selection, or `null` when that selection cannot be ejected. */
-export function registrySkinItem({ useCase, skin }: { useCase: UseCase; skin: Skin }): string | null {
+/** The catalog and item for an installation selection, or `null` when that selection cannot be ejected. */
+export function registrySkinSelection({
+  useCase,
+  skin,
+}: {
+  useCase: UseCase;
+  skin: Skin;
+}): Pick<RegistrySkin, 'item' | 'theme'> | null {
   if (useCase === 'background-video' || skin === 'none') return null;
 
-  const preset = getInstallationPreset(useCase).flag;
-
-  return skin.startsWith('minimal-') ? `${preset}-minimal` : preset;
+  return {
+    item: getInstallationPreset(useCase).flag,
+    theme: skin.startsWith('minimal-') ? 'minimal' : 'default',
+  };
 }

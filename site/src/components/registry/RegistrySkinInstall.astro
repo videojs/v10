@@ -5,18 +5,20 @@ import P from '@/components/typography/P.astro';
 import { REGISTRY_NAMESPACE, REGISTRY_SKINS } from '@/utils/installation/shadcn';
 
 interface Props {
-  /** Registry item name, such as `video` or `video-minimal`. */
+  /** Registry item name, such as `video` or `live-audio`. */
   item: string;
+  /** Registry theme selected by this reference page. */
+  theme?: 'default' | 'minimal';
 }
 
-const { item } = Astro.props;
-const skin = REGISTRY_SKINS.find((candidate) => candidate.item === item);
-if (!skin) throw new Error(`Unknown registry skin: ${item}.`);
+const { item, theme = 'default' } = Astro.props;
+const skin = REGISTRY_SKINS.find((candidate) => candidate.item === item && candidate.theme === theme);
+if (!skin) throw new Error(`Unknown registry skin: ${theme}/${item}.`);
 ---
 
 <P>
-  The <code>{REGISTRY_NAMESPACE}/{skin.item}</code> skin installs under <code>{skin.directory}</code>. The player and
-  media remain package imports. Follow{' '}
+  Select the <strong>{skin.label}</strong> catalog, then add <code>{REGISTRY_NAMESPACE}/{skin.item}</code>. The skin
+  installs under <code>{skin.directory}</code>. The player and media remain package imports. Follow{' '}
   <DocsLink slug="how-to/customize-skins" anchor="set-up-the-shadcn-cli">Customize skins</DocsLink> to set up
   the CLI, install the skin, and use the copied files.
 </P>
