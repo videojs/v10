@@ -27,8 +27,8 @@ export function TimeSlider({
       <$.TimeSlider.Chapters className={styles.chapters}>
         <Template name="chapter" className={styles.chapter}>
           <$.TimeSlider.Track $render={SliderTrack} className={styles.chapterTrack}>
-            <$.TimeSlider.Buffer $render={SliderBuffer} />
-            <$.TimeSlider.Fill $render={SliderFill} />
+            <$.TimeSlider.Buffer $render={SliderBuffer} className={styles.chapterLayer} />
+            <$.TimeSlider.Fill $render={SliderFill} className={styles.chapterLayer} />
           </$.TimeSlider.Track>
         </Template>
       </$.TimeSlider.Chapters>

@@ -409,17 +409,23 @@ async function audioSeekContract(root: Locator) {
 
   await expect
     .poll(() =>
-      slider.evaluate((element) =>
-        [...element.querySelectorAll('*')]
+      slider.evaluate((element) => {
+        const fills = [...element.querySelectorAll('*')]
           .map((target) => getComputedStyle(target))
           .filter((style) =>
             style.transitionProperty
               .split(',')
               .map((value) => value.trim())
-              .includes('clip-path')
+              .includes('inset')
+          );
+
+        return (
+          fills.length > 0 &&
+          fills.every((style) =>
+            style.transitionDuration.split(',').some((duration) => Number.parseFloat(duration) > 0)
           )
-          .every((style) => style.transitionDuration.split(',').some((duration) => Number.parseFloat(duration) > 0))
-      )
+        );
+      })
     )
     .toBe(true);
 
@@ -446,7 +452,7 @@ async function audioSeekContract(root: Locator) {
         candidate.transitionProperty
           .split(',')
           .map((value) => value.trim())
-          .includes('clip-path')
+          .includes('inset')
       );
     const rect = element.getBoundingClientRect();
     const lag = Math.abs(rect.x + rect.width / 2 - expectedX);

@@ -331,28 +331,24 @@
   transition: inset var(--media-duration-fast) ease-in-out;
 }
 
-/* Horizontal slider layer clipped to a progress variable, for example `clip-media-x-[--media-slider-fill]`. */
+/* Horizontal slider layer sized to progress and chapter bounds. */
 @utility clip-media-x-* {
-  --media-slider-layer-start: calc(
-    var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0)
-  );
-  --media-slider-layer-end: max(
+  left: calc(var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0));
+  right: max(
     calc(100% - var(--value([*]))),
     calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
   );
-  clip-path: inset(-1px calc(var(--media-slider-layer-end) - 1px) -1px calc(var(--media-slider-layer-start) - 1px));
+  clip-path: inset(-1px 0);
 }
 
-/* Vertical slider layer clipped to a progress variable. */
+/* Vertical slider layer sized to progress and chapter bounds. */
 @utility clip-media-y-* {
-  --media-slider-layer-start: calc(
-    var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0)
-  );
-  --media-slider-layer-end: max(
+  bottom: calc(var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0));
+  top: max(
     calc(100% - var(--value([*]))),
     calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
   );
-  clip-path: inset(calc(var(--media-slider-layer-end) - 1px) -1px calc(var(--media-slider-layer-start) - 1px) -1px);
+  clip-path: inset(0 -1px);
 }
 
 /* Horizontal chapter segment clipped to its start and end. */

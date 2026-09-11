@@ -14,7 +14,7 @@ export default styles({
       utilities: [
         'group/chapter absolute inset-0 flex min-h-0 min-w-0 items-center justify-center',
         '[--media-chapter-inset-start:0.5] [--media-chapter-inset-end:0.5]',
-        'first:[--media-chapter-inset-start:0] last:[--media-chapter-inset-end:0]',
+        'first-of-type:[--media-chapter-inset-start:0] last-of-type:[--media-chapter-inset-end:0]',
         'data-[orientation=horizontal]:clip-media-chapter-x data-[orientation=vertical]:clip-media-chapter-y',
       ],
     },
@@ -24,6 +24,12 @@ export default styles({
         'data-[orientation=horizontal]:before:clip-media-chapter-track-x data-[orientation=vertical]:before:clip-media-chapter-track-y',
         'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
         'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
+      ],
+    },
+    chapterLayer: {
+      utilities: [
+        'group-data-highlighted/chapter:data-[orientation=horizontal]:before:min-w-1.75',
+        'group-data-highlighted/chapter:data-[orientation=vertical]:before:min-h-1.75',
       ],
     },
     thumb: {

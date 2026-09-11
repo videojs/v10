@@ -132,6 +132,90 @@ for (const variant of CASES) {
     await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
+  test(`${variant.framework} ${variant.skin} keeps slider paint within the track thickness`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, media: 'mp4-1', width: 618 }, async ({ root }) =>
+      expect(root.getByRole('slider', { name: 'Seek' })).toBeVisible()
+    );
+
+    for (const { root } of panels) {
+      const layers = root
+        .getByRole('slider', { name: 'Seek' })
+        .locator('..')
+        .locator(
+          'media-slider-fill, media-slider-buffer, .media-slider-fill, .media-slider-buffer, [class~="before:bg-media-primary"], [class~="before:bg-current/20"]'
+        );
+      const caps = await layers.evaluateAll((elements) =>
+        elements
+          .filter(
+            (element): element is HTMLElement =>
+              element instanceof HTMLElement && getComputedStyle(element).position === 'absolute'
+          )
+          .flatMap((element) => {
+            const layer = element;
+
+            return ['horizontal', 'vertical'].flatMap((orientation) =>
+              [0, 0.5, 4, 20, 100].map((size) => {
+                layer.setAttribute('data-orientation', orientation);
+                Object.assign(layer.style, {
+                  transition: 'none',
+                  inset: '0 auto auto 0',
+                  width: `${orientation === 'horizontal' ? size : 4}px`,
+                  height: `${orientation === 'vertical' ? size : 4}px`,
+                });
+                const paint = getComputedStyle(layer, '::before');
+
+                return {
+                  width: paint.width,
+                  height: paint.height,
+                  clip: getComputedStyle(layer).clipPath,
+                  orientation,
+                  size,
+                };
+              })
+            );
+          })
+      );
+
+      expect(caps.length).toBeGreaterThan(0);
+
+      for (const { orientation, size, ...cap } of caps) {
+        // A short segment reveals part of the track's circular cap, never a compressed vertical pill.
+        expect(cap).toEqual({
+          width: `${orientation === 'horizontal' ? Math.max(4, size) : 4}px`,
+          height: `${orientation === 'vertical' ? Math.max(4, size) : 4}px`,
+          clip: orientation === 'horizontal' ? 'inset(-1px 0px)' : 'inset(0px -1px)',
+        });
+      }
+    }
+  });
+
+  test(`${variant.framework} ${variant.skin} animates seeks while focused`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, media: 'mp4-1', width: 618 }, async ({ root }) =>
+      expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled()
+    );
+
+    for (const { root } of panels) {
+      const thumb = root.getByRole('slider', { name: 'Seek' });
+
+      await thumb.press('Home');
+      await root.evaluate((element) => {
+        if (element instanceof HTMLElement) element.style.setProperty('--media-duration-slider', '1s');
+      });
+      await thumb.press('ArrowRight');
+
+      const properties = await thumb
+        .locator('..')
+        .evaluate((element) =>
+          element
+            .getAnimations({ subtree: true })
+            .flatMap((animation) => (animation instanceof CSSTransition ? [animation.transitionProperty] : []))
+        );
+
+      expect(properties).toContain('right');
+      expect(properties).toContain('left');
+    }
+  });
+
   test(`${variant.framework} ${variant.skin} keeps seek dragging attached to the pointer`, async ({ page }) => {
     const { css, tailwind } = await openVariants(page, variant, 800);
     const cssContract = await seekDragContract(css.root);
@@ -496,44 +580,56 @@ for (const skin of ['default-video', 'minimal-video'] as const) {
   }
 }
 
-test('React chapter segments match across styles and retain their generated range props', async ({ page }) => {
-  const { panels } = await openComparison(page, { ...REACT_DEFAULT, media: 'hls-7', width: 855 }, async ({ root }) =>
-    expect(root).toBeVisible()
-  );
-  const contracts = [];
-
-  for (const panel of panels) {
-    const chapters = panel.section.locator('.media-time-slider-chapter, [class~="group/chapter"]');
-
-    await expect(chapters).toHaveCount(8);
-    contracts.push(
-      await chapters.evaluateAll((elements) =>
-        elements.map((element) => {
-          if (!(element instanceof HTMLElement)) throw new Error('Expected a rendered chapter element.');
-
-          const track = element.firstElementChild;
-
-          return {
-            end: element.style.getPropertyValue('--media-slider-chapter-end'),
-            orientation: element.getAttribute('data-orientation'),
-            segment: getComputedStyle(element).clipPath,
-            start: element.style.getPropertyValue('--media-slider-chapter-start'),
-            track: track && getComputedStyle(track, '::before').clipPath !== 'none' ? 'clipped' : 'none',
-          };
-        })
-      )
+for (const framework of ['react', 'html'] as const) {
+  test(`${framework} chapter segments match across styles and retain their generated range props`, async ({ page }) => {
+    const { panels } = await openComparison(
+      page,
+      { ...REACT_DEFAULT, framework, media: 'hls-7', width: 855 },
+      async ({ root }) => expect(root).toBeVisible()
     );
-  }
+    const contracts = [];
 
-  expect(contracts[1]).toEqual(contracts[0]);
-  expect(contracts[0]).toHaveLength(8);
-  expect(
-    contracts[0]?.every(
-      ({ orientation, segment, track }) => orientation === 'horizontal' && segment !== 'none' && track !== 'none'
-    )
-  ).toBe(true);
-  expect(new Set(contracts[0]?.map(({ start }) => start)).size).toBe(8);
-});
+    for (const panel of panels) {
+      const chapters = panel.section.locator('.media-time-slider-chapter, [class~="group/chapter"]');
+
+      await expect(chapters).toHaveCount(8);
+      contracts.push(
+        await chapters.evaluateAll((elements) =>
+          elements.map((element) => {
+            if (!(element instanceof HTMLElement)) throw new Error('Expected a rendered chapter element.');
+
+            const track = element.firstElementChild;
+
+            return {
+              end: element.style.getPropertyValue('--media-slider-chapter-end'),
+              insetStart: Number(getComputedStyle(element).getPropertyValue('--media-chapter-inset-start')),
+              insetEnd: Number(getComputedStyle(element).getPropertyValue('--media-chapter-inset-end')),
+              orientation: element.getAttribute('data-orientation'),
+              segment: getComputedStyle(element).clipPath,
+              start: element.style.getPropertyValue('--media-slider-chapter-start'),
+              track: track && getComputedStyle(track, '::before').clipPath !== 'none' ? 'clipped' : 'none',
+            };
+          })
+        )
+      );
+    }
+
+    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[0]).toHaveLength(8);
+
+    for (const contract of contracts) {
+      expect(contract.map(({ insetStart }) => insetStart)).toEqual([0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]);
+      expect(contract.map(({ insetEnd }) => insetEnd)).toEqual([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0]);
+    }
+
+    expect(
+      contracts[0]?.every(
+        ({ orientation, segment, track }) => orientation === 'horizontal' && segment !== 'none' && track !== 'none'
+      )
+    ).toBe(true);
+    expect(new Set(contracts[0]?.map(({ start }) => start)).size).toBe(8);
+  });
+}
 
 test('menu item and moving-highlight styling matches across styles', async ({ page }) => {
   for (const variant of CASES) {
@@ -628,9 +724,9 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
           properties: style === 'css' ? ['opacity', 'scale'] : ['transform', 'translate', 'scale', 'rotate'],
         },
         slider: {
-          buffer: { duration: '0.1s', properties: ['clip-path'] },
+          buffer: { duration: '0.1s', properties: ['inset'] },
           chapterTrack: { duration: '0.2s', properties: ['height', 'width'] },
-          fill: { duration: '0.1s', properties: ['clip-path'] },
+          fill: { duration: '0.1s', properties: ['inset'] },
           focusRing: variant.skin === 'default-video' ? { duration: '0.15s', properties: ['opacity', 'scale'] } : null,
           pointer: { duration: '0.2s', properties: ['opacity', 'scale'] },
           thumb: {
@@ -949,7 +1045,7 @@ async function seekDragContract(root: Locator) {
         style.transitionProperty
           .split(',')
           .map((value) => value.trim())
-          .includes('clip-path')
+          .includes('inset')
       );
     const rect = element.getBoundingClientRect();
     const lag = Math.abs(rect.x + rect.width / 2 - expectedX);

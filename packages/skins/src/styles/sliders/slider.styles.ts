@@ -1,12 +1,12 @@
 import { styles } from 'vjsc/styles';
 
+// Reveal part of a full round cap for tiny values instead of squeezing it into a vertical pill.
 const trackLayer = [
-  'pointer-events-none absolute inset-0 before:absolute before:inset-0 before:rounded-media-control',
-  'data-[orientation=horizontal]:before:left-(--media-slider-layer-start) data-[orientation=horizontal]:before:right-(--media-slider-layer-end)',
-  'data-[orientation=vertical]:before:top-(--media-slider-layer-end) data-[orientation=vertical]:before:bottom-(--media-slider-layer-start)',
-  'before:transition-[left,right,top,bottom] before:duration-[inherit] before:ease-out',
-  'transition-[clip-path] duration-media-slider ease-out',
-  'group-data-dragging/slider:duration-0 group-data-seeking/slider:duration-0 group-focus-within/slider:duration-0',
+  'pointer-events-none absolute inset-0 before:absolute before:size-full before:rounded-media-control',
+  'data-[orientation=horizontal]:before:left-0 data-[orientation=horizontal]:before:min-w-1',
+  'data-[orientation=vertical]:before:bottom-0 data-[orientation=vertical]:before:min-h-1',
+  'transition-[inset] duration-media-slider ease-out',
+  'group-data-dragging/slider:duration-0',
 ] as const;
 
 export default styles({
@@ -52,10 +52,9 @@ export default styles({
     },
     thumb: {
       utilities: [
-        'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
+        'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-white',
         'select-none transition-[opacity,height,width,outline-offset,left,top,scale] duration-media-slider ease-out',
         'group-data-dragging/slider:transition-[opacity,height,width,outline-offset,scale]',
-        'group-focus-within/slider:transition-[opacity,height,width,outline-offset,scale]',
         'group-data-dragging/slider:scale-90',
         'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
