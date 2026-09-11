@@ -80,9 +80,9 @@ Use `UIElement` for most custom controls. Use the specialized bases when your el
 
 Built-in custom media elements compose `CustomMediaElement(...)` with `MediaAttachMixin`. `CustomMediaElement` queues one microtask after disconnection and destroys its media adapter only if it remains disconnected. This protects a synchronous move, but not a longer detached period. Its `keep-alive` attribute skips that automatic media-adapter destruction.
 
-Player roots use the configured <DocsLink slug="components/player">`PlayerElement`</DocsLink> returned by `createPlayer`.
+Player roots use the configured <DocsLink slug="reference/components/player">`PlayerElement`</DocsLink> returned by `createPlayer`.
 
 ## See also
 
 - <DocsLink slug="guides/build-your-own-component">Build your own UI component</DocsLink>
-- <DocsLink slug="components/player">`PlayerElement`</DocsLink>
+- <DocsLink slug="reference/components/player">`PlayerElement`</DocsLink>

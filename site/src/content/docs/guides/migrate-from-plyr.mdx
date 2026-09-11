@@ -119,7 +119,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 - `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video.
 - The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin — see <DocsLink slug="guides/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
-- If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="components/thumbnail">Thumbnail</DocsLink>.
+- If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink>.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
 
 </FrameworkCase>
@@ -370,7 +370,7 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 | Plyr option | Video.js v10 |
 |---|---|
 | `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include the common controls, laid out in a familiar way that users would expect. Not every Plyr control ships in every skin—the video skins do not include `rewind` and `fast-forward` buttons, for example. To change which controls appear, or to customize the skin beyond basic colors, [eject the skin](#eject-a-skin) and change controls, layout, styles, or icons. |
-| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Eject the skin](#eject-a-skin) and add a <DocsLink slug="components/seek-button">SeekButton</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
+| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Eject the skin](#eject-a-skin) and add a <DocsLink slug="reference/components/seek-button">SeekButton</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
 | `poster` / `data-poster` | Set `poster` on `<video-player>` or `VideoPlayer`. See [Basic migration](#basic-migration). |
@@ -421,7 +421,7 @@ Control everything through the player's store. Every Plyr call has a matching st
 You can still script the media element directly when you want to. Plyr routed calls through its wrapper because the wrapper had to know about every change; Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 10` keeps every control in sync. The media element is also the way to change content: set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `Video` to `HlsVideo`. The player UI follows the attached media.
 
 <FrameworkCase frameworks={["react"]}>
-Import the preset's <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook and call it from a descendant of `VideoPlayer`. The component that creates `VideoPlayer` cannot also consume its context, so put store access in a child component:
+Import the preset's <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> hook and call it from a descendant of `VideoPlayer`. The component that creates `VideoPlayer` cannot also consume its context, so put store access in a child component:
 
 ```tsx
 import '@videojs/react/video/minimal-skin.css';
@@ -450,7 +450,7 @@ When you need the element itself, put a `ref` on the media component; its value 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The store's actions live on the player element's `store.state`: query `<video-player>` and call `player.store.state.togglePaused()`. Your media element is also a plain child in your markup, so you can query and drive it directly. To keep a custom element in sync with player state, use <DocsLink slug="api/player-controller">`PlayerController`</DocsLink>:
+The store's actions live on the player element's `store.state`: query `<video-player>` and call `player.store.state.togglePaused()`. Your media element is also a plain child in your markup, so you can query and drive it directly. To keep a custom element in sync with player state, use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink>:
 
 ```js
 import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';

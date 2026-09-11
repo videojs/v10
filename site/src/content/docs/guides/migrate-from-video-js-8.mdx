@@ -169,7 +169,7 @@ export function MyPlayer() {
 }
 ```
 
-`VideoPlayer` is the piece that owns the state. To read that state, the preset ships a matching <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook. There's no ref to manage and no disposal to remember.
+`VideoPlayer` is the piece that owns the state. To read that state, the preset ships a matching <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> hook. There's no ref to manage and no disposal to remember.
 
 Three differences worth understanding, because each one is a pattern you'll see again:
 
@@ -230,7 +230,7 @@ The poster belongs to player state rather than the media, which lets the skin co
 ```
 </FrameworkCase>
 
-The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="components/title">Title</DocsLink> component as a child of the skin, or place it in an ejected or custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="components/poster">Poster</DocsLink> reference.
+The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">Title</DocsLink> component as a child of the skin, or place it in an ejected or custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference.
 
 ### Your CSS
 
@@ -263,7 +263,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 | `spatialNavigation` | no equivalent; see [Known gaps](#known-gaps) |
 | `inactivityTimeout` | delay not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)); `inactivityTimeout: 0` maps to `visibility="always"` on the controls component |
 | `errorDisplay`, `notSupportedMessage` | the skins include an error dialog |
-| `ModalDialog` | compose a <DocsLink slug="components/dialog">Dialog</DocsLink>; your application controls media playback when it opens and closes |
+| `ModalDialog` | compose a <DocsLink slug="reference/components/dialog">Dialog</DocsLink>; your application controls media playback when it opens and closes |
 
 ## Techs become media components
 
@@ -274,12 +274,12 @@ v10 replaces the whole mechanism with a choice you make in markup. You pick the 
 | What you're playing | Video.js 8 | Video.js v10 |
 |---|---|---|
 | MP4, WebM | `techOrder: ['html5']` | a plain `<video>` |
-| HLS | VHS | <DocsLink slug="components/hls-video">HLS video</DocsLink> |
-| HLS, needing hls.js directly | `videojs.Vhs` | <DocsLink slug="components/hlsjs-video">hls.js video</DocsLink> |
-| HLS, native only | `html5.vhs.overrideNative: false` | <DocsLink slug="components/native-hls-video">native HLS video</DocsLink> |
-| DASH | VHS | <DocsLink slug="components/dash-video">DASH video</DocsLink> |
+| HLS | VHS | <DocsLink slug="reference/components/hls-video">HLS video</DocsLink> |
+| HLS, needing hls.js directly | `videojs.Vhs` | <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink> |
+| HLS, native only | `html5.vhs.overrideNative: false` | <DocsLink slug="reference/components/native-hls-video">native HLS video</DocsLink> |
+| DASH | VHS | <DocsLink slug="reference/components/dash-video">DASH video</DocsLink> |
 | YouTube, Vimeo | a tech plugin | the YouTube and Vimeo components |
-| Mux | a tech plugin | <DocsLink slug="components/mux-video">Mux Video</DocsLink> |
+| Mux | a tech plugin | <DocsLink slug="reference/components/mux-video">Mux Video</DocsLink> |
 
 Each needs its own import.
 
@@ -500,7 +500,7 @@ One category doesn't survive that translation, because those were never media ev
 
 ### Player state
 
-Use <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
+Use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
 
 ```js
 import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
@@ -516,7 +516,7 @@ class MyElapsed extends ReactiveElement {
 
 ### Player state
 
-Put standard media event props such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `Video` or your chosen media component. Read player state through the preset's <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook, typed to that preset's features:
+Put standard media event props such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `Video` or your chosen media component. Read player state through the preset's <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> hook, typed to that preset's features:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -589,7 +589,7 @@ See <DocsLink slug="guides/internationalize-the-player">Internationalize the pla
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-To override individual strings, use <DocsLink slug="api/i18n-provider">`I18nProvider`</DocsLink> when you want them scoped to a subtree:
+To override individual strings, use <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> when you want them scoped to a subtree:
 
 ```tsx
 import { I18nProvider } from '@videojs/react/i18n';
@@ -639,11 +639,11 @@ You get `targetLiveWindow` and `liveEdgeStart` in state, plus a live button that
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need an omitted feature on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
-That's what <DocsLink slug="api/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
+That's what <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-That's what <DocsLink slug="api/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
+That's what <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
 </FrameworkCase>
 
 ## Known gaps

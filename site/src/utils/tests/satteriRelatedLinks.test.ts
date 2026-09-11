@@ -22,7 +22,7 @@ function compile(source: string): string {
 
 const related = `## Related components
 
-- <DocsLink slug="components/play-button">Play button</DocsLink>
+- <DocsLink slug="reference/components/play-button">Play button</DocsLink>
 
 ## Related guides
 

@@ -319,7 +319,7 @@ jobs:
             Step 2: For each changed component/util, read the "after" JSON to understand the current API shape.
 
             Step 3: Search for documentation that references these APIs. Check ALL of:
-            - `site/src/content/docs/components/` and `site/src/content/docs/api/` — MDX reference pages (look for stale prop descriptions,
+            - `site/src/content/docs/reference/components/` and `site/src/content/docs/reference/api/` — MDX reference pages (look for stale prop descriptions,
               missing new props/state/data-attributes, outdated type signatures)
             - `site/src/content/docs/concepts/` — concept pages mentioning these APIs
             - `site/src/content/docs/guides/` — how-to guides mentioning these APIs

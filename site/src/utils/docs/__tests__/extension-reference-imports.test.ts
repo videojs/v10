@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const referenceDirectory = resolve(process.cwd(), 'src/content/docs/components');
+const referenceDirectory = resolve(process.cwd(), 'src/content/docs/reference/components');
 const extensions = [
   { file: 'google-cast.mdx', extension: 'google-cast', react: 'GoogleCast' },
   { file: 'mux-data.mdx', extension: 'mux-data', react: 'MuxData' },

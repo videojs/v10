@@ -69,7 +69,7 @@ export default function App() {
 
 </FrameworkCase>
 
-The examples use <DocsLink slug="components/hlsjs-video">`HlsJsVideo`</DocsLink>, but any streaming media component works here, including the smaller default <DocsLink slug="components/hls-video">`HlsVideo`</DocsLink>. Start with the default and switch engines only if your stream needs it.
+The examples use <DocsLink slug="reference/components/hlsjs-video">`HlsJsVideo`</DocsLink>, but any streaming media component works here, including the smaller default <DocsLink slug="reference/components/hls-video">`HlsVideo`</DocsLink>. Start with the default and switch engines only if your stream needs it.
 
 The `liveVideoFeatures` bundle mirrors <DocsLink slug="concepts/features">`videoFeatures`</DocsLink> but adds the live feature and drops playback rate (not meaningful for live), quality selection, and audio-track selection. The live presets also ship skins without a time slider, duration display, or current-time display.
 
@@ -100,12 +100,12 @@ const { ProviderMixin } = createPlayer({ features: [...liveVideoFeatures, stream
 
 Two features describe liveness:
 
-- The <DocsLink slug="api/feature-stream-type">stream type feature</DocsLink> reports `streamType`: `'live'`, `'on-demand'`, or `'unknown'`. Streaming media derives it from manifest metadata; plain media elements fall back to duration-based detection. `liveVideoFeatures` does not include it; add `streamTypeFeature` to the player's features when you need `streamType`.
-- The <DocsLink slug="api/feature-live">live feature</DocsLink> reports two values:
+- The <DocsLink slug="reference/api/feature-stream-type">stream type feature</DocsLink> reports `streamType`: `'live'`, `'on-demand'`, or `'unknown'`. Streaming media derives it from manifest metadata; plain media elements fall back to duration-based detection. `liveVideoFeatures` does not include it; add `streamTypeFeature` to the player's features when you need `streamType`.
+- The <DocsLink slug="reference/api/feature-live">live feature</DocsLink> reports two values:
   - `liveEdgeStart` is where "live" begins on the timeline. When the playhead is at or past this time, the viewer is watching live; behind it, they're watching earlier moments of the stream.
   - `targetLiveWindow` is how far back the stream lets viewers rewind. `0` means a plain live stream that stays at the edge. `Infinity` means full DVR: rewind as far as the recording goes. `NaN` means the stream isn't live, or the player doesn't know yet.
 
-The <DocsLink slug="api/feature-time">time feature</DocsLink> adjusts for live playback: `duration` reports the live edge (the end of the seekable range) and keeps growing as the stream continues.
+The <DocsLink slug="reference/api/feature-time">time feature</DocsLink> adjusts for live playback: `duration` reports the live edge (the end of the seekable range) and keeps growing as the stream continues.
 
 LiveButton reads this state: it renders as an active "go to live" control while playback is behind the edge, seeks to the edge on activation, and goes inactive at the edge. Until the media reports a `seekable` range — before metadata loads, or for non-live media — the button is disabled (`data-disabled`) because there is no edge to seek to. Custom live UIs should treat "behind the edge" and "actionable" as separate states.
 
@@ -120,7 +120,7 @@ LiveButton reads this state: it renders as an active "go to live" control while 
 
 ### DVR: let users scrub back
 
-For streams with a DVR window, give users a <DocsLink slug="components/time-slider">TimeSlider</DocsLink>. The live preset skins don't include one, so add it to your own UI or <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink>. The slider tracks the sliding window automatically because `duration` follows the live edge.
+For streams with a DVR window, give users a <DocsLink slug="reference/components/time-slider">TimeSlider</DocsLink>. The live preset skins don't include one, so add it to your own UI or <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink>. The slider tracks the sliding window automatically because `duration` follows the live edge.
 
 ### Switch UI by stream type
 
@@ -128,7 +128,7 @@ Render live or on-demand controls from `streamType` when one player handles both
 
 <FrameworkCase frameworks={["react"]}>
 
-The preset `LiveVideoPlayer` comes with a fixed feature set. To change it, build the player yourself with <DocsLink slug="api/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
+The preset `LiveVideoPlayer` comes with a fixed feature set. To change it, build the player yourself with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
 
 ```tsx
 import { Container, createPlayer, LiveButton, streamTypeFeature } from '@videojs/react';
@@ -159,7 +159,7 @@ export default function App() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-`<media-live-button>` selects from the live, time, and buffer features and reflects live state. To swap larger parts of the UI on `streamType`, build a provider with <DocsLink slug="api/html-create-player">createPlayer</DocsLink> and add `streamTypeFeature` to its features (`<live-video-player>` uses `liveVideoFeatures`, which does not include it), then read `streamType` from the player store through the <DocsLink slug="api/player-controller">player controller</DocsLink>.
+`<media-live-button>` selects from the live, time, and buffer features and reflects live state. To swap larger parts of the UI on `streamType`, build a provider with <DocsLink slug="reference/api/html-create-player">createPlayer</DocsLink> and add `streamTypeFeature` to its features (`<live-video-player>` uses `liveVideoFeatures`, which does not include it), then read `streamType` from the player store through the <DocsLink slug="reference/api/player-controller">player controller</DocsLink>.
 
 </FrameworkCase>
 
@@ -167,7 +167,7 @@ export default function App() {
 
 ### The live badge never activates
 
-`streamType` isn't `'live'`. Confirm the player's features include `streamTypeFeature` (`liveVideoFeatures` does not include it, so `streamType` reads as `undefined`), the source is a live manifest, and it plays through a live-capable media element such as <DocsLink slug="components/hlsjs-video">HlsJsVideo</DocsLink>.
+`streamType` isn't `'live'`. Confirm the player's features include `streamTypeFeature` (`liveVideoFeatures` does not include it, so `streamType` reads as `undefined`), the source is a live manifest, and it plays through a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>.
 
 ### Playback keeps falling behind the edge
 
@@ -179,15 +179,15 @@ Standard-latency live streams have no meaningful seek range. Show the slider onl
 
 ## Related components
 
-- <DocsLink slug="components/time-slider">Time slider</DocsLink>
-- <DocsLink slug="components/buffering-indicator">Buffering indicator</DocsLink>
+- <DocsLink slug="reference/components/time-slider">Time slider</DocsLink>
+- <DocsLink slug="reference/components/buffering-indicator">Buffering indicator</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="api/feature-live">Live feature</DocsLink>
-- <DocsLink slug="api/feature-stream-type">Stream type feature</DocsLink>
-- <DocsLink slug="api/feature-time">Time feature</DocsLink>
-- <DocsLink slug="components/hlsjs-video">HlsJsVideo</DocsLink>
+- <DocsLink slug="reference/api/feature-live">Live feature</DocsLink>
+- <DocsLink slug="reference/api/feature-stream-type">Stream type feature</DocsLink>
+- <DocsLink slug="reference/api/feature-time">Time feature</DocsLink>
+- <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>
 
 ## Related guides
 

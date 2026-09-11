@@ -123,7 +123,7 @@ export function MyPlayer() {
 }
 ```
 
-A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="api/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
+A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
 
 ```tsx
 import { createPlayer } from '@videojs/react';
@@ -132,7 +132,7 @@ import { videoFeatures } from '@videojs/react/video';
 const { Player } = createPlayer({ features: videoFeatures });
 ```
 
-Read player state with <DocsLink slug="api/use-player">`usePlayer`</DocsLink>, `useMedia`, and <DocsLink slug="api/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
+Read player state with <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink>, `useMedia`, and <DocsLink slug="reference/api/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
 
 </FrameworkCase>
 
@@ -208,7 +208,7 @@ Unchanged names: `media-play-button`, `media-mute-button`, `media-fullscreen-but
 Matching tag names do not mean matching appearance. Media Chrome buttons include default icons and styles. Individual Video.js buttons provide behavior, state, and an accessible name, but no visible content or finished styling. Add text, an SVG, or a `<media-icon>`, plus your own CSS. Without visible content, a button can work while showing nothing. Sliders also need their child elements and CSS. Use a ready-made skin when you want finished controls.
 </Aside>
 
-Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="components/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="components/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
+Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="reference/components/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="reference/components/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
 
 <FrameworkCase frameworks={["html"]}>
 Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
@@ -315,7 +315,7 @@ player.store.state.toggleFullscreen();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Select an action with the same <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook you read state with:
+Select an action with the same <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> hook you read state with:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';

@@ -1,0 +1,53 @@
+---
+title: Audio track
+description: Audio track state and actions for the player store
+---
+
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks available audio tracks and selects the enabled track.
+
+## Import
+
+<FeatureImports feature="audioTrack" />
+
+<FeatureReference feature="audioTrack" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectAudioTrack` to <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> to subscribe to audio track state. Returns `undefined` if the audio track feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectAudioTrack` to <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> to subscribe to audio track state. Returns `undefined` if the audio track feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="AudioTrackInfo.tsx"
+import { selectAudioTrack, usePlayer } from '@videojs/react';
+
+function AudioTrackInfo() {
+  const audioTrack = usePlayer(selectAudioTrack);
+  if (!audioTrack) return null;
+
+  return <span>{audioTrack.audioTrackList.length} audio tracks</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="audio-track-info.ts"
+import { createPlayer, UIElement, selectAudioTrack } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController } = createPlayer({ features: videoFeatures });
+
+class AudioTrackInfo extends UIElement {
+  readonly #audioTrack = new PlayerController(this, selectAudioTrack);
+}
+```
+</FrameworkCase>

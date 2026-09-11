@@ -43,12 +43,26 @@
   force = true
 
 
-# Docs sections were renamed: how-to → guides, reference → components. Keep every old URL (and its .md twin) alive.
+# Docs sections were renamed: how-to → guides; reference pages now live under reference/components and reference/api.
+# Keep every old URL (and its .md twin) alive.
 [[redirects]]
   from = "/docs/framework/:framework/how-to/*"
   to = "/docs/framework/:framework/guides/:splat"
   status = 301
 
+# Missing pages under the new prefixes must 404 here; otherwise the hop below would bounce them between
+# reference/ and components/ forever. Existing files are served before either rule applies.
+[[redirects]]
+  from = "/docs/framework/:framework/reference/components/*"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/docs/framework/:framework/reference/api/*"
+  to = "/404.html"
+  status = 404
+
+# Pre-rename reference URLs hop through components/, whose rules below send each page to its new home.
 [[redirects]]
   from = "/docs/framework/:framework/reference/*"
   to = "/docs/framework/:framework/components/:splat"
@@ -57,799 +71,810 @@
 # Non-component API pages moved from components/ to api/.
 [[redirects]]
   from = "/docs/framework/:framework/components/aria-key-shortcuts-controller"
-  to = "/docs/framework/:framework/api/aria-key-shortcuts-controller"
+  to = "/docs/framework/:framework/reference/api/aria-key-shortcuts-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/aria-key-shortcuts-controller.md"
-  to = "/docs/framework/:framework/api/aria-key-shortcuts-controller.md"
+  to = "/docs/framework/:framework/reference/api/aria-key-shortcuts-controller.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-i18n"
-  to = "/docs/framework/:framework/api/create-i18n"
+  to = "/docs/framework/:framework/reference/api/create-i18n"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-i18n.md"
-  to = "/docs/framework/:framework/api/create-i18n.md"
+  to = "/docs/framework/:framework/reference/api/create-i18n.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-player"
-  to = "/docs/framework/:framework/api/create-player"
+  to = "/docs/framework/:framework/reference/api/create-player"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-player.md"
-  to = "/docs/framework/:framework/api/create-player.md"
+  to = "/docs/framework/:framework/reference/api/create-player.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-selector"
-  to = "/docs/framework/:framework/api/create-selector"
+  to = "/docs/framework/:framework/reference/api/create-selector"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-selector.md"
-  to = "/docs/framework/:framework/api/create-selector.md"
+  to = "/docs/framework/:framework/reference/api/create-selector.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-translator"
-  to = "/docs/framework/:framework/api/create-translator"
+  to = "/docs/framework/:framework/reference/api/create-translator"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/create-translator.md"
-  to = "/docs/framework/:framework/api/create-translator.md"
+  to = "/docs/framework/:framework/reference/api/create-translator.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-audio-track"
-  to = "/docs/framework/:framework/api/feature-audio-track"
+  to = "/docs/framework/:framework/reference/api/feature-audio-track"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-audio-track.md"
-  to = "/docs/framework/:framework/api/feature-audio-track.md"
+  to = "/docs/framework/:framework/reference/api/feature-audio-track.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-buffer"
-  to = "/docs/framework/:framework/api/feature-buffer"
+  to = "/docs/framework/:framework/reference/api/feature-buffer"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-buffer.md"
-  to = "/docs/framework/:framework/api/feature-buffer.md"
+  to = "/docs/framework/:framework/reference/api/feature-buffer.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-controls"
-  to = "/docs/framework/:framework/api/feature-controls"
+  to = "/docs/framework/:framework/reference/api/feature-controls"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-controls.md"
-  to = "/docs/framework/:framework/api/feature-controls.md"
+  to = "/docs/framework/:framework/reference/api/feature-controls.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-error"
-  to = "/docs/framework/:framework/api/feature-error"
+  to = "/docs/framework/:framework/reference/api/feature-error"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-error.md"
-  to = "/docs/framework/:framework/api/feature-error.md"
+  to = "/docs/framework/:framework/reference/api/feature-error.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-fullscreen"
-  to = "/docs/framework/:framework/api/feature-fullscreen"
+  to = "/docs/framework/:framework/reference/api/feature-fullscreen"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-fullscreen.md"
-  to = "/docs/framework/:framework/api/feature-fullscreen.md"
+  to = "/docs/framework/:framework/reference/api/feature-fullscreen.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-live"
-  to = "/docs/framework/:framework/api/feature-live"
+  to = "/docs/framework/:framework/reference/api/feature-live"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-live.md"
-  to = "/docs/framework/:framework/api/feature-live.md"
+  to = "/docs/framework/:framework/reference/api/feature-live.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-metadata"
-  to = "/docs/framework/:framework/api/feature-metadata"
+  to = "/docs/framework/:framework/reference/api/feature-metadata"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-metadata.md"
-  to = "/docs/framework/:framework/api/feature-metadata.md"
+  to = "/docs/framework/:framework/reference/api/feature-metadata.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-orientation-lock"
-  to = "/docs/framework/:framework/api/feature-orientation-lock"
+  to = "/docs/framework/:framework/reference/api/feature-orientation-lock"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-orientation-lock.md"
-  to = "/docs/framework/:framework/api/feature-orientation-lock.md"
+  to = "/docs/framework/:framework/reference/api/feature-orientation-lock.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-pip"
-  to = "/docs/framework/:framework/api/feature-pip"
+  to = "/docs/framework/:framework/reference/api/feature-pip"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-pip.md"
-  to = "/docs/framework/:framework/api/feature-pip.md"
+  to = "/docs/framework/:framework/reference/api/feature-pip.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-playback"
-  to = "/docs/framework/:framework/api/feature-playback"
+  to = "/docs/framework/:framework/reference/api/feature-playback"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-playback.md"
-  to = "/docs/framework/:framework/api/feature-playback.md"
+  to = "/docs/framework/:framework/reference/api/feature-playback.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-playback-rate"
-  to = "/docs/framework/:framework/api/feature-playback-rate"
+  to = "/docs/framework/:framework/reference/api/feature-playback-rate"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-playback-rate.md"
-  to = "/docs/framework/:framework/api/feature-playback-rate.md"
+  to = "/docs/framework/:framework/reference/api/feature-playback-rate.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-quality"
-  to = "/docs/framework/:framework/api/feature-quality"
+  to = "/docs/framework/:framework/reference/api/feature-quality"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-quality.md"
-  to = "/docs/framework/:framework/api/feature-quality.md"
+  to = "/docs/framework/:framework/reference/api/feature-quality.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-remote-playback"
-  to = "/docs/framework/:framework/api/feature-remote-playback"
+  to = "/docs/framework/:framework/reference/api/feature-remote-playback"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-remote-playback.md"
-  to = "/docs/framework/:framework/api/feature-remote-playback.md"
+  to = "/docs/framework/:framework/reference/api/feature-remote-playback.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-source"
-  to = "/docs/framework/:framework/api/feature-source"
+  to = "/docs/framework/:framework/reference/api/feature-source"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-source.md"
-  to = "/docs/framework/:framework/api/feature-source.md"
+  to = "/docs/framework/:framework/reference/api/feature-source.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-stream-type"
-  to = "/docs/framework/:framework/api/feature-stream-type"
+  to = "/docs/framework/:framework/reference/api/feature-stream-type"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-stream-type.md"
-  to = "/docs/framework/:framework/api/feature-stream-type.md"
+  to = "/docs/framework/:framework/reference/api/feature-stream-type.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-text-tracks"
-  to = "/docs/framework/:framework/api/feature-text-tracks"
+  to = "/docs/framework/:framework/reference/api/feature-text-tracks"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-text-tracks.md"
-  to = "/docs/framework/:framework/api/feature-text-tracks.md"
+  to = "/docs/framework/:framework/reference/api/feature-text-tracks.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-time"
-  to = "/docs/framework/:framework/api/feature-time"
+  to = "/docs/framework/:framework/reference/api/feature-time"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-time.md"
-  to = "/docs/framework/:framework/api/feature-time.md"
+  to = "/docs/framework/:framework/reference/api/feature-time.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-volume"
-  to = "/docs/framework/:framework/api/feature-volume"
+  to = "/docs/framework/:framework/reference/api/feature-volume"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/feature-volume.md"
-  to = "/docs/framework/:framework/api/feature-volume.md"
+  to = "/docs/framework/:framework/reference/api/feature-volume.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/get-i18n-translations"
-  to = "/docs/framework/:framework/api/get-i18n-translations"
+  to = "/docs/framework/:framework/reference/api/get-i18n-translations"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/get-i18n-translations.md"
-  to = "/docs/framework/:framework/api/get-i18n-translations.md"
+  to = "/docs/framework/:framework/reference/api/get-i18n-translations.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/has-registered-locale"
-  to = "/docs/framework/:framework/api/has-registered-locale"
+  to = "/docs/framework/:framework/reference/api/has-registered-locale"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/has-registered-locale.md"
-  to = "/docs/framework/:framework/api/has-registered-locale.md"
+  to = "/docs/framework/:framework/reference/api/has-registered-locale.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/html-create-player"
-  to = "/docs/framework/:framework/api/html-create-player"
+  to = "/docs/framework/:framework/reference/api/html-create-player"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/html-create-player.md"
-  to = "/docs/framework/:framework/api/html-create-player.md"
+  to = "/docs/framework/:framework/reference/api/html-create-player.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/html-i-18-n-context"
-  to = "/docs/framework/:framework/api/html-i-18-n-context"
+  to = "/docs/framework/:framework/reference/api/html-i-18-n-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/html-i-18-n-context.md"
-  to = "/docs/framework/:framework/api/html-i-18-n-context.md"
+  to = "/docs/framework/:framework/reference/api/html-i-18-n-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-context"
-  to = "/docs/framework/:framework/api/i-18-n-context"
+  to = "/docs/framework/:framework/reference/api/i-18-n-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-context.md"
-  to = "/docs/framework/:framework/api/i-18-n-context.md"
+  to = "/docs/framework/:framework/reference/api/i-18-n-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-controller"
-  to = "/docs/framework/:framework/api/i-18-n-controller"
+  to = "/docs/framework/:framework/reference/api/i-18-n-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-controller.md"
-  to = "/docs/framework/:framework/api/i-18-n-controller.md"
+  to = "/docs/framework/:framework/reference/api/i-18-n-controller.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i18n-provider"
-  to = "/docs/framework/:framework/api/i18n-provider"
+  to = "/docs/framework/:framework/reference/api/i18n-provider"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i18n-provider.md"
-  to = "/docs/framework/:framework/api/i18n-provider.md"
+  to = "/docs/framework/:framework/reference/api/i18n-provider.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/media-attach-mixin"
-  to = "/docs/framework/:framework/api/media-attach-mixin"
+  to = "/docs/framework/:framework/reference/api/media-attach-mixin"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/media-attach-mixin.md"
-  to = "/docs/framework/:framework/api/media-attach-mixin.md"
+  to = "/docs/framework/:framework/reference/api/media-attach-mixin.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/media-i18n"
-  to = "/docs/framework/:framework/api/media-i18n"
+  to = "/docs/framework/:framework/reference/api/media-i18n"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/media-i18n.md"
-  to = "/docs/framework/:framework/api/media-i18n.md"
+  to = "/docs/framework/:framework/reference/api/media-i18n.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/media-text"
-  to = "/docs/framework/:framework/api/media-text"
+  to = "/docs/framework/:framework/reference/api/media-text"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/media-text.md"
-  to = "/docs/framework/:framework/api/media-text.md"
+  to = "/docs/framework/:framework/reference/api/media-text.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/merge-props"
-  to = "/docs/framework/:framework/api/merge-props"
+  to = "/docs/framework/:framework/reference/api/merge-props"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/merge-props.md"
-  to = "/docs/framework/:framework/api/merge-props.md"
+  to = "/docs/framework/:framework/reference/api/merge-props.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/on-i18n-registry-change"
-  to = "/docs/framework/:framework/api/on-i18n-registry-change"
+  to = "/docs/framework/:framework/reference/api/on-i18n-registry-change"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/on-i18n-registry-change.md"
-  to = "/docs/framework/:framework/api/on-i18n-registry-change.md"
+  to = "/docs/framework/:framework/reference/api/on-i18n-registry-change.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/player-context"
-  to = "/docs/framework/:framework/api/player-context"
+  to = "/docs/framework/:framework/reference/api/player-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/player-context.md"
-  to = "/docs/framework/:framework/api/player-context.md"
+  to = "/docs/framework/:framework/reference/api/player-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/player-controller"
-  to = "/docs/framework/:framework/api/player-controller"
+  to = "/docs/framework/:framework/reference/api/player-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/player-controller.md"
-  to = "/docs/framework/:framework/api/player-controller.md"
+  to = "/docs/framework/:framework/reference/api/player-controller.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/register-i18n"
-  to = "/docs/framework/:framework/api/register-i18n"
+  to = "/docs/framework/:framework/reference/api/register-i18n"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/register-i18n.md"
-  to = "/docs/framework/:framework/api/register-i18n.md"
+  to = "/docs/framework/:framework/reference/api/register-i18n.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/render-element"
-  to = "/docs/framework/:framework/api/render-element"
+  to = "/docs/framework/:framework/reference/api/render-element"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/render-element.md"
-  to = "/docs/framework/:framework/api/render-element.md"
+  to = "/docs/framework/:framework/reference/api/render-element.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/snapshot-controller"
-  to = "/docs/framework/:framework/api/snapshot-controller"
+  to = "/docs/framework/:framework/reference/api/snapshot-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/snapshot-controller.md"
-  to = "/docs/framework/:framework/api/snapshot-controller.md"
+  to = "/docs/framework/:framework/reference/api/snapshot-controller.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/store-controller"
-  to = "/docs/framework/:framework/api/store-controller"
+  to = "/docs/framework/:framework/reference/api/store-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/store-controller.md"
-  to = "/docs/framework/:framework/api/store-controller.md"
+  to = "/docs/framework/:framework/reference/api/store-controller.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/subscription-controller"
-  to = "/docs/framework/:framework/api/subscription-controller"
+  to = "/docs/framework/:framework/reference/api/subscription-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/subscription-controller.md"
-  to = "/docs/framework/:framework/api/subscription-controller.md"
+  to = "/docs/framework/:framework/reference/api/subscription-controller.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/translation-phrases"
-  to = "/docs/framework/:framework/api/translation-phrases"
+  to = "/docs/framework/:framework/reference/api/translation-phrases"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/translation-phrases.md"
-  to = "/docs/framework/:framework/api/translation-phrases.md"
+  to = "/docs/framework/:framework/reference/api/translation-phrases.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-attach-media"
-  to = "/docs/framework/:framework/api/use-attach-media"
+  to = "/docs/framework/:framework/reference/api/use-attach-media"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-attach-media.md"
-  to = "/docs/framework/:framework/api/use-attach-media.md"
+  to = "/docs/framework/:framework/reference/api/use-attach-media.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-audio-track-options"
-  to = "/docs/framework/:framework/api/use-audio-track-options"
+  to = "/docs/framework/:framework/reference/api/use-audio-track-options"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-audio-track-options.md"
-  to = "/docs/framework/:framework/api/use-audio-track-options.md"
+  to = "/docs/framework/:framework/reference/api/use-audio-track-options.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-button"
-  to = "/docs/framework/:framework/api/use-button"
+  to = "/docs/framework/:framework/reference/api/use-button"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-button.md"
-  to = "/docs/framework/:framework/api/use-button.md"
+  to = "/docs/framework/:framework/reference/api/use-button.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-captions-options"
-  to = "/docs/framework/:framework/api/use-captions-options"
+  to = "/docs/framework/:framework/reference/api/use-captions-options"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-captions-options.md"
-  to = "/docs/framework/:framework/api/use-captions-options.md"
+  to = "/docs/framework/:framework/reference/api/use-captions-options.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-composed-refs"
-  to = "/docs/framework/:framework/api/use-composed-refs"
+  to = "/docs/framework/:framework/reference/api/use-composed-refs"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-composed-refs.md"
-  to = "/docs/framework/:framework/api/use-composed-refs.md"
+  to = "/docs/framework/:framework/reference/api/use-composed-refs.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-container"
-  to = "/docs/framework/:framework/api/use-container"
+  to = "/docs/framework/:framework/reference/api/use-container"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-container.md"
-  to = "/docs/framework/:framework/api/use-container.md"
+  to = "/docs/framework/:framework/reference/api/use-container.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-container-attach"
-  to = "/docs/framework/:framework/api/use-container-attach"
+  to = "/docs/framework/:framework/reference/api/use-container-attach"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-container-attach.md"
-  to = "/docs/framework/:framework/api/use-container-attach.md"
+  to = "/docs/framework/:framework/reference/api/use-container-attach.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-destroy"
-  to = "/docs/framework/:framework/api/use-destroy"
+  to = "/docs/framework/:framework/reference/api/use-destroy"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-destroy.md"
-  to = "/docs/framework/:framework/api/use-destroy.md"
+  to = "/docs/framework/:framework/reference/api/use-destroy.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-dialog-context"
-  to = "/docs/framework/:framework/api/use-dialog-context"
+  to = "/docs/framework/:framework/reference/api/use-dialog-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-dialog-context.md"
-  to = "/docs/framework/:framework/api/use-dialog-context.md"
+  to = "/docs/framework/:framework/reference/api/use-dialog-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-double-tap-gesture"
-  to = "/docs/framework/:framework/api/use-double-tap-gesture"
+  to = "/docs/framework/:framework/reference/api/use-double-tap-gesture"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-double-tap-gesture.md"
-  to = "/docs/framework/:framework/api/use-double-tap-gesture.md"
+  to = "/docs/framework/:framework/reference/api/use-double-tap-gesture.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-error-dialog-context"
-  to = "/docs/framework/:framework/api/use-error-dialog-context"
+  to = "/docs/framework/:framework/reference/api/use-error-dialog-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-error-dialog-context.md"
-  to = "/docs/framework/:framework/api/use-error-dialog-context.md"
+  to = "/docs/framework/:framework/reference/api/use-error-dialog-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-hotkey"
-  to = "/docs/framework/:framework/api/use-hotkey"
+  to = "/docs/framework/:framework/reference/api/use-hotkey"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-hotkey.md"
-  to = "/docs/framework/:framework/api/use-hotkey.md"
+  to = "/docs/framework/:framework/reference/api/use-hotkey.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-hotkey-shortcut"
-  to = "/docs/framework/:framework/api/use-hotkey-shortcut"
+  to = "/docs/framework/:framework/reference/api/use-hotkey-shortcut"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-hotkey-shortcut.md"
-  to = "/docs/framework/:framework/api/use-hotkey-shortcut.md"
+  to = "/docs/framework/:framework/reference/api/use-hotkey-shortcut.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-latest-ref"
-  to = "/docs/framework/:framework/api/use-latest-ref"
+  to = "/docs/framework/:framework/reference/api/use-latest-ref"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-latest-ref.md"
-  to = "/docs/framework/:framework/api/use-latest-ref.md"
+  to = "/docs/framework/:framework/reference/api/use-latest-ref.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-locale"
-  to = "/docs/framework/:framework/api/use-locale"
+  to = "/docs/framework/:framework/reference/api/use-locale"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-locale.md"
-  to = "/docs/framework/:framework/api/use-locale.md"
+  to = "/docs/framework/:framework/reference/api/use-locale.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media"
-  to = "/docs/framework/:framework/api/use-media"
+  to = "/docs/framework/:framework/reference/api/use-media"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media.md"
-  to = "/docs/framework/:framework/api/use-media.md"
+  to = "/docs/framework/:framework/reference/api/use-media.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-attach"
-  to = "/docs/framework/:framework/api/use-media-attach"
+  to = "/docs/framework/:framework/reference/api/use-media-attach"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-attach.md"
-  to = "/docs/framework/:framework/api/use-media-attach.md"
+  to = "/docs/framework/:framework/reference/api/use-media-attach.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-extension"
-  to = "/docs/framework/:framework/api/use-media-extension"
+  to = "/docs/framework/:framework/reference/api/use-media-extension"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-extension.md"
-  to = "/docs/framework/:framework/api/use-media-extension.md"
+  to = "/docs/framework/:framework/reference/api/use-media-extension.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-instance"
-  to = "/docs/framework/:framework/api/use-media-instance"
+  to = "/docs/framework/:framework/reference/api/use-media-instance"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-instance.md"
-  to = "/docs/framework/:framework/api/use-media-instance.md"
+  to = "/docs/framework/:framework/reference/api/use-media-instance.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-menu-context"
-  to = "/docs/framework/:framework/api/use-menu-context"
+  to = "/docs/framework/:framework/reference/api/use-menu-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-menu-context.md"
-  to = "/docs/framework/:framework/api/use-menu-context.md"
+  to = "/docs/framework/:framework/reference/api/use-menu-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-container"
-  to = "/docs/framework/:framework/api/use-optional-container"
+  to = "/docs/framework/:framework/reference/api/use-optional-container"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-container.md"
-  to = "/docs/framework/:framework/api/use-optional-container.md"
+  to = "/docs/framework/:framework/reference/api/use-optional-container.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-menu-context"
-  to = "/docs/framework/:framework/api/use-optional-menu-context"
+  to = "/docs/framework/:framework/reference/api/use-optional-menu-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-menu-context.md"
-  to = "/docs/framework/:framework/api/use-optional-menu-context.md"
+  to = "/docs/framework/:framework/reference/api/use-optional-menu-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-player"
-  to = "/docs/framework/:framework/api/use-optional-player"
+  to = "/docs/framework/:framework/reference/api/use-optional-player"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-player.md"
-  to = "/docs/framework/:framework/api/use-optional-player.md"
+  to = "/docs/framework/:framework/reference/api/use-optional-player.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-playback-rate-options"
-  to = "/docs/framework/:framework/api/use-playback-rate-options"
+  to = "/docs/framework/:framework/reference/api/use-playback-rate-options"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-playback-rate-options.md"
-  to = "/docs/framework/:framework/api/use-playback-rate-options.md"
+  to = "/docs/framework/:framework/reference/api/use-playback-rate-options.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-player"
-  to = "/docs/framework/:framework/api/use-player"
+  to = "/docs/framework/:framework/reference/api/use-player"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-player.md"
-  to = "/docs/framework/:framework/api/use-player.md"
+  to = "/docs/framework/:framework/reference/api/use-player.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-player-context"
-  to = "/docs/framework/:framework/api/use-player-context"
+  to = "/docs/framework/:framework/reference/api/use-player-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-player-context.md"
-  to = "/docs/framework/:framework/api/use-player-context.md"
+  to = "/docs/framework/:framework/reference/api/use-player-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-popover-context"
-  to = "/docs/framework/:framework/api/use-popover-context"
+  to = "/docs/framework/:framework/reference/api/use-popover-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-popover-context.md"
-  to = "/docs/framework/:framework/api/use-popover-context.md"
+  to = "/docs/framework/:framework/reference/api/use-popover-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-quality-options"
-  to = "/docs/framework/:framework/api/use-quality-options"
+  to = "/docs/framework/:framework/reference/api/use-quality-options"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-quality-options.md"
-  to = "/docs/framework/:framework/api/use-quality-options.md"
+  to = "/docs/framework/:framework/reference/api/use-quality-options.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-selector"
-  to = "/docs/framework/:framework/api/use-selector"
+  to = "/docs/framework/:framework/reference/api/use-selector"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-selector.md"
-  to = "/docs/framework/:framework/api/use-selector.md"
+  to = "/docs/framework/:framework/reference/api/use-selector.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-slider"
-  to = "/docs/framework/:framework/api/use-slider"
+  to = "/docs/framework/:framework/reference/api/use-slider"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-slider.md"
-  to = "/docs/framework/:framework/api/use-slider.md"
+  to = "/docs/framework/:framework/reference/api/use-slider.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-snapshot"
-  to = "/docs/framework/:framework/api/use-snapshot"
+  to = "/docs/framework/:framework/reference/api/use-snapshot"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-snapshot.md"
-  to = "/docs/framework/:framework/api/use-snapshot.md"
+  to = "/docs/framework/:framework/reference/api/use-snapshot.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-store"
-  to = "/docs/framework/:framework/api/use-store"
+  to = "/docs/framework/:framework/reference/api/use-store"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-store.md"
-  to = "/docs/framework/:framework/api/use-store.md"
+  to = "/docs/framework/:framework/reference/api/use-store.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-tap-gesture"
-  to = "/docs/framework/:framework/api/use-tap-gesture"
+  to = "/docs/framework/:framework/reference/api/use-tap-gesture"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-tap-gesture.md"
-  to = "/docs/framework/:framework/api/use-tap-gesture.md"
+  to = "/docs/framework/:framework/reference/api/use-tap-gesture.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-tooltip-context"
-  to = "/docs/framework/:framework/api/use-tooltip-context"
+  to = "/docs/framework/:framework/reference/api/use-tooltip-context"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-tooltip-context.md"
-  to = "/docs/framework/:framework/api/use-tooltip-context.md"
+  to = "/docs/framework/:framework/reference/api/use-tooltip-context.md"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-translator"
-  to = "/docs/framework/:framework/api/use-translator"
+  to = "/docs/framework/:framework/reference/api/use-translator"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/use-translator.md"
-  to = "/docs/framework/:framework/api/use-translator.md"
+  to = "/docs/framework/:framework/reference/api/use-translator.md"
   status = 301
 
 # SimpleHls* was renamed to Hls*, taking the reference slugs with it
 [[redirects]]
   from = "/docs/framework/:framework/components/simple-hls-video"
-  to = "/docs/framework/:framework/components/hls-video"
+  to = "/docs/framework/:framework/reference/components/hls-video"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/simple-hls-audio-only"
-  to = "/docs/framework/:framework/components/hls-audio"
+  to = "/docs/framework/:framework/reference/components/hls-audio"
   status = 301
 
 # useMediaComponent was renamed to useMediaExtension, taking the reference slug with it
 [[redirects]]
   from = "/docs/framework/:framework/components/use-media-component"
-  to = "/docs/framework/:framework/api/use-media-extension"
+  to = "/docs/framework/:framework/reference/api/use-media-extension"
+  status = 301
+
+# Everything else under the old components/ and api/ prefixes moved beneath reference/.
+[[redirects]]
+  from = "/docs/framework/:framework/components/*"
+  to = "/docs/framework/:framework/reference/components/:splat"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/api/*"
+  to = "/docs/framework/:framework/reference/api/:splat"
   status = 301
 
 # Redirect old theme demo pages to home

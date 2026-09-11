@@ -376,11 +376,11 @@ const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
 
 function featureDocsSlug(featureName: string): string {
   const override = FEATURE_SLUG_OVERRIDES[featureName];
-  if (override) return `api/feature-${override}`;
+  if (override) return `reference/api/feature-${override}`;
 
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 
-  return `api/feature-${kebab}`;
+  return `reference/api/feature-${kebab}`;
 }
 
 function featureReferenceExists(monorepoRoot: string, slug: string): boolean {

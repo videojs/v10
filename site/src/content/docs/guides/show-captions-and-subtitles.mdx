@@ -26,7 +26,7 @@ Add captions and subtitles to media, and let users turn them on and pick a langu
 
 ## Recommended approach
 
-Add WebVTT tracks as `<track>` children of the media element, and give users a <DocsLink slug="components/captions-button">CaptionsButton</DocsLink> to toggle them.
+Add WebVTT tracks as `<track>` children of the media element, and give users a <DocsLink slug="reference/components/captions-button">CaptionsButton</DocsLink> to toggle them.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -53,7 +53,7 @@ Add WebVTT tracks as `<track>` children of the media element, and give users a <
 
 ## How it works
 
-The <DocsLink slug="api/feature-text-tracks">text track feature</DocsLink> mirrors the media element's `textTracks` into player state:
+The <DocsLink slug="reference/api/feature-text-tracks">text track feature</DocsLink> mirrors the media element's `textTracks` into player state:
 
 - `textTrackList` holds every track with its `id`, `kind`, `label`, `language`, and `mode`.
 - `subtitlesShowing` is `true` when any caption or subtitle track is showing.
@@ -106,12 +106,12 @@ function CaptionsMenu() {
 }
 ```
 
-See the <DocsLink slug="components/captions-radio-group">CaptionsRadioGroup</DocsLink> reference for the complete pattern.
+See the <DocsLink slug="reference/components/captions-radio-group">CaptionsRadioGroup</DocsLink> reference for the complete pattern.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Use <DocsLink slug="components/captions-radio-group">`<media-captions-radio-group>`</DocsLink> inside a menu or popover for explicit track selection.
+Use <DocsLink slug="reference/components/captions-radio-group">`<media-captions-radio-group>`</DocsLink> inside a menu or popover for explicit track selection.
 
 </FrameworkCase>
 
@@ -135,14 +135,14 @@ The media has no caption or subtitle tracks, so captions availability is `'unava
 
 ## Related components
 
-- <DocsLink slug="components/captions-button">Captions button</DocsLink>
-- <DocsLink slug="components/captions-radio-group">Captions radio group</DocsLink>
-- <DocsLink slug="components/menu">Menu</DocsLink>
+- <DocsLink slug="reference/components/captions-button">Captions button</DocsLink>
+- <DocsLink slug="reference/components/captions-radio-group">Captions radio group</DocsLink>
+- <DocsLink slug="reference/components/menu">Menu</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="api/feature-text-tracks">Text track feature</DocsLink>
-- <DocsLink slug="api/use-captions-options">useCaptionsOptions</DocsLink>
+- <DocsLink slug="reference/api/feature-text-tracks">Text track feature</DocsLink>
+- <DocsLink slug="reference/api/use-captions-options">useCaptionsOptions</DocsLink>
 
 ## Related guides
 

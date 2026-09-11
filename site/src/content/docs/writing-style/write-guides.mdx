@@ -551,7 +551,7 @@ function Component() {
 
 ### `<Demo>`, for a live preview with tabbed source code
 
-Use `<Demo>` to show a live, interactive example alongside the code that produces it. This is the standard pattern on reference pages (e.g., <DocsLink slug="components/play-button">PlayButton</DocsLink>).
+Use `<Demo>` to show a live, interactive example alongside the code that produces it. This is the standard pattern on reference pages (e.g., <DocsLink slug="reference/components/play-button">PlayButton</DocsLink>).
 
 Pass the source files via the `files` prop — each entry has a `title`, `code` (a `?raw` import), and `lang` — and place the rendered demo in the default slot. Any `css` file in `files` is automatically scoped to the demo, so the demo's styles won't leak into the page.
 
@@ -635,7 +635,7 @@ import MinimalFrame from '@/components/frames/Minimal.astro';
 
 ### `<TabsRoot>` supports arbitrary content, too
 
-You can place any old content underneath `<TabsPanel>`, and it'll show alongside whatever tabbed content you're showing. This is a pattern we've used so far to display code alongside a rendered example (e.g., <DocsLink slug="components/play-button">PlayButton</DocsLink>).
+You can place any old content underneath `<TabsPanel>`, and it'll show alongside whatever tabbed content you're showing. This is a pattern we've used so far to display code alongside a rendered example (e.g., <DocsLink slug="reference/components/play-button">PlayButton</DocsLink>).
 
 ```mdx
 import { MyDemo } from '@/examples/react/MyDemo';

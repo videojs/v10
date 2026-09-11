@@ -6,7 +6,7 @@ description: How to create API reference pages for the Video.js documentation si
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-This guide covers how to create API reference pages — component references, media references, and util references (hooks, controllers, mixins) under `components/` in the docs sidebar.
+This guide covers how to create API reference pages — component references, media references, and util references (hooks, controllers, mixins) under `reference/` in the docs content.
 
 <Aside type="tip">
 Reference pages use the portable `write-api-reference` agent skill. Invoke `/write-api-reference play-button` in clients that expose skills as slash commands.
@@ -357,10 +357,10 @@ Skins, UI Components, Media Components, Extensions, and Player Features are flat
 For reference, look at existing pages:
 
 **Component pages:**
-- <DocsLink slug="components/play-button">PlayButton</DocsLink> — single-part, interactive
-- <DocsLink slug="components/controls">Controls</DocsLink> — behavior-heavy (auto-hide)
-- <DocsLink slug="components/time">Time</DocsLink> — multi-part, formatting
+- <DocsLink slug="reference/components/play-button">PlayButton</DocsLink> — single-part, interactive
+- <DocsLink slug="reference/components/controls">Controls</DocsLink> — behavior-heavy (auto-hide)
+- <DocsLink slug="reference/components/time">Time</DocsLink> — multi-part, formatting
 
 **Util pages:**
-- <DocsLink slug="api/use-player">usePlayer</DocsLink> — React hook, multi-overload
-- <DocsLink slug="api/player-controller">PlayerController</DocsLink> — HTML controller
+- <DocsLink slug="reference/api/use-player">usePlayer</DocsLink> — React hook, multi-overload
+- <DocsLink slug="reference/api/player-controller">PlayerController</DocsLink> — HTML controller

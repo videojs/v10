@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const referenceDirectory = resolve(process.cwd(), 'src/content/docs/components');
+const referenceDirectory = resolve(process.cwd(), 'src/content/docs/reference/components');
 const componentImport = 'import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";';
 
 describe('component reference imports', () => {

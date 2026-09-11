@@ -26,7 +26,7 @@ Present the player fullscreen, with your custom controls intact, and optionally 
 
 ## Recommended approach
 
-Add a <DocsLink slug="components/fullscreen-button">FullscreenButton</DocsLink> inside the player container. It requests fullscreen on the container, so everything inside it — controls, captions, overlays — stays visible in the fullscreen presentation.
+Add a <DocsLink slug="reference/components/fullscreen-button">FullscreenButton</DocsLink> inside the player container. It requests fullscreen on the container, so everything inside it — controls, captions, overlays — stays visible in the fullscreen presentation.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -53,7 +53,7 @@ Add a <DocsLink slug="components/fullscreen-button">FullscreenButton</DocsLink> 
 
 ## How it works
 
-The <DocsLink slug="api/feature-fullscreen">fullscreen feature</DocsLink> tracks fullscreen state and provides the actions:
+The <DocsLink slug="reference/api/feature-fullscreen">fullscreen feature</DocsLink> tracks fullscreen state and provides the actions:
 
 - `fullscreen` is `true` while the player is fullscreen, from any path — your button, native controls, or the platform presentation.
 - `fullscreenAvailability` is `'available'`, `'unavailable'`, or `'unsupported'`. It starts as `'unavailable'`, then settles to `'available'` or `'unsupported'` when the feature attaches to a media element.
@@ -78,7 +78,7 @@ Add `orientationLockFeature` to lock screen orientation while the player is full
 
 <FrameworkCase frameworks={["react"]}>
 
-Because the feature list changes, build the player yourself with <DocsLink slug="api/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
+Because the feature list changes, build the player yourself with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
 
 ```tsx
 import { Container, createPlayer, orientationLockFeature } from '@videojs/react';
@@ -102,11 +102,11 @@ export default function App() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Compose a player with `orientationLockFeature` in its feature list through <DocsLink slug="api/html-create-player">`createPlayer`</DocsLink>; the prebuilt `<video-player>` element doesn't include it.
+Compose a player with `orientationLockFeature` in its feature list through <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink>; the prebuilt `<video-player>` element doesn't include it.
 
 </FrameworkCase>
 
-To lock to something other than `landscape`, set `orientationLockType` on the player (the `orientation-lock-type` attribute in HTML). See the <DocsLink slug="api/feature-orientation-lock">orientation lock feature</DocsLink> reference for details.
+To lock to something other than `landscape`, set `orientationLockType` on the player (the `orientation-lock-type` attribute in HTML). See the <DocsLink slug="reference/api/feature-orientation-lock">orientation lock feature</DocsLink> reference for details.
 
 ### Double-click to toggle
 
@@ -150,13 +150,13 @@ Orientation lock works in fullscreen on Android browsers; iOS doesn't support it
 
 ## Related components
 
-- <DocsLink slug="components/fullscreen-button">Fullscreen button</DocsLink>
-- <DocsLink slug="components/player-container">Player container</DocsLink>
+- <DocsLink slug="reference/components/fullscreen-button">Fullscreen button</DocsLink>
+- <DocsLink slug="reference/components/player-container">Player container</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="api/feature-fullscreen">Fullscreen feature</DocsLink>
-- <DocsLink slug="api/feature-orientation-lock">Orientation lock feature</DocsLink>
+- <DocsLink slug="reference/api/feature-fullscreen">Fullscreen feature</DocsLink>
+- <DocsLink slug="reference/api/feature-orientation-lock">Orientation lock feature</DocsLink>
 
 ## Related guides
 

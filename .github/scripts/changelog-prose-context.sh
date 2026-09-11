@@ -94,7 +94,7 @@ echo "Resolved $(jq 'length' "$CONTEXT_DIR/prs.json") pull requests"
 
 # ── Docs slugs ───────────────────────────────────────────────────
 DOCS_ROOT="site/src/content/docs"
-find "$DOCS_ROOT/concepts" "$DOCS_ROOT/guides" "$DOCS_ROOT/components" "$DOCS_ROOT/api" \
+find "$DOCS_ROOT/concepts" "$DOCS_ROOT/guides" "$DOCS_ROOT/reference" \
   -type f \( -name '*.mdx' -o -name '*.md' \) \
   | sed -e "s#^$DOCS_ROOT/##" -e 's#\.mdx\?$##' \
   | sort > "$CONTEXT_DIR/docs.txt"

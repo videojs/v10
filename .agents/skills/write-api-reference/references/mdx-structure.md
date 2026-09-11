@@ -1,6 +1,6 @@
 # MDX Structure
 
-Structure and conventions for API reference MDX pages at `site/src/content/docs/components/` (components, skins, media, extensions) and `site/src/content/docs/api/` (hooks, features, controllers, factories, utilities).
+Structure and conventions for API reference MDX pages at `site/src/content/docs/reference/components/` (components, skins, media, extensions) and `site/src/content/docs/reference/api/` (hooks, features, controllers, factories, utilities).
 
 ## Component Pages
 
@@ -247,18 +247,18 @@ Link generously between related reference pages.
 Same-framework or cross-framework link:
 
 ```mdx
-Within a `Player`, <DocsLink slug="api/use-player">`usePlayer`</DocsLink> is usually simpler.
+Within a `Player`, <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> is usually simpler.
 ```
 
 Selector page linking to framework-specific utils:
 
 ```mdx
 <FrameworkCase frameworks={["react"]}>
-Pass `selectPlayback` to <DocsLink slug="api/use-player">`usePlayer`</DocsLink> to subscribe.
+Pass `selectPlayback` to <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> to subscribe.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectPlayback` to <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> to subscribe.
+Pass `selectPlayback` to <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> to subscribe.
 </FrameworkCase>
 ```
 

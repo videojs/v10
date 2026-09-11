@@ -51,11 +51,11 @@ Likely cause, then the fix.
 
 ## Related components
 
-- <DocsLink slug="components/..." />
+- <DocsLink slug="reference/components/..." />
 
 ## Related API
 
-- <DocsLink slug="components/..." />
+- <DocsLink slug="reference/components/..." />
 
 ## Related guides
 

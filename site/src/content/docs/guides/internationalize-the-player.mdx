@@ -96,7 +96,7 @@ Pick a language and every label follows — no remount:
 
 - Component labels are text descriptors — a translation key plus its English default — so everything renders in English with no setup and switches language when a translator is present. Keys are stable: `buttons.play` stays `buttons.play` even if the English wording changes.
 - The provider resolves the locale: explicit `locale` (React) or `lang` (HTML) first, then the nearest ancestor `lang` attribute, then `'en'`. It re-resolves when the page's `lang` changes.
-- The provider lazy-loads the pack for the resolved locale automatically and keeps it in a layer above the shared registry (<DocsLink slug="api/register-i18n">`registerI18n`</DocsLink>). Translations merge along a fallback chain that follows the [BCP 47](https://www.rfc-editor.org/rfc/rfc5646) parent tags — `es-MX` checks `es`, then `en` — so a regional pack only has to carry the text that differs from its parent.
+- The provider lazy-loads the pack for the resolved locale automatically and keeps it in a layer above the shared registry (<DocsLink slug="reference/api/register-i18n">`registerI18n`</DocsLink>). Translations merge along a fallback chain that follows the [BCP 47](https://www.rfc-editor.org/rfc/rfc5646) parent tags — `es-MX` checks `es`, then `en` — so a regional pack only has to carry the text that differs from its parent.
 - Each piece of text resolves from the first source that has it:
   1. Overrides supplied to the current player (React `translations` prop)
   2. Registered custom translations
@@ -135,7 +135,7 @@ The element's text content is the English default; the `token` selects the trans
 
 - English is built in; every other locale is a lazy-loaded pack. Server rendering needs an explicit `locale` (React) since there's no DOM to resolve from.
 - Locale tags are [BCP 47](https://www.rfc-editor.org/rfc/rfc5646) (`es`, `pt-BR`).
-- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`); the full list lives at <DocsLink slug="api/translation-phrases">Translation keys</DocsLink> and is typed, so typos in `registerI18n` objects fail in TypeScript. The translator itself accepts any string; a mistyped `t()` key falls back to its `default`.
+- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`); the full list lives at <DocsLink slug="reference/api/translation-phrases">Translation keys</DocsLink> and is typed, so typos in `registerI18n` objects fail in TypeScript. The translator itself accepts any string; a mistyped `t()` key falls back to its `default`.
 - Some strings interpolate parameters; custom translations must keep the placeholders:
 
 ```ts
@@ -154,7 +154,7 @@ registerI18n('es', { seek: { forward: 'Adelantar' } });
 
 <FrameworkCase frameworks={["react"]}>
 
-Pass `translations` on <DocsLink slug="api/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. This layer sits above the registry and lazy packs:
+Pass `translations` on <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. This layer sits above the registry and lazy packs:
 
 ```tsx
 <I18nProvider locale="ja" translations={{ buttons: { play: '再生', pause: '一時停止' } }}>
@@ -448,17 +448,17 @@ The provider resolved different locales on server and client. Pass an explicit `
 
 ## Related components
 
-- <DocsLink slug="api/i18n-provider">I18nProvider</DocsLink>
-- <DocsLink slug="api/media-i18n">media-i18n</DocsLink>
-- <DocsLink slug="api/media-text">media-text</DocsLink>
+- <DocsLink slug="reference/api/i18n-provider">I18nProvider</DocsLink>
+- <DocsLink slug="reference/api/media-i18n">media-i18n</DocsLink>
+- <DocsLink slug="reference/api/media-text">media-text</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="api/register-i18n">registerI18n</DocsLink>
-- <DocsLink slug="api/translation-phrases">Translation keys</DocsLink>
-- <DocsLink slug="api/use-translator">useTranslator</DocsLink>
-- <DocsLink slug="api/use-locale">useLocale</DocsLink>
-- <DocsLink slug="api/get-i18n-translations">getI18nTranslations</DocsLink>
+- <DocsLink slug="reference/api/register-i18n">registerI18n</DocsLink>
+- <DocsLink slug="reference/api/translation-phrases">Translation keys</DocsLink>
+- <DocsLink slug="reference/api/use-translator">useTranslator</DocsLink>
+- <DocsLink slug="reference/api/use-locale">useLocale</DocsLink>
+- <DocsLink slug="reference/api/get-i18n-translations">getI18nTranslations</DocsLink>
 
 ## Related guides
 

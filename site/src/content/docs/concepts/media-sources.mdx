@@ -44,7 +44,7 @@ The shape answers one question: does this option describe the source, or how to 
 | How to interpret it | `source.type` | `'video/mp4'` |
 | How Video.js plays it | `source`, at the top level | `preferPlayback`, `maxAutoResolution`, `capRenditionToPlayerSize` |
 | How a specific engine behaves | `source.engine`, under that engine's name | hls.js's `maxBufferLength`, in `source.engine.hlsJs` |
-| An extension's own settings | that extension's props | <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>, <DocsLink slug="components/google-cast">GoogleCast</DocsLink> |
+| An extension's own settings | that extension's props | <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>, <DocsLink slug="reference/components/google-cast">GoogleCast</DocsLink> |
 
 `type` is worth reaching for when the URL lies about its contents. Video.js infers the content type from the file extension, so a manifest served from an extensionless or signed URL may need to say so explicitly:
 
@@ -137,15 +137,15 @@ Engine options live under `source.engine`, **namespaced by engine**. Each key th
 
 | Key | Elements that read it | It holds |
 |---|---|---|
-| `engine.hlsJs` | <DocsLink slug="components/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="components/mux-video">MuxVideo</DocsLink>, <DocsLink slug="components/mux-audio">MuxAudio</DocsLink> | an [hls.js config](https://github.com/video-dev/hls.js/blob/master/docs/API.md#fine-tuning) |
-| `engine.nativeHls` | <DocsLink slug="components/native-hls-video">NativeHlsVideo</DocsLink>, and the three above whenever the browser plays the manifest | options for the browser's own HLS support (today, [DRM](#licensing-one-engine-differently)) |
-| `engine.dashJs` | <DocsLink slug="components/dash-video">DashVideo</DocsLink> | [dash.js settings](https://cdn.dashjs.org/latest/jsdoc/module-Settings.html) |
-| `engine.vimeo` | <DocsLink slug="components/vimeo-video">VimeoVideo</DocsLink> | [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) |
-| `engine.youtube` | <DocsLink slug="components/youtube-video">YouTubeVideo</DocsLink> | [YouTube player parameters](https://developer.chrome.com/docs/youtube/iframe_api_reference#Parameters) |
-| `engine.cloudflare` | <DocsLink slug="components/cloudflare-video">CloudflareVideo</DocsLink> | [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) |
-| `engine.spotify` | <DocsLink slug="components/spotify-audio">SpotifyAudio</DocsLink> | [Spotify embed options](https://developer.spotify.com/documentation/embeds) |
-| `engine.tiktok` | <DocsLink slug="components/tiktok-video">TikTokVideo</DocsLink> | [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) |
-| `engine.twitch` | <DocsLink slug="components/twitch-video">TwitchVideo</DocsLink> | [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) |
+| `engine.hlsJs` | <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/components/mux-audio">MuxAudio</DocsLink> | an [hls.js config](https://github.com/video-dev/hls.js/blob/master/docs/API.md#fine-tuning) |
+| `engine.nativeHls` | <DocsLink slug="reference/components/native-hls-video">NativeHlsVideo</DocsLink>, and the three above whenever the browser plays the manifest | options for the browser's own HLS support (today, [DRM](#licensing-one-engine-differently)) |
+| `engine.dashJs` | <DocsLink slug="reference/components/dash-video">DashVideo</DocsLink> | [dash.js settings](https://cdn.dashjs.org/latest/jsdoc/module-Settings.html) |
+| `engine.vimeo` | <DocsLink slug="reference/components/vimeo-video">VimeoVideo</DocsLink> | [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) |
+| `engine.youtube` | <DocsLink slug="reference/components/youtube-video">YouTubeVideo</DocsLink> | [YouTube player parameters](https://developer.chrome.com/docs/youtube/iframe_api_reference#Parameters) |
+| `engine.cloudflare` | <DocsLink slug="reference/components/cloudflare-video">CloudflareVideo</DocsLink> | [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) |
+| `engine.spotify` | <DocsLink slug="reference/components/spotify-audio">SpotifyAudio</DocsLink> | [Spotify embed options](https://developer.spotify.com/documentation/embeds) |
+| `engine.tiktok` | <DocsLink slug="reference/components/tiktok-video">TikTokVideo</DocsLink> | [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) |
+| `engine.twitch` | <DocsLink slug="reference/components/twitch-video">TwitchVideo</DocsLink> | [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) |
 
 Naming the engine rather than using one generic key matters where an element has more than one to choose from. `HlsJsVideo` plays through hls.js or through the browser depending on the platform and `preferPlayback`, and only one of them runs — so a single source can describe both paths without either engine reading the other's options.
 
@@ -335,7 +335,7 @@ The same `drm` reaches both playback paths, and how far it gets is the one thing
 | hls.js (MSE) | FairPlay, Widevine, PlayReady | Hands it to hls.js as `drmSystems`, with `emeEnabled` switched on |
 | The browser's own HLS | FairPlay | Answers the element's key requests itself: POSTs the CDM's license request to `licenseUrl` and hands the response back |
 
-So a source naming only Widevine plays through hls.js and cannot play on the native path — <DocsLink slug="components/native-hls-video">NativeHlsVideo</DocsLink>, or any HLS element the browser ends up playing the manifest for. Video.js says so in development, and encrypted media that gets there with no `com.apple.fps` license server fails with a `MEDIA_ERR_ENCRYPTED` error rather than hanging.
+So a source naming only Widevine plays through hls.js and cannot play on the native path — <DocsLink slug="reference/components/native-hls-video">NativeHlsVideo</DocsLink>, or any HLS element the browser ends up playing the manifest for. Video.js says so in development, and encrypted media that gets there with no `com.apple.fps` license server fails with a `MEDIA_ERR_ENCRYPTED` error rather than hanging.
 
 For Widevine on hls.js, Video.js asks for a hardware-backed CDM first, falling back to whatever robustness the browser offers, so content restricted to L1 devices plays where it can. Supplying your own `requestMediaKeySystemAccessFunc` replaces that entirely.
 
@@ -360,7 +360,7 @@ It replaces rather than merges, so the FairPlay server above is gone as far as h
 
 ## Mux sources name a playback ID
 
-<DocsLink slug="components/mux-video">MuxVideo</DocsLink> and <DocsLink slug="components/mux-audio">MuxAudio</DocsLink> identify a source by `playbackId` rather than a URL, and derive `src` from it. Everything else works the same, engine options included:
+<DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink> and <DocsLink slug="reference/components/mux-audio">MuxAudio</DocsLink> identify a source by `playbackId` rather than a URL, and derive `src` from it. Everything else works the same, engine options included:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -504,7 +504,7 @@ It survives a `src` change, so swapping the source keeps the frame you asked for
 
 ## Elements without engine options
 
-<DocsLink slug="components/hls-video">HlsVideo</DocsLink> and <DocsLink slug="components/hls-audio">HlsAudio</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
+<DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> and <DocsLink slug="reference/components/hls-audio">HlsAudio</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
 
 ## Migrate from `config`
 
@@ -517,7 +517,7 @@ Media elements used to take a `config` object: one untyped bag holding engine op
 | `config.hlsJs` | `source.engine.hlsJs` |
 | `config.dashJs` | `source.engine.dashJs` |
 | `config.muxData` | the <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> extension's own props |
-| `config.googleCast` | the <DocsLink slug="components/google-cast">GoogleCast</DocsLink> extension's own props |
+| `config.googleCast` | the <DocsLink slug="reference/components/google-cast">GoogleCast</DocsLink> extension's own props |
 | `config` on VimeoVideo | `source.engine.vimeo` |
 
 The engine keys keep their names, so their contents move across unchanged — what moves is the object they sit in.
@@ -546,6 +546,6 @@ video.source = { src, preferPlayback: 'native', engine: { hlsJs: { maxBufferLeng
 
 ## See also
 
-<DocsLinkCard slug="components/hlsjs-video">HlsJsVideo element reference</DocsLinkCard>
-<DocsLinkCard slug="components/mux-video">MuxVideo element reference</DocsLinkCard>
-<DocsLinkCard slug="components/dash-video">DashVideo element reference</DocsLinkCard>
+<DocsLinkCard slug="reference/components/hlsjs-video">HlsJsVideo element reference</DocsLinkCard>
+<DocsLinkCard slug="reference/components/mux-video">MuxVideo element reference</DocsLinkCard>
+<DocsLinkCard slug="reference/components/dash-video">DashVideo element reference</DocsLinkCard>

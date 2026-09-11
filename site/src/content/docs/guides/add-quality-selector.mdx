@@ -71,7 +71,7 @@ Let automatic quality selection do its job by default, and offer a quality menu 
 
 ## How it works
 
-The <DocsLink slug="api/feature-quality">quality feature</DocsLink> mirrors the media element's video renditions into player state:
+The <DocsLink slug="reference/api/feature-quality">quality feature</DocsLink> mirrors the media element's video renditions into player state:
 
 - `videoRenditionList` holds each rendition's `id`, `width`, `height`, `bitrate`, `frameRate`, `codec`, and whether it's `selected`.
 - `activeVideoRendition` is the rendition currently playing. When the engine doesn't report one directly, the player matches it from the video's current dimensions.
@@ -79,12 +79,12 @@ The <DocsLink slug="api/feature-quality">quality feature</DocsLink> mirrors the 
 
 <FrameworkCase frameworks={["react"]}>
 
-<DocsLink slug="api/use-quality-options">`useQualityOptions`</DocsLink> turns this state into ready-made menu options — labels like "1080p", an "Auto" entry, and `availability` — as shown in the demo above.
+<DocsLink slug="reference/api/use-quality-options">`useQualityOptions`</DocsLink> turns this state into ready-made menu options — labels like "1080p", an "Auto" entry, and `availability` — as shown in the demo above.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-<DocsLink slug="components/quality-radio-group">`<media-quality-radio-group>`</DocsLink> turns this state into a ready-made radio menu with resolution labels and an "Auto" entry, as shown in the demo above.
+<DocsLink slug="reference/components/quality-radio-group">`<media-quality-radio-group>`</DocsLink> turns this state into a ready-made radio menu with resolution labels and an "Auto" entry, as shown in the demo above.
 
 </FrameworkCase>
 
@@ -140,7 +140,7 @@ export default function App() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Access the player store through the <DocsLink slug="api/player-controller">player controller</DocsLink> and call `selectVideoRendition` with a rendition `id` from `videoRenditionList`, or `'auto'` to restore adaptive selection.
+Access the player store through the <DocsLink slug="reference/api/player-controller">player controller</DocsLink> and call `selectVideoRendition` with a rendition `id` from `videoRenditionList`, or `'auto'` to restore adaptive selection.
 
 </FrameworkCase>
 
@@ -148,7 +148,7 @@ Access the player store through the <DocsLink slug="api/player-controller">playe
 
 ### The quality menu doesn't render
 
-Quality availability is `'unavailable'`. The source is progressive (no renditions), the manifest hasn't loaded yet, or the media element doesn't support renditions. Use a streaming media element such as the default <DocsLink slug="components/hls-video">HlsVideo</DocsLink> or <DocsLink slug="components/hlsjs-video">HlsJsVideo</DocsLink>.
+Quality availability is `'unavailable'`. The source is progressive (no renditions), the manifest hasn't loaded yet, or the media element doesn't support renditions. Use a streaming media element such as the default <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> or <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>.
 
 ### The menu doesn't render for a single-rendition stream
 
@@ -160,16 +160,16 @@ The pinned rendition exceeds available bandwidth. Selecting "Auto" lets the engi
 
 ## Related components
 
-- <DocsLink slug="components/quality-radio-group">Quality radio group</DocsLink>
-- <DocsLink slug="components/menu">Menu</DocsLink>
+- <DocsLink slug="reference/components/quality-radio-group">Quality radio group</DocsLink>
+- <DocsLink slug="reference/components/menu">Menu</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="api/feature-quality">Quality feature</DocsLink>
-- <DocsLink slug="api/use-quality-options">useQualityOptions</DocsLink>
-- <DocsLink slug="components/hls-video">HlsVideo</DocsLink>
-- <DocsLink slug="components/hlsjs-video">HlsJsVideo</DocsLink>
-- <DocsLink slug="components/dash-video">DashVideo</DocsLink>
+- <DocsLink slug="reference/api/feature-quality">Quality feature</DocsLink>
+- <DocsLink slug="reference/api/use-quality-options">useQualityOptions</DocsLink>
+- <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink>
+- <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>
+- <DocsLink slug="reference/components/dash-video">DashVideo</DocsLink>
 
 ## Related guides
 
