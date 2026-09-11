@@ -36,7 +36,7 @@ interface SourceBuild<Meta extends ModuleMeta> {
   readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly paths?: { readonly install?: string | undefined; readonly import?: string | undefined } | undefined;
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
-  readonly theme: boolean | string;
+  readonly theme: boolean | string | readonly string[];
 }
 
 interface PreservedStyleFile {
@@ -407,7 +407,7 @@ async function buildPublishedItem<Meta extends ModuleMeta>(
       let source = stripStyleImports(rewritten.source);
 
       if (module.id === root.id) {
-        for (const styleTarget of [...styleOutputs.imports].sort().reverse()) {
+        for (const styleTarget of [...styleOutputs.imports].reverse()) {
           const stylesheetTarget = posix.join(normalizePath(options.paths.install), normalizePath(styleTarget));
 
           source = addStyleImport(source, relativeImport(module.target, stylesheetTarget));
@@ -456,19 +456,23 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   const themes = registryThemes(styles);
 
   if (themes.length > 0 && (hasStyles || item.build.theme)) {
-    const theme = resolveRegistryTheme(themes, item.build.theme, item.name);
-    const themeTarget = item.build.theme === true || item.build.theme === false ? theme.target : item.build.theme;
-    const themeFiles = theme.files ? Object.values(theme.files) : [];
+    const selections = Array.isArray(item.build.theme) ? item.build.theme : [item.build.theme];
 
-    if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
-      throw new Error(
-        `Shadcn item \`${item.name}\` imports a stylesheet outside its registry theme: \`${themeTarget}\`.`
-      );
+    for (const selection of selections) {
+      const theme = resolveRegistryTheme(themes, selection, item.name);
+      const themeTarget = selection === true || selection === false ? theme.target : selection;
+      const themeFiles = theme.files ? Object.values(theme.files) : [];
+
+      if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
+        throw new Error(
+          `Shadcn item \`${item.name}\` imports a stylesheet outside its registry theme: \`${themeTarget}\`.`
+        );
+      }
+
+      targets.add(themeTarget);
+
+      if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(theme));
     }
-
-    targets.add(themeTarget);
-
-    if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(theme));
   }
 
   if (item.build.stylesheet) {
@@ -485,7 +489,7 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
     }
   }
 
-  const imports = [...targets].sort();
+  const imports = Array.isArray(item.build.theme) ? [...targets] : [...targets].sort();
 
   return { dependencies: [...dependencies].sort(), imports };
 }

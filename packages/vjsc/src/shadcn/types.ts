@@ -39,8 +39,8 @@ export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = Distribut
   readonly paths?: Partial<RegistryPaths> | undefined;
   /** Bundle the module closure's generated CSS into one installed stylesheet. */
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
-  /** Import the configured shared theme, or a specific installed stylesheet from that theme item. */
-  readonly theme?: boolean | string | undefined;
+  /** Import the configured shared theme, or one or more installed stylesheets from registered theme items. */
+  readonly theme?: boolean | string | readonly string[] | undefined;
 };
 
 /** A file-backed Shadcn item which is not owned by one transformed graph module. */

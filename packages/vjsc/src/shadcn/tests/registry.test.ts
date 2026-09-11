@@ -177,6 +177,52 @@ describe('createShadcnRegistryFiles', () => {
       /^import '\.\.\/\.\.\/styles\/minimal\.css';/
     );
   });
+
+  it('imports multiple registered theme stylesheets in configured order', async () => {
+    const graph = fixtureGraph();
+    const files = await createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'component' || module.params.theme !== 'minimal') return null;
+
+          return {
+            name: 'button',
+            type: 'registry:ui',
+            title: 'Button',
+            description: 'Button.',
+            group: 'ui',
+            target: 'ui/button.tsx',
+            theme: ['styles/tokens.css', 'styles/overrides.css'],
+          };
+        },
+      },
+      styles: {
+        theme: {
+          name: '_style-base',
+          title: 'Base theme',
+          description: 'Base theme.',
+          target: 'styles/tokens.css',
+        },
+        themes: [
+          {
+            name: '_style-minimal',
+            title: 'Minimal theme',
+            description: 'Minimal theme.',
+            target: 'styles/overrides.css',
+          },
+        ],
+      },
+    });
+    const item = registryItem(files, 'ui/registry.json', 'button');
+    const source = sourceFile(files, 'ui/files/button/button.tsx');
+
+    expect(item.registryDependencies).toEqual(['@example/_style-base', '@example/_style-minimal']);
+    expect(source).toMatch(/^import '\.\.\/styles\/tokens\.css';\n\nimport '\.\.\/styles\/overrides\.css';/);
+  });
 });
 
 function fixtureGraph(): Graph<FixtureMeta> {
