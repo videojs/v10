@@ -88,7 +88,9 @@
     --media-slider-preview-label-offset: calc(var(--media-spacing) * 10.5);
 
     /* Player frame and scale. */
-    --media-video-border-radius: var(--media-border-radius, 28px);
+    --media-player-radius: var(--media-border-radius, 28px);
+    /* Custom media must not round again inside the player frame. */
+    --media-video-border-radius: 0px;
     --media-scale: 1;
     --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
     --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
@@ -104,7 +106,7 @@
 
   .media-skin:fullscreen {
     --media-object-fit: contain;
-    --media-video-border-radius: 0;
+    --media-player-radius: 0;
   }
 
   @media (min-width: 1280px) {

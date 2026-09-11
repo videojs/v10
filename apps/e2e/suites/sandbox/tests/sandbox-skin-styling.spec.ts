@@ -86,7 +86,7 @@ for (const { platform, skin, styling, skins } of CASES) {
       borderUsesColor: true,
       fillUsesAccent: true,
       fontFamily: '"Courier New"',
-      videoBorderRadius: '18px',
+      videoBorderRadius: '0px',
     });
   });
 

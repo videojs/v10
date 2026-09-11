@@ -37,7 +37,7 @@ export const utilities = {
   },
   'layer-media': {
     kind: 'utility',
-    description: 'Absolutely positioned layer filling its parent and inheriting its radius.',
+    description: 'Absolutely positioned layer filling its parent.',
   },
   'object-media': {
     kind: 'utility',

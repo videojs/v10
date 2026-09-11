@@ -2656,7 +2656,7 @@ async function skinContract(root: Locator) {
       seek: inspect(seek),
       tokens: {
         spacing: rootStyle.getPropertyValue('--media-spacing').trim(),
-        radius: rootStyle.getPropertyValue('--media-video-border-radius').trim(),
+        radius: rootStyle.getPropertyValue('--media-player-radius').trim(),
         controlRadius: rootStyle.getPropertyValue('--media-control-radius').trim(),
       },
     };

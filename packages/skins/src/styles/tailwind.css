@@ -47,7 +47,7 @@
   --radius-media-dialog: var(--media-dialog-radius);
   --radius-media-menu-item: var(--media-menu-item-radius);
   --radius-media-pill: 9999px;
-  --radius-media-player: var(--media-video-border-radius);
+  --radius-media-player: var(--media-player-radius);
   --radius-media-popup: var(--media-popup-radius);
 
   /* Shadows and backdrop filters. Contrast-aware ones read the current color; the rest alias theme tokens. */
@@ -283,13 +283,12 @@
   transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
 }
 
-/* Absolutely positioned layer filling its parent and inheriting its radius. */
+/* The container clips media layers so their edges are not rounded independently. */
 @utility layer-media {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  border-radius: inherit;
 }
 
 /* Media and poster fit, overridable through the public `--media-object-fit` and `--media-object-position`. */

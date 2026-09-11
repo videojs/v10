@@ -12,6 +12,32 @@ const POSTER_SKINS = [
   { framework: 'VJSC React', path: '/pages/source-react-video-mp4.html', selector: '.media-poster img' },
 ] as const;
 
+test('rounds the HTML skin without rounding adapter media in its shadow DOM', async ({ page, browserName }) => {
+  await page.goto('/pages/html-mux-video.html', { waitUntil: 'domcontentloaded' });
+
+  const skin = page.locator('video-skin');
+  const container = skin.locator('media-container');
+  const video = page.locator('mux-video video');
+
+  await expect(video).toBeAttached();
+  await expect(container).toHaveCSS('border-radius', '28px');
+  await skin.evaluate((element: HTMLElement) => element.style.setProperty('--media-border-radius', '18px'));
+
+  await expect(container).toHaveCSS('border-radius', '18px');
+  await expect(video).toHaveCSS('border-radius', '0px');
+  await expect(container).toHaveCSS('clip-path', 'none');
+  await expect(container).toHaveCSS('mask-image', 'none');
+
+  if (browserName === 'chromium') {
+    await container.evaluate((element) => element.requestFullscreen());
+    await expect(container).toHaveCSS('border-radius', '0px');
+    await expect(video).toHaveCSS('border-radius', '0px');
+    await expect.poll(() => container.evaluate((element) => getComputedStyle(element, '::before').top)).toBe('0px');
+    await page.evaluate(() => document.exitFullscreen());
+    await expect(container).toHaveCSS('border-radius', '18px');
+  }
+});
+
 for (const { framework, path } of SOURCE_SKINS) {
   test.describe(`Canonical Skin container — ${framework}`, () => {
     test.beforeEach(async ({ page }) => {

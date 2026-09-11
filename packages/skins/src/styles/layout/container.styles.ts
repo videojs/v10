@@ -22,7 +22,7 @@ export default styles({
         // The HTML skin slots the page's media, which the base `video` rule cannot reach across the shadow boundary.
         'shadow-dom': [
           '[&>slot::slotted(video)]:m-0 [&>slot::slotted(video)]:block [&>slot::slotted(video)]:h-full [&>slot::slotted(video)]:w-full',
-          '[&>slot::slotted(video)]:max-w-full [&>slot::slotted(video)]:rounded-[inherit] [&>slot::slotted(video)]:object-media',
+          '[&>slot::slotted(video)]:max-w-full [&>slot::slotted(video)]:object-media',
         ],
       },
     },

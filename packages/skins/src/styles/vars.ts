@@ -458,7 +458,11 @@ export const vars = {
   },
   '--media-video-border-radius': {
     kind: 'runtime',
-    description: 'Resolved radius supplied by the Skin and consumed by light- and shadow-DOM media.',
+    description: 'Media radius, reset by the Skin so adapters do not round inside the player frame.',
+  },
+  '--media-player-radius': {
+    kind: 'internal',
+    description: 'Resolved outer player radius, including theme defaults and fullscreen overrides.',
   },
   '--media-volume-fill': {
     kind: 'runtime',
