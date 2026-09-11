@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import type { PlayerStyleTheme } from './config';
+import { PLAYER_STYLE_THEMES, PORTED_THEMES } from './themes';
 
 /**
  * A two-frame comparison for one ported theme, in the shape the shell's Compare uses: one axis differs, everything else
@@ -72,7 +73,11 @@ export function mountCompare(theme: PlayerStyleTheme): void {
   root.className = 'flex min-h-screen flex-col';
   root.innerHTML = `
     <header class="border-border bg-background flex min-h-10 shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-b px-4 py-1.5">
-      <h1 class="text-sm font-medium">${theme.label} — port vs original</h1>
+      <label class="flex items-center gap-1.5">
+        <span class="sr-only">Theme</span>
+        <select class="border-border bg-background rounded border px-1.5 py-0.5 text-sm font-medium" data-theme-picker></select>
+      </label>
+      <span class="text-muted-foreground text-xs">port vs original</span>
       <div class="flex items-center gap-1.5">
         <span class="text-muted-foreground text-xs">Layout</span>
         <div role="group" aria-label="Layout" class="flex gap-1" data-layout-group></div>
@@ -85,6 +90,33 @@ export function mountCompare(theme: PlayerStyleTheme): void {
     </header>
     <div class="bg-muted/40 min-h-0 flex-1 gap-px" data-panels></div>
   `;
+
+  /*
+   * Switching themes keeps every other selection, the way the shell's own pickers do: the source, width, captions and
+   * locale all travel in the query string, so a comparison stays comparable across themes.
+   */
+  const picker = root.querySelector<HTMLSelectElement>('[data-theme-picker]')!;
+
+  picker.replaceChildren(
+    ...PORTED_THEMES.map((name) => {
+      const option = document.createElement('option');
+
+      option.value = name;
+      option.textContent = PLAYER_STYLE_THEMES[name].label;
+      option.selected = name === theme.name;
+
+      return option;
+    })
+  );
+
+  picker.addEventListener('change', () => {
+    const params = new URLSearchParams(location.search);
+
+    params.delete('panel');
+    const query = params.toString();
+
+    location.href = `../player-style-${picker.value}/${query ? `?${query}` : ''}`;
+  });
 
   const panelsEl = root.querySelector<HTMLElement>('[data-panels]')!;
   const layoutGroup = root.querySelector<HTMLElement>('[data-layout-group]')!;
