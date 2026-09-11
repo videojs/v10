@@ -247,6 +247,18 @@
   }
 }
 
+/* With the desktop links showing but no room to spare, fall back to the icon-only trigger. */
+@media (width >= 48rem) and (width < 64rem) {
+  .DocSearch-Button {
+    width: auto;
+    padding: 0 calc(var(--spacing) * 2);
+  }
+
+  .DocSearch-Button-Placeholder {
+    display: none;
+  }
+}
+
 /* The key hints only fit once the trigger has its full desktop width. */
 @media (width >= 64rem) {
   .DocSearch-Button-Keys {
