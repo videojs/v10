@@ -26,4 +26,4 @@ export const PLAYER_STYLE_THEMES = {
 export type PlayerStyleThemeName = keyof typeof PLAYER_STYLE_THEMES;
 
 /** Themes with a port checked in, in the order the index lists them. */
-export const PORTED_THEMES: readonly PlayerStyleThemeName[] = ['demuxed-2022', 'instaplay'];
+export const PORTED_THEMES: readonly PlayerStyleThemeName[] = ['demuxed-2022', 'halloween', 'instaplay', 'notflix'];
