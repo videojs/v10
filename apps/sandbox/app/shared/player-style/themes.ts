@@ -34,4 +34,5 @@ export const PORTED_THEMES: readonly PlayerStyleThemeName[] = [
   'reelplay',
   'tailwind-audio',
   'winamp',
+  'x-mas',
 ];
