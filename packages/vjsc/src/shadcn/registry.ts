@@ -489,9 +489,7 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
     }
   }
 
-  const imports = Array.isArray(item.build.theme) ? [...targets] : [...targets].sort();
-
-  return { dependencies: [...dependencies].sort(), imports };
+  return { dependencies: [...dependencies].sort(), imports: [...targets] };
 }
 
 function styleFileEntries<Meta extends ModuleMeta>(

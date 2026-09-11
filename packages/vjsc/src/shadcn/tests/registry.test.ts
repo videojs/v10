@@ -223,6 +223,54 @@ describe('createShadcnRegistryFiles', () => {
     expect(item.registryDependencies).toEqual(['@example/_style-base', '@example/_style-minimal']);
     expect(source).toMatch(/^import '\.\.\/styles\/tokens\.css';\n\nimport '\.\.\/styles\/overrides\.css';/);
   });
+
+  it('imports one registered theme before a source-owned stylesheet', async () => {
+    const graph = fixtureGraph();
+    const files = await createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (!module.meta || module.params.theme !== 'default') return null;
+
+          if (module.meta.type === 'component') {
+            return {
+              name: 'button',
+              type: 'registry:ui',
+              title: 'Button',
+              description: 'Button.',
+              group: 'ui',
+              target: 'ui/button.tsx',
+            };
+          }
+
+          return {
+            name: 'video',
+            type: 'registry:block',
+            title: 'Video',
+            description: 'Video.',
+            group: 'skins',
+            target: 'video/skin.tsx',
+            stylesheet: { target: 'audio/skin.css' },
+            theme: 'styles/theme.css',
+          };
+        },
+      },
+      styles: {
+        theme: {
+          name: '_style-theme',
+          title: 'Theme',
+          description: 'Theme.',
+          target: 'styles/theme.css',
+        },
+      },
+    });
+    const source = sourceFile(files, 'skins/files/video/default.tsx');
+
+    expect(source).toMatch(/^import '\.\.\/styles\/theme\.css';\n\nimport '\.\.\/audio\/skin\.css';/);
+  });
 });
 
 function fixtureGraph(): Graph<FixtureMeta> {
