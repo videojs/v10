@@ -339,7 +339,6 @@ export const sidebar: Sidebar = [
           { slug: 'api/has-registered-locale', sidebarLabel: 'hasRegisteredLocale' },
           { slug: 'api/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
           { slug: 'api/create-translator', sidebarLabel: 'createTranslator' },
-          { slug: 'api/i-18-n-context', sidebarLabel: 'I18nContext', frameworks: ['react'] },
           { slug: 'api/i-18-n-controller', sidebarLabel: 'I18nController', frameworks: ['html'] },
         ],
       },
