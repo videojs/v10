@@ -6,6 +6,19 @@
 @import "./themes/minimal.css";
 @import "./themes/preferences.css";
 
+/* Interpolate progress before chapter bounds are applied. */
+@property --media-slider-fill {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
+@property --media-slider-buffer {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
 @layer base {
   @scope (.media-skin) {
     :scope {

@@ -5,8 +5,6 @@ const trackLayer = [
   'pointer-events-none absolute inset-0 before:absolute before:size-full before:rounded-media-control',
   'data-[orientation=horizontal]:before:left-0 data-[orientation=horizontal]:before:min-w-1',
   'data-[orientation=vertical]:before:bottom-0 data-[orientation=vertical]:before:min-h-1',
-  'transition-[inset] duration-media-slider ease-out',
-  'group-data-dragging/slider:duration-0',
 ] as const;
 
 export default styles({
@@ -17,6 +15,7 @@ export default styles({
       utilities: [
         'group/slider relative flex flex-1 cursor-pointer items-center justify-center outline-hidden',
         'data-disabled:pointer-events-none',
+        'transition-[--media-slider-fill,--media-slider-buffer] duration-media-slider ease-out data-dragging:duration-0',
         'rounded-media-pill',
         'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))]',
         'data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
@@ -53,8 +52,7 @@ export default styles({
     thumb: {
       utilities: [
         'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-white',
-        'select-none transition-[opacity,height,width,outline-offset,left,top,scale] duration-media-slider ease-out',
-        'group-data-dragging/slider:transition-[opacity,height,width,outline-offset,scale]',
+        'select-none transition-[opacity,height,width,outline-offset,scale] duration-media-slider ease-out',
         'group-data-dragging/slider:scale-90',
         'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',

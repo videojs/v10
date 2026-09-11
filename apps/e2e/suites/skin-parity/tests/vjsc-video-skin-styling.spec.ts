@@ -189,6 +189,61 @@ for (const variant of CASES) {
     }
   });
 
+  test(`${variant.framework} ${variant.skin} animates progress continuously across chapters`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, media: 'hls-7', width: 618 }, async ({ root }) =>
+      expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled()
+    );
+
+    for (const { root } of panels) {
+      const slider = root.getByRole('slider', { name: 'Seek' }).locator('..');
+
+      await expect(slider.locator('.media-time-slider-chapter, [class~="group/chapter"]')).toHaveCount(8);
+      const progress = await slider.evaluate((element) => {
+        if (!(element instanceof HTMLElement)) throw new Error('Expected a slider element.');
+
+        const properties = ['--media-slider-fill', '--media-slider-buffer'];
+        const layers = element.querySelectorAll(
+          'media-slider-fill, media-slider-buffer, .media-slider-fill, .media-slider-buffer, [class~="before:bg-media-primary"], [class~="before:bg-current/20"]'
+        );
+        const widths = () => [...layers].map((layer) => layer.getBoundingClientRect().width);
+        const setProgress = (value: string) => {
+          for (const property of properties) element.style.setProperty(property, value);
+        };
+
+        element.style.transitionDuration = '0s';
+
+        setProgress('50%');
+        const expected = widths();
+
+        setProgress('0%');
+        widths();
+
+        element.style.transitionDuration = '1s';
+        element.style.transitionTimingFunction = 'linear';
+
+        setProgress('100%');
+        widths();
+
+        const animations = element
+          .getAnimations()
+          .filter(
+            (animation) => animation instanceof CSSTransition && properties.includes(animation.transitionProperty)
+          );
+
+        for (const animation of animations) {
+          animation.pause();
+          animation.currentTime = 500;
+        }
+
+        return { expected, actual: widths(), animations: animations.length };
+      });
+
+      expect(progress.animations).toBe(2);
+      expect(progress.expected.length).toBeGreaterThan(0);
+      expect(progress.actual).toEqual(progress.expected);
+    }
+  });
+
   test(`${variant.framework} ${variant.skin} animates seeks while focused`, async ({ page }) => {
     const { panels } = await openComparison(page, { ...variant, media: 'mp4-1', width: 618 }, async ({ root }) =>
       expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled()
@@ -211,8 +266,9 @@ for (const variant of CASES) {
             .flatMap((animation) => (animation instanceof CSSTransition ? [animation.transitionProperty] : []))
         );
 
-      expect(properties).toContain('right');
-      expect(properties).toContain('left');
+      expect(properties).toContain('--media-slider-fill');
+      expect(properties).not.toContain('left');
+      expect(properties).not.toContain('width');
     }
   });
 
@@ -724,14 +780,14 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
           properties: style === 'css' ? ['opacity', 'scale'] : ['transform', 'translate', 'scale', 'rotate'],
         },
         slider: {
-          buffer: { duration: '0.1s', properties: ['inset'] },
+          buffer: { duration: '0s', properties: ['all'] },
           chapterTrack: { duration: '0.2s', properties: ['height', 'width'] },
-          fill: { duration: '0.1s', properties: ['inset'] },
+          fill: { duration: '0s', properties: ['all'] },
           focusRing: variant.skin === 'default-video' ? { duration: '0.15s', properties: ['opacity', 'scale'] } : null,
           pointer: { duration: '0.2s', properties: ['opacity', 'scale'] },
           thumb: {
             duration: '0.1s',
-            properties: ['opacity', 'height', 'width', 'outline-offset', 'left', 'top', 'scale'],
+            properties: ['opacity', 'height', 'width', 'outline-offset', 'scale'],
           },
         },
         preview: {
@@ -1038,15 +1094,10 @@ async function seekDragContract(root: Locator) {
     const style = getComputedStyle(element);
     const sliderElement = element.parentElement?.closest('[data-orientation]');
     const expectedX = (sliderElement?.getBoundingClientRect().x ?? 0) + expectedOffset;
-    const slider = [...(sliderElement?.querySelectorAll('*') ?? [])];
+    const slider = sliderElement ? [sliderElement] : [];
     const fills = slider
       .map((target) => getComputedStyle(target))
-      .filter((style) =>
-        style.transitionProperty
-          .split(',')
-          .map((value) => value.trim())
-          .includes('inset')
-      );
+      .filter((style) => style.transitionProperty.includes('--media-slider-fill'));
     const rect = element.getBoundingClientRect();
     const lag = Math.abs(rect.x + rect.width / 2 - expectedX);
     const positionProperties = new Set(style.transitionProperty.split(',').map((value) => value.trim()));

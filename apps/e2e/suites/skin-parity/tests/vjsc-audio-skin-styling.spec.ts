@@ -410,14 +410,9 @@ async function audioSeekContract(root: Locator) {
   await expect
     .poll(() =>
       slider.evaluate((element) => {
-        const fills = [...element.querySelectorAll('*')]
+        const fills = [element]
           .map((target) => getComputedStyle(target))
-          .filter((style) =>
-            style.transitionProperty
-              .split(',')
-              .map((value) => value.trim())
-              .includes('inset')
-          );
+          .filter((style) => style.transitionProperty.includes('--media-slider-fill'));
 
         return (
           fills.length > 0 &&
@@ -446,14 +441,9 @@ async function audioSeekContract(root: Locator) {
     const style = getComputedStyle(element);
     const root = element.parentElement;
     const expectedX = (root?.getBoundingClientRect().x ?? 0) + expectedOffset;
-    const fills = [...(root?.querySelectorAll('*') ?? [])]
-      .map((target) => getComputedStyle(target))
-      .filter((candidate) =>
-        candidate.transitionProperty
-          .split(',')
-          .map((value) => value.trim())
-          .includes('inset')
-      );
+    const fills = (root ? [getComputedStyle(root)] : []).filter((candidate) =>
+      candidate.transitionProperty.includes('--media-slider-fill')
+    );
     const rect = element.getBoundingClientRect();
     const lag = Math.abs(rect.x + rect.width / 2 - expectedX);
     const positionProperties = new Set(style.transitionProperty.split(',').map((value) => value.trim()));
