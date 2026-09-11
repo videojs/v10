@@ -4,16 +4,17 @@ import sizes from '@/data/bundle-sizes.json';
 import { AnimatedBars } from '../AnimatedBars';
 
 /**
- * Bundle sizes, measured with the repository's bundle-size script and snapshotted in `src/data/bundle-sizes.json`.
- * Bars are proportional to the Video.js 8 reference so the reduction reads at a glance.
+ * Download-time comparison on a slow 4G connection. Sizes come from `src/data/bundle-sizes.json`, measured with the
+ * repository's bundle-size script; the connection speed matches the original chart's assumption.
  */
-const kb = (bytes: number) => `${Math.round(bytes / 1024)} kB`;
-const max = sizes.baseline.initial;
-const rows = [
-  { label: `Video.js ${sizes.baseline.version}`, size: sizes.baseline.initial, accent: false },
-  ...sizes.presets.map((preset) => ({ label: preset.label, size: preset.initial, accent: true })),
-];
-const hlsExtra = kb(sizes.presets[0].total - sizes.presets[0].initial);
+const KB_PER_SECOND = 50.5;
+const seconds = [0, 5, 10, 15, 20];
+
+const v8Kb = Math.round(sizes.baseline.initial / 1024);
+const v10Kb = Math.round(sizes.presets[0].initial / 1024);
+const v8Seconds = (v8Kb / KB_PER_SECOND).toFixed(2);
+const v10Seconds = (v10Kb / KB_PER_SECOND).toFixed(2);
+const v10Width = `${((v10Kb / v8Kb) * 100).toFixed(2)}%`;
 ---
 
 <AnimatedBars
@@ -21,28 +22,78 @@ const hlsExtra = kb(sizes.presets[0].total - sizes.presets[0].initial);
   client:idle
 >
   <header class="text-p2">
-    <h3 class="font-semibold text-manila-light">Bundle size</h3>
-    <span class="text-manila-dark">Brotli-compressed JavaScript for a complete player</span>
+    <h3 class="font-bold text-manila-light">Download speeds</h3>
+    <span class="whitespace-nowrap text-manila-dark"
+      >(based on slow 4G connection)</span
+    >
   </header>
-  <dl class="mt-6 flex flex-col gap-4">
+  <p
+    class="mt-6 inline-block items-center rounded-full border border-manila-light bg-faded-black px-8 py-0.5 text-center font-display text-h5 font-bold text-manila-light uppercase md:hidden"
+  >
+    VJS 8
+  </p>
+  <div
+    class="mt-4 mb-2 data-bar w-full md:mt-5 md:mb-2.5"
+    style={`--data-bar-width: 100%; --data-bar-duration: ${v8Seconds}s;`}
+  >
+  </div>
+  <div class="flex items-center gap-2.5">
+    <p
+      class="hidden min-w-30 items-center justify-center rounded-full border border-manila-light bg-faded-black py-0.5 text-center font-display text-h5 font-bold text-manila-light uppercase md:flex"
+    >
+      VJS 8
+    </p>
+    <p
+      class="flex gap-1 text-center font-display text-h5 text-manila-light uppercase lg:gap-2.5"
+    >
+      <span class="font-bold">{v8Seconds}s</span>
+      <span>/</span>
+      <span class="whitespace-nowrap">{v8Kb}kB</span>
+    </p>
+  </div>
+  <p
+    class="mt-6 inline-block items-center rounded-full border border-orange bg-faded-black px-8 py-0.5 text-center font-display text-h5 font-bold text-orange uppercase md:hidden"
+  >
+    VJS 10
+  </p>
+  <div
+    class="mt-4 mb-2 data-bar data-bar-orange md:mt-5 md:mb-2.5"
+    style={`--data-bar-width: ${v10Width}; --data-bar-duration: ${v10Seconds}s;`}
+  >
+  </div>
+
+  <div class="flex items-center gap-2.5">
+    <p
+      class="hidden min-w-30 items-center justify-center rounded-full border border-orange bg-faded-black py-0 text-center font-display text-h5 font-bold text-orange uppercase md:flex"
+    >
+      VJS 10
+    </p>
+    <p
+      class="flex gap-1 text-center font-display text-h5 text-orange uppercase lg:gap-2.5"
+    >
+      <span class="font-bold">{v10Seconds}s</span>
+      <span>/</span>
+      <span class="whitespace-nowrap">{v10Kb}kB</span>
+    </p>
+  </div>
+
+  <div class="flex w-full justify-between px-1 pt-4 pb-2">
     {
-      rows.map((row, index) => (
-        <div class="flex flex-col gap-1.5">
-          <div class="flex items-baseline justify-between gap-4 text-p3">
-            <dt class={clsx("font-semibold", row.accent ? "text-orange" : "text-manila-light")}>{row.label}</dt>
-            <dd class={clsx("font-mono", row.accent ? "text-orange" : "text-manila-light")}>{kb(row.size)}</dd>
-          </div>
-          <div
-            class={clsx("data-bar", row.accent && "data-bar-orange")}
-            style={`height: calc(var(--spacing) * 2.5); --data-bar-width: ${(row.size / max) * 100}%; --data-bar-duration: ${0.6 + index * 0.15}s;`}
-          />
-        </div>
+      Array.from({ length: 21 }, (_, i) => (
+        <div
+          class={clsx(
+            "h-4 w-px",
+            seconds.includes(i) ? "bg-manila-light" : "bg-warm-gray",
+          )}
+        />
       ))
     }
-  </dl>
-  <p class="mt-6 text-p4 text-manila-dark">
+  </div>
+  <div class="-mx-1.5 flex justify-between" style="width: calc(100% + 0.85rem)">
     {
-      `Initial JavaScript per preset, before any streaming engine. hls.js loads on demand and adds about ${hlsExtra}. Measured ${sizes.measuredAt} with the repository's bundle-size script.`
+      Array.from({ length: 5 }, (_, i) => (
+        <div class="w-5 text-center text-p3 text-manila-light">{i}s</div>
+      ))
     }
-  </p>
+  </div>
 </AnimatedBars>
