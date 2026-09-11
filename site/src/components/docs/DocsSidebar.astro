@@ -49,10 +49,9 @@ const indicatorTransitionName =
     : undefined;
 
 // Server-rendered clip for the highlight overlay: each tab is 9 spacing units tall inside 1 unit of padding and gap,
-// so the band for the active tab can be expressed without measuring. The client refines it and animates from the
-// previously active tab after a section change.
+// so the band for the active tab can be expressed without measuring. The client refines it once layout is known.
 const activeIndex = activeTab ? tabs.indexOf(activeTab) : 0;
-const initialClip = `inset(calc(var(--spacing) * ${1 + activeIndex * 10}) var(--spacing) calc(var(--spacing) * ${1 + (tabs.length - 1 - activeIndex) * 10}) var(--spacing) round var(--radius-md))`;
+const initialClip = `inset(calc(var(--spacing) * ${1 + activeIndex * 10}) var(--spacing) calc(var(--spacing) * ${1 + (tabs.length - 1 - activeIndex) * 10}) var(--spacing) round 6px)`;
 
 const TAB_ICONS = {
   Guides: BookIcon,
@@ -125,21 +124,20 @@ const TAB_ICONS = {
   </nav>
 </div>
 
+<style>
+  /* Without clip-path the overlay would highlight every tab; hide it and let the real link carry the selected state. */
+  @supports not (clip-path: inset(0 round 6px)) {
+    [data-sidebar-tabs-highlight] {
+      display: none;
+    }
+  }
+</style>
+
 <script is:inline>
-  // Slide the section highlight from the previously active tab after a section change. The tab list is identical on
-  // every docs page, so the previous tab's index is enough to rebuild its band on the new page.
+  // Slide the section highlight to the chosen tab before following its link, so the next page arrives with the
+  // highlight already in place and the page's own cross-document transition has nothing to fade.
   (() => {
-    const KEY = "vjs-sidebar-tab-from";
     const roots = document.querySelectorAll("[data-sidebar-tabs]:not([data-tabs-ready])");
-    if (roots.length === 0) return;
-
-    let from = null;
-
-    try {
-      from = sessionStorage.getItem(KEY);
-      sessionStorage.removeItem(KEY);
-    } catch {}
-
     const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     for (const root of roots) {
@@ -154,25 +152,28 @@ const TAB_ICONS = {
         const box = root.getBoundingClientRect();
         const tab = links[index].getBoundingClientRect();
 
-        return `inset(${tab.top - box.top}px ${box.right - tab.right}px ${box.bottom - tab.bottom}px ${tab.left - box.left}px round var(--radius-md))`;
+        return `inset(${tab.top - box.top}px ${box.right - tab.right}px ${box.bottom - tab.bottom}px ${tab.left - box.left}px round 6px)`;
       };
-
-      for (const link of links) {
-        link.addEventListener("click", () => {
-          try {
-            sessionStorage.setItem(KEY, String(active));
-          } catch {}
-        });
-      }
 
       overlay.style.clipPath = bandFor(active);
 
-      const previous = from === null ? active : Number(from);
-      if (previous === active || !links[previous] || reduceMotion) continue;
+      links.forEach((link, index) => {
+        link.addEventListener("click", (event) => {
+          // Leave modified clicks, same-tab re-clicks, and reduced-motion users on the browser's default path.
+          if (index === active || reduceMotion) return;
 
-      overlay.animate([{ clipPath: bandFor(previous) }, { clipPath: bandFor(active) }], {
-        duration: 320,
-        easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+          event.preventDefault();
+
+          const slide = overlay.animate([{ clipPath: bandFor(active) }, { clipPath: bandFor(index) }], {
+            duration: 260,
+            easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+            fill: "forwards",
+          });
+
+          slide.finished.then(() => window.location.assign(link.href), () => window.location.assign(link.href));
+        });
       });
     }
   })();
