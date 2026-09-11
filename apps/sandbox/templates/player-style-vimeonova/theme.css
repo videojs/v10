@@ -1,0 +1,502 @@
+/*
+ * Vimeonova, ported from `@player.style/vimeonova` (media-chrome) to Video.js 10 elements.
+ *
+ * Three separate menus rather than one settings menu, so each gets its own `media-menu` and trigger. The original's
+ * `bounds="vimeonova-bounds"` — media-chrome's way of constraining the preview to an element — becomes the slider
+ * preview's own `overflow="clamp"`.
+ */
+
+.ps-vimeonova {
+  --ps-black: 23 35 34;
+  --ps-primary: rgb(253 244 255);
+  --ps-secondary: rgb(23 35 34 / 0.75);
+  --ps-accent: rgb(0 186 115);
+  --ps-bar-height: 32px;
+  --ps-bar-radius: 0.125em;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-vimeonova / inline-size;
+
+  background: #000;
+  color: var(--ps-primary);
+  font-family: system-ui, sans-serif;
+  line-height: 1;
+}
+
+.ps-vimeonova > video,
+.ps-vimeonova > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+/* --- Header --- */
+
+.ps-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  row-gap: 1px;
+  margin: 0.625em;
+}
+
+.ps-title,
+.ps-byline {
+  display: inline-block;
+  margin: 0;
+  padding: 0.18em 0.24em;
+  background: var(--ps-secondary);
+  color: var(--ps-accent);
+  font-size: 0.8em;
+  font-weight: normal;
+  line-height: 1;
+}
+
+.ps-title {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.ps-title:not(:has(*)),
+.ps-byline:not(:has(*)) {
+  display: none;
+}
+
+/* --- Play buttons --- */
+
+.ps-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-play {
+  display: grid;
+  place-content: center;
+  width: 65px;
+  height: 40px;
+  padding: 0.3125em 0.625em;
+  border: 0;
+  border-radius: 0.25em;
+  background: var(--ps-secondary);
+  color: var(--ps-primary);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-play:hover,
+.ps-play:active {
+  background: var(--ps-accent);
+}
+
+.ps-play-center {
+  position: relative;
+  top: -30%;
+}
+
+.ps-play-bar {
+  flex: none;
+  align-self: end;
+}
+
+.ps-pause-icon,
+.ps-cc-on,
+.ps-pip-exit,
+.ps-cast-exit,
+.ps-fs-exit,
+.ps-vol-off,
+.ps-vol-low,
+.ps-vol-medium {
+  display: none;
+}
+
+.ps-play:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+.ps-play:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+/* --- Control bar --- */
+
+.ps-bar-container {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: end;
+  width: 100%;
+  padding: 0.35em;
+}
+
+@container ps-vimeonova (inline-size >= 384px) {
+  .ps-bar-container {
+    column-gap: 0.625em;
+    padding: 0.625em;
+  }
+}
+
+.ps-bar-right {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.ps-bar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--ps-bar-height);
+  background: var(--ps-secondary);
+  border-end-start-radius: var(--ps-bar-radius);
+  border-end-end-radius: var(--ps-bar-radius);
+}
+
+.ps-spacer {
+  flex: 1;
+}
+
+.ps-button {
+  display: grid;
+  flex: none;
+  place-content: center;
+  padding: 0.3125em 0.35em;
+  border: 0;
+  background: transparent;
+  color: var(--ps-primary);
+  cursor: pointer;
+}
+
+.ps-button[data-hidden],
+.ps-button[data-availability="unavailable"],
+.ps-button[data-availability="unsupported"] {
+  display: none;
+}
+
+.ps-icon {
+  width: 1.15em;
+  height: 1.15em;
+  fill: none;
+  stroke: currentcolor;
+  transition: transform 0.2s ease;
+}
+
+.ps-button:active .ps-icon {
+  transform: scale(1.2);
+}
+
+.ps-rate {
+  font: inherit;
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-rate::after {
+  content: "1x";
+}
+
+.ps-button[data-fullscreen] .ps-fs-enter {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-exit {
+  display: block;
+}
+
+.ps-button[data-pip] .ps-pip-enter {
+  display: none;
+}
+
+.ps-button[data-pip] .ps-pip-exit {
+  display: block;
+}
+
+.ps-button[data-volume-level="off"] .ps-vol-high,
+.ps-button[data-volume-level="low"] .ps-vol-high,
+.ps-button[data-volume-level="medium"] .ps-vol-high {
+  display: none;
+}
+
+.ps-button[data-volume-level="off"] .ps-vol-off,
+.ps-button[data-volume-level="low"] .ps-vol-low,
+.ps-button[data-volume-level="medium"] .ps-vol-medium {
+  display: block;
+}
+
+/* --- Time sliders: a thin strip above the bar, and a full-height one inside it --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-range-small {
+  width: 100%;
+  height: 5px;
+}
+
+.ps-range-large {
+  display: none;
+  flex-grow: 10000;
+  height: var(--ps-bar-height);
+  padding-inline: 10px;
+}
+
+@container ps-vimeonova (inline-size >= 384px) {
+  .ps-range-large {
+    display: block;
+  }
+
+  .ps-range-small {
+    display: none;
+  }
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 10px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: rgb(var(--ps-black) / 0.5);
+}
+
+.ps-range-small .ps-track {
+  inset: 0;
+  height: 5px;
+  transform: none;
+  border-start-start-radius: var(--ps-bar-radius);
+  border-start-end-radius: var(--ps-bar-radius);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: dimgray;
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-accent);
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin-bottom: 0.4em;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border: 4px solid var(--ps-secondary);
+  border-radius: 2px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  padding: 0.2em 0.4em;
+  background: rgb(var(--ps-black) / 1);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Volume --- */
+
+.ps-volume {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.ps-volume-range {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.2s ease-out;
+}
+
+.ps-volume:hover .ps-volume-range,
+.ps-volume:focus-within .ps-volume-range {
+  width: 60px;
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  width: 60px;
+  height: var(--ps-bar-height);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 5px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: rgb(var(--ps-black) / 0.5);
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-accent);
+}
+
+/* --- Menus --- */
+
+.ps-menu {
+  position: absolute;
+  right: 0.625em;
+  bottom: calc(var(--ps-bar-height) + 1.25em);
+  min-width: 9em;
+  padding: 0.25em 0;
+  border-radius: 0.25em;
+  background: rgb(var(--ps-black) / 0.95);
+  color: var(--ps-primary);
+  font-size: 0.85em;
+}
+
+.ps-menu:not([data-open]) {
+  display: none;
+}
+
+.ps-menu-title {
+  padding: 0.4em 0.8em;
+  color: var(--ps-accent);
+  font-weight: bold;
+}
+
+.ps-radio {
+  display: block;
+}
+
+.ps-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.35em 0.8em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ps-menu-item:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.ps-check {
+  opacity: 0;
+}
+
+.ps-menu-item[aria-checked="true"] .ps-check,
+.ps-menu-item[data-checked] .ps-check {
+  opacity: 1;
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 0.25em;
+  background: var(--ps-secondary);
+  text-align: center;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 0.25em;
+  background: var(--ps-accent);
+  color: var(--ps-primary);
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}
+
+/*
+ * The harness renders skins into light DOM, where `<slot>` is inert — a named slot never receives content, so these
+ * would otherwise render as empty chips. Only a shadow-DOM skin (v10's own `SkinElement`) can honour named slots.
+ */
+.ps-title,
+.ps-byline {
+  display: none;
+}

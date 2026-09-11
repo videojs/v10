@@ -1,0 +1,515 @@
+/*
+ * YT, ported from `@player.style/yt` (media-chrome) to Video.js 10 elements.
+ *
+ * Another delegate-heavy theme: 57 lines of its own CSS setting a handful of `--media-*` variables, with
+ * media-chrome's built-in control styling doing the rest. The port authors the control sizing and slider parts.
+ *
+ * Its largest size is tied to fullscreen rather than a width, which ports directly as `:fullscreen`.
+ */
+
+.ps-yt {
+  --ps-primary: #fff;
+  --ps-menu-bg: rgb(28 28 28 / 0.9);
+  --ps-button-width: 36px;
+  --ps-track-height: 3px;
+  --ps-thumb-size: 13px;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-yt / inline-size;
+
+  background: #000;
+  color: var(--ps-primary);
+  font-size: 13px;
+  font-family: Roboto, Arial, sans-serif;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+@container ps-yt (inline-size >= 480px) {
+  .ps-yt {
+    --ps-button-width: 48px;
+  }
+}
+
+.ps-yt:fullscreen {
+  --ps-button-width: 54px;
+  --ps-track-height: 4px;
+  --ps-thumb-size: 20px;
+
+  font-size: 17px;
+}
+
+.ps-yt > video,
+.ps-yt > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+.ps-gradient {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(0deg, #000000c0, transparent);
+}
+
+/* --- Time slider, sitting directly above the bar --- */
+
+.ps-range {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: 42px;
+  display: block;
+  height: 16px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: var(--ps-track-height);
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: rgb(255 255 255 / 0.45);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: var(--ps-thumb-size);
+  height: var(--ps-thumb-size);
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  transition: transform 0.1s;
+}
+
+.ps-range:hover .ps-thumb,
+.ps-range[data-interactive] .ps-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0.25em;
+  margin-bottom: 0.5em;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 2px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-chapter,
+.ps-preview-time {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+.ps-chapter:empty {
+  display: none;
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 6px;
+}
+
+.ps-spacer {
+  flex: 1;
+}
+
+.ps-button {
+  position: relative;
+  display: inline-grid;
+  place-content: center;
+  width: var(--ps-button-width);
+  height: 100%;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.9;
+  cursor: pointer;
+  transition: opacity 0.1s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.ps-button:hover {
+  opacity: 1;
+}
+
+.ps-button[data-hidden],
+.ps-button[data-availability="unavailable"],
+.ps-button[data-availability="unsupported"] {
+  display: none;
+}
+
+.ps-icon {
+  width: 100%;
+  height: 24px;
+  fill: var(--ps-primary);
+  fill-rule: evenodd;
+}
+
+.ps-icon .svg-shadow {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: 0.15;
+  stroke-width: 2px;
+}
+
+.ps-fs-exit {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-enter {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-exit {
+  display: block;
+}
+
+.ps-time {
+  padding: 0 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Volume --- */
+
+.ps-volume {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.ps-volume-range {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.2s ease-out;
+}
+
+.ps-volume:hover .ps-volume-range,
+.ps-volume:focus-within .ps-volume-range {
+  width: 64px;
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 100%;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: var(--ps-track-height);
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+.ps-vthumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: var(--ps-thumb-size);
+  height: var(--ps-thumb-size);
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+}
+
+/* --- Centred controls --- */
+
+.ps-mobile-controls {
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 12%;
+  pointer-events: none;
+}
+
+.ps-mobile-controls {
+  display: flex;
+}
+
+.ps-round {
+  display: grid;
+  place-content: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.5);
+  color: var(--ps-primary);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-round-play {
+  width: 60px;
+  height: 60px;
+}
+
+.ps-tap-animation {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-tap {
+  display: grid;
+  place-content: center;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.5);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-tap-animation {
+  display: none;
+}
+
+.ps-tap .ps-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.ps-pause-icon {
+  display: none;
+}
+
+.ps-tap:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+.ps-tap:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+/* --- Settings menu --- */
+
+.ps-menu {
+  position: absolute;
+  right: 12px;
+  bottom: 54px;
+  min-width: 180px;
+  padding: 6px 0;
+  border-radius: 4px;
+  background: var(--ps-menu-bg);
+  color: var(--ps-primary);
+}
+
+.ps-menu:not([data-open]) {
+  display: none;
+}
+
+.ps-menu-content:not([data-open]) {
+  display: none;
+}
+
+.ps-menu-item,
+.ps-menu-back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ps-menu-item:hover,
+.ps-menu-back:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.ps-menu-back {
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.15);
+}
+
+.ps-radio {
+  display: block;
+}
+
+.ps-check {
+  opacity: 0;
+}
+
+.ps-menu-item[aria-checked="true"] .ps-check,
+.ps-menu-item[data-checked] .ps-check {
+  opacity: 1;
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 4px;
+  background: var(--ps-menu-bg);
+  text-align: center;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 2px;
+  background: var(--ps-primary);
+  color: #000;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}
+
+/*
+ * The play artwork ships both states as sub-groups (`play-icon` / `pause-icon`) with no rules of its own — in
+ * media-chrome they were toggled by the player's stylesheet. v10 leaves skin-authored artwork alone, so without this
+ * both groups paint at once and overlap into an unreadable glyph.
+ */
+.ps-yt [id="pause-icon"] {
+  display: none;
+}
+
+.ps-yt .ps-button:not([data-paused]) [id="play-icon"],
+.ps-yt .ps-tap:not([data-paused]) [id="play-icon"] {
+  display: none;
+}
+
+.ps-yt .ps-button:not([data-paused]) [id="pause-icon"],
+.ps-yt .ps-tap:not([data-paused]) [id="pause-icon"] {
+  display: block;
+}
+
+.ps-round-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* The seek glyph is one asset; the backward button mirrors it. */
+.ps-seek-back {
+  transform: scaleX(-1);
+}
+
+.ps-round-pause-icon {
+  display: none;
+}
+
+.ps-round-play:not([data-paused]) .ps-round-play-icon {
+  display: none;
+}
+
+.ps-round-play:not([data-paused]) .ps-round-pause-icon {
+  display: block;
+}

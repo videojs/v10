@@ -1,0 +1,90 @@
+<media-container class="media-skin ps-reelplay" data-theme="reelplay" data-preset="video">
+  <slot></slot>
+
+  <media-poster class="ps-poster">
+    <img alt="" decoding="async" />
+  </media-poster>
+
+  <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+
+  <media-error-dialog class="ps-dialog">
+    <media-dialog-backdrop class="ps-dialog-backdrop"></media-dialog-backdrop>
+    <media-dialog-popup class="ps-dialog-popup">
+      <media-dialog-title class="ps-dialog-title"></media-dialog-title>
+      <media-dialog-description class="ps-dialog-description"></media-dialog-description>
+      <media-dialog-close class="ps-dialog-close">Dismiss</media-dialog-close>
+    </media-dialog-popup>
+  </media-error-dialog>
+
+  <div class="ps-top">
+    <div class="ps-titlebar"><span>ReelPlay: Welcome!</span></div>
+
+    <div class="ps-bar">
+      <media-play-button class="ps-transport ps-play">
+        <div class="ps-t-play"></div>
+        <div class="ps-t-pause"></div>
+      </media-play-button>
+      <media-play-button class="ps-transport ps-pause">
+        <div class="ps-t-play"></div>
+        <div class="ps-t-pause"></div>
+      </media-play-button>
+      <media-play-button class="ps-transport ps-stop">
+        <div class="ps-t-play"></div>
+        <div class="ps-t-pause"></div>
+      </media-play-button>
+
+      <media-seek-button class="ps-seek ps-seek-back" seconds="-10"
+        ><span class="ps-seek-icon"></span
+      ></media-seek-button>
+
+      <media-time-slider class="ps-range">
+        <media-slider-track class="ps-track">
+          <media-slider-fill class="ps-fill"></media-slider-fill>
+        </media-slider-track>
+        <media-slider-thumb class="ps-thumb"></media-slider-thumb>
+        <media-slider-preview class="ps-preview" overflow="clamp">
+          <media-slider-thumbnail class="ps-thumbnail"></media-slider-thumbnail>
+          <media-slider-value class="ps-preview-time" type="pointer"></media-slider-value>
+        </media-slider-preview>
+      </media-time-slider>
+
+      <media-seek-button class="ps-seek ps-seek-fwd" seconds="10"><span class="ps-seek-icon"></span></media-seek-button>
+
+      <div class="ps-spacer"></div>
+
+      <media-mute-button class="ps-mute">
+        <span class="ps-spk ps-spk-off"></span>
+        <span class="ps-spk ps-spk-on"></span>
+      </media-mute-button>
+
+      <media-volume-slider class="ps-vrange">
+        <media-slider-track class="ps-vtrack">
+          <media-slider-fill class="ps-vfill"></media-slider-fill>
+        </media-slider-track>
+        <media-slider-thumb class="ps-vthumb"></media-slider-thumb>
+      </media-volume-slider>
+    </div>
+  </div>
+
+  <div class="ps-bottom">
+    <div>
+      <media-play-button class="ps-status">
+        <div class="ps-s-play"></div>
+        <div class="ps-s-pause"></div>
+      </media-play-button>
+      <span>32.1 Kbps</span>
+    </div>
+    <div>
+      <media-time-group class="ps-time">
+        <media-time type="current"></media-time>
+        <media-time-separator> / </media-time-separator>
+        <media-time type="duration"></media-time>
+      </media-time-group>
+    </div>
+    <div><span>Theme by @davekiss</span></div>
+    <div>
+      <span>Powered by <a href="https://mux.com" title="Mux">Mux</a></span>
+    </div>
+  </div>
+</media-container>
