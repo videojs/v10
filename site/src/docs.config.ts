@@ -7,7 +7,7 @@ import type { Sidebar } from '@/types/docs';
  */
 export const sidebar: Sidebar = [
   {
-    sidebarLabel: 'Guide',
+    sidebarLabel: 'Guides',
     llmsDescription: 'Installation, migration, concepts, playback guides, customization, and tooling for Video.js.',
     contents: [
       {
