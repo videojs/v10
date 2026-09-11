@@ -1,0 +1,343 @@
+/*
+ * Microvideo, ported from `@player.style/microvideo` (media-chrome) to Video.js 10 elements.
+ *
+ * Its controls are a centred cluster rather than a bottom bar, with the scrubber directly underneath.
+ *
+ * Only the on-demand half is ported. The original also branches on `streamtype == 'live'`, and again on whether there
+ * is a target live window, which in v10 means the `live-video` preset and a second skin.
+ */
+
+.ps-microvideo {
+  --ps-primary: #fff;
+  --ps-secondary: rgb(0 0 0 / 0.7);
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-microvideo / inline-size;
+
+  background: #000;
+  color: var(--ps-primary);
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.ps-microvideo > video,
+.ps-microvideo > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+.ps-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-loading[data-visible] {
+  display: grid;
+}
+
+.ps-spinner {
+  width: 3em;
+  height: 3em;
+}
+
+/* --- Centred control cluster --- */
+
+.ps-centre {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.6em;
+  padding: 1em;
+  pointer-events: none;
+}
+
+.ps-group {
+  display: flex;
+  align-items: center;
+  gap: 0.15em;
+  padding: 0.3em 0.5em;
+  border-radius: 9999px;
+  background: var(--ps-secondary);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.ps-button {
+  display: grid;
+  flex: none;
+  place-content: center;
+  padding: 0.3em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ps-button[data-hidden],
+.ps-button[data-availability="unavailable"],
+.ps-button[data-availability="unsupported"] {
+  display: none;
+}
+
+.ps-icon {
+  width: 1.5em;
+  height: 1.5em;
+  fill: var(--ps-primary);
+}
+
+.ps-pause-icon,
+.ps-cc-on,
+.ps-fs-exit,
+.ps-pip-exit,
+.ps-cast-exit,
+.ps-vol-off,
+.ps-vol-low,
+.ps-vol-medium {
+  display: none;
+}
+
+.ps-button:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+.ps-button:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+.ps-button[data-active] .ps-cc-off {
+  display: none;
+}
+
+.ps-button[data-active] .ps-cc-on {
+  display: block;
+}
+
+.ps-button[data-fullscreen] .ps-fs-enter {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-exit {
+  display: block;
+}
+
+.ps-button[data-pip] .ps-pip-enter {
+  display: none;
+}
+
+.ps-button[data-pip] .ps-pip-exit {
+  display: block;
+}
+
+.ps-button[data-volume-level="off"] .ps-vol-high,
+.ps-button[data-volume-level="low"] .ps-vol-high,
+.ps-button[data-volume-level="medium"] .ps-vol-high {
+  display: none;
+}
+
+.ps-button[data-volume-level="off"] .ps-vol-off,
+.ps-button[data-volume-level="low"] .ps-vol-low,
+.ps-button[data-volume-level="medium"] .ps-vol-medium {
+  display: block;
+}
+
+/* Volume opens on hover, as in the original. */
+.ps-volume {
+  display: flex;
+  align-items: center;
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  width: 0;
+  height: 1.6em;
+  overflow: hidden;
+  touch-action: none;
+  cursor: pointer;
+  transition: width 0.2s ease-out;
+}
+
+.ps-volume:hover .ps-vslider,
+.ps-volume:focus-within .ps-vslider {
+  width: 4em;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0.2em;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.4);
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+/* --- Scrubber --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  width: min(100%, 24em);
+  height: 1.2em;
+  touch-action: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.4);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: rgb(255 255 255 / 0.3);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.ps-range:hover .ps-thumb,
+.ps-range[data-interactive] .ps-thumb {
+  opacity: 1;
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin-bottom: 0.5em;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 12px;
+  background: var(--ps-secondary);
+  text-align: center;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  color: #000;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}

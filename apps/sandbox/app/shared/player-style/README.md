@@ -27,7 +27,7 @@ something systemic that would have invalidated earlier pixel work, so polishing 
 | vimeonova | yes | Icons stroke-only where the original fills them; no title/byline (see slots below) |
 | yt | yes | Bar play glyph renders as a skip icon; centred seek controls show at the wrong breakpoint |
 | minimal | on-demand only | Shows more controls than the original at the same width — the composition thresholds do not match. Live variant outstanding |
-| microvideo | no | — |
+| microvideo | on-demand only | Control cluster sits centre-vertically; original sits it near the bottom. Shows more controls at the same width. Live variant outstanding |
 
 Winamp references its artwork from player.style over a pinned CDN rather than copying the bitmaps in — the same
 reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
