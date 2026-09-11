@@ -5,9 +5,24 @@
  * What's worth asserting here is that applying it to the audio-only Media keeps that surface intact — the two extend
  * different bases, so nothing guarantees it but a test — plus the two things this flavor decides for itself.
  */
-import { describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxAudioAdapter } from '../adapter';
+
+// The document Mux serves for the asset, the first chapter standing for it.
+const DOCUMENT = [{ 'start-time': 0, titles: [{ language: 'und', title: 'Big Buck Bunny' }] }];
+
+// Every Mux source fetches its metadata, so no test here reaches the network.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify(DOCUMENT), { status: 200 }))
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('MuxAudioAdapter', () => {
   it('defaults source to null', () => {
@@ -72,6 +87,18 @@ describe('MuxAudioAdapter', () => {
     media.source = { playbackId: 'abc123' };
 
     expect(onContentDataChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads the title from the asset metadata, like the video flavor', async () => {
+    const media = new MuxAudioAdapter();
+
+    media.source = { playbackId: 'abc123' };
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
+    expect(fetch).toHaveBeenCalledWith('https://stream.mux.com/abc123/metadata.json', expect.anything());
+    expect(media.contentData.title).toBe('Big Buck Bunny');
   });
 
   it('points unplayable-source copy at the hls.js-backed Media', () => {

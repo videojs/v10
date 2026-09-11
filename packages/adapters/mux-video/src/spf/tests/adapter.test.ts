@@ -5,9 +5,50 @@
  * (`packages/adapters/mux-video/src/tests/adapter.test.ts`), minus everything that flavor's `engine` / `preferPlayback`
  * options carry — this source is Mux identity and nothing else.
  */
-import { describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxVideoAdapter } from '../adapter';
+
+// The document Mux serves: Apple's JSON chapters, the first chapter standing
+// for the asset.
+const DOCUMENT = [
+  {
+    'start-time': 0,
+    titles: [{ language: 'und', title: 'Big Buck Bunny' }],
+    metadata: [{ key: 'com.mux.video.branding', value: 'mux-free-plan' }],
+  },
+];
+
+function stubFetch(body: unknown = DOCUMENT, status = 200) {
+  const fetchMock = vi.fn(async (_input: string | URL | Request) => new Response(JSON.stringify(body), { status }));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  return fetchMock;
+}
+
+// The engine fetches the manifest through the same global; only the metadata
+// requests are of interest here.
+function metadataRequests(fetchMock: ReturnType<typeof stubFetch>) {
+  return fetchMock.mock.calls.map(([input]) => String(input)).filter((url) => url.includes('metadata.json'));
+}
+
+// Let a resolved fetch settle into `contentData`.
+function flush() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+// Every Mux source fetches its metadata, so no test here reaches the network.
+beforeEach(() => {
+  stubFetch();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('MuxVideoAdapter', () => {
   it('defaults source to null', () => {
@@ -223,5 +264,133 @@ describe('MuxVideoAdapter', () => {
     // import path, since this one Media is reached through three packages.
     expect(MuxVideoAdapter.alternativeMediaSuggestion).toContain('hls-js');
     expect(MuxVideoAdapter.alternativeMediaSuggestion).not.toContain('@videojs/');
+  });
+
+  describe('metadata', () => {
+    it('fetches the metadata as soon as a playback id is known', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+      const handler = vi.fn();
+
+      media.addEventListener('contentdatachange', handler);
+      media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
+
+      // SPF surfaces no session data, so there is no manifest to wait on.
+      expect(metadataRequests(fetchMock)).toEqual(['https://stream.mux.com/abc123/metadata.json?token=jwt']);
+      expect(media.contentData.title).toBeUndefined();
+
+      await flush();
+
+      // Signed playback without image tokens derives no URLs, so the metadata
+      // is the one change announced.
+      expect(media.contentData).toEqual({
+        title: 'Big Buck Bunny',
+        'com.mux.video.branding': 'mux-free-plan',
+      });
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not fetch for a non-Mux source', () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.source = { src: 'https://example.com/stream.m3u8' };
+
+      expect(metadataRequests(fetchMock)).toEqual([]);
+    });
+
+    it('keeps the title when only image params change', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.source = { playbackId: 'abc123' };
+      await flush();
+
+      // What `poster-time` does through the element: same stream, new object.
+      media.source = { playbackId: 'abc123', poster: { time: 3 } };
+      await flush();
+
+      expect(media.contentData.title).toBe('Big Buck Bunny');
+      expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp?time=3');
+      expect(metadataRequests(fetchMock)).toHaveLength(1);
+    });
+
+    it('drops the title with the playback id, before the next one loads', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.source = { playbackId: 'abc123' };
+      await flush();
+
+      const seen: (string | null | undefined)[] = [];
+
+      media.addEventListener('sourcechange', () => seen.push(media.contentData.title));
+      media.source = { playbackId: 'xyz789' };
+
+      expect(seen).toEqual([undefined]);
+
+      await flush();
+
+      expect(metadataRequests(fetchMock)).toEqual([
+        'https://stream.mux.com/abc123/metadata.json',
+        'https://stream.mux.com/xyz789/metadata.json',
+      ]);
+      expect(media.contentData.title).toBe('Big Buck Bunny');
+    });
+
+    it('clears the title with the source', async () => {
+      const media = new MuxVideoAdapter();
+
+      media.source = { playbackId: 'abc123' };
+      await flush();
+
+      media.source = null;
+
+      expect(media.contentData).toEqual({});
+    });
+
+    it('has no title for an asset without metadata', async () => {
+      stubFetch([{ 'start-time': 0 }]);
+
+      const media = new MuxVideoAdapter();
+      const handler = vi.fn();
+
+      media.source = { playbackId: 'abc123' };
+      media.addEventListener('contentdatachange', handler);
+      await flush();
+
+      expect(media.contentData.title).toBeUndefined();
+      // An empty document changes nothing, so nothing is announced.
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('has no title when the document fails to load', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      stubFetch('', 500);
+
+      const media = new MuxVideoAdapter();
+
+      media.source = { playbackId: 'abc123' };
+      await flush();
+
+      expect(media.contentData.title).toBeUndefined();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('500'));
+    });
+
+    it('aborts the request in flight on destroy', () => {
+      const fetchMock = vi.fn((_url: string, _init?: RequestInit) => new Promise<Response>(() => {}));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const media = new MuxVideoAdapter();
+
+      media.source = { playbackId: 'abc123' };
+      media.destroy();
+
+      const request = fetchMock.mock.calls.find(([url]) => url.includes('metadata.json'));
+
+      expect(request?.[1]?.signal?.aborted).toBe(true);
+    });
   });
 });

@@ -3,8 +3,10 @@ import {
   createMuxStoryboardURL,
   createMuxVideoURL,
   type MuxContentData,
+  MuxMetadataLoader,
   type MuxSourceBase,
   parseMuxVideoURL,
+  toMuxContentData,
 } from '@videojs/mux';
 import { shallowEqual } from '@videojs/utils/object';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
@@ -29,9 +31,13 @@ export interface MuxAdapterAPI extends MuxAdapterProps {
  * Unlike the hls.js-backed `MuxVideoAdapter`, there is no inherited `source` to delegate to — the SPF Medias know only
  * `src` — so this owns the structured source and dispatches `sourcechange` itself.
  *
+ * The metadata Mux publishes for the asset is fetched as soon as a playback ID is known. The hls.js-backed flavor waits
+ * for its `load()`; SPF has no such step — assigning `src` is the load — so the assignment is the moment here.
+ *
  * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the
  *   new value.
- * @fires contentdatachange - Fired when the derived `contentData` changes. Read `contentData` for the new value.
+ * @fires contentdatachange - Fired when `contentData` changes: the derived URLs with `source`, and the metadata once it
+ *   loads. Read `contentData` for the new value.
  */
 export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class MuxImpl extends BaseClass {
@@ -54,6 +60,14 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     #source: MuxSourceBase | null = MuxImpl.defaultProps.source;
     #contentData: MuxContentData = {};
+    #metadata = new MuxMetadataLoader(() => {
+      if (this.#refreshContentData()) this.dispatchEvent?.(new Event('contentdatachange'));
+    });
+
+    destroy() {
+      this.#metadata.destroy();
+      super.destroy?.();
+    }
 
     /**
      * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the
@@ -91,6 +105,7 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
       if (source === this.#source) return;
 
       this.#source = source;
+      this.#metadata.reset(source);
 
       // Refresh the bag before announcing `sourcechange`, because listeners read
       // `contentData` from that event. Announcing its own change waits until
@@ -102,25 +117,29 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.dispatchEvent?.(new Event('sourcechange'));
 
       if (contentDataChanged) this.dispatchEvent?.(new Event('contentdatachange'));
+
+      this.#metadata.load();
     }
 
     /**
-     * Image URLs `source` describes rather than plays: `poster` from its `poster` params, `storyboard` from its
-     * `storyboard` params.
+     * What `source` says about its content. `poster` and `storyboard` are image URLs it describes rather than plays,
+     * from its `poster` and `storyboard` params. `title` and the rest come from the metadata Mux publishes for the
+     * asset, which loads with the source, so they arrive later than the URLs and are absent until then.
      *
-     * Derived from `source` and nothing else. The same object is handed back until one of those URLs changes, and
-     * `contentdatachange` announces it when it does. Nothing here is applied for you.
+     * The same object is handed back until something in it changes, and `contentdatachange` announces it when it does.
+     * Nothing here is applied for you.
      */
     get contentData(): MuxContentData {
       return this.#contentData;
     }
 
-    /** Rebuild the derived bag, reporting whether anything about it changed. */
+    /** Rebuild the bag from `source` and the metadata, reporting whether anything about it changed. */
     #refreshContentData(): boolean {
       const poster = createMuxPosterURL(this.#source);
       const storyboard = createMuxStoryboardURL(this.#source);
 
       const next: MuxContentData = {
+        ...toMuxContentData(this.#metadata.metadata),
         ...(poster && { poster }),
         ...(storyboard && { storyboard }),
       };
