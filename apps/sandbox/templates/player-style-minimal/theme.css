@@ -1,0 +1,392 @@
+/*
+ * Minimal, ported from `@player.style/minimal` (media-chrome) to Video.js 10 elements.
+ *
+ * This is the theme the audit flagged as hardest, and the reason is composition rather than size: media-chrome let it
+ * render a *different set of controls* per breakpoint through `<template if="breakpointsm">`. v10 skins are static, so
+ * every control is always in the tree and the container queries below decide what is shown. Hidden controls use
+ * `display: none` so they leave the tab order and the accessibility tree, not just the picture.
+ *
+ * Only the on-demand half is ported here. The original also branches on `streamtype == 'live'`, which in v10 is a
+ * separate preset (`live-video`) and therefore a second skin.
+ */
+
+.ps-minimal {
+  --ps-primary: #fff;
+  --ps-secondary: rgb(0 0 0 / 0.75);
+  --ps-bar-height: 30px;
+  --ps-bar-radius: 4px;
+  --ps-bar-margin: 0 5px 5px;
+  --ps-bar-padding: 2px;
+  --ps-control-padding: 2px;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-minimal / inline-size;
+
+  background: #000;
+  color: var(--ps-primary);
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .ps-minimal {
+    --ps-secondary: color-mix(in srgb, #000 75%, transparent);
+  }
+}
+
+.ps-minimal > video,
+.ps-minimal > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+.ps-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-loading[data-visible] {
+  display: grid;
+}
+
+.ps-spinner {
+  width: 3em;
+  height: 3em;
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  height: var(--ps-bar-height);
+  margin: var(--ps-bar-margin);
+  padding-inline: var(--ps-bar-padding);
+  border-radius: var(--ps-bar-radius);
+  background: var(--ps-secondary);
+}
+
+.ps-button {
+  display: grid;
+  flex: none;
+  place-content: center;
+  padding: var(--ps-control-padding);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ps-button[data-hidden],
+.ps-button[data-availability="unavailable"],
+.ps-button[data-availability="unsupported"] {
+  display: none;
+}
+
+.ps-button[data-disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ps-icon {
+  width: 1.6em;
+  height: 1.6em;
+  fill: var(--ps-primary);
+}
+
+.ps-pause-icon,
+.ps-cc-on,
+.ps-fs-exit,
+.ps-pip-exit,
+.ps-cast-exit,
+.ps-vol-off,
+.ps-vol-low,
+.ps-vol-medium {
+  display: none;
+}
+
+.ps-button:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+.ps-button:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+.ps-button[data-active] .ps-cc-off {
+  display: none;
+}
+
+.ps-button[data-active] .ps-cc-on {
+  display: block;
+}
+
+.ps-button[data-fullscreen] .ps-fs-enter {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-exit {
+  display: block;
+}
+
+.ps-button[data-pip] .ps-pip-enter {
+  display: none;
+}
+
+.ps-button[data-pip] .ps-pip-exit {
+  display: block;
+}
+
+.ps-button[data-volume-level="off"] .ps-vol-high,
+.ps-button[data-volume-level="low"] .ps-vol-high,
+.ps-button[data-volume-level="medium"] .ps-vol-high {
+  display: none;
+}
+
+.ps-button[data-volume-level="off"] .ps-vol-off,
+.ps-button[data-volume-level="low"] .ps-vol-low,
+.ps-button[data-volume-level="medium"] .ps-vol-medium {
+  display: block;
+}
+
+.ps-time {
+  flex: none;
+  padding-inline: 0.4em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Sliders --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 3em;
+  height: 100%;
+  margin-inline: 0.4em;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.5);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: rgb(255 255 255 / 0.4);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+/* The original keeps the thumb hidden until the slider is touched. */
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 11px;
+  height: 11px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.ps-range:hover .ps-thumb,
+.ps-range[data-interactive] .ps-thumb {
+  opacity: 1;
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin-bottom: 0.5em;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 4em;
+  height: 100%;
+  margin-inline: 0.3em;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.5);
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+/* --- Composition by width, replacing the original's per-breakpoint control sets --- */
+
+.ps-wide-only,
+.ps-mid-only {
+  display: none;
+}
+
+@container ps-minimal (inline-size >= 384px) {
+  .ps-minimal {
+    --ps-bar-height: 38px;
+    --ps-bar-radius: 8px;
+    --ps-bar-padding: 5px;
+    --ps-control-padding: 4px;
+  }
+
+  .ps-wide-only {
+    display: grid;
+  }
+
+  .ps-vslider.ps-wide-only {
+    display: block;
+  }
+}
+
+@container ps-minimal (inline-size >= 576px) {
+  .ps-minimal {
+    --ps-bar-height: 46px;
+    --ps-bar-margin: 0 8px 8px;
+  }
+
+  .ps-mid-only {
+    display: block;
+  }
+}
+
+@container ps-minimal (inline-size >= 768px) {
+  .ps-minimal {
+    --ps-bar-padding: 7px;
+  }
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 8px;
+  background: var(--ps-secondary);
+  text-align: center;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ps-primary);
+  color: #000;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}

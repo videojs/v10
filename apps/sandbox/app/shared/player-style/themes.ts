@@ -30,6 +30,7 @@ export const PORTED_THEMES: readonly PlayerStyleThemeName[] = [
   'demuxed-2022',
   'halloween',
   'instaplay',
+  'minimal',
   'notflix',
   'reelplay',
   'sutro',

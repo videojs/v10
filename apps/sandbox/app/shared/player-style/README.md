@@ -26,12 +26,14 @@ something systemic that would have invalidated earlier pixel work, so polishing 
 | sutro-audio | yes | Times stack right in the original; port lays them inline around a small scrubber. Icons thin, as sutro |
 | vimeonova | yes | Icons stroke-only where the original fills them; no title/byline (see slots below) |
 | yt | yes | Bar play glyph renders as a skip icon; centred seek controls show at the wrong breakpoint |
-| minimal, microvideo | no | — |
+| minimal | on-demand only | Shows more controls than the original at the same width — the composition thresholds do not match. Live variant outstanding |
+| microvideo | no | — |
 
 Winamp references its artwork from player.style over a pinned CDN rather than copying the bitmaps in — the same
 reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
 
-`minimal` and `microvideo` each branch on stream type, so both become two skins.
+`minimal` and `microvideo` each branch on stream type, so both become two skins. Only the on-demand half is
+ported; the live half needs the `live-video` preset, which the harness does not yet mount.
 
 **What "checked" currently means.** Every port was compared at one width, one source, paused, with no captions and no
 menu open. Hover states, playback, menus and the narrow breakpoints are unverified across the board. Treat a blank
