@@ -8,6 +8,9 @@ import MuxUploader, {
 import { actions } from 'astro:actions';
 import { useCallback, useRef, useState } from 'react';
 
+import CloudUpload from '@/assets/icons/cloud-upload.svg?react';
+import MuxLogo from '@/assets/logos/mux-small.svg?react';
+import { MUX_URL } from '@/consts';
 import { muxPlaybackId, renderer, sourceUrl } from '@/stores/installation';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
 import { pollForPlaybackId } from '@/utils/mux/polling';
@@ -163,7 +166,7 @@ export default function MuxUploaderPanel() {
   }, []);
 
   return (
-    <div className="border-light-40 border-faded-black dark:border-manila-dark relative flex-1 overflow-hidden rounded-xs border border-dashed">
+    <div className="corner-squircle border-line-strong bg-surface relative isolate w-full overflow-hidden rounded-xl border border-dashed">
       <MuxUploader
         // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
@@ -179,27 +182,47 @@ export default function MuxUploaderPanel() {
       {/* Custom Mux Uploader UI */}
       <MuxUploaderDrop
         muxUploader="mux-uploader"
-        className="flex h-full w-full flex-col items-center justify-center p-4"
+        className="flex w-full flex-col items-center justify-center gap-4 px-6 py-10 text-center"
         overlay
         overlayText="Let it go"
       >
-        <span slot="heading" className="text-p3 mb-2 font-bold">
-          Drop a video
+        <span slot="heading" className="flex flex-col items-center gap-4">
+          <span className="corner-squircle border-accent/25 bg-accent/10 text-accent flex size-14 items-center justify-center rounded-2xl border">
+            <CloudUpload className="size-6" aria-hidden="true" />
+          </span>
+          <span className="flex flex-col gap-1">
+            <span className="text-p15 font-semibold text-balance">Drop a video to host it for free on Mux</span>
+            <span className="text-muted text-p3 text-balance">
+              We transcode it into an HLS stream and set it as your source above.
+            </span>
+          </span>
         </span>
-        <span slot="separator" className="text-p3 mb-3 block">
-          — or —
+        <span slot="separator" className="sr-only">
+          or
         </span>
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black inline-flex cursor-pointer items-center gap-2 rounded-xs px-4 py-2 font-bold"
+            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-accent intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
           >
             Select a file
           </button>
         </MuxUploaderFileSelect>
-        <MuxUploaderStatus muxUploader="mux-uploader" />
-        <MuxUploaderRetry muxUploader="mux-uploader" />
-        <MuxUploaderProgress type="percentage" muxUploader="mux-uploader" />
+        <MuxUploaderStatus muxUploader="mux-uploader" className="text-p3" />
+        <MuxUploaderRetry muxUploader="mux-uploader" className="text-p3" />
+        <MuxUploaderProgress type="percentage" muxUploader="mux-uploader" className="text-p3 font-mono" />
+        <span className="text-muted text-p4 mt-2 inline-flex items-center gap-1.5">
+          Powered by{' '}
+          <a
+            href={MUX_URL}
+            target="_blank"
+            rel="noopener"
+            aria-label="Mux"
+            className="text-faded-black intent:text-accent dark:text-manila-light"
+          >
+            <MuxLogo className="h-3.5 w-auto" />
+          </a>
+        </span>
       </MuxUploaderDrop>
 
       {/* TODO add a pre-hydration loading state */}

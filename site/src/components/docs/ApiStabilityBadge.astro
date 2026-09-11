@@ -1,5 +1,4 @@
 ---
-import Pill from '@/components/Pill';
 import type { DocStability } from '@/types/docs';
 
 type Props = {
@@ -8,13 +7,14 @@ type Props = {
 
 const { stability } = Astro.props;
 const labels = {
-  beta: 'Beta',
+  experimental: 'Unstable',
 } satisfies Record<DocStability, string>;
+
+const label = labels[stability];
 ---
 
-<Pill
-  size="compact"
-  className="h-5 shrink-0 px-2 font-display-compact uppercase sm:h-5 sm:px-2"
+<span
+  class="inline-flex h-4.5 shrink-0 items-center rounded-md corner-squircle bg-accent/12 px-1.5 text-p4 leading-none font-medium text-accent select-none dark:bg-accent/15"
 >
-  {labels[stability]}
-</Pill>
+  {label}
+</span>

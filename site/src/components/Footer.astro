@@ -1,11 +1,10 @@
 ---
-import { ArrowUpRight } from 'lucide-react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import LogoMonoVersion from '@/assets/logos/videojs-mono.svg?react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL, MUX_URL } from '@/consts';
 import GetStartedLink from './NavBar/GetStartedLink';
-import { ThemeToggle } from './ThemeToggle';
 
 type NavLink = {
   href: string;
@@ -42,7 +41,7 @@ const { class: className } = Astro.props;
       >
         <GetStartedLink
           client:idle
-          className="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          className="flex items-center rounded-md corner-squircle px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-hover"
         >
           Docs
         </GetStartedLink>
@@ -50,11 +49,11 @@ const { class: className } = Astro.props;
           navLinks.map((link) => (
             <a
               href={link.href}
-              class="flex items-center gap-1.5 rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+              class="flex items-center gap-1.5 rounded-md corner-squircle px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-hover"
             >
               {link.label}{" "}
               {link.external ? (
-                <ArrowUpRight size="1em" aria-hidden="true" />
+                <ArrowUpRight className="size-4" aria-hidden="true" />
               ) : null}
             </a>
           ))
@@ -63,21 +62,21 @@ const { class: className } = Astro.props;
         <span class="hidden md:flex">
           <a
             href={DISCORD_INVITE_URL}
-            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            class="flex items-center rounded-md corner-squircle px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-hover"
             aria-label="Discord"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Discord width="1.5em" height="1.5em" />
+            <Discord className="size-6" />
           </a>
           <a
             href={GITHUB_REPO_URL}
-            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            class="flex items-center rounded-md corner-squircle px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-hover"
             aria-label="GitHub"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <GitHub width="1.5em" height="1.5em" />
+            <GitHub className="size-6" />
           </a>
         </span>
       </div>
@@ -87,25 +86,22 @@ const { class: className } = Astro.props;
         {/* Narrow viewports: icons keep their own row below the link block */}
         <a
           href={DISCORD_INVITE_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
+          class="flex items-center rounded-md corner-squircle px-2 py-2 font-display font-bold uppercase md:hidden intent:bg-hover"
           aria-label="Discord"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Discord width="1.5em" height="1.5em" />
+          <Discord className="size-6" />
         </a>
         <a
           href={GITHUB_REPO_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
+          class="flex items-center rounded-md corner-squircle px-2 py-2 font-display font-bold uppercase md:hidden intent:bg-hover"
           aria-label="GitHub"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <GitHub width="1.5em" height="1.5em" />
+          <GitHub className="size-6" />
         </a>
-        <div class="ml-auto">
-          <ThemeToggle client:idle />
-        </div>
       </div>
     </nav>
 

@@ -1,0 +1,96 @@
+---
+title: 'Build with AI'
+description: 'How to give AI tools the context they need to build Video.js players alongside you'
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
+
+Video.js publishes all of its documentation in AI-friendly formats. This page covers how to feed that documentation to your tools.
+
+## Give your AI context
+
+AI tools might not know the Video.js API out of the box. You need to give them documentation.
+
+### Markdown documentation
+
+Every doc page is available as markdown, so you can provide your model with focused content instead of HTML. Three ways to get it:
+
+<FrameworkCase frameworks={["react"]}>
+1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
+
+   <CopyMarkdownButton client:idle />
+
+2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 250 KB as HTML and about 4 KB as Markdown.
+
+   ```bash title="Terminal"
+   curl -H "Accept: text/markdown" \
+     https://videojs.org/docs/framework/react/reference/components/play-button
+   ```
+
+   ````markdown title="Response"
+   # PlayButton
+
+   Accessible play/pause button with keyboard support and customizable rendering
+
+   ## Import
+
+   ```tsx
+   import { PlayButton } from '@videojs/react';
+   ```
+   ````
+3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/react/reference/components/play-button.md`](https://videojs.org/docs/framework/react/reference/components/play-button.md). Every doc page also advertises this twin in its HTML head with `<link rel="alternate" type="text/markdown">`, so tools that look for it will find it.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
+
+   <CopyMarkdownButton client:idle />
+
+2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 250 KB as HTML and about 4 KB as Markdown.
+
+   ```bash title="Terminal"
+   curl -H "Accept: text/markdown" \
+     https://videojs.org/docs/framework/html/reference/components/play-button
+   ```
+
+   ````markdown title="Response"
+   # media-play-button
+
+   Accessible play/pause button with keyboard support and customizable rendering
+
+   ## Import
+
+   ```ts
+   import '@videojs/html/ui/play-button';
+   ```
+   ````
+3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/html/reference/components/play-button.md`](https://videojs.org/docs/framework/html/reference/components/play-button.md). Every doc page also advertises this twin in its HTML head with `<link rel="alternate" type="text/markdown">`, so tools that look for it will find it.
+</FrameworkCase>
+
+### llms.txt
+
+<FrameworkCase frameworks={["react"]}>
+[`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
+
+If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/react/llms-full.txt`](https://videojs.org/docs/framework/react/llms-full.txt) has every React doc page in one file.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+[`videojs.org/docs/framework/html/llms.txt`](https://videojs.org/docs/framework/html/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
+
+If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/html/llms-full.txt`](https://videojs.org/docs/framework/html/llms-full.txt) has every HTML doc page in one file.
+</FrameworkCase>
+
+## Set up your tools
+
+How you use these resources depends on your tool:
+
+- **Any AI chat**: copy markdown from a doc page and paste it into the conversation.
+- **Claude Code**: reference doc URLs in your project's [`CLAUDE.md`](https://docs.anthropic.com/en/docs/claude-code/overview) so the agent knows where to find Video.js docs when it needs them.
+- **Cursor**: reference the `llms.txt` URL in a project [rule](https://cursor.com/docs/rules) so Cursor knows where to find Video.js docs.
+- **Other coding agents**: reference doc URLs or `llms.txt` in your project's [`AGENTS.md`](https://agents.md) or equivalent context file.
+
+## What's next for AI and Video.js
+
+We're exploring additional ways to integrate with AI tools, including MCP servers and agent skills. If you have ideas or want to share how you're using AI with Video.js, we'd love to hear from you in [GitHub Discussions](https://github.com/videojs/v10/discussions).

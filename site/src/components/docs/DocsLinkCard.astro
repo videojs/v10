@@ -1,6 +1,6 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
-import { ChevronRight } from 'lucide-react';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import { isValidFramework } from '@/types/docs';
 import { resolveDocsLinkUrl } from '@/utils/docs/routing';
 
@@ -30,15 +30,15 @@ const href = anchor ? `${url}#${anchor}` : url;
 >
   <a
     href={href}
-    class="flex items-center justify-between gap-4 rounded-xs border border-manila-dark p-4 no-underline md:pl-6 dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
+    class="flex h-full items-center justify-between gap-4 rounded-lg corner-squircle border border-manila-dark p-4 no-underline md:pl-6 dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
   >
     {
       description ? (
         <div>
-          <div class="font-bold">
+          <div class="font-semibold">
             <slot />
           </div>
-          <div class="mt-2 text-p3">{description}</div>
+          <div class="mt-2 text-p3 text-muted">{description}</div>
         </div>
       ) : (
         <span>
@@ -46,6 +46,6 @@ const href = anchor ? `${url}#${anchor}` : url;
         </span>
       )
     }
-    <ChevronRight size={14} />
+    <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden="true" />
   </a>
 </div>

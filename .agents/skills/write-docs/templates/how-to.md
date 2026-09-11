@@ -1,6 +1,6 @@
 # How-to Guide Template
 
-Use for pages under `site/src/content/docs/how-to/` — one page per reader goal ("Autoplay", "Show captions and subtitles", "Remember user preferences"). The rules — when a topic gets its own page, the section list, and the frontmatter fields — live in `site/src/content/docs/how-to/write-guides.mdx`; read it first. Follow an existing guide (e.g., `how-to/autoplay.mdx`) for current MDX and demo patterns.
+Use for pages under `site/src/content/docs/guides/` — one page per reader goal ("Autoplay", "Show captions and subtitles", "Remember user preferences"). The rules — when a topic gets its own page, the section list, and the frontmatter fields — live in `site/src/content/docs/writing-style/write-guides.mdx`; read it first. Follow an existing guide (e.g., `guides/autoplay.mdx`) for current MDX and demo patterns.
 
 ## Page structure
 
@@ -51,15 +51,15 @@ Likely cause, then the fix.
 
 ## Related components
 
-- <DocsLink slug="reference/..." />
+- <DocsLink slug="reference/components/..." />
 
 ## Related API
 
-- <DocsLink slug="reference/..." />
+- <DocsLink slug="reference/components/..." />
 
 ## Related guides
 
-- <DocsLink slug="how-to/..." />
+- <DocsLink slug="guides/..." />
 ```
 
 ## Checklist

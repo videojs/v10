@@ -1,0 +1,36 @@
+---
+/**
+ * Framed table for API reference sections.
+ *
+ * Rows come from the slot as `<tbody>` groups (see `DetailRow` and `SimpleRow`), so a prop's summary, description,
+ * and expandable detail travel together and share one top border.
+ */
+import Table from '@/components/typography/Table.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+
+interface Props {
+  columns: string[];
+  /** Reserve a trailing column for the disclosure toggle when any row has expandable detail. */
+  toggle?: boolean;
+}
+
+const { columns, toggle = false } = Astro.props;
+---
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      {columns.map((column) => <Th class="whitespace-nowrap">{column}</Th>)}
+      {
+        toggle && (
+          <Th class="w-0 p-0">
+            <span class="sr-only">Details</span>
+          </Th>
+        )
+      }
+    </Tr>
+  </Thead>
+  <slot />
+</Table>

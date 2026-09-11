@@ -2,10 +2,11 @@
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
-import { ArrowUpRight } from 'lucide-react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import FormattedDate from '@/components/FormattedDate.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import Blog from '@/layouts/Blog.astro';
+import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection('changelog');
@@ -26,6 +27,7 @@ const description =
 ---
 
 <Blog title={[title, "Changelog"]} description={description}>
+  <MarkdownAlternate slot="head" />
   <article
     class="@container text-p2 sm:text-p15"
     data-search-content
@@ -38,7 +40,7 @@ const description =
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
       <div
-        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-orange uppercase sm:flex-row sm:gap-4"
+        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:gap-4"
       >
         <FormattedDate date={entry.data.date} />
         {
@@ -59,7 +61,7 @@ const description =
         target="_blank"
         rel="noopener noreferrer"
       >
-        Compare changes on GitHub <ArrowUpRight size="1em" aria-hidden="true" />
+        Compare changes on GitHub <ArrowUpRight className="size-4" aria-hidden="true" />
       </a>
     </header>
     <Content components={{ ...defaultMarkdownComponents }} />

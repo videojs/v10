@@ -1,0 +1,12 @@
+---
+/**
+ * Lays consecutive `<DocsLinkCard>`s out as one two-column grid. Each card's own wrapper collapses to `display:
+ * contents`, so the links become direct grid items and share row heights.
+ */
+---
+
+<div
+  class="docs-link-cards mx-auto my-8 grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-2 [&>.docs-link-card]:contents"
+>
+  <slot />
+</div>

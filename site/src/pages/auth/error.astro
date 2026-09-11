@@ -1,5 +1,6 @@
 ---
-import { ArrowLeft, X } from 'lucide-react';
+import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
+import X from '@/assets/icons/x.svg?react';
 
 import AuthResult from '@/layouts/AuthResult.astro';
 ---
@@ -16,8 +17,7 @@ import AuthResult from '@/layouts/AuthResult.astro';
     class="group hidden items-center gap-1 intent:underline"
   >
     <ArrowLeft
-      size="1em"
-      className="transition-transform group-intent:-translate-x-1"
+      className="size-4 transition-transform group-intent:-translate-x-1"
     />
     Back to Home
   </a>
@@ -27,7 +27,7 @@ import AuthResult from '@/layouts/AuthResult.astro';
     type="button"
     class="group hidden items-center gap-1 intent:underline"
   >
-    <X size="1em" className="transition-transform group-intent:scale-110" />
+    <X className="size-4 transition-transform group-intent:scale-110" />
     Close
   </button>
 </AuthResult>

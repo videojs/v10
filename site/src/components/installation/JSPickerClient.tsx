@@ -1,31 +1,86 @@
-import { Atom, Globe } from 'lucide-react';
-import type { ReactNode } from 'react';
-
-import ImageRadioGroup from '@/components/ImageRadioGroup';
+import Html5Logo from '@/assets/logos/brands/html5.svg?react';
+import ReactLogo from '@/assets/logos/brands/react.svg?react';
+import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
+import VueLogo from '@/assets/logos/brands/vue.svg?react';
+import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import type { SupportedFramework } from '@/types/docs';
-import { FRAMEWORK_LABELS, isValidFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
-import { resolveFrameworkChange } from '@/utils/docs/routing';
+import { isValidFramework } from '@/types/docs';
+import { buildDocsUrl, resolveFrameworkChange } from '@/utils/docs/routing';
 
-const FRAMEWORK_IMAGES: Record<SupportedFramework, ReactNode> = {
-  react: <Atom size={32} />,
-  html: <Globe size={32} />,
+/**
+ * Frameworks the installation flow can start from. React and HTML switch the docs framework; Vue and Svelte open their
+ * own installation pages, which build on the HTML custom elements.
+ */
+type PickerFramework = SupportedFramework | 'vue' | 'svelte';
+
+const INSTALL_PAGE_SLUGS: Record<'vue' | 'svelte', string> = {
+  vue: 'guides/installation-vue',
+  svelte: 'guides/installation-svelte',
 };
+
+const OPTIONS: CardRadioOption<PickerFramework>[] = [
+  {
+    value: 'react',
+    label: 'React',
+    description: 'Components and hooks for React 19',
+    media: <ReactLogo className="size-7" />,
+  },
+  {
+    value: 'html',
+    label: 'HTML',
+    description: 'Custom elements for any stack',
+    media: <Html5Logo className="size-7" />,
+  },
+  {
+    value: 'vue',
+    label: 'Vue',
+    description: 'Vue 3 and Nuxt, using the custom elements',
+    media: <VueLogo className="size-7" />,
+  },
+  {
+    value: 'svelte',
+    label: 'Svelte',
+    description: 'Svelte 5 and SvelteKit, using the custom elements',
+    media: <SvelteLogo className="size-7" />,
+  },
+];
 
 interface Props {
   currentFramework: SupportedFramework;
   currentSlug: string;
 }
 
-export default function JSPickerClient({ currentFramework, currentSlug }: Props) {
-  const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
-    if (newFramework === null) return;
+function pickerValue(currentFramework: SupportedFramework, currentSlug: string): PickerFramework {
+  if (currentSlug === INSTALL_PAGE_SLUGS.vue) return 'vue';
 
-    if (!isValidFramework(newFramework)) return;
+  if (currentSlug === INSTALL_PAGE_SLUGS.svelte) return 'svelte';
+
+  return currentFramework;
+}
+
+export default function JSPickerClient({ currentFramework, currentSlug }: Props) {
+  const selected = pickerValue(currentFramework, currentSlug);
+
+  const handleChange = (next: PickerFramework) => {
+    if (next === selected) return;
+
+    if (next === 'vue' || next === 'svelte') {
+      window.location.href = buildDocsUrl('html', INSTALL_PAGE_SLUGS[next]);
+      return;
+    }
+
+    if (!isValidFramework(next)) return;
+
+    // Leaving a Vue or Svelte page: land on the main installation page for the chosen framework.
+    if (selected === 'vue' || selected === 'svelte') {
+      window.location.href = buildDocsUrl(next, 'guides/installation');
+      return;
+    }
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
       currentSlug,
-      newFramework,
+      newFramework: next,
     });
 
     if (shouldReplace) {
@@ -48,16 +103,5 @@ export default function JSPickerClient({ currentFramework, currentSlug }: Props)
     }
   };
 
-  return (
-    <ImageRadioGroup
-      value={currentFramework}
-      onChange={handleFrameworkChange}
-      options={SUPPORTED_FRAMEWORKS.map((fw) => ({
-        value: fw,
-        label: FRAMEWORK_LABELS[fw],
-        image: FRAMEWORK_IMAGES[fw],
-      }))}
-      aria-label="Select JS framework"
-    />
-  );
+  return <CardRadioGroup value={selected} onChange={handleChange} options={OPTIONS} aria-label="Select JS framework" />;
 }

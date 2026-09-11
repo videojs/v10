@@ -56,18 +56,18 @@ describe('routing utilities', () => {
   };
 
   const guideHtmlOnly: Guide = {
-    slug: 'how-to/html-only',
+    slug: 'guides/html-only',
     frameworks: ['html'] satisfies MockFramework[],
   };
 
   // Guide with no own restrictions, but lives inside a react-only section
   const guideInReactSection: Guide = {
-    slug: 'reference/react-hook',
+    slug: 'components/react-hook',
   };
 
   // Guide with no own restrictions, but lives inside an html-only section
   const guideInHtmlSection: Guide = {
-    slug: 'reference/html-controller',
+    slug: 'components/html-controller',
   };
 
   const mockSidebar: Sidebar = [
@@ -198,13 +198,13 @@ describe('routing utilities', () => {
         const result = resolveFrameworkChange(
           {
             currentFramework: 'html',
-            currentSlug: 'how-to/html-only',
+            currentSlug: 'guides/html-only',
             newFramework: 'react',
           },
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('how-to/html-only');
+        expect(result.selectedSlug).not.toBe('guides/html-only');
         expect(result.slugChanged).toBe(true);
         expect(result.shouldReplace).toBe(false);
         expect(result.reason).toContain('changed slug');
@@ -214,13 +214,13 @@ describe('routing utilities', () => {
         const result = resolveFrameworkChange(
           {
             currentFramework: 'html',
-            currentSlug: 'reference/html-controller', // in html-only section
+            currentSlug: 'components/html-controller', // in html-only section
             newFramework: 'react',
           },
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('reference/html-controller');
+        expect(result.selectedSlug).not.toBe('components/html-controller');
         expect(result.slugChanged).toBe(true);
         expect(result.shouldReplace).toBe(false);
       });
@@ -305,7 +305,7 @@ describe('routing utilities', () => {
       it('should fall back when guide inherits framework restriction from section', () => {
         const result = resolveDocsLinkUrl(
           {
-            targetSlug: 'reference/react-hook', // in react-only section, no own restriction
+            targetSlug: 'components/react-hook', // in react-only section, no own restriction
             contextFramework: 'html',
           },
           mockSidebar

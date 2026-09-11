@@ -72,7 +72,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const { html, preClassName, codeClassName } = highlight(code, lang, highlighter);
 
   return (
-    <pre className={clsx(shared.pre, preClassName)}>
+    <pre className={clsx(shared.pre, preClassName)} data-language={lang}>
       <code className={clsx(shared.codeBlock, codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
   );

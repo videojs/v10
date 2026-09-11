@@ -1,0 +1,27 @@
+---
+/**
+ * Two-column API reference row for entries that only have a name and a description, such as events and CSS custom
+ * properties.
+ */
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import InlineMarkdown from './InlineMarkdown.astro';
+
+interface Props {
+  id?: string;
+  name: string;
+  description?: string;
+}
+
+const { id, name, description } = Astro.props;
+---
+
+<tbody id={id} class="border-t border-line">
+  <tr class="*:px-3 *:py-3 *:align-top sm:*:px-4">
+    <td>
+      <MarkdownCode>{name}</MarkdownCode>
+    </td>
+    <td class="w-full text-muted">
+      <InlineMarkdown content={description} fallback="" />
+    </td>
+  </tr>
+</tbody>

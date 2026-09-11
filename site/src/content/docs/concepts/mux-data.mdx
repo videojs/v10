@@ -89,7 +89,7 @@ An explicit key always wins, so set one to send Mux-hosted views to a specific e
 
 ## Any media element works
 
-The extension attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/dash-video">DashVideo</DocsLink>, and the rest alike.
+The extension attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/components/dash-video">DashVideo</DocsLink>, and the rest alike.
 
 How much it reports depends on the engine playing the stream. Every media gets the playback metrics the media element itself can tell us. On top of that, the component recognizes [hls.js](https://github.com/video-dev/hls.js/) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js) engines and hands them to the Mux Data SDK, which adds stream-level detail: rendition switches, segment request timing and throughput, and engine errors. Media with no JavaScript engine, like native HLS or a plain `<video>`, report the element-level metrics alone.
 
@@ -114,11 +114,11 @@ muxData.metadata = { video_title: 'Big Buck Bunny', viewer_user_id: 'u_789' }; /
 
 ## Configuration
 
-The <DocsLink slug="reference/mux-data">MuxData reference</DocsLink> lists every option: the metadata and software fields above, plus the beacon domain, cookie, debug, and SDK settings. Most options update the current view in place; changing `MuxDataSdk`, `beaconCollectionDomain`, `debug`, or `disableCookies` restarts monitoring, ending the current view and starting a new one.
+The <DocsLink slug="reference/components/mux-data">MuxData reference</DocsLink> lists every option: the metadata and software fields above, plus the beacon domain, cookie, debug, and SDK settings. Most options update the current view in place; changing `MuxDataSdk`, `beaconCollectionDomain`, `debug`, or `disableCookies` restarts monitoring, ending the current view and starting a new one.
 
 ## See also
 
-<DocsLinkCard slug="reference/mux-data">MuxData reference</DocsLinkCard>
-<DocsLinkCard slug="reference/mux-video">MuxVideo element reference</DocsLinkCard>
-<DocsLinkCard slug="reference/mux-audio">MuxAudio element reference</DocsLinkCard>
-<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast" description="Add Google Cast and AirPlay to a player">Cast to AirPlay and Chromecast</DocsLinkCard>
+<DocsLinkCard slug="reference/components/mux-data">MuxData reference</DocsLinkCard>
+<DocsLinkCard slug="reference/components/mux-video">MuxVideo element reference</DocsLinkCard>
+<DocsLinkCard slug="reference/components/mux-audio">MuxAudio element reference</DocsLinkCard>
+<DocsLinkCard slug="guides/cast-to-airplay-and-chromecast" description="Add Google Cast and AirPlay to a player">Cast to AirPlay and Chromecast</DocsLinkCard>

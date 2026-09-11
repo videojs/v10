@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { renderInlineMarkdown } from '../renderInlineMarkdown';
+import { renderInlineMarkdown, setInlineCodeHighlighter } from '../renderInlineMarkdown';
 
 describe('renderInlineMarkdown', () => {
   it('returns plain text for a simple sentence', () => {
@@ -11,7 +11,7 @@ describe('renderInlineMarkdown', () => {
     const result = renderInlineMarkdown('Hello **world**.');
 
     expect(result).not.toMatch(/^<p/);
-    expect(result).toContain('<strong class="font-bold">world</strong>');
+    expect(result).toContain('<strong class="font-semibold">world</strong>');
   });
 
   it('preserves multiple paragraphs', () => {
@@ -31,10 +31,24 @@ describe('renderInlineMarkdown', () => {
     expect(result).toContain('foo');
   });
 
+  it('escapes inline code without a highlighter', () => {
+    expect(renderInlineMarkdown('Use `a < b`.', { highlight: true })).toContain('a &lt; b');
+  });
+
+  it('routes inline code through the registered highlighter', () => {
+    setInlineCodeHighlighter((code) => `<span data-hl>${code}</span>`);
+
+    const result = renderInlineMarkdown('Use `foo` here.', { highlight: true });
+
+    expect(result).toContain('data-code-inline');
+    expect(result).toContain('<span data-hl>foo</span>');
+    expect(renderInlineMarkdown('Use `foo` here.')).not.toContain('data-hl');
+  });
+
   it('renders strong text', () => {
     const result = renderInlineMarkdown('**bold text**');
 
-    expect(result).toContain('<strong class="font-bold">bold text</strong>');
+    expect(result).toContain('<strong class="font-semibold">bold text</strong>');
   });
 
   it('renders emphasized text', () => {

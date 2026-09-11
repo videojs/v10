@@ -1,0 +1,175 @@
+---
+title: 'Install with Vue'
+description: 'Install Video.js in a Vue or Nuxt app with the HTML custom elements'
+---
+
+import JSPicker from '@/components/installation/JSPicker.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+
+Video.js does not ship a first-party Vue package yet, so Vue and Nuxt apps use the `@videojs/html` custom elements directly in their templates.
+
+<ContentWidth margins="lg">
+  <JSPicker />
+</ContentWidth>
+
+## Install Video.js
+
+Install the HTML elements and the hls.js adapter. `@videojs/html` plays MP4 files on its own; the adapter adds cross-browser HLS playback for the `.m3u8` source used below.
+
+<TabsRoot client:idle>
+  <TabsList client:idle label="Package manager">
+    <Tab client:idle value="npm" initial>npm</Tab>
+    <Tab client:idle value="pnpm">pnpm</Tab>
+    <Tab client:idle value="yarn">yarn</Tab>
+    <Tab client:idle value="bun">bun</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="npm" initial>
+    ```bash
+    npm install @videojs/html @videojs/hlsjs-video
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="pnpm">
+    ```bash
+    pnpm add @videojs/html @videojs/hlsjs-video
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="yarn">
+    ```bash
+    yarn add @videojs/html @videojs/hlsjs-video
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="bun">
+    ```bash
+    bun add @videojs/html @videojs/hlsjs-video
+    ```
+  </TabsPanel>
+</TabsRoot>
+
+## Register the custom elements
+
+Vue's template compiler treats unknown tags as Vue components and warns when it cannot resolve them. Tell it which tags are Video.js custom elements with [`isCustomElement`](https://vuejs.org/guide/extras/web-components.html#skipping-component-resolution). List only the tags your templates use.
+
+<TabsRoot client:idle>
+  <TabsList client:idle label="Build tool">
+    <Tab client:idle value="vite" initial>Vite</Tab>
+    <Tab client:idle value="nuxt">Nuxt</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="vite" initial>
+    ```ts title="vite.config.ts"
+    import vue from '@vitejs/plugin-vue';
+    import { defineConfig } from 'vite';
+
+    const videoJsElements = new Set(['video-player', 'video-skin', 'hlsjs-video']);
+
+    export default defineConfig({
+      plugins: [
+        vue({
+          template: {
+            compilerOptions: {
+              isCustomElement: (tag) => videoJsElements.has(tag),
+            },
+          },
+        }),
+      ],
+    });
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="nuxt">
+    ```ts title="nuxt.config.ts"
+    const videoJsElements = new Set(['video-player', 'video-skin', 'hlsjs-video']);
+
+    export default defineNuxtConfig({
+      vue: {
+        compilerOptions: {
+          isCustomElement: (tag) => videoJsElements.has(tag),
+        },
+      },
+    });
+    ```
+  </TabsPanel>
+</TabsRoot>
+
+## Create your player
+
+Add a single-file component that imports the elements it renders. The imports register `<video-player>`, `<video-skin>`, and `<hlsjs-video>` with the browser; the template composes them.
+
+```vue title="components/VideoPlayer.vue"
+<script setup lang="ts">
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
+import '@videojs/html/media/hlsjs-video';
+
+defineProps<{ src: string }>();
+</script>
+
+<template>
+  <!--
+    The player element owns and shares state between the UI
+    components and Media. Put layout on the skin or container.
+  -->
+  <video-player>
+    <!--
+      Skins contain the entire player UI and are easily swappable.
+      They can each be "ejected" for full control and customization
+      of UI components.
+    -->
+    <video-skin>
+      <!--
+        Media are players without UIs, handling networking
+        and display of the media. They are easily swappable
+        to handle different sources.
+      -->
+      <hlsjs-video :src="src" playsinline></hlsjs-video>
+    </video-skin>
+  </video-player>
+</template>
+```
+
+## Use your player
+
+Render the component anywhere in your app and pass it a source.
+
+```vue title="App.vue"
+<script setup lang="ts">
+import VideoPlayer from './components/VideoPlayer.vue';
+</script>
+
+<template>
+  <h1>Welcome to My App</h1>
+  <VideoPlayer src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
+</template>
+```
+
+That's it! You now have a working Video.js player.
+
+<Aside type="note" title="Server rendering with Nuxt">
+Keep the element imports static. Nuxt renders the custom-element markup on the server, and the browser upgrades it when the page loads. If you need to read player state or call player methods, wait until Vue has mounted the element. See <DocsLink slug="guides/use-videojs-with-vue" anchor="use-nuxt">Use Nuxt</DocsLink> for client-only registration.
+</Aside>
+
+## Choose what to do next
+
+<DocsLinkCard slug="guides/use-videojs-with-vue" description="Read player state, pass objects as properties, and configure Nuxt">Use Video.js with Vue and Nuxt</DocsLinkCard>
+
+<DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/overview" description="Learn how the player, skins, media, and UI components fit together">Overview</DocsLinkCard>
+
+## Prepare for production
+
+<DocsLinkCard slug="concepts/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/cdn" description="See every bundle the CDN serves and the layout rules behind the URLs">CDN</DocsLinkCard>
+
+<DocsLinkCard slug="guides/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+
+Something not quite right? You can [submit an issue](https://github.com/videojs/v10/issues) and ask for help, or explore [other support options](/html5-video-support).

@@ -1,7 +1,8 @@
 @import "@docsearch/css/dist/style.css";
 /* ── Light theme ── */
 :root {
-  --docsearch-primary-color: var(--color-gold);
+  /* The accent token follows the appearance menu, so search highlights match the chosen brand colour. */
+  --docsearch-primary-color: var(--color-accent);
   --docsearch-text-color: var(--color-faded-black);
   --docsearch-secondary-text-color: var(--color-soot);
   --docsearch-background-color: var(--color-manila-50);
@@ -13,9 +14,9 @@
   --docsearch-searchbox-focus-background: var(--color-manila-light);
   --docsearch-hit-background: var(--color-manila-light);
   --docsearch-hit-color: var(--color-faded-black);
-  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-gold) 15%, var(--color-manila-light));
-  --docsearch-highlight-color: var(--color-orange);
-  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-gold) 10%, transparent);
+  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-accent) 15%, var(--color-manila-light));
+  --docsearch-highlight-color: var(--color-accent);
+  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
   --docsearch-focus-color: var(--color-gold);
   --docsearch-subtle-color: var(--color-manila-75);
   --docsearch-muted-color: var(--color-manila-dark);
@@ -47,52 +48,84 @@
   --docsearch-background-color: var(--color-warm-gray);
   --docsearch-modal-background: var(--color-faded-black);
   --docsearch-modal-shadow:
-    inset 1px 1px 0 0 var(--color-warm-gray),
-    0 calc(var(--spacing) * 0.75) calc(var(--spacing) * 2) color-mix(in srgb, var(--color-black) 50%, transparent);
+    inset 0 0 0 1px var(--line),
+    0 calc(var(--spacing) * 4) calc(var(--spacing) * 10) color-mix(in srgb, var(--color-black) 60%, transparent);
   --docsearch-searchbox-background: var(--color-soot);
   --docsearch-searchbox-focus-background: var(--color-soot);
   --docsearch-hit-background: var(--color-warm-gray);
   --docsearch-hit-color: var(--color-manila-light);
-  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-gold) 10%, var(--color-warm-gray));
-  --docsearch-highlight-color: var(--color-gold);
-  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-gold) 10%, transparent);
+  --docsearch-hit-highlight-color: color-mix(in srgb, var(--color-accent) 12%, var(--color-warm-gray));
+  --docsearch-highlight-color: var(--color-accent);
+  --docsearch-soft-primary-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
   --docsearch-focus-color: var(--color-gold);
-  --docsearch-subtle-color: var(--color-warm-gray);
-  --docsearch-muted-color: var(--color-manila-dark);
-  --docsearch-icon-color: var(--color-manila-dark);
-  --docsearch-container-background: color-mix(in srgb, var(--color-faded-black) 60%, transparent);
+  --docsearch-subtle-color: var(--line);
+  --docsearch-muted-color: var(--muted);
+  --docsearch-icon-color: var(--muted);
+  --docsearch-container-background: color-mix(in srgb, var(--color-black) 60%, transparent);
   --docsearch-key-background: var(--color-soot);
   --docsearch-key-color: var(--color-manila-light);
   --docsearch-key-pressed-shadow: inset 0 calc(var(--spacing) / 2) var(--spacing)
     color-mix(in srgb, var(--color-black) 40%, transparent);
   --docsearch-footer-background: var(--color-soot);
-  --docsearch-footer-shadow: 0 -1px 0 0 var(--color-warm-gray); /* 1px hairline */
+  --docsearch-footer-shadow: 0 -1px 0 0 var(--line); /* 1px hairline */
   --docsearch-logo-color: currentColor;
   --docsearch-search-button-background: transparent;
   --docsearch-search-button-text-color: var(--color-manila-light);
 }
 
-/* ── Trigger button — match rounded-pill navbar style ── */
+/* ── Trigger button — looks like a search input, as on the Next.js docs ── */
 .DocSearch-Button {
   box-sizing: border-box;
+  display: inline-flex;
   gap: calc(var(--spacing) * 2);
-  height: auto;
-  min-height: calc(var(--spacing) * 6);
+  align-items: center;
+  width: auto;
+  height: calc(var(--spacing) * 8);
   padding: 0 calc(var(--spacing) * 2);
   margin: 0;
   font-family: inherit;
-  border: none;
-  border-radius: 9999px;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+@supports (corner-shape: squircle) {
+  .DocSearch-Button,
+  .DocSearch-Button .DocSearch-Button-Key {
+    /* Match the `corner-squircle` utility, which scales radius tokens to keep the squircle visible. */
+    --radius-md: 0.5rem;
+    --radius-lg: 0.7rem;
+
+    corner-shape: squircle;
+  }
 }
 
 .DocSearch-Button:hover,
 .DocSearch-Button:focus-within {
+  color: var(--color-faded-black);
+  background: var(--color-surface);
+  border-color: var(--color-line-strong);
   box-shadow: none;
+}
+
+.dark .DocSearch-Button:hover,
+.dark .DocSearch-Button:focus-within {
+  color: var(--color-manila-light);
+}
+
+.DocSearch-Button:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 1px;
 }
 
 .DocSearch-Button .DocSearch-Search-Icon {
   width: calc(var(--spacing) * 4);
   height: calc(var(--spacing) * 4);
+  color: inherit;
 }
 
 .DocSearch-Search-Icon circle,
@@ -100,24 +133,65 @@
   stroke-width: var(--docsearch-icon-stroke-width);
 }
 
-.DocSearch-Button .DocSearch-Search-Icon circle,
-.DocSearch-Button .DocSearch-Search-Icon path {
-  stroke-width: calc(var(--docsearch-icon-stroke-width) * 2);
+.DocSearch-Button-Container {
+  gap: calc(var(--spacing) * 2.5);
+  min-width: 0;
 }
 
-/* Hide button label text on small screens, keep icon + keyboard shortcut */
+/* Small screens: icon only. */
 .DocSearch-Button-Placeholder {
   display: none;
+  padding: 0;
+  font-size: var(--text-p3);
+  font-weight: var(--text-p3--font-weight);
+  line-height: 1;
+  letter-spacing: var(--text-p3--letter-spacing);
+  white-space: nowrap;
 }
 
 .DocSearch-Button-Keys {
   display: none;
-  gap: 0;
-  min-width: 0;
+  gap: var(--spacing);
+  /* Reserve the two keys' width so the trigger does not reflow when they arrive. */
+  min-width: calc(var(--spacing) * 13);
+  margin-left: calc(var(--spacing) * 2);
+  justify-content: flex-end;
 }
 
-.DocSearch-Button-Keys:has(.DocSearch-Button-Key--ctrl) {
-  gap: var(--spacing);
+/*
+ * DocSearch only knows the platform's modifier key after hydration, so the server renders an empty keys container.
+ * Show two blank key shapes until then, and fade the real keys in over them instead of popping.
+ */
+.DocSearch-Button-Keys:empty::before,
+.DocSearch-Button-Keys:empty::after {
+  display: block;
+  width: calc(var(--spacing) * 6);
+  height: calc(var(--spacing) * 5);
+  content: "";
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.dark .DocSearch-Button-Keys:empty::before,
+.dark .DocSearch-Button-Keys:empty::after {
+  background: var(--color-warm-gray);
+}
+
+.DocSearch-Button .DocSearch-Button-Key {
+  animation: docsearch-key-in 240ms ease-out both;
+}
+
+@keyframes docsearch-key-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .DocSearch-Button .DocSearch-Button-Key {
+    animation: none;
+  }
 }
 
 .DocSearch-Button-Key,
@@ -132,53 +206,64 @@
 }
 
 .DocSearch-Button .DocSearch-Button-Key {
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: auto;
-  height: auto;
-  padding: 0;
+  min-width: calc(var(--spacing) * 5);
+  height: calc(var(--spacing) * 5);
+  padding: 0 calc(var(--spacing) * 1.5);
   margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-h4);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--text-h4--line-height);
-  color: inherit;
-  letter-spacing: var(--text-h4--letter-spacing);
-  background: none;
-  border: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-p4);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  color: var(--color-muted);
+  letter-spacing: var(--tracking-normal);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
   /* Override DocSearch's inline theme precedence. */
   box-shadow: none !important;
 }
 
+.dark .DocSearch-Button .DocSearch-Button-Key {
+  background: var(--color-warm-gray);
+}
+
 @media (width >= 40rem) {
+  /* Fills its wrapper, which caps at 180px and shrinks when the nav gets crowded (see `Search.tsx`). */
   .DocSearch-Button {
-    width: calc(var(--spacing) * 16.5);
-    border: 1px solid var(--color-faded-black);
+    width: 100%;
+    padding: 0 calc(var(--spacing) * 2) 0 calc(var(--spacing) * 3);
   }
 
-  .DocSearch-Button:has(.DocSearch-Button-Key--ctrl) {
-    width: calc(var(--spacing) * 25);
+  .DocSearch-Button-Placeholder {
+    display: inline;
+    flex: 1;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+  }
+}
+
+/* With the desktop links showing but no room to spare, fall back to the icon-only trigger. */
+@media (width >= 48rem) and (width < 64rem) {
+  .DocSearch-Button {
+    width: auto;
+    padding: 0 calc(var(--spacing) * 2);
   }
 
-  .dark .DocSearch-Button {
-    border-color: var(--color-manila-dark);
+  .DocSearch-Button-Placeholder {
+    display: none;
   }
+}
 
-  .DocSearch-Button:hover,
-  .DocSearch-Button:focus-within {
-    border-color: var(--color-manila-dark);
-  }
-
-  .dark .DocSearch-Button:hover,
-  .dark .DocSearch-Button:focus-within {
-    border-color: var(--color-warm-gray);
-  }
-
+/* The key hints only fit once the trigger has its full desktop width. */
+@media (width >= 64rem) {
   .DocSearch-Button-Keys {
     display: flex;
-  }
-
-  .DocSearch-Button .DocSearch-Search-Icon {
-    width: calc(var(--spacing) * 3);
-    height: calc(var(--spacing) * 3);
   }
 }
 
@@ -189,16 +274,16 @@
 
 /* ── Consistent border-radius — DocSearch hardcodes 4px on these ── */
 .DocSearch-Modal {
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-xl);
 }
 
 .DocSearch-Form {
-  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .DocSearch-Footer {
   border-block-start: none;
-  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .DocSearch-Dropdown + .DocSearch-Footer {
@@ -206,7 +291,7 @@
 }
 
 .DocSearch-Hit a {
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-md);
 }
 
 /* ── Typography — full text-token treatment (size + leading + tracking + weight) ── */
@@ -279,5 +364,5 @@
 .DocSearch-Hit mark,
 .DocSearch-Hit[aria-selected="true"] mark {
   color: currentColor;
-  text-decoration-color: var(--color-gold);
+  text-decoration-color: var(--color-accent);
 }

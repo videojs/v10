@@ -140,7 +140,7 @@ jobs:
             1. **Load context** from `.prose-context/`:
                - `writing-style.md` — tone and style rules. Follow it strictly.
                - `prs.json` — an array of the release's pull requests: `number`, `title`, `body`, `url`, and `closingIssuesReferences.nodes[]` (linked issues with `number`, `title`, `body`, and `parent { number title }` for epics). PR numbers from the raw changelog that no longer resolve are simply absent; do not look them up.
-               - `docs.txt` — one docs slug per line (e.g. `concepts/cast`, `reference/menu`). This is the complete list of linkable docs pages.
+               - `docs.txt` — one docs slug per line (e.g. `concepts/cast`, `components/menu`). This is the complete list of linkable docs pages.
                - `examples/` — the two most recent other changelog files. Match their tone and format.
                - Then read the raw changelog at `site/src/content/changelog/${{ steps.version.outputs.version }}.mdx`.
 

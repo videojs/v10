@@ -1,0 +1,142 @@
+---
+title: Self-host the player
+description: Serve the Video.js HTML player from your own origin for offline, air-gapped, or restricted-network deployments
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+By default, the <DocsLink slug="guides/installation">installation</DocsLink> flow loads the player from a public CDN. For offline, air-gapped, or locked-down deployments, you can serve everything from your own origin instead.
+
+## Recommended approach
+
+Bundle a single file: install the package, put the player's imports into an entry file, then let any bundler produce one self-contained module you can host anywhere. For the default video player, that's:
+
+```js title="player.js"
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
+```
+
+```bash
+npm install @videojs/html
+npx esbuild player.js --bundle --format=esm --minify --sourcemap --outfile=public/player.js
+```
+
+Load the output with `type="module"`:
+
+```html
+<script type="module" src="/player.js"></script>
+```
+
+You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works (Vite, Rollup, webpack) as long as the output stays ESM.
+
+## Availability and constraints
+
+- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling HlsJsVideo, install `@videojs/hls.js` with `@videojs/html`, add `import '@videojs/html/media/hlsjs-video';` to the entry file, and use `<hlsjs-video>` for the `.m3u8` source. The smaller default HlsVideo uses `@videojs/spf`; DASH, Shaka, Vimeo, and Wistia use `@videojs/dash.js`, `@videojs/shaka`, `@videojs/vimeo`, and `@videojs/wistia`. When mirroring the CDN package, adapters are already bundled: serve the matching media file and add its script tag, such as `<script type="module" src="/videojs/media/hlsjs-video.js"></script>`.
+
+## Common variations
+
+Bundle a single file when you already build your front end. Download the release archive when you install outside npm, like Composer or Drupal. Mirror the CDN files when you want the published layout as-is.
+
+### Download the release archive
+
+[Video.js releases](https://github.com/videojs/v10/releases) provide a `videojs-cdn-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
+
+Unpack it into whatever your server treats as static files:
+
+```bash
+VIDEOJS_VERSION={{VJS10_CDN_ARCHIVE_VERSION}}
+curl -fLO "https://github.com/videojs/v10/releases/download/@videojs/cdn@${VIDEOJS_VERSION}/videojs-cdn-${VIDEOJS_VERSION}.zip"
+unzip "videojs-cdn-${VIDEOJS_VERSION}.zip" -d public/
+```
+
+Then point a script tag at the player you want:
+
+```html
+<script type="module" src="/videojs-cdn-{{VJS10_CDN_ARCHIVE_VERSION}}/video.js"></script>
+```
+
+The archive holds the same production bundles the CDN serves, minus sourcemaps and development builds. Every path inside it is relative, so it runs from any origin with no outbound requests. `SHA256SUMS` on the release verifies the download.
+
+For Composer-based projects such as Drupal, declare the archive as a package:
+
+```json title="composer.json"
+{
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "videojs/cdn",
+        "version": "{{VJS10_CDN_ARCHIVE_VERSION}}",
+        "type": "drupal-library",
+        "dist": {
+          "type": "zip",
+          "url": "https://github.com/videojs/v10/releases/download/@videojs/cdn@{{VJS10_CDN_ARCHIVE_VERSION}}/videojs-cdn-{{VJS10_CDN_ARCHIVE_VERSION}}.zip"
+        }
+      }
+    }
+  ],
+  "require": {
+    "videojs/cdn": "{{VJS10_CDN_ARCHIVE_VERSION}}"
+  }
+}
+```
+
+Composer strips the archive's top-level directory, so the player lands directly in your libraries path.
+
+### Mirror the prebuilt CDN files
+
+To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
+
+<Aside type="caution" title="Copy the whole package directory">
+  The CDN entry files like `video.js` and `media/hlsjs-video.js` are not standalone. They import
+  shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them.
+  Copying a single file breaks at runtime, so mirror the entire `@videojs/cdn` directory and keep its layout
+  intact.
+</Aside>
+
+```bash
+npm install @videojs/cdn
+mkdir -p public
+cp -r node_modules/@videojs/cdn public/videojs
+```
+
+Then point the script tag at your copy instead of the CDN:
+
+```html
+<script type="module" src="/videojs/video.js"></script>
+```
+
+The file name matches your player: `video.js`, `audio.js`, `background.js`, and so on. Every option is present in the package directory you copied.
+
+Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/cdn`.
+
+## Stylesheets
+
+Every bundle inlines its own CSS and applies it when the custom element upgrades, so a mirrored copy renders correctly with no extra `<link>`. Alongside the bundles, `@videojs/cdn` publishes those styles as separate files for the one thing a script cannot do: style the page before that upgrade happens.
+
+`global.css` holds the light-DOM rules — `display: contents` on `<video-player>`, and the box the media and poster stretch to fill. Link it ahead of the bundle and the player reserves its space on first paint instead of on upgrade:
+
+```html
+<link rel="stylesheet" href="/videojs/global.css" />
+<script type="module" src="/videojs/video.js"></script>
+```
+
+The background preset keeps its light-DOM rules in `background.css` instead.
+
+The rest — `video.css`, `audio.css`, one per skin, and the `shared.css` they build on — are shadow-DOM styles. No skin exposes a `::part`, so linking these from the document has no effect. They apply only inside a shadow root, which each skin builds and styles itself.
+
+<Aside type="note" title="Declarative shadow DOM">
+A skin skips building and styling its shadow root when one already exists, so markup that ships a `<template shadowrootmode="open">` has to carry the matching stylesheet inside that template. Today only `background-video-skin` exposes its template for server rendering; the other skins keep theirs in JavaScript, so this path needs a hand-written template.
+</Aside>
+
+## Troubleshooting
+
+### The player UI renders but the video never loads
+
+There is no console error. The media module for your format isn't part of your self-hosted build. Add the media import to your bundle entry file, or serve the media file and its script tag alongside the player, as described in [Availability and constraints](#availability-and-constraints).
+
+## Related guides
+
+- <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>

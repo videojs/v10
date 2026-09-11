@@ -1,106 +1,113 @@
 ---
 /**
- * Expandable table row used by PropRow and StateRow.
+ * One entry of an API reference table: a summary row, its description beneath, and an optional expandable panel
+ * holding the full type.
  *
- * Uses button disclosure pattern: the summary row has real `<td>` cells,
- * the detail row is a separate `<tr>` toggled via `aria-controls` + `hidden`.
- * The entire summary row is clickable, delegating to the toggle button.
- *
- * The default slot provides the summary cells. This component appends the
- * toggle-button cell and renders the expandable detail panel beneath.
+ * Renders a `<tbody>` so the three rows share one top border and one hover state. The default slot provides the
+ * summary cells; padding is applied to them here so row components stay bare `<td>`s. When `toggleColumn` is set the
+ * table reserved a trailing column, and the disclosure button renders there for entries that have a full type.
  */
-import clsx from 'clsx';
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
-import Td from '@/components/typography/Td.astro';
-import Tr from '@/components/typography/Tr.astro';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
+import ServerCode from '@/components/Code/ServerCode.astro';
 import InlineMarkdown from './InlineMarkdown.astro';
 
 interface Props {
   id: string;
   name: string;
-  type: string;
-  attributeName?: string;
   detailedType?: string;
   description?: string;
   colspan: number;
+  toggleColumn?: boolean;
 }
 
-const { id, name, attributeName, detailedType, description, colspan } = Astro.props;
+const { id, name, detailedType, description, colspan, toggleColumn = false } = Astro.props;
 
-const hasDetail = Boolean(attributeName || detailedType || description);
+const hasDetail = Boolean(detailedType);
+const cells = colspan + (toggleColumn ? 1 : 0);
 ---
 
-<Tr
+<tbody
   id={id}
   data-apiref-row
-  class={clsx(
-    hasDetail &&
-      "group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot",
-  )}
+  class:list={[
+    "group border-t border-line target:bg-accent/8",
+    hasDetail && "cursor-pointer intent:bg-surface/60 dark:intent:bg-surface",
+  ]}
 >
-  <slot />
-  <Td class="align-top">
+  <tr
+    class:list={[
+      "*:px-3 *:pt-3 *:align-top sm:*:px-4",
+      description ? "*:pb-1" : "*:pb-3",
+    ]}
+  >
+    <slot />
     {
-      hasDetail && (
-        <button
-          aria-expanded="false"
-          aria-controls={`${id}-detail`}
-          aria-label={`Details for ${name}`}
-          data-apiref-toggle
-        >
-          <span
-            aria-hidden="true"
-            class="inline-block group-data-expanded:rotate-90"
-          >
-            ▸
-          </span>
-        </button>
+      toggleColumn && (
+        <td class="w-0 pr-1.5 pl-0!">
+          {hasDetail && (
+            <button
+              type="button"
+              aria-expanded="false"
+              aria-controls={`${id}-detail`}
+              aria-label={`Full type for ${name}`}
+              data-apiref-toggle
+              class="-my-0.5 flex size-6 items-center justify-center rounded-md text-muted corner-squircle intent:bg-hover intent:text-current"
+            >
+              <ChevronRight className="size-4 transition-transform group-data-expanded:rotate-90" />
+            </button>
+          )}
+        </td>
       )
     }
-  </Td>
-</Tr>
+  </tr>
+  {
+    description && (
+      <tr>
+        <td colspan={cells} class="px-3 pt-2 pb-3.5 text-muted sm:px-4">
+          <InlineMarkdown content={description} />
+        </td>
+      </tr>
+    )
+  }
+  {
+    hasDetail && (
+      <tr id={`${id}-detail`}>
+        <td colspan={cells} class="px-3 py-0 sm:px-4">
+          {/* Rows cannot animate height, so the panel collapses through a 0fr → 1fr grid track instead of `hidden`. */}
+          <div data-apiref-detail aria-hidden="true" inert>
+            <div class="min-h-0 overflow-hidden">
+              <div class="mb-4 overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
+                <ServerCode code={detailedType!} lang="ts" />
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    )
+  }
+</tbody>
 
-{
-  hasDetail && (
-    <Tr id={`${id}-detail`} hidden>
-      <Td colspan={String(colspan)} class="p-0">
-        <div class="px-6 py-4">
-          <dl
-            class="grid grid-cols-(--grid-cols) gap-x-6 gap-y-3"
-            style="--grid-cols: auto 1fr"
-          >
-            {attributeName && (
-              <>
-                <dt class="font-bold">Attribute</dt>
-                <dd>
-                  <MarkdownCode>{attributeName}</MarkdownCode>
-                </dd>
-              </>
-            )}
+<style>
+  [data-apiref-detail] {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 200ms ease;
+  }
 
-            {description && (
-              <>
-                <dt class="font-bold">Description</dt>
-                <dd>
-                  <InlineMarkdown content={description} />
-                </dd>
-              </>
-            )}
+  [data-expanded] [data-apiref-detail] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
 
-            {detailedType && (
-              <>
-                <dt class="font-bold">Type</dt>
-                <dd>
-                  <MarkdownCode>{detailedType}</MarkdownCode>
-                </dd>
-              </>
-            )}
-          </dl>
-        </div>
-      </Td>
-    </Tr>
-  )
-}
+  @media (prefers-reduced-motion: reduce) {
+    [data-apiref-detail] {
+      transition: none;
+    }
+  }
+</style>
 
 <script>
   document
@@ -111,25 +118,29 @@ const hasDetail = Boolean(attributeName || detailedType || description);
 
         button.setAttribute("aria-expanded", String(!expanded));
 
-        const row = button.closest<HTMLTableRowElement>("[data-apiref-row]");
+        const group = button.closest<HTMLElement>("[data-apiref-row]");
 
-        if (row) row.toggleAttribute("data-expanded", !expanded);
+        if (group) group.toggleAttribute("data-expanded", !expanded);
 
-        const detail = document.getElementById(
-          button.getAttribute("aria-controls")!,
-        );
+        const panel = document
+          .getElementById(button.getAttribute("aria-controls")!)
+          ?.querySelector<HTMLElement>("[data-apiref-detail]");
 
-        if (detail) detail.hidden = expanded;
+        if (panel) {
+          panel.toggleAttribute("inert", expanded);
+          panel.setAttribute("aria-hidden", String(expanded));
+        }
       });
     });
 
   document
-    .querySelectorAll<HTMLTableRowElement>("[data-apiref-row]")
-    .forEach((row) => {
-      row.addEventListener("click", (e) => {
+    .querySelectorAll<HTMLElement>("[data-apiref-row]")
+    .forEach((group) => {
+      group.addEventListener("click", (e) => {
+        // SAFETY: click targets inside a table are always elements.
         if ((e.target as Element).closest("a, button")) return;
 
-        row.querySelector<HTMLButtonElement>("[data-apiref-toggle]")?.click();
+        group.querySelector<HTMLButtonElement>("[data-apiref-toggle]")?.click();
       });
     });
 </script>

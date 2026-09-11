@@ -37,7 +37,7 @@ export default function DialNav({ left, right }: DialNavProps) {
 
     return {
       transition: 'background-color 0.3s ease, border-color 0.3s ease',
-      backgroundColor: active ? 'var(--color-orange)' : '',
+      backgroundColor: active ? 'var(--color-accent)' : '',
     };
   }
 
@@ -56,7 +56,7 @@ export default function DialNav({ left, right }: DialNavProps) {
               href={link.href}
               onClick={(e) => handleClick(e, link)}
               className={clsx(
-                'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
+                'flex rounded-md corner-squircle min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
                 'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black'
               )}
             >
@@ -105,7 +105,7 @@ export default function DialNav({ left, right }: DialNavProps) {
               href={link.href}
               onClick={(e) => handleClick(e, link)}
               className={clsx(
-                'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
+                'flex rounded-md corner-squircle min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
                 'pl-15 -ml-12 bg-manila-50 dark:bg-black'
               )}
             >

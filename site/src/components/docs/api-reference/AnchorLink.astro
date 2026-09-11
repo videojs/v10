@@ -1,0 +1,22 @@
+---
+import LinkIcon from '@/assets/icons/link.svg?react';
+
+/**
+ * Hover-revealed permalink for a reference table entry. The parent `<tbody>` carries the `group` class, so the icon
+ * shows while the row is hovered and stays visible when focused.
+ */
+interface Props {
+  id: string;
+  name: string;
+}
+
+const { id, name } = Astro.props;
+---
+
+<a
+  href={`#${id}`}
+  aria-label={`Link to ${name}`}
+  class="ml-1 inline-flex size-5 items-center justify-center rounded align-middle text-muted opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 intent:text-accent"
+>
+  <LinkIcon className="size-4" aria-hidden="true" />
+</a>

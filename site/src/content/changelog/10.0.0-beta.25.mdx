@@ -15,19 +15,19 @@ The headline is a quality menu ([#1694](https://github.com/videojs/v10/pull/1694
 
 Quality isn't the only new menu. A settings menu gathers playback options in one place ([#1615](https://github.com/videojs/v10/pull/1615)), and audio tracks get a menu of their own ([#1714](https://github.com/videojs/v10/pull/1714)). The menu system itself grew up alongside them, with clearer group labels, handling for items that come and go at runtime, and a pass of style polish ([#1643](https://github.com/videojs/v10/pull/1643), [#1739](https://github.com/videojs/v10/pull/1739), [#1725](https://github.com/videojs/v10/pull/1725)).
 
-See the menu reference for [HTML](/docs/framework/html/reference/menu/) and [React](/docs/framework/react/reference/menu/), or the quality feature for [HTML](/docs/framework/html/reference/feature-quality/) and [React](/docs/framework/react/reference/feature-quality/).
+See the menu reference for [HTML](/docs/framework/html/reference/components/menu/) and [React](/docs/framework/react/reference/components/menu/), or the quality feature for [HTML](/docs/framework/html/reference/api/feature-quality/) and [React](/docs/framework/react/reference/api/feature-quality/).
 
 ## AirPlay and Chromecast
 
 Remote playback grew in both directions. There's now an AirPlay button in the html and react packages ([#1531](https://github.com/videojs/v10/pull/1531), [#1614](https://github.com/videojs/v10/pull/1614)), and MSE-backed streams can hand off to AirPlay too ([#1692](https://github.com/videojs/v10/pull/1692)). On the Chromecast side, HLS and DASH media now ship with Google Cast on by default ([#1661](https://github.com/videojs/v10/pull/1661)), so the cast button works with no extra setup. That last one changes how you configure media; see [Breaking changes](#breaking-changes) below.
 
-Read the AirPlay button reference for [HTML](/docs/framework/html/reference/airplay-button/) and [React](/docs/framework/react/reference/airplay-button/), and the Google Cast guide for [HTML](/docs/framework/html/how-to/cast-to-airplay-and-chromecast/) and [React](/docs/framework/react/how-to/cast-to-airplay-and-chromecast/).
+Read the AirPlay button reference for [HTML](/docs/framework/html/reference/components/airplay-button/) and [React](/docs/framework/react/reference/components/airplay-button/), and the Google Cast guide for [HTML](/docs/framework/html/guides/cast-to-airplay-and-chromecast/) and [React](/docs/framework/react/guides/cast-to-airplay-and-chromecast/).
 
 ## Vimeo joins the lineup
 
 You can now point the player at a Vimeo video. Beta.25 adds a Vimeo media host with matching html and react components ([#1667](https://github.com/videojs/v10/pull/1667)). Vimeo also shows up as a source option in the installation flow, both on the site and in the CLI, alongside DASH and Mux ([#1732](https://github.com/videojs/v10/pull/1732)), backed by a manifest that tracks which media each CDN actually has ([#1737](https://github.com/videojs/v10/pull/1737)).
 
-Pick a source and try it from the installation guide for [HTML](/docs/framework/html/how-to/installation/) and [React](/docs/framework/react/how-to/installation/).
+Pick a source and try it from the installation guide for [HTML](/docs/framework/html/guides/installation/) and [React](/docs/framework/react/guides/installation/).
 
 ## Polish
 

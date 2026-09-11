@@ -5,7 +5,7 @@ description: Write Video.js guides, concepts, READMEs, and JSDoc. Use for site p
 
 # Documentation
 
-Treat implementation, types, tests, and content schemas as factual sources. Read `site/src/content/docs/how-to/write-guides.mdx` before authoring a site guide.
+Treat implementation, types, tests, and content schemas as factual sources. Read `site/src/content/docs/writing-style/write-guides.mdx` before authoring a site guide.
 
 ## Choose the artifact
 

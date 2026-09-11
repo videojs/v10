@@ -3,7 +3,7 @@ export const FRAMEWORK_STYLES = {
   html: ['css'],
 } as const;
 
-export const DOC_STABILITIES = ['beta'] as const;
+export const DOC_STABILITIES = ['experimental'] as const;
 
 export type DocStability = (typeof DOC_STABILITIES)[number];
 
@@ -57,6 +57,8 @@ export interface Guide {
   sidebarLabel?: string; // defaults to guide title
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
+  /** Build the page and keep it in breadcrumbs and llms.txt, but leave it out of the sidebar list and prev/next. */
+  hidden?: boolean;
 }
 
 // Plain link to a page outside the docs (e.g. /changelog) — rendered with an
@@ -73,7 +75,6 @@ export interface Section {
   llmsDescription?: string;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
-  defaultOpen?: boolean;
   contents: Array<Guide | Section | SidebarLink>;
 }
 

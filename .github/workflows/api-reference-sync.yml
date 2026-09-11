@@ -123,7 +123,8 @@ jobs:
           PR_URL=$(jq -r .url /tmp/api-sync/pr-meta.json)
           PR_AUTHOR=$(jq -r .author /tmp/api-sync/pr-meta.json)
 
-          REF_DIR="site/src/content/docs/reference"
+          # Reference pages live in components/ and api/; grep the whole docs tree so both are covered.
+          REF_DIR="site/src/content/docs"
 
           # --- New components ---
           if [ -s /tmp/api-sync/new-components.txt ]; then
@@ -318,10 +319,10 @@ jobs:
             Step 2: For each changed component/util, read the "after" JSON to understand the current API shape.
 
             Step 3: Search for documentation that references these APIs. Check ALL of:
-            - `site/src/content/docs/reference/` — MDX reference pages (look for stale prop descriptions,
+            - `site/src/content/docs/reference/components/` and `site/src/content/docs/reference/api/` — MDX reference pages (look for stale prop descriptions,
               missing new props/state/data-attributes, outdated type signatures)
             - `site/src/content/docs/concepts/` — concept pages mentioning these APIs
-            - `site/src/content/docs/how-to/` — how-to guides mentioning these APIs
+            - `site/src/content/docs/guides/` — how-to guides mentioning these APIs
             - `site/src/components/docs/demos/` — demo code using changed props/state/signatures
             - `packages/**/README.md` — package READMEs mentioning these APIs
 

@@ -19,7 +19,7 @@ const exportName = `${feature}Feature`;
 
 // Each framework documents createPlayer on its own reference page.
 const createPlayerSlug =
-  Astro.params.framework === 'react' ? 'reference/create-player' : 'reference/html-create-player';
+  Astro.params.framework === 'react' ? 'reference/api/create-player' : 'reference/api/html-create-player';
 
 // Membership comes from the generated preset references so the sentence tracks the real bundles.
 const bundles = (await getCollection('presetReference'))

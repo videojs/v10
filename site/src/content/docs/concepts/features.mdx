@@ -106,7 +106,7 @@ customElements.define('my-player', MyPlayer);
 ### Access features in components
 
 <FrameworkCase frameworks={["react"]}>
-You access feature state and actions through <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
+You access feature state and actions through <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink>:
 ```tsx
 // Subscribe to state (re-renders when selected values change)
 const { paused, volume } = usePlayer((s) => ({
@@ -122,7 +122,7 @@ store.setVolume(0.8);
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-You can access feature state and actions through <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>):
+You can access feature state and actions through <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/api/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/api/feature-volume">`selectVolume`</DocsLink>):
 ```ts
 import { selectPlayback } from '@videojs/html';
 
@@ -137,7 +137,7 @@ if (media?.paused) media.play();
 
 <FrameworkCase frameworks={["react"]}>
 ### Feature selectors
-Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
+Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/api/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/api/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
 
 ```tsx
 import { selectPlayback, usePlayer } from '@videojs/react';
@@ -157,7 +157,7 @@ Volume, fullscreen, and picture-in-picture expose availability properties becaus
 | `'unavailable'` | Could work, not ready yet |
 | `'unsupported'` | Platform can never do this |
 
-Components that depend on availability (like <DocsLink slug="reference/mute-button">`MuteButton`</DocsLink>, <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink>, and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) handle the three states for you:
+Components that depend on availability (like <DocsLink slug="reference/components/mute-button">`MuteButton`</DocsLink>, <DocsLink slug="reference/components/pip-button">`PiPButton`</DocsLink>, and <DocsLink slug="reference/components/fullscreen-button">`FullscreenButton`</DocsLink>) handle the three states for you:
 
 - **`unsupported`** — the HTML custom element receives the native `hidden` attribute (and `data-hidden`); React buttons return `null`. No CSS needed.
 - **`unavailable`** — the presentation controls stay hidden while capability detection is unresolved. Cast remains visible but disabled when its API is supported and no device is reachable.

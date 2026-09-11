@@ -1,6 +1,6 @@
 # Diátaxis boundaries and language
 
-Distilled from [Diátaxis](https://diataxis.fr/). The document-type map and the compass for picking a mode live in `site/src/content/docs/how-to/write-guides.mdx`. Read this file when content drifts between modes or a passage's tone feels wrong for its page type.
+Distilled from [Diátaxis](https://diataxis.fr/). The document-type map and the compass for picking a mode live in `site/src/content/docs/writing-style/write-guides.mdx`. Read this file when content drifts between modes or a passage's tone feels wrong for its page type.
 
 ## Apply the compass to passages, not only pages
 
