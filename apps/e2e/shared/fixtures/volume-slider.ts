@@ -48,6 +48,16 @@ export async function holdVolumeKey(
     await page.waitForTimeout(17);
   }
 
+  // Let the final keyboard step finish animating before checking for a jump on release.
+  await slider.evaluate(async (element) => {
+    let animations = element.getAnimations({ subtree: true });
+
+    while (animations.length) {
+      await Promise.allSettled(animations.map((animation) => animation.finished));
+      animations = element.getAnimations({ subtree: true }).filter((animation) => animation.playState !== 'finished');
+    }
+  });
+
   const beforeRelease = await getThumbPercent(slider);
 
   await page.keyboard.up(key);
