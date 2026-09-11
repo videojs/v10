@@ -478,6 +478,8 @@ media.contentData;
 
 It's read-only and derived from `source`, so read it again after `sourcechange`. A key is missing when its URL can't be built: no playback ID, or signed playback with no matching image token. Changing the URLs means changing the params they're built from.
 
+One more key arrives later. Mux publishes a small metadata document for each asset, and the media loads it alongside the stream, so `contentData.title` fills in with the asset's title once it does — `contentdatachange` announces it. The player reads it as the fallback for its own title, so a Mux asset titled in the dashboard names itself without a `title` on the player. Any other entries the document carries ride along under their own keys. An untitled asset adds nothing.
+
 `source.poster` takes the [full set of Mux image modifiers](https://www.mux.com/docs/guides/get-images-from-a-video), so a narrower still for a small viewport is a `width`:
 
 <FrameworkCase frameworks={["react"]}>

@@ -351,6 +351,8 @@ For display, use `content-title` on the player.
 For display, use `title` on the player.
 </FrameworkCase>
 
+An asset titled in the Mux dashboard supplies its own: the Mux media loads the asset's metadata and the player falls back to that title when none is set on it, so the display title is optional for Mux-hosted video.
+
 The title reaches player state, but the packaged skins don't place it in their layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of a packaged skin, or place it in an ejected or custom layout, when you want viewers to see it:
 
 <FrameworkCase frameworks={["html"]}>
