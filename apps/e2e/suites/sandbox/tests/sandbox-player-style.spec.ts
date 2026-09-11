@@ -8,7 +8,7 @@ const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
  * Audio themes have no picture, so the checks that ask what paints over the media skip them. Live themes pin their own
  * source; everything else plays the progressive file.
  */
-const PORTS = [
+const PORTS: readonly { name: string; kind: 'video' | 'live' | 'audio'; fill?: boolean }[] = [
   { name: 'demuxed-2022', kind: 'video' },
   { name: 'halloween', kind: 'video' },
   { name: 'instaplay', kind: 'video' },
@@ -22,10 +22,11 @@ const PORTS = [
   { name: 'sutro-audio', kind: 'audio' },
   { name: 'tailwind-audio', kind: 'audio' },
   { name: 'vimeonova', kind: 'video' },
-  { name: 'winamp', kind: 'video' },
+  // Winamp shows position with a thumb on a bare track, no fill layer, as the original does.
+  { name: 'winamp', kind: 'video', fill: false },
   { name: 'x-mas', kind: 'video' },
   { name: 'yt', kind: 'video' },
-] as const;
+];
 
 /** Implementations that stand in for the hand-written markup on the same route, and the ports each one covers. */
 const IMPLEMENTATIONS: readonly { impl: string | null; ports?: readonly string[] }[] = [
@@ -114,9 +115,62 @@ async function imagesCoveringVideo(page: Page, selector: string) {
   }, selector);
 }
 
+/**
+ * How much of the time slider's track the fill actually covers, as a fraction, beside the fraction it should.
+ *
+ * The fill layer reports progress only through `--media-slider-fill`, and a skin reads it in whichever way suits the
+ * layer — a width, or a clip on a layer that stays full size. Both name the variable in the declaration that uses it,
+ * so one selector finds either, and the rendered extent is read back rather than the declaration: a fill that reads
+ * nothing renders at zero however plausible its markup looks.
+ *
+ * A theme with a volume slider has more than one fill and they are indistinguishable by markup, so the widest track
+ * wins: a volume slider spans a fraction of what a time slider does.
+ */
+async function fillCoverage(page: Page): Promise<{ shown: number; expected: number } | null> {
+  return page.evaluate(() => {
+    const deep = (root: Document | ShadowRoot, found: Element[]): Element[] => {
+      for (const element of root.querySelectorAll('*')) {
+        found.push(element);
+
+        if (element.shadowRoot) deep(element.shadowRoot, found);
+      }
+
+      return found;
+    };
+
+    const widest = deep(document, [])
+      .filter(
+        (element) =>
+          element.tagName.toLowerCase() === 'media-slider-fill' ||
+          String(element.className).includes('var(--media-slider-fill)')
+      )
+      .map((element) => ({ element, track: element.parentElement }))
+      .filter((candidate): candidate is { element: Element; track: HTMLElement } => candidate.track !== null)
+      .sort((a, b) => b.track.getBoundingClientRect().width - a.track.getBoundingClientRect().width)[0];
+    if (!widest) return null;
+
+    const { element: fill, track } = widest;
+
+    const expected = Number.parseFloat(getComputedStyle(fill).getPropertyValue('--media-slider-fill')) / 100;
+    if (Number.isNaN(expected)) return null;
+
+    const box = fill.getBoundingClientRect();
+    const trackWidth = track.getBoundingClientRect().width;
+    if (trackWidth === 0) return null;
+
+    // A clip leaves the box at full width, so the inset from the right is what the viewer is left seeing.
+    const inset = /inset\(([^)]+)\)/.exec(getComputedStyle(fill).clipPath);
+    const right = inset?.[1] ? (inset[1].trim().split(/\s+/)[1] ?? '0px') : null;
+    const clipped =
+      right === null ? 0 : right.endsWith('%') ? Number.parseFloat(right) / 100 : Number.parseFloat(right) / box.width;
+
+    return { shown: (box.width * (1 - clipped)) / trackWidth, expected };
+  });
+}
+
 for (const { impl, ports } of IMPLEMENTATIONS) {
   test.describe(`player.style ports${impl ? ` (${impl})` : ''}`, () => {
-    for (const { name, kind } of PORTS) {
+    for (const { name, kind, fill = true } of PORTS) {
       if (ports && !ports.includes(name)) continue;
 
       test(`${name} renders and plays`, async ({ page }) => {
@@ -177,6 +231,27 @@ for (const { impl, ports } of IMPLEMENTATIONS) {
 
         if (kind !== 'audio') {
           expect(await imagesCoveringVideo(page, selector), 'no image covers the playing video').toEqual([]);
+        }
+
+        // Live progress is the live window rather than a share of a duration, so only on-demand has a share to check.
+        if (kind !== 'live' && fill) {
+          await media.evaluate((element: HTMLMediaElement) => {
+            element.pause();
+            element.currentTime = element.duration / 2;
+          });
+
+          await expect
+            .poll(() => fillCoverage(page).then((coverage) => (coverage === null ? 'none' : 'found')), {
+              message: 'the time slider has a fill layer that reads --media-slider-fill',
+            })
+            .toBe('found');
+
+          // Polled, not read once: several of these skins transition the fill, so it arrives over a few frames.
+          await expect
+            .poll(() => fillCoverage(page).then((coverage) => coverage && coverage.shown - coverage.expected), {
+              message: 'the fill covers the share of the track it reports',
+            })
+            .toBeCloseTo(0, 1);
         }
       });
     }
