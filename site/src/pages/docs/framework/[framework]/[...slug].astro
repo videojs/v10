@@ -136,7 +136,7 @@ const jsonLdSchema = createTechArticleSchema({
         data-category={category}
       >
         <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-10 pb-8">
-          <div class="mb-1.5 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
+          <div class="mb-2 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
             {eyebrow && <p class="font-display text-h4 uppercase text-orange select-none">{eyebrow}</p>}
             <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
           </div>
@@ -145,7 +145,8 @@ const jsonLdSchema = createTechArticleSchema({
               as="h1"
               maxWidth={false}
               class={clsx(
-                "mt-0 mb-0 text-h25 @lg:text-h2",
+                // Size utilities carry their own line-height, so the leading has to follow them for every breakpoint.
+                "mt-0 mb-0 text-h25 leading-tight @lg:text-h2 @lg:leading-tight",
                 isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
               )}
             >
