@@ -1,5 +1,30 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-rc.2...@videojs/skins@10.0.0-rc.3) (2026-09-11)
+
+
+### Features
+
+* **skin:** slot the slider thumbnail image ([#2700](https://github.com/videojs/v10/issues/2700)) ([b68563f](https://github.com/videojs/v10/commit/b68563f62595e19c8bfc0d3c88147ea74c4473ef))
+
+
+### Bug Fixes
+
+* **skin:** animate slider progress continuously across chapters ([#2721](https://github.com/videojs/v10/issues/2721)) ([fdfb7d6](https://github.com/videojs/v10/commit/fdfb7d6a4d1310e627dad4307b97fca9868506e1))
+* **skin:** resolve blurry slider rendering ([#2705](https://github.com/videojs/v10/issues/2705)) ([2c01ec8](https://github.com/videojs/v10/commit/2c01ec87558dc77b927fb50b1836447275b3a49a))
+* **skin:** restore intrinsic height ([#2707](https://github.com/videojs/v10/issues/2707)) ([7d99a30](https://github.com/videojs/v10/commit/7d99a302847c9f60818af98b247dc39fc7332849))
+* **skin:** restore settings rotation and rtl parity ([#2723](https://github.com/videojs/v10/issues/2723)) ([d31ed0f](https://github.com/videojs/v10/commit/d31ed0fec28e34df48e9865fcacc59c775b6ef6c))
+* **skin:** simplify the slider styles ([#2719](https://github.com/videojs/v10/issues/2719)) ([68bcf5b](https://github.com/videojs/v10/commit/68bcf5b0ae700791bbdee4c3ec01af813225bc23))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-rc.3
+    * @videojs/icons bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-rc.1...@videojs/skins@10.0.0-rc.2) (2026-09-09)
 
 

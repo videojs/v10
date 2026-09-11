@@ -1,5 +1,68 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-rc.2...@videojs/react@10.0.0-rc.3) (2026-09-11)
+
+
+### Features
+
+* **skin:** slot the slider thumbnail image ([#2700](https://github.com/videojs/v10/issues/2700)) ([b68563f](https://github.com/videojs/v10/commit/b68563f62595e19c8bfc0d3c88147ea74c4473ef))
+
+
+### Bug Fixes
+
+* **core:** apply popup starting styles before showing ([#2715](https://github.com/videojs/v10/issues/2715)) ([a80aeca](https://github.com/videojs/v10/commit/a80aecadecc1a7dee643c6a7200cc09dfa8c4f9e))
+* **react:** keep media attached when the composed ref changes identity ([#2729](https://github.com/videojs/v10/issues/2729)) ([a685b18](https://github.com/videojs/v10/commit/a685b18782f27e5b8d94f83997882784217bcd83))
+* **react:** route media event props on embed medias ([#2712](https://github.com/videojs/v10/issues/2712)) ([0743e3b](https://github.com/videojs/v10/commit/0743e3b22b515567480c7bf2521415b6b73c152f))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-rc.3
+    * @videojs/media bumped to 10.0.0-rc.3
+    * @videojs/native-hls-video bumped to 10.0.0-rc.3
+    * @videojs/spf bumped to 10.0.0-rc.3
+    * @videojs/store bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+  * devDependencies
+    * @videojs/cloudflare-video bumped to 10.0.0-rc.3
+    * @videojs/dash-video bumped to 10.0.0-rc.3
+    * @videojs/google-cast bumped to 10.0.0-rc.3
+    * @videojs/hlsjs-video bumped to 10.0.0-rc.3
+    * @videojs/icons bumped to 10.0.0-rc.3
+    * @videojs/mux-audio bumped to 10.0.0-rc.3
+    * @videojs/mux-data bumped to 10.0.0-rc.3
+    * @videojs/mux-video bumped to 10.0.0-rc.3
+    * @videojs/shaka-video bumped to 10.0.0-rc.3
+    * @videojs/spf bumped to 10.0.0-rc.3
+    * @videojs/spotify-audio bumped to 10.0.0-rc.3
+    * @videojs/tiktok-video bumped to 10.0.0-rc.3
+    * @videojs/twitch-video bumped to 10.0.0-rc.3
+    * @videojs/vimeo-video bumped to 10.0.0-rc.3
+    * @videojs/wistia-video bumped to 10.0.0-rc.3
+    * @videojs/youtube-video bumped to 10.0.0-rc.3
+  * peerDependencies
+    * @videojs/cloudflare-video bumped to 10.0.0-rc.3
+    * @videojs/dash-video bumped to 10.0.0-rc.3
+    * @videojs/google-cast bumped to 10.0.0-rc.3
+    * @videojs/hlsjs-video bumped to 10.0.0-rc.3
+    * @videojs/mux-audio bumped to 10.0.0-rc.3
+    * @videojs/mux-data bumped to 10.0.0-rc.3
+    * @videojs/mux-video bumped to 10.0.0-rc.3
+    * @videojs/shaka-video bumped to 10.0.0-rc.3
+    * @videojs/spotify-audio bumped to 10.0.0-rc.3
+    * @videojs/tiktok-video bumped to 10.0.0-rc.3
+    * @videojs/twitch-video bumped to 10.0.0-rc.3
+    * @videojs/vimeo-video bumped to 10.0.0-rc.3
+    * @videojs/wistia-video bumped to 10.0.0-rc.3
+    * @videojs/youtube-video bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-rc.1...@videojs/react@10.0.0-rc.2) (2026-09-09)
 
 
