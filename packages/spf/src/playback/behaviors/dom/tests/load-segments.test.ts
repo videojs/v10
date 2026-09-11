@@ -24,6 +24,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
     loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
+    segmentLoadingBlocked: signal<boolean | undefined>(initial.segmentLoadingBlocked),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -1534,6 +1535,94 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     const reactor = loadVideoSegments.setup({ state: state as ReturnType<typeof makeState>, context });
 
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+    reactor.destroy();
+  });
+
+  // segmentLoadingBlocked — observed DRM key-readiness 'dormant' gate. Same
+  // observed-slot contract as loadingSuspended: only DRM-composed variants
+  // declare a writer (setupMediaKeys), so every other composition is
+  // structurally unchanged.
+  it('goes dormant while awaiting MediaKeys, even with preload="auto"', async () => {
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      segmentLoadingBlocked: true,
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(send).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('parks while awaiting MediaKeys and re-dispatches once they attach', async () => {
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      segmentLoadingBlocked: true,
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(send).not.toHaveBeenCalled();
+
+    state.segmentLoadingBlocked.set(false);
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+    reactor.destroy();
+  });
+
+  // Every dispatch carries a resolved track. `planTasks` reads `track.segments`
+  // straight off the message, so a track-less `'load'` throws inside the loader
+  // actor and takes segment loading down with it — nothing appends and
+  // `readyState` never leaves 0.
+  //
+  // The state's own precondition is not enough on its own: `monitor` and the
+  // per-state effect are separate effects over the same signals, and the
+  // scheduler flushes them in dirty-notification order, so the effect can re-fire
+  // on the change that should be transitioning the machine out of the state. DRM
+  // makes that likely by moving the gate, the selection and the presentation
+  // together.
+  it('never dispatches a load without a resolved track', async () => {
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      loadActivated: true,
+      segmentLoadingBlocked: true,
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    state.segmentLoadingBlocked.set(false);
+    await vi.waitFor(() => expect(send).toHaveBeenCalled());
+
+    // The shapes that un-resolve a selection: the id going away, and the
+    // presentation being replaced by one that no longer carries it.
+    state.selectedVideoTrackId.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    state.selectedVideoTrackId.set('track-1');
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    for (const [message] of send.mock.calls) {
+      expect(message.track).toBeDefined();
+    }
 
     reactor.destroy();
   });

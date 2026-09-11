@@ -29,10 +29,16 @@ Tier 2 phases.
 
 ## Status
 
-- **Composition:** not implemented in `createHlsVideoEngine`. No
-  retry logic in `packages/spf/src/` today; `createTrackedFetch` and
-  other fetch sites treat HTTP errors as fatal. Aligns with `hls.js`'s
-  default behavior (4xx fatal, basic 5xx retry).
+- **Composition:** the naive first slice exists — `fetchWithRetry`
+  (`network/retry.ts`): retry-with-capped-backoff + a first-byte timeout
+  (5xx / network errors / timeouts retry, 4xx fatal), matching `hls.js`'s
+  default shape. Applied so far only to `fetchDrm` (the DRM license /
+  certificate fetch, whose server is the flakiest link). The rest of the
+  fetch sites — `createTrackedFetch` (segments), manifest / playlist
+  reload, text-track segments — are still bare and adopt the same
+  primitive as this feature builds out; the full error-class matrix
+  (`Retry-After`, 408 / 429), per-site policy, retry budget, circuit
+  breaker, and config surface are the Tier-1/Tier-2 work below.
 - **Definition depth:** coarse — scope identified from the cluster
   taxonomy + the conversation reframe + Notion epics; SPF touchpoints
   sketched at the cluster level. Implementation details (retry-policy

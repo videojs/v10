@@ -58,6 +58,11 @@
       "types": "./dist/dev/hls-video.d.ts",
       "development": "./dist/dev/hls-video.js",
       "default": "./dist/default/hls-video.js"
+    },
+    "./drm": {
+      "types": "./dist/dev/drm.d.ts",
+      "development": "./dist/dev/drm.js",
+      "default": "./dist/default/drm.js"
     }
   },
   "publishConfig": {

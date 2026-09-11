@@ -7,6 +7,9 @@ import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '..
 
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
+  define: {
+    __DEV__: mode === 'dev' ? 'true' : 'false',
+  },
   entry: {
     index: 'src/index.ts',
     dom: 'src/dom.ts',
@@ -15,6 +18,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     'hls-audio': 'src/playback/adapters/hls-audio/index.ts',
     'hls-background-video': 'src/playback/adapters/hls-background-video/index.ts',
     'hls-video': 'src/playback/adapters/hls-video/index.ts',
+    drm: 'src/drm.ts',
   },
 });
 
@@ -29,6 +33,9 @@ export default defineConfig({
       },
       'test:ci': packageTestTask(),
     },
+  },
+  define: {
+    __DEV__: 'true',
   },
   test: {
     coverage: {
