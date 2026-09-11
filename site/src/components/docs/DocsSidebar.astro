@@ -47,6 +47,13 @@ const indicatorTransitionName =
     ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     : undefined;
 
+// Cross-document view transition names for the section switcher. The highlight pill morphs to the newly selected tab
+// while each label cross-fades its colour above it; see the global styles below for the stacking.
+const tabTransition = (slug: string) =>
+  animateIndicator ? `view-transition-name: sidebar-tab-${slug}; view-transition-class: sidebar-tab-label` : undefined;
+const pillTransition = animateIndicator ? 'view-transition-name: sidebar-tab-pill' : undefined;
+const tabSlug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 const TAB_ICONS = {
   Guides: BookIcon,
   Components: PuzzleIcon,
@@ -71,24 +78,34 @@ const TAB_ICONS = {
                 href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
-                  "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
+                  // One weight for both states, so the label cross-fade during the transition is colour only.
+                  "relative isolate flex items-center rounded-md corner-squircle px-3 py-2 text-p3 leading-5 font-medium select-none",
                   isActive
-                    ? "bg-surface-raised font-semibold text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
+                    ? "text-faded-black dark:text-manila-light"
                     : "text-muted intent:text-faded-black dark:intent:text-manila-light",
                 ]}
               >
-                {Icon && (
-                  <Icon
-                    className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
+                {isActive && (
+                  <span
                     aria-hidden="true"
+                    class="absolute inset-0 -z-10 rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line"
+                    style={pillTransition}
                   />
                 )}
-                <span class="flex-1">{tab.sidebarLabel}</span>
-                {tab.devOnly && (
-                  <span class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 text-p4 leading-none font-medium text-muted ring-1 ring-line">
-                    dev only
-                  </span>
-                )}
+                <span class="flex flex-1 items-center gap-2.5" style={tabTransition(tabSlug(tab.sidebarLabel))}>
+                  {Icon && (
+                    <Icon
+                      className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span class="flex-1">{tab.sidebarLabel}</span>
+                  {tab.devOnly && (
+                    <span class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 text-p4 leading-none font-medium text-muted ring-1 ring-line">
+                      dev only
+                    </span>
+                  )}
+                </span>
               </a>
             );
           })}
@@ -115,3 +132,14 @@ const TAB_ICONS = {
     }
   </nav>
 </div>
+
+<style is:global>
+  /* Keep the morphing pill beneath the labels while the page transition runs. */
+  ::view-transition-group(sidebar-tab-pill) {
+    z-index: 1;
+  }
+
+  ::view-transition-group(.sidebar-tab-label) {
+    z-index: 2;
+  }
+</style>
