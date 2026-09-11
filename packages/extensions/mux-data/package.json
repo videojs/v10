@@ -1,6 +1,6 @@
 {
   "name": "@videojs/mux-data",
-  "version": "10.0.0-rc.2",
+  "version": "10.0.0-rc.3",
   "description": "Mux Data telemetry integration for Video.js",
   "keywords": [
     "analytics",

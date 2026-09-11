@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.2...@videojs/store@10.0.0-rc.3) (2026-09-11)
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-rc.3
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-rc.3
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.1...@videojs/store@10.0.0-rc.2) (2026-09-09)
 
 
