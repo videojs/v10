@@ -1,8 +1,10 @@
 import '@app/styles.css';
+import { Chapters } from '@app/shared/react/chapters';
 import { VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
+import { Storyboard } from '@app/shared/react/storyboard';
 import { useSandbox } from '@app/shared/react/use-sandbox';
-import { getPosterSrc, SOURCES } from '@app/shared/sources';
+import { getChapters, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 import { Video } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
@@ -34,7 +36,14 @@ export function mountReactPanel(theme: PlayerStyleTheme): void {
         <VideoPlayer poster={getPosterSrc(source)}>
           <div className="mx-auto aspect-video w-full max-w-4xl">
             <Skin>
-              <Video src={SOURCES[source].url} {...mediaProps} playsInline crossOrigin="" />
+              {/*
+               * The tracks the skin's own preview reads: without the storyboard the slider has no thumbnail to show,
+               * which is what the hand-written port gets from the same helpers.
+               */}
+              <Video src={SOURCES[source].url} {...mediaProps} playsInline crossOrigin="">
+                <Chapters tracks={getChapters(source)} />
+                <Storyboard src={getStoryboardSrc(source)} />
+              </Video>
             </Skin>
           </div>
         </VideoPlayer>
