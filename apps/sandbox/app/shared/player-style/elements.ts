@@ -11,6 +11,8 @@ import '@videojs/html/icons/element/default';
 // reads from. Without one the controls render but never receive state.
 import '@videojs/html/audio/player';
 import '@videojs/html/video/player';
+// A live port plays HLS, so the media element has to be one that can.
+import '@videojs/html/media/hls-video';
 import '@videojs/html/ui/airplay-button';
 import '@videojs/html/ui/audio-track-radio-group';
 import '@videojs/html/ui/buffering-indicator';

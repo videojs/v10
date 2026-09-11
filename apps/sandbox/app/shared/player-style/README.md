@@ -26,14 +26,18 @@ something systemic that would have invalidated earlier pixel work, so polishing 
 | sutro-audio | yes | Times stack right in the original; port lays them inline around a small scrubber. Icons thin, as sutro |
 | vimeonova | yes | Icons stroke-only where the original fills them; no title/byline (see slots below) |
 | yt | yes | Matches at the default width |
-| minimal | on-demand only | Matches at the default width. Live variant outstanding |
-| microvideo | on-demand only | Matches at the default width. Live variant outstanding |
+| minimal | yes | Matches at the default width |
+| minimal-live | yes | Renders the DVR shape; the test stream has no live window so the original picks its no-DVR branch. Shows more controls than the original |
+| microvideo | yes | Matches at the default width |
+| microvideo-live | yes | Renders the DVR shape, as minimal-live. Shows more controls than the original |
 
 Winamp references its artwork from player.style over a pinned CDN rather than copying the bitmaps in — the same
 reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
 
-`minimal` and `microvideo` each branch on stream type, so both become two skins. Only the on-demand half is
-ported; the live half needs the `live-video` preset, which the harness does not yet mount.
+`minimal` and `microvideo` each branch on stream type, so both are two skins — the on-demand port plus a `-live`
+sibling on the `live-video` preset, compared against the same published package. The originals branch *again* on
+whether the stream has a target live window; v10 exposes no equivalent to select on, so the live ports render the DVR
+shape and the no-DVR variant is unported.
 
 **What "checked" currently means.** Every port was compared at one width, one source, paused, with no captions and no
 menu open. Hover states, playback, menus and the narrow breakpoints are unverified across the board. Treat a blank

@@ -28,12 +28,14 @@ export function mountPortedPanel(theme: PlayerStyleTheme, markup: string): void 
       container.querySelector('media-poster img') ?? container.querySelector('slot[name="poster"]'),
   });
 
-  const playerTag = theme.player === 'audio' ? 'audio-player' : 'video-player';
-  const mediaTag = theme.player === 'audio' ? 'audio' : 'video';
+  // A live port needs a media element that can actually play HLS, or stream type never resolves and the live
+  // controls stay inert. The player tag comes from the harness, which already swaps in the live preset.
+  const mediaTag = theme.live ? 'hls-video' : theme.player === 'audio' ? 'audio' : 'video';
 
   createHtmlSandbox({
     player: theme.player,
-    render: ({ src, attrs, chapters, storyboard, poster }) => html`
+    live: theme.live === true,
+    render: ({ playerTag, src, attrs, chapters, storyboard, poster }) => html`
       <${playerTag}>
         <${skinTag} class="${frameClasses(theme)}">
           <${mediaTag}${src} ${attrs} playsinline crossorigin>

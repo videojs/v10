@@ -46,11 +46,14 @@ function writeUrl(layout: Layout, mirror: boolean): void {
 }
 
 /** Panels share every selection the page carries; only `panel` and the shell's own view state differ. */
-function frameUrl(id: string, mirror: boolean): string {
+function frameUrl(theme: PlayerStyleTheme, id: string, mirror: boolean): string {
   const params = new URLSearchParams(location.search);
 
   params.delete('layout');
   params.set('panel', id);
+
+  // A live port compared against a on-demand source shows neither side's live branch.
+  if (theme.defaultSource !== undefined && !params.has('source')) params.set('source', theme.defaultSource);
 
   if (mirror) params.set('mirror', '1');
   else params.delete('mirror');
@@ -170,7 +173,7 @@ export function mountCompare(theme: PlayerStyleTheme): void {
   /** Point every frame at its URL. Toggling the mirror reloads them, since the flag is read from the frame's URL. */
   function loadFrames(): void {
     for (const [id, frame] of frames) {
-      const url = frameUrl(id, mirror);
+      const url = frameUrl(theme, id, mirror);
 
       frame.src = url;
       panelsEl.querySelector<HTMLAnchorElement>(`[data-open="${id}"]`)!.href = url;
