@@ -45,6 +45,28 @@
 
 # Docs sections were renamed: how-to → guides; reference pages now live under reference/components and reference/api.
 # Keep every old URL (and its .md twin) alive.
+# The authoring guides moved to writing-style/ before the wildcards below existed; name them so they do not fall
+# through to guides/ or components/. They are dev-only pages, so production answers 404 at the right address.
+[[redirects]]
+  from = "/docs/framework/:framework/how-to/write-guides"
+  to = "/docs/framework/:framework/writing-style/write-guides"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/how-to/write-guides.md"
+  to = "/docs/framework/:framework/writing-style/write-guides.md"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/reference/write-references"
+  to = "/docs/framework/:framework/writing-style/write-references"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/reference/write-references.md"
+  to = "/docs/framework/:framework/writing-style/write-references.md"
+  status = 301
+
 [[redirects]]
   from = "/docs/framework/:framework/how-to/*"
   to = "/docs/framework/:framework/guides/:splat"
