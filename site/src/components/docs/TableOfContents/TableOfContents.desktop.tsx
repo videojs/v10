@@ -52,7 +52,7 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
           {indicator && (
             <span
               aria-hidden="true"
-              className="bg-orange absolute -left-px w-px transition-[transform,height] duration-300 ease-out motion-reduce:transition-none"
+              className="bg-accent absolute -left-px w-px transition-[transform,height] duration-300 ease-out motion-reduce:transition-none"
               style={{ transform: `translateY(${indicator.top}px)`, height: indicator.height, top: 0 }}
             />
           )}
@@ -64,7 +64,7 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
                 className={clsx(
                   'text-p3 block py-1.5 leading-5 transition-colors',
                   activeId === heading.slug
-                    ? 'text-orange font-semibold'
+                    ? 'text-accent font-semibold'
                     : 'text-muted intent:text-faded-black dark:intent:text-manila-light'
                 )}
                 style={{ paddingLeft: `calc(var(--spacing) * 4 + ${heading.depth - 2} * var(--spacing) * 4)` }}

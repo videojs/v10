@@ -37,7 +37,7 @@ export default function DialNav({ left, right }: DialNavProps) {
 
     return {
       transition: 'background-color 0.3s ease, border-color 0.3s ease',
-      backgroundColor: active ? 'var(--color-orange)' : '',
+      backgroundColor: active ? 'var(--color-accent)' : '',
     };
   }
 

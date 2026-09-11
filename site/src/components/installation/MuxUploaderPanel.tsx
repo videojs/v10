@@ -187,7 +187,7 @@ export default function MuxUploaderPanel() {
         overlayText="Let it go"
       >
         <span slot="heading" className="flex flex-col items-center gap-4">
-          <span className="corner-squircle border-orange/25 bg-orange/10 text-orange flex size-14 items-center justify-center rounded-2xl border">
+          <span className="corner-squircle border-accent/25 bg-accent/10 text-accent flex size-14 items-center justify-center rounded-2xl border">
             <CloudUpload className="size-6" aria-hidden="true" />
           </span>
           <span className="flex flex-col gap-1">
@@ -203,7 +203,7 @@ export default function MuxUploaderPanel() {
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
+            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-accent intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
           >
             Select a file
           </button>
@@ -218,7 +218,7 @@ export default function MuxUploaderPanel() {
             target="_blank"
             rel="noopener"
             aria-label="Mux"
-            className="text-faded-black intent:text-orange dark:text-manila-light"
+            className="text-faded-black intent:text-accent dark:text-manila-light"
           >
             <MuxLogo className="h-3.5 w-auto" />
           </a>

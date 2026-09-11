@@ -203,7 +203,7 @@ export default function InstallationPreview() {
         {referenceHref && (
           <a
             href={referenceHref}
-            className="text-faded-black intent:text-orange dark:text-manila-light inline-flex items-center gap-1 font-semibold"
+            className="text-faded-black intent:text-accent dark:text-manila-light inline-flex items-center gap-1 font-semibold"
           >
             Skin reference
             <ArrowRight className="size-4" aria-hidden="true" />

@@ -102,6 +102,8 @@
   --color-bright-yellow: #ffca18;
   --color-gold: #ffa81b;
   --color-orange: #ff6200;
+  /* The accent follows the appearance menu (see `html[data-accent]` below); orange stays the literal brand colour. */
+  --color-accent: var(--color-orange);
   --color-red: #eb3132;
   --color-magenta: #cc3566;
   --color-magenta-dark: #922e4f;
@@ -227,31 +229,31 @@
 
 /*
  * Appearance preferences, applied to <html> by ThemeInit before paint and kept in sync by `stores/appearance.ts`.
- * The accent swaps the token every orange utility reads, with a darker value in light mode where the brighter brand
+ * The accent swaps the token every `accent` utility reads, with a darker value in light mode where the brighter brand
  * colours would not pass on manila. The deep tone drops the three dark surfaces a step without touching light mode.
  */
 html[data-accent="gold"] {
-  --color-orange: #a86a00;
+  --color-accent: #a86a00;
 }
 
 html.dark[data-accent="gold"] {
-  --color-orange: var(--color-gold);
+  --color-accent: var(--color-gold);
 }
 
 html[data-accent="magenta"] {
-  --color-orange: var(--color-magenta);
+  --color-accent: var(--color-magenta);
 }
 
 html.dark[data-accent="magenta"] {
-  --color-orange: #e0608c;
+  --color-accent: #e0608c;
 }
 
 html[data-accent="red"] {
-  --color-orange: var(--color-red);
+  --color-accent: var(--color-red);
 }
 
 html.dark[data-accent="red"] {
-  --color-orange: #ff5d5e;
+  --color-accent: #ff5d5e;
 }
 
 html.dark[data-tone="deep"] {
@@ -374,7 +376,7 @@ html.dark[data-tone="deep"] {
   }
 }
 
-@utility data-bar-orange {
+@utility data-bar-accent {
   background-image: url("/data-bar-orange.svg");
 }
 
@@ -391,7 +393,7 @@ html.dark[data-tone="deep"] {
   }
 }
 
-@utility horizontal-bars-orange {
+@utility horizontal-bars-accent {
   background-image: url("/horizontal-bar-orange.svg");
 }
 

@@ -33,7 +33,7 @@ const TONE_OPTIONS = [
 ] satisfies { value: Tone; label: string }[];
 
 /**
- * Swatch colours are fixed brand values rather than theme tokens, since the orange token itself changes with the
+ * Swatch colours are fixed brand values rather than theme tokens, since the accent token itself changes with the
  * selection and a swatch must keep showing its own colour.
  */
 const ACCENT_SWATCHES = {

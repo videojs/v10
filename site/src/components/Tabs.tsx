@@ -236,7 +236,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
           'group flex items-center gap-2 text-p3 select-none',
           'no-underline',
           variant === 'expanded' && 'uppercase font-display',
-          variant === 'expanded' && isActive && 'text-orange',
+          variant === 'expanded' && isActive && 'text-accent',
           variant === 'compact' && 'px-2.5 z-0 h-7 rounded-md corner-squircle',
           variant === 'compact' &&
             (isActive
@@ -250,7 +250,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
             className={clsx(
               'w-3 h-3 rounded-full border group-hover:bg-manila-dark',
               variant === 'expanded' && 'border-faded-black dark:border-manila-light',
-              isActive && 'bg-orange group-hover:bg-orange'
+              isActive && 'bg-accent group-hover:bg-accent'
             )}
           />
         )}

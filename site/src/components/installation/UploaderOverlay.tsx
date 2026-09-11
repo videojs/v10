@@ -55,7 +55,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
-          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
+          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-accent intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
         >
           Sign up or log in
         </button>
@@ -66,7 +66,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'preparing') {
     return (
       <OverlayWrapper>
-        <div className="border-orange h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
+        <div className="border-accent h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
         <p className="text-p3">Preparing video...</p>
       </OverlayWrapper>
     );
@@ -76,7 +76,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
     return (
       <OverlayWrapper>
         <div className="flex items-center gap-2">
-          <CheckCircle className="text-orange size-4" aria-hidden="true" />
+          <CheckCircle className="text-accent size-4" aria-hidden="true" />
           <p className="font-semibold">Ready to play</p>
         </div>
         <p className="text-p3 text-center">

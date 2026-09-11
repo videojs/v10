@@ -62,7 +62,7 @@ const milestones = [
           <span>Latest release</span>
           <a
             href={`/changelog/${latest.id}`}
-            class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 font-mono text-p4 text-faded-black ring-1 ring-line intent:text-orange dark:text-manila-light"
+            class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 font-mono text-p4 text-faded-black ring-1 ring-line intent:text-accent dark:text-manila-light"
           >
             v{latest.data.version}
           </a>
@@ -88,11 +88,11 @@ const milestones = [
               <div
                 class={clsx(
                   "relative z-10 flex h-10 w-10 items-center justify-center rounded-full border bg-manila-light dark:bg-faded-black",
-                  milestone.completed ? "border-orange" : "border-manila-dark",
+                  milestone.completed ? "border-accent" : "border-manila-dark",
                 )}
               >
                 {milestone.completed && (
-                  <span class="contents text-orange">
+                  <span class="contents text-accent">
                     <Check className="size-4" />
                   </span>
                 )}
@@ -102,7 +102,7 @@ const milestones = [
               <p class="relative z-10 block font-display text-h3 text-faded-black uppercase md:hidden dark:text-manila-light">
                 {milestone.date}
               </p>
-              <h3 class="font-display text-h3 leading-none text-orange uppercase md:mt-5 md:px-1 lg:text-h2">
+              <h3 class="font-display text-h3 leading-none text-accent uppercase md:mt-5 md:px-1 lg:text-h2">
                 {milestone.title}
               </h3>
               <p class="mt-2.5 max-w-55 text-p2 text-warm-gray md:mx-auto dark:text-manila-light">
@@ -121,7 +121,7 @@ const milestones = [
         >
         </div>
         <div
-          class="absolute top-0 left-0 z-2 data-bar h-8 bg-manila-light data-bar-orange dark:bg-faded-black"
+          class="absolute top-0 left-0 z-2 data-bar h-8 bg-manila-light data-bar-accent dark:bg-faded-black"
           style="max-width: 50%"
         >
         </div>
@@ -143,7 +143,7 @@ const milestones = [
         >
         </div>
         <div
-          class="absolute top-0 left-0 z-2 h-10 horizontal-bars bg-manila-light horizontal-bars-orange dark:bg-faded-black"
+          class="absolute top-0 left-0 z-2 h-10 horizontal-bars bg-manila-light horizontal-bars-accent dark:bg-faded-black"
           style="max-height: 50%"
         >
         </div>

@@ -66,7 +66,7 @@ export default function CardRadioGroup<T extends string = string>({
                 ? 'cursor-not-allowed opacity-50'
                 : 'cursor-pointer intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
               isSelected
-                ? 'border-orange bg-surface-raised shadow-sm ring-1 ring-orange'
+                ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
                 : 'border-line intent:border-line-strong'
             )}
           >
@@ -94,7 +94,7 @@ export default function CardRadioGroup<T extends string = string>({
                 'absolute flex size-5 items-center justify-center rounded-full border transition',
                 layout === 'tile' ? 'top-3 right-3' : 'top-1/2 right-3 -translate-y-1/2',
                 isSelected
-                  ? 'scale-100 border-orange bg-orange text-manila-light opacity-100'
+                  ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
                   : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100'
               )}
             >

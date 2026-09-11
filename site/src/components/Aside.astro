@@ -43,7 +43,7 @@ const renderTitle = title ?? defaultTitles[type];
       "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-lg corner-squircle ring-1 ring-inset",
       type === "note" && "ring-magenta/40",
       type === "tip" && "ring-magenta/40",
-      type === "caution" && "ring-orange/40",
+      type === "caution" && "ring-accent/40",
       type === "danger" && "ring-red/40",
     ),
     className,
@@ -54,7 +54,7 @@ const renderTitle = title ?? defaultTitles[type];
       "w-1.5 shrink-0 self-stretch",
       type === "note" && "bg-magenta",
       type === "tip" && "bg-magenta",
-      type === "caution" && "bg-orange",
+      type === "caution" && "bg-accent",
       type === "danger" && "bg-red",
     )}
   >
@@ -67,7 +67,7 @@ const renderTitle = title ?? defaultTitles[type];
           clsx(
             type === "note" && "text-magenta",
             type === "tip" && "text-magenta",
-            type === "caution" && "text-orange",
+            type === "caution" && "text-accent",
             type === "danger" && "text-red",
           ),
         )}

@@ -54,14 +54,14 @@ const { class: className } = Astro.props;
       client:idle
       className={clsx(
         "flex items-center rounded-md corner-squircle px-5 py-2 font-display text-h3 uppercase intent:bg-hover",
-        isDocsActive ? "relative z-10 text-orange" : "",
+        isDocsActive ? "relative z-10 text-accent" : "",
       )}
       aria-current={isDocsActive ? "page" : undefined}
     >
       Docs
       <hr
         aria-hidden="true"
-        class="absolute right-0 -bottom-px left-0 h-px bg-orange"
+        class="absolute right-0 -bottom-px left-0 h-px bg-accent"
       />
     </GetStartedLink>
     {

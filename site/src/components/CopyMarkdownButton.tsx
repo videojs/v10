@@ -125,7 +125,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         aria-label={ariaLabel}
       >
         {state.status === 'success' ? (
-          <Check className="text-orange size-4" aria-hidden="true" />
+          <Check className="text-accent size-4" aria-hidden="true" />
         ) : (
           <Copy className="size-4" aria-hidden="true" />
         )}
