@@ -1,15 +1,15 @@
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
-import { BufferingIndicator } from '../../../components/feedback/buffering-indicator';
-import { ErrorDialog } from '../../../components/feedback/error-dialog';
+import { ErrorDialog } from '../../../components/dialogs/error-dialog';
+import { BufferingIndicator } from '../../../components/display/buffering-indicator';
+import { Poster } from '../../../components/display/poster';
 import { Container } from '../../../components/layout/container';
-import { Poster } from '../../../components/layout/poster';
 import type { SkinDescription } from '../../../meta';
-import { LiveVideoGestures } from '../../shared/live-video/gestures';
-import { LiveVideoHotkeys } from '../../shared/live-video/hotkeys';
-import { LiveVideoStatusIndicators } from '../../shared/live-video/status-indicators';
+import { LiveVideoGestures } from '../../shared/live-video/behaviors/gestures';
+import { LiveVideoHotkeys } from '../../shared/live-video/behaviors/hotkeys';
+import { LiveVideoStatusIndicators } from '../../shared/live-video/display/status-indicators';
 import videoSkinStyles from '../../shared/video/skin.styles';
-import { DefaultLiveVideoControls } from './controls';
+import { DefaultLiveVideoControls } from './layout/controls';
 
 export interface DefaultLiveVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;

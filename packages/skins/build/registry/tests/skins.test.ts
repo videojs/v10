@@ -27,23 +27,23 @@ describe('skinModuleTarget', () => {
   });
 
   it('keeps a skin-owned module in its owner directory', () => {
-    expect(skinModuleTarget(graphModule('skins/minimal/audio/controls.tsx'), root, 'minimal-audio')).toBe(
-      'skins/audio/minimal/controls.tsx'
+    expect(skinModuleTarget(graphModule('skins/minimal/audio/layout/controls.tsx'), root, 'minimal-audio')).toBe(
+      'skins/audio/minimal/layout/controls.tsx'
     );
   });
 
   it('gives each theme its own copy of a preset-shared module', () => {
-    const timeSlider = graphModule('skins/shared/audio/time-slider.tsx');
+    const timeSlider = graphModule('skins/shared/audio/sliders/time-slider.tsx');
 
-    expect(skinModuleTarget(timeSlider, root, 'minimal-audio')).toBe('skins/audio/minimal/time-slider.tsx');
+    expect(skinModuleTarget(timeSlider, root, 'minimal-audio')).toBe('skins/audio/minimal/sliders/time-slider.tsx');
     expect(skinModuleTarget(timeSlider, graphModule('skins/default/audio/skin.tsx'), 'default-audio')).toBe(
-      'skins/audio/default/time-slider.tsx'
+      'skins/audio/default/sliders/time-slider.tsx'
     );
   });
 
   it('leaves modules shared by every skin in place', () => {
-    expect(skinModuleTarget(graphModule('skins/shared/playback-hotkeys.tsx'), root, 'minimal-audio')).toBe(
-      'skins/shared/playback-hotkeys.tsx'
+    expect(skinModuleTarget(graphModule('skins/shared/behaviors/playback-hotkeys.tsx'), root, 'minimal-audio')).toBe(
+      'skins/shared/behaviors/playback-hotkeys.tsx'
     );
   });
 });

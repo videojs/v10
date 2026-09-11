@@ -43,7 +43,20 @@ describe('React registry output', () => {
     expect(defaultSkin).toContain(`import '../../../styles/video/base.css';`);
     expect(minimalSkin).toContain(`import '../../../styles/video/minimal.css';`);
     expect(defaultTargets).toContain('@components/videojs/skins/video/default/skin.tsx');
+    expect(defaultTargets).toContain('@components/videojs/skins/video/default/behaviors/hotkeys.tsx');
+    expect(defaultTargets).toContain('@components/videojs/skins/video/default/display/status-indicators.tsx');
+    expect(defaultTargets).toContain('@components/videojs/skins/video/default/layout/controls.tsx');
+    expect(defaultTargets).toContain('@components/videojs/skins/video/default/menus/settings-menu.tsx');
     expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/sliders/slider.tsx');
+    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/display/status-indicator.tsx');
+    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/dialogs/error-dialog.tsx');
+    expect(minimalTargets).toContain('@components/videojs/skins/video/minimal/components/menus/volume-popover.tsx');
+    expect(
+      [...defaultTargets, ...minimalTargets].some((target) => target?.includes('/components/feedback/') === true)
+    ).toBe(false);
+    expect(
+      [...defaultTargets, ...minimalTargets].some((target) => target?.includes('/components/controls/') === true)
+    ).toBe(false);
     expect(styleTargets(items, 'video')).toEqual([
       '@components/videojs/styles/base.css',
       '@components/videojs/styles/themes/preferences.css',
@@ -78,6 +91,15 @@ describe('React registry output', () => {
       '@components/videojs/styles/themes/preferences.css',
       '@components/videojs/styles/themes/theme.css',
     ]);
+  });
+
+  it('publishes component categories that match the UI taxonomy', () => {
+    expect(items.get('buffering-indicator')?.categories).toEqual(['media', 'display']);
+    expect(items.get('error-dialog')?.categories).toEqual(['media', 'dialogs']);
+    expect(items.get('poster')?.categories).toEqual(['media', 'display']);
+    expect(items.get('status-announcer')?.categories).toEqual(['media', 'behaviors']);
+    expect(items.get('volume-popover')?.categories).toEqual(['media', 'menus']);
+    expect(items.get('container')?.categories).toEqual(['media', 'layout']);
   });
 
   it('preserves utility groups as readable generated class-name arguments', () => {

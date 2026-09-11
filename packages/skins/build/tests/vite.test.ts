@@ -10,7 +10,7 @@ const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(import.meta.dirname, 'vite.config.ts');
 const reactTarget = '?style=css&target=react&skin=default-video';
 const defaultSkinUrl = `/../src/skins/default/video/skin.tsx${reactTarget}`;
-const defaultControlsUrl = `/../src/skins/default/video/controls.tsx${reactTarget}`;
+const defaultControlsUrl = `/../src/skins/default/video/layout/controls.tsx${reactTarget}`;
 const htmlContainerUrl = '/../src/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
 const playButtonUrl = `/../src/components/buttons/play-button.tsx${reactTarget}`;
 const settingsMenuUrl = `/../src/components/menus/settings-menu.tsx${reactTarget}`;
@@ -18,16 +18,17 @@ const reactCaptionsMenuUrl =
   '/../src/components/menus/captions-menu.tsx?style=css&target=react&skin=default-live-video';
 const htmlCaptionsMenuUrl = '/../src/components/menus/captions-menu.tsx?style=css&target=html&skin=default-live-video';
 const htmlAudioSettingsMenuUrl =
-  '/../src/skins/shared/audio/settings-menu.tsx?style=css&target=html&skin=default-audio';
-const volumePopoverUrl = `/../src/components/controls/volume-popover.tsx${reactTarget}`;
-const htmlPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
-const reactPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
+  '/../src/skins/shared/audio/menus/settings-menu.tsx?style=css&target=html&skin=default-audio';
+const volumePopoverUrl = `/../src/components/menus/volume-popover.tsx${reactTarget}`;
+const htmlPosterUrl = '/../src/components/display/poster.tsx?style=tailwind&target=html&skin=default-video';
+const reactPosterUrl = '/../src/components/display/poster.tsx?style=tailwind&target=react&skin=default-video';
 const htmlTimeSliderUrl = '/../src/components/sliders/time-slider.tsx?style=tailwind&target=html&skin=default-video';
 const reactTimeSliderUrl = '/../src/components/sliders/time-slider.tsx?style=tailwind&target=react&skin=default-video';
 // The Minimal controls reach across to the volume popover trigger with `group-has-*`, a tracked parity gap.
-const minimalControlsUrl = '/../src/skins/minimal/video/controls.tsx?style=tailwind&target=react&skin=minimal-video';
+const minimalControlsUrl =
+  '/../src/skins/minimal/video/layout/controls.tsx?style=tailwind&target=react&skin=minimal-video';
 const buttonStyles = resolve(packageDir, 'src/styles/buttons/button.styles.ts');
-const controlsStyles = resolve(packageDir, 'src/skins/default/video/controls.styles.ts');
+const controlsStyles = resolve(packageDir, 'src/skins/default/video/layout/controls.styles.ts');
 const designStyles = resolve(packageDir, 'src/styles/base.css');
 const skinConfig = resolve(packageDir, 'build/transform.ts');
 const vjscPlayButton = resolve(packageDir, 'src/components/buttons/play-button.tsx');
@@ -360,5 +361,5 @@ function skinUrl(variant: (typeof variants)[number]): string {
 }
 
 function controlsUrl(variant: (typeof variants)[number]): string {
-  return `/../src/skins/${skinSourceDirectory(variant.skin)}/controls.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
+  return `/../src/skins/${skinSourceDirectory(variant.skin)}/layout/controls.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
 }
