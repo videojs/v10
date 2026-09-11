@@ -47,6 +47,9 @@ const indicatorTransitionName =
     ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     : undefined;
 
+// One shared name across sections, so the active tab's background slides to the newly selected tab on navigation.
+const tabTransitionName = animateIndicator ? 'sidebar-tab' : undefined;
+
 const TAB_ICONS = {
   Guides: BookIcon,
   Components: PuzzleIcon,
@@ -71,12 +74,20 @@ const TAB_ICONS = {
                 href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
-                  "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
+                  "relative isolate flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
                   isActive
-                    ? "bg-surface-raised font-semibold text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
+                    ? "font-semibold text-faded-black dark:text-manila-light"
                     : "text-muted intent:text-faded-black dark:intent:text-manila-light",
                 ]}
               >
+                {/* The background is its own element so it can morph between tabs while the labels simply swap. */}
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    class="absolute inset-0 -z-10 rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line"
+                    style={tabTransitionName ? `view-transition-name: ${tabTransitionName}` : undefined}
+                  />
+                )}
                 {Icon && (
                   <Icon
                     className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
