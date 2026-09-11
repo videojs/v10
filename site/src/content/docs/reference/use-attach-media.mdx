@@ -1,23 +1,23 @@
 ---
 title: useAttachMedia
-description: Hook that attaches an HTML media element to a playback adapter
+description: Hook that attaches a rendered element to a playback adapter
 ---
 
-import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import UtilReference from '@/components/docs/api-reference/UtilReference.astro';
 
 ## Import
 
 ```tsx
-import { useAttachMedia } from "@videojs/react";
+import { useAttachMedia } from '@videojs/react';
 ```
 
 ## Usage
 
-Pass a playback adapter to receive a callback ref for its rendered `<video>` or `<audio>` element.
+Pass a playback adapter to receive a callback ref for its rendered `<video>`, `<audio>`, or embed `<iframe>` element.
 
 ```tsx
-import { HlsJsAdapter } from "@videojs/hlsjs-video";
-import { useAttachMedia, useMediaInstance } from "@videojs/react";
+import { HlsJsAdapter } from '@videojs/hlsjs-video';
+import { useAttachMedia, useMediaInstance } from '@videojs/react';
 
 function CustomHlsVideo() {
   const media = useMediaInstance(HlsJsAdapter);
@@ -27,6 +27,6 @@ function CustomHlsVideo() {
 }
 ```
 
-The callback attaches a non-null element to the playback adapter and detaches it when React clears or cleans up the ref.
+The callback attaches the element it receives to the playback adapter and detaches it when the element or the adapter changes, and on unmount. A ref that only changed identity, such as a parent's inline `ref={(el) => ...}` composed with this one, leaves the attachment alone.
 
 <UtilReference util="useAttachMedia" />

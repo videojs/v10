@@ -3,7 +3,7 @@
 import { buildYouTubeIframeSrc, YouTubeAdapter, type YouTubeAdapterProps } from '@videojs/youtube-video';
 import { forwardRef, type ReactNode, useState } from 'react';
 
-import { useAttachIframe } from '../../utils/use-attach-iframe';
+import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
@@ -27,7 +27,7 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
     useSyncProps<YouTubeAdapterProps, Record<string, unknown>>(media, props, YouTubeAdapter.defaultProps),
     media
   );
-  const attachRef = useAttachIframe(media);
+  const attachRef = useAttachMedia(media);
   // Listeners first: `attach()` dispatches `loadstart` synchronously.
   const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 

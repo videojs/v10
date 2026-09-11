@@ -3,7 +3,7 @@
 import { buildCloudflareIframeSrc, CloudflareAdapter, type CloudflareAdapterProps } from '@videojs/cloudflare-video';
 import { forwardRef, type ReactNode, useState } from 'react';
 
-import { useAttachIframe } from '../../utils/use-attach-iframe';
+import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
@@ -34,7 +34,7 @@ export const CloudflareVideo = forwardRef<HTMLIFrameElement, CloudflareVideoProp
     useSyncProps<CloudflareAdapterProps, Record<string, unknown>>(media, props, CloudflareAdapter.defaultProps),
     media
   );
-  const attachRef = useAttachIframe(media);
+  const attachRef = useAttachMedia(media);
   // Listeners first: `attach()` dispatches `loadstart` synchronously.
   const composedRef = useComposedRefs(eventsRef, attachRef, ref);
 
