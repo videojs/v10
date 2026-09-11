@@ -42,7 +42,7 @@
       </svg>
     </media-play-button>
 
-    <media-seek-button class="ps-button ps-wide-only" seconds="-10" aria-label="Back 10 seconds">
+    <media-seek-button class="ps-button" seconds="-10" aria-label="Back 10 seconds">
       <svg class="ps-icon" aria-hidden="true" viewBox="0 0 22 24">
         <path d="M11 6V3L5.37 7 11 10.94V8a5.54 5.54 0 0 1 1.9 10.48v2.12A7.5 7.5 0 0 0 11 6Z" />
         <text class="value" transform="translate(2.5 21)" style="font-size: 8px; font-family: 'ArialMT', 'Arial'">
@@ -50,7 +50,7 @@
         </text>
       </svg>
     </media-seek-button>
-    <media-seek-button class="ps-button ps-wide-only" seconds="10" aria-label="Forward 10 seconds">
+    <media-seek-button class="ps-button" seconds="10" aria-label="Forward 10 seconds">
       <svg class="ps-icon" aria-hidden="true" viewBox="0 0 22 24">
         <path d="M11 6V3l5.61 4L11 10.94V8a5.54 5.54 0 0 0-1.9 10.48v2.12A7.5 7.5 0 0 1 11 6Z" />
         <text class="value" transform="translate(10 21)" style="font-size: 8px; font-family: 'ArialMT', 'Arial'">
@@ -71,11 +71,8 @@
       </media-slider-preview>
     </media-time-slider>
 
-    <media-time-group class="ps-time ps-mid-only">
-      <media-time type="current"></media-time>
-      <media-time-separator> / </media-time-separator>
-      <media-time type="duration"></media-time>
-    </media-time-group>
+    <!-- The original shows elapsed time only at this breakpoint, not a current/duration pair. -->
+    <media-time class="ps-time ps-mid-only" type="current"></media-time>
 
     <media-mute-button class="ps-button">
       <svg class="ps-icon ps-vol-off" aria-hidden="true" viewBox="0 0 24 24">
@@ -145,7 +142,7 @@
         <path d="M20.5 5.5h-15v5.811c3.52.906 6.283 3.67 7.189 7.19H20.5V5.5Z" />
       </svg>
     </media-cast-button>
-    <media-pip-button class="ps-button ps-wide-only">
+    <media-pip-button class="ps-button">
       <svg class="ps-icon ps-pip-enter" aria-hidden="true" viewBox="0 0 26 24">
         <path
           d="M22 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h6.75v-1.25h-6.5V4.25h17.5v6.5H23V4a1 1 0 0 0-1-1Zm0 10h-8a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1Zm-.5 6.5h-7v-5h7v5Z"

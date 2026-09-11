@@ -25,9 +25,9 @@ something systemic that would have invalidated earlier pixel work, so polishing 
 | sutro | yes | Icons render smaller and thinner than the original (22px at stroke-width 1); bar spacing |
 | sutro-audio | yes | Times stack right in the original; port lays them inline around a small scrubber. Icons thin, as sutro |
 | vimeonova | yes | Icons stroke-only where the original fills them; no title/byline (see slots below) |
-| yt | yes | Bar play glyph renders as a skip icon; centred seek controls show at the wrong breakpoint |
-| minimal | on-demand only | Shows more controls than the original at the same width — the composition thresholds do not match. Live variant outstanding |
-| microvideo | on-demand only | Control cluster sits centre-vertically; original sits it near the bottom. Shows more controls at the same width. Live variant outstanding |
+| yt | yes | Matches at the default width |
+| minimal | on-demand only | Matches at the default width. Live variant outstanding |
+| microvideo | on-demand only | Matches at the default width. Live variant outstanding |
 
 Winamp references its artwork from player.style over a pinned CDN rather than copying the bitmaps in — the same
 reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
@@ -63,6 +63,14 @@ Things that bit at least once and apply to every theme:
   exposed a title or byline through a slot render nothing, and an empty chip if the markup wraps it. Only a
   shadow-DOM skin — v10's own `SkinElement` — can honour named slots, which is a point in favour of that being
   the eventual distribution shape.
+- **Controls can be opt-in.** `minimal` and `microvideo` default their seek and picture-in-picture buttons to
+  `display: none` behind a custom property, so an integrator opts in. Nothing about this is visible from the markup —
+  it is three easily-missed rules near the end of the stylesheet.
+- **Artwork can carry more than one state.** `yt`'s play icon ships `play-icon` and `pause-icon` as sub-groups of one
+  SVG with no rules of its own; media-chrome toggled them from the player's stylesheet. v10 leaves skin-authored
+  artwork alone, so both paint at once until the skin toggles them.
+- **media-chrome ships default icons; v10 does not.** A control left empty in the original — `yt`'s centred seek
+  buttons — renders as an empty box until the skin supplies an icon.
 - **Breakpoints become container queries** on the skin root, at the same stops the theme already used.
 
 And one thing that got *smaller*: halloween stacks two range elements because media-chrome's thumb lives in a shadow

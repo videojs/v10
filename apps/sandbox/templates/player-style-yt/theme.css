@@ -306,17 +306,14 @@
 .ps-mobile-controls {
   position: absolute;
   inset: 0;
-  display: none;
   align-items: center;
   justify-content: center;
   gap: 12%;
   pointer-events: none;
 }
 
-@container ps-yt (inline-size < 480px) {
-  .ps-mobile-controls {
-    display: flex;
-  }
+.ps-mobile-controls {
+  display: flex;
 }
 
 .ps-round {
@@ -357,10 +354,8 @@
   pointer-events: auto;
 }
 
-@container ps-yt (inline-size < 480px) {
-  .ps-tap-animation {
-    display: none;
-  }
+.ps-tap-animation {
+  display: none;
 }
 
 .ps-tap .ps-icon {
@@ -476,4 +471,45 @@
   font: inherit;
   font-size: 0.875em;
   cursor: pointer;
+}
+
+/*
+ * The play artwork ships both states as sub-groups (`play-icon` / `pause-icon`) with no rules of its own — in
+ * media-chrome they were toggled by the player's stylesheet. v10 leaves skin-authored artwork alone, so without this
+ * both groups paint at once and overlap into an unreadable glyph.
+ */
+.ps-yt [id="pause-icon"] {
+  display: none;
+}
+
+.ps-yt .ps-button:not([data-paused]) [id="play-icon"],
+.ps-yt .ps-tap:not([data-paused]) [id="play-icon"] {
+  display: none;
+}
+
+.ps-yt .ps-button:not([data-paused]) [id="pause-icon"],
+.ps-yt .ps-tap:not([data-paused]) [id="pause-icon"] {
+  display: block;
+}
+
+.ps-round-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* The seek glyph is one asset; the backward button mirrors it. */
+.ps-seek-back {
+  transform: scaleX(-1);
+}
+
+.ps-round-pause-icon {
+  display: none;
+}
+
+.ps-round-play:not([data-paused]) .ps-round-play-icon {
+  display: none;
+}
+
+.ps-round-play:not([data-paused]) .ps-round-pause-icon {
+  display: block;
 }

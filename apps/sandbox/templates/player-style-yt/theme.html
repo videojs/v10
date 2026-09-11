@@ -187,9 +187,20 @@
 
   <!-- Narrow layout: seek / play / seek across the middle. -->
   <div class="ps-mobile-controls">
-    <media-seek-button class="ps-round" seconds="-10" aria-label="Back 10 seconds"></media-seek-button>
-    <media-play-button class="ps-round ps-round-play"></media-play-button>
-    <media-seek-button class="ps-round" seconds="10" aria-label="Forward 10 seconds"></media-seek-button>
+    <!--
+      The original leaves these empty because media-chrome ships default icons for its buttons. v10 does not, so the
+      icons are supplied from its own set or the controls render as empty circles.
+    -->
+    <media-seek-button class="ps-round" seconds="-10" aria-label="Back 10 seconds">
+      <media-icon class="ps-round-icon ps-seek-back" name="seek"></media-icon>
+    </media-seek-button>
+    <media-play-button class="ps-round ps-round-play">
+      <media-icon class="ps-round-icon ps-round-play-icon" name="play"></media-icon>
+      <media-icon class="ps-round-icon ps-round-pause-icon" name="pause"></media-icon>
+    </media-play-button>
+    <media-seek-button class="ps-round" seconds="10" aria-label="Forward 10 seconds">
+      <media-icon class="ps-round-icon" name="seek"></media-icon>
+    </media-seek-button>
   </div>
 
   <div class="ps-tap-animation">

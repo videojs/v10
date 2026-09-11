@@ -390,3 +390,15 @@
   font-size: 0.875em;
   cursor: pointer;
 }
+
+/*
+ * The original defaults these three off; an integrator opts in with the matching custom property. v10 merges the two
+ * seek directions into one element, so the two seek variables collapse into one.
+ */
+.ps-minimal media-seek-button {
+  display: var(--media-control-display, var(--media-seek-button-display, none));
+}
+
+.ps-minimal media-pip-button {
+  display: var(--media-control-display, var(--media-pip-button-display, none));
+}

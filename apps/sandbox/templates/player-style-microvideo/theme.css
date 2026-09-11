@@ -70,14 +70,18 @@
 
 /* --- Centred control cluster --- */
 
+/*
+ * The original leaves the cluster's `place-self` unset inside media-chrome's centred-chrome grid, which lands it near
+ * the bottom, with the scrubber pinned to the very bottom edge underneath.
+ */
 .ps-centre {
   position: absolute;
   inset: 0;
   display: grid;
-  align-content: center;
+  align-content: end;
   justify-items: center;
   gap: 0.6em;
-  padding: 1em;
+  padding: 0 0 0.5em;
   pointer-events: none;
 }
 
@@ -214,9 +218,11 @@
 /* --- Scrubber --- */
 
 .ps-range {
-  position: relative;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
   display: block;
-  width: min(100%, 24em);
+  width: 100%;
   height: 1.2em;
   touch-action: none;
   cursor: pointer;
@@ -340,4 +346,16 @@
   font: inherit;
   font-size: 0.875em;
   cursor: pointer;
+}
+
+/*
+ * The original defaults these three off; an integrator opts in with the matching custom property. v10 merges the two
+ * seek directions into one element, so the two seek variables collapse into one.
+ */
+.ps-microvideo media-seek-button {
+  display: var(--media-control-display, var(--media-seek-button-display, none));
+}
+
+.ps-microvideo media-pip-button {
+  display: var(--media-control-display, var(--media-pip-button-display, none));
 }
