@@ -4,6 +4,7 @@ description: Hook to access the media object from within a Player
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Aside from "@/components/Aside.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -51,6 +52,10 @@ export function LiveDetails() {
 ## Access hls.js
 
 Media backed by hls.js also provides an `engine` property. That property is specific to hls.js, so keep direct engine calls in a small part of your app rather than treating them as part of the common `Media` API.
+
+<Aside type="note">
+Because `Media` is a runtime-agnostic interface, the returned object is not guaranteed to be a `CanvasImageSource` -- with a custom media element it is a wrapper around the real element, not the `<video>` itself. If you need the underlying element for `drawImage`, WebGL textures, or frame sampling, keep your own ref on the `<Video>` component, which forwards to the underlying `HTMLVideoElement`.
+</Aside>
 
 ## Examples
 
