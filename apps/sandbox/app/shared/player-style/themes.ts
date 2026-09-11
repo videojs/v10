@@ -35,6 +35,7 @@ export const PORTED_THEMES: readonly PlayerStyleThemeName[] = [
   'sutro',
   'sutro-audio',
   'tailwind-audio',
+  'vimeonova',
   'winamp',
   'x-mas',
 ];
