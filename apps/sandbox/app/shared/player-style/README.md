@@ -22,7 +22,8 @@ something systemic that would have invalidated earlier pixel work, so polishing 
 | tailwind-audio | yes | Not yet checked beyond the resting state |
 | winamp | yes | Video window narrower than the original; transport row spacing |
 | x-mas | yes | Mute icon shows a different volume level than the original |
-| sutro, sutro-audio, vimeonova, yt, minimal, microvideo | no | — |
+| sutro | yes | Icons render smaller and thinner than the original (22px at stroke-width 1); bar spacing |
+| sutro-audio, vimeonova, yt, minimal, microvideo | no | — |
 
 Winamp references its artwork from player.style over a pinned CDN rather than copying the bitmaps in — the same
 reference-don't-carry pattern the media-chrome repo uses for its own winamp example.
