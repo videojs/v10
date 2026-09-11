@@ -6,6 +6,7 @@ import CodeIcon from '@/assets/icons/code.svg?react';
 import PuzzleIcon from '@/assets/icons/puzzle.svg?react';
 import PenIcon from '@/assets/icons/pen.svg?react';
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
+import DocsSidebarTab from '@/components/docs/DocsSidebarTab.astro';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
@@ -47,8 +48,11 @@ const indicatorTransitionName =
     ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     : undefined;
 
-// One shared name across sections, so the active tab's background slides to the newly selected tab on navigation.
-const tabTransitionName = animateIndicator ? 'sidebar-tab' : undefined;
+// Server-rendered clip for the highlight overlay: each tab is 9 spacing units tall inside 1 unit of padding and gap,
+// so the band for the active tab can be expressed without measuring. The client refines it and animates from the
+// previously active tab after a section change.
+const activeIndex = activeTab ? tabs.indexOf(activeTab) : 0;
+const initialClip = `inset(calc(var(--spacing) * ${1 + activeIndex * 10}) var(--spacing) calc(var(--spacing) * ${1 + (tabs.length - 1 - activeIndex) * 10}) var(--spacing) round var(--radius-md))`;
 
 const TAB_ICONS = {
   Guides: BookIcon,
@@ -64,45 +68,39 @@ const TAB_ICONS = {
   {
     tabs.length > 1 && (
       <nav aria-label="Docs sections" class="px-6 pt-5">
-        <div class="mx-auto grid w-full max-w-3xl gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
-          {tabs.map((tab) => {
-            const isActive = tab === activeTab;
-            const Icon = TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS];
-
-            return (
-              <a
+        <div
+          class="relative mx-auto w-full max-w-3xl rounded-lg corner-squircle border border-line bg-surface p-1"
+          data-sidebar-tabs
+          data-active-index={activeIndex}
+        >
+          <div class="grid gap-1">
+            {tabs.map((tab) => (
+              <DocsSidebarTab
                 href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
-                aria-current={isActive ? "true" : undefined}
-                class:list={[
-                  "relative isolate flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
-                  isActive
-                    ? "font-semibold text-faded-black dark:text-manila-light"
-                    : "text-muted intent:text-faded-black dark:intent:text-manila-light",
-                ]}
-              >
-                {/* The background is its own element so it can morph between tabs while the labels simply swap. */}
-                {isActive && (
-                  <span
-                    aria-hidden="true"
-                    class="absolute inset-0 -z-10 rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line"
-                    style={tabTransitionName ? `view-transition-name: ${tabTransitionName}` : undefined}
-                  />
-                )}
-                {Icon && (
-                  <Icon
-                    className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
-                    aria-hidden="true"
-                  />
-                )}
-                <span class="flex-1">{tab.sidebarLabel}</span>
-                {tab.devOnly && (
-                  <span class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 text-p4 leading-none font-medium text-muted ring-1 ring-line">
-                    dev only
-                  </span>
-                )}
-              </a>
-            );
-          })}
+                label={tab.sidebarLabel}
+                icon={TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS]}
+                devOnly={tab.devOnly}
+                current={tab === activeTab}
+              />
+            ))}
+          </div>
+          {/* Selected-state copy of the tabs, clipped to the active one so the highlight and label colours slide together. */}
+          <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 grid gap-1 p-1"
+            data-sidebar-tabs-highlight
+            style={`clip-path: ${initialClip}`}
+          >
+            {tabs.map((tab) => (
+              <DocsSidebarTab
+                href=""
+                label={tab.sidebarLabel}
+                icon={TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS]}
+                devOnly={tab.devOnly}
+                highlight
+              />
+            ))}
+          </div>
         </div>
       </nav>
     )
@@ -126,3 +124,56 @@ const TAB_ICONS = {
     }
   </nav>
 </div>
+
+<script is:inline>
+  // Slide the section highlight from the previously active tab after a section change. The tab list is identical on
+  // every docs page, so the previous tab's index is enough to rebuild its band on the new page.
+  (() => {
+    const KEY = "vjs-sidebar-tab-from";
+    const roots = document.querySelectorAll("[data-sidebar-tabs]:not([data-tabs-ready])");
+    if (roots.length === 0) return;
+
+    let from = null;
+
+    try {
+      from = sessionStorage.getItem(KEY);
+      sessionStorage.removeItem(KEY);
+    } catch {}
+
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    for (const root of roots) {
+      root.setAttribute("data-tabs-ready", "");
+
+      const overlay = root.querySelector("[data-sidebar-tabs-highlight]");
+      const links = Array.from(root.querySelectorAll(":scope > div:first-child > a"));
+      const active = Number(root.getAttribute("data-active-index"));
+      if (!overlay || !links[active]) continue;
+
+      const bandFor = (index) => {
+        const box = root.getBoundingClientRect();
+        const tab = links[index].getBoundingClientRect();
+
+        return `inset(${tab.top - box.top}px ${box.right - tab.right}px ${box.bottom - tab.bottom}px ${tab.left - box.left}px round var(--radius-md))`;
+      };
+
+      for (const link of links) {
+        link.addEventListener("click", () => {
+          try {
+            sessionStorage.setItem(KEY, String(active));
+          } catch {}
+        });
+      }
+
+      overlay.style.clipPath = bandFor(active);
+
+      const previous = from === null ? active : Number(from);
+      if (previous === active || !links[previous] || reduceMotion) continue;
+
+      overlay.animate([{ clipPath: bandFor(previous) }, { clipPath: bandFor(active) }], {
+        duration: 320,
+        easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      });
+    }
+  })();
+</script>

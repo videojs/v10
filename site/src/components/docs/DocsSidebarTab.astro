@@ -1,0 +1,41 @@
+---
+import clsx from 'clsx';
+
+/**
+ * One entry of the docs section switcher. The sidebar renders every tab twice: once as the real link, and once inside
+ * an aria-hidden overlay styled as the selected state, which is clipped to the active tab and animates between
+ * sections. `highlight` picks which of the two this is.
+ */
+interface Props {
+  href: string;
+  label: string;
+  icon?: typeof import('*.svg?react').default;
+  devOnly?: boolean;
+  current?: boolean;
+  highlight?: boolean;
+}
+
+const { href, label, icon: Icon, devOnly = false, current = false, highlight = false } = Astro.props;
+const Tag = highlight ? 'span' : 'a';
+---
+
+<Tag
+  href={highlight ? undefined : href}
+  aria-current={!highlight && current ? "true" : undefined}
+  class:list={[
+    "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-2 text-p3 leading-5 select-none",
+    highlight
+      ? "bg-surface-raised font-semibold text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
+      : "text-muted intent:text-faded-black dark:intent:text-manila-light",
+  ]}
+>
+  {Icon && <Icon className={clsx("size-4 shrink-0", !highlight && "opacity-70")} aria-hidden="true" />}
+  <span class="flex-1">{label}</span>
+  {
+    devOnly && (
+      <span class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 text-p4 leading-none font-medium text-muted ring-1 ring-line">
+        dev only
+      </span>
+    )
+  }
+</Tag>
