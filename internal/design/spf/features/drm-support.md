@@ -31,10 +31,11 @@ Legacy Engine Medias"), [#1772 hls.js](https://github.com/videojs/v10/issues/177
 [#1775 Mux integration](https://github.com/videojs/v10/issues/1775), and the
 per-key-system sub-issues
 [#1412](https://github.com/videojs/v10/issues/1412)–[#1414](https://github.com/videojs/v10/issues/1414)
-(all closed). Milestone: GA. Prior art: the in-repo `@videojs/media` DRM
-modules (`core/drm.ts` contract, `dom/hls-js/drm.ts` bridge,
-`dom/native-hls/fairplay.ts` EME implementation, `dom/mux/drm.ts`
-token-derived license URLs),
+(all closed). Milestone: GA. Prior art: the in-repo DRM modules
+(`@videojs/media`'s `core/drm.ts` contract, the hls.js bridge in
+`adapters/hlsjs-video/src/drm.ts`, the native FairPlay implementation in
+`adapters/native-hls-video/src/fairplay-eme.ts` + `fairplay-webkit.ts`,
+and `adapters/mux-video/src/drm.ts` token-derived license URLs),
 [videojs-contrib-eme](https://github.com/videojs/videojs-contrib-eme)
 (Video.js v8 plugin), [Mux Player DRM integration](https://www.mux.com/docs/guides/protect-videos-with-drm)
 (Widevine + PlayReady + FairPlay via `drm-token` attribute).
@@ -92,15 +93,15 @@ token-derived license URLs),
   `@videojs/media`'s `DrmSystemsConfig` (`packages/media/src/core/drm.ts`) —
   license servers keyed by EME key-system id, `licenseUrl` + optional
   `serverCertificateUrl` — and is already consumed by the hls.js bridge
-  (`dom/hls-js/drm.ts`), the native FairPlay implementation
-  (`dom/native-hls/fairplay.ts` + `fairplay-webkit.ts`, including a DRM
-  error taxonomy), and the Mux token derivation (`dom/mux/drm.ts`, one DRM
-  token → all three systems' URLs). The SPF `mux-video` adapter accepts
-  `source.drm` but leaves it inert, steering DRM sources to the
-  hls.js-backed Media via `alternativeMediaSuggestion`; the SPF
-  `hls-video` adapter does consume it, naming every composed key system
-  up front with a resolver that reads whatever source is current, so the
-  engine is never rebuilt when the source changes. A Mux DRM CMAF
+  (`adapters/hlsjs-video/src/drm.ts`), the native FairPlay implementation
+  (`adapters/native-hls-video/src/fairplay-eme.ts` + `fairplay-webkit.ts`,
+  including a DRM error taxonomy), and the Mux token derivation
+  (`adapters/mux-video/src/drm.ts`, one DRM token → all three systems' URLs). The SPF `mux-video` adapter derives
+  Mux's three license servers from `drm.token`, with entries naming
+  servers outright overriding them; the SPF `hls-video` adapter consumes
+  `source.drm` directly, naming every composed key system up front with a
+  resolver that reads whatever source is current, so the engine is never
+  rebuilt when the source changes. A Mux DRM CMAF
   playlist fixture (Widevine PSSH + PlayReady PRO + FairPlay `skd://`, all
   `METHOD=SAMPLE-AES`) exists at
   `packages/spf/src/media/hls/tests/fixtures/drm-cmaf-video.m3u8`.
@@ -110,7 +111,8 @@ token-derived license URLs),
   per-key-system phases below are implemented and tested, and the
   `keystatuschange` report-only baseline landed (see Open questions).
   Still coarse: the key-status *policy* layer (re-request, exclusion),
-  security-level probing, and the FairPlay-AirPlay variant.
+  security-level probing, and the AirPlay handoff (designed, unbuilt —
+  see Open questions).
 - **Hard prerequisite:** [capability-probing](./capability-probing.md)'s
   "Key-system capability probing" phase. The probe must resolve
   before this feature commits to a key system, sets up MediaKeys,
@@ -128,7 +130,7 @@ separate phases.
 |---|---|---|
 | EME setup pipeline | Capability-probing's key-system verdict drives `navigator.requestMediaKeySystemAccess(...)`, which produces a `MediaKeys` instance attached via `mediaElement.setMediaKeys(mediaKeys)`. Ordering relative to MediaSource attachment is **not** spec-constrained the way this doc once claimed: Shaka and rx-player attach MediaKeys *after* `src`/MediaSource is linked (rx-player documents that ordering), hls.js gates fragment *loads* rather than MSE setup, dash.js gates nothing. The functional invariant is only that keys exist before encrypted data must decode. Sessions start manifest-driven (`MediaKeySession.generateRequest` with playlist-derived init data), with the `encrypted` event as fallback | Shared infrastructure regardless of key system. The SPF composition question is where the readiness gate composes — see Likely cross-cutting impact; the lean is a gate on the segment-load path, leaving `setupMediaSource` untouched in every variant |
 | License flow | Per-source license-server configuration via the landed `DrmSystemsConfig` contract (`licenseUrl` + optional `serverCertificateUrl` per key system). `MediaKeySession.message` event → POST message to server → `MediaKeySession.update(licenseResponse)`. Per-key-system request/response quirks (PlayReady challenge-unwrap, FairPlay SPC/CKC bodies) live in internal adapters, as every surveyed engine does | The consumer contract is settled: `source.drm` (`packages/media/src/core/drm.ts`), already how Mux, hls.js, and native FairPlay are configured. Callback hooks (`licenseXhrSetup`-style request/response shaping) are deferred until a concrete need |
-| Per-key-system specifics | Widevine, PlayReady, FairPlay. Per-system: init-data format (PSSH for Widevine, PRO box for PlayReady, content-id derivation for FairPlay), license URL conventions, license body format, server-certificate handshake (FairPlay), browser-API quirks. **FairPlay-AirPlay is a distinct key system from standard FairPlay** (see [capability-probing](./capability-probing.md)'s four-key-system enumeration) — active when content streams via AirPlay; entering/exiting AirPlay mid-playback is a *runtime state change*, not a compose-time variant, raising an open question on runtime-switching shape (see Open questions) | The shared pipeline + license flow above handle most of the machinery; each key system adds its own init-data + license-format adapters. In-repo references: `dom/native-hls/fairplay.ts` (FairPlay SPC/CKC + certificate handshake); the Mux fixture shows Widevine/PlayReady keys arriving as complete PSSH / PRO `data:` URIs in `#EXT-X-KEY`. FairPlay-AirPlay sits as a runtime-switchable variant of FairPlay specifically |
+| Per-key-system specifics | Widevine, PlayReady, FairPlay. Per-system: init-data format (PSSH for Widevine, PRO box for PlayReady, content-id derivation for FairPlay), license URL conventions, license body format, server-certificate handshake (FairPlay), browser-API quirks. **FairPlay-AirPlay is a distinct key system from standard FairPlay** (see [capability-probing](./capability-probing.md)'s four-key-system enumeration) — active when content streams via AirPlay; entering/exiting AirPlay mid-playback is a *runtime state change*, not a compose-time variant, handled as a runtime handoff (see Open questions) | The shared pipeline + license flow above handle most of the machinery; each key system adds its own init-data + license-format adapters. In-repo references: `adapters/native-hls-video/src/fairplay-eme.ts` (FairPlay SPC/CKC + certificate handshake) and `fairplay-webkit.ts` (the legacy `WebKitMediaKeys` fallback); the Mux fixture shows Widevine/PlayReady keys arriving as complete PSSH / PRO `data:` URIs in `#EXT-X-KEY`. FairPlay-AirPlay sits as a runtime-switchable variant of FairPlay specifically |
 | Key delivery and `keystatuschange` reactivity | Browser receives keys via `MediaKeySession.update()`; encrypted segments decrypt automatically. `MediaKeySession.keystatuses` Map tracks per-key status (`usable`, `expired`, `output-restricted`, `released`, etc.); `keystatuschange` event fires on changes. Engine reacts to status transitions (e.g., expired key → re-request) | The report-only baseline is implemented in `exchangeLicenses`: `expired` / `output-restricted` / `internal-error` transitions report SVTA 4003 / 4007 / 4014 so the silent-stall shapes are diagnosable. Richer handling stays consumer-policy-driven. Prior-art consensus (hls.js, Shaka, dash.js, rx-player): `output-restricted` / `internal-error` map to rendition-level exclusion, never a fatal error — SPF's constraint+filter pattern beside `excludeUnplayableTracks` |
 | Security-level capability and constraint filtering | Probe device security level (Widevine L1 hardware-backed / L2 hybrid / L3 software-only; PlayReady SL150 / SL2000 / SL3000; FairPlay key-duration / persistent-vs-streaming model) via `MediaKeySystemAccess.getConfiguration()`. HDCP output-protection requirements similarly probed. Match against per-rendition security-level requirements (e.g., 4K HDR HEVC often requires L1 Widevine) and license-server policy. Write a `deviceSecurityLevel` constraint slot read by ABR / variant selection; renditions exceeding the device's level filter out, or the engine surfaces a failure when no compatible rendition remains | Constraint+filter pattern parallel to [rendition-selection-caps](./rendition-selection-caps.md) and [hevc-variant-selection](./hevc-variant-selection.md). Probing extends [capability-probing](./capability-probing.md)'s key-system probe with security-level configuration. Borderline classification (Media-src for "play protected content correctly"; Player for customer-policy caps) — current scope leans Media-src |
 | Parser surface for key tags | `parseMediaPlaylist` surfaces structured key metadata (METHOD / KEYFORMAT / URI / KEYID) from `#EXT-X-KEY`, replacing today's boolean `encrypted` flag; multivariant parser surfaces `#EXT-X-SESSION-KEY` at presentation resolution. For Widevine / PlayReady the key URI is a `data:` URI carrying a complete PSSH / PRO (Mux emits this), so manifest-driven init data flows from the parsed-track output to the EME pipeline | Parser-side change. Today `#EXT-X-KEY` is recognized only enough to flag a rendition `encrypted`; the structured detail is dropped and `#EXT-X-SESSION-KEY` is unrecognized |
@@ -320,25 +322,33 @@ rediscovering it.
   precede MediaSource attachment, which is what made (a) attractive.
   Lean: (c) — confirm against the load behaviors' FSM shape when
   implementation starts.
-- **FairPlay-AirPlay runtime switching.** AirPlay session state is
-  a *runtime* condition (user can enter/exit AirPlay during
-  playback), not a compose-time variant. This breaks the standard
-  composition-variant discipline (compose-time variants for compose-
-  time conditions). Two open shapes: (a) a middle-pattern behavior
-  monitors AirPlay session state (`mediaElement.remote.state` or
-  equivalent) and writes an `airplaySessionActive` slot; a DRM-variant
-  behavior reads the slot and reacts (re-request key system,
-  re-create MediaKeys, potentially flush buffer + re-fetch license).
-  MediaKeys-recreation mid-source is non-trivial — the standard
-  source-replacement cascade tears MediaKeys down on
-  `presentation.url` change; an AirPlay-triggered recreation would
-  need a narrower reset (MediaKeys only, not the rest of the source
-  state). (b) Defer the switch entirely: standard FairPlay key system
-  is used for both local and AirPlay playback, accepting any degraded
-  behavior or playback errors during AirPlay sessions. Likely (a)
-  but the implementation is substantial; this open question may
-  itself motivate a follow-on feature doc once this feature's FairPlay
-  phase lands.
+- **FairPlay-AirPlay runtime handoff.** Resolved 2026-09-11 as shape
+  (a) — a session fact plus a DRM behavior that reacts to it — with
+  `setupAirPlay`'s `loadingSuspended` as the session fact (WebKit's
+  `remote.state` does not track AirPlay reliably; `@videojs/core` skips
+  it for the same reason). Two pieces, neither built yet. (1)
+  `setupMediaKeys` treats an observed `loadingSuspended` as
+  `preconditions-unmet`, so its own cleanup performs the MediaKeys-only
+  reset — sessions close via `exchangeLicenses`, then `setMediaKeys(null)`
+  — and re-negotiation rides the falling edge with the MediaSource
+  rebuild. (2) A droppable `setupAirPlayFairPlay` behavior, gated on the
+  session fact, a FairPlay key, a `com.apple.fps` entry, and a cleared
+  `context.mediaKeys`, negotiates `com.apple.fps` with `skd` init data
+  for the receiver's key requests through the same fetch and transform
+  layers, keeps persistent `message` listeners (the receiver proxies its
+  own SPC through the sender's CDM on connect and on disconnect), and
+  dedupes nothing that could drop those. The handoff is needed regardless
+  of any browser bug: the MSE MediaKeys are negotiated for `sinf`/`cenc`
+  and cannot serve the `skd` requests the native fallback source raises.
+  **The legacy fallback (`WebKitMediaKeys`, `com.apple.fps.1_0`) is
+  deferred pending a device re-check.** Prior art: elements PR
+  [muxinc/elements#1277](https://github.com/muxinc/elements/pull/1277)
+  falls back to it only on `NotSupportedError` from `generateRequest`
+  while `webkitCurrentPlaybackTargetIsWireless`, non-sticky, with no OS
+  sniffing — an Apple sender bug on iOS/macOS 26.1–26.2 that may since be
+  fixed. Legacy lacks SPC v3 and works for `src=` only, so it is never the
+  primary path. Device verification gates both pieces; unit tests pin
+  protocol and lifecycle against stubs only.
 - **MediaKeys re-use across sources.** When the consumer changes
   sources within the same key system + license server, should the
   engine re-use the existing MediaKeys instance or tear down and
@@ -414,9 +424,11 @@ rediscovering it.
   prerequisite)* — owns key-system probing; this feature consumes the
   verdict. Crisp boundary: probing = "can we?"; this feature =
   "set it up."
-- **`[fairplay-airplay-workaround]`** *(candidate, this session)* —
-  Apple-specific FairPlay quirks during AirPlay sessions. Consumes
-  this feature's FairPlay setup as the baseline.
+- **`[fairplay-airplay-workaround]`** *(candidate)* — the legacy
+  `WebKitMediaKeys` fallback for senders whose EME cannot generate a
+  request during an AirPlay session. Real work only if the device
+  re-check shows the Apple bug persists; the EME handoff itself lands in
+  this feature.
 - **[mse-mms-pipeline](./mse-mms-pipeline.md)** — DRM gates MSE
   setup; encrypted-event flow on `mediaElement` triggers session
   creation. Once keys are delivered, segment append proceeds
