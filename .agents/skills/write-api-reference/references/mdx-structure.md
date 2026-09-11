@@ -356,10 +356,10 @@ Add to `site/src/docs.config.ts` in the appropriate section, alphabetically:
   sidebarLabel: 'Components',
   contents: [
     // sorted alphabetically
-    { slug: 'components/buffering-indicator' },
-    { slug: 'components/controls' },
+    { slug: 'reference/components/buffering-indicator' },
+    { slug: 'reference/components/controls' },
     // ...
-    { slug: 'components/{name}' },  // <-- insert alphabetically
+    { slug: 'reference/components/{name}' },  // <-- insert alphabetically
     // ...
   ],
 },
