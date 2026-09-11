@@ -245,20 +245,17 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'API',
     llmsDescription:
-      'API reference for the player factory, store, features, menus, overlays, gestures, translation tools, and utilities.',
+      'API reference for the player factory, store, features, menus, gestures, translation tools, and utilities.',
     contents: [
       {
         sidebarLabel: 'Player',
-        llmsDescription:
-          'API reference for creating a player and reaching it, its container, and its context from your own code.',
+        llmsDescription: 'API reference for creating a player and reaching it and its container from your own code.',
         contents: [
           { slug: 'api/create-player', frameworks: ['react'] },
           { slug: 'api/html-create-player', sidebarLabel: 'createPlayer', frameworks: ['html'] },
           { slug: 'api/player-controller', frameworks: ['html'] },
           { slug: 'api/use-player', frameworks: ['react'] },
           { slug: 'api/use-optional-player', frameworks: ['react'] },
-          { slug: 'api/use-player-context', frameworks: ['react'] },
-          { slug: 'api/player-context', frameworks: ['html'] },
           { slug: 'api/use-container', frameworks: ['react'] },
           { slug: 'api/use-optional-container', frameworks: ['react'] },
           { slug: 'api/use-container-attach', frameworks: ['react'] },
@@ -306,26 +303,12 @@ export const sidebar: Sidebar = [
       {
         sidebarLabel: 'Menu',
         frameworks: ['react'],
-        llmsDescription:
-          'API reference for menu context and the option lists behind the track, quality, and speed menus.',
+        llmsDescription: 'API reference for the option lists behind the track, quality, and speed menus.',
         contents: [
-          { slug: 'api/use-menu-context', frameworks: ['react'] },
-          { slug: 'api/use-optional-menu-context', frameworks: ['react'] },
           { slug: 'api/use-audio-track-options', frameworks: ['react'] },
           { slug: 'api/use-captions-options', frameworks: ['react'] },
           { slug: 'api/use-playback-rate-options', frameworks: ['react'] },
           { slug: 'api/use-quality-options', frameworks: ['react'] },
-        ],
-      },
-      {
-        sidebarLabel: 'Overlays',
-        frameworks: ['react'],
-        llmsDescription: 'API reference for dialog, popover, and tooltip context hooks.',
-        contents: [
-          { slug: 'api/use-dialog-context', frameworks: ['react'] },
-          { slug: 'api/use-error-dialog-context', frameworks: ['react'] },
-          { slug: 'api/use-popover-context', frameworks: ['react'] },
-          { slug: 'api/use-tooltip-context', frameworks: ['react'] },
         ],
       },
       {
@@ -342,7 +325,7 @@ export const sidebar: Sidebar = [
       {
         sidebarLabel: 'i18n',
         llmsDescription:
-          'API reference for translating the player: providers, hooks, elements, the phrase registry, and contexts.',
+          'API reference for translating the player: providers, hooks, elements, and the phrase registry.',
         contents: [
           { slug: 'api/i18n-provider', frameworks: ['react'] },
           { slug: 'api/create-i18n' },
@@ -357,7 +340,6 @@ export const sidebar: Sidebar = [
           { slug: 'api/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
           { slug: 'api/create-translator', sidebarLabel: 'createTranslator' },
           { slug: 'api/i-18-n-context', sidebarLabel: 'I18nContext', frameworks: ['react'] },
-          { slug: 'api/html-i-18-n-context', sidebarLabel: 'i18nContext', frameworks: ['html'] },
           { slug: 'api/i-18-n-controller', sidebarLabel: 'I18nController', frameworks: ['html'] },
         ],
       },
