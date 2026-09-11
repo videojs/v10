@@ -21,6 +21,7 @@ import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
@@ -181,26 +182,23 @@ To add, remove, or rearrange the skin you selected, eject it into your project. 
 
 ## Choose what to do next
 
+<DocsLinkCards>
 <DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
-
 <DocsLinkCard slug="concepts/overview" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
-
 <DocsLinkCard slug="guides/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
+</DocsLinkCards>
 
 ## Prepare for production
 
+<DocsLinkCards>
 <DocsLinkCard slug="concepts/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
-
 <DocsLinkCard slug="concepts/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
-
 <DocsLinkCard slug="concepts/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
-
 <DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
-
 <FrameworkCase frameworks={["html"]}>
 <DocsLinkCard slug="concepts/cdn" description="See every bundle the CDN serves and the layout rules behind the URLs">CDN</DocsLinkCard>
-
 <DocsLinkCard slug="guides/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
 </FrameworkCase>
+</DocsLinkCards>
 
 Something not quite right? You can [submit an issue](https://github.com/videojs/v10/issues) and ask for help, or explore [other support options](/html5-video-support).
