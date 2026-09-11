@@ -74,14 +74,15 @@ export default function CardRadioGroup<T extends string = string>({
             <span
               aria-hidden="true"
               className={clsx(
-                'flex shrink-0 items-center justify-center self-start rounded-lg corner-squircle border border-line',
+                'flex shrink-0 items-center justify-center rounded-lg corner-squircle border border-line',
                 'bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light',
-                layout === 'tile' ? 'size-12' : 'size-10'
+                layout === 'tile' ? 'size-12 self-start' : 'size-10 self-center'
               )}
             >
               {option.media}
             </span>
-            <span className="min-w-0 flex-1">
+            {/* The check badge is absolutely positioned on the right, so the text reserves room for it. */}
+            <span className={clsx('min-w-0 flex-1', layout === 'tile' ? 'pr-6' : 'pr-8')}>
               <span className={clsx('block truncate font-semibold', layout === 'tile' ? 'text-p2' : 'text-p3')}>
                 {option.label}
               </span>
