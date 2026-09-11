@@ -7,7 +7,6 @@
  */
 import { describe, expect, it } from 'vite-plus/test';
 
-import { HlsBackgroundVideo } from '../../media/hls-background-video';
 import { HlsBackgroundVideoElement } from '../media/hls-background-video';
 import { MuxBackgroundVideoElement } from '../media/mux-background-video';
 
@@ -17,9 +16,10 @@ describe('background-video alias tags', () => {
     expect(customElements.get('mux-background-video')).toBe(MuxBackgroundVideoElement);
   });
 
-  it('registers distinct subclasses of the one shared base', () => {
+  it('registers the alias as a subclass of the shared element', () => {
     expect(MuxBackgroundVideoElement).not.toBe(HlsBackgroundVideoElement);
-    expect(Object.getPrototypeOf(HlsBackgroundVideoElement)).toBe(HlsBackgroundVideo);
-    expect(Object.getPrototypeOf(MuxBackgroundVideoElement)).toBe(HlsBackgroundVideo);
+    expect(Object.getPrototypeOf(MuxBackgroundVideoElement)).toBe(HlsBackgroundVideoElement);
+    expect(MuxBackgroundVideoElement.tagName).toBe('mux-background-video');
+    expect(HlsBackgroundVideoElement.tagName).toBe('hls-background-video');
   });
 });

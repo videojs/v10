@@ -1568,19 +1568,20 @@ describe('Preset pipeline (end-to-end)', () => {
 //
 // The builder extracts:
 //   - Tag name from the element class's static tagName
-//   - Host properties by following the CustomMediaElement(tag, Host) call to the
-//     host class and walking its getter/setter pairs
-//   - Standard/custom attributes from static properties and host accessors
+//   - Adapter properties by following the `Adapter` passed to CustomMediaElement
+//     and walking its getter/setter pairs
+//   - Standard/custom attributes from host declarations and adapter defaults
 //   - Platform metadata from the matching React component conventions
 //   - Events and CSS vars for the HTML custom element
-//   - JSDoc descriptions from host getter/setter pairs
+//   - Media type and target metadata from element-class JSDoc
+//   - JSDoc descriptions from adapter getter/setter pairs
 //
 // Key behaviors:
 //   - Discovery: files in define/media/ and public nested barrels with an inline
 //     class declaration + static tagName
 //   - Exclusion: container.ts (re-exports, no inline class), background-video.ts
 //     (no CustomMediaElement — uses MediaAttachMixin(HTMLElement) directly)
-//   - Host inheritance: child host extends parent, builder walks the chain
+//   - Adapter inheritance: child adapter extends parent, builder walks the chain
 //   - Attribute classification: standard attributes remain an MDN-linked list;
 //     Video.js-specific attributes use their corresponding host definitions.
 //   - Methods: native media methods are extracted ONCE per media type from the
@@ -1610,12 +1611,21 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(names).toEqual([
         'BarrelVideo',
         'ComplexVideo',
+        'EmbedPodcast',
         'EmbedVideo',
         'ExtendingVideo',
         'MixinVideo',
         'SimpleVideo',
         'SpfAudio',
       ]);
+    });
+
+    it('discovers elements built with createMediaElement as well as CustomMediaElement', () => {
+      // SimpleVideo and MixinVideo compose through the HTML factory, while ComplexVideo uses CustomMediaElement
+      // directly. Their media targets come from JSDoc on the element class.
+      expect(findElement('SimpleVideo')!.reference.platforms.html.target).toBe('video');
+      expect(findElement('MixinVideo')!.reference.platforms.html.target).toBe('video');
+      expect(findElement('ComplexVideo')!.reference.platforms.html.target).toBe('video');
     });
 
     it('does not treat the UI container as a media element', () => {
@@ -1628,7 +1638,7 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(7);
+      expect(results.length).toBe(8);
     });
 
     it('follows nested public index barrels without including sibling implementations', () => {
@@ -1966,6 +1976,15 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(Object.keys(react!.props).sort()).toEqual(['autoplay', 'source', 'src']);
     });
 
+    it('classifies iframe-backed elements from their mediaType JSDoc', () => {
+      const audio = findElement('EmbedPodcast')!.reference;
+      const video = findElement('EmbedVideo')!.reference;
+
+      expect(audio.platforms.html.target).toBe('iframe');
+      expect(audio.mediaType).toBe('audio');
+      expect(video.mediaType).toBe('video');
+    });
+
     it('extracts engine options by following the source property type', () => {
       const ref = findElement('EmbedVideo')!.reference;
 
@@ -2270,6 +2289,17 @@ describe('Media element pipeline (end-to-end)', () => {
 
       expect(ref.tagName).toBe('spf-audio');
       expect(ref.mediaType).toBe('audio');
+    });
+
+    it('takes the media attributes of the audio host as standard and none of the video ones', () => {
+      const attributes = findElement('SpfAudio')!.reference.platforms.html.attributes;
+
+      expect(attributes.standard).toContain('src');
+      expect(attributes.standard).toContain('controls');
+      expect(attributes.standard).toContain('muted');
+      expect(attributes.standard).not.toContain('poster');
+      expect(attributes.standard).not.toContain('playsinline');
+      expect(attributes.custom['preload']).toBeUndefined();
     });
 
     it('resolves the mixin through another package barrel', () => {

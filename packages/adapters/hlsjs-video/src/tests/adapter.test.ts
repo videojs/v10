@@ -1,5 +1,5 @@
 import { MediaError, type RemotePlaybackLike } from '@videojs/media';
-import { addMediaExtension, CustomMediaElement, type MediaExtension } from '@videojs/media/dom';
+import { addMediaExtension, CustomMediaElement, type MediaExtension, videoHost } from '@videojs/media/dom';
 import { NativeHlsAdapter } from '@videojs/native-hls-video';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -7,7 +7,7 @@ import { ContentTypes, Hls, HlsJsAdapter, type HlsSource } from '../index';
 
 // Stands in for `<hlsjs-video>`, so markup reaches the media adapter the same way
 // the HTML binding delivers it.
-customElements.define('test-airplay-video', CustomMediaElement('video', HlsJsAdapter as never));
+customElements.define('test-airplay-video', CustomMediaElement({ Adapter: HlsJsAdapter, host: videoHost }));
 
 afterEach(() => {
   document.body.innerHTML = '';

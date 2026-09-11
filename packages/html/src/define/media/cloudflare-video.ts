@@ -1,11 +1,9 @@
-import { CloudflareVideo } from '../../media/cloudflare-video';
+import { CloudflareVideoElement } from '../../media/cloudflare-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export class CloudflareVideoElement extends CloudflareVideo {
-  static readonly tagName = 'cloudflare-video';
-}
-
 safeDefine(CloudflareVideoElement);
+
+export { CloudflareVideoElement };
 
 declare global {
   interface HTMLElementTagNameMap {

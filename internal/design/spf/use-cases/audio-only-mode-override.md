@@ -311,7 +311,7 @@ Public re-export: `@videojs/spf/hls-audio`.
 
 | Export | File | Purpose |
 |---|---|---|
-| `HlsAudio` | `media/hls-audio/adapter.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', HlsAudioAdapter)` |
+| `HlsAudioElement` | `media/hls-audio/element.ts` | Builds `HlsAudioAdapter` with `createMediaElement({ Adapter: HlsAudioAdapter, host: audioHost })` |
 | `HlsAudioElement` (tag `hls-audio`) | `media/hls-audio/element.ts` | Custom-element implementation; `define/media/hls-audio.ts` registers it via `safeDefine` |
 
 CDN entry: `packages/html/src/define/media/hls-audio.ts` →
@@ -416,7 +416,7 @@ configuration drives end-of-stream correctly with no per-type changes.
 - [`packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts) — Phase 1 engine integration tests
 - [`packages/spf/src/playback/adapters/hls-audio/tests/mixin.test.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/tests/mixin.test.ts) — Phase 1 adapter tests
 - [`packages/spf/src/playback/adapters/hls-audio/adapter.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/adapter.ts) — Phase 1 media wrapper
-- [`packages/html/src/media/hls-audio/adapter.ts`](../../../../packages/html/src/media/hls-audio/adapter.ts) — Phase 1 HTML custom element
+- [`packages/html/src/media/hls-audio/element.ts`](../../../../packages/html/src/media/hls-audio/element.ts) — Phase 1 HTML custom element
 - [`packages/react/src/media/hls-audio/adapter.tsx`](../../../../packages/react/src/media/hls-audio/adapter.tsx) — Phase 1 React component
 - [`apps/sandbox/templates/html-hls-audio/`](../../../../apps/sandbox/templates/html-hls-audio/) — Phase 1 HTML sandbox demo template
 - [`apps/sandbox/templates/react-hls-audio/`](../../../../apps/sandbox/templates/react-hls-audio/) — Phase 1 React sandbox demo template
