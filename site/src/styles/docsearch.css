@@ -248,7 +248,7 @@
 }
 
 /* The key hints only fit once the trigger has its full desktop width. */
-@media (width >= 48rem) {
+@media (width >= 64rem) {
   .DocSearch-Button-Keys {
     display: flex;
   }

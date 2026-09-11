@@ -20,9 +20,9 @@ export default function Search({ className }: SearchProps) {
   const framework = useStore(currentFramework);
 
   // A flex wrapper keeps the button's box on whole pixels; an inline strut would add a half-pixel line box. The trigger
-  // is an icon below `sm`, a compact field beside the mobile menu button, and the full 180px once desktop links show.
+  // is an icon below `sm`, a compact field while the nav is crowded, and the full 180px from `lg` up.
   return (
-    <div className={clsx('flex min-w-0 sm:w-full sm:max-w-36 md:max-w-45', className)}>
+    <div className={clsx('flex min-w-0 sm:w-full sm:max-w-36 lg:max-w-45', className)}>
       <DocSearch
         appId={DOCSEARCH_APP_ID}
         apiKey={DOCSEARCH_API_KEY}
