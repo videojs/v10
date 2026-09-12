@@ -86,6 +86,13 @@ export const sidebar: Sidebar = [
           { slug: 'how-to/use-videojs-with-svelte', sidebarLabel: 'Svelte and SvelteKit', frameworks: ['html'] },
         ],
       },
+      {
+        sidebarLabel: 'Use a component library',
+        defaultOpen: false,
+        llmsDescription:
+          'Guides for driving a headless React component library with Video.js hooks: state, actions, availability, and option hooks feed the library primitives. One library per page.',
+        contents: [{ slug: 'how-to/use-videojs-with-radix-ui', sidebarLabel: 'Radix UI', frameworks: ['react'] }],
+      },
       { slug: 'how-to/autoplay' },
       { slug: 'how-to/show-and-hide-controls' },
       { slug: 'how-to/show-captions-and-subtitles' },
