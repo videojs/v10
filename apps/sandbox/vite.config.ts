@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import browserslist from 'browserslist';
 import { defineConfig, normalizePath, type Plugin, type PluginOption } from 'vite-plus';
 
 import { mirrorTemplatesToSrc } from './scripts/shared';
@@ -14,6 +15,11 @@ import { mirrorTemplatesToSrc } from './scripts/shared';
 // path, so the sandbox also works when the package is installed from a registry.
 // The manifest is the anchor because bundles only exist after `pnpm build:cdn`.
 const cdnDir = normalizePath(dirname(createRequire(__filename).resolve('@videojs/cdn/package.json')));
+const cssTarget = browserslist(undefined, { path: __dirname }).map((browser) => {
+  const [name, version] = browser.split(' ');
+
+  return `${name === 'ios_saf' ? 'ios' : name}${version!.split('-')[0]}`;
+});
 const cdnI18nRegistry = `${cdnDir}/i18n.dev.js`;
 const cdnSourceI18n = `${cdnDir}/src/i18n.ts`;
 
@@ -375,6 +381,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       strictPort: true,
     },
     build: {
+      cssTarget,
       outDir: resolve(__dirname, 'dist'),
       emptyOutDir: true,
       sourcemap: true,

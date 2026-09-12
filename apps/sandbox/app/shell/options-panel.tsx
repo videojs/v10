@@ -26,7 +26,7 @@ import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { ASPECT_RATIOS, type AspectRatio, PLAYER_WIDTH } from '@app/shared/player-frame';
 import { XMarkIcon } from '@heroicons/react/16/solid';
-import { type ReactNode, useId, useRef } from 'react';
+import { type ReactNode, useId, useMemo, useRef } from 'react';
 
 import { PREFERENCE_QUERIES, type Preferences } from './report';
 import { SelectField } from './select';
@@ -340,7 +340,17 @@ type ColorItemProps = {
 };
 
 function ColorItem({ id, value, onChange }: ColorItemProps) {
-  const pickerValue = /^#[\da-f]{6}$/i.test(value) ? value : '#ff0000';
+  const pickerValue = useMemo(() => {
+    const context = document.createElement('canvas').getContext('2d');
+    if (!context || !CSS.supports('color', value)) return '#ff0000';
+
+    // The native picker needs sRGB hex even when the text uses another CSS color format.
+    context.fillStyle = value;
+    context.fillRect(0, 0, 1, 1);
+    const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+
+    return `#${[red, green, blue].map((channel) => channel!.toString(16).padStart(2, '0')).join('')}`;
+  }, [value]);
 
   return (
     <>
