@@ -1,4 +1,4 @@
-import { globSync, rmSync, writeFileSync } from 'node:fs';
+import { globSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -74,6 +74,21 @@ export const entries = [
   ...cdnMediaEntries,
   ...cdnExtensionEntries,
 ];
+
+/**
+ * Html's build inlines every `@import` into its published sheets, so each preset skin sheet carries `global.css`. Those
+ * rules are for the light DOM and ship on their own as `global.css`; a skin sheet is linked inside a declarative shadow
+ * root, where `media-container video` and the caption-track rules would otherwise apply too. Strip the exact inlined
+ * text, which is the same resolved content html wrote to `define/global.css`.
+ */
+function stripGlobalSheet(content: string, file: string): string {
+  if (!/^define\/[\w-]+\/[\w-]+\.css$/.test(file)) return content;
+
+  // The background skin is light DOM only and never imports the global sheet; `check-cdn-skins` asserts the rest lost it.
+  const globalSheet = readFileSync(resolve(htmlDistDir, 'define/global.css'), 'utf-8').trim();
+
+  return content.replace(globalSheet, '');
+}
 
 function cdnStylesheetName(file: string): string | null {
   const match = /^define\/(?:([\w-]+)\/)?([\w-]+)\.css$/.exec(file);
@@ -168,6 +183,7 @@ for (const mode of ['dev', 'prod'] satisfies CdnBuildMode[]) {
               outDir: packageDir,
               rename: cdnStylesheetName,
               inline: false,
+              rewrite: stripGlobalSheet,
               minify: true,
             }),
           ]

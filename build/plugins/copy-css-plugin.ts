@@ -21,6 +21,11 @@ interface CopyCssPluginOptions {
   rename?: (file: string) => string | null;
   /** Drop an `@import`ed file, by resolved absolute path, instead of inlining it. */
   omitImport?: (file: string) => boolean;
+  /**
+   * Rewrite a sheet's resolved content before it is minified and written. `file` is the source path relative to
+   * `rootDir`.
+   */
+  transform?: (content: string, file: string) => string;
   minify?: boolean;
 }
 
@@ -37,6 +42,7 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
     rebuild = true,
     rename = mirrorSrcTree,
     omitImport,
+    rewrite,
     minify = false,
   } = options;
   let poll: ReturnType<typeof setInterval> | undefined;
@@ -68,6 +74,8 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
       const source = join(rootDir, file);
       const content = readFileSync(source, 'utf-8');
       let output = inline ? resolveImports(content, dirname(source), omitImport) : content;
+
+      if (rewrite) output = rewrite(output, file);
 
       if (minify) {
         output = transform({ filename: source, code: Buffer.from(output), minify: true }).code.toString();
