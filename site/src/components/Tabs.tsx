@@ -16,6 +16,7 @@ import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import CopyIcon from '@/assets/icons/copy.svg?react';
+import type { AnalyticsEventProperties } from '@/utils/analytics';
 import { twMerge } from '@/utils/twMerge';
 import useIsHydrated from '@/utils/useIsHydrated';
 
@@ -91,8 +92,10 @@ interface TabsListProps {
   label: string;
   children: React.ReactNode;
   variant?: TabsVariant;
+  /** Names this tab set's code in the `code_copied` event. */
+  analytics?: AnalyticsEventProperties['code_copied'];
 }
-export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
+export function TabsList({ label, children, variant = 'compact', analytics }: TabsListProps) {
   return (
     <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'p-0' : 'px-2.5')}>
       <div
@@ -115,6 +118,7 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-manila-dark dark:intent:bg-warm-gray rounded-xs'
         )}
         copied={<Check size={20} />}
+        analytics={analytics}
       >
         <CopyIcon width="1.25rem" height="1.25rem" />
       </CopyButton>

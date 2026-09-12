@@ -17,6 +17,7 @@ interface UploaderOverlayProps {
 function OverlayWrapper({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
+      data-ph-capture-attribute-location="mux-uploader"
       className={clsx(
         'absolute inset-0 flex flex-col items-center justify-center gap-3',
         'bg-manila-light dark:bg-faded-black',
@@ -47,7 +48,13 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
       <OverlayWrapper>
         <p className="text-p3 font-bold">
           To upload this video to{' '}
-          <a href={MUX_URL} target="_blank" rel="noopener" className="intent:decoration-gold underline">
+          <a
+            href={MUX_URL}
+            target="_blank"
+            rel="noopener"
+            data-ph-capture-attribute-destination="mux"
+            className="intent:decoration-gold underline"
+          >
             Mux
           </a>
           &hellip;
@@ -55,6 +62,8 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
+          data-ph-capture-attribute-cta="mux-login"
+          data-ph-capture-attribute-destination="mux"
           className="bg-bright-yellow text-faded-black text-p3 intent:bg-bright-yellow/70 inline-flex cursor-pointer items-center gap-2 rounded-xs px-4 py-2 font-bold"
         >
           Sign up or log in
@@ -86,6 +95,8 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
             target="_blank"
             className="intent:decoration-gold underline"
             rel="noopener"
+            data-ph-capture-attribute-cta="mux-dashboard"
+            data-ph-capture-attribute-destination="mux"
           >
             manage on Mux
           </a>
@@ -102,7 +113,12 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
           Error preparing video:
           {error}
         </p>
-        <button type="button" onClick={onRetry} className="text-p3 intent:decoration-gold underline">
+        <button
+          type="button"
+          onClick={onRetry}
+          data-ph-capture-attribute-cta="mux-upload-retry"
+          className="text-p3 intent:decoration-gold underline"
+        >
           Try again
         </button>
       </OverlayWrapper>

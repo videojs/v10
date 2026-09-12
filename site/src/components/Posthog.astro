@@ -4,13 +4,26 @@
  * Idle-loaded to minimize impact on page performance.
  *
  * Requires "Cookieless server hash mode" enabled in PostHog project settings.
+ *
+ * Cookieless mode means there is no durable person: never call `identify`,
+ * `alias`, or any person-property API. Super properties registered in `loaded`
+ * below last for this page load only, which is why every page re-registers.
+ * Custom events go through `src/utils/analytics.ts`.
  */
+
+import { FRAMEWORK_COOKIE, STYLE_STORAGE_KEY_PREFIX } from '@/utils/docs/preferences';
 ---
 
 <link rel="dns-prefetch" href="/" />
 <link rel="preconnect" href="/" crossorigin />
 
-<script is:inline>
+<script
+  is:inline
+  define:vars={{
+    frameworkCookie: FRAMEWORK_COOKIE,
+    styleKeyPrefix: STYLE_STORAGE_KEY_PREFIX,
+  }}
+>
   (function () {
     function load() {
       !(function (t, e) {
@@ -73,6 +86,36 @@
         ui_host: "https://us.posthog.com",
         defaults: "2026-01-30",
         cookieless_mode: "always",
+        capture_dead_clicks: true,
+        capture_heatmaps: true,
+        // `loaded` runs before the initial $pageview, so the docs context is
+        // attached to every event on this page load. Keys come from
+        // `src/utils/docs/preferences.ts` via define:vars above.
+        loaded: function (ph) {
+          try {
+            var framework = null;
+
+            document.cookie.split(";").forEach(function (cookie) {
+              var parts = cookie.trim().split("=");
+
+              if (parts[0] === frameworkCookie) framework = parts[1] || null;
+            });
+
+            var context = {};
+
+            if (framework) {
+              context.docs_framework = framework;
+
+              var style = localStorage.getItem(styleKeyPrefix + framework);
+
+              if (style) context.docs_style = style;
+            }
+
+            if (Object.keys(context).length) ph.register(context);
+          } catch (error) {
+            // Storage can throw in private modes; analytics must never break the page.
+          }
+        },
       });
     }
 

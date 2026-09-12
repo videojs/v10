@@ -11,6 +11,7 @@ import {
   STYLE_LABELS,
   SUPPORTED_FRAMEWORKS,
 } from '@/types/docs';
+import { ANALYTICS_EVENTS, registerAnalyticsContext, trackEvent } from '@/utils/analytics';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
 import useIsHydrated from '@/utils/useIsHydrated';
@@ -29,6 +30,15 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
     if (newFramework === null) return;
 
     if (!isValidFramework(newFramework)) return;
+
+    if (newFramework !== currentFramework) {
+      registerAnalyticsContext({ docs_framework: newFramework });
+      trackEvent(ANALYTICS_EVENTS.docsPreferenceChanged, {
+        preference: 'framework',
+        value: newFramework,
+        previous: currentFramework,
+      });
+    }
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
@@ -60,6 +70,15 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
     if (newStyle === null) return;
 
     if (!isValidStyleForFramework(currentFramework, newStyle)) return;
+
+    if (newStyle !== currentStyle) {
+      registerAnalyticsContext({ docs_style: newStyle });
+      trackEvent(ANALYTICS_EVENTS.docsPreferenceChanged, {
+        preference: 'style',
+        value: newStyle,
+        previous: currentStyle,
+      });
+    }
 
     // Update localStorage for this framework
     setStylePreferenceClient(currentFramework, newStyle);

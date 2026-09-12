@@ -3,9 +3,10 @@ import { useEffect } from 'react';
 
 import { Select } from '@/components/Select';
 import { renderer, sourceUrl, useCase } from '@/stores/installation';
+import { ANALYTICS_EVENTS, registerAnalyticsContext, trackEvent } from '@/utils/analytics';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
 import { buildOptions } from '@/utils/installation/renderer-options';
-import { getInstallationPreset } from '@/utils/installation/types';
+import { getInstallationPreset, type Renderer } from '@/utils/installation/types';
 
 export default function RendererSelect() {
   const $renderer = useStore(renderer);
@@ -33,6 +34,20 @@ export default function RendererSelect() {
       }
     }
   }, [detectedRenderer, $useCase]);
+
+  // Covers every path that changes the renderer — manual pick, URL auto-detection, and a finished Mux upload — so the
+  // super property never drifts from the store. Super properties are per page load, so re-registering is cheap.
+  useEffect(() => {
+    registerAnalyticsContext({ install_renderer: $renderer });
+  }, [$renderer]);
+
+  const selectRenderer = (value: Renderer) => {
+    const previous = renderer.get();
+    if (value === previous) return;
+
+    renderer.set(value);
+    trackEvent(ANALYTICS_EVENTS.installOptionChanged, { option: 'renderer', value, previous });
+  };
 
   const showDetectionMatch = $sourceUrl.trim() && detection && detection.renderer === $renderer;
   const showDetectionSuggestion = $sourceUrl.trim() && detection && detection.renderer !== $renderer;
@@ -65,7 +80,7 @@ export default function RendererSelect() {
               This looks like {articleFor(detection.renderer)} {detection.label} link.
               <button
                 type="button"
-                onClick={() => renderer.set(detection.renderer)}
+                onClick={() => selectRenderer(detection.renderer)}
                 className="intent:decoration-gold cursor-pointer underline"
               >
                 Select {detection.label}
@@ -80,7 +95,7 @@ export default function RendererSelect() {
         <Select
           value={$renderer}
           onChange={(value) => {
-            if (value) renderer.set(value);
+            if (value) selectRenderer(value);
           }}
           options={options}
           aria-label="Select renderer"
