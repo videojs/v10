@@ -1,0 +1,124 @@
+.radix-player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  color: white;
+  background: black;
+}
+
+.radix-player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.radix-player__bar {
+  position: absolute;
+  inset: auto 12px 12px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 4px;
+  background: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border-radius: 9999px;
+}
+
+.radix-player__spacer {
+  flex: 1;
+}
+
+.radix-player__button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.radix-player__button:hover,
+.radix-player__button:focus-visible,
+.radix-player__button[data-state="open"] {
+  background: rgb(255 255 255 / 15%);
+  outline: none;
+}
+
+.radix-player__button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Menu surfaces: Radix positions them; this is only the look. */
+.radix-player__menu {
+  z-index: 50;
+  min-width: 14rem;
+  max-height: min(70vh, 20rem);
+  padding: 4px;
+  overflow-y: auto;
+  font-size: 13px;
+  color: white;
+  background: rgb(23 23 23 / 90%);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+  outline: none;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 40%);
+}
+
+.radix-player__menu-item {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+.radix-player__menu-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+.radix-player__menu-item--radio {
+  padding-left: 32px;
+}
+
+.radix-player__menu-item[data-highlighted],
+.radix-player__menu-item[data-state="open"] {
+  background: rgb(255 255 255 / 15%);
+}
+
+.radix-player__menu-item[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.radix-player__menu-hint {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 16px;
+  color: rgb(255 255 255 / 60%);
+}
+
+.radix-player__menu-check {
+  position: absolute;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
