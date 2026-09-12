@@ -16,7 +16,7 @@ export default styles({
         'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-media-fast ease-out',
         'focus-visible:outline-media-ring focus-visible:outline-offset-2',
         'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
-        'after:shadow-[inset_0_0_0_1px_var(--media-frame-border)] [&:fullscreen]:after:hidden',
+        'after:border after:border-(--media-frame-border) [&:fullscreen]:after:hidden',
       ],
       variants: {
         // The HTML skin slots the page's media, which the base `video` rule cannot reach across the shadow boundary.

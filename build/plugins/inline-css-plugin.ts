@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from 'node:path';
 
 import { transform } from 'lightningcss';
 
+import { cssTargets } from '../css-targets.ts';
 import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 
@@ -50,6 +51,7 @@ export function inlineCssPlugin(options: InlineCssPluginOptions): BuildPlugin {
           filename: file,
           code: Buffer.from(resolved),
           minify: true,
+          targets: cssTargets,
         });
 
         resolved = code.toString();

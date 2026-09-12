@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 
 import { transform } from 'lightningcss';
 
+import { cssTargets } from '../css-targets.ts';
 import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 
@@ -70,7 +71,12 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
       let output = inline ? resolveImports(content, dirname(source), omitImport) : content;
 
       if (minify) {
-        output = transform({ filename: source, code: Buffer.from(output), minify: true }).code.toString();
+        output = transform({
+          filename: source,
+          code: Buffer.from(output),
+          minify: true,
+          targets: cssTargets,
+        }).code.toString();
       }
 
       const outFile = join(outDir, target);
