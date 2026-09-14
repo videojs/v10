@@ -1,11 +1,12 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-import { isString } from '@videojs/utils/predicate';
-
 /**
  * Pure helpers behind `generate-html-entries.ts`: derive the `video.js` re-export tree and package manifest from
  * `@videojs/html`'s manifest and source tree, so the two can never drift apart by hand.
+ *
+ * `vite.config.ts` imports this module, and Vite+ loads every package config before any package is built, so nothing
+ * here may import a workspace package.
  */
 
 export type ExportTarget = string | Record<string, string>;
@@ -50,7 +51,7 @@ export function rewriteHtmlDistPath(path: string): string {
 }
 
 function rewriteTarget(target: ExportTarget): ExportTarget {
-  if (isString(target)) return rewriteHtmlDistPath(target);
+  if (typeof target === 'string') return rewriteHtmlDistPath(target);
 
   return Object.fromEntries(Object.entries(target).map(([condition, path]) => [condition, rewriteHtmlDistPath(path)]));
 }
@@ -147,7 +148,7 @@ export function resolveHtmlModules(htmlSrcDir: string, exports: ExportsMap): Htm
   for (const [key, target] of Object.entries(exports)) {
     if (isOwnExport(key)) continue;
 
-    const dist = isString(target) ? target : target.default;
+    const dist = typeof target === 'string' ? target : target.default;
     if (!dist || !dist.endsWith('.js')) continue;
 
     const pattern = dist.replace(DIST_TARGET, '').replace(/\.js$/, '');
