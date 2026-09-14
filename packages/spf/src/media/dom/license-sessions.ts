@@ -5,7 +5,9 @@
  * Everything here binds to one `AbortSignal` — the caller's lifetime — and reports through a callback, so it reads no
  * signals and imports nothing from the behavior layer; `exchangeLicenses` decides which sessions to open and when. Kept
  * apart from `eme.ts`, which is stateless: a session carries state (its listeners, its last-seen key statuses) for as
- * long as it lives.
+ * long as it lives. `fetchLicense` is the license twin of `eme.ts`'s `fetchServerCertificate`; it lives here, beside
+ * its one caller, and because `exchangeLicenses`' tests mock `fetchDrm` at the `eme` boundary that this module
+ * crosses.
  */
 import { listen } from '@videojs/utils/dom';
 

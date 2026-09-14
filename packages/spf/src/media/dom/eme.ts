@@ -1,6 +1,10 @@
 /**
- * Browser EME helpers for DRM-composed engines: `MediaKeySystemAccess` negotiation, MediaKeys attachment, and the
- * license POST. Stateless helpers — `setupMediaKeys` and `exchangeLicenses` own all lifecycle.
+ * Browser EME helpers for DRM-composed engines: `MediaKeySystemAccess` negotiation, MediaKeys attachment, the DRM
+ * network exchange (`fetchDrm`), and the server-certificate fetch built on it. Stateless helpers — `setupMediaKeys`
+ * owns the negotiation lifecycle, and everything that lives for a session's lifetime (opening it, its license exchange,
+ * its key-status observation) is in `./license-sessions.ts`. `fetchLicense` sits there rather than here as the twin of
+ * `fetchServerCertificate` on purpose: the behavior tests mock `fetchDrm` at this module's boundary, which a caller in
+ * a sibling module routes through and a caller in this module would bypass.
  *
  * Everything system-specific lives in a {@link KeySystemModule} (`./key-systems.ts`); these helpers only read the
  * contract, so adding a system touches no code here — and this module deliberately does not re-export the modules
