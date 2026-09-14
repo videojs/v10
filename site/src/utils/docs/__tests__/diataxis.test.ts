@@ -17,7 +17,6 @@ const CONTENT_ROOT = resolve(process.cwd(), 'src/content/docs');
  */
 const KNOWN_DRIFT = new Map<string, DiataxisRule[]>([
   ['concepts/accessibility', ['task-heading']],
-  ['concepts/custom-element-lifecycle', ['task-heading']],
   ['concepts/media-sources', ['task-heading']],
   ['concepts/presets', ['task-heading']],
   ['concepts/ui-components', ['task-heading']],
