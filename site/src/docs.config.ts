@@ -12,7 +12,7 @@ export const sidebar: Sidebar = [
     contents: [
       {
         sidebarLabel: 'Getting Started',
-        llmsDescription: 'Install Video.js and understand its main pieces.',
+        llmsDescription: 'Install Video.js, understand its main pieces, and check browser and AI tool support.',
         contents: [
           { slug: 'guides/installation' },
           { slug: 'guides/installation-vue', sidebarLabel: 'Install with Vue', frameworks: ['html'], hidden: true },
@@ -25,6 +25,8 @@ export const sidebar: Sidebar = [
           { slug: 'guides/architecture', redirectFrom: ['concepts/overview'] },
           { slug: 'guides/why-videojs', redirectFrom: ['concepts/why-videojs'] },
           { slug: 'guides/v10-roadmap', sidebarLabel: 'Roadmap', redirectFrom: ['concepts/v10-roadmap'] },
+          { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
+          { slug: 'guides/build-with-ai' },
         ],
       },
       {
@@ -45,12 +47,9 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Tooling',
-        llmsDescription:
-          'Guidance for AI tools, browser support, TypeScript, bundlers, the CDN, self-hosting, and contributing.',
+        sidebarLabel: 'Environment',
+        llmsDescription: 'TypeScript, bundlers, the CDN, self-hosting, Content Security Policy, and contributing.',
         contents: [
-          { slug: 'guides/build-with-ai' },
-          { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
           { slug: 'guides/typescript', redirectFrom: ['concepts/typescript'] },
           { slug: 'guides/bundlers', redirectFrom: ['concepts/bundlers'] },
           { slug: 'guides/cdn', frameworks: ['html'], redirectFrom: ['concepts/cdn'] },
