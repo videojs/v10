@@ -184,7 +184,7 @@ A few things worth calling out:
 - **The skin has no size of its own**, so the examples give it one with an inline `aspect-ratio`. Any styling that sizes the skin works the same way, whether that's a class of yours or a Tailwind utility like `aspect-video`. See [Move your layout styles](#move-your-layout-styles).
 - **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
-- **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
+- **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="guides/monitor-playback-with-mux-data">Mux Data</DocsLink>.
 - **Chromecast is opt-in.** Follow <DocsLink slug="guides/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> when you want it; leave the extension out when you don't.
 
 ### Move your layout styles
@@ -804,5 +804,5 @@ Ordered roughly by how many migrations they'll touch.
 ## See also
 
 - <DocsLink slug="reference/components/mux-video">Mux Video</DocsLink> and <DocsLink slug="reference/components/mux-audio">Mux Audio</DocsLink>
-- <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>
+- <DocsLink slug="guides/monitor-playback-with-mux-data">Mux Data</DocsLink>
 - <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>

@@ -76,7 +76,6 @@ export const sidebar: Sidebar = [
           { slug: 'concepts/ui-components' },
           { slug: 'concepts/accessibility' },
           { slug: 'concepts/media-sources' },
-          { slug: 'concepts/mux-data' },
           { slug: 'concepts/custom-element-lifecycle', frameworks: ['html'] },
         ],
       },
@@ -100,6 +99,11 @@ export const sidebar: Sidebar = [
           { slug: 'guides/remember-user-preferences', sidebarLabel: 'User preferences' },
           { slug: 'guides/add-a-background-video', sidebarLabel: 'Background video' },
           { slug: 'guides/internationalize-the-player', sidebarLabel: 'Internationalization' },
+          {
+            slug: 'guides/monitor-playback-with-mux-data',
+            sidebarLabel: 'Mux Data',
+            redirectFrom: ['concepts/mux-data'],
+          },
         ],
       },
       {
