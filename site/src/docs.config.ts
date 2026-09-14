@@ -24,7 +24,13 @@ export const sidebar: Sidebar = [
             hidden: true,
           },
           { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
-          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component', hidden: true },
+          {
+            slug: 'guides/build-your-own-component',
+            sidebarLabel: 'Build a component',
+            hidden: true,
+            // The lifecycle page folded into this guide's cleanup advice.
+            redirectFrom: ['concepts/custom-element-lifecycle'],
+          },
           { slug: 'guides/architecture', redirectFrom: ['concepts/overview'] },
           { slug: 'guides/why-videojs', redirectFrom: ['concepts/why-videojs'] },
           { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
