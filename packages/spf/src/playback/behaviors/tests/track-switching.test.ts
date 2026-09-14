@@ -21,7 +21,9 @@ import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import {
+  DEFAULT_VIDEO_CONSTRAINTS,
   type SwitchVideoTrackConfig,
+  type SwitchVideoTrackRule,
   setupTrackSwitching,
   switchAudioTrack,
   switchTextTrack,
@@ -1652,7 +1654,8 @@ describe('excludeRefusedKeySystems (refused-key-system constraint)', () => {
     negotiatedKeySystem: signal<string | undefined>(negotiatedKeySystem),
     errors: signal<SvtaError[] | undefined>(undefined),
   });
-  const config = { extraConstraints: [excludeRefusedKeySystems] };
+  // The engine's shape: the default pre-pass extended, not replaced.
+  const config = { videoConstraints: [...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems] };
 
   it('leaves encrypted renditions alone while negotiation has not settled', async () => {
     // `undefined` is "not yet", not "refused" — pruning here would park a source
@@ -2002,5 +2005,80 @@ describe('switchTextTrack', () => {
       expect(state.selectedTextTrackId.get()).toBe('es-b');
       reactor.destroy();
     });
+  });
+});
+
+// ============================================================================
+// Per-type chain config — each variant's constraints and rules are config, with
+// the status-quo chain as the default. Keyed per type because one engine config
+// reaches every variant.
+// ============================================================================
+
+describe('per-type chain config', () => {
+  const tracks = () => [createVideoTrack('360p', 1_000_000), createVideoTrack('1080p', 2_000_000)];
+  const pruneAll: SwitchVideoTrackRule = () => [];
+  const lowestBandwidth: SwitchVideoTrackRule = (candidates) =>
+    [...candidates].sort((a, b) => (a.bandwidth ?? 0) - (b.bandwidth ?? 0));
+
+  it('runs the default chains when none is configured', async () => {
+    const state = makeState({
+      presentation: createPresentation(tracks()),
+      bandwidthState: createBandwidthState(10_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state });
+
+    await flush();
+
+    // The default ranker: highest bitrate that fits the throughput.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p');
+    reactor.destroy();
+  });
+
+  it('replaces the video rule chain with videoRules', async () => {
+    const state = makeState({
+      presentation: createPresentation(tracks()),
+      bandwidthState: createBandwidthState(10_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { videoRules: [lowestBandwidth] } });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('360p');
+    reactor.destroy();
+  });
+
+  it('replaces the video pre-pass with videoConstraints', async () => {
+    const state = makeState({
+      presentation: createPresentation(tracks()),
+      bandwidthState: createBandwidthState(10_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { videoConstraints: [pruneAll] } });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('keeps audio on its own keys — the video chains do not reach it', async () => {
+    // The whole point of per-type keys: the engine hands one config to every
+    // variant, so a video override must leave audio's chain alone.
+    const state = makeAudioState({ presentation: createAudioPresentation([makeAudioTrack('audio-en')]) });
+    const reactor = switchAudioTrack.setup({ state, config: { videoConstraints: [pruneAll], videoRules: [pruneAll] } });
+
+    await flush();
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
+    reactor.destroy();
+  });
+
+  it('replaces the audio pre-pass with audioConstraints', async () => {
+    const state = makeAudioState({ presentation: createAudioPresentation([makeAudioTrack('audio-en')]) });
+    const reactor = switchAudioTrack.setup({ state, config: { audioConstraints: [() => []] } });
+
+    await flush();
+
+    expect(state.selectedAudioTrackId.get()).toBeUndefined();
+    reactor.destroy();
   });
 });

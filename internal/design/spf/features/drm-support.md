@@ -251,9 +251,10 @@ Things this feature probably forces decisions on, not just additions:
   encrypted rendition, so a type left with nothing reports
   `SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK` from its owner and a type
   keeping a clear rendition still reports nothing. The constraint
-  reaches the chain through `switch*Track`'s append-only
-  `extraConstraints` config — an interim seam until the full constraint
-  chain is passed in.
+  reaches the chain through the engine's `videoConstraints` /
+  `audioConstraints` config, which replace each variant's whole
+  pre-pass: the engine defaults them to `[...DEFAULT_*_CONSTRAINTS,
+  excludeRefusedKeySystems]`.
 - **Encrypted-segment buffer behavior.** Once keys are delivered,
   the MSE pipeline appends encrypted segments unchanged. The
   encrypted-event flow happens *before* steady-state appending. No

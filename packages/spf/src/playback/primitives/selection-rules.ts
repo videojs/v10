@@ -39,15 +39,6 @@ export type SelectionRule<T, State = unknown, Context = unknown, Config = unknow
 ) => readonly T[];
 
 /**
- * A rule generic enough to append to any variant's chain — the shape the built-in constraints are declared with, so a
- * composition-supplied constraint composes without a cast at the call site.
- */
-export type GenericSelectionRule = <T, State, Context, Config>(
-  tracks: readonly T[],
-  deps: SelectionRuleDeps<State, Context, Config>
-) => readonly T[];
-
-/**
  * Apply rules to a candidate list in order; the pick is the first survivor. Two responsibilities the rules don't carry:
  * a rule that returns nothing is skipped (fall-through — a preference never empties the set), and once one survivor
  * remains the chain stops (early-bail — later rules, including the bandwidth ranker, never run, so the effect doesn't
