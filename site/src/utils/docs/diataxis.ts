@@ -22,6 +22,39 @@ const HOW_TO_PREFIX = /^how to\b/i;
 const CUSTOM_UI_NOTE = /<CustomUiNote\b/;
 const HEADING = /^#{2,6}\s+(.+?)\s*$/gm;
 
+/**
+ * First words that turn a heading into an instruction. Concept headings name the thing being explained ("Feature
+ * bundles"), not the task ("Create a player"). Kept short so the signal stays precise.
+ */
+const TASK_VERBS = new Set([
+  'add',
+  'build',
+  'check',
+  'choose',
+  'clean',
+  'configure',
+  'connect',
+  'create',
+  'customize',
+  'customizing',
+  'eject',
+  'enable',
+  'extend',
+  'install',
+  'keep',
+  'migrate',
+  'register',
+  'release',
+  'remove',
+  'run',
+  'set',
+  'swap',
+  'test',
+  'use',
+  'using',
+  'write',
+]);
+
 /** Headings the how-to template owns; on a reference page they mean a task walkthrough has crept in. */
 const HOW_TO_SECTIONS = new Set(['recommended approach', 'how it works', 'common variations', 'troubleshooting']);
 
@@ -57,4 +90,13 @@ export function findDiataxisIssues(page: DocPage): DiataxisIssue[] {
   }
 
   return issues;
+}
+
+/**
+ * Headings on a concept page that read as instructions. Concept and how-to share a folder, so this is advisory: the
+ * content test prints these as warnings for the pages listed under the Concepts sidebar section and never fails on
+ * them.
+ */
+export function findTaskHeadings(page: DocPage): string[] {
+  return headings(page.body).filter((heading) => TASK_VERBS.has(heading.split(/\s+/)[0]?.toLowerCase() ?? ''));
 }

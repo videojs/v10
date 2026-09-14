@@ -3,9 +3,9 @@ import { join, relative, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
-import { getDocTypeFromId } from '../../../types/docs';
+import { getDocTypeFromId, isSection } from '../../../types/docs';
 import type { DocPage } from '../diataxis';
-import { findDiataxisIssues } from '../diataxis';
+import { findDiataxisIssues, findTaskHeadings } from '../diataxis';
 import { getRedirectedSlugs } from '../redirects';
 import { getAllGuideSlugs } from '../sidebar';
 
@@ -67,6 +67,13 @@ describe('findDiataxisIssues', () => {
     ]);
   });
 
+  it('names task headings without treating them as failures', () => {
+    const body = '## Feature bundles\n\n## Create a player\n\n### Using selectors\n\n## Styling and state';
+
+    expect(findTaskHeadings(page({ body }))).toEqual(['Create a player', 'Using selectors']);
+    expect(findDiataxisIssues(page({ body }))).toEqual([]);
+  });
+
   it('lets guides explain, instruct, and troubleshoot', () => {
     const body = '<CustomUiNote />\n\n## Recommended approach\n\n## How it works\n\n## Troubleshooting';
 
@@ -95,5 +102,31 @@ describe('docs content', () => {
     const collisions = getRedirectedSlugs(sidebar).filter((slug) => live.has(slug));
 
     expect(collisions).toEqual([]);
+  });
+
+  it('warns about task headings on concept pages', async () => {
+    const { sidebar } = await import('../../../docs.config');
+    const conceptSlugs = new Set<string>();
+
+    const visit = (items: typeof sidebar) => {
+      for (const item of items) {
+        if (!isSection(item)) continue;
+
+        if (item.sidebarLabel === 'Concepts') getAllGuideSlugs(item.contents).forEach((slug) => conceptSlugs.add(slug));
+
+        visit(item.contents);
+      }
+    };
+
+    visit(sidebar);
+
+    const warnings = pages
+      .filter((entry) => conceptSlugs.has(entry.id))
+      .flatMap((entry) => findTaskHeadings(entry).map((heading) => `${entry.id}: "${heading}"`));
+
+    // Advisory only. Concept pages explain; a heading that gives an instruction usually belongs in a how-to guide.
+    if (warnings.length > 0) console.warn(`Task headings on concept pages:\n  ${warnings.join('\n  ')}`);
+
+    expect(conceptSlugs.size).toBeGreaterThan(0);
   });
 });

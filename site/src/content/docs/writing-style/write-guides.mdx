@@ -39,7 +39,7 @@ Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a
 
 Concept pages and how-to guides share one folder and one URL prefix, `guides/`. The difference is the shape of the page, not its address. Reference has its own folder because the api-docs-builder owns its shape. The site derives that split from the path and shows it in the eyebrow above the title (for example "Guide › Playback").
 
-A unit test, `pnpm -F site test diataxis`, guards the line between the two folders: no title starts with "How to", no reference page carries how-to sections or a `<CustomUiNote />`, every page is in the sidebar, and no redirected slug still exists. Whether a guide reads as a concept or a how-to is a judgement you make while writing and reviewing, with the compass below.
+A unit test, `pnpm -F site test diataxis`, guards the line between the two folders: no title starts with "How to", no reference page carries how-to sections or a `<CustomUiNote />`, every page is in the sidebar, and no redirected slug still exists. Whether a guide reads as a concept or a how-to is a judgement you make while writing and reviewing, with the compass below. The test helps by printing, as warnings only, any heading on a Concepts-section page that opens with a task verb such as "Add" or "Configure".
 
 To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask two questions: does the content inform **action** (practical steps) or **cognition** (understanding)? And does it serve the reader's **study** (acquiring skills) or their **work** (applying them)?
 
