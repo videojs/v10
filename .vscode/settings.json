@@ -34,5 +34,14 @@
   },
   "[css]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  // Enable Tailwind autocomplete for our custom *.styles.ts files
+  "tailwindCSS.classFunctions": ["styles"],
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "tailwindCSS.experimental.configFile": {
+    "packages/skins/src/styles/tailwind.compiler.css": "packages/skins/src/**"
   }
 }
