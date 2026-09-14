@@ -42,6 +42,8 @@
     "strings": "on"
   },
   "tailwindCSS.experimental.configFile": {
-    "packages/skins/src/styles/tailwind.compiler.css": "packages/skins/src/**"
+    "packages/skins/src/styles/tailwind.compiler.css": "packages/skins/src/**",
+    "apps/sandbox/app/styles.css": "apps/sandbox/**",
+    "site/src/styles/globals.css": "site/**"
   }
 }
