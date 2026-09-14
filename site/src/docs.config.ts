@@ -13,7 +13,7 @@ export const sidebar: Sidebar = [
       {
         sidebarLabel: 'Getting Started',
         llmsDescription:
-          'Install Video.js, understand its main pieces, check browser and AI tool support, and contribute.',
+          'Install Video.js, customize a skin, understand its main pieces, check browser and AI tool support, and contribute.',
         contents: [
           { slug: 'guides/installation' },
           { slug: 'guides/installation-vue', sidebarLabel: 'Install with Vue', frameworks: ['html'], hidden: true },
@@ -23,6 +23,8 @@ export const sidebar: Sidebar = [
             frameworks: ['html'],
             hidden: true,
           },
+          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
+          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component', hidden: true },
           { slug: 'guides/architecture', redirectFrom: ['concepts/overview'] },
           { slug: 'guides/why-videojs', redirectFrom: ['concepts/why-videojs'] },
           { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
@@ -89,14 +91,6 @@ export const sidebar: Sidebar = [
             sidebarLabel: 'Mux Data',
             redirectFrom: ['concepts/mux-data'],
           },
-        ],
-      },
-      {
-        sidebarLabel: 'Customize',
-        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
-        contents: [
-          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
-          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
         ],
       },
       {
