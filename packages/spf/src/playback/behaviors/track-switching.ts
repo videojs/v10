@@ -93,6 +93,7 @@ import {
   preferCodecFamilies,
   sameCandidateSet,
 } from '../primitives/selection-rules';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 import { type ErrorEmitterState, emitError } from './collect-errors';
 
 // ============================================================================
@@ -883,11 +884,11 @@ export const switchVideoTrack = defineBehavior({
       state,
       config: {
         ...config,
-        selectionKey: 'selectedVideoTrackId',
-        userSelectionKey: 'userVideoTrackSelection',
+        selectionKey: VIDEO_TYPE_CONFIG.selectedKey,
+        userSelectionKey: VIDEO_TYPE_CONFIG.userSelectionKey,
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
-        constraints: config?.videoConstraints ?? DEFAULT_VIDEO_CONSTRAINTS,
-        rules: config?.videoRules ?? DEFAULT_VIDEO_RULES,
+        constraints: config?.[VIDEO_TYPE_CONFIG.constraintsKey] ?? DEFAULT_VIDEO_CONSTRAINTS,
+        rules: config?.[VIDEO_TYPE_CONFIG.rulesKey] ?? DEFAULT_VIDEO_RULES,
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),
@@ -933,11 +934,11 @@ export const switchAudioTrack = defineBehavior({
         // FOLLOW-UP: a shared config type for the genuinely cross-cutting fields
         // would keep video-only tuning out of audio entirely (CJP).
         ...config,
-        selectionKey: 'selectedAudioTrackId',
-        userSelectionKey: 'userAudioTrackSelection',
+        selectionKey: AUDIO_TYPE_CONFIG.selectedKey,
+        userSelectionKey: AUDIO_TYPE_CONFIG.userSelectionKey,
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
-        constraints: config?.audioConstraints ?? DEFAULT_AUDIO_CONSTRAINTS,
-        rules: config?.audioRules ?? DEFAULT_AUDIO_RULES,
+        constraints: config?.[AUDIO_TYPE_CONFIG.constraintsKey] ?? DEFAULT_AUDIO_CONSTRAINTS,
+        rules: config?.[AUDIO_TYPE_CONFIG.rulesKey] ?? DEFAULT_AUDIO_RULES,
         noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
       },
     }),
@@ -995,10 +996,10 @@ export const switchTextTrack = defineBehavior({
       state,
       config: {
         ...config,
-        selectionKey: 'selectedTextTrackId',
+        selectionKey: TEXT_TYPE_CONFIG.selectedKey,
         getTracks: (presentation) => getTracksByType(presentation, 'text') as readonly TextTrackCandidate[],
-        constraints: config?.textConstraints ?? DEFAULT_TEXT_CONSTRAINTS,
-        rules: config?.textRules ?? DEFAULT_TEXT_RULES,
+        constraints: config?.[TEXT_TYPE_CONFIG.constraintsKey] ?? DEFAULT_TEXT_CONSTRAINTS,
+        rules: config?.[TEXT_TYPE_CONFIG.rulesKey] ?? DEFAULT_TEXT_RULES,
         resolveSelection: pickResolvedTextTrack,
       },
     }),
