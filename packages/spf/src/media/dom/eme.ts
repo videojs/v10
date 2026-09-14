@@ -1,0 +1,264 @@
+/**
+ * Browser EME helpers for DRM-composed engines: `MediaKeySystemAccess` negotiation, MediaKeys attachment, and the
+ * license POST. Stateless helpers — `setupMediaKeys` and `exchangeLicenses` own all lifecycle.
+ *
+ * Everything system-specific lives in a {@link KeySystemModule} (`./key-systems.ts`); these helpers only read the
+ * contract, so adding a system touches no code here — and this module deliberately does not re-export the modules
+ * themselves, so importing these helpers never pulls a key system's code in. The DOM-free DRM model half (config
+ * contract, module contract, declared keys, candidate selection) lives in `../drm.ts` and is re-exported here.
+ */
+import { fetchWithRetry } from '../../network/retry';
+import { type DrmRequest, type KeySystemModule } from '../drm';
+import type { MaybeResolvedPresentation } from '../types';
+import { buildMimeCodec } from './mse/mediasource-setup';
+
+export {
+  type DrmCredentials,
+  type DrmHeaders,
+  type DrmRequest,
+  type DrmRequestTransform,
+  type DrmResponseTransform,
+  type DrmSystemConfig,
+  type DrmSystemsConfig,
+  type DrmUrl,
+  declaredDrmKeys,
+  declaredEncryptionScheme,
+  firstNonDrmEncryptionKey,
+  type KeySystemModule,
+  keySystemCandidates,
+  NO_KEY_SYSTEM,
+  resolveDrmCredentials,
+  resolveDrmHeaders,
+  resolveDrmUrl,
+} from '../drm';
+
+/**
+ * The unique audio/video content types across every track that declares codecs — the capability surface a
+ * `MediaKeySystemConfiguration` negotiates over. Includes unresolved tracks: the multivariant already carries
+ * `CODECS`.
+ */
+export function contentTypesFromPresentation(presentation: MaybeResolvedPresentation | undefined): {
+  video: string[];
+  audio: string[];
+} {
+  const video = new Set<string>();
+  const audio = new Set<string>();
+
+  for (const selectionSet of presentation?.selectionSets ?? []) {
+    for (const switchingSet of selectionSet.switchingSets) {
+      for (const track of switchingSet.tracks) {
+        if (track.type !== 'video' && track.type !== 'audio') continue;
+
+        if (!track.mimeType || !track.codecs?.length) continue;
+
+        const bucket = track.type === 'video' ? video : audio;
+
+        bucket.add(buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs }));
+      }
+    }
+  }
+
+  return { video: [...video], audio: [...audio] };
+}
+
+/**
+ * MediaKeySystemConfigurations for one key-system module over the given content types, most-preferred first.
+ *
+ * `requestMediaKeySystemAccess` takes the whole list and picks the first entry the CDM supports, so every preference
+ * here is expressed by offering an extra configuration rather than by retrying — and each one can only widen what
+ * negotiation accepts.
+ *
+ * Two module-declared preferences compose, encryption scheme outermost:
+ *
+ * - **Declared encryption scheme** (see `declaredEncryptionScheme`), stamped on every capability, then dropped when the
+ *   module keeps `schemeFallback`. CDMs that honour the member negotiate the exact scheme; CDMs that refuse it outright
+ *   still negotiate instead of failing the request.
+ * - **Robustness** (`videoRobustnessTiers` / `audioRobustnessTiers`), strongest rung first. One configuration per rung,
+ *   and nothing unstamped behind them: a device without the top tier descends the ladder, and the weakest rung is the
+ *   fallback. Chromium warns for any _requested_ configuration that omits `robustness` — including one it never accepts
+ *   — so the ladder ends at a tier every CDM has rather than at an unstamped entry.
+ *
+ * Scheme is the outer preference because a mismatched scheme risks failing decode outright, whereas a lower robustness
+ * tier only means weaker content protection.
+ */
+export function buildKeySystemConfigurations(
+  module_: KeySystemModule,
+  contentTypes: { video: readonly string[]; audio: readonly string[] },
+  encryptionScheme?: 'cbcs' | 'cenc'
+): MediaKeySystemConfiguration[] {
+  // A shorter list clamps to its last entry, so one audio tier serves every video rung.
+  const tierAt = (tiers: readonly string[] | undefined, rung: number): string | undefined =>
+    tiers === undefined || tiers.length === 0 ? undefined : tiers[Math.min(rung, tiers.length - 1)];
+
+  const configuration = (scheme?: 'cbcs' | 'cenc', rung?: number): MediaKeySystemConfiguration => {
+    const capability = (robustness: string | undefined) => (contentType: string) => ({
+      contentType,
+      ...(scheme !== undefined && { encryptionScheme: scheme }),
+      ...(robustness !== undefined && { robustness }),
+    });
+    const video = rung === undefined ? undefined : tierAt(module_.videoRobustnessTiers, rung);
+    const audio = rung === undefined ? undefined : tierAt(module_.audioRobustnessTiers, rung);
+
+    return {
+      initDataTypes: [...(module_.initDataTypes ?? ['cenc'])],
+      ...(contentTypes.video.length > 0 && { videoCapabilities: contentTypes.video.map(capability(video)) }),
+      ...(contentTypes.audio.length > 0 && { audioCapabilities: contentTypes.audio.map(capability(audio)) }),
+    };
+  };
+
+  const schemes =
+    encryptionScheme === undefined
+      ? [undefined]
+      : module_.schemeFallback === false
+        ? [encryptionScheme]
+        : [encryptionScheme, undefined];
+  // One rung per tier a present capability could carry, and **no unstamped rung behind them**.
+  // Chromium warns for any *requested* configuration that omits `robustness`, not just the one it
+  // accepts, so a trailing unstamped entry warns even when a stamped rung wins — measured against a
+  // real CDM. The ladder's own floor is the fallback instead. A module naming no tier at all still
+  // gets a single unstamped configuration, because it has nothing else to ask for.
+  const rungCount = Math.max(
+    contentTypes.video.length > 0 ? (module_.videoRobustnessTiers?.length ?? 0) : 0,
+    contentTypes.audio.length > 0 ? (module_.audioRobustnessTiers?.length ?? 0) : 0
+  );
+  const rungs: Array<number | undefined> =
+    rungCount > 0 ? Array.from({ length: rungCount }, (_, rung) => rung) : [undefined];
+
+  return schemes.flatMap((scheme) => rungs.map((rung) => configuration(scheme, rung)));
+}
+
+/**
+ * Negotiate CDM access: ask for each candidate module (and each of its request-string variants) in order with a
+ * configuration built for that module, first success wins. Resolves `undefined` when every candidate is refused (or
+ * none were given).
+ *
+ * Reports the module rather than the request string that won: license-server lookup and message shaping key off the
+ * configured `keySystem`, not off the variant a CDM happened to accept.
+ *
+ * Two passes, and the order is the whole point. The first asks with the module's robustness ladder, which names a tier
+ * on every capability — Chromium warns about any _requested_ configuration that omits one, so a warning-free
+ * negotiation cannot carry an unstamped entry alongside the stamped ones. The second pass asks unstamped, and runs only
+ * when every candidate refused the first: a CDM that has none of the named tiers then still gets access. That trades
+ * the warning back for playback exactly where it is the price of playing at all, instead of everywhere.
+ */
+export async function requestKeySystemAccess(
+  keySystems: readonly KeySystemModule[],
+  contentTypes: { video: readonly string[]; audio: readonly string[] },
+  encryptionScheme?: 'cbcs' | 'cenc'
+): Promise<{ module: KeySystemModule; access: MediaKeySystemAccess } | undefined> {
+  const attempt = async (module_: KeySystemModule, configurations: MediaKeySystemConfiguration[]) => {
+    for (const variant of module_.requestVariants ?? [module_.keySystem]) {
+      try {
+        return await navigator.requestMediaKeySystemAccess(variant, configurations);
+      } catch {
+        // Refused — try the next variant.
+      }
+    }
+
+    return undefined;
+  };
+
+  for (const module_ of keySystems) {
+    const access = await attempt(module_, buildKeySystemConfigurations(module_, contentTypes, encryptionScheme));
+    if (access) return { module: module_, access };
+  }
+
+  // Unstamped retry. `unstampedRobustness` strips the tiers rather than rebuilding, so the scheme
+  // preference and every other member stay exactly as the module declared them.
+  for (const module_ of keySystems) {
+    const configurations = buildKeySystemConfigurations(module_, contentTypes, encryptionScheme).map(
+      unstampedRobustness
+    );
+    const access = await attempt(module_, configurations);
+    if (access) return { module: module_, access };
+  }
+
+  return undefined;
+}
+
+/** The same configuration with every capability's robustness dropped. */
+function unstampedRobustness(configuration: MediaKeySystemConfiguration): MediaKeySystemConfiguration {
+  const strip = (capabilities: MediaKeySystemMediaCapability[] | undefined) =>
+    capabilities?.map(({ robustness: _robustness, ...rest }) => rest);
+  const video = strip(configuration.videoCapabilities);
+  const audio = strip(configuration.audioCapabilities);
+
+  return {
+    ...configuration,
+    ...(video && { videoCapabilities: video }),
+    ...(audio && { audioCapabilities: audio }),
+  };
+}
+
+/**
+ * Apply the negotiated module's license-request transform to a request already carrying the source's URL and headers.
+ * With no transform the default POSTs the raw message as octet-stream (Widevine and FairPlay want this; Mux's FairPlay
+ * server takes the bare SPC) — octet-stream wins over a configured `Content-Type`, matching the prior contract.
+ * PlayReady's module transform unwraps the challenge envelope instead.
+ */
+export function applyLicenseRequest(
+  module_: KeySystemModule | undefined,
+  request: DrmRequest
+): DrmRequest | Promise<DrmRequest> {
+  return (
+    module_?.licenseRequest?.(request) ?? {
+      ...request,
+      headers: { ...request.headers, 'Content-Type': 'application/octet-stream' },
+    }
+  );
+}
+
+/**
+ * Apply the negotiated module's license-response transform. With no transform the response passes through unchanged
+ * (Mux and EZDRM return the raw CDM license); a module whose server wraps the license overrides it to unwrap. The
+ * per-source override composes after this, in `exchangeLicenses`.
+ */
+export function applyLicenseResponse(
+  module_: KeySystemModule | undefined,
+  response: Uint8Array<ArrayBuffer>
+): Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>> {
+  return module_?.licenseResponse?.(response) ?? response;
+}
+
+/**
+ * Apply the negotiated module's certificate-request transform. No shipped system needs one — the default is the plain
+ * GET FairPlay's certificate endpoints answer — so this is identity unless a module declares its own. The per-source
+ * override composes after it, in `setupMediaKeys`.
+ */
+export function applyCertificateRequest(
+  module_: KeySystemModule | undefined,
+  request: DrmRequest
+): DrmRequest | Promise<DrmRequest> {
+  return module_?.certificateRequest?.(request) ?? request;
+}
+
+/** Apply the negotiated module's certificate-response transform. Identity unless a module unwraps its certificate. */
+export function applyCertificateResponse(
+  module_: KeySystemModule | undefined,
+  response: Uint8Array<ArrayBuffer>
+): Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>> {
+  return module_?.certificateResponse?.(response) ?? response;
+}
+
+/** Attach (or with `null`, detach) MediaKeys on a media element. */
+export function attachMediaKeys(mediaElement: HTMLMediaElement, mediaKeys: MediaKeys | null): Promise<void> {
+  return mediaElement.setMediaKeys(mediaKeys);
+}
+
+/**
+ * Perform one DRM network exchange — a license POST, a certificate GET — and return the raw response bytes. Method,
+ * headers, and body all ride on the {@link DrmRequest} (already shaped by the module default and any per-source
+ * override), so this is the single fetch seam the license and certificate paths share and the shape a future network
+ * layer slots into. Wrapped in {@link fetchWithRetry}'s naive retry + first-byte timeout so a transient blip on the
+ * (routinely flaky, rate-limited) license server doesn't park the source on a single failure.
+ */
+export async function fetchDrm(request: DrmRequest, signal: AbortSignal): Promise<Uint8Array<ArrayBuffer>> {
+  const response = await fetchWithRetry(
+    request.url,
+    { method: request.method, headers: request.headers, body: request.body, credentials: request.credentials },
+    signal
+  );
+  if (!response.ok) throw new Error(`DRM request failed with status ${response.status}`);
+
+  return new Uint8Array(await response.arrayBuffer());
+}

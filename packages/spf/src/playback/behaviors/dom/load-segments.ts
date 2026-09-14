@@ -17,9 +17,9 @@
  * Four states encode the load-gating policy directly:
  *
  * - `'preconditions-unmet'` — no loader actor in context, or the selected track hasn't resolved.
- * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` (highest precedence) or `preload === 'none'
- *   && !loadActivated`. Nothing fires; already-queued loader work drains. Auto-resumes into the derived state when the
- *   policy lifts.
+ * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` or `segmentLoadingBlocked` (highest
+ *   precedence) or `preload === 'none' && !loadActivated`. Nothing fires; already-queued loader work drains.
+ *   Auto-resumes into the derived state when the policy lifts.
  * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`. Fires an init-segment-only `load`
  *   message **once on entry**. The variant's loader actor decides what to do — v/a's actor fetches the init segment;
  *   text's actor no-ops (no init concept).
@@ -75,6 +75,18 @@ export interface SegmentLoadingState {
    * remote-playback session owns presentation). An absent slot means never suspended.
    */
   loadingSuspended?: boolean;
+  /**
+   * Segment-load gate: dispatch no new segment work while `true`. **Observed, never declared**, exactly like
+   * `loadingSuspended`, so an absent slot means never gated — but narrower in what it forbids: only the dispatchers
+   * read it, never `setupMediaSource`, because a writer holding this has no quarrel with the element's load algorithm.
+   * That asymmetry is why it isn't folded into `loadingSuspended`, which both read; a single boolean would newly gate
+   * MediaSource attach, and co-writing one would be a last-write-wins conflict besides.
+   *
+   * Single writer per composition. Today that writer is DRM (`setupMediaKeys`, holding until an encrypted source's
+   * MediaKeys attach — appending encrypted data before `setMediaKeys` misbehaves on Chromium); the slot names the
+   * prohibition rather than the domain so a second such gate needs no vocabulary here.
+   */
+  segmentLoadingBlocked?: boolean;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
@@ -132,10 +144,14 @@ function setupSegmentLoading<
   context,
   config,
 }: {
-  // `loadingSuspended` is observed, never declared (see its state-shape doc):
-  // optional here so variant maps — which omit it from their contracts — are
-  // assignable as-is, while compositions with a writer expose the live slot.
-  state: SegmentLoadingStateMap<K> & { loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']> };
+  // `loadingSuspended` and `segmentLoadingBlocked` are observed, never declared
+  // (see their state-shape docs): optional here so variant maps — which omit
+  // them from their contracts — are assignable as-is, while compositions with
+  // a writer expose the live slot.
+  state: SegmentLoadingStateMap<K> & {
+    loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']>;
+    segmentLoadingBlocked?: ReadonlySignal<SegmentLoadingState['segmentLoadingBlocked']>;
+  };
   context: { [P in L]: ReadonlySignal<SegmentLoaderLike<Track> | undefined> };
   config: {
     selectedKey: K;
@@ -166,8 +182,8 @@ function setupSegmentLoading<
 
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
     // Policy-off wins even over preconditions: a loader arriving while
-    // suspended must not dispatch.
-    if (state.loadingSuspended?.get()) return 'dormant';
+    // either gate holds must not dispatch.
+    if (state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get()) return 'dormant';
 
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
 
@@ -192,9 +208,18 @@ function setupSegmentLoading<
         // no-op. Selection changes while still in `'metadata-only'` are
         // intentionally not followed.
         entry: () => {
-          const track = selectedTrack.get()!;
+          // Re-checked rather than asserted, even though `derivedStateSignal`
+          // already required both. `monitor` and this handler are separate
+          // effects over the same signals, and the flush order between them is
+          // the scheduler's dirty-notification order, not registration order —
+          // so a track that un-resolves can reach here before the transition to
+          // `'preconditions-unmet'` lands. Returning is safe: the effect re-runs
+          // when a track resolves again.
+          const track = selectedTrack.get();
+          const loader = context[loaderKey].get();
+          if (!track || !loader) return;
 
-          context[loaderKey].get()!.send({ type: 'load', track });
+          loader.send({ type: 'load', track });
         },
       },
       'full-range': {
@@ -202,12 +227,19 @@ function setupSegmentLoading<
         // crossings. The loader and `currentTime` are peeked — the
         // boundary-dedup signal already handles re-firing policy.
         effects: () => {
-          const track = selectedTrack.get()!;
+          // Guarded for the reason given on `'metadata-only'`'s entry: this
+          // effect tracks `selectedTrack` directly, so it can re-fire on the
+          // very change that should be transitioning the machine out of this
+          // state, and would otherwise dispatch a load with no track.
+          const track = selectedTrack.get();
 
           segmentBoundarySignal.get();
+          const loader = peek(context[loaderKey]);
+          if (!track || !loader) return;
+
           const currentTime = peek(state.currentTime) ?? 0;
 
-          peek(context[loaderKey])!.send({
+          loader.send({
             type: 'load',
             track,
             range: { start: currentTime, end: currentTime + bufferDuration },

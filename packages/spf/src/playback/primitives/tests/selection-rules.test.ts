@@ -5,9 +5,9 @@
  * constraint's empty result stands, a rule chain bails at one survivor while every constraint always runs, and
  * constraint order can't change the outcome while rule order can.
  */
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { applyConstraints, applyRules, type SelectionRule } from '../selection-rules';
+import { applyConstraints, applyRules, excludeUnplayableTracks, type SelectionRule } from '../selection-rules';
 
 // ============================================================================
 // applyRules — the rule-chain composer (pure; no signals)
@@ -99,5 +99,43 @@ describe('applyConstraints', () => {
 
     applyConstraints([toA, later], all, noDeps);
     expect(laterCalled).toBe(true);
+  });
+});
+
+// ============================================================================
+// excludeUnplayableTracks — the capability constraint (pure; no DOM probe)
+// ============================================================================
+
+describe('excludeUnplayableTracks', () => {
+  const track = (id: string, codec: string) => ({ id, mimeType: 'video/mp4', codecs: [codec] });
+  const all = [track('a', 'ok.1'), track('b', 'bad.1'), track('c', 'ok.2')];
+
+  it('passes everything through when the config wires no probe', () => {
+    expect(excludeUnplayableTracks(all, { state: {}, context: {}, config: {} })).toBe(all);
+    expect(excludeUnplayableTracks(all, { state: {}, context: {}, config: undefined })).toBe(all);
+  });
+
+  it('keeps only the tracks the probe answers true for', () => {
+    const canPlayTrack = (candidate: { codecs?: string[] }) => candidate.codecs?.[0]?.startsWith('ok') ?? true;
+
+    expect(excludeUnplayableTracks(all, { state: {}, context: {}, config: { canPlayTrack } })).toEqual([
+      all[0],
+      all[2],
+    ]);
+  });
+
+  it('hands the probe the whole config alongside each track', () => {
+    // An extended probe reads its own props (e.g. `drm`) off the config rather
+    // than closing over them, so the constraint must pass the config through.
+    const canPlayTrack = vi.fn(() => true);
+    const config = { canPlayTrack, drm: { 'com.example': { licenseUrl: 'https://license.example.com' } } };
+
+    excludeUnplayableTracks(all, { state: {}, context: {}, config });
+
+    expect(canPlayTrack).toHaveBeenCalledTimes(all.length);
+
+    for (const [index, candidate] of all.entries()) {
+      expect(canPlayTrack).toHaveBeenNthCalledWith(index + 1, candidate, config);
+    }
   });
 });

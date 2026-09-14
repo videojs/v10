@@ -251,7 +251,7 @@ export const setupVideoBufferActors = defineBehavior({
       context,
       config: {
         ...typeConfig,
-        messagePipelines: config.videoMessagePipelines,
+        messagePipelines: config[VIDEO_TYPE_CONFIG.messagePipelinesKey],
         fetch: failoverFetch(trackedFetch, state, typeConfig),
       },
     });
@@ -294,7 +294,7 @@ export const setupAudioBufferActors = defineBehavior({
       context,
       config: {
         ...typeConfig,
-        messagePipelines: config.audioMessagePipelines,
+        messagePipelines: config[AUDIO_TYPE_CONFIG.messagePipelinesKey],
         fetch: failoverFetch(fetchStream, state, typeConfig),
       },
     });

@@ -108,14 +108,14 @@ was a decision rather than a detail:
 
 `screenResolutionCap`, `preferHighestResolution`, and `SelectTrackRule`
 are exported from `@videojs/spf/hls`, so a consumer can pass
-`rules: [preferHighestResolution]` to drop the cap, or compose its own
+`videoRules: [preferHighestResolution]` to drop the cap, or compose its own
 rule alongside it, rather than only replacing the chain wholesale.
 
 ## Config surface
 
 | Option | Where | Effect |
 |---|---|---|
-| `rules` | `BackgroundVideoEngineConfig` | Replaces the default chain. Omit for `[screenResolutionCap, preferHighestResolution]` |
+| `videoRules` | `BackgroundVideoEngineConfig` | Replaces the default chain. Omit for `[screenResolutionCap, preferHighestResolution]` |
 | `useDevicePixelRatio` | `BackgroundVideoEngineConfig`, read by `trackScreenResolution` | Whether the screen is measured in device pixels (default `true`) or CSS pixels. ⚠️ Chromium and Gecko fold page zoom into `devicePixelRatio`, so with this on, zooming moves the cap; WebKit does not |
 
 There is no cap-value config option. The cap is derived from a measured

@@ -15,11 +15,28 @@
  * predicate, since their verdict resolves asynchronously.
  */
 
+import { type DrmConfig, keySystemCandidates } from '../drm';
 import { NON_FMP4_CONTAINER_MIMES } from '../hls/parse-media-playlist';
 import { type CanPlayTrack, getMediaPlaylistMetadata } from '../types';
 import { buildMimeCodec, isCodecSupported } from './mse/mediasource-setup';
 
 const codecSupportCache = new Map<string, boolean>();
+
+/** The container + codec half shared by both probes below. */
+const canDecodeTrack: CanPlayTrack = (track) => {
+  if (track.mimeType && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) return false;
+
+  if (!track.mimeType || !track.codecs?.length) return true;
+
+  const mimeCodec = buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs });
+  const cached = codecSupportCache.get(mimeCodec);
+  if (cached !== undefined) return cached;
+
+  const supported = isCodecSupported(mimeCodec);
+
+  codecSupportCache.set(mimeCodec, supported);
+  return supported;
+};
 
 /**
  * Whether the environment can decode `track`, by codec. Builds the track's MIME codec string and checks
@@ -44,23 +61,32 @@ const codecSupportCache = new Map<string, boolean>();
  * Override via the engine's `canPlayTrack` config when those pipelines land.
  */
 export const canPlayTrack: CanPlayTrack = (track) => {
-  if (track.mimeType && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) return false;
-
-  // Encrypted renditions are unplayable *for now* — this engine has no EME /
+  // Encrypted renditions are unplayable in DRM-free compositions — no EME /
   // license pipeline, so appending them would fail to decode with nothing to
   // explain it. Pruning them here means a partially-encrypted source still plays
   // its clear renditions, and a fully-encrypted one empties the candidate set
-  // (which `track-switching` reports). Remove this when DRM support lands.
+  // (which `track-switching` reports). DRM-composed engines swap in
+  // `canPlayTrackWithDrm` instead.
   if (getMediaPlaylistMetadata(track)?.encrypted) return false;
 
-  if (!track.mimeType || !track.codecs?.length) return true;
+  return canDecodeTrack(track);
+};
 
-  const mimeCodec = buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs });
-  const cached = codecSupportCache.get(mimeCodec);
-  if (cached !== undefined) return cached;
+/**
+ * DRM-composed variant of {@link canPlayTrack}: an encrypted rendition is playable when its declared keys reach a key
+ * system with a configured license server (its container / codecs still have to probe as decodable); everything else
+ * matches the standard probe. Encrypted renditions no configured system serves stay pruned — MediaKeys could never be
+ * negotiated for them, so playing them would park forever behind the `segmentLoadingBlocked` gate. Reads the engine's
+ * `drm` and `keySystems` off the config it is handed (see `DrmConfig`); with either absent, nothing serves any key and
+ * it refuses encrypted renditions exactly as {@link canPlayTrack} does.
+ */
+export const canPlayTrackWithDrm: CanPlayTrack = (track, config) => {
+  const metadata = getMediaPlaylistMetadata(track);
 
-  const supported = isCodecSupported(mimeCodec);
+  if (metadata?.encrypted) {
+    const { drm = {}, keySystems = [] } = (config as DrmConfig | undefined) ?? {};
+    if (keySystemCandidates(metadata.keys ?? [], drm, keySystems).length === 0) return false;
+  }
 
-  codecSupportCache.set(mimeCodec, supported);
-  return supported;
+  return canDecodeTrack(track);
 };
