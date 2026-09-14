@@ -91,7 +91,7 @@ Format — Hypothetical Application Model). The framing is explicit in
 the code:
 
 > Protocol-agnostic representation of streaming media content.
-> See https://github.com/AcademySoftwareFoundation/common-media-library
+> See https://github.com/streaming-video-technology-alliance/common-media-library
 
 All types live in `packages/spf/src/media/types/index.ts`.
 
@@ -567,5 +567,5 @@ file format-specific architectural docs as siblings to this one
   case study for the opposite direction: hardcoded, but should be
   config)
 - `packages/spf/src/media/types/index.ts` — canonical type definitions
-- [common-media-library upstream](https://github.com/AcademySoftwareFoundation/common-media-library)
+- [common-media-library upstream](https://github.com/streaming-video-technology-alliance/common-media-library)
   — the CMAF-HAM model this layer is based on
