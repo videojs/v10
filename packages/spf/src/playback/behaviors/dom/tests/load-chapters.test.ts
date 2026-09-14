@@ -177,14 +177,15 @@ describe('loadChapters', () => {
     reactor.destroy();
   });
 
-  it('merges the documents of several chapters entries without repeating cues', async () => {
+  it('reads the first chapters entry that carries a URI', async () => {
     const fetchMock = stubFetch();
     const mediaElement = document.createElement('video');
     const { reactor } = setup({
       presentation: makePresentation({
         duration: 120,
         sessionData: [
-          { ...chaptersEntry, language: 'en' },
+          { dataId: 'com.apple.hls.chapters', value: '[]' },
+          chaptersEntry,
           { ...chaptersEntry, uri: 'http://example.com/chapters-es.json', language: 'es' },
         ],
       }),
@@ -192,8 +193,7 @@ describe('loadChapters', () => {
     });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
-    expect(requestedUrls(fetchMock)).toEqual([CHAPTERS_URL, 'http://example.com/chapters-es.json']);
-    await vi.waitFor(() => expect(cuesOf(chaptersTracks(mediaElement)[0]!)).toHaveLength(3));
+    expect(requestedUrls(fetchMock)).toEqual([CHAPTERS_URL]);
     reactor.destroy();
   });
 

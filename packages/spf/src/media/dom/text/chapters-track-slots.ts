@@ -71,8 +71,7 @@ function onceSettled(el: HTMLTrackElement, callback: () => void): void {
  * `data-src-chapters-track` for `removeAllChaptersTracksFromMedia`. No `src` — a `data:` URL would do, but WebKit
  * refuses one on a `crossorigin` media element — so the cues arrive programmatically: the slot is set `hidden` to let
  * its empty load settle, then filled while `disabled`, then set `hidden` again. That last mode change is what queues
- * the `TextTrackList` `change` observers re-read cues on; a srcless `<track>` never fires `load`. One cue per start
- * time per language; a later chapter repeating a start (two documents merged) is skipped.
+ * the `TextTrackList` `change` observers re-read cues on; a srcless `<track>` never fires `load`.
  */
 export function addChaptersTracksToMedia(
   mediaElement: HTMLMediaElement,
@@ -94,15 +93,12 @@ export function addChaptersTracksToMedia(
       // Removed before the load settled — a source change mid-flight.
       if (el.parentNode !== mediaElement) return;
 
-      const startTimes = new Set<number>();
-
       el.track.mode = 'disabled';
 
       for (const chapter of chapters) {
         const title = chapter.titles[language];
-        if (title === undefined || startTimes.has(chapter.startTime)) continue;
+        if (title === undefined) continue;
 
-        startTimes.add(chapter.startTime);
         el.track.addCue(new VTTCue(chapter.startTime, chapter.endTime ?? fallbackEnd, title));
       }
 

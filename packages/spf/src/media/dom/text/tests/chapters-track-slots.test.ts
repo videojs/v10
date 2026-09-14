@@ -111,20 +111,6 @@ describe('addChaptersTracksToMedia', () => {
     expect(media.children.length).toBe(0);
   });
 
-  it('adds one cue per start time per language, first title winning', async () => {
-    const media = document.createElement('video');
-
-    addChaptersTracksToMedia(media, [
-      { startTime: 0, endTime: 10, titles: { und: 'First' } },
-      { startTime: 0, endTime: 10, titles: { und: 'Duplicate' } },
-      { startTime: 10, endTime: 20, titles: { und: 'Second' } },
-    ]);
-
-    await vi.waitFor(() =>
-      expect(cuesOf(chaptersTracks(media)[0]!).map((cue) => cue.text)).toEqual(['First', 'Second'])
-    );
-  });
-
   it('fires change on the TextTrackList once the cues are in place', async () => {
     // Observers (video.js's textTrack feature) re-read `cues` on `change`; a
     // srcless `<track>` never fires `load`, so the post-fill mode change is

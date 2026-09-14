@@ -14,8 +14,8 @@
  * removes the slots on state exit (source unload, media element change, destroy).
  *
  * Failures are never fatal: a document that won't load or won't parse is warned about and projects nothing. An entry
- * carrying its data inline as `VALUE` is skipped — chapters are a document, not a string. Several entries (one per
- * `LANGUAGE`) are fetched together and merged; the slot helper keeps one cue per start time per language.
+ * carrying its data inline as `VALUE` is skipped — chapters are a document, not a string. Exactly one document is
+ * assumed: Apple carries every language inside it, so the first entry with a URI is the one read.
  *
  * Slots carry `data-src-chapters-track`, distinct from the subtitle slots' tag, so neither cleanup removes the other's
  * tracks. A `<track kind="chapters">` the host page authored precedes these in `textTracks` (tree order), so a page
@@ -56,9 +56,12 @@ function deriveState(
     return 'preconditions-unmet';
   }
 
-  const hasDocument = getSessionData(presentation, APPLE_HLS_CHAPTERS_DATA_ID).some((entry) => entry.uri !== undefined);
+  return findChaptersDocument(presentation) === undefined ? 'preconditions-unmet' : 'loading';
+}
 
-  return hasDocument ? 'loading' : 'preconditions-unmet';
+/** The URI of the chapters document — the first `com.apple.hls.chapters` entry that points at one. */
+function findChaptersDocument(presentation: MaybeResolvedPresentation): string | undefined {
+  return getSessionData(presentation, APPLE_HLS_CHAPTERS_DATA_ID).find((entry) => entry.uri !== undefined)?.uri;
 }
 
 /** Fetch and parse one chapters document; a failure other than our own abort is warned about and yields nothing. */
@@ -98,17 +101,15 @@ function loadChaptersSetup({
         entry: () => {
           const mediaElement = context.mediaElement.get()!;
           const presentation = state.presentation.get()!;
-          const uris = getSessionData(presentation, APPLE_HLS_CHAPTERS_DATA_ID).flatMap((entry) =>
-            entry.uri !== undefined ? [entry.uri] : []
-          );
+          const uri = findChaptersDocument(presentation)!;
           const controller = new AbortController();
 
-          void Promise.all(uris.map((uri) => loadChaptersDocument(uri, controller.signal))).then((documents) => {
+          void loadChaptersDocument(uri, controller.signal).then((chapters) => {
             // A document that settled before the abort still must not project
             // onto a media element the state has since left.
             if (controller.signal.aborted) return;
 
-            addChaptersTracksToMedia(mediaElement, documents.flat(), {
+            addChaptersTracksToMedia(mediaElement, chapters, {
               preferredLanguage: config.preferredSubtitleLanguage,
               duration: presentation.duration,
             });

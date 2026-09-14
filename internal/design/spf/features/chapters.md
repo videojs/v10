@@ -54,9 +54,10 @@ the `<track>`-slot mechanism and the text-track DOM surface.
   each cleanup removes only its own. A host-page `<track kind="chapters">` precedes the engine's in `textTracks` (tree
   order: the custom element clones slotted children first), so a page that supplies its own chapters keeps them; no
   opt-out config was added.
-- **Failures are quiet.** A document that won't load or won't parse is warned about (ungated, like the package's other
-  reporting paths) and projects nothing. An entry carrying `VALUE` instead of `URI` is skipped. Several entries (one
-  per `LANGUAGE`) are fetched together and merged, one cue per start time per language.
+- **Exactly one document, quiet failures.** The first `com.apple.hls.chapters` entry with a URI is read; Apple carries
+  every language inside the document, so a playlist repeating the `DATA-ID` per `LANGUAGE` is not an expected shape. An
+  entry carrying `VALUE` instead of `URI` is skipped. A document that won't load or won't parse is warned about
+  (ungated, like the package's other reporting paths) and projects nothing.
 
 ## What's not implemented
 
@@ -66,6 +67,8 @@ Extension boundaries, each a candidate slice on this doc or its own:
   chapter-art consumer yet.
 - **Metadata.** `Chapter.metadata` is passed through untouched; nothing reads it.
 - **Other `DATA-ID`s.** Recorded on the presentation, no consumer. Reading one is `getSessionData(presentation, id)`.
+- **Several chapters entries.** Only the first with a URI is read; merging per-`LANGUAGE` documents would need a
+  cue-dedupe policy nothing calls for yet.
 - **hls.js-backed flavors.** `<mux-video>` / `<hls-video>` over hls.js get `sessionData` from `MANIFEST_PARSED`; the
   pure parser and the DOM slot helpers are exported so that path can reuse them.
 - **Live / EVENT chapters.** The open chapter ends at `Number.MAX_VALUE` and the UI shows nothing for a non-finite
@@ -105,7 +108,7 @@ Extension boundaries, each a candidate slice on this doc or its own:
 - `packages/spf/src/media/dom/text/tests/chapters-track-slots.test.ts` — slot shape, ordering, settle-then-fill,
   `change` after fill, `MAX_VALUE` fallback, ownership isolation from subtitle slots.
 - `packages/spf/src/playback/behaviors/dom/tests/load-chapters.test.ts` — gating (media element, entry, duration),
-  projection, merge, quiet failure, abort on source change, cleanup on unload and destroy.
+  projection, first-entry selection, quiet failure, abort on source change, cleanup on unload and destroy.
 - `packages/spf/src/playback/engines/hls/tests/engine.test.ts`, `engine-audio-only.test.ts` — end to end from a
   manifest carrying the tag, including that the slot's mode changes never register as subtitle intent.
 - **Sandbox:** `HLS - Apple JSON chapters (Mux staging, TS)` in the `*-mux-video-spf` presets. The only chapters-bearing
