@@ -17,13 +17,7 @@ export interface VideoSkinProps extends Omit<PropsOf<typeof Container>, 'childre
   renderThumbnail?: PropsOf<typeof MinimalVideoControls>['renderThumbnail'];
 }
 
-export function VideoSkin({
-  children,
-  className,
-  renderPoster,
-  renderThumbnail,
-  ...props
-}: VideoSkinProps = {}) {
+export function VideoSkin({ children, className, renderPoster, renderThumbnail, ...props }: VideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="minimal" data-preset="video" {...props}>
       <Slot>{children}</Slot>

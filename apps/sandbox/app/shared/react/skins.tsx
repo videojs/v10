@@ -121,7 +121,7 @@ async function loadSkinComponent<Props>(request: SkinRequest): Promise<Component
       const { authoredExportName, loadAuthoredSkinModule } = await import('@app/shared/authored-skins');
       const module = await loadAuthoredSkinModule('react', preset, skin, styling);
 
-      return pickComponent(module, authoredExportName(preset, skin), key);
+      return pickComponent(module, authoredExportName(preset), key);
     }
   }
 }

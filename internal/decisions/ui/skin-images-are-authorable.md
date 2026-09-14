@@ -22,4 +22,4 @@ Because the component still has to write to an image it did not create — the p
 - A new skin image needs three things: a named slot around it in skin source, an owning component that respects authored attributes, and a `shadow-dom` style variant so a slotted image is sized and transitioned like the skin's own.
 - Ejected HTML strips every named slot, since without a shadow root the author edits the image directly.
 
-See [`packages/skins/src/components/layout/poster.tsx`](/packages/skins/src/components/layout/poster.tsx), [`packages/skins/src/components/sliders/time-slider.tsx`](/packages/skins/src/components/sliders/time-slider.tsx), and the adoption logic in [`packages/html/src/ui/thumbnail/element.ts`](/packages/html/src/ui/thumbnail/element.ts).
+See [`packages/skins/src/components/display/poster.tsx`](/packages/skins/src/components/display/poster.tsx), [`packages/skins/src/components/sliders/time-slider.tsx`](/packages/skins/src/components/sliders/time-slider.tsx), and the adoption logic in [`packages/html/src/ui/thumbnail/element.ts`](/packages/html/src/ui/thumbnail/element.ts).
