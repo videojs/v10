@@ -77,7 +77,15 @@ import { type ParsePresentation, resolvePresentation } from '../../behaviors/res
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
-import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import {
+  DEFAULT_AUDIO_CONSTRAINTS,
+  DEFAULT_VIDEO_CONSTRAINTS,
+  type SwitchTextTrackConfig,
+  type SwitchVideoTrackConfig,
+  switchAudioTrack,
+  switchTextTrack,
+  switchVideoTrack,
+} from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
@@ -252,6 +260,17 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   preferredCodecs?: string[];
   /**
+   * The per-type hard-constraint pre-pass and rule chain `switch{Video,Audio,Text}Track` run, each replacing its
+   * `DEFAULT_*` chain outright (`@videojs/spf/hls` exports the defaults, so spread one to extend it). The video and
+   * audio constraints default here to the DRM-aware pair: the default pre-pass plus `excludeRefusedKeySystems`.
+   */
+  videoConstraints?: SwitchVideoTrackConfig['videoConstraints'];
+  videoRules?: SwitchVideoTrackConfig['videoRules'];
+  audioConstraints?: SwitchVideoTrackConfig['audioConstraints'];
+  audioRules?: SwitchVideoTrackConfig['audioRules'];
+  textConstraints?: SwitchTextTrackConfig['textConstraints'];
+  textRules?: SwitchTextTrackConfig['textRules'];
+  /**
    * Conditions reported about each rendition as it resolves — the _causes_ behind a later verdict, and the copy a
    * verdict reuses when they agree. Defaults to `reportUnsupportedTrackConditionsWithDrm`, which reads `drm` and
    * `keySystems` off this config and reports non-fMP4 containers plus encryption no configured system serves; supply
@@ -425,11 +444,12 @@ export function createHlsVideoEngine(
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrackWithDrm,
-    // The late half of DRM pruning, appended to switch*Track's built-in
-    // constraint chain: once negotiation publishes a refusal, encrypted
-    // renditions prune and the emptied type reports its own verdict. Dropped
-    // with the rest of the DRM defaults by a composition that omits DRM.
-    extraConstraints: [excludeRefusedKeySystems],
+    // The late half of DRM pruning, appended to each type's default pre-pass:
+    // once negotiation publishes a refusal, encrypted renditions prune and the
+    // emptied type reports its own verdict. Dropped with the rest of the DRM
+    // defaults by a composition that omits DRM.
+    videoConstraints: config.videoConstraints ?? [...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems],
+    audioConstraints: config.audioConstraints ?? [...DEFAULT_AUDIO_CONSTRAINTS, excludeRefusedKeySystems],
     reportUnsupportedTrackConditions:
       config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditionsWithDrm,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,

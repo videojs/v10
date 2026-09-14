@@ -52,16 +52,30 @@ export {
   derivePerTypeStartMediaTime,
   deriveSharedMinStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
-// The video selection rules the engines compose by default, plus the rule shape
-// itself. `config.rules` is public, so without these a consumer can override the
-// chain but cannot reconstruct or partially opt out of the default it replaces —
-// `[preferHighestResolution]` alone drops the screen-size cap, for one.
+// The selection rules the engines compose by default, plus the rule shapes
+// themselves. The chain config keys are public, so without these a consumer can
+// override a chain but cannot reconstruct or partially opt out of the default it
+// replaces — `[preferHighestResolution]` alone drops the screen-size cap, and a
+// DRM engine's `videoConstraints` needs `excludeRefusedKeySystems` to keep
+// pruning refused renditions.
 export type { SelectTrackRule } from '../../behaviors/select-tracks';
 export { preferHighestResolution, screenResolutionCap } from '../../behaviors/select-tracks';
-export { stickToSelectedCodecs } from '../../behaviors/track-switching';
+export {
+  DEFAULT_AUDIO_CONSTRAINTS,
+  DEFAULT_AUDIO_RULES,
+  DEFAULT_TEXT_CONSTRAINTS,
+  DEFAULT_TEXT_RULES,
+  DEFAULT_VIDEO_CONSTRAINTS,
+  DEFAULT_VIDEO_RULES,
+  stickToSelectedCodecs,
+  type SwitchAudioTrackRule,
+  type SwitchTextTrackRule,
+  type SwitchVideoTrackRule,
+} from '../../behaviors/track-switching';
 export {
   type CodecPreferenceConfig,
   DEFAULT_PREFERRED_CODECS,
+  excludeRefusedKeySystems,
   preferCodecFamilies,
 } from '../../primitives/selection-rules';
 // The Medias over these engines are not here: they live behind
