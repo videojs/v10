@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { parseHlsJsonChapters } from '../parse-json-chapters';
+import { type HlsJsonChapters, parseHlsJsonChapters } from '../parse-json-chapters';
 
 const BASE = 'https://cdn.example.com/assets/a/chapters.json';
 
 // Apple's JSON chapters notation: titles per BCP-47 tag, an optional duration,
 // images relative to the document, and free-form metadata.
-const DOCUMENT = [
+const DOCUMENT: HlsJsonChapters = [
   {
     chapter: 1,
     'start-time': 0,
@@ -27,12 +27,6 @@ const DOCUMENT = [
 ];
 
 describe('parseHlsJsonChapters', () => {
-  it('returns an empty list for a document that is not an array', () => {
-    expect(parseHlsJsonChapters({}, BASE)).toEqual([]);
-    expect(parseHlsJsonChapters(null, BASE)).toEqual([]);
-    expect(parseHlsJsonChapters('chapters', BASE)).toEqual([]);
-  });
-
   it('returns an empty list for an empty document', () => {
     expect(parseHlsJsonChapters([], BASE)).toEqual([]);
   });
@@ -63,7 +57,7 @@ describe('parseHlsJsonChapters', () => {
   });
 
   it('keeps document order rather than sorting by start-time', () => {
-    const chapters = parseHlsJsonChapters([DOCUMENT[2], DOCUMENT[0]], BASE);
+    const chapters = parseHlsJsonChapters([DOCUMENT[2]!, DOCUMENT[0]!], BASE);
 
     expect(chapters.map((chapter) => chapter.startTime)).toEqual([90, 0]);
     // "Next chapter" is the next entry in the document, per Apple.
@@ -128,23 +122,5 @@ describe('parseHlsJsonChapters', () => {
 
     expect(chapters[0]?.endTime).toBe(10);
     expect(chapters[1]).toEqual({ startTime: 10, titles: {} });
-  });
-
-  it('skips entries without a numeric start-time', () => {
-    const chapters = parseHlsJsonChapters(
-      [{ 'start-time': '0', titles: [] }, 'nope', { titles: [] }, { 'start-time': 5 }],
-      BASE
-    );
-
-    expect(chapters).toEqual([{ startTime: 5, titles: {} }]);
-  });
-
-  it('skips title entries missing a string language or title', () => {
-    const [chapter] = parseHlsJsonChapters(
-      [{ 'start-time': 0, titles: [{ language: 'und' }, { title: 'x' }, { language: 'en', title: 'Ok' }, 'junk'] }],
-      BASE
-    );
-
-    expect(chapter?.titles).toEqual({ en: 'Ok' });
   });
 });

@@ -85,7 +85,7 @@ Extension boundaries, each a candidate slice on this doc or its own:
 | `loadChapters` | `packages/spf/src/playback/behaviors/dom/load-chapters.ts` | Reactor gated on media element + resolved presentation with duration + a chapters entry with a URI; fetches, parses, projects; aborts and removes the tracks on exit |
 | `parseMultivariantPlaylist` | `packages/spf/src/media/hls/parse-multivariant.ts` | Records `#EXT-X-SESSION-DATA` as `SessionDataEntry[]` under `presentation.metadata` |
 | `getSessionData` / `getMultivariantPlaylistMetadata` | `packages/spf/src/media/types/index.ts` | Typed reads of the recorded entries |
-| `parseHlsJsonChapters` | `packages/spf/src/media/hls/parse-json-chapters.ts` | Apple JSON → `Chapter[]`, document order, `duration` or next start as end, images resolved |
+| `parseHlsJsonChapters` | `packages/spf/src/media/hls/parse-json-chapters.ts` | Apple JSON (typed as its schema, `HlsJsonChapters`) → `Chapter[]`, document order, `duration` or next start as end, images resolved |
 | `addChaptersTracksToMedia` / `removeAllChaptersTracksFromMedia` | `packages/spf/src/media/dom/text/chapters-tracks.ts` | Per-language hidden tracks, ordering, settle-then-fill, ownership tag |
 
 **State:** reads `presentation` (metadata + `duration`); writes none. **Context:** reads `mediaElement`.
@@ -104,7 +104,7 @@ Extension boundaries, each a candidate slice on this doc or its own:
   `FORMAT` default, repeated `DATA-ID` per `LANGUAGE`, spec-invalid tags skipped.
 - `packages/spf/src/media/types/tests/metadata.test.ts` — the accessors.
 - `packages/spf/src/media/hls/tests/parse-json-chapters.test.ts` — document order, end derivation, images, metadata,
-  malformed entries.
+  entries without titles.
 - `packages/spf/src/media/dom/text/tests/chapters-tracks.test.ts` — element shape, ordering, settle-then-fill,
   `change` after fill, `MAX_VALUE` fallback, ownership isolation from subtitle tracks.
 - `packages/spf/src/playback/behaviors/dom/tests/load-chapters.test.ts` — gating (media element, entry, duration),

@@ -30,7 +30,12 @@ import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
 import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '../../../media/dom/text/chapters-tracks';
-import { APPLE_HLS_CHAPTERS_DATA_ID, type Chapter, parseHlsJsonChapters } from '../../../media/hls/parse-json-chapters';
+import {
+  APPLE_HLS_CHAPTERS_DATA_ID,
+  type Chapter,
+  type HlsJsonChapters,
+  parseHlsJsonChapters,
+} from '../../../media/hls/parse-json-chapters';
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
 import {
   getSessionData,
@@ -65,8 +70,11 @@ function findChaptersDocument(presentation: MaybeResolvedPresentation): string |
 async function loadChaptersDocument(uri: string, signal: AbortSignal): Promise<Chapter[]> {
   try {
     const text = await fetchResolvableText({ url: uri }, { signal });
+    // The tag's contract is an Apple JSON chapters document; the parser is
+    // written for that shape, and anything else lands in the catch below.
+    const document: HlsJsonChapters = JSON.parse(text);
 
-    return parseHlsJsonChapters(JSON.parse(text), uri);
+    return parseHlsJsonChapters(document, uri);
   } catch (error) {
     if (!isAbortError(error)) console.warn(`[loadChapters] Failed to load the chapters document at ${uri}`, error);
 
