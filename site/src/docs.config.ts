@@ -24,9 +24,9 @@ export const sidebar: Sidebar = [
           },
           { slug: 'guides/architecture', redirectFrom: ['concepts/overview'] },
           { slug: 'guides/why-videojs', redirectFrom: ['concepts/why-videojs'] },
-          { slug: 'guides/v10-roadmap', sidebarLabel: 'Roadmap', redirectFrom: ['concepts/v10-roadmap'] },
           { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
           { slug: 'guides/build-with-ai' },
+          { slug: 'guides/v10-roadmap', sidebarLabel: 'Roadmap', redirectFrom: ['concepts/v10-roadmap'] },
         ],
       },
       {
