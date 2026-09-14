@@ -3,27 +3,13 @@ import { join, relative, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
-import { getDocTypeFromId, isSection } from '../../../types/docs';
-import type { DiataxisRule, DocPage } from '../diataxis';
+import { getDocTypeFromId } from '../../../types/docs';
+import type { DocPage } from '../diataxis';
 import { findDiataxisIssues } from '../diataxis';
 import { getRedirectedSlugs } from '../redirects';
 import { getAllGuideSlugs } from '../sidebar';
 
 const CONTENT_ROOT = resolve(process.cwd(), 'src/content/docs');
-
-/**
- * Pages whose prose still drifts from their folder. Each entry is debt: the test fails when the drift is fixed so the
- * entry gets removed, and no new page can join the list without editing it here.
- */
-const KNOWN_DRIFT = new Map<string, DiataxisRule[]>([
-  ['concepts/accessibility', ['task-heading']],
-  ['concepts/media-sources', ['task-heading']],
-  ['concepts/presets', ['task-heading']],
-  ['concepts/ui-components', ['task-heading']],
-  // Contributor authoring guides double as the MDX test bed and stop where the examples stop.
-  ['writing-style/write-guides', ['missing-related-links']],
-  ['writing-style/write-references', ['missing-related-links']],
-]);
 
 function walk(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -36,9 +22,8 @@ function walk(directory: string): string[] {
 }
 
 /** The docs frontmatter is flat YAML with quoted or bare single-line scalars, which is all this needs to read. */
-function frontmatterField(frontmatter: string, key: string): string {
-  const match = frontmatter.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
-  const value = match?.[1]?.trim() ?? '';
+function frontmatterTitle(frontmatter: string): string {
+  const value = frontmatter.match(/^title:\s*(.+)$/m)?.[1]?.trim() ?? '';
 
   return value.replace(/^(['"])(.*)\1$/, '$2');
 }
@@ -48,13 +33,7 @@ function readPage(path: string): DocPage {
   const source = readFileSync(path, 'utf8');
   const [, frontmatter = '', body = ''] = source.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/) ?? [];
 
-  return {
-    id,
-    type: getDocTypeFromId(id),
-    title: frontmatterField(frontmatter, 'title'),
-    description: frontmatterField(frontmatter, 'description'),
-    body,
-  };
+  return { id, type: getDocTypeFromId(id), title: frontmatterTitle(frontmatter), body };
 }
 
 const pages = walk(CONTENT_ROOT)
@@ -62,101 +41,45 @@ const pages = walk(CONTENT_ROOT)
   .sort((a, b) => a.id.localeCompare(b.id));
 
 function page(overrides: Partial<DocPage>): DocPage {
-  return {
-    id: 'concepts/example',
-    type: 'concept',
-    title: 'Example',
-    description: 'An example',
-    body: '',
-    ...overrides,
-  };
+  return { id: 'guides/example', type: 'guide', title: 'Example', body: '', ...overrides };
 }
 
 describe('findDiataxisIssues', () => {
   it('rejects a literal how-to prefix on any title', () => {
-    const rules = findDiataxisIssues(page({ type: 'guide', title: 'How to autoplay', body: '## Related guides' })).map(
-      (issue) => issue.rule
-    );
-
-    expect(rules).toEqual(['title-how-to-prefix']);
+    expect(findDiataxisIssues(page({ title: 'How to autoplay' })).map((issue) => issue.rule)).toEqual([
+      'title-how-to-prefix',
+    ]);
+    expect(findDiataxisIssues(page({ type: 'reference', title: 'How to use PlayButton' }))).toHaveLength(1);
   });
 
-  it('flags concept prose that walks through a task', () => {
+  it('keeps task walkthroughs off reference pages', () => {
     const issues = findDiataxisIssues(
       page({
-        description: 'How to configure the thing',
-        body: [
-          '<CustomUiNote />',
-          '',
-          '```bash',
-          'pnpm add @videojs/react',
-          '```',
-          '',
-          '## Create a player',
-          '',
-          '## Troubleshooting',
-          '',
-          '## Feature bundles',
-        ].join('\n'),
+        type: 'reference',
+        body: ['<CustomUiNote />', '', '## Import', '', '## Troubleshooting', '', '### How It Works'].join('\n'),
       })
     );
 
     expect(issues.map((issue) => issue.rule)).toEqual([
-      'description-how-to',
-      'custom-ui-note',
-      'how-to-section',
-      'install-command',
-      'task-heading',
+      'reference-custom-ui-note',
+      'reference-how-to-section',
+      'reference-how-to-section',
     ]);
   });
 
-  it('holds reference pages to the not-a-how-to rules but allows install commands', () => {
-    const issues = findDiataxisIssues(
-      page({
-        type: 'reference',
-        body: ['```bash', 'npm install @videojs/html', '```', '', '## Set up the element', '', '## How it works'].join(
-          '\n'
-        ),
-      })
-    );
+  it('lets guides explain, instruct, and troubleshoot', () => {
+    const body = '<CustomUiNote />\n\n## Recommended approach\n\n## How it works\n\n## Troubleshooting';
 
-    expect(issues.map((issue) => issue.rule)).toEqual(['how-to-section']);
-  });
-
-  it('requires guides to end with related links and skips the concept rules for them', () => {
-    const drifting = findDiataxisIssues(page({ type: 'guide', body: '## Create a player\n\npnpm add x' }));
-    const complete = findDiataxisIssues(page({ type: 'guide', body: '## Create a player\n\n## See also' }));
-
-    expect(drifting.map((issue) => issue.rule)).toEqual(['missing-related-links']);
-    expect(complete).toEqual([]);
-  });
-
-  it('ignores backticks and case when reading headings', () => {
-    const issues = findDiataxisIssues(page({ body: '## Migrate from `config`\n\n### TROUBLESHOOTING' }));
-
-    expect(issues.map((issue) => issue.rule)).toEqual(['how-to-section', 'task-heading']);
+    expect(findDiataxisIssues(page({ body }))).toEqual([]);
   });
 });
 
 describe('docs content', () => {
-  it('reads like the folder it is filed in', () => {
-    const unexpected = pages.flatMap((entry) =>
-      findDiataxisIssues(entry).filter((issue) => !KNOWN_DRIFT.get(issue.id)?.includes(issue.rule))
-    );
-    const report = unexpected.map((issue) => `${issue.id} [${issue.rule}]: ${issue.message}`).join('\n');
+  it('keeps every page inside the boundary of its folder', () => {
+    const issues = pages.flatMap((entry) => findDiataxisIssues(entry));
+    const report = issues.map((issue) => `${issue.id} [${issue.rule}]: ${issue.message}`).join('\n');
 
-    expect(unexpected, `\n${report}\n`).toEqual([]);
-  });
-
-  it('keeps the known drift list current', () => {
-    const stale = [...KNOWN_DRIFT].flatMap(([id, rules]) => {
-      const entry = pages.find((candidate) => candidate.id === id);
-      const present = new Set(entry ? findDiataxisIssues(entry).map((issue) => issue.rule) : []);
-
-      return rules.filter((rule) => !present.has(rule)).map((rule) => `${id} [${rule}]`);
-    });
-
-    expect(stale, 'remove fixed entries from KNOWN_DRIFT').toEqual([]);
+    expect(issues, `\n${report}\n`).toEqual([]);
   });
 
   it('registers every page in the sidebar', () => {
@@ -172,25 +95,5 @@ describe('docs content', () => {
     const collisions = getRedirectedSlugs(sidebar).filter((slug) => live.has(slug));
 
     expect(collisions).toEqual([]);
-  });
-
-  it('lists only concept pages under a Concepts section', async () => {
-    const { sidebar } = await import('../../../docs.config');
-    const misfiled: string[] = [];
-
-    const visit = (items: typeof sidebar) => {
-      for (const item of items) {
-        if (!isSection(item)) continue;
-
-        if (item.sidebarLabel === 'Concepts') {
-          misfiled.push(...getAllGuideSlugs(item.contents).filter((slug) => getDocTypeFromId(slug) !== 'concept'));
-        }
-
-        visit(item.contents);
-      }
-    };
-
-    visit(sidebar);
-    expect(misfiled).toEqual([]);
   });
 });
