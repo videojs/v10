@@ -84,6 +84,33 @@ describe('compileStyles', () => {
     expect(changed.get('buttons.css')).not.toEqual(first.get('buttons.css'));
   });
 
+  it('folds zero sizing and spacing without resolving the runtime spacing variable', async () => {
+    const styles = await compileStyles({
+      design: await loadDesignSystem(resolve(import.meta.dirname, 'fixtures/variable-spacing.css')),
+      styles: resolvedStyles([rule('root', 'media-layout', ['min-h-0', 'min-w-0', 'p-0', 'gap-0', 'h-4'])]),
+    });
+    const css = styles.get('buttons.css');
+
+    expect(css).toContain('min-height: 0;');
+    expect(css).toContain('min-width: 0;');
+    expect(css).toContain('padding: 0;');
+    expect(css).toContain('gap: 0;');
+    expect(css).toContain('height: calc(var(--test-spacing) * 4)');
+  });
+
+  it('preserves zero calculations with unknown divisors or non-length units', async () => {
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([
+        rule('root', 'media-layout', ['h-[calc(0px/var(--divisor))]', 'duration-[calc(var(--delay)*0)]']),
+      ]),
+    });
+    const css = styles.get('buttons.css');
+
+    expect(css).toContain('calc(0px / var(--divisor))');
+    expect(css).toContain('calc(var(--delay) * 0)');
+  });
+
   it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {
     const muteButton = rule('muteButton', 'media-mute-button', ['grid', 'group/mute']);
     const highIcon = rule('volumeHighIcon', 'media-volume-high-icon', [
