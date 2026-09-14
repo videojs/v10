@@ -41,14 +41,6 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Customize',
-        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
-        contents: [
-          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
-          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
-        ],
-      },
-      {
         sidebarLabel: 'Environment',
         llmsDescription: 'TypeScript, bundlers, the CDN, self-hosting, and Content Security Policy.',
         contents: [
@@ -97,6 +89,14 @@ export const sidebar: Sidebar = [
             sidebarLabel: 'Mux Data',
             redirectFrom: ['concepts/mux-data'],
           },
+        ],
+      },
+      {
+        sidebarLabel: 'Customize',
+        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
+        contents: [
+          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
+          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
         ],
       },
       {
