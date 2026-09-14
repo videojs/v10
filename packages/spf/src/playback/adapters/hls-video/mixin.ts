@@ -74,13 +74,22 @@ export interface HlsVideoSource {
  * What `new HlsVideoAdapter(options)` accepts. The mixin class is forced to `constructor(...args: any[])`, so this is
  * the type its returned constructor names for the one argument it reads.
  */
-export interface HlsVideoAdapterOptions {
-  /**
-   * Engine config forwarded to `createHlsVideoEngine`. Its `drm` merges over the license servers derived from the
-   * current `source.drm`, so an entry here names a server the source does not.
-   */
-  config?: HlsVideoEngineConfig;
-}
+export type HlsVideoAdapterOptions =
+  | {
+      /**
+       * Engine config forwarded to `createHlsVideoEngine`. Its `drm` merges over the license servers derived from the
+       * current `source.drm`, so an entry here names a server the source does not. With no `keySystems`, `drm` is keyed
+       * by the default systems' ids.
+       */
+      config?: HlsVideoEngineConfig;
+    }
+  | {
+      /**
+       * The same, with `keySystems` narrowed. A constructor cannot be generic per call the way `createHlsVideoEngine`
+       * is, so `drm` is keyed by any id here; the engine still negotiates only what `keySystems` composes.
+       */
+      config: HlsVideoEngineConfig<readonly KeySystemModule[]> & { keySystems: readonly KeySystemModule[] };
+    };
 
 export interface HlsVideoAdapterProps {
   src: string;
@@ -185,7 +194,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     readonly #engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
-    #config: HlsVideoEngineConfig;
+    #config: HlsVideoEngineConfig<readonly KeySystemModule[]>;
     #signals!: HlsVideoEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsVideoImpl.defaultProps.preload;
     #disableRemotePlayback: boolean = HlsVideoImpl.defaultProps.disableRemotePlayback;

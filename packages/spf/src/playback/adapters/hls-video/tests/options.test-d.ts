@@ -9,6 +9,7 @@
  */
 import { describe, expectTypeOf, it } from 'vite-plus/test';
 
+import { clearKeySystem } from '../../../../media/dom/key-systems';
 import { HlsAudioAdapterCore } from '../../hls-audio';
 import { HlsBackgroundVideoAdapterCore } from '../../hls-background-video';
 import { type HlsVideoAdapterOptions, HlsVideoAdapterCore, type HlsVideoSource } from '../index';
@@ -30,6 +31,15 @@ describe('HlsVideoAdapterOptions', () => {
     new HlsVideoAdapterCore({ config: { drm: 'not-an-object' } });
     // @ts-expect-error — unknown option
     new HlsVideoAdapterCore({ engine: {} });
+  });
+
+  it('keys drm by the default systems, or by any id once keySystems is named', () => {
+    const server = { licenseUrl: 'https://l' };
+
+    new HlsVideoAdapterCore({ config: { drm: { 'com.apple.fps': server } } });
+    new HlsVideoAdapterCore({ config: { keySystems: [clearKeySystem], drm: { 'org.w3.clearkey': server } } });
+    // @ts-expect-error — not a default system, and no keySystems names it
+    new HlsVideoAdapterCore({ config: { drm: { 'org.w3.clearkey': server } } });
   });
 
   it('names the structured source type', () => {
