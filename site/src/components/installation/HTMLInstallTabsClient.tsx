@@ -6,6 +6,7 @@ import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 import { installMethod, renderer, skin, useCase } from '@/stores/installation';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import { generateHTMLInstallCode } from '@/utils/installation/codegen';
 import type { InstallMethod } from '@/utils/installation/types';
@@ -22,6 +23,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   const $renderer = useStore(renderer);
   const $skin = useStore(skin);
   const $useCase = useStore(useCase);
+  const $installMethod = useStore(installMethod);
 
   const supportsCdn = rendererSupportsCdn($renderer, cdnMedia);
   const install = generateHTMLInstallCode({ renderer: $renderer, skin: $skin, useCase: $useCase }, cdnMedia);
@@ -35,9 +37,17 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
     if (!el) return;
 
     const observer = new MutationObserver(() => {
-      const value = el.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
+      const active = el.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
+      if (!active) return;
 
-      if (value) installMethod.set(value as InstallMethod);
+      // SAFETY: every tab below is rendered with an InstallMethod as its value.
+      const value = active as InstallMethod;
+
+      const previous = installMethod.get();
+      if (value === previous) return;
+
+      installMethod.set(value);
+      trackEvent(ANALYTICS_EVENTS.installOptionChanged, { option: 'install_method', value, previous });
     });
 
     observer.observe(el, { subtree: true, attributes: true, attributeFilter: ['data-tab-active'] });
@@ -62,7 +72,10 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
           `initial` while the CDN tab mounts/unmounts can leave two tabs active
           at once and desync installMethod from the visible tab. */}
       <TabsRoot key={supportsCdn ? 'with-cdn' : 'without-cdn'}>
-        <TabsList label="Installation">
+        <TabsList
+          label="Installation"
+          analytics={{ block: 'html-install', framework: 'html', install_method: $installMethod }}
+        >
           {supportsCdn && (
             <Tab value="cdn" initial>
               cdn

@@ -18,7 +18,7 @@ export default function ReactUsageCodeBlock() {
 
   return (
     <TabsRoot maxWidth={false}>
-      <TabsList label="React usage">
+      <TabsList label="React usage" analytics={{ block: 'react-usage', framework: 'react' }}>
         <Tab value="react" initial>
           ./app/page.tsx
         </Tab>

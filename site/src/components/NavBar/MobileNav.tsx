@@ -14,6 +14,8 @@ interface NavLink {
   label: string;
   matchPath: string | null;
   external?: boolean;
+  /** Analytics `destination` for autocaptured clicks. */
+  destination: 'docs' | 'blog';
 }
 
 export interface MobileNavProps {
@@ -50,6 +52,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
       <Dialog.Portal>
         {/* Popup container */}
         <Dialog.Popup
+          data-ph-capture-attribute-location="nav-mobile"
           className={clsx(
             'fixed inset-0 z-50 flex flex-col',
             'bg-manila-light dark:bg-faded-black text-faded-black dark:text-manila-light'
@@ -107,7 +110,13 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
 
                 if (link.href === '/docs') {
                   return (
-                    <GetStartedLink key={link.href} className={className} aria-current={isActive ? 'page' : undefined}>
+                    <GetStartedLink
+                      key={link.href}
+                      className={className}
+                      aria-current={isActive ? 'page' : undefined}
+                      data-ph-capture-attribute-cta="view-docs"
+                      data-ph-capture-attribute-destination="docs"
+                    >
                       {link.label}
                     </GetStartedLink>
                   );
@@ -119,6 +128,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                     href={link.href}
                     className={className}
                     aria-current={isActive ? 'page' : undefined}
+                    data-ph-capture-attribute-destination={link.destination}
                   >
                     {link.label} {link.external ? <ArrowUpRight size="1em" aria-hidden="true" /> : null}
                   </a>
@@ -131,6 +141,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                 )}
                 target="_blank"
                 rel="noopener"
+                data-ph-capture-attribute-destination="discord"
               >
                 Discord
               </a>
@@ -142,6 +153,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                 )}
                 target="_blank"
                 rel="noopener"
+                data-ph-capture-attribute-destination="github"
               >
                 GitHub
               </a>

@@ -5,7 +5,7 @@ import RendererSelect from './RendererSelect';
 
 export default function RendererPicker() {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2" data-ph-capture-attribute-location="install-page">
       <div className="flex flex-col gap-4">
         <p className="font-bold">Select your source</p>
         <RendererSelect />
@@ -13,7 +13,13 @@ export default function RendererPicker() {
       <div className="flex flex-col gap-4">
         <p className="font-bold">
           Or upload your media for free to{' '}
-          <a href={MUX_URL} target="_blank" rel="noopener" className="intent:decoration-gold underline">
+          <a
+            href={MUX_URL}
+            target="_blank"
+            rel="noopener"
+            data-ph-capture-attribute-destination="mux"
+            className="intent:decoration-gold underline"
+          >
             Mux
           </a>
         </p>

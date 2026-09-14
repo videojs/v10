@@ -3,6 +3,7 @@ import { Globe, Image, RadioTower } from 'lucide-react';
 
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import { useCase } from '@/stores/installation';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics';
 import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installation/types';
 
 function getPresetIcon(useCase: UseCase) {
@@ -16,10 +17,18 @@ function getPresetIcon(useCase: UseCase) {
 export default function UseCasePicker() {
   const $useCase = useStore(useCase);
 
+  const selectUseCase = (value: UseCase) => {
+    const previous = useCase.get();
+    if (value === previous) return;
+
+    useCase.set(value);
+    trackEvent(ANALYTICS_EVENTS.installOptionChanged, { option: 'use_case', value, previous });
+  };
+
   return (
     <ImageRadioGroup
       value={$useCase}
-      onChange={(value) => useCase.set(value as UseCase)}
+      onChange={selectUseCase}
       options={USE_CASES.map((value) => ({
         value,
         label: getInstallationPreset(value).label,

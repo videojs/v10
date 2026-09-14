@@ -4,7 +4,10 @@ import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import GetStartedLink from '../NavBar/GetStartedLink';
 ---
 
-<section class="mx-auto w-full max-w-305 px-5">
+<section
+  data-ph-capture-attribute-location="get-started-banner"
+  class="mx-auto w-full max-w-305 px-5"
+>
   <div
     class="group relative mb-34 items-center bg-faded-black py-2.5 text-center text-manila-light transition-colors duration-200 has-[a:hover]:text-faded-black lg:mb-40 lg:flex lg:text-left lg:duration-300 dark:bg-manila-light dark:text-faded-black dark:has-[a:hover]:text-manila-light"
   >
@@ -41,6 +44,8 @@ import GetStartedLink from '../NavBar/GetStartedLink';
     <GetStartedLink
       client:idle
       aria-label="Get started"
+      data-ph-capture-attribute-cta="get-started"
+      data-ph-capture-attribute-destination="docs"
       className={clsx(
         "relative z-10 ml-auto flex h-15 items-center justify-center text-faded-black lg:h-25 lg:w-40 lg:pr-2.5 dark:text-orange",
       )}

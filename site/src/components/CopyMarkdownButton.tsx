@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { CheckIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -68,6 +69,8 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
 
         await navigator.clipboard.write([clipboardItem]);
       }
+
+      trackEvent(ANALYTICS_EVENTS.codeCopied, { block: 'page-markdown' });
 
       setState({ status: 'success' });
       setTimeout(() => {

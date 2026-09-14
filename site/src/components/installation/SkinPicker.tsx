@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import type { ImageRadioOption } from '@/components/ImageRadioGroup';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import { skin, useCase } from '@/stores/installation';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics';
 import { getInstallationPreset, type Skin } from '@/utils/installation/types';
 
 const VIDEO_SKINS: ImageRadioOption<Skin>[] = [
@@ -34,7 +35,13 @@ export default function SkinPicker() {
     }
   }, [options]);
 
-  return (
-    <ImageRadioGroup value={$skin} onChange={(value) => skin.set(value)} options={options} aria-label="Select skin" />
-  );
+  const selectSkin = (value: Skin) => {
+    const previous = skin.get();
+    if (value === previous) return;
+
+    skin.set(value);
+    trackEvent(ANALYTICS_EVENTS.installOptionChanged, { option: 'skin', value, previous });
+  };
+
+  return <ImageRadioGroup value={$skin} onChange={selectSkin} options={options} aria-label="Select skin" />;
 }

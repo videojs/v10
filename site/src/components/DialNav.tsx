@@ -5,7 +5,13 @@ import DialInner from '@/assets/icons/dial-inner.svg?react';
 import DialOuter from '@/assets/icons/dial-outer.svg?react';
 import GetStartedLink from '@/components/NavBar/GetStartedLink';
 
-type Link = { href: string; label: string; angle: number };
+type Link = {
+  href: string;
+  label: string;
+  angle: number;
+  /** Analytics `destination` for autocaptured clicks. */
+  destination?: 'mux' | 'docs' | 'blog' | 'external';
+};
 
 export interface DialNavProps {
   left: [Link, Link];
@@ -55,6 +61,7 @@ export default function DialNav({ left, right }: DialNavProps) {
               key={link.href}
               href={link.href}
               onClick={(e) => handleClick(e, link)}
+              data-ph-capture-attribute-destination={link.destination}
               className={clsx(
                 'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
                 'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black'
@@ -104,6 +111,7 @@ export default function DialNav({ left, right }: DialNavProps) {
               key={link.href}
               href={link.href}
               onClick={(e) => handleClick(e, link)}
+              data-ph-capture-attribute-destination={link.destination}
               className={clsx(
                 'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
                 'pl-15 -ml-12 bg-manila-50 dark:bg-black'

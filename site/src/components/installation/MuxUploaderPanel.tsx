@@ -9,6 +9,7 @@ import { actions } from 'astro:actions';
 import { useCallback, useRef, useState } from 'react';
 
 import { muxPlaybackId, renderer, sourceUrl } from '@/stores/installation';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
 import { pollForPlaybackId } from '@/utils/mux/polling';
 
@@ -16,6 +17,11 @@ import type { UploaderState } from './UploaderOverlay';
 import UploaderOverlay from './UploaderOverlay';
 
 // import './MuxUploaderPanel.module.css';
+
+/** Server action errors carry a short code; fall back to a trimmed message. Never includes ids or tokens. */
+function failureReason(error: { code?: string; message: string }): string {
+  return error.code ?? error.message.slice(0, 100);
+}
 
 /**
  * Mux video uploader with auth-gated flow.
@@ -59,20 +65,28 @@ export default function MuxUploaderPanel() {
       }
 
       // Other error - throw and let MuxUploader display its native error UI
+      trackEvent(ANALYTICS_EVENTS.muxUploadFailed, {
+        stage: 'create_upload',
+        reason: failureReason(result.error),
+      });
       throw new Error(result.error.message);
     }
 
     // Authenticated - store upload ID and proceed
     setUploadId(result.data.uploadId);
     setState('uploading');
+    trackEvent(ANALYTICS_EVENTS.muxUploadStarted);
     return result.data.uploadUrl;
   }, []);
 
   /** Handles OAuth login via popup. On success: fetches upload URL and resolves the pending Promise. */
   const handleLogin = useCallback(async () => {
+    trackEvent(ANALYTICS_EVENTS.muxLoginClicked);
+
     const result = await actions.auth.initiateLogin();
 
     if (result.error) {
+      trackEvent(ANALYTICS_EVENTS.muxAuthFailed, { reason: failureReason(result.error) });
       setError(result.error.message);
       setState('polling_error');
       return;
@@ -81,12 +95,18 @@ export default function MuxUploaderPanel() {
     initiateAuthPopup({
       authorizationUrl: result.data.authorizationUrl,
       onSuccess: async () => {
+        trackEvent(ANALYTICS_EVENTS.muxAuthSucceeded);
+
         // Now authenticated - fetch upload URL
         const uploadResult = await actions.mux.createDirectUpload({
           corsOrigin: window.location.origin,
         });
 
         if (uploadResult.error) {
+          trackEvent(ANALYTICS_EVENTS.muxUploadFailed, {
+            stage: 'create_upload',
+            reason: failureReason(uploadResult.error),
+          });
           setError(uploadResult.error.message);
           setState('polling_error');
           return;
@@ -95,9 +115,11 @@ export default function MuxUploaderPanel() {
         // Store upload ID and resolve the pending Promise
         setUploadId(uploadResult.data.uploadId);
         setState('uploading');
+        trackEvent(ANALYTICS_EVENTS.muxUploadStarted);
         loginResolverRef.current?.(uploadResult.data.uploadUrl);
       },
       onError: (errorMessage) => {
+        trackEvent(ANALYTICS_EVENTS.muxAuthFailed, { reason: errorMessage.slice(0, 100) });
         setError(errorMessage);
         setState('polling_error');
       },
@@ -108,6 +130,7 @@ export default function MuxUploaderPanel() {
   const handleUploadSuccess = useCallback(async () => {
     if (!uploadId) return;
 
+    trackEvent(ANALYTICS_EVENTS.muxUploadCompleted);
     setState('preparing');
 
     const result = await pollForPlaybackId({
@@ -137,10 +160,16 @@ export default function MuxUploaderPanel() {
     });
 
     if (result.status === 'error') {
+      trackEvent(ANALYTICS_EVENTS.muxUploadFailed, {
+        stage: 'polling',
+        reason: result.message.slice(0, 100),
+      });
       setError(result.message);
       setState('polling_error');
       return;
     }
+
+    trackEvent(ANALYTICS_EVENTS.muxPlaybackIdResolved);
 
     // Success! Update local state and nanostores (for cross-island use)
     setPlaybackId(result.playbackId);

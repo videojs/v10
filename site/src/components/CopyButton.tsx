@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 
+import type { AnalyticsEventProperties } from '@/utils/analytics';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyButtonProps {
@@ -12,9 +14,19 @@ export interface CopyButtonProps {
   className?: string;
   style?: React.CSSProperties;
   timeout?: number;
+  /** Names this block in the `code_copied` event. Defaults to a generic id. */
+  analytics?: AnalyticsEventProperties['code_copied'];
 }
 
-export default function CopyButton({ children, copied, copyFrom, className, style, timeout = 2000 }: CopyButtonProps) {
+export default function CopyButton({
+  children,
+  copied,
+  copyFrom,
+  className,
+  style,
+  timeout = 2000,
+  analytics = { block: 'code-tabs' },
+}: CopyButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isCopied, setIsCopied] = useState(false);
   const isHydrated = useIsHydrated();
@@ -49,6 +61,8 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
 
       if (text) {
         await navigator.clipboard.writeText(text.trim());
+        trackEvent(ANALYTICS_EVENTS.codeCopied, analytics);
+
         setIsCopied(true);
         setTimeout(() => {
           setIsCopied(false);

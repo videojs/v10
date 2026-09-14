@@ -24,7 +24,10 @@ export default function HTMLUsageCodeBlock() {
     <>
       {result.imports && (
         <TabsRoot maxWidth={false}>
-          <TabsList label="HTML implementation">
+          <TabsList
+            label="HTML implementation"
+            analytics={{ block: 'html-usage', framework: 'html', install_method: $installMethod }}
+          >
             <Tab value="typescript" initial>
               TypeScript
             </Tab>
@@ -35,7 +38,10 @@ export default function HTMLUsageCodeBlock() {
         </TabsRoot>
       )}
       <TabsRoot maxWidth={false}>
-        <TabsList label="HTML implementation">
+        <TabsList
+          label="HTML implementation"
+          analytics={{ block: 'html-usage', framework: 'html', install_method: $installMethod }}
+        >
           <Tab value="html" initial>
             HTML
           </Tab>
