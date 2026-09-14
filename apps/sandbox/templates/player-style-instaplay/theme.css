@@ -1,0 +1,297 @@
+/*
+ * Instaplay, ported from `@player.style/instaplay` (media-chrome) to Video.js 10 elements.
+ *
+ * The skin renders into light DOM through the sandbox's `defineTemplateSkin`, so every rule is scoped under
+ * `.ps-instaplay` by hand. A packaged skin would scope with `@scope (.media-skin[data-theme="instaplay"])`, the way
+ * the generated skins in `packages/html/src/internal/skins` do.
+ */
+
+.ps-instaplay {
+  --ps-primary: #fff;
+  --ps-secondary: rgb(38 38 38 / 0.75);
+  --ps-accent: #fff;
+  --ps-track: rgb(38 38 38 / 0.25);
+  --ps-buffer: rgb(38 38 38 / 0.3);
+
+  position: relative;
+  display: block;
+  /* The packaged container carries `w-full h-full` from its own stylesheet; this skin brings its own box. */
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-instaplay / inline-size;
+
+  background: #000;
+  color: var(--ps-primary);
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .ps-instaplay {
+    --ps-secondary: color-mix(in srgb, rgb(38 38 38) 75%, transparent);
+    --ps-accent: color-mix(in srgb, #fff 75%, transparent);
+  }
+}
+
+/* The media and the poster share the box. `object-fit` matches the packaged skins' `--media-object-fit`. */
+.ps-instaplay > video,
+.ps-instaplay > audio,
+.ps-instaplay > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+/* --- Centred play button: visible only while paused, as in the original. --- */
+
+.ps-play {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  place-content: center;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  padding: 0.7em;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ps-secondary);
+  color: inherit;
+  cursor: pointer;
+}
+
+.ps-play[data-paused] {
+  display: grid;
+}
+
+.ps-play-icon {
+  display: block;
+  width: 1.2em;
+  height: 1.2em;
+  /* The original nudges the triangle so it reads centred inside the circle. */
+  transform: translateX(0.05em);
+}
+
+/* --- Chrome: a bottom-aligned column that never auto-hides, matching `noautohide` in the original. --- */
+
+.ps-chrome {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.ps-bar {
+  display: flex;
+  align-items: center;
+  margin: 0.4em 0.8em;
+}
+
+.ps-spacer {
+  flex: 1;
+}
+
+.ps-mute {
+  display: grid;
+  place-content: center;
+  padding: 0.3em;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ps-secondary);
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-mute-icon {
+  display: none;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/* v10 reports four levels; the icon set ships three, so medium borrows the high glyph. */
+.ps-mute[data-volume-level="off"] .ps-mute-off,
+.ps-mute[data-volume-level="low"] .ps-mute-low,
+.ps-mute[data-volume-level="medium"] .ps-mute-high,
+.ps-mute[data-volume-level="high"] .ps-mute-high,
+.ps-mute:not([data-volume-level]) .ps-mute-high {
+  display: block;
+}
+
+/* --- Time slider: a hairline track flush to the bottom edge, no thumb. --- */
+
+.ps-time {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 8px;
+  touch-action: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 3px;
+  height: 4px;
+  overflow: hidden;
+  background: var(--ps-track);
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: var(--ps-buffer);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-accent);
+}
+
+/* --- Scrub preview: thumbnail and time stacked in one cell, as the original did with `preview-box`. --- */
+
+/*
+ * `media-slider-preview` writes its own inline `position`, `left` and `width` from the pointer position, so this rule
+ * only owns the vertical offset and the reveal. Hiding with `visibility` rather than `display` keeps the element
+ * measurable — its resize observer feeds the horizontal placement.
+ */
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  margin: 0 0 20px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail,
+.ps-preview-time {
+  grid-area: 1 / 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  place-self: end center;
+  position: relative;
+  padding: 0 0.4em;
+  line-height: 2;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+/* --- Error dialog: the original relies on media-chrome's built-in; v10 wants the parts spelled out. --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 28ch;
+  padding: 1.4em;
+  border-radius: 8px;
+  background: var(--ps-secondary);
+  text-align: center;
+}
+
+.ps-dialog-title {
+  font-size: 1em;
+}
+
+.ps-dialog-description {
+  font-weight: normal;
+  font-size: 0.875em;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ps-primary);
+  color: #262626;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}
+
+/* The original's only breakpoint, kept at the same 384px stop. */
+@container ps-instaplay (inline-size >= 384px) {
+  .ps-instaplay {
+    font-size: 17px;
+  }
+
+  .ps-track {
+    bottom: 2px;
+  }
+
+  .ps-preview {
+    margin: 0 0 0.5em;
+  }
+}

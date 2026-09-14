@@ -1,0 +1,42 @@
+/*
+ * Tailwind Audio, ported from `@player.style/tailwind-audio` (media-chrome) to Video.js 10 elements.
+ *
+ * The original is written in Tailwind utilities and compiles its own stylesheet at build time. The sandbox already
+ * scans `templates/` (`@source "../templates"` in `app/styles.css`), so the port keeps the utilities inline and needs
+ * almost no authored CSS — only the icon-state rules, which media-chrome expressed as named slots.
+ */
+
+.ps-tailwind-audio media-play-button:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+.ps-tailwind-audio media-play-button:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+.ps-tailwind-audio media-mute-button[data-volume-level="off"] .ps-vol-high,
+.ps-tailwind-audio media-mute-button[data-volume-level="low"] .ps-vol-high,
+.ps-tailwind-audio media-mute-button[data-volume-level="medium"] .ps-vol-high {
+  display: none;
+}
+
+.ps-tailwind-audio media-mute-button[data-volume-level="off"] .ps-vol-off,
+.ps-tailwind-audio media-mute-button[data-volume-level="low"] .ps-vol-low,
+.ps-tailwind-audio media-mute-button[data-volume-level="medium"] .ps-vol-medium {
+  display: block;
+}
+
+/* Controls whose feature the platform does not offer; media-chrome drops these outright. */
+.ps-tailwind-audio [data-hidden],
+.ps-tailwind-audio [data-availability="unavailable"],
+.ps-tailwind-audio [data-availability="unsupported"] {
+  display: none;
+}
+
+/*
+ * v10's playback-rate button carries no text of its own — media-chrome rendered the rate for you. It reports the
+ * current rate as `data-rate`, so the label is drawn from that.
+ */
+.ps-tailwind-audio media-playback-rate-button::after {
+  content: attr(data-rate) "x";
+}

@@ -1,0 +1,50 @@
+<media-container class="media-skin ps-instaplay" data-theme="instaplay" data-preset="video">
+  <slot></slot>
+
+  <media-poster class="ps-poster">
+    <img alt="" decoding="async" />
+  </media-poster>
+
+  <media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
+  <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+
+  <media-error-dialog class="ps-dialog">
+    <media-dialog-backdrop class="ps-dialog-backdrop"></media-dialog-backdrop>
+    <media-dialog-popup class="ps-dialog-popup">
+      <media-dialog-title class="ps-dialog-title"></media-dialog-title>
+      <media-dialog-description class="ps-dialog-description"></media-dialog-description>
+      <media-dialog-close class="ps-dialog-close">Dismiss</media-dialog-close>
+    </media-dialog-popup>
+  </media-error-dialog>
+
+  <media-play-button class="ps-play">
+    <svg class="ps-play-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 4.2c0-1 1.1-1.6 1.9-1.1l12.2 7.8c.8.5.8 1.7 0 2.2L7.9 20.9c-.8.5-1.9-.1-1.9-1.1V4.2Z" />
+    </svg>
+  </media-play-button>
+
+  <div class="ps-chrome">
+    <div class="ps-bar">
+      <div class="ps-spacer"></div>
+      <media-mute-button class="ps-mute">
+        <media-icon class="ps-mute-icon ps-mute-off" name="volume-off"></media-icon>
+        <media-icon class="ps-mute-icon ps-mute-low" name="volume-low"></media-icon>
+        <media-icon class="ps-mute-icon ps-mute-high" name="volume-high"></media-icon>
+      </media-mute-button>
+    </div>
+
+    <media-time-slider class="ps-time">
+      <media-slider-track class="ps-track">
+        <media-slider-buffer class="ps-buffer"></media-slider-buffer>
+        <media-slider-fill class="ps-fill"></media-slider-fill>
+      </media-slider-track>
+
+      <media-slider-preview class="ps-preview" overflow="clamp">
+        <media-slider-thumbnail class="ps-thumbnail"></media-slider-thumbnail>
+        <media-slider-value class="ps-preview-time" type="pointer"></media-slider-value>
+      </media-slider-preview>
+    </media-time-slider>
+  </div>
+</media-container>
