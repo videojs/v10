@@ -42,7 +42,7 @@ describe('React registry output', () => {
     }
   });
 
-  it('keeps project utilities and skin-owned modules in stable boundaries', () => {
+  it('keeps project utilities, component styles, and skin-owned modules in stable boundaries', () => {
     const defaultItems = registries.default;
     const minimalItems = registries.minimal;
     const helper = defaultItems.get('_resolve-class-name');
@@ -54,14 +54,39 @@ describe('React registry output', () => {
     const minimalSkin = readItemRoot(registryDirs.minimal, minimalItems.get('video')!);
     const defaultTargets = defaultItems.get('video')?.files?.map((file) => file.target) ?? [];
     const minimalTargets = minimalItems.get('video')?.files?.map((file) => file.target) ?? [];
+    const defaultStyleTargets = [
+      '@components/videojs/styles/audio/base.css',
+      '@components/videojs/styles/audio/theme.css',
+      '@components/videojs/styles/base.css',
+      '@components/videojs/styles/themes/preferences.css',
+      '@components/videojs/styles/themes/theme.css',
+      '@components/videojs/styles/video/base.css',
+      '@components/videojs/styles/video/captions.css',
+      '@components/videojs/styles/video/theme.css',
+    ];
+    const minimalStyleTargets = [
+      '@components/videojs/styles/audio/base.css',
+      '@components/videojs/styles/audio/minimal.css',
+      '@components/videojs/styles/audio/theme.css',
+      '@components/videojs/styles/base.css',
+      '@components/videojs/styles/themes/minimal.css',
+      '@components/videojs/styles/themes/preferences.css',
+      '@components/videojs/styles/themes/theme.css',
+      '@components/videojs/styles/video/base.css',
+      '@components/videojs/styles/video/captions.css',
+      '@components/videojs/styles/video/minimal.css',
+      '@components/videojs/styles/video/theme.css',
+    ];
 
     expect(helper?.files?.map((file) => file.target)).toEqual(['@lib/resolve-class-name.ts']);
     expect(defaultPlayButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
     expect(defaultPlayButton).toContain(`import { cn } from '@/lib/utils';`);
     expect(defaultPlayButton).not.toContain(`{ cn, resolveClassName }`);
-    expect(defaultPlayButton).toContain(`import '../styles/base.css';`);
+    expect(defaultPlayButton).toContain(`import '../styles/audio/base.css';`);
+    expect(defaultPlayButton).toContain(`import '../styles/video/base.css';`);
     expect(defaultPlayButton).not.toContain(`styles/themes/minimal.css`);
-    expect(minimalPlayButton).toContain(`import '../styles/themes/minimal.css';`);
+    expect(minimalPlayButton).toContain(`import '../styles/audio/minimal.css';`);
+    expect(minimalPlayButton).toContain(`import '../styles/video/minimal.css';`);
     expect(defaultPlayButton).toContain(`from '@videojs/react/icons';`);
     expect(defaultPlayButton).not.toContain(`@videojs/react/icons/minimal`);
     expect(minimalPlayButton).toContain(`from '@videojs/react/icons/minimal';`);
@@ -81,40 +106,12 @@ describe('React registry output', () => {
     expect(defaultTargets).toContain('@components/videojs/video/menus/settings-menu.tsx');
     expect(defaultTargets.some((target) => target?.includes('/skins/') === true)).toBe(false);
     expect(defaultTargets.some((target) => target?.includes('/components/') === true)).toBe(false);
-    expect(styleTargets(defaultItems, 'video')).toEqual([
-      '@components/videojs/styles/base.css',
-      '@components/videojs/styles/themes/preferences.css',
-      '@components/videojs/styles/themes/theme.css',
-      '@components/videojs/styles/video/base.css',
-      '@components/videojs/styles/video/captions.css',
-      '@components/videojs/styles/video/theme.css',
-    ]);
-    expect(styleTargets(minimalItems, 'video')).toEqual([
-      '@components/videojs/styles/base.css',
-      '@components/videojs/styles/themes/minimal.css',
-      '@components/videojs/styles/themes/preferences.css',
-      '@components/videojs/styles/themes/theme.css',
-      '@components/videojs/styles/video/base.css',
-      '@components/videojs/styles/video/captions.css',
-      '@components/videojs/styles/video/minimal.css',
-      '@components/videojs/styles/video/theme.css',
-    ]);
-    expect(styleTargets(defaultItems, 'audio')).toEqual([
-      '@components/videojs/styles/audio/base.css',
-      '@components/videojs/styles/audio/theme.css',
-      '@components/videojs/styles/base.css',
-      '@components/videojs/styles/themes/preferences.css',
-      '@components/videojs/styles/themes/theme.css',
-    ]);
-    expect(styleTargets(minimalItems, 'audio')).toEqual([
-      '@components/videojs/styles/audio/base.css',
-      '@components/videojs/styles/audio/minimal.css',
-      '@components/videojs/styles/audio/theme.css',
-      '@components/videojs/styles/base.css',
-      '@components/videojs/styles/themes/minimal.css',
-      '@components/videojs/styles/themes/preferences.css',
-      '@components/videojs/styles/themes/theme.css',
-    ]);
+    expect(styleTargets(defaultItems, 'play-button')).toEqual(defaultStyleTargets);
+    expect(styleTargets(minimalItems, 'play-button')).toEqual(minimalStyleTargets);
+    expect(styleTargets(defaultItems, 'video')).toEqual(defaultStyleTargets);
+    expect(styleTargets(minimalItems, 'video')).toEqual(minimalStyleTargets);
+    expect(styleTargets(defaultItems, 'audio')).toEqual(defaultStyleTargets);
+    expect(styleTargets(minimalItems, 'audio')).toEqual(minimalStyleTargets);
   });
 
   it('publishes the same public names from each theme catalog', () => {
