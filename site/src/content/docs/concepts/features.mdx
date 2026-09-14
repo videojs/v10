@@ -10,8 +10,7 @@ import Aside from '@/components/Aside.astro';
 
 Not every player needs to support every use case. To address this, Video.js has a concept of **features** — self-contained units of player functionality. Each one adds state properties and actions to the player. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
 
-## Using features
-### Feature bundles and presets
+## Feature bundles and presets
 
 You probably don't want to hand-pick every feature your player needs. A **feature bundle** groups the features needed for a specific use case into a single array.
 
@@ -51,7 +50,7 @@ Feature bundles are usually paired with specific skins and media elements in a *
 
 <DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
 
-### Create a player with individual features
+## Individual features
 If you're not using presets, you can create a player that has individual features.
 
 <FrameworkCase frameworks={["react"]}>
@@ -76,7 +75,7 @@ customElements.define('my-player', MyPlayer);
 ```
 </FrameworkCase>
 
-### Extending a feature bundle
+## Extended feature bundles
 
 Since feature bundles are just an array of features under the hood, it doesn't take much to extend one. For example, if you were using the `/background` preset and wanted a play button on your background video, you might add the playback feature.
 
@@ -103,7 +102,7 @@ customElements.define('my-player', MyPlayer);
 ```
 </FrameworkCase>
 
-### Access features in components
+## Features inside components
 
 <FrameworkCase frameworks={["react"]}>
 You access feature state and actions through <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink>:
@@ -136,7 +135,7 @@ if (media?.paused) media.play();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-### Feature selectors
+## Feature selectors
 Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/api/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/api/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
 
 ```tsx
@@ -147,7 +146,7 @@ playback?.play();
 ```
 </FrameworkCase>
 
-### Checking for feature support
+## Feature availability
 
 Volume, fullscreen, and picture-in-picture expose availability properties because platform support varies. Volume has two independent properties: `volumeAvailability` for changing the volume level and `mutedAvailability` for toggling mute. For example, iOS Safari allows muting but doesn't allow programmatic volume control.
 
