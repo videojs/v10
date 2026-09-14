@@ -7,7 +7,7 @@ const sidebar: Sidebar = [
   {
     sidebarLabel: 'Tooling',
     contents: [
-      { slug: 'guides/configure-a-content-security-policy', redirectFrom: ['concepts/security'] },
+      { slug: 'guides/content-security-policy', redirectFrom: ['concepts/security'] },
       { slug: 'reference/cdn', frameworks: ['html'], redirectFrom: ['concepts/cdn'] },
       { slug: 'guides/autoplay' },
       { href: 'https://example.com', sidebarLabel: 'Outbound' },
@@ -16,7 +16,7 @@ const sidebar: Sidebar = [
   {
     sidebarLabel: 'HTML only',
     frameworks: ['html'],
-    contents: [{ slug: 'guides/self-host-the-player', redirectFrom: ['concepts/self-hosting', 'guides/self-host'] }],
+    contents: [{ slug: 'guides/self-hosting', redirectFrom: ['concepts/self-hosting', 'guides/self-host'] }],
   },
 ];
 
@@ -26,11 +26,11 @@ describe('collectDocsRedirects', () => {
 
     expect(redirects).toContainEqual({
       from: '/docs/framework/react/concepts/security',
-      to: '/docs/framework/react/guides/configure-a-content-security-policy',
+      to: '/docs/framework/react/guides/content-security-policy',
     });
     expect(redirects).toContainEqual({
       from: '/docs/framework/html/concepts/security.md',
-      to: '/docs/framework/html/guides/configure-a-content-security-policy.md',
+      to: '/docs/framework/html/guides/content-security-policy.md',
     });
   });
 
