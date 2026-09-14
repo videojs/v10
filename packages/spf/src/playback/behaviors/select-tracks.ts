@@ -207,9 +207,12 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
 // ============================================================================
 // Default rules
 //
-// Each variant resolves its chain as `config?.rules ?? <default>`. The whole
-// behavior config is forwarded as the rules' `config`, so a policy rule reads
-// its own options (`preferredAudioLanguage`) directly off it.
+// Each variant resolves its chains as `config?.[<TYPE>_TYPE_CONFIG.rulesKey] ??
+// <default>` — per-type keys (`videoRules`, `audioRules`), because one engine
+// config reaches every variant, read through the type bundle like the other
+// per-type families. The whole behavior config is forwarded as the rules'
+// `config`, so a policy rule reads its own options (`preferredAudioLanguage`)
+// directly off it.
 //
 // Video's default is the *empty* chain: with no rule narrowing or reordering the
 // candidates, the head is the first track — a consequence of the model rather than
@@ -290,12 +293,13 @@ export const screenResolutionCap: SelectTrackRule<unknown> = (tracks, { state })
 // ============================================================================
 
 /**
- * Config for `selectVideoTrack`. Pass `rules` to replace the selection chain, or `constraints` to replace the
- * capability pre-pass; otherwise the chain is empty and the first playable candidate is the pick.
+ * Config for `selectVideoTrack`. Pass `videoRules` to replace the selection chain, or `videoConstraints` to replace the
+ * capability pre-pass; otherwise the chain is empty and the first playable candidate is the pick. Keyed per type, as
+ * `switchVideoTrack`'s are, because one engine config reaches every variant.
  */
 export interface SelectVideoTrackConfig extends CapabilityConstraintConfig {
-  constraints?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
-  rules?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
+  videoConstraints?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
+  videoRules?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
 }
 
 /**
@@ -324,20 +328,21 @@ export const selectVideoTrack = defineBehavior({
       config: {
         selectedKey: VIDEO_TYPE_CONFIG.selectedKey,
         trackType: 'video',
-        constraints: config?.constraints ?? DEFAULT_VIDEO_CONSTRAINTS,
-        rules: config?.rules ?? DEFAULT_VIDEO_RULES,
+        constraints: config?.[VIDEO_TYPE_CONFIG.constraintsKey] ?? DEFAULT_VIDEO_CONSTRAINTS,
+        rules: config?.[VIDEO_TYPE_CONFIG.rulesKey] ?? DEFAULT_VIDEO_RULES,
         ruleConfig: config,
       },
     }),
 });
 
 /**
- * Config for `selectAudioTrack`. Pass `rules` to replace the selection chain, or `constraints` to prune candidates
- * before it runs; otherwise the default three-tier policy applies (`preferredAudioLanguage` → `DEFAULT=YES` → first).
+ * Config for `selectAudioTrack`. Pass `audioRules` to replace the selection chain, or `audioConstraints` to prune
+ * candidates before it runs; otherwise the default three-tier policy applies (`preferredAudioLanguage` → `DEFAULT=YES`
+ * → first).
  */
 export interface SelectAudioTrackConfig extends AudioSelectionConfig {
-  constraints?: readonly SelectTrackRule<SelectAudioTrackConfig>[];
-  rules?: readonly SelectTrackRule<SelectAudioTrackConfig>[];
+  audioConstraints?: readonly SelectTrackRule<SelectAudioTrackConfig>[];
+  audioRules?: readonly SelectTrackRule<SelectAudioTrackConfig>[];
 }
 
 /**
@@ -368,8 +373,8 @@ export const selectAudioTrack = defineBehavior({
       config: {
         selectedKey: AUDIO_TYPE_CONFIG.selectedKey,
         trackType: 'audio',
-        constraints: config?.constraints ?? [],
-        rules: config?.rules ?? DEFAULT_AUDIO_RULES,
+        constraints: config?.[AUDIO_TYPE_CONFIG.constraintsKey] ?? [],
+        rules: config?.[AUDIO_TYPE_CONFIG.rulesKey] ?? DEFAULT_AUDIO_RULES,
         ruleConfig: config,
       },
     }),

@@ -265,7 +265,9 @@ describe('HlsBackgroundVideoAdapterCore', () => {
       // replaces the engine's `[screenResolutionCap, preferHighestResolution]`
       // default outright — screen cap included, hence no screen written here.
       const media = new HlsBackgroundVideoAdapterCore({
-        config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === '360p')] },
+        config: {
+          videoRules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === '360p')],
+        },
       });
 
       media.engine.state.presentation.set(presentationWithFourTracks());
