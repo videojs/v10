@@ -1,71 +1,62 @@
 # Concept Page Template
 
-Use for bite-sized explanation pages. One concept per page, quickly scannable.
+Use for pages under `site/src/content/docs/concepts/`: one reusable mental model per page, scannable while building. The rules for choosing a concept over a how-to live in `site/src/content/docs/writing-style/write-guides.mdx`; the boundaries and sentence forms live in `../references/diataxis.md`. Follow an existing concept (e.g., `concepts/skins.mdx`) for current MDX patterns.
 
 ## Frontmatter
 
 ```yaml
 ---
-title: 'Your concept title'
-description: 'One-sentence summary for search and metadata'
+title: 'Concept name'
+description: 'What the page explains, as a noun phrase'
 ---
 ```
 
-Optional fields:
-
-```yaml
----
-title: 'State management'
-description: 'How Video.js manages player state'
-ogTitle: 'State management' # Shorter title for OG image (if page title is long)
-frameworkTitle:
-  html: 'State management in HTML'
-  react: 'State management in React'
----
-```
+Optional fields: `ogTitle` (shorter title for the social image) and `frameworkTitle` (per-framework title override). There is no `type` field; the folder is the type.
 
 ## Page structure
 
 ```mdx
 ---
 title: 'Concept name'
-description: 'Brief description'
+description: 'What the page explains'
 ---
 
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-One-sentence description of the concept. Show code immediately:
+One or two sentences that define the concept and say why it exists. A short
+snippet may follow when it shows the shape being explained, not a task.
 
-{/* Minimal example — under 5 lines */}
+## What it is made of
 
-## How it works
+Noun-phrase headings that name the thing explained ("Feature bundles",
+"Packaged and ejected skins"), never the task ("Create a bundle").
 
-2-3 short paragraphs. Keep it brief — readers reference this while building,
-not when learning from scratch.
+## How the pieces relate
+
+Trade-offs, alternatives, and rationale belong here. Compare with the native
+element or with other approaches when it helps the reader decide.
 
 <FrameworkCase frameworks={["react"]}>
 
-React-specific explanation or code example.
+Framework-specific shape, when the model differs.
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+## Related guides
 
-HTML-specific explanation or code example.
+- <DocsLink slug="guides/..." />
 
-</FrameworkCase>
+## Related API
 
-## See also
-
-- <DocsLink slug="concepts/related-concept">Related concept</DocsLink>
-- <DocsLink slug="reference/components/related-component">Component reference</DocsLink>
+- <DocsLink slug="reference/..." />
 ```
 
 ## Checklist
 
-- [ ] Single concept per page
-- [ ] Code example in first 5 lines after description
-- [ ] Brief explanation (2-3 paragraphs max)
+- [ ] One concept per page, explained rather than taught
+- [ ] Headings are noun phrases; no step-by-step instructions, numbered procedures, or install commands
+- [ ] No `<CustomUiNote />` and none of the how-to sections (Recommended approach, How it works, Common variations, Troubleshooting)
+- [ ] Tasks link to the guide that performs them; exact surfaces link to reference
 - [ ] Framework-specific content uses `<FrameworkCase>`
-- [ ] Scannable in under 2 minutes
+- [ ] Sidebar entry added in `src/docs.config.ts`; `pnpm -F site test diataxis` passes
