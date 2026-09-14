@@ -1,7 +1,9 @@
 ---
-title: Security
-description: How to configure Content Security Policy for your video player
+title: Configure a Content Security Policy
+description: Allow the media, images, workers, and styles a Video.js player needs when your page enforces a Content Security Policy
 ---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
 
 Content Security Policy (CSP) limits which resources a page can load. Video.js uses the URLs you configure for media, posters, thumbnails, and captions. Some HLS renderers also create blob URLs or web workers, so your policy must allow those resources too.
 
@@ -14,7 +16,7 @@ Content Security Policy (CSP) limits which resources a page can load. Video.js u
 - `worker-src blob:` is required when using the `hls.js` player variants.
 - `style-src 'unsafe-inline'` is required for some player UI and HTML player styling behavior.
 
-## Example
+## Recommended policy
 
 ```http
 Content-Security-Policy:
@@ -29,3 +31,8 @@ Content-Security-Policy:
 This policy assumes you bundle Video.js with your application or serve it from your own origin. If you load the player from a CDN, add that CDN's origin to `script-src`.
 
 Replace broad sources such as `https:` with the exact origins your player uses. Remove sources your deployment does not need, and keep `blob:` only where your selected HLS renderer requires it.
+
+## Related guides
+
+- <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="guides/self-host-the-player">Self-host the player</DocsLink>
