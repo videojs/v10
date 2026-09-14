@@ -113,6 +113,17 @@ export const NO_KEY_SYSTEM = 'none';
 export type DrmSystemsConfig = Partial<Record<string, DrmSystemConfig>>;
 
 /**
+ * The DRM slice of an engine's config: the license servers it can reach and the key systems it can negotiate. What the
+ * DRM-aware capability probe (`canPlayTrackWithDrm`) and condition reporter (`reportUnsupportedTrackConditionsWithDrm`)
+ * read off the config they are handed — through a cast rather than a constraint on their function types, for the same
+ * reason the selection rules read their own config that way: those types compose into configs that share nothing else.
+ */
+export interface DrmConfig {
+  drm?: DrmSystemsConfig;
+  keySystems?: readonly KeySystemModule[];
+}
+
+/**
  * Resolve a {@link DrmUrl}. A resolver that throws answers `undefined`: this is called from a selection constraint,
  * where an exception would fail the whole pruning pass, and a system whose URL can't be produced is unusable anyway.
  */

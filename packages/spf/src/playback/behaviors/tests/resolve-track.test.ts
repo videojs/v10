@@ -866,6 +866,27 @@ http://example.com/segment1.m4s
     reactor.destroy();
   });
 
+  it('hands the seam the whole config alongside the resolved track', async () => {
+    // An extended reporter reads its own props (e.g. `drm`) off the config rather
+    // than closing over them, so the behavior must pass the config through.
+    const state = setup();
+    const reportUnsupportedTrackConditions = vi.fn(() => []);
+    const drm = { 'com.example': { licenseUrl: 'https://license.example.com' } };
+    // A variable, not a literal: the engine config carries props (`drm`) the
+    // behavior's own config slice doesn't name, and that is the point.
+    const config = { reportUnsupportedTrackConditions, drm };
+    const reactor = resolveVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(reportUnsupportedTrackConditions).toHaveBeenCalledTimes(1);
+    expect(reportUnsupportedTrackConditions).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'track-1' }),
+      expect.objectContaining({ reportUnsupportedTrackConditions, drm })
+    );
+    reactor.destroy();
+  });
+
   it('reports nothing when no seam is wired', async () => {
     const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
     const reactor = resolveVideoTrack.setup({ state });

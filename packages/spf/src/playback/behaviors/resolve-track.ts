@@ -89,15 +89,7 @@ interface ResolveTrackConfig {
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: {
-    selectedKey,
-    findTrackToResolve,
-    fetchResolvableText = defaultFetchResolvableText,
-    gateFirstParse,
-    reschedule,
-    reportUnsupportedTrackConditions,
-    resolveKeyUri,
-  },
+  config,
 }: {
   // Widened with the optional `errors` slot: reporting writes through it without
   // the behavior declaring ownership, and no-ops when `collectErrors` isn't
@@ -105,6 +97,16 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   state: ResolveTrackStateMap<K> & ErrorEmitterState;
   config: TrackResolutionConfig<K>;
 }) {
+  const {
+    selectedKey,
+    findTrackToResolve,
+    fetchResolvableText = defaultFetchResolvableText,
+    gateFirstParse,
+    reschedule,
+    reportUnsupportedTrackConditions,
+    resolveKeyUri,
+  } = config;
+
   // Recurrence lives in the runner: with a `reschedule` (live) it re-runs the
   // task until the policy stops; `runOnce` (VOD) runs it exactly once. Single-
   // slot — a selection change re-schedules (abort-and-replace).
@@ -219,9 +221,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // Report what the parse revealed about this rendition, before
                   // committing it. Causes only — one unplayable rendition doesn't
                   // make the source unplayable, so the verdict stays with
-                  // track-switching's empty-candidate branch.
+                  // track-switching's empty-candidate branch. The reporter gets
+                  // the whole config alongside the track, so an extended one
+                  // reads its own props off it rather than closing over them.
                   if (reportUnsupportedTrackConditions) {
-                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack)) {
+                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack, config)) {
                       emitError(state, condition);
                     }
                   }

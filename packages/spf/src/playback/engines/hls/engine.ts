@@ -79,8 +79,8 @@ import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
-  makeReportUnsupportedTrackConditionsWithDrm,
   type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditionsWithDrm,
 } from '../../primitives/report-track-conditions';
 import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
@@ -252,9 +252,10 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
   preferredCodecs?: string[];
   /**
    * Conditions reported about each rendition as it resolves — the _causes_ behind a later verdict, and the copy a
-   * verdict reuses when they agree. Defaults to {@link reportUnsupportedTrackConditions}, which reports non-fMP4
-   * containers and encryption; supply your own to report a different set (a provider that never ships MPEG-TS can drop
-   * that check) or `() => []` to report nothing.
+   * verdict reuses when they agree. Defaults to `reportUnsupportedTrackConditionsWithDrm`, which reads `drm` and
+   * `keySystems` off this config and reports non-fMP4 containers plus encryption no configured system serves; supply
+   * your own to report a different set (a provider that never ships MPEG-TS can drop that check) or `() => []` to
+   * report nothing.
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   preferredAudioLanguage?: string;
@@ -429,7 +430,7 @@ export function createHlsVideoEngine(
     // with the rest of the DRM defaults by a composition that omits DRM.
     extraConstraints: [excludeRefusedKeySystems],
     reportUnsupportedTrackConditions:
-      config.reportUnsupportedTrackConditions ?? makeReportUnsupportedTrackConditionsWithDrm(drm, keySystems),
+      config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditionsWithDrm,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.

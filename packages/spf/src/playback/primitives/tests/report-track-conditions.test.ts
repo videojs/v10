@@ -8,10 +8,7 @@ import {
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack, type TrackType } from '../../../media/types';
-import {
-  makeReportUnsupportedTrackConditionsWithDrm,
-  reportUnsupportedTrackConditions,
-} from '../report-track-conditions';
+import { reportUnsupportedTrackConditions, reportUnsupportedTrackConditionsWithDrm } from '../report-track-conditions';
 
 const track = (
   type: TrackType,
@@ -121,7 +118,7 @@ describe('reportUnsupportedTrackConditions', () => {
   });
 });
 
-describe('makeReportUnsupportedTrackConditionsWithDrm', () => {
+describe('reportUnsupportedTrackConditionsWithDrm', () => {
   const WIDEVINE_KEY = {
     method: 'SAMPLE-AES',
     uri: 'data:text/plain;base64,cGluZw==',
@@ -138,10 +135,9 @@ describe('makeReportUnsupportedTrackConditionsWithDrm', () => {
     { keySystem: 'com.widevine.alpha', keyFormats: ['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed'] },
     { keySystem: 'com.apple.fps', keyFormats: ['com.apple.streamingkeydelivery'] },
   ];
-  const report = makeReportUnsupportedTrackConditionsWithDrm(
-    { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
-    keySystems
-  );
+  const drm = { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } };
+  const config = { drm, keySystems };
+  const report = (t: ResolvedTrack) => reportUnsupportedTrackConditionsWithDrm(t, config);
 
   it('reports no DRM cause when the declared keys reach a configured system', () => {
     expect(report(track('video', { encrypted: true, keys: [WIDEVINE_KEY] }))).toEqual([]);
@@ -159,5 +155,17 @@ describe('makeReportUnsupportedTrackConditionsWithDrm', () => {
         (error) => error.code
       )
     ).toEqual([SVTA_UNSUPPORTED_VIDEO_FORMAT]);
+  });
+
+  it('keeps the DRM cause for every encrypted rendition when handed no DRM config, as the default does', () => {
+    // The degenerate DRM config: nothing serves any key, so a DRM-composed engine
+    // with no license servers reports exactly like a DRM-free one.
+    const encrypted = track('video', { encrypted: true, keys: [WIDEVINE_KEY] });
+
+    for (const config of [undefined, {}, { drm }, { keySystems }]) {
+      expect(reportUnsupportedTrackConditionsWithDrm(encrypted, config).map((error) => error.code)).toEqual([
+        SVTA_UNSUPPORTED_DRM_SYSTEM,
+      ]);
+    }
   });
 });
