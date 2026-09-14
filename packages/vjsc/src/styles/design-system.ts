@@ -27,12 +27,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   const watchFiles = new Set([absolute]);
   const design = await __unstable__loadDesignSystem(raw, { base });
   const theme = Object.fromEntries(
-    Object.keys(defaultConfig().theme).map((group) => [
-      group,
-      [...design.theme.namespace(`--${group}`).keys()].filter(
-        (name): name is string => name !== null && !name.includes('--')
-      ),
-    ])
+    Object.keys(defaultConfig().theme).map((group) => [group, design.theme.keysInNamespaces([`--${group}`])])
   );
   const merge = createTwMerge({ extend: { theme } });
   const candidateCache = new Map<string, string | undefined>();
