@@ -106,8 +106,8 @@ export const sidebar: Sidebar = [
         frameworks: ['html'],
         llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
         contents: [
-          { slug: 'guides/use-videojs-with-vue', sidebarLabel: 'Vue and Nuxt' },
-          { slug: 'guides/use-videojs-with-svelte', sidebarLabel: 'Svelte and SvelteKit' },
+          { slug: 'guides/vue', frameworks: ['html'], redirectFrom: ['guides/use-videojs-with-vue'] },
+          { slug: 'guides/svelte', frameworks: ['html'], redirectFrom: ['guides/use-videojs-with-svelte'] },
         ],
       },
     ],
