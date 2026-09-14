@@ -4,6 +4,7 @@ import { BufferingIndicator } from '../../../components/feedback/buffering-indic
 import { ErrorDialog } from '../../../components/feedback/error-dialog';
 import { Container } from '../../../components/layout/container';
 import { Poster } from '../../../components/layout/poster';
+import { Title } from '../../../components/metadata/title';
 import type { SkinDescription } from '../../../meta';
 import { VideoGestures } from '../../shared/video/gestures';
 import { VideoHotkeys } from '../../shared/video/hotkeys';
@@ -30,6 +31,7 @@ export function DefaultVideoSkin({
       <Poster renderImage={renderPoster} />
       <BufferingIndicator />
       <ErrorDialog />
+      <Title />
 
       <DefaultVideoControls renderThumbnail={renderThumbnail} />
 

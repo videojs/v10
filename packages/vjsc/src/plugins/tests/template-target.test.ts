@@ -34,6 +34,12 @@ const target = defineComponentTarget<typeof schema>()(({ code, element }) => {
             tier: ({ props: source }) => code.when(item.tier, jsx(Sup, { ...source, children: item.tier })),
           },
         },
+        text: {
+          render: ({ children }) =>
+            jsx(Host, {
+              renderItem: code.fn([item], code.withProps(children, { children: item.label })),
+            }),
+        },
         chapter: {
           render: ({ props: source, children }) =>
             jsx(Host, {
@@ -47,6 +53,15 @@ const target = defineComponentTarget<typeof schema>()(({ code, element }) => {
 });
 
 describe('templateTargetPlugin', () => {
+  it('passes explicit children through host props', async () => {
+    const source = await transform(`
+      import { Template } from 'vjsc/components';
+      export const list = <List><Template name="text"><div className="title" /></Template></List>;
+    `);
+
+    expect(source).toContain('children={item.label}');
+  });
+
   it('lowers host callbacks and template parts from source-backed JSX', async () => {
     const source = await transform(`
       import { Template } from 'vjsc/components';

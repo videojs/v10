@@ -292,6 +292,10 @@ function renderWithProps(
         children.rootComponent ? 'react' : context.target.jsx.attributes
       );
 
+  if (!isExpressionNode(props) && props.children !== undefined && props.children !== children) {
+    attributes.push(renderGeneratedAttribute('children', props.children, context));
+  }
+
   if (children.rootOpeningEnd === undefined) {
     const host = context.target.jsx.host;
     if (!host) throw new Error('vjsc/target: dynamic host children require a target JSX host runtime.');

@@ -161,7 +161,9 @@ export type {
   TimeSliderChaptersProps,
   TimeSliderChaptersState,
 } from './ui/time-slider/chapters';
-export { Title, type TitleProps } from './ui/title/component';
+export { Title } from './ui/title';
+export type { TitleRootProps } from './ui/title/root';
+export type { TitleValueProps } from './ui/title/value';
 export { Tooltip, type TooltipContent, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeIndicator } from './ui/volume-indicator';
 export type { VolumeIndicatorFillProps } from './ui/volume-indicator/fill';

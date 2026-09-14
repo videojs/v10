@@ -116,6 +116,7 @@ export const utilities = {
   '--text-media-sm': { kind: 'theme', description: 'Small text size in player spacing units.' },
   '--text-media': { kind: 'theme', description: 'Base text size in player spacing units.' },
   '--text-media-lg': { kind: 'theme', description: 'Large text size in player spacing units.' },
+  '--text-media-xl': { kind: 'theme', description: 'Extra large text size in player spacing units.' },
   '--spacing-media-icon-sm': { kind: 'theme', description: 'Chevron size derived from the icon size.' },
   '--spacing-media-icon': { kind: 'theme', description: 'Control icon size.' },
   '--spacing-media-icon-lg': { kind: 'theme', description: 'Large indicator icon size.' },
