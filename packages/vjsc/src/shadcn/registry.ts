@@ -453,26 +453,29 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   const dependencies = new Set<string>();
   const targets = new Set<string>();
 
-  const themes = registryThemes(styles);
+  const selections =
+    item.build.theme === false
+      ? styles?.theme
+        ? [false]
+        : []
+      : Array.isArray(item.build.theme)
+        ? item.build.theme
+        : [item.build.theme];
 
-  if (themes.length > 0 && (hasStyles || item.build.theme)) {
-    const selections = Array.isArray(item.build.theme) ? item.build.theme : [item.build.theme];
+  for (const selection of selections) {
+    const theme = resolveRegistryTheme(styles, selection, item.name);
+    const themeTarget = selection === true || selection === false ? theme.target : selection;
+    const themeFiles = theme.files ? Object.values(theme.files) : [];
 
-    for (const selection of selections) {
-      const theme = resolveRegistryTheme(themes, selection, item.name);
-      const themeTarget = selection === true || selection === false ? theme.target : selection;
-      const themeFiles = theme.files ? Object.values(theme.files) : [];
-
-      if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
-        throw new Error(
-          `Shadcn item \`${item.name}\` imports a stylesheet outside its registry theme: \`${themeTarget}\`.`
-        );
-      }
-
-      targets.add(themeTarget);
-
-      if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(theme));
+    if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
+      throw new Error(
+        `Shadcn item \`${item.name}\` imports a stylesheet outside its registry theme: \`${themeTarget}\`.`
+      );
     }
+
+    targets.add(themeTarget);
+
+    if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(theme));
   }
 
   if (item.build.stylesheet) {
@@ -779,11 +782,19 @@ function registryThemes(styles: RegistryStylesOptions | undefined): readonly Reg
 }
 
 function resolveRegistryTheme(
-  themes: readonly RegistryThemeOptions[],
+  styles: RegistryStylesOptions | undefined,
   selection: boolean | string,
   itemName: string
 ): RegistryThemeOptions {
-  if (selection === true || selection === false) return themes[0]!;
+  if (selection === true || selection === false) {
+    if (!styles?.theme) {
+      throw new Error(`Shadcn item \`${itemName}\` requests a primary registry theme, but none is configured.`);
+    }
+
+    return styles.theme;
+  }
+
+  const themes = registryThemes(styles);
 
   const matches = themes.filter(
     (theme) => theme.target === selection || Object.values(theme.files ?? {}).includes(selection)

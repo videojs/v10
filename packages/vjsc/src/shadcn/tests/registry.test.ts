@@ -271,6 +271,74 @@ describe('createShadcnRegistryFiles', () => {
 
     expect(source).toMatch(/^import '\.\.\/styles\/theme\.css';\n\nimport '\.\.\/audio\/skin\.css';/);
   });
+
+  it('rejects a named theme target when no registry theme owns it', async () => {
+    const graph = fixtureGraph();
+    const files = createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'component' || module.params.theme !== 'default') return null;
+
+          return {
+            name: 'button',
+            type: 'registry:ui',
+            title: 'Button',
+            description: 'Button.',
+            group: 'ui',
+            target: 'ui/button.tsx',
+            theme: 'styles/missing.css',
+          };
+        },
+      },
+    });
+
+    await expect(files).rejects.toThrow(
+      'Shadcn item `button` references an unknown registry theme target: `styles/missing.css`.'
+    );
+  });
+
+  it('rejects a primary theme request when only additional themes are configured', async () => {
+    const graph = fixtureGraph();
+    const files = createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'component' || module.params.theme !== 'default') return null;
+
+          return {
+            name: 'button',
+            type: 'registry:ui',
+            title: 'Button',
+            description: 'Button.',
+            group: 'ui',
+            target: 'ui/button.tsx',
+            theme: true,
+          };
+        },
+      },
+      styles: {
+        themes: [
+          {
+            name: '_style-extra',
+            title: 'Extra theme',
+            description: 'Extra theme.',
+            target: 'styles/extra.css',
+          },
+        ],
+      },
+    });
+
+    await expect(files).rejects.toThrow(
+      'Shadcn item `button` requests a primary registry theme, but none is configured.'
+    );
+  });
 });
 
 function fixtureGraph(): Graph<FixtureMeta> {
