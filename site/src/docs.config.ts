@@ -22,7 +22,7 @@ export const sidebar: Sidebar = [
             frameworks: ['html'],
             hidden: true,
           },
-          { slug: 'guides/overview', redirectFrom: ['concepts/overview'] },
+          { slug: 'guides/architecture', redirectFrom: ['concepts/overview'] },
           { slug: 'guides/why-videojs', redirectFrom: ['concepts/why-videojs'] },
           { slug: 'guides/v10-roadmap', sidebarLabel: 'Roadmap', redirectFrom: ['concepts/v10-roadmap'] },
         ],
