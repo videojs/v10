@@ -18,6 +18,17 @@ describe('loadDesignSystem', () => {
     expect(design.watchFiles).toContain(resolve(import.meta.dirname, '../../plugins/tests/fixtures/theme.css'));
   });
 
+  it('keeps overlapping theme namespaces in separate merge groups', async () => {
+    const design = await loadDesignSystem(resolve(import.meta.dirname, '../../plugins/tests/fixtures/design.css'));
+
+    expect(design.merge('text-fixture-title text-shadow-fixture')).toBe('text-fixture-title text-shadow-fixture');
+    expect(design.merge('text-shadow-fixture text-fixture-title')).toBe('text-shadow-fixture text-fixture-title');
+    expect(design.merge('font-fixture font-[family-name:Arial]')).toBe('font-[family-name:Arial]');
+    expect(design.merge('font-fixture font-fixture-medium')).toBe('font-fixture font-fixture-medium');
+    expect(design.merge('font-medium font-fixture-medium')).toBe('font-fixture-medium');
+    expect(design.merge('text-shadow-sm text-shadow-fixture')).toBe('text-shadow-fixture');
+  });
+
   it('memoizes compiled CSS by source', async () => {
     const design = await loadDesignSystem(designPath);
     const source = '.media-button {\n  @apply grid;\n}';
