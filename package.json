@@ -1,5 +1,5 @@
 {
-  "name": "video.js",
+  "name": "@videojs/monorepo",
   "version": "0.1.0",
   "description": "Video.js 10 Monorepo",
   "license": "Apache-2.0",
