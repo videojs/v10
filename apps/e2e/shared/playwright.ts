@@ -5,6 +5,12 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 const CI = Boolean(process.env.CI);
 /** Pull requests retry once: a second retry mostly re-records video and traces for the same flake. */
 const RETRIES = process.env.GITHUB_EVENT_NAME === 'pull_request' ? 1 : 2;
+/**
+ * Under the 15-minute job timeout in `e2e.yml`, with room for the job's own setup. When the runner cancels a job the
+ * conclusion is `cancelled` rather than `failure`, so no report uploads and failure triage never runs; Playwright
+ * ending the run itself keeps both.
+ */
+const GLOBAL_TIMEOUT = 12 * 60_000;
 const e2eDir = resolve(import.meta.dirname, '..');
 
 /** Apply the shared reporting, retry, trace, and screenshot policy to one E2E suite. */
@@ -13,6 +19,7 @@ export function suiteConfig(name: string): PlaywrightTestConfig {
     snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
     outputDir: resolve(e2eDir, 'test-results', name),
     timeout: 60_000,
+    globalTimeout: CI ? GLOBAL_TIMEOUT : 0,
     retries: CI ? RETRIES : 0,
     fullyParallel: true,
     reporter: CI

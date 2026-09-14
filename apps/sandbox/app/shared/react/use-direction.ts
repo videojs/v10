@@ -1,4 +1,5 @@
-import { getDirection, onDirectionChange, type TextDirection } from '@app/shared/sandbox-listener';
+import type { TextDirection } from '@app/constants';
+import { getDirection, onDirectionChange } from '@app/shared/sandbox-listener';
 import { useEffect, useState } from 'react';
 
 /** The shell's pinned text direction, or `auto` to let the player follow its locale. */

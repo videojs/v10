@@ -38,7 +38,7 @@ describe('createPopover', () => {
       expect(popover.input.current).toEqual({ active: true, status: 'ending' });
     });
 
-    it('shows an already-mounted popup when a deferred open is committed', () => {
+    it('shows an already-mounted popup after a deferred open is committed', async () => {
       const { popover } = createTestPopover({ deferOpenChanges: true });
       const popup = document.createElement('div');
       const showPopover = vi.fn();
@@ -50,7 +50,29 @@ describe('createPopover', () => {
       expect(showPopover).not.toHaveBeenCalled();
 
       popover.syncOpen(true);
+      expect(showPopover).not.toHaveBeenCalled();
+
+      await Promise.resolve();
+
       expect(showPopover).toHaveBeenCalledOnce();
+    });
+
+    it('does not show a deferred popup that closes before the opening microtask', async () => {
+      const { popover } = createTestPopover({ deferOpenChanges: true });
+      const popup = document.createElement('div');
+      const showPopover = vi.fn();
+
+      Object.defineProperty(popup, 'showPopover', { value: showPopover });
+      popover.setPopupElement(popup);
+
+      popover.open();
+      popover.syncOpen(true);
+      popover.close();
+      popover.syncOpen(false);
+
+      await Promise.resolve();
+
+      expect(showPopover).not.toHaveBeenCalled();
     });
 
     it('updates input state and calls onOpenChange when opening', () => {

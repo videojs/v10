@@ -8,7 +8,7 @@ createHtmlSandbox({
   player: 'video',
   render: ({ skinTag }) => html`
     <video-player>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <youtube-video class="block h-full w-full" src="${YOUTUBE_VIDEO_SRC}" playsinline></youtube-video>
       </${skinTag}>
     </video-player>

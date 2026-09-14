@@ -1,7 +1,17 @@
 import { Hls, HlsJsAdapter } from '@videojs/hlsjs-video';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxVideoAdapter, type MuxSource } from '..';
+
+// Every Mux source fetches its metadata, and native playback fetches the
+// manifest alongside; neither should reach the network from here. Tests that
+// care about a response stub their own.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response('', { status: 404 }))
+  );
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -604,7 +614,11 @@ describe('MuxVideoAdapter', () => {
         requestMediaKeySystemAccess: async () => ({ createMediaKeys: async () => mediaKeys }),
       });
 
-      const fetchMock = vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) }) as Response);
+      // Answers the certificate request, and the metadata one every Mux source
+      // makes alongside it.
+      const fetchMock = vi.fn(
+        async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4), json: async () => [] }) as Response
+      );
 
       vi.stubGlobal('fetch', fetchMock);
       return fetchMock;
@@ -690,9 +704,10 @@ describe('MuxVideoAdapter', () => {
       fireEncrypted(video);
       await flushLoad();
 
-      // The caller named no certificate URL, so nothing is fetched — least of all
-      // from the servers the token would have derived.
-      expect(fetchMock).not.toHaveBeenCalled();
+      // The caller named no certificate URL, so no certificate is fetched — least
+      // of all from the servers the token would have derived. (The one request
+      // made is for the asset's metadata, which every Mux source loads.)
+      expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('license.mux.com'), expect.anything());
     });
 
     it('lets a license server named alongside the token replace the derived one', async () => {
@@ -765,6 +780,196 @@ describe('MuxVideoAdapter', () => {
       await flushLoad();
 
       expect(loadstart).toHaveBeenCalled();
+    });
+  });
+
+  describe('metadata', () => {
+    // The document Mux serves: Apple's JSON chapters, the first chapter standing
+    // for the asset.
+    const DOCUMENT = [
+      {
+        'start-time': 0,
+        titles: [{ language: 'und', title: 'Big Buck Bunny' }],
+        metadata: [{ key: 'com.mux.video.branding', value: 'mux-free-plan' }],
+      },
+    ];
+
+    function stubFetch(body: unknown = DOCUMENT, status = 200) {
+      const fetchMock = vi.fn(async (input: string | URL | Request) => {
+        const url = input instanceof Request ? input.url : String(input);
+        // The native live mixin fetches the manifest in parallel; only the
+        // metadata document is answered here.
+        if (!url.includes('metadata.json')) return new Response('', { status: 404 });
+
+        return new Response(JSON.stringify(body), { status });
+      });
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      return fetchMock;
+    }
+
+    function metadataRequests(fetchMock: ReturnType<typeof stubFetch>) {
+      return fetchMock.mock.calls.map(([input]) => String(input)).filter((url) => url.includes('metadata.json'));
+    }
+
+    it('has no title until the metadata has loaded', () => {
+      stubFetch();
+
+      const media = new MuxVideoAdapter();
+
+      media.source = { playbackId: 'abc123' };
+
+      expect(media.contentData.title).toBeUndefined();
+    });
+
+    it('loads the metadata with the source, over hls.js', async () => {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+      const handler = vi.fn();
+
+      media.attach(document.createElement('video'));
+      media.addEventListener('contentdatachange', handler);
+      media.source = { playbackId: 'abc123' };
+      await flushLoad();
+
+      expect(media.engine).not.toBeNull();
+      expect(metadataRequests(fetchMock)).toEqual(['https://stream.mux.com/abc123/metadata.json']);
+      expect(media.contentData).toEqual({
+        title: 'Big Buck Bunny',
+        'com.mux.video.branding': 'mux-free-plan',
+        poster: 'https://image.mux.com/abc123/thumbnail.webp',
+        storyboard: 'https://image.mux.com/abc123/storyboard.vtt?format=webp',
+      });
+      // Once for the URLs with `source`, once for the metadata.
+      expect(handler).toHaveBeenCalledTimes(2);
+
+      media.destroy();
+    });
+
+    it('loads the metadata with the source, over native playback, with the playback token', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native', playback: { token: 'jwt' } };
+      await flushLoad();
+
+      // Signed playback answers 403 without it.
+      expect(metadataRequests(fetchMock)).toEqual(['https://stream.mux.com/abc123/metadata.json?token=jwt']);
+      expect(media.contentData.title).toBe('Big Buck Bunny');
+
+      media.destroy();
+    });
+
+    it('does not fetch for a non-Mux source', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.attach(document.createElement('video'));
+      media.source = { src: 'https://example.com/custom.m3u8', preferPlayback: 'native' };
+      await flushLoad();
+
+      expect(metadataRequests(fetchMock)).toEqual([]);
+
+      media.destroy();
+    });
+
+    it('keeps the title when only image params change', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+      await flushLoad();
+
+      // What `poster-time` does through the element: same stream, new object,
+      // and no reload to fetch the document again on.
+      media.source = { playbackId: 'abc123', preferPlayback: 'native', poster: { time: 3 } };
+      await flushLoad();
+
+      expect(media.contentData.title).toBe('Big Buck Bunny');
+      expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp?time=3');
+      expect(metadataRequests(fetchMock)).toHaveLength(1);
+
+      media.destroy();
+    });
+
+    it('drops the title with the playback id, before the next one loads', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+      await flushLoad();
+
+      const seen: (string | null | undefined)[] = [];
+
+      media.addEventListener('sourcechange', () => seen.push(media.contentData.title));
+      media.source = { playbackId: 'xyz789', preferPlayback: 'native' };
+
+      expect(seen).toEqual([undefined]);
+
+      await flushLoad();
+
+      expect(metadataRequests(fetchMock)).toEqual([
+        'https://stream.mux.com/abc123/metadata.json',
+        'https://stream.mux.com/xyz789/metadata.json',
+      ]);
+      expect(media.contentData.title).toBe('Big Buck Bunny');
+
+      media.destroy();
+    });
+
+    it('clears the title with the source', async () => {
+      stubFetch();
+
+      const media = new MuxVideoAdapter();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+      await flushLoad();
+
+      media.source = null;
+
+      expect(media.contentData).toEqual({});
+    });
+
+    it('has no title for an asset without metadata', async () => {
+      stubFetch([{ 'start-time': 0 }]);
+
+      const media = new MuxVideoAdapter();
+      const handler = vi.fn();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+      media.addEventListener('contentdatachange', handler);
+      await flushLoad();
+
+      expect(media.contentData.title).toBeUndefined();
+      // An empty document changes nothing, so nothing is announced.
+      expect(handler).not.toHaveBeenCalled();
+
+      media.destroy();
+    });
+
+    it('has no title when the document fails to load', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      stubFetch('', 500);
+
+      const media = new MuxVideoAdapter();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+      await flushLoad();
+
+      expect(media.contentData.title).toBeUndefined();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('500'));
+
+      media.destroy();
     });
   });
 });

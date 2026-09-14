@@ -9,7 +9,7 @@ createHtmlSandbox({
   live: true,
   render: ({ playerTag, skinTag, src, attrs, chapters, storyboard, poster }) => html`
     <${playerTag}>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <hls-video${src} ${attrs} playsinline crossorigin>
           ${chapters}
           ${storyboard}

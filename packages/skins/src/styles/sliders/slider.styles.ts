@@ -1,9 +1,10 @@
 import { styles } from 'vjsc/styles';
 
+// Reveal part of a full round cap for tiny values instead of squeezing it into a vertical pill.
 const trackLayer = [
-  'pointer-events-none absolute rounded-[inherit]',
-  'transition-[clip-path] duration-media-slider ease-out',
-  'group-data-dragging/slider:duration-0 group-data-seeking/slider:duration-0 group-focus-within/slider:duration-0',
+  'pointer-events-none absolute inset-0 before:absolute before:size-full before:rounded-media-control',
+  'data-[orientation=horizontal]:before:left-0 data-[orientation=horizontal]:before:min-w-1',
+  'data-[orientation=vertical]:before:bottom-0 data-[orientation=vertical]:before:min-h-1',
 ] as const;
 
 export default styles({
@@ -14,6 +15,7 @@ export default styles({
       utilities: [
         'group/slider relative flex flex-1 cursor-pointer items-center justify-center outline-hidden',
         'data-disabled:pointer-events-none',
+        'transition-[--media-slider-fill,--media-slider-buffer] duration-media-slider ease-out data-dragging:duration-0',
         'rounded-media-pill',
         'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))]',
         'data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
@@ -25,18 +27,16 @@ export default styles({
     },
     track: {
       utilities: [
-        'relative isolate w-full select-none overflow-hidden rounded-media-pill bg-current/20',
+        'relative isolate w-full select-none rounded-media-pill before:pointer-events-none before:absolute before:inset-0 before:rounded-media-control before:bg-current/20',
         'data-[orientation=horizontal]:h-1 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1',
       ],
     },
     fill: {
       utilities: [
         ...trackLayer,
-        'bg-media-primary',
-        'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
+        'before:bg-media-primary',
         'data-[orientation=horizontal]:clip-media-x-[--media-slider-fill]',
         'group-data-dragging/slider:data-[orientation=horizontal]:clip-media-x-[--media-slider-pointer]',
-        'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
         'data-[orientation=vertical]:clip-media-y-[--media-slider-fill]',
         'group-data-dragging/slider:data-[orientation=vertical]:clip-media-y-[--media-slider-pointer]',
       ],
@@ -44,19 +44,15 @@ export default styles({
     buffer: {
       utilities: [
         ...trackLayer,
-        'bg-current/20',
-        'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
+        'before:bg-current/20',
         'data-[orientation=horizontal]:clip-media-x-[--media-slider-buffer]',
-        'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
         'data-[orientation=vertical]:clip-media-y-[--media-slider-buffer]',
       ],
     },
     thumb: {
       utilities: [
-        'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
-        'select-none transition-[opacity,height,width,outline-offset,left,top,scale] duration-media-slider ease-out',
-        'group-data-dragging/slider:transition-[opacity,height,width,outline-offset,scale]',
-        'group-focus-within/slider:transition-[opacity,height,width,outline-offset,scale]',
+        'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-white',
+        'select-none transition-[opacity,height,width,outline-offset,scale] duration-media-slider ease-out',
         'group-data-dragging/slider:scale-90',
         'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',

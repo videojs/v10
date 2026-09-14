@@ -39,7 +39,7 @@ export default styles({
         default: [
           'contents p-1 transition-[filter,opacity,scale,translate]',
           'media-lg:absolute media-lg:inset-x-2 media-lg:bottom-2 media-lg:z-30',
-          'media-lg:flex media-lg:items-center media-lg:rounded-media-controls',
+          'media-lg:flex media-lg:items-center media-lg:rtl:flex-row-reverse media-lg:rounded-media-controls',
           'media-lg:bg-media-popover media-lg:text-media-popover-foreground',
           'media-lg:surface-media media-lg:after:surface-media-inset',
           'media-2xl:inset-x-3 media-2xl:bottom-3',
@@ -49,7 +49,7 @@ export default styles({
           'media-lg:not-data-visible:duration-media-controls',
         ],
         minimal: [
-          'absolute inset-x-1 bottom-1 z-30 flex items-center gap-x-2 rounded-media-controls bg-transparent p-1 media-opaque:bg-media-background',
+          'absolute inset-x-1 bottom-1 z-30 flex items-center rtl:flex-row-reverse gap-x-2 rounded-media-controls bg-transparent p-1 media-opaque:bg-media-background',
           'transition-[filter,opacity,translate]',
           'not-data-visible:pointer-events-none not-data-visible:opacity-0',
           'not-data-visible:duration-media-controls',
@@ -68,7 +68,7 @@ export default styles({
     },
     primary: {
       utilities: [
-        'absolute inset-x-2 bottom-2 z-30 flex origin-bottom items-center rounded-media-controls p-0.5',
+        'absolute inset-x-2 bottom-2 z-30 flex origin-bottom items-center rtl:flex-row-reverse rounded-media-controls p-0.5',
         ...compactSurface,
         'media-lg:contents',
         ...compactHidden,
@@ -77,7 +77,7 @@ export default styles({
     },
     secondary: {
       utilities: [
-        'absolute top-2 right-2 z-30 flex origin-top items-center gap-px rounded-media-controls p-0.5',
+        'absolute top-2 right-2 z-30 flex origin-top items-center rtl:flex-row-reverse gap-px rounded-media-controls p-0.5',
         ...compactSurface,
         'media-lg:static media-lg:p-0',
         ...compactHidden,

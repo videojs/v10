@@ -181,7 +181,15 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     const opening = layer.open(() => popupEl);
     if (!opening) return;
 
-    tryShowPopover(popupEl);
+    // Let platform adapters commit `data-starting-style` before exposing an
+    // already-mounted popup. Showing synchronously starts the transition from
+    // its visible styles before reactive HTML updates can apply the start state.
+    queueMicrotask(() => {
+      if (layer.signal.aborted || !state.current.active || state.current.status === 'ending') return;
+
+      tryShowPopover(popupEl);
+    });
+
     options.group?.()?.open(groupMember);
 
     opening.then(() => {

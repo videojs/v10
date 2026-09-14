@@ -70,6 +70,25 @@ afterEach(() => {
 });
 
 describe('MenuElement', () => {
+  it('applies starting styles before showing the popup', async () => {
+    const { root } = createMenu();
+    const startingStates: boolean[] = [];
+    const showPopover = vi.fn(() => {
+      startingStates.push(root.hasAttribute('data-starting-style'));
+    });
+
+    Object.defineProperty(root, 'showPopover', { configurable: true, value: showPopover });
+    document.body.append(root);
+    await root.updateComplete;
+
+    root.openMenu();
+    await root.updateComplete;
+    await Promise.resolve();
+
+    expect(showPopover).toHaveBeenCalled();
+    expect(startingStates.every(Boolean)).toBe(true);
+  });
+
   it('owns popup state while Content owns menu semantics', async () => {
     const { root, content } = createMenu();
 

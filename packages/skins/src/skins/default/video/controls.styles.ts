@@ -12,7 +12,7 @@ export default styles({
     },
     timeSliderGroup: {
       className: 'video-time-slider-group',
-      utilities: '@container/media-time flex flex-1 items-center gap-2.5 px-2 media-lg:px-3',
+      utilities: '@container/media-time flex flex-1 items-center rtl:flex-row-reverse gap-2.5 px-2 media-lg:px-3',
     },
     timeValue: {
       className: 'video-time-value',

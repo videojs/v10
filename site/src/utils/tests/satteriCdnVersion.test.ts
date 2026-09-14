@@ -4,9 +4,14 @@
 import { mdxToJs } from 'satteri';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { VJS10_CDN_ARCHIVE_VERSION, VJS10_CDN_BASE } from '@/consts';
+import { VJS10_CDN_ARCHIVE_VERSION, VJS10_CDN_BASE, VJS10_UTILS_CDN_BASE } from '@/consts';
 
-import { satteriCdnVersion, VJS10_CDN_ARCHIVE_VERSION_PLACEHOLDER, VJS10_CDN_PLACEHOLDER } from '../satteriCdnVersion';
+import {
+  satteriCdnVersion,
+  VJS10_CDN_ARCHIVE_VERSION_PLACEHOLDER,
+  VJS10_CDN_PLACEHOLDER,
+  VJS10_UTILS_CDN_PLACEHOLDER,
+} from '../satteriCdnVersion';
 
 function compile(source: string): string {
   const data = {
@@ -37,6 +42,17 @@ describe('satteriCdnVersion', () => {
 
     expect(code).toContain(`${VJS10_CDN_BASE}/video.js`);
     expect(code).not.toContain(VJS10_CDN_PLACEHOLDER);
+  });
+
+  it('uses the current @videojs/utils version in fenced code', () => {
+    const code = compile(`\`\`\`html
+<script type="module">
+  import { formatTime } from '${VJS10_UTILS_CDN_PLACEHOLDER}/dist/time.js';
+</script>
+\`\`\``);
+
+    expect(code).toContain(`${VJS10_UTILS_CDN_BASE}/dist/time.js`);
+    expect(code).not.toContain(VJS10_UTILS_CDN_PLACEHOLDER);
   });
 
   it('replaces archive version placeholders', () => {

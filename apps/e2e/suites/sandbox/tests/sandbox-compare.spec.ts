@@ -41,6 +41,51 @@ async function playerBox(frame: Frame) {
 }
 
 test.describe('Sandbox compare', () => {
+  for (const platform of ['html', 'react']) {
+    test(`changes the ${platform} aspect ratio in both panels without reloading`, async ({ page }) => {
+      await page.setViewportSize({ width: 1600, height: 1000 });
+      await page.goto(
+        `${SANDBOX_BASE}/?platform=${platform}&media=video&skins=authored&compare=styling&layout=row&width=480&${QUERY}`
+      );
+
+      const frames = await Promise.all([getPanelFrame(page, 'css'), getPanelFrame(page, 'tailwind')]);
+      const urls = frames.map((frame) => frame.url());
+      const options = page.getByRole('button', { name: 'Options', exact: true });
+
+      if ((await options.getAttribute('aria-expanded')) !== 'true') await options.click();
+
+      for (const [label, height] of [
+        ['4:3', 360],
+        ['1:1', 480],
+        ['9:16', 853],
+        ['21:9', 206],
+        ['Intrinsic', 270],
+        ['16:9', 270],
+      ] as const) {
+        await page.getByRole('combobox', { name: 'Aspect ratio', exact: true }).click();
+        await page.getByRole('option', { name: label, exact: true }).click();
+
+        for (const frame of frames) {
+          await expect.poll(async () => Math.round((await playerBox(frame)).height)).toBe(height);
+        }
+
+        expect(frames.map((frame) => frame.url())).toEqual(urls);
+        const ratio = new URL(page.url()).searchParams.get('ratio');
+
+        expect(ratio).toBe(label === '16:9' ? null : label.toLowerCase());
+      }
+
+      await page.getByRole('combobox', { name: 'Aspect ratio', exact: true }).click();
+      await page.getByRole('option', { name: '4:3', exact: true }).click();
+      await page.reload();
+      await expect(page.getByRole('combobox', { name: 'Aspect ratio', exact: true })).toHaveText('4:3');
+
+      for (const id of ['css', 'tailwind']) {
+        await expect.poll(async () => Math.round((await playerBox(await getPanelFrame(page, id))).height)).toBe(360);
+      }
+    });
+  }
+
   test('compares the two stylings side by side with one width', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto(`${SANDBOX_BASE}/?platform=react&media=video&compare=styling&layout=row&width=480&${QUERY}`, {

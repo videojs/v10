@@ -68,13 +68,13 @@ for (const { platform, skin, styling, skins } of CASES) {
     const styles = await root.evaluate((element) => {
       const accent = 'rgb(18, 52, 86)';
       const fillUsesAccent = [...element.querySelectorAll<HTMLElement>('[data-orientation]')].some(
-        (part) => getComputedStyle(part).backgroundColor === accent
+        (part) => getComputedStyle(part, '::before').backgroundColor === accent
       );
       const style = getComputedStyle(element);
 
       return {
         borderRadius: style.borderRadius,
-        borderUsesColor: getComputedStyle(element, '::after').boxShadow.includes('rgb(254, 1, 2)'),
+        border: getComputedStyle(element, '::after').border,
         fillUsesAccent,
         fontFamily: style.fontFamily,
         videoBorderRadius: style.getPropertyValue('--media-video-border-radius').trim(),
@@ -83,7 +83,7 @@ for (const { platform, skin, styling, skins } of CASES) {
 
     expect(styles).toEqual({
       borderRadius: '18px',
-      borderUsesColor: true,
+      border: '1px solid rgb(254, 1, 2)',
       fillUsesAccent: true,
       fontFamily: '"Courier New"',
       videoBorderRadius: '18px',

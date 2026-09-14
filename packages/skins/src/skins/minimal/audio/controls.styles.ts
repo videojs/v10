@@ -6,8 +6,8 @@ export default styles({
   rules: {
     timeSliderGroup: {
       utilities: [
-        '@container/audio-time-controls flex min-w-0 flex-1 flex-row-reverse items-center gap-3',
-        'media-2xl:flex-row',
+        '@container/audio-time-controls flex min-w-0 flex-1 flex-row-reverse items-center rtl:flex-row gap-3',
+        'media-2xl:flex-row media-2xl:rtl:flex-row-reverse',
       ],
     },
   },

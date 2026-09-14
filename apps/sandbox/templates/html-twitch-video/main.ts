@@ -8,7 +8,7 @@ createHtmlSandbox({
   player: 'video',
   render: ({ skinTag }) => html`
     <video-player>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <twitch-video class="block h-full w-full" src="${TWITCH_VIDEO_SRC}" playsinline></twitch-video>
       </${skinTag}>
     </video-player>

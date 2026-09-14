@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { testRtlLayout } from './rtl';
 import {
   captureRendering,
   closeMenus,
@@ -25,8 +26,43 @@ const WIDTHS = [320, 800] as const;
 const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
 const CONTROLS_SELECTOR = '.video-controls';
+/**
+ * The poster root in every skin: the HTML element, or the React `div` carrying `data-loaded`, which no other component
+ * exposes. The Tailwind output emits no semantic class for it, so a class selector misses that panel. `preparePanel`
+ * waits for the loaded state, so contracts can rely on the attribute being present.
+ */
+const POSTER_SELECTOR = 'media-poster, [data-loaded]';
+const LAYOUT_SELECTORS = [CONTROLS_SELECTOR, POSTER_SELECTOR] as const;
+/**
+ * The spinner icon inside the slider preview's thumbnail, relative to the slider root. Playwright's child combinator
+ * pierces the `<media-slider-thumbnail>` shadow root, where a `<slot>` is also a last child, so the element type keeps
+ * the match to the icon.
+ */
+const THUMBNAIL_SPINNER_SELECTOR = ':scope > :last-child > :first-child > :is(svg, media-icon)';
+
+testRtlLayout(CASES);
 
 for (const variant of CASES) {
+  test(`${variant.framework} ${variant.skin} keeps poster sizing and fit in sync`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, width: 800 }, async () => {});
+
+    for (const { root } of panels) {
+      const image = root.locator('img').first();
+
+      await image.evaluate((element: HTMLImageElement) => {
+        element.removeAttribute('srcset');
+        element.src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200"><rect width="100" height="200" fill="red"/></svg>')}`;
+      });
+      await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalHeight)).toBe(200);
+      await expect(image).toHaveCSS('object-fit', 'contain');
+      await expect(image).toHaveCSS('object-position', '50% 50%');
+      expect(await frameRect(image)).toEqual(await frameRect(root));
+
+      await root.evaluate((element: HTMLElement) => element.style.setProperty('--media-object-fit', 'cover'));
+      await expect(image).toHaveCSS('object-fit', 'cover');
+    }
+  });
+
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind layout in sync`, async ({ page }) => {
     for (const width of WIDTHS) {
       const { css, tailwind } = await openVariants(page, variant, width);
@@ -97,6 +133,146 @@ for (const variant of CASES) {
 
     expect(tailwindContract).toEqual(cssContract);
     await expectSameRendering(testInfo, reference, tailwind.root);
+  });
+
+  test(`${variant.framework} ${variant.skin} keeps slider paint within the track thickness`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, media: 'mp4-1', width: 618 }, async ({ root }) =>
+      expect(root.getByRole('slider', { name: 'Seek' })).toBeVisible()
+    );
+
+    for (const { root } of panels) {
+      const layers = root
+        .getByRole('slider', { name: 'Seek' })
+        .locator('..')
+        .locator(
+          'media-slider-fill, media-slider-buffer, .media-slider-fill, .media-slider-buffer, [class~="before:bg-media-primary"], [class~="before:bg-current/20"]'
+        );
+      const caps = await layers.evaluateAll((elements) =>
+        elements
+          .filter(
+            (element): element is HTMLElement =>
+              element instanceof HTMLElement && getComputedStyle(element).position === 'absolute'
+          )
+          .flatMap((element) => {
+            const layer = element;
+
+            return ['horizontal', 'vertical'].flatMap((orientation) =>
+              [0, 0.5, 4, 20, 100].map((size) => {
+                layer.setAttribute('data-orientation', orientation);
+                Object.assign(layer.style, {
+                  transition: 'none',
+                  inset: '0 auto auto 0',
+                  width: `${orientation === 'horizontal' ? size : 4}px`,
+                  height: `${orientation === 'vertical' ? size : 4}px`,
+                });
+                const paint = getComputedStyle(layer, '::before');
+
+                return {
+                  width: paint.width,
+                  height: paint.height,
+                  clip: getComputedStyle(layer).clipPath,
+                  orientation,
+                  size,
+                };
+              })
+            );
+          })
+      );
+
+      expect(caps.length).toBeGreaterThan(0);
+
+      for (const { orientation, size, ...cap } of caps) {
+        // A short segment reveals part of the track's circular cap, never a compressed vertical pill.
+        expect(cap).toEqual({
+          width: `${orientation === 'horizontal' ? Math.max(4, size) : 4}px`,
+          height: `${orientation === 'vertical' ? Math.max(4, size) : 4}px`,
+          clip: orientation === 'horizontal' ? 'inset(-1px 0px)' : 'inset(0px -1px)',
+        });
+      }
+    }
+  });
+
+  test(`${variant.framework} ${variant.skin} animates progress continuously across chapters`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, media: 'hls-7', width: 618 }, async ({ root }) =>
+      expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled()
+    );
+
+    for (const { root } of panels) {
+      const slider = root.getByRole('slider', { name: 'Seek' }).locator('..');
+
+      await expect(slider.locator('.media-time-slider-chapter, [class~="group/chapter"]')).toHaveCount(8);
+      const progress = await slider.evaluate((element) => {
+        if (!(element instanceof HTMLElement)) throw new Error('Expected a slider element.');
+
+        const properties = ['--media-slider-fill', '--media-slider-buffer'];
+        const layers = element.querySelectorAll(
+          'media-slider-fill, media-slider-buffer, .media-slider-fill, .media-slider-buffer, [class~="before:bg-media-primary"], [class~="before:bg-current/20"]'
+        );
+        const widths = () => [...layers].map((layer) => layer.getBoundingClientRect().width);
+        const setProgress = (value: string) => {
+          for (const property of properties) element.style.setProperty(property, value);
+        };
+
+        element.style.transitionDuration = '0s';
+
+        setProgress('50%');
+        const expected = widths();
+
+        setProgress('0%');
+        widths();
+
+        element.style.transitionDuration = '1s';
+        element.style.transitionTimingFunction = 'linear';
+
+        setProgress('100%');
+        widths();
+
+        const animations = element
+          .getAnimations()
+          .filter(
+            (animation) => animation instanceof CSSTransition && properties.includes(animation.transitionProperty)
+          );
+
+        for (const animation of animations) {
+          animation.pause();
+          animation.currentTime = 500;
+        }
+
+        return { expected, actual: widths(), animations: animations.length };
+      });
+
+      expect(progress.animations).toBe(2);
+      expect(progress.expected.length).toBeGreaterThan(0);
+      expect(progress.actual).toEqual(progress.expected);
+    }
+  });
+
+  test(`${variant.framework} ${variant.skin} animates seeks while focused`, async ({ page }) => {
+    const { panels } = await openComparison(page, { ...variant, media: 'mp4-1', width: 618 }, async ({ root }) =>
+      expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled()
+    );
+
+    for (const { root } of panels) {
+      const thumb = root.getByRole('slider', { name: 'Seek' });
+
+      await thumb.press('Home');
+      await root.evaluate((element) => {
+        if (element instanceof HTMLElement) element.style.setProperty('--media-duration-slider', '1s');
+      });
+      await thumb.press('ArrowRight');
+
+      const properties = await thumb
+        .locator('..')
+        .evaluate((element) =>
+          element
+            .getAnimations({ subtree: true })
+            .flatMap((animation) => (animation instanceof CSSTransition ? [animation.transitionProperty] : []))
+        );
+
+      expect(properties).toContain('--media-slider-fill');
+      expect(properties).not.toContain('left');
+      expect(properties).not.toContain('width');
+    }
   });
 
   test(`${variant.framework} ${variant.skin} keeps seek dragging attached to the pointer`, async ({ page }) => {
@@ -219,6 +395,24 @@ for (const variant of CASES) {
       }
     });
   }
+
+  test(`${variant.framework} ${variant.skin} animates the settings gear across styles`, async ({ page }) => {
+    const { panels } = await openVariants(page, variant, 800);
+
+    for (const { root } of panels) {
+      const icon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
+
+      await icon.evaluate((element) => {
+        element.addEventListener('transitionrun', (event) => {
+          if ((event as TransitionEvent).propertyName === 'rotate') element.setAttribute('data-rotation-started', '');
+        });
+      });
+      await openSettingsMenu(root);
+
+      await expect(icon).toHaveAttribute('data-rotation-started', '');
+      await expect(icon).toHaveCSS('rotate', '90deg');
+    }
+  });
 
   test(`${variant.framework} ${variant.skin} keeps settings menu styling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-settings-menu.png`;
@@ -463,44 +657,56 @@ for (const skin of ['default-video', 'minimal-video'] as const) {
   }
 }
 
-test('React chapter segments match across styles and retain their generated range props', async ({ page }) => {
-  const { panels } = await openComparison(page, { ...REACT_DEFAULT, media: 'hls-7', width: 855 }, async ({ root }) =>
-    expect(root).toBeVisible()
-  );
-  const contracts = [];
-
-  for (const panel of panels) {
-    const chapters = panel.section.locator('.media-time-slider-chapter, [class~="group/chapter"]');
-
-    await expect(chapters).toHaveCount(8);
-    contracts.push(
-      await chapters.evaluateAll((elements) =>
-        elements.map((element) => {
-          if (!(element instanceof HTMLElement)) throw new Error('Expected a rendered chapter element.');
-
-          const track = element.firstElementChild;
-
-          return {
-            end: element.style.getPropertyValue('--media-slider-chapter-end'),
-            orientation: element.getAttribute('data-orientation'),
-            segment: getComputedStyle(element).clipPath,
-            start: element.style.getPropertyValue('--media-slider-chapter-start'),
-            track: track && getComputedStyle(track).clipPath !== 'none' ? 'clipped' : 'none',
-          };
-        })
-      )
+for (const framework of ['react', 'html'] as const) {
+  test(`${framework} chapter segments match across styles and retain their generated range props`, async ({ page }) => {
+    const { panels } = await openComparison(
+      page,
+      { ...REACT_DEFAULT, framework, media: 'hls-7', width: 855 },
+      async ({ root }) => expect(root).toBeVisible()
     );
-  }
+    const contracts = [];
 
-  expect(contracts[1]).toEqual(contracts[0]);
-  expect(contracts[0]).toHaveLength(8);
-  expect(
-    contracts[0]?.every(
-      ({ orientation, segment, track }) => orientation === 'horizontal' && segment !== 'none' && track !== 'none'
-    )
-  ).toBe(true);
-  expect(new Set(contracts[0]?.map(({ start }) => start)).size).toBe(8);
-});
+    for (const panel of panels) {
+      const chapters = panel.section.locator('.media-time-slider-chapter, [class~="group/chapter"]');
+
+      await expect(chapters).toHaveCount(8);
+      contracts.push(
+        await chapters.evaluateAll((elements) =>
+          elements.map((element) => {
+            if (!(element instanceof HTMLElement)) throw new Error('Expected a rendered chapter element.');
+
+            const track = element.firstElementChild;
+
+            return {
+              end: element.style.getPropertyValue('--media-slider-chapter-end'),
+              insetStart: Number(getComputedStyle(element).getPropertyValue('--media-chapter-inset-start')),
+              insetEnd: Number(getComputedStyle(element).getPropertyValue('--media-chapter-inset-end')),
+              orientation: element.getAttribute('data-orientation'),
+              segment: getComputedStyle(element).clipPath,
+              start: element.style.getPropertyValue('--media-slider-chapter-start'),
+              track: track && getComputedStyle(track, '::before').clipPath !== 'none' ? 'clipped' : 'none',
+            };
+          })
+        )
+      );
+    }
+
+    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[0]).toHaveLength(8);
+
+    for (const contract of contracts) {
+      expect(contract.map(({ insetStart }) => insetStart)).toEqual([0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]);
+      expect(contract.map(({ insetEnd }) => insetEnd)).toEqual([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0]);
+    }
+
+    expect(
+      contracts[0]?.every(
+        ({ orientation, segment, track }) => orientation === 'horizontal' && segment !== 'none' && track !== 'none'
+      )
+    ).toBe(true);
+    expect(new Set(contracts[0]?.map(({ start }) => start)).size).toBe(8);
+  });
+}
 
 test('menu item and moving-highlight styling matches across styles', async ({ page }) => {
   for (const variant of CASES) {
@@ -565,7 +771,7 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
     const { panels } = await openVariants(page, variant, 800);
 
     for (const panel of panels) {
-      const { root, style } = panel;
+      const { root } = panel;
       const contract = await sharedMotionContract(root);
 
       expect(contract).toEqual({
@@ -588,21 +794,19 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
           { display: 'block', duration: '0.15s', opacity: '0', properties: ['opacity', 'scale'], scale: '0' },
         ],
         poster: { duration: '0.25s', properties: ['opacity'] },
-        // Known gap: the settings trigger icon carries both the icon-swap and the rotation transitions, and the CSS
-        // output lets the swap rule win while the Tailwind utility order keeps the rotation.
         settingsIcon: {
           duration: '0.15s',
-          properties: style === 'css' ? ['opacity', 'scale'] : ['transform', 'translate', 'scale', 'rotate'],
+          properties: ['transform', 'translate', 'scale', 'rotate'],
         },
         slider: {
-          buffer: { duration: '0.1s', properties: ['clip-path'] },
+          buffer: { duration: '0s', properties: ['all'] },
           chapterTrack: { duration: '0.2s', properties: ['height', 'width'] },
-          fill: { duration: '0.1s', properties: ['clip-path'] },
+          fill: { duration: '0s', properties: ['all'] },
           focusRing: variant.skin === 'default-video' ? { duration: '0.15s', properties: ['opacity', 'scale'] } : null,
           pointer: { duration: '0.2s', properties: ['opacity', 'scale'] },
           thumb: {
             duration: '0.1s',
-            properties: ['opacity', 'height', 'width', 'outline-offset', 'left', 'top', 'scale'],
+            properties: ['opacity', 'height', 'width', 'outline-offset', 'scale'],
           },
         },
         preview: {
@@ -723,9 +927,9 @@ async function openPackagedVariants(page: Page, variant: SkinCase, width: number
 async function preparePanel({ root }: SkinPanel, width: number) {
   await expect(root).toBeVisible();
   await expect(root).toHaveAttribute('data-controls-visible', '');
-  await expect(root.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(root.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
 
-  const poster = root.locator('.media-poster[data-loaded], media-poster[data-loaded]').first();
+  const poster = root.locator('[data-loaded]').first();
 
   await expect(poster).toBeVisible();
   await expect(poster).toHaveCSS('opacity', '1');
@@ -733,6 +937,9 @@ async function preparePanel({ root }: SkinPanel, width: number) {
     'data-availability',
     'available'
   );
+  // Controls render before media metadata: the seek slider stays disabled, time text shows placeholders, and
+  // picture-in-picture hides until it lands. Both panels must be past that phase before any contract is compared.
+  await expect(root.getByRole('slider', { name: 'Seek' })).toBeEnabled({ timeout: 20_000 });
   await root.dispatchEvent('pointermove', { pointerType: 'mouse' });
   await expect
     .poll(() =>
@@ -906,15 +1113,10 @@ async function seekDragContract(root: Locator) {
     const style = getComputedStyle(element);
     const sliderElement = element.parentElement?.closest('[data-orientation]');
     const expectedX = (sliderElement?.getBoundingClientRect().x ?? 0) + expectedOffset;
-    const slider = [...(sliderElement?.querySelectorAll('*') ?? [])];
+    const slider = sliderElement ? [sliderElement] : [];
     const fills = slider
       .map((target) => getComputedStyle(target))
-      .filter((style) =>
-        style.transitionProperty
-          .split(',')
-          .map((value) => value.trim())
-          .includes('clip-path')
-      );
+      .filter((style) => style.transitionProperty.includes('--media-slider-fill'));
     const rect = element.getBoundingClientRect();
     const lag = Math.abs(rect.x + rect.width / 2 - expectedX);
     const positionProperties = new Set(style.transitionProperty.split(',').map((value) => value.trim()));
@@ -1438,8 +1640,24 @@ async function enableCaptions({ root, section }: SkinPanel) {
     element.pause();
     element.currentTime = 2;
   });
+  // Cues activate when the seek completes, which waits on media data from the network while the showing track fetches
+  // its cues in parallel. The media may also carry a thumbnails metadata track, so look the caption track up by kind.
   await expect
-    .poll(() => video.evaluate((element: HTMLVideoElement) => element.textTracks[0]?.activeCues?.length ?? 0))
+    .poll(
+      () =>
+        video.evaluate((element: HTMLVideoElement) => {
+          const track = [...element.textTracks].find(
+            ({ kind, mode }) => (kind === 'subtitles' || kind === 'captions') && mode === 'showing'
+          );
+          const active = track?.activeCues?.length ?? 0;
+
+          // Cues that land after the seek completed only activate on the next one.
+          if (track?.cues?.length && !active && !element.seeking) element.currentTime = 2;
+
+          return active;
+        }),
+      { timeout: 20_000 }
+    )
     .toBeGreaterThan(0);
   await root.page().waitForTimeout(100);
 }
@@ -1525,7 +1743,7 @@ async function sharedMotionContract(root: Locator) {
     });
   const controls = root.locator(CONTROLS_SELECTOR).first();
   const button = root.getByRole('button', { name: 'Play', exact: true });
-  const poster = root.locator(':scope > .media-poster, :scope > media-poster').first();
+  const poster = root.locator(POSTER_SELECTOR).first();
   const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
   const playIconCandidates = await root
     .getByRole('button', { name: 'Play', exact: true })
@@ -1567,7 +1785,7 @@ async function sharedMotionContract(root: Locator) {
   const fill = chapterTrack.locator(':scope > :last-child');
   const preview = slider.locator(':scope > :last-child > :last-child');
   const previewRoot = slider.locator(':scope > :last-child');
-  const thumbnailSpinner = slider.locator(':scope > :last-child > :first-child > :last-child');
+  const thumbnailSpinner = slider.locator(THUMBNAIL_SPINNER_SELECTOR);
   const pseudoTransition = (target: Locator, pseudo: '::before' | '::after') =>
     target.evaluate((element, pseudoElement) => {
       const style = getComputedStyle(element, pseudoElement);
@@ -1872,7 +2090,7 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
       })
     )
   );
-  const poster = root.locator(':scope > .media-poster, :scope > media-poster').first();
+  const poster = root.locator(POSTER_SELECTOR).first();
   const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
   const seekThumb = root.getByRole('slider', { name: 'Seek' });
   const seekSlider = seekThumb.locator('..');
@@ -1883,7 +2101,7 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
     .first();
   const fill = chapterTrack.locator(':scope > :last-child');
   const preview = seekSlider.locator(':scope > :last-child > :last-child');
-  const thumbnailSpinner = seekSlider.locator(':scope > :last-child > :first-child > :last-child');
+  const thumbnailSpinner = seekSlider.locator(THUMBNAIL_SPINNER_SELECTOR);
   const thumbnailSpinnerMotion = await inspect(thumbnailSpinner);
 
   const rootMotion = {
@@ -1938,7 +2156,7 @@ async function rtlMenuContract(root: Locator, submenu: Locator) {
 }
 
 async function layoutContract(root: Locator) {
-  return root.evaluate((element, controlsSelector) => {
+  return root.evaluate((element, [controlsSelector, posterSelector]) => {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (
@@ -1986,7 +2204,7 @@ async function layoutContract(root: Locator) {
 
     return {
       root: inspect(element),
-      poster: inspect(query('.media-poster[data-loaded], media-poster[data-loaded]'), { includeRadius: false }),
+      poster: inspect(query(posterSelector), { includeRadius: false }),
       controls: inspect(query(controlsSelector), { includeGap: false }),
       primary: inspect(play?.parentElement ?? null, { includeGap: false }),
       timeline: inspect(seek?.parentElement?.parentElement ?? null, {
@@ -2008,7 +2226,7 @@ async function layoutContract(root: Locator) {
         query('[role="button"][aria-label="Enter fullscreen"], [role="button"][aria-label="Exit fullscreen"]')
       ),
     };
-  }, CONTROLS_SELECTOR);
+  }, LAYOUT_SELECTORS);
 }
 
 async function openSettingsMenu(root: Locator): Promise<Locator> {
@@ -2456,7 +2674,7 @@ async function popupContract(root: Locator, popup: Locator) {
 }
 
 async function skinContract(root: Locator) {
-  return root.evaluate((element: HTMLElement) => {
+  return root.evaluate((element: HTMLElement, posterSelector) => {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const relativeRect = (rect: DOMRect) => ({
@@ -2469,7 +2687,7 @@ async function skinContract(root: Locator) {
     const mute = element.querySelector<HTMLElement>('[role="button"][aria-label="Mute"]');
     const seek = element.querySelector<HTMLElement>('[role="slider"][aria-label="Seek"]');
     const controls = play?.closest<HTMLElement>('[data-interactive], media-controls');
-    const poster = element.querySelector<HTMLElement>('.media-poster, media-poster');
+    const poster = element.querySelector<HTMLElement>(posterSelector);
 
     const inspect = (target: HTMLElement | null | undefined) => {
       if (!target) return null;
@@ -2512,7 +2730,7 @@ async function skinContract(root: Locator) {
         controlRadius: rootStyle.getPropertyValue('--media-control-radius').trim(),
       },
     };
-  });
+  }, POSTER_SELECTOR);
 }
 
 function snapshotName(variant: SkinCase, width: number): string {

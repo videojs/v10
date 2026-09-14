@@ -20,7 +20,7 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
     <$.Menu.Root side="top" align="center" {...props}>
       <ButtonTooltip label={<Text token={settingsText.key}>{settingsText.text}</Text>} side="top">
         <$.Menu.Trigger $render={Button} className={[styles.settingsTrigger, className]}>
-          <GearIcon className={[buttonStyles.icon, styles.settingsTriggerIcon]} />
+          <GearIcon className={[buttonStyles.iconBase, styles.settingsTriggerIcon]} />
           <Text className={styles.triggerLabel} token={settingsText.key}>
             {settingsText.text}
           </Text>

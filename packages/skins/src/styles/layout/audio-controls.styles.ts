@@ -9,17 +9,17 @@ export default styles({
     },
     content: {
       utilities:
-        'relative z-20 flex items-center rounded-media-controls bg-media-controls text-media-controls-foreground text-shadow-media',
+        'relative z-20 flex items-center rtl:flex-row-reverse rounded-media-controls bg-media-controls text-media-controls-foreground text-shadow-media',
       variants: {
         default: 'p-0.5 media-lg:p-1 surface-media after:surface-media-inset',
         minimal: 'gap-2 p-1 shadow-media-hairline',
       },
     },
     start: {
-      utilities: 'flex items-center gap-px',
+      utilities: 'flex items-center rtl:flex-row-reverse gap-px',
     },
     end: {
-      utilities: 'flex items-center gap-px',
+      utilities: 'flex items-center rtl:flex-row-reverse gap-px',
     },
     spacer: {
       utilities: 'flex-1',

@@ -126,7 +126,7 @@ test.describe('Sandbox shell controls', () => {
     await expect(html).toHaveAttribute('dir', 'ltr');
   });
 
-  test('the scheme and direction settings reach the shell and the preview', async ({ page }) => {
+  test('direction stays inside the preview while the scheme also reaches the shell', async ({ page }) => {
     await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`, { waitUntil: 'domcontentloaded' });
 
     const frame = await getPreviewFrame(page, '/html-video/');
@@ -141,6 +141,7 @@ test.describe('Sandbox shell controls', () => {
 
     await expect(frame.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(root).toHaveCSS('direction', 'rtl');
+    await expect(page.locator('html')).toHaveCSS('direction', 'ltr');
     await expect(page).toHaveURL(/[?&]dir=rtl(?:&|$)/);
 
     await page.getByRole('combobox', { name: 'Color scheme', exact: true }).click();
@@ -150,6 +151,13 @@ test.describe('Sandbox shell controls', () => {
     await expect(frame.locator('html')).toHaveAttribute('data-color-scheme', 'light');
     await expect(frame.locator('html')).toHaveCSS('color-scheme', 'light');
     await expect(page).toHaveURL(/[?&]scheme=light(?:&|$)/);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+
+    const reloaded = await getPreviewFrame(page, '/html-video/');
+
+    await expect(reloaded.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.locator('html')).toHaveCSS('direction', 'ltr');
   });
 
   test('switches and grouped language options retain their settings', async ({ page }) => {

@@ -6,6 +6,7 @@ import { DATA_ATTRS, SELECTORS } from '../../../shared/fixtures/selectors';
 import { PlayerPage } from '../../../shared/page-objects/player';
 
 const UI_VIDEO_PAGES = VIDEO_PAGES.filter(({ media }) => media === 'video');
+const HTML_VIDEO_MP4_PATH = '/pages/html-video-mp4.html';
 
 function getMediaVolume(page: Page): Promise<number> {
   return page.evaluate((selector) => {
@@ -347,3 +348,51 @@ for (const { name, path } of UI_VIDEO_PAGES) {
     });
   });
 }
+
+test.describe('Video Controls — HTML settings transition', () => {
+  let player: PlayerPage;
+
+  test.beforeEach(async ({ page }) => {
+    player = new PlayerPage(page);
+    await page.goto(HTML_VIDEO_MP4_PATH);
+    await player.waitForMediaReady();
+    await player.showControls();
+  });
+
+  test('applies starting styles before the settings menu first becomes visible', async () => {
+    const initialFrame = await player.settingsButton.evaluate(
+      (element) =>
+        new Promise<{ filter: string; opacity: string; open: boolean; scale: string; starting: boolean }>((resolve) => {
+          const root = element.getRootNode();
+
+          if (!(element instanceof HTMLElement) || (!(root instanceof Document) && !(root instanceof ShadowRoot))) {
+            throw new Error('Expected the HTML settings menu trigger.');
+          }
+
+          const popup = root.querySelector<HTMLElement>('media-menu.media-menu-popup');
+          if (!popup) throw new Error('Expected the HTML settings menu popup.');
+
+          element.click();
+          requestAnimationFrame(() => {
+            const style = getComputedStyle(popup);
+
+            resolve({
+              filter: style.filter,
+              opacity: style.opacity,
+              open: popup.matches(':popover-open'),
+              scale: style.scale,
+              starting: popup.hasAttribute('data-starting-style'),
+            });
+          });
+        })
+    );
+
+    expect(initialFrame).toEqual({
+      filter: 'blur(4px)',
+      opacity: '0',
+      open: true,
+      scale: '0.95',
+      starting: true,
+    });
+  });
+});

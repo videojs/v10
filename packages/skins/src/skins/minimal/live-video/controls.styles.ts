@@ -5,11 +5,11 @@ export default styles({
   prefix: 'video-controls',
   rules: {
     start: {
-      utilities: 'flex items-center gap-px',
+      utilities: 'flex items-center rtl:flex-row-reverse gap-px',
     },
     end: {
       utilities: [
-        'flex items-center gap-px mask-media-volume [mask-size:400%_100%]',
+        'flex items-center rtl:flex-row-reverse gap-px mask-media-volume [mask-size:400%_100%]',
         'group-has-[[data-volume-level][aria-expanded=true]]/controls:mask-media-volume-open',
       ],
     },

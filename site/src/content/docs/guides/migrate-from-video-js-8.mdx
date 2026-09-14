@@ -106,7 +106,7 @@ Four differences worth understanding, because each one is a pattern you'll see a
 - **The poster is player metadata, not a media attribute.** Set `poster` on `<video-player>`, and the skin, not the browser, controls how it appears. For more advanced control (like supplying your own image element), see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
 - **Your `<track>` elements don't change.** Captions, subtitles, chapters, and thumbnails are all still tracks, and the skin shows the matching controls when it finds them.
 
-There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `video.js` for `video-minimal.js`.
+There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `video.js` for `video-minimal.js` and `<video-skin>` for `<video-minimal-skin>`.
 
 </FrameworkCase>
 
@@ -544,10 +544,10 @@ You can also write to the media element directly. That is safe because player st
 | `player.duration()` | `duration` in player state, or `media.duration` |
 | `player.volume()`, `player.muted()` | the player's `setVolume`, `toggleMuted`, or `media.volume`, `media.muted` |
 | `player.playbackRate()` | the player's `setPlaybackRate`, or `media.playbackRate` |
-| `player.src({ src, type })` | set `src` on the media |
+| `player.src({ src, type })` | set `src` on the media or replace the media element (`<video>` tag, `<hlsjs-video>`, `<dash-video>`, etc) |
 | `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
-| `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state |
-| `player.audioTracks()` | `audioTracks` in player state |
+| `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state, `textTracks` in media |
+| `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
 | `player.error()` | `error` in player state |
 | `player.dispose()` | remove the element, or unmount the component |
 | `player.tech()` | the media component's public `engine` escape hatch, where one exists; in React, reach it through `useMedia()` |
@@ -645,6 +645,39 @@ That's what <DocsLink slug="reference/api/html-create-player">`createPlayer`</Do
 <FrameworkCase frameworks={["react"]}>
 That's what <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
 </FrameworkCase>
+
+## Moved utilities
+
+v8 put a handful of utilities on the `videojs` global for anyone building a custom component or plugin: `videojs.time.formatTime`, `videojs.dom`, `videojs.fn.throttle`, and a few others. There's no global in v10, but the same job is covered by `@videojs/utils`.
+
+| Video.js 8 | Video.js v10 |
+|---|---|
+| `videojs.time.formatTime(seconds, guide)` | `formatTime(seconds, guide)` from `@videojs/utils/time` |
+| a hand-rolled remaining-time or percent string | `formatTimeAsPhrase(seconds)` and `formatPercent(fraction)`, from `@videojs/utils/time` and `@videojs/utils/percent` |
+| `videojs.fn.throttle(fn, wait)` | `throttle(fn, ms)` from `@videojs/utils/function` |
+| `videojs.dom.isEl(value)` and its type-specific cousins | `isHTMLVideoElement`, `isHTMLMediaElement`, `isDocument`, and other narrowing checks from `@videojs/utils/dom` |
+| `videojs.obj.merge(a, b)` | `defaults(object, defaultValues)` from `@videojs/utils/object`, alongside `pick`, `omit`, `deepEqual`, and `shallowEqual` |
+
+These are worth reaching for before writing your own when extending the player. For example, `formatTime` is the exact digital-clock formatting the packaged skins use for their own time displays, so a custom one will match.
+The package is split into subpaths, so you can import only the module you need. Other than `time`, it includes `array`, `events`, `i18n`, `jwt`, `predicate`, `string`, and `types` subpaths for anything else a custom component or plugin replacement needs.
+
+Import the util function directly with a `<script>` tag:
+
+```html
+<script src="
+    {{VJS10_UTILS_CDN_BASE}}/dist/time/formatTime.min.js
+"></script>
+```
+
+Or with a bundler:
+
+```bash
+npm install @videojs/utils
+```
+
+```js
+import { formatTime } from '@videojs/utils/time';
+```
 
 ## Known gaps
 

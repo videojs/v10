@@ -117,7 +117,8 @@ const REACT_SUBSECTIONS: readonly MediaSubsectionDefinition<ReactMediaReference>
     key: 'events',
     title: 'Events',
     id: 'events',
-    isEmpty: (react) => !react.acceptsNativeProps,
+    // Iframe medias route the standard media event props to their playback adapter.
+    isEmpty: (react) => !react.acceptsNativeProps && react.target !== 'iframe',
   },
 ]);
 

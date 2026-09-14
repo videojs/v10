@@ -29,7 +29,7 @@ const address = server
 if (server) {
   server.on('request', async (request, response) => {
     const path = new URL(request.url ?? '/', address).pathname.slice(1);
-    const source = await readFile(resolve(registryDir, path)).catch(() => undefined);
+    const source = await readFile(resolve(registryDir, path), 'utf8').catch(() => undefined);
 
     response.setHeader('access-control-allow-origin', '*');
     response.setHeader('cache-control', 'no-store');
@@ -41,7 +41,7 @@ if (server) {
     }
 
     response.setHeader('content-type', 'application/json; charset=utf-8');
-    response.end(source);
+    response.end(withoutPackagePins(source));
   });
 }
 
@@ -86,6 +86,21 @@ if (existsSync(resolve(generatedDir, 'components/videojs/skins'))) {
   console.log(`Installed 8 React Tailwind, 8 React CSS, and 8 HTML source-owned Sandbox skins from ${address}.`);
 }
 
+/**
+ * The local registry pins `@videojs/*` to the workspace version, which npm may not have yet, for instance on a release
+ * branch that bumped it. Only the copied source files matter here, so drop the pins: the fixture already lists those
+ * packages, and the Shadcn CLI skips installing an unpinned dependency that is present.
+ */
+function withoutPackagePins(source: string): string {
+  // SAFETY: the registry build validated these documents against the Shadcn schema; only `dependencies` changes.
+  const document = JSON.parse(source) as { dependencies?: string[] };
+  if (!document.dependencies) return source;
+
+  document.dependencies = document.dependencies.map((dependency) => dependency.replace(/^(@videojs\/[^@]+)@.+$/, '$1'));
+
+  return `${JSON.stringify(document)}\n`;
+}
+
 /** What `app/styles.css` imports and scans, with nothing in it, so the app compiles without the registry skins. */
 async function writeEmptyRegistry(): Promise<void> {
   await rm(generatedDir, { recursive: true, force: true });
@@ -127,11 +142,12 @@ async function writeFixture(root: string, address: string, alias: string): Promi
     name: 'videojs-sandbox-skins',
     private: true,
     type: 'module',
-    packageManager: 'pnpm@11.17.0',
+    packageManager: 'pnpm@12.3.4',
+    // Every package the registry items depend on, so the CLI copies files without installing anything.
     dependencies: {
       '@videojs/core': '*',
-      '@videojs/html': '10.0.0-beta.32',
-      '@videojs/react': '10.0.0-beta.32',
+      '@videojs/html': '*',
+      '@videojs/react': '*',
       cn: '*',
       react: '*',
     },

@@ -14,9 +14,6 @@ import {
 } from '@app/components/ui/sidebar';
 import { Slider } from '@app/components/ui/slider';
 import { Switch } from '@app/components/ui/switch';
-import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
-import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { PLAYER_WIDTH } from '@app/shared/player-frame';
 import {
   COLOR_SCHEMES,
   type ColorScheme,
@@ -24,9 +21,12 @@ import {
   type PreloadValue,
   TEXT_DIRECTIONS,
   type TextDirection,
-} from '@app/shared/sandbox-listener';
+} from '@app/constants';
+import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
+import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
+import { ASPECT_RATIOS, type AspectRatio, PLAYER_WIDTH } from '@app/shared/player-frame';
 import { XMarkIcon } from '@heroicons/react/16/solid';
-import { type ReactNode, useId, useRef } from 'react';
+import { type ReactNode, useId, useMemo, useRef } from 'react';
 
 import { PREFERENCE_QUERIES, type Preferences } from './report';
 import { SelectField } from './select';
@@ -38,6 +38,9 @@ export type OptionsPanelProps = {
   width: number;
   onWidthChange: (value: number) => void;
   widthDisabled: boolean;
+  ratio: AspectRatio;
+  onRatioChange: (value: AspectRatio) => void;
+  ratioDisabled: boolean;
   scheme: ColorScheme;
   onSchemeChange: (value: ColorScheme) => void;
   direction: TextDirection;
@@ -87,6 +90,9 @@ export function OptionsPanel({
   width,
   onWidthChange,
   widthDisabled,
+  ratio,
+  onRatioChange,
+  ratioDisabled,
   scheme,
   onSchemeChange,
   direction,
@@ -161,6 +167,13 @@ export function OptionsPanel({
       <SidebarContent className="gap-0">
         <Section title="Preview">
           <WidthControl value={width} onChange={onWidthChange} disabled={widthDisabled} />
+          <SelectField
+            label="Aspect ratio"
+            value={ratio}
+            onChange={(value) => onRatioChange(value as AspectRatio)}
+            disabled={ratioDisabled}
+            options={ASPECT_RATIOS.map((value) => ({ value, label: value === 'intrinsic' ? 'Intrinsic' : value }))}
+          />
           <SelectField
             id={schemeId}
             label="Color scheme"
@@ -327,7 +340,17 @@ type ColorItemProps = {
 };
 
 function ColorItem({ id, value, onChange }: ColorItemProps) {
-  const pickerValue = /^#[\da-f]{6}$/i.test(value) ? value : '#ff0000';
+  const pickerValue = useMemo(() => {
+    const context = document.createElement('canvas').getContext('2d');
+    if (!context || !CSS.supports('color', value)) return '#ff0000';
+
+    // The native picker needs sRGB hex even when the text uses another CSS color format.
+    context.fillStyle = value;
+    context.fillRect(0, 0, 1, 1);
+    const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+
+    return `#${[red, green, blue].map((channel) => channel!.toString(16).padStart(2, '0')).join('')}`;
+  }, [value]);
 
   return (
     <>

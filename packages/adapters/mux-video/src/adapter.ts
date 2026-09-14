@@ -5,8 +5,10 @@ import {
   createMuxVideoURL,
   type MuxContentData,
   type MuxDrmParams,
+  MuxMetadataLoader,
   type MuxSourceBase,
   parseMuxVideoURL,
+  toMuxContentData,
 } from '@videojs/mux';
 import { shallowEqual } from '@videojs/utils/object';
 
@@ -32,7 +34,8 @@ export interface MuxVideoAdapterProps {
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the
  *   new value.
- * @fires contentdatachange - Fired when the derived `contentData` changes. Read `contentData` for the new value.
+ * @fires contentdatachange - Fired when `contentData` changes: the derived URLs with `source`, and the metadata once it
+ *   loads. Read `contentData` for the new value.
  */
 export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProps {
   static override readonly defaultProps: Omit<HlsJsAdapterProps, 'source'> & MuxVideoAdapterProps = {
@@ -43,6 +46,14 @@ export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProp
 
   #source: MuxSource | null = MuxVideoAdapter.defaultProps.source;
   #contentData: MuxContentData = {};
+  #metadata = new MuxMetadataLoader(() => {
+    if (this.#refreshContentData()) this.dispatchEvent(new Event('contentdatachange'));
+  });
+
+  override destroy() {
+    this.#metadata.destroy();
+    super.destroy();
+  }
 
   /**
    * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the playback
@@ -101,6 +112,7 @@ export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProp
     if (source === this.#source) return;
 
     this.#source = source;
+    this.#metadata.reset(source);
 
     // Refresh the bag before the base announces `sourcechange`, because
     // listeners read `contentData` from that event. Announcing its own change
@@ -120,24 +132,37 @@ export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProp
   }
 
   /**
-   * Image URLs `source` describes rather than plays: `poster` from its `poster` params, `storyboard` from its
-   * `storyboard` params. A key is absent when the URL can't be built — no playback ID, or signed playback without a
-   * matching image token.
+   * What `source` says about its content. `poster` and `storyboard` are image URLs it describes rather than plays, from
+   * its `poster` and `storyboard` params; a key is absent when the URL can't be built — no playback ID, or signed
+   * playback without a matching image token. `title` and the rest come from the metadata Mux publishes for the asset,
+   * which loads with the source, so they arrive later than the URLs and are absent until then.
    *
-   * Derived from `source` and nothing else. The same object is handed back until one of those URLs changes, and
-   * `contentdatachange` announces it when it does. Nothing here is applied for you, apart from the thumbnail track
-   * `<mux-video>` adds from `storyboard` (and drops for live streams).
+   * The same object is handed back until something in it changes, and `contentdatachange` announces it when it does.
+   * Nothing here is applied for you, apart from the thumbnail track `<mux-video>` adds from `storyboard` (and drops for
+   * live streams).
    */
   get contentData(): MuxContentData {
     return this.#contentData;
   }
 
-  /** Rebuild the derived bag, reporting whether anything about it changed. */
+  override load() {
+    const loading = super.load();
+
+    // The metadata goes with the load rather than the assignment: the same
+    // playback ID may be assigned several times over without playing, and one
+    // small request per source that actually loads is the right cost.
+    this.#metadata.load();
+
+    return loading;
+  }
+
+  /** Rebuild the bag from `source` and the metadata, reporting whether anything about it changed. */
   #refreshContentData(): boolean {
     const poster = createMuxPosterURL(this.#source);
     const storyboard = createMuxStoryboardURL(this.#source);
 
     const next: MuxContentData = {
+      ...toMuxContentData(this.#metadata.metadata),
       ...(poster && { poster }),
       ...(storyboard && { storyboard }),
     };

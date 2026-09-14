@@ -7,7 +7,7 @@ createHtmlSandbox({
   player: 'video',
   render: ({ skinTag, src, attrs, storyboard, poster }) => html`
     <video-player>
-      <${skinTag} class="mx-auto aspect-video max-w-4xl">
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
         <!-- Shaka plays DASH and HLS from the same element, so the source list here is not
              narrowed to one manifest format the way the dash.js sandbox is. -->
         <shaka-video${src} ${attrs} playsinline crossorigin>${storyboard}</shaka-video>

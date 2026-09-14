@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { testRtlLayout } from './rtl';
 import {
   buttonInteractionContract,
   captureRendering,
@@ -26,6 +27,8 @@ import {
 
 const CASES = skinCases('audio');
 const WIDTHS = [384, 672] as const;
+
+testRtlLayout(CASES);
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {
@@ -409,17 +412,18 @@ async function audioSeekContract(root: Locator) {
 
   await expect
     .poll(() =>
-      slider.evaluate((element) =>
-        [...element.querySelectorAll('*')]
+      slider.evaluate((element) => {
+        const fills = [element]
           .map((target) => getComputedStyle(target))
-          .filter((style) =>
-            style.transitionProperty
-              .split(',')
-              .map((value) => value.trim())
-              .includes('clip-path')
+          .filter((style) => style.transitionProperty.includes('--media-slider-fill'));
+
+        return (
+          fills.length > 0 &&
+          fills.every((style) =>
+            style.transitionDuration.split(',').some((duration) => Number.parseFloat(duration) > 0)
           )
-          .every((style) => style.transitionDuration.split(',').some((duration) => Number.parseFloat(duration) > 0))
-      )
+        );
+      })
     )
     .toBe(true);
 
@@ -440,14 +444,9 @@ async function audioSeekContract(root: Locator) {
     const style = getComputedStyle(element);
     const root = element.parentElement;
     const expectedX = (root?.getBoundingClientRect().x ?? 0) + expectedOffset;
-    const fills = [...(root?.querySelectorAll('*') ?? [])]
-      .map((target) => getComputedStyle(target))
-      .filter((candidate) =>
-        candidate.transitionProperty
-          .split(',')
-          .map((value) => value.trim())
-          .includes('clip-path')
-      );
+    const fills = (root ? [getComputedStyle(root)] : []).filter((candidate) =>
+      candidate.transitionProperty.includes('--media-slider-fill')
+    );
     const rect = element.getBoundingClientRect();
     const lag = Math.abs(rect.x + rect.width / 2 - expectedX);
     const positionProperties = new Set(style.transitionProperty.split(',').map((value) => value.trim()));

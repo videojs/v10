@@ -5,7 +5,7 @@ export default styles({
   prefix: 'media-time',
   rules: {
     group: {
-      utilities: 'flex items-center gap-1',
+      utilities: 'flex items-center rtl:flex-row-reverse gap-1',
     },
     value: {
       utilities: 'tabular-nums transition-opacity duration-media-slow ease-out data-unavailable:opacity-50',

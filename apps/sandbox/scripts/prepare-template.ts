@@ -62,5 +62,8 @@ const prepared = prepareTemplateManifest(readJson<TemplateManifest>(manifestPath
   isPrivate: (name) => privatePackages.has(name),
 });
 
+// The standalone template has no parent workspace from which to inherit this policy.
+prepared.browserslist = readJson<TemplateManifest>(resolve(workspaceDir, 'package.json')).browserslist;
+
 writeFileSync(manifestPath, `${JSON.stringify(prepared, null, 2)}\n`);
 console.log(`Prepared ${manifestPath} for the StackBlitz template.`);

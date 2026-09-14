@@ -202,14 +202,19 @@ function parseMuxParamValue(value: string): string | number | boolean {
 }
 
 /**
- * Image URLs a Mux source describes rather than plays, as every Mux Media exposes them through `contentData`. A key is
- * absent when its URL can't be built — no playback ID, or signed playback without a matching image token.
+ * What a Mux source says about its content, as every Mux Media exposes it through `contentData`.
  *
- * Names the two keys a Mux source actually derives. The index signature comes from `MediaContentData`, which the shared
- * `contentData` capability is typed as, so it can't be closed off here — extending it is what keeps this assignable to
- * that contract.
+ * `poster` and `storyboard` are image URLs the source describes rather than plays, derived from it alone. A key is
+ * absent when its URL can't be built — no playback ID, or signed playback without a matching image token. `title` comes
+ * from the metadata document Mux publishes for the asset, so it arrives once that has loaded — see `MuxMetadataLoader`
+ * — and is absent until then, or when the asset has none. The document's other entries ride along under their own
+ * keys.
+ *
+ * The index signature comes from `MediaContentData`, which the shared `contentData` capability is typed as, so it can't
+ * be closed off here — extending it is what keeps this assignable to that contract.
  */
 export interface MuxContentData extends MediaContentData {
+  readonly title?: string;
   readonly poster?: string;
   readonly storyboard?: string;
 }

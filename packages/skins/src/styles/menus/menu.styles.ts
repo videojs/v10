@@ -123,7 +123,7 @@ export default styles({
     settingsTriggerIcon: {
       className: 'media-settings-menu-trigger-icon',
       utilities: [
-        'transition-transform duration-media-base ease-in-out motion-reduce:transition-none!',
+        'transition-transform duration-media-base ease-in-out motion-reduce:transition-none',
         'group-aria-expanded/settings:rotate-90',
       ],
     },
