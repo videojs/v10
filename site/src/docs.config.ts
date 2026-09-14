@@ -60,17 +60,6 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Migrate',
-        llmsDescription:
-          'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
-        contents: [
-          { slug: 'guides/migrate-from-video-js-8', sidebarLabel: 'Video.js 8' },
-          { slug: 'guides/migrate-from-mux-player', sidebarLabel: 'Mux Player' },
-          { slug: 'guides/migrate-from-plyr', sidebarLabel: 'Plyr' },
-          { slug: 'guides/migrate-from-media-chrome', sidebarLabel: 'Media Chrome' },
-        ],
-      },
-      {
         sidebarLabel: 'Concepts',
         llmsDescription:
           'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
@@ -108,6 +97,17 @@ export const sidebar: Sidebar = [
             sidebarLabel: 'Mux Data',
             redirectFrom: ['concepts/mux-data'],
           },
+        ],
+      },
+      {
+        sidebarLabel: 'Migrate',
+        llmsDescription:
+          'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
+        contents: [
+          { slug: 'guides/migrate-from-video-js-8', sidebarLabel: 'Video.js 8' },
+          { slug: 'guides/migrate-from-mux-player', sidebarLabel: 'Mux Player' },
+          { slug: 'guides/migrate-from-plyr', sidebarLabel: 'Plyr' },
+          { slug: 'guides/migrate-from-media-chrome', sidebarLabel: 'Media Chrome' },
         ],
       },
     ],
