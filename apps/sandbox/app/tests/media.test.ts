@@ -62,8 +62,8 @@ describe('MEDIA', () => {
 
     expect(protectedSource.drm).toBe(true);
     expect(transportStream.subType).toBe('ts');
-    expect(MEDIA['hls-video'].outcome?.(protectedSource)).toBe('expects protected error');
-    expect(MEDIA['hls-audio'].outcome?.(protectedSource)).toBe('plays — Mux leaves audio clear');
+    expect(MEDIA['hls-video'].outcome?.(protectedSource)).toBe('plays where the browser has the CDM');
+    expect(MEDIA['hls-audio'].outcome?.(protectedSource)).toBe('plays if its audio is clear');
     expect(MEDIA['hls-video'].outcome?.(transportStream)).toBe('expects unsupported-format error');
     expect(MEDIA['hls-audio'].outcome?.(transportStream)).toBe('expects no playback');
     expect(MEDIA['hls-background-video'].outcome?.(transportStream)).toBe('expects unsupported-format error');
