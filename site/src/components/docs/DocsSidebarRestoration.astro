@@ -33,7 +33,9 @@ const { docsSidebarId } = Astro.props;
         }
       }
 
-      // Keep the active link in view when arriving from a different section
+      // Keep the active link in view when arriving from a different section. Scroll the sidebar alone:
+      // scrollIntoView would also scroll the window to centre the link, which pushes the banner off the top of
+      // every docs page and shifts the content mid-transition.
       const activeLink = aside.querySelector('a[aria-current="page"]');
 
       if (activeLink) {
@@ -41,7 +43,10 @@ const { docsSidebarId } = Astro.props;
         const linkRect = activeLink.getBoundingClientRect();
 
         if (linkRect.top < asideRect.top || linkRect.bottom > asideRect.bottom) {
-          activeLink.scrollIntoView({ block: "center" });
+          const linkCentre = linkRect.top + linkRect.height / 2;
+          const asideCentre = asideRect.top + asideRect.height / 2;
+
+          aside.scrollTop += linkCentre - asideCentre;
         }
       }
     }
