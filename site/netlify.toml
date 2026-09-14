@@ -352,26 +352,6 @@
   status = 301
 
 [[redirects]]
-  from = "/docs/framework/:framework/components/html-i-18-n-context"
-  to = "/docs/framework/:framework/reference/api/html-i-18-n-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/html-i-18-n-context.md"
-  to = "/docs/framework/:framework/reference/api/html-i-18-n-context.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/i-18-n-context"
-  to = "/docs/framework/:framework/reference/api/i-18-n-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/i-18-n-context.md"
-  to = "/docs/framework/:framework/reference/api/i-18-n-context.md"
-  status = 301
-
-[[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-controller"
   to = "/docs/framework/:framework/reference/api/i-18-n-controller"
   status = 301
@@ -389,16 +369,6 @@
 [[redirects]]
   from = "/docs/framework/:framework/components/i18n-provider.md"
   to = "/docs/framework/:framework/reference/api/i18n-provider.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/media-attach-mixin"
-  to = "/docs/framework/:framework/reference/api/media-attach-mixin"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/media-attach-mixin.md"
-  to = "/docs/framework/:framework/reference/api/media-attach-mixin.md"
   status = 301
 
 [[redirects]]
@@ -439,16 +409,6 @@
 [[redirects]]
   from = "/docs/framework/:framework/components/on-i18n-registry-change.md"
   to = "/docs/framework/:framework/reference/api/on-i18n-registry-change.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/player-context"
-  to = "/docs/framework/:framework/reference/api/player-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/player-context.md"
-  to = "/docs/framework/:framework/reference/api/player-context.md"
   status = 301
 
 [[redirects]]
@@ -522,16 +482,6 @@
   status = 301
 
 [[redirects]]
-  from = "/docs/framework/:framework/components/use-attach-media"
-  to = "/docs/framework/:framework/reference/api/use-attach-media"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-attach-media.md"
-  to = "/docs/framework/:framework/reference/api/use-attach-media.md"
-  status = 301
-
-[[redirects]]
   from = "/docs/framework/:framework/components/use-audio-track-options"
   to = "/docs/framework/:framework/reference/api/use-audio-track-options"
   status = 301
@@ -602,16 +552,6 @@
   status = 301
 
 [[redirects]]
-  from = "/docs/framework/:framework/components/use-dialog-context"
-  to = "/docs/framework/:framework/reference/api/use-dialog-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-dialog-context.md"
-  to = "/docs/framework/:framework/reference/api/use-dialog-context.md"
-  status = 301
-
-[[redirects]]
   from = "/docs/framework/:framework/components/use-double-tap-gesture"
   to = "/docs/framework/:framework/reference/api/use-double-tap-gesture"
   status = 301
@@ -619,16 +559,6 @@
 [[redirects]]
   from = "/docs/framework/:framework/components/use-double-tap-gesture.md"
   to = "/docs/framework/:framework/reference/api/use-double-tap-gesture.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-error-dialog-context"
-  to = "/docs/framework/:framework/reference/api/use-error-dialog-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-error-dialog-context.md"
-  to = "/docs/framework/:framework/reference/api/use-error-dialog-context.md"
   status = 301
 
 [[redirects]]
@@ -672,56 +602,6 @@
   status = 301
 
 [[redirects]]
-  from = "/docs/framework/:framework/components/use-media"
-  to = "/docs/framework/:framework/reference/api/use-media"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media.md"
-  to = "/docs/framework/:framework/reference/api/use-media.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-attach"
-  to = "/docs/framework/:framework/reference/api/use-media-attach"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-attach.md"
-  to = "/docs/framework/:framework/reference/api/use-media-attach.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-extension"
-  to = "/docs/framework/:framework/reference/api/use-media-extension"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-extension.md"
-  to = "/docs/framework/:framework/reference/api/use-media-extension.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-instance"
-  to = "/docs/framework/:framework/reference/api/use-media-instance"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-instance.md"
-  to = "/docs/framework/:framework/reference/api/use-media-instance.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-menu-context"
-  to = "/docs/framework/:framework/reference/api/use-menu-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-menu-context.md"
-  to = "/docs/framework/:framework/reference/api/use-menu-context.md"
-  status = 301
-
-[[redirects]]
   from = "/docs/framework/:framework/components/use-optional-container"
   to = "/docs/framework/:framework/reference/api/use-optional-container"
   status = 301
@@ -729,16 +609,6 @@
 [[redirects]]
   from = "/docs/framework/:framework/components/use-optional-container.md"
   to = "/docs/framework/:framework/reference/api/use-optional-container.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-optional-menu-context"
-  to = "/docs/framework/:framework/reference/api/use-optional-menu-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-optional-menu-context.md"
-  to = "/docs/framework/:framework/reference/api/use-optional-menu-context.md"
   status = 301
 
 [[redirects]]
@@ -769,26 +639,6 @@
 [[redirects]]
   from = "/docs/framework/:framework/components/use-player.md"
   to = "/docs/framework/:framework/reference/api/use-player.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-player-context"
-  to = "/docs/framework/:framework/reference/api/use-player-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-player-context.md"
-  to = "/docs/framework/:framework/reference/api/use-player-context.md"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-popover-context"
-  to = "/docs/framework/:framework/reference/api/use-popover-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-popover-context.md"
-  to = "/docs/framework/:framework/reference/api/use-popover-context.md"
   status = 301
 
 [[redirects]]
@@ -852,16 +702,6 @@
   status = 301
 
 [[redirects]]
-  from = "/docs/framework/:framework/components/use-tooltip-context"
-  to = "/docs/framework/:framework/reference/api/use-tooltip-context"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-tooltip-context.md"
-  to = "/docs/framework/:framework/reference/api/use-tooltip-context.md"
-  status = 301
-
-[[redirects]]
   from = "/docs/framework/:framework/components/use-translator"
   to = "/docs/framework/:framework/reference/api/use-translator"
   status = 301
@@ -880,12 +720,6 @@
 [[redirects]]
   from = "/docs/framework/:framework/components/simple-hls-audio-only"
   to = "/docs/framework/:framework/reference/components/hls-audio"
-  status = 301
-
-# useMediaComponent was renamed to useMediaExtension, taking the reference slug with it
-[[redirects]]
-  from = "/docs/framework/:framework/components/use-media-component"
-  to = "/docs/framework/:framework/reference/api/use-media-extension"
   status = 301
 
 # Everything else under the old components/ and api/ prefixes moved beneath reference/.
