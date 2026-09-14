@@ -16,7 +16,8 @@ interface StyleTransformBaseOptions {
 /** Replace style references with their Tailwind utility classes. */
 export interface TailwindTransformOptions extends StyleTransformBaseOptions {
   readonly mode: 'tailwind';
-  readonly stylesheet?: never;
+  /** Tailwind theme input used when merging variant utilities. */
+  readonly stylesheet?: Pick<StylesheetOptions, 'input'> | undefined;
 }
 
 /** Replace style references with semantic class names and optionally emit their CSS. */

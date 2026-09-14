@@ -1,3 +1,5 @@
 @theme inline {
+  --text-fixture-title: 1.5rem;
+  --color-fixture-foreground: white;
   --spacing: 0.25rem;
 }

@@ -25,7 +25,7 @@ const compiledStyles = new WeakMap<DesignSystem, Map<string, Promise<ReadonlyMap
 /** Compile semantic rules and group the resulting CSS by each definition's explicit output file. */
 export async function compileStyles(options: CompileStylesOptions): Promise<Map<string, string>> {
   const variants = options.variants ?? [];
-  const groupOwners = uniqueGroupOwners(options.styles.rules, variants);
+  const groupOwners = uniqueGroupOwners(options.styles.rules, variants, options.design);
   const selected = selectRules(options);
   const key = compileKey(options, selected, groupOwners, variants);
   const cache = compiledStyles.get(options.design) ?? new Map<string, Promise<ReadonlyMap<string, string>>>();
@@ -71,7 +71,7 @@ function compileKey(
       rule.layer,
       rule.scopeRoot,
       rule.shadowHost,
-      utilitiesForRule(rule, variants),
+      utilitiesForRule(rule, variants, options.design.merge),
     ]),
     options.ruleClassNames ? null : [...new Set(options.styles.rules.map((rule) => rule.file))].sort(),
   ]);
@@ -144,7 +144,7 @@ function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: re
   const candidates: string[] = [];
   const unsupported: string[] = [];
 
-  for (const utility of utilitiesForRule(rule, variants)) {
+  for (const utility of utilitiesForRule(rule, variants, design.merge)) {
     if (isGroupMarker(utility)) continue;
 
     const css = design.candidateCss(utility);
@@ -170,11 +170,12 @@ function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: re
 /** Each relationship marker must have exactly one owner before its consumers can be scoped to it. */
 function uniqueGroupOwners(
   rules: readonly ResolvedStyleRule[],
-  variants: readonly string[]
+  variants: readonly string[],
+  design: DesignSystem
 ): ReadonlyMap<string, string> {
   const owners = new Map<string, string>();
 
-  for (const [utility, classNames] of collectGroupOwners(rules, variants)) {
+  for (const [utility, classNames] of collectGroupOwners(rules, variants, design.merge)) {
     if (classNames.length > 1) {
       throw new Error(
         `Style relationship marker \`${utility}\` maps to both \`${classNames[0]}\` and \`${classNames[1]}\`.`
