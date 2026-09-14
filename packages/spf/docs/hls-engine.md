@@ -41,6 +41,10 @@ Text selection is resolved through the same constraint model as other tracks. DO
 
 Owned actors load WebVTT segments and cues. They are destroyed on source replacement with the other per-source resources.
 
+Chapters are separate from selection: when the multivariant playlist carries Apple JSON chapters as session data, a
+behavior fetches the document once the duration is known and projects one hidden `chapters` track per language onto the
+element. The audio-only engine composes it too.
+
 ## Multi-CDN behavior
 
 The engine derives comparable CDN identifiers from track URLs. Track selection prefers one active CDN across media types, while failed-CDN state temporarily removes candidates and later expires through the failover monitor.

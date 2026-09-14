@@ -97,6 +97,7 @@ Extension boundaries — each could become its own feature doc or a phase extens
 
 References to other features in the registry. Bracketed entries are candidate features that don't yet have their own doc — they're tracked here so the registry surfaces them when work begins.
 
+- **[chapters](./chapters.md)** — chapter markers from `#EXT-X-SESSION-DATA` Apple JSON, projected as hidden `chapters` `<track>` slots beside these subtitle slots. Separate ownership tag (`data-src-chapters-track`), no part in text selection; `syncTextTracks`' `change` bridge ignores its mode changes because it only reads showing caption/subtitle slots.
 - **preload-modes** — `loadTextTrackSegments` reads the same `(preload, loadActivated)` gate state as the audio/video segment loaders; the load-mode FSM rows are direct consumers of the preload-modes contract.
 - **buffer-management** — text tracks share the per-type segment-loading dispatcher pattern with video/audio (the `'preconditions-unmet' → 'dormant' → 'metadata-only' → 'full-range'` FSM is the same shape). Text uses `TextTrackSegmentLoaderActor` rather than the v/a `SegmentLoaderActor`, but the dispatcher contract is unified.
 - **hls-multivariant-parsing** *(not yet documented)* — subtitle rendition extraction is one slice of manifest parsing.
