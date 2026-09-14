@@ -6,6 +6,14 @@
  * inline, so the per-type identity (which state slot, which context slot, which discriminant) lives in one place per
  * type.
  *
+ * Every entry is a generic-name-to-type-specific-name mapping, and the target object varies: `selectedKey` names a
+ * state slot, `actorKey` / `loaderKey` a context slot, and the `*Key` entries for config facets (`constraintsKey`,
+ * `rulesKey`, `messagePipelinesKey`) name the per-type **engine config** key a variant reads into its helper's generic
+ * one — `config[VIDEO_TYPE_CONFIG.constraintsKey]` feeds `constraints`, the way rules read `state[config.selectedKey]`.
+ * One engine config reaches every variant, so the per-type key is what keeps video's chain out of audio's. The bundle
+ * carries the key, never the default: `videoRules` and `audioRules` fall back differently, so `?? DEFAULT_…` stays
+ * beside each variant.
+ *
  * Variants spread their composition-time `config` over the defaults so engines can layer composition-supplied additions
  * on top (e.g. a custom fetch closure, a non-default segment resolver). Defaults first, engine config second.
  *
@@ -21,8 +29,12 @@
 export const VIDEO_TYPE_CONFIG = {
   type: 'video',
   selectedKey: 'selectedVideoTrackId',
+  userSelectionKey: 'userVideoTrackSelection',
   actorKey: 'videoBufferActor',
   loaderKey: 'videoSegmentLoaderActor',
+  constraintsKey: 'videoConstraints',
+  rulesKey: 'videoRules',
+  messagePipelinesKey: 'videoMessagePipelines',
 } as const;
 
 /**
@@ -33,14 +45,20 @@ export const VIDEO_TYPE_CONFIG = {
 export const AUDIO_TYPE_CONFIG = {
   type: 'audio',
   selectedKey: 'selectedAudioTrackId',
+  userSelectionKey: 'userAudioTrackSelection',
   actorKey: 'audioBufferActor',
   loaderKey: 'audioSegmentLoaderActor',
+  constraintsKey: 'audioConstraints',
+  rulesKey: 'audioRules',
+  messagePipelinesKey: 'audioMessagePipelines',
 } as const;
 
 /**
  * Type-identity bundle for text-track-typed behaviors. Text tracks have no `SourceBufferActor` (MSE doesn't apply), so
- * this bundle omits `actorKey`. The `loaderKey` points at the text-track-segment-loader actor (a `MessageActor` with
- * continue-vs-preempt semantics, parallel to v/a's `SegmentLoaderActor`).
+ * this bundle omits `actorKey`, and no user-selection slot in the video/audio sense (`switchTextTrack` resolves
+ * standing intent through its own terminal), so it omits `userSelectionKey`. The `loaderKey` points at the
+ * text-track-segment-loader actor (a `MessageActor` with continue-vs-preempt semantics, parallel to v/a's
+ * `SegmentLoaderActor`).
  *
  * @see loadTextTrackSegments, setupTextTrackActors
  */
@@ -48,4 +66,7 @@ export const TEXT_TYPE_CONFIG = {
   type: 'text',
   selectedKey: 'selectedTextTrackId',
   loaderKey: 'textTrackSegmentLoaderActor',
+  constraintsKey: 'textConstraints',
+  rulesKey: 'textRules',
+  messagePipelinesKey: 'textMessagePipelines',
 } as const;
