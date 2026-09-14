@@ -23,7 +23,7 @@ import basicUsageHtml from "@/components/docs/demos/vimeo-video/html/css/BasicUs
 import basicUsageHtmlCss from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.ts?raw";
 
-Of the embed-backed media components, the [Vimeo player SDK](https://developer.vimeo.com/player/sdk) comes closest to a native `<video>`: volume, mute, playback rate, seeking, looping, and picture-in-picture all work, and the embed pushes real events instead of being polled. Vimeo's own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Vimeo's UI instead.
+Of the embed-backed media components, the [Vimeo player SDK](https://developer.vimeo.com/player/sdk) comes closest to a native `<video>`: volume, mute, playback rate, seeking, looping, and picture-in-picture all work, and the embed pushes real events instead of being polled. Vimeo's own chrome stays hidden by default, so it drops into a <DocsLink slug="guides/skins">player skin</DocsLink> like any other media component; set `controls` to use Vimeo's UI instead.
 
 ## Import
 
@@ -100,7 +100,7 @@ A `vimeo.com/event/<id>` URL plays that event through Vimeo's event embed, and i
 
 <MediaReference media="VimeoVideo">
   <Fragment slot="engine-vimeo">
-    Pass [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) under `source.engine.vimeo`, spelled exactly as Vimeo spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+    Pass [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) under `source.engine.vimeo`, spelled exactly as Vimeo spells them. <DocsLink slug="guides/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
     These options are typed from Vimeo's own SDK, so your editor completes every parameter and rejects one Vimeo doesn't have. That also means the list covers Vimeo's oEmbed API alongside the player: `id` and `url` both override the video `src` names, and `width`, `height`, `maxwidth`, `maxheight`, and `responsive` size an oEmbed response rather than this element. Pass the video through `src`, and size the element with CSS.
 

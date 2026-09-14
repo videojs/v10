@@ -23,7 +23,7 @@ import basicUsageHtml from "@/components/docs/demos/twitch-video/html/css/BasicU
 import basicUsageHtmlCss from "@/components/docs/demos/twitch-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/twitch-video/html/css/BasicUsage.ts?raw";
 
-The [Twitch embed player](https://dev.twitch.tv/docs/embed/video-and-clips/) handles both recorded videos and live channels. Its own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Twitch's UI instead.
+The [Twitch embed player](https://dev.twitch.tv/docs/embed/video-and-clips/) handles both recorded videos and live channels. Its own chrome stays hidden by default, so it drops into a <DocsLink slug="guides/skins">player skin</DocsLink> like any other media component; set `controls` to use Twitch's UI instead.
 
 ## Import
 
@@ -116,7 +116,7 @@ video.source = {
 
 <MediaReference media="TwitchVideo">
   <Fragment slot="engine-twitch">
-    Pass [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) under `source.engine.twitch`, spelled exactly as Twitch spells them, plus anything Twitch adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+    Pass [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) under `source.engine.twitch`, spelled exactly as Twitch spells them, plus anything Twitch adds next. <DocsLink slug="guides/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
     `controls`, `autoplay`, and `muted` come from the props of the same name, and the video or channel comes from `src`, so none of those have an `engine.twitch` spelling.
   </Fragment>

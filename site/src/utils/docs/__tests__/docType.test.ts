@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vite-plus/test';
 import { getDocTypeFromId } from '../../../types/docs';
 
 describe('getDocTypeFromId', () => {
-  it('maps each content folder to its Diátaxis type', () => {
-    expect(getDocTypeFromId('concepts/features')).toBe('concept');
+  it('maps each content folder to its type', () => {
     expect(getDocTypeFromId('guides/autoplay')).toBe('guide');
+    expect(getDocTypeFromId('guides/features')).toBe('guide');
     expect(getDocTypeFromId('reference/components/play-button')).toBe('reference');
     expect(getDocTypeFromId('reference/api/use-player')).toBe('reference');
   });
@@ -15,7 +15,7 @@ describe('getDocTypeFromId', () => {
   });
 
   it('rejects pages outside a typed folder', () => {
-    expect(() => getDocTypeFromId('tutorials/first-player')).toThrow(/not inside a typed folder/);
+    expect(() => getDocTypeFromId('concepts/features')).toThrow(/not inside a typed folder/);
     expect(() => getDocTypeFromId('loose-page')).toThrow(/not inside a typed folder/);
   });
 });

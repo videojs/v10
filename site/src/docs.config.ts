@@ -75,12 +75,12 @@ export const sidebar: Sidebar = [
         llmsDescription:
           'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
         contents: [
-          { slug: 'concepts/features' },
-          { slug: 'concepts/skins' },
-          { slug: 'concepts/presets' },
-          { slug: 'concepts/ui-components' },
-          { slug: 'concepts/accessibility' },
-          { slug: 'concepts/media-sources' },
+          { slug: 'guides/features', redirectFrom: ['concepts/features'] },
+          { slug: 'guides/skins', redirectFrom: ['concepts/skins'] },
+          { slug: 'guides/presets', redirectFrom: ['concepts/presets'] },
+          { slug: 'guides/ui-components', redirectFrom: ['concepts/ui-components'] },
+          { slug: 'guides/accessibility', redirectFrom: ['concepts/accessibility'] },
+          { slug: 'guides/media-sources', redirectFrom: ['concepts/media-sources'] },
         ],
       },
       {

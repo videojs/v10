@@ -29,11 +29,11 @@ A few minutes of auditing tells you which sections of this guide apply to you:
 
 Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
 
-**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> it's built from.
+**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
 
-**The media** is the thing that plays the video. The Mux media is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for another <DocsLink slug="concepts/media-sources">media component</DocsLink> and the rest of your player keeps working.
+**The media** is the thing that plays the video. The Mux media is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for another <DocsLink slug="guides/media-sources">media component</DocsLink> and the rest of your player keeps working.
 
-**The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. <DocsLink slug="concepts/skins">Skins</DocsLink> are pre-built arrangements of smaller components, and you can use one as-is, restyle it, or take it apart.
+**The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. <DocsLink slug="guides/skins">Skins</DocsLink> are pre-built arrangements of smaller components, and you can use one as-is, restyle it, or take it apart.
 
 So a Mux Player embed becomes a player wrapped around a skin wrapped around a media:
 
@@ -76,7 +76,7 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 ></mux-player>
 ```
 
-From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>, the Mux media, and analytics:
+From the CDN, load the video <DocsLink slug="guides/presets">preset</DocsLink>, the Mux media, and analytics:
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
@@ -140,7 +140,7 @@ export function MyPlayer() {
 npm install @videojs/react @videojs/mux-video @videojs/mux-data
 ```
 
-Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/presets">preset</DocsLink>, then add the Mux media and analytics components:
+Start with the general-purpose `@videojs/react/video` <DocsLink slug="guides/presets">preset</DocsLink>, then add the Mux media and analytics components:
 
 ```tsx
 'use client';
@@ -430,7 +430,7 @@ Mux Player gives you attributes and documented CSS variables. Past that, you're 
 
 ### Level 1: pick a skin
 
-Two are packaged. The default skin is a modern, frosted look. The minimal skin is closer to a classic control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="concepts/skins">Skins</DocsLink>.
+Two are packaged. The default skin is a modern, frosted look. The minimal skin is closer to a classic control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
 
 ### Level 2: restyle it
 
@@ -805,4 +805,4 @@ Ordered roughly by how many migrations they'll touch.
 
 - <DocsLink slug="reference/components/mux-video">Mux Video</DocsLink> and <DocsLink slug="reference/components/mux-audio">Mux Audio</DocsLink>
 - <DocsLink slug="guides/monitor-playback-with-mux-data">Mux Data</DocsLink>
-- <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="guides/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>

@@ -16,7 +16,7 @@ Scoped to apps that compose their own player from Media Chrome elements. If you 
 
 ## Before you begin
 
-Install Video.js and choose a <DocsLink slug="concepts/presets">preset</DocsLink> (see <DocsLink slug="guides/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
+Install Video.js and choose a <DocsLink slug="guides/presets">preset</DocsLink> (see <DocsLink slug="guides/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
 <FrameworkCase frameworks={["html"]}>
 ```bash
@@ -97,7 +97,7 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 
 <FrameworkCase frameworks={["react"]}>
 
-Media Chrome's React package wraps its custom elements. `@videojs/react` ships native components instead. `VideoPlayer` comes from the video <DocsLink slug="concepts/presets">preset</DocsLink>, and `Container` is the box the media and controls live in:
+Media Chrome's React package wraps its custom elements. `@videojs/react` ships native components instead. `VideoPlayer` comes from the video <DocsLink slug="guides/presets">preset</DocsLink>, and `Container` is the box the media and controls live in:
 
 ```tsx
 'use client';
@@ -123,7 +123,7 @@ export function MyPlayer() {
 }
 ```
 
-A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
+A preset player carries a fixed set of <DocsLink slug="guides/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
 
 ```tsx
 import { createPlayer } from '@videojs/react';
@@ -229,7 +229,7 @@ React buttons do not include visible content either. Use a button's `render` pro
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="concepts/ui-components">UI components</DocsLink> concept for the full set.
+These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="guides/ui-components">UI components</DocsLink> concept for the full set.
 
 `Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster.Root` owns its state and `Poster.Image` accepts image attributes such as `alt`, `srcSet`, and `sizes`:
 
@@ -286,7 +286,7 @@ The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-
 
 ## Themes become skins
 
-Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject its skin</DocsLink>, rather than authoring a template.
+Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="guides/skins">skins</DocsLink> and <DocsLink slug="guides/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject its skin</DocsLink>, rather than authoring a template.
 
 <FrameworkCase frameworks={["html"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.
@@ -411,5 +411,5 @@ Work against the store directly: `selectVolume(store.state).setVolume(…)` on i
 ## See also
 
 - <DocsLink slug="guides/installation">Installation</DocsLink>
-- <DocsLink slug="concepts/ui-components">UI components</DocsLink>
-- <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="guides/ui-components">UI components</DocsLink>
+- <DocsLink slug="guides/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>

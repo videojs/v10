@@ -47,7 +47,7 @@ The [Spotify embed](https://developer.spotify.com/documentation/embeds) accepts 
 
 ## Controls
 
-Spotify's own chrome is the only UI the embed offers, so `controls` decides whether the element is visible at all. With `controls`, it shows Spotify's player. Without it, the element hides itself and plays as an invisible transport: a hidden iframe still loads and plays, so a <DocsLink slug="concepts/skins">player skin</DocsLink>'s buttons drive playback while the embed takes no room on the page.
+Spotify's own chrome is the only UI the embed offers, so `controls` decides whether the element is visible at all. With `controls`, it shows Spotify's player. Without it, the element hides itself and plays as an invisible transport: a hidden iframe still loads and plays, so a <DocsLink slug="guides/skins">player skin</DocsLink>'s buttons drive playback while the embed takes no room on the page.
 
 ## Behavior
 
@@ -86,7 +86,7 @@ The Spotify embed exposes less than a native `<audio>` element:
 
 <MediaReference media="SpotifyAudio">
   <Fragment slot="engine-spotify">
-    Pass [Spotify embed options](https://developer.spotify.com/documentation/embeds) under `source.engine.spotify`, spelled exactly as Spotify spells them, plus anything Spotify adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+    Pass [Spotify embed options](https://developer.spotify.com/documentation/embeds) under `source.engine.spotify`, spelled exactly as Spotify spells them, plus anything Spotify adds next. <DocsLink slug="guides/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
     <FrameworkCase frameworks={["react"]}>
     ```tsx

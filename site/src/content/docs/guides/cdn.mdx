@@ -32,7 +32,7 @@ Bundles share content-hashed chunks that change between releases. A tag like `@l
 
 ## Player bundles
 
-Each installation <DocsLink slug="concepts/presets">preset</DocsLink> ships its bundles at the package root: one per skin choice, plus a player-only bundle. For the video preset:
+Each installation <DocsLink slug="guides/presets">preset</DocsLink> ships its bundles at the package root: one per skin choice, plus a player-only bundle. For the video preset:
 
 | File | Registers |
 | --- | --- |
@@ -46,7 +46,7 @@ A skin bundle registers every UI element its skin is built from. The CDN publish
 
 ## Media bundles
 
-The default presets play through the browser's own `<video>` and `<audio>`. Every other <DocsLink slug="concepts/media-sources">media element</DocsLink> is its own bundle under `media/`, loaded beside the player bundle:
+The default presets play through the browser's own `<video>` and `<audio>`. Every other <DocsLink slug="guides/media-sources">media element</DocsLink> is its own bundle under `media/`, loaded beside the player bundle:
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>

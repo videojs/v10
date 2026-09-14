@@ -23,11 +23,11 @@ In v8 the player was everything: playback, UI, and the skin on top of it. Option
 
 v10 splits those jobs up. Learning the three names first makes the rest of this guide much shorter.
 
-**The player** is the outer element. It holds state and hands that state to everything inside it, and it draws nothing. This is the closest thing to a v8 `player` instance, but it owns state rather than DOM. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> it's built from.
+**The player** is the outer element. It holds state and hands that state to everything inside it, and it draws nothing. This is the closest thing to a v8 `player` instance, but it owns state rather than DOM. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
 
-**The media** is the thing that plays the video. This is where v8's *tech* went. A plain `<video>` plays progressive files, and there's a <DocsLink slug="concepts/media-sources">media component</DocsLink> for HLS, DASH, YouTube, Vimeo, and Mux. Swapping one for another is a tag change, and the rest of your player keeps working.
+**The media** is the thing that plays the video. This is where v8's *tech* went. A plain `<video>` plays progressive files, and there's a <DocsLink slug="guides/media-sources">media component</DocsLink> for HLS, DASH, YouTube, Vimeo, and Mux. Swapping one for another is a tag change, and the rest of your player keeps working.
 
-**The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. It's the v8 control bar and skin combined, except <DocsLink slug="concepts/skins">skins</DocsLink> are plain trees of components you can read and edit rather than a class hierarchy you subclass.
+**The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. It's the v8 control bar and skin combined, except <DocsLink slug="guides/skins">skins</DocsLink> are plain trees of components you can read and edit rather than a class hierarchy you subclass.
 
 So a v8 embed becomes a player wrapped around a skin wrapped around a media:
 
@@ -77,7 +77,7 @@ Here's a standard v8 setup: one file, captions, a poster, and the default skin.
 <script src="https://vjs.zencdn.net/8.x/video.min.js"></script>
 ```
 
-v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you the video <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together.
+v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you the video <DocsLink slug="guides/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together.
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
@@ -147,7 +147,7 @@ export function MyPlayer() {
 npm install @videojs/react
 ```
 
-One new idea here. Instead of one `videojs()` that does everything, you pick a <DocsLink slug="concepts/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you know you need something unusual.
+One new idea here. Instead of one `videojs()` that does everything, you pick a <DocsLink slug="guides/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you know you need something unusual.
 
 ```tsx
 'use client';
@@ -269,7 +269,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 
 v8's tech system was one of its harder ideas: an abstraction layer with a registry, a resolution order, and source handlers on top. Getting HLS meant getting VHS, which meant reasoning about `overrideNative` and hoping the right thing won.
 
-v10 replaces the whole mechanism with a choice you make in markup. You pick the <DocsLink slug="concepts/media-sources">media component</DocsLink> that plays your format, and that's the tech decision.
+v10 replaces the whole mechanism with a choice you make in markup. You pick the <DocsLink slug="guides/media-sources">media component</DocsLink> that plays your format, and that's the tech decision.
 
 | What you're playing | Video.js 8 | Video.js v10 |
 |---|---|---|
@@ -343,7 +343,7 @@ In v8, customizing meant three different techniques depending on what you wanted
 
 ### Level 1: pick a skin
 
-The default skin is a modern, frosted look. The minimal skin is closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="concepts/skins">Skins</DocsLink>.
+The default skin is a modern, frosted look. The minimal skin is closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
 
 Both also include AirPlay and Cast buttons, which v8 had no answer for. Follow <DocsLink slug="guides/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast extension. Remote playback is a feature you compose in rather than a plugin you install.
 
@@ -422,7 +422,7 @@ Then write the layout yourself:
 
 <FrameworkCase frameworks={["react"]}>
 
-Drop `VideoSkin` and compose the <DocsLink slug="concepts/ui-components">UI components</DocsLink> yourself. `Container` is what the skin used to render for you: the box the media and controls live in. Compound parts are namespaced, so a time slider is assembled from `TimeSlider.Root`, `TimeSlider.Track`, and friends:
+Drop `VideoSkin` and compose the <DocsLink slug="guides/ui-components">UI components</DocsLink> yourself. `Container` is what the skin used to render for you: the box the media and controls live in. Compound parts are namespaced, so a time slider is assembled from `TimeSlider.Root`, `TimeSlider.Track`, and friends:
 
 ```tsx
 import { Container, Controls, Hotkey, MuteButton, PlayButton, TimeSlider } from '@videojs/react';
@@ -604,7 +604,7 @@ See <DocsLink slug="guides/internationalize-the-player">Internationalize the pla
 
 ## Live and audio-only
 
-v8 turned live UI on with a `liveui` flag, and audio-only on with `audioOnlyMode`. In v10 these are different players with different skins, because live and audio-only have different state and a genuinely different UI. See <DocsLink slug="concepts/presets">Presets</DocsLink>.
+v8 turned live UI on with a `liveui` flag, and audio-only on with `audioOnlyMode`. In v10 these are different players with different skins, because live and audio-only have different state and a genuinely different UI. See <DocsLink slug="guides/presets">Presets</DocsLink>.
 
 <FrameworkCase frameworks={["html"]}>
 ```html
@@ -668,6 +668,6 @@ Ordered roughly by how likely each is to block a v8 migration.
 
 ## See also
 
-- <DocsLink slug="concepts/features">Features</DocsLink> and <DocsLink slug="concepts/presets">Presets</DocsLink>
-- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>
-- <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="guides/features">Features</DocsLink> and <DocsLink slug="guides/presets">Presets</DocsLink>
+- <DocsLink slug="guides/media-sources">Media sources</DocsLink>
+- <DocsLink slug="guides/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>

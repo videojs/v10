@@ -28,7 +28,7 @@ describe('getDocTitle', () => {
     data: {
       title: 'Basic Concepts',
       description: 'Introduction to basic concepts',
-      type: 'concept',
+      type: 'guide',
     },
     body: '',
     slug: 'concepts/basic',

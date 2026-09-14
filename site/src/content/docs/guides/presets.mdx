@@ -7,7 +7,7 @@ import PresetReference from '@/components/docs/api-reference/PresetReference.ast
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="concepts/features">state management</DocsLink>, one or more <DocsLink slug="concepts/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
+A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="guides/features">state management</DocsLink>, one or more <DocsLink slug="guides/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
 
 <FrameworkCase frameworks={["react"]}>
 For example, the `@videojs/react/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
@@ -58,7 +58,7 @@ Each React preset exports a named, preconfigured player component and typed `use
 
 - **Player** — A player component named for the preset, such as `VideoPlayer`, already configured with the preset's feature bundle.
 - **Typed hook** — A `usePlayer` hook whose state and actions match the preset.
-- **Feature bundle** — An array of <DocsLink slug="concepts/features">features</DocsLink> that define the player's state and actions. For example, the video feature bundle includes playback, volume, time, fullscreen, and more.
+- **Feature bundle** — An array of <DocsLink slug="guides/features">features</DocsLink> that define the player's state and actions. For example, the video feature bundle includes playback, volume, time, fullscreen, and more.
 - **Skins** — Pre-built UIs designed for that feature bundle. For example, a video skin renders fullscreen and PiP controls because the video feature bundle includes those features. An audio skin doesn't.
 - **Media element** — A media component suited to the use case. For example, the background video element bakes in autoplay, mute, and loop.
 </FrameworkCase>

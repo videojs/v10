@@ -61,13 +61,13 @@ const { Player, usePlayer, useMedia } = createPlayer({
 });
 ```
 
-The <DocsLink slug="concepts/features">features</DocsLink> you pass determine what state is available in the store. `videoFeatures` is a <DocsLink slug="concepts/presets">preset</DocsLink> that includes playback, volume, fullscreen, and other standard video controls.
+The <DocsLink slug="guides/features">features</DocsLink> you pass determine what state is available in the store. `videoFeatures` is a <DocsLink slug="guides/presets">preset</DocsLink> that includes playback, volume, fullscreen, and other standard video controls.
 
 <DocsLinkCard slug="reference/api/create-player">createPlayer reference</DocsLinkCard>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-For most users, importing from `@videojs/html/video/player` registers a ready-to-use `<video-player>` element with the standard video <DocsLink slug="concepts/features">features</DocsLink> (bundled as a <DocsLink slug="concepts/presets">preset</DocsLink>):
+For most users, importing from `@videojs/html/video/player` registers a ready-to-use `<video-player>` element with the standard video <DocsLink slug="guides/features">features</DocsLink> (bundled as a <DocsLink slug="guides/presets">preset</DocsLink>):
 
 ```ts
 import '@videojs/html/video/player';

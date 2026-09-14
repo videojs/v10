@@ -47,7 +47,7 @@ The [TikTok embed player](https://developers.tiktok.com/doc/embed-player) expect
 
 ## Controls
 
-TikTok always draws part of its own chrome: the center play button, author header, and social rail are always visible. `controls` adds the progress bar and control buttons on top of those. Without `controls`, the element ignores pointer events, so a <DocsLink slug="concepts/skins">player skin</DocsLink> above it receives every click.
+TikTok always draws part of its own chrome: the center play button, author header, and social rail are always visible. `controls` adds the progress bar and control buttons on top of those. Without `controls`, the element ignores pointer events, so a <DocsLink slug="guides/skins">player skin</DocsLink> above it receives every click.
 
 ## Deferred startup
 
@@ -91,7 +91,7 @@ Two settings opt out. `preload="none"` skips the warm-up, leaving the network un
 
 <MediaReference media="TikTokVideo">
   <Fragment slot="engine-tiktok">
-    Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them, each one `0` or `1`, plus anything TikTok adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+    Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them, each one `0` or `1`, plus anything TikTok adds next. <DocsLink slug="guides/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
     `autoplay`, `controls`, `loop`, and `muted` come from the props of the same name, so they have no `engine.tiktok` spelling.
 
