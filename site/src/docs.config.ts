@@ -49,7 +49,7 @@ export const sidebar: Sidebar = [
           { slug: 'concepts/browser-support' },
           { slug: 'concepts/typescript' },
           { slug: 'concepts/bundlers' },
-          { slug: 'concepts/cdn', frameworks: ['html'] },
+          { slug: 'reference/cdn', frameworks: ['html'], redirectFrom: ['concepts/cdn'] },
           { slug: 'guides/self-host-the-player', sidebarLabel: 'Self-hosting', frameworks: ['html'] },
           { href: 'https://github.com/videojs/v10/blob/main/CONTRIBUTING.md', sidebarLabel: 'Contribute to Video.js' },
         ],
