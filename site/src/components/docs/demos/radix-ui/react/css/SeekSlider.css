@@ -1,0 +1,112 @@
+.radix-player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  color: white;
+  background: black;
+}
+
+.radix-player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.radix-player__bar {
+  position: absolute;
+  inset: auto 12px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 44px;
+  padding: 4px 12px 4px 4px;
+  background: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border-radius: 9999px;
+}
+
+.radix-player__button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.radix-player__button:hover,
+.radix-player__button:focus-visible {
+  background: rgb(255 255 255 / 15%);
+  outline: none;
+}
+
+.radix-player__button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.radix-player__time {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Radix Slider parts: the root is the pointer surface, the track the visible bar. */
+.radix-player__slider {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  height: 32px;
+  touch-action: none;
+  user-select: none;
+}
+
+.radix-player__track {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 20%);
+  border-radius: 9999px;
+}
+
+.radix-player__buffer {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgb(255 255 255 / 20%);
+}
+
+.radix-player__range {
+  position: absolute;
+  height: 100%;
+  background: white;
+}
+
+/* The thumb appears on hover and while dragging, like the default skin. */
+.radix-player__thumb {
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 9999px;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.radix-player__slider:hover .radix-player__thumb,
+.radix-player__thumb:focus-visible,
+.radix-player__thumb[data-state="active"] {
+  opacity: 1;
+}
+
+.radix-player__thumb:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 60%);
+}

@@ -1,0 +1,53 @@
+.radix-player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  color: white;
+  background: black;
+}
+
+.radix-player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The default skin's pill bar: 44px tall, inset 12px, frosted. */
+.radix-player__bar {
+  position: absolute;
+  inset: auto 12px 12px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 4px;
+  background: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border-radius: 9999px;
+}
+
+/* Radix ships no styles; this is the 36px round icon button with an 18px icon. */
+.radix-player__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.radix-player__button:hover,
+.radix-player__button:focus-visible {
+  background: rgb(255 255 255 / 15%);
+  outline: none;
+}
+
+.radix-player__button svg {
+  width: 18px;
+  height: 18px;
+}

@@ -1,0 +1,468 @@
+.radix-player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  font-size: 13px;
+  color: white;
+  background: black;
+}
+
+.radix-player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The default skin's gradient behind the bar and the bar itself; both fade with the controls feature. */
+.radix-player__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / 50%), rgb(0 0 0 / 30%) 25%, transparent);
+  transition: opacity 300ms;
+}
+
+.radix-player__bar {
+  position: absolute;
+  inset: auto 12px 12px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 4px;
+  background: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border-radius: 9999px;
+  transition: opacity 300ms;
+}
+
+.radix-player__backdrop[data-hidden],
+.radix-player__bar[data-hidden] {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.radix-player__group {
+  display: flex;
+  align-items: center;
+}
+
+.radix-player__time-group {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  align-items: center;
+  padding: 0 12px;
+}
+
+/* Buttons */
+.radix-player__button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 9999px;
+  transition: background-color 150ms;
+}
+
+.radix-player__button:hover,
+.radix-player__button:focus-visible,
+.radix-player__button[data-state="open"] {
+  background: rgb(255 255 255 / 15%);
+  outline: none;
+}
+
+.radix-player__button:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 60%);
+}
+
+.radix-player__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.radix-player__button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* On/off state for glyphs Radix has only one of: an underline while on, dimmed while off. */
+.radix-player__icon {
+  position: relative;
+  display: inline-flex;
+  opacity: 0.8;
+}
+
+.radix-player__icon[data-on] {
+  opacity: 1;
+}
+
+.radix-player__icon[data-on]::after {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 16px;
+  height: 2px;
+  content: "";
+  background: currentColor;
+  border-radius: 9999px;
+  transform: translateX(-50%);
+}
+
+.radix-player__text-button {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  background: rgb(255 255 255 / 15%);
+  border: 0;
+  border-radius: 9999px;
+}
+
+.radix-player__text-button:hover,
+.radix-player__text-button:focus-visible {
+  background: rgb(255 255 255 / 25%);
+  outline: none;
+}
+
+/* Time */
+.radix-player__time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.radix-player__time--button {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+/* Seek slider: the root is the pointer surface; each chapter is its own rounded segment with a 4px gap. */
+.radix-player__slider {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  height: 32px;
+  touch-action: none;
+  user-select: none;
+}
+
+.radix-player__track {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  height: 4px;
+}
+
+.radix-player__segment {
+  position: absolute;
+  height: 4px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 20%);
+  border-radius: 9999px;
+  transition: height 300ms;
+}
+
+.radix-player__segment[data-highlighted] {
+  height: 7px;
+}
+
+.radix-player__buffer,
+.radix-player__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.radix-player__buffer {
+  background: rgb(255 255 255 / 20%);
+}
+
+.radix-player__fill {
+  background: white;
+}
+
+.radix-player__thumb {
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 9999px;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.radix-player__slider:hover .radix-player__thumb,
+.radix-player__thumb:focus-visible,
+.radix-player__thumb[data-state="active"],
+.radix-player__thumb--always {
+  opacity: 1;
+}
+
+.radix-player__thumb:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 60%);
+}
+
+/* Preview: the thumbnail sits 36px above the track, the label 42px above it, over the thumbnail's gradient. */
+.radix-player__preview {
+  position: absolute;
+  bottom: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.radix-player__thumbnail {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  width: 160px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 90%);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 40%);
+}
+
+.radix-player__thumbnail img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: top left;
+}
+
+.radix-player__thumbnail::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(to top, rgb(0 0 0 / 50%), rgb(0 0 0 / 10%), transparent);
+}
+
+.radix-player__preview-label {
+  position: absolute;
+  bottom: 42px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
+}
+
+.radix-player__preview-chapter {
+  width: 100%;
+  padding: 0 12px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tooltip */
+.radix-player__tooltip {
+  z-index: 50;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #171717;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
+}
+
+.radix-player__tooltip-key {
+  margin-left: 6px;
+  font: inherit;
+  color: #737373;
+}
+
+/* Popups: Radix positions them; this is only the surface. */
+.radix-player__popover,
+.radix-player__menu {
+  z-index: 50;
+  padding: 4px;
+  color: white;
+  background: rgb(23 23 23 / 90%);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+  outline: none;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 40%);
+}
+
+.radix-player__volume-anchor {
+  display: inline-flex;
+}
+
+.radix-player__popover {
+  display: flex;
+  align-items: center;
+  height: 144px;
+  padding: 12px;
+}
+
+.radix-player__volume {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+.radix-player__volume-track {
+  position: relative;
+  flex: 1;
+  width: 4px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 20%);
+  border-radius: 9999px;
+}
+
+.radix-player__volume-range {
+  position: absolute;
+  width: 100%;
+  background: white;
+}
+
+/* Menu */
+.radix-player__menu {
+  min-width: 14rem;
+  max-height: min(70vh, 20rem);
+  overflow-y: auto;
+}
+
+.radix-player__menu-item {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+.radix-player__menu-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+.radix-player__menu-item--radio {
+  padding-left: 32px;
+}
+
+.radix-player__menu-item[data-highlighted],
+.radix-player__menu-item[data-state="open"] {
+  background: rgb(255 255 255 / 15%);
+}
+
+.radix-player__menu-item[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.radix-player__menu-hint {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 16px;
+  color: rgb(255 255 255 / 60%);
+}
+
+.radix-player__menu-check {
+  position: absolute;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+/* Indicators */
+.radix-player__spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.radix-player__spinner svg {
+  width: 48px;
+  height: 48px;
+  animation: radix-player-spin 1s linear infinite;
+}
+
+@keyframes radix-player-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error dialog, scoped to the player: our own scrim plus a centered, non-modal Radix Dialog. */
+.radix-player__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 60%);
+}
+
+.radix-player__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: fit-content;
+  max-width: 24rem;
+  height: fit-content;
+  margin: auto;
+  padding: 20px;
+  color: white;
+  background: #171717;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+  outline: none;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 50%);
+}
+
+.radix-player__dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.radix-player__dialog-description {
+  margin: 0;
+  font-size: 14px;
+  color: rgb(255 255 255 / 80%);
+}
+
+.radix-player__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
