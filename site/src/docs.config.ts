@@ -51,6 +51,15 @@ export const sidebar: Sidebar = [
         ],
       },
       {
+        sidebarLabel: 'Frameworks',
+        frameworks: ['html'],
+        llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
+        contents: [
+          { slug: 'guides/vue', redirectFrom: ['guides/use-videojs-with-vue'] },
+          { slug: 'guides/svelte', redirectFrom: ['guides/use-videojs-with-svelte'] },
+        ],
+      },
+      {
         sidebarLabel: 'Migrate',
         llmsDescription:
           'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
@@ -99,15 +108,6 @@ export const sidebar: Sidebar = [
             sidebarLabel: 'Mux Data',
             redirectFrom: ['concepts/mux-data'],
           },
-        ],
-      },
-      {
-        sidebarLabel: 'Frameworks',
-        frameworks: ['html'],
-        llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
-        contents: [
-          { slug: 'guides/vue', frameworks: ['html'], redirectFrom: ['guides/use-videojs-with-vue'] },
-          { slug: 'guides/svelte', frameworks: ['html'], redirectFrom: ['guides/use-videojs-with-svelte'] },
         ],
       },
     ],
