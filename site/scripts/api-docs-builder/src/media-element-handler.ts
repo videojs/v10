@@ -145,7 +145,10 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const mediaAdapterPath = path.join(monorepoRoot, 'packages/media/src/dom/html-media-adapter/html-media-adapter.ts');
   const videoAdapterPath = path.join(monorepoRoot, 'packages/media/src/dom/html-video-adapter/html-video-adapter.ts');
   const audioAdapterPath = path.join(monorepoRoot, 'packages/media/src/dom/html-audio-adapter/html-audio-adapter.ts');
-  const hostAttributesPath = path.join(monorepoRoot, 'packages/media/src/dom/custom-media-element/host-attributes.ts');
+  const targetAttributesPath = path.join(
+    monorepoRoot,
+    'packages/media/src/dom/custom-media-element/target-attributes.ts'
+  );
   const baseMethods = extractPublicMethodNames(mediaAdapterPath, 'HTMLMediaAdapter', project);
   const videoMethods = mergeNames(baseMethods, extractPublicMethodNames(videoAdapterPath, 'HTMLVideoAdapter', project));
   const audioMethods = mergeNames(baseMethods, extractPublicMethodNames(audioAdapterPath, 'HTMLAudioAdapter', project));
@@ -157,10 +160,10 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const audioBaseSurface = { ...baseAdapter.properties, ...audioAdapter.properties };
   const videoCSSVars = cssVarsRecord(extractCSSVars(templatesPath, project, 'Video'));
   const audioCSSVars = cssVarsRecord(extractCSSVars(templatesPath, project, 'Audio'));
-  // The content attributes each built-in host accepts, declared by the host layer.
+  // The content attributes each built-in target accepts, declared by the target layer.
   const nativeAttributes = {
-    video: extractAttributeConfigs(hostAttributesPath, 'videoContentAttributes', project),
-    audio: extractAttributeConfigs(hostAttributesPath, 'audioContentAttributes', project),
+    video: extractAttributeConfigs(targetAttributesPath, 'videoContentAttributes', project),
+    audio: extractAttributeConfigs(targetAttributesPath, 'audioContentAttributes', project),
     iframe: [],
   };
   const results: MediaElementResult[] = [];

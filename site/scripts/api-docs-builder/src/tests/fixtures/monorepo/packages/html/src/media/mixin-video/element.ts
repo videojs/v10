@@ -7,7 +7,7 @@
 import { MixinHost } from '../../../../media/src/dom/mixin';
 
 // Stub — the builder parses the AST, it doesn't run the code.
-function createMediaElement(options: { Adapter: any; host: any }) {
+function createMediaElement(options: { Adapter: any; target: any }) {
   return options.Adapter;
 }
 
@@ -17,7 +17,7 @@ function createMediaElement(options: { Adapter: any; host: any }) {
  */
 export class MixinVideoElement extends createMediaElement({
   Adapter: MixinHost,
-  host: { template: () => '<video></video>' },
+  target: { template: () => '<video></video>' },
 }) {
   static readonly tagName = 'mixin-video';
 }

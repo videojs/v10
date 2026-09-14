@@ -1,6 +1,6 @@
-import { AdapterAttachment, type Media, renderHost } from '@videojs/media/dom';
+import { AdapterAttachment, type Media } from '@videojs/media/dom';
 import { HlsBackgroundVideoAdapter, type HlsVideoMediaError } from '@videojs/spf/hls-background-video';
-import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
+import { type CustomElement, namedNodeMapToObject, renderShadowTemplate } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
@@ -65,7 +65,7 @@ export class HlsBackgroundVideoElement extends HlsBackgroundVideoBase {
   constructor() {
     super();
 
-    renderHost(this, {
+    renderShadowTemplate(this, {
       ...namedNodeMapToObject(this.attributes),
       muted: '',
       loop: '',
@@ -94,7 +94,7 @@ export class HlsBackgroundVideoElement extends HlsBackgroundVideoBase {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback?.();
-    this.#attachment.release();
+    this.#attachment.detach();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {

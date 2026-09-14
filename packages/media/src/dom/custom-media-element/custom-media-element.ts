@@ -1,17 +1,17 @@
+import type { ShadowTemplateFunction } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
 import { AdapterAttachment } from './attach-adapter';
 import { attributeName, buildRoutes, coerceAttribute, derivedAttributes } from './attributes';
 import { bridgeEvent, forwardAdapter, reflectAttributes, unbridgeEvents } from './element-surface';
-import type { MediaElementHost } from './hosts';
-import { initialAttributes } from './render-host';
-import type { MediaTemplate } from './templates';
+import { createRenderContext } from './render-context';
+import type { MediaTargetDefinition } from './targets';
 
-export interface PlaybackAdapter extends EventTarget {
-  attach(target: EventTarget | null): void;
+export interface PlaybackAdapter<Target extends EventTarget = EventTarget> extends EventTarget {
+  attach(target: Target): void;
   detach(): void;
   destroy(): void;
-  /** Index signature for dynamic property forwarding (includes the adapter's protected `target`). */
+  /** Index signature for dynamic property forwarding. */
   [key: string]: any;
 }
 
@@ -19,27 +19,30 @@ export interface PlaybackAdapter extends EventTarget {
  * An adapter class as an element sees it: constructible without arguments and declaring its configurable properties
  * with their defaults.
  */
-export interface PlaybackAdapterConstructor<T extends PlaybackAdapter = PlaybackAdapter> extends Constructor<T> {
+export interface PlaybackAdapterConstructor<
+  T extends PlaybackAdapter<any> = PlaybackAdapter<any>,
+> extends Constructor<T> {
   readonly defaultProps: object;
 }
 
-export interface CustomMediaElementConfig<
-  T extends PlaybackAdapterConstructor,
-  Target extends EventTarget = EventTarget,
-> {
+type PlaybackAdapterTarget<T extends PlaybackAdapterConstructor> = NonNullable<
+  Parameters<InstanceType<T>['attach']>[0]
+>;
+
+export interface CustomMediaElementConfig<T extends PlaybackAdapterConstructor> {
   Adapter: T;
-  host: MediaElementHost<Target>;
+  target: MediaTargetDefinition<PlaybackAdapterTarget<T>>;
 }
 
-type CustomMediaConstructor<T extends PlaybackAdapterConstructor, Target extends EventTarget> = Constructor<
+type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
   HTMLElement &
     InstanceType<T> & {
       readonly adapter: InstanceType<T>;
-      readonly target: Target | null;
+      readonly target: PlaybackAdapterTarget<T> | null;
       attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     }
 > & {
-  template?: MediaTemplate;
+  template?: ShadowTemplateFunction<Record<string, string>>;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
 };
@@ -47,24 +50,25 @@ type CustomMediaConstructor<T extends PlaybackAdapterConstructor, Target extends
 /**
  * Build a custom element around an adapter.
  *
- * The supplied host owns rendering and resolving the target. The element attaches its adapter to that target and is the
- * adapter to callers: every method, accessor, and event comes through. Adapter attributes are inferred from primitive
- * `defaultProps`; target-native attributes and how they are applied belong to the host.
+ * The supplied target definition owns rendering and resolving the target. The element attaches its adapter to that
+ * target and is the adapter to callers: every method, accessor, and event comes through. Adapter attributes are
+ * inferred from primitive `defaultProps`; target-native attributes and how they are applied belong to the target
+ * definition.
  *
- * @param config - The playback adapter and the independent host policy used to render and manage its target.
+ * @param config - The playback adapter and the independent definition used to render and manage its target.
  */
-export function CustomMediaElement<T extends PlaybackAdapterConstructor, Target extends EventTarget>(
-  config: CustomMediaElementConfig<T, Target>
-): CustomMediaConstructor<T, Target> {
-  const { Adapter, host } = config;
-  const targetAttributes = host.attributes ?? {};
-  const hostAttributeNames = new Set(
-    Object.entries(targetAttributes).map(([prop, config]) => attributeName(prop, config))
+export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
+  config: CustomMediaElementConfig<T>
+): CustomMediaConstructor<T> {
+  const { Adapter, target: definition } = config;
+  const targetAttributeConfigs = definition.attributes ?? {};
+  const targetAttributeNames = new Set(
+    Object.entries(targetAttributeConfigs).map(([prop, config]) => attributeName(prop, config))
   );
-  const routes = buildRoutes(targetAttributes, derivedAttributes(Adapter.defaultProps), Adapter);
+  const routes = buildRoutes(targetAttributeConfigs, derivedAttributes(Adapter.defaultProps), Adapter);
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
-    static template = host.template;
+    static template = definition.template;
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
 
     static get observedAttributes(): string[] {
@@ -74,7 +78,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor, Target 
     // SAFETY: `Adapter` is the constructor represented by `T`; TypeScript widens construction through the constraint.
     #adapter = new Adapter() as InstanceType<T>;
     #stopObserving: (() => void) | undefined;
-    #attachment = new AdapterAttachment(
+    #attachment = new AdapterAttachment<PlaybackAdapterTarget<T>>(
       this,
       this.#adapter,
       () => this.target,
@@ -87,36 +91,37 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor, Target 
     constructor() {
       super();
 
-      const attributes = initialAttributes(this, routes);
+      const context = createRenderContext(this, routes);
 
-      host.render(this, attributes);
+      definition.render(this, context);
 
       this.#attachment.attach();
-      const stopObserving = host.observe?.(this, () => {
+      const stopObserving = definition.observe?.(this, () => {
         // A target that arrives later has seen none of the attributes already on the element.
         if (this.#attachment.attach()) this.#hydrate();
       });
 
       if (stopObserving) this.#stopObserving = stopObserving;
 
-      this.#hydrate(attributes.all);
+      this.#hydrate(context.attributeValues);
     }
 
+    /** The adapter owned by this element. The element exclusively manages its attachment lifecycle. */
     get adapter(): InstanceType<T> {
       return this.#adapter;
     }
 
-    /** The target currently selected by the host for the adapter to play through. */
-    get target(): Target | null {
-      return host.target(this);
+    /** The concrete target currently selected for the adapter to play through. */
+    get target(): PlaybackAdapterTarget<T> | null {
+      return definition.resolve(this);
     }
 
     connectedCallback() {
-      host.connected?.(this);
+      definition.connected?.(this);
     }
 
     disconnectedCallback() {
-      this.#attachment.release();
+      this.#attachment.detach();
     }
 
     addEventListener(
@@ -158,10 +163,12 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor, Target 
         return;
       }
 
-      // Anything else the host understands is the target's business; a subclass's own attributes are not.
-      const target = this.target;
+      // Anything else the target definition understands is the target's business; a subclass's own attributes are not.
+      const resolvedTarget = this.target;
 
-      if (target && hostAttributeNames.has(name)) host.attributeChanged?.(target, name, value);
+      if (resolvedTarget && targetAttributeNames.has(name)) {
+        definition.attributeChanged?.(resolvedTarget, name, value);
+      }
     }
   }
 

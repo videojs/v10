@@ -1,7 +1,7 @@
 import { propsFromAttributes } from '@videojs/media/dom';
 import { buildTwitchIframeSrc, TwitchAdapter } from '@videojs/twitch-video';
 
-import { createMediaElement, iframeHost } from '../create-media-element';
+import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
@@ -21,6 +21,6 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaType video
  * @mediaTarget iframe
  */
-export class TwitchVideoElement extends createMediaElement({ Adapter: TwitchAdapter, host: iframeHost(template) }) {
+export class TwitchVideoElement extends createMediaElement({ Adapter: TwitchAdapter, target: iframeTarget(template) }) {
   static readonly tagName = 'twitch-video';
 }

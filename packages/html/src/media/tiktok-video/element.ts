@@ -1,7 +1,7 @@
 import { propsFromAttributes } from '@videojs/media/dom';
 import { buildTikTokIframeSrc, TikTokAdapter } from '@videojs/tiktok-video';
 
-import { createMediaElement, iframeHost } from '../create-media-element';
+import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
@@ -24,6 +24,6 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaType video
  * @mediaTarget iframe
  */
-export class TikTokVideoElement extends createMediaElement({ Adapter: TikTokAdapter, host: iframeHost(template) }) {
+export class TikTokVideoElement extends createMediaElement({ Adapter: TikTokAdapter, target: iframeTarget(template) }) {
   static readonly tagName = 'tiktok-video';
 }

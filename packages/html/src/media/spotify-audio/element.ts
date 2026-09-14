@@ -1,7 +1,7 @@
 import { propsFromAttributes } from '@videojs/media/dom';
 import { buildSpotifyIframeSrc, SpotifyAdapter } from '@videojs/spotify-audio';
 
-import { createMediaElement, iframeHost } from '../create-media-element';
+import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
@@ -22,6 +22,9 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaType audio
  * @mediaTarget iframe
  */
-export class SpotifyAudioElement extends createMediaElement({ Adapter: SpotifyAdapter, host: iframeHost(template) }) {
+export class SpotifyAudioElement extends createMediaElement({
+  Adapter: SpotifyAdapter,
+  target: iframeTarget(template),
+}) {
   static readonly tagName = 'spotify-audio';
 }

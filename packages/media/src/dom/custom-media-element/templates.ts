@@ -1,4 +1,4 @@
-import { serializeAttributes } from '@videojs/utils/dom';
+import { serializeAttributes, type ShadowTemplateFunction } from '@videojs/utils/dom';
 
 /** CSS custom property names for video elements. */
 export const VideoCSSVars = {
@@ -18,9 +18,6 @@ export const VideoCSSVars = {
 
 /** CSS custom property names for audio elements. */
 export const AudioCSSVars = {} as const;
-
-/** Renders an element's shadow template from its initial attributes. */
-export type MediaTemplate = (attrs: Record<string, string>) => string;
 
 export function videoTemplate(attrs: Record<string, string>): string {
   return /*html*/ `
@@ -54,7 +51,7 @@ export function videoTemplate(attrs: Record<string, string>): string {
   `;
 }
 
-export function elementTemplate(tag: string): MediaTemplate {
+export function elementTemplate(tag: string): ShadowTemplateFunction<Record<string, string>> {
   return (attrs) => /*html*/ `
     <style>
       :host {

@@ -2,28 +2,29 @@ import { isBoolean, isFunction, isNumber, isString } from '@videojs/utils/predic
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
-import type { HostAttributeConfig, HostAttributeConfigs } from './host-attributes';
+import type { MediaTargetAttributeConfig, MediaTargetAttributeConfigs } from './target-attributes';
 
 /**
  * The media properties whose content attribute is not their kebab-cased name, plus the one attribute that seeds live
  * state: a `muted` attribute is `defaultMuted` by the HTML spec, but the page that writes it means to start muted.
  */
-export const mediaAttributeConfigs: Readonly<Record<string, Pick<HostAttributeConfig, 'attribute' | 'state'>>> = {
-  autoPictureInPicture: { attribute: 'autopictureinpicture' },
-  controlsList: { attribute: 'controlslist' },
-  crossOrigin: { attribute: 'crossorigin' },
-  defaultMuted: { attribute: 'muted', state: 'muted' },
-  disablePictureInPicture: { attribute: 'disablepictureinpicture' },
-  disableRemotePlayback: { attribute: 'disableremoteplayback' },
-  playsInline: { attribute: 'playsinline' },
-};
+export const mediaAttributeMappings: Readonly<Record<string, Pick<MediaTargetAttributeConfig, 'attribute' | 'state'>>> =
+  {
+    autoPictureInPicture: { attribute: 'autopictureinpicture' },
+    controlsList: { attribute: 'controlslist' },
+    crossOrigin: { attribute: 'crossorigin' },
+    defaultMuted: { attribute: 'muted', state: 'muted' },
+    disablePictureInPicture: { attribute: 'disablepictureinpicture' },
+    disableRemotePlayback: { attribute: 'disableremoteplayback' },
+    playsInline: { attribute: 'playsinline' },
+  };
 
 /** Live playback state has no content attribute, even when an adapter lists a default for it. */
 export const stateProps: ReadonlySet<string> = new Set(['muted', 'volume', 'currentTime', 'playbackRate']);
 
 /** The content attribute a property is driven by: its WHATWG spelling if it has one, else kebab-case. */
-export function attributeName(prop: string, config?: HostAttributeConfig): string {
-  return config?.attribute ?? mediaAttributeConfigs[prop]?.attribute ?? kebabCase(prop);
+export function attributeName(prop: string, config?: MediaTargetAttributeConfig): string {
+  return config?.attribute ?? mediaAttributeMappings[prop]?.attribute ?? kebabCase(prop);
 }
 
 /**
@@ -33,8 +34,8 @@ export function attributeName(prop: string, config?: HostAttributeConfig): strin
  * Object defaults such as `source` stay property-only, and so does a boolean that defaults to `true`: an HTML boolean
  * attribute cannot say "absent means true", so `<x playsinline>` could never turn it off.
  */
-export function derivedAttributes(defaultProps: object): HostAttributeConfigs {
-  const configs: HostAttributeConfigs = {};
+export function derivedAttributes(defaultProps: object): MediaTargetAttributeConfigs {
+  const configs: Record<string, MediaTargetAttributeConfig> = {};
 
   for (const [prop, value] of Object.entries(defaultProps)) {
     if (stateProps.has(prop) || value === true) continue;
@@ -42,7 +43,7 @@ export function derivedAttributes(defaultProps: object): HostAttributeConfigs {
     const type = isBoolean(value) ? Boolean : isNumber(value) ? Number : isString(value) ? String : undefined;
     if (!type) continue;
 
-    const { state } = mediaAttributeConfigs[prop] ?? {};
+    const { state } = mediaAttributeMappings[prop] ?? {};
 
     configs[prop] = { type, attribute: attributeName(prop), empty: value, ...(state && { state }) };
   }
@@ -76,7 +77,7 @@ export function propsFromAttributes<Adapter extends { readonly defaultProps: obj
  * Coerce an attribute string to the type its config declares. A removed attribute, or a number that does not parse,
  * falls back to the config's `empty` value.
  */
-export function coerceAttribute(value: string | null, config: HostAttributeConfig): unknown {
+export function coerceAttribute(value: string | null, config: MediaTargetAttributeConfig): unknown {
   if (config.type === Boolean) return value !== null;
 
   const empty = 'empty' in config ? config.empty : config.type === Number ? 0 : '';
@@ -105,19 +106,19 @@ export interface AttributeRoutes {
   /** Attribute name by adapter property, for the properties that reflect through one. */
   attributeOf: Map<string, string>;
   /** Config by attribute name, for coercion. */
-  configOf: Map<string, HostAttributeConfig>;
+  configOf: Map<string, MediaTargetAttributeConfig>;
   /** Properties with no adapter counterpart to write: they only reflect their attribute. */
-  reflected: Map<string, { attribute: string; config: HostAttributeConfig }>;
+  reflected: Map<string, { attribute: string; config: MediaTargetAttributeConfig }>;
 }
 
 /**
- * @param host - The host target's own attributes, owned by the adapter only where it can set the property.
+ * @param target - The concrete target's own attributes, owned by the adapter only where it can set the property.
  * @param derived - The adapter's declared attributes, owned by the adapter unless it exposes the property read-only.
  * @param Adapter - The adapter class, for its prototype.
  */
 export function buildRoutes(
-  host: HostAttributeConfigs,
-  derived: HostAttributeConfigs,
+  target: MediaTargetAttributeConfigs,
+  derived: MediaTargetAttributeConfigs,
   Adapter: Constructor<object>
 ): AttributeRoutes {
   const routes: AttributeRoutes = {
@@ -127,9 +128,9 @@ export function buildRoutes(
     configOf: new Map(),
     reflected: new Map(),
   };
-  const configs: Record<string, { config: HostAttributeConfig; owned: boolean }> = {};
+  const configs: Record<string, { config: MediaTargetAttributeConfig; owned: boolean }> = {};
 
-  for (const [prop, config] of Object.entries(host)) {
+  for (const [prop, config] of Object.entries(target)) {
     configs[prop] = { config, owned: accessorOf(Adapter.prototype, prop)?.set !== undefined };
   }
 

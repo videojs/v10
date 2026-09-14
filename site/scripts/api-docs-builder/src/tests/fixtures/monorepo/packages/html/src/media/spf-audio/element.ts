@@ -16,6 +16,6 @@ function MediaAttachMixin(base: any) {
  * @mediaType audio
  * @mediaTarget audio
  */
-export class SpfAudioElement extends MediaAttachMixin(CustomMediaElement({ Adapter: SpfAudioHost, host: {} })) {
+export class SpfAudioElement extends MediaAttachMixin(CustomMediaElement({ Adapter: SpfAudioHost, target: {} })) {
   static readonly tagName = 'spf-audio';
 }

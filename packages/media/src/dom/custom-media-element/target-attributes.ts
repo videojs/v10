@@ -1,18 +1,18 @@
-/** How a host property maps to the content attribute that drives it. */
-export interface HostAttributeConfig {
-  type: BooleanConstructor | NumberConstructor | StringConstructor;
+/** How a media target property maps to the content attribute that drives it. */
+export interface MediaTargetAttributeConfig {
+  readonly type: BooleanConstructor | NumberConstructor | StringConstructor;
   /** The attribute name when it is not the lowercased property name. */
-  attribute?: string;
+  readonly attribute?: string;
   /** The value the property takes when the attribute is removed, when that is not the empty string. */
-  empty?: unknown;
+  readonly empty?: unknown;
   /** A live-state property written alongside the owner. */
-  state?: string;
+  readonly state?: string;
 }
 
-export type HostAttributeConfigs = Record<string, HostAttributeConfig>;
+export type MediaTargetAttributeConfigs = Readonly<Record<string, MediaTargetAttributeConfig>>;
 
-/** Content attributes accepted by native audio and video hosts. */
-export const mediaContentAttributes = {
+/** Content attributes accepted by native audio and video targets. */
+export const mediaContentAttributes = Object.freeze({
   autoplay: { type: Boolean },
   controls: { type: Boolean },
   controlsList: { type: String },
@@ -23,16 +23,16 @@ export const mediaContentAttributes = {
   loop: { type: Boolean },
   preload: { type: String, empty: null },
   src: { type: String, empty: '' },
-} satisfies HostAttributeConfigs;
+} satisfies MediaTargetAttributeConfigs);
 
-/** Content attributes accepted by a native audio host. */
+/** Content attributes accepted by a native audio target. */
 export const audioContentAttributes = mediaContentAttributes;
 
-/** Content attributes accepted by a native video host. */
-export const videoContentAttributes = {
+/** Content attributes accepted by a native video target. */
+export const videoContentAttributes = Object.freeze({
   ...mediaContentAttributes,
   autoPictureInPicture: { type: Boolean },
   disablePictureInPicture: { type: Boolean },
   playsInline: { type: Boolean },
   poster: { type: String, empty: '' },
-} satisfies HostAttributeConfigs;
+} satisfies MediaTargetAttributeConfigs);

@@ -1,6 +1,6 @@
 import { DashAdapter } from '@videojs/dash-video';
 
-import { createMediaElement, videoHost } from '../create-media-element';
+import { createMediaElement, videoTarget } from '../create-media-element';
 
 /**
  * MPEG-DASH media element powered by dash.js and registered as `<dash-video>`.
@@ -8,6 +8,6 @@ import { createMediaElement, videoHost } from '../create-media-element';
  * @mediaType video
  * @mediaTarget video
  */
-export class DashVideoElement extends createMediaElement({ Adapter: DashAdapter, host: videoHost }) {
+export class DashVideoElement extends createMediaElement({ Adapter: DashAdapter, target: videoTarget }) {
   static readonly tagName = 'dash-video';
 }

@@ -1,8 +1,18 @@
 export { AdapterAttachment } from './attach-adapter';
 export { propsFromAttributes } from './attributes';
 export * from './custom-media-element';
-export * from './host-attributes';
-export * from './hosts';
-export { MediaChildren } from './media-children';
-export { type HostElementConstructor, renderHost } from './render-host';
-export * from './templates';
+export {
+  audioContentAttributes,
+  mediaContentAttributes,
+  type MediaTargetAttributeConfig,
+  type MediaTargetAttributeConfigs,
+  videoContentAttributes,
+} from './target-attributes';
+export {
+  type MediaTargetDefinition,
+  type MediaTargetRenderContext,
+  audioTarget,
+  iframeTarget,
+  videoTarget,
+} from './targets';
+export { AudioCSSVars, VideoCSSVars } from './templates';

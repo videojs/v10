@@ -1,7 +1,7 @@
 import { propsFromAttributes } from '@videojs/media/dom';
 import { buildVimeoIframeSrc, VimeoAdapter } from '@videojs/vimeo-video';
 
-import { createMediaElement, iframeHost } from '../create-media-element';
+import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
@@ -18,6 +18,6 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaType video
  * @mediaTarget iframe
  */
-export class VimeoVideoElement extends createMediaElement({ Adapter: VimeoAdapter, host: iframeHost(template) }) {
+export class VimeoVideoElement extends createMediaElement({ Adapter: VimeoAdapter, target: iframeTarget(template) }) {
   static readonly tagName = 'vimeo-video';
 }

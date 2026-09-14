@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLAudioAdapter } from '../../html-audio-adapter';
 import { HTMLVideoAdapter } from '../../html-video-adapter';
-import { audioHost, CustomMediaElement, iframeHost, videoHost } from '../index';
+import { audioTarget, CustomMediaElement, iframeTarget, videoTarget } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -160,7 +160,7 @@ class TestEmbedAdapter extends EventTarget {
     this.#playsInline = value;
   }
 
-  attach(target: EventTarget | null) {
+  attach(target: EventTarget) {
     this.target = target;
   }
 
@@ -204,15 +204,15 @@ function define<T extends CustomElementConstructor>(prefix: string, Ctor: T) {
 }
 
 const defineVideoElement = () =>
-  define('test-video', CustomMediaElement({ Adapter: TestVideoAdapter, host: videoHost }));
+  define('test-video', CustomMediaElement({ Adapter: TestVideoAdapter, target: videoTarget }));
 const defineVideoElementWithOptions = () =>
-  define('test-video', CustomMediaElement({ Adapter: TestVideoAdapterWithOptions, host: videoHost }));
+  define('test-video', CustomMediaElement({ Adapter: TestVideoAdapterWithOptions, target: videoTarget }));
 const defineAudioElement = () =>
-  define('test-audio', CustomMediaElement({ Adapter: TestAudioAdapter, host: audioHost }));
+  define('test-audio', CustomMediaElement({ Adapter: TestAudioAdapter, target: audioTarget }));
 const defineEmbedElement = () =>
-  define('test-embed', CustomMediaElement({ Adapter: TestEmbedAdapter, host: iframeHost() }));
+  define('test-embed', CustomMediaElement({ Adapter: TestEmbedAdapter, target: iframeTarget() }));
 const defineFieldElement = () =>
-  define('test-video', CustomMediaElement({ Adapter: TestFieldAdapter, host: videoHost }));
+  define('test-video', CustomMediaElement({ Adapter: TestFieldAdapter, target: videoTarget }));
 
 function create(def: { Ctor: new () => any; tag: string }) {
   const el = new def.Ctor();
@@ -224,7 +224,7 @@ function create(def: { Ctor: new () => any; tag: string }) {
 
 describe('CustomMediaElement', () => {
   describe('shadow DOM', () => {
-    it('renders the host element for the adapter', () => {
+    it('renders the concrete target for the adapter', () => {
       const video = create(defineVideoElement());
       const audio = create(defineAudioElement());
       const embed = create(defineEmbedElement());
@@ -234,7 +234,7 @@ describe('CustomMediaElement', () => {
       expect(embed.shadowRoot!.querySelector('iframe')).not.toBeNull();
     });
 
-    it('marks the inner element with a part named after the host', () => {
+    it('marks the inner element with a part named after the target tag', () => {
       const el = create(defineVideoElement());
 
       expect(el.shadowRoot!.querySelector('video')!.getAttribute('part')).toBe('video');
@@ -243,7 +243,7 @@ describe('CustomMediaElement', () => {
     it('renders a custom template', () => {
       const Ctor = CustomMediaElement({
         Adapter: TestEmbedAdapter,
-        host: iframeHost((attrs) => `<iframe title="Embedded player" data-src="${attrs.src ?? ''}"></iframe>`),
+        target: iframeTarget((attrs) => `<iframe title="Embedded player" data-src="${attrs.src ?? ''}"></iframe>`),
       });
       const { tag } = define('test-embed', Ctor);
       const container = document.createElement('div');
@@ -257,16 +257,18 @@ describe('CustomMediaElement', () => {
       expect(iframe.getAttribute('data-src')).toBe('https://example.com/embed');
     });
 
-    it('accepts a host with an arbitrary target', () => {
-      const host = {
+    it('accepts a definition with an arbitrary target', () => {
+      const targetDefinition = {
         render(element: HTMLElement) {
           element.attachShadow({ mode: 'open' }).innerHTML = '<div data-playback-target></div>';
         },
-        target(element: HTMLElement) {
+        resolve(element: HTMLElement) {
           return element.shadowRoot?.querySelector<HTMLDivElement>('[data-playback-target]') ?? null;
         },
       };
-      const el = create(define('test-target', CustomMediaElement({ Adapter: TestEmbedAdapter, host })));
+      const el = create(
+        define('test-target', CustomMediaElement({ Adapter: TestEmbedAdapter, target: targetDefinition }))
+      );
 
       expect(el.target).toBe(el.shadowRoot!.querySelector('[data-playback-target]'));
       expect(el.adapter.target).toBe(el.target);
@@ -274,7 +276,7 @@ describe('CustomMediaElement', () => {
     });
 
     it('lets a subclass replace the template through the static', () => {
-      class Custom extends CustomMediaElement({ Adapter: TestVideoAdapter, host: videoHost }) {
+      class Custom extends CustomMediaElement({ Adapter: TestVideoAdapter, target: videoTarget }) {
         static template = () => '<video part="custom"></video>';
       }
 
@@ -300,7 +302,7 @@ describe('CustomMediaElement', () => {
       expect(el.target).toBe(slotted);
     });
 
-    it('adopts a direct child of the host tag but not one nested in slotted content', () => {
+    it('adopts a direct target child but not one nested in slotted content', () => {
       const el = create(defineVideoElement());
       const wrapper = document.createElement('div');
 
@@ -314,7 +316,7 @@ describe('CustomMediaElement', () => {
       expect(el.target).toBe(child);
     });
 
-    it('ignores a slotted element that is not the host tag', () => {
+    it('ignores a slotted element that is not the target tag', () => {
       const el = create(defineVideoElement());
       const div = document.createElement('div');
 
@@ -365,7 +367,7 @@ describe('CustomMediaElement', () => {
   });
 
   describe('observedAttributes', () => {
-    it('observes the native attributes of a video host plus the adapter defaults', () => {
+    it('observes the native attributes of a video target plus the adapter defaults', () => {
       const observed = defineVideoElement().Ctor.observedAttributes;
 
       for (const attr of ['autoplay', 'controls', 'crossorigin', 'loop', 'muted', 'preload', 'src', 'loading']) {
@@ -379,7 +381,7 @@ describe('CustomMediaElement', () => {
       expect(observed).toContain('stream-type');
     });
 
-    it('does not give an audio host video-only attributes', () => {
+    it('does not give an audio target video-only attributes', () => {
       const observed = defineAudioElement().Ctor.observedAttributes;
 
       expect(observed).toContain('controls');
@@ -480,7 +482,9 @@ describe('CustomMediaElement', () => {
 
     it('only reflect a property the adapter exposes read-only', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const el = create(define('test-video', CustomMediaElement({ Adapter: TestReadOnlyAdapter, host: videoHost })));
+      const el = create(
+        define('test-video', CustomMediaElement({ Adapter: TestReadOnlyAdapter, target: videoTarget }))
+      );
 
       el.setAttribute('engine-name', 'other');
 
@@ -521,7 +525,7 @@ describe('CustomMediaElement', () => {
     });
   });
 
-  describe('native attributes of the host', () => {
+  describe('native attributes of the target', () => {
     it('reach the adapter when it can set the property, so an engine can intercept them', () => {
       const el = create(defineVideoElement());
 
@@ -615,7 +619,9 @@ describe('CustomMediaElement', () => {
     it('are not mirrored by an embed, whose template gets them all instead', () => {
       const Ctor = CustomMediaElement({
         Adapter: TestEmbedAdapter,
-        host: iframeHost((attrs) => `<iframe data-src="${attrs.src ?? ''}" data-muted="${'muted' in attrs}"></iframe>`),
+        target: iframeTarget(
+          (attrs) => `<iframe data-src="${attrs.src ?? ''}" data-muted="${'muted' in attrs}"></iframe>`
+        ),
       });
       const { tag } = define('test-embed', Ctor);
       const container = document.createElement('div');
@@ -636,7 +642,7 @@ describe('CustomMediaElement', () => {
     });
 
     it('do not include attributes a subclass observes for itself', () => {
-      class Extended extends CustomMediaElement({ Adapter: TestVideoAdapter, host: videoHost }) {
+      class Extended extends CustomMediaElement({ Adapter: TestVideoAdapter, target: videoTarget }) {
         static get observedAttributes() {
           return [...super.observedAttributes, 'playback-id'];
         }

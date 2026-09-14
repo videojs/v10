@@ -1,7 +1,7 @@
 import { propsFromAttributes } from '@videojs/media/dom';
 import { buildYouTubeIframeSrc, YouTubeAdapter } from '@videojs/youtube-video';
 
-import { createMediaElement, iframeHost } from '../create-media-element';
+import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
@@ -18,6 +18,9 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaType video
  * @mediaTarget iframe
  */
-export class YouTubeVideoElement extends createMediaElement({ Adapter: YouTubeAdapter, host: iframeHost(template) }) {
+export class YouTubeVideoElement extends createMediaElement({
+  Adapter: YouTubeAdapter,
+  target: iframeTarget(template),
+}) {
   static readonly tagName = 'youtube-video';
 }

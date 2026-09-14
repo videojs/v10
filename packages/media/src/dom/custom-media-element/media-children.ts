@@ -1,3 +1,5 @@
+import { setAttributeValue } from '@videojs/utils/dom';
+
 type MediaChild = HTMLTrackElement | HTMLSourceElement;
 
 /**
@@ -9,23 +11,23 @@ type MediaChild = HTMLTrackElement | HTMLSourceElement;
  * the `default` attribute on a track added from script.
  */
 export class MediaChildren {
-  #host: HTMLElement;
+  #element: HTMLElement;
   #target: () => Element | null;
   #clones = new Map<MediaChild, MediaChild>();
   #observer = new MutationObserver((mutations) => this.#syncAttributes(mutations));
 
   /**
-   * @param host - The custom element whose default slot holds the children.
+   * @param element - The custom element whose default slot holds the children.
    * @param target - Resolves the media element the clones are appended to.
    */
-  constructor(host: HTMLElement, target: () => Element | null) {
-    this.#host = host;
+  constructor(element: HTMLElement, target: () => Element | null) {
+    this.#element = element;
     this.#target = target;
   }
 
   /** Bring the clones in step with the default slot's assigned children. Call it after construction and on `slotchange`. */
   sync(): void {
-    const slot = this.#host.shadowRoot?.querySelector<HTMLSlotElement>('slot:not([name])');
+    const slot = this.#element.shadowRoot?.querySelector<HTMLSlotElement>('slot:not([name])');
     const children = new Set(slot?.assignedElements({ flatten: true }).filter(isMediaChild) ?? []);
 
     for (const [child, clone] of this.#clones) {
@@ -51,7 +53,7 @@ export class MediaChildren {
     }
   }
 
-  /** Stop following the children. Call it when the host is done for good; the clones are left where they are. */
+  /** Stop following the children. Call it when the owning element is done for good; the clones stay where they are. */
   disconnect(): void {
     this.#observer.disconnect();
     this.#clones.clear();
@@ -67,8 +69,7 @@ export class MediaChildren {
 
       const value = child.getAttribute(attributeName);
 
-      if (value === null) clone.removeAttribute(attributeName);
-      else clone.setAttribute(attributeName, value);
+      setAttributeValue(clone, attributeName, value);
 
       enableDefaultTrack(clone);
     }

@@ -17,6 +17,6 @@ function MediaAttachMixin(base: any) {
  * @mediaType video
  * @mediaTarget video
  */
-export class ComplexVideoElement extends MediaAttachMixin(CustomMediaElement({ Adapter: ComplexHost, host: {} })) {
+export class ComplexVideoElement extends MediaAttachMixin(CustomMediaElement({ Adapter: ComplexHost, target: {} })) {
   static readonly tagName = 'complex-video';
 }

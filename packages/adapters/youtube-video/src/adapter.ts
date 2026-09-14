@@ -92,8 +92,8 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
    * Bind the iframe hosting the embed. The player follows once an embed URL can be resolved, which may not be now: an
    * iframe attached before `src` is set is picked up by the next `load()`.
    */
-  attach(target: HTMLIFrameElement | null): void {
-    if (!target || this.#target === target) return;
+  attach(target: HTMLIFrameElement): void {
+    if (this.#target === target) return;
 
     if (this.#target) this.detach();
 

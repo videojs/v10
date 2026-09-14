@@ -1,3 +1,4 @@
+import { redispatchEvent } from '@videojs/utils/events';
 import { isFunction } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
 
@@ -134,15 +135,6 @@ interface Bridge {
 
 const bridges = new WeakMap<AdapterElement, Bridge>();
 
-/** A copy of an event for re-dispatch, keeping the subclass and its init dictionary where the constructor allows it. */
-function cloneEvent(event: Event): Event {
-  try {
-    return new (event.constructor as typeof Event)(event.type, event);
-  } catch {
-    return new Event(event.type, event);
-  }
-}
-
 /**
  * Re-dispatch the adapter's events of one type on the element. Call it from `addEventListener`: the adapter is only
  * subscribed the first time someone listens for a type. An adapter's composed copy of an event its target dispatched
@@ -158,7 +150,7 @@ export function bridgeEvent(element: AdapterElement, type: string): void {
       handler: (event) => {
         if (event.composed && isForwardedEvent(event)) return;
 
-        element.dispatchEvent(cloneEvent(event));
+        redispatchEvent(element, event);
       },
     };
     bridges.set(element, bridge);

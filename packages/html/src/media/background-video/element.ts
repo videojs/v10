@@ -1,5 +1,5 @@
-import { type Media, renderHost } from '@videojs/media/dom';
-import { namedNodeMapToObject } from '@videojs/utils/dom';
+import type { Media } from '@videojs/media/dom';
+import { namedNodeMapToObject, renderShadowTemplate } from '@videojs/utils/dom';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { backgroundVideoTemplate } from './template';
@@ -7,7 +7,7 @@ import { backgroundVideoTemplate } from './template';
 const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
 // Not a `CustomMediaElement`: a background video has no adapter and needs one attribute, not the full media API. It
-// renders through the same `renderHost` the media elements use.
+// renders through the same shadow-template utility the media elements use.
 export class BackgroundVideoElement extends MediaAttachMixin(HTMLElementBase) {
   static readonly tagName = 'background-video';
 
@@ -20,7 +20,7 @@ export class BackgroundVideoElement extends MediaAttachMixin(HTMLElementBase) {
   constructor() {
     super();
 
-    renderHost(this, {
+    renderShadowTemplate(this, {
       ...namedNodeMapToObject(this.attributes),
       ...(!this.hasAttribute('nomuted') && { muted: '' }),
       ...(!this.hasAttribute('noloop') && { loop: '' }),

@@ -1,4 +1,5 @@
 import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import { redispatchEvent } from '@videojs/utils/events';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
@@ -129,10 +130,7 @@ export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends
   }
 
   #forwardEvent = (event: Event) => {
-    const copy = new (event.constructor as typeof Event)(event.type, event);
-
-    forwardedEvents.add(copy);
-    this.dispatchEvent(copy);
+    redispatchEvent(this, event, { beforeDispatch: (copy) => forwardedEvents.add(copy) });
   };
 
   /**

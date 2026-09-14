@@ -1,7 +1,7 @@
 import { buildCloudflareIframeSrc, CloudflareAdapter } from '@videojs/cloudflare-video';
 import { propsFromAttributes } from '@videojs/media/dom';
 
-import { createMediaElement, iframeHost } from '../create-media-element';
+import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
@@ -20,7 +20,7 @@ const template = (attrs: Record<string, string>): string => {
  */
 export class CloudflareVideoElement extends createMediaElement({
   Adapter: CloudflareAdapter,
-  host: iframeHost(template),
+  target: iframeTarget(template),
 }) {
   static readonly tagName = 'cloudflare-video';
 }

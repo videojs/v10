@@ -102,8 +102,8 @@ export class TwitchAdapter extends MediaPlayedRangesMixin(EventTarget) implement
   }
 
   /** Bind the iframe hosting the embed. The embed follows once a URL resolves; `load()` retries if none does yet. */
-  attach(target: HTMLIFrameElement | null): void {
-    if (!target || this.#target === target) return;
+  attach(target: HTMLIFrameElement): void {
+    if (this.#target === target) return;
 
     if (this.#target) this.detach();
 

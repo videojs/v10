@@ -3,7 +3,7 @@ import { HTMLAudioAdapter, HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayer } from '../../player/create-player';
-import { audioHost, createMediaElement, iframeHost, videoHost } from '../create-media-element';
+import { audioTarget, createMediaElement, iframeTarget, videoTarget } from '../create-media-element';
 
 class FakeAdapter extends HTMLVideoAdapter {
   static readonly defaultProps = { src: '' };
@@ -63,8 +63,10 @@ afterEach(() => {
 });
 
 describe('createMediaElement', () => {
-  it("renders the host's target in the shadow root and attaches the adapter to it", () => {
-    const el = document.createElement(defineTestElement(createMediaElement({ Adapter: FakeAdapter, host: videoHost })));
+  it("renders the definition's target in the shadow root and attaches the adapter to it", () => {
+    const el = document.createElement(
+      defineTestElement(createMediaElement({ Adapter: FakeAdapter, target: videoTarget }))
+    );
 
     document.body.append(el);
 
@@ -76,7 +78,7 @@ describe('createMediaElement', () => {
 
   it('renders an <audio> for an audio adapter and mirrors attributes onto the adapter', () => {
     const el = document.createElement(
-      defineTestElement(createMediaElement({ Adapter: FakeAudioAdapter, host: audioHost }))
+      defineTestElement(createMediaElement({ Adapter: FakeAudioAdapter, target: audioTarget }))
     );
 
     document.body.append(el);
@@ -89,7 +91,7 @@ describe('createMediaElement', () => {
   it('renders the template around an embed adapter and attaches to its iframe', () => {
     const Element = createMediaElement({
       Adapter: FakeEmbedAdapter,
-      host: iframeHost(() => '<iframe part="iframe" title="Embedded player"></iframe>'),
+      target: iframeTarget(() => '<iframe part="iframe" title="Embedded player"></iframe>'),
     });
     const el = document.createElement(defineTestElement(Element));
 
@@ -105,7 +107,9 @@ describe('createMediaElement', () => {
   it('registers with the surrounding player and releases on disconnect', async () => {
     const { PlayerElement } = createPlayer({ features: backgroundFeatures });
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
-    const el = document.createElement(defineTestElement(createMediaElement({ Adapter: FakeAdapter, host: videoHost })));
+    const el = document.createElement(
+      defineTestElement(createMediaElement({ Adapter: FakeAdapter, target: videoTarget }))
+    );
 
     player.append(el);
     document.body.append(player);
