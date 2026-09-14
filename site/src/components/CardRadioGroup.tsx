@@ -86,7 +86,7 @@ export default function CardRadioGroup<T extends string = string>({
               <span className={clsx('block truncate font-semibold', layout === 'tile' ? 'text-p2' : 'text-p3')}>
                 {option.label}
               </span>
-              {option.description && <span className="text-muted text-p4 mt-0.5 block">{option.description}</span>}
+              {option.description && <span className="text-p4 dark:text-muted mt-0.5 block">{option.description}</span>}
             </span>
             <span
               aria-hidden="true"
