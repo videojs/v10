@@ -86,7 +86,7 @@ jobs:
       - name: Build and measure base
         run: |
           if [ -f .bundle-size-pr/.github/scripts/bundle-size.js ]; then
-            pnpm --dir .bundle-size-pr --fail-if-no-match install --frozen-lockfile --ignore-scripts --filter video.js
+            pnpm --dir .bundle-size-pr --fail-if-no-match install --frozen-lockfile --ignore-scripts --filter @videojs/monorepo
             pnpm build:packages
             node .bundle-size-pr/.github/scripts/bundle-size.js --root . --json base-size.json
           else
