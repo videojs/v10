@@ -106,7 +106,7 @@ export interface BackgroundVideoEngineConfig extends ShareSignalsConfig<
    * reportAbsentTrackType(2011)]` — prune the renditions this environment can't decode, then report 2011 if nothing is
    * left (this engine composes only video, so a source with none playable can never play).
    */
-  constraints?: SelectVideoTrackConfig['constraints'];
+  videoConstraints?: SelectVideoTrackConfig['videoConstraints'];
   /**
    * Selection-rule chain handed to `selectVideoTrack`. Defaults to `[screenResolutionCap, preferHighestResolution]` —
    * narrows to the renditions that fit the screen, takes the largest of those, and pins it for the session.
@@ -114,7 +114,7 @@ export interface BackgroundVideoEngineConfig extends ShareSignalsConfig<
    * The cap sits ahead of the ranker because a scope that narrows first wins over one applied later; pass
    * `[preferHighestResolution]` alone to opt out and always pin the largest rendition on offer.
    */
-  rules?: readonly NonNullable<SelectVideoTrackConfig['rules']>[number][];
+  videoRules?: readonly NonNullable<SelectVideoTrackConfig['videoRules']>[number][];
   /** Manifest parser handed to `resolvePresentation`. Defaults to the HLS multivariant-playlist parser. */
   parsePresentation?: ParsePresentation;
   /** Whether `state.screenResolution` is reported in device pixels. Read by `trackScreenResolution`; defaults to `true`. */
@@ -174,8 +174,11 @@ export function createBackgroundVideoEngine(
 ): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   const finalConfig = {
     ...config,
-    constraints: config.constraints ?? [excludeUnplayableTracks, reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK)],
-    rules: config.rules ?? [screenResolutionCap, preferHighestResolution],
+    videoConstraints: config.videoConstraints ?? [
+      excludeUnplayableTracks,
+      reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK),
+    ],
+    videoRules: config.videoRules ?? [screenResolutionCap, preferHighestResolution],
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,

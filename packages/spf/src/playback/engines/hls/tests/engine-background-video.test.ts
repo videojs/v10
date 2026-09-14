@@ -381,7 +381,7 @@ describe('createBackgroundVideoEngine', () => {
     // (`[screenResolutionCap, preferHighestResolution]`) would take 720p on any
     // screen that fits it, and this rule takes 480p regardless.
     const engine = createBackgroundVideoEngine({
-      rules: [(tracks) => tracks.filter((track) => track.id === '480p')],
+      videoRules: [(tracks) => tracks.filter((track) => track.id === '480p')],
     });
 
     const presentation: MaybeResolvedPresentation = {
