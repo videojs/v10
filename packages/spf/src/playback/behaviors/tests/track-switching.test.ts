@@ -2064,7 +2064,10 @@ describe('per-type chain config', () => {
     // The whole point of per-type keys: the engine hands one config to every
     // variant, so a video override must leave audio's chain alone.
     const state = makeAudioState({ presentation: createAudioPresentation([makeAudioTrack('audio-en')]) });
-    const reactor = switchAudioTrack.setup({ state, config: { videoConstraints: [pruneAll], videoRules: [pruneAll] } });
+    // A variable, not a literal: the engine config carries video keys the audio
+    // config type does not name, and that is exactly what is being pinned.
+    const config = { videoConstraints: [pruneAll], videoRules: [pruneAll] };
+    const reactor = switchAudioTrack.setup({ state, config });
 
     await flush();
 

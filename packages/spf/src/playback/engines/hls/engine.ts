@@ -79,6 +79,7 @@ import { syncPreload } from '../../behaviors/sync-preload';
 import {
   DEFAULT_AUDIO_CONSTRAINTS,
   DEFAULT_VIDEO_CONSTRAINTS,
+  type SwitchAudioTrackConfig,
   type SwitchTextTrackConfig,
   type SwitchVideoTrackConfig,
   switchAudioTrack,
@@ -265,8 +266,8 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   videoConstraints?: SwitchVideoTrackConfig['videoConstraints'];
   videoRules?: SwitchVideoTrackConfig['videoRules'];
-  audioConstraints?: SwitchVideoTrackConfig['audioConstraints'];
-  audioRules?: SwitchVideoTrackConfig['audioRules'];
+  audioConstraints?: SwitchAudioTrackConfig['audioConstraints'];
+  audioRules?: SwitchAudioTrackConfig['audioRules'];
   textConstraints?: SwitchTextTrackConfig['textConstraints'];
   textRules?: SwitchTextTrackConfig['textRules'];
   /**
