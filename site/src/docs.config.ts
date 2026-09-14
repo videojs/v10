@@ -41,11 +41,7 @@ export const sidebar: Sidebar = [
           'Guidance for AI tools, browser support, TypeScript, bundlers, the CDN, self-hosting, and contributing.',
         contents: [
           { slug: 'guides/build-with-ai' },
-          {
-            slug: 'guides/configure-a-content-security-policy',
-            sidebarLabel: 'Content Security Policy',
-            redirectFrom: ['concepts/security'],
-          },
+          { slug: 'guides/configure-a-content-security-policy', redirectFrom: ['concepts/security'] },
           { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
           { slug: 'guides/typescript', redirectFrom: ['concepts/typescript'] },
           { slug: 'guides/bundlers', redirectFrom: ['concepts/bundlers'] },
