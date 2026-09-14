@@ -8,7 +8,6 @@ describe('getDocTypeFromId', () => {
     expect(getDocTypeFromId('guides/autoplay')).toBe('guide');
     expect(getDocTypeFromId('reference/components/play-button')).toBe('reference');
     expect(getDocTypeFromId('reference/api/use-player')).toBe('reference');
-    expect(getDocTypeFromId('reference/cdn')).toBe('reference');
   });
 
   it('treats the contributor authoring guides as guides', () => {

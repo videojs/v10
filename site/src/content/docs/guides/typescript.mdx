@@ -13,7 +13,7 @@ Video.js type files use syntax introduced in TypeScript 5.0. Older versions cann
 
 ## Module resolution
 
-Video.js packages define their supported import paths using <DocsLink slug="concepts/bundlers">package exports</DocsLink>. Most web applications should use the following configuration. It makes TypeScript follow the same package rules as the bundler that builds the application:
+Video.js packages define their supported import paths using <DocsLink slug="guides/bundlers">package exports</DocsLink>. Most web applications should use the following configuration. It makes TypeScript follow the same package rules as the bundler that builds the application:
 
 ```json title="tsconfig.json"
 {
@@ -33,3 +33,8 @@ Do not use the older `node` setting, now called `node10`. It does not understand
 The older `node` setting allowed applications to import almost any file inside a dependency. Modern settings allow only the paths that dependency publishes. Changing the setting can therefore reveal an existing import into another package's private files.
 
 If the error names a package outside `@videojs/*`, update that dependency or use one of its supported import paths. A TypeScript `paths` override can be a temporary bridge when no supported replacement exists. Do not switch back to the older resolver because that also breaks Video.js type resolution.
+
+## Related guides
+
+- <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="guides/bundlers">Bundlers</DocsLink>

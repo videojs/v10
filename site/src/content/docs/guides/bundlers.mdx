@@ -3,6 +3,8 @@ title: Bundlers
 description: Bundler requirements for Video.js package exports, CSS, and wrapper libraries
 ---
 
+import DocsLink from '@/components/docs/DocsLink.astro';
+
 Before the browser runs your application, a bundler such as Vite combines its imports into files the browser can load. Your bundler must understand the import paths published by Video.js packages.
 
 ## Package exports
@@ -40,3 +42,9 @@ export default {
 ```
 
 Add every `@videojs/*` package your library imports directly to `videojsPeers` and list it in `peerDependencies`.
+
+## Related guides
+
+- <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="guides/typescript">TypeScript</DocsLink>
+- <DocsLink slug="guides/self-host-the-player">Self-host the player</DocsLink>

@@ -37,7 +37,7 @@ First, read and understand [Diátaxis](https://diataxis.fr/). We organize docume
 Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now.
 </Aside>
 
-The folder is the type. The site derives each page's type from its path, shows it in the eyebrow above the title (for example "Guide · Playback"), and exposes it to search and llms.txt. Hand-written reference that isn't a code export, such as the <DocsLink slug="reference/cdn">CDN</DocsLink> layout, sits directly under `src/content/docs/reference/`.
+The folder is the type. The site derives each page's type from its path, shows it in the eyebrow above the title (for example "Guide · Playback"), and exposes it to search and llms.txt.
 
 A unit test, `pnpm -F site test diataxis`, checks every page against its folder and fails on the common drift signals: a title that starts with "How to", task headings or install commands on a concept page, how-to sections or a `<CustomUiNote />` on a concept or reference page, and a how-to guide with no Related section. Pages that still drift are listed in the test's known-drift map; fix the page and remove the entry, and don't add new ones without saying why in review.
 

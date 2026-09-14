@@ -209,7 +209,7 @@ After imports, the page follows this order:
 
 `component` is the named export from `@videojs/react`. `html` is the suffix of the side-effect registration import from `@videojs/html/ui/`.
 
-The component renders only those package imports. UI components have no per-component CDN bundle, and that story belongs to the <DocsLink slug="reference/cdn">CDN</DocsLink> reference, so individual pages never make CDN claims of their own.
+The component renders only those package imports. UI components have no per-component CDN bundle, and that story belongs to the <DocsLink slug="guides/cdn">CDN</DocsLink> guide, so individual pages never make CDN claims of their own.
 
 ```mdx
 <ComponentReference component="PlayButton" />
@@ -293,7 +293,7 @@ Every media page opens with an `## Import` section rendered by `<MediaImports>`,
 
 `media` is the module name: the suffix of `@videojs/react/media/{media}` and `@videojs/html/media/{media}`, and of the CDN bundle `media/{media}.js`. `react` is the named export from the React subpath.
 
-Unlike UI components, every media module ships a matching CDN bundle, so for HTML readers the component names that bundle and links the <DocsLink slug="reference/cdn">CDN</DocsLink> reference. A unit test enforces the Import section on every page that renders `<MediaReference />`.
+Unlike UI components, every media module ships a matching CDN bundle, so for HTML readers the component names that bundle and links the <DocsLink slug="guides/cdn">CDN</DocsLink> guide. A unit test enforces the Import section on every page that renders `<MediaReference />`.
 
 ## Create an extension reference page
 
