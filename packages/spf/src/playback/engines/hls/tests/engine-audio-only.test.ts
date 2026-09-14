@@ -631,4 +631,71 @@ http://example.com/audio-seg1.m4s
 
     engine.destroy();
   });
+
+  it('projects Apple JSON chapters onto an <audio> element', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",FORMAT=JSON,URI="http://example.com/chapters.json"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",CHANNELS="2",URI="http://example.com/audio-en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+http://example.com/audio-en.m3u8`)
+        );
+      }
+
+      if (url.includes('audio-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio.mp4"
+#EXTINF:10.0,
+http://example.com/audio-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('chapters.json')) {
+        return Promise.resolve(
+          new Response(JSON.stringify([{ 'start-time': 0, titles: [{ language: 'und', title: 'Episode' }] }]))
+        );
+      }
+
+      return unmockedFetchFallback(url);
+    });
+
+    globalThis.fetch = mockFetch;
+
+    const engine = createHlsAudioEngine();
+    const mediaElement = document.createElement('audio');
+
+    mediaElement.preload = 'auto';
+
+    engine.context.mediaElement.set(mediaElement);
+    engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
+    engine.state.preload.set('auto');
+
+    const chaptersTrack = () => mediaElement.querySelector<HTMLTrackElement>('track[kind="chapters"]');
+
+    await vi.waitFor(
+      () => {
+        expect(chaptersTrack()?.track.mode).toBe('hidden');
+        expect(chaptersTrack()?.track.cues?.length).toBe(1);
+      },
+      { timeout: 3000 }
+    );
+
+    // SAFETY: `loadChapters` adds `VTTCue`s only.
+    const [cue] = Array.from(chaptersTrack()!.track.cues!) as VTTCue[];
+
+    expect([cue!.startTime, cue!.endTime, cue!.text]).toEqual([0, 10, 'Episode']);
+
+    engine.destroy();
+
+    expect(chaptersTrack()).toBeNull();
+  });
 });

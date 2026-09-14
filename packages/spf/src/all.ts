@@ -14,6 +14,8 @@ export * from './index';
 // HLS Parsing (P1, P2, P3)
 // =============================================================================
 
+export type { Chapter, ChapterImage, ChapterMetadata } from './media/hls/parse-json-chapters';
+export { APPLE_HLS_CHAPTERS_DATA_ID, parseHlsJsonChapters } from './media/hls/parse-json-chapters';
 export { parseMediaPlaylist } from './media/hls/parse-media-playlist';
 export { parseMultivariantPlaylist } from './media/hls/parse-multivariant';
 export { resolveUrl } from './media/hls/resolve-url';
@@ -50,6 +52,7 @@ export type {
   FrameRate,
   MaybeResolvedPresentation,
   MediaElementLike,
+  MultivariantPlaylistMetadata,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedTrack,
@@ -57,11 +60,18 @@ export type {
   Presentation,
   Segment,
   SelectionSet,
+  SessionDataEntry,
   TextTrack,
   Track,
   VideoTrack,
 } from './media/types';
-export { hasPresentationDuration, isResolvedPresentation, isResolvedTrack } from './media/types';
+export {
+  getMultivariantPlaylistMetadata,
+  getSessionData,
+  hasPresentationDuration,
+  isResolvedPresentation,
+  isResolvedTrack,
+} from './media/types';
 
 // =============================================================================
 // DOM APIs (P4, P12, P16)
@@ -77,6 +87,8 @@ export {
   supportsManagedMediaSource,
   supportsMediaSource,
 } from './media/dom/mse/mediasource-setup';
+export type { AddChaptersTracksOptions } from './media/dom/text/chapters-track-slots';
+export { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from './media/dom/text/chapters-track-slots';
 export type { ResponseLike } from './network/fetch';
 export { fetchResolvable, getResponseText } from './network/fetch';
 

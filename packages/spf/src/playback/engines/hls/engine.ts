@@ -46,6 +46,7 @@ import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
+import { loadChapters } from '../../behaviors/dom/load-chapters';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
@@ -520,6 +521,10 @@ export function createHlsVideoEngine(
       syncTextTracks,
       setupTextTrackActors,
       loadTextTrackSegments,
+      // Apple JSON chapters (`EXT-X-SESSION-DATA`, `com.apple.hls.chapters`) →
+      // a hidden `chapters` track per language, the preferred subtitle
+      // language leading. Cues live on the element; no state slot.
+      loadChapters,
 
       // Behavior whose sole purpose is to use a callback to allow for signal writing from the outside (e.g. an adapter)
       // NOTE: While not required, adding at the end since behaviors are setup in order, so this increases the likelihood
