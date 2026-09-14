@@ -4,6 +4,7 @@ import { ErrorDialog } from '../../../components/dialogs/error-dialog';
 import { BufferingIndicator } from '../../../components/display/buffering-indicator';
 import { Poster } from '../../../components/display/poster';
 import { Container } from '../../../components/layout/container';
+import { Title } from '../../../components/metadata/title';
 import type { SkinDescription } from '../../../meta';
 import { LiveVideoGestures } from '../../shared/live-video/behaviors/gestures';
 import { LiveVideoHotkeys } from '../../shared/live-video/behaviors/hotkeys';
@@ -23,6 +24,7 @@ export function LiveVideoSkin({ children, className, renderPoster, ...props }: L
       <Poster renderImage={renderPoster} />
       <BufferingIndicator />
       <ErrorDialog />
+      <Title />
       <DefaultLiveVideoControls />
       <LiveVideoHotkeys />
       <LiveVideoGestures />

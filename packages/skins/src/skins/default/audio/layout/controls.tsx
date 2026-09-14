@@ -4,7 +4,7 @@ import { ButtonTooltip } from '../../../../components/buttons/button-tooltip';
 import { SeekButton } from '../../../../components/buttons/seek-button';
 import { VolumePopover } from '../../../../components/menus/volume-popover';
 import audioControlsStyles from '../../../../styles/layout/audio-controls.styles';
-import timeStyles from '../../../../styles/layout/time.styles';
+import timeStyles from '../../../../styles/metadata/time.styles';
 import { AudioPlayButton } from '../../../shared/audio/buttons/play-button';
 import { AudioSettingsMenu } from '../../../shared/audio/menus/settings-menu';
 import { AudioTimeSlider } from '../../../shared/audio/sliders/time-slider';

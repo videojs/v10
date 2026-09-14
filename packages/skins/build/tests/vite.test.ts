@@ -241,6 +241,18 @@ describe('Skins Vite workflow', () => {
     );
   }, 30_000);
 
+  it.each(frameworks)(
+    'renders a title primitive for %s',
+    async (target) => {
+      const result = await server.transformRequest(
+        `/../src/components/metadata/title.tsx?style=tailwind&target=${target}&skin=default-video`
+      );
+
+      expect(result?.code).toContain(target === 'html' ? 'media-title' : 'Title');
+    },
+    30_000
+  );
+
   it('includes Shadow DOM utilities only for HTML targets', async () => {
     const html = await server.transformRequest(htmlPosterUrl);
     const react = await server.transformRequest(reactPosterUrl);

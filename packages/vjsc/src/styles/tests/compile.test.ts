@@ -21,6 +21,18 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).toContain('.media-container');
   });
 
+  it('includes group owners colocated on the scope root', async () => {
+    const container = { ...rule('root', 'media-container', ['group/player', 'relative']), scopeRoot: true };
+    const title = rule('title', 'media-title', ['group-not-data-controls-visible/player:opacity-0']);
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([container, title]),
+      scope: '.media-skin',
+    });
+
+    expect(styles.get('buttons.css')).toContain('@scope (.media-container, :scope.media-container)');
+  });
+
   it('rewrites named group variants to their semantic owner', async () => {
     const playButton = rule('playButton', 'media-play-button', ['group/play']);
     const buttonIcon = rule('buttonIcon', 'media-button-icon', ['size-4']);

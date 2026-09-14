@@ -358,12 +358,13 @@ The title reaches player state, but the packaged skins don't place it in their l
 <FrameworkCase frameworks={["html"]}>
 ```js
 import '@videojs/html/ui/title';
+import '@videojs/html/ui/title-value';
 ```
 
 ```html
 <video-player content-title="Test VOD">
   <video-skin>
-    <media-title></media-title>
+    <media-title><media-title-value></media-title-value></media-title>
   </video-skin>
 </video-player>
 ```
@@ -376,7 +377,7 @@ import { VideoPlayer, VideoSkin } from '@videojs/react/video';
 
 <VideoPlayer title="Test VOD">
   <VideoSkin>
-    <Title />
+    <Title.Root><Title.Value /></Title.Root>
   </VideoSkin>
 </VideoPlayer>
 ```

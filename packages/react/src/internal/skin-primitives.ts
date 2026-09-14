@@ -30,6 +30,7 @@ export { StatusAnnouncer } from '../ui/status-announcer';
 export { StatusIndicator } from '../ui/status-indicator';
 export { Time } from '../ui/time';
 export { TimeSlider } from '../ui/time-slider';
+export { Title } from '../ui/title';
 export { Tooltip } from '../ui/tooltip';
 export { VolumeIndicator } from '../ui/volume-indicator';
 export { VolumePopover } from '../ui/volume-popover';

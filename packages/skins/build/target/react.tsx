@@ -43,7 +43,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   const Span = element('span');
   const Sup = element('sup');
   const I18nText = imported({ from: '@videojs/react', name: 'Text' });
-  const renderProps = code.param('props');
+  const renderProps = code.param<{ children: unknown }>('props');
   const item = code.param<{ badge?: unknown; label: unknown; tier?: unknown }>('item');
   const optionTemplate: TemplateTargetDefinition = {
     render: ({ children }) => <Host renderItem={code.fn([renderProps, item], code.withProps(children, renderProps))} />,

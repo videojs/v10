@@ -11,7 +11,7 @@ import { PlayButton } from '../../../../components/buttons/play-button';
 import { VolumePopover } from '../../../../components/menus/volume-popover';
 import { TimeSlider } from '../../../../components/sliders/time-slider';
 import controlsStyles from '../../../../styles/layout/controls.styles';
-import timeStyles from '../../../../styles/layout/time.styles';
+import timeStyles from '../../../../styles/metadata/time.styles';
 import { VideoSettingsMenu } from '../../../shared/video/menus/settings-menu';
 import styles from './controls.styles';
 

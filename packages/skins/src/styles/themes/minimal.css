@@ -4,7 +4,7 @@
   .media-skin[data-theme="minimal"] {
     --media-control-corner-shape: squircle;
     --media-control-radius: calc(var(--media-spacing) * 2);
-    --media-control-size: calc(var(--media-spacing) * 9.5);
+    --media-control-size: calc(var(--media-spacing) * 9);
     --media-controls-radius: calc(var(--media-spacing) * 3);
     --media-popover: oklch(0 0 0 / 0.5);
     --media-border: oklch(1 0 0 / 0.1);
