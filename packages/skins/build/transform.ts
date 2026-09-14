@@ -40,6 +40,7 @@ export function createStyleOptions(config: SkinTransformConfig): StyleTransformO
     ? {
         mode: 'tailwind',
         variants,
+        stylesheet: { input: resolve(stylesDir, 'tailwind.compiler.css') },
       }
     : {
         mode: 'css',

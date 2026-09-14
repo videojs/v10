@@ -33,12 +33,16 @@ export interface StyleDiagnostic {
 }
 
 /** Diagnose relationships and structural selectors using only the resolved local styles. */
-export function diagnoseStyles(styles: ResolvedStyles, variants: readonly string[] = []): readonly StyleDiagnostic[] {
-  const owners = new Set(collectGroupOwners(styles.rules, variants).keys());
+export function diagnoseStyles(
+  styles: ResolvedStyles,
+  variants: readonly string[] = [],
+  merge?: DesignSystem['merge']
+): readonly StyleDiagnostic[] {
+  const owners = new Set(collectGroupOwners(styles.rules, variants, merge).keys());
   const diagnostics: StyleDiagnostic[] = [];
 
   for (const rule of styles.rules) {
-    const utilities = utilitiesForRule(rule, variants);
+    const utilities = utilitiesForRule(rule, variants, merge);
     const peers = utilities.filter(usesPeerRelationship);
     const implicitAncestors = utilities.filter(usesImplicitAncestor);
     const unownedGroups = utilities.filter((utility) =>
@@ -114,13 +118,13 @@ export function diagnoseCompiledStyles(
   ruleClassNames: ReadonlySet<string>,
   variants: readonly string[] = []
 ): readonly StyleDiagnostic[] {
-  const groupOwners = new Set(collectGroupOwners(styles.rules, variants).keys());
+  const groupOwners = new Set(collectGroupOwners(styles.rules, variants, design.merge).keys());
   const diagnostics: StyleDiagnostic[] = [];
 
   for (const rule of styles.rules) {
     if (!ruleClassNames.has(rule.className)) continue;
 
-    for (const candidate of utilitiesForRule(rule, variants)) {
+    for (const candidate of utilitiesForRule(rule, variants, design.merge)) {
       if (isGroupMarker(candidate)) continue;
 
       const css = design.candidateCss(candidate);
