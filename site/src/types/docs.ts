@@ -19,12 +19,12 @@ export const DOC_TYPE_LABELS = {
 } satisfies Record<DocType, string>;
 
 // The authoring guides under writing-style are dev-only how-tos for contributors.
-const DOC_TYPE_FOLDERS: Record<string, DocType> = {
-  concepts: 'concept',
-  guides: 'guide',
-  reference: 'reference',
-  'writing-style': 'guide',
-};
+const DOC_TYPE_FOLDERS = new Map<string, DocType>([
+  ['concepts', 'concept'],
+  ['guides', 'guide'],
+  ['reference', 'reference'],
+  ['writing-style', 'guide'],
+]);
 
 /**
  * Resolve the document type from a docs collection id such as `guides/autoplay`. The folder is the single source of
@@ -32,11 +32,11 @@ const DOC_TYPE_FOLDERS: Record<string, DocType> = {
  */
 export function getDocTypeFromId(id: string): DocType {
   const folder = id.split('/')[0] ?? '';
-  const type = DOC_TYPE_FOLDERS[folder];
+  const type = DOC_TYPE_FOLDERS.get(folder);
 
   if (!type) {
     throw new Error(
-      `Docs entry "${id}" is not inside a typed folder. Place it under one of: ${Object.keys(DOC_TYPE_FOLDERS).join(', ')}.`
+      `Docs entry "${id}" is not inside a typed folder. Place it under one of: ${[...DOC_TYPE_FOLDERS.keys()].join(', ')}.`
     );
   }
 
@@ -95,6 +95,11 @@ export interface Guide {
   devOnly?: boolean; // only visible in development mode
   /** Build the page and keep it in breadcrumbs and llms.txt, but leave it out of the sidebar list and prev/next. */
   hidden?: boolean;
+  /**
+   * Slugs this page used to live at, such as `concepts/security`. Each one redirects here for every framework the page
+   * renders in, so moving a page between type folders costs one line. Old slugs must not exist as pages.
+   */
+  redirectFrom?: string[];
 }
 
 // Plain link to a page outside the docs (e.g. /changelog) — rendered with an

@@ -23,6 +23,7 @@ import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 
+import docsRedirects from './integrations/docs-redirects';
 import llmsMarkdown from './integrations/llms-markdown';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
@@ -81,7 +82,8 @@ export default defineConfig({
     },
   },
   redirects: {
-    // Redirects are configured in netlify.toml
+    // Legacy redirects live in netlify.toml. Moved docs pages declare `redirectFrom` on their sidebar entry instead;
+    // the docs-redirects integration turns those into Astro redirects.
   },
   integrations: [
     // Only register Sentry when the upload token is present (i.e. production
@@ -111,6 +113,7 @@ export default defineConfig({
         `${SITE_URL}/docs/framework/react/llms-full.txt`,
       ],
     }),
+    docsRedirects(),
     llmsMarkdown(),
     react({
       babel: {
