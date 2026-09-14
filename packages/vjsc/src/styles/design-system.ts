@@ -24,7 +24,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   const base = dirname(absolute);
   const raw = readFileSync(absolute, 'utf8');
   const reference = `@reference "${normalizePath(absolute)}";`;
-  const watchFiles = new Set([absolute]);
+  const watchFiles = await collectWatchFiles(absolute, reference);
   const design = await __unstable__loadDesignSystem(raw, { base });
   const theme = Object.fromEntries(
     Object.keys(defaultConfig().theme).map((group) => [group, design.theme.keysInNamespaces([`--${group}`])])
@@ -61,9 +61,6 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
     return result;
   };
 
-  // The design loader does not report imports; compilation supplies the watch dependencies.
-  await compileReferencedCss('');
-
   return {
     watchFiles,
     merge,
@@ -73,4 +70,18 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
     candidateCss,
     compileCss: compileReferencedCss,
   };
+}
+
+/** The Node design loader discards dependency callbacks; only the compiler exposes its resolved imports. */
+async function collectWatchFiles(path: string, reference: string): Promise<Set<string>> {
+  const files = new Set([path]);
+
+  await compile(reference, {
+    base: dirname(path),
+    onDependency(dependency) {
+      files.add(resolve(dependency));
+    },
+  });
+
+  return files;
 }
