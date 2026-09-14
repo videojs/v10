@@ -28,20 +28,20 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Customize',
-        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
-        contents: [
-          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
-          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
-        ],
-      },
-      {
         sidebarLabel: 'Frameworks',
         frameworks: ['html'],
         llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
         contents: [
           { slug: 'guides/vue', redirectFrom: ['guides/use-videojs-with-vue'] },
           { slug: 'guides/svelte', redirectFrom: ['guides/use-videojs-with-svelte'] },
+        ],
+      },
+      {
+        sidebarLabel: 'Customize',
+        llmsDescription: 'Guides for changing what the player looks like and building your own controls.',
+        contents: [
+          { slug: 'guides/customize-skins', sidebarLabel: 'Customize skins' },
+          { slug: 'guides/build-your-own-component', sidebarLabel: 'Build a component' },
         ],
       },
       {
