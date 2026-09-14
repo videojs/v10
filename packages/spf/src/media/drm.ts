@@ -3,6 +3,7 @@
  * mapping, manifest-declared key collection, and key-system candidate selection. The browser-touching EME half (access
  * negotiation, MediaKeys attachment, init-data decoding, license POST) lives in `dom/eme.ts`, which re-exports these.
  */
+import { SVTA_UNSUPPORTED_ENCRYPTION_METHOD, type SvtaError } from './errors';
 import {
   getMediaPlaylistMetadata,
   isResolvedTrack,
@@ -373,6 +374,29 @@ export const IDENTITY_KEY_FORMAT = 'identity';
  */
 export function firstNonDrmEncryptionKey(keys: readonly MediaPlaylistKey[]): MediaPlaylistKey | undefined {
   return keys.find((key) => key.keyFormat === undefined || key.keyFormat === IDENTITY_KEY_FORMAT);
+}
+
+/**
+ * The cause to report when encryption the engine cannot decrypt is why a source or rendition will not play, given its
+ * declared keys — or `undefined` when a DRM system is the right thing to blame. An `identity`-keyformat key (AES-128 /
+ * SAMPLE-AES over HTTP) is not EME at all and this engine has no decryptor for it, so the cause names the unsupported
+ * _encryption method_ rather than a DRM system that was never involved. `data` rides on the condition beside the method
+ * and key format.
+ *
+ * Shared by `setupMediaKeys` (at negotiation) and the condition reporter (at resolve), so the two never disagree about
+ * which gap to name.
+ */
+export function unsupportedEncryptionMethodCause(
+  keys: readonly MediaPlaylistKey[],
+  data: Record<string, unknown> = {}
+): SvtaError | undefined {
+  const nonDrmKey = firstNonDrmEncryptionKey(keys);
+  if (!nonDrmKey) return undefined;
+
+  return {
+    code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
+    data: { ...data, method: nonDrmKey.method, keyFormat: nonDrmKey.keyFormat },
+  };
 }
 
 /**

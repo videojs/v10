@@ -1,29 +1,31 @@
 /**
- * **Negotiate a key system and attach its MediaKeys for the current source.** When a mediaElement and a resolved
- * presentation whose tracks declare DRM keys are both in scope, negotiates a key system over the configured license
- * servers (the minimal key-system probe — capability-probing's full async probe supersedes it when that lands) with
- * per-system init-data types and the declared encryption scheme, creates MediaKeys, applies the server certificate when
- * the chosen system configures one (FairPlay can't request a license without it), and attaches.
+ * **Negotiate a key system and attach its MediaKeys for the current source.** Once an encrypted rendition has resolved
+ * against a media element, negotiate one composed key system over the configured license servers, apply its server
+ * certificate when it configures one, and attach the resulting MediaKeys — so licensing can begin. Encrypted segment
+ * loads are gated until the attach lands, and the outcome is published for pruning and licensing to react to: the
+ * chosen system, or {@link NO_KEY_SYSTEM} for a refusal.
  *
  * Licensing is `exchangeLicenses`' job, not this behavior's. The handoff is `context.mediaKeys` +
  * `state.negotiatedKeySystem`, both published only once the certificate has been applied and the attach has resolved —
  * which is what carries the "certificate before `generateRequest`" ordering across the boundary.
  *
- * Publishes the attached MediaKeys on `context.mediaKeys`, the chosen system on `state.negotiatedKeySystem`, and drives
- * the `segmentLoadingBlocked` load gate: raised synchronously on entry, lowered once MediaKeys attach. Appending
- * encrypted data with no MediaKeys attached misbehaves on Chromium, so the segment-load dispatchers park while the gate
- * is up (see `load-segments.ts`); compose this behavior ahead of them so the gate is up before their first dispatch —
- * but lowered on _attach_, not on license: the appends that follow are what fire `encrypted` for the event-driven path,
- * and browsers queue decode on missing keys. Failures report onto the errors sequence via `emitError` (SVTA 4008 no
- * usable key system, 99408 the source is non-DRM clear-key encryption we can't decrypt, 4010 MediaKeys init, 4013
- * certificate); a refused negotiation or failed certificate leaves the gate up — playback stays parked rather than
- * failing decode, and severity is the adapter's call. A refusal publishes {@link NO_KEY_SYSTEM}, which is what lets
- * rendition pruning reach the verdict `track-switching` owns.
+ * The negotiation is the minimal key-system probe — capability-probing's full async probe supersedes it when that lands
+ * — over per-system init-data types and the declared encryption scheme. The `segmentLoadingBlocked` load gate is raised
+ * synchronously on entry and lowered once MediaKeys attach: appending encrypted data with no MediaKeys attached
+ * misbehaves on Chromium, so the segment-load dispatchers park while the gate is up (see `load-segments.ts`); compose
+ * this behavior ahead of them so the gate is up before their first dispatch — but lowered on _attach_, not on license:
+ * the appends that follow are what fire `encrypted` for the event-driven path, and browsers queue decode on missing
+ * keys. Failures report onto the errors sequence via `emitError` (SVTA 4008 no usable key system, 99408 the source is
+ * non-DRM clear-key encryption we can't decrypt, 4010 MediaKeys init, 4013 certificate); a refused negotiation or
+ * failed certificate leaves the gate up — playback stays parked rather than failing decode, and severity is the
+ * adapter's call. A refusal publishes {@link NO_KEY_SYSTEM}, which is what lets rendition pruning reach the verdict
+ * `track-switching` owns.
  *
- * Single-positive-state reactor riding the resolver's resolved/unresolved lifecycle, like `setupMediaSource`: source
- * replacement routes through `'preconditions-unmet'`, whose state-exit cleanup detaches MediaKeys
- * (`setMediaKeys(null)`) and clears its slots before the next source's setup runs. Teardown-per-source is deliberate —
- * MediaKeys re-use across sources is an optimization with prior art (see drm-support.md).
+ * Single-positive-state reactor riding the resolver's resolved/unresolved lifecycle, like `setupMediaSource`. The EME
+ * pipeline runs as one `Task` under a runner the reactor owns — the same shape as `setupTrackResolution` — so source
+ * replacement routes through `'preconditions-unmet'`, whose state-exit cleanup aborts the task structurally, clears the
+ * slots, and detaches MediaKeys (`setMediaKeys(null)`) before the next source's setup runs. Teardown-per-source is
+ * deliberate — MediaKeys re-use across sources is an optimization with prior art (see drm-support.md).
  *
  * Sole writer of `context.mediaKeys`, `state.negotiatedKeySystem`, and `state.segmentLoadingBlocked`. Composed into
  * `createHlsVideoEngine` unconditionally today, degenerate on a clear source (the derived state never leaves
@@ -38,29 +40,25 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { RecurringRunner, runOnce, Task } from '../../../core/tasks/task';
 import {
-  applyCertificateRequest,
-  applyCertificateResponse,
   attachMediaKeys,
   contentTypesFromPresentation,
   type DrmSystemsConfig,
   declaredDrmKeys,
   declaredEncryptionScheme,
-  firstNonDrmEncryptionKey,
-  fetchDrm,
+  fetchServerCertificate,
   type KeySystemModule,
   keySystemCandidates,
   NO_KEY_SYSTEM,
   requestKeySystemAccess,
-  resolveDrmCredentials,
-  resolveDrmHeaders,
   resolveDrmUrl,
+  unsupportedEncryptionMethodCause,
 } from '../../../media/dom/eme';
 import {
   SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_INITIALIZATION_ERROR,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
-  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
 } from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 import { type ErrorEmitterState, emitError } from '../collect-errors';
@@ -102,24 +100,140 @@ export interface MediaKeysSetupConfig {
   keySystems: readonly KeySystemModule[];
 }
 
+// The exact keyed maps keep `defineBehavior`'s stateKeys ≡ keyof inference
+// intact — as type aliases, not interfaces: the inference goes through an
+// index-signature constraint that only aliases satisfy implicitly. The reporter
+// seam (`errors`, optional per `ErrorEmitterState`) is deliberately not in the
+// typed slice — the setup helper accepts the map without it, and the live slot
+// reaches it at runtime when `collectErrors` is composed. Same shape as
+// `resolve-track`.
+type MediaKeysStateMap = {
+  presentation: ReadonlySignal<MediaKeysState['presentation']>;
+  segmentLoadingBlocked: Signal<MediaKeysState['segmentLoadingBlocked']>;
+  negotiatedKeySystem: Signal<MediaKeysState['negotiatedKeySystem']>;
+};
+
+type MediaKeysContextMap = {
+  mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;
+  mediaKeys: Signal<MediaKeysContext['mediaKeys']>;
+};
+
 type MediaKeysFsmState = 'preconditions-unmet' | 'media-keys-required';
+
+/** What a settled negotiation publishes: the chosen system, and the MediaKeys attached for it. */
+interface Negotiation {
+  keySystem: string;
+  mediaKeys: MediaKeys;
+}
+
+/**
+ * The EME pipeline for one source, as a task body: negotiate → create MediaKeys → certificate → attach → publish.
+ *
+ * Runs under the task's `signal`. The certificate fetch takes it directly; the EME calls cannot, so each is followed by
+ * a check at the next commit point — an aborted run reports nothing, attaches nothing, and publishes nothing, and an
+ * attach that landed as the abort arrived is undone on the spot. A refusal or a certificate failure reports its cause
+ * and returns, leaving the gate up; anything else rejects for the caller to report as 4010.
+ */
+async function negotiateMediaKeys({
+  mediaElement,
+  presentation,
+  signal,
+  state,
+  config,
+  publish,
+}: {
+  mediaElement: HTMLMediaElement;
+  presentation: MaybeResolvedPresentation;
+  signal: AbortSignal;
+  state: Pick<MediaKeysStateMap, 'negotiatedKeySystem'> & ErrorEmitterState;
+  config: MediaKeysSetupConfig;
+  publish: (negotiation: Negotiation) => void;
+}): Promise<void> {
+  const keys = declaredDrmKeys(presentation);
+  const candidates = keySystemCandidates(keys, config.drm, config.keySystems);
+  const negotiated = await requestKeySystemAccess(
+    candidates,
+    contentTypesFromPresentation(presentation),
+    declaredEncryptionScheme(keys)
+  );
+
+  if (signal.aborted) return;
+
+  if (!negotiated) {
+    // Gate stays up: parked playback beats guaranteed decode failure. Severity
+    // is the adapter's call, per errors.md. Name the real gap: with no candidate
+    // at all the source may be clear-key encrypted — not EME — which the shared
+    // cause helper names as an unsupported encryption method (clear-key-aes.md);
+    // a declared-but-unlicensable or refused DRM system reports 4008.
+    const nonDrmCause = candidates.length === 0 ? unsupportedEncryptionMethodCause(keys) : undefined;
+
+    emitError(
+      state,
+      nonDrmCause ?? {
+        code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+        data: { keySystems: candidates.map((module_) => module_.keySystem) },
+      }
+    );
+
+    // Cause reported; the verdict is `track-switching`'s. Publishing the refusal
+    // re-fires its constraint chain, where `excludeRefusedKeySystems` prunes
+    // every encrypted rendition — so a type left with nothing reports
+    // SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK from its owner, and a type keeping a
+    // clear one still reports nothing. Set after the cause so the sequence
+    // reads cause-then-verdict.
+    state.negotiatedKeySystem.set(NO_KEY_SYSTEM);
+    return;
+  }
+
+  const { keySystem } = negotiated.module;
+  const entry = config.drm[keySystem]!;
+  const mediaKeys = await negotiated.access.createMediaKeys();
+
+  // FairPlay can't generate a license request without the server (application)
+  // certificate, so its failure parks the source like an unusable key system
+  // rather than proceeding to certain failure. Skipped entirely when no
+  // certificate URL resolves.
+  const certificateUrl = resolveDrmUrl(entry.serverCertificateUrl);
+
+  if (certificateUrl !== undefined) {
+    try {
+      await mediaKeys.setServerCertificate(
+        await fetchServerCertificate(negotiated.module, entry, certificateUrl, signal)
+      );
+    } catch (error) {
+      if (signal.aborted) return;
+
+      emitError(state, { code: SVTA_DRM_CERTIFICATE_ERROR, data: { keySystem, reason: String(error) } });
+      return;
+    }
+  }
+
+  if (signal.aborted) return;
+
+  await attachMediaKeys(mediaElement, mediaKeys);
+
+  if (signal.aborted) {
+    attachMediaKeys(mediaElement, null).catch(() => {});
+    return;
+  }
+
+  publish({ keySystem, mediaKeys });
+}
 
 function setupMediaKeysSetup({
   state,
   context,
   config,
 }: {
-  state: {
-    presentation: ReadonlySignal<MediaKeysState['presentation']>;
-    segmentLoadingBlocked: Signal<MediaKeysState['segmentLoadingBlocked']>;
-    negotiatedKeySystem: Signal<MediaKeysState['negotiatedKeySystem']>;
-  } & ErrorEmitterState;
-  context: {
-    mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;
-    mediaKeys: Signal<MediaKeysContext['mediaKeys']>;
-  };
+  state: MediaKeysStateMap & ErrorEmitterState;
+  context: MediaKeysContextMap;
   config: MediaKeysSetupConfig;
 }): Reactor<MediaKeysFsmState | 'destroying' | 'destroyed'> {
+  // One negotiation per source, aborted structurally on state exit. `runOnce`,
+  // because there is no recurrence: a source is negotiated once, and a re-entry
+  // schedules a fresh task.
+  const runner = new RecurringRunner<void>(runOnce);
+
   const derivedStateSignal = computed<MediaKeysFsmState>(() => {
     const presentation = state.presentation.get();
     if (!context.mediaElement.get() || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
@@ -132,6 +246,22 @@ function setupMediaKeysSetup({
     return 'media-keys-required';
   });
 
+  // The handoff: what `exchangeLicenses` preconditions on and rendition pruning
+  // reads. The three writes land together, before any further await — a
+  // reactor monitor cannot observe an intermediate write, the flush being a
+  // microtask away — so they read as one fact. `clearNegotiation` is its exact
+  // inverse, and the only other writer of these slots.
+  const publishNegotiation = ({ keySystem, mediaKeys }: Negotiation) => {
+    context.mediaKeys.set(mediaKeys);
+    state.negotiatedKeySystem.set(keySystem);
+    state.segmentLoadingBlocked.set(false);
+  };
+  const clearNegotiation = () => {
+    context.mediaKeys.set(undefined);
+    state.negotiatedKeySystem.set(undefined);
+    state.segmentLoadingBlocked.set(false);
+  };
+
   return createMachineReactor<MediaKeysFsmState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
@@ -139,125 +269,26 @@ function setupMediaKeysSetup({
       'preconditions-unmet': {},
 
       'media-keys-required': {
-        // entry body is auto-untracked. Raises the gate synchronously, then
-        // runs the async EME pipeline; state-exit cleanup aborts in-flight
-        // work and tears the attachment down in order.
+        // entry body is auto-untracked. Raises the gate synchronously, then runs
+        // the EME pipeline as one task; state-exit cleanup aborts it and tears
+        // the attachment down in order.
         entry: () => {
           const mediaElement = context.mediaElement.get()!;
           const presentation = state.presentation.get()!;
-          const controller = new AbortController();
 
           state.segmentLoadingBlocked.set(true);
 
-          const negotiate = async () => {
-            const keys = declaredDrmKeys(presentation);
-            const candidates = keySystemCandidates(keys, config.drm, config.keySystems);
-            const result = await requestKeySystemAccess(
-              candidates,
-              contentTypesFromPresentation(presentation),
-              declaredEncryptionScheme(keys)
-            );
-
-            if (controller.signal.aborted) return;
-
-            if (!result) {
-              // Gate stays up: parked playback beats guaranteed decode
-              // failure. Severity is the adapter's call, per errors.md.
-              //
-              // Name the real gap. No candidate can mean the source is
-              // clear-key encrypted — an `identity`-keyformat key (AES-128 /
-              // SAMPLE-AES over HTTP), which is not EME at all and which this
-              // engine has no decryptor for (clear-key-aes.md). Report the
-              // unsupported *encryption method* for that, rather than blaming a
-              // DRM system that was never involved; a declared-but-unlicensable
-              // or refused DRM system still reports 4008.
-              const nonDrmKey = candidates.length === 0 ? firstNonDrmEncryptionKey(keys) : undefined;
-
-              emitError(
-                state,
-                nonDrmKey
-                  ? {
-                      code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
-                      data: { method: nonDrmKey.method, keyFormat: nonDrmKey.keyFormat },
-                    }
-                  : {
-                      code: SVTA_UNSUPPORTED_DRM_SYSTEM,
-                      data: { keySystems: candidates.map((module_) => module_.keySystem) },
-                    }
-              );
-
-              // Cause reported; the verdict is `track-switching`'s. Publishing
-              // the refusal re-fires its constraint chain, where
-              // `excludeRefusedKeySystems` prunes every encrypted rendition —
-              // so a type left with nothing reports
-              // SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK from its owner, and a
-              // type keeping a clear one still reports nothing. Set after the
-              // cause so the sequence reads cause-then-verdict.
-              state.negotiatedKeySystem.set(NO_KEY_SYSTEM);
-              return;
-            }
-
-            const { keySystem } = result.module;
-            const entry = config.drm[keySystem]!;
-            const serverCertificateUrl = resolveDrmUrl(entry.serverCertificateUrl);
-            const mediaKeys = await result.access.createMediaKeys();
-
-            if (controller.signal.aborted) return;
-
-            // FairPlay can't generate a license request without the server
-            // (application) certificate, so its failure parks the source like
-            // an unusable key system rather than proceeding to certain
-            // failure. Skipped entirely when no certificate URL resolves.
-            if (serverCertificateUrl !== undefined) {
-              try {
-                // Same two-layer compose as the license exchange, module first:
-                // the module default (a plain GET today) then the per-source
-                // override — a provider that gates its certificate behind an
-                // auth header or its own URL shapes it here — around the fetch,
-                // and the response unwraps the same way before it is applied.
-                const shaped = await applyCertificateRequest(result.module, {
-                  url: serverCertificateUrl,
-                  method: 'GET',
-                  headers: { ...resolveDrmHeaders(entry.certificateHeaders) },
-                  body: null,
-                  credentials: resolveDrmCredentials(entry.credentials),
-                });
-                const request = entry.certificateRequest ? await entry.certificateRequest(shaped) : shaped;
-                const raw = await fetchDrm(request, controller.signal);
-                const unwrapped = await applyCertificateResponse(result.module, raw);
-                const certificate = entry.certificateResponse ? await entry.certificateResponse(unwrapped) : unwrapped;
-
-                await mediaKeys.setServerCertificate(certificate);
-              } catch (error) {
-                if (controller.signal.aborted) return;
-
-                emitError(state, { code: SVTA_DRM_CERTIFICATE_ERROR, data: { keySystem, reason: String(error) } });
-                return;
-              }
-
-              if (controller.signal.aborted) return;
-            }
-
-            await attachMediaKeys(mediaElement, mediaKeys);
-
-            if (controller.signal.aborted) {
-              attachMediaKeys(mediaElement, null).catch(() => {});
-              return;
-            }
-
-            // Published together, before any further await: `exchangeLicenses`
-            // preconditions on both, and a reactor monitor cannot observe an
-            // intermediate write — the flush is a microtask away.
-            context.mediaKeys.set(mediaKeys);
-            state.negotiatedKeySystem.set(keySystem);
-            state.segmentLoadingBlocked.set(false);
-          };
-
-          negotiate().catch((error) => {
-            if (controller.signal.aborted) return;
-
-            emitError(state, { code: SVTA_DRM_INITIALIZATION_ERROR, data: { reason: String(error) } });
-          });
+          // A genuine failure rejects here and reports; the runner's own abort
+          // settles quietly, so teardown never reports anything.
+          runner
+            .schedule(
+              new Task((signal) =>
+                negotiateMediaKeys({ mediaElement, presentation, signal, state, config, publish: publishNegotiation })
+              )
+            )
+            .catch((error) => {
+              emitError(state, { code: SVTA_DRM_INITIALIZATION_ERROR, data: { reason: String(error) } });
+            });
 
           // State-exit cleanup — source unload, element detach, or destroy.
           // Order: abort first (kills the negotiation), clear the slots, then
@@ -265,11 +296,8 @@ function setupMediaKeysSetup({
           // `exchangeLicenses`, which is composed ahead of this behavior so
           // its cleanup runs first (see its file JSDoc).
           return () => {
-            controller.abort();
-
-            context.mediaKeys.set(undefined);
-            state.negotiatedKeySystem.set(undefined);
-            state.segmentLoadingBlocked.set(false);
+            runner.abortAll();
+            clearNegotiation();
             attachMediaKeys(mediaElement, null).catch(() => {});
           };
         },
@@ -281,25 +309,13 @@ function setupMediaKeysSetup({
 export const setupMediaKeys = defineBehavior({
   stateKeys: ['presentation', 'segmentLoadingBlocked', 'negotiatedKeySystem'],
   contextKeys: ['mediaElement', 'mediaKeys'],
-  // The wrapper's exact keyed map keeps `defineBehavior`'s stateKeys ≡ keyof
-  // inference intact; the reporter seam (`errors`, optional per
-  // `ErrorEmitterState`) is deliberately not in the typed slice — the setup
-  // helper accepts the map without it, and the live slot reaches it at
-  // runtime when `collectErrors` is composed. Same shape as `resolve-track`.
   setup: ({
     state,
     context,
     config,
   }: {
-    state: {
-      presentation: ReadonlySignal<MediaKeysState['presentation']>;
-      segmentLoadingBlocked: Signal<MediaKeysState['segmentLoadingBlocked']>;
-      negotiatedKeySystem: Signal<MediaKeysState['negotiatedKeySystem']>;
-    };
-    context: {
-      mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;
-      mediaKeys: Signal<MediaKeysContext['mediaKeys']>;
-    };
+    state: MediaKeysStateMap;
+    context: MediaKeysContextMap;
     config: MediaKeysSetupConfig;
   }) => setupMediaKeysSetup({ state, context, config }),
 });

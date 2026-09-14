@@ -4,7 +4,7 @@ import { signal } from '../../../../core/signals/primitives';
 import {
   attachMediaKeys,
   type DrmSystemsConfig,
-  fetchDrm,
+  fetchServerCertificate,
   NO_KEY_SYSTEM,
   requestKeySystemAccess,
 } from '../../../../media/dom/eme';
@@ -23,9 +23,11 @@ import {
 import type { Presentation } from '../../../../media/types';
 import { type MediaKeysContext, type MediaKeysState, setupMediaKeys } from '../setup-media-keys';
 
-// Mock the DOM-touching seams while keeping the pure helpers (candidate
-// selection, key-system modules, declared-key collection) real — the behavior
-// is exercised against real manifest-shaped fixtures.
+// Mock the DOM- and network-touching seams while keeping the pure helpers
+// (candidate selection, key-system modules, declared-key collection) real — the
+// behavior is exercised against real manifest-shaped fixtures. The certificate
+// fetch is mocked whole: how it shapes its request is `fetchServerCertificate`'s
+// contract, pinned in `eme.test.ts`; here only that it is applied matters.
 vi.mock('../../../../media/dom/eme', async () => {
   const actual = await vi.importActual<typeof import('../../../../media/dom/eme')>('../../../../media/dom/eme');
 
@@ -33,7 +35,7 @@ vi.mock('../../../../media/dom/eme', async () => {
     ...actual,
     requestKeySystemAccess: vi.fn(),
     attachMediaKeys: vi.fn(async () => {}),
-    fetchDrm: vi.fn(),
+    fetchServerCertificate: vi.fn(),
   };
 });
 
@@ -150,7 +152,7 @@ describe('setupMediaKeys', () => {
   beforeEach(() => {
     vi.mocked(requestKeySystemAccess).mockReset();
     vi.mocked(attachMediaKeys).mockReset().mockResolvedValue(undefined);
-    vi.mocked(fetchDrm)
+    vi.mocked(fetchServerCertificate)
       .mockReset()
       .mockResolvedValue(new Uint8Array([7, 7]));
   });
@@ -233,9 +235,11 @@ describe('setupMediaKeys', () => {
     );
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchDrm).toHaveBeenCalledWith(
-      { url: DRM_CONFIG['com.apple.fps'].serverCertificateUrl, method: 'GET', headers: {}, body: null },
-      expect.anything()
+    expect(fetchServerCertificate).toHaveBeenCalledWith(
+      fairPlayKeySystem,
+      DRM_CONFIG['com.apple.fps'],
+      DRM_CONFIG['com.apple.fps'].serverCertificateUrl,
+      expect.any(AbortSignal)
     );
     expect(eme.mediaKeys.setServerCertificate).toHaveBeenCalledWith(new Uint8Array([7, 7]));
 
@@ -246,7 +250,7 @@ describe('setupMediaKeys', () => {
     const eme = makeFakeEme('com.apple.fps');
 
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchDrm).mockRejectedValue(new Error('appcert 403'));
+    vi.mocked(fetchServerCertificate).mockRejectedValue(new Error('appcert 403'));
     const { state, context, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([FAIRPLAY_KEY]) },
       { mediaElement: document.createElement('video') }
@@ -279,93 +283,12 @@ describe('setupMediaKeys', () => {
     );
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchDrm).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'https://license.example.com/minted-appcert', method: 'GET' }),
-      expect.anything()
+    expect(fetchServerCertificate).toHaveBeenCalledWith(
+      fairPlayKeySystem,
+      expect.anything(),
+      'https://license.example.com/minted-appcert',
+      expect.any(AbortSignal)
     );
-
-    reactor.destroy();
-  });
-
-  it('applies a per-source certificate request and response transform around the cert fetch', async () => {
-    const eme = makeFakeEme('com.apple.fps');
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    // The cert fetch returns a wrapped certificate; the response transform unwraps it.
-    vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([1]));
-    const { context, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([FAIRPLAY_KEY]) },
-      { mediaElement: document.createElement('video') },
-      {
-        'com.apple.fps': {
-          licenseUrl: () => 'https://license.example.com/fairplay',
-          serverCertificateUrl: () => 'https://license.example.com/appcert',
-          // A provider that gates the cert behind an entitlement header (Vualto's shape).
-          certificateRequest: (request) => ({ ...request, headers: { ...request.headers, 'x-token': 'ent' } }),
-          certificateResponse: (response) => new Uint8Array([response[0]! + 40]),
-        },
-      }
-    );
-
-    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchDrm).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'https://license.example.com/appcert', headers: { 'x-token': 'ent' } }),
-      expect.anything()
-    );
-    expect(eme.mediaKeys.setServerCertificate).toHaveBeenCalledWith(new Uint8Array([41]));
-
-    reactor.destroy();
-  });
-
-  it('sends configured certificate headers with the certificate fetch, never the license headers', async () => {
-    const eme = makeFakeEme('com.apple.fps');
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([1]));
-    const { context, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([FAIRPLAY_KEY]) },
-      { mediaElement: document.createElement('video') },
-      {
-        'com.apple.fps': {
-          licenseUrl: 'https://license.example.com/fairplay',
-          serverCertificateUrl: 'https://license.example.com/appcert',
-          headers: { 'X-License-Only': 'never-on-the-cert' },
-          certificateHeaders: { 'x-vudrm-token': 'ent' },
-        },
-      }
-    );
-
-    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchDrm).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: 'https://license.example.com/appcert',
-        headers: { 'x-vudrm-token': 'ent' },
-      }),
-      expect.anything()
-    );
-
-    reactor.destroy();
-  });
-
-  it('sends the configured credentials mode with the certificate fetch', async () => {
-    const eme = makeFakeEme('com.apple.fps');
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([1]));
-    const { context, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([FAIRPLAY_KEY]) },
-      { mediaElement: document.createElement('video') },
-      {
-        'com.apple.fps': {
-          licenseUrl: 'https://license.example.com/fairplay',
-          serverCertificateUrl: 'https://license.example.com/appcert',
-          credentials: 'include',
-        },
-      }
-    );
-
-    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchDrm).toHaveBeenCalledWith(expect.objectContaining({ credentials: 'include' }), expect.anything());
 
     reactor.destroy();
   });
@@ -388,7 +311,7 @@ describe('setupMediaKeys', () => {
     // Same as naming no certificate URL at all: attachment proceeds rather than
     // parking the source.
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchDrm).not.toHaveBeenCalled();
+    expect(fetchServerCertificate).not.toHaveBeenCalled();
 
     reactor.destroy();
   });
