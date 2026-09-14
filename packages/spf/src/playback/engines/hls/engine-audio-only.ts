@@ -45,7 +45,7 @@ import { type ParsePresentation, resolvePresentation } from '../../behaviors/res
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
-import { switchAudioTrack } from '../../behaviors/track-switching';
+import { type SwitchVideoTrackConfig, switchAudioTrack } from '../../behaviors/track-switching';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
@@ -154,6 +154,12 @@ export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineS
    * to disable.
    */
   preferredCodecs?: string[];
+  /**
+   * The hard-constraint pre-pass and rule chain `switchAudioTrack` runs, each replacing its `DEFAULT_AUDIO_*` chain
+   * outright (`@videojs/spf/hls` exports the defaults, so spread one to extend it).
+   */
+  audioConstraints?: SwitchVideoTrackConfig['audioConstraints'];
+  audioRules?: SwitchVideoTrackConfig['audioRules'];
   /**
    * Conditions reported about each rendition as it resolves — the _causes_ behind a later verdict, and the copy a
    * verdict reuses when they agree. Defaults to {@link reportUnsupportedTrackConditions}, which reports non-fMP4

@@ -70,6 +70,18 @@ export interface HlsVideoSource {
   drm?: DrmSystemsConfig | undefined;
 }
 
+/**
+ * What `new HlsVideoAdapter(options)` accepts. The mixin class is forced to `constructor(...args: any[])`, so this is
+ * the type its returned constructor names for the one argument it reads.
+ */
+export interface HlsVideoAdapterOptions {
+  /**
+   * Engine config forwarded to `createHlsVideoEngine`. Its `drm` merges over the license servers derived from the
+   * current `source.drm`, so an entry here names a server the source does not.
+   */
+  config?: HlsVideoEngineConfig;
+}
+
 export interface HlsVideoAdapterProps {
   src: string;
   source: HlsVideoSource | null;
@@ -200,7 +212,10 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     constructor(...args: any[]) {
       super(...args);
 
-      const { config } = args?.[0] ?? {};
+      // The mixin constructor's `any[]` is TypeScript's rule, not the contract;
+      // the returned constructor names `HlsVideoAdapterOptions`, so this is the
+      // shape callers were checked against.
+      const { config } = (args[0] ?? {}) as HlsVideoAdapterOptions;
 
       // Every key system this engine knows gets an entry whose fields read
       // whatever source is current, so `source.drm` licenses playback without the
@@ -582,7 +597,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsVideoImpl as unknown as MixinReturn<Base, HlsVideoAdapterAPI> & {
+  return HlsVideoImpl as unknown as MixinReturn<Base, HlsVideoAdapterAPI, [options?: HlsVideoAdapterOptions]> & {
     readonly alternativeMediaSuggestion: string | undefined;
     readonly defaultProps: HlsVideoAdapterProps;
   };
