@@ -50,12 +50,12 @@ export const sidebar: Sidebar = [
           'Guidance for AI tools, browser support, TypeScript, bundlers, the CDN, self-hosting, and contributing.',
         contents: [
           { slug: 'guides/build-with-ai' },
-          { slug: 'guides/configure-a-content-security-policy', redirectFrom: ['concepts/security'] },
           { slug: 'guides/browser-support', redirectFrom: ['concepts/browser-support'] },
           { slug: 'guides/typescript', redirectFrom: ['concepts/typescript'] },
           { slug: 'guides/bundlers', redirectFrom: ['concepts/bundlers'] },
           { slug: 'guides/cdn', frameworks: ['html'], redirectFrom: ['concepts/cdn'] },
           { slug: 'guides/self-host-the-player', sidebarLabel: 'Self-hosting', frameworks: ['html'] },
+          { slug: 'guides/configure-a-content-security-policy', redirectFrom: ['concepts/security'] },
           { href: 'https://github.com/videojs/v10/blob/main/CONTRIBUTING.md', sidebarLabel: 'Contribute to Video.js' },
         ],
       },
