@@ -59,10 +59,10 @@ export const sidebar: Sidebar = [
         llmsDescription:
           'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
         contents: [
-          { slug: 'guides/migrate-from-video-js-8', sidebarLabel: 'From Video.js 8' },
-          { slug: 'guides/migrate-from-mux-player', sidebarLabel: 'From Mux Player' },
-          { slug: 'guides/migrate-from-plyr', sidebarLabel: 'From Plyr' },
-          { slug: 'guides/migrate-from-media-chrome', sidebarLabel: 'From Media Chrome' },
+          { slug: 'guides/migrate-from-video-js-8', sidebarLabel: 'Video.js 8' },
+          { slug: 'guides/migrate-from-mux-player', sidebarLabel: 'Mux Player' },
+          { slug: 'guides/migrate-from-plyr', sidebarLabel: 'Plyr' },
+          { slug: 'guides/migrate-from-media-chrome', sidebarLabel: 'Media Chrome' },
         ],
       },
       {
