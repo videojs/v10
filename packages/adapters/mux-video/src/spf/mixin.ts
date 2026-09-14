@@ -172,7 +172,10 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
   //
   // Statics are otherwise sourced from `Base`, so this mixin's own need adding
   // back to the type or callers can't read them.
-  return MuxImpl as unknown as Constructor<Omit<InstanceType<Base>, 'source'> & MuxAdapterAPI> &
+  return MuxImpl as unknown as Constructor<
+    Omit<InstanceType<Base>, 'source'> & MuxAdapterAPI,
+    ConstructorParameters<Base>
+  > &
     Omit<Base, 'prototype' | 'defaultProps'> & {
       readonly alternativeMediaSuggestion: string | undefined;
       readonly defaultProps: MuxAdapterProps;

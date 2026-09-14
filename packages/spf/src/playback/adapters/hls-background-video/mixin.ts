@@ -24,6 +24,12 @@ import { firstFatal, type HlsVideoMediaError, hasUnsupportedFeatureCause } from 
 // copy of it.
 export type { HlsVideoMediaError } from '../hls-video/error-surface';
 
+/** What `new HlsBackgroundVideoAdapter(options)` accepts; see `HlsVideoAdapterOptions` for why it is typed here. */
+export interface HlsBackgroundVideoAdapterOptions {
+  /** Engine config forwarded to `createBackgroundVideoEngine`. */
+  config?: BackgroundVideoEngineConfig;
+}
+
 export interface HlsBackgroundVideoAdapterProps {
   src: string;
 }
@@ -124,9 +130,9 @@ export function HlsBackgroundVideoMixin<Base extends Constructor<any>>(BaseClass
     constructor(...args: any[]) {
       super(...args);
 
-      const { config } = args?.[0] ?? {};
+      const { config } = (args[0] ?? {}) as HlsBackgroundVideoAdapterOptions;
 
-      this.#config = config;
+      this.#config = config ?? {};
       this.#engine = this.#createEngine();
 
       // Promote the first fatal condition out of the engine's reported sequence
@@ -299,7 +305,11 @@ export function HlsBackgroundVideoMixin<Base extends Constructor<any>>(BaseClass
     }
   }
 
-  return HlsBackgroundVideoImpl as unknown as MixinReturn<Base, HlsBackgroundVideoAdapterAPI> & {
+  return HlsBackgroundVideoImpl as unknown as MixinReturn<
+    Base,
+    HlsBackgroundVideoAdapterAPI,
+    [options?: HlsBackgroundVideoAdapterOptions]
+  > & {
     readonly defaultProps: HlsBackgroundVideoAdapterProps;
   };
 }

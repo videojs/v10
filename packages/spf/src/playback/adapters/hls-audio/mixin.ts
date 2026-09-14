@@ -23,6 +23,12 @@ import {
 } from '../hls-video/error-surface';
 import type { HlsVideoSource } from '../hls-video/mixin';
 
+/** What `new HlsAudioAdapter(options)` accepts; see `HlsVideoAdapterOptions` for why it is typed here. */
+export interface HlsAudioAdapterOptions {
+  /** Engine config forwarded to `createHlsAudioEngine`. */
+  config?: HlsAudioEngineConfig;
+}
+
 export interface HlsAudioAdapterProps {
   src: string;
   source: HlsVideoSource | null;
@@ -103,9 +109,9 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     constructor(...args: any[]) {
       super(...args);
 
-      const { config } = args?.[0] ?? {};
+      const { config } = (args[0] ?? {}) as HlsAudioAdapterOptions;
 
-      this.#config = config;
+      this.#config = config ?? {};
       this.#engine = this.#createEngine();
 
       // Promote the first fatal condition out of the engine's reported sequence
@@ -334,7 +340,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsAudioImpl as unknown as MixinReturn<Base, HlsAudioAdapterAPI> & {
+  return HlsAudioImpl as unknown as MixinReturn<Base, HlsAudioAdapterAPI, [options?: HlsAudioAdapterOptions]> & {
     readonly alternativeMediaSuggestion: string | undefined;
     readonly defaultProps: HlsAudioAdapterProps;
   };
