@@ -3,7 +3,9 @@
 // `config.keySystems` is public, so without these a consumer could neither
 // narrow the default nor reconstruct it — `[widevineKeySystem]` alone drops
 // PlayReady's and FairPlay's code from the bundle.
-export type { KeySystemModule } from '../../../media/drm';
+// `DrmSystemsConfig` is the `drm` config shape — `createHlsVideoEngine`'s and
+// the structured `source.drm`'s — so a consumer building one can name it.
+export type { DrmSystemsConfig, KeySystemModule } from '../../../media/drm';
 export {
   DEFAULT_KEY_SYSTEMS,
   clearKeySystem,

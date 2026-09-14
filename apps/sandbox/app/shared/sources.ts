@@ -1,5 +1,5 @@
 import type { MuxSource } from '@videojs/mux-video';
-import type { DrmSystemsConfig } from '@videojs/spf/drm';
+import type { DrmSystemsConfig } from '@videojs/spf/hls';
 
 import { getMuxAssetId } from './mux';
 

@@ -18,7 +18,6 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     'hls-audio': 'src/playback/adapters/hls-audio/index.ts',
     'hls-background-video': 'src/playback/adapters/hls-background-video/index.ts',
     'hls-video': 'src/playback/adapters/hls-video/index.ts',
-    drm: 'src/drm.ts',
   },
 });
 

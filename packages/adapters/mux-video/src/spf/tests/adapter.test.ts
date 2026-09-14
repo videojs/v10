@@ -1,4 +1,4 @@
-import { type DrmSystemsConfig, resolveDrmUrl } from '@videojs/spf/drm';
+import type { DrmSystemsConfig } from '@videojs/spf/hls';
 /**
  * SPF-backed MuxVideoAdapter tests.
  *
@@ -65,13 +65,19 @@ const ProbeMuxVideoAdapter = MuxMixin(RecordingBase);
 
 type ProbeAdapter = InstanceType<typeof ProbeMuxVideoAdapter>;
 
+// A configured DRM URL is a string or a resolver for one; the engine's own
+// resolver is internal, so read it the same way here.
+function resolveUrl(url: string | (() => string | undefined) | undefined): string | undefined {
+  return typeof url === 'function' ? url() : url;
+}
+
 /** One key system's license server, off the `drm` the Adapter projected. */
 function licenseUrl(media: ProbeAdapter, keySystem: string): string | undefined {
-  return resolveDrmUrl(media.projected?.drm?.[keySystem]?.licenseUrl);
+  return resolveUrl(media.projected?.drm?.[keySystem]?.licenseUrl);
 }
 
 function serverCertificateUrl(media: ProbeAdapter, keySystem: string): string | undefined {
-  return resolveDrmUrl(media.projected?.drm?.[keySystem]?.serverCertificateUrl);
+  return resolveUrl(media.projected?.drm?.[keySystem]?.serverCertificateUrl);
 }
 
 // The document Mux serves: Apple's JSON chapters, the first chapter standing
