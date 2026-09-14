@@ -174,8 +174,20 @@ export function stylePlugin(
 
         for (const file of styles.watchFiles) this.addWatchFile(file);
 
+        const cachedDesign = options.stylesheet
+          ? await cachedDesignSystem(designs, resolve(cwd, options.stylesheet.input))
+          : undefined;
+
+        if (cachedDesign) {
+          lifecycle?.onOwnerTransform(id, [...new Set([...styles.watchFiles, ...cachedDesign.design.watchFiles])]);
+
+          for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
+        }
+
         const diagnosticOptions = isFunction(diagnostics) ? diagnostics() : diagnostics;
-        const styleDiagnostics = diagnosticOptions ? [...diagnoseStyles(styles, options.variants)] : [];
+        const styleDiagnostics = diagnosticOptions
+          ? [...diagnoseStyles(styles, options.variants, cachedDesign?.design.merge)]
+          : [];
         const report = () => {
           if (!diagnosticOptions) return;
 
@@ -184,7 +196,14 @@ export function stylePlugin(
           }
         };
 
-        const referencedRules = transformStyles(filename, transform.ast, transform.magicString, styles, options);
+        const referencedRules = transformStyles(
+          filename,
+          transform.ast,
+          transform.magicString,
+          styles,
+          options,
+          cachedDesign?.design.merge
+        );
 
         if (referencedRules.size === 0) {
           report();
@@ -197,10 +216,8 @@ export function stylePlugin(
         ].sort();
         let styleAssets: readonly string[] = [];
 
-        if (options.mode === 'css' && options.stylesheet) {
-          const input = resolve(cwd, options.stylesheet.input);
+        if (options.mode === 'css' && options.stylesheet && cachedDesign) {
           const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
-          const cachedDesign = await cachedDesignSystem(designs, input);
 
           if (diagnosticOptions) {
             styleDiagnostics.push(
@@ -353,7 +370,8 @@ function transformStyles(
   ast: Program,
   magicString: RolldownMagicString,
   styles: ResolvedStyles,
-  options: StyleTransformOptions
+  options: StyleTransformOptions,
+  merge?: DesignSystem['merge']
 ): ReadonlySet<string> {
   const bindings = styleBindings(filename, ast, styles);
   if (bindings.size === 0) return new Set();
@@ -375,7 +393,7 @@ function transformStyles(
       edits.push({
         start: node.start,
         end: node.end,
-        content: renderStyleRule(rule, options, styleReferenceContext(node, parent)),
+        content: renderStyleRule(rule, options, styleReferenceContext(node, parent), merge),
       });
       referencedRules.add(rule.className);
       transformedRanges.push([node.start, node.end]);
@@ -458,9 +476,10 @@ type StyleReferenceContext = 'jsx' | 'list' | 'value';
 function renderStyleRule(
   rule: ResolvedStyleRule,
   options: StyleTransformOptions,
-  context: StyleReferenceContext
+  context: StyleReferenceContext,
+  merge?: DesignSystem['merge']
 ): string {
-  const utilityGroups = utilityGroupsForRule(rule, options.variants);
+  const utilityGroups = utilityGroupsForRule(rule, options.variants, merge);
   const groups = options.mode === 'css' || utilityGroups.length === 0 ? [rule.className] : utilityGroups;
   const values = groups.filter(Boolean);
 

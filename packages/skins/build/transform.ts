@@ -43,6 +43,7 @@ export function createStyleOptions(
     ? {
         mode: 'tailwind',
         variants,
+        stylesheet: { input: resolve(stylesDir, 'tailwind.compiler.css') },
       }
     : {
         mode: 'css',

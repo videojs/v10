@@ -199,6 +199,31 @@ describe('stylePlugin', () => {
     expect(selected.source).toContain('pointer-events-none');
   });
 
+  it.each(['css', 'tailwind'] as const)('preserves custom font sizes with variants in %s output', async (mode) => {
+    const plugin = stylePlugin({ mode, variants: ['minimal'], stylesheet: { input: designPath } });
+    const { source } = await transform(
+      `import styles from './fixtures/title.styles'; export const title = <div className={styles.root} />;`,
+      undefined,
+      plugin
+    );
+
+    if (mode === 'tailwind') {
+      expect(source).toContain('text-fixture-title');
+      expect(source).toContain('text-fixture-foreground');
+      expect(source).toContain('font-normal');
+      expect(source).not.toContain('font-medium');
+    } else {
+      const id = virtualCssIds(source)[0];
+      if (!id) throw new Error('Expected a generated stylesheet.');
+
+      const css = await loadPlugin(plugin, id);
+
+      expect(css).toContain('font-size: 1.5rem');
+      expect(css).toContain('font-weight: 400');
+      expect(css).toContain('color:');
+    }
+  });
+
   it('forwards multiple variants to generated CSS', async () => {
     const styles = stylePlugin({
       mode: 'css',
