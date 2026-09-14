@@ -130,9 +130,9 @@ export const sidebar: Sidebar = [
             redirectFrom: ['guides/handle-playback-errors'],
           },
           {
-            slug: 'guides/preferences',
+            slug: 'guides/user-preferences',
             sidebarLabel: 'User preferences',
-            redirectFrom: ['guides/remember-user-preferences'],
+            redirectFrom: ['guides/remember-user-preferences', 'guides/preferences'],
           },
           {
             slug: 'guides/background-video',
