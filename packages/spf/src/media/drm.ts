@@ -335,6 +335,31 @@ export function declaredEncryptionScheme(keys: readonly MediaPlaylistKey[]): 'cb
 }
 
 /**
+ * The init data a presentation's manifest carries for one key system: every declared key the module claims, projected
+ * through its `toInitData` (Widevine PSSH / PlayReady PRO as `data:` URIs). Empty when the module carries none
+ * (FairPlay `skd://` keys have no inline init data) or declares no projection at all — which is what routes
+ * `exchangeLicenses` to its event-driven fallback.
+ */
+export function manifestInitData(
+  presentation: MaybeResolvedPresentation | undefined,
+  module_: KeySystemModule | undefined
+): { initDataType: string; initData: Uint8Array<ArrayBuffer> }[] {
+  if (!module_?.toInitData) return [];
+
+  const projected: { initDataType: string; initData: Uint8Array<ArrayBuffer> }[] = [];
+
+  for (const key of declaredDrmKeys(presentation)) {
+    if (key.keyFormat === undefined || key.uri === undefined || !module_.keyFormats.includes(key.keyFormat)) continue;
+
+    const initData = module_.toInitData(key.uri);
+
+    if (initData) projected.push(initData);
+  }
+
+  return projected;
+}
+
+/**
  * The key-system modules worth asking the CDM for: declared by the presentation's keys _and_ resolving to a license
  * server, in `keySystems` order. Keys without a `KEYFORMAT` any module claims (e.g. `identity` AES-128) contribute
  * nothing.

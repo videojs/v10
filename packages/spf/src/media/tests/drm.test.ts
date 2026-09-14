@@ -8,6 +8,7 @@ import {
   firstNonDrmEncryptionKey,
   keySystemCandidates,
   type KeySystemModule,
+  manifestInitData,
   resolveDrmCredentials,
   resolveDrmHeaders,
   resolveDrmUrl,
@@ -15,6 +16,7 @@ import {
   unsupportedEncryptionMethodCause,
 } from '../drm';
 import { SVTA_UNSUPPORTED_ENCRYPTION_METHOD } from '../errors';
+import type { MaybeResolvedPresentation } from '../types';
 import type { Presentation } from '../types';
 
 const WIDEVINE_KEY = {
@@ -320,5 +322,75 @@ describe('unsupportedEncryptionMethodCause', () => {
 
   it('answers undefined with no keys at all — absent keys default to the DRM assumption', () => {
     expect(unsupportedEncryptionMethodCause([])).toBeUndefined();
+  });
+});
+
+describe('manifestInitData', () => {
+  const WIDEVINE_FORMAT = 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed';
+  const projecting: KeySystemModule = {
+    keySystem: 'com.widevine.alpha',
+    keyFormats: [WIDEVINE_FORMAT],
+    toInitData: (uri) =>
+      uri.startsWith('data:') ? { initDataType: 'cenc', initData: new Uint8Array([uri.length]) } : undefined,
+  };
+  const eventDriven: KeySystemModule = { keySystem: 'com.apple.fps', keyFormats: ['com.apple.streamingkeydelivery'] };
+  const presentation = (keys: object[]) =>
+    ({
+      id: 'p',
+      url: 'https://example.com/m.m3u8',
+      selectionSets: [
+        {
+          id: 's',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'w',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: 'v',
+                  url: 'https://example.com/v.m3u8',
+                  bandwidth: 1,
+                  mimeType: 'video/mp4',
+                  segments: [],
+                  startTime: 0,
+                  duration: 1,
+                  metadata: { mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, keys } },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }) as unknown as MaybeResolvedPresentation;
+
+  it('projects every declared key the module claims through its toInitData', () => {
+    const keys = [
+      { method: 'SAMPLE-AES', uri: 'data:;base64,AA', keyFormat: WIDEVINE_FORMAT },
+      { method: 'SAMPLE-AES', uri: 'skd://k', keyFormat: 'com.apple.streamingkeydelivery' },
+      { method: 'SAMPLE-AES', uri: 'data:;base64,AAAA', keyFormat: WIDEVINE_FORMAT },
+    ];
+
+    expect(manifestInitData(presentation(keys), projecting)).toEqual([
+      { initDataType: 'cenc', initData: new Uint8Array(['data:;base64,AA'.length]) },
+      { initDataType: 'cenc', initData: new Uint8Array(['data:;base64,AAAA'.length]) },
+    ]);
+  });
+
+  it('is empty for a module with no projection, which routes licensing to the encrypted-event fallback', () => {
+    const keys = [{ method: 'SAMPLE-AES', uri: 'skd://k', keyFormat: 'com.apple.streamingkeydelivery' }];
+
+    expect(manifestInitData(presentation(keys), eventDriven)).toEqual([]);
+    expect(manifestInitData(presentation(keys), undefined)).toEqual([]);
+  });
+
+  it('skips keys without a URI or a key format', () => {
+    const keys = [
+      { method: 'SAMPLE-AES', keyFormat: WIDEVINE_FORMAT },
+      { method: 'AES-128', uri: 'data:;base64,AA' },
+    ];
+
+    expect(manifestInitData(presentation(keys), projecting)).toEqual([]);
   });
 });

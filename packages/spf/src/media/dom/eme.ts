@@ -32,6 +32,7 @@ export {
   firstNonDrmEncryptionKey,
   type KeySystemModule,
   keySystemCandidates,
+  manifestInitData,
   NO_KEY_SYSTEM,
   resolveDrmCredentials,
   resolveDrmHeaders,
