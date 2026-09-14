@@ -1,6 +1,6 @@
 # Concept Page Template
 
-Use for pages under `site/src/content/docs/concepts/`: one reusable mental model per page, scannable while building. The rules for choosing a concept over a how-to live in `site/src/content/docs/writing-style/write-guides.mdx`; the boundaries and sentence forms live in `../references/diataxis.md`. Follow an existing concept (e.g., `concepts/skins.mdx`) for current MDX patterns.
+Use for explanation pages under `site/src/content/docs/guides/`: one reusable mental model per page, scannable while building. They share the folder with how-to guides; the shape is what differs. The rules for choosing a concept over a how-to live in `site/src/content/docs/writing-style/write-guides.mdx`; the boundaries and sentence forms live in `../references/diataxis.md`. Follow an existing concept (e.g., `guides/skins.mdx`) for current MDX patterns.
 
 ## Frontmatter
 

@@ -26,13 +26,6 @@ Each mode has characteristic sentence forms. When your sentences read like a dif
 
 Reference is austere by design: neutral, consistent, and example-rich. Its value is accuracy, completeness, and predictable structure. The api-docs-builder provides the structure; hold hand-written prose on reference pages to the same standard, and spend warmth and persuasion in how-tos and concepts instead.
 
-## Drift signals the site checks
+## What the site checks
 
-The folder is the type, and `site/src/utils/docs/diataxis.ts` turns the boundaries above into rules that `pnpm -F site test diataxis` runs over every page:
-
-- Any page: a title that starts with "How to".
-- Concept: headings that open with a task verb, install commands, `<CustomUiNote />`, a description that starts with "How to", or a how-to template section (Recommended approach, How it works, Common variations, Troubleshooting).
-- Reference: the same as concept, minus install commands, which reference pages legitimately show.
-- Guide: no Related components, Related API, Related guides, or See also section.
-
-Pages that still drift are listed in the test's known-drift map. Fixing one removes it from the list; adding one is a deliberate act in review. When a page changes type, move the file and add `redirectFrom` with the old slug to its sidebar entry.
+Hand-written pages, concept and how-to alike, live in `site/src/content/docs/guides/`; builder-backed pages live in `reference/`. `site/src/utils/docs/diataxis.ts` guards that line through `pnpm -F site test diataxis`: no title starts with "How to", and no reference page carries a how-to template section (Recommended approach, How it works, Common variations, Troubleshooting) or `<CustomUiNote />`. Concept versus how-to inside guides is a writing and review judgement, not a test. When a page moves or is renamed, add `redirectFrom` with the old slug to its sidebar entry.

@@ -29,7 +29,7 @@ Oh hey by the way. A lot of this knowledge is encoded in the `write-docs` and `r
 
 First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
 
-1. **Concept pages** (`src/content/docs/concepts/`): Explain a reusable mental model — design rationale, trade-offs, and context that helps readers with several tasks. Diátaxis calls this mode "explanation." If the background matters to only one outcome, keep it in that how-to instead.
+1. **Concept pages** (`src/content/docs/guides/`): Explain a reusable mental model — design rationale, trade-offs, and context that helps readers with several tasks. Diátaxis calls this mode "explanation." If the background matters to only one outcome, keep it in that how-to instead.
 2. **How-to guides** (`src/content/docs/guides/`): Help the reader achieve a specific outcome — one page per thing they want to do (Autoplay, Play live streams, Self-host the player). Address a real goal, assume competence, and include only the explanation needed to complete or adapt the task.
 3. **Reference pages** (`src/content/docs/reference/components/` and `src/content/docs/reference/api/`): Describe the exact machinery — components, features, hooks, utilities, options, state, and behavior. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="writing-style/write-references">Write reference pages</DocsLink> for details.
 
@@ -37,9 +37,9 @@ First, read and understand [Diátaxis](https://diataxis.fr/). We organize docume
 Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now.
 </Aside>
 
-The folder is the type. The site derives each page's type from its path, shows it in the eyebrow above the title (for example "Guide · Playback"), and exposes it to search and llms.txt.
+Concept pages and how-to guides share one folder and one URL prefix, `guides/`. The difference is the shape of the page, not its address. Reference has its own folder because the api-docs-builder owns its shape. The site derives that split from the path and shows it in the eyebrow above the title (for example "Guide › Playback").
 
-A unit test, `pnpm -F site test diataxis`, checks every page against its folder and fails on the common drift signals: a title that starts with "How to", task headings or install commands on a concept page, how-to sections or a `<CustomUiNote />` on a concept or reference page, and a how-to guide with no Related section. Pages that still drift are listed in the test's known-drift map; fix the page and remove the entry, and don't add new ones without saying why in review.
+A unit test, `pnpm -F site test diataxis`, guards the line between the two folders: no title starts with "How to", no reference page carries how-to sections or a `<CustomUiNote />`, every page is in the sidebar, and no redirected slug still exists. Whether a guide reads as a concept or a how-to is a judgement you make while writing and reviewing, with the compass below.
 
 To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask two questions: does the content inform **action** (practical steps) or **cognition** (understanding)? And does it serve the reader's **study** (acquiring skills) or their **work** (applying them)?
 
@@ -88,8 +88,8 @@ One goal per page. Titles are goal-oriented and in the reader's words: each comp
 
 Our guides are [MDX](https://mdxjs.com) files placed in the matching directory:
 
-- Concept pages go in `src/content/docs/concepts/[slug].mdx`
-- How-to guides go in `src/content/docs/guides/[slug].mdx`
+- Concept pages and how-to guides both go in `src/content/docs/guides/[slug].mdx`
+- Reference pages go in `src/content/docs/reference/components/` or `src/content/docs/reference/api/`
 
 Every guide needs a frontmatter block with `title` and `description`:
 
