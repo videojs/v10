@@ -87,8 +87,8 @@ export {
   supportsManagedMediaSource,
   supportsMediaSource,
 } from './media/dom/mse/mediasource-setup';
-export type { AddChaptersTracksOptions } from './media/dom/text/chapters-track-slots';
-export { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from './media/dom/text/chapters-track-slots';
+export type { AddChaptersTracksOptions } from './media/dom/text/chapters-tracks';
+export { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from './media/dom/text/chapters-tracks';
 export type { ResponseLike } from './network/fetch';
 export { fetchResolvable, getResponseText } from './network/fetch';
 

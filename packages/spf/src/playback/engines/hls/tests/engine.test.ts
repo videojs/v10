@@ -2219,7 +2219,7 @@ http://example.com/video-seg1.m4s
     [0, 4, 'Intro'],
     [4, 10, 'Outro'],
   ]);
-  // The chapters slot's mode changes never registered as subtitle intent.
+  // The chapters track's mode changes never registered as subtitle intent.
   expect(engine.state.userTextTrackSelection.get()).toBeUndefined();
 
   engine.destroy();

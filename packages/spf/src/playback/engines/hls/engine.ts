@@ -523,7 +523,7 @@ export function createHlsVideoEngine(
       loadTextTrackSegments,
       // Apple JSON chapters (`EXT-X-SESSION-DATA`, `com.apple.hls.chapters`) →
       // a hidden `chapters` track per language, the preferred subtitle
-      // language leading. Cues live on the element; no state slot.
+      // language leading. Cues live on the element; no state signal.
       loadChapters,
 
       // Behavior whose sole purpose is to use a callback to allow for signal writing from the outside (e.g. an adapter)

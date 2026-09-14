@@ -256,7 +256,7 @@ describe('loadChapters', () => {
     reactor.destroy();
   });
 
-  it('removes its tracks on src unload and leaves subtitle slots alone', async () => {
+  it('removes its tracks on src unload and leaves subtitle tracks alone', async () => {
     stubFetch();
     const mediaElement = document.createElement('video');
 

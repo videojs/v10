@@ -2,7 +2,7 @@
  * **Project Apple JSON chapters onto the host media element.** When the resolved presentation carries an
  * `#EXT-X-SESSION-DATA` entry for `com.apple.hls.chapters`, fetch the document it points at, parse it, and add one
  * hidden `<track kind="chapters">` per title language — cues and all — to `mediaElement`. The element is the store:
- * there is no chapters state slot, exactly as subtitle cues live on their DOM tracks and nowhere else. Consumers
+ * there is no chapters state signal, exactly as subtitle cues live on their DOM tracks and nowhere else. Consumers
  * (video.js's textTrack feature, a host page) read the first chapters track's `cues` the way they would an authored
  * `<track>`.
  *
@@ -11,14 +11,14 @@
  * chapter when the document leaves it open: `VTTCue` rejects a non-finite end, and a chapters UI can't place a chapter
  * whose end it doesn't know — and for on-demand content the duration lands with the first media playlist, which
  * playback needs anyway. Entry fetches and projects, fire-once; the returned cleanup aborts an in-flight fetch and
- * removes the slots on state exit (source unload, media element change, destroy).
+ * removes the tracks on state exit (source unload, media element change, destroy).
  *
  * Failures are never fatal: a document that won't load or won't parse is warned about and projects nothing. An entry
  * carrying its data inline as `VALUE` is skipped — chapters are a document, not a string. Exactly one document is
  * assumed: Apple carries every language inside it, so the first entry with a URI is the one read.
  *
- * Slots carry `data-src-chapters-track`, distinct from the subtitle slots' tag, so neither cleanup removes the other's
- * tracks. A `<track kind="chapters">` the host page authored precedes these in `textTracks` (tree order), so a page
+ * The tracks carry `data-src-chapters-track`, distinct from the subtitle tracks' tag, so neither cleanup removes the
+ * other's. A `<track kind="chapters">` the host page authored precedes these in `textTracks` (tree order), so a page
  * that supplies its own chapters keeps them. On a Mux source this document is the same one the Mux adapter reads for
  * the asset title; the request is cacheable, and each side stays ignorant of the other.
  */
@@ -29,10 +29,7 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
-import {
-  addChaptersTracksToMedia,
-  removeAllChaptersTracksFromMedia,
-} from '../../../media/dom/text/chapters-track-slots';
+import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '../../../media/dom/text/chapters-tracks';
 import { APPLE_HLS_CHAPTERS_DATA_ID, type Chapter, parseHlsJsonChapters } from '../../../media/hls/parse-json-chapters';
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
 import {

@@ -1,8 +1,8 @@
 import type { Chapter } from '../../hls/parse-json-chapters';
 
 /**
- * SPF-owned chapters `<track>` selector. Distinct from the subtitle slots' `data-src-track` so each helper family
- * removes only its own slots — and so host-page `<track kind="chapters">` children are never touched.
+ * SPF-owned chapters `<track>` selector. Distinct from the subtitle tracks' `data-src-track` so each helper family
+ * removes only its own elements — and so host-page `<track kind="chapters">` children are never touched.
  */
 const SPF_CHAPTERS_TRACK_SELECTOR = 'track[data-src-chapters-track]';
 
@@ -44,7 +44,7 @@ function orderLanguages(chapters: readonly Chapter[], preferredLanguage: string 
  * Run `callback` once the `<track>`'s (empty) load has settled. A `<track>` with no `src` still runs the track
  * processing model the moment its mode leaves `disabled`: the empty URL fails the load, `readyState` goes to `ERROR`
  * and `error` fires. Chromium and WebKit drop any cue added before that point, so cues have to wait for it. Same
- * sequence the subtitle slots go through — their cues just happen to arrive later, after a segment fetch.
+ * sequence the subtitle tracks go through — their cues just happen to arrive later, after a segment fetch.
  */
 function onceSettled(el: HTMLTrackElement, callback: () => void): void {
   if (el.readyState >= HTMLTrackElement.LOADED) {
@@ -67,9 +67,9 @@ function onceSettled(el: HTMLTrackElement, callback: () => void): void {
  * `VTTCue` per chapter titled in that language. The element is the store — there is no chapters state elsewhere — so
  * consumers read `TextTrack.cues` like they would for an authored `<track>`.
  *
- * Slots are `<track>` children (the only spec mechanism that can also remove a text track), tagged
+ * The tracks are `<track>` children (the only spec mechanism that can also remove a text track), tagged
  * `data-src-chapters-track` for `removeAllChaptersTracksFromMedia`. No `src` — a `data:` URL would do, but WebKit
- * refuses one on a `crossorigin` media element — so the cues arrive programmatically: the slot is set `hidden` to let
+ * refuses one on a `crossorigin` media element — so the cues arrive programmatically: the track is set `hidden` to let
  * its empty load settle, then filled while `disabled`, then set `hidden` again. That last mode change is what queues
  * the `TextTrackList` `change` observers re-read cues on; a srcless `<track>` never fires `load`.
  */
@@ -107,7 +107,7 @@ export function addChaptersTracksToMedia(
   }
 }
 
-/** Remove every SPF-owned chapters `<track>` child from `mediaElement`; subtitle slots and host-page tracks stay. */
+/** Remove every SPF-owned chapters `<track>` child from `mediaElement`; subtitle and host-page tracks stay. */
 export function removeAllChaptersTracksFromMedia(mediaElement: HTMLMediaElement): void {
   const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_CHAPTERS_TRACK_SELECTOR);
 

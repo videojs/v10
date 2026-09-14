@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Chapter } from '../../../hls/parse-json-chapters';
-import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '../chapters-track-slots';
+import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '../chapters-tracks';
 import { addSubtitlesTracksToMedia, removeAllSubtitlesTracksFromMedia } from '../text-track-slots';
 
 const chapters: Chapter[] = [
@@ -21,7 +21,7 @@ function cuesOf(el: HTMLTrackElement): VTTCue[] {
 
 describe('addChaptersTracksToMedia', () => {
   it('appends one hidden chapters <track> per title language, tagged data-src-chapters-track', () => {
-    // Attributes, order, and mode are synchronous; cues land once the slot settles.
+    // Attributes, order, and mode are synchronous; cues land once the track's load settles.
     const media = document.createElement('video');
 
     addChaptersTracksToMedia(media, chapters);
@@ -40,7 +40,7 @@ describe('addChaptersTracksToMedia', () => {
     }
   });
 
-  it('adds a cue for every chapter titled in that language once the slot has settled', async () => {
+  it('adds a cue for every chapter titled in that language once the track has settled', async () => {
     const media = document.createElement('video');
 
     addChaptersTracksToMedia(media, chapters, { duration: 120 });
@@ -124,7 +124,7 @@ describe('addChaptersTracksToMedia', () => {
     await vi.waitFor(() => expect(seen.at(-1)).toBe(3));
   });
 
-  it('adds no cues to a slot removed before its load settled', async () => {
+  it('adds no cues to a track removed before its load settled', async () => {
     const media = document.createElement('video');
 
     addChaptersTracksToMedia(media, chapters);
@@ -141,7 +141,7 @@ describe('addChaptersTracksToMedia', () => {
 });
 
 describe('removeAllChaptersTracksFromMedia', () => {
-  it('removes every SPF-owned chapters slot and nothing else', () => {
+  it('removes every SPF-owned chapters track and nothing else', () => {
     const media = document.createElement('video');
     const host = document.createElement('track');
 
@@ -169,7 +169,7 @@ describe('removeAllChaptersTracksFromMedia', () => {
     expect(Array.from(media.children)).toEqual([host, media.querySelector('track[data-src-track]')]);
   });
 
-  it('is left alone by the subtitle slot removal', () => {
+  it('is left alone by the subtitle track removal', () => {
     const media = document.createElement('video');
 
     addChaptersTracksToMedia(media, chapters);
