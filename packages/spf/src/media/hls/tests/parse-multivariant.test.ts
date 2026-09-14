@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { PartiallyResolvedAudioTrack, PartiallyResolvedTextTrack, PartiallyResolvedVideoTrack } from '../../types';
+import { getMultivariantPlaylistMetadata, getSessionData } from '../../types';
 import { parseMultivariantPlaylist } from '../parse-multivariant';
 
 describe('parseMultivariantPlaylist', () => {
@@ -537,6 +538,91 @@ video.m3u8`;
 
       expect(normalTrack?.autoselect).toBeUndefined();
       expect(normalTrack?.default).toBeUndefined();
+    });
+  });
+
+  describe('EXT-X-SESSION-DATA', () => {
+    const text = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",FORMAT=JSON,URI="chapters.json"
+#EXT-X-SESSION-DATA:DATA-ID="com.example.title",VALUE="Big Buck Bunny, Remastered",LANGUAGE="en"
+#EXT-X-SESSION-DATA:DATA-ID="com.example.title",VALUE="Conejo",LANGUAGE="es"
+#EXT-X-SESSION-DATA:DATA-ID="com.example.blob",URI="https://cdn.example.com/blob.bin",FORMAT=RAW
+#EXT-X-SESSION-DATA:VALUE="no data id"
+#EXT-X-SESSION-DATA:DATA-ID="com.example.empty"
+#EXT-X-STREAM-INF:BANDWIDTH=800000
+video.m3u8`;
+
+    it('stores session data under the multivariant playlist metadata with URIs resolved against the playlist', () => {
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const sessionData = getMultivariantPlaylistMetadata(result)?.sessionData;
+
+      expect(sessionData).toHaveLength(4);
+      expect(sessionData?.[0]).toEqual({
+        dataId: 'com.apple.hls.chapters',
+        uri: 'https://example.com/chapters.json',
+        format: 'JSON',
+      });
+    });
+
+    it('defaults FORMAT to JSON and honors FORMAT=RAW', () => {
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+
+      expect(getSessionData(result, 'com.apple.hls.chapters')[0]?.format).toBe('JSON');
+      expect(getSessionData(result, 'com.example.blob')[0]).toEqual({
+        dataId: 'com.example.blob',
+        uri: 'https://cdn.example.com/blob.bin',
+        format: 'RAW',
+      });
+    });
+
+    it('keeps a quoted VALUE containing commas and its LANGUAGE', () => {
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+
+      expect(getSessionData(result, 'com.example.title')[0]).toEqual({
+        dataId: 'com.example.title',
+        value: 'Big Buck Bunny, Remastered',
+        language: 'en',
+      });
+    });
+
+    it('keeps multiple entries sharing a DATA-ID when LANGUAGE differs, in playlist order', () => {
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const titles = getSessionData(result, 'com.example.title');
+
+      expect(titles.map((entry) => entry.language)).toEqual(['en', 'es']);
+      expect(titles[1]?.value).toBe('Conejo');
+    });
+
+    it('skips a tag without DATA-ID and a tag with neither VALUE nor URI', () => {
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+
+      expect(getSessionData(result).map((entry) => entry.dataId)).toEqual([
+        'com.apple.hls.chapters',
+        'com.example.title',
+        'com.example.title',
+        'com.example.blob',
+      ]);
+    });
+
+    it('does not disturb stream parsing', () => {
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const videoTracks = result.selectionSets.find((s) => s.type === 'video')?.switchingSets[0]?.tracks;
+
+      expect(videoTracks).toHaveLength(1);
+      expect(videoTracks?.[0]?.url).toBe('https://example.com/video.m3u8');
+    });
+
+    it('leaves metadata undefined when the playlist carries no session data', () => {
+      const result = parseMultivariantPlaylist(
+        `#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=800000
+video.m3u8`,
+        { url: baseUrl }
+      );
+
+      expect(result.metadata).toBeUndefined();
+      expect(getSessionData(result)).toEqual([]);
     });
   });
 

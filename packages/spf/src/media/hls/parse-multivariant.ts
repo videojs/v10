@@ -5,16 +5,19 @@ import type {
   AudioSelectionSet,
   AudioSwitchingSet,
   FrameRate,
+  MultivariantPlaylistMetadata,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
   SelectionSet,
+  SessionDataEntry,
   TextSelectionSet,
   TextSwitchingSet,
   VideoSelectionSet,
   VideoSwitchingSet,
 } from '../types';
+import { MULTIVARIANT_PLAYLIST_METADATA_KEY } from '../types';
 import { matchTag, parseCodecs } from './parse-attributes';
 import { resolveUrl } from './resolve-url';
 
@@ -66,6 +69,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
   const streams: StreamInfo[] = [];
   const audioRenditions: AudioRenditionInfo[] = [];
   const subtitleRenditions: SubtitleRenditionInfo[] = [];
+  const sessionData: SessionDataEntry[] = [];
 
   // State for STREAM-INF parsing (URI follows on next line)
   let pendingStreamInfo: Omit<StreamInfo, 'uri'> | null = null;
@@ -81,6 +85,35 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       trimmed.startsWith('#EXT-X-VERSION:') ||
       trimmed.startsWith('#EXT-X-INDEPENDENT-SEGMENTS')
     ) {
+      continue;
+    }
+
+    // #EXT-X-SESSION-DATA — recorded, not fetched; a behavior that knows the
+    // DATA-ID reads it back via `getSessionData`.
+    const sessionDataAttrs = matchTag(trimmed, 'EXT-X-SESSION-DATA');
+
+    if (sessionDataAttrs) {
+      const dataId = sessionDataAttrs.get('DATA-ID');
+      const value = sessionDataAttrs.get('VALUE');
+      const uri = sessionDataAttrs.get('URI');
+
+      // A tag MUST carry DATA-ID and exactly one of VALUE / URI.
+      if (dataId && (value !== undefined || uri !== undefined)) {
+        const language = sessionDataAttrs.get('LANGUAGE');
+        const entry: SessionDataEntry = { dataId };
+
+        if (value !== undefined) entry.value = value;
+
+        if (uri !== undefined) {
+          entry.uri = resolveUrl(uri, baseUrl);
+          entry.format = sessionDataAttrs.get('FORMAT') === 'RAW' ? 'RAW' : 'JSON';
+        }
+
+        if (language) entry.language = language;
+
+        sessionData.push(entry);
+      }
+
       continue;
     }
 
@@ -434,11 +467,21 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
   }
 
   // Build presentation (duration is undefined until tracks are resolved)
-  return {
+  const presentation: Presentation = {
     id: generateId(),
     url: unresolved.url,
     startTime: 0,
     // duration: undefined, // Won't be known until after at least one media playlist is fetched + parsed
     selectionSets,
   };
+
+  // Only a playlist that carries session data grows a metadata bag, so
+  // everything else keeps its shape.
+  if (sessionData.length > 0) {
+    const metadata: MultivariantPlaylistMetadata = { sessionData };
+
+    presentation.metadata = { [MULTIVARIANT_PLAYLIST_METADATA_KEY]: metadata };
+  }
+
+  return presentation;
 }
