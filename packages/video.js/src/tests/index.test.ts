@@ -1,0 +1,34 @@
+import * as html from '@videojs/html';
+import { describe, expect, it } from 'vite-plus/test';
+
+import * as root from '../index';
+import videojs, { getPlayer, options, registerPlugin } from '../videojs';
+
+describe('video.js', () => {
+  it('re-exports everything @videojs/html exports', () => {
+    for (const name of Object.keys(html)) {
+      expect(root[name as keyof typeof root], name).toBe(html[name as keyof typeof html]);
+    }
+  });
+
+  it('adds the Video.js 8 stubs without shadowing an @videojs/html export', () => {
+    const stubs = [
+      'default',
+      'registerPlugin',
+      'getPlugin',
+      'registerComponent',
+      'getComponent',
+      'getPlayer',
+      'options',
+    ];
+
+    for (const name of stubs) {
+      expect(name in html, name).toBe(false);
+    }
+
+    expect(root.default).toBe(videojs);
+    expect(root.registerPlugin).toBe(registerPlugin);
+    expect(root.getPlayer).toBe(getPlayer);
+    expect(root.options).toBe(options);
+  });
+});
