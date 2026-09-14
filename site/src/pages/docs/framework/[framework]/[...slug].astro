@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import clsx from 'clsx';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton';
 import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
@@ -142,9 +143,14 @@ const jsonLdSchema = createTechArticleSchema({
       >
         <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-10 pb-8">
           <div class="mb-2 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
-            <p class="font-display text-h4 uppercase text-accent select-none">
+            <p class="flex items-center gap-1.5 font-display text-h4 uppercase text-accent select-none">
               {typeLabel}
-              {eyebrowSection && <span class="text-muted"> · {eyebrowSection}</span>}
+              {eyebrowSection && (
+                <>
+                  <ChevronRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+                  <span class="text-muted">{eyebrowSection}</span>
+                </>
+              )}
             </p>
             <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
           </div>
