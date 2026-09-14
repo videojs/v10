@@ -12,12 +12,7 @@
  * `SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK` when a type's candidates actually empty. Keeping the two apart is what lets a
  * mixed source — some renditions encrypted or MPEG-TS, others playable — log its causes and still play.
  */
-import {
-  type DrmSystemsConfig,
-  firstNonDrmEncryptionKey,
-  type KeySystemModule,
-  keySystemCandidates,
-} from '../../media/drm';
+import { type DrmConfig, firstNonDrmEncryptionKey, keySystemCandidates } from '../../media/drm';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
@@ -28,8 +23,15 @@ import {
 import { NON_FMP4_CONTAINER_MIMES } from '../../media/hls/parse-media-playlist';
 import { getMediaPlaylistMetadata, type ResolvedTrack, type TrackType } from '../../media/types';
 
-/** Conditions worth reporting about a just-resolved track. Return an empty array (or omit the seam) to report nothing. */
-export type ReportUnsupportedTrackConditions = (track: ResolvedTrack) => readonly SvtaError[];
+/**
+ * Conditions worth reporting about a just-resolved track. Return an empty array (or omit the seam) to report nothing.
+ *
+ * `config` is the composition's config, handed along by `resolve-track` so an extended reporter can read the props it
+ * defines off it — `reportUnsupportedTrackConditionsWithDrm` reads `drm` and `keySystems` — through a cast, the way the
+ * selection rules read their own. Untyped here because the seam composes into configs that share nothing else; a
+ * reporter that needs nothing from it ignores it.
+ */
+export type ReportUnsupportedTrackConditions = (track: ResolvedTrack, config?: unknown) => readonly SvtaError[];
 
 /** Unsupported-format code per type; text has none — absent captions aren't a failure. */
 const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
@@ -71,20 +73,17 @@ export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly
 /**
  * DRM-composed variant of {@link reportUnsupportedTrackConditions}: encryption is only a cause when no configured key
  * system serves the rendition's declared keys — mirroring what `canPlayTrackWithDrm` prunes on, so a reported cause
- * still always has a corresponding exclusion.
+ * still always has a corresponding exclusion. Reads the engine's `drm` and `keySystems` off the config it is handed
+ * (see `DrmConfig`); with either absent, nothing serves any key and encryption is a cause exactly as in the default.
  */
-export function makeReportUnsupportedTrackConditionsWithDrm(
-  drm: DrmSystemsConfig,
-  keySystems: readonly KeySystemModule[]
-): ReportUnsupportedTrackConditions {
-  return (track) => {
-    const metadata = getMediaPlaylistMetadata(track);
-    const unservable =
-      Boolean(metadata?.encrypted) && keySystemCandidates(metadata?.keys ?? [], drm, keySystems).length === 0;
+export const reportUnsupportedTrackConditionsWithDrm: ReportUnsupportedTrackConditions = (track, config) => {
+  const metadata = getMediaPlaylistMetadata(track);
+  const { drm = {}, keySystems = [] } = (config as DrmConfig | undefined) ?? {};
+  const unservable =
+    Boolean(metadata?.encrypted) && keySystemCandidates(metadata?.keys ?? [], drm, keySystems).length === 0;
 
-    return unsupportedTrackConditions(track, unservable);
-  };
-}
+  return unsupportedTrackConditions(track, unservable);
+};
 
 function unsupportedTrackConditions(track: ResolvedTrack, encryptionUnsupported: boolean): readonly SvtaError[] {
   if (!CAPABILITY_PRUNED_TYPES.has(track.type)) return [];

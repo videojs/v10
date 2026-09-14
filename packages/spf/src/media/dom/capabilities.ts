@@ -15,7 +15,7 @@
  * predicate, since their verdict resolves asynchronously.
  */
 
-import { type DrmSystemsConfig, type KeySystemModule, keySystemCandidates } from '../drm';
+import { type DrmConfig, keySystemCandidates } from '../drm';
 import { NON_FMP4_CONTAINER_MIMES } from '../hls/parse-media-playlist';
 import { type CanPlayTrack, getMediaPlaylistMetadata } from '../types';
 import { buildMimeCodec, isCodecSupported } from './mse/mediasource-setup';
@@ -73,27 +73,18 @@ export const canPlayTrack: CanPlayTrack = (track) => {
 };
 
 /**
- * What {@link canPlayTrackWithDrm} reads off the config it is handed: the engine's `drm` license servers and the
- * `keySystems` it can negotiate. A cast view rather than a constraint on `CanPlayTrack`, for the same reason
- * `excludeUnplayableTracks` reads `canPlayTrack` itself through one.
- */
-export interface DrmCapabilityConfig {
-  drm?: DrmSystemsConfig;
-  keySystems?: readonly KeySystemModule[];
-}
-
-/**
  * DRM-composed variant of {@link canPlayTrack}: an encrypted rendition is playable when its declared keys reach a key
  * system with a configured license server (its container / codecs still have to probe as decodable); everything else
  * matches the standard probe. Encrypted renditions no configured system serves stay pruned — MediaKeys could never be
- * negotiated for them, so playing them would park forever behind the `segmentLoadingBlocked` gate. Handed no `drm` or
- * no `keySystems`, nothing serves any key and it refuses encrypted renditions exactly as {@link canPlayTrack} does.
+ * negotiated for them, so playing them would park forever behind the `segmentLoadingBlocked` gate. Reads the engine's
+ * `drm` and `keySystems` off the config it is handed (see `DrmConfig`); with either absent, nothing serves any key and
+ * it refuses encrypted renditions exactly as {@link canPlayTrack} does.
  */
 export const canPlayTrackWithDrm: CanPlayTrack = (track, config) => {
   const metadata = getMediaPlaylistMetadata(track);
 
   if (metadata?.encrypted) {
-    const { drm = {}, keySystems = [] } = (config as DrmCapabilityConfig | undefined) ?? {};
+    const { drm = {}, keySystems = [] } = (config as DrmConfig | undefined) ?? {};
     if (keySystemCandidates(metadata.keys ?? [], drm, keySystems).length === 0) return false;
   }
 
