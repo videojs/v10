@@ -114,26 +114,10 @@ export interface TrackSwitchingState {
 }
 
 /**
- * Config for `switchVideoTrack` — the ABR tuning read by its ranker rule (`rankByBandwidth`). `quality.safetyMargin` is
- * the bandwidth-headroom multiplier; `quality.upgradeMargin` the hysteresis ratio gating upgrades; `bandwidth` tunes
- * the estimator; `initialBandwidth` is the pre-sample fallback. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15),
- * `DEFAULT_BANDWIDTH_CONFIG`, `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
+ * Config both `switchVideoTrack` and `switchAudioTrack` read — the cross-cutting fields one engine config serves to
+ * every variant. Each variant's own config extends this with its chains (and, for video, its ABR tuning).
  */
-export interface SwitchVideoTrackConfig {
-  /**
-   * The hard-constraint pre-pass and rule chain `switchVideoTrack` runs, replacing {@link DEFAULT_VIDEO_CONSTRAINTS} /
-   * {@link DEFAULT_VIDEO_RULES} outright — the same whole-chain contract as `selectVideoTrack`'s `constraints` /
-   * `rules`. Spread the default to extend it: `[...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems]` is how the DRM
-   * composition prunes on a slot only it carries. Keyed per type because one engine config reaches every variant.
-   */
-  videoConstraints?: readonly SwitchVideoTrackRule[];
-  videoRules?: readonly SwitchVideoTrackRule[];
-  /** `switchAudioTrack`'s chains, replacing {@link DEFAULT_AUDIO_CONSTRAINTS} / {@link DEFAULT_AUDIO_RULES}. */
-  audioConstraints?: readonly SwitchAudioTrackRule[];
-  audioRules?: readonly SwitchAudioTrackRule[];
-  quality?: Partial<QualityConfig>;
-  bandwidth?: Partial<BandwidthConfig>;
-  initialBandwidth?: number;
+export interface TrackSwitchingSharedConfig {
   /** Override CDN-id derivation (shared by the CDN scope + failover constraint). */
   getCdnId?: GetCdnId;
   /**
@@ -151,6 +135,38 @@ export interface SwitchVideoTrackConfig {
    * Defaults to `DEFAULT_PREFERRED_CODECS` (AVC + AAC); pass `[]` to disable.
    */
   preferredCodecs?: string[];
+}
+
+/**
+ * Config for `switchVideoTrack`: its chains, plus the ABR tuning read by its ranker rule (`rankByBandwidth`).
+ * `quality.safetyMargin` is the bandwidth-headroom multiplier; `quality.upgradeMargin` the hysteresis ratio gating
+ * upgrades; `bandwidth` tunes the estimator; `initialBandwidth` is the pre-sample fallback. Defaults:
+ * `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15), `DEFAULT_BANDWIDTH_CONFIG`, `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
+ */
+export interface SwitchVideoTrackConfig extends TrackSwitchingSharedConfig {
+  /**
+   * The hard-constraint pre-pass and rule chain `switchVideoTrack` runs, replacing {@link DEFAULT_VIDEO_CONSTRAINTS} /
+   * {@link DEFAULT_VIDEO_RULES} outright — the same whole-chain contract as `selectVideoTrack`'s `videoConstraints` /
+   * `videoRules`. Spread the default to extend it: `[...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems]` is how
+   * the DRM composition prunes on a slot only it carries. Keyed per type because one engine config reaches every
+   * variant.
+   */
+  videoConstraints?: readonly SwitchVideoTrackRule[];
+  videoRules?: readonly SwitchVideoTrackRule[];
+  quality?: Partial<QualityConfig>;
+  bandwidth?: Partial<BandwidthConfig>;
+  initialBandwidth?: number;
+}
+
+/**
+ * Config for `switchAudioTrack`: its chains over the shared fields. Audio ranks through the same `rankByBandwidth` but
+ * carries no ABR tuning — with no audio `bandwidthState` the ranker's tuning is inert, and the ranker always yields a
+ * pick.
+ */
+export interface SwitchAudioTrackConfig extends TrackSwitchingSharedConfig {
+  /** `switchAudioTrack`'s chains, replacing {@link DEFAULT_AUDIO_CONSTRAINTS} / {@link DEFAULT_AUDIO_RULES}. */
+  audioConstraints?: readonly SwitchAudioTrackRule[];
+  audioRules?: readonly SwitchAudioTrackRule[];
 }
 
 /** Default initial-bandwidth value before bandwidth measurements arrive. */
@@ -918,21 +934,17 @@ export const switchAudioTrack = defineBehavior({
     ...otherProps
   }: {
     state: TrackSwitchingStateMap<'selectedAudioTrackId'>;
-    // Shares the video config shape so the engine config spreads through (CDN
-    // derivation + any future cross-cutting fields).
-    config?: SwitchVideoTrackConfig;
+    config?: SwitchAudioTrackConfig;
   }) =>
     setupTrackSwitching({
       ...otherProps,
       state,
       config: {
-        // Spread engine config so cross-cutting fields (`getCdnId`, future shared
-        // tuning) flow through like they do for video, then override the per-type
-        // wiring. Video-only ABR tuning (`quality`/`bandwidth`/`initialBandwidth`)
-        // rides along into the shared `rankByBandwidth` too; harmless since audio
-        // has no `bandwidthState` to act on it and the ranker always yields a pick.
-        // FOLLOW-UP: a shared config type for the genuinely cross-cutting fields
-        // would keep video-only tuning out of audio entirely (CJP).
+        // Spread engine config so the shared fields (`getCdnId`, `canPlayTrack`,
+        // `preferredCodecs`) flow through like they do for video, then override
+        // the per-type wiring. The engine's video-only ABR tuning rides along at
+        // runtime into the shared `rankByBandwidth`; harmless, since audio has no
+        // `bandwidthState` to act on it (see `SwitchAudioTrackConfig`).
         ...config,
         selectionKey: AUDIO_TYPE_CONFIG.selectedKey,
         userSelectionKey: AUDIO_TYPE_CONFIG.userSelectionKey,
