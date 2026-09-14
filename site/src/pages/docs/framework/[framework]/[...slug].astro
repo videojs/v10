@@ -13,7 +13,7 @@ import H2Markdown from '@/components/typography/H2Markdown.astro';
 import { PRODUCTION_URL } from '@/consts';
 import DocsLayout from '@/layouts/Docs.astro';
 import type { SupportedFramework } from '@/types/docs';
-import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
+import { DOC_TYPE_LABELS, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { filterSidebar, getAdjacentGuides, getAllGuideSlugs, getSectionsForGuide } from '@/utils/docs/sidebar';
 import { getDocTitle, isCodeIdentifier } from '@/utils/docs/title';
 import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
@@ -85,7 +85,11 @@ const docTitles = new Map(allDocs.map((d) => [d.id, getDocTitle(d, framework)]))
 const filteredSidebar = filterSidebar(framework);
 const sections = getSectionsForGuide(slug, filteredSidebar);
 const category = sections[1] ?? sections[0];
-const eyebrow = sections.at(-1);
+// The eyebrow names the Diátaxis type first so a how-to filed as a concept looks wrong on the page itself.
+const typeLabel = DOC_TYPE_LABELS[doc.data.type];
+const section = sections.at(-1);
+// A "Concepts" section would only repeat the type label, so the eyebrow keeps the type alone there.
+const eyebrowSection = section?.toLowerCase().startsWith(typeLabel.toLowerCase()) ? undefined : section;
 
 // Build JSON-LD schema for TechArticle
 const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
@@ -134,10 +138,14 @@ const jsonLdSchema = createTechArticleSchema({
         data-framework={framework}
         data-site="docs"
         data-category={category}
+        data-type={doc.data.type}
       >
         <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-10 pb-8">
           <div class="mb-2 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
-            {eyebrow && <p class="font-display text-h4 uppercase text-accent select-none">{eyebrow}</p>}
+            <p class="font-display text-h4 uppercase text-accent select-none">
+              {typeLabel}
+              {eyebrowSection && <span class="text-muted"> · {eyebrowSection}</span>}
+            </p>
             <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
           </div>
           <div class="mb-4 flex flex-wrap items-center gap-3">

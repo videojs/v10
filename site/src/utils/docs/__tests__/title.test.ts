@@ -11,6 +11,7 @@ describe('getDocTitle', () => {
     data: {
       title: 'PlayButton',
       description: 'A button component for playing and pausing media playback',
+      type: 'reference',
       frameworkTitle: {
         react: 'PlayButton',
         html: 'play-button',
@@ -27,6 +28,7 @@ describe('getDocTitle', () => {
     data: {
       title: 'Basic Concepts',
       description: 'Introduction to basic concepts',
+      type: 'concept',
     },
     body: '',
     slug: 'concepts/basic',
@@ -38,6 +40,7 @@ describe('getDocTitle', () => {
     data: {
       title: 'MuteButton',
       description: 'A button for muting audio',
+      type: 'reference',
       frameworkTitle: {
         react: 'MuteButton',
         // html framework title not defined
@@ -117,6 +120,7 @@ describe('getDocTitle', () => {
         data: {
           title: 'Default Title',
           description: 'Test',
+          type: 'guide',
           frameworkTitle: {},
         },
         body: '',

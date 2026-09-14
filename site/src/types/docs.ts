@@ -7,6 +7,42 @@ export const DOC_STABILITIES = ['experimental'] as const;
 
 export type DocStability = (typeof DOC_STABILITIES)[number];
 
+/** The Diátaxis mode a docs page is written in. Derived from its content folder, never declared by hand. */
+export const DOC_TYPES = ['concept', 'guide', 'reference'] as const;
+
+export type DocType = (typeof DOC_TYPES)[number];
+
+export const DOC_TYPE_LABELS = {
+  concept: 'Concept',
+  guide: 'Guide',
+  reference: 'Reference',
+} satisfies Record<DocType, string>;
+
+// The authoring guides under writing-style are dev-only how-tos for contributors.
+const DOC_TYPE_FOLDERS: Record<string, DocType> = {
+  concepts: 'concept',
+  guides: 'guide',
+  reference: 'reference',
+  'writing-style': 'guide',
+};
+
+/**
+ * Resolve the document type from a docs collection id such as `guides/autoplay`. The folder is the single source of
+ * truth for the type, so a page filed in the wrong folder is the wrong type; there is no frontmatter override.
+ */
+export function getDocTypeFromId(id: string): DocType {
+  const folder = id.split('/')[0] ?? '';
+  const type = DOC_TYPE_FOLDERS[folder];
+
+  if (!type) {
+    throw new Error(
+      `Docs entry "${id}" is not inside a typed folder. Place it under one of: ${Object.keys(DOC_TYPE_FOLDERS).join(', ')}.`
+    );
+  }
+
+  return type;
+}
+
 export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
 export type SupportedStyle<F extends SupportedFramework> = (typeof FRAMEWORK_STYLES)[F][number];
 export type AnySupportedStyle = SupportedStyle<SupportedFramework>;
