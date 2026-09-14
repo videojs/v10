@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { derivedAttributes, propsFromAttributes } from '../attributes';
+import { adapterPropsFromAttributes, derivedAttributes } from '../attributes';
 
 class EmbedAdapter {
   static readonly defaultProps = {
@@ -25,9 +25,13 @@ describe('derivedAttributes', () => {
   });
 });
 
-describe('propsFromAttributes', () => {
+describe('adapterPropsFromAttributes', () => {
   it('reads the present attributes over the defaults, coerced by their default', () => {
-    const props = propsFromAttributes(EmbedAdapter, { src: 'https://example.com/x', muted: '', preload: 'none' });
+    const props = adapterPropsFromAttributes(EmbedAdapter, {
+      src: 'https://example.com/x',
+      muted: '',
+      preload: 'none',
+    });
 
     expect(props).toEqual({
       src: 'https://example.com/x',
@@ -42,6 +46,6 @@ describe('propsFromAttributes', () => {
   });
 
   it('returns the defaults when nothing is set', () => {
-    expect(propsFromAttributes(EmbedAdapter, {})).toEqual(EmbedAdapter.defaultProps);
+    expect(adapterPropsFromAttributes(EmbedAdapter, {})).toEqual(EmbedAdapter.defaultProps);
   });
 });

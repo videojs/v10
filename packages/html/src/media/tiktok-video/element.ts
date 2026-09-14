@@ -1,11 +1,11 @@
-import { propsFromAttributes } from '@videojs/media/dom';
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
 import { buildTikTokIframeSrc, TikTokAdapter } from '@videojs/tiktok-video';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const props = propsFromAttributes(TikTokAdapter, attrs);
+  const props = adapterPropsFromAttributes(TikTokAdapter, attrs);
 
   return embedTemplate({
     src: buildTikTokIframeSrc(props.src, props),

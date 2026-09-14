@@ -1,5 +1,5 @@
 export { AdapterAttachment } from './attach-adapter';
-export { propsFromAttributes } from './attributes';
+export { adapterPropsFromAttributes } from './attributes';
 export * from './custom-media-element';
 export {
   audioContentAttributes,

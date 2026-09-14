@@ -1,11 +1,11 @@
-import { propsFromAttributes } from '@videojs/media/dom';
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
 import { buildVimeoIframeSrc, VimeoAdapter } from '@videojs/vimeo-video';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const props = propsFromAttributes(VimeoAdapter, attrs);
+  const props = adapterPropsFromAttributes(VimeoAdapter, attrs);
 
   return embedTemplate({
     src: buildVimeoIframeSrc(props.src, props),

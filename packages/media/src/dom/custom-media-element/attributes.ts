@@ -55,7 +55,7 @@ export function derivedAttributes(defaultProps: object): MediaTargetAttributeCon
  * The adapter's props as an element's initial attributes set them: `defaultProps` with each declared attribute that is
  * present coerced over it. What a template needs to build an embed URL before the adapter has attached.
  */
-export function propsFromAttributes<Adapter extends { readonly defaultProps: object }>(
+export function adapterPropsFromAttributes<Adapter extends { readonly defaultProps: object }>(
   Adapter: Adapter,
   attrs: Record<string, string>
 ): Adapter['defaultProps'] {

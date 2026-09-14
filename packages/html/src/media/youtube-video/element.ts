@@ -1,11 +1,11 @@
-import { propsFromAttributes } from '@videojs/media/dom';
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
 import { buildYouTubeIframeSrc, YouTubeAdapter } from '@videojs/youtube-video';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const props = propsFromAttributes(YouTubeAdapter, attrs);
+  const props = adapterPropsFromAttributes(YouTubeAdapter, attrs);
 
   return embedTemplate({
     src: buildYouTubeIframeSrc(props.src, props),

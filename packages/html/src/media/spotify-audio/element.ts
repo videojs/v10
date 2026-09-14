@@ -1,11 +1,11 @@
-import { propsFromAttributes } from '@videojs/media/dom';
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
 import { buildSpotifyIframeSrc, SpotifyAdapter } from '@videojs/spotify-audio';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const props = propsFromAttributes(SpotifyAdapter, attrs);
+  const props = adapterPropsFromAttributes(SpotifyAdapter, attrs);
 
   return embedTemplate({
     src: buildSpotifyIframeSrc(props.src, props),

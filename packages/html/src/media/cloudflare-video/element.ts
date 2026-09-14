@@ -1,11 +1,11 @@
 import { buildCloudflareIframeSrc, CloudflareAdapter } from '@videojs/cloudflare-video';
-import { propsFromAttributes } from '@videojs/media/dom';
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const props = propsFromAttributes(CloudflareAdapter, attrs);
+  const props = adapterPropsFromAttributes(CloudflareAdapter, attrs);
 
   return embedTemplate({
     src: buildCloudflareIframeSrc(props.src, props),

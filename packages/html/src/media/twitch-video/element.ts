@@ -1,11 +1,11 @@
-import { propsFromAttributes } from '@videojs/media/dom';
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
 import { buildTwitchIframeSrc, TwitchAdapter } from '@videojs/twitch-video';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
 const template = (attrs: Record<string, string>): string => {
-  const props = propsFromAttributes(TwitchAdapter, attrs);
+  const props = adapterPropsFromAttributes(TwitchAdapter, attrs);
 
   return embedTemplate({
     src: buildTwitchIframeSrc(props.src, props),
