@@ -361,6 +361,9 @@ jobs:
         if: github.event_name == 'push'
         run: pnpm exec vp run '@videojs/e2e#test:registry:full'
 
+      - name: Validate published registry packages
+        run: pnpm exec vp run '@videojs/e2e#test:registry:published'
+
       - name: Save Vite Task cache
         if: success()
         uses: actions/cache/save@v6

@@ -313,7 +313,7 @@ export async function verifyPublishedRegistry(): Promise<void> {
     await scaffold(project);
     await configurePackage(projectDir, {}, []);
     await configureShadcn(project, projectDir, registryUrl);
-    await exerciseRegistryCli(project, projectDir, ['video']);
+    await exerciseRegistryCli(project, projectDir);
     await cp(resolve(overlaysDir, 'published/page.tsx'), resolve(projectDir, 'src/app/page.tsx'));
     await verifyConsumer(project);
 

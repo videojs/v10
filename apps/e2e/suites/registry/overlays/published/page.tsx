@@ -1,5 +1,7 @@
+import { Audio, AudioPlayer } from '@videojs/react/audio';
 import { Video, VideoPlayer } from '@videojs/react/video';
 
+import { AudioSkin } from '@/components/videojs/audio/skin';
 import { VideoSkin } from '@/components/videojs/video/skin';
 
 export default function Home() {
@@ -11,6 +13,11 @@ export default function Home() {
           <Video aria-label="Published registry validation video" />
         </VideoSkin>
       </VideoPlayer>
+      <AudioPlayer>
+        <AudioSkin className="w-full">
+          <Audio aria-label="Published registry validation audio" />
+        </AudioSkin>
+      </AudioPlayer>
     </main>
   );
 }

@@ -15,8 +15,8 @@ export type RegistryConsumerProject = RegistryConsumerProjectBase &
     | { readonly framework: 'html'; readonly styling: 'css' }
   );
 
-/** The on-demand video skin every theme catalog publishes under the same item name. */
-export const registryConsumerSkins = ['video'] as const;
+/** The on-demand skins every theme catalog publishes under the same item names. */
+export const registryConsumerSkins = ['video', 'audio'] as const;
 
 /** Smallest consumer that proves generated source works with the exact package versions published to npm. */
 export const publishedRegistryConsumerProject = {

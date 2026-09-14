@@ -4,7 +4,10 @@ body {
   font-family: system-ui, sans-serif;
 }
 
-media-container {
+[data-registry-skin] media-container {
   width: 640px;
+}
+
+[data-registry-skin="video"] media-container {
   aspect-ratio: 16 / 9;
 }
