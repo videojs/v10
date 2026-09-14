@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MEDIA_PLAYLIST_METADATA_KEY } from '../../types';
-import { canPlayTrack, makeCanPlayTrackWithDrm } from '../capabilities';
+import { canPlayTrack, canPlayTrackWithDrm } from '../capabilities';
 import { DEFAULT_KEY_SYSTEMS } from '../key-systems';
 
 describe('canPlayTrack', () => {
@@ -92,7 +92,7 @@ describe('canPlayTrack', () => {
   });
 });
 
-describe('makeCanPlayTrackWithDrm', () => {
+describe('canPlayTrackWithDrm', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -108,7 +108,8 @@ describe('makeCanPlayTrackWithDrm', () => {
     keyFormat: 'com.apple.streamingkeydelivery',
   };
   const drm = { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } };
-  const probe = makeCanPlayTrackWithDrm(drm, DEFAULT_KEY_SYSTEMS);
+  const config = { drm, keySystems: DEFAULT_KEY_SYSTEMS };
+  const probe: typeof canPlayTrackWithDrm = (track) => canPlayTrackWithDrm(track, config);
 
   const encryptedTrack = (keys: object[], codecs: string[]) => ({
     mimeType: 'video/mp4',
@@ -136,5 +137,18 @@ describe('makeCanPlayTrackWithDrm', () => {
   it('matches the standard refusals for clear tracks', () => {
     expect(probe({ mimeType: 'video/mp2t', codecs: ['avc1.640028'] })).toBe(false);
     expect(probe({ mimeType: 'video/mp4' })).toBe(true);
+  });
+
+  it('refuses every encrypted rendition when handed no DRM config, as the plain probe does', () => {
+    // The degenerate DRM config: nothing serves any key, so a DRM-composed engine
+    // with no license servers prunes exactly like a DRM-free one.
+    const spy = vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
+    const track = encryptedTrack([WIDEVINE_KEY], ['drm.codec.4']);
+
+    expect(canPlayTrackWithDrm(track)).toBe(false);
+    expect(canPlayTrackWithDrm(track, {})).toBe(false);
+    expect(canPlayTrackWithDrm(track, { drm })).toBe(false);
+    expect(canPlayTrackWithDrm(track, { keySystems: DEFAULT_KEY_SYSTEMS })).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
   });
 });

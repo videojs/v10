@@ -66,23 +66,36 @@ export const canPlayTrack: CanPlayTrack = (track) => {
   // explain it. Pruning them here means a partially-encrypted source still plays
   // its clear renditions, and a fully-encrypted one empties the candidate set
   // (which `track-switching` reports). DRM-composed engines swap in
-  // `makeCanPlayTrackWithDrm` instead.
+  // `canPlayTrackWithDrm` instead.
   if (getMediaPlaylistMetadata(track)?.encrypted) return false;
 
   return canDecodeTrack(track);
 };
 
 /**
+ * What {@link canPlayTrackWithDrm} reads off the config it is handed: the engine's `drm` license servers and the
+ * `keySystems` it can negotiate. A cast view rather than a constraint on `CanPlayTrack`, for the same reason
+ * `excludeUnplayableTracks` reads `canPlayTrack` itself through one.
+ */
+export interface DrmCapabilityConfig {
+  drm?: DrmSystemsConfig;
+  keySystems?: readonly KeySystemModule[];
+}
+
+/**
  * DRM-composed variant of {@link canPlayTrack}: an encrypted rendition is playable when its declared keys reach a key
  * system with a configured license server (its container / codecs still have to probe as decodable); everything else
  * matches the standard probe. Encrypted renditions no configured system serves stay pruned — MediaKeys could never be
- * negotiated for them, so playing them would park forever behind the `segmentLoadingBlocked` gate.
+ * negotiated for them, so playing them would park forever behind the `segmentLoadingBlocked` gate. Handed no `drm` or
+ * no `keySystems`, nothing serves any key and it refuses encrypted renditions exactly as {@link canPlayTrack} does.
  */
-export function makeCanPlayTrackWithDrm(drm: DrmSystemsConfig, keySystems: readonly KeySystemModule[]): CanPlayTrack {
-  return (track) => {
-    const metadata = getMediaPlaylistMetadata(track);
-    if (metadata?.encrypted && keySystemCandidates(metadata.keys ?? [], drm, keySystems).length === 0) return false;
+export const canPlayTrackWithDrm: CanPlayTrack = (track, config) => {
+  const metadata = getMediaPlaylistMetadata(track);
 
-    return canDecodeTrack(track);
-  };
-}
+  if (metadata?.encrypted) {
+    const { drm = {}, keySystems = [] } = (config as DrmCapabilityConfig | undefined) ?? {};
+    if (keySystemCandidates(metadata.keys ?? [], drm, keySystems).length === 0) return false;
+  }
+
+  return canDecodeTrack(track);
+};

@@ -230,12 +230,20 @@ export type TextTrack = Track & {
  *
  * Takes the minimal codec-bearing shape both video and audio candidates carry. `mimeType` is optional so unprobeable
  * candidates (no MIME) can be passed straight through as playable rather than dropped.
+ *
+ * `config` is the composition's config, handed along by `excludeUnplayableTracks` so an extended probe can read the
+ * props it defines off it — `canPlayTrackWithDrm` reads `drm` and `keySystems` — through a cast, the way the selection
+ * rules read their own. Untyped here because the predicate composes into configs that share nothing else; a probe that
+ * needs nothing from it ignores it.
  */
-export type CanPlayTrack = (track: {
-  mimeType?: string;
-  codecs?: string[];
-  metadata?: Record<string, unknown>;
-}) => boolean;
+export type CanPlayTrack = (
+  track: {
+    mimeType?: string;
+    codecs?: string[];
+    metadata?: Record<string, unknown>;
+  },
+  config?: unknown
+) => boolean;
 
 /**
  * Minimal text-track cue shape — start time, end time, and display text.

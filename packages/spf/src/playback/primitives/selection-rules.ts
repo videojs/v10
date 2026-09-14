@@ -138,6 +138,9 @@ export interface CapabilityConstraintConfig {
  * and the pinned `selectVideoTrack` apply it, and reaching it through `behaviors/track-switching.ts` would drag the ABR
  * path into a composition that deliberately omits it.
  *
+ * The probe is handed the whole config alongside each track, so an extended probe reads the props it defines off it
+ * rather than closing over them — `canPlayTrackWithDrm` reads `drm` and `keySystems` that way.
+ *
  * Passes everything through when there's no probe (a composition that didn't wire one, or DOM-free tests). When it
  * prunes _every_ track, the empty result is preserved (per `applyConstraints`) — "nothing playable" — which each
  * consuming behavior answers by clearing its selection; reporting the verdict is separate.
@@ -146,10 +149,10 @@ export function excludeUnplayableTracks<T, State, Context, Config>(
   tracks: readonly T[],
   { config }: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
-  const canPlay = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
-  if (!canPlay) return tracks;
+  const canPlayTrack = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
+  if (!canPlayTrack) return tracks;
 
-  return tracks.filter((track) => canPlay(track as Parameters<CanPlayTrack>[0]));
+  return tracks.filter((track) => canPlayTrack(track as Parameters<CanPlayTrack>[0], config));
 }
 
 /**

@@ -10,7 +10,7 @@ import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
-import { makeCanPlayTrackWithDrm } from '../../../media/dom/capabilities';
+import { canPlayTrackWithDrm } from '../../../media/dom/capabilities';
 import { DEFAULT_KEY_SYSTEMS } from '../../../media/dom/key-systems';
 import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
@@ -236,9 +236,9 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
   keySystems?: readonly KeySystemModule[];
   /**
    * Codec capability probe injected into `track-switching`'s `excludeUnplayableTracks` constraint — drops renditions
-   * the environment can't decode before selection. Defaults to `makeCanPlayTrackWithDrm` over `drm` (with no `drm`,
-   * equivalent to the plain `MediaSource.isTypeSupported`-backed `canPlayTrack`); supply your own to override (e.g.
-   * force-exclude a codec).
+   * the environment can't decode before selection. Defaults to `canPlayTrackWithDrm`, which reads `drm` and
+   * `keySystems` off this config (with no `drm`, equivalent to the plain `MediaSource.isTypeSupported`-backed
+   * `canPlayTrack`); supply your own to override (e.g. force-exclude a codec).
    */
   canPlayTrack?: CanPlayTrack;
   /**
@@ -422,7 +422,7 @@ export function createHlsVideoEngine(
     // whose native fallback `<source>` requires the MSE attachment to keep
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
-    canPlayTrack: config.canPlayTrack ?? makeCanPlayTrackWithDrm(drm, keySystems),
+    canPlayTrack: config.canPlayTrack ?? canPlayTrackWithDrm,
     // The late half of DRM pruning, appended to switch*Track's built-in
     // constraint chain: once negotiation publishes a refusal, encrypted
     // renditions prune and the emptied type reports its own verdict. Dropped

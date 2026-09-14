@@ -70,7 +70,7 @@ export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly
 
 /**
  * DRM-composed variant of {@link reportUnsupportedTrackConditions}: encryption is only a cause when no configured key
- * system serves the rendition's declared keys — mirroring what `makeCanPlayTrackWithDrm` prunes on, so a reported cause
+ * system serves the rendition's declared keys — mirroring what `canPlayTrackWithDrm` prunes on, so a reported cause
  * still always has a corresponding exclusion.
  */
 export function makeReportUnsupportedTrackConditionsWithDrm(
