@@ -73,7 +73,10 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   preferred video robustness, encryption-scheme fallback, manifest
   init-data projection, and license-message shaping. `config.keySystems`
   narrows the list; dropping `playReadyKeySystem` removes its PSSH wrap,
-  its XML envelope unwrap, and `DOMParser` from the bundle. Replaces six
+  its XML envelope unwrap, and `DOMParser` from the bundle. Each shipped
+  module carries its id as a literal type, and `HlsVideoEngineConfig` keys
+  `drm` by the composed ids, so a config entry no module claims is a type
+  error (it replaced a dev-only runtime warning). Replaces six
   string-keyed lookup tables that previously split one system's facts
   across the DOM boundary.
 - **Droppability (measured 2026-08-27):** DRM costs +2,760 B gzipped

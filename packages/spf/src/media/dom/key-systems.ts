@@ -32,7 +32,7 @@ export function initDataFromKeyUri(uri: string): Uint8Array<ArrayBuffer> | undef
  *
  * `HW_SECURE_ALL` is the L1 hardware tier; Mux Player prefers it over hls.js the same way.
  */
-export const widevineKeySystem: KeySystemModule = {
+export const widevineKeySystem: KeySystemModule<'com.widevine.alpha'> = {
   keySystem: 'com.widevine.alpha',
   keyFormats: ['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed'],
   // L1 hardware, then the two software rungs a desktop CDM actually has —
@@ -90,7 +90,7 @@ function toPlayReadyPssh(bytes: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer
  * `HttpHeaders` name the real request headers and whose `Challenge` is base64 — unwrap it; modern (`.recommendation`)
  * CDMs emit the challenge directly, sent as XML.
  */
-export const playReadyKeySystem: KeySystemModule = {
+export const playReadyKeySystem: KeySystemModule<'com.microsoft.playready'> = {
   keySystem: 'com.microsoft.playready',
   keyFormats: ['com.microsoft.playready'],
   requestVariants: ['com.microsoft.playready', 'com.microsoft.playready.recommendation'],
@@ -132,7 +132,7 @@ export const playReadyKeySystem: KeySystemModule = {
  * `encrypted` events, where the init data arrives as `sinf` on the MSE path. Safari rejects a cenc-only configuration,
  * hence the explicit `initDataTypes`.
  */
-export const fairPlayKeySystem: KeySystemModule = {
+export const fairPlayKeySystem: KeySystemModule<'com.apple.fps'> = {
   keySystem: 'com.apple.fps',
   keyFormats: ['com.apple.streamingkeydelivery'],
   initDataTypes: ['sinf', 'cenc'],
@@ -147,7 +147,7 @@ export const fairPlayKeySystem: KeySystemModule = {
  * key URI to carry that PSSH as a `data:` URI — the same manifest-driven shape as Widevine. The license exchange is
  * spec-fixed JSON: the CDM's message is `{"kids": […]}` and the response is a JWK set, hence the JSON content type.
  */
-export const clearKeySystem: KeySystemModule = {
+export const clearKeySystem: KeySystemModule<'org.w3.clearkey'> = {
   keySystem: 'org.w3.clearkey',
   keyFormats: ['urn:uuid:1077efec-c0b2-4d02-ace3-3c1e52e2fb4b'],
   toInitData: (uri) => {
@@ -168,8 +168,8 @@ export const clearKeySystem: KeySystemModule = {
  * The convenience default, not a requirement — an engine that only ever sees Widevine composes `[widevineKeySystem]`
  * and pays for nothing else.
  */
-export const DEFAULT_KEY_SYSTEMS: readonly KeySystemModule[] = [
+export const DEFAULT_KEY_SYSTEMS = [
   fairPlayKeySystem,
   widevineKeySystem,
   playReadyKeySystem,
-];
+] as const satisfies readonly KeySystemModule[];

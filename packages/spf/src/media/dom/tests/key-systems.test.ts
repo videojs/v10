@@ -203,7 +203,11 @@ describe('clearKeySystem', () => {
   });
 
   it('stays out of DEFAULT_KEY_SYSTEMS', () => {
-    expect(DEFAULT_KEY_SYSTEMS.some((module_) => module_.keySystem === 'org.w3.clearkey')).toBe(false);
+    // Widened on purpose: the ids are literal types now, and the compiler would
+    // otherwise reject the comparison as never overlapping — which is the point.
+    const ids: readonly string[] = DEFAULT_KEY_SYSTEMS.map((module_) => module_.keySystem);
+
+    expect(ids).not.toContain('org.w3.clearkey');
   });
 });
 

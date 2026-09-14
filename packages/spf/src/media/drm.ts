@@ -109,8 +109,19 @@ export interface DrmSystemConfig {
  */
 export const NO_KEY_SYSTEM = 'none';
 
-/** License servers keyed by EME key-system id — the shape of `source.drm`. */
-export type DrmSystemsConfig = Partial<Record<string, DrmSystemConfig>>;
+/**
+ * License servers keyed by EME key-system id, for the ids `Id` names. `HlsVideoEngineConfig` uses it to key `drm` by
+ * the composed modules' ids, so a config entry no composed module could ever negotiate is a type error rather than a
+ * silent miss at negotiation time.
+ */
+export type DrmSystemsConfigFor<Id extends string> = Partial<Record<Id, DrmSystemConfig>>;
+
+/**
+ * License servers keyed by EME key-system id — the shape of `source.drm`. The runtime form, keyed by any id: a source
+ * is data, so it cannot be checked against a composition. It assigns to any {@link DrmSystemsConfigFor} — an index
+ * signature satisfies optional properties — so a source-derived config still flows into a typed engine config.
+ */
+export type DrmSystemsConfig = DrmSystemsConfigFor<string>;
 
 /**
  * The DRM slice of an engine's config: the license servers it can reach and the key systems it can negotiate. What the
@@ -162,9 +173,13 @@ function resolveDrmValue<T>(value: DrmValue<T>): T | undefined {
  * Declared DOM-free so the pruning path (`keySystemCandidates`) can consume modules without a DOM dependency; the
  * modules themselves live in `dom/key-systems.ts`, since license-message shaping needs browser APIs.
  */
-export interface KeySystemModule {
-  /** EME key-system id. What a CDM is asked for, and what `source.drm` and the negotiated-system state are keyed by. */
-  readonly keySystem: string;
+export interface KeySystemModule<Id extends string = string> {
+  /**
+   * EME key-system id. What a CDM is asked for, and what `source.drm` and the negotiated-system state are keyed by.
+   * Carried as a literal type by the shipped modules so a composition's `drm` config can be keyed by exactly the ids it
+   * composes (see {@link KeySystemId}); a module typed with the default `string` opts out of that narrowing.
+   */
+  readonly keySystem: Id;
   /**
    * The HLS `KEYFORMAT` identities that declare this system. Widevine declares itself by its DASH system-id URN;
    * PlayReady's KEYFORMAT happens to equal its key system; FairPlay uses Apple's streaming-key-delivery name.
@@ -236,6 +251,9 @@ export interface KeySystemModule {
    */
   readonly certificateResponse?: DrmResponseTransform;
 }
+
+/** The key-system ids a list of modules composes — `string` if any module is typed with the default id. */
+export type KeySystemId<Modules extends readonly KeySystemModule[]> = Modules[number]['keySystem'];
 
 /**
  * One DRM network request as it is about to be sent — the value a {@link DrmRequestTransform} rewrites. Shaped as a

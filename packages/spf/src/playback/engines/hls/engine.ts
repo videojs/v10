@@ -19,7 +19,7 @@ import {
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
-import type { DrmSystemsConfig, KeySystemModule } from '../../../media/drm';
+import type { DrmSystemsConfig, DrmSystemsConfigFor, KeySystemId, KeySystemModule } from '../../../media/drm';
 import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
@@ -224,7 +224,9 @@ export type HlsVideoEngineSignals = {
  *
  * Each option is consumed by the appropriate behavior — the engine itself has no config beyond what its behaviors read.
  */
-export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
+export interface HlsVideoEngineConfig<
+  KeySystems extends readonly KeySystemModule[] = typeof DEFAULT_KEY_SYSTEMS,
+> extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
   /**
    * Bandwidth estimate in bps to use before enough samples have been collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5
    * Mbps).
@@ -235,14 +237,19 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    * attach, license exchange) and the DRM-aware capability probe / condition reporter, so encrypted renditions a
    * configured system can serve play instead of being pruned. Absent or empty, encrypted renditions are refused exactly
    * as a DRM-less engine refuses them: pruned before selection, with `SVTA_UNSUPPORTED_DRM_SYSTEM` causes reported.
+   *
+   * Keyed by the ids `keySystems` composes: an entry for a system no composed module claims could never be negotiated
+   * (`keySystemCandidates` intersects the two), so naming one is a type error here instead of a silent refusal. A
+   * `keySystems` list typed as plain `KeySystemModule[]` widens the keys back to `string`.
    */
-  drm?: DrmSystemsConfig;
+  drm?: DrmSystemsConfigFor<KeySystemId<KeySystems>>;
   /**
    * The key systems this engine can negotiate, most-preferred first. Defaults to `DEFAULT_KEY_SYSTEMS` (FairPlay,
    * Widevine, PlayReady). Narrow it to drop the systems an engine will never see along with their code — a
-   * `[widevineKeySystem]` engine carries no PlayReady request variants, PSSH wrap, or XML envelope unwrap.
+   * `[widevineKeySystem]` engine carries no PlayReady request variants, PSSH wrap, or XML envelope unwrap. Inferred as
+   * a tuple, so it also decides which ids `drm` may name.
    */
-  keySystems?: readonly KeySystemModule[];
+  keySystems?: KeySystems;
   /**
    * Codec capability probe injected into `track-switching`'s `excludeUnplayableTracks` constraint — drops renditions
    * the environment can't decode before selection. Defaults to `canPlayTrackWithDrm`, which reads `drm` and
@@ -421,8 +428,8 @@ const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext
  *   await engine.destroy();
  *   ```;
  */
-export function createHlsVideoEngine(
-  config: HlsVideoEngineConfig = {}
+export function createHlsVideoEngine<const KeySystems extends readonly KeySystemModule[] = typeof DEFAULT_KEY_SYSTEMS>(
+  config: HlsVideoEngineConfig<KeySystems> = {}
 ): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
   // Non-zero-PTS relocation (spike): resolve the coordination seam once so the reactor
   // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
@@ -432,8 +439,10 @@ export function createHlsVideoEngine(
   // probe and reporter refuse encrypted renditions exactly as the DRM-less
   // `canPlayTrack` / `reportUnsupportedTrackConditions` pair does, and
   // `setupMediaKeys` reports SVTA 4008 for an encrypted source it can't serve.
-  const drm = config.drm ?? {};
-  const keySystems = config.keySystems ?? DEFAULT_KEY_SYSTEMS;
+  // Widened back to the runtime shapes here: the behaviors read any id, and the
+  // composition's config type is the intersection of what they declare.
+  const drm: DrmSystemsConfig = config.drm ?? {};
+  const keySystems: readonly KeySystemModule[] = config.keySystems ?? DEFAULT_KEY_SYSTEMS;
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
