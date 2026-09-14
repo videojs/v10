@@ -99,3 +99,9 @@ Keep the static element import with the component so `<mux-video>` is registered
 If you use server rendering, keep the element imports from the installation guide static. SvelteKit renders the custom-element markup on the server, and the browser upgrades it when the page loads. Put code that needs the bound element or browser APIs in `onMount`, as shown above.
 
 If you intentionally import Video.js later from `onMount`, wait for `customElements.whenDefined('video-player')` before reading its store or calling its methods. If Svelte reports a type error for a custom tag or event, add it to `SvelteHTMLElements` by following Svelte's [DOM type guidance](https://svelte.dev/docs/svelte/typescript#enhancing-built-in-dom-types).
+
+## Related guides
+
+- <DocsLink slug="guides/installation-svelte">Installation</DocsLink>
+- <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="concepts/custom-element-lifecycle">Custom element lifecycle</DocsLink>

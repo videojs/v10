@@ -146,3 +146,9 @@ Use `.prop` explicitly. An ordinary binding or render-function prop can become a
 If you use server rendering, keep the element imports from the installation guide static. Nuxt renders the custom-element markup on the server, and the browser upgrades it when the page loads.
 
 If you intentionally keep registration client-only, import the elements from a `.client.ts` plugin and wait for `customElements.whenDefined('video-player')` before reading its store or calling its methods. For custom tag or event types, follow Vue's [TypeScript guidance for non-Vue custom elements](https://vuejs.org/guide/extras/web-components.html#non-vue-web-components-and-typescript).
+
+## Related guides
+
+- <DocsLink slug="guides/installation-vue">Installation</DocsLink>
+- <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="concepts/custom-element-lifecycle">Custom element lifecycle</DocsLink>
