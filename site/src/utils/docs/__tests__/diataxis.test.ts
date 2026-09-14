@@ -21,7 +21,6 @@ const KNOWN_DRIFT = new Map<string, DiataxisRule[]>([
   ['concepts/media-sources', ['task-heading']],
   ['concepts/presets', ['task-heading']],
   ['concepts/ui-components', ['task-heading']],
-  ['concepts/why-videojs', ['task-heading']],
   // Contributor authoring guides double as the MDX test bed and stop where the examples stop.
   ['writing-style/write-guides', ['missing-related-links']],
   ['writing-style/write-references', ['missing-related-links']],
