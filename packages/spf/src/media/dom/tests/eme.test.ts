@@ -5,6 +5,7 @@ import {
   buildKeySystemConfigurations,
   contentTypesFromPresentation,
   fetchDrm,
+  fetchServerCertificate,
   type KeySystemModule,
   requestKeySystemAccess,
   applyLicenseRequest,
@@ -440,6 +441,84 @@ describe('fetchDrm', () => {
         'https://license.example.com/wv',
         expect.objectContaining({ credentials: 'include' })
       );
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
+describe('fetchServerCertificate', () => {
+  const CERT_URL = 'https://license.example.com/appcert';
+
+  function stubFetch(body = new Uint8Array([1])) {
+    return vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body));
+  }
+
+  it('GETs the certificate with the configured certificate headers and credentials, never the license headers', async () => {
+    const fetchSpy = stubFetch();
+
+    try {
+      const certificate = await fetchServerCertificate(
+        fairPlayKeySystem,
+        {
+          licenseUrl: 'https://license.example.com/fairplay',
+          serverCertificateUrl: CERT_URL,
+          headers: { 'X-License-Only': 'never-on-the-cert' },
+          certificateHeaders: { 'x-vudrm-token': 'ent' },
+          credentials: 'include',
+        },
+        CERT_URL,
+        new AbortController().signal
+      );
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        CERT_URL,
+        expect.objectContaining({ method: 'GET', headers: { 'x-vudrm-token': 'ent' }, credentials: 'include' })
+      );
+      expect(certificate).toEqual(new Uint8Array([1]));
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('applies the per-source request and response transforms around the fetch', async () => {
+    // A provider that gates the cert behind an entitlement header (Vualto's
+    // shape) and wraps the certificate; the transforms shape the request and
+    // unwrap the response.
+    const fetchSpy = stubFetch(new Uint8Array([1]));
+
+    try {
+      const certificate = await fetchServerCertificate(
+        fairPlayKeySystem,
+        {
+          licenseUrl: 'https://license.example.com/fairplay',
+          serverCertificateUrl: CERT_URL,
+          certificateRequest: (request) => ({ ...request, headers: { ...request.headers, 'x-token': 'ent' } }),
+          certificateResponse: (response) => new Uint8Array([response[0]! + 40]),
+        },
+        CERT_URL,
+        new AbortController().signal
+      );
+
+      expect(fetchSpy).toHaveBeenCalledWith(CERT_URL, expect.objectContaining({ headers: { 'x-token': 'ent' } }));
+      expect(certificate).toEqual(new Uint8Array([41]));
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('rejects on a non-OK response, so the caller can report the certificate phase', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 403 }));
+
+    try {
+      await expect(
+        fetchServerCertificate(
+          fairPlayKeySystem,
+          { licenseUrl: 'https://license.example.com/fairplay', serverCertificateUrl: CERT_URL },
+          CERT_URL,
+          new AbortController().signal
+        )
+      ).rejects.toThrow(/403/);
     } finally {
       fetchSpy.mockRestore();
     }

@@ -12,11 +12,10 @@
  * `SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK` when a type's candidates actually empty. Keeping the two apart is what lets a
  * mixed source — some renditions encrypted or MPEG-TS, others playable — log its causes and still play.
  */
-import { type DrmConfig, firstNonDrmEncryptionKey, keySystemCandidates } from '../../media/drm';
+import { type DrmConfig, keySystemCandidates, unsupportedEncryptionMethodCause } from '../../media/drm';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
-  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
 } from '../../media/errors';
@@ -98,18 +97,15 @@ function unsupportedTrackConditions(track: ResolvedTrack, encryptionUnsupported:
   }
 
   if (encryptionUnsupported) {
-    // Name the real gap, as `setupMediaKeys` does at negotiation: a non-DRM
-    // `identity`-keyformat key (clear-key AES) is an unsupported encryption
-    // method, not a DRM system. Absent keys default to the DRM assumption.
-    const nonDrmKey = firstNonDrmEncryptionKey(getMediaPlaylistMetadata(track)?.keys ?? []);
-
+    // Name the real gap, through the same helper `setupMediaKeys` uses at
+    // negotiation: a non-DRM `identity`-keyformat key (clear-key AES) is an
+    // unsupported encryption method, not a DRM system. Absent keys default to
+    // the DRM assumption.
     conditions.push(
-      nonDrmKey
-        ? {
-            code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
-            data: { ...data, method: nonDrmKey.method, keyFormat: nonDrmKey.keyFormat },
-          }
-        : { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data }
+      unsupportedEncryptionMethodCause(getMediaPlaylistMetadata(track)?.keys ?? [], data) ?? {
+        code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+        data,
+      }
     );
   }
 

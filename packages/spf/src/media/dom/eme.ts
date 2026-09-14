@@ -8,7 +8,13 @@
  * contract, module contract, declared keys, candidate selection) lives in `../drm.ts` and is re-exported here.
  */
 import { fetchWithRetry } from '../../network/retry';
-import { type DrmRequest, type KeySystemModule } from '../drm';
+import {
+  type DrmRequest,
+  type DrmSystemConfig,
+  type KeySystemModule,
+  resolveDrmCredentials,
+  resolveDrmHeaders,
+} from '../drm';
 import type { MaybeResolvedPresentation } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
 
@@ -30,6 +36,7 @@ export {
   resolveDrmCredentials,
   resolveDrmHeaders,
   resolveDrmUrl,
+  unsupportedEncryptionMethodCause,
 } from '../drm';
 
 /**
@@ -238,6 +245,34 @@ export function applyCertificateResponse(
   response: Uint8Array<ArrayBuffer>
 ): Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>> {
   return module_?.certificateResponse?.(response) ?? response;
+}
+
+/**
+ * Fetch and unwrap one key system's server (application) certificate — FairPlay cannot generate a license request
+ * without it. The same two-layer compose as the license exchange, module first: the module default (a plain GET today)
+ * then the per-source override — a provider that gates its certificate behind an auth header or its own URL shapes it
+ * here — around the fetch, and the response unwraps the same way. The configured `certificateHeaders` and `credentials`
+ * ride the request; the license `headers` deliberately do not. The caller applies the result with
+ * `setServerCertificate` before it publishes the negotiation.
+ */
+export async function fetchServerCertificate(
+  module_: KeySystemModule,
+  entry: DrmSystemConfig,
+  url: string,
+  signal: AbortSignal
+): Promise<Uint8Array<ArrayBuffer>> {
+  const shaped = await applyCertificateRequest(module_, {
+    url,
+    method: 'GET',
+    headers: { ...resolveDrmHeaders(entry.certificateHeaders) },
+    body: null,
+    credentials: resolveDrmCredentials(entry.credentials),
+  });
+  const request = entry.certificateRequest ? await entry.certificateRequest(shaped) : shaped;
+  const raw = await fetchDrm(request, signal);
+  const unwrapped = await applyCertificateResponse(module_, raw);
+
+  return entry.certificateResponse ? await entry.certificateResponse(unwrapped) : unwrapped;
 }
 
 /** Attach (or with `null`, detach) MediaKeys on a media element. */

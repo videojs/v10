@@ -3,16 +3,18 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
   declaredDrmKeys,
   declaredEncryptionScheme,
-  firstNonDrmEncryptionKey,
   type DrmRequest,
   type DrmSystemsConfig,
-  type KeySystemModule,
+  firstNonDrmEncryptionKey,
   keySystemCandidates,
+  type KeySystemModule,
   resolveDrmCredentials,
   resolveDrmHeaders,
   resolveDrmUrl,
   sourceDrmSystems,
+  unsupportedEncryptionMethodCause,
 } from '../drm';
+import { SVTA_UNSUPPORTED_ENCRYPTION_METHOD } from '../errors';
 import type { Presentation } from '../types';
 
 const WIDEVINE_KEY = {
@@ -294,5 +296,29 @@ describe('firstNonDrmEncryptionKey', () => {
   it('returns undefined when every declared key names a DRM system, or there are none', () => {
     expect(firstNonDrmEncryptionKey([widevine])).toBeUndefined();
     expect(firstNonDrmEncryptionKey([])).toBeUndefined();
+  });
+});
+
+describe('unsupportedEncryptionMethodCause', () => {
+  it('names the encryption method for an identity-keyformat (clear-key AES) key, carrying the caller data', () => {
+    // No KEYFORMAT means identity per RFC 8216 — AES-128 over HTTP, not DRM.
+    expect(
+      unsupportedEncryptionMethodCause([{ method: 'AES-128', uri: 'https://example.com/key.bin' }], { trackId: 'v-1' })
+    ).toEqual({
+      code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
+      data: { trackId: 'v-1', method: 'AES-128', keyFormat: undefined },
+    });
+  });
+
+  it('answers undefined when every key is a DRM key — a DRM system is the thing to blame', () => {
+    expect(
+      unsupportedEncryptionMethodCause([
+        { method: 'SAMPLE-AES', uri: 'skd://k', keyFormat: 'com.apple.streamingkeydelivery' },
+      ])
+    ).toBeUndefined();
+  });
+
+  it('answers undefined with no keys at all — absent keys default to the DRM assumption', () => {
+    expect(unsupportedEncryptionMethodCause([])).toBeUndefined();
   });
 });
