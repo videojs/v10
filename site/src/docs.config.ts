@@ -36,6 +36,15 @@ export const sidebar: Sidebar = [
         ],
       },
       {
+        sidebarLabel: 'Frameworks',
+        frameworks: ['html'],
+        llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
+        contents: [
+          { slug: 'guides/vue', redirectFrom: ['guides/use-videojs-with-vue'] },
+          { slug: 'guides/svelte', redirectFrom: ['guides/use-videojs-with-svelte'] },
+        ],
+      },
+      {
         sidebarLabel: 'Tooling',
         llmsDescription:
           'Guidance for AI tools, browser support, TypeScript, bundlers, the CDN, self-hosting, and contributing.',
@@ -48,15 +57,6 @@ export const sidebar: Sidebar = [
           { slug: 'guides/cdn', frameworks: ['html'], redirectFrom: ['concepts/cdn'] },
           { slug: 'guides/self-host-the-player', sidebarLabel: 'Self-hosting', frameworks: ['html'] },
           { href: 'https://github.com/videojs/v10/blob/main/CONTRIBUTING.md', sidebarLabel: 'Contribute to Video.js' },
-        ],
-      },
-      {
-        sidebarLabel: 'Frameworks',
-        frameworks: ['html'],
-        llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
-        contents: [
-          { slug: 'guides/vue', redirectFrom: ['guides/use-videojs-with-vue'] },
-          { slug: 'guides/svelte', redirectFrom: ['guides/use-videojs-with-svelte'] },
         ],
       },
       {
