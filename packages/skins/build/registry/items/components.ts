@@ -45,10 +45,13 @@ export function componentItem(
     group: 'ui',
     directives: ['use client'],
     target: `ui/${meta.name}.tsx`,
-    theme:
-      target.theme === 'minimal'
-        ? ['styles/audio/minimal.css', 'styles/video/minimal.css']
-        : ['styles/audio/base.css', 'styles/video/base.css'],
+    theme: [
+      ...(target.theme === 'minimal' ? ['styles/themes/minimal.css'] : []),
+      'styles/base.css',
+      'styles/audio/theme.css',
+      'styles/video/captions.css',
+      'styles/video/theme.css',
+    ],
   };
 }
 

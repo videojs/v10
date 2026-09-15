@@ -77,16 +77,35 @@ describe('React registry output', () => {
       '@components/videojs/styles/video/minimal.css',
       '@components/videojs/styles/video/theme.css',
     ];
+    const minimalComponentStyleTargets = minimalStyleTargets.filter(
+      (style) => !style.endsWith('/audio/minimal.css') && !style.endsWith('/video/minimal.css')
+    );
+    const minimalAudioStyleTargets = [
+      ...minimalComponentStyleTargets,
+      '@components/videojs/styles/audio/minimal.css',
+    ].sort();
+    const minimalVideoStyleTargets = [
+      ...minimalComponentStyleTargets,
+      '@components/videojs/styles/video/minimal.css',
+    ].sort();
 
     expect(helper?.files?.map((file) => file.target)).toEqual(['@lib/resolve-class-name.ts']);
     expect(defaultPlayButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
     expect(defaultPlayButton).toContain(`import { cn } from '@/lib/utils';`);
     expect(defaultPlayButton).not.toContain(`{ cn, resolveClassName }`);
-    expect(defaultPlayButton).toContain(`import '../styles/audio/base.css';`);
-    expect(defaultPlayButton).toContain(`import '../styles/video/base.css';`);
-    expect(defaultPlayButton).not.toContain(`styles/themes/minimal.css`);
-    expect(minimalPlayButton).toContain(`import '../styles/audio/minimal.css';`);
-    expect(minimalPlayButton).toContain(`import '../styles/video/minimal.css';`);
+    expect(styleImports(defaultPlayButton)).toEqual([
+      '../styles/base.css',
+      '../styles/audio/theme.css',
+      '../styles/video/captions.css',
+      '../styles/video/theme.css',
+    ]);
+    expect(styleImports(minimalPlayButton)).toEqual([
+      '../styles/themes/minimal.css',
+      '../styles/base.css',
+      '../styles/audio/theme.css',
+      '../styles/video/captions.css',
+      '../styles/video/theme.css',
+    ]);
     expect(defaultPlayButton).toContain(`from '@videojs/react/icons';`);
     expect(defaultPlayButton).not.toContain(`@videojs/react/icons/minimal`);
     expect(minimalPlayButton).toContain(`from '@videojs/react/icons/minimal';`);
@@ -107,11 +126,11 @@ describe('React registry output', () => {
     expect(defaultTargets.some((target) => target?.includes('/skins/') === true)).toBe(false);
     expect(defaultTargets.some((target) => target?.includes('/components/') === true)).toBe(false);
     expect(styleTargets(defaultItems, 'play-button')).toEqual(defaultStyleTargets);
-    expect(styleTargets(minimalItems, 'play-button')).toEqual(minimalStyleTargets);
+    expect(styleTargets(minimalItems, 'play-button')).toEqual(minimalComponentStyleTargets);
     expect(styleTargets(defaultItems, 'video')).toEqual(defaultStyleTargets);
-    expect(styleTargets(minimalItems, 'video')).toEqual(minimalStyleTargets);
+    expect(styleTargets(minimalItems, 'video')).toEqual(minimalVideoStyleTargets);
     expect(styleTargets(defaultItems, 'audio')).toEqual(defaultStyleTargets);
-    expect(styleTargets(minimalItems, 'audio')).toEqual(minimalStyleTargets);
+    expect(styleTargets(minimalItems, 'audio')).toEqual(minimalAudioStyleTargets);
   });
 
   it('publishes the same public names from each theme catalog', () => {
@@ -220,6 +239,10 @@ function readRegistryItems(registryDir: string): ReadonlyMap<string, RegistryIte
   }
 
   return items;
+}
+
+function styleImports(source: string): string[] {
+  return [...source.matchAll(/^import '([^']+\.css)';$/gm)].map((match) => match[1]!);
 }
 
 function itemClosure(items: ReadonlyMap<string, RegistryItem>, root: string): ReadonlySet<string> {

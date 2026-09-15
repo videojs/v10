@@ -40,33 +40,58 @@ for (const preset of ['video', 'audio'] as const) {
     expect(themeStyles.controlSize).not.toBe('');
     expect(themeStyles.spacing).not.toBe('');
 
-    if (preset === 'audio' && theme === 'minimal') {
-      const hairline = await skin
-        .locator('.audio-controls')
-        .first()
-        .evaluate((element) => {
-          const style = getComputedStyle(element);
-          const probe = document.createElement('span');
+    if (preset === 'audio') {
+      for (const colorScheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme });
+        await skin.evaluate((element, scheme) => {
+          if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML skin element.');
 
-          probe.style.color = 'var(--media-border)';
-          element.append(probe);
+          element.style.colorScheme = scheme;
+        }, colorScheme);
 
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          if (!context) throw new Error('Could not create a canvas context.');
+        const hairline = await skin
+          .locator('.audio-controls')
+          .first()
+          .evaluate((element) => {
+            const style = getComputedStyle(element);
+            const probe = document.createElement('span');
 
-          context.fillStyle = getComputedStyle(probe).color;
-          context.fillRect(0, 0, 1, 1);
-          probe.remove();
+            probe.style.color = 'var(--media-border)';
+            element.append(probe);
 
-          const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Could not create a canvas context.');
 
-          return { alpha, boxShadow: style.boxShadow, luminance: red + green + blue };
-        });
+            context.fillStyle = getComputedStyle(probe).color;
+            context.fillRect(0, 0, 1, 1);
+            probe.remove();
 
-      expect(hairline.boxShadow).not.toBe('none');
-      expect(hairline.alpha).toBeGreaterThan(0);
-      expect(hairline.luminance).toBeLessThan(128 * 3);
+            const pixel = context.getImageData(0, 0, 1, 1).data;
+
+            return {
+              alpha: pixel[3]!,
+              boxShadow: style.boxShadow,
+              luminance: pixel[0]! + pixel[1]! + pixel[2]!,
+            };
+          });
+
+        expect(hairline.boxShadow, `${theme} ${colorScheme} audio hairline`).not.toBe('none');
+        expect(hairline.alpha, `${theme} ${colorScheme} audio hairline`).toBeGreaterThan(0);
+
+        if (colorScheme === 'light') {
+          expect(hairline.luminance, `${theme} light audio hairline`).toBeLessThan(128 * 3);
+        } else {
+          expect(hairline.luminance, `${theme} dark audio hairline`).toBeGreaterThan(128 * 3);
+        }
+      }
+
+      await page.emulateMedia({ colorScheme: 'light' });
+      await skin.evaluate((element) => {
+        if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML skin element.');
+
+        element.style.removeProperty('color-scheme');
+      });
     }
 
     const box = await skin.boundingBox();
