@@ -27,7 +27,7 @@ export default defineConfig({
         input: cachedTaskInputs,
         output: ['dist/**'],
       },
-      'test:ci': packageTestTask(),
+      'test:ci': packageTestTask('vp test run'),
     },
   },
   test: {
@@ -137,6 +137,7 @@ export default defineConfig({
             enabled: true,
             checker: 'tsgo',
             include: ['src/**/*.test-d.ts'],
+            tsconfig: 'tsconfig.test.json',
           },
         },
       },
