@@ -1,0 +1,5 @@
+/*
+ * Intentionally empty. `video.js/dist/video-js.css` was the Video.js 8 stylesheet; Video.js 10 skins style
+ * themselves. This file exists so a stale import resolves instead of failing before the `videojs()` stub can throw
+ * its VJS8_LEGACY_INIT code. See https://videojs.org/docs/how-to/migrate-from-video-js-8
+ */

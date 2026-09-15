@@ -59,6 +59,7 @@ export default {
         'store',
         'test',
         'utils',
+        'video.js',
       ],
     ],
   },
