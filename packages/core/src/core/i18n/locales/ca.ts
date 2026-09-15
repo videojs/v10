@@ -2,11 +2,11 @@ import type { Translations } from '../params';
 
 export default {
   buttons: {
-    play: 'Reproduir',
+    play: 'Reprodueix',
     pause: 'Pausa',
-    replay: 'Repetir',
-    mute: 'Silenciar',
-    unmute: 'Activar el so',
+    replay: 'Repeteix',
+    mute: 'Silencia',
+    unmute: 'Activa el so',
   },
   seek: {
     forward: 'Salta endavant {seconds} segons',
@@ -17,22 +17,22 @@ export default {
     exit: 'Surt de pantalla completa',
   },
   captions: {
-    enable: 'Activa subtítols',
-    disable: 'Desactiva subtítols',
+    enable: 'Activa els subtítols',
+    disable: 'Desactiva els subtítols',
   },
   pip: {
     enter: 'Imatge en imatge',
-    exit: 'Sortir de la imatge en imatge',
+    exit: 'Surt de la imatge en imatge',
   },
   live: {
     playing: 'Reproducció en directe',
-    seekToEdge: 'Anar al directe',
+    seekToEdge: 'Vés al directe',
     badge: 'En directe',
   },
   cast: {
     start: 'Comença a emetre',
-    stop: 'Atura la transmissió',
-    connecting: 'Connectant',
+    stop: "Atura l'emissió",
+    connecting: "S'està connectant",
   },
   airplay: {
     start: 'Inicia AirPlay',
@@ -66,10 +66,10 @@ export default {
     value: 'Volum {value}',
   },
   status: {
-    captionsOn: 'Llegendes activades',
-    captionsOff: 'Llegendes desactivades',
+    captionsOn: 'Subtítols activats',
+    captionsOff: 'Subtítols desactivats',
     paused: 'En pausa',
-    playing: 'Reproduint',
+    playing: "S'està reproduint",
     fullscreen: 'Pantalla completa',
     pip: 'Imatge en imatge',
     exitPip: 'Surt de la imatge en imatge',
@@ -79,20 +79,20 @@ export default {
     label: 'Reproductor multimèdia',
   },
   errors: {
-    aborted: 'Has interromput la reproducció del contingut',
-    network: 'Un error de xarxa ha interromput la descàrrega del contingut.',
+    aborted: 'Heu aturat la reproducció del contingut multimèdia abans que acabés.',
+    network: "No s'ha pogut carregar aquest contingut multimèdia a causa d'un problema de xarxa o del servidor.",
     decode:
-      "La reproducció del contingut s'ha interromput a causa d'un problema de corrupció o perquè el contingut fa servir funcions que el teu navegador no suporta.",
+      "No s'ha pogut reproduir aquest contingut multimèdia. Pot ser que estigui malmès o que el navegador no n'admeti el format.",
     source:
-      "No s'ha pogut carregar el contingut, ja sigui perquè el servidor o la xarxa han fallat o perquè el format no està suportat.",
-    encrypted: 'El contingut està xifrat i no disposem de les claus per desxifrar-lo.',
-    unplayable: 'El reproductor no admet aquest mitjà.',
+      "No s'ha pogut carregar aquest contingut multimèdia. Pot ser que no estigui disponible o que el navegador no n'admeti el format.",
+    encrypted: "No s'ha pogut reproduir aquest contingut multimèdia perquè no s'ha pogut desxifrar.",
+    unplayable: 'El reproductor no admet aquest contingut multimèdia.',
     title: 'Alguna cosa ha anat malament.',
-    unexpected: "S'ha produït un error. Torneu-ho a intentar.",
+    unexpected: "S'ha produït un error inesperat.",
   },
   common: {
     empty: '',
-    ok: 'Tancar',
+    ok: 'Tanca',
   },
   menu: {
     settings: 'Configuració',
