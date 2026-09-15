@@ -15,15 +15,15 @@ Almost certainly. Every current browser supports the `<video>` element. However,
 
 ## Why isn't HTML5 video enough?
 
-The `<video>` element gets you a file that plays. Everything past that is yours to build:
+The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
 
 - **Adaptive streaming.** HLS plays natively in Safari and in a few mobile browsers. DASH plays natively nowhere. Everywhere else needs a JavaScript playback engine on top of Media Source Extensions, and a way to swap engines when the source changes.
 - **Consistent controls.** Chrome, Safari, and Firefox each draw their own controls. You can hide them, but you can't restyle or rearrange them.
-- **Captions, quality, speed, and chapters.** The browser renders text tracks but gives you no menu to pick one, no quality selector, no playback speed control, and no chapter markers.
+- **Captions, quality, speed, and chapters.** The browser gives you no menu to pick text tracks, no quality selector, no playback speed control, and no chapter markers.
 - **Accessibility.** Keyboard shortcuts, focus management, screen reader labels, and reduced-motion preferences are on you the moment you replace the native controls.
 - **Everything else.** Thumbnail previews, live stream UI, AirPlay and Chromecast, error recovery, playback analytics, and sources like YouTube, Vimeo, or Mux each need their own wiring.
 
-Video.js ships each of those as a component, so you take the ones you need and keep the rest of the web platform. The longer version is in <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>
+Video.js ships each of those as a component, so you take the ones you need and keep the rest of the web platform. Read more: <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>
 
 ## Get started with Video.js
 
