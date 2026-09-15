@@ -50,9 +50,11 @@ describe('VideoSkin', () => {
   });
 
   it('links to the about-this-player page', () => {
-    render(<VideoSkin />, { wrapper: wrapper() });
+    const { container } = render(<VideoSkin />, { wrapper: wrapper() });
+    const link = container.querySelector<HTMLAnchorElement>('a[rel="help"]');
 
-    expect(document.head.querySelector('link[rel="help"]')?.getAttribute('href')).toBe(SKIN_HELP_URL);
+    expect(link?.getAttribute('href')).toBe(SKIN_HELP_URL);
+    expect(link?.hidden).toBe(true);
   });
 
   it('draws its own poster image', () => {

@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import { SKIN_HELP_URL } from '@videojs/core';
+import { SKIN_HELP_TEXT, SKIN_HELP_URL } from '@videojs/core';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
@@ -23,9 +23,13 @@ describe('BackgroundVideoSkin', () => {
   });
 
   it('links to the about-this-player page, on the client and in server output', () => {
-    render(<BackgroundVideoSkin />);
+    const { container } = render(<BackgroundVideoSkin />);
+    const link = container.querySelector<HTMLAnchorElement>('.media-background-skin > a[rel="help"]');
 
-    expect(document.head.querySelector('link[rel="help"]')?.getAttribute('href')).toBe(SKIN_HELP_URL);
-    expect(renderToString(<BackgroundVideoSkin />)).toContain(`<link rel="help" href="${SKIN_HELP_URL}"/>`);
+    expect(link?.getAttribute('href')).toBe(SKIN_HELP_URL);
+    expect(link?.hidden).toBe(true);
+    expect(renderToString(<BackgroundVideoSkin />)).toContain(
+      `<a rel="help" href="${SKIN_HELP_URL}" hidden="">${SKIN_HELP_TEXT}</a>`
+    );
   });
 });

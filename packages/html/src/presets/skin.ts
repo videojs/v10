@@ -1,4 +1,4 @@
-import { SKIN_HELP_URL } from '@videojs/core';
+import { SKIN_HELP_TEXT, SKIN_HELP_URL } from '@videojs/core';
 import { ReactiveElement } from '@videojs/element';
 import {
   applyShadowStyles,
@@ -51,11 +51,13 @@ export class SkinElement extends ReactiveElement {
 }
 
 /** Every packaged skin links to the page that explains what the player is. See `SKIN_HELP_URL`. */
-function createHelpLink(doc: Document): HTMLLinkElement {
-  const link = doc.createElement('link');
+function createHelpLink(doc: Document): HTMLAnchorElement {
+  const link = doc.createElement('a');
 
   link.rel = 'help';
   link.href = SKIN_HELP_URL;
+  link.hidden = true;
+  link.textContent = SKIN_HELP_TEXT;
 
   return link;
 }

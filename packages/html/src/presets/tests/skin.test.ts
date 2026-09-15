@@ -35,15 +35,16 @@ describe('SkinElement', () => {
 
   it('appends a help link after the template content', () => {
     const skin = createSkin(createTemplate('<media-container></media-container>'));
-    const link = skin.shadowRoot?.querySelector('link[rel="help"]');
+    const link = skin.shadowRoot?.querySelector<HTMLAnchorElement>('a[rel="help"]');
 
     expect(link?.getAttribute('href')).toBe(SKIN_HELP_URL);
+    expect(link?.hidden).toBe(true);
     expect(link?.previousElementSibling?.tagName.toLowerCase()).toBe('media-container');
   });
 
   it('adds the help link even without a template', () => {
     const skin = createSkin();
 
-    expect(skin.shadowRoot?.querySelector('link[rel="help"]')).not.toBeNull();
+    expect(skin.shadowRoot?.querySelector('a[rel="help"]')).not.toBeNull();
   });
 });
