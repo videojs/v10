@@ -1,0 +1,85 @@
+---
+import { LEGACY_V8_DOCS_URL, LEGACY_V8_INSTALL } from 'video.js/errors';
+
+import ServerCode from '@/components/Code/ServerCode.astro';
+import Footer from '@/components/Footer.astro';
+import NavBar from '@/components/NavBar/NavBar.astro';
+import A from '@/components/typography/A.astro';
+import CodeFrame from '@/components/typography/CodeFrame.astro';
+import H2 from '@/components/typography/H2.astro';
+import H3 from '@/components/typography/H3.astro';
+import P from '@/components/typography/P.astro';
+import { PRODUCTION_URL } from '@/consts';
+import Base from '@/layouts/Base.astro';
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+import { buildDocsUrl } from '@/utils/docs/routing';
+import { ERRORS_BASE_PATH, getLegacyErrorPages, type LegacyErrorPage } from '@/utils/errors/legacy-errors';
+
+export function getStaticPaths() {
+  return getLegacyErrorPages().map((page) => ({
+    params: { slug: page.slug },
+    props: page,
+  }));
+}
+
+type Props = LegacyErrorPage;
+
+const page = Astro.props;
+
+const MIGRATION_GUIDE_SLUG = 'how-to/migrate-from-video-js-8';
+const v8DocsHost = new URL(LEGACY_V8_DOCS_URL).host;
+---
+
+<Base
+  title={page.code}
+  description={`${page.code}: ${page.summary.replaceAll('`', '')}`}
+  canonical={new URL(page.path, PRODUCTION_URL).href}
+>
+  <NavBar />
+  <main id="main-content" class="mt-10 px-6 pb-24 md:mt-20 md:px-10">
+    <article class="@container text-p2 sm:text-p15">
+      <header
+        class="mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
+      >
+        <p class="mb-3 font-display text-p3 uppercase">
+          <A href={ERRORS_BASE_PATH}>Video.js 10 error codes</A>
+        </p>
+        <h1 class="mb-4 font-mono text-h3 leading-tight break-words sm:text-h25">
+          {page.code}
+        </h1>
+        <p set:html={renderInlineMarkdown(page.summary)} />
+      </header>
+
+      <H2>The Video.js 8 code that triggers it</H2>
+      <div class="mx-auto max-w-3xl">
+        <CodeFrame lang="js">
+          <ServerCode code={page.legacy} lang="javascript" />
+        </CodeFrame>
+      </div>
+
+      <H2>The Video.js 10 equivalent</H2>
+      <H3>HTML</H3>
+      <P set:html={renderInlineMarkdown(page.html)} />
+      <P>
+        See the <A href={buildDocsUrl('html', MIGRATION_GUIDE_SLUG)}>Migrate from Video.js 8</A> guide for HTML.
+      </P>
+      <H3>React</H3>
+      <P set:html={renderInlineMarkdown(page.react)} />
+      <P>
+        See the <A href={buildDocsUrl('react', MIGRATION_GUIDE_SLUG)}>Migrate from Video.js 8</A> guide for React.
+      </P>
+
+      <H2>Staying on Video.js 8</H2>
+      <P>
+        Staying on Video.js 8 is fine. It keeps receiving security patches, and its docs live at
+        <A href={LEGACY_V8_DOCS_URL}>{v8DocsHost}</A>. Pin the major version to keep it:
+      </P>
+      <div class="mx-auto max-w-3xl">
+        <CodeFrame lang="bash">
+          <ServerCode code={LEGACY_V8_INSTALL} lang="bash" />
+        </CodeFrame>
+      </div>
+    </article>
+  </main>
+  <Footer />
+</Base>

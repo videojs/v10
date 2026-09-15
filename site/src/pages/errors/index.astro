@@ -1,0 +1,59 @@
+---
+import { LEGACY_V8_DOCS_URL } from 'video.js/errors';
+
+import Footer from '@/components/Footer.astro';
+import NavBar from '@/components/NavBar/NavBar.astro';
+import A from '@/components/typography/A.astro';
+import Base from '@/layouts/Base.astro';
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+import { buildDocsUrl } from '@/utils/docs/routing';
+import { getLegacyErrorPages } from '@/utils/errors/legacy-errors';
+
+const pages = getLegacyErrorPages();
+const migrationGuideUrl = buildDocsUrl('html', 'how-to/migrate-from-video-js-8');
+const v8DocsHost = new URL(LEGACY_V8_DOCS_URL).host;
+---
+
+<Base
+  title="Error codes"
+  description="Every VJS10_ error code Video.js 10 throws for Video.js 8 patterns, with the v10 equivalent in HTML and React and how to stay on v8."
+>
+  <NavBar />
+  <main id="main-content" class="mt-10 px-6 pb-24 md:mt-20 md:px-10">
+    <article class="@container text-p2 sm:text-p15">
+      <header
+        class="mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
+      >
+        <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
+          Error codes
+        </h1>
+        <p class="my-4">
+          Video.js 10 is a rebuild. When it meets a Video.js 8 pattern such as a
+          <code class="font-mono">videojs()</code> call, it throws a
+          <code class="font-mono">VJS10_</code> code and a link to one of these pages
+          instead of an opaque failure. Each page shows the v8 code that triggers it, the
+          Video.js 10 equivalent in HTML and React, and how to stay on Video.js 8.
+        </p>
+        <p>
+          New to v10? Start with the <A href={migrationGuideUrl}>Migrate from Video.js 8</A>
+          guide. Staying on v8 is fine too: its docs live at
+          <A href={LEGACY_V8_DOCS_URL}>{v8DocsHost}</A>.
+        </p>
+      </header>
+
+      <ul class="mx-auto max-w-3xl divide-y divide-faded-black dark:divide-manila-light">
+        {
+          pages.map((page) => (
+            <li class="py-6">
+              <h2 class="mb-2 font-mono text-h4 leading-tight break-words">
+                <A href={page.path}>{page.code}</A>
+              </h2>
+              <p set:html={renderInlineMarkdown(page.summary)} />
+            </li>
+          ))
+        }
+      </ul>
+    </article>
+  </main>
+  <Footer />
+</Base>
