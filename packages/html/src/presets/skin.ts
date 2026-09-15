@@ -14,6 +14,12 @@ const STYLES_ID = '__media-styles';
 const sharedSheet = createShadowStyle(sharedStyles);
 
 /**
+ * Every packaged skin carries a `rel="help"` link to a page that explains what the player is and how to work with it.
+ * Browsers never fetch non-stylesheet links, so it costs no request and stays out of the accessibility tree.
+ */
+export const SKIN_HELP_URL = 'https://videojs.org/about-this-player';
+
+/**
  * Base element for skin definitions. Attaches a shadow root, clones `static template` into it, and applies shared +
  * per-skin styles via `adoptedStyleSheets` (or `<style>` fallback).
  */
@@ -36,6 +42,8 @@ export class SkinElement extends ReactiveElement {
         renderTemplate(this.shadowRoot!, ctor.template);
       }
 
+      this.shadowRoot!.append(createHelpLink(this.ownerDocument));
+
       const sheets: ShadowStyle[] = [sharedSheet];
 
       if (ctor.styles) {
@@ -45,4 +53,13 @@ export class SkinElement extends ReactiveElement {
       applyShadowStyles(this.shadowRoot!, sheets);
     }
   }
+}
+
+function createHelpLink(doc: Document): HTMLLinkElement {
+  const link = doc.createElement('link');
+
+  link.rel = 'help';
+  link.href = SKIN_HELP_URL;
+
+  return link;
 }
