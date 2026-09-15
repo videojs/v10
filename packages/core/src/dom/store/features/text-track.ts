@@ -16,7 +16,7 @@ import { isNil } from '@videojs/utils/predicate';
 
 import { DEFAULT_LOCALE, findLocaleKeys, getCanonicalLocaleKey } from '../../../core/i18n';
 import { definePlayerFeature } from '../../feature';
-import { normalizeTextCues } from '../text-cues';
+import { clampCuesToDuration } from '../text-cues';
 
 interface IdentifiedTrack {
   id: string;
@@ -181,7 +181,7 @@ export const textTrackFeature = definePlayerFeature({
 
       // The last chapter of an in-stream chapters document is open-ended on the
       // track; consumers read it ending where the media does.
-      const chaptersCues = normalizeTextCues(chaptersTrack?.cues, isMediaSeekCapable(media) ? media.duration : NaN);
+      const chaptersCues = clampCuesToDuration(chaptersTrack?.cues, isMediaSeekCapable(media) ? media.duration : NaN);
       // VTTCue extends TextTrackCue with `text` — cast via `unknown` since
       // the CueList is typed as TextTrackCue which doesn't expose `text`.
       const thumbnailCues: MediaTextCue[] = thumbnailTrack?.cues

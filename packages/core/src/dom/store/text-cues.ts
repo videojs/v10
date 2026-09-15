@@ -8,7 +8,7 @@ import type { MediaTextCue, TextCueListLike } from '@videojs/media';
  * cue ending no later than the media does. While the duration is unknown or infinite the ends pass through unchanged.
  * Pure: the result is fresh data, never the live cues, so a store can expose it without leaking DOM objects.
  */
-export function normalizeTextCues(cues: TextCueListLike | null | undefined, duration: number): MediaTextCue[] {
+export function clampCuesToDuration(cues: TextCueListLike | null | undefined, duration: number): MediaTextCue[] {
   if (!cues) return [];
 
   const max = Number.isFinite(duration) && duration > 0 ? duration : Number.POSITIVE_INFINITY;
