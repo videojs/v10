@@ -1,0 +1,22 @@
+---
+/**
+ * Upgrades framework-agnostic docs links in place. Anchors rendered outside the
+ * docs carry `data-docs-slug` and an `/docs/<slug>` href that the server can
+ * redirect; once the reader's framework is known on the client, the same
+ * resolver rewrites them to the concrete URL so the click skips the redirect.
+ */
+---
+
+<script>
+  import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
+  import { resolveDocsHref } from '@/utils/docs/routing';
+
+  const framework = getFrameworkPreferenceClient();
+
+  for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[data-docs-slug]')) {
+    const slug = anchor.dataset.docsSlug || null;
+    const hash = anchor.hash;
+
+    anchor.href = resolveDocsHref({ slug, framework }) + hash;
+  }
+</script>
