@@ -25,5 +25,6 @@
   "packages/utils": "10.0.0-rc.2",
   "packages/adapters/vimeo-video": "10.0.0-rc.2",
   "packages/adapters/wistia-video": "10.0.0-rc.2",
-  "packages/adapters/youtube-video": "10.0.0-rc.2"
+  "packages/adapters/youtube-video": "10.0.0-rc.2",
+  "packages/video.js": "10.0.0-rc.2"
 }

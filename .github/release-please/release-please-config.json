@@ -39,7 +39,8 @@
         "@videojs/utils",
         "@videojs/vimeo-video",
         "@videojs/wistia-video",
-        "@videojs/youtube-video"
+        "@videojs/youtube-video",
+        "video.js"
       ]
     }
   ],
@@ -202,6 +203,12 @@
     },
     "packages/adapters/youtube-video": {
       "component": "@videojs/youtube-video",
+      "prerelease": true,
+      "prerelease-type": "rc",
+      "versioning": "prerelease"
+    },
+    "packages/video.js": {
+      "component": "video.js",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"
