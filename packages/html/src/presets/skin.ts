@@ -1,3 +1,4 @@
+import { SKIN_HELP_URL } from '@videojs/core';
 import { ReactiveElement } from '@videojs/element';
 import {
   applyShadowStyles,
@@ -12,12 +13,6 @@ import sharedStyles from '../define/shared.css?inline';
 
 const STYLES_ID = '__media-styles';
 const sharedSheet = createShadowStyle(sharedStyles);
-
-/**
- * Every packaged skin carries a `rel="help"` link to a page that explains what the player is and how to work with it.
- * Browsers never fetch non-stylesheet links, so it costs no request and stays out of the accessibility tree.
- */
-export const SKIN_HELP_URL = 'https://videojs.org/about-this-player';
 
 /**
  * Base element for skin definitions. Attaches a shadow root, clones `static template` into it, and applies shared +
@@ -55,6 +50,7 @@ export class SkinElement extends ReactiveElement {
   }
 }
 
+/** Every packaged skin links to the page that explains what the player is. See `SKIN_HELP_URL`. */
 function createHelpLink(doc: Document): HTMLLinkElement {
   const link = doc.createElement('link');
 

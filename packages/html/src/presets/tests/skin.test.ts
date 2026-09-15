@@ -1,7 +1,8 @@
+import { SKIN_HELP_URL } from '@videojs/core';
 import { createTemplate } from '@videojs/utils/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { SKIN_HELP_URL, SkinElement } from '../skin';
+import { SkinElement } from '../skin';
 
 let tagId = 0;
 
