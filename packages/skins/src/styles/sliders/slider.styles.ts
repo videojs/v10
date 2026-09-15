@@ -17,7 +17,7 @@ export default styles({
         'data-disabled:pointer-events-none',
         'transition-[--media-slider-fill,--media-slider-buffer] duration-media-slider ease-out data-dragging:duration-0',
         'rounded-media-pill',
-        'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))]',
+        'data-[orientation=horizontal]:h-(--media-slider-height,--spacing(8))',
         'data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
       ],
       variants: {

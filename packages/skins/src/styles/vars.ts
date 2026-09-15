@@ -228,6 +228,10 @@ export const vars = {
     kind: 'internal',
     description: 'Theme gradient painted behind the video controls.',
   },
+  '--media-title-gradient': {
+    kind: 'internal',
+    description: 'Full-height backdrop behind the video title that fades with the controls.',
+  },
   '--media-thumbnail-gradient': {
     kind: 'internal',
     description: 'Theme backdrop over the default thumbnail preview that keeps the time label legible.',

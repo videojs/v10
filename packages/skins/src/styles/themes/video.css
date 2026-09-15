@@ -7,6 +7,12 @@
       oklch(from var(--media-backdrop) l c h / 0.3) 25%,
       transparent
     );
+    --media-title-gradient: linear-gradient(
+      to bottom in oklab,
+      oklch(from var(--media-backdrop) l c h / 0.5),
+      oklch(from var(--media-backdrop) l c h / 0.1) 25%,
+      transparent
+    );
     --media-caption-controls-y: calc(var(--media-spacing) * -14);
     --media-slider-preview-offset: calc(var(--media-spacing) * 9);
     --media-thumbnail-gradient: linear-gradient(

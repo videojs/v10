@@ -32,6 +32,7 @@
   --text-media-sm: calc(var(--media-spacing) * 2.75);
   --text-media: calc(var(--media-spacing) * 3.25);
   --text-media-lg: calc(var(--media-spacing) * 3.75);
+  --text-media-xl: calc(var(--media-spacing) * 4.25);
 
   /* Icon and control sizes derived from `--media-icon-size` and `--media-control-size`. */
   --spacing-media-icon-sm: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 7 / 9);

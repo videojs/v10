@@ -68,7 +68,7 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
         visitor: {
           Rule: {
             style(rule) {
-              const relationship = relationshipScope(rule, relationshipOwners);
+              const relationship = relationshipScope(rule, relationshipOwners, scopeRootClasses);
               if (relationship) return relationship;
 
               if (!scope) return;
@@ -243,7 +243,8 @@ function includeScopeRootSelectors(selectors: SelectorList, scopeRootClasses: Re
 
 function relationshipScope(
   rule: Extract<Rule, { type: 'style' }>,
-  relationshipOwners: ReadonlySet<string>
+  relationshipOwners: ReadonlySet<string>,
+  scopeRootClasses: ReadonlySet<string>
 ): Rule | undefined {
   const relationships = rule.value.selectors.map((selector) => scopedRelationship(selector, relationshipOwners));
   const owner = relationships[0]?.owner;
@@ -257,7 +258,7 @@ function relationshipScope(
     type: 'scope',
     value: {
       loc: cloneCssAst(rule.value.loc),
-      scopeStart: [[{ type: 'class', name: owner }]],
+      scopeStart: includeScopeRootSelectors([[{ type: 'class', name: owner }]], scopeRootClasses),
       rules: [style],
     },
   });
