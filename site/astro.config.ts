@@ -52,6 +52,12 @@ const SITE_URL =
       ? PRERELEASE_URL.origin
       : process.env.DEPLOY_PRIME_URL || PRODUCTION_URL.origin;
 
+const [reactCompilerPlugin] = viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] });
+
+if (reactCompilerPlugin?.name !== 'vite:react-compiler') {
+  throw new Error('Expected @vitejs/plugin-react to return the native React Compiler plugin first.');
+}
+
 // https://astro.build/config
 export default defineConfig({
   site: SITE_URL,
@@ -170,7 +176,7 @@ export default defineConfig({
     plugins: [
       // @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first
       // plugin returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
-      viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] })[0],
+      reactCompilerPlugin,
       demoPlaceholderPlugin(),
       tailwindcss(),
       svgr(),
