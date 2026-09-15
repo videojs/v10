@@ -1,7 +1,7 @@
 import { Input } from '@base-ui/react/input';
 import { useStore } from '@nanostores/react';
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from '@/assets/icons/image.svg?react';
 import LinkSquare from '@/assets/icons/link-square.svg?react';
@@ -58,10 +58,46 @@ const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
   'background-video': 'Muted, looping file URLs',
 };
 
+/** How long typing may pause before the draft URL reaches the preview. */
+const COMMIT_DELAY_MS = 500;
+
 export default function MediaSourcePicker() {
   const $renderer = useStore(renderer);
   const $useCase = useStore(useCase);
   const $sourceUrl = useStore(sourceUrl);
+
+  // The input edits a local draft and commits to the store after a pause, or at once on paste, blur, or Enter. The
+  // preview reloads its media on every store change, and a half-typed URL fails the media URL safety check, opens
+  // the player's error dialog, and pulls focus out of the field mid-word.
+  const [draft, setDraft] = useState($sourceUrl);
+  const [syncedUrl, setSyncedUrl] = useState($sourceUrl);
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // An outside write to the store, such as a finished Mux upload, replaces the draft. Adjusting state during render is
+  // the sanctioned way to derive it from a changed input.
+  if ($sourceUrl !== syncedUrl) {
+    setSyncedUrl($sourceUrl);
+    setDraft($sourceUrl);
+  }
+
+  useEffect(() => () => clearCommitTimer(), []);
+
+  function clearCommitTimer() {
+    if (commitTimer.current === null) return;
+
+    clearTimeout(commitTimer.current);
+    commitTimer.current = null;
+  }
+
+  function commit(value: string) {
+    clearCommitTimer();
+    sourceUrl.set(value);
+  }
+
+  function scheduleCommit(value: string) {
+    clearCommitTimer();
+    commitTimer.current = setTimeout(() => commit(value), COMMIT_DELAY_MS);
+  }
 
   const renderers = getInstallationPreset($useCase).renderers;
   const detection = detectRenderer($sourceUrl, $useCase);
@@ -104,8 +140,23 @@ export default function MediaSourcePicker() {
           <Input
             id="source-url-input"
             type="url"
-            value={$sourceUrl}
-            onChange={(e) => sourceUrl.set(e.target.value)}
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              scheduleCommit(e.target.value);
+            }}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData('text').trim();
+              if (!pasted) return;
+
+              e.preventDefault();
+              setDraft(pasted);
+              commit(pasted);
+            }}
+            onBlur={() => commit(draft)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit(draft);
+            }}
             placeholder="https://stream.mux.com/….m3u8"
             className="corner-squircle border-line bg-surface text-p3 placeholder:text-muted intent:border-line-strong focus-visible:border-line-strong focus-visible:outline-gold h-10 w-full rounded-lg border pr-3 pl-9 shadow-xs focus-visible:outline-2 focus-visible:outline-offset-1"
           />

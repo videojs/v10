@@ -48,13 +48,26 @@ interface Source {
   demo: boolean;
 }
 
+/** An absolute http(s) URL that names a resource, so a bare origin or a half-typed address keeps the demo media. */
+function isLoadableUrl(value: string): boolean {
+  if (!URL.canParse(value)) return false;
+
+  const parsed = new URL(value);
+
+  return (
+    (parsed.protocol === 'https:' || parsed.protocol === 'http:') &&
+    parsed.hostname.includes('.') &&
+    parsed.pathname.length > 1
+  );
+}
+
 /**
  * The preview follows the media source step: a pasted file or HLS URL (including a Mux upload) plays here, while embeds
  * such as YouTube or Vimeo keep the demo media since each needs its own adapter.
  */
 function resolveSource($useCase: UseCase, $renderer: Renderer, $sourceUrl: string): Source {
   const preset = getInstallationPreset($useCase);
-  const url = $sourceUrl.trim();
+  const url = isLoadableUrl($sourceUrl.trim()) ? $sourceUrl.trim() : '';
   if (url && FILE_RENDERERS.includes($renderer)) return { url, kind: 'file', demo: false };
 
   if (url && HLS_RENDERERS.includes($renderer)) return { url, kind: 'hls', demo: false };
