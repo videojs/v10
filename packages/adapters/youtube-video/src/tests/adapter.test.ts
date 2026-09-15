@@ -741,11 +741,18 @@ describe('YouTubeAdapter', () => {
     expect(events).toEqual(['seeking']);
     expect(player.seekTo).toHaveBeenCalledWith(30, true);
 
-    player.getCurrentTime.mockReturnValue(30);
+    player.getVideoLoadedFraction.mockReturnValue(0.5);
     player.emit('onStateChange', STATE.PLAYING);
+    await new Promise((resolve) => setTimeout(resolve, 60));
 
-    expect(media.seeking).toBe(false);
-    expect(events).toEqual(['seeking', 'seeked']);
+    expect(media.currentTime).toBe(30);
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+
+    player.getCurrentTime.mockReturnValue(30);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('seek not completed yet');
+    });
 
     player.getCurrentTime.mockReturnValue(30.25);
     await vi.waitFor(() => {

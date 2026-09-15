@@ -62,6 +62,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #paused = true;
   #ended = false;
   #seeking = false;
+  #seekTarget: number | null = null;
   #loaded = false;
   #playFired = false;
   #currentTime = 0;
@@ -251,6 +252,8 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#currentTime = value;
     // `seekTo` keeps the player paused when called from a paused state.
     this.#afterLoad((p) => {
+      this.#seekTarget = value;
+
       if (!this.#seeking) {
         this.#seeking = true;
         this.dispatchEvent(new Event('seeking'));
@@ -510,6 +513,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#progress = 0;
     this.#readyState = READY_STATE_HAVE_NOTHING;
     this.#seeking = false;
+    this.#seekTarget = null;
     this.#loaded = false;
     this.#playFired = false;
     this.#volume = 1;
@@ -592,7 +596,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       if (state === STATE_BUFFERING) {
         emit('waiting');
       } else if (state === STATE_PLAYING) {
-        if (this.#seeking) {
+        if (this.#seeking && this.#seekTarget === null) {
           this.#seeking = false;
           emit('seeked');
         }
@@ -658,22 +662,24 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     const time = player.getCurrentTime();
     const duration = player.getDuration();
     const bufferedEnd = player.getVideoLoadedFraction() * duration;
+    const wasSeeking = this.#seeking;
+    const reachedSeekTarget = this.#seekTarget !== null && Math.abs(time - this.#seekTarget) <= 0.1;
 
-    if (this.#seeking && bufferedEnd > 0.1) {
-      this.#seeking = false;
-      this.dispatchEvent(new Event('seeked'));
-    } else if (
-      !this.#seeking &&
-      player.getPlayerState() !== STATE_PLAYING &&
-      Math.abs(time - this.#currentTime) > 0.1
-    ) {
+    if (!wasSeeking && player.getPlayerState() !== STATE_PLAYING && Math.abs(time - this.#currentTime) > 0.1) {
       this.#seeking = true;
       this.dispatchEvent(new Event('seeking'));
     }
 
-    if (time !== this.#currentTime) {
+    // Preserve the requested time until YouTube's clock catches up with a programmatic seek.
+    if ((this.#seekTarget === null || reachedSeekTarget) && time !== this.#currentTime) {
       this.#currentTime = time;
       this.dispatchEvent(new Event('timeupdate'));
+    }
+
+    if (wasSeeking && (reachedSeekTarget || (this.#seekTarget === null && bufferedEnd > 0.1))) {
+      this.#seeking = false;
+      this.#seekTarget = null;
+      this.dispatchEvent(new Event('seeked'));
     }
 
     if (isNumber(duration) && duration > 0 && duration !== this.#duration) {
