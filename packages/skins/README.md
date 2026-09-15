@@ -18,7 +18,7 @@ Follow one skin from source to output.
 
 | Path                                                             | Owns                                                                                                                                       |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`src/components/`](./src/components)                            | Shared UI grouped as buttons, controls, feedback, layout, menus, and sliders.                                                              |
+| [`src/components/`](./src/components)                            | Shared UI grouped as behaviors, buttons, dialogs, display, layout, menus, and sliders.                                                     |
 | [`src/skins/`](./src/skins)                                      | Skin folders grouped by theme and preset (`default/video`, `minimal/audio`, and so on), with reused parts under `shared/`. |
 | [`src/styles/`](./src/styles)                                    | Base resets, themes, tokens, the shared Tailwind source, and style modules grouped like the components.                                    |
 | [`src/presets/`](./src/presets)                                  | The handwritten background preset, copied into both packages as is.                                                                        |

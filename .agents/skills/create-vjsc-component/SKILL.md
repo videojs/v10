@@ -50,7 +50,7 @@ Avoid structural selectors such as `:has()`, `has-*`, `group-has-*`, descendants
 - Name rules after the part or shortest semantic role: `root`, `trigger`, `popup`, `content`, `track`, `fill`, `thumb`, or `playIcon`. Do not repeat the component name in the key. Set the module `prefix` and let each rule derive `prefix-<kebab key>`, with `root` emitting the prefix itself, such as `media-slider-thumb`. Spell out `className` only where a rule departs from that.
 - Put shared primitive rules in a generic module and component-specific deltas in a specific module. Follow the current `button.styles.ts` plus `play-button.styles.ts`, and `slider.styles.ts` plus `time-slider.styles.ts`, pattern.
 - Compose classes from general to specific to caller override: `[sliderStyles.thumb, styles.thumb, className]`.
-- Organize style modules and output assets by role (`buttons`, `sliders`, `popups`, `feedback`, `layout`). Keep skin-only layout in the skin rather than a generic primitive module.
+- Organize component and style modules by role (`behaviors`, `buttons`, `dialogs`, `display`, `layout`, `menus`, `sliders`), with reusable popup rules under `styles/popups`. Name output assets for the rules they aggregate, and keep skin-only layout in the skin rather than a generic primitive module.
 - Put common utilities in `utilities` and selected skin or target differences in `variants` instead of duplicating a rule.
 
 ## Shared utilities and tokens
