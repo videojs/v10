@@ -88,7 +88,7 @@ export default {
     encrypted: 'Non foi posíbel reproducir este contido multimedia porque non se puido descifrar.',
     unplayable: 'O reprodutor non admite este contido multimedia.',
     title: 'Algo saíu mal.',
-    unexpected: 'Produciuse un erro. Por favor, ténteo de novo.',
+    unexpected: 'Produciuse un erro inesperado.',
   },
   common: {
     empty: '',
