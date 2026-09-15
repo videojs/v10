@@ -15,7 +15,7 @@ import {
   type UIEvent,
 } from '@videojs/core/dom';
 import { isText, resolveText, type Text, translateText } from '@videojs/core/i18n';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 import { isBoolean, isObject } from '@videojs/utils/predicate';
 
@@ -39,7 +39,7 @@ function getLabelParams<Core extends MediaButtonComponent>(
 
 /** Abstract base for HTML custom elements that render a media-control button. */
 export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends UIElement {
-  static override properties: PropertyDeclarationMap = {
+  static override properties: PropertyDeclarations = {
     label: { type: String },
     disabled: { type: Boolean },
   };

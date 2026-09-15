@@ -1,11 +1,9 @@
-import { WistiaVideo } from '../../media/wistia-video';
+import { WistiaVideoElement } from '../../media/wistia-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export class WistiaVideoElement extends WistiaVideo {
-  static readonly tagName = 'wistia-video';
-}
-
 safeDefine(WistiaVideoElement);
+
+export { WistiaVideoElement };
 
 declare global {
   interface HTMLElementTagNameMap {

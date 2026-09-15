@@ -4,7 +4,7 @@ export * from '@videojs/core/dom';
 export type {
   Destroyable,
   PropertyDeclaration,
-  PropertyDeclarationMap,
+  PropertyDeclarations,
   PropertyValues,
   ReactiveController,
   ReactiveControllerHost,
@@ -69,6 +69,23 @@ export { i18nContext } from './i18n/context';
 export * from './player/context';
 export * from './player/create-player';
 export { PlayerController, type PlayerControllerHost } from './player/controller';
+export {
+  audioContentAttributes,
+  audioTarget,
+  createMediaElement,
+  iframeTarget,
+  mediaContentAttributes,
+  videoContentAttributes,
+  videoTarget,
+} from './media/create-media-element';
+export type {
+  CreateMediaElementOptions,
+  MediaAttributeDeclaration,
+  MediaAttributeDeclarations,
+  MediaAttributeDeclarationsFor,
+  MediaTargetDefinition,
+  MediaTargetRenderContext,
+} from './media/create-media-element';
 export * from './store/media-attach-mixin';
 export * from './store/types';
 export { AirPlayButtonElement } from './ui/airplay-button/element';

@@ -46,8 +46,9 @@ The API is a subset of Lit's `ReactiveElement`. Types are aligned so controllers
 
 ### What's included
 
-- **`static properties`** — Declare reactive properties with `type` (`String`, `Boolean`, `Number`) and `attribute` (custom attribute name)
-- **Reactive accessors** — Installed automatically, change detection via `Object.is()`
+- **`static properties`** — Declare reactive properties with Lit's `type`, `attribute`, `converter`, `hasChanged`, and `noAccessor` options
+- **Reactive accessors** — Installed automatically, with Lit's default `Object.is()` change detection
+- **Attribute conversion** — Built-in string, number, boolean, object, and array conversion plus custom converters
 - **Batched updates** — Multiple property changes in one tick trigger a single update via `queueMicrotask()`
 - **Full lifecycle** — `willUpdate` → `update` → `firstUpdated` (first time) → `updated` → `updateComplete`
 - **`hasUpdated`** — `false` until first update completes, `true` during `firstUpdated` and `updated` (matches Lit)
@@ -56,6 +57,7 @@ The API is a subset of Lit's `ReactiveElement`. Types are aligned so controllers
 - **`scheduleUpdate()`** — Override point for custom update timing (default calls `performUpdate()`)
 - **Reactive controllers** — `addController`/`removeController` with `hostConnected`, `hostDisconnected`, `hostUpdate`, `hostUpdated`
 - **Element upgrade handling** — Properties set before registration are preserved
+- **Property inheritance** — Subclasses inherit parent declarations without spreading `Parent.properties`
 
 ### What's NOT included
 
@@ -67,24 +69,26 @@ The API is a subset of Lit's `ReactiveElement`. Types are aligned so controllers
 | `shouldUpdate()` | No use case for skipping updates |
 | `getUpdateComplete()` | No async update chaining needed |
 | `reflect` option | No property-to-attribute reflection |
-| `converter` option | Simple type coercion is sufficient |
 | `state` option | All properties are observable |
-| `hasChanged` option | `Object.is()` is always used |
+| `useDefault` option | No property-to-attribute reflection |
 
 ### Property inheritance
 
-Lit walks the prototype chain to collect properties from all ancestors. We don't — subclasses that define their own `static properties` must spread the parent:
+Like Lit, subclasses inherit declarations from their ancestors. Annotate a parent declaration with `PropertyDeclarations`
+when a subclass replaces the static object so TypeScript keeps the static sides compatible:
 
 ```ts
+import type { PropertyDeclarations } from '@videojs/element';
+
 class FancyButton extends MyButton {
-  static override properties = {
-    ...MyButton.properties,
+  static override properties: PropertyDeclarations = {
     variant: { type: String },
   };
 }
 ```
 
-This is only needed when a subclass declares `static properties`. If it doesn't, JS static property inheritance means the parent's properties are used automatically.
+`ReactiveController` is identical to Lit's public controller contract. The separate `DestroyController` extension adds
+`hostDestroyed()` for elements composed with `DestroyMixin` without changing Lit controller compatibility.
 
 ## Context
 
@@ -95,6 +99,32 @@ import { createContext, ContextProvider, ContextConsumer } from '@videojs/elemen
 ```
 
 This provides tree-scoped data sharing without prop drilling, using Lit's [Context Protocol](https://github.com/webcomponents-cg/community-protocols/blob/main/proposals/context.md).
+
+## Attribute composition
+
+The root package also exposes attribute conversion and reflection helpers for elements that do not extend
+`ReactiveElement`:
+
+```ts
+import { createAttributeBindings, defineAttributeProperty } from '@videojs/element';
+
+const bindings = createAttributeBindings({
+  count: { type: Number, defaultValue: 0 },
+  disabled: { type: Boolean },
+});
+
+class CounterElement extends HTMLElement {
+  static observedAttributes = [...bindings.observedAttributes];
+}
+
+for (const binding of bindings.byProperty.values()) {
+  defineAttributeProperty(CounterElement.prototype, binding);
+}
+```
+
+Bindings reject duplicate or non-lowercase attribute names. `AttributeDeclarationsFor<Props>` checks declaration keys
+and built-in conversion types against a property surface; a custom converter can represent any other value. Values
+assigned before registration are preserved and replayed through generated accessors during element upgrade.
 
 ## Community
 

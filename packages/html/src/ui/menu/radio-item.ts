@@ -1,5 +1,5 @@
 import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -11,7 +11,7 @@ export class MenuRadioItemElement extends UIElement {
   static override properties = {
     value: { type: String },
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<'value' | 'disabled'>;
+  } satisfies PropertyDeclarations;
 
   value = '';
   disabled = false;

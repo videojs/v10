@@ -1,6 +1,6 @@
 import type { SliderPreviewProps } from '@videojs/core';
 import { applyStateDataAttrs, getSliderPreviewStyle } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import { applyStyles, observeResize } from '@videojs/utils/dom';
 
@@ -12,7 +12,7 @@ export class SliderPreviewElement extends UIElement {
 
   static override properties = {
     overflow: { type: String },
-  } satisfies PropertyDeclarationMap<'overflow'>;
+  } satisfies PropertyDeclarations;
 
   overflow: NonNullable<SliderPreviewProps['overflow']> = 'clamp';
 

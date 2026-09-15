@@ -1,0 +1,100 @@
+---
+title: createMediaElement
+description: Build a custom media element around a playback adapter that registers with the player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+## Import
+
+```ts
+import { createMediaElement } from "@videojs/html";
+```
+
+## Usage
+
+Pass an adapter and a target definition. The adapter owns playback behavior. The definition supplies the default shadow template and resolves the concrete target passed to `adapter.attach()`. The returned element forwards the adapter's surface and registers itself with the surrounding <DocsLink slug="reference/player">player</DocsLink> on connect.
+
+```ts
+import { createMediaElement, videoTarget } from '@videojs/html';
+import { HlsJsAdapter } from '@videojs/hlsjs-video';
+
+export class MyHlsVideoElement extends createMediaElement({
+  adapter: { constructor: HlsJsAdapter },
+  target: videoTarget,
+}) {
+  static readonly tagName = 'my-hls-video';
+}
+
+customElements.define(MyHlsVideoElement.tagName, MyHlsVideoElement);
+```
+
+Use `audioTarget` for a native audio target. For an embed, use `iframeTarget` and set `template` on the element configuration. The template receives adapter properties parsed from the element's initial attributes:
+
+```ts
+import { createMediaElement, iframeTarget } from '@videojs/html';
+import { escapeHtml } from '@videojs/utils/string';
+import { VimeoAdapter } from '@videojs/vimeo-video';
+
+export class MyVimeoVideoElement extends createMediaElement({
+  adapter: { constructor: VimeoAdapter },
+  target: iframeTarget,
+  template: ({ adapterProps }) =>
+    `<iframe part="iframe" src="${escapeHtml(adapterProps.src)}" allowfullscreen></iframe>`,
+}) {}
+```
+
+The template is written to the shadow root with `innerHTML`, so escape any attribute value you interpolate.
+
+The template is also the element's static `template`, so a subclass can override it the same way.
+
+`createMediaElement` does not select a target type from the adapter. Supply your own `MediaTargetDefinition` to use a custom element, canvas, or another `EventTarget`. A target definition implements `resolve()` and can supply a default `template`, declare target-native attributes, observe target replacement, apply changed attributes, and run connection work. Set `template` or `shadowRootOptions` on the element configuration to override the target defaults. This keeps rendering and DOM lifecycle out of the playback adapter.
+
+The `mediaContentAttributes`, `audioContentAttributes`, and `videoContentAttributes` tables are exported for definitions that extend the built-in native-media attribute policies. Spread them into a new `attributes` object rather than mutating the shared tables.
+
+## Attributes
+
+Each primitive in the adapter's `defaultProps` becomes a content attribute of the same type, named by its WHATWG spelling where one exists and kebab-case otherwise: `src`, `preload`, `stream-type`. Removing the attribute resets the property to its default. Object properties such as `source` stay property-only, and so does a boolean that defaults to `true`, since an absent attribute cannot mean `true`. The `muted` attribute belongs to `defaultMuted`, as in HTML, and seeds the `muted` state when it changes. This is the rule the React `createMediaComponent` factory applies to props, so both façades expose the same surface from one declaration.
+
+Use `adapter.attributes` to override part of an inferred declaration or keep a primitive property off the attribute
+surface. Keys are checked against `defaultProps`, and `false` is the concise opt-out:
+
+```ts
+createMediaElement({
+  adapter: {
+    constructor: LowLatencyAdapter,
+    attributes: {
+      debug: false,
+      latencyMode: { attribute: 'latency' },
+    },
+  },
+  target: videoTarget,
+});
+```
+
+`videoTarget` and `audioTarget` also accept attributes their native elements understand, such as `controls`, `muted`, and `crossorigin`. Ones the adapter can set go through the adapter; the rest reach the target element. `iframeTarget` exposes only attributes inferred from the adapter because its template owns the frame markup.
+
+```ts
+import { HTMLVideoAdapter } from '@videojs/media/dom';
+import { createMediaElement, videoTarget } from '@videojs/html';
+
+class LowLatencyAdapter extends HTMLVideoAdapter {
+  static readonly defaultProps = { src: '', debug: false, latencyMode: 'normal' };
+}
+
+customElements.define(
+  'll-video',
+  createMediaElement({ adapter: { constructor: LowLatencyAdapter }, target: videoTarget }),
+);
+// <ll-video src="…" debug latency-mode="low" controls></ll-video>
+// `debug` and `latency-mode` reach the adapter; `controls` reaches the <video>.
+```
+
+Every built-in media element except `<wistia-video>` and `<background-video>` is created this way. Subclass the result to add element behavior, such as extra observed attributes.
+
+## Who needs this
+
+Use `createMediaElement` to expose an adapter as a custom element, for example a third-party engine that implements the `@videojs/media` contract. Supply a custom target definition when the adapter needs a different target or rendering lifecycle. For an element that already owns the entire adapter lifecycle, apply <DocsLink slug="reference/media-attach-mixin">MediaAttachMixin</DocsLink> to it directly.
+
+<UtilReference util="createMediaElement" />

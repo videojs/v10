@@ -1,6 +1,6 @@
 import { CaptionsButtonCore, CaptionsButtonDataAttrs } from '@videojs/core';
 import { applyElementProps, selectTextTrack, type UIEvent } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 
@@ -21,7 +21,7 @@ export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore
     disabled: { type: Boolean },
     commandfor: { type: String },
     menuFor: { type: String, attribute: 'menu-for' },
-  } satisfies PropertyDeclarationMap<'label' | 'disabled' | 'commandfor' | 'menuFor'>;
+  } satisfies PropertyDeclarations;
 
   commandfor: string | undefined = undefined;
   menuFor: string | undefined = undefined;

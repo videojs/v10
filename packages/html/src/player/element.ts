@@ -5,7 +5,7 @@ import {
   type PlayerTarget,
   setPlayerConfigValue,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
@@ -59,7 +59,7 @@ export function createPlayerElement<Store extends PlayerStore>(
     static properties = {
       ...UIElement.properties,
       ...Object.fromEntries(inputs.map(({ property, attribute }) => [property, { type: String, attribute }])),
-    } satisfies PropertyDeclarationMap;
+    } satisfies PropertyDeclarations;
 
     #store: Store | null = options.factory();
     #configuredStore: Store | null = null;

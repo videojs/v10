@@ -1,5 +1,5 @@
 import type { ReactiveElement } from './reactive-element';
-import type { ReactiveController } from './types';
+import type { DestroyController, ReactiveController } from './types';
 
 export interface Destroyable {
   readonly destroyed: boolean;
@@ -40,7 +40,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     destroyCallback(): void {
       for (const c of this.#trackedControllers) {
-        c.hostDestroyed?.();
+        (c as DestroyController).hostDestroyed?.();
       }
     }
 

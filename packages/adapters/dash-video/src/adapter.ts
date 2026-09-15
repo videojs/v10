@@ -1,4 +1,4 @@
-import type { EngineAdapter } from '@videojs/media';
+import { type EngineAdapter, type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 import { deepEqual } from '@videojs/utils/object';
@@ -23,6 +23,7 @@ export interface DashEngineConfig {
 export interface DashAdapterProps {
   src: string;
   source: DashSource | null;
+  streamType: MediaStreamType;
 }
 
 class DashAdapterCore
@@ -32,6 +33,7 @@ class DashAdapterCore
   static readonly defaultProps: DashAdapterProps = {
     src: '',
     source: null,
+    streamType: MediaStreamTypes.UNKNOWN,
   };
 
   #engine: dashjs.MediaPlayerClass;

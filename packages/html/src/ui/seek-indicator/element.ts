@@ -1,6 +1,6 @@
 import { getSeekIndicatorDisplayValue, SeekIndicatorCore, SeekIndicatorDataAttrs } from '@videojs/core';
 import { createTransition } from '@videojs/core/dom';
-import type { PropertyDeclarationMap } from '@videojs/element';
+import type { PropertyDeclarations } from '@videojs/element';
 
 import { InputIndicatorElement } from '../input-indicator/element';
 import { LiveIndicator } from '../input-indicator/live-indicator';
@@ -10,7 +10,7 @@ export class SeekIndicatorElement extends InputIndicatorElement<SeekIndicatorCor
 
   static override properties = {
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<'closeDelay'>;
+  } satisfies PropertyDeclarations;
 
   closeDelay: number | undefined;
 

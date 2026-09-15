@@ -1,24 +1,27 @@
-import type { PropertyDeclaration, PropertyDeclarationMap, PropertyValues, ReactiveController } from './types';
+import { createAttributeBindings, valueFromAttribute, type AttributeBindings } from './attributes';
+import type { PropertyDeclaration, PropertyDeclarations, PropertyValues, ReactiveController } from './types';
+
+declare const __DEV__: boolean;
 
 interface ResolvedMeta {
-  props: Map<string, PropertyDeclaration>;
-  attrToProp: Map<string, string>;
+  props: Map<PropertyKey, PropertyDeclaration>;
+  bindings: AttributeBindings<PropertyDeclaration>;
+  wrapped: Set<PropertyKey>;
 }
 
 const cache = new WeakMap<typeof ReactiveElement, ResolvedMeta>();
-const propertyKeys = new Map<string, symbol>();
 const HTMLElementBase = globalThis.HTMLElement ?? class {};
+const defaultPropertyDeclaration: PropertyDeclaration = { attribute: true, type: String };
+const notEqual = (value: unknown, oldValue: unknown) => !Object.is(value, oldValue);
 
 /**
  * Lightweight reactive custom element base class.
  *
- * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`, attribute reflection, batched async
+ * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`, attribute conversion, batched async
  * updates, and reactive controllers. No Shadow DOM, no `static styles`, no decorators.
  *
  * Updates are batched using the same Promise-based scheduling as Lit: property changes enqueue a microtask, and the
  * update is gated behind `connectedCallback` so the first update only runs once the element is in the document.
- *
- * Subclasses that extend another element with properties must spread them:
  *
  * @example
  *   ```ts
@@ -36,16 +39,6 @@ const HTMLElementBase = globalThis.HTMLElement ?? class {};
  *       this.textContent = this.label;
  *     }
  *   }
- *
- *   // Inheritance — spread parent properties
- *   class FancyButton extends MyButton {
- *     static override properties = {
- *       ...MyButton.properties,
- *       variant: { type: String },
- *     };
- *
- *     variant = 'primary';
- *   }
  *   ```;
  */
 export class ReactiveElement extends HTMLElementBase {
@@ -53,19 +46,19 @@ export class ReactiveElement extends HTMLElementBase {
    * User-supplied object that maps property names to {@linkcode PropertyDeclaration} objects containing options for
    * configuring reactive properties. When a reactive property is set the element will update and render.
    */
-  static properties: PropertyDeclarationMap = {};
+  static properties: PropertyDeclarations = {};
 
   /** Returns a list of attributes corresponding to the registered properties. */
   static get observedAttributes(): string[] {
-    return [...resolve(this).attrToProp.keys()];
+    return [...resolve(this).bindings.observedAttributes];
   }
 
   // --- Instance state ---
 
   #controllers: Set<ReactiveController> = new Set();
   #changedProperties: PropertyValues = new Map();
-  #instanceProperties: Map<string, unknown> | undefined;
-  #propertiesUpgraded = false;
+  #instanceProperties: Map<PropertyKey, unknown> | undefined;
+  #controllersConnected = false;
 
   /**
    * Promise that gates the first update until `connectedCallback`. Also used to serialize updates — each
@@ -93,16 +86,9 @@ export class ReactiveElement extends HTMLElementBase {
       (res) => (this.enableUpdating = res as (requestedUpdate: boolean) => void)
     );
 
-    // Save instance properties that might shadow prototype accessors.
-    // Handles the "upgrade" case where properties were set before registration.
     const { props } = resolve(this.constructor as typeof ReactiveElement);
 
-    for (const name of props.keys()) {
-      if (Object.hasOwn(this, name)) {
-        (this.#instanceProperties ??= new Map()).set(name, (this as Record<string, unknown>)[name]);
-        delete (this as Record<string, unknown>)[name];
-      }
-    }
+    this.#instanceProperties = takeInstanceProperties(this, props.keys());
 
     // Enqueue the first update. It won't run until connectedCallback calls
     // `this.enableUpdating(true)` which resolves the #updatePromise gate.
@@ -125,7 +111,7 @@ export class ReactiveElement extends HTMLElementBase {
   addController(controller: ReactiveController): void {
     this.#controllers.add(controller);
 
-    if (this.isConnected) {
+    if (this.#controllersConnected && this.isConnected) {
       controller.hostConnected?.();
     }
   }
@@ -137,8 +123,8 @@ export class ReactiveElement extends HTMLElementBase {
 
   /** On first connection, enables updating and notifies controllers. */
   connectedCallback(): void {
-    this.#upgradeProperties();
     this.enableUpdating(true);
+    this.#controllersConnected = true;
 
     for (const c of this.#controllers) {
       c.hostConnected?.();
@@ -146,6 +132,8 @@ export class ReactiveElement extends HTMLElementBase {
   }
 
   disconnectedCallback(): void {
+    this.#controllersConnected = false;
+
     for (const c of this.#controllers) {
       c.hostDisconnected?.();
     }
@@ -157,25 +145,11 @@ export class ReactiveElement extends HTMLElementBase {
    * Specifically, when an attribute is set, the corresponding property is set. You should rarely need to implement this
    * callback. If this method is overridden, `super.attributeChangedCallback(name, _old, value)` must be called.
    */
-  attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
-    if (oldValue === newValue) return;
+  attributeChangedCallback(attr: string, _oldValue: string | null, newValue: string | null): void {
+    const binding = resolve(this.constructor as typeof ReactiveElement).bindings.byAttribute.get(attr);
+    if (!binding) return;
 
-    const { props, attrToProp } = resolve(this.constructor as typeof ReactiveElement);
-    const propName = attrToProp.get(attr);
-    if (!propName) return;
-
-    const decl = props.get(propName);
-    if (!decl) return;
-
-    let value: unknown = newValue;
-
-    if (decl.type === Boolean) {
-      value = newValue !== null;
-    } else if (decl.type === Number) {
-      value = newValue === null ? null : Number(newValue);
-    }
-
-    (this as Record<string, unknown>)[propName] = value;
+    (this as Record<string, unknown>)[binding.property] = valueFromAttribute(newValue, binding.declaration);
   }
 
   /**
@@ -184,9 +158,24 @@ export class ReactiveElement extends HTMLElementBase {
    * when manually implementing a property setter. In this case, pass the property `name` and `oldValue` to ensure that
    * any configured property options are honored.
    */
-  requestUpdate(name?: string, oldValue?: unknown): void {
-    if (name !== undefined && !this.#changedProperties.has(name)) {
-      this.#changedProperties.set(name, oldValue);
+  requestUpdate(
+    name?: PropertyKey,
+    oldValue?: unknown,
+    options?: PropertyDeclaration,
+    useNewValue = false,
+    newValue?: unknown
+  ): void {
+    if (name !== undefined) {
+      const declaration =
+        options ?? resolve(this.constructor as typeof ReactiveElement).props.get(name) ?? defaultPropertyDeclaration;
+
+      if (!useNewValue) newValue = Reflect.get(this, name);
+
+      if (!(declaration.hasChanged ?? notEqual)(newValue, oldValue)) return;
+
+      if (!this.#changedProperties.has(name)) {
+        this.#changedProperties.set(name, this.hasUpdated ? oldValue : undefined);
+      }
     }
 
     if (this.isUpdatePending) return;
@@ -255,17 +244,51 @@ export class ReactiveElement extends HTMLElementBase {
 
     const changed = this.#changedProperties;
 
-    this.willUpdate(changed);
+    try {
+      if (!this.hasUpdated) {
+        if (typeof __DEV__ === 'undefined' || __DEV__) {
+          const properties = resolve(this.constructor as typeof ReactiveElement).props;
+          const shadowed = [...properties.keys()].filter(
+            (property) => Object.hasOwn(this, property) && property in Object.getPrototypeOf(this)
+          );
 
-    for (const c of this.#controllers) {
-      c.hostUpdate?.();
+          if (shadowed.length > 0) {
+            throw new Error(
+              `Reactive properties on ${this.localName} are shadowed by class fields: ${shadowed.map(String).join(', ')}.`
+            );
+          }
+        }
+
+        if (this.#instanceProperties) {
+          for (const [property, value] of this.#instanceProperties) Reflect.set(this, property, value);
+
+          this.#instanceProperties = undefined;
+        }
+
+        const { wrapped } = resolve(this.constructor as typeof ReactiveElement);
+
+        for (const property of wrapped) {
+          const value = Reflect.get(this, property);
+
+          if (!this.#changedProperties.has(property) && value !== undefined) {
+            this.#changedProperties.set(property, undefined);
+          }
+        }
+      }
+
+      this.willUpdate(changed);
+
+      for (const c of this.#controllers) {
+        c.hostUpdate?.();
+      }
+
+      this.update(changed);
+    } catch (error) {
+      this.#markUpdated();
+      throw error;
     }
 
-    this.update(changed);
-
-    // The update is no longer pending and further updates are now allowed.
-    this.#changedProperties = new Map();
-    this.isUpdatePending = false;
+    this.#markUpdated();
 
     for (const c of this.#controllers) {
       c.hostUpdated?.();
@@ -277,6 +300,11 @@ export class ReactiveElement extends HTMLElementBase {
     }
 
     this.updated(changed);
+  }
+
+  #markUpdated(): void {
+    this.#changedProperties = new Map();
+    this.isUpdatePending = false;
   }
 
   /**
@@ -296,8 +324,8 @@ export class ReactiveElement extends HTMLElementBase {
   protected willUpdate(_changed: PropertyValues): void {}
 
   /**
-   * Updates the element. This method reflects property values to attributes and can be overridden to render and keep
-   * updated element DOM. Setting properties inside this method will _not_ trigger another update.
+   * Updates the element. This method can be overridden to render and keep element DOM updated. Setting properties
+   * inside this method will _not_ trigger another update.
    */
   protected update(_changed: PropertyValues): void {}
 
@@ -324,83 +352,85 @@ export class ReactiveElement extends HTMLElementBase {
   get updateComplete(): Promise<boolean> {
     return this.#updatePromise;
   }
-
-  /**
-   * Replays properties set before registration through their reactive accessors. This runs after subclass fields have
-   * initialized but before connection lifecycle consumers, so user values win over defaults and are immediately
-   * usable.
-   */
-  #upgradeProperties(): void {
-    if (this.#propertiesUpgraded) return;
-
-    this.#propertiesUpgraded = true;
-
-    const { props } = resolve(this.constructor as typeof ReactiveElement);
-
-    for (const name of props.keys()) {
-      const hasSavedValue = this.#instanceProperties?.has(name) ?? false;
-      const hasOwnValue = Object.hasOwn(this, name);
-      if (!hasSavedValue && !hasOwnValue) continue;
-
-      const value = hasSavedValue ? this.#instanceProperties?.get(name) : Reflect.get(this, name);
-
-      if (hasOwnValue) Reflect.deleteProperty(this, name);
-
-      Reflect.set(this, name, value);
-    }
-
-    this.#instanceProperties = undefined;
-  }
 }
 
 /**
  * Resolve `ctor.properties` into lookup Maps and install reactive accessors on the prototype. Runs once per class,
  * result is cached.
  *
- * Subclasses that need parent properties must spread them: `static override properties = { ...Parent.properties, ...
- * }`.
+ * Property declarations are inherited in the same way as Lit's `ReactiveElement` declarations.
  */
 function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
   const existing = cache.get(ctor);
   if (existing) return existing;
 
-  const props = new Map<string, PropertyDeclaration>();
-  const attrToProp = new Map<string, string>();
+  const parent = Object.getPrototypeOf(ctor) as typeof ReactiveElement;
+  const parentMeta = ctor === ReactiveElement ? undefined : resolve(parent);
+  const props = new Map<PropertyKey, PropertyDeclaration>(parentMeta?.props);
+  const wrapped = new Set<PropertyKey>(parentMeta?.wrapped);
+  const declarations = Object.hasOwn(ctor, 'properties') ? ctor.properties : {};
 
-  for (const [name, decl] of Object.entries(ctor.properties)) {
+  for (const [name, decl] of Object.entries(declarations)) {
     props.set(name, decl);
-    attrToProp.set(decl.attribute ?? name, name);
 
-    // Install reactive accessor on the prototype
-    if (!Object.getOwnPropertyDescriptor(ctor.prototype, name)?.get) {
-      let key = propertyKeys.get(name);
+    if (Object.hasOwn(ctor.prototype, name)) wrapped.add(name);
+    else wrapped.delete(name);
 
-      if (!key) {
-        key = Symbol(name);
-        propertyKeys.set(name, key);
-      }
-
-      Object.defineProperty(ctor.prototype, name, {
-        get(this: ReactiveElement) {
-          return (this as unknown as Record<symbol, unknown>)[key];
-        },
-        set(this: ReactiveElement, value: unknown) {
-          const old = (this as unknown as Record<symbol, unknown>)[key];
-
-          (this as unknown as Record<symbol, unknown>)[key] = value;
-
-          if (!Object.is(old, value)) {
-            this.requestUpdate(name, old);
-          }
-        },
-        configurable: true,
-        enumerable: true,
-      });
-    }
+    if (!decl.noAccessor) defineReactiveProperty(ctor, name, decl);
   }
 
-  const meta: ResolvedMeta = { props, attrToProp };
+  const bindings = createAttributeBindings(Object.fromEntries(props) as PropertyDeclarations);
+  const meta: ResolvedMeta = { props, bindings, wrapped };
 
   cache.set(ctor, meta);
   return meta;
+}
+
+function defineReactiveProperty(ctor: typeof ReactiveElement, name: string, declaration: PropertyDeclaration): void {
+  const own = Object.getOwnPropertyDescriptor(ctor.prototype, name);
+  const key = Symbol(name);
+  const get =
+    own?.get ??
+    function (this: ReactiveElement) {
+      return (this as unknown as Record<symbol, unknown>)[key];
+    };
+  const set =
+    own?.set ??
+    function (this: ReactiveElement, value: unknown) {
+      (this as unknown as Record<symbol, unknown>)[key] = value;
+    };
+
+  if (own && 'value' in own) {
+    throw new TypeError(
+      `Reactive property \`${name}\` must be declared as a field or accessor, not a prototype value.`
+    );
+  }
+
+  Object.defineProperty(ctor.prototype, name, {
+    get,
+    set(this: ReactiveElement, value: unknown) {
+      const oldValue = get.call(this);
+
+      set.call(this, value);
+      this.requestUpdate(name, oldValue, declaration);
+    },
+    configurable: true,
+    enumerable: true,
+  });
+}
+
+function takeInstanceProperties(
+  element: ReactiveElement,
+  properties: Iterable<PropertyKey>
+): Map<PropertyKey, unknown> | undefined {
+  const captured = new Map<PropertyKey, unknown>();
+
+  for (const property of properties) {
+    if (!Object.hasOwn(element, property)) continue;
+
+    captured.set(property, Reflect.get(element, property));
+    Reflect.deleteProperty(element, property);
+  }
+
+  return captured.size > 0 ? captured : undefined;
 }

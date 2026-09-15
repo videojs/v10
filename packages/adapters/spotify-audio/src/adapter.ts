@@ -83,8 +83,8 @@ export class SpotifyAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   }
 
   /** Bind the iframe hosting the embed; the API and controller follow as soon as an embed URL resolves. */
-  attach(target: HTMLIFrameElement | null): void {
-    if (!target || this.#target === target) return;
+  attach(target: HTMLIFrameElement): void {
+    if (this.#target === target) return;
 
     if (this.#target) this.detach();
 

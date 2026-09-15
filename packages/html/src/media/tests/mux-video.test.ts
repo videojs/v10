@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { MuxVideo } from '../mux-video';
+import { MuxVideoElement } from '../mux-video';
 
-customElements.define('test-mux-video', MuxVideo);
+customElements.define('test-mux-video', MuxVideoElement);
 
 function createMuxVideo() {
-  const el = new MuxVideo();
+  const el = new MuxVideoElement();
 
   document.body.appendChild(el);
   return el;
@@ -15,7 +15,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('MuxVideo', () => {
+describe('MuxVideoElement', () => {
   it('exposes the element source as a property, not an attribute', () => {
     const el = createMuxVideo();
 

@@ -7,7 +7,7 @@ import {
 } from '@videojs/core';
 import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
 import { findComposedElement, isHTMLImageElement, listen } from '@videojs/utils/dom';
 
@@ -62,7 +62,7 @@ export class ThumbnailElement extends UIElement {
     crossOrigin: { type: String, attribute: 'crossorigin' },
     loading: { type: String },
     fetchPriority: { type: String, attribute: 'fetchpriority' },
-  } satisfies PropertyDeclarationMap<Exclude<keyof ThumbnailCore.Props, 'thumbnails'>>;
+  } satisfies PropertyDeclarations;
 
   time = 0;
   crossOrigin: ThumbnailCore.Props['crossOrigin'];

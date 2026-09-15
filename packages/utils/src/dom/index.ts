@@ -5,6 +5,7 @@ export {
   namedNodeMapToObject,
   restoreAttributes,
   serializeAttributes,
+  setAttributeValue,
   snapshotAttributes,
 } from './attributes';
 export {
@@ -79,6 +80,7 @@ export {
 } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { loadScript } from './script';
+export { renderShadowTemplate, type RenderShadowTemplateOptions, type ShadowTemplateFunction } from './shadow-template';
 export { applyShadowStyles, createShadowStyle, ensureGlobalStyle, type ShadowStyle } from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
 export {

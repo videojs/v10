@@ -1,4 +1,4 @@
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -8,7 +8,7 @@ import { radioGroupContext } from './context';
 export class RadioGroupElement extends UIElement {
   static override properties = {
     value: { type: String },
-  } satisfies PropertyDeclarationMap<'value'>;
+  } satisfies PropertyDeclarations;
 
   value = '';
 

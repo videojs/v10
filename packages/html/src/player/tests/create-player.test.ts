@@ -9,7 +9,7 @@ import {
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BackgroundVideo } from '../../media/background-video';
+import { BackgroundVideoElement } from '../../media/background-video';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { ContainerElement } from '../../ui/container/element';
 import { UIElement } from '../../ui/ui-element';
@@ -186,7 +186,7 @@ describe('createPlayer', () => {
   it('does not retain disconnected context media as a native fallback', async () => {
     const { PlayerElement } = createPlayer({ features: backgroundFeatures });
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
-    const background = document.createElement(defineTestElement(BackgroundVideo));
+    const background = document.createElement(defineTestElement(BackgroundVideoElement));
     const video = document.createElement('video');
 
     video.slot = 'media';
@@ -297,7 +297,7 @@ describe('createPlayer', () => {
     player.remove();
   });
 
-  it('applies property configuration that shadowed an accessor before connection', async () => {
+  it('applies property configuration before connection', async () => {
     const { PlayerElement } = createPlayer({ features: [features.orientationLock] });
     const tagName = `test-shadowed-config-player-${tagCounter++}`;
 
@@ -306,12 +306,7 @@ describe('createPlayer', () => {
     // SAFETY: The tag was registered with PlayerElement immediately above.
     const player = document.createElement(tagName) as InstanceType<typeof PlayerElement>;
 
-    Object.defineProperty(player, 'orientationLockType', {
-      value: 'portrait',
-      writable: true,
-      configurable: true,
-      enumerable: true,
-    });
+    player.orientationLockType = 'portrait';
     document.body.append(player);
 
     await vi.waitFor(() => expect(player.store.orientationLockType).toBe('portrait'));

@@ -96,8 +96,8 @@ export class TikTokAdapter extends MediaPlayedRangesMixin(EventTarget) implement
   }
 
   /** Bind the iframe hosting the embed. The embed follows once a `src` resolves, which may be after attach. */
-  attach(target: HTMLIFrameElement | null): void {
-    if (!target || this.#target === target) return;
+  attach(target: HTMLIFrameElement): void {
+    if (this.#target === target) return;
 
     if (this.#target) this.detach();
 

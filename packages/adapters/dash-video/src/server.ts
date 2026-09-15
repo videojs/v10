@@ -1,3 +1,4 @@
+import { MediaStreamTypes } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 
@@ -10,6 +11,7 @@ export class DashAdapter extends MediaTracksMixin(HTMLVideoAdapter) implements D
   static readonly defaultProps: DashAdapterProps = {
     src: '',
     source: null,
+    streamType: MediaStreamTypes.UNKNOWN,
   };
 
   readonly engine = null;

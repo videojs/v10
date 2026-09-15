@@ -1,6 +1,12 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { namedNodeMapToObject, restoreAttributes, serializeAttributes, snapshotAttributes } from '../attributes';
+import {
+  namedNodeMapToObject,
+  restoreAttributes,
+  serializeAttributes,
+  setAttributeValue,
+  snapshotAttributes,
+} from '../attributes';
 
 describe('serializeAttributes', () => {
   it('serializes a boolean (empty-string) attribute without a value', () => {
@@ -60,6 +66,30 @@ describe('attribute snapshots', () => {
 
     expect(element.getAttribute('aria-hidden')).toBe('false');
     expect(element.hasAttribute('inert')).toBe(false);
+  });
+});
+
+describe('setAttributeValue', () => {
+  it('sets and removes an attribute from a nullable value', () => {
+    const element = document.createElement('div');
+
+    setAttributeValue(element, 'aria-label', 'Player');
+    expect(element.getAttribute('aria-label')).toBe('Player');
+
+    setAttributeValue(element, 'aria-label', null);
+    expect(element.hasAttribute('aria-label')).toBe(false);
+  });
+
+  it('does not rewrite an equal value', () => {
+    const element = document.createElement('div');
+
+    element.setAttribute('aria-label', 'Player');
+
+    const setAttribute = vi.spyOn(element, 'setAttribute');
+
+    setAttributeValue(element, 'aria-label', 'Player');
+
+    expect(setAttribute).not.toHaveBeenCalled();
   });
 });
 

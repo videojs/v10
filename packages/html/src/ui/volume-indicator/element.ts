@@ -6,7 +6,7 @@ import {
   VolumeIndicatorDataAttrs,
 } from '@videojs/core';
 import { createTransition } from '@videojs/core/dom';
-import type { PropertyDeclarationMap } from '@videojs/element';
+import type { PropertyDeclarations } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
@@ -18,7 +18,7 @@ export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicato
 
   static override properties = {
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<'closeDelay'>;
+  } satisfies PropertyDeclarations;
 
   closeDelay: number | undefined;
 

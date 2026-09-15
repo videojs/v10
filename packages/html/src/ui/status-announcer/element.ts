@@ -1,6 +1,6 @@
 import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
 import { type StatusAnnouncerStore, shouldAnnounceStatusChange, subscribeToStatusAnnouncer } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { i18nContext } from '../../i18n/context';
@@ -13,7 +13,7 @@ export class StatusAnnouncerElement extends UIElement {
 
   static override properties = {
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<'closeDelay'>;
+  } satisfies PropertyDeclarations;
 
   closeDelay: number | undefined;
 

@@ -84,8 +84,8 @@ export class CloudflareAdapter extends MediaPlayedRangesMixin(EventTarget) imple
   }
 
   /** Bind the embed iframe. The SDK and player follow once an embed URL resolves, which may not be until `load()`. */
-  attach(target: HTMLIFrameElement | null): void {
-    if (!target || this.#target === target) return;
+  attach(target: HTMLIFrameElement): void {
+    if (this.#target === target) return;
 
     if (this.#target) this.detach();
 

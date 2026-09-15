@@ -1,6 +1,6 @@
 import { PlaybackRateButtonCore, PlaybackRateButtonDataAttrs } from '@videojs/core';
 import { applyElementProps, selectPlaybackRate, type UIEvent } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import type { MediaPlaybackRateState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
@@ -14,7 +14,7 @@ export class PlaybackRateButtonElement extends MediaButtonElement<PlaybackRateBu
     label: { type: String },
     disabled: { type: Boolean },
     commandfor: { type: String },
-  } satisfies PropertyDeclarationMap<'label' | 'disabled' | 'commandfor'>;
+  } satisfies PropertyDeclarations;
 
   commandfor: string | undefined = undefined;
 

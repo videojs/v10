@@ -1,5 +1,5 @@
 import { applyElementProps, applyStateDataAttrs, createButton } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -10,7 +10,7 @@ export class DialogCloseElement extends UIElement {
 
   static override properties = {
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<'disabled'>;
+  } satisfies PropertyDeclarations;
 
   disabled = false;
 

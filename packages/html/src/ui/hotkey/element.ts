@@ -1,6 +1,6 @@
 import type { HotkeyProps } from '@videojs/core';
 import { createHotkey, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { containerContext, playerContext } from '../../player/context';
@@ -10,7 +10,7 @@ import { UIElement } from '../ui-element';
 export class HotkeyElement extends UIElement {
   static readonly tagName = 'media-hotkey';
 
-  static override properties: PropertyDeclarationMap = {
+  static override properties: PropertyDeclarations = {
     keys: { type: String },
     action: { type: String },
     value: { type: Number },
