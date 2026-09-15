@@ -3,22 +3,22 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Riproduci',
-    pause: 'Pausa',
+    pause: 'Metti in pausa',
     replay: 'Riproduci di nuovo',
     mute: 'Disattiva l’audio',
     unmute: 'Attiva l’audio',
   },
   seek: {
-    forward: 'Avanti {seconds} secondi',
-    backward: 'Indietro {seconds} secondi',
+    forward: 'Avanti di {seconds} secondi',
+    backward: 'Indietro di {seconds} secondi',
   },
   fullscreen: {
     enter: 'Schermo intero',
-    exit: 'Esci da schermo intero',
+    exit: 'Esci dallo schermo intero',
   },
   captions: {
-    enable: 'Attiva sottotitoli',
-    disable: 'Disattiva sottotitoli',
+    enable: 'Attiva i sottotitoli',
+    disable: 'Disattiva i sottotitoli',
   },
   pip: {
     enter: 'Riproduzione in finestra',
@@ -26,7 +26,7 @@ export default {
   },
   live: {
     playing: 'Riproduzione in diretta',
-    seekToEdge: 'Vai al live',
+    seekToEdge: 'Vai alla diretta',
     badge: 'In diretta',
   },
   cast: {
@@ -36,13 +36,13 @@ export default {
   },
   airplay: {
     start: 'Avvia AirPlay',
-    stop: 'Arresta AirPlay',
+    stop: 'Interrompi AirPlay',
   },
   slider: {
     seek: 'Scorrimento',
   },
   time: {
-    current: 'Orario attuale',
+    current: 'Tempo attuale',
     duration: 'Durata',
     remaining: 'Tempo rimanente',
     elapsedSuffix: '{duration} di tempo trascorso',
@@ -79,16 +79,16 @@ export default {
     label: 'Lettore multimediale',
   },
   errors: {
-    aborted: 'La riproduzione del contenuto multimediale è stata interrotta.',
-    network: 'Il download del contenuto multimediale è stato interrotto a causa di un problema rete.',
+    aborted: 'Hai interrotto la riproduzione del contenuto multimediale prima della fine.',
+    network: 'Impossibile caricare il contenuto multimediale a causa di un problema di rete o del server.',
     decode:
-      'La riproduzione del contenuto multimediale è stata interrotta a causa di un file danneggiato o per l’utilizzo di impostazioni non supportate dal browser.',
+      'Impossibile riprodurre il contenuto multimediale. Potrebbe essere danneggiato oppure il browser potrebbe non supportarne il formato.',
     source:
-      'Il contenuto multimediale non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.',
-    encrypted: 'Il contenuto multimediale è criptato e non disponiamo delle chiavi per decifrarlo.',
+      'Impossibile caricare il contenuto multimediale. Potrebbe non essere disponibile oppure il browser potrebbe non supportarne il formato.',
+    encrypted: 'Impossibile riprodurre il contenuto multimediale perché non è stato possibile decriptarlo.',
     unplayable: 'Questo contenuto multimediale non è supportato dal lettore.',
     title: 'Qualcosa è andato storto.',
-    unexpected: 'Si è verificato un errore. Riprova.',
+    unexpected: 'Si è verificato un errore imprevisto.',
   },
   common: {
     empty: '',
