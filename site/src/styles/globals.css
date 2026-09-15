@@ -109,11 +109,18 @@
   --color-magenta-dark: #922e4f;
 
   /* Typography */
+  --font-weight-code-normal: 400;
+  --font-weight-normal: 450;
+
   --tracking-*: initial;
   --tracking-tightest: -0.03em;
   --tracking-tighter: -0.02em;
   --tracking-tight: -0.01em;
   --tracking-normal: 0;
+
+  /* Body copy runs half a percent tighter than the shared scale, to offset its 450 weight. */
+  --tracking-body-tight: -0.015em;
+  --tracking-body: -0.005em;
 
   --text-*: initial;
 
@@ -154,33 +161,33 @@
 
   --text-p1: 1.375rem; /* 22px */
   --text-p1--line-height: 1.5;
-  --text-p1--letter-spacing: var(--tracking-tight);
+  --text-p1--letter-spacing: var(--tracking-body-tight);
   --text-p1--font-weight: var(--font-weight-normal);
 
   --text-p15: 1.125rem; /* 18px */
   --text-p15--line-height: 1.5;
-  --text-p15--letter-spacing: var(--tracking-normal);
+  --text-p15--letter-spacing: var(--tracking-body);
   --text-p15--font-weight: var(--font-weight-normal);
 
   --text-p2: 1rem; /* 16px */
   --text-p2--line-height: 1.5;
-  --text-p2--letter-spacing: var(--tracking-normal);
+  --text-p2--letter-spacing: var(--tracking-body);
   --text-p2--font-weight: var(--font-weight-normal);
 
   --text-p3: 0.875rem; /* 14px */
   --text-p3--line-height: 1.5;
-  --text-p3--letter-spacing: var(--tracking-normal);
+  --text-p3--letter-spacing: var(--tracking-body);
   --text-p3--font-weight: var(--font-weight-normal);
 
   --text-p4: 0.75rem; /* 12px */
   --text-p4--line-height: 1.5;
-  --text-p4--letter-spacing: var(--tracking-normal);
+  --text-p4--letter-spacing: var(--tracking-body);
   --text-p4--font-weight: var(--font-weight-normal);
 
   --text-code: 0.875em; /* 14px */
   --text-code--line-height: inherit;
   --text-code--letter-spacing: var(--tracking-normal);
-  --text-code--font-weight: var(--font-weight-normal);
+  --text-code--font-weight: var(--font-weight-code-normal);
 
   /* animations */
   --animate-marquee: marquee 30s linear infinite;
