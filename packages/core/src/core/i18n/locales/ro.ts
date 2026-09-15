@@ -2,19 +2,19 @@ import type { Translations } from '../params';
 
 export default {
   buttons: {
-    play: 'Redare',
+    play: 'Redă',
     pause: 'Pauză',
-    replay: 'Reluare',
-    mute: 'Fără sunet',
-    unmute: 'Cu sunet',
+    replay: 'Redă din nou',
+    mute: 'Dezactivează sunetul',
+    unmute: 'Activează sunetul',
   },
   seek: {
-    forward: 'Salt înainte {seconds} secunde',
-    backward: 'Salt înapoi {seconds} secunde',
+    forward: 'Derulează înainte {seconds} sec.',
+    backward: 'Derulează înapoi {seconds} sec.',
   },
   fullscreen: {
     enter: 'Ecran complet',
-    exit: 'Ieșire ecran complet',
+    exit: 'Ieși din ecranul complet',
   },
   captions: {
     enable: 'Activează subtitrările',
@@ -22,7 +22,7 @@ export default {
   },
   pip: {
     enter: 'Imagine în imagine',
-    exit: 'Închidere imagine în imagine',
+    exit: 'Ieși din modul imagine în imagine',
   },
   live: {
     playing: 'Redare în direct',
@@ -30,8 +30,8 @@ export default {
     badge: 'În direct',
   },
   cast: {
-    start: 'Pornire transmisie',
-    stop: 'Oprire transmisie',
+    start: 'Începe proiectarea',
+    stop: 'Oprește proiectarea',
     connecting: 'Se conectează',
   },
   airplay: {
@@ -42,7 +42,7 @@ export default {
     seek: 'Derulare',
   },
   time: {
-    current: 'Ora curentă',
+    current: 'Timp curent',
     duration: 'Durată',
     remaining: 'Timp rămas',
     elapsedSuffix: '{duration} de timp scurs',
@@ -60,35 +60,35 @@ export default {
     rate: 'Rată de redare {rate}',
   },
   volume: {
-    mutedValue: '{percent}, mut',
-    muted: 'Mut',
+    mutedValue: '{percent}, sunet dezactivat',
+    muted: 'Sunet dezactivat',
     label: 'Volum',
     value: 'Volum {value}',
   },
   status: {
     captionsOn: 'Subtitrări activate',
     captionsOff: 'Subtitrări dezactivate',
-    paused: 'Pauză',
+    paused: 'În pauză',
     playing: 'Se redă',
     fullscreen: 'Ecran complet',
     pip: 'Imagine în imagine',
-    exitPip: 'Închidere imagine în imagine',
+    exitPip: 'Imagine în imagine dezactivată',
     seekedTo: 'S-a trecut la {time}',
   },
   container: {
     label: 'Player media',
   },
   errors: {
-    aborted: 'Ați abandonat redarea media',
-    network: 'O eroare de rețea a provocat eșecul descărcării conținutului media în timpul procesului.',
+    aborted: 'Ați oprit redarea conținutului media înainte de finalizare.',
+    network: 'Acest conținut media nu a putut fi încărcat din cauza unei probleme de rețea sau de server.',
     decode:
-      'Redarea media a fost întreruptă din cauza conținutului corupt sau din cauza faptului că acest conținut media folosește funcții pe care browserul dvs. nu le acceptă.',
+      'Acest conținut media nu a putut fi redat. Este posibil să fie deteriorat sau browserul dvs. să nu accepte formatul său.',
     source:
-      'Conținutul media nu a putut fi încărcat, fie pentru că serverul sau rețeaua a eșuat, fie pentru că formatul nu este acceptat.',
-    encrypted: 'Conținutul media este criptat și nu avem cheile pentru decriptare.',
+      'Acest conținut media nu a putut fi încărcat. Este posibil să fie indisponibil sau browserul dvs. să nu accepte formatul său.',
+    encrypted: 'Acest conținut media nu a putut fi redat deoarece nu a putut fi decriptat.',
     unplayable: 'Acest fișier media nu este acceptat de player.',
-    title: 'Ceva a mers greșit.',
-    unexpected: 'A apărut o eroare. Vă rugăm să încercați din nou.',
+    title: 'Ceva nu a funcționat corect.',
+    unexpected: 'A apărut o eroare neașteptată.',
   },
   common: {
     empty: '',
@@ -97,7 +97,7 @@ export default {
   menu: {
     settings: 'Setări',
     quality: 'Calitate',
-    audio: 'Sunet',
+    audio: 'Audio',
     default: 'Implicit',
     speed: 'Viteză',
     captions: 'Subtitrări',
