@@ -3,7 +3,7 @@ import {
   valueFromAttribute,
   type AttributeBinding,
   type AttributeBindings,
-} from '@videojs/element/attributes';
+} from '@videojs/element';
 import { isBoolean, isFunction, isNumber, isString } from '@videojs/utils/predicate';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';

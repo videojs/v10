@@ -98,11 +98,11 @@ This provides tree-scoped data sharing without prop drilling, using Lit's [Conte
 
 ## Attribute composition
 
-Use `@videojs/element/attributes` when an element needs attribute conversion or reflection without extending
+The root package also exposes attribute conversion and reflection helpers for elements that do not extend
 `ReactiveElement`:
 
 ```ts
-import { createAttributeBindings, defineReflectedAttribute } from '@videojs/element/attributes';
+import { createAttributeBindings, defineReflectedAttribute } from '@videojs/element';
 
 const bindings = createAttributeBindings({
   count: { type: Number, defaultValue: 0 },

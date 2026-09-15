@@ -1,4 +1,4 @@
-import { defineReflectedAttribute, setAttributeFromValue, type AttributeValue } from '@videojs/element/attributes';
+import { defineReflectedAttribute, setAttributeFromValue, type AttributeValue } from '@videojs/element';
 import { redispatchEvent } from '@videojs/utils/events';
 import { isFunction } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';

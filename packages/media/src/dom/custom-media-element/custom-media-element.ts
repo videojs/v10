@@ -1,4 +1,4 @@
-import { preparePropertyUpgrade, valueFromAttribute } from '@videojs/element/attributes';
+import { preparePropertyUpgrade, valueFromAttribute } from '@videojs/element';
 import type { ShadowTemplateFunction } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 

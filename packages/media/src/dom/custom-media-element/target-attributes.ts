@@ -3,7 +3,7 @@ import type {
   AttributeDeclarationMap,
   AttributeDeclarationsFor,
   AttributeValue,
-} from '@videojs/element/attributes';
+} from '@videojs/element';
 
 interface MediaAttributeOptions {
   /** Another property that receives the parsed value, such as `muted` for the `defaultMuted` content attribute. */
