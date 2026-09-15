@@ -4,6 +4,7 @@ import { BLOG_PAGE_SIZE } from '@/consts';
 import { SUPPORTED_FRAMEWORKS, type SupportedFramework } from '@/types/docs';
 import { filterSidebar, getAllGuideSlugs } from '@/utils/docs/sidebar';
 import { getDocTitle } from '@/utils/docs/title';
+import { getLegacyErrorPages } from '@/utils/errors/legacy-errors';
 import { normalizeSitePath } from '@/utils/og/normalize-site-path';
 
 const STATIC_PAGES: { path: string; title: string }[] = [
@@ -11,9 +12,18 @@ const STATIC_PAGES: { path: string; title: string }[] = [
   { path: 'support', title: 'Support' },
   { path: 'privacy', title: 'Privacy' },
   { path: 'blog', title: 'Blog' },
+  { path: 'errors', title: 'Error codes' },
 ];
 
-export type OgTitleEntryKind = 'static' | 'blog' | 'blog-index' | 'author' | 'docs' | 'changelog' | 'changelog-index';
+export type OgTitleEntryKind =
+  | 'static'
+  | 'blog'
+  | 'blog-index'
+  | 'author'
+  | 'docs'
+  | 'changelog'
+  | 'changelog-index'
+  | 'error';
 export type OgTitleSource = 'static' | 'title' | 'ogTitle' | 'frameworkTitle' | 'name';
 
 export interface OgTitleEntry {
@@ -99,6 +109,15 @@ export async function listOgTitleEntries(): Promise<OgTitleEntry[]> {
       title: author.data.name,
       source: 'name',
       collectionId: author.id,
+    });
+  }
+
+  for (const page of getLegacyErrorPages()) {
+    entries.push({
+      kind: 'error',
+      path: page.path.replace(/^\//, ''),
+      title: page.code,
+      source: 'static',
     });
   }
 
