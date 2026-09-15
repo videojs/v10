@@ -31,7 +31,7 @@ function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
 function createMockTrack(
   kind: TextTrackKind,
   mode: TextTrackMode = 'disabled',
-  options: { id?: string; label?: string; language?: string } = {}
+  options: { id?: string; label?: string; language?: string; cues?: VTTCue[] } = {}
 ): TextTrack {
   return {
     id: options.id ?? '',
@@ -39,7 +39,17 @@ function createMockTrack(
     mode,
     label: options.label ?? '',
     language: options.language ?? '',
-  } as TextTrack;
+    cues: options.cues,
+  } as unknown as TextTrack;
+}
+
+/** A cue as the DOM would hold it; jsdom has no `VTTCue`, so a plain object stands in. */
+function createCue(startTime: number, endTime: number, text: string): VTTCue {
+  return { startTime, endTime, text } as VTTCue;
+}
+
+function setDuration(video: HTMLVideoElement, duration: number): void {
+  Object.defineProperty(video, 'duration', { configurable: true, value: duration });
 }
 
 describe('textTrackFeature', () => {
@@ -98,6 +108,82 @@ describe('textTrackFeature', () => {
 
     it('is null when there is no thumbnail track to inherit for', () => {
       expect(crossOriginFor('anonymous', 'subtitles')).toBeNull();
+    });
+  });
+
+  describe('chaptersCues', () => {
+    // A chapters document delivered with the stream leaves its last chapter
+    // open; the track carries that as a very large end.
+    const cues = () => [createCue(0, 3, 'Intro'), createCue(3, Number.MAX_SAFE_INTEGER, 'Outro')];
+
+    it('clamps every cue end to a finite media duration', () => {
+      const video = createVideo();
+
+      setDuration(video, 23.872);
+      mockTextTracks(video, [createMockTrack('chapters', 'hidden', { cues: cues() })]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.chaptersCues).toEqual([
+        { startTime: 0, endTime: 3, text: 'Intro' },
+        { startTime: 3, endTime: 23.872, text: 'Outro' },
+      ]);
+    });
+
+    it('leaves cue ends alone while the duration is unknown or infinite', () => {
+      for (const duration of [Number.NaN, Number.POSITIVE_INFINITY, 0]) {
+        const video = createVideo();
+
+        setDuration(video, duration);
+        mockTextTracks(video, [createMockTrack('chapters', 'hidden', { cues: cues() })]);
+
+        const store = createStore<PlayerTarget>()(textTrackFeature);
+
+        store.attach({ media: video, container: null });
+
+        expect(store.state.chaptersCues[1]?.endTime).toBe(Number.MAX_SAFE_INTEGER);
+      }
+    });
+
+    it('re-clamps on durationchange', () => {
+      const video = createVideo();
+
+      setDuration(video, Number.NaN);
+      mockTextTracks(video, [createMockTrack('chapters', 'hidden', { cues: cues() })]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.chaptersCues[1]?.endTime).toBe(Number.MAX_SAFE_INTEGER);
+
+      // MSE sets the duration from the playlist first, then the appended media extends it.
+      setDuration(video, 23.857);
+      video.dispatchEvent(new Event('durationchange'));
+
+      expect(store.state.chaptersCues[1]?.endTime).toBe(23.857);
+
+      setDuration(video, 23.872);
+      video.dispatchEvent(new Event('durationchange'));
+
+      expect(store.state.chaptersCues[1]?.endTime).toBe(23.872);
+    });
+
+    it('exposes plain cue data rather than the live cues', () => {
+      const video = createVideo();
+      const live = cues();
+
+      setDuration(video, 10);
+      mockTextTracks(video, [createMockTrack('chapters', 'hidden', { cues: live })]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.chaptersCues[1]).not.toBe(live[1]);
+      expect(live[1]?.endTime).toBe(Number.MAX_SAFE_INTEGER);
     });
   });
 

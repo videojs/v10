@@ -5,20 +5,19 @@ import { toPercent } from '@videojs/utils/number';
 import type { SliderSegmentRange, SliderSegmentState } from '../../slider/segments';
 import type { TimeSliderChapterRange, TimeSliderChapterState } from './types';
 
-const cueKeys = new WeakMap<object, string>();
-let cueKey = 0;
+/**
+ * A stable key for a chapter cue: its id when it has one, then where it starts and what it says. Keyed by content
+ * rather than identity because the store hands out fresh cue data on every sync (a duration change re-clamps ends); two
+ * cues sharing all of that within one list are told apart by position.
+ */
+function getCueKey(cue: MediaTextCue, seen: Map<string, number>): string {
+  const id = (cue as MediaTextCue & { id?: unknown }).id;
+  const base = `cue-${typeof id === 'string' && id ? `${id}-` : ''}${cue.startTime}-${cue.text}`;
+  const count = seen.get(base) ?? 0;
 
-function getCueKey(cue: MediaTextCue): string {
-  let key = cueKeys.get(cue);
+  seen.set(base, count + 1);
 
-  if (!key) {
-    const id = (cue as MediaTextCue & { id?: unknown }).id;
-
-    key = `cue-${typeof id === 'string' && id ? `${id}-` : ''}${cueKey++}`;
-    cueKeys.set(cue, key);
-  }
-
-  return key;
+  return count ? `${base}-${count}` : base;
 }
 
 /** Produces an ordered, non-overlapping, contiguous partition of the slider domain. */
@@ -29,8 +28,9 @@ export function normalizeChapterCues(
 ): TimeSliderChapterRange[] {
   if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return [];
 
+  const seen = new Map<string, number>();
   const sorted = cues
-    .map((cue, index) => ({ cue, index, key: getCueKey(cue) }))
+    .map((cue, index) => ({ cue, index, key: getCueKey(cue, seen) }))
     .filter(({ cue }) => Number.isFinite(cue.startTime) && Number.isFinite(cue.endTime))
     .sort((a, b) => a.cue.startTime - b.cue.startTime || a.index - b.index);
 

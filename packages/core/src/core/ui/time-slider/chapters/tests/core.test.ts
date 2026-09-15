@@ -31,6 +31,23 @@ describe('normalizeChapterCues', () => {
     );
   });
 
+  it('keys cues by content, so fresh cue data keeps its keys across syncs', () => {
+    // The store hands out new cue objects whenever it re-syncs (a duration
+    // change re-clamps ends); the segments they render must not be rebuilt.
+    const chapterKeys = (end: number) =>
+      normalizeChapterCues([cue(0, end, 'Chapter')], 0, 100)
+        .filter(({ cue: chapter }) => chapter !== null)
+        .map(({ key }) => key);
+
+    expect(chapterKeys(100)).toEqual(chapterKeys(50));
+  });
+
+  it('tells apart cues that share a start and a title', () => {
+    const [first, second] = normalizeChapterCues([cue(0, 20, 'Same'), cue(0, 40, 'Same')], 0, 100);
+
+    expect(first?.key).not.toBe(second?.key);
+  });
+
   it('returns one full-domain gap when there are no usable cues', () => {
     expect(normalizeChapterCues([], 10, 20)).toEqual([{ key: 'gap-start-end', start: 10, end: 20, cue: null }]);
   });

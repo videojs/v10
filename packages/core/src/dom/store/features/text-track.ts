@@ -5,12 +5,18 @@ import type {
   MediaTextTrackState,
   TextTrackLike,
 } from '@videojs/media';
-import { isMediaSourceCapable, isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media';
+import {
+  isMediaSeekCapable,
+  isMediaSourceCapable,
+  isMediaTextTrackCapable,
+  isQuerySelectorAllCapable,
+} from '@videojs/media';
 import { findTrackElement, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import { isNil } from '@videojs/utils/predicate';
 
 import { DEFAULT_LOCALE, findLocaleKeys, getCanonicalLocaleKey } from '../../../core/i18n';
 import { definePlayerFeature } from '../../feature';
+import { normalizeTextCues } from '../text-cues';
 
 interface IdentifiedTrack {
   id: string;
@@ -173,11 +179,11 @@ export const textTrackFeature = definePlayerFeature({
         }
       }
 
+      // The last chapter of an in-stream chapters document is open-ended on the
+      // track; consumers read it ending where the media does.
+      const chaptersCues = normalizeTextCues(chaptersTrack?.cues, isMediaSeekCapable(media) ? media.duration : NaN);
       // VTTCue extends TextTrackCue with `text` — cast via `unknown` since
       // the CueList is typed as TextTrackCue which doesn't expose `text`.
-      const chaptersCues: MediaTextCue[] = chaptersTrack?.cues
-        ? (Array.from(chaptersTrack.cues) as unknown as MediaTextCue[])
-        : [];
       const thumbnailCues: MediaTextCue[] = thumbnailTrack?.cues
         ? (Array.from(thumbnailTrack.cues) as unknown as MediaTextCue[])
         : [];
@@ -227,6 +233,8 @@ export const textTrackFeature = definePlayerFeature({
     }
 
     listen(media, 'loadstart', sync, { signal });
+    // The chapter clamp follows the media duration.
+    listen(media, 'durationchange', sync, { signal });
 
     signal.addEventListener('abort', () => trackCleanup?.abort(), { once: true });
   },
