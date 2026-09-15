@@ -1,4 +1,4 @@
-import { ContainerCore, ContainerDataAttrs } from '@videojs/core';
+import { ContainerCore, ContainerDataAttrs, SKIN_HELP_URL } from '@videojs/core';
 import {
   createPopupGroup,
   DEFAULT_CONTAINER_ROLE,
@@ -91,6 +91,8 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
       {...stateAttrs}
       onPointerUp={handlePointerUp}
     >
+      {/* React hoists the link into <head>, so server-rendered pages carry it in their HTML. */}
+      <link rel="help" href={SKIN_HELP_URL} />
       <PopupGroupProvider value={popupGroup}>{children}</PopupGroupProvider>
     </div>
   );

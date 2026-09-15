@@ -1,0 +1,56 @@
+---
+title: "About this player"
+description: "This player is built with Video.js, the open-source video player for HTML and React."
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+
+## What is Video.js?
+
+Video.js is the open-source video player for the web. It has been playing video on millions of sites since 2010, and today it ships as web components for HTML and as components for React. It makes web video easy, performant, accessible, and customizable.
+
+Video.js is built at Mux by the teams behind Video.js, Plyr, Vidstack, and Media Chrome, with contributions from engineers across other player projects.
+
+## Why Video.js?
+
+Every browser can play a video file. Past that, the gaps show up quickly:
+
+- **Controls differ in every browser.** Chrome, Safari, and Firefox each draw their own. You can hide them, but you can't restyle or rearrange them.
+- **Streaming isn't built in.** HLS plays natively only in Safari and a few mobile browsers, and DASH plays natively nowhere. Everywhere else needs a JavaScript playback engine.
+- **The extras are all on you.** Captions menus, quality selection, playback speed, chapters, thumbnail previews, live stream UI, casting, and analytics each need their own wiring, and each has to stay accessible.
+
+Video.js gives you accessible, composable components for all of that, so you take what you need and keep the rest of the web platform. The full story is in <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>
+
+## Build one yourself
+
+Here's a basic video player you can build with Video.js:
+
+```html title="index.html"
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+
+<video-player>
+  <video-skin>
+    <video src="/video.mp4" playsinline></video>
+  </video-skin>
+</video-player>
+```
+
+```tsx title="MyPlayer.tsx"
+import '@videojs/react/video/skin.css';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer({ src }: { src: string }) {
+  return (
+    <VideoPlayer>
+      <VideoSkin>
+        <Video src={src} playsInline />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+If you want to dive deeper, get started with our <DocsLink slug="how-to/installation">installation guide</DocsLink>, which will guide you through generating a snippet that fits your use case.
+
+<DocsLinkCard slug="how-to/installation" description="Install Video.js and build your first player with streaming support and accessible controls">Get started with Video.js</DocsLinkCard>
