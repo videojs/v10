@@ -1,16 +1,21 @@
-import viteReact from '@vitejs/plugin-react';
+import viteReact, { type Options as ViteReactOptions } from '@vitejs/plugin-react';
+import type { Plugin } from 'vite';
 
-/** Creates the native React Compiler transform for published React 18-compatible packages. */
-export function reactCompilerPlugin(include?: RegExp) {
-  const [plugin] = viteReact({
-    compiler: { target: '18' },
-    include,
-    exclude: [/\.d\.[cm]?ts$/, /node_modules/],
-  });
+interface ReactCompilerPluginOptions {
+  compiler?: Exclude<ViteReactOptions['compiler'], false>;
+  exclude?: ViteReactOptions['exclude'];
+  include?: ViteReactOptions['include'];
+}
 
-  if (plugin?.name !== 'vite:react-compiler') {
-    throw new Error('Expected @vitejs/plugin-react to return the native React Compiler plugin first.');
-  }
+/** Creates the native React Compiler transform, targeting React 18 by default for published packages. */
+export function reactCompilerPlugin({
+  compiler = { target: '18' },
+  exclude = [/\.d\.[cm]?ts$/, /node_modules/],
+  include,
+}: ReactCompilerPluginOptions = {}): Plugin {
+  const plugin = viteReact({ compiler, exclude, include }).find(({ name }) => name === 'vite:react-compiler');
+  if (!plugin) throw new Error('Expected @vitejs/plugin-react to return the native React Compiler plugin.');
 
-  return plugin;
+  // SAFETY: @vitejs/plugin-react and the workspace resolve Plugin from the catalog-pinned Vite implementation.
+  return plugin as Plugin;
 }

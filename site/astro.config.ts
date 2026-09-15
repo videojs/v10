@@ -7,7 +7,6 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
-import viteReact from '@vitejs/plugin-react';
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import astro from 'shiki/langs/astro.mjs';
 import bash from 'shiki/langs/bash.mjs';
@@ -22,9 +21,9 @@ import mdxLang from 'shiki/langs/mdx.mjs';
 import ts from 'shiki/langs/ts.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
-import type { Plugin } from 'vite';
 import svgr from 'vite-plugin-svgr';
 
+import { reactCompilerPlugin } from '../build/react-compiler.ts';
 import llmsMarkdown from './integrations/llms-markdown';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
@@ -53,22 +52,12 @@ const SITE_URL =
       ? PRERELEASE_URL.origin
       : process.env.DEPLOY_PRIME_URL || PRODUCTION_URL.origin;
 
-interface VitePluginIdentity {
-  name: string;
-}
-
-function asWorkspacePlugin(value: VitePluginIdentity | undefined): Plugin | undefined {
-  // SAFETY: The producer and consumer resolve Plugin from the workspace's catalog-pinned Vite implementation.
-  return value as Plugin | undefined;
-}
-
-const reactCompilerPlugin = asWorkspacePlugin(viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] })[0]);
-
-// @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first plugin
-// returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
-if (reactCompilerPlugin?.name !== 'vite:react-compiler') {
-  throw new Error('Expected @vitejs/plugin-react to return the native React Compiler plugin first.');
-}
+// @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. Register only the compiler here;
+// the remaining plugins are already registered by Astro's integration.
+const siteReactCompilerPlugin = reactCompilerPlugin({
+  compiler: true,
+  exclude: [/\.astro$/, /node_modules/],
+});
 
 // https://astro.build/config
 export default defineConfig({
@@ -185,7 +174,7 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
-    plugins: [reactCompilerPlugin, demoPlaceholderPlugin(), tailwindcss(), svgr()],
+    plugins: [siteReactCompilerPlugin, demoPlaceholderPlugin(), tailwindcss(), svgr()],
     optimizeDeps: {
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.

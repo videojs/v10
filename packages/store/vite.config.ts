@@ -12,7 +12,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     html: './src/html/index.ts',
     react: './src/react/index.ts',
   },
-  plugins: [reactCompilerPlugin(/[/\\]src[/\\]react[/\\]/)],
+  plugins: [reactCompilerPlugin({ include: /[/\\]src[/\\]react[/\\]/ })],
 });
 
 export default defineConfig({
