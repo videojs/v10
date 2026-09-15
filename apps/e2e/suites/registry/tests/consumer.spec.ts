@@ -40,6 +40,35 @@ for (const preset of ['video', 'audio'] as const) {
     expect(themeStyles.controlSize).not.toBe('');
     expect(themeStyles.spacing).not.toBe('');
 
+    if (preset === 'audio' && theme === 'minimal') {
+      const hairline = await skin
+        .locator('.audio-controls')
+        .first()
+        .evaluate((element) => {
+          const style = getComputedStyle(element);
+          const probe = document.createElement('span');
+
+          probe.style.color = 'var(--media-border)';
+          element.append(probe);
+
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Could not create a canvas context.');
+
+          context.fillStyle = getComputedStyle(probe).color;
+          context.fillRect(0, 0, 1, 1);
+          probe.remove();
+
+          const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+
+          return { alpha, boxShadow: style.boxShadow, luminance: red + green + blue };
+        });
+
+      expect(hairline.boxShadow).not.toBe('none');
+      expect(hairline.alpha).toBeGreaterThan(0);
+      expect(hairline.luminance).toBeLessThan(128 * 3);
+    }
+
     const box = await skin.boundingBox();
 
     expect(box?.width).toBeGreaterThan(500);
