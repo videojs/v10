@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { withPreservedTextTracks } from '../text-tracks';
+import { removeHlsTextTracks, withPreservedTextTracks } from '../text-tracks';
 
 /**
  * Jsdom has no text track implementation, so the media element and its tracks are stubbed with the parts the helper
@@ -152,5 +152,36 @@ describe('withPreservedTextTracks', () => {
     withPreservedTextTracks(null, action);
 
     expect(action).toHaveBeenCalledOnce();
+  });
+});
+
+describe('removeHlsTextTracks', () => {
+  it('disables hls.js tracks before removing them', () => {
+    const actions: string[] = [];
+    const media = document.createElement('video');
+    const trackEl = document.createElement('track');
+    const remove = trackEl.remove.bind(trackEl);
+
+    trackEl.setAttribute('data-removeondestroy', '');
+    Object.defineProperty(trackEl, 'track', {
+      value: {
+        set mode(mode: TextTrackMode) {
+          actions.push(`mode:${mode}`);
+        },
+      },
+    });
+    vi.spyOn(trackEl, 'remove').mockImplementation(() => {
+      actions.push('remove');
+      remove();
+    });
+    media.append(trackEl);
+
+    removeHlsTextTracks(media);
+
+    expect(actions).toEqual(['mode:disabled', 'remove']);
+  });
+
+  it('does nothing without a media element', () => {
+    expect(() => removeHlsTextTracks(null)).not.toThrow();
   });
 });
