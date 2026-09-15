@@ -8,9 +8,8 @@ test('Packaged skin interpolates progress and isolates media spacing', async ({ 
 
   await player.waitForMediaReady();
 
-  await page.addStyleTag({ content: '@layer theme { video { margin-block: 2em; } }' });
-  await expect(page.locator('video-player video')).toHaveCSS('margin-top', '0px');
-  await expect(page.locator('video-player video')).toHaveCSS('margin-bottom', '0px');
+  await page.addStyleTag({ content: 'video { margin: 2em !important; }' });
+  await expect(page.locator('video-player video')).toHaveCSS('margin', '0px');
 
   const progress = await page.locator('media-time-slider').evaluate((slider) => {
     const animation = slider.animate([{ '--media-slider-fill': '0%' }, { '--media-slider-fill': '100%' }], {

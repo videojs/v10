@@ -21,6 +21,12 @@ media-controls {
   outline: none !important;
 }
 
+/* Media fills the skin; important keeps page styles from adding internal spacing. */
+::slotted(video),
+::slotted(audio) {
+  margin: 0 !important;
+}
+
 media-container {
   min-width: 0;
   min-height: 0;
