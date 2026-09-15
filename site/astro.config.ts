@@ -170,7 +170,7 @@ export default defineConfig({
     plugins: [
       // @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first
       // plugin returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
-      viteReact({ compiler: true, exclude: /\.astro$/ })[0],
+      viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] })[0],
       demoPlaceholderPlugin(),
       tailwindcss(),
       svgr(),
