@@ -793,6 +793,43 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('waits for the latest of overlapping programmatic seeks', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.emit('onStateChange', STATE.PLAYING);
+    media.currentTime = 10;
+    await Promise.resolve();
+    media.currentTime = 20;
+    await Promise.resolve();
+
+    player.getCurrentTime.mockReturnValue(10.25);
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    expect(media.currentTime).toBe(20);
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+
+    player.getCurrentTime.mockReturnValue(20.25);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('latest seek not completed yet');
+    });
+
+    expect(media.currentTime).toBe(20.25);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    expect(player.seekTo.mock.calls).toEqual([
+      [10, true],
+      [20, true],
+    ]);
+    media.detach();
+  });
+
   it('destroys the player on detach', async () => {
     const media = new YouTubeAdapter();
     const { player } = await attachAndLoad(media);

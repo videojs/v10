@@ -64,6 +64,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #seeking = false;
   #seekTarget: number | null = null;
   #seekOrigin: number | null = null;
+  #supersededSeekTargets: number[] = [];
   #loaded = false;
   #playFired = false;
   #currentTime = 0;
@@ -253,6 +254,14 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#currentTime = value;
     // `seekTo` keeps the player paused when called from a paused state.
     this.#afterLoad((p) => {
+      const supersededTarget = this.#seekTarget;
+
+      this.#supersededSeekTargets = this.#supersededSeekTargets.filter((target) => target !== value);
+
+      if (supersededTarget !== null && supersededTarget !== value) {
+        this.#supersededSeekTargets.push(supersededTarget);
+      }
+
       this.#seekTarget = value;
       this.#seekOrigin = p.getCurrentTime();
 
@@ -517,6 +526,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#seeking = false;
     this.#seekTarget = null;
     this.#seekOrigin = null;
+    this.#supersededSeekTargets = [];
     this.#loaded = false;
     this.#playFired = false;
     this.#volume = 1;
@@ -663,6 +673,11 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     const origin = this.#seekOrigin;
     if (target === null || origin === null) return false;
 
+    const belongsToSupersededSeek = this.#supersededSeekTargets.some(
+      (supersededTarget) => Math.abs(time - supersededTarget) <= Math.abs(time - target)
+    );
+    if (belongsToSupersededSeek) return false;
+
     const crossedTarget = target >= origin ? time >= target - 0.1 : time <= target + 0.1;
     // YouTube can land on a nearby keyframe without crossing the requested time.
     const jumpedTowardTarget = Math.abs(time - target) <= Math.abs(origin - target) / 2;
@@ -695,6 +710,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       this.#seeking = false;
       this.#seekTarget = null;
       this.#seekOrigin = null;
+      this.#supersededSeekTargets = [];
       this.dispatchEvent(new Event('seeked'));
     }
 
