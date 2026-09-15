@@ -1,6 +1,7 @@
 ---
 export const prerender = false; // since we're reading cookies
 
+import ErrorPage from '@/layouts/ErrorPage.astro';
 import { DEFAULT_FRAMEWORK } from '@/types/docs';
 import { getPreferencesServer } from '@/utils/docs/preferences';
 import { resolveDocsHref } from '@/utils/docs/routing';
@@ -11,10 +12,17 @@ import { findGuideBySlug } from '@/utils/docs/sidebar';
 // without pinning one. Clients with JavaScript never get here: the links are
 // upgraded in place by ResolveDocsLinks before anyone clicks them.
 const slug = Astro.params.slug ?? '';
-if (!findGuideBySlug(slug)) return new Response('Not Found', { status: 404 });
 
-const { framework } = getPreferencesServer(Astro.cookies);
-const url = resolveDocsHref({ slug, framework: framework ?? DEFAULT_FRAMEWORK });
+if (findGuideBySlug(slug)) {
+  const { framework } = getPreferencesServer(Astro.cookies);
+  const url = resolveDocsHref({ slug, framework: framework ?? DEFAULT_FRAMEWORK });
 
-return Astro.redirect(url, 307);
+  return Astro.redirect(url, 307);
+}
+
+// This route also catches every other unknown path under /docs, which used to fall
+// through to the static 404 page. Render the same page rather than a bare body.
+Astro.response.status = 404;
 ---
+
+<ErrorPage title="404" description="Page not found" />
