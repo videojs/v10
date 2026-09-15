@@ -23,7 +23,7 @@ export default async (request: Request, _context: Context) => {
 export const config: Config = {
   // https://docs.netlify.com/build/edge-functions/optional-configuration/#caching
   cache: 'manual',
-  path: ['/blog/*', '/docs/*', '/html5-video-support', '/about-this-player'],
+  path: ['/blog/*', '/docs/*', '/errors/*', '/html5-video-support', '/about-this-player'],
   header: {
     accept: 'text/markdown',
   },
