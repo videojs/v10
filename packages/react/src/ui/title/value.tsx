@@ -8,6 +8,7 @@ import { useTitleContext } from './context';
 
 export interface TitleValueProps extends UIComponentProps<'div', TitleCore.State> {}
 
+/** Displays the resolved title text from the enclosing `Title.Root`. */
 export const TitleValue = forwardRef(function TitleValue(
   componentProps: TitleValueProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
