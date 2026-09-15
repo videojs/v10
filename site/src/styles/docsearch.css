@@ -95,7 +95,9 @@
 
 @supports (corner-shape: squircle) {
   .DocSearch-Button,
-  .DocSearch-Button .DocSearch-Button-Key {
+  .DocSearch-Button .DocSearch-Button-Key,
+  .DocSearch-Button-Keys:empty::before,
+  .DocSearch-Button-Keys:empty::after {
     /* Match the `corner-squircle` utility, which scales radius tokens to keep the squircle visible. */
     --radius-md: 0.5rem;
     --radius-lg: 0.7rem;
@@ -176,6 +178,8 @@
 }
 
 .DocSearch-Button-Key,
+.DocSearch-Button-Keys:empty::before,
+.DocSearch-Button-Keys:empty::after,
 .DocSearch-Escape-Key {
   font-family: var(--font-mono);
   font-size: var(--text-code);
