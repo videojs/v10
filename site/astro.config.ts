@@ -54,6 +54,8 @@ const SITE_URL =
 
 const [reactCompilerPlugin] = viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] });
 
+// @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first plugin
+// returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
 if (reactCompilerPlugin?.name !== 'vite:react-compiler') {
   throw new Error('Expected @vitejs/plugin-react to return the native React Compiler plugin first.');
 }
@@ -173,14 +175,7 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
-    plugins: [
-      // @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first
-      // plugin returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
-      reactCompilerPlugin,
-      demoPlaceholderPlugin(),
-      tailwindcss(),
-      svgr(),
-    ],
+    plugins: [reactCompilerPlugin, demoPlaceholderPlugin(), tailwindcss(), svgr()],
     optimizeDeps: {
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.
