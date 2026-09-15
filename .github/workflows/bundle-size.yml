@@ -47,10 +47,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout base
+      - name: Checkout comparison history
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      - name: Checkout merge base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          comparison_base=$(git merge-base "$HEAD_SHA" "$BASE_SHA")
+          echo "Checking out comparison base $comparison_base"
+          git checkout --detach "$comparison_base"
 
       - name: Checkout PR scripts
         uses: actions/checkout@v5
