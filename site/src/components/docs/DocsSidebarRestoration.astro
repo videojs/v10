@@ -14,23 +14,33 @@ const { docsSidebarId } = Astro.props;
 <script is:inline define:vars={{ docsSidebarId }}>
   const STORAGE_KEY = "vjs-sidebar-state";
 
-  window.addEventListener("pagereveal", () => {
-    // Restore sidebar scroll position
-    const aside = document.getElementById(docsSidebarId);
-
-    if (aside) {
+  function readState() {
+    try {
       const stored = sessionStorage.getItem(STORAGE_KEY);
 
-      if (stored) {
-        try {
-          const state = JSON.parse(stored);
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      console.error("[Sidebar] Failed to restore state", e);
 
-          if (state.sidebarScroll !== undefined) {
-            aside.scrollTop = state.sidebarScroll;
-          }
-        } catch (e) {
-          console.error("[Sidebar] Failed to restore state", e);
-        }
+      return {};
+    }
+  }
+
+  window.addEventListener("pagereveal", () => {
+    const state = readState();
+    const aside = document.getElementById(docsSidebarId);
+    const nav = document.querySelector("[data-site-nav]");
+
+    // Keep the banners above the nav out of view once the reader has scrolled past them. A new page starts at the
+    // top, which brings them back and drops the nav and sidebar by their height; going back restores the old scroll
+    // and lifts them again. Starting the new page just below the banners keeps both still across navigations.
+    if (state.bannersHidden && nav && !window.location.hash && window.scrollY < nav.offsetTop) {
+      window.scrollTo(0, nav.offsetTop);
+    }
+
+    if (aside) {
+      if (state.sidebarScroll !== undefined) {
+        aside.scrollTop = state.sidebarScroll;
       }
 
       // Keep the active link in view when arriving from a different section. Scroll the sidebar alone:
@@ -72,13 +82,14 @@ const { docsSidebarId } = Astro.props;
 
   window.addEventListener("pageswap", () => {
     const aside = document.getElementById(docsSidebarId);
-    if (!aside) return;
+    const nav = document.querySelector("[data-site-nav]");
+    const state = {
+      sidebarScroll: aside ? aside.scrollTop : undefined,
+      bannersHidden: Boolean(nav && nav.offsetTop > 0 && window.scrollY >= nav.offsetTop),
+    };
 
     try {
-      sessionStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ sidebarScroll: aside.scrollTop }),
-      );
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       console.error("[Sidebar] Failed to save state", e);
     }
