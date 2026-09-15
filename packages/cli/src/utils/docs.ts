@@ -1,13 +1,19 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DOCS_DIR = join(__dirname, '..', 'docs');
 
-function safePath(...segments: string[]): string | null {
-  const resolved = resolve(DOCS_DIR, ...segments);
-  if (relative(DOCS_DIR, resolved).startsWith('..')) return null;
+function safePath(framework: string, path: string): string | null {
+  if (framework !== 'html' && framework !== 'react') return null;
+
+  if (path.split(/[\\/]/).includes('..')) return null;
+
+  const frameworkDir = join(DOCS_DIR, framework);
+  const resolved = resolve(frameworkDir, path);
+  const relativePath = relative(frameworkDir, resolved);
+  if (relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) return null;
 
   return resolved;
 }
