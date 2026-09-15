@@ -33,7 +33,7 @@
     "link:aliases": "node build/scripts/link-aliases.mjs",
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
     "test": "pnpm test:packages",
-    "test:packages": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cli' --concurrency-limit=2 test:ci",
+    "test:packages": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cli' --concurrency-limit=1 test:ci",
     "test:build": "node --test build/plugins/tests/*.test.ts",
     "test:cli": "vp run @videojs/cli#test:ci",
     "test:e2e": "pnpm --dir apps/e2e test:all",
