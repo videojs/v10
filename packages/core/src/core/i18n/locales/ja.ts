@@ -4,16 +4,16 @@ export default {
   buttons: {
     play: '再生',
     pause: '一時停止',
-    replay: 'もう一度見る',
+    replay: 'もう一度再生',
     mute: 'ミュート',
-    unmute: 'サウンドをオン',
+    unmute: 'ミュート解除',
   },
   seek: {
     forward: '{seconds}秒進む',
     backward: '{seconds}秒戻る',
   },
   fullscreen: {
-    enter: 'フルスクリーン',
+    enter: '全画面表示',
     exit: '全画面表示解除',
   },
   captions: {
@@ -21,8 +21,8 @@ export default {
     disable: '字幕を非表示',
   },
   pip: {
-    enter: 'ピクチャーインピクチャー',
-    exit: 'ピクチャーインピクチャー機能の終了',
+    enter: 'ピクチャー イン ピクチャー',
+    exit: 'ピクチャー イン ピクチャーを終了',
   },
   live: {
     playing: 'ライブ再生中',
@@ -53,11 +53,11 @@ export default {
     showRemaining: '残り時間を表示, {duration}.',
     toggleElapsed: '経過時間と残り時間を切り替えます。',
     toggleDuration: '再生時間と残り時間を切り替えます。',
-    position: '{duration}の{current}',
+    position: '{current} / {duration}',
     unknown: 'メディアが読み込まれていないため、時間は不明です。',
   },
   playback: {
-    rate: '再生レート {rate}',
+    rate: '再生速度 {rate}',
   },
   volume: {
     mutedValue: '{percent}、ミュート',
@@ -71,24 +71,24 @@ export default {
     paused: '一時停止',
     playing: '再生中',
     fullscreen: '全画面表示',
-    pip: 'ピクチャーインピクチャー表示',
-    exitPip: 'ピクチャーインピクチャー表示解除',
+    pip: 'ピクチャー イン ピクチャー表示',
+    exitPip: 'ピクチャー イン ピクチャー表示解除',
     seekedTo: '{time}に移動しました',
   },
   container: {
-    label: 'メディアプレイヤー',
+    label: 'メディアプレーヤー',
   },
   errors: {
-    aborted: '動画再生を中止しました',
-    network: 'ネットワーク エラーにより動画のダウンロードが途中で失敗しました',
+    aborted: 'メディアの再生が完了する前に停止されました。',
+    network: 'ネットワークまたはサーバーの問題により、このメディアを読み込めませんでした。',
     decode:
-      '破損の問題、またはお使いのブラウザがサポートしていない機能が動画に使用されていたため、動画の再生が中止されました',
+      'このメディアを再生できませんでした。データが破損しているか、お使いのブラウザがこの形式をサポートしていない可能性があります。',
     source:
-      'サーバーまたはネットワークのエラー、またはフォーマットがサポートされていないため、動画をロードできませんでした',
-    encrypted: 'メディアは暗号化されており、解読するためのキーがありません。',
-    unplayable: 'このメディアはメディアプレイヤーでサポートされていません。',
+      'このメディアを読み込めませんでした。現在利用できないか、お使いのブラウザがこの形式をサポートしていない可能性があります。',
+    encrypted: 'このメディアは復号できなかったため、再生できませんでした。',
+    unplayable: 'このメディアはプレーヤーでサポートされていません。',
     title: '問題が発生しました。',
-    unexpected: 'エラーが発生しました。再度お試しください。',
+    unexpected: '予期しないエラーが発生しました。',
   },
   common: {
     empty: '',
