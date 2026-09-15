@@ -692,7 +692,7 @@ http://example.com/audio-seg1.m4s
     // SAFETY: `loadChapters` adds `VTTCue`s only.
     const [cue] = Array.from(chaptersTrack()!.track.cues!) as VTTCue[];
 
-    expect([cue!.startTime, cue!.endTime, cue!.text]).toEqual([0, 10, 'Episode']);
+    expect([cue!.startTime, cue!.endTime, cue!.text]).toEqual([0, Number.MAX_SAFE_INTEGER, 'Episode']);
 
     engine.destroy();
 

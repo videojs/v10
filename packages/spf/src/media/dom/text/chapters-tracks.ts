@@ -9,12 +9,15 @@ const SPF_CHAPTERS_TRACK_SELECTOR = 'track[data-src-chapters-track]';
 export interface AddChaptersTracksOptions {
   /** The language whose track goes first; `und`, then the first language seen, when no chapter is titled in it. */
   preferredLanguage?: string | undefined;
-  /**
-   * Where a chapter with no end of its own ends. Absent or non-finite (live), it ends at `Number.MAX_VALUE` — `VTTCue`
-   * rejects non-finite times.
-   */
-  duration?: number | undefined;
 }
+
+/**
+ * Where a chapter with no end of its own ends: as far out as a cue can go. The notation leaves the last chapter open,
+ * the HTML spec spells "unbounded" as `Infinity`, and every current engine rejects a non-finite cue time — so, like Mux
+ * Elements before it, SPF writes the largest safe integer and leaves it there. Consumers that need the chapter to end
+ * where the media ends clamp to the media duration when they read the cue; video.js's textTrack feature does.
+ */
+export const OPEN_CHAPTER_END = Number.MAX_SAFE_INTEGER;
 
 /**
  * The languages any chapter is titled in, first-seen order, with the one to lead moved to the front. Consumers that
@@ -76,10 +79,8 @@ function onceSettled(el: HTMLTrackElement, callback: () => void): void {
 export function addChaptersTracksToMedia(
   mediaElement: HTMLMediaElement,
   chapters: readonly Chapter[],
-  { preferredLanguage, duration }: AddChaptersTracksOptions = {}
+  { preferredLanguage }: AddChaptersTracksOptions = {}
 ): void {
-  const fallbackEnd = duration !== undefined && Number.isFinite(duration) ? duration : Number.MAX_VALUE;
-
   for (const language of orderLanguages(chapters, preferredLanguage)) {
     const el = document.createElement('track');
 
@@ -99,7 +100,7 @@ export function addChaptersTracksToMedia(
         const title = chapter.titles[language];
         if (title === undefined) continue;
 
-        el.track.addCue(new VTTCue(chapter.startTime, chapter.endTime ?? fallbackEnd, title));
+        el.track.addCue(new VTTCue(chapter.startTime, chapter.endTime ?? OPEN_CHAPTER_END, title));
       }
 
       el.track.mode = 'hidden';

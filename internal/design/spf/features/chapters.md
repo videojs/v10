@@ -34,11 +34,14 @@ the `<track>` mechanism and the text-track DOM surface.
 - **No `chapters` state signal.** A signal would be a second copy of what the DOM `TextTrack` already holds, with its own
   clear-on-source-change to keep in sync, and nothing but the projector would read it. One DOM behavior fetches, parses,
   and projects; the pure parser is unit-tested on its own.
-- **Projection waits for `presentation.duration`.** The document leaves the last chapter open unless it declares a
-  `duration`; `VTTCue` rejects a non-finite end, and the time-slider UI drops non-finite cues and renders nothing for a
-  non-finite slider max. For on-demand content the duration lands with the first media playlist, which playback needs
-  anyway, so gating costs nothing and avoids mutating cues later. A live presentation (`Infinity`) ends the open chapter
-  at `Number.MAX_VALUE`; the UI renders no chapters for it regardless.
+- **The open last chapter ends at `Number.MAX_SAFE_INTEGER`, and stays there.** The notation leaves the last chapter
+  open unless it declares a `duration`. The HTML spec spells "unbounded" as `endTime = Infinity`, but Chromium, WebKit,
+  and Firefox all reject a non-finite cue time (measured 2026-09-15), so the track carries the largest safe integer — as
+  Mux Elements' `playback-core` did — and nothing waits for or chases a duration: projection happens as soon as the
+  presentation resolves, and the cue is never amended (amending fires no event anyway). Consumers that need the chapter
+  to end where the media ends clamp on read: video.js's `textTrack` store feature normalizes `chaptersCues` to the
+  media duration once it is finite and re-syncs on `durationchange`, so a chapters list reads a true last-chapter
+  length while the track itself is static. The time-slider UI already clamps every cue end to the media duration.
 - **One hidden track per language, order is the selection.** Consumers take the first `kind="chapters"` track, so the
   `preferredSubtitleLanguage` track is appended first, then `und`, then first-seen. All tracks stay on the element for a
   consumer that wants another language. Language matching is exact-tag.
@@ -71,8 +74,8 @@ Extension boundaries, each a candidate slice on this doc or its own:
   cue-dedupe policy nothing calls for yet.
 - **hls.js-backed flavors.** `<mux-video>` / `<hls-video>` over hls.js get `sessionData` from `MANIFEST_PARSED`; the
   pure parser and the DOM track helpers are exported so that path can reuse them.
-- **Live / EVENT chapters.** The open chapter ends at `Number.MAX_VALUE` and the UI shows nothing for a non-finite
-  duration. A growing timeline would need re-projection as the window grows.
+- **Live / EVENT chapters.** The open chapter's `MAX_SAFE_INTEGER` end is never clamped while the duration is
+  non-finite, and the time-slider UI shows nothing for a non-finite duration.
 - **Language fallback.** Exact BCP-47 match only; no region/base-language collapsing.
 
 ## Implementation surface
@@ -82,13 +85,13 @@ Extension boundaries, each a candidate slice on this doc or its own:
 
 | Piece | File | Responsibility |
 |---|---|---|
-| `loadChapters` | `packages/spf/src/playback/behaviors/dom/load-chapters.ts` | Reactor gated on media element + resolved presentation with duration + a chapters entry with a URI; fetches, parses, projects; aborts and removes the tracks on exit |
+| `loadChapters` | `packages/spf/src/playback/behaviors/dom/load-chapters.ts` | Reactor gated on media element + resolved presentation + a chapters entry with a URI; fetches, parses, projects; aborts and removes the tracks on exit |
 | `parseMultivariantPlaylist` | `packages/spf/src/media/hls/parse-multivariant.ts` | Records `#EXT-X-SESSION-DATA` as `SessionDataEntry[]` under `presentation.metadata` |
 | `getSessionData` / `getMultivariantPlaylistMetadata` | `packages/spf/src/media/types/index.ts` | Typed reads of the recorded entries |
 | `parseHlsJsonChapters` | `packages/spf/src/media/hls/parse-json-chapters.ts` | Apple JSON (typed as its schema, `HlsJsonChapters`) → `Chapter[]`, document order, `duration` or next start as end, images resolved |
-| `addChaptersTracksToMedia` / `removeAllChaptersTracksFromMedia` | `packages/spf/src/media/dom/text/chapters-tracks.ts` | Per-language hidden tracks, ordering, settle-then-fill, ownership tag |
+| `addChaptersTracksToMedia` / `removeAllChaptersTracksFromMedia` | `packages/spf/src/media/dom/text/chapters-tracks.ts` | Per-language hidden tracks, ordering, settle-then-fill, `OPEN_CHAPTER_END`, ownership tag |
 
-**State:** reads `presentation` (metadata + `duration`); writes none. **Context:** reads `mediaElement`.
+**State:** reads `presentation` (its session-data metadata); writes none. **Context:** reads `mediaElement`.
 
 ## Config surface
 
@@ -106,15 +109,17 @@ Extension boundaries, each a candidate slice on this doc or its own:
 - `packages/spf/src/media/hls/tests/parse-json-chapters.test.ts` — document order, end derivation, images, metadata,
   entries without titles.
 - `packages/spf/src/media/dom/text/tests/chapters-tracks.test.ts` — element shape, ordering, settle-then-fill,
-  `change` after fill, `MAX_VALUE` fallback, ownership isolation from subtitle tracks.
-- `packages/spf/src/playback/behaviors/dom/tests/load-chapters.test.ts` — gating (media element, entry, duration),
+  `change` after fill, the `OPEN_CHAPTER_END` end, ownership isolation from subtitle tracks.
+- `packages/spf/src/playback/behaviors/dom/tests/load-chapters.test.ts` — gating (media element, entry),
   projection, first-entry selection, quiet failure, abort on source change, cleanup on unload and destroy.
 - `packages/spf/src/playback/engines/hls/tests/engine.test.ts`, `engine-audio-only.test.ts` — end to end from a
   manifest carrying the tag, including that the track's mode changes never register as subtitle intent.
+- `packages/core/src/dom/store/features/tests/text-track.test.ts` — `chaptersCues` clamped to a finite media duration
+  and re-synced on `durationchange`.
 - **Sandbox / smoke:** no in-repo source — the chapters-bearing Mux assets live on staging, and staging URLs stay out
   of the repository; reviewers get one out of band and assign it as a `source` on the `*-mux-video-spf` presets.
   Verified headless in Chromium against a CMAF staging asset (2026-09-15): the track projects before playback (cues
-  `0→3`, `3→23.857`), the store mirrors them in `chaptersCues`, the time slider partitions at 12.6%, and the hover
+  `0→3`, `3→open`), the store mirrors them in `chaptersCues` with the open end clamped to the media duration, the time slider partitions at 12.6%, and the hover
   title follows the pointer.
 
 ## Related features

@@ -2214,10 +2214,10 @@ http://example.com/video-seg1.m4s
   // SAFETY: `loadChapters` adds `VTTCue`s only.
   const cues = Array.from(chaptersTrack()!.track.cues!) as VTTCue[];
 
-  // The open last chapter ends at the resolved presentation duration.
+  // The open last chapter ends at the largest safe integer; readers clamp.
   expect(cues.map((cue) => [cue.startTime, cue.endTime, cue.text])).toEqual([
     [0, 4, 'Intro'],
-    [4, 10, 'Outro'],
+    [4, Number.MAX_SAFE_INTEGER, 'Outro'],
   ]);
   // The chapters track's mode changes never registered as subtitle intent.
   expect(engine.state.userTextTrackSelection.get()).toBeUndefined();

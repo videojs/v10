@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Chapter } from '../../../hls/parse-json-chapters';
-import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '../chapters-tracks';
+import { addChaptersTracksToMedia, OPEN_CHAPTER_END, removeAllChaptersTracksFromMedia } from '../chapters-tracks';
 import { addSubtitlesTracksToMedia, removeAllSubtitlesTracksFromMedia } from '../text-track-slots';
 
 const chapters: Chapter[] = [
@@ -43,7 +43,7 @@ describe('addChaptersTracksToMedia', () => {
   it('adds a cue for every chapter titled in that language once the track has settled', async () => {
     const media = document.createElement('video');
 
-    addChaptersTracksToMedia(media, chapters, { duration: 120 });
+    addChaptersTracksToMedia(media, chapters);
 
     const [und, es] = chaptersTracks(media);
 
@@ -51,11 +51,11 @@ describe('addChaptersTracksToMedia', () => {
     expect(cuesOf(und!).map((cue) => [cue.startTime, cue.endTime, cue.text])).toEqual([
       [0, 30, 'Intro'],
       [30, 75, 'Middle'],
-      [90, 120, 'End'],
+      [90, OPEN_CHAPTER_END, 'End'],
     ]);
     expect(cuesOf(es!).map((cue) => [cue.startTime, cue.endTime, cue.text])).toEqual([
       [0, 30, 'Introducción'],
-      [90, 120, 'Fin'],
+      [90, OPEN_CHAPTER_END, 'Fin'],
     ]);
   });
 
@@ -78,28 +78,17 @@ describe('addChaptersTracksToMedia', () => {
     expect(chaptersTracks(media).map((el) => el.srclang)).toEqual(['fr', 'de']);
   });
 
-  it('ends an open last chapter at the duration', async () => {
-    const media = document.createElement('video');
-
-    addChaptersTracksToMedia(media, chapters, { duration: 100 });
-
-    const [und] = chaptersTracks(media);
-
-    await vi.waitFor(() => expect(cuesOf(und!).at(-1)?.endTime).toBe(100));
-  });
-
-  it('ends an open last chapter at Number.MAX_VALUE when no finite duration is known', async () => {
-    // `VTTCue` throws on a non-finite time, so an open chapter on a live
-    // presentation (duration Infinity) gets the largest finite end instead.
+  it('ends an open last chapter at OPEN_CHAPTER_END, the largest safe integer', async () => {
+    // The notation leaves the last chapter open; `VTTCue` rejects a non-finite
+    // time, so the cue gets the largest safe integer and readers clamp.
     const media = document.createElement('video');
 
     addChaptersTracksToMedia(media, chapters);
-    addChaptersTracksToMedia(media, [{ startTime: 0, titles: { fr: 'Un' } }], { duration: Number.POSITIVE_INFINITY });
 
-    const [und, , fr] = chaptersTracks(media);
+    const [und] = chaptersTracks(media);
 
-    await vi.waitFor(() => expect(cuesOf(und!).at(-1)?.endTime).toBe(Number.MAX_VALUE));
-    expect(cuesOf(fr!)[0]?.endTime).toBe(Number.MAX_VALUE);
+    await vi.waitFor(() => expect(cuesOf(und!).at(-1)?.endTime).toBe(Number.MAX_SAFE_INTEGER));
+    expect(OPEN_CHAPTER_END).toBe(Number.MAX_SAFE_INTEGER);
   });
 
   it('creates no track when no chapter carries a title', () => {

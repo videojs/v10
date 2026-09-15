@@ -7,11 +7,11 @@
  * `<track>`.
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'loading'`), gated on a media element, a resolved
- * presentation **with a duration**, and at least one chapters entry with a URI. The duration gate is what ends the last
- * chapter when the document leaves it open: `VTTCue` rejects a non-finite end, and a chapters UI can't place a chapter
- * whose end it doesn't know — and for on-demand content the duration lands with the first media playlist, which
- * playback needs anyway. Entry fetches and projects, fire-once; the returned cleanup aborts an in-flight fetch and
- * removes the tracks on state exit (source unload, media element change, destroy).
+ * presentation, and a chapters entry with a URI. Entry fetches and projects, fire-once; the returned cleanup aborts an
+ * in-flight fetch and removes the tracks on state exit (source unload, media element change, destroy). The document
+ * leaves the last chapter open; it is written with `OPEN_CHAPTER_END` and never amended — a consumer that wants it to
+ * end where the media ends clamps to the media duration on read (video.js's textTrack feature does), so nothing here
+ * waits for, or chases, a duration.
  *
  * Failures are never fatal: a document that won't load or won't parse is warned about and projects nothing. An entry
  * carrying its data inline as `VALUE` is skipped — chapters are a document, not a string. Exactly one document is
@@ -37,12 +37,7 @@ import {
   parseHlsJsonChapters,
 } from '../../../media/hls/parse-json-chapters';
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
-import {
-  getSessionData,
-  hasPresentationDuration,
-  isResolvedPresentation,
-  type MaybeResolvedPresentation,
-} from '../../../media/types';
+import { getSessionData, isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 import { fetchResolvableText } from '../../../network/fetch';
 
 type LoadChaptersFsmState = 'preconditions-unmet' | 'loading';
@@ -54,9 +49,7 @@ function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
   mediaElement: HTMLMediaElement | undefined
 ): LoadChaptersFsmState {
-  if (!mediaElement || !isResolvedPresentation(presentation) || !hasPresentationDuration(presentation)) {
-    return 'preconditions-unmet';
-  }
+  if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
 
   return findChaptersDocument(presentation) === undefined ? 'preconditions-unmet' : 'loading';
 }
@@ -114,10 +107,7 @@ function loadChaptersSetup({
             // onto a media element the state has since left.
             if (controller.signal.aborted) return;
 
-            addChaptersTracksToMedia(mediaElement, chapters, {
-              preferredLanguage: config.preferredSubtitleLanguage,
-              duration: presentation.duration,
-            });
+            addChaptersTracksToMedia(mediaElement, chapters, { preferredLanguage: config.preferredSubtitleLanguage });
           });
 
           return () => {

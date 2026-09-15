@@ -24,14 +24,12 @@ const DOCUMENT = [
 const chaptersEntry: SessionDataEntry = { dataId: 'com.apple.hls.chapters', uri: CHAPTERS_URL, format: 'JSON' };
 
 function makePresentation({
-  duration,
   sessionData = [chaptersEntry],
-}: { duration?: number; sessionData?: SessionDataEntry[] } = {}): MaybeResolvedPresentation {
+}: { sessionData?: SessionDataEntry[] } = {}): MaybeResolvedPresentation {
   return {
     id: 'pres-1',
     url: 'http://example.com/playlist.m3u8',
     selectionSets: [],
-    ...(duration !== undefined && { duration }),
     ...(sessionData.length > 0 && { metadata: { [MULTIVARIANT_PLAYLIST_METADATA_KEY]: { sessionData } } }),
   };
 }
@@ -87,7 +85,7 @@ describe('loadChapters', () => {
 
   it('does nothing without a media element', async () => {
     const fetchMock = stubFetch();
-    const { reactor } = setup({ presentation: makePresentation({ duration: 120 }) });
+    const { reactor } = setup({ presentation: makePresentation() });
 
     await settle();
 
@@ -99,7 +97,7 @@ describe('loadChapters', () => {
     const fetchMock = stubFetch();
     const mediaElement = document.createElement('video');
     const { reactor } = setup({
-      presentation: makePresentation({ duration: 120, sessionData: [{ dataId: 'com.example.title', value: 'x' }] }),
+      presentation: makePresentation({ sessionData: [{ dataId: 'com.example.title', value: 'x' }] }),
       mediaElement,
     });
 
@@ -115,7 +113,6 @@ describe('loadChapters', () => {
     const mediaElement = document.createElement('video');
     const { reactor } = setup({
       presentation: makePresentation({
-        duration: 120,
         sessionData: [{ dataId: 'com.apple.hls.chapters', value: '[]' }],
       }),
       mediaElement,
@@ -127,25 +124,10 @@ describe('loadChapters', () => {
     reactor.destroy();
   });
 
-  it('waits for the presentation duration before fetching', async () => {
-    const fetchMock = stubFetch();
-    const mediaElement = document.createElement('video');
-    const { state, reactor } = setup({ presentation: makePresentation(), mediaElement });
-
-    await settle();
-    expect(fetchMock).not.toHaveBeenCalled();
-
-    state.presentation.set({ ...makePresentation(), duration: 120 });
-
-    await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
-    expect(requestedUrls(fetchMock)).toEqual([CHAPTERS_URL]);
-    reactor.destroy();
-  });
-
-  it('projects one hidden chapters track per language, ending the open chapter at the duration', async () => {
+  it('projects one hidden chapters track per language without waiting for a duration', async () => {
     stubFetch();
     const mediaElement = document.createElement('video');
-    const { reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
 
@@ -157,7 +139,7 @@ describe('loadChapters', () => {
     expect(cuesOf(und!).map((cue) => [cue.startTime, cue.endTime, cue.text])).toEqual([
       [0, 30, 'Intro'],
       [30, 75, 'Middle'],
-      [90, 120, 'End'],
+      [90, Number.MAX_SAFE_INTEGER, 'End'],
     ]);
     expect(es!.srclang).toBe('es');
     expect(cuesOf(es!)).toHaveLength(1);
@@ -167,10 +149,7 @@ describe('loadChapters', () => {
   it('puts the preferred subtitle language first', async () => {
     stubFetch();
     const mediaElement = document.createElement('video');
-    const { reactor } = setup(
-      { presentation: makePresentation({ duration: 120 }), mediaElement },
-      { preferredSubtitleLanguage: 'es' }
-    );
+    const { reactor } = setup({ presentation: makePresentation(), mediaElement }, { preferredSubtitleLanguage: 'es' });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
     expect(chaptersTracks(mediaElement).map((el) => el.srclang)).toEqual(['es', 'und']);
@@ -182,7 +161,6 @@ describe('loadChapters', () => {
     const mediaElement = document.createElement('video');
     const { reactor } = setup({
       presentation: makePresentation({
-        duration: 120,
         sessionData: [
           { dataId: 'com.apple.hls.chapters', value: '[]' },
           chaptersEntry,
@@ -202,7 +180,7 @@ describe('loadChapters', () => {
 
     stubFetch(() => jsonResponse({}, 500));
     const mediaElement = document.createElement('video');
-    const { reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(warn).toHaveBeenCalledOnce());
     await settle();
@@ -216,7 +194,7 @@ describe('loadChapters', () => {
 
     stubFetch(() => new Response('not json', { status: 200 }));
     const mediaElement = document.createElement('video');
-    const { reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(warn).toHaveBeenCalledOnce());
     await settle();
@@ -240,7 +218,7 @@ describe('loadChapters', () => {
     });
 
     const mediaElement = document.createElement('video');
-    const { state, reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { state, reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(request).toBeDefined());
 
@@ -274,7 +252,7 @@ describe('loadChapters', () => {
       },
     ]);
 
-    const { state, reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { state, reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
 
@@ -289,7 +267,7 @@ describe('loadChapters', () => {
   it('removes its tracks on destroy', async () => {
     stubFetch();
     const mediaElement = document.createElement('video');
-    const { reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
 
@@ -301,7 +279,7 @@ describe('loadChapters', () => {
   it('projects again for a new source', async () => {
     const fetchMock = stubFetch();
     const mediaElement = document.createElement('video');
-    const { state, reactor } = setup({ presentation: makePresentation({ duration: 120 }), mediaElement });
+    const { state, reactor } = setup({ presentation: makePresentation(), mediaElement });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
 
@@ -310,14 +288,14 @@ describe('loadChapters', () => {
     expect(chaptersTracks(mediaElement)).toHaveLength(0);
 
     state.presentation.set({
-      ...makePresentation({ duration: 60 }),
+      ...makePresentation(),
       id: 'pres-2',
       url: 'http://example.com/next.m3u8',
     });
 
     await vi.waitFor(() => expect(chaptersTracks(mediaElement)).toHaveLength(2));
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    await vi.waitFor(() => expect(cuesOf(chaptersTracks(mediaElement)[0]!).at(-1)?.endTime).toBe(60));
+    await vi.waitFor(() => expect(cuesOf(chaptersTracks(mediaElement)[0]!)).toHaveLength(3));
     reactor.destroy();
   });
 });
