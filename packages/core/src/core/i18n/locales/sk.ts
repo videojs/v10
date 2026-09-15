@@ -14,7 +14,7 @@ export default {
   },
   fullscreen: {
     enter: 'Režim celej obrazovky',
-    exit: 'Zavrieť celú obrazovku',
+    exit: 'Ukončiť režim celej obrazovky',
   },
   captions: {
     enable: 'Zapnúť titulky',
@@ -22,7 +22,7 @@ export default {
   },
   pip: {
     enter: 'Obraz v obraze',
-    exit: 'Zavrieť obraz v obraze',
+    exit: 'Ukončiť obraz v obraze',
   },
   live: {
     playing: 'Prehráva sa naživo',
@@ -32,7 +32,7 @@ export default {
   cast: {
     start: 'Spustiť prenos',
     stop: 'Zastaviť prenos',
-    connecting: 'Pripájam',
+    connecting: 'Pripájanie',
   },
   airplay: {
     start: 'Spustiť AirPlay',
@@ -53,7 +53,7 @@ export default {
     showRemaining: 'Zobraziť zostávajúci čas, {duration}.',
     toggleElapsed: 'Prepínanie medzi uplynulým a zostávajúcim časom.',
     toggleDuration: 'Prepínanie medzi trvaním a zostávajúcim časom.',
-    position: '{current} z {duration}',
+    position: '{current} / {duration}',
     unknown: 'Médium sa nenačítalo, čas nie je známy.',
   },
   playback: {
@@ -66,29 +66,28 @@ export default {
     value: 'Hlasitosť {value}',
   },
   status: {
-    captionsOn: 'Popisky zapnuté',
-    captionsOff: 'Popisky vypnuté',
+    captionsOn: 'Titulky zapnuté',
+    captionsOff: 'Titulky vypnuté',
     paused: 'Pozastavené',
     playing: 'Prehráva sa',
     fullscreen: 'Celá obrazovka',
     pip: 'Obraz v obraze',
-    exitPip: 'Zavrieť obraz v obraze',
+    exitPip: 'Obraz v obraze vypnutý',
     seekedTo: 'Presunuté na {time}',
   },
   container: {
     label: 'Prehrávač médií',
   },
   errors: {
-    aborted: 'Prerušili ste prehrávanie',
-    network: 'Sťahovanie súboru bolo zrušené pre chybu na sieti.',
-    decode:
-      'Prehrávanie súboru bolo prerušené pre poškodené dáta, alebo súbor používa vlastnosti, ktoré váš prehliadač nepodporuje.',
+    aborted: 'Zastavili ste prehrávanie média pred jeho dokončením.',
+    network: 'Toto médium sa nepodarilo načítať pre problém so sieťou alebo serverom.',
+    decode: 'Toto médium sa nepodarilo prehrať. Môže byť poškodené alebo váš prehliadač nemusí podporovať jeho formát.',
     source:
-      'Súbor sa nepodarilo načítať pre chybu servera, sieťového pripojenia, alebo je formát súboru nepodporovaný.',
-    encrypted: 'Súbor je zašifrovaný a nie je k dispozícii kľúč na rozšifrovanie.',
+      'Toto médium sa nepodarilo načítať. Môže byť nedostupné alebo váš prehliadač nemusí podporovať jeho formát.',
+    encrypted: 'Toto médium sa nepodarilo prehrať, pretože sa ho nepodarilo dešifrovať.',
     unplayable: 'Toto médium prehrávač nepodporuje.',
     title: 'Niečo sa pokazilo.',
-    unexpected: 'Vyskytla sa chyba. Skúste to znova.',
+    unexpected: 'Vyskytla sa neočakávaná chyba.',
   },
   common: {
     empty: '',
