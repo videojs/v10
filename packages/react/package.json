@@ -162,7 +162,8 @@
     "@videojs/native-hls-video": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "react-compiler-runtime": "^1.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
