@@ -26,6 +26,16 @@ describe('LEGACY_ERRORS', () => {
     }
   });
 
+  it('keeps markup and code inside backticks so the error pages can render the text as inline Markdown', () => {
+    for (const code of LEGACY_ERROR_CODES) {
+      const { summary, html, react } = LEGACY_ERRORS[code];
+
+      for (const text of [summary, html, react]) {
+        expect(text.replaceAll(/`[^`]*`/g, ''), `${code}: ${text}`).not.toMatch(/[<>]/);
+      }
+    }
+  });
+
   it('never points a consumer back at the v8 factory', () => {
     for (const code of LEGACY_ERROR_CODES) {
       const { html, react } = LEGACY_ERRORS[code];

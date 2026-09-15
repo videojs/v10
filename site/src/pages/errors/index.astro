@@ -1,0 +1,42 @@
+---
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import Blog from '@/layouts/Blog.astro';
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+import { getLegacyErrorPages } from '@/utils/errors/legacy-errors';
+
+const pages = getLegacyErrorPages();
+
+const description =
+  'Every error code Video.js 10 throws, with what triggers it and what to do instead. Search a code to land here.';
+---
+
+<Blog title="Error codes" description={description}>
+  <header
+    class="mx-auto mb-10 w-full max-w-4xl overflow-hidden rounded-xs border border-manila-dark text-center md:mb-20 dark:border-transparent dark:bg-soot"
+  >
+    <div class="mx-auto max-w-3xl px-5 py-20">
+      <h1 class="font-display text-h15 uppercase lg:text-h1">Error codes</h1>
+      <p class="mx-auto mt-6 max-w-xl text-p2 sm:text-p15">
+        When Video.js 10 hits something it can name, it throws a <code
+          class="font-mono">VJS10_</code> code and a link to one of these pages. Each page
+        explains what triggered the code and what to do instead.
+      </p>
+    </div>
+    <FooterEasterEgg variant="extra-short" />
+  </header>
+
+  <div class="mx-auto grid w-full max-w-3xl gap-10">
+    {
+      pages.map((page) => (
+        <article>
+          <a href={page.path} class="group grid max-w-3xl">
+            <h2 class="mb-3 font-display text-h25 leading-tight break-words uppercase underline group-intent:decoration-gold">
+              {page.code}
+            </h2>
+            <p set:html={renderInlineMarkdown(page.summary)} />
+          </a>
+        </article>
+      ))
+    }
+  </div>
+</Blog>
