@@ -14,7 +14,7 @@ export default {
   },
   fullscreen: {
     enter: 'Masuk layar penuh',
-    exit: 'Keluar layar penuh',
+    exit: 'Keluar dari layar penuh',
   },
   captions: {
     enable: 'Aktifkan teks',
@@ -39,14 +39,14 @@ export default {
     stop: 'Hentikan AirPlay',
   },
   slider: {
-    seek: 'Cari',
+    seek: 'Bilah geser',
   },
   time: {
     current: 'Waktu saat ini',
     duration: 'Durasi',
     remaining: 'Waktu tersisa',
-    elapsedSuffix: '{duration} waktu berlalu',
-    durationSuffix: '{duration} durasi',
+    elapsedSuffix: '{duration} berlalu',
+    durationSuffix: 'Durasi {duration}',
     remainingSuffix: '{duration} tersisa',
     showElapsed: 'Tampilkan waktu berlalu, {duration}.',
     showDuration: 'Tampilkan durasi, {duration}.',
@@ -104,6 +104,6 @@ export default {
     off: 'Nonaktif',
     auto: 'Otomatis',
     autoWithLabel: 'Otomatis ({label})',
-    subtitles: 'Teks',
+    subtitles: 'Subtitel',
   },
 } as const satisfies Translations;
