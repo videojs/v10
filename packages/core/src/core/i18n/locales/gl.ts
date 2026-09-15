@@ -6,7 +6,7 @@ export default {
     pause: 'Pausa',
     replay: 'Repetir',
     mute: 'Silenciar',
-    unmute: 'Son activado',
+    unmute: 'Activar o son',
   },
   seek: {
     forward: 'Avanzar {seconds} segundos',
@@ -79,14 +79,14 @@ export default {
     label: 'Reprodutor multimedia',
   },
   errors: {
-    aborted: 'Vostede interrompeu a reprodución do medio.',
-    network: 'Un erro de rede interrompeu a descarga do medio.',
+    aborted: 'Vostede detivo a reprodución do contido multimedia antes de que rematase.',
+    network: 'Non foi posíbel cargar este contido multimedia por mor dun problema de rede ou do servidor.',
     decode:
-      'Interrompeuse a reprodución do medio por mor dun problema de estragamento dos datos ou porque o medio precisa funcións que o seu navegador non ofrece.',
+      'Non foi posíbel reproducir este contido multimedia. Pode que estea danado ou que o seu navegador non admita o seu formato.',
     source:
-      'Non foi posíbel cargar o medio por mor dun fallo de rede ou do servidor ou porque o formato non é compatíbel.',
-    encrypted: 'O medio está cifrado e non temos as chaves para descifralo.',
-    unplayable: 'O reprodutor non admite este medio.',
+      'Non foi posíbel cargar este contido multimedia. Pode que non estea dispoñíbel ou que o seu navegador non admita o seu formato.',
+    encrypted: 'Non foi posíbel reproducir este contido multimedia porque non se puido descifrar.',
+    unplayable: 'O reprodutor non admite este contido multimedia.',
     title: 'Algo saíu mal.',
     unexpected: 'Produciuse un erro. Por favor, ténteo de novo.',
   },
