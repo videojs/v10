@@ -5,6 +5,10 @@ export default async (request: Request) => {
   // Skip PostHog proxy paths — handled by Netlify redirects
   if (url.pathname.startsWith('/ph/')) return;
 
+  // The Video.js 8 embed snippet links to this path with a trailing slash. Let the
+  // request through so the redirect rule can serve the page in a single hop.
+  if (url.pathname === '/html5-video-support/') return;
+
   const redirectUrl = new URL(url.pathname.replace(/\/$/, ''), url.origin);
 
   redirectUrl.search = url.search;
