@@ -1,3 +1,4 @@
+import { SKIN_HELP_URL } from '@videojs/core';
 import { ReactiveElement } from '@videojs/element';
 import {
   applyShadowStyles,
@@ -36,6 +37,8 @@ export class SkinElement extends ReactiveElement {
         renderTemplate(this.shadowRoot!, ctor.template);
       }
 
+      this.shadowRoot!.append(createHelpLink(this.ownerDocument));
+
       const sheets: ShadowStyle[] = [sharedSheet];
 
       if (ctor.styles) {
@@ -45,4 +48,14 @@ export class SkinElement extends ReactiveElement {
       applyShadowStyles(this.shadowRoot!, sheets);
     }
   }
+}
+
+/** Every packaged skin links to the page that explains what the player is. See `SKIN_HELP_URL`. */
+function createHelpLink(doc: Document): HTMLLinkElement {
+  const link = doc.createElement('link');
+
+  link.rel = 'help';
+  link.href = SKIN_HELP_URL;
+
+  return link;
 }

@@ -1,4 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
+import { SKIN_HELP_URL } from '@videojs/core';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
@@ -46,6 +47,12 @@ describe('VideoSkin', () => {
     expect(errorBackdrop?.parentElement).toBe(error?.parentElement);
     expect(error?.contains(errorBackdrop)).toBe(false);
     expect(container.querySelector('.video-status-indicators')).not.toBeNull();
+  });
+
+  it('links to the about-this-player page', () => {
+    render(<VideoSkin />, { wrapper: wrapper() });
+
+    expect(document.head.querySelector('link[rel="help"]')?.getAttribute('href')).toBe(SKIN_HELP_URL);
   });
 
   it('draws its own poster image', () => {
