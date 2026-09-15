@@ -1,59 +1,45 @@
 ---
-import { LEGACY_V8_DOCS_URL } from 'video.js/errors';
-
-import Footer from '@/components/Footer.astro';
-import NavBar from '@/components/NavBar/NavBar.astro';
-import A from '@/components/typography/A.astro';
-import Base from '@/layouts/Base.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import Blog from '@/layouts/Blog.astro';
 import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
-import { buildDocsUrl } from '@/utils/docs/routing';
 import { getLegacyErrorPages } from '@/utils/errors/legacy-errors';
 
 const pages = getLegacyErrorPages();
-const migrationGuideUrl = buildDocsUrl('html', 'how-to/migrate-from-video-js-8');
-const v8DocsHost = new URL(LEGACY_V8_DOCS_URL).host;
+
+const description =
+  'Every error code Video.js 10 throws, with what triggers it and what to do instead. Search a code to land here.';
 ---
 
-<Base
-  title="Error codes"
-  description="Every VJS10_ error code Video.js 10 throws for Video.js 8 patterns, with the v10 equivalent in HTML and React and how to stay on v8."
->
-  <NavBar />
-  <main id="main-content" class="mt-10 px-6 pb-24 md:mt-20 md:px-10">
-    <article class="@container text-p2 sm:text-p15">
-      <header
-        class="mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
-      >
-        <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
-          Error codes
-        </h1>
-        <p class="my-4">
-          Video.js 10 is a rebuild. When it meets a Video.js 8 pattern such as a
-          <code class="font-mono">videojs()</code> call, it throws a
-          <code class="font-mono">VJS10_</code> code and a link to one of these pages
-          instead of an opaque failure. Each page shows the v8 code that triggers it, the
-          Video.js 10 equivalent in HTML and React, and how to stay on Video.js 8.
-        </p>
-        <p>
-          New to v10? Start with the <A href={migrationGuideUrl}>Migrate from Video.js 8</A>
-          guide. Staying on v8 is fine too: its docs live at
-          <A href={LEGACY_V8_DOCS_URL}>{v8DocsHost}</A>.
-        </p>
-      </header>
+<Blog title="Error codes" description={description}>
+  <header
+    class="mx-auto mb-10 w-full max-w-4xl overflow-hidden rounded-xs border border-manila-dark text-center md:mb-20 dark:border-transparent dark:bg-soot"
+  >
+    <div class="mx-auto max-w-3xl px-5 py-20">
+      <h1 class="font-display text-h15 uppercase lg:text-h1">Error codes</h1>
+      <p class="mx-auto mt-6 max-w-xl text-p2 sm:text-p15">
+        When Video.js 10 hits something it can name, it throws a <code
+          class="font-mono">VJS10_</code> code and a link to one of these pages. Each page
+        explains what triggered the code and what to do instead.
+      </p>
+    </div>
+    <FooterEasterEgg variant="extra-short" />
+  </header>
 
-      <ul class="mx-auto max-w-3xl divide-y divide-faded-black dark:divide-manila-light">
-        {
-          pages.map((page) => (
-            <li class="py-6">
-              <h2 class="mb-2 font-mono text-h4 leading-tight break-words">
-                <A href={page.path}>{page.code}</A>
-              </h2>
-              <p set:html={renderInlineMarkdown(page.summary)} />
-            </li>
-          ))
-        }
-      </ul>
-    </article>
-  </main>
-  <Footer />
-</Base>
+  <div class="mx-auto grid w-full max-w-3xl gap-10">
+    {
+      pages.map((page) => (
+        <article>
+          <a href={page.path} class="group grid max-w-3xl">
+            <span class="mb-1 font-display text-h4 font-bold text-orange uppercase">
+              Video.js 8 pattern
+            </span>
+            <h2 class="mb-3 font-display text-h25 leading-tight break-words uppercase underline group-intent:decoration-gold">
+              {page.code}
+            </h2>
+            <p set:html={renderInlineMarkdown(page.summary)} />
+          </a>
+        </article>
+      ))
+    }
+  </div>
+</Blog>
