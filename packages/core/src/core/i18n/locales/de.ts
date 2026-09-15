@@ -32,7 +32,7 @@ export default {
   cast: {
     start: 'Übertragung starten',
     stop: 'Übertragung beenden',
-    connecting: 'Verbinden',
+    connecting: 'Wird verbunden',
   },
   airplay: {
     start: 'AirPlay starten',
@@ -45,16 +45,16 @@ export default {
     current: 'Aktueller Zeitpunkt',
     duration: 'Dauer',
     remaining: 'Verbleibende Zeit',
-    elapsedSuffix: '{duration} verstrichene Zeit',
+    elapsedSuffix: '{duration} verstrichen',
     durationSuffix: '{duration} Dauer',
-    remainingSuffix: 'Noch {duration}',
+    remainingSuffix: 'noch {duration}',
     showElapsed: 'Verstrichene Zeit anzeigen, {duration}.',
     showDuration: 'Dauer anzeigen, {duration}.',
     showRemaining: 'Verbleibende Zeit anzeigen, {duration}.',
     toggleElapsed: 'Zwischen verstrichener und verbleibender Zeit wechseln.',
     toggleDuration: 'Zwischen Dauer und verbleibender Zeit wechseln.',
     position: '{current} von {duration}',
-    unknown: 'Medien nicht geladen, unbekannte Zeit.',
+    unknown: 'Medium nicht geladen, Zeit unbekannt.',
   },
   playback: {
     rate: 'Wiedergabegeschwindigkeit {rate}',
