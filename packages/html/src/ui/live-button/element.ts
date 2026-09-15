@@ -9,7 +9,7 @@ import {
   selectTime,
 } from '@videojs/core/dom';
 import { resolveText, type Text, translateText } from '@videojs/core/i18n';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
 import { i18nContext } from '../../i18n/context';
@@ -28,7 +28,7 @@ import { UIElement } from '../ui-element';
 export class LiveButtonElement extends UIElement {
   static readonly tagName = 'media-live-button';
 
-  static override properties: PropertyDeclarationMap = {
+  static override properties: PropertyDeclarations = {
     label: { type: String },
     disabled: { type: Boolean },
   };

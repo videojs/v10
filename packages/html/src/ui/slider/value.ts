@@ -1,5 +1,5 @@
 import { applyStateDataAttrs } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -10,7 +10,7 @@ export class SliderValueElement extends UIElement {
 
   static override properties = {
     type: { type: String },
-  } satisfies PropertyDeclarationMap<'type'>;
+  } satisfies PropertyDeclarations;
 
   type: 'current' | 'pointer' = 'current';
 

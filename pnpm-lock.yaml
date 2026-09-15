@@ -818,6 +818,9 @@ importers:
         specifier: workspace:*
         version: link:../utils
     devDependencies:
+      '@lit/reactive-element':
+        specifier: ^2.1.2
+        version: 2.1.2
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1

@@ -1,4 +1,5 @@
 import { setAttributeValue } from '@videojs/utils/dom';
+import { isFunction } from '@videojs/utils/predicate';
 
 export type AttributeValue = boolean | number | string | null;
 
@@ -51,26 +52,42 @@ export type AttributeDeclaration<Value = AttributeValue> =
   | CustomAttributeDeclaration<Value>;
 
 interface AttributeDeclarationShape {
-  readonly type?: AttributeType;
-  readonly attribute?: string | false;
+  readonly type?: unknown;
+  readonly attribute?: boolean | string;
   readonly defaultValue?: unknown;
-  readonly converter?: {
-    fromAttribute?(value: string | null): unknown;
-    toAttribute?: (...values: never[]) => string | null;
-  };
+  readonly converter?:
+    | ((value: string | null, type?: unknown) => unknown)
+    | {
+        fromAttribute?(value: string | null, type?: unknown): unknown;
+        toAttribute?(value: unknown, type?: unknown): unknown;
+      };
 }
 
 /** The property value produced by a resolved attribute declaration. */
 export type AttributeValueFor<Declaration> =
   Declaration extends CustomAttributeDeclaration<infer Value>
     ? Value
-    : Declaration extends BooleanAttributeDeclaration
-      ? boolean
-      : Declaration extends NumberAttributeDeclaration
-        ? number | null
-        : Declaration extends StringAttributeDeclaration
-          ? string | null
-          : never;
+    : Declaration extends { readonly converter: (value: string | null, type?: unknown) => infer Value }
+      ? Value
+      : Declaration extends {
+            readonly converter: { fromAttribute(value: string | null, type?: unknown): infer Value };
+          }
+        ? Value
+        : Declaration extends {
+              readonly converter: { toAttribute(value: infer Value, type?: unknown): unknown };
+            }
+          ? Value
+          : Declaration extends BooleanAttributeDeclaration
+            ? boolean
+            : Declaration extends NumberAttributeDeclaration
+              ? number | null
+              : Declaration extends StringAttributeDeclaration
+                ? string | null
+                : Declaration extends { readonly type: ObjectConstructor }
+                  ? object | null
+                  : Declaration extends { readonly type: ArrayConstructor }
+                    ? unknown[] | null
+                    : never;
 
 export type AttributeDeclarationMap<Declaration extends AttributeDeclarationShape = AttributeDeclaration> = Readonly<
   Record<string, Declaration>
@@ -123,7 +140,11 @@ export function createAttributeBindings<
     if (declaration.attribute === false) continue;
 
     const property = untypedProperty as Property;
-    const attribute = declaration.attribute ?? options.attributeName?.(property, declaration) ?? property.toLowerCase();
+    const configuredAttribute = declaration.attribute;
+    const attribute =
+      typeof configuredAttribute === 'string'
+        ? configuredAttribute
+        : (options.attributeName?.(property, declaration) ?? property.toLowerCase());
 
     if (!attribute || attribute !== attribute.toLowerCase()) {
       throw new TypeError(
@@ -154,8 +175,11 @@ export function valueFromAttribute<Declaration extends AttributeDeclarationShape
   value: string | null,
   declaration: Declaration
 ): AttributeValueFor<Declaration> {
-  if (declaration.converter?.fromAttribute) {
-    return declaration.converter.fromAttribute(value) as AttributeValueFor<Declaration>;
+  const converter = declaration.converter;
+  if (isFunction(converter)) return converter(value, declaration.type) as AttributeValueFor<Declaration>;
+
+  if (converter?.fromAttribute) {
+    return converter.fromAttribute(value, declaration.type) as AttributeValueFor<Declaration>;
   }
 
   if (declaration.type === Boolean) return (value !== null) as AttributeValueFor<Declaration>;
@@ -174,6 +198,14 @@ export function valueFromAttribute<Declaration extends AttributeDeclarationShape
     ) as AttributeValueFor<Declaration>;
   }
 
+  if (declaration.type === Object || declaration.type === Array) {
+    try {
+      return JSON.parse(value) as AttributeValueFor<Declaration>;
+    } catch {
+      return null as AttributeValueFor<Declaration>;
+    }
+  }
+
   return value as AttributeValueFor<Declaration>;
 }
 
@@ -182,11 +214,19 @@ export function valueToAttribute<Declaration extends AttributeDeclarationShape>(
   value: AttributeValueFor<Declaration>,
   declaration: Declaration
 ): string | null {
-  if (declaration.converter?.toAttribute) {
-    return Reflect.apply(declaration.converter.toAttribute, declaration.converter, [value]);
+  const converter = declaration.converter;
+
+  if (!isFunction(converter) && converter?.toAttribute) {
+    const converted = converter.toAttribute(value, declaration.type);
+
+    return converted == null ? null : String(converted);
   }
 
   if (declaration.type === Boolean) return value ? '' : null;
+
+  if (declaration.type === Object || declaration.type === Array) {
+    return value == null ? null : (JSON.stringify(value) ?? null);
+  }
 
   return value === null ? null : String(value);
 }

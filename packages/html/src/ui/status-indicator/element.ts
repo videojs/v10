@@ -6,7 +6,7 @@ import {
   StatusIndicatorDataAttrs,
 } from '@videojs/core';
 import { createTransition } from '@videojs/core/dom';
-import type { PropertyDeclarationMap } from '@videojs/element';
+import type { PropertyDeclarations } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
@@ -19,7 +19,7 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
   static override properties = {
     actions: { type: String },
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<'actions' | 'closeDelay'>;
+  } satisfies PropertyDeclarations;
 
   actions: string | undefined;
   closeDelay: number | undefined;

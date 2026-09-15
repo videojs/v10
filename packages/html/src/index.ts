@@ -4,7 +4,7 @@ export * from '@videojs/core/dom';
 export type {
   Destroyable,
   PropertyDeclaration,
-  PropertyDeclarationMap,
+  PropertyDeclarations,
   PropertyValues,
   ReactiveController,
   ReactiveControllerHost,

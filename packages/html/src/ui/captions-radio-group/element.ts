@@ -1,7 +1,7 @@
 import { CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs, type CaptionsRadioGroupOption } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
@@ -17,7 +17,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     ...MenuRadioGroupElement.properties,
     disabled: { type: Boolean },
     label: { type: String },
-  } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
+  } satisfies PropertyDeclarations;
 
   disabled = false;
   label: Text | string = '';

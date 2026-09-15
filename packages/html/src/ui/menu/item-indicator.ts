@@ -1,5 +1,5 @@
 import { applyElementProps } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 
 import { UIElement } from '../ui-element';
 
@@ -9,7 +9,7 @@ export class MenuItemIndicatorElement extends UIElement {
   static override properties = {
     checked: { type: Boolean },
     forceMount: { type: Boolean, attribute: 'force-mount' },
-  } satisfies PropertyDeclarationMap<'checked' | 'forceMount'>;
+  } satisfies PropertyDeclarations;
 
   checked = false;
   forceMount = false;

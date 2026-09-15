@@ -48,6 +48,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@lit/reactive-element": "^2.1.2",
     "happy-dom": "^20.11.1",
     "vite-plus": "catalog:",
     "vitest": "catalog:"

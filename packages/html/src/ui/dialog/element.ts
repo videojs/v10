@@ -6,7 +6,7 @@ import {
   createTransition,
   type DialogApi,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 
@@ -28,7 +28,7 @@ export class DialogElementBase extends UIElement {
     open: { type: Boolean },
     defaultOpen: { type: Boolean, attribute: 'default-open' },
     closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
-  } satisfies PropertyDeclarationMap<keyof DialogCore.Props>;
+  } satisfies PropertyDeclarations;
 
   open = DialogCore.defaultProps.open;
   defaultOpen = DialogCore.defaultProps.defaultOpen;

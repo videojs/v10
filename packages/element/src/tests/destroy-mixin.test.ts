@@ -1,4 +1,4 @@
-import type { ReactiveController } from '@videojs/element';
+import type { DestroyController, ReactiveController } from '@videojs/element';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { DestroyMixin } from '../destroy-mixin';
@@ -181,7 +181,7 @@ describe('DestroyMixin deferred destruction', () => {
 describe('DestroyMixin controller lifecycle', () => {
   it('hostDestroyed() is called on controllers', () => {
     const hostDestroyed = vi.fn();
-    const controller: ReactiveController = { hostDestroyed };
+    const controller: DestroyController = { hostDestroyed };
 
     const el = createElement(DestroyableElement);
 

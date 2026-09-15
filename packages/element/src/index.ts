@@ -25,8 +25,11 @@ export type {
 export { type Destroyable, DestroyMixin } from './destroy-mixin';
 export { ReactiveElement } from './reactive-element';
 export type {
+  ComplexAttributeConverter,
+  DestroyController,
   PropertyDeclaration,
-  PropertyDeclarationMap,
+  PropertyDeclarations,
+  PropertyValueMap,
   PropertyValues,
   ReactiveController,
   ReactiveControllerHost,

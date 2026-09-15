@@ -1,4 +1,4 @@
-import type { PropertyDeclarationMap } from '@videojs/element';
+import type { PropertyDeclarations } from '@videojs/element';
 import { MuxDataExtension as MuxDataExtensionBase, type MuxDataExtensionProps } from '@videojs/mux-data';
 
 import { MediaExtensionElement } from '../media-extension-element';
@@ -34,7 +34,7 @@ export class MuxDataExtension extends MediaExtensionElement<MuxDataExtensionBase
     playerSoftwareVersion: { type: String, attribute: 'player-software-version' },
     playerInitTime: { type: Number, attribute: 'player-init-time' },
     // `metadata` and `MuxDataSdk` take objects, so they're property-only props.
-  } satisfies PropertyDeclarationMap<Exclude<keyof MuxDataExtensionProps, 'metadata' | 'MuxDataSdk'>>;
+  } satisfies PropertyDeclarations;
 
   protected createComponent(): MuxDataExtensionBase {
     return new MuxDataExtensionBase();

@@ -5,7 +5,7 @@ import {
 } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
@@ -20,7 +20,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   static override properties = {
     ...MenuRadioGroupElement.properties,
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<'value' | 'disabled'>;
+  } satisfies PropertyDeclarations;
 
   disabled = false;
   formatRate = PlaybackRateRadioGroupCore.defaultProps.formatRate;

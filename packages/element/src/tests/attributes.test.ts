@@ -31,6 +31,12 @@ describe('createAttributeBindings', () => {
     expect(bindings.observedAttributes).toEqual(['close-delay']);
   });
 
+  it('treats attribute true as an implicit attribute name', () => {
+    const bindings = createAttributeBindings({ closeDelay: { type: Number, attribute: true } });
+
+    expect(bindings.observedAttributes).toEqual(['closedelay']);
+  });
+
   it('preserves declared property keys in its lookup types', () => {
     const bindings = createAttributeBindings({
       label: { type: String },
@@ -97,6 +103,43 @@ describe('attribute value conversion', () => {
     expect(valueFromAttribute('a,b', declaration)).toBe(2);
     setAttributeFromValue(element, binding, 3);
     expect(element.getAttribute('count')).toBe('3');
+  });
+
+  it('passes type hints to function and object converters', () => {
+    const functionConverter = (value: string | null, type?: unknown) => `${String(type)}:${value}`;
+    const objectConverter = {
+      fromAttribute: (value: string | null, type?: unknown) => `${String(type)}:${value}`,
+      toAttribute: (value: string, type?: unknown) => `${String(type)}:${value}`,
+    };
+
+    expect(valueFromAttribute('value', { type: 'function', converter: functionConverter })).toBe('function:value');
+    expect(valueFromAttribute('value', { type: 'object', converter: objectConverter })).toBe('object:value');
+
+    const element = document.createElement('div');
+    const binding = {
+      property: 'value',
+      attribute: 'value',
+      declaration: { type: 'object', converter: objectConverter },
+    } as const;
+
+    setAttributeFromValue(element, binding, 'value');
+    expect(element.getAttribute('value')).toBe('object:value');
+  });
+
+  it('uses Lit-compatible object and array conversion', () => {
+    expect(valueFromAttribute('{"label":"Player"}', { type: Object })).toEqual({ label: 'Player' });
+    expect(valueFromAttribute('[1,2]', { type: Array })).toEqual([1, 2]);
+    expect(valueFromAttribute('invalid', { type: Object })).toBeNull();
+
+    const element = document.createElement('div');
+    const objectBinding = createAttributeBindings({ value: { type: Object } }).byProperty.get('value')!;
+    const arrayBinding = createAttributeBindings({ value: { type: Array } }).byProperty.get('value')!;
+
+    setAttributeFromValue(element, objectBinding, { label: 'Player' });
+    expect(element.getAttribute('value')).toBe('{"label":"Player"}');
+
+    setAttributeFromValue(element, arrayBinding, [1, 2]);
+    expect(element.getAttribute('value')).toBe('[1,2]');
   });
 });
 

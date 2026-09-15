@@ -1,4 +1,4 @@
-import type { PropertyDeclarationMap } from '@videojs/element';
+import type { PropertyDeclarations } from '@videojs/element';
 import { GoogleCastExtension as GoogleCastExtensionBase, type GoogleCastExtensionProps } from '@videojs/google-cast';
 
 import { MediaExtensionElement } from '../media-extension-element';
@@ -25,7 +25,7 @@ export class GoogleCastExtension extends MediaExtensionElement<GoogleCastExtensi
     streamType: { type: String, attribute: 'stream-type' },
     receiver: { type: String },
     // `customData` takes an object, so it's a property-only prop.
-  } satisfies PropertyDeclarationMap<Exclude<keyof GoogleCastExtensionProps, 'customData'>>;
+  } satisfies PropertyDeclarations;
 
   protected createComponent(): GoogleCastExtensionBase {
     return new GoogleCastExtensionBase();

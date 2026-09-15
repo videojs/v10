@@ -1,6 +1,6 @@
 import { ControlsCore, ControlsDataAttrs, type ControlsVisibility, POPUP_HOST_SELECTOR } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectControls } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { isFunction } from '@videojs/utils/predicate';
 
@@ -14,7 +14,7 @@ export class ControlsElement extends UIElement {
 
   static override properties = {
     visibility: { type: String },
-  } satisfies PropertyDeclarationMap<'visibility'>;
+  } satisfies PropertyDeclarations;
 
   visibility: ControlsVisibility = ControlsCore.defaultProps.visibility;
 

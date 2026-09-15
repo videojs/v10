@@ -9,7 +9,7 @@ import {
   type PopoverOpenChangeReason,
   type PositioningBoundary,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
@@ -35,7 +35,7 @@ export class PopoverElement extends UIElement {
     delay: { type: Number },
     closeDelay: { type: Number, attribute: 'close-delay' },
     boundary: { type: String },
-  } satisfies PropertyDeclarationMap<keyof PopoverCore.Props | 'boundary'>;
+  } satisfies PropertyDeclarations;
 
   open = PopoverCore.defaultProps.open;
   defaultOpen = PopoverCore.defaultProps.defaultOpen;

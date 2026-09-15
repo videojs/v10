@@ -18,7 +18,7 @@ import {
   type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
@@ -62,7 +62,7 @@ export class TooltipElement extends UIElement {
     sticky: { type: Boolean },
     boundary: { type: String },
     trigger: { type: String },
-  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary' | 'trigger'>;
+  } satisfies PropertyDeclarations;
 
   open = TooltipCore.defaultProps.open;
   defaultOpen = TooltipCore.defaultProps.defaultOpen;

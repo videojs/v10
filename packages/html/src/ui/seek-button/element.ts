@@ -1,6 +1,6 @@
 import { SeekButtonCore, SeekButtonDataAttrs } from '@videojs/core';
 import { selectTime } from '@videojs/core/dom';
-import type { PropertyDeclarationMap } from '@videojs/element';
+import type { PropertyDeclarations } from '@videojs/element';
 import type { MediaTimeState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
@@ -10,7 +10,7 @@ import { MediaButtonElement } from '../media-button-element';
 export class SeekButtonElement extends MediaButtonElement<SeekButtonCore> {
   static readonly tagName = 'media-seek-button';
 
-  static override properties: PropertyDeclarationMap = {
+  static override properties: PropertyDeclarations = {
     ...MediaButtonElement.properties,
     seconds: { type: Number },
   };

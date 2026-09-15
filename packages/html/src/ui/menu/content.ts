@@ -10,7 +10,7 @@ import {
   type MenuOpenChangeReason,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -24,7 +24,7 @@ export class MenuContentElement extends UIElement {
   static override properties = {
     open: { type: Boolean },
     defaultOpen: { type: Boolean, attribute: 'default-open' },
-  } satisfies PropertyDeclarationMap<'open' | 'defaultOpen'>;
+  } satisfies PropertyDeclarations;
 
   open = false;
   defaultOpen = false;

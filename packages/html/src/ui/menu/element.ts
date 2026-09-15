@@ -22,7 +22,7 @@ import {
   selectControls,
   type UIFocusEvent,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
@@ -50,9 +50,7 @@ export class MenuElement extends UIElement {
     closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
     closeOnOutsideClick: { type: Boolean, attribute: 'close-on-outside-click' },
     boundary: { type: String },
-  } satisfies PropertyDeclarationMap<
-    'open' | 'defaultOpen' | 'side' | 'align' | 'closeOnEscape' | 'closeOnOutsideClick' | 'boundary'
-  >;
+  } satisfies PropertyDeclarations;
 
   open = MenuCore.defaultProps.open;
   defaultOpen = MenuCore.defaultProps.defaultOpen;
