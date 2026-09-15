@@ -9,8 +9,8 @@ export default {
     unmute: 'Vključi zvok',
   },
   seek: {
-    forward: 'Preskoči naprej {seconds} sekund',
-    backward: 'Preskoči nazaj {seconds} sekund',
+    forward: 'Preskoči naprej {seconds} sek.',
+    backward: 'Preskoči nazaj {seconds} sek.',
   },
   fullscreen: {
     enter: 'Celozaslonski prikaz',
@@ -26,7 +26,7 @@ export default {
   },
   live: {
     playing: 'Predvajanje v živo',
-    seekToEdge: 'Skoči na live',
+    seekToEdge: 'Skoči na predvajanje v živo',
     badge: 'V živo',
   },
   cast: {
@@ -53,42 +53,42 @@ export default {
     showRemaining: 'Prikaži preostali čas, {duration}.',
     toggleElapsed: 'Preklopi med preteklim in preostalim časom.',
     toggleDuration: 'Preklopi med trajanjem in preostalim časom.',
-    position: '{current} od {duration}',
+    position: '{current} / {duration}',
     unknown: 'Predstavnostna vsebina se ni naložila, čas ni znan.',
   },
   playback: {
     rate: 'Hitrost predvajanja {rate}',
   },
   volume: {
-    mutedValue: '{percent}, izklopljeno',
-    muted: 'Izklopljeno',
+    mutedValue: '{percent}, zvok izklopljen',
+    muted: 'Zvok izklopljen',
     label: 'Glasnost',
     value: 'Glasnost {value}',
   },
   status: {
-    captionsOn: 'Zvočni zapis vklopljen',
-    captionsOff: 'Zvočni zapis izklopljen',
+    captionsOn: 'Podnapisi vklopljeni',
+    captionsOff: 'Podnapisi izklopljeni',
     paused: 'Začasno ustavljeno',
-    playing: 'Predvaja',
+    playing: 'Predvajanje',
     fullscreen: 'Celozaslonski prikaz',
     pip: 'Slika v sliki',
     exitPip: 'Izhod iz slike v sliki',
-    seekedTo: 'Premaknjeno na {time}',
+    seekedTo: 'Premaknjeno: {time}',
   },
   container: {
     label: 'Medijski predvajalnik',
   },
   errors: {
-    aborted: 'Prekinili ste predvajanje.',
-    network: 'Prenos multimedijske datoteke ni uspel zaradi napake v omrežju.',
+    aborted: 'Predvajanje predstavnostne vsebine ste prekinili, preden se je končalo.',
+    network: 'Te predstavnostne vsebine ni bilo mogoče naložiti zaradi težave z omrežjem ali strežnikom.',
     decode:
-      'Predvajanje datoteke je bilo prekinjeno zaradi napak v datoteki ali ker uporablja funkcije, ki jih brskalnik ne podpira.',
+      'Te predstavnostne vsebine ni bilo mogoče predvajati. Morda je poškodovana ali pa brskalnik ne podpira njene oblike zapisa.',
     source:
-      'Multimedijske datoteke ni bilo mogoče naložiti zaradi napake na strežniku oziroma omrežju ali ker ta oblika ni podprta.',
-    encrypted: 'Datoteka je šifrirana in predvajalnik nima ključev za njeno dešifriranje.',
-    unplayable: 'Predvajalnik ne podpira tega medija.',
+      'Te predstavnostne vsebine ni bilo mogoče naložiti. Morda ni na voljo ali pa brskalnik ne podpira njene oblike zapisa.',
+    encrypted: 'Te predstavnostne vsebine ni bilo mogoče predvajati, ker je ni bilo mogoče dešifrirati.',
+    unplayable: 'Predvajalnik ne podpira te predstavnostne vsebine.',
     title: 'Nekaj je šlo narobe.',
-    unexpected: 'Prišlo je do napake. Poskusite znova.',
+    unexpected: 'Prišlo je do nepričakovane napake.',
   },
   common: {
     empty: '',
