@@ -3,8 +3,6 @@ title: "About this player"
 description: "You found a link inside a Video.js 10 player. Here's what it is and how to work with it."
 ---
 
-import MarkdownForAgents from '@/components/support/MarkdownForAgents.astro';
-
 ## What you're looking at
 
 The player you came from is built with Video.js 10, the open-source video player for HTML and React. Its UI lives in the shadow root of a skin element such as `<video-skin>`, which sits inside a `<video-player>` element that owns the player state. The media itself is a regular `<video>` element, or a custom media element such as `<hlsjs-video>` for HLS, kept in the light DOM as a child of the skin.
@@ -51,7 +49,15 @@ The [installation guide](/docs/framework/html/how-to/installation) generates the
 
 Every browser can play a file. None of them give you adaptive streaming outside Safari, controls you can style, a captions menu, or a quality selector. Video.js 10 ships each of those as a component. The full argument is on [HTML5 video support](/html5-video-support#why-isnt-html5-video-enough).
 
-<MarkdownForAgents />
+## For AI agents
+
+Every page on this site is available as markdown, this one included.
+
+- `https://videojs.org/llms.txt` indexes the documentation.
+- Append `.md` to any documentation URL, including this one, to get its markdown.
+- Send `Accept: text/markdown` when fetching a documentation URL and you'll get markdown back.
+
+The full guide is [Build with AI](/docs/framework/html/how-to/build-with-ai).
 
 ## Need help?
 
