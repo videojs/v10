@@ -1,3 +1,5 @@
+@import "../internal/skins/properties.css";
+
 /* -------------------------------------------------------------------------- */
 /* Global styles for the host document, outside of the Shadow DOM             */
 /* -------------------------------------------------------------------------- */
@@ -30,4 +32,9 @@ media-container video::-webkit-media-text-track-container {
   translate: 0 var(--media-caption-track-y, 0);
   transition: translate var(--media-caption-track-duration, 0) ease-out;
   transition-delay: var(--media-caption-track-delay, 0);
+}
+
+/* Page typography must not add spacing inside a player's media surface. */
+:is(video-player, live-video-player, audio-player, live-audio-player) :is(video, audio) {
+  margin: 0;
 }
