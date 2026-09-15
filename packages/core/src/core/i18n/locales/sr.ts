@@ -3,14 +3,14 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Pusti',
-    pause: 'Pauza',
+    pause: 'Pauziraj',
     replay: 'Ponovi',
     mute: 'Utišaj',
     unmute: 'Poništi utišavanje',
   },
   seek: {
-    forward: 'Premotaj unapred {seconds} sekundi',
-    backward: 'Premotaj unazad {seconds} sekundi',
+    forward: 'Premotaj unapred {seconds} sek.',
+    backward: 'Premotaj unazad {seconds} sek.',
   },
   fullscreen: {
     enter: 'Režim celog ekrana',
@@ -26,17 +26,17 @@ export default {
   },
   live: {
     playing: 'Reprodukcija uživo',
-    seekToEdge: 'Idi na live',
+    seekToEdge: 'Idi na stream uživo',
     badge: 'Uživo',
   },
   cast: {
-    start: 'Počni emitovanje',
-    stop: 'Zaustavi emitovanje',
+    start: 'Započni prebacivanje',
+    stop: 'Zaustavi prebacivanje',
     connecting: 'Povezivanje',
   },
   airplay: {
-    start: 'Покрени AirPlay',
-    stop: 'Заустави AirPlay',
+    start: 'Pokreni AirPlay',
+    stop: 'Zaustavi AirPlay',
   },
   slider: {
     seek: 'Premotavanje',
@@ -53,11 +53,11 @@ export default {
     showRemaining: 'Prikaži preostalo vreme, {duration}.',
     toggleElapsed: 'Prebacivanje između proteklog i preostalog vremena.',
     toggleDuration: 'Prebacivanje između trajanja i preostalog vremena.',
-    position: '{current} od {duration}',
-    unknown: 'Медијски садржај није учитан, време није познато.',
+    position: '{current} / {duration}',
+    unknown: 'Medijski sadržaj nije učitan, vreme nije poznato.',
   },
   playback: {
-    rate: 'Stopa reprodukcije {rate}',
+    rate: 'Brzina reprodukcije {rate}',
   },
   volume: {
     mutedValue: '{percent}, utišano',
@@ -73,20 +73,22 @@ export default {
     fullscreen: 'Režim celog ekrana',
     pip: 'Slika u slici',
     exitPip: 'Izađi iz slike u slici',
-    seekedTo: 'Premotano na {time}',
+    seekedTo: 'Premotano: {time}',
   },
   container: {
     label: 'Medija plejer',
   },
   errors: {
-    aborted: 'Isključili ste reprodukciju videa.',
-    network: 'Video se prestao preuzimati zbog greške na mreži.',
-    decode: 'Reprodukcija videa je zaustavljena zbog greške u formatu ili zbog verzije vašeg pretraživača.',
-    source: 'Video se ne može reproducirati zbog servera, greške u mreži ili format nije podržan.',
-    encrypted: 'Medij je šifrovan i nema ključeva za dešifrovanje.',
-    unplayable: 'Plejer ne podržava ovaj medij.',
+    aborted: 'Zaustavili ste reprodukciju medijskog sadržaja pre nego što se završila.',
+    network: 'Ovaj medijski sadržaj nije moguće učitati zbog problema sa mrežom ili serverom.',
+    decode:
+      'Ovaj medijski sadržaj nije moguće reprodukovati. Možda je oštećen ili vaš pregledač ne podržava njegov format.',
+    source:
+      'Ovaj medijski sadržaj nije moguće učitati. Možda nije dostupan ili vaš pregledač ne podržava njegov format.',
+    encrypted: 'Ovaj medijski sadržaj nije moguće reprodukovati jer ga nije moguće dešifrovati.',
+    unplayable: 'Plejer ne podržava ovaj medijski sadržaj.',
     title: 'Nešto je pošlo po zlu.',
-    unexpected: 'Došlo je do greške. Molimo pokušajte ponovo.',
+    unexpected: 'Došlo je do neočekivane greške.',
   },
   common: {
     empty: '',
@@ -96,10 +98,10 @@ export default {
     settings: 'Podešavanja',
     quality: 'Kvalitet',
     audio: 'Zvuk',
-    default: 'Подразумевано',
+    default: 'Podrazumevano',
     speed: 'Brzina',
     captions: 'Titlovi',
-    playbackRate: 'Stopa reprodukcije',
+    playbackRate: 'Brzina reprodukcije',
     back: 'Nazad',
     off: 'Isključeno',
     auto: 'Automatski',
