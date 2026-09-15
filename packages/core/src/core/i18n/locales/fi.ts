@@ -3,25 +3,25 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Toista',
-    pause: 'Keskeytä toisto',
+    pause: 'Keskeytä',
     replay: 'Toista uudelleen',
     mute: 'Mykistä',
     unmute: 'Poista mykistys',
   },
   seek: {
-    forward: 'Hyppää eteenpäin {seconds} sekuntia',
-    backward: 'Hyppää taaksepäin {seconds} sekuntia',
+    forward: 'Siirry eteenpäin {seconds} sekuntia',
+    backward: 'Siirry taaksepäin {seconds} sekuntia',
   },
   fullscreen: {
-    enter: 'Koko näytön tila',
-    exit: 'Poistu koko näytöltä',
+    enter: 'Siirry koko näytön tilaan',
+    exit: 'Poistu koko näytön tilasta',
   },
   captions: {
     enable: 'Ota tekstitykset käyttöön',
     disable: 'Poista tekstitykset käytöstä',
   },
   pip: {
-    enter: 'Kuva kuvassa -tila',
+    enter: 'Siirry kuva kuvassa -tilaan',
     exit: 'Poistu kuva kuvassa -tilasta',
   },
   live: {
@@ -30,13 +30,13 @@ export default {
     badge: 'Live',
   },
   cast: {
-    start: 'Aloita lähetys',
-    stop: 'Lopeta lähetys',
+    start: 'Aloita striimaus',
+    stop: 'Lopeta striimaus',
     connecting: 'Yhdistetään',
   },
   airplay: {
     start: 'Käynnistä AirPlay',
-    stop: 'Pysäytä AirPlay',
+    stop: 'Lopeta AirPlay',
   },
   slider: {
     seek: 'Kelaa',
@@ -66,28 +66,27 @@ export default {
     value: 'Äänenvoimakkuus {value}',
   },
   status: {
-    captionsOn: 'Tekstitys päällä',
-    captionsOff: 'Tekstitys pois',
+    captionsOn: 'Tekstitykset päällä',
+    captionsOff: 'Tekstitykset pois päältä',
     paused: 'Keskeytetty',
     playing: 'Toistetaan',
     fullscreen: 'Koko näyttö',
     pip: 'Kuva kuvassa',
-    exitPip: 'Poistu kuva kuvassa -tilasta',
+    exitPip: 'Kuva kuvassa -tila päättyi',
     seekedTo: 'Siirrytty kohtaan {time}',
   },
   container: {
     label: 'Mediasoitin',
   },
   errors: {
-    aborted: 'Olet keskeyttänyt videotoiston',
-    network: 'Verkkovirhe keskeytti videon latauksen.',
-    decode:
-      'Videon toisto keskeytyi, koska videotiedosto on vioittunut tai käyttää toimintoja, joita selaimesi ei tue.',
-    source: 'Videon lataus ei onnistunut joko palvelin- tai verkkovirheestä tai väärästä formaatista johtuen.',
-    encrypted: 'Media on salattu eikä siihen ole purkuavaimia.',
+    aborted: 'Keskeytit median toiston ennen kuin se päättyi.',
+    network: 'Tämän median lataaminen epäonnistui verkko- tai palvelinongelman vuoksi.',
+    decode: 'Tämän median toistaminen epäonnistui. Se voi olla vioittunut tai selaimesi ei tue sen muotoa.',
+    source: 'Tämän median lataaminen epäonnistui. Se ei ehkä ole saatavilla tai selaimesi ei tue sen muotoa.',
+    encrypted: 'Tämän median toistaminen epäonnistui, koska sen salausta ei voitu purkaa.',
     unplayable: 'Soitin ei tue tätä mediaa.',
     title: 'Jotain meni pieleen.',
-    unexpected: 'Tapahtui virhe. Yritä uudelleen.',
+    unexpected: 'Tapahtui odottamaton virhe.',
   },
   common: {
     empty: '',
