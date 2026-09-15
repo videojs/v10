@@ -40,7 +40,6 @@
     "jose": "^6.1.3",
     "just-debounce-it": "^3.2.0",
     "just-throttle": "^4.2.0",
-    "lucide-react": "^0.546.0",
     "marked": "^17.0.1",
     "nanostores": "^1.0.1",
     "react": "^19.2.8",

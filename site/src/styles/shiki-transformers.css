@@ -17,9 +17,9 @@
   .astro-code .line.diff,
   .astro-code .line.focused {
     position: relative;
-    width: calc(100% + var(--spacing) * 12);
-    padding-inline: calc(var(--spacing) * 6);
-    margin-inline: calc(var(--spacing) * -6);
+    width: calc(100% + var(--spacing) * 14);
+    padding-inline: calc(var(--spacing) * 7);
+    margin-inline: calc(var(--spacing) * -7);
   }
 
   /* Diff: added lines */
@@ -36,7 +36,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: calc(var(--spacing) * 6);
+    width: calc(var(--spacing) * 7);
     font-weight: bold;
   }
 
@@ -88,4 +88,20 @@
   background-color: transparent;
   border: 0;
   border-radius: 0;
+}
+
+/*
+ * Inline snippets highlighted by `highlightInline` carry both palettes; pick the dark one under `.dark`. They render
+ * at the table text size rather than the relative inline-code size so the token colors stay legible.
+ */
+[data-code-inline] {
+  font-size: var(--text-p3);
+}
+
+[data-code-inline] span {
+  color: var(--shiki-light);
+}
+
+:where(.dark, .dark *) [data-code-inline] span {
+  color: var(--shiki-dark);
 }

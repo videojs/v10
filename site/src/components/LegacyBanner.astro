@@ -8,14 +8,14 @@ import { BANNER_DISMISS_KEY } from '@/consts';
     "banner-dismissed:hidden",
     "relative py-2 text-p3 md:text-p2",
     "border-b border-manila-75 bg-manila-50 text-faded-black",
-    "dark:border-soot dark:bg-warm-gray dark:text-manila-light",
+    "dark:border-line dark:bg-warm-gray dark:text-manila-light",
   ]}
 >
   <p class="px-12 text-center">
     Using Video.js v8 or earlier?{" "}
     <a
       href="https://legacy.videojs.org"
-      class="font-bold whitespace-nowrap underline intent:decoration-gold"
+      class="font-semibold whitespace-nowrap underline intent:decoration-gold"
     >
       Visit legacy.videojs.org
     </a>
@@ -26,7 +26,7 @@ import { BANNER_DISMISS_KEY } from '@/consts';
     aria-label="Dismiss banner"
     class:list={[
       "absolute top-1/2 right-2 -translate-y-1/2",
-      "shrink-0 cursor-pointer rounded p-2 intent:bg-manila-light dark:intent:bg-faded-black",
+      "shrink-0 cursor-pointer rounded-md corner-squircle p-2 intent:bg-manila-light dark:intent:bg-faded-black",
     ]}
   >
     <svg

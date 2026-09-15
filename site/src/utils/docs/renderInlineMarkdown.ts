@@ -96,6 +96,27 @@ const renderer: MarkedExtension['renderer'] = {
 
 const marked = new Marked({ renderer });
 
+const highlightedMarked = new Marked({
+  renderer: {
+    ...renderer,
+    codespan({ text }) {
+      return `<code class="${classes.code}" data-code-inline>${highlightCodespan(text)}</code>`;
+    },
+  },
+});
+
+let highlightCodespan: (code: string) => string = escapeHtmlCarets;
+
+/**
+ * Register a syntax highlighter for inline code spans.
+ *
+ * The highlighter is opt-in because this module also runs where Shiki is not loaded, such as unit tests. Pass the
+ * returned HTML for a snippet; `renderInlineMarkdown` wraps it in the shared inline-code chip.
+ */
+export function setInlineCodeHighlighter(highlight: (code: string) => string): void {
+  highlightCodespan = highlight;
+}
+
 /**
  * Unwrap a single `<p>` wrapper so simple descriptions sit inline.
  *
@@ -110,8 +131,8 @@ function unwrapSingleParagraph(html: string): string {
   return trimmed;
 }
 
-export function renderInlineMarkdown(markdown: string): string {
-  const raw = marked.parse(markdown);
+export function renderInlineMarkdown(markdown: string, { highlight = false }: { highlight?: boolean } = {}): string {
+  const raw = (highlight ? highlightedMarked : marked).parse(markdown);
   if (typeof raw !== 'string') return markdown;
 
   return unwrapSingleParagraph(raw);

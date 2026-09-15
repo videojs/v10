@@ -122,7 +122,7 @@ function buildPartialFlags(flags: ParsedFlags, framework: Framework): PartialIns
 const DOCS_HELP = `Usage: @videojs/cli docs <slug> [--framework <html|react>]
        @videojs/cli docs --list [--framework <html|react>]
 
-Installation flags (for docs how-to/installation):
+Installation flags (for docs guides/installation):
   --preset <video|audio|live-video|live-audio|background-video>
   --skin <default|minimal|none>
   --source-url <url>
@@ -176,7 +176,7 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
   }
 
   // Installation page: generate code and replace markers
-  if (slug === 'how-to/installation') {
+  if (slug === 'guides/installation') {
     const partial = buildPartialFlags(flags, framework);
     const needsPrompting =
       !partial.preset ||

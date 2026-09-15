@@ -116,7 +116,7 @@ The only weird thing about the blog? Blog posts use date-prefixed filenames: `YY
 
 ### Guides
 
-You'll learn most of what you need to know about writing guides by reading [`src/content/docs/how-to/write-guides.mdx`](src/content/docs/how-to/write-guides.mdx).
+You'll learn most of what you need to know about writing guides by reading [`src/content/docs/writing-style/write-guides.mdx`](src/content/docs/writing-style/write-guides.mdx).
 
 High-level primer?
 
@@ -134,14 +134,14 @@ We want docs to feel idiomatic, no matter your framework or styling preference. 
 
 We currently support two frameworks (HTML, React) and one styling approach (CSS). This is defined in [types/docs.ts](src/types/docs.ts).
 
-Every doc generates a route per framework. E.g., `how-to/installation.mdx` becomes:
+Every doc generates a route per framework. E.g., `guides/installation.mdx` becomes:
 
-- `/docs/framework/html/how-to/installation/`
-- `/docs/framework/react/how-to/installation/`
+- `/docs/framework/html/guides/installation/`
+- `/docs/framework/react/guides/installation/`
 
 Content that applies to only certain frameworks or styles can be restricted in two ways:
 
-1. Within the MDX content itself, by wrapping framework- or style-specific content in `<FrameworkCase>` or `<StyleCase>` components. (Read more about these components in [`src/content/docs/how-to/write-guides.mdx`](src/content/docs/how-to/write-guides.mdx).)
+1. Within the MDX content itself, by wrapping framework- or style-specific content in `<FrameworkCase>` or `<StyleCase>` components. (Read more about these components in [`src/content/docs/writing-style/write-guides.mdx`](src/content/docs/writing-style/write-guides.mdx).)
 2. In the sidebar config ([docs.config.ts](src/docs.config.ts)), by specifying `frameworks` on a per-guide basis, e.g.,
 
 ```ts
@@ -149,9 +149,9 @@ const sidebar: Sidebar = [
   {
     sidebarLabel: "Getting started",
     contents: [
-      { slug: "how-to/installation" }, // Available to all
+      { slug: "guides/installation" }, // Available to all
       {
-        slug: "how-to/react-hooks",
+        slug: "guides/react-hooks",
         frameworks: ["react"], // Only for React
       },
     ],

@@ -15,7 +15,7 @@ const { post, authors } = Astro.props;
   <a href={`/blog/${post.id}`} class="group grid max-w-3xl">
     <time
       datetime={post.data.pubDate.toISOString()}
-      class="mb-1 font-display text-h4 font-bold text-orange"
+      class="mb-1 font-display text-h4 font-bold text-accent"
     >
       <FormattedDate date={post.data.pubDate} />
     </time>
@@ -27,7 +27,7 @@ const { post, authors } = Astro.props;
       </h2>
       {
         authors.length > 0 && (
-          <div class="mb-4 font-bold">
+          <div class="mb-4 font-semibold">
             {new Intl.ListFormat("en", {
               style: "long",
               type: "conjunction",

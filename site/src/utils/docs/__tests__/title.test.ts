@@ -6,11 +6,12 @@ import { getDocTitle, isCodeIdentifier } from '../title';
 describe('getDocTitle', () => {
   // Mock fixtures
   const mockDocWithFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'reference/play-button',
+    id: 'components/play-button',
     collection: 'docs',
     data: {
       title: 'PlayButton',
       description: 'A button component for playing and pausing media playback',
+      type: 'reference',
       frameworkTitle: {
         react: 'PlayButton',
         html: 'play-button',
@@ -18,7 +19,7 @@ describe('getDocTitle', () => {
     },
     // Mock required Astro fields
     body: '',
-    slug: 'reference/play-button',
+    slug: 'components/play-button',
   } as CollectionEntry<'docs'>;
 
   const mockDocWithoutFrameworkTitle: CollectionEntry<'docs'> = {
@@ -27,24 +28,26 @@ describe('getDocTitle', () => {
     data: {
       title: 'Basic Concepts',
       description: 'Introduction to basic concepts',
+      type: 'guide',
     },
     body: '',
     slug: 'concepts/basic',
   } as CollectionEntry<'docs'>;
 
   const mockDocWithPartialFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'reference/mute-button',
+    id: 'components/mute-button',
     collection: 'docs',
     data: {
       title: 'MuteButton',
       description: 'A button for muting audio',
+      type: 'reference',
       frameworkTitle: {
         react: 'MuteButton',
         // html framework title not defined
       },
     },
     body: '',
-    slug: 'reference/mute-button',
+    slug: 'components/mute-button',
   } as CollectionEntry<'docs'>;
 
   describe('with frameworkTitle defined', () => {
@@ -117,6 +120,7 @@ describe('getDocTitle', () => {
         data: {
           title: 'Default Title',
           description: 'Test',
+          type: 'guide',
           frameworkTitle: {},
         },
         body: '',

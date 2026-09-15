@@ -6,7 +6,7 @@ import { getPreferencesServer } from '@/utils/docs/preferences';
 import { resolveDocsHref } from '@/utils/docs/routing';
 import { findGuideBySlug } from '@/utils/docs/sidebar';
 
-// Framework-agnostic guide URLs such as /docs/how-to/installation resolve to the
+// Framework-agnostic guide URLs such as /docs/guides/installation resolve to the
 // reader's preferred framework, so pages outside the docs can link to a guide
 // without pinning one. Clients with JavaScript never get here: the links are
 // upgraded in place by ResolveDocsLinks before anyone clicks them.

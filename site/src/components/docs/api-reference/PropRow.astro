@@ -1,7 +1,8 @@
 ---
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
-import Td from '@/components/typography/Td.astro';
+import AnchorLink from './AnchorLink.astro';
 import DetailRow from './DetailRow.astro';
+import InlineCode from './InlineCode.astro';
 import { getPropReferenceNames } from './prop-reference-names';
 
 interface Props {
@@ -15,36 +16,57 @@ interface Props {
   /** Overrides the name derived from the prop, for a feature that declares one. */
   attribute?: string;
   componentName: string;
+  toggleColumn?: boolean;
 }
 
-const { name, type, detailedType, description, defaultValue, required, showAttributeName, attribute, componentName } =
-  Astro.props;
+const {
+  name,
+  type,
+  detailedType,
+  description,
+  defaultValue,
+  required,
+  showAttributeName,
+  attribute,
+  componentName,
+  toggleColumn,
+} = Astro.props;
 
 const id = `${componentName}-${name}`;
 const { propertyName, attributeName } = getPropReferenceNames(name, attribute, showAttributeName);
+
+// A same-named attribute adds nothing under the property name.
+const showAttribute = Boolean(attributeName && attributeName !== propertyName);
 ---
 
 <DetailRow
   id={id}
   name={propertyName}
-  type={type}
-  attributeName={attributeName}
   detailedType={detailedType}
   description={description}
-  colspan={4}
+  colspan={3}
+  toggleColumn={toggleColumn}
 >
-  <Td class="align-top">
-    <MarkdownCode>
-      {propertyName}
-      {required && <span class="text-orange">*</span>}
-    </MarkdownCode>
-  </Td>
-  <Td class="align-top">
-    <MarkdownCode>{type}</MarkdownCode>
-  </Td>
-  <Td class="align-top">
-    <MarkdownCode>
-      {defaultValue ?? "—"}
-    </MarkdownCode>
-  </Td>
+  <td>
+    <span class="inline-flex items-center whitespace-nowrap">
+      <MarkdownCode>
+        {propertyName}
+        {required && <span class="text-accent">*</span>}
+      </MarkdownCode>
+      <AnchorLink id={id} name={propertyName} />
+    </span>
+    {
+      showAttribute && (
+        <div class="mt-1.5 text-p4 text-muted">
+          attribute <MarkdownCode class="text-p4">{attributeName}</MarkdownCode>
+        </div>
+      )
+    }
+  </td>
+  <td class="w-full">
+    <InlineCode code={type} />
+  </td>
+  <td>
+    {defaultValue ? <InlineCode code={defaultValue} /> : <span class="text-muted">—</span>}
+  </td>
 </DetailRow>

@@ -24,6 +24,7 @@ import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 
 import { reactCompilerPlugin } from '../build/react-compiler.ts';
+import docsRedirects from './integrations/docs-redirects';
 import llmsMarkdown from './integrations/llms-markdown';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
@@ -31,6 +32,7 @@ import { satteriCdnVersion } from './src/utils/satteriCdnVersion';
 import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
 import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
 import { satteriReadingTime } from './src/utils/satteriReadingTime';
+import { satteriRelatedLinks } from './src/utils/satteriRelatedLinks';
 import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
 import { shikiStripPreStyle } from './src/utils/shikiStripPreStyle';
 
@@ -90,7 +92,8 @@ export default defineConfig({
     },
   },
   redirects: {
-    // Redirects are configured in netlify.toml
+    // Legacy redirects live in netlify.toml. Moved docs pages declare `redirectFrom` on their sidebar entry instead;
+    // the docs-redirects integration turns those into Astro redirects.
   },
   integrations: [
     // Only register Sentry when the upload token is present (i.e. production
@@ -115,9 +118,12 @@ export default defineConfig({
         `${SITE_URL}/blog/llms.txt`,
         `${SITE_URL}/changelog/llms.txt`,
         `${SITE_URL}/docs/framework/html/llms.txt`,
+        `${SITE_URL}/docs/framework/html/llms-full.txt`,
         `${SITE_URL}/docs/framework/react/llms.txt`,
+        `${SITE_URL}/docs/framework/react/llms-full.txt`,
       ],
     }),
+    docsRedirects(),
     llmsMarkdown(),
     react(),
   ],
@@ -157,7 +163,13 @@ export default defineConfig({
     // independently of the Markdown processor, so highlighting is configured
     // here while the processor's custom transforms live in `mdastPlugins`.
     processor: satteri({
-      mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCdnVersion(), satteriCodeFrame()],
+      mdastPlugins: [
+        satteriReadingTime(),
+        satteriRelatedLinks(),
+        satteriConditionalHeadings(),
+        satteriCdnVersion(),
+        satteriCodeFrame(),
+      ],
     }),
   },
 
