@@ -655,7 +655,11 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     if (this.#seeking && bufferedEnd > 0.1) {
       this.#seeking = false;
       this.dispatchEvent(new Event('seeked'));
-    } else if (!this.#seeking && Math.abs(time - this.#currentTime) > 0.1) {
+    } else if (
+      !this.#seeking &&
+      player.getPlayerState() !== STATE_PLAYING &&
+      Math.abs(time - this.#currentTime) > 0.1
+    ) {
       this.#seeking = true;
       this.dispatchEvent(new Event('seeking'));
     }

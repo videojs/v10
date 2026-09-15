@@ -700,6 +700,29 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('does not interpret coarse playback updates as seeking', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getVideoLoadedFraction.mockReturnValue(0);
+    player.emit('onStateChange', STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(0.25);
+
+    await vi.waitFor(() => {
+      if (media.currentTime !== 0.25) throw new Error('time not polled yet');
+    });
+
+    expect(media.seeking).toBe(false);
+    expect(events).toEqual(['timeupdate']);
+    media.detach();
+  });
+
   it('destroys the player on detach', async () => {
     const media = new YouTubeAdapter();
     const { player } = await attachAndLoad(media);
