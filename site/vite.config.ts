@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 import type { Plugin, ViteUserConfig } from 'vite-plus';
+import { configDefaults } from 'vite-plus/test/config';
 
 import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../build/task.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
@@ -18,8 +19,29 @@ const config: ViteUserConfig = {
   plugins: [demoPlaceholderPlugin(), ...reactPlugins],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.ts'],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'site',
+          include: configDefaults.include,
+          exclude: [
+            ...configDefaults.exclude,
+            'src/utils/docs/__tests__/preferences.test.ts',
+            'src/utils/mux/__tests__/auth-flow.test.ts',
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'site/dom',
+          include: ['src/utils/docs/__tests__/preferences.test.ts', 'src/utils/mux/__tests__/auth-flow.test.ts'],
+          environment: 'jsdom',
+          setupFiles: ['./src/test-setup.ts'],
+        },
+      },
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
