@@ -250,7 +250,14 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
 
     this.#currentTime = value;
     // `seekTo` keeps the player paused when called from a paused state.
-    this.#afterLoad((p) => p.seekTo(value, true));
+    this.#afterLoad((p) => {
+      if (!this.#seeking) {
+        this.#seeking = true;
+        this.dispatchEvent(new Event('seeking'));
+      }
+
+      p.seekTo(value, true);
+    });
   }
 
   get duration() {

@@ -723,6 +723,40 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('completes a programmatic seek during playback and resumes time updates', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.emit('onStateChange', STATE.PLAYING);
+    media.currentTime = 30;
+    await Promise.resolve();
+
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+    expect(player.seekTo).toHaveBeenCalledWith(30, true);
+
+    player.getCurrentTime.mockReturnValue(30);
+    player.emit('onStateChange', STATE.PLAYING);
+
+    expect(media.seeking).toBe(false);
+    expect(events).toEqual(['seeking', 'seeked']);
+
+    player.getCurrentTime.mockReturnValue(30.25);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 30.25) throw new Error('time not polled yet');
+    });
+
+    expect(media.seeking).toBe(false);
+    expect(events).toEqual(['seeking', 'seeked', 'timeupdate']);
+    media.detach();
+  });
+
   it('destroys the player on detach', async () => {
     const media = new YouTubeAdapter();
     const { player } = await attachAndLoad(media);
