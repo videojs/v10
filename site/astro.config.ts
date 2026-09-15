@@ -53,10 +53,12 @@ const SITE_URL =
       : process.env.DEPLOY_PRIME_URL || PRODUCTION_URL.origin;
 
 // @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. Register only the compiler here;
-// the remaining plugins are already registered by Astro's integration.
+// the remaining plugins are already registered by Astro's integration. Limit compilation to site source because
+// workspace libraries resolve outside node_modules and already ship compiled output.
 const siteReactCompilerPlugin = reactCompilerPlugin({
   compiler: true,
   exclude: [/\.astro$/, /node_modules/],
+  include: /[/\\]site[/\\]src[/\\].*\.[jt]sx?$/,
 });
 
 // https://astro.build/config
