@@ -86,7 +86,7 @@ jobs:
         run: pnpm lint
 
       - name: Test lint rules
-        run: pnpm exec vp test run tools/oxlint/anti-slop/rules/tests
+        run: pnpm exec vp test run tools/oxlint/anti-slop/rules/tests tools/oxlint/videojs/rules/tests
 
   typecheck:
     runs-on: ubuntu-latest

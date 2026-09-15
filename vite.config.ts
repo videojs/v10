@@ -36,6 +36,7 @@ const ignoredPaths = [
   '**/packages/extensions/*/types/**',
   'packages/core/src/core/ui/components.generated.ts',
   'tools/oxlint/anti-slop/**',
+  'tools/oxlint/videojs/**',
 ];
 
 export default defineConfig({
@@ -73,7 +74,10 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: ignoredPaths,
-    jsPlugins: [{ name: 'anti-slop', specifier: './tools/oxlint/anti-slop/index.ts' }],
+    jsPlugins: [
+      { name: 'anti-slop', specifier: './tools/oxlint/anti-slop/index.ts' },
+      { name: 'videojs', specifier: './tools/oxlint/videojs/index.ts' },
+    ],
     plugins: ['typescript', 'react'],
     options: {
       typeAware: false,
@@ -133,6 +137,15 @@ export default defineConfig({
               ],
             },
           ],
+        },
+      },
+      {
+        // Cores are mutated during render and read back with getState(). React Compiler only tracks the inputs when
+        // both happen in the same component; a core mutated in one component and read in another memoises stale state.
+        files: ['packages/react/src/**'],
+        excludeFiles: ['packages/react/src/**/tests/**', 'packages/react/src/testing/**'],
+        rules: {
+          'videojs/no-orphan-core-mutation': 'error',
         },
       },
       {
