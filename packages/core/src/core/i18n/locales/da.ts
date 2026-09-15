@@ -5,24 +5,24 @@ export default {
     play: 'Afspil',
     pause: 'Pause',
     replay: 'Afspil igen',
-    mute: 'Uden lyd',
-    unmute: 'Med lyd',
+    mute: 'Slå lyden fra',
+    unmute: 'Slå lyden til',
   },
   seek: {
     forward: 'Spring {seconds} sekunder frem',
     backward: 'Spring {seconds} sekunder tilbage',
   },
   fullscreen: {
-    enter: 'Fuldskærm',
-    exit: 'Luk fuldskærm',
+    enter: 'Fuld skærm',
+    exit: 'Afslut fuld skærm',
   },
   captions: {
     enable: 'Aktivér undertekster',
-    disable: 'Deaktiver undertekster',
+    disable: 'Deaktivér undertekster',
   },
   pip: {
-    enter: 'Billede-i-billede',
-    exit: 'Afslut billede-i-billede',
+    enter: 'Billede i billede',
+    exit: 'Afslut billede i billede',
   },
   live: {
     playing: 'Afspiller live',
@@ -30,8 +30,8 @@ export default {
     badge: 'Live',
   },
   cast: {
-    start: 'Start afsendelse',
-    stop: 'Stop afsendelse',
+    start: 'Start cast',
+    stop: 'Stop cast',
     connecting: 'Forbinder',
   },
   airplay: {
@@ -57,7 +57,7 @@ export default {
     unknown: 'Mediet er ikke indlæst, tidspunktet er ukendt.',
   },
   playback: {
-    rate: 'Afspilningsrate {rate}',
+    rate: 'Afspilningshastighed {rate}',
   },
   volume: {
     mutedValue: '{percent}, lydløs',
@@ -70,25 +70,24 @@ export default {
     captionsOff: 'Undertekster fra',
     paused: 'Pauseret',
     playing: 'Afspiller',
-    fullscreen: 'Fuldskærm',
+    fullscreen: 'Fuld skærm',
     pip: 'Billede i billede',
-    exitPip: 'Afslut billede i billede',
+    exitPip: 'Billede i billede fra',
     seekedTo: 'Sprunget til {time}',
   },
   container: {
     label: 'Medieafspiller',
   },
   errors: {
-    aborted: 'Du afbrød videoafspilningen.',
-    network: 'En netværksfejl fik download af videoen til at fejle.',
-    decode:
-      'Videoafspilningen blev afbrudt på grund af ødelagte data eller fordi videoen benyttede faciliteter som din browser ikke understøtter.',
+    aborted: 'Du stoppede afspilningen af mediet, før den var færdig.',
+    network: 'Mediet kunne ikke indlæses på grund af et netværks- eller serverproblem.',
+    decode: 'Mediet kunne ikke afspilles. Det er muligvis beskadiget, eller din browser understøtter ikke formatet.',
     source:
-      'Videoen kunne ikke indlæses, enten fordi serveren eller netværket fejlede, eller fordi formatet ikke er understøttet.',
-    encrypted: 'Mediet er krypteret, og der er ingen nøgler til at dekryptere det.',
+      'Mediet kunne ikke indlæses. Det er muligvis ikke tilgængeligt, eller din browser understøtter ikke formatet.',
+    encrypted: 'Mediet kunne ikke afspilles, fordi det ikke kunne dekrypteres.',
     unplayable: 'Denne mediefil understøttes ikke af afspilleren.',
     title: 'Noget gik galt.',
-    unexpected: 'Der opstod en fejl. Prøv igen.',
+    unexpected: 'Der opstod en uventet fejl.',
   },
   common: {
     empty: '',
