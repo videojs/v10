@@ -9,6 +9,7 @@ import { normalizeSitePath } from '@/utils/og/normalize-site-path';
 const STATIC_PAGES: { path: string; title: string }[] = [
   { path: 'index', title: 'The open source player for the web' },
   { path: 'support', title: 'Support' },
+  { path: 'html5-video-support', title: 'HTML5 video support' },
   { path: 'privacy', title: 'Privacy' },
   { path: 'blog', title: 'Blog' },
 ];
