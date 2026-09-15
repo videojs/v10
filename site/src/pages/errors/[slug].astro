@@ -11,7 +11,7 @@ import { PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
 import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
 import { buildDocsUrl } from '@/utils/docs/routing';
-import { ERRORS_BASE_PATH, getLegacyErrorPages, type LegacyErrorPage } from '@/utils/errors/legacy-errors';
+import { getLegacyErrorPages, type LegacyErrorPage } from '@/utils/errors/legacy-errors';
 
 export function getStaticPaths() {
   return getLegacyErrorPages().map((page) => ({
@@ -44,13 +44,6 @@ const v8DocsHost = new URL(LEGACY_V8_DOCS_URL).host;
     <header
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
-      <div
-        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-orange uppercase sm:flex-row sm:gap-4"
-      >
-        <a href={ERRORS_BASE_PATH} class="underline intent:decoration-gold">Error codes</a>
-        <span class="hidden sm:inline">&bull;</span>
-        <span>Video.js 8 pattern</span>
-      </div>
       <h1 class="mb-2 font-display text-h2 leading-tight break-words uppercase sm:text-h15">
         {page.code}
       </h1>
