@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Table from '@/components/typography/Table.astro';
@@ -42,7 +43,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
       <Tr>
         <Th>Import</Th>
         <Th>Description</Th>
-        <Th><span class="sr-only">Details</span></Th>
+        <Th class="w-0 p-0"><span class="sr-only">Details</span></Th>
       </Tr>
     </Thead>
     <Tbody>
@@ -55,7 +56,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
               <Tr
                 id={id}
                 data-preset-row
-                class="group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot"
+                class="group cursor-pointer intent:bg-surface/60 dark:intent:bg-surface"
               >
                 <Td class="align-top">
                   <MarkdownCode>{`${pkg}/${preset.name}`}</MarkdownCode>
@@ -65,35 +66,32 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                     <InlineMarkdown content={preset.description} />
                   )}
                 </Td>
-                <Td class="align-top">
+                <Td class="w-0 pr-1.5 pl-0!">
                   <button
+                    type="button"
                     aria-expanded="false"
                     aria-controls={`${id}-detail`}
                     aria-label={`Details for ${preset.name} preset`}
                     data-preset-toggle
+                    class="-my-0.5 flex size-6 items-center justify-center rounded-md text-muted corner-squircle intent:bg-hover intent:text-current"
                   >
-                    <span
-                      aria-hidden="true"
-                      class="inline-block group-data-expanded:rotate-90"
-                    >
-                      ▸
-                    </span>
+                    <ChevronRight className="size-4 transition-transform group-data-expanded:rotate-90" />
                   </button>
                 </Td>
               </Tr>
-              <Tr id={`${id}-detail`} hidden>
-                <Td colspan="3" class="p-0">
-                  <div class="px-6 py-4">
+              <Tr id={`${id}-detail`} class="border-t-0" hidden>
+                <Td colspan="3" class="pt-0 pb-4">
+                  <div>
                     <dl
                       class="grid grid-cols-(--grid-cols) gap-x-6 gap-y-3"
                       style="--grid-cols: auto 1fr"
                     >
-                      <dt class="font-bold">Feature bundle</dt>
+                      <dt class="font-semibold">Feature bundle</dt>
                       <dd>
                         <MarkdownCode>{preset.featureBundle}</MarkdownCode>
                       </dd>
 
-                      <dt class="font-bold">Features</dt>
+                      <dt class="font-semibold">Features</dt>
                       <dd>
                         {preset.features.length > 0
                           ? listFormat
@@ -121,7 +119,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                           : "–"}
                       </dd>
 
-                      <dt class="font-bold">Skins</dt>
+                      <dt class="font-semibold">Skins</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
                           {preset.react.skins.length > 0
@@ -156,7 +154,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                         </FrameworkCase>
                       </dd>
 
-                      <dt class="font-bold">Default media element</dt>
+                      <dt class="font-semibold">Default media element</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
                           <MarkdownCode>{`<${preset.react.mediaElement}>`}</MarkdownCode>

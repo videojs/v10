@@ -1,143 +1,108 @@
 ---
-import GithubSlugger from 'github-slugger';
-import { ArrowUpRight } from 'lucide-react';
-import DropdownIcon from '@/assets/icons/dropdown-arrow.svg?react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
 
+/**
+ * One flat sidebar entry. Depth 0 is a section heading inside the active tab, deeper sections render as sub-headings,
+ * and guides render as links. Nothing collapses.
+ */
 type Props = {
   item: SidebarItemType;
   framework: SupportedFramework;
   docTitles: Map<string, string>;
   docStabilities: Map<string, DocStability | undefined>;
   depth?: number;
+  /** View-transition name for the active link's indicator; see `DocsSidebar`. */
+  indicatorTransitionName?: string;
 };
 
-const { item, framework, docTitles, docStabilities, depth = 0 } = Astro.props;
+const { item, framework, docTitles, docStabilities, depth = 0, indicatorTransitionName } = Astro.props;
 const currentPath = Astro.url.pathname;
-const slugger = new GithubSlugger();
+const isHidden = !isSection(item) && !isLink(item) && item.hidden === true;
 const stability = !isSection(item) && !isLink(item) ? docStabilities.get(item.slug) : undefined;
+const isActive = !isSection(item) && !isLink(item) && `/docs/framework/${framework}/${item.slug}` === currentPath;
 
-// Helper to check if this item or any of its children contains the active path
-function containsActivePath(item: SidebarItemType): boolean {
-  if (isSection(item)) {
-    return item.contents.some((child) => containsActivePath(child));
-  } else if (isLink(item)) {
-    return false;
-  } else {
-    const itemPath = `/docs/framework/${framework}/${item.slug}`;
-
-    return itemPath === currentPath;
-  }
-}
-
-const isActive = containsActivePath(item);
-
-function getGroup(depth: number) {
-  if (depth === 0) return 'group';
-
-  if (depth === 1) return 'group/1';
-
-  if (depth === 2) return 'group/2';
-
-  return '';
-}
-function getGroupMargin(depth: number) {
-  if (depth === 1) return 'group-open/1:mb-1';
-
-  if (depth === 2) return 'group-open/2:mb-1';
-
-  return '';
-}
-function getGroupRotate(depth: number) {
-  if (depth === 0) return 'group-open:rotate-180';
-
-  if (depth === 1) return 'group-open/1:rotate-180';
-
-  if (depth === 2) return 'group-open/2:rotate-180';
-
-  return '';
-}
+// The active indicator is a separate element rather than the link's own border so a view transition can move it.
+const linkClass = [
+  "relative -ml-px flex items-center gap-2 border-l border-transparent py-1.5 pl-4 text-p3 leading-5 select-none",
+  isActive
+    ? "font-semibold text-faded-black dark:text-manila-light"
+    : "text-muted intent:border-line-strong intent:text-faded-black dark:intent:text-manila-light",
+];
 ---
 
 {
-  isSection(item) ? (
-    <details
-      id={slugger.slug(item.sidebarLabel)}
-      open={isActive || item.defaultOpen !== false}
-      class:list={[getGroup(depth), depth === 0 && "my-4 first:mt-0"]}
-    >
-      <summary
-        class:list={[
-          "flex items-center gap-4 py-2 text-faded-black dark:text-manila-light",
-          "cursor-pointer",
-          depth === 0
-            ? "font-display text-h4 uppercase font-bold"
-            : "text-p3",
-          depth > 0 && "pl-4",
-          depth > 0 && isActive &&
-            "relative before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-orange",
-          getGroupMargin(depth),
-        ]}
-        style={
-          depth ? `margin-left: calc(var(--spacing) * ${(depth - 1) * 4})` : ``
-        }
-      >
-        <span class="flex-1">{item.sidebarLabel}</span>
-        <DropdownIcon
-          width={"0.5rem"}
-          className={getGroupRotate(depth)}
-          aria-hidden="true"
-        />
-      </summary>
-      <div class="relative">
-        <span
-          aria-hidden="true"
-          class="absolute inset-y-0 w-px bg-manila-75 dark:bg-warm-gray"
-          style={`left: calc(var(--spacing) * ${depth * 4})`}
-        />
-        {item.contents.map((contentItem) => (
-          <Astro.self
-            item={contentItem}
-            framework={framework}
-            docTitles={docTitles}
-            docStabilities={docStabilities}
-            depth={depth + 1}
-          />
-        ))}
+  isHidden ? null : isSection(item) ? (
+    depth === 0 ? (
+      <section class="mb-7 last:mb-0">
+        <h3 class="mb-2 font-display text-h4 uppercase text-faded-black select-none dark:text-manila-light">
+          {item.sidebarLabel}
+        </h3>
+        <ul class="border-l border-line">
+          {item.contents.map((contentItem) => (
+            <li>
+              <Astro.self
+                item={contentItem}
+                framework={framework}
+                docTitles={docTitles}
+                docStabilities={docStabilities}
+                depth={depth + 1}
+                indicatorTransitionName={indicatorTransitionName}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : (
+      <div class="mt-3 mb-1">
+        <p
+          class="py-1 pl-4 text-p4 font-semibold tracking-wide text-muted uppercase select-none"
+          style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
+        >
+          {item.sidebarLabel}
+        </p>
+        <ul>
+          {item.contents.map((contentItem) => (
+            <li>
+              <Astro.self
+                item={contentItem}
+                framework={framework}
+                docTitles={docTitles}
+                docStabilities={docStabilities}
+                depth={depth + 1}
+                indicatorTransitionName={indicatorTransitionName}
+              />
+            </li>
+          ))}
+        </ul>
       </div>
-    </details>
+    )
   ) : isLink(item) ? (
     <a
-      class:list={[
-        "flex items-center gap-1.5 py-2 text-p3 text-faded-black dark:text-manila-light",
-        "cursor-pointer",
-        depth === 0 && "font-bold",
-        depth > 0 && "pl-4",
-      ]}
-      style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
+      class:list={linkClass}
+      style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
       href={item.href}
     >
       {item.devOnly ? "[Dev only] " : ""}
-      {item.sidebarLabel}
-      <ArrowUpRight size="1em" aria-hidden="true" />
+      <span class="min-w-0 flex-1">{item.sidebarLabel}</span>
+      <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
     </a>
   ) : (
     <a
       aria-current={isActive ? "page" : undefined}
-      class:list={[
-        "flex items-center gap-4 py-2 text-p3 text-faded-black dark:text-manila-light",
-        "cursor-pointer",
-        depth === 0 && "font-bold",
-        depth > 0 && "pl-4",
-        depth > 0 && isActive && "font-bold",
-        depth > 0 && isActive &&
-          "relative before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-orange",
-      ]}
-      style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
+      class:list={linkClass}
+      style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
       href={`/docs/framework/${framework}/${item.slug}`}
     >
+      {isActive && (
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-0 -left-px w-px bg-accent"
+          style={indicatorTransitionName ? `view-transition-name: ${indicatorTransitionName}` : undefined}
+        />
+      )}
       {item.devOnly ? "[Dev only] " : ""}
       <span class="min-w-0 flex-1">
         {item.sidebarLabel || docTitles.get(item.slug) || item.slug}
@@ -146,12 +111,3 @@ function getGroupRotate(depth: number) {
     </a>
   )
 }
-
-<style>
-  summary {
-    list-style: none;
-  }
-  summary::-webkit-details-marker {
-    display: none;
-  }
-</style>

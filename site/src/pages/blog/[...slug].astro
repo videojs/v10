@@ -7,6 +7,7 @@ import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import { PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
+import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
@@ -54,6 +55,7 @@ const jsonLdSchema = createBlogPostingSchema({
   image={post.data.ogImage}
   twitterImage={post.data.twitterImage}
 >
+  <MarkdownAlternate slot="head" />
   <JsonLd slot="head" schema={jsonLdSchema} />
   <article
     class="@container text-p2 sm:text-p15"
@@ -67,7 +69,7 @@ const jsonLdSchema = createBlogPostingSchema({
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
       <div
-        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-orange uppercase sm:flex-row sm:gap-4"
+        class="mb-4 flex flex-col gap-2 font-display text-h3 font-bold text-accent uppercase sm:flex-row sm:gap-4"
       >
         <FormattedDate date={post.data.pubDate} />
         <span class="hidden sm:inline">&bull;</span>
@@ -75,7 +77,10 @@ const jsonLdSchema = createBlogPostingSchema({
           >{remarkPluginFrontmatter.minutesRead}</span
         >
       </div>
-      <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
+      <h1
+        class="mb-3 font-display text-h2 leading-tight uppercase text-balance sm:text-(length:--blog-title)"
+        style="--blog-title: 2.75rem"
+      >
         {post.data.title}
       </h1>
       <div class="">

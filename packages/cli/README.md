@@ -34,7 +34,7 @@ videojs docs concepts/overview
 Generate a framework-specific installation snippet interactively:
 
 ```bash
-videojs docs how-to/installation \
+videojs docs guides/installation \
   --framework react \
   --preset video \
   --skin default \
@@ -46,7 +46,7 @@ videojs docs how-to/installation \
 Presets are `video`, `audio`, `live-video`, `live-audio`, and `background-video`. Live video supports HLS and Mux video; live audio supports Mux audio:
 
 ```bash
-videojs docs how-to/installation \
+videojs docs guides/installation \
   --framework html \
   --preset live-video \
   --skin default \

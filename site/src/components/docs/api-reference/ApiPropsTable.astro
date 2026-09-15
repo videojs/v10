@@ -4,14 +4,10 @@
  *
  * Props are sorted: required first, then alphabetical.
  */
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { PropDef } from '@/types/component-reference';
 import type { SupportedFramework } from '@/types/docs';
 import type { FeatureConfigDef } from '@/types/feature-reference';
+import ApiTable from './ApiTable.astro';
 import PropRow from './PropRow.astro';
 
 interface Props {
@@ -22,36 +18,26 @@ interface Props {
 }
 
 const { props, componentName, framework, showAttributeName } = Astro.props;
+
+const entries = Object.entries(props).filter(([, prop]) => !prop.frameworks || prop.frameworks.includes(framework));
+const toggleColumn = entries.some(([, prop]) => Boolean(prop.detailedType));
 ---
 
-<Table maxWidth={false} outerClass="my-6">
-  <Thead>
-    <Tr>
-      <Th>Prop</Th>
-      <Th>Type</Th>
-      <Th>Default</Th>
-      <Th>Details</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {
-      Object.entries(props)
-        .filter(
-          ([, prop]) => !prop.frameworks || prop.frameworks.includes(framework),
-        )
-        .map(([name, prop]) => (
-          <PropRow
-            name={name}
-            type={prop.type}
-            detailedType={prop.detailedType}
-            description={prop.description}
-            defaultValue={prop.default}
-            required={prop.required}
-            showAttributeName={showAttributeName}
-            attribute={"attribute" in prop ? prop.attribute : undefined}
-            componentName={componentName}
-          />
-        ))
-    }
-  </Tbody>
-</Table>
+<ApiTable columns={["Prop", "Type", "Default"]} toggle={toggleColumn}>
+  {
+    entries.map(([name, prop]) => (
+      <PropRow
+        name={name}
+        type={prop.type}
+        detailedType={prop.detailedType}
+        description={prop.description}
+        defaultValue={prop.default}
+        required={prop.required}
+        showAttributeName={showAttributeName}
+        attribute={"attribute" in prop ? prop.attribute : undefined}
+        componentName={componentName}
+        toggleColumn={toggleColumn}
+      />
+    ))
+  }
+</ApiTable>

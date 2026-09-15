@@ -1,22 +1,26 @@
 import { useStore } from '@nanostores/react';
-import { Code2, Minus, Sparkles } from 'lucide-react';
 import { useEffect } from 'react';
 
-import type { ImageRadioOption } from '@/components/ImageRadioGroup';
-import ImageRadioGroup from '@/components/ImageRadioGroup';
+import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import { skin, useCase } from '@/stores/installation';
 import { getInstallationPreset, type Skin } from '@/utils/installation/types';
 
-const VIDEO_SKINS: ImageRadioOption<Skin>[] = [
-  { value: 'video', label: 'Default', image: <Sparkles size={32} /> },
-  { value: 'minimal-video', label: 'Minimal', image: <Minus size={32} /> },
-  { value: 'none', label: 'No Skin', image: <Code2 size={32} /> },
+import SkinPreview from './SkinPreview';
+
+function option(value: Skin, label: string, description: string): CardRadioOption<Skin> {
+  return { value, label, description, media: <SkinPreview skin={value} className="size-6" /> };
+}
+
+const VIDEO_SKINS: CardRadioOption<Skin>[] = [
+  option('video', 'Default', 'Full controls, menus, captions, and dialogs'),
+  option('minimal-video', 'Minimal', 'Play, seek, and volume, nothing else'),
+  option('none', 'No skin', 'Bring your own UI built from the components'),
 ];
 
-const AUDIO_SKINS: ImageRadioOption<Skin>[] = [
-  { value: 'audio', label: 'Default', image: <Sparkles size={32} /> },
-  { value: 'minimal-audio', label: 'Minimal', image: <Minus size={32} /> },
-  { value: 'none', label: 'No Skin', image: <Code2 size={32} /> },
+const AUDIO_SKINS: CardRadioOption<Skin>[] = [
+  option('audio', 'Default', 'Full controls, menus, and a waveform-ready layout'),
+  option('minimal-audio', 'Minimal', 'Play, seek, and volume, nothing else'),
+  option('none', 'No skin', 'Bring your own UI built from the components'),
 ];
 
 export default function SkinPicker() {
@@ -35,6 +39,12 @@ export default function SkinPicker() {
   }, [options]);
 
   return (
-    <ImageRadioGroup value={$skin} onChange={(value) => skin.set(value)} options={options} aria-label="Select skin" />
+    <CardRadioGroup
+      value={$skin}
+      onChange={(value) => skin.set(value)}
+      options={options}
+      aria-label="Select skin"
+      minColumnWidth="12rem"
+    />
   );
 }

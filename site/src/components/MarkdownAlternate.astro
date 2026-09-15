@@ -1,0 +1,12 @@
+---
+import { PRODUCTION_URL } from '@/consts';
+
+/**
+ * Advertises the page's Markdown twin so agents and tools can discover it from the HTML head instead of guessing the
+ * `.md` convention. Only pages the llms-markdown integration converts should render this.
+ */
+const pathname = Astro.url.pathname.replace(/\/+$/, '');
+const href = new URL(`${pathname}.md`, PRODUCTION_URL).href;
+---
+
+<link rel="alternate" type="text/markdown" href={href} />

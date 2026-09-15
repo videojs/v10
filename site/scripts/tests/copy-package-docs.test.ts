@@ -70,16 +70,16 @@ describe('stripFooter', () => {
 
 describe('rewriteLinks', () => {
   it('rewrites an absolute same-framework .md link to a relative path', () => {
-    const input = '- [Installation](https://videojs.org/docs/framework/react/how-to/installation.md): desc';
+    const input = '- [Installation](https://videojs.org/docs/framework/react/guides/installation.md): desc';
 
-    expect(rewriteLinks(input, 'llms', 'react')).toBe('- [Installation](./how-to/installation.md): desc');
+    expect(rewriteLinks(input, 'llms', 'react')).toBe('- [Installation](./guides/installation.md): desc');
   });
 
   it('rewrites a root-relative same-framework link with a trailing slash', () => {
-    const input = 'See [Play Button](/docs/framework/react/reference/play-button/) for details.';
+    const input = 'See [Play Button](/docs/framework/react/components/play-button/) for details.';
 
     expect(rewriteLinks(input, 'concepts/overview', 'react')).toBe(
-      'See [Play Button](../reference/play-button.md) for details.'
+      'See [Play Button](../components/play-button.md) for details.'
     );
   });
 
@@ -90,13 +90,13 @@ describe('rewriteLinks', () => {
   });
 
   it('preserves a fragment when rewriting', () => {
-    const input = '[Section](https://videojs.org/docs/framework/react/reference/play-button.md#props)';
+    const input = '[Section](https://videojs.org/docs/framework/react/components/play-button.md#props)';
 
-    expect(rewriteLinks(input, 'llms', 'react')).toBe('[Section](./reference/play-button.md#props)');
+    expect(rewriteLinks(input, 'llms', 'react')).toBe('[Section](./components/play-button.md#props)');
   });
 
   it('does not touch links to a different framework', () => {
-    const input = '[HTML docs](https://videojs.org/docs/framework/html/how-to/installation.md)';
+    const input = '[HTML docs](https://videojs.org/docs/framework/html/guides/installation.md)';
 
     expect(rewriteLinks(input, 'llms', 'react')).toBe(input);
   });
@@ -110,13 +110,13 @@ describe('rewriteLinks', () => {
   it('preserves the .txt extension when rewriting a link to llms.txt', () => {
     const input = '[index](https://videojs.org/docs/framework/react/llms.txt)';
 
-    expect(rewriteLinks(input, 'how-to/build-with-ai', 'react')).toBe('[index](../llms.txt)');
+    expect(rewriteLinks(input, 'guides/build-with-ai', 'react')).toBe('[index](../llms.txt)');
   });
 
   it('leaves bare framework-root URLs alone (empty slug)', () => {
     const input = '[Docs](https://videojs.org/docs/framework/react/)';
 
-    expect(rewriteLinks(input, 'how-to/build-with-ai', 'react')).toBe(input);
+    expect(rewriteLinks(input, 'guides/build-with-ai', 'react')).toBe(input);
   });
 
   it('does not rewrite URLs that appear inside link text (e.g. code spans)', () => {
@@ -124,7 +124,7 @@ describe('rewriteLinks', () => {
     // target inside `(...)` should be rewritten.
     const input = '[`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt)';
 
-    expect(rewriteLinks(input, 'how-to/build-with-ai', 'react')).toBe(
+    expect(rewriteLinks(input, 'guides/build-with-ai', 'react')).toBe(
       '[`videojs.org/docs/framework/react/llms.txt`](../llms.txt)'
     );
   });
@@ -175,7 +175,7 @@ describe('packageDocumentation', () => {
       fixture.siteDist,
       'react',
       'concepts/overview.md',
-      `[Install](https://videojs.org/docs/framework/react/how-to/installation.md)${footer}`
+      `[Install](https://videojs.org/docs/framework/react/guides/installation.md)${footer}`
     );
 
     expect(
@@ -187,14 +187,14 @@ describe('packageDocumentation', () => {
       })
     ).toBe(1);
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/concepts/overview.md'), 'utf-8')).toBe(
-      '[Install](../how-to/installation.md)'
+      '[Install](../guides/installation.md)'
     );
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/README.md'), 'utf-8')).toContain('v10.0.0-test');
   });
 
   it('packages both CLI frameworks while preserving online links', () => {
     const fixture = createFixture();
-    const link = '[Install](https://videojs.org/docs/framework/react/how-to/installation.md)';
+    const link = '[Install](https://videojs.org/docs/framework/react/guides/installation.md)';
 
     writeDoc(
       fixture.siteDist,

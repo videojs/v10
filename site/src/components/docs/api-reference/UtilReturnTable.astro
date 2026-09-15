@@ -7,16 +7,11 @@
  * - Mode 2: Simple return with detailedType/description → single-row disclosure table
  * - Mode 3: Simple return without detail → inline type text
  */
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Td from '@/components/typography/Td.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { ReturnValue } from '@/types/util-reference';
+import ApiTable from './ApiTable.astro';
 import DetailRow from './DetailRow.astro';
+import InlineCode from './InlineCode.astro';
 import InlineMarkdown from './InlineMarkdown.astro';
 import StateRow from './StateRow.astro';
 
@@ -27,58 +22,44 @@ interface Props {
 
 const { returnValue, utilName } = Astro.props;
 
-const hasFields = returnValue.fields && Object.keys(returnValue.fields).length > 0;
+const fields = Object.entries(returnValue.fields ?? {});
+const hasFields = fields.length > 0;
 const hasDetail = !hasFields && Boolean(returnValue.detailedType || returnValue.description);
+const fieldsToggleColumn = fields.some(([, field]) => Boolean(field.detailedType));
 ---
 
 {
   hasFields ? (
-    <Table maxWidth={false} outerClass="my-6">
-      <Thead>
-        <Tr>
-          <Th>Property</Th>
-          <Th>Type</Th>
-          <Th>Details</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {Object.entries(returnValue.fields!).map(([name, field]) => (
-          <StateRow
-            name={name}
-            type={field.type}
-            detailedType={field.detailedType}
-            description={field.description}
-            componentName={`${utilName}-return`}
-          />
-        ))}
-      </Tbody>
-    </Table>
+    <ApiTable columns={["Property", "Type"]} toggle={fieldsToggleColumn}>
+      {fields.map(([name, field]) => (
+        <StateRow
+          name={name}
+          type={field.type}
+          detailedType={field.detailedType}
+          description={field.description}
+          componentName={`${utilName}-return`}
+          toggleColumn={fieldsToggleColumn}
+        />
+      ))}
+    </ApiTable>
   ) : hasDetail ? (
-    <Table maxWidth={false} outerClass="my-6">
-      <Thead>
-        <Tr>
-          <Th>Type</Th>
-          <Th>Details</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        <DetailRow
-          id={`${utilName}-return-type`}
-          name="return type"
-          type={returnValue.type}
-          detailedType={returnValue.detailedType}
-          description={returnValue.description}
-          colspan={2}
-        >
-          <Td>
-            <MarkdownCode>{returnValue.type}</MarkdownCode>
-          </Td>
-        </DetailRow>
-      </Tbody>
-    </Table>
+    <ApiTable columns={["Type"]} toggle={Boolean(returnValue.detailedType)}>
+      <DetailRow
+        id={`${utilName}-return-type`}
+        name="return type"
+        detailedType={returnValue.detailedType}
+        description={returnValue.description}
+        colspan={1}
+        toggleColumn={Boolean(returnValue.detailedType)}
+      >
+        <td class="w-full">
+          <InlineCode code={returnValue.type} />
+        </td>
+      </DetailRow>
+    </ApiTable>
   ) : (
     <P>
-      <MarkdownCode>{returnValue.type}</MarkdownCode>
+      <InlineCode code={returnValue.type} />
       {returnValue.description && (
         <>
           {" — "}

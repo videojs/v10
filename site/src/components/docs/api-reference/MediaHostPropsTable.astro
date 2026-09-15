@@ -7,14 +7,10 @@
  * properties on the element instance.
  */
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Td from '@/components/typography/Td.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { HostPropertyDef } from '@/types/media-reference';
+import ApiTable from './ApiTable.astro';
 import DetailRow from './DetailRow.astro';
+import InlineCode from './InlineCode.astro';
 
 interface Props {
   hostProperties: Record<string, HostPropertyDef>;
@@ -27,44 +23,31 @@ const { hostProperties, componentName, nameLabel = 'Property' } = Astro.props;
 const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompare(b));
 ---
 
-<Table maxWidth={false} outerClass="my-6">
-  <Thead>
-    <Tr>
-      <Th>{nameLabel}</Th>
-      <Th>Type</Th>
-      <Th>Default</Th>
-      <Th>Details</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {
-      entries.map(([name, def]) => {
-        const id = `${componentName}-${name}`;
-        const readonlyNote = def.readonly ? "Read-only." : undefined;
-        const description =
-          [readonlyNote, def.description].filter(Boolean).join(" ") ||
-          undefined;
+<ApiTable columns={[nameLabel, "Type", "Default"]}>
+  {
+    entries.map(([name, def]) => {
+      const id = `${componentName}-${name}`;
+      const readonlyNote = def.readonly ? "Read-only." : undefined;
+      const description =
+        [readonlyNote, def.description].filter(Boolean).join(" ") || undefined;
 
-        return (
-          <DetailRow
-            id={id}
-            name={name}
-            type={def.type}
-            description={description}
-            colspan={4}
-          >
-            <Td class="align-top">
-              <MarkdownCode>{name}</MarkdownCode>
-            </Td>
-            <Td class="align-top">
-              <MarkdownCode>{def.type}</MarkdownCode>
-            </Td>
-            <Td class="align-top">
-              <MarkdownCode>{def.default ?? "—"}</MarkdownCode>
-            </Td>
-          </DetailRow>
-        );
-      })
-    }
-  </Tbody>
-</Table>
+      return (
+        <DetailRow id={id} name={name} description={description} colspan={3}>
+          <td>
+            <MarkdownCode>{name}</MarkdownCode>
+          </td>
+          <td class="w-full">
+            <InlineCode code={def.type} />
+          </td>
+          <td>
+            {def.default ? (
+              <InlineCode code={def.default} />
+            ) : (
+              <span class="text-muted">—</span>
+            )}
+          </td>
+        </DetailRow>
+      );
+    })
+  }
+</ApiTable>

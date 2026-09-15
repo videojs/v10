@@ -217,8 +217,12 @@ export function getAdjacentGuides(
   // Get the filtered sidebar for this framework
   const filteredSidebar = filterSidebar(framework);
 
-  // Flatten the sidebar to get all guides in order
-  const allGuides = getAllGuideSlugs(filteredSidebar);
+  // Flatten the sidebar to get all guides in order, skipping pages the sidebar doesn't list
+  const allGuides = getAllGuideSlugs(filteredSidebar).filter((guideSlug) => {
+    const guide = findGuideBySlug(guideSlug, filteredSidebar);
+
+    return guideSlug === currentSlug || !guide?.hidden;
+  });
 
   // Find the current guide's index
   const currentIndex = allGuides.indexOf(currentSlug);

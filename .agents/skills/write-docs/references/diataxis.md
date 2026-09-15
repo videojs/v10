@@ -1,6 +1,6 @@
 # Diátaxis boundaries and language
 
-Distilled from [Diátaxis](https://diataxis.fr/). The document-type map and the compass for picking a mode live in `site/src/content/docs/how-to/write-guides.mdx`. Read this file when content drifts between modes or a passage's tone feels wrong for its page type.
+Distilled from [Diátaxis](https://diataxis.fr/). The document-type map and the compass for picking a mode live in `site/src/content/docs/writing-style/write-guides.mdx`. Read this file when content drifts between modes or a passage's tone feels wrong for its page type.
 
 ## Apply the compass to passages, not only pages
 
@@ -25,3 +25,7 @@ Each mode has characteristic sentence forms. When your sentences read like a dif
 ## Reference tone
 
 Reference is austere by design: neutral, consistent, and example-rich. Its value is accuracy, completeness, and predictable structure. The api-docs-builder provides the structure; hold hand-written prose on reference pages to the same standard, and spend warmth and persuasion in how-tos and concepts instead.
+
+## What the site checks
+
+Hand-written pages, concept and how-to alike, live in `site/src/content/docs/guides/`; builder-backed pages live in `reference/`. `site/src/utils/docs/diataxis.ts` guards that line through `pnpm -F site test diataxis`: no title starts with "How to", and no reference page carries a how-to template section (Recommended approach, How it works, Common variations, Troubleshooting) or `<CustomUiNote />`. Concept versus how-to inside guides is a writing and review judgement; the same test prints task-verb headings on pages under the Concepts sidebar section as warnings without failing. When a page moves or is renamed, add `redirectFrom` with the old slug to its sidebar entry.

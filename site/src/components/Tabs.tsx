@@ -12,9 +12,10 @@
  */
 
 import clsx from 'clsx';
-import { Check } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
+import Check from '@/assets/icons/check.svg?react';
+import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
 import useIsHydrated from '@/utils/useIsHydrated';
@@ -32,55 +33,28 @@ interface TabsRootProps {
 }
 export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'compact' }: TabsRootProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isHydrated = useIsHydrated();
 
-  /**
-   * When this component initializes, it generates an ID for itself, and then uses that ID to
-   *
-   * - Set [role="tab"] ID
-   * - Set [role="tab"][aria-controls]
-   * - Set [role="tabpanel"] ID
-   * - Set [role="tabpanel"][aria-labelledby]
-   *
-   * This allows tabs and tabpanels to be associated without relying on context or parent-child relationships, as well
-   * as complying with WAI-ARIA authoring practices.
-   */
-  useEffect(() => {
-    // I know this isHydrated check looks weird,
-    // but it actually delays this effect until later,
-    // giving tab and tabpanel elements time to mount.
-    if (!isHydrated) return;
-
-    const id = propId || Date.now().toString();
-    const tabs = ref.current?.querySelectorAll('[role="tab"]') || [];
-    const panels = ref.current?.querySelectorAll('[role="tabpanel"]') || [];
-
-    tabs.forEach((tab) => {
-      const value = tab.getAttribute('data-value');
-
-      tab.id = `tab-${id}-${value}`;
-      tab.setAttribute('aria-controls', `panel-${id}-${value}`);
-    });
-    panels.forEach((panel) => {
-      const value = panel.getAttribute('data-value');
-
-      panel.id = `panel-${id}-${value}`;
-      panel.setAttribute('aria-labelledby', `tab-${id}-${value}`);
-    });
-  }, [isHydrated, propId]);
+  // A stable id shared with the tab and panel islands through the DOM. `useId` matches between server and client, so
+  // the descendants can derive their own ids without a context and without patching attributes after hydration.
+  const generatedId = useId();
+  const id = propId ?? generatedId;
 
   return (
     <div
       ref={ref}
       className={twMerge(
         clsx(
-          'overflow-hidden flex flex-col my-8 border border-faded-black dark:border-manila-dark rounded-xs bg-manila-light dark:bg-faded-black',
-          variant === 'compact' && 'border px-2.5 pb-2.5',
+          // The panel background fills the whole frame; the header sits flush on top of it with a hairline divider.
+          'overflow-hidden flex flex-col my-8 rounded-lg corner-squircle border border-faded-black/10 dark:border-line',
+          variant === 'compact'
+            ? 'bg-faded-black dark:bg-soot text-manila-light'
+            : 'bg-manila-light dark:bg-faded-black',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
         )
       )}
       data-tabs-root
+      data-tabs-id={id}
     >
       {children}
     </div>
@@ -94,14 +68,21 @@ interface TabsListProps {
 }
 export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
   return (
-    <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'p-0' : 'px-2.5')}>
+    <div
+      className={clsx(
+        'w-full flex items-center gap-1 h-10 pl-1.5 pr-1.5',
+        variant === 'compact' &&
+          'border-b border-manila-light/10 dark:border-line bg-manila-light/4 dark:bg-warm-gray/60',
+        variant === 'expanded' && 'px-2.5'
+      )}
+    >
       <div
         role="tablist"
         data-orientation="horizontal"
         aria-label={label}
         className={clsx(
-          'flex list-none p-0 m-0',
-          variant === 'compact' ? 'gap-0 border-y border-l border-manila-75' : 'gap-5 px-2.5'
+          'flex list-none p-0 m-0 min-w-0 overflow-x-auto scrollbar-thin',
+          variant === 'compact' ? 'gap-0.5' : 'gap-5 px-2.5'
         )}
       >
         {children}
@@ -112,11 +93,14 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-manila-dark dark:intent:bg-warm-gray rounded-xs'
+          'ml-auto shrink-0 size-7 flex items-center justify-center cursor-pointer disabled:cursor-wait rounded-md corner-squircle',
+          variant === 'compact'
+            ? 'text-manila-light/60 intent:text-manila-light intent:bg-manila-light/10'
+            : 'intent:bg-hover'
         )}
-        copied={<Check size={20} />}
+        copied={<Check className="text-gold size-4" />}
       >
-        <CopyIcon width="1.25rem" height="1.25rem" />
+        <CopyIcon className="size-4" />
       </CopyButton>
     </div>
   );
@@ -132,6 +116,14 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   const isHydrated = useIsHydrated();
   const ref = useRef<HTMLButtonElement>(null);
   const [isActive, setIsActive] = useState(initial);
+  const [ids, setIds] = useState<{ id: string; controls: string } | null>(null);
+
+  // Read the root's id from the DOM after mount so React owns these attributes and hydration stays clean.
+  useEffect(() => {
+    const base = ref.current?.closest('[data-tabs-root]')?.getAttribute('data-tabs-id');
+
+    if (base) setIds({ id: `tab-${base}-${value}`, controls: `panel-${base}-${value}` });
+  }, [value]);
 
   const onClick = () => {
     if (ref.current) {
@@ -228,25 +220,28 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   }, []);
 
   return (
-    <div key={value} className={clsx('flex', variant === 'compact' && 'border-r border-manila-75')}>
+    <div key={value} className="flex shrink-0">
       <button
         ref={ref}
         type="button"
         role="tab"
+        id={ids?.id}
+        aria-controls={ids?.controls}
         aria-selected={isActive}
         tabIndex={isActive ? 0 : -1}
         onClick={onClick}
         onKeyDown={onKeyDown}
         data-value={value}
         className={clsx(
-          'group flex items-center gap-2 text-p3',
+          'group flex items-center gap-2 text-p3 select-none',
           'no-underline',
           variant === 'expanded' && 'uppercase font-display',
-          variant === 'expanded' && isActive && 'text-orange',
-          variant === 'compact' && 'px-2.5 z-0 h-7',
-          variant === 'compact' && isActive
-            ? 'bg-manila-50 dark:bg-warm-gray'
-            : 'intent:bg-manila-dark dark:intent:bg-soot',
+          variant === 'expanded' && isActive && 'text-accent',
+          variant === 'compact' && 'px-2.5 z-0 h-7 rounded-md corner-squircle',
+          variant === 'compact' &&
+            (isActive
+              ? 'bg-manila-light/12 text-manila-light'
+              : 'text-manila-light/60 intent:text-manila-light intent:bg-manila-light/6'),
           isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
@@ -255,16 +250,16 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
             className={clsx(
               'w-3 h-3 rounded-full border group-hover:bg-manila-dark',
               variant === 'expanded' && 'border-faded-black dark:border-manila-light',
-              isActive && 'bg-orange group-hover:bg-orange'
+              isActive && 'bg-accent group-hover:bg-accent'
             )}
           />
         )}
         <span className="relative">
           {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
-          <span className="invisible font-bold" aria-hidden="true" data-search-ignore data-llms-ignore>
+          <span className="invisible font-semibold" aria-hidden="true" data-search-ignore data-llms-ignore>
             {children}
           </span>
-          <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
+          <span className={clsx('absolute top-0 left-0', isActive && 'font-semibold')}>{children}</span>
         </span>
       </button>
     </div>
@@ -278,9 +273,27 @@ interface TabsPanelProps {
   className?: string;
   variant?: TabsVariant;
 }
+
+/**
+ * Collapsed height for long code. Content that only slightly exceeds the cap is shown in full, since a "Show more"
+ * button that reveals a couple of lines is more annoying than the extra height.
+ */
+const COLLAPSED_MAX_HEIGHT = 512;
+const COLLAPSE_SLACK = 96;
+
 export function TabsPanel({ value, children, initial, className, variant = 'compact' }: TabsPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(initial);
+  const [ids, setIds] = useState<{ id: string; labelledBy: string } | null>(null);
+  const [overflows, setOverflows] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const base = ref.current?.closest('[data-tabs-root]')?.getAttribute('data-tabs-id');
+
+    if (base) setIds({ id: `panel-${base}-${value}`, labelledBy: `tab-${base}-${value}` });
+  }, [value]);
 
   // Observe the corresponding Tab element's data-tab-active attribute
   // to sync panel visibility with tab activation
@@ -307,18 +320,95 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
     };
   }, [value]);
 
+  // A hidden panel has no layout, so measure once it is shown. The content's natural height decides whether the
+  // collapse affordance is needed at all.
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!isActive || !content) return;
+
+    const measure = () => setOverflows(content.scrollHeight > COLLAPSED_MAX_HEIGHT + COLLAPSE_SLACK);
+
+    measure();
+    const observer = new ResizeObserver(measure);
+
+    observer.observe(content);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isActive]);
+
+  const collapsed = overflows && !expanded;
+
+  const onCollapse = () => {
+    setExpanded(false);
+
+    // Collapsing from the bottom of a long block would otherwise leave the reader below the frame.
+    const root = ref.current?.closest('[data-tabs-root]');
+
+    if (root && root.getBoundingClientRect().top < 0) root.scrollIntoView({ block: 'start' });
+  };
+
+  const buttonClassName = clsx(
+    'flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full corner-squircle text-p3 font-semibold cursor-pointer select-none',
+    variant === 'compact'
+      ? 'bg-warm-gray text-manila-light border border-manila-light/15 intent:border-manila-light/30'
+      : 'bg-surface-raised border border-line intent:border-line-strong'
+  );
+
   return (
     <div
       ref={ref}
       role="tabpanel"
+      id={ids?.id}
+      aria-labelledby={ids?.labelledBy}
       hidden={!isActive}
       data-value={value}
-      className={twMerge(
-        clsx('overflow-auto p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
-        className
-      )}
+      className={twMerge(clsx('relative flex-1 min-h-0'), className)}
     >
-      {children}
+      <div
+        ref={contentRef}
+        className={clsx('overflow-x-auto scrollbar-thin px-7 py-5', collapsed && 'overflow-y-hidden')}
+        style={collapsed ? { maxHeight: COLLAPSED_MAX_HEIGHT } : undefined}
+      >
+        {children}
+      </div>
+      {collapsed && (
+        <div
+          className={clsx(
+            'pointer-events-none absolute inset-x-0 bottom-0 flex h-28 items-end justify-center pb-4 bg-linear-to-t to-transparent',
+            variant === 'compact' ? 'from-faded-black dark:from-soot' : 'from-manila-light dark:from-faded-black'
+          )}
+          data-copy-ignore
+          data-search-ignore
+          data-llms-ignore
+        >
+          <button
+            type="button"
+            className={clsx(buttonClassName, 'pointer-events-auto')}
+            onClick={() => setExpanded(true)}
+          >
+            <ChevronDown className="size-4" />
+            Show more
+          </button>
+        </div>
+      )}
+      {overflows && expanded && (
+        <div
+          className={clsx(
+            'flex justify-center border-t py-3',
+            variant === 'compact' ? 'border-manila-light/10 dark:border-line' : 'border-line'
+          )}
+          data-copy-ignore
+          data-search-ignore
+          data-llms-ignore
+        >
+          <button type="button" className={buttonClassName} onClick={onCollapse}>
+            <ChevronDown className="size-4 rotate-180" />
+            Show less
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,9 +3,44 @@ export const FRAMEWORK_STYLES = {
   html: ['css'],
 } as const;
 
-export const DOC_STABILITIES = ['beta'] as const;
+export const DOC_STABILITIES = ['experimental'] as const;
 
 export type DocStability = (typeof DOC_STABILITIES)[number];
+
+/** The kind of docs page, derived from its content folder and never declared by hand. */
+export const DOC_TYPES = ['guide', 'reference'] as const;
+
+export type DocType = (typeof DOC_TYPES)[number];
+
+export const DOC_TYPE_LABELS = {
+  guide: 'Guide',
+  reference: 'Reference',
+} satisfies Record<DocType, string>;
+
+// The authoring guides under writing-style are dev-only how-tos for contributors.
+const DOC_TYPE_FOLDERS = new Map<string, DocType>([
+  ['guides', 'guide'],
+  ['reference', 'reference'],
+  ['writing-style', 'guide'],
+]);
+
+/**
+ * Resolve the document type from a docs collection id such as `guides/autoplay`. The folder is the single source of
+ * truth: guides hold every hand-written page, how-to or explanation alike, and reference holds the builder-backed
+ * pages. There is no frontmatter override.
+ */
+export function getDocTypeFromId(id: string): DocType {
+  const folder = id.split('/')[0] ?? '';
+  const type = DOC_TYPE_FOLDERS.get(folder);
+
+  if (!type) {
+    throw new Error(
+      `Docs entry "${id}" is not inside a typed folder. Place it under one of: ${[...DOC_TYPE_FOLDERS.keys()].join(', ')}.`
+    );
+  }
+
+  return type;
+}
 
 export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
 export type SupportedStyle<F extends SupportedFramework> = (typeof FRAMEWORK_STYLES)[F][number];
@@ -57,6 +92,13 @@ export interface Guide {
   sidebarLabel?: string; // defaults to guide title
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
+  /** Build the page and keep it in breadcrumbs and llms.txt, but leave it out of the sidebar list and prev/next. */
+  hidden?: boolean;
+  /**
+   * Slugs this page used to live at, such as `concepts/security`. Each one redirects here for every framework the page
+   * renders in, so moving a page between type folders costs one line. Old slugs must not exist as pages.
+   */
+  redirectFrom?: string[];
 }
 
 // Plain link to a page outside the docs (e.g. /changelog) — rendered with an
@@ -73,7 +115,6 @@ export interface Section {
   llmsDescription?: string;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
-  defaultOpen?: boolean;
   contents: Array<Guide | Section | SidebarLink>;
 }
 

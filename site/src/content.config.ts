@@ -5,7 +5,7 @@ import { z } from 'astro/zod';
 import { defineCollection, reference } from 'astro:content';
 
 import { ComponentReferenceSchema } from './types/component-reference';
-import { DOC_STABILITIES, SUPPORTED_FRAMEWORKS } from './types/docs';
+import { DOC_STABILITIES, DOC_TYPES, getDocTypeFromId, SUPPORTED_FRAMEWORKS } from './types/docs';
 import { FeatureReferenceSchema } from './types/feature-reference';
 import { MediaReferenceSchema } from './types/media-reference';
 import { PresetReferenceSchema } from './types/preset-reference';
@@ -82,11 +82,12 @@ const docs = defineCollection({
       // Get updatedDate from git history
       const updatedDate = entry.filePath ? await gitService.getLastModifiedDate(entry.filePath) : null;
 
-      // Return transformed entry with added field if updatedDate exists
+      // The folder decides the Diátaxis type; it overrides anything an author writes in frontmatter.
       return {
         ...entry,
         data: {
           ...entry.data,
+          type: getDocTypeFromId(entry.id),
           ...(updatedDate ? { updatedDate } : {}),
         },
       };
@@ -95,6 +96,7 @@ const docs = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
+    type: z.enum(DOC_TYPES),
     updatedDate: z.coerce.date().optional(),
     ogTitle: z.string().optional(),
     stability: z.enum(DOC_STABILITIES).optional(),

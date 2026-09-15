@@ -3,12 +3,8 @@
  * Renders the parameters table for util reference.
  * Reuses PropRow.astro since ParamDef has the same shape as PropDef.
  */
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { ParamDef } from '@/types/util-reference';
+import ApiTable from './ApiTable.astro';
 import PropRow from './PropRow.astro';
 
 interface Props {
@@ -17,30 +13,24 @@ interface Props {
 }
 
 const { params, utilName } = Astro.props;
+
+const entries = Object.entries(params);
+const toggleColumn = entries.some(([, param]) => Boolean(param.detailedType));
 ---
 
-<Table maxWidth={false} outerClass="my-6">
-  <Thead>
-    <Tr>
-      <Th>Parameter</Th>
-      <Th>Type</Th>
-      <Th>Default</Th>
-      <Th>Details</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {
-      Object.entries(params).map(([name, param]) => (
-        <PropRow
-          name={name}
-          type={param.type}
-          detailedType={param.detailedType}
-          description={param.description}
-          defaultValue={param.default}
-          required={param.required}
-          componentName={utilName}
-        />
-      ))
-    }
-  </Tbody>
-</Table>
+<ApiTable columns={["Parameter", "Type", "Default"]} toggle={toggleColumn}>
+  {
+    entries.map(([name, param]) => (
+      <PropRow
+        name={name}
+        type={param.type}
+        detailedType={param.detailedType}
+        description={param.description}
+        defaultValue={param.default}
+        required={param.required}
+        componentName={utilName}
+        toggleColumn={toggleColumn}
+      />
+    ))
+  }
+</ApiTable>

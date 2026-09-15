@@ -9,14 +9,14 @@ describe('buildAgnosticDocsUrl', () => {
   });
 
   it('nests the guide slug under /docs', () => {
-    expect(buildAgnosticDocsUrl('how-to/installation')).toBe('/docs/how-to/installation');
+    expect(buildAgnosticDocsUrl('guides/installation')).toBe('/docs/guides/installation');
   });
 });
 
 describe('resolveDocsHref', () => {
   it('returns the agnostic URL when no framework is known', () => {
     expect(resolveDocsHref({ slug: null, framework: null })).toBe('/docs');
-    expect(resolveDocsHref({ slug: 'how-to/installation', framework: null })).toBe('/docs/how-to/installation');
+    expect(resolveDocsHref({ slug: 'guides/installation', framework: null })).toBe('/docs/guides/installation');
   });
 
   it('resolves the first guide for a framework without a slug', () => {
@@ -24,12 +24,12 @@ describe('resolveDocsHref', () => {
   });
 
   it('keeps the slug when the guide exists for the framework', () => {
-    expect(resolveDocsHref({ slug: 'how-to/installation', framework: 'react' })).toBe(
-      '/docs/framework/react/how-to/installation'
+    expect(resolveDocsHref({ slug: 'guides/installation', framework: 'react' })).toBe(
+      '/docs/framework/react/guides/installation'
     );
   });
 
   it('throws for an unknown guide slug', () => {
-    expect(() => resolveDocsHref({ slug: 'how-to/does-not-exist', framework: 'html' })).toThrow(/No guide found/);
+    expect(() => resolveDocsHref({ slug: 'guides/does-not-exist', framework: 'html' })).toThrow(/No guide found/);
   });
 });

@@ -33,19 +33,19 @@ const scopedCss = cssFile && scopeId ? `@scope ([data-demo-scope="${scopeId}"]) 
 ---
 
 <div
-  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border border-faded-black dark:border-manila-dark"
+  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-lg corner-squircle border border-line bg-surface"
 >
   {scopedCss && <style is:inline set:html={scopedCss} />}
-  <div
-    class="relative z-20 bg-manila-light dark:bg-faded-black"
-    data-demo-scope={scopeId}
-  >
-    <slot />
+  {/* The demo sits inside a padded surface so it reads as a component being previewed, like the installation preview. */}
+  <div class="relative z-20 p-5 sm:p-8" data-llms-ignore>
+    <div class="overflow-hidden rounded-2xl" data-demo-scope={scopeId}>
+      <slot />
+    </div>
   </div>
   <TabsRoot
     client:idle
     maxWidth={false}
-    className="my-0 rounded-none border-0 border-t border-faded-black dark:border-manila-dark"
+    className="my-0 rounded-none border-0 border-t border-line"
   >
     <TabsList client:idle label="Demo source code">
       {
