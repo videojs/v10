@@ -4,6 +4,7 @@ import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '..
 import { registryTargets } from './build/registry/targets.ts';
 
 const packageDir = import.meta.dirname;
+const viteIntegrationTests = ['build/tests/vite-hmr.test.ts', 'build/tests/vite.test.ts'];
 const generatedPackageOutputs = [
   { pattern: 'packages/html/src/presets/background/skin.ts', base: 'workspace' as const },
   { pattern: 'packages/html/src/define/background/skin.css', base: 'workspace' as const },
@@ -88,6 +89,14 @@ export default defineConfig({
           name: 'skins',
           root: packageDir,
           include: ['build/**/*.test.ts', 'src/**/*.test.ts'],
+          exclude: viteIntegrationTests,
+        },
+      },
+      {
+        test: {
+          name: 'skins-vite',
+          root: packageDir,
+          include: viteIntegrationTests,
           // These integration tests share Vite and Rolldown package state.
           fileParallelism: false,
         },
