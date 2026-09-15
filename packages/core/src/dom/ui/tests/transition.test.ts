@@ -170,8 +170,10 @@ describe('createTransition', () => {
     it('is idempotent', () => {
       const handler = createTransition();
 
-      handler.destroy();
-      handler.destroy(); // should not throw
+      expect(() => {
+        handler.destroy();
+        handler.destroy();
+      }).not.toThrow();
     });
   });
 });
