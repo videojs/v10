@@ -111,10 +111,11 @@ Extension boundaries, each a candidate slice on this doc or its own:
   projection, first-entry selection, quiet failure, abort on source change, cleanup on unload and destroy.
 - `packages/spf/src/playback/engines/hls/tests/engine.test.ts`, `engine-audio-only.test.ts` — end to end from a
   manifest carrying the tag, including that the track's mode changes never register as subtitle intent.
-- **Sandbox:** `HLS - Apple JSON chapters (Mux staging, TS)` in the `*-mux-video-spf` presets. The only chapters-bearing
-  asset today is MPEG-TS, so the engine projects the track (verified in Chrome: two cues, the second ending at the
-  resolved 23.86 s duration, mirrored into the store's `chaptersCues`) and then refuses the renditions; the slider
-  partition needs a CMAF staging asset with chapters.
+- **Sandbox / smoke:** no in-repo source — the chapters-bearing Mux assets live on staging, and staging URLs stay out
+  of the repository; reviewers get one out of band and assign it as a `source` on the `*-mux-video-spf` presets.
+  Verified headless in Chromium against a CMAF staging asset (2026-09-15): the track projects before playback (cues
+  `0→3`, `3→23.857`), the store mirrors them in `chaptersCues`, the time slider partitions at 12.6%, and the hover
+  title follows the pointer.
 
 ## Related features
 

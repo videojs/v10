@@ -186,22 +186,6 @@ const SOURCE_MAP = {
     subType: 'ts',
     source: { playbackId: 'VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA' },
   },
-  // Apple JSON chapters, referenced from the multivariant playlist by
-  // `#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters"`. Only the SPF-backed
-  // Mux preset projects them (a hidden `chapters` track the time slider reads);
-  // the hls.js-backed one plays the video without chapters. A staging asset for
-  // now — Mux publishes the tag there first — and an MPEG-TS one, so SPF projects
-  // the track and then refuses the renditions (1004 / 99001); swap in a CMAF
-  // staging asset once one carries chapters to see the slider partition. No
-  // `chapters:` array on purpose: an authored `<track kind="chapters">` would
-  // precede the engine's and mask it.
-  'mux-source-chapters': {
-    label: 'HLS - Apple JSON chapters (Mux staging, TS)',
-    type: 'hls',
-    subType: 'ts',
-    source: { playbackId: 'ohE52GULkildpT1eujkgoQEvPV9fk02lFYyN8dnIybRk', customDomain: 'staging.mux.com' },
-    poster: 'https://image.staging.mux.com/ohE52GULkildpT1eujkgoQEvPV9fk02lFYyN8dnIybRk/thumbnail.webp',
-  },
   // Signed playback needs no engine support beyond the token: SPF plays these,
   // unlike the DRM entries below, because Mux serves ordinary CMAF once the URL
   // is authorized.
