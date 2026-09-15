@@ -1,5 +1,32 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.2...@videojs/core@10.0.0-rc.3) (2026-09-15)
+
+
+### Features
+
+* about-this-player page and a help link in every player ([#2758](https://github.com/videojs/v10/issues/2758)) ([8a538a5](https://github.com/videojs/v10/commit/8a538a572945c2bb01cb79d38f420ec143a4239c))
+* **spf:** support apple json chapters from ext-x-session-data ([#2737](https://github.com/videojs/v10/issues/2737)) ([f3c2caf](https://github.com/videojs/v10/commit/f3c2caf5abcbe78e7f2d93f6a2603ef4f20741ab))
+
+
+### Bug Fixes
+
+* **core:** apply popup starting styles before showing ([#2715](https://github.com/videojs/v10/issues/2715)) ([a80aeca](https://github.com/videojs/v10/commit/a80aecadecc1a7dee643c6a7200cc09dfa8c4f9e))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-rc.3
+    * @videojs/store bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.1...@videojs/core@10.0.0-rc.2) (2026-09-09)
 
 
