@@ -1,0 +1,108 @@
+---
+/**
+ * Live readout of what the visitor's browser can play. The rows are filled in
+ * by the inline script, so the table is excluded from the markdown twin and a
+ * static summary carries the conclusion there instead.
+ */
+import P from '@/components/typography/P.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+
+const rows = [
+  { id: 'video-element', label: 'HTML5 <video> element' },
+  { id: 'mp4-h264', label: 'MP4 (H.264 + AAC)' },
+  { id: 'webm-vp9', label: 'WebM (VP9)' },
+  { id: 'mp4-av1', label: 'AV1' },
+  { id: 'mp4-hevc', label: 'HEVC (H.265)' },
+  { id: 'native-hls', label: 'HLS, played natively' },
+  { id: 'mse', label: 'Media Source Extensions' },
+  { id: 'eme', label: 'Encrypted Media Extensions (DRM)' },
+  { id: 'pip', label: 'Picture-in-Picture' },
+  { id: 'fullscreen', label: 'Fullscreen API' },
+] as const;
+---
+
+<div data-llms-ignore>
+  <Table>
+    <Thead>
+      <Tr>
+        <Th>Capability</Th>
+        <Th>This browser</Th>
+      </Tr>
+    </Thead>
+    <Tbody>
+      {
+        rows.map((row) => (
+          <Tr>
+            <Td>{row.label}</Td>
+            <Td data-capability={row.id}>Checking…</Td>
+          </Tr>
+        ))
+      }
+    </Tbody>
+  </Table>
+  <P class="text-p3 text-warm-gray dark:text-manila-dark">
+    Codec rows report what <code>canPlayType()</code> returns. "Probably" and
+    "maybe" both mean the browser will attempt playback; an empty result means it
+    won't. Results are only as honest as the browser is about itself.
+  </P>
+</div>
+
+<p data-llms-only hidden>
+  Every current browser supports the HTML5 video element, MP4 with H.264, and
+  Media Source Extensions. Native HLS playback is limited to Safari and a few
+  mobile browsers. The interactive table on the HTML version of this page
+  reports the visiting browser's results.
+</p>
+
+<script>
+  type Verdict = 'probably' | 'maybe' | 'yes' | 'no';
+
+  function codec(type: string): Verdict {
+    const result = document.createElement('video').canPlayType(type);
+
+    return result === '' ? 'no' : result;
+  }
+
+  function bool(value: unknown): Verdict {
+    return value ? 'yes' : 'no';
+  }
+
+  const doc = document as Document & { webkitFullscreenEnabled?: boolean };
+  const nav = navigator as Navigator & { requestMediaKeySystemAccess?: unknown };
+  const hasPip =
+    'pictureInPictureEnabled' in document ||
+    'webkitSupportsPresentationMode' in HTMLVideoElement.prototype;
+
+  const results: Record<string, Verdict> = {
+    'video-element': bool(typeof HTMLVideoElement === 'function'),
+    'mp4-h264': codec('video/mp4; codecs="avc1.42E01E, mp4a.40.2"'),
+    'webm-vp9': codec('video/webm; codecs="vp9"'),
+    'mp4-av1': codec('video/mp4; codecs="av01.0.05M.08"'),
+    'mp4-hevc': codec('video/mp4; codecs="hvc1.1.6.L93.B0"'),
+    'native-hls': codec('application/vnd.apple.mpegurl'),
+    mse: bool('MediaSource' in window || 'ManagedMediaSource' in window),
+    eme: bool(typeof nav.requestMediaKeySystemAccess === 'function'),
+    pip: bool(hasPip),
+    fullscreen: bool(document.fullscreenEnabled || doc.webkitFullscreenEnabled),
+  };
+
+  const labels: Record<Verdict, string> = {
+    probably: 'Yes (probably)',
+    maybe: 'Yes (maybe)',
+    yes: 'Yes',
+    no: 'No',
+  };
+
+  for (const cell of document.querySelectorAll<HTMLElement>('[data-capability]')) {
+    const verdict = results[cell.dataset.capability ?? ''];
+    if (!verdict) continue;
+
+    cell.textContent = labels[verdict];
+    cell.dataset.verdict = verdict;
+  }
+</script>

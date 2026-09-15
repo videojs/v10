@@ -1,0 +1,23 @@
+---
+/** Shared "how to read this site as markdown" section for the pages agents land on. */
+import H2Markdown from '@/components/typography/H2Markdown.astro';
+import Li from '@/components/typography/Li.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import Ul from '@/components/typography/Ul.astro';
+import A from '@/components/typography/A.astro';
+---
+
+<H2Markdown id="for-ai-agents">For AI agents</H2Markdown>
+
+<P>Every page on this site is available as markdown, this one included.</P>
+
+<Ul>
+  <Li><MarkdownCode>https://videojs.org/llms.txt</MarkdownCode> indexes the documentation.</Li>
+  <Li>Append <MarkdownCode>.md</MarkdownCode> to any documentation URL, including this one, to get its markdown.</Li>
+  <Li>Send <MarkdownCode>Accept: text/markdown</MarkdownCode> when fetching a documentation URL and you'll get markdown back.</Li>
+</Ul>
+
+<P>
+  The full guide is <A href="/docs/framework/html/how-to/build-with-ai">Build with AI</A>.
+</P>

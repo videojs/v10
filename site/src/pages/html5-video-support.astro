@@ -1,0 +1,9 @@
+---
+import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
+import Html5VideoSupportMdx, { frontmatter } from '@/content/pages/html5-video-support.mdx';
+import MarkdownLayout from '@/layouts/Markdown.astro';
+---
+
+<MarkdownLayout title={frontmatter.title} description={frontmatter.description} llms>
+  <Html5VideoSupportMdx components={{ ...defaultMarkdownComponents }} />
+</MarkdownLayout>

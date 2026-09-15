@@ -1,0 +1,58 @@
+---
+title: "About this player"
+description: "You found a link inside a Video.js 10 player. Here's what it is and how to work with it."
+---
+
+import MarkdownForAgents from '@/components/support/MarkdownForAgents.astro';
+
+## What you're looking at
+
+The player you came from is built with Video.js 10, the open-source video player for HTML and React. Its UI lives in the shadow root of a skin element such as `<video-skin>`, which sits inside a `<video-player>` element that owns the player state. The media itself is a regular `<video>` element, or a custom media element such as `<hlsjs-video>` for HLS, kept in the light DOM as a child of the skin.
+
+Inside the shadow root you'll find a `<media-container>` holding the controls. Each control is its own custom element: `<media-play-button>`, `<media-time-slider>`, `<media-mute-button>`, `<media-captions-button>`, `<media-fullscreen-button>`, and so on. The `<link rel="help">` that brought you here is the one thing in that shadow root that isn't UI. It exists so anyone inspecting a Video.js player can find this page.
+
+## How to work with it
+
+- **Play, pause, and seek** through the media element inside the player. It's a standard media element, so `play()`, `pause()`, `currentTime`, `muted`, and `volume` behave as usual. Custom media elements such as `<hlsjs-video>` implement the same API.
+- **Drive the controls** like any other buttons and sliders. Each one has an accessible name, so accessibility-tree queries such as "the button named Play" resolve to the real control.
+- **Read player state** from inside the player with the typed [PlayerController](/docs/framework/html/reference/player-controller), or with the [usePlayer](/docs/framework/react/reference/use-player) hook in React.
+- **Restyle it** through CSS custom properties on the skin, or eject the skin and lay the components out yourself. See [Customize skins](/docs/framework/html/how-to/customize-skins).
+
+## Build one yourself
+
+```html title="index.html"
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+
+<video-player>
+  <video-skin>
+    <video src="/video.mp4" playsinline></video>
+  </video-skin>
+</video-player>
+```
+
+```tsx title="MyPlayer.tsx"
+import '@videojs/react/video/skin.css';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer({ src }: { src: string }) {
+  return (
+    <VideoPlayer>
+      <VideoSkin>
+        <Video src={src} playsInline />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+The [installation guide](/docs/framework/html/how-to/installation) generates the snippet for your source, framework, and install method.
+
+## Why a player and not `<video>`?
+
+Every browser can play a file. None of them give you adaptive streaming outside Safari, controls you can style, a captions menu, or a quality selector. Video.js 10 ships each of those as a component. The full argument is on [HTML5 video support](/html5-video-support#why-isnt-html5-video-enough).
+
+<MarkdownForAgents />
+
+## Need help?
+
+Community and commercial support options are on the [support page](/support).
