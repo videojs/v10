@@ -14,7 +14,7 @@ export default {
   },
   fullscreen: {
     enter: 'Ecrã inteiro',
-    exit: 'Sair de ecrã inteiro',
+    exit: 'Sair do ecrã inteiro',
   },
   captions: {
     enable: 'Ativar legendas',
@@ -22,11 +22,11 @@ export default {
   },
   pip: {
     enter: 'Imagem em imagem',
-    exit: 'Sair de imagem em imagem',
+    exit: 'Sair do modo de imagem em imagem',
   },
   live: {
     playing: 'A reproduzir em direto',
-    seekToEdge: 'Ir para o em direto',
+    seekToEdge: 'Ir para a emissão em direto',
     badge: 'Em direto',
   },
   cast: {
@@ -42,9 +42,9 @@ export default {
     seek: 'Procurar',
   },
   time: {
-    current: 'Tempo Atual',
+    current: 'Tempo atual',
     duration: 'Duração',
-    remaining: 'Tempo Restante',
+    remaining: 'Tempo restante',
     elapsedSuffix: '{duration} de tempo decorrido',
     durationSuffix: '{duration} de duração',
     remainingSuffix: 'Restam {duration}',
@@ -66,29 +66,29 @@ export default {
     value: 'Nível de volume {value}',
   },
   status: {
-    captionsOn: 'Legendas ativas',
+    captionsOn: 'Legendas ativadas',
     captionsOff: 'Legendas desativadas',
     paused: 'Em pausa',
     playing: 'A reproduzir',
     fullscreen: 'Ecrã inteiro',
     pip: 'Imagem em imagem',
-    exitPip: 'Sair de imagem em imagem',
+    exitPip: 'Sair do modo de imagem em imagem',
     seekedTo: 'Posição alterada para {time}',
   },
   container: {
-    label: 'Reprodutor multimédia',
+    label: 'Leitor multimédia',
   },
   errors: {
-    aborted: 'Parou a reprodução do vídeo.',
-    network: 'Um erro na rede fez o vídeo falhar parcialmente.',
+    aborted: 'Parou a reprodução do conteúdo multimédia antes de esta terminar.',
+    network: 'Não foi possível carregar este conteúdo multimédia devido a um problema de rede ou do servidor.',
     decode:
-      'A reprodução foi interrompida por um problema com o vídeo ou porque o formato não é compatível com o seu navegador.',
+      'Não foi possível reproduzir este conteúdo multimédia. Pode estar danificado ou o seu navegador pode não suportar o formato.',
     source:
-      'O vídeo não pode ser carregado, ou porque houve um problema na rede ou no servidor, ou porque o formato do vídeo não é compatível.',
-    encrypted: 'O vídeo está encriptado e não há uma chave para o desencriptar.',
-    unplayable: 'Este conteúdo multimédia não é suportado pelo reprodutor.',
+      'Não foi possível carregar este conteúdo multimédia. Pode estar indisponível ou o seu navegador pode não suportar o formato.',
+    encrypted: 'Não foi possível reproduzir este conteúdo multimédia porque não foi possível desencriptá-lo.',
+    unplayable: 'Este conteúdo multimédia não é suportado pelo leitor.',
     title: 'Algo correu mal.',
-    unexpected: 'Ocorreu um erro. Por favor tente novamente.',
+    unexpected: 'Ocorreu um erro inesperado.',
   },
   common: {
     empty: '',
