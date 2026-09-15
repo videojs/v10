@@ -65,6 +65,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #ended = false;
   #seeking = false;
   #seekTarget: number | null = null;
+  #seekOrigin: number | null = null;
   #loaded = false;
   #playFired = false;
   #currentTime = 0;
@@ -255,6 +256,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     // `seekTo` keeps the player paused when called from a paused state.
     this.#afterLoad((p) => {
       this.#seekTarget = value;
+      this.#seekOrigin = p.getCurrentTime();
 
       if (!this.#seeking) {
         this.#seeking = true;
@@ -516,6 +518,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#readyState = READY_STATE_HAVE_NOTHING;
     this.#seeking = false;
     this.#seekTarget = null;
+    this.#seekOrigin = null;
     this.#loaded = false;
     this.#playFired = false;
     this.#volume = 1;
@@ -659,10 +662,11 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
 
   #hasAppliedSeek(time: number) {
     const target = this.#seekTarget;
-    if (target === null) return false;
+    const origin = this.#seekOrigin;
+    if (target === null || origin === null) return false;
 
     // YouTube can report coarse clock samples or land on a nearby keyframe.
-    return Math.abs(time - target) <= SEEK_TOLERANCE;
+    return time !== origin && Math.abs(time - target) <= SEEK_TOLERANCE;
   }
 
   #poll() {
@@ -689,6 +693,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     if (wasSeeking && (appliedSeek || (this.#seekTarget === null && bufferedEnd > 0.1))) {
       this.#seeking = false;
       this.#seekTarget = null;
+      this.#seekOrigin = null;
       this.dispatchEvent(new Event('seeked'));
     }
 

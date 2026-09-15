@@ -830,6 +830,41 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('does not complete a nearby seek while the player clock is unchanged', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(10);
+    player.emit('onStateChange', STATE.PLAYING);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 10) throw new Error('time not polled yet');
+    });
+    events.length = 0;
+
+    media.currentTime = 10.5;
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    expect(media.currentTime).toBe(10.5);
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+
+    player.getCurrentTime.mockReturnValue(10.25);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('nearby seek not completed yet');
+    });
+
+    expect(media.currentTime).toBe(10.25);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    media.detach();
+  });
+
   it('destroys the player on detach', async () => {
     const media = new YouTubeAdapter();
     const { player } = await attachAndLoad(media);
