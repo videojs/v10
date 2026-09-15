@@ -2,7 +2,7 @@ import type { Translations } from '../params';
 
 export default {
   buttons: {
-    play: 'Lectura',
+    play: 'Legir',
     pause: 'Pausa',
     replay: 'Tornar legir',
     mute: 'Copar lo son',
@@ -17,8 +17,8 @@ export default {
     exit: "Sortir de l'ecran complèt",
   },
   captions: {
-    enable: 'Activar los subtítols',
-    disable: 'Desactivar los subtítols',
+    enable: 'Activar las legendas',
+    disable: 'Desactivar las legendas',
   },
   pip: {
     enter: 'Vidèo incrustada',
@@ -30,7 +30,7 @@ export default {
     badge: 'Dirècte',
   },
   cast: {
-    start: 'Anar en dirècte',
+    start: 'Aviar la difusion',
     stop: 'Aturar la difusion',
     connecting: 'Connexion en cors',
   },
@@ -39,10 +39,10 @@ export default {
     stop: 'Arrestar AirPlay',
   },
   slider: {
-    seek: 'Desfilament',
+    seek: 'Posicion',
   },
   time: {
-    current: 'Durada passada',
+    current: 'Temps actual',
     duration: 'Durada',
     remaining: 'Temps restant',
     elapsedSuffix: '{duration} de temps passat',
@@ -79,16 +79,16 @@ export default {
     label: 'Lector multimèdia',
   },
   errors: {
-    aborted: 'Avètz copat la lectura del mèdia.',
-    network: 'Una error de ret a provocat un fracàs del telecargament.',
+    aborted: 'Avètz copat la lectura del mèdia abans la fin.',
+    network: "Aqueste mèdia a pas pogut èsser cargat a causa d'un problèma de ret o de servidor.",
     decode:
-      "La lectura del mèdia es copada a causa d'un problèma de corrupcion o perque lo mèdia utiliza de foncionalitats pas suportadas pel navigador.",
+      "Aqueste mèdia a pas pogut èsser legit. Benlèu qu'es damatjat, o que vòstre navegador pren pas en carga son format.",
     source:
-      'Lo mèdia a pas pogut èsser cargat, siá perque lo servidor o lo ret a fracassat siá perque lo format es pas compatible.',
-    encrypted: 'Lo mèdia es chifrat e avèm pas las claus per lo deschifrar.',
+      "Aqueste mèdia a pas pogut èsser cargat. Benlèu qu'es indisponible, o que vòstre navegador pren pas en carga son format.",
+    encrypted: 'Aqueste mèdia a pas pogut èsser legit perque son deschiframent a fracassat.',
     unplayable: 'Aqueste mèdia es pas pres en carga pel lector.',
     title: "Quaucarèn s'es mal passat.",
-    unexpected: "Una error s'es produsida. Provatz d'un autre còp.",
+    unexpected: "Una error inesperada s'es produsida.",
   },
   common: {
     empty: '',
