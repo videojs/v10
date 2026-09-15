@@ -2,11 +2,11 @@ import type { Translations } from '../params';
 
 export default {
   buttons: {
-    play: 'Spel',
+    play: 'Spel av',
     pause: 'Pause',
-    replay: 'Spel om att',
-    mute: 'Lyd av',
-    unmute: 'Lyd på',
+    replay: 'Spel av på nytt',
+    mute: 'Slå av lyden',
+    unmute: 'Slå på lyden',
   },
   seek: {
     forward: 'Hopp fram {seconds} sekund',
@@ -14,7 +14,7 @@ export default {
   },
   fullscreen: {
     enter: 'Fullskjerm',
-    exit: 'Stenga fullskjerm',
+    exit: 'Avslutt fullskjerm',
   },
   captions: {
     enable: 'Slå på teksting',
@@ -25,13 +25,13 @@ export default {
     exit: 'Avslutt bilete-i-bilete',
   },
   live: {
-    playing: 'Spelar live',
-    seekToEdge: 'Hopp til live',
+    playing: 'Spelar direkte',
+    seekToEdge: 'Gå til direktesendinga',
     badge: 'Direkte',
   },
   cast: {
-    start: 'Start sending',
-    stop: 'Stopp sending',
+    start: 'Start casting',
+    stop: 'Stopp casting',
     connecting: 'Koplar til',
   },
   airplay: {
@@ -44,12 +44,12 @@ export default {
   time: {
     current: 'Aktuell tid',
     duration: 'Varigheit',
-    remaining: 'Tid attende',
+    remaining: 'Tid att',
     elapsedSuffix: '{duration} avspelt tid',
     durationSuffix: '{duration} varigheit',
     remainingSuffix: '{duration} att',
     showElapsed: 'Vis avspelt tid, {duration}.',
-    showDuration: 'Vis lengd, {duration}.',
+    showDuration: 'Vis varigheit, {duration}.',
     showRemaining: 'Vis tid att, {duration}.',
     toggleElapsed: 'Byt mellom avspelt tid og tid att.',
     toggleDuration: 'Byt mellom varigheit og tid att.',
@@ -68,27 +68,27 @@ export default {
   status: {
     captionsOn: 'Teksting på',
     captionsOff: 'Teksting av',
-    paused: 'Satt på pause',
+    paused: 'Sett på pause',
     playing: 'Spelar',
     fullscreen: 'Fullskjerm',
-    pip: 'Bilete i bilete',
-    exitPip: 'Avslutt bilete i bilete',
+    pip: 'Bilete-i-bilete',
+    exitPip: 'Bilete-i-bilete av',
     seekedTo: 'Hoppa til {time}',
   },
   container: {
     label: 'Mediespelar',
   },
   errors: {
-    aborted: 'Du avbraut avspelinga.',
-    network: 'Ein nettverksfeil avbraut nedlasting av videoen.',
+    aborted: 'Du stoppa avspelinga av mediet før ho var ferdig.',
+    network: 'Dette mediet kunne ikkje lastast inn på grunn av ein nettverks- eller serverfeil.',
     decode:
-      'Videoavspelinga blei broten på grunn av øydelagde data eller av di videoen ville gjera noe som nettlesaren din ikkje stodar.',
+      'Dette mediet kunne ikkje spelast av. Det kan vera øydelagt, eller nettlesaren din støttar kanskje ikkje formatet.',
     source:
-      'Videoen kunne ikkje lastas ned, på grunn av ein nettverksfeil eller serverfeil, eller av di formatet ikkje er stoda.',
-    encrypted: 'Mediefila er kryptert og vi manglar nyklar for å dekryptere ho.',
+      'Dette mediet kunne ikkje lastast inn. Det kan vera utilgjengeleg, eller nettlesaren din støttar kanskje ikkje formatet.',
+    encrypted: 'Dette mediet kunne ikkje spelast av fordi det ikkje kunne dekrypterast.',
     unplayable: 'Denne mediefila er ikkje støtta av spelaren.',
     title: 'Noko gjekk gale.',
-    unexpected: 'Det oppstod ein feil. Ver venleg prøv igjen.',
+    unexpected: 'Det oppstod ein uventa feil.',
   },
   common: {
     empty: '',
