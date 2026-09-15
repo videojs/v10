@@ -2,10 +2,10 @@ import type { Translations } from '../params';
 
 export default {
   buttons: {
-    play: 'Tocar',
+    play: 'Reproduzir',
     pause: 'Pausar',
-    replay: 'Tocar novamente',
-    mute: 'Mudo',
+    replay: 'Reproduzir novamente',
+    mute: 'Silenciar',
     unmute: 'Ativar o som',
   },
   seek: {
@@ -13,7 +13,7 @@ export default {
     backward: 'Retroceder {seconds} segundos',
   },
   fullscreen: {
-    enter: 'Tela Cheia',
+    enter: 'Entrar em tela cheia',
     exit: 'Sair da tela cheia',
   },
   captions: {
@@ -21,8 +21,8 @@ export default {
     disable: 'Desativar legendas',
   },
   pip: {
-    enter: 'Picture-in-Picture',
-    exit: 'Sair de Picture-in-Picture',
+    enter: 'Entrar em picture-in-picture',
+    exit: 'Sair do picture-in-picture',
   },
   live: {
     playing: 'Reproduzindo ao vivo',
@@ -42,9 +42,9 @@ export default {
     seek: 'Buscar',
   },
   time: {
-    current: 'Tempo',
+    current: 'Tempo atual',
     duration: 'Duração',
-    remaining: 'Tempo Restante',
+    remaining: 'Tempo restante',
     elapsedSuffix: '{duration} de tempo decorrido',
     durationSuffix: '{duration} de duração',
     remainingSuffix: 'Restam {duration}',
@@ -79,10 +79,10 @@ export default {
     label: 'Reprodutor de mídia',
   },
   errors: {
-    aborted: 'Você parou a execução do vídeo.',
+    aborted: 'Você interrompeu a reprodução da mídia antes de ela terminar.',
     network: 'Um erro na rede causou falha durante o download da mídia.',
     decode:
-      'A reprodução foi interrompida devido à um problema de mídia corrompida ou porque a mídia utiliza funções que seu navegador não suporta.',
+      'A reprodução foi interrompida devido a um problema de mídia corrompida ou porque a mídia utiliza funções que seu navegador não suporta.',
     source: 'A mídia não pode ser carregada, por uma falha de rede ou servidor ou o formato não é suportado.',
     encrypted: 'A mídia está criptografada e não temos as chaves para descriptografar.',
     unplayable: 'Esta mídia não é suportada pelo reprodutor.',
