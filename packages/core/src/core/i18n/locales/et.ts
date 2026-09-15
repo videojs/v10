@@ -3,14 +3,14 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Esita',
-    pause: 'Paus',
+    pause: 'Peata',
     replay: 'Esita uuesti',
     mute: 'Vaigista',
     unmute: 'Lõpeta vaigistus',
   },
   seek: {
-    forward: 'Liigu edasi {seconds} sekundit',
-    backward: 'Liigu tagasi {seconds} sekundit',
+    forward: 'Keri edasi {seconds} sek.',
+    backward: 'Keri tagasi {seconds} sek.',
   },
   fullscreen: {
     enter: 'Täisekraan',
@@ -22,11 +22,11 @@ export default {
   },
   pip: {
     enter: 'Pilt pildis',
-    exit: 'Välju funktsioonist pilt pildis',
+    exit: 'Välju režiimist Pilt pildis',
   },
   live: {
-    playing: 'Mängib reaalajas',
-    seekToEdge: 'Mine otseülekande äärele',
+    playing: 'Esitatakse reaalajas',
+    seekToEdge: 'Mine otseülekande juurde',
     badge: 'Otse',
   },
   cast: {
@@ -66,29 +66,28 @@ export default {
     value: 'Helitugevus {value}',
   },
   status: {
-    captionsOn: 'Pealdised sees',
-    captionsOff: 'Pealdised väljas',
-    paused: 'Pausitud',
-    playing: 'Esitamine',
+    captionsOn: 'Subtiitrid sees',
+    captionsOff: 'Subtiitrid väljas',
+    paused: 'Peatatud',
+    playing: 'Esitatakse',
     fullscreen: 'Täisekraan',
     pip: 'Pilt pildis',
-    exitPip: 'Välju funktsioonist pilt pildis',
-    seekedTo: 'Liigutud ajale {time}',
+    exitPip: 'Pilt pildis välja lülitatud',
+    seekedTo: 'Keritud: {time}',
   },
   container: {
     label: 'Meediumipleier',
   },
   errors: {
-    aborted: 'Katkestasid taasesituse',
-    network: 'Võrguvea tõttu nurjus meediumifaili allalaadimine poole pealt.',
-    decode:
-      'Meediumifaili taasesitamine katkestati, kuna fail on rikutud või see kasutab funktsiooni, mida sinu brauser ei toeta.',
+    aborted: 'Katkestasite meediumi taasesituse enne selle lõppu.',
+    network: 'Seda meediumi ei õnnestunud laadida võrgu- või serveritõrke tõttu.',
+    decode: 'Seda meediumi ei õnnestunud esitada. See võib olla rikutud või ei toeta teie brauser selle vormingut.',
     source:
-      'Seda meediumifaili ei õnnestunud laadida, kuna serveris või võrgus esines tõrge või kuna vormingut ei toetata.',
-    encrypted: 'See meediumifail on krüpteeritud ja meil pole dekrüpteerimiseks vajalikku võtit.',
-    unplayable: 'Pleier ei toeta seda meediat.',
+      'Seda meediumi ei õnnestunud laadida. See võib olla kättesaamatu või ei toeta teie brauser selle vormingut.',
+    encrypted: 'Seda meediumi ei õnnestunud esitada, sest seda ei saanud dekrüpteerida.',
+    unplayable: 'Pleier ei toeta seda meediumi.',
     title: 'Midagi läks valesti.',
-    unexpected: 'Esines viga. Palun proovige uuesti.',
+    unexpected: 'Ilmnes ootamatu viga.',
   },
   common: {
     empty: '',
@@ -97,7 +96,7 @@ export default {
   menu: {
     settings: 'Seaded',
     quality: 'Kvaliteet',
-    audio: 'Heli',
+    audio: 'Heliriba',
     default: 'Vaikimisi',
     speed: 'Kiirus',
     captions: 'Subtiitrid',
