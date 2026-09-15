@@ -37,7 +37,7 @@ export const LEGACY_ERRORS = {
   VJS10_LEGACY_INIT: {
     summary: '`videojs()` was the Video.js 8 API. Video.js 10 has no factory; players are components you compose.',
     legacy: "const player = videojs('my-video', { controls: true });",
-    html: "import '@videojs/html/video/player' and '@videojs/html/video/skin', then render <video-player><video-skin><video src></video></video-skin></video-player>.",
+    html: "Keep import 'video.js', remove the factory call, and render <video-player><video-skin><video src></video></video-skin></video-player>.",
     react:
       "import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video' and render <VideoPlayer><VideoSkin><Video src /></VideoSkin></VideoPlayer>.",
   },

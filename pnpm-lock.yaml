@@ -1279,54 +1279,9 @@ importers:
 
   packages/video.js:
     dependencies:
-      '@videojs/cloudflare-video':
-        specifier: workspace:*
-        version: link:../adapters/cloudflare-video
-      '@videojs/dash-video':
-        specifier: workspace:*
-        version: link:../adapters/dash-video
-      '@videojs/google-cast':
-        specifier: workspace:*
-        version: link:../extensions/google-cast
-      '@videojs/hlsjs-video':
-        specifier: workspace:*
-        version: link:../adapters/hlsjs-video
       '@videojs/html':
         specifier: workspace:*
         version: link:../html
-      '@videojs/mux-audio':
-        specifier: workspace:*
-        version: link:../adapters/mux-audio
-      '@videojs/mux-data':
-        specifier: workspace:*
-        version: link:../extensions/mux-data
-      '@videojs/mux-video':
-        specifier: workspace:*
-        version: link:../adapters/mux-video
-      '@videojs/shaka-video':
-        specifier: workspace:*
-        version: link:../adapters/shaka-video
-      '@videojs/spotify-audio':
-        specifier: workspace:*
-        version: link:../adapters/spotify-audio
-      '@videojs/tiktok-video':
-        specifier: workspace:*
-        version: link:../adapters/tiktok-video
-      '@videojs/twitch-video':
-        specifier: workspace:*
-        version: link:../adapters/twitch-video
-      '@videojs/utils':
-        specifier: workspace:*
-        version: link:../utils
-      '@videojs/vimeo-video':
-        specifier: workspace:*
-        version: link:../adapters/vimeo-video
-      '@videojs/wistia-video':
-        specifier: workspace:*
-        version: link:../adapters/wistia-video
-      '@videojs/youtube-video':
-        specifier: workspace:*
-        version: link:../adapters/youtube-video
     devDependencies:
       happy-dom:
         specifier: ^20.11.1

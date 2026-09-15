@@ -2,7 +2,7 @@
   "name": "video.js",
   "version": "10.0.0-rc.2",
   "private": true,
-  "description": "Video.js for HTML, plus coded errors for Video.js 8 patterns",
+  "description": "Video.js for HTML in one import, plus coded errors for Video.js 8 patterns",
   "keywords": [
     "html",
     "media",
@@ -20,12 +20,7 @@
   ],
   "type": "module",
   "sideEffects": [
-    "./dist/*/html/define/**/*.js",
-    "./dist/*/html/internal/skins/*/register.js",
-    "./dist/*/html/i18n/index.js",
-    "./dist/*/html/i18n/locales/*/register.js",
-    "./dist/*/html/icons/element/**/*.js",
-    "./dist/*/html/icons/dist/element/**/*.js"
+    "./dist/*/index.js"
   ],
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
@@ -42,192 +37,24 @@
       "development": "./dist/dev/errors/index.js",
       "default": "./dist/default/errors/index.js"
     },
-    "./dist/video-js.css": "./dist/video-js.css",
-    "./icons": {
-      "types": "./dist/dev/html/icons/index.d.ts",
-      "development": "./dist/dev/html/icons/index.js",
-      "default": "./dist/default/html/icons/index.js"
-    },
-    "./icons/*": {
-      "types": "./dist/dev/html/icons/*/index.d.ts",
-      "development": "./dist/dev/html/icons/*/index.js",
-      "default": "./dist/default/html/icons/*/index.js"
-    },
-    "./video": {
-      "types": "./dist/dev/html/presets/video/index.d.ts",
-      "development": "./dist/dev/html/presets/video/index.js",
-      "default": "./dist/default/html/presets/video/index.js"
-    },
-    "./video/*.css": "./dist/default/html/define/video/*.css",
-    "./video/*": {
-      "types": "./dist/dev/html/define/video/*.d.ts",
-      "development": "./dist/dev/html/define/video/*.js",
-      "default": "./dist/default/html/define/video/*.js"
-    },
-    "./audio": {
-      "types": "./dist/dev/html/presets/audio/index.d.ts",
-      "development": "./dist/dev/html/presets/audio/index.js",
-      "default": "./dist/default/html/presets/audio/index.js"
-    },
-    "./audio/*.css": "./dist/default/html/define/audio/*.css",
-    "./audio/*": {
-      "types": "./dist/dev/html/define/audio/*.d.ts",
-      "development": "./dist/dev/html/define/audio/*.js",
-      "default": "./dist/default/html/define/audio/*.js"
-    },
-    "./background": {
-      "types": "./dist/dev/html/presets/background/index.d.ts",
-      "development": "./dist/dev/html/presets/background/index.js",
-      "default": "./dist/default/html/presets/background/index.js"
-    },
-    "./background/*.css": "./dist/default/html/define/background/*.css",
-    "./background/*": {
-      "types": "./dist/dev/html/define/background/*.d.ts",
-      "development": "./dist/dev/html/define/background/*.js",
-      "default": "./dist/default/html/define/background/*.js"
-    },
-    "./live-video": {
-      "types": "./dist/dev/html/presets/live-video/index.d.ts",
-      "development": "./dist/dev/html/presets/live-video/index.js",
-      "default": "./dist/default/html/presets/live-video/index.js"
-    },
-    "./live-video/*.css": "./dist/default/html/define/live-video/*.css",
-    "./live-video/*": {
-      "types": "./dist/dev/html/define/live-video/*.d.ts",
-      "development": "./dist/dev/html/define/live-video/*.js",
-      "default": "./dist/default/html/define/live-video/*.js"
-    },
-    "./live-audio": {
-      "types": "./dist/dev/html/presets/live-audio/index.d.ts",
-      "development": "./dist/dev/html/presets/live-audio/index.js",
-      "default": "./dist/default/html/presets/live-audio/index.js"
-    },
-    "./live-audio/*.css": "./dist/default/html/define/live-audio/*.css",
-    "./live-audio/*": {
-      "types": "./dist/dev/html/define/live-audio/*.d.ts",
-      "development": "./dist/dev/html/define/live-audio/*.js",
-      "default": "./dist/default/html/define/live-audio/*.js"
-    },
-    "./ui/*": {
-      "types": "./dist/dev/html/define/ui/*.d.ts",
-      "development": "./dist/dev/html/define/ui/*.js",
-      "default": "./dist/default/html/define/ui/*.js"
-    },
-    "./feature/*": {
-      "types": "./dist/dev/html/define/feature/*.d.ts",
-      "development": "./dist/dev/html/define/feature/*.js",
-      "default": "./dist/default/html/define/feature/*.js"
-    },
-    "./media/mux-video": {
-      "types": "./dist/dev/html/define/media/mux-video/index.d.ts",
-      "development": "./dist/dev/html/define/media/mux-video/index.js",
-      "default": "./dist/default/html/define/media/mux-video/index.js"
-    },
-    "./media/mux-audio": {
-      "types": "./dist/dev/html/define/media/mux-audio/index.d.ts",
-      "development": "./dist/dev/html/define/media/mux-audio/index.js",
-      "default": "./dist/default/html/define/media/mux-audio/index.js"
-    },
-    "./media/*": {
-      "types": "./dist/dev/html/define/media/*.d.ts",
-      "development": "./dist/dev/html/define/media/*.js",
-      "default": "./dist/default/html/define/media/*.js"
-    },
-    "./i18n": {
-      "types": "./dist/dev/html/i18n/index.d.ts",
-      "development": "./dist/dev/html/i18n/index.js",
-      "default": "./dist/default/html/i18n/index.js"
-    },
-    "./i18n/locales/*": {
-      "types": "./dist/dev/html/i18n/locales/*.d.ts",
-      "development": "./dist/dev/html/i18n/locales/*.js",
-      "default": "./dist/default/html/i18n/locales/*.js"
-    },
-    "./*.css": "./dist/default/html/define/*.css",
-    "./*": {
-      "types": "./dist/dev/html/define/*.d.ts",
-      "development": "./dist/dev/html/define/*.js",
-      "default": "./dist/default/html/define/*.js"
-    }
+    "./dist/video-js.css": "./dist/video-js.css"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "generate": "node --import tsx ./scripts/generate-html-entries.ts",
-    "build:watch": "pnpm run generate && vp pack --watch ./src --no-clean",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vp test run",
     "test:watch": "vp test",
-    "clean": "rimraf --glob dist types src/html '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/html": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/html": "workspace:*"
   },
   "devDependencies": {
     "happy-dom": "^20.11.1",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
-  },
-  "peerDependencies": {
-    "@videojs/cloudflare-video": "workspace:*",
-    "@videojs/dash-video": "workspace:*",
-    "@videojs/google-cast": "workspace:*",
-    "@videojs/hlsjs-video": "workspace:*",
-    "@videojs/mux-audio": "workspace:*",
-    "@videojs/mux-data": "workspace:*",
-    "@videojs/mux-video": "workspace:*",
-    "@videojs/shaka-video": "workspace:*",
-    "@videojs/spotify-audio": "workspace:*",
-    "@videojs/tiktok-video": "workspace:*",
-    "@videojs/twitch-video": "workspace:*",
-    "@videojs/vimeo-video": "workspace:*",
-    "@videojs/wistia-video": "workspace:*",
-    "@videojs/youtube-video": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@videojs/cloudflare-video": {
-      "optional": true
-    },
-    "@videojs/dash-video": {
-      "optional": true
-    },
-    "@videojs/google-cast": {
-      "optional": true
-    },
-    "@videojs/hlsjs-video": {
-      "optional": true
-    },
-    "@videojs/mux-audio": {
-      "optional": true
-    },
-    "@videojs/mux-data": {
-      "optional": true
-    },
-    "@videojs/mux-video": {
-      "optional": true
-    },
-    "@videojs/shaka-video": {
-      "optional": true
-    },
-    "@videojs/spotify-audio": {
-      "optional": true
-    },
-    "@videojs/tiktok-video": {
-      "optional": true
-    },
-    "@videojs/twitch-video": {
-      "optional": true
-    },
-    "@videojs/vimeo-video": {
-      "optional": true
-    },
-    "@videojs/wistia-video": {
-      "optional": true
-    },
-    "@videojs/youtube-video": {
-      "optional": true
-    }
   }
 }

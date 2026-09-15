@@ -5,6 +5,12 @@ import * as root from '../index';
 import videojs, { getPlayer, options, registerPlugin } from '../videojs';
 
 describe('video.js', () => {
+  it('registers the video preset on import, matching the CDN video.js bundle', () => {
+    expect(customElements.get('video-player')).toBeDefined();
+    expect(customElements.get('video-skin')).toBeDefined();
+    expect(customElements.get('media-i18n')).toBeDefined();
+  });
+
   it('re-exports everything @videojs/html exports', () => {
     for (const name of Object.keys(html)) {
       expect(root[name as keyof typeof root], name).toBe(html[name as keyof typeof html]);
