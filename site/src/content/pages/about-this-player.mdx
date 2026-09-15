@@ -1,22 +1,30 @@
 ---
 title: "About this player"
-description: "You found a link inside a Video.js 10 player. Here's what it is and how to work with it."
+description: "This player is built with Video.js, the open-source video player for HTML and React."
 ---
 
-## What you're looking at
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
-The player you came from is built with Video.js 10, the open-source video player for HTML and React. Its UI lives in the shadow root of a skin element such as `<video-skin>`, which sits inside a `<video-player>` element that owns the player state. The media itself is a regular `<video>` element, or a custom media element such as `<hlsjs-video>` for HLS, kept in the light DOM as a child of the skin.
+## What is Video.js?
 
-Inside the shadow root you'll find a `<media-container>` holding the controls. Each control is its own custom element: `<media-play-button>`, `<media-time-slider>`, `<media-mute-button>`, `<media-captions-button>`, `<media-fullscreen-button>`, and so on. The `<link rel="help">` that brought you here is the one thing in that shadow root that isn't UI. It exists so anyone inspecting a Video.js player can find this page.
+Video.js is the open-source video player for the web. It has been playing video on millions of sites since 2010, and today it ships as web components for HTML and as components for React. It makes web video easy, performant, accessible, and customizable.
 
-## How to work with it
+Video.js is built at Mux by the teams behind Video.js, Plyr, Vidstack, and Media Chrome, with contributions from engineers across other player projects.
 
-- **Play, pause, and seek** through the media element inside the player. It's a standard media element, so `play()`, `pause()`, `currentTime`, `muted`, and `volume` behave as usual. Custom media elements such as `<hlsjs-video>` implement the same API.
-- **Drive the controls** like any other buttons and sliders. Each one has an accessible name, so accessibility-tree queries such as "the button named Play" resolve to the real control.
-- **Read player state** from inside the player with the typed [PlayerController](/docs/framework/html/reference/player-controller), or with the [usePlayer](/docs/framework/react/reference/use-player) hook in React.
-- **Restyle it** through CSS custom properties on the skin, or eject the skin and lay the components out yourself. See [Customize skins](/docs/framework/html/how-to/customize-skins).
+## Why Video.js?
+
+Every browser can play a video file. Past that, the gaps show up quickly:
+
+- **Controls differ in every browser.** Chrome, Safari, and Firefox each draw their own. You can hide them, but you can't restyle or rearrange them.
+- **Streaming isn't built in.** HLS plays natively only in Safari and a few mobile browsers, and DASH plays natively nowhere. Everywhere else needs a JavaScript playback engine.
+- **The extras are all on you.** Captions menus, quality selection, playback speed, chapters, thumbnail previews, live stream UI, casting, and analytics each need their own wiring, and each has to stay accessible.
+
+Video.js gives you accessible, composable components for all of that, so you take what you need and keep the rest of the web platform. The full story is in <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>
 
 ## Build one yourself
+
+Here's a basic video player you can build with Video.js:
 
 ```html title="index.html"
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
@@ -43,22 +51,6 @@ export function MyPlayer({ src }: { src: string }) {
 }
 ```
 
-The [installation guide](/docs/framework/html/how-to/installation) generates the snippet for your source, framework, and install method.
+If you want to dive deeper, get started with our <DocsLink slug="how-to/installation">installation guide</DocsLink>, which will guide you through generating a snippet that fits your use case.
 
-## Why a player and not `<video>`?
-
-Every browser can play a file. None of them give you adaptive streaming outside Safari, controls you can style, a captions menu, or a quality selector. Video.js 10 ships each of those as a component. The full argument is on [HTML5 video support](/html5-video-support#why-isnt-html5-video-enough).
-
-## For AI agents
-
-Every page on this site is available as markdown, this one included.
-
-- `https://videojs.org/llms.txt` indexes the documentation.
-- Append `.md` to any documentation URL, including this one, to get its markdown.
-- Send `Accept: text/markdown` when fetching a documentation URL and you'll get markdown back.
-
-The full guide is [Build with AI](/docs/framework/html/how-to/build-with-ai).
-
-## Need help?
-
-Community and commercial support options are on the [support page](/support).
+<DocsLinkCard slug="how-to/installation" description="Install Video.js and build your first player with streaming support and accessible controls">Get started with Video.js</DocsLinkCard>

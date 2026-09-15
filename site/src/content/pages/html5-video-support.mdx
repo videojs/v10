@@ -1,27 +1,15 @@
 ---
 title: "HTML5 video support"
-description: "Does this browser support HTML5 video? Yes. Here's what that answer leaves out."
+description: "Does this browser support HTML5 video? Almost certainly. Here's what that answer leaves out."
 ---
 
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import VideoCapabilities from '@/components/support/VideoCapabilities.astro';
-
-## How you got here
-
-Since 2010, the Video.js embed snippet has shipped with a fallback paragraph inside the `<video>` tag:
-
-```html
-<p class="vjs-no-js">
-  To view this video please enable JavaScript, and consider upgrading to a
-  web browser that
-  <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
-</p>
-```
-
-That paragraph sits in the HTML of millions of pages, which is why this link gets so many visitors. If you followed it, here's the answer, plus the parts the 2010 question leaves out.
 
 ## Does this browser support HTML5 video?
 
-Yes. Every current browser supports the `<video>` element. What still varies is codecs and streaming APIs, which is what the table below checks in the browser you're using right now.
+Almost certainly. Every current browser supports the `<video>` element. However, codec and streaming support still varies:
 
 <VideoCapabilities />
 
@@ -35,11 +23,11 @@ The `<video>` element gets you a file that plays. Everything past that is yours 
 - **Accessibility.** Keyboard shortcuts, focus management, screen reader labels, and reduced-motion preferences are on you the moment you replace the native controls.
 - **Everything else.** Thumbnail previews, live stream UI, AirPlay and Chromecast, error recovery, playback analytics, and sources like YouTube, Vimeo, or Mux each need their own wiring.
 
-Video.js 10 ships each of those as a component, so you take the ones you need and keep the rest of the web platform. The longer version is in [Why Video.js?](/docs/framework/html/concepts/why-videojs)
+Video.js ships each of those as a component, so you take the ones you need and keep the rest of the web platform. The longer version is in <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>
 
-## The snippet, updated
+## Get started with Video.js
 
-If you're writing a Video.js embed today, don't reach for the paragraph above. Video.js 10 is composed from custom elements or React components, and the `<video>` element stays in your markup, so there's nothing to fall back to.
+Here's a basic video player you can build with Video.js:
 
 ```html title="index.html"
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
@@ -66,9 +54,9 @@ export function MyPlayer({ src }: { src: string }) {
 }
 ```
 
-For HLS, swap the `<video>` element for `<hlsjs-video>` and load its media script. The [installation guide](/docs/framework/html/how-to/installation) generates the exact snippet for your source, framework, and install method.
+If you want to dive deeper, get started with our <DocsLink slug="how-to/installation">installation guide</DocsLink>, which will guide you through generating a snippet that fits your use case.
 
-Video.js 8 remains documented at [legacy.videojs.org](https://legacy.videojs.org) for the projects that already use it. If you're moving one of them, start with [Migrate from Video.js 8](/docs/framework/html/how-to/migrate-from-video-js-8).
+Video.js 8 remains documented at [legacy.videojs.org](https://legacy.videojs.org). If you're looking to upgrade to newer versions, start with <DocsLink slug="how-to/migrate-from-video-js-8">Migrate from Video.js 8</DocsLink>.
 
 ## For AI agents
 
@@ -78,8 +66,4 @@ Every page on this site is available as markdown, this one included.
 - Append `.md` to any documentation URL, including this one, to get its markdown.
 - Send `Accept: text/markdown` when fetching a documentation URL and you'll get markdown back.
 
-The full guide is [Build with AI](/docs/framework/html/how-to/build-with-ai).
-
-## Need help?
-
-Community and commercial support options are on the [support page](/support).
+<DocsLinkCard slug="how-to/build-with-ai" description="How to give AI tools the context they need to build Video.js players alongside you">Build with AI</DocsLinkCard>
