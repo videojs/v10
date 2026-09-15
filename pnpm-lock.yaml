@@ -1227,6 +1227,9 @@ importers:
 
   packages/react-native:
     devDependencies:
+      '@babel/runtime':
+        specifier: ^7.25.0
+        version: 7.28.6
       '@react-native/babel-preset':
         specifier: 0.86.2
         version: 0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1)
