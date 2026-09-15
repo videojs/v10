@@ -3,14 +3,14 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Reproducir',
-    pause: 'Pausa',
+    pause: 'Pausar',
     replay: 'Volver a reproducir',
-    mute: 'Desactivar el sonido',
+    mute: 'Silenciar',
     unmute: 'Activar el sonido',
   },
   seek: {
-    forward: 'Avanza {seconds} segundos',
-    backward: 'Retrocede {seconds} segundos',
+    forward: 'Avanzar {seconds} segundos',
+    backward: 'Retroceder {seconds} segundos',
   },
   fullscreen: {
     enter: 'Pantalla completa',
@@ -21,8 +21,8 @@ export default {
     disable: 'Desactivar subtítulos',
   },
   pip: {
-    enter: 'Imagen sobre imagen',
-    exit: 'Salir de imagen sobre imagen',
+    enter: 'Imagen en imagen',
+    exit: 'Salir de imagen en imagen',
   },
   live: {
     playing: 'Reproduciendo en directo',
@@ -79,16 +79,16 @@ export default {
     label: 'Reproductor multimedia',
   },
   errors: {
-    aborted: 'Ha interrumpido la reproducción del vídeo.',
-    network: 'Un error de red ha interrumpido la descarga del vídeo.',
+    aborted: 'Has detenido la reproducción del contenido multimedia antes de que terminara.',
+    network: 'No se ha podido cargar este contenido multimedia debido a un problema de red o del servidor.',
     decode:
-      'La reproducción de vídeo se ha interrumpido por un problema de corrupción de datos o porque el vídeo precisa funciones que su navegador no ofrece.',
+      'No se ha podido reproducir este contenido multimedia. Puede que esté dañado o que tu navegador no admita su formato.',
     source:
-      'No se ha podido cargar el vídeo debido a un fallo de red o del servidor o porque el formato es incompatible.',
-    encrypted: 'El material audiovisual está cifrado y no tenemos las claves para descifrarlo.',
-    unplayable: 'El reproductor no admite este medio.',
+      'No se ha podido cargar este contenido multimedia. Puede que no esté disponible o que tu navegador no admita su formato.',
+    encrypted: 'No se ha podido reproducir este contenido multimedia porque no se ha podido descifrar.',
+    unplayable: 'El reproductor no admite este contenido multimedia.',
     title: 'Algo ha salido mal.',
-    unexpected: 'Se ha producido un error. Inténtalo de nuevo.',
+    unexpected: 'Se ha producido un error inesperado.',
   },
   common: {
     empty: '',
