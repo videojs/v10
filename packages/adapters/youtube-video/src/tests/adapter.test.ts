@@ -749,7 +749,7 @@ describe('YouTubeAdapter', () => {
     expect(media.seeking).toBe(true);
     expect(events).toEqual(['seeking']);
 
-    player.getCurrentTime.mockReturnValue(30.25);
+    player.getCurrentTime.mockReturnValue(29.75);
     await vi.waitFor(() => {
       if (media.seeking) throw new Error('seek not completed yet');
     });
@@ -783,12 +783,12 @@ describe('YouTubeAdapter', () => {
 
     media.currentTime = 10;
     await Promise.resolve();
-    player.getCurrentTime.mockReturnValue(9.75);
+    player.getCurrentTime.mockReturnValue(10.25);
     await vi.waitFor(() => {
       if (media.seeking) throw new Error('seek not completed yet');
     });
 
-    expect(media.currentTime).toBe(9.75);
+    expect(media.currentTime).toBe(10.25);
     expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
     media.detach();
   });

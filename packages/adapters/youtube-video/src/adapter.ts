@@ -658,6 +658,18 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     }
   }
 
+  #hasAppliedSeek(time: number) {
+    const target = this.#seekTarget;
+    const origin = this.#seekOrigin;
+    if (target === null || origin === null) return false;
+
+    const crossedTarget = target >= origin ? time >= target - 0.1 : time <= target + 0.1;
+    // YouTube can land on a nearby keyframe without crossing the requested time.
+    const jumpedTowardTarget = Math.abs(time - target) <= Math.abs(origin - target) / 2;
+
+    return crossedTarget || jumpedTowardTarget;
+  }
+
   #poll() {
     const player = this.#player;
     if (!player) return;
@@ -666,10 +678,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     const duration = player.getDuration();
     const bufferedEnd = player.getVideoLoadedFraction() * duration;
     const wasSeeking = this.#seeking;
-    const reachedSeekTarget =
-      this.#seekTarget !== null &&
-      this.#seekOrigin !== null &&
-      (this.#seekTarget >= this.#seekOrigin ? time >= this.#seekTarget - 0.1 : time <= this.#seekTarget + 0.1);
+    const appliedSeek = this.#hasAppliedSeek(time);
 
     if (!wasSeeking && player.getPlayerState() !== STATE_PLAYING && Math.abs(time - this.#currentTime) > 0.1) {
       this.#seeking = true;
@@ -677,12 +686,12 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     }
 
     // Preserve the requested time until YouTube's clock catches up with a programmatic seek.
-    if ((this.#seekTarget === null || reachedSeekTarget) && time !== this.#currentTime) {
+    if ((this.#seekTarget === null || appliedSeek) && time !== this.#currentTime) {
       this.#currentTime = time;
       this.dispatchEvent(new Event('timeupdate'));
     }
 
-    if (wasSeeking && (reachedSeekTarget || (this.#seekTarget === null && bufferedEnd > 0.1))) {
+    if (wasSeeking && (appliedSeek || (this.#seekTarget === null && bufferedEnd > 0.1))) {
       this.#seeking = false;
       this.#seekTarget = null;
       this.#seekOrigin = null;
