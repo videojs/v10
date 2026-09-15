@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-rc.3] - 2026-09-15
+
+### 🚀 Features
+- *(skin)* Slot the slider thumbnail image ([#2700](https://github.com/videojs/v10/pull/2700)) by [@luwes](https://github.com/luwes)
+- *(sandbox)* Add aspect ratio preview option ([#2709](https://github.com/videojs/v10/pull/2709)) by [@sampotts](https://github.com/sampotts)
+- *(mux-video)* Load the asset title from the mux metadata api ([#2726](https://github.com/videojs/v10/pull/2726)) by [@luwes](https://github.com/luwes)
+- *(skins)* Add theme-scoped shadcn registries ([#2736](https://github.com/videojs/v10/pull/2736)) by [@mihar-22](https://github.com/mihar-22)
+- *(spf)* Support apple json chapters from ext-x-session-data ([#2737](https://github.com/videojs/v10/pull/2737)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(cdn)* Open every entry bundle with a Video.js banner ([#2762](https://github.com/videojs/v10/pull/2762)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Framework-agnostic docs links ([#2756](https://github.com/videojs/v10/pull/2756)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Reclaim html5-video-support with a real page ([#2757](https://github.com/videojs/v10/pull/2757)) by [@decepulis](https://github.com/decepulis)
+- About-this-player page and a help link in every player ([#2758](https://github.com/videojs/v10/pull/2758)) by [@decepulis](https://github.com/decepulis)
+
+### 🐛 Bug Fixes
+- *(skin)* Restore intrinsic height ([#2707](https://github.com/videojs/v10/pull/2707)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Resolve blurry slider rendering ([#2705](https://github.com/videojs/v10/pull/2705)) by [@sampotts](https://github.com/sampotts)
+- *(test)* Restore the skin parity suite and speed up ci ([#2717](https://github.com/videojs/v10/pull/2717)) by [@luwes](https://github.com/luwes)
+- *(react)* Route media event props on embed medias ([#2712](https://github.com/videojs/v10/pull/2712)) by [@luwes](https://github.com/luwes)
+- *(skin)* Simplify the slider styles ([#2719](https://github.com/videojs/v10/pull/2719)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Apply popup starting styles before showing ([#2715](https://github.com/videojs/v10/pull/2715)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Animate slider progress continuously across chapters ([#2721](https://github.com/videojs/v10/pull/2721)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Restore settings rotation and rtl parity ([#2723](https://github.com/videojs/v10/pull/2723)) by [@sampotts](https://github.com/sampotts)
+- *(react)* Keep media attached when the composed ref changes identity ([#2729](https://github.com/videojs/v10/pull/2729)) by [@luwes](https://github.com/luwes)
+- *(skin)* Use shared browser targets for css builds ([#2730](https://github.com/videojs/v10/pull/2730)) by [@sampotts](https://github.com/sampotts)
+- *(react)* Volume popover not working with react compiler ([#2742](https://github.com/videojs/v10/pull/2742)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Disable stale hls text tracks ([#2747](https://github.com/videojs/v10/pull/2747)) by [@mihar-22](https://github.com/mihar-22)
+- *(youtube-video)* Keep current time updating during playback ([#2744](https://github.com/videojs/v10/pull/2744)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Simplify zero length calculations ([#2739](https://github.com/videojs/v10/pull/2739)) by [@sampotts](https://github.com/sampotts)
+- *(html)* Register skin properties in the host document ([#2750](https://github.com/videojs/v10/pull/2750)) by [@sampotts](https://github.com/sampotts)
+
+### 💼 Other
+- *(packages)* Compile published react sources ([#2745](https://github.com/videojs/v10/pull/2745)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Use native react compiler ([#2743](https://github.com/videojs/v10/pull/2743)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🚜 Refactor
+- *(skin)* Harden style reset ([#2704](https://github.com/videojs/v10/pull/2704)) by [@sampotts](https://github.com/sampotts)
+
+### 📚 Documentation
+- Announce the v10 release candidate ([#2658](https://github.com/videojs/v10/pull/2658)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add changelog prose for 10.0.0-rc.2 ([#2699](https://github.com/videojs/v10/pull/2699)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(site)* Minor changes to v8 migration guide ([#2716](https://github.com/videojs/v10/pull/2716)) by [@spuppo-mux](https://github.com/spuppo-mux)
+
+### ⚡ Performance
+- *(site)* Faster docs dev server start ([#2698](https://github.com/videojs/v10/pull/2698)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🧪 Testing
+- Fix e2e tests for volume slider ([#2724](https://github.com/videojs/v10/pull/2724)) by [@sampotts](https://github.com/sampotts)
+
+### ⚙️ Miscellaneous Tasks
+- *(site)* Forward-port blog posts to site/v10 ([#2701](https://github.com/videojs/v10/pull/2701)) by [@decepulis](https://github.com/decepulis)
+- *(release-pr)* Cancel superseded changelog runs ([#2702](https://github.com/videojs/v10/pull/2702)) by [@decepulis](https://github.com/decepulis)
+- Point every public package's homepage at videojs.org ([#2761](https://github.com/videojs/v10/pull/2761)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-rc.2] - 2026-09-09
 
 ### 🚀 Features
@@ -1990,6 +2043,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-rc.3]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.2...@videojs/core@10.0.0-rc.3
 [@videojs/core@10.0.0-rc.2]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.1...@videojs/core@10.0.0-rc.2
 [@videojs/core@10.0.0-rc.1]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.32...@videojs/core@10.0.0-rc.1
 [@videojs/core@10.0.0-beta.32]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.31...@videojs/core@10.0.0-beta.32
