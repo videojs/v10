@@ -6,11 +6,11 @@ export default {
     pause: '일시중지',
     replay: '다시 재생',
     mute: '음소거',
-    unmute: '소리 활성화하기',
+    unmute: '음소거 해제',
   },
   seek: {
-    forward: '{seconds}초 앞으로',
-    backward: '{seconds}초 뒤로',
+    forward: '{seconds}초 앞으로 탐색',
+    backward: '{seconds}초 뒤로 탐색',
   },
   fullscreen: {
     enter: '전체 화면',
@@ -43,13 +43,13 @@ export default {
   },
   time: {
     current: '현재 시간',
-    duration: '지정 기간',
+    duration: '재생 시간',
     remaining: '남은 시간',
-    elapsedSuffix: '{duration} 경과 시간',
+    elapsedSuffix: '{duration} 경과',
     durationSuffix: '{duration} 재생 시간',
     remainingSuffix: '{duration} 남음',
     showElapsed: '경과 시간 표시, {duration}.',
-    showDuration: '길이 표시, {duration}.',
+    showDuration: '재생 시간 표시, {duration}.',
     showRemaining: '남은 시간 표시, {duration}.',
     toggleElapsed: '경과 시간과 남은 시간 사이를 전환합니다.',
     toggleDuration: '재생 시간과 남은 시간 사이를 전환합니다.',
@@ -68,7 +68,7 @@ export default {
   status: {
     captionsOn: '자막 켜짐',
     captionsOff: '자막 꺼짐',
-    paused: '일시정지',
+    paused: '일시중지됨',
     playing: '재생 중',
     fullscreen: '전체 화면',
     pip: '화면 속 화면',
@@ -79,15 +79,15 @@ export default {
     label: '미디어 플레이어',
   },
   errors: {
-    aborted: '비디오 재생을 취소했습니다.',
-    network: '네트워크 오류로 인하여 비디오 일부를 다운로드하지 못 했습니다.',
-    decode:
-      '비디오 재생이 취소됐습니다. 비디오가 손상되었거나 비디오가 사용하는 기능을 브라우저에서 지원하지 않는 것 같습니다.',
-    source: '비디오를 로드할 수 없습니다. 서버 혹은 네트워크 오류 때문이거나 지원되지 않는 형식 때문일 수 있습니다.',
-    encrypted: '미디어는 암호화되어 있으며 이를 해독할 키를 갖고 있지 않습니다.',
+    aborted: '미디어가 끝나기 전에 재생을 중지했습니다.',
+    network: '네트워크 또는 서버 문제로 인해 이 미디어를 불러올 수 없습니다.',
+    decode: '이 미디어를 재생할 수 없습니다. 미디어가 손상되었거나 브라우저에서 해당 형식을 지원하지 않을 수 있습니다.',
+    source:
+      '이 미디어를 불러올 수 없습니다. 미디어를 사용할 수 없거나 브라우저에서 해당 형식을 지원하지 않을 수 있습니다.',
+    encrypted: '암호를 해독할 수 없어 이 미디어를 재생할 수 없습니다.',
     unplayable: '이 미디어는 플레이어에서 지원되지 않습니다.',
     title: '문제가 발생했습니다.',
-    unexpected: '오류가 발생했습니다. 다시 시도해 주세요.',
+    unexpected: '예기치 않은 오류가 발생했습니다.',
   },
   common: {
     empty: '',
@@ -95,7 +95,7 @@ export default {
   },
   menu: {
     settings: '설정',
-    quality: '품질',
+    quality: '화질',
     audio: '오디오',
     default: '기본값',
     speed: '속도',
