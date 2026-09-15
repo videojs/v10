@@ -449,7 +449,7 @@ describe('store', () => {
       expect(listener).not.toHaveBeenCalled();
     });
 
-    it('calls onError for action errors', () => {
+    it('lets action errors propagate without reporting them', () => {
       const onError = vi.fn();
 
       const failingSlice = defineSlice<MockMedia>()({
@@ -463,8 +463,8 @@ describe('store', () => {
 
       const store = createStore<MockMedia>()(failingSlice, { onError });
 
-      // No target attached, so target() will throw
-      expect(() => store.fail()).toThrow();
+      expect(() => store.fail()).toThrow('NO_TARGET');
+      expect(onError).not.toHaveBeenCalled();
     });
   });
 
