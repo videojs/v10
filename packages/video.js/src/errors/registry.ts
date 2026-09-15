@@ -18,6 +18,11 @@ export interface LegacyErrorEntry {
   react: string;
 }
 
+/*
+ * `summary`, `html`, and `react` are inline Markdown: code and markup go in backticks. The thrown message prints them
+ * as-is, and the error pages render them, so a bare `<tag>` outside backticks would be swallowed as HTML there.
+ */
+
 /** A registry entry resolved for one code, with everything an error page or message needs. */
 export interface LegacyErrorRecord extends LegacyErrorEntry {
   code: LegacyErrorCode;
@@ -37,36 +42,36 @@ export const LEGACY_ERRORS = {
   VJS8_LEGACY_INIT: {
     summary: '`videojs()` was the Video.js 8 API. Video.js 10 has no factory; players are components you compose.',
     legacy: "const player = videojs('my-video', { controls: true });",
-    html: "Keep import 'video.js', remove the factory call, and render <video-player><video-skin><video src></video></video-skin></video-player>.",
+    html: "Keep `import 'video.js'`, remove the factory call, and render `<video-player><video-skin><video src></video></video-skin></video-player>`.",
     react:
-      "import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video' and render <VideoPlayer><VideoSkin><Video src /></VideoSkin></VideoPlayer>.",
+      "`import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video'` and render `<VideoPlayer><VideoSkin><Video src /></VideoSkin></VideoPlayer>`.",
   },
   VJS8_LEGACY_PLUGIN: {
     summary: '`videojs.registerPlugin()` was the Video.js 8 plugin system. Video.js 10 has no plugin registry.',
     legacy: "videojs.registerPlugin('myPlugin', function () { /* ... */ });",
-    html: 'Compose behavior as components inside <video-player>, or add an extension such as @videojs/google-cast.',
-    react: 'Compose behavior as components inside <VideoPlayer>, or add an extension such as @videojs/google-cast.',
+    html: 'Compose behavior as components inside `<video-player>`, or add an extension such as `@videojs/google-cast`.',
+    react: 'Compose behavior as components inside `<VideoPlayer>`, or add an extension such as `@videojs/google-cast`.',
   },
   VJS8_LEGACY_COMPONENT: {
     summary:
       '`videojs.registerComponent()` was the Video.js 8 component tree. Video.js 10 components are custom elements and React components.',
     legacy: "videojs.registerComponent('MyButton', MyButton);",
-    html: 'Define a custom element and place it inside <video-skin> or your own skin markup.',
-    react: 'Write a React component and place it inside <VideoSkin> or your own skin tree.',
+    html: 'Define a custom element and place it inside `<video-skin>` or your own skin markup.',
+    react: 'Write a React component and place it inside `<VideoSkin>` or your own skin tree.',
   },
   VJS8_LEGACY_GET_PLAYER: {
     summary:
       '`videojs.getPlayer()` looked players up by id. Video.js 10 has no registry; hold a reference to the element.',
     legacy: "const player = videojs.getPlayer('my-video');",
-    html: "document.querySelector('video-player') and call actions on its store.state.",
-    react: 'Select state and actions with usePlayer() from @videojs/react/video inside the tree.',
+    html: "`document.querySelector('video-player')` and call actions on its `store.state`.",
+    react: 'Select state and actions with `usePlayer()` from `@videojs/react/video` inside the tree.',
   },
   VJS8_LEGACY_OPTIONS: {
     summary:
       '`videojs.options` held Video.js 8 global defaults. Video.js 10 has no global; configuration lives on the components you render.',
     legacy: 'videojs.options.autoplay = true;',
-    html: 'Set attributes on <video-player>, <video-skin>, and the media element.',
-    react: 'Pass props to <VideoPlayer>, <VideoSkin>, and the media component.',
+    html: 'Set attributes on `<video-player>`, `<video-skin>`, and the media element.',
+    react: 'Pass props to `<VideoPlayer>`, `<VideoSkin>`, and the media component.',
   },
 } satisfies Record<LegacyErrorCode, LegacyErrorEntry>;
 
