@@ -7,7 +7,10 @@ import { ContentTypes, Hls, HlsJsAdapter, type HlsSource } from '../index';
 
 // Stands in for `<hlsjs-video>`, so markup reaches the media adapter the same way
 // the HTML binding delivers it.
-customElements.define('test-airplay-video', CustomMediaElement({ Adapter: HlsJsAdapter, target: videoTarget }));
+customElements.define(
+  'test-airplay-video',
+  CustomMediaElement({ adapter: { constructor: HlsJsAdapter }, target: videoTarget })
+);
 
 afterEach(() => {
   document.body.innerHTML = '';

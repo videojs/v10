@@ -48,6 +48,7 @@ The API is a subset of Lit's `ReactiveElement`. Types are aligned so controllers
 
 - **`static properties`** — Declare reactive properties with `type` (`String`, `Boolean`, `Number`) and `attribute` (custom attribute name)
 - **Reactive accessors** — Installed automatically, change detection via `Object.is()`
+- **Attribute conversion** — Built-in string, number, and boolean conversion plus custom converters
 - **Batched updates** — Multiple property changes in one tick trigger a single update via `queueMicrotask()`
 - **Full lifecycle** — `willUpdate` → `update` → `firstUpdated` (first time) → `updated` → `updateComplete`
 - **`hasUpdated`** — `false` until first update completes, `true` during `firstUpdated` and `updated` (matches Lit)
@@ -67,7 +68,6 @@ The API is a subset of Lit's `ReactiveElement`. Types are aligned so controllers
 | `shouldUpdate()` | No use case for skipping updates |
 | `getUpdateComplete()` | No async update chaining needed |
 | `reflect` option | No property-to-attribute reflection |
-| `converter` option | Simple type coercion is sufficient |
 | `state` option | All properties are observable |
 | `hasChanged` option | `Object.is()` is always used |
 
@@ -95,6 +95,33 @@ import { createContext, ContextProvider, ContextConsumer } from '@videojs/elemen
 ```
 
 This provides tree-scoped data sharing without prop drilling, using Lit's [Context Protocol](https://github.com/webcomponents-cg/community-protocols/blob/main/proposals/context.md).
+
+## Attribute composition
+
+Use `@videojs/element/attributes` when an element needs attribute conversion or reflection without extending
+`ReactiveElement`:
+
+```ts
+import { createAttributeBindings, defineReflectedAttribute } from '@videojs/element/attributes';
+
+const bindings = createAttributeBindings({
+  count: { type: Number, defaultValue: 0 },
+  disabled: { type: Boolean },
+});
+
+class CounterElement extends HTMLElement {
+  static observedAttributes = [...bindings.observedAttributes];
+}
+
+for (const binding of bindings.byProperty.values()) {
+  defineReflectedAttribute(CounterElement.prototype, binding);
+}
+```
+
+Bindings reject duplicate or non-lowercase attribute names. `AttributeDeclarationsFor<Props>` checks declaration keys
+and built-in conversion types against a property surface; a custom converter can represent any other value.
+`preparePropertyUpgrade()` preserves values assigned before registration and replays subclass fields through generated
+accessors. `ReactiveElement` uses the same upgrade primitive internally.
 
 ## Community
 

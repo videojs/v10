@@ -5,6 +5,6 @@
  * base adapters and CSS vars from templates.ts.
  */
 // Stub — the builder parses the AST, it doesn't run the code.
-export function CustomMediaElement(options: { Adapter: any; target: any }) {
-  return options.Adapter;
+export function CustomMediaElement(options: { adapter: { constructor: any }; target: any }) {
+  return options.adapter.constructor;
 }

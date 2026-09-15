@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { adapterPropsFromAttributes, derivedAttributes } from '../attributes';
+import { adapterPropsFromAttributes, deriveAdapterAttributes } from '../attributes';
 
 class EmbedAdapter {
   static readonly defaultProps = {
@@ -15,13 +15,18 @@ class EmbedAdapter {
   };
 }
 
-describe('derivedAttributes', () => {
+describe('deriveAdapterAttributes', () => {
   it('declares one attribute per primitive default, spelled the WHATWG way, and skips objects, playback state, and booleans that default to true', () => {
-    const configs = derivedAttributes(EmbedAdapter.defaultProps);
+    const configs = deriveAdapterAttributes(EmbedAdapter.defaultProps);
 
     expect(Object.keys(configs).sort()).toEqual(['autoplay', 'defaultMuted', 'preload', 'src']);
-    expect(configs.defaultMuted).toEqual({ type: Boolean, attribute: 'muted', empty: false, state: 'muted' });
-    expect(configs.preload).toEqual({ type: String, attribute: 'preload', empty: 'metadata' });
+    expect(configs.defaultMuted).toEqual({
+      type: Boolean,
+      attribute: 'muted',
+      defaultValue: false,
+      linkedProperty: 'muted',
+    });
+    expect(configs.preload).toEqual({ type: String, attribute: 'preload', defaultValue: 'metadata' });
   });
 });
 

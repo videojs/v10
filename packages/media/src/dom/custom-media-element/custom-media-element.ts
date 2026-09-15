@@ -1,11 +1,12 @@
+import { preparePropertyUpgrade, valueFromAttribute } from '@videojs/element/attributes';
 import type { ShadowTemplateFunction } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
 import { AdapterAttachment } from './attach-adapter';
-import { attributeName, buildRoutes, coerceAttribute, derivedAttributes } from './attributes';
+import { resolveAdapterAttributes, resolveMediaAttributeBindings, type AdapterAttributeOverrides } from './attributes';
 import { bridgeEvent, forwardAdapter, reflectAttributes, unbridgeEvents } from './element-surface';
 import { createRenderContext } from './render-context';
-import type { MediaTargetDefinition } from './targets';
+import type { MediaTargetDefinition, MediaTargetRenderContext } from './targets';
 
 export interface PlaybackAdapter<Target extends EventTarget = EventTarget> extends EventTarget {
   attach(target: Target): void;
@@ -29,9 +30,15 @@ type PlaybackAdapterTarget<T extends PlaybackAdapterConstructor> = NonNullable<
   Parameters<InstanceType<T>['attach']>[0]
 >;
 
+export interface PlaybackAdapterDefinition<T extends PlaybackAdapterConstructor> {
+  readonly constructor: T;
+  /** Partial declaration overrides keyed by adapter default property. Use `false` to disable an attribute. */
+  readonly attributes?: AdapterAttributeOverrides<T['defaultProps']>;
+}
+
 export interface CustomMediaElementConfig<T extends PlaybackAdapterConstructor> {
-  Adapter: T;
-  target: MediaTargetDefinition<PlaybackAdapterTarget<T>>;
+  readonly adapter: PlaybackAdapterDefinition<T>;
+  readonly target: MediaTargetDefinition<PlaybackAdapterTarget<T>, T['defaultProps']>;
 }
 
 type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
@@ -42,7 +49,7 @@ type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
       attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     }
 > & {
-  template?: ShadowTemplateFunction<Record<string, string>>;
+  template?: ShadowTemplateFunction<MediaTargetRenderContext<T['defaultProps']>>;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
 };
@@ -60,23 +67,28 @@ type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
 export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
   config: CustomMediaElementConfig<T>
 ): CustomMediaConstructor<T> {
-  const { Adapter, target: definition } = config;
-  const targetAttributeConfigs = definition.attributes ?? {};
-  const targetAttributeNames = new Set(
-    Object.entries(targetAttributeConfigs).map(([prop, config]) => attributeName(prop, config))
+  const { constructor: Adapter, attributes: adapterAttributeOverrides } = config.adapter;
+  const { target: definition } = config;
+  const targetAttributeDeclarations = definition.attributes ?? {};
+  const adapterAttributeDeclarations = resolveAdapterAttributes(Adapter.defaultProps, adapterAttributeOverrides);
+  const attributeBindings = resolveMediaAttributeBindings(
+    targetAttributeDeclarations,
+    adapterAttributeDeclarations,
+    Adapter
   );
-  const routes = buildRoutes(targetAttributeConfigs, derivedAttributes(Adapter.defaultProps), Adapter);
+  let exposedProperties: readonly string[] = [];
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static template = definition.template;
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
 
     static get observedAttributes(): string[] {
-      return [...routes.observed];
+      return [...attributeBindings.observedAttributes];
     }
 
     // SAFETY: `Adapter` is the constructor represented by `T`; TypeScript widens construction through the constraint.
     #adapter = new Adapter() as InstanceType<T>;
+    #upgradeProperties: (() => void) | undefined;
     #stopObserving: (() => void) | undefined;
     #attachment = new AdapterAttachment<PlaybackAdapterTarget<T>>(
       this,
@@ -91,7 +103,9 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     constructor() {
       super();
 
-      const context = createRenderContext(this, routes);
+      this.#upgradeProperties = preparePropertyUpgrade(this, exposedProperties);
+
+      const context = createRenderContext(this, attributeBindings, Adapter, adapterAttributeDeclarations);
 
       definition.render(this, context);
 
@@ -102,8 +116,6 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
       });
 
       if (stopObserving) this.#stopObserving = stopObserving;
-
-      this.#hydrate(context.attributeValues);
     }
 
     /** The adapter owned by this element. The element exclusively manages its attachment lifecycle. */
@@ -117,6 +129,9 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     }
 
     connectedCallback() {
+      this.#upgradeProperties?.();
+      this.#upgradeProperties = undefined;
+
       definition.connected?.(this);
     }
 
@@ -139,7 +154,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
 
     /** Replay every observed attribute onto the current target, after the target changed underneath them. */
     #hydrate(attributes?: Record<string, string>): void {
-      for (const name of routes.observed) {
+      for (const name of attributeBindings.observedAttributes) {
         if (attributes && name in attributes) {
           this.#apply(name, attributes[name]!);
         } else if (this.hasAttribute(name)) {
@@ -149,31 +164,34 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     }
 
     #apply(name: string, value: string | null): void {
-      const owner = routes.ownerOf.get(name);
+      const binding = attributeBindings.byAttribute.get(name);
+      if (!binding) return;
 
-      if (owner) {
-        const config = routes.configOf.get(name)!;
-        const coerced = coerceAttribute(value, config);
+      if (binding.destination === 'adapter') {
+        const coerced = valueFromAttribute(value, binding.declaration);
         const adapter: PlaybackAdapter = this.#adapter;
 
-        adapter[owner] = coerced;
+        adapter[binding.property] = coerced;
 
-        if (config.state && config.state in adapter) adapter[config.state] = coerced;
+        const linkedProperty = binding.declaration.linkedProperty;
+
+        if (linkedProperty && linkedProperty in adapter) {
+          adapter[linkedProperty] = coerced;
+        }
 
         return;
       }
 
-      // Anything else the target definition understands is the target's business; a subclass's own attributes are not.
       const resolvedTarget = this.target;
 
-      if (resolvedTarget && targetAttributeNames.has(name)) {
-        definition.attributeChanged?.(resolvedTarget, name, value);
-      }
+      if (resolvedTarget) definition.attributeChanged?.(resolvedTarget, name, value);
     }
   }
 
-  forwardAdapter(CustomMedia.prototype, Adapter, routes);
-  reflectAttributes(CustomMedia.prototype, routes);
+  exposedProperties = [
+    ...forwardAdapter(CustomMedia.prototype, Adapter, attributeBindings),
+    ...reflectAttributes(CustomMedia.prototype, attributeBindings),
+  ];
 
   return CustomMedia as any;
 }

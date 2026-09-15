@@ -3,7 +3,9 @@ import { MuxVideoAdapter } from '@videojs/mux-video/spf';
 import { createMediaElement, videoTarget } from '../create-media-element';
 import { MuxVideoMixin } from './mixin';
 
-const MuxVideoBase = MuxVideoMixin(createMediaElement({ Adapter: MuxVideoAdapter, target: videoTarget }));
+const MuxVideoBase = MuxVideoMixin(
+  createMediaElement({ adapter: { constructor: MuxVideoAdapter }, target: videoTarget })
+);
 
 /**
  * `<mux-video>` over the SPF-backed Mux Media instead of the hls.js-backed one.

@@ -63,19 +63,7 @@ export interface ReactiveController {
 export type PropertyValues = Map<string, unknown>;
 
 /** Defines options for a reactive property. */
-export interface PropertyDeclaration {
-  /**
-   * Indicates the type of the property. This is used as a hint to determine how to convert between attributes and
-   * properties.
-   */
-  readonly type?: typeof String | typeof Boolean | typeof Number;
-
-  /**
-   * Indicates the attribute name to use for this property. If a string, that string is used as the attribute name. By
-   * default, the lowercased property name is used.
-   */
-  readonly attribute?: string;
-}
+export type PropertyDeclaration = AttributeDeclaration;
 
 /**
  * Map of property names to {@linkcode PropertyDeclaration} options.
@@ -89,3 +77,4 @@ export interface PropertyDeclaration {
  *   ```;
  */
 export type PropertyDeclarationMap<K extends string = string> = Record<K, PropertyDeclaration>;
+import type { AttributeDeclaration } from './attributes';

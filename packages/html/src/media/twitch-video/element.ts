@@ -1,12 +1,10 @@
-import { adapterPropsFromAttributes } from '@videojs/media/dom';
+import type { MediaTargetRenderContext } from '@videojs/media/dom';
 import { buildTwitchIframeSrc, TwitchAdapter } from '@videojs/twitch-video';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
-const template = (attrs: Record<string, string>): string => {
-  const props = adapterPropsFromAttributes(TwitchAdapter, attrs);
-
+const template = ({ adapterProps: props }: MediaTargetRenderContext<typeof TwitchAdapter.defaultProps>): string => {
   return embedTemplate({
     src: buildTwitchIframeSrc(props.src, props),
     allow: 'accelerometer; fullscreen; autoplay; encrypted-media; picture-in-picture;',
@@ -21,6 +19,9 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaType video
  * @mediaTarget iframe
  */
-export class TwitchVideoElement extends createMediaElement({ Adapter: TwitchAdapter, target: iframeTarget(template) }) {
+export class TwitchVideoElement extends createMediaElement({
+  adapter: { constructor: TwitchAdapter },
+  target: iframeTarget(template),
+}) {
   static readonly tagName = 'twitch-video';
 }

@@ -65,7 +65,7 @@ afterEach(() => {
 describe('createMediaElement', () => {
   it("renders the definition's target in the shadow root and attaches the adapter to it", () => {
     const el = document.createElement(
-      defineTestElement(createMediaElement({ Adapter: FakeAdapter, target: videoTarget }))
+      defineTestElement(createMediaElement({ adapter: { constructor: FakeAdapter }, target: videoTarget }))
     );
 
     document.body.append(el);
@@ -78,7 +78,7 @@ describe('createMediaElement', () => {
 
   it('renders an <audio> for an audio adapter and mirrors attributes onto the adapter', () => {
     const el = document.createElement(
-      defineTestElement(createMediaElement({ Adapter: FakeAudioAdapter, target: audioTarget }))
+      defineTestElement(createMediaElement({ adapter: { constructor: FakeAudioAdapter }, target: audioTarget }))
     );
 
     document.body.append(el);
@@ -90,7 +90,7 @@ describe('createMediaElement', () => {
 
   it('renders the template around an embed adapter and attaches to its iframe', () => {
     const Element = createMediaElement({
-      Adapter: FakeEmbedAdapter,
+      adapter: { constructor: FakeEmbedAdapter },
       target: iframeTarget(() => '<iframe part="iframe" title="Embedded player"></iframe>'),
     });
     const el = document.createElement(defineTestElement(Element));
@@ -108,7 +108,7 @@ describe('createMediaElement', () => {
     const { PlayerElement } = createPlayer({ features: backgroundFeatures });
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const el = document.createElement(
-      defineTestElement(createMediaElement({ Adapter: FakeAdapter, target: videoTarget }))
+      defineTestElement(createMediaElement({ adapter: { constructor: FakeAdapter }, target: videoTarget }))
     );
 
     player.append(el);

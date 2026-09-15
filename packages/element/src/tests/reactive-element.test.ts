@@ -163,6 +163,21 @@ describe('ReactiveElement properties', () => {
     expect(el.negativeSign).toBe('\u2212');
   });
 
+  it('lowercases an implicit attribute name', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        closeDelay: { type: Number },
+      };
+      closeDelay = 0;
+    }
+
+    const el = createElement(TestElement);
+
+    expect(TestElement.observedAttributes).toContain('closedelay');
+    el.setAttribute('closedelay', '100');
+    expect(el.closeDelay).toBe(100);
+  });
+
   it('triggers requestUpdate on property change', async () => {
     const update = vi.fn();
 

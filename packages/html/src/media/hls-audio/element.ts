@@ -6,6 +6,9 @@ import { audioTarget, createMediaElement } from '../create-media-element';
  * @mediaType audio
  * @mediaTarget audio
  */
-export class HlsAudioElement extends createMediaElement({ Adapter: HlsAudioAdapter, target: audioTarget }) {
+export class HlsAudioElement extends createMediaElement({
+  adapter: { constructor: HlsAudioAdapter },
+  target: audioTarget,
+}) {
   static readonly tagName = 'hls-audio';
 }

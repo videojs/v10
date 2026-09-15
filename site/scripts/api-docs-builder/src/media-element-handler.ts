@@ -418,12 +418,18 @@ function findCustomMediaComposition(
       if (!argument || argument.type === 'SpreadElement') return;
 
       const config = unwrapObjectExpression(argument);
-      const adapter = config?.properties.find(
-        (property) => property.type === 'Property' && staticName(property.key) === 'Adapter'
+      const adapterProperty = config?.properties.find(
+        (property) => property.type === 'Property' && staticName(property.key) === 'adapter'
       );
-      if (adapter?.type !== 'Property' || adapter.value.type !== 'Identifier') return;
+      if (adapterProperty?.type !== 'Property') return;
 
-      found = { adapterClassName: adapter.value.name };
+      const adapter = unwrapObjectExpression(adapterProperty.value);
+      const constructor = adapter?.properties.find(
+        (property) => property.type === 'Property' && staticName(property.key) === 'constructor'
+      );
+      if (constructor?.type !== 'Property' || constructor.value.type !== 'Identifier') return;
+
+      found = { adapterClassName: constructor.value.name };
     });
 
     if (found) return found;

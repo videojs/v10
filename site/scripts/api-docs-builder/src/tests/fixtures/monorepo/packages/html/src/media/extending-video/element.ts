@@ -11,7 +11,9 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-const ExtendingVideoBase = MediaAttachMixin(CustomMediaElement({ Adapter: ExtendingHost, target: {} }));
+const ExtendingVideoBase = MediaAttachMixin(
+  CustomMediaElement({ adapter: { constructor: ExtendingHost }, target: {} })
+);
 
 /**
  * @mediaType video

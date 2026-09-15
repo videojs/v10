@@ -1,11 +1,12 @@
 export { AdapterAttachment } from './attach-adapter';
-export { adapterPropsFromAttributes } from './attributes';
+export { adapterPropsFromAttributes, type AdapterAttributeOverrides } from './attributes';
 export * from './custom-media-element';
 export {
   audioContentAttributes,
   mediaContentAttributes,
-  type MediaTargetAttributeConfig,
-  type MediaTargetAttributeConfigs,
+  type MediaAttributeDeclaration,
+  type MediaAttributeDeclarations,
+  type MediaAttributeDeclarationsFor,
   videoContentAttributes,
 } from './target-attributes';
 export {

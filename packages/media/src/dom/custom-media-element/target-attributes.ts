@@ -1,29 +1,38 @@
-/** How a media target property maps to the content attribute that drives it. */
-export interface MediaTargetAttributeConfig {
-  readonly type: BooleanConstructor | NumberConstructor | StringConstructor;
-  /** The attribute name when it is not the lowercased property name. */
-  readonly attribute?: string;
-  /** The value the property takes when the attribute is removed, when that is not the empty string. */
-  readonly empty?: unknown;
-  /** A live-state property written alongside the owner. */
-  readonly state?: string;
+import type {
+  AttributeDeclaration,
+  AttributeDeclarationMap,
+  AttributeDeclarationsFor,
+  AttributeValue,
+} from '@videojs/element/attributes';
+
+interface MediaAttributeOptions {
+  /** Another property that receives the parsed value, such as `muted` for the `defaultMuted` content attribute. */
+  readonly linkedProperty?: string;
 }
 
-export type MediaTargetAttributeConfigs = Readonly<Record<string, MediaTargetAttributeConfig>>;
+/** How a media property maps to the content attribute that drives it. */
+export type MediaAttributeDeclaration<Value = AttributeValue> = AttributeDeclaration<Value> & MediaAttributeOptions;
+
+export type MediaAttributeDeclarations = AttributeDeclarationMap<MediaAttributeDeclaration>;
+
+export type MediaAttributeDeclarationsFor<Properties extends object> = AttributeDeclarationsFor<
+  Properties,
+  MediaAttributeOptions
+>;
 
 /** Content attributes accepted by native audio and video targets. */
 export const mediaContentAttributes = Object.freeze({
   autoplay: { type: Boolean },
   controls: { type: Boolean },
   controlsList: { type: String },
-  crossOrigin: { type: String, empty: null },
-  defaultMuted: { type: Boolean, attribute: 'muted', state: 'muted' },
+  crossOrigin: { type: String, defaultValue: null },
+  defaultMuted: { type: Boolean, attribute: 'muted', linkedProperty: 'muted' },
   disableRemotePlayback: { type: Boolean },
   loading: { type: String },
   loop: { type: Boolean },
-  preload: { type: String, empty: null },
-  src: { type: String, empty: '' },
-} satisfies MediaTargetAttributeConfigs);
+  preload: { type: String, defaultValue: null },
+  src: { type: String, defaultValue: '' },
+} satisfies MediaAttributeDeclarations);
 
 /** Content attributes accepted by a native audio target. */
 export const audioContentAttributes = mediaContentAttributes;
@@ -34,5 +43,5 @@ export const videoContentAttributes = Object.freeze({
   autoPictureInPicture: { type: Boolean },
   disablePictureInPicture: { type: Boolean },
   playsInline: { type: Boolean },
-  poster: { type: String, empty: '' },
-} satisfies MediaTargetAttributeConfigs);
+  poster: { type: String, defaultValue: '' },
+} satisfies MediaAttributeDeclarations);

@@ -8,14 +8,14 @@
 import { SimpleHost } from '../../../../media/src/dom/simple';
 
 // Stub — the builder parses the AST, it doesn't run the code.
-function createMediaElement(options: { Adapter: any; target: any }) {
-  return options.Adapter;
+function createMediaElement(options: { adapter: { constructor: any }; target: any }) {
+  return options.adapter.constructor;
 }
 
 /**
  * @mediaType video
  * @mediaTarget video
  */
-export class SimpleVideoElement extends createMediaElement({ Adapter: SimpleHost, target: {} }) {
+export class SimpleVideoElement extends createMediaElement({ adapter: { constructor: SimpleHost }, target: {} }) {
   static readonly tagName = 'simple-video';
 }

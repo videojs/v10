@@ -80,8 +80,9 @@ export {
 } from './media/create-media-element';
 export type {
   CreateMediaElementOptions,
-  MediaTargetAttributeConfig,
-  MediaTargetAttributeConfigs,
+  MediaAttributeDeclaration,
+  MediaAttributeDeclarations,
+  MediaAttributeDeclarationsFor,
   MediaTargetDefinition,
   MediaTargetRenderContext,
 } from './media/create-media-element';

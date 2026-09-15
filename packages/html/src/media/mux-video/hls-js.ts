@@ -3,7 +3,9 @@ import { MuxVideoAdapter } from '@videojs/mux-video';
 import { createMediaElement, videoTarget } from '../create-media-element';
 import { MuxVideoMixin } from './mixin';
 
-const MuxVideoBase = MuxVideoMixin(createMediaElement({ Adapter: MuxVideoAdapter, target: videoTarget }));
+const MuxVideoBase = MuxVideoMixin(
+  createMediaElement({ adapter: { constructor: MuxVideoAdapter }, target: videoTarget })
+);
 
 /**
  * @mediaType video

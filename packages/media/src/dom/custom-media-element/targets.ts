@@ -1,24 +1,29 @@
 import { renderShadowTemplate, setAttributeValue, type ShadowTemplateFunction } from '@videojs/utils/dom';
 
 import { MediaChildren } from './media-children';
-import { audioContentAttributes, type MediaTargetAttributeConfigs, videoContentAttributes } from './target-attributes';
+import { audioContentAttributes, type MediaAttributeDeclarations, videoContentAttributes } from './target-attributes';
 import { elementTemplate, videoTemplate } from './templates';
 
-export interface MediaTargetRenderContext {
+export interface MediaTargetRenderContext<AdapterProps extends object = Record<string, unknown>> {
   /** Initial observed attributes from the outer media element. */
   readonly attributeValues: Record<string, string>;
   /** Initial attributes safe to render onto the adapter target. */
   readonly targetAttributeValues: Record<string, string>;
+  /** Adapter defaults with initial content attributes parsed over them. */
+  readonly adapterProps: AdapterProps;
 }
 
 /** Defines how a media element renders and manages the target attached to its playback adapter. */
-export interface MediaTargetDefinition<Target extends EventTarget = EventTarget> {
+export interface MediaTargetDefinition<
+  Target extends EventTarget = EventTarget,
+  AdapterProps extends object = Record<string, unknown>,
+> {
   /** Target-native attributes exposed on the outer custom element. */
-  readonly attributes?: MediaTargetAttributeConfigs;
+  readonly attributes?: MediaAttributeDeclarations;
   /** Default template exposed on the generated element class. */
-  readonly template?: ShadowTemplateFunction<Record<string, string>>;
+  readonly template?: ShadowTemplateFunction<MediaTargetRenderContext<AdapterProps>>;
   /** Render the target from the element's initial attributes. */
-  render(element: HTMLElement, context: MediaTargetRenderContext): void;
+  render(element: HTMLElement, context: MediaTargetRenderContext<AdapterProps>): void;
   /** Resolve the target currently attached to the adapter. */
   resolve(element: HTMLElement): Target | null;
   /** Observe target replacement and return an optional cleanup callback. */
@@ -37,16 +42,16 @@ const queryTargetElement = <Tag extends keyof HTMLElementTagNameMap>(element: HT
 
 const createNativeMediaTarget = <Tag extends 'audio' | 'video'>(
   tag: Tag,
-  attributes: MediaTargetAttributeConfigs,
+  attributes: MediaAttributeDeclarations,
   template: ShadowTemplateFunction<Record<string, string>>
-): MediaTargetDefinition<HTMLElementTagNameMap[Tag]> => {
+): MediaTargetDefinition<HTMLElementTagNameMap[Tag], object> => {
   const resolve = (element: HTMLElement) => queryTargetElement(element, tag);
 
   return {
     attributes,
-    template,
+    template: (context) => template({ part: tag, ...context.targetAttributeValues }),
     render(element, context) {
-      renderShadowTemplate(element, { part: tag, ...context.targetAttributeValues });
+      renderShadowTemplate(element, context);
     },
     resolve,
     observe(element, targetChanged) {
@@ -75,13 +80,16 @@ export const videoTarget = createNativeMediaTarget('video', videoContentAttribut
 export const audioTarget = createNativeMediaTarget('audio', audioContentAttributes, elementTemplate('audio'));
 
 /** Creates a target definition for an iframe-backed playback adapter. */
-export const iframeTarget = (template: ShadowTemplateFunction<Record<string, string>> = elementTemplate('iframe')) => {
+export const iframeTarget = <AdapterProps extends object = Record<string, unknown>>(
+  template: ShadowTemplateFunction<MediaTargetRenderContext<AdapterProps>> = (context) =>
+    elementTemplate('iframe')({ part: 'iframe', ...context.attributeValues })
+) => {
   const resolve = (element: HTMLElement) => queryTargetElement(element, 'iframe');
 
   return {
     template,
-    render(element: HTMLElement, context: MediaTargetRenderContext) {
-      renderShadowTemplate(element, { part: 'iframe', ...context.attributeValues });
+    render(element: HTMLElement, context: MediaTargetRenderContext<AdapterProps>) {
+      renderShadowTemplate(element, context);
     },
     resolve,
     observe(element: HTMLElement, targetChanged: () => void) {
@@ -92,5 +100,5 @@ export const iframeTarget = (template: ShadowTemplateFunction<Record<string, str
     connected(element: HTMLElement) {
       element.setAttribute('data-cross-origin-frame', '');
     },
-  } satisfies MediaTargetDefinition<HTMLIFrameElement>;
+  } satisfies MediaTargetDefinition<HTMLIFrameElement, AdapterProps>;
 };

@@ -8,6 +8,9 @@ import { createMediaElement, videoTarget } from '../create-media-element';
  * @mediaType video
  * @mediaTarget video
  */
-export class DashVideoElement extends createMediaElement({ Adapter: DashAdapter, target: videoTarget }) {
+export class DashVideoElement extends createMediaElement({
+  adapter: { constructor: DashAdapter },
+  target: videoTarget,
+}) {
   static readonly tagName = 'dash-video';
 }

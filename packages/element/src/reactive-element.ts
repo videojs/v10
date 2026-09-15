@@ -1,8 +1,14 @@
+import {
+  createAttributeBindings,
+  preparePropertyUpgrade,
+  valueFromAttribute,
+  type AttributeBindings,
+} from './attributes';
 import type { PropertyDeclaration, PropertyDeclarationMap, PropertyValues, ReactiveController } from './types';
 
 interface ResolvedMeta {
   props: Map<string, PropertyDeclaration>;
-  attrToProp: Map<string, string>;
+  bindings: AttributeBindings<PropertyDeclaration>;
 }
 
 const cache = new WeakMap<typeof ReactiveElement, ResolvedMeta>();
@@ -57,15 +63,14 @@ export class ReactiveElement extends HTMLElementBase {
 
   /** Returns a list of attributes corresponding to the registered properties. */
   static get observedAttributes(): string[] {
-    return [...resolve(this).attrToProp.keys()];
+    return [...resolve(this).bindings.observedAttributes];
   }
 
   // --- Instance state ---
 
   #controllers: Set<ReactiveController> = new Set();
   #changedProperties: PropertyValues = new Map();
-  #instanceProperties: Map<string, unknown> | undefined;
-  #propertiesUpgraded = false;
+  #upgradeProperties: (() => void) | undefined;
 
   /**
    * Promise that gates the first update until `connectedCallback`. Also used to serialize updates — each
@@ -93,16 +98,9 @@ export class ReactiveElement extends HTMLElementBase {
       (res) => (this.enableUpdating = res as (requestedUpdate: boolean) => void)
     );
 
-    // Save instance properties that might shadow prototype accessors.
-    // Handles the "upgrade" case where properties were set before registration.
     const { props } = resolve(this.constructor as typeof ReactiveElement);
 
-    for (const name of props.keys()) {
-      if (Object.hasOwn(this, name)) {
-        (this.#instanceProperties ??= new Map()).set(name, (this as Record<string, unknown>)[name]);
-        delete (this as Record<string, unknown>)[name];
-      }
-    }
+    this.#upgradeProperties = preparePropertyUpgrade(this, props.keys());
 
     // Enqueue the first update. It won't run until connectedCallback calls
     // `this.enableUpdating(true)` which resolves the #updatePromise gate.
@@ -137,7 +135,8 @@ export class ReactiveElement extends HTMLElementBase {
 
   /** On first connection, enables updating and notifies controllers. */
   connectedCallback(): void {
-    this.#upgradeProperties();
+    this.#upgradeProperties?.();
+    this.#upgradeProperties = undefined;
     this.enableUpdating(true);
 
     for (const c of this.#controllers) {
@@ -160,22 +159,10 @@ export class ReactiveElement extends HTMLElementBase {
   attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return;
 
-    const { props, attrToProp } = resolve(this.constructor as typeof ReactiveElement);
-    const propName = attrToProp.get(attr);
-    if (!propName) return;
+    const binding = resolve(this.constructor as typeof ReactiveElement).bindings.byAttribute.get(attr);
+    if (!binding) return;
 
-    const decl = props.get(propName);
-    if (!decl) return;
-
-    let value: unknown = newValue;
-
-    if (decl.type === Boolean) {
-      value = newValue !== null;
-    } else if (decl.type === Number) {
-      value = newValue === null ? null : Number(newValue);
-    }
-
-    (this as Record<string, unknown>)[propName] = value;
+    (this as Record<string, unknown>)[binding.property] = valueFromAttribute(newValue, binding.declaration);
   }
 
   /**
@@ -324,33 +311,6 @@ export class ReactiveElement extends HTMLElementBase {
   get updateComplete(): Promise<boolean> {
     return this.#updatePromise;
   }
-
-  /**
-   * Replays properties set before registration through their reactive accessors. This runs after subclass fields have
-   * initialized but before connection lifecycle consumers, so user values win over defaults and are immediately
-   * usable.
-   */
-  #upgradeProperties(): void {
-    if (this.#propertiesUpgraded) return;
-
-    this.#propertiesUpgraded = true;
-
-    const { props } = resolve(this.constructor as typeof ReactiveElement);
-
-    for (const name of props.keys()) {
-      const hasSavedValue = this.#instanceProperties?.has(name) ?? false;
-      const hasOwnValue = Object.hasOwn(this, name);
-      if (!hasSavedValue && !hasOwnValue) continue;
-
-      const value = hasSavedValue ? this.#instanceProperties?.get(name) : Reflect.get(this, name);
-
-      if (hasOwnValue) Reflect.deleteProperty(this, name);
-
-      Reflect.set(this, name, value);
-    }
-
-    this.#instanceProperties = undefined;
-  }
 }
 
 /**
@@ -365,11 +325,10 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
   if (existing) return existing;
 
   const props = new Map<string, PropertyDeclaration>();
-  const attrToProp = new Map<string, string>();
+  const bindings = createAttributeBindings(ctor.properties);
 
   for (const [name, decl] of Object.entries(ctor.properties)) {
     props.set(name, decl);
-    attrToProp.set(decl.attribute ?? name, name);
 
     // Install reactive accessor on the prototype
     if (!Object.getOwnPropertyDescriptor(ctor.prototype, name)?.get) {
@@ -399,7 +358,7 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
     }
   }
 
-  const meta: ResolvedMeta = { props, attrToProp };
+  const meta: ResolvedMeta = { props, bindings };
 
   cache.set(ctor, meta);
   return meta;

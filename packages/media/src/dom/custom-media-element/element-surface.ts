@@ -1,9 +1,10 @@
+import { defineReflectedAttribute, setAttributeFromValue, type AttributeValue } from '@videojs/element/attributes';
 import { redispatchEvent } from '@videojs/utils/events';
 import { isFunction } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
 
 import { isForwardedEvent } from '../html-media-adapter';
-import type { AttributeRoutes } from './attributes';
+import type { MediaAttributeBindings } from './attributes';
 import type { PlaybackAdapter } from './custom-media-element';
 
 /** An element that owns an adapter. */
@@ -19,14 +20,6 @@ const excludedProperties = new Set(['constructor', 'attach', 'detach', 'destroy'
  */
 const elementOwned = new Set(['title']);
 
-function writeThroughAttribute(element: HTMLElement, attribute: string, value: unknown): void {
-  if (value === true || value === false || value == null) {
-    element.toggleAttribute(attribute, Boolean(value));
-  } else {
-    element.setAttribute(attribute, String(value));
-  }
-}
-
 /**
  * Put the adapter's public methods and accessors on the element prototype, so the element is the adapter to its
  * callers.
@@ -36,14 +29,20 @@ function writeThroughAttribute(element: HTMLElement, attribute: string, value: u
  * `addEventListener` or `title`, are left alone; in development, any other collision is reported. Underscore-prefixed
  * members are treated as private.
  */
-export function forwardAdapter(prototype: object, Adapter: Constructor<object>, routes: AttributeRoutes): void {
+export function forwardAdapter(
+  prototype: object,
+  Adapter: Constructor<object>,
+  bindings: MediaAttributeBindings
+): string[] {
   const collisions: string[] = [];
+  const properties: string[] = [];
 
   for (let proto = Adapter.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
     if (proto === EventTarget.prototype) break;
 
     for (const prop of Object.getOwnPropertyNames(proto)) {
-      if (excludedProperties.has(prop) || prop.startsWith('_') || routes.reflected.has(prop)) continue;
+      const binding = bindings.byProperty.get(prop);
+      if (excludedProperties.has(prop) || prop.startsWith('_') || binding?.destination === 'target') continue;
 
       if (prop in prototype) {
         if (!elementOwned.has(prop) && !(prop in EventTarget.prototype)) collisions.push(prop);
@@ -61,20 +60,20 @@ export function forwardAdapter(prototype: object, Adapter: Constructor<object>, 
           return this.adapter[prop](...args);
         };
       } else if (descriptor.get) {
-        const attribute = routes.attributeOf.get(prop);
-
         config.get = function (this: AdapterElement) {
           return this.adapter[prop];
         };
 
         if (descriptor.set) {
           config.set = function (this: AdapterElement, value: unknown) {
-            if (attribute) {
-              writeThroughAttribute(this, attribute, value);
+            if (binding) {
+              // SAFETY: Attribute bindings carry the converter for the corresponding property value.
+              setAttributeFromValue(this, binding, value as AttributeValue);
             } else {
               this.adapter[prop] = value;
             }
           };
+          properties.push(prop);
         }
       } else {
         continue;
@@ -89,6 +88,8 @@ export function forwardAdapter(prototype: object, Adapter: Constructor<object>, 
       `[videojs] ${Adapter.name} defines ${collisions.map((name) => `\`${name}\``).join(', ')}, which HTMLElement already has; the element's own member wins.`
     );
   }
+
+  return properties;
 }
 
 /**
@@ -96,36 +97,33 @@ export function forwardAdapter(prototype: object, Adapter: Constructor<object>, 
  * as fields rather than accessors read the adapter and write the attribute, and reflected properties read and write the
  * attribute alone.
  */
-export function reflectAttributes(prototype: object, routes: AttributeRoutes): void {
-  for (const [prop, attribute] of routes.attributeOf) {
-    if (Object.hasOwn(prototype, prop)) continue;
+export function reflectAttributes(prototype: HTMLElement, bindings: MediaAttributeBindings): string[] {
+  const properties: string[] = [];
 
-    Object.defineProperty(prototype, prop, {
+  for (const binding of bindings.byProperty.values()) {
+    if (binding.destination === 'target') {
+      if (defineReflectedAttribute(prototype, binding)) properties.push(binding.property);
+
+      continue;
+    }
+
+    if (binding.property in prototype) continue;
+
+    Object.defineProperty(prototype, binding.property, {
       get(this: AdapterElement) {
-        return this.adapter[prop];
+        return this.adapter[binding.property];
       },
       set(this: AdapterElement, value: unknown) {
-        writeThroughAttribute(this, attribute, value);
+        // SAFETY: Attribute bindings carry the converter for the corresponding property value.
+        setAttributeFromValue(this, binding, value as AttributeValue);
       },
       enumerable: true,
       configurable: true,
     });
+    properties.push(binding.property);
   }
 
-  for (const [prop, { attribute, config }] of routes.reflected) {
-    if (Object.hasOwn(prototype, prop)) continue;
-
-    Object.defineProperty(prototype, prop, {
-      get(this: HTMLElement) {
-        return config.type === Boolean ? this.hasAttribute(attribute) : this.getAttribute(attribute);
-      },
-      set(this: HTMLElement, value: unknown) {
-        writeThroughAttribute(this, attribute, config.type === Boolean ? Boolean(value) : value);
-      },
-      enumerable: true,
-      configurable: true,
-    });
-  }
+  return properties;
 }
 
 interface Bridge {

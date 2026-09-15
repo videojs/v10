@@ -12,8 +12,9 @@ export {
   videoTarget,
 } from '@videojs/media/dom';
 export type {
-  MediaTargetAttributeConfig,
-  MediaTargetAttributeConfigs,
+  MediaAttributeDeclaration,
+  MediaAttributeDeclarations,
+  MediaAttributeDeclarationsFor,
   MediaTargetDefinition,
   MediaTargetRenderContext,
 } from '@videojs/media/dom';

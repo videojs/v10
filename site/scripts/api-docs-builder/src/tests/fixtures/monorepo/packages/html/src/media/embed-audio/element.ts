@@ -15,6 +15,8 @@ function MediaAttachMixin(base: any) {
  * @mediaType audio
  * @mediaTarget iframe
  */
-export class EmbedPodcastElement extends MediaAttachMixin(CustomMediaElement({ Adapter: EmbedHost, target: {} })) {
+export class EmbedPodcastElement extends MediaAttachMixin(
+  CustomMediaElement({ adapter: { constructor: EmbedHost }, target: {} })
+) {
   static readonly tagName = 'embed-audio';
 }

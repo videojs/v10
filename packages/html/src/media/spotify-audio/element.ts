@@ -1,12 +1,10 @@
-import { adapterPropsFromAttributes } from '@videojs/media/dom';
+import type { MediaTargetRenderContext } from '@videojs/media/dom';
 import { buildSpotifyIframeSrc, SpotifyAdapter } from '@videojs/spotify-audio';
 
 import { createMediaElement, iframeTarget } from '../create-media-element';
 import { embedTemplate } from '../embed-template';
 
-const template = (attrs: Record<string, string>): string => {
-  const props = adapterPropsFromAttributes(SpotifyAdapter, attrs);
-
+const template = ({ adapterProps: props }: MediaTargetRenderContext<typeof SpotifyAdapter.defaultProps>): string => {
   return embedTemplate({
     src: buildSpotifyIframeSrc(props.src, props),
     allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',
@@ -23,7 +21,7 @@ const template = (attrs: Record<string, string>): string => {
  * @mediaTarget iframe
  */
 export class SpotifyAudioElement extends createMediaElement({
-  Adapter: SpotifyAdapter,
+  adapter: { constructor: SpotifyAdapter },
   target: iframeTarget(template),
 }) {
   static readonly tagName = 'spotify-audio';

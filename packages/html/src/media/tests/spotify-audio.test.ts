@@ -1,10 +1,17 @@
+import { adapterPropsFromAttributes } from '@videojs/media/dom';
+import { SpotifyAdapter } from '@videojs/spotify-audio';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { SpotifyAudioElement } from '../spotify-audio/element';
 
 describe('SpotifyAudioElement', () => {
   it('hides the embed unless it is showing Spotify’s own chrome', () => {
-    const template = SpotifyAudioElement.template!({ src: 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M' });
+    const attributeValues = { src: 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M' };
+    const template = SpotifyAudioElement.template!({
+      attributeValues,
+      targetAttributeValues: {},
+      adapterProps: adapterPropsFromAttributes(SpotifyAdapter, attributeValues),
+    });
 
     // Left visible, Spotify's own player UI shows through the skin drawn over it.
     // Asserted against the template because no DOM implementation the tests run

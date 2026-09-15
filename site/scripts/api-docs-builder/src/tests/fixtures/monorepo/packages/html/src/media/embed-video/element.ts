@@ -5,7 +5,7 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-class EmbedCustomMediaElement extends CustomMediaElement({ Adapter: EmbedHost, target: {} }) {}
+class EmbedCustomMediaElement extends CustomMediaElement({ adapter: { constructor: EmbedHost }, target: {} }) {}
 
 /**
  * @mediaType video

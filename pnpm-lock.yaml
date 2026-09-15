@@ -814,6 +814,9 @@ importers:
       '@lit/context':
         specifier: ^1.1.0
         version: 1.1.6
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       happy-dom:
         specifier: ^20.11.1
@@ -1014,6 +1017,9 @@ importers:
 
   packages/media:
     dependencies:
+      '@videojs/element':
+        specifier: workspace:*
+        version: link:../element
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

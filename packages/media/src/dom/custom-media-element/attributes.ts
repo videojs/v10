@@ -1,174 +1,199 @@
+import {
+  createAttributeBindings,
+  valueFromAttribute,
+  type AttributeBinding,
+  type AttributeBindings,
+} from '@videojs/element/attributes';
 import { isBoolean, isFunction, isNumber, isString } from '@videojs/utils/predicate';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
-import type { MediaTargetAttributeConfig, MediaTargetAttributeConfigs } from './target-attributes';
+import type {
+  MediaAttributeDeclaration,
+  MediaAttributeDeclarations,
+  MediaAttributeDeclarationsFor,
+} from './target-attributes';
 
-/**
- * The media properties whose content attribute is not their kebab-cased name, plus the one attribute that seeds live
- * state: a `muted` attribute is `defaultMuted` by the HTML spec, but the page that writes it means to start muted.
- */
-export const mediaAttributeMappings: Readonly<Record<string, Pick<MediaTargetAttributeConfig, 'attribute' | 'state'>>> =
-  {
-    autoPictureInPicture: { attribute: 'autopictureinpicture' },
-    controlsList: { attribute: 'controlslist' },
-    crossOrigin: { attribute: 'crossorigin' },
-    defaultMuted: { attribute: 'muted', state: 'muted' },
-    disablePictureInPicture: { attribute: 'disablepictureinpicture' },
-    disableRemotePlayback: { attribute: 'disableremoteplayback' },
-    playsInline: { attribute: 'playsinline' },
-  };
+/** Media properties whose content attribute uses a WHATWG spelling, or initializes another live property. */
+export const mediaAttributeMappings: Readonly<
+  Record<string, Pick<MediaAttributeDeclaration, 'attribute' | 'linkedProperty'>>
+> = {
+  autoPictureInPicture: { attribute: 'autopictureinpicture' },
+  controlsList: { attribute: 'controlslist' },
+  crossOrigin: { attribute: 'crossorigin' },
+  defaultMuted: { attribute: 'muted', linkedProperty: 'muted' },
+  disablePictureInPicture: { attribute: 'disablepictureinpicture' },
+  disableRemotePlayback: { attribute: 'disableremoteplayback' },
+  playsInline: { attribute: 'playsinline' },
+};
 
 /** Live playback state has no content attribute, even when an adapter lists a default for it. */
-export const stateProps: ReadonlySet<string> = new Set(['muted', 'volume', 'currentTime', 'playbackRate']);
+export const liveMediaProperties: ReadonlySet<string> = new Set(['muted', 'volume', 'currentTime', 'playbackRate']);
 
 /** The content attribute a property is driven by: its WHATWG spelling if it has one, else kebab-case. */
-export function attributeName(prop: string, config?: MediaTargetAttributeConfig): string {
-  return config?.attribute ?? mediaAttributeMappings[prop]?.attribute ?? kebabCase(prop);
+export function mediaAttributeName(prop: string, declaration?: MediaAttributeDeclaration): string {
+  const configured = declaration?.attribute;
+  const mapped = mediaAttributeMappings[prop]?.attribute;
+
+  return (isString(configured) && configured) || (isString(mapped) && mapped) || kebabCase(prop);
 }
 
-/**
- * The content attributes an adapter's `defaultProps` declare: one per primitive default, typed by that default and
- * reset to it when the attribute is removed.
- *
- * Object defaults such as `source` stay property-only, and so does a boolean that defaults to `true`: an HTML boolean
- * attribute cannot say "absent means true", so `<x playsinline>` could never turn it off.
- */
-export function derivedAttributes(defaultProps: object): MediaTargetAttributeConfigs {
-  const configs: Record<string, MediaTargetAttributeConfig> = {};
+/** Infer content-attribute declarations from an adapter's primitive defaults. */
+export function deriveAdapterAttributes<Properties extends object>(
+  defaultProps: Properties
+): MediaAttributeDeclarationsFor<Properties> {
+  const declarations: Record<string, MediaAttributeDeclaration> = {};
 
-  for (const [prop, value] of Object.entries(defaultProps)) {
-    if (stateProps.has(prop) || value === true) continue;
+  for (const [property, value] of Object.entries(defaultProps)) {
+    if (liveMediaProperties.has(property) || value === true) continue;
 
     const type = isBoolean(value) ? Boolean : isNumber(value) ? Number : isString(value) ? String : undefined;
     if (!type) continue;
 
-    const { state } = mediaAttributeMappings[prop] ?? {};
+    const linkedProperty = mediaAttributeMappings[property]?.linkedProperty;
 
-    configs[prop] = { type, attribute: attributeName(prop), empty: value, ...(state && { state }) };
+    declarations[property] = {
+      type,
+      attribute: mediaAttributeName(property),
+      defaultValue: value,
+      ...(linkedProperty && { linkedProperty }),
+    } as MediaAttributeDeclaration;
   }
 
-  return configs;
+  return declarations as MediaAttributeDeclarationsFor<Properties>;
 }
 
-/**
- * The adapter's props as an element's initial attributes set them: `defaultProps` with each declared attribute that is
- * present coerced over it. What a template needs to build an embed URL before the adapter has attached.
- */
+type AdapterAttributeOverride<Value> =
+  | false
+  | ([Value] extends [boolean | number | string]
+      ? Partial<MediaAttributeDeclaration<Value>>
+      : MediaAttributeDeclaration<Value>);
+
+export type AdapterAttributeOverrides<Properties extends object> = {
+  readonly [Property in Extract<keyof Properties, string>]?: AdapterAttributeOverride<Properties[Property]>;
+};
+
+/** Merge adapter attribute overrides into the declarations inferred from its defaults. */
+export function resolveAdapterAttributes<Properties extends object>(
+  defaultProps: Properties,
+  overrides: AdapterAttributeOverrides<Properties> = {}
+): MediaAttributeDeclarationsFor<Properties> {
+  const declarations: Record<string, MediaAttributeDeclaration> = {
+    ...(deriveAdapterAttributes(defaultProps) as MediaAttributeDeclarations),
+  };
+
+  for (const [property, untypedOverride] of Object.entries(overrides)) {
+    const override = untypedOverride as false | Partial<MediaAttributeDeclaration>;
+
+    if (!(property in defaultProps)) {
+      throw new TypeError(`Adapter attribute \`${property}\` does not correspond to a default property.`);
+    }
+
+    const inferred = declarations[property];
+
+    if (override === false) {
+      if (inferred) declarations[property] = { ...inferred, attribute: false };
+
+      continue;
+    }
+
+    const declaration = Object.assign({}, inferred, override) as MediaAttributeDeclaration;
+
+    if (!inferred && !declaration.type && !declaration.converter) {
+      throw new TypeError(
+        `Adapter attribute \`${property}\` cannot be inferred; declare its type or provide a converter.`
+      );
+    }
+
+    declarations[property] = declaration;
+  }
+
+  return declarations as MediaAttributeDeclarationsFor<Properties>;
+}
+
+/** Parse initial element attributes over an adapter's defaults. */
 export function adapterPropsFromAttributes<Adapter extends { readonly defaultProps: object }>(
   Adapter: Adapter,
-  attrs: Record<string, string>
+  attrs: Record<string, string>,
+  declarations: MediaAttributeDeclarationsFor<Adapter['defaultProps']> = deriveAdapterAttributes(Adapter.defaultProps)
 ): Adapter['defaultProps'] {
-  const props: Record<string, unknown> = { ...Adapter.defaultProps };
+  const props = { ...Adapter.defaultProps } as Record<string, unknown>;
+  const bindings = createAttributeBindings(declarations as MediaAttributeDeclarations, {
+    attributeName: mediaAttributeName,
+  });
 
-  for (const [prop, config] of Object.entries(derivedAttributes(Adapter.defaultProps))) {
-    const attribute = config.attribute!;
-    if (!(attribute in attrs)) continue;
+  for (const binding of bindings.byProperty.values()) {
+    if (!(binding.attribute in attrs)) continue;
 
-    props[prop] = coerceAttribute(attrs[attribute]!, config);
+    props[binding.property] = valueFromAttribute(attrs[binding.attribute]!, binding.declaration);
 
-    if (config.state && config.state in props) props[config.state] = props[prop];
+    const linkedProperty = binding.declaration.linkedProperty;
+
+    if (linkedProperty && linkedProperty in props) props[linkedProperty] = props[binding.property];
   }
 
   return props as Adapter['defaultProps'];
 }
 
-/**
- * Coerce an attribute string to the type its config declares. A removed attribute, or a number that does not parse,
- * falls back to the config's `empty` value.
- */
-export function coerceAttribute(value: string | null, config: MediaTargetAttributeConfig): unknown {
-  if (config.type === Boolean) return value !== null;
+export type MediaAttributeDestination = 'adapter' | 'target';
 
-  const empty = 'empty' in config ? config.empty : config.type === Number ? 0 : '';
-
-  if (value === null) return empty;
-
-  if (config.type !== Number) return value;
-
-  const number = Number(value);
-
-  return Number.isNaN(number) ? empty : number;
+/** One resolved media attribute binding and the surface that receives its value. */
+export interface MediaAttributeBinding extends AttributeBinding<MediaAttributeDeclaration> {
+  readonly destination: MediaAttributeDestination;
 }
 
-/**
- * How an element routes its content attributes.
- *
- * A property from `defaultProps` owns its attribute by definition: the attribute writes the adapter, and the property
- * writes the attribute. A native attribute is owned by the adapter property of the same name when the adapter can set
- * it, so an engine can intercept `preload`; otherwise the element reflects it and copies it onto the inner element.
- */
-export interface AttributeRoutes {
-  /** Attribute names to observe, in declaration order. */
-  observed: string[];
-  /** Adapter property by attribute name, for the attributes an adapter property owns. */
-  ownerOf: Map<string, string>;
-  /** Attribute name by adapter property, for the properties that reflect through one. */
-  attributeOf: Map<string, string>;
-  /** Config by attribute name, for coercion. */
-  configOf: Map<string, MediaTargetAttributeConfig>;
-  /** Properties with no adapter counterpart to write: they only reflect their attribute. */
-  reflected: Map<string, { attribute: string; config: MediaTargetAttributeConfig }>;
+/** Media attribute bindings indexed for element callbacks and property accessors. */
+export interface MediaAttributeBindings extends AttributeBindings<MediaAttributeDeclaration> {
+  readonly byAttribute: ReadonlyMap<string, MediaAttributeBinding>;
+  readonly byProperty: ReadonlyMap<string, MediaAttributeBinding>;
 }
 
-/**
- * @param target - The concrete target's own attributes, owned by the adapter only where it can set the property.
- * @param derived - The adapter's declared attributes, owned by the adapter unless it exposes the property read-only.
- * @param Adapter - The adapter class, for its prototype.
- */
-export function buildRoutes(
-  target: MediaTargetAttributeConfigs,
-  derived: MediaTargetAttributeConfigs,
+/** Resolve target and adapter declarations into one element attribute surface. */
+export function resolveMediaAttributeBindings(
+  target: MediaAttributeDeclarations,
+  adapter: MediaAttributeDeclarations,
   Adapter: Constructor<object>
-): AttributeRoutes {
-  const routes: AttributeRoutes = {
-    observed: [],
-    ownerOf: new Map(),
-    attributeOf: new Map(),
-    configOf: new Map(),
-    reflected: new Map(),
-  };
-  const configs: Record<string, { config: MediaTargetAttributeConfig; owned: boolean }> = {};
+): MediaAttributeBindings {
+  const declarations: Record<string, MediaAttributeDeclaration> = {};
+  const destinations = new Map<string, MediaAttributeDestination>();
 
-  for (const [prop, config] of Object.entries(target)) {
-    configs[prop] = { config, owned: accessorOf(Adapter.prototype, prop)?.set !== undefined };
+  for (const [property, declaration] of Object.entries(target)) {
+    declarations[property] = declaration;
+    destinations.set(property, accessorOf(Adapter.prototype, property)?.set ? 'adapter' : 'target');
   }
 
-  for (const [prop, config] of Object.entries(derived)) {
-    const accessor = accessorOf(Adapter.prototype, prop);
+  for (const [property, declaration] of Object.entries(adapter)) {
+    declarations[property] = declaration;
+    destinations.set(property, 'adapter');
+
+    if (declaration.attribute === false) continue;
+
+    const accessor = accessorOf(Adapter.prototype, property);
     const readOnly = !!accessor?.get && !accessor.set;
 
-    if (__DEV__ && readOnly) {
-      console.warn(
-        `[videojs] ${Adapter.name}.defaultProps lists \`${prop}\`, but the adapter exposes it read-only; its attribute reflects without reaching the adapter.`
+    if (readOnly) {
+      throw new TypeError(
+        `${Adapter.name} declares \`${property}\` as an adapter attribute, but the adapter exposes it read-only.`
       );
     }
-
-    configs[prop] = { config, owned: !readOnly };
   }
 
-  for (const [prop, { config, owned }] of Object.entries(configs)) {
-    const attribute = attributeName(prop, config);
+  const bindings = createAttributeBindings(declarations, { attributeName: mediaAttributeName });
+  const mediaBindings = [...bindings.byProperty.values()].map(
+    (binding): MediaAttributeBinding => ({ ...binding, destination: destinations.get(binding.property)! })
+  );
 
-    if (!routes.configOf.has(attribute)) routes.observed.push(attribute);
-
-    routes.configOf.set(attribute, config);
-
-    if (owned) {
-      routes.ownerOf.set(attribute, prop);
-      routes.attributeOf.set(prop, attribute);
-    } else {
-      routes.reflected.set(prop, { attribute, config });
-    }
-  }
-
-  return routes;
+  return {
+    observedAttributes: bindings.observedAttributes,
+    byAttribute: new Map(mediaBindings.map((binding) => [binding.attribute, binding])),
+    byProperty: new Map(mediaBindings.map((binding) => [binding.property, binding])),
+  };
 }
 
 /** The accessor descriptor a prototype chain declares for a property, if any. */
-export function accessorOf(prototype: object, prop: string): PropertyDescriptor | undefined {
-  for (let proto = prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
-    const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
+export function accessorOf(prototype: object, property: string): PropertyDescriptor | undefined {
+  for (let current = prototype; current && current !== Object.prototype; current = Object.getPrototypeOf(current)) {
+    const descriptor = Object.getOwnPropertyDescriptor(current, property);
     if (descriptor) return isFunction(descriptor.get) || isFunction(descriptor.set) ? descriptor : undefined;
   }
 

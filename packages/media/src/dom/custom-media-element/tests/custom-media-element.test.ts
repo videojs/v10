@@ -204,15 +204,18 @@ function define<T extends CustomElementConstructor>(prefix: string, Ctor: T) {
 }
 
 const defineVideoElement = () =>
-  define('test-video', CustomMediaElement({ Adapter: TestVideoAdapter, target: videoTarget }));
+  define('test-video', CustomMediaElement({ adapter: { constructor: TestVideoAdapter }, target: videoTarget }));
 const defineVideoElementWithOptions = () =>
-  define('test-video', CustomMediaElement({ Adapter: TestVideoAdapterWithOptions, target: videoTarget }));
+  define(
+    'test-video',
+    CustomMediaElement({ adapter: { constructor: TestVideoAdapterWithOptions }, target: videoTarget })
+  );
 const defineAudioElement = () =>
-  define('test-audio', CustomMediaElement({ Adapter: TestAudioAdapter, target: audioTarget }));
+  define('test-audio', CustomMediaElement({ adapter: { constructor: TestAudioAdapter }, target: audioTarget }));
 const defineEmbedElement = () =>
-  define('test-embed', CustomMediaElement({ Adapter: TestEmbedAdapter, target: iframeTarget() }));
+  define('test-embed', CustomMediaElement({ adapter: { constructor: TestEmbedAdapter }, target: iframeTarget() }));
 const defineFieldElement = () =>
-  define('test-video', CustomMediaElement({ Adapter: TestFieldAdapter, target: videoTarget }));
+  define('test-video', CustomMediaElement({ adapter: { constructor: TestFieldAdapter }, target: videoTarget }));
 
 function create(def: { Ctor: new () => any; tag: string }) {
   const el = new def.Ctor();
@@ -242,8 +245,10 @@ describe('CustomMediaElement', () => {
 
     it('renders a custom template', () => {
       const Ctor = CustomMediaElement({
-        Adapter: TestEmbedAdapter,
-        target: iframeTarget((attrs) => `<iframe title="Embedded player" data-src="${attrs.src ?? ''}"></iframe>`),
+        adapter: { constructor: TestEmbedAdapter },
+        target: iframeTarget(
+          ({ adapterProps }) => `<iframe title="Embedded player" data-src="${adapterProps.src}"></iframe>`
+        ),
       });
       const { tag } = define('test-embed', Ctor);
       const container = document.createElement('div');
@@ -257,6 +262,27 @@ describe('CustomMediaElement', () => {
       expect(iframe.getAttribute('data-src')).toBe('https://example.com/embed');
     });
 
+    it('renders from the same adapter attribute declarations used by the element', () => {
+      const Ctor = CustomMediaElement({
+        adapter: {
+          constructor: TestEmbedAdapter,
+          attributes: { src: { attribute: 'playback-id' } },
+        },
+        target: iframeTarget(({ adapterProps }) => `<iframe data-src="${adapterProps.src}"></iframe>`),
+      });
+      const { tag } = define('test-embed', Ctor);
+      const container = document.createElement('div');
+
+      document.body.append(container);
+      container.innerHTML = `<${tag} playback-id="abc123"></${tag}>`;
+
+      const element = container.querySelector(tag)! as InstanceType<typeof Ctor>;
+
+      expect(element.shadowRoot!.querySelector('iframe')!.getAttribute('data-src')).toBe('abc123');
+      expect(element.adapter.src).toBe('abc123');
+      expect(Ctor.observedAttributes).not.toContain('src');
+    });
+
     it('accepts a definition with an arbitrary target', () => {
       const targetDefinition = {
         render(element: HTMLElement) {
@@ -267,7 +293,10 @@ describe('CustomMediaElement', () => {
         },
       };
       const el = create(
-        define('test-target', CustomMediaElement({ Adapter: TestEmbedAdapter, target: targetDefinition }))
+        define(
+          'test-target',
+          CustomMediaElement({ adapter: { constructor: TestEmbedAdapter }, target: targetDefinition })
+        )
       );
 
       expect(el.target).toBe(el.shadowRoot!.querySelector('[data-playback-target]'));
@@ -276,7 +305,10 @@ describe('CustomMediaElement', () => {
     });
 
     it('lets a subclass replace the template through the static', () => {
-      class Custom extends CustomMediaElement({ Adapter: TestVideoAdapter, target: videoTarget }) {
+      class Custom extends CustomMediaElement({
+        adapter: { constructor: TestVideoAdapter },
+        target: videoTarget,
+      }) {
         static template = () => '<video part="custom"></video>';
       }
 
@@ -421,6 +453,49 @@ describe('CustomMediaElement', () => {
       expect(observed).not.toContain('volume');
       expect(observed).not.toContain('current-time');
     });
+
+    it('allows an inferred adapter attribute to be disabled explicitly', () => {
+      const Ctor = CustomMediaElement({
+        adapter: { constructor: TestVideoAdapterWithOptions, attributes: { debug: false } },
+        target: videoTarget,
+      });
+
+      expect(Ctor.observedAttributes).not.toContain('debug');
+      expect(Ctor.observedAttributes).toContain('latency-mode');
+    });
+
+    it('partially overrides an inferred adapter declaration', () => {
+      const Ctor = CustomMediaElement({
+        adapter: {
+          constructor: TestVideoAdapterWithOptions,
+          attributes: { latencyMode: { attribute: 'latency' } },
+        },
+        target: videoTarget,
+      });
+      const el = create(define('test-video', Ctor));
+
+      expect(Ctor.observedAttributes).toContain('latency');
+      expect(Ctor.observedAttributes).not.toContain('latency-mode');
+
+      el.setAttribute('latency', 'low');
+      expect(el.adapter.latencyMode).toBe('low');
+
+      el.removeAttribute('latency');
+      expect(el.adapter.latencyMode).toBe('normal');
+    });
+
+    it('rejects adapter attribute keys outside defaultProps', () => {
+      expect(() =>
+        CustomMediaElement({
+          adapter: {
+            constructor: TestVideoAdapterWithOptions,
+            // @ts-expect-error Unknown adapter properties are rejected by the public configuration type.
+            attributes: { typo: { type: String } },
+          },
+          target: videoTarget,
+        })
+      ).toThrow('does not correspond to a default property');
+    });
   });
 
   describe('attributes owned by the adapter', () => {
@@ -480,18 +555,19 @@ describe('CustomMediaElement', () => {
       expect(el.bufferSeconds).toBe(60);
     });
 
-    it('only reflect a property the adapter exposes read-only', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const el = create(
-        define('test-video', CustomMediaElement({ Adapter: TestReadOnlyAdapter, target: videoTarget }))
+    it('rejects an adapter attribute exposed read-only', () => {
+      expect(() => CustomMediaElement({ adapter: { constructor: TestReadOnlyAdapter }, target: videoTarget })).toThrow(
+        'adapter exposes it read-only'
       );
+    });
 
-      el.setAttribute('engine-name', 'other');
-
-      expect(el.adapter.engineName).toBe('test');
-      expect(el.engineName).toBe('other');
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('engineName'));
-      warn.mockRestore();
+    it('allows a read-only adapter attribute to be disabled', () => {
+      expect(() =>
+        CustomMediaElement({
+          adapter: { constructor: TestReadOnlyAdapter, attributes: { engineName: false } },
+          target: videoTarget,
+        })
+      ).not.toThrow();
     });
 
     it('fall back to the default for a number that does not parse', () => {
@@ -572,6 +648,29 @@ describe('CustomMediaElement', () => {
       expect(el.target!.hasAttribute('crossorigin')).toBe(false);
     });
 
+    it('coerces reflected numeric target attributes in both directions', () => {
+      const target = {
+        attributes: { width: { type: Number, defaultValue: 640 } },
+        render(element: HTMLElement) {
+          element.attachShadow({ mode: 'open' }).innerHTML = '<div></div>';
+        },
+        resolve(element: HTMLElement) {
+          return element.shadowRoot?.querySelector('div') ?? null;
+        },
+      };
+      const el = create(
+        define('test-target', CustomMediaElement({ adapter: { constructor: TestEmbedAdapter }, target }))
+      );
+
+      expect(el.width).toBe(640);
+      el.setAttribute('width', '320');
+      expect(el.width).toBe(320);
+      el.width = 480;
+      expect(el.getAttribute('width')).toBe('480');
+      el.setAttribute('width', 'wide');
+      expect(el.width).toBe(640);
+    });
+
     it('give the muted attribute to defaultMuted and seed the muted state with it', () => {
       const el = create(defineVideoElement());
 
@@ -618,9 +717,10 @@ describe('CustomMediaElement', () => {
 
     it('are not mirrored by an embed, whose template gets them all instead', () => {
       const Ctor = CustomMediaElement({
-        Adapter: TestEmbedAdapter,
+        adapter: { constructor: TestEmbedAdapter },
         target: iframeTarget(
-          (attrs) => `<iframe data-src="${attrs.src ?? ''}" data-muted="${'muted' in attrs}"></iframe>`
+          ({ adapterProps }) =>
+            `<iframe data-src="${adapterProps.src}" data-muted="${adapterProps.defaultMuted}"></iframe>`
         ),
       });
       const { tag } = define('test-embed', Ctor);
@@ -642,7 +742,10 @@ describe('CustomMediaElement', () => {
     });
 
     it('do not include attributes a subclass observes for itself', () => {
-      class Extended extends CustomMediaElement({ Adapter: TestVideoAdapter, target: videoTarget }) {
+      class Extended extends CustomMediaElement({
+        adapter: { constructor: TestVideoAdapter },
+        target: videoTarget,
+      }) {
         static get observedAttributes() {
           return [...super.observedAttributes, 'playback-id'];
         }
@@ -668,6 +771,22 @@ describe('CustomMediaElement', () => {
       expect(el.target!.volume).toBe(0.5);
     });
 
+    it('keeps inherited element properties while routing their attributes to the adapter', () => {
+      class TestTitledAdapter extends TestVideoAdapter {
+        static readonly defaultProps = { ...TestVideoAdapter.defaultProps, title: '' };
+      }
+
+      const { Ctor, tag } = define(
+        'test-video',
+        CustomMediaElement({ adapter: { constructor: TestTitledAdapter }, target: videoTarget })
+      );
+      const el = create({ Ctor, tag });
+
+      expect(Object.hasOwn(Ctor.prototype, 'title')).toBe(false);
+      el.title = 'Element tooltip';
+      expect(el.adapter.title).toBe('Element tooltip');
+    });
+
     it('forwards object properties without an attribute', () => {
       const el = create(defineVideoElementWithOptions());
       const source = { src: 'https://example.com/video.m3u8' };
@@ -678,6 +797,28 @@ describe('CustomMediaElement', () => {
       expect(el.source).toBe(source);
       expect(el.hasAttribute('source')).toBe(false);
       expect(el.adapter.metadata).toEqual({ title: 'x' });
+    });
+
+    it('preserves a property assigned before custom-element upgrade', () => {
+      const tag = `test-video-upgrade-${++tagCounter}`;
+      const container = document.createElement('div');
+
+      container.innerHTML = `<${tag} src="attribute.m3u8"></${tag}>`;
+      document.body.append(container);
+
+      // SAFETY: Defining `tag` above upgrades this element to the generated custom media element class.
+      const el = container.firstElementChild as any;
+
+      el.src = 'property.m3u8';
+      customElements.define(
+        tag,
+        CustomMediaElement({ adapter: { constructor: TestVideoAdapter }, target: videoTarget })
+      );
+
+      expect(Object.hasOwn(el, 'src')).toBe(false);
+      expect(el.src).toBe('property.m3u8');
+      expect(el.adapter.src).toBe('property.m3u8');
+      expect(el.getAttribute('src')).toBe('property.m3u8');
     });
 
     it('leaves attach, detach, and destroy to the element', () => {
@@ -798,7 +939,11 @@ describe('CustomMediaElement', () => {
       const { Ctor } = defineVideoElement();
       const container = document.createElement('div');
 
-      container.innerHTML = Ctor.template!(attrs);
+      container.innerHTML = Ctor.template!({
+        attributeValues: attrs,
+        targetAttributeValues: attrs,
+        adapterProps: TestVideoAdapter.defaultProps,
+      });
 
       return container;
     }

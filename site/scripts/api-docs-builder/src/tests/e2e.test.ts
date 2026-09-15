@@ -1568,7 +1568,7 @@ describe('Preset pipeline (end-to-end)', () => {
 //
 // The builder extracts:
 //   - Tag name from the element class's static tagName
-//   - Adapter properties by following the `Adapter` passed to CustomMediaElement
+//   - Adapter properties by following the `adapter.constructor` passed to CustomMediaElement
 //     and walking its getter/setter pairs
 //   - Standard/custom attributes from host declarations and adapter defaults
 //   - Platform metadata from the matching React component conventions

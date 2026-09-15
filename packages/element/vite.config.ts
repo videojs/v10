@@ -8,6 +8,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   entry: {
     index: './src/index.ts',
+    attributes: './src/attributes.ts',
     context: './src/context.ts',
   },
 });
