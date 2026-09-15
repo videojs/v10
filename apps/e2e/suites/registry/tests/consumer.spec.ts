@@ -40,6 +40,60 @@ for (const preset of ['video', 'audio'] as const) {
     expect(themeStyles.controlSize).not.toBe('');
     expect(themeStyles.spacing).not.toBe('');
 
+    if (preset === 'audio') {
+      for (const colorScheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme });
+        await skin.evaluate((element, scheme) => {
+          if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML skin element.');
+
+          element.style.colorScheme = scheme;
+        }, colorScheme);
+
+        const hairline = await skin
+          .locator('.audio-controls')
+          .first()
+          .evaluate((element) => {
+            const style = getComputedStyle(element);
+            const probe = document.createElement('span');
+
+            probe.style.color = 'var(--media-border)';
+            element.append(probe);
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Could not create a canvas context.');
+
+            context.fillStyle = getComputedStyle(probe).color;
+            context.fillRect(0, 0, 1, 1);
+            probe.remove();
+
+            const pixel = context.getImageData(0, 0, 1, 1).data;
+
+            return {
+              alpha: pixel[3]!,
+              boxShadow: style.boxShadow,
+              luminance: pixel[0]! + pixel[1]! + pixel[2]!,
+            };
+          });
+
+        expect(hairline.boxShadow, `${theme} ${colorScheme} audio hairline`).not.toBe('none');
+        expect(hairline.alpha, `${theme} ${colorScheme} audio hairline`).toBeGreaterThan(0);
+
+        if (colorScheme === 'light') {
+          expect(hairline.luminance, `${theme} light audio hairline`).toBeLessThan(128 * 3);
+        } else {
+          expect(hairline.luminance, `${theme} dark audio hairline`).toBeGreaterThan(128 * 3);
+        }
+      }
+
+      await page.emulateMedia({ colorScheme: 'light' });
+      await skin.evaluate((element) => {
+        if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML skin element.');
+
+        element.style.removeProperty('color-scheme');
+      });
+    }
+
     const box = await skin.boundingBox();
 
     expect(box?.width).toBeGreaterThan(500);
