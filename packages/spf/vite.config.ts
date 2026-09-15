@@ -27,6 +27,7 @@ export default defineConfig({
         input: cachedTaskInputs,
         output: ['dist/**'],
       },
+      'test:coverage': packageTestTask('vp test run --coverage'),
       'test:ci': packageTestTask('vp test run'),
     },
   },
@@ -35,7 +36,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.d.ts'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.test-d.ts', 'src/**/*.d.ts'],
       thresholds: {
         lines: 80,
         functions: 80,

@@ -199,8 +199,8 @@ jobs:
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
-      - name: Test SPF
-        run: .github/scripts/run-logged.sh test-spf pnpm exec vp run @videojs/spf#test:ci
+      - name: Test SPF with coverage
+        run: .github/scripts/run-logged.sh test-spf pnpm exec vp run @videojs/spf#test:coverage
 
   workspace:
     runs-on: ubuntu-latest
