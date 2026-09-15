@@ -865,6 +865,37 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('settles a nearby seek that lands on the original clock time', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(10);
+    player.emit('onStateChange', STATE.PLAYING);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 10) throw new Error('time not polled yet');
+    });
+    events.length = 0;
+
+    media.currentTime = 10.5;
+    await Promise.resolve();
+    now.mockReturnValue(2_000);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('seek not settled yet');
+    });
+
+    expect(media.currentTime).toBe(10);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    now.mockRestore();
+    media.detach();
+  });
+
   it('destroys the player on detach', async () => {
     const media = new YouTubeAdapter();
     const { player } = await attachAndLoad(media);

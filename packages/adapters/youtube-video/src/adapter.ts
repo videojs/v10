@@ -24,6 +24,7 @@ import type { YouTubeAdapterProps } from './props';
 import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from './source';
 
 const SEEK_TOLERANCE = 1;
+const SEEK_SETTLE_TIMEOUT = 1_000;
 
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: YouTubeAdapterProps = {
@@ -66,6 +67,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #seeking = false;
   #seekTarget: number | null = null;
   #seekOrigin: number | null = null;
+  #seekStartedAt = 0;
   #loaded = false;
   #playFired = false;
   #currentTime = 0;
@@ -257,6 +259,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#afterLoad((p) => {
       this.#seekTarget = value;
       this.#seekOrigin = p.getCurrentTime();
+      this.#seekStartedAt = Date.now();
 
       if (!this.#seeking) {
         this.#seeking = true;
@@ -519,6 +522,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#seeking = false;
     this.#seekTarget = null;
     this.#seekOrigin = null;
+    this.#seekStartedAt = 0;
     this.#loaded = false;
     this.#playFired = false;
     this.#volume = 1;
@@ -665,8 +669,11 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     const origin = this.#seekOrigin;
     if (target === null || origin === null) return false;
 
-    // YouTube can report coarse clock samples or land on a nearby keyframe.
-    return time !== origin && Math.abs(time - target) <= SEEK_TOLERANCE;
+    // YouTube can report coarse clock samples or land on a nearby keyframe. Give a matching origin
+    // time a chance to change before accepting it as the final position of a short or no-op seek.
+    const clockSettled = time !== origin || Date.now() - this.#seekStartedAt >= SEEK_SETTLE_TIMEOUT;
+
+    return clockSettled && Math.abs(time - target) <= SEEK_TOLERANCE;
   }
 
   #poll() {
@@ -694,6 +701,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       this.#seeking = false;
       this.#seekTarget = null;
       this.#seekOrigin = null;
+      this.#seekStartedAt = 0;
       this.dispatchEvent(new Event('seeked'));
     }
 
