@@ -1,8 +1,7 @@
 import { useStore } from '@nanostores/react';
 
 import { currentFramework } from '@/stores/preferences';
-import { buildDocsUrl } from '@/utils/docs/routing';
-import { findFirstGuide } from '@/utils/docs/sidebar';
+import { resolveDocsHref } from '@/utils/docs/routing';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface GetStartedLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -13,7 +12,7 @@ export default function GetStartedLink({ children, ...props }: GetStartedLinkPro
   const framework = useStore(currentFramework);
   const isHydrated = useIsHydrated();
 
-  const href = isHydrated && framework ? buildDocsUrl(framework, findFirstGuide(framework)) : '/docs';
+  const href = resolveDocsHref({ slug: null, framework: isHydrated ? framework : null });
 
   return (
     <a {...props} href={href}>

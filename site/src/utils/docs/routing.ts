@@ -9,6 +9,40 @@ export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): 
   return `/docs/framework/${framework}/${guideSlug}`;
 }
 
+/**
+ * Build a framework-agnostic docs URL. `/docs` and `/docs/<slug>` are server routes that redirect to the reader's
+ * preferred framework, and `resolveDocsHref` upgrades them on the client when the preference is known.
+ */
+export function buildAgnosticDocsUrl(guideSlug?: string | null): string {
+  return guideSlug ? `/docs/${guideSlug}` : '/docs';
+}
+
+/** Input for resolveDocsHref */
+export interface DocsHrefInput {
+  /** Guide to link to. `null` means the docs landing page (first guide for the framework). */
+  slug: string | null;
+  /** Framework in context. `null` when unknown, which yields the agnostic URL. */
+  framework: SupportedFramework | null;
+}
+
+/**
+ * Resolve the href for any docs link from whatever context is available. This is the one entry point shared by the
+ * static link components, the server redirect routes, and the client-side enhancer, so all of them agree on where a
+ * link goes.
+ *
+ * - No framework → agnostic `/docs` or `/docs/<slug>` (resolved later by the server or the client)
+ * - Framework, no slug → that framework's first guide
+ * - Framework and slug → the slug, falling back to another framework if the guide is not available in this one
+ */
+export function resolveDocsHref(input: DocsHrefInput, sidebar: Sidebar = defaultSidebar): string {
+  const { slug, framework } = input;
+  if (!framework) return buildAgnosticDocsUrl(slug);
+
+  if (!slug) return buildDocsUrl(framework, findFirstGuide(framework, sidebar));
+
+  return resolveDocsLinkUrl({ targetSlug: slug, contextFramework: framework }, sidebar).url;
+}
+
 /** Input for resolveIndexRedirect */
 export interface IndexRedirectInput {
   preferences: {
