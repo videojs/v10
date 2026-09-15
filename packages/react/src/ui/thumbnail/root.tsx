@@ -21,6 +21,9 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
   componentProps: ThumbnailRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
+  // Image state and measured CSS constraints mutate outside React, so every forced render must recompute them.
+  'use no memo';
+
   const { render, className, style, time = 0, thumbnails: externalThumbnails, ...elementProps } = componentProps;
 
   const [core] = useState(() => new ThumbnailCore());
