@@ -11,13 +11,14 @@ function define<Element extends CustomElementConstructor>(Ctor: Element): Elemen
 }
 
 describe('renderShadowTemplate', () => {
-  it("renders the element constructor's template with the supplied context", () => {
+  it('renders the supplied template with its context', () => {
     class TestElement extends HTMLElement {
-      static template = ({ label }: { label: string }) => `<span>${label}</span>`;
-
       constructor() {
         super();
-        renderShadowTemplate(this, { label: 'Player' });
+        renderShadowTemplate(this, {
+          template: ({ label }) => `<span>${label}</span>`,
+          context: { label: 'Player' },
+        });
       }
     }
 
@@ -29,12 +30,10 @@ describe('renderShadowTemplate', () => {
 
   it('leaves an existing shadow root unchanged', () => {
     class TestElement extends HTMLElement {
-      static template = () => '<span>replacement</span>';
-
       constructor() {
         super();
         this.attachShadow({ mode: 'open' }).innerHTML = '<span>existing</span>';
-        renderShadowTemplate(this, undefined);
+        renderShadowTemplate(this, { template: () => '<span>replacement</span>', context: undefined });
       }
     }
 
@@ -44,38 +43,21 @@ describe('renderShadowTemplate', () => {
     expect(element.shadowRoot?.textContent).toBe('existing');
   });
 
-  it('uses a subclass template', () => {
-    class BaseElement extends HTMLElement {
-      static template = () => '<span>base</span>';
-
+  it('uses the supplied shadow root options', () => {
+    class TestElement extends HTMLElement {
       constructor() {
         super();
-        renderShadowTemplate(this, undefined);
+        renderShadowTemplate(this, {
+          template: () => '<span>closed</span>',
+          context: undefined,
+          shadowRootOptions: { mode: 'closed' },
+        });
       }
-    }
-
-    class TestElement extends BaseElement {
-      static override template = () => '<span>subclass</span>';
     }
 
     const Ctor = define(TestElement);
     const element = new Ctor();
 
-    expect(element.shadowRoot?.textContent).toBe('subclass');
-  });
-
-  it('reports a missing template function', () => {
-    class TestElement extends HTMLElement {
-      constructor() {
-        super();
-        renderShadowTemplate(this, undefined);
-      }
-    }
-
-    const Ctor = define(TestElement);
-
-    expect(() => new Ctor()).toThrow(
-      '[videojs] renderShadowTemplate requires the element constructor to define a template function.'
-    );
+    expect(element.shadowRoot).toBeNull();
   });
 });

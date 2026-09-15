@@ -1,3 +1,5 @@
+import type { AttributeDeclaration } from './attributes';
+
 /** An object that can host Reactive Controllers and call their lifecycle callbacks. */
 export interface ReactiveControllerHost {
   /**
@@ -77,4 +79,3 @@ export type PropertyDeclaration = AttributeDeclaration;
  *   ```;
  */
 export type PropertyDeclarationMap<K extends string = string> = Record<K, PropertyDeclaration>;
-import type { AttributeDeclaration } from './attributes';

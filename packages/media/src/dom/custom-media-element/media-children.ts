@@ -48,7 +48,8 @@ export class MediaChildren {
         this.#observer.observe(child, { attributes: true });
       }
 
-      target?.append(clone);
+      if (target && clone.parentNode !== target) target.append(clone);
+
       enableDefaultTrack(clone);
     }
   }

@@ -191,7 +191,7 @@ export function valueToAttribute<Declaration extends AttributeDeclarationShape>(
   return value === null ? null : String(value);
 }
 
-/** Write a property value to the content attribute represented by a binding. */
+/** @internal Write a property value to the content attribute represented by a binding. */
 export function setAttributeFromValue<Declaration extends AttributeDeclarationShape>(
   element: Element,
   binding: AttributeBinding<Declaration>,
@@ -201,7 +201,7 @@ export function setAttributeFromValue<Declaration extends AttributeDeclarationSh
 }
 
 /** Define an attribute-backed property unless the prototype already declares it. */
-export function defineReflectedAttribute<Declaration extends AttributeDeclarationShape>(
+export function defineAttributeProperty<Declaration extends AttributeDeclarationShape>(
   prototype: Element,
   binding: AttributeBinding<Declaration>
 ): boolean {
@@ -242,8 +242,10 @@ function takeOwnProperties(element: Element, properties: Iterable<string>): Map<
  *
  * Create the callback in the base constructor, then call it once from `connectedCallback()`. Values assigned before
  * registration win over subclass field defaults; otherwise the field value is replayed through the prototype accessor.
+ *
+ * @internal
  */
-export function preparePropertyUpgrade(element: Element, properties: Iterable<string>): () => void {
+export function saveInstanceProperties(element: Element, properties: Iterable<string>): () => void {
   const propertyNames = [...properties];
   const authored = takeOwnProperties(element, propertyNames);
   let upgraded = false;

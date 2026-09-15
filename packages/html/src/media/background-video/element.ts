@@ -21,13 +21,17 @@ export class BackgroundVideoElement extends MediaAttachMixin(HTMLElementBase) {
     super();
 
     renderShadowTemplate(this, {
-      ...namedNodeMapToObject(this.attributes),
-      ...(!this.hasAttribute('nomuted') && { muted: '' }),
-      ...(!this.hasAttribute('noloop') && { loop: '' }),
-      ...(!this.hasAttribute('noautoplay') && { autoplay: '' }),
-      playsinline: '',
-      disableremoteplayback: '',
-      disablepictureinpicture: '',
+      template: BackgroundVideoElement.template,
+      context: {
+        ...namedNodeMapToObject(this.attributes),
+        ...(!this.hasAttribute('nomuted') && { muted: '' }),
+        ...(!this.hasAttribute('noloop') && { loop: '' }),
+        ...(!this.hasAttribute('noautoplay') && { autoplay: '' }),
+        playsinline: '',
+        disableremoteplayback: '',
+        disablepictureinpicture: '',
+      },
+      shadowRootOptions: BackgroundVideoElement.shadowRootOptions,
     });
 
     // Neither Chrome or Firefox support setting the muted attribute

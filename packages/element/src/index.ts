@@ -1,7 +1,7 @@
 export {
   createAttributeBindings,
-  defineReflectedAttribute,
-  preparePropertyUpgrade,
+  defineAttributeProperty,
+  saveInstanceProperties,
   setAttributeFromValue,
   valueFromAttribute,
   valueToAttribute,

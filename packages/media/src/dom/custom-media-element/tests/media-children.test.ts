@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vite-plus/test';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaChildren } from '../media-children';
 
@@ -41,6 +41,17 @@ describe('MediaChildren', () => {
     children.sync();
 
     expect([...video.querySelectorAll('source')].map((el) => el.getAttribute('src'))).toEqual(['b.mp4']);
+  });
+
+  it('does not re-insert existing clones on a later sync', () => {
+    const { host, video, children } = createHost();
+    const append = vi.spyOn(video, 'append');
+
+    host.innerHTML = '<track kind="captions" src="en.vtt" /><source src="a.mp4" />';
+    children.sync();
+    children.sync();
+
+    expect(append).toHaveBeenCalledTimes(2);
   });
 
   it('mirrors attribute changes from a child to its clone', async () => {

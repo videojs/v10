@@ -1,10 +1,12 @@
-import { preparePropertyUpgrade, valueFromAttribute } from '@videojs/element';
-import type { ShadowTemplateFunction } from '@videojs/utils/dom';
+import { saveInstanceProperties, valueFromAttribute } from '@videojs/element';
+import { renderShadowTemplate, type ShadowTemplateFunction } from '@videojs/utils/dom';
+import { EventForwarder } from '@videojs/utils/events';
 import type { Constructor } from '@videojs/utils/types';
 
+import { isForwardedEvent } from '../html-media-adapter';
+import { forwardAdapterMembers, reflectAttributes } from './adapter-surface';
 import { AdapterAttachment } from './attach-adapter';
 import { resolveAdapterAttributes, resolveMediaAttributeBindings, type AdapterAttributeOverrides } from './attributes';
-import { bridgeEvent, forwardAdapter, reflectAttributes, unbridgeEvents } from './element-surface';
 import { createRenderContext } from './render-context';
 import type { MediaTargetDefinition, MediaTargetRenderContext } from './targets';
 
@@ -38,7 +40,11 @@ export interface PlaybackAdapterDefinition<T extends PlaybackAdapterConstructor>
 
 export interface CustomMediaElementConfig<T extends PlaybackAdapterConstructor> {
   readonly adapter: PlaybackAdapterDefinition<T>;
-  readonly target: MediaTargetDefinition<PlaybackAdapterTarget<T>, T['defaultProps']>;
+  readonly target: MediaTargetDefinition<PlaybackAdapterTarget<T>>;
+  /** Override the target definition's default shadow template. */
+  readonly template?: ShadowTemplateFunction<MediaTargetRenderContext<T['defaultProps']>>;
+  /** Options passed to `attachShadow()`. */
+  readonly shadowRootOptions?: ShadowRootInit;
 }
 
 type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
@@ -57,10 +63,10 @@ type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
 /**
  * Build a custom element around an adapter.
  *
- * The supplied target definition owns rendering and resolving the target. The element attaches its adapter to that
- * target and is the adapter to callers: every method, accessor, and event comes through. Adapter attributes are
- * inferred from primitive `defaultProps`; target-native attributes and how they are applied belong to the target
- * definition.
+ * The supplied target definition provides default rendering and owns target resolution. The element attaches its
+ * adapter to that target and is the adapter to callers: every method, accessor, and event comes through. Adapter
+ * attributes are inferred from primitive `defaultProps`; target-native attributes and how they are applied belong to
+ * the target definition.
  *
  * @param config - The playback adapter and the independent definition used to render and manage its target.
  */
@@ -68,7 +74,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
   config: CustomMediaElementConfig<T>
 ): CustomMediaConstructor<T> {
   const { constructor: Adapter, attributes: adapterAttributeOverrides } = config.adapter;
-  const { target: definition } = config;
+  const { target: definition, template = definition.template, shadowRootOptions = { mode: 'open' } } = config;
   const targetAttributeDeclarations = definition.attributes ?? {};
   const adapterAttributeDeclarations = resolveAdapterAttributes(Adapter.defaultProps, adapterAttributeOverrides);
   const attributeBindings = resolveMediaAttributeBindings(
@@ -79,8 +85,8 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
   let exposedProperties: readonly string[] = [];
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
-    static template = definition.template;
-    static shadowRootOptions: ShadowRootInit = { mode: 'open' };
+    static template = template;
+    static shadowRootOptions: ShadowRootInit = shadowRootOptions;
 
     static get observedAttributes(): string[] {
       return [...attributeBindings.observedAttributes];
@@ -88,6 +94,9 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
 
     // SAFETY: `Adapter` is the constructor represented by `T`; TypeScript widens construction through the constraint.
     #adapter = new Adapter() as InstanceType<T>;
+    #events = new EventForwarder(this.#adapter, this, {
+      filter: (event) => !(event.composed && isForwardedEvent(event)),
+    });
     #upgradeProperties: (() => void) | undefined;
     #stopObserving: (() => void) | undefined;
     #attachment = new AdapterAttachment<PlaybackAdapterTarget<T>>(
@@ -95,7 +104,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
       this.#adapter,
       () => this.target,
       () => {
-        unbridgeEvents(this);
+        this.#events.dispose();
         this.#stopObserving?.();
       }
     );
@@ -103,11 +112,19 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     constructor() {
       super();
 
-      this.#upgradeProperties = preparePropertyUpgrade(this, exposedProperties);
+      this.#upgradeProperties = saveInstanceProperties(this, exposedProperties);
 
       const context = createRenderContext(this, attributeBindings, Adapter, adapterAttributeDeclarations);
+      // SAFETY: this class and every subclass have the static contract declared by `CustomMediaConstructor`.
+      const Element = this.constructor as CustomMediaConstructor<T>;
 
-      definition.render(this, context);
+      if (Element.template) {
+        renderShadowTemplate(this, {
+          template: Element.template,
+          context,
+          shadowRootOptions: Element.shadowRootOptions,
+        });
+      }
 
       this.#attachment.attach();
       const stopObserving = definition.observe?.(this, () => {
@@ -132,7 +149,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
       this.#upgradeProperties?.();
       this.#upgradeProperties = undefined;
 
-      definition.connected?.(this);
+      definition.hostConnected?.(this);
     }
 
     disconnectedCallback() {
@@ -145,7 +162,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
       options?: boolean | AddEventListenerOptions
     ) {
       super.addEventListener(type, listener as EventListener, options);
-      bridgeEvent(this, type);
+      this.#events.forward(type);
     }
 
     attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
@@ -153,13 +170,9 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     }
 
     /** Replay every observed attribute onto the current target, after the target changed underneath them. */
-    #hydrate(attributes?: Record<string, string>): void {
+    #hydrate(): void {
       for (const name of attributeBindings.observedAttributes) {
-        if (attributes && name in attributes) {
-          this.#apply(name, attributes[name]!);
-        } else if (this.hasAttribute(name)) {
-          this.#apply(name, this.getAttribute(name));
-        }
+        if (this.hasAttribute(name)) this.#apply(name, this.getAttribute(name));
       }
     }
 
@@ -189,7 +202,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
   }
 
   exposedProperties = [
-    ...forwardAdapter(CustomMedia.prototype, Adapter, attributeBindings),
+    ...forwardAdapterMembers(CustomMedia.prototype, Adapter, attributeBindings),
     ...reflectAttributes(CustomMedia.prototype, attributeBindings),
   ];
 

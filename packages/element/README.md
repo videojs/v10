@@ -102,7 +102,7 @@ The root package also exposes attribute conversion and reflection helpers for el
 `ReactiveElement`:
 
 ```ts
-import { createAttributeBindings, defineReflectedAttribute } from '@videojs/element';
+import { createAttributeBindings, defineAttributeProperty } from '@videojs/element';
 
 const bindings = createAttributeBindings({
   count: { type: Number, defaultValue: 0 },
@@ -114,14 +114,13 @@ class CounterElement extends HTMLElement {
 }
 
 for (const binding of bindings.byProperty.values()) {
-  defineReflectedAttribute(CounterElement.prototype, binding);
+  defineAttributeProperty(CounterElement.prototype, binding);
 }
 ```
 
 Bindings reject duplicate or non-lowercase attribute names. `AttributeDeclarationsFor<Props>` checks declaration keys
-and built-in conversion types against a property surface; a custom converter can represent any other value.
-`preparePropertyUpgrade()` preserves values assigned before registration and replays subclass fields through generated
-accessors. `ReactiveElement` uses the same upgrade primitive internally.
+and built-in conversion types against a property surface; a custom converter can represent any other value. Values
+assigned before registration are preserved and replayed through generated accessors during element upgrade.
 
 ## Community
 

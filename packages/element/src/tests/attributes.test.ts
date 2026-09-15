@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import {
   createAttributeBindings,
-  defineReflectedAttribute,
-  preparePropertyUpgrade,
+  defineAttributeProperty,
+  saveInstanceProperties,
   setAttributeFromValue,
   valueFromAttribute,
   type AttributeDeclarationsFor,
@@ -100,7 +100,7 @@ describe('attribute value conversion', () => {
   });
 });
 
-describe('defineReflectedAttribute', () => {
+describe('defineAttributeProperty', () => {
   it('defines a symmetrically converted property', () => {
     class TestElement extends HTMLElement {}
 
@@ -108,7 +108,7 @@ describe('defineReflectedAttribute', () => {
 
     const binding = createAttributeBindings({ count: { type: Number, defaultValue: 10 } }).byProperty.get('count')!;
 
-    defineReflectedAttribute(TestElement.prototype, binding);
+    defineAttributeProperty(TestElement.prototype, binding);
 
     // SAFETY: The generated accessor above defines the numeric `count` surface used by this test.
     const element = document.createElement('test-reflected-attribute') as TestElement & { count: number };
@@ -135,7 +135,7 @@ describe('defineReflectedAttribute', () => {
       },
     }).byProperty.get('items')!;
 
-    defineReflectedAttribute(TestElement.prototype, binding);
+    defineAttributeProperty(TestElement.prototype, binding);
 
     const element = new TestElement() as TestElement & { items: string[] };
 
@@ -149,12 +149,12 @@ describe('defineReflectedAttribute', () => {
 
     const binding = createAttributeBindings({ title: { type: String } }).byProperty.get('title')!;
 
-    expect(defineReflectedAttribute(TestElement.prototype, binding)).toBe(false);
+    expect(defineAttributeProperty(TestElement.prototype, binding)).toBe(false);
     expect(Object.hasOwn(TestElement.prototype, 'title')).toBe(false);
   });
 });
 
-describe('preparePropertyUpgrade', () => {
+describe('saveInstanceProperties', () => {
   it('replays authored properties over subclass field defaults through accessors', () => {
     class TestElement extends HTMLElement {
       values: string[] = [];
@@ -169,7 +169,7 @@ describe('preparePropertyUpgrade', () => {
 
     Object.defineProperty(element, 'source', { value: 'video.mp4', configurable: true, writable: true });
 
-    const upgrade = preparePropertyUpgrade(element, ['source']);
+    const upgrade = saveInstanceProperties(element, ['source']);
 
     Object.setPrototypeOf(element, TestElement.prototype);
     element.values = [];

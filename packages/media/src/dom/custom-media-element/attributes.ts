@@ -111,7 +111,7 @@ export function resolveAdapterAttributes<Properties extends object>(
   return declarations as MediaAttributeDeclarationsFor<Properties>;
 }
 
-/** Parse initial element attributes over an adapter's defaults. */
+/** @internal Parse initial element attributes over an adapter's defaults. */
 export function adapterPropsFromAttributes<Adapter extends { readonly defaultProps: object }>(
   Adapter: Adapter,
   attrs: Record<string, string>,

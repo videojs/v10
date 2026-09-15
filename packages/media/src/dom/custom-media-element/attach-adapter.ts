@@ -1,6 +1,8 @@
 import type { PlaybackAdapter } from './custom-media-element';
 
 /**
+ * @internal
+ *
  * Solely owns an adapter's attachment lifecycle, keeping it attached to whichever value `target()` currently resolves
  * to and destroying it once the owning element has left the document for good. Callers must not attach or detach the
  * adapter independently while this owner is active.

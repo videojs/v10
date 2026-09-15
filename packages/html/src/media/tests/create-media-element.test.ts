@@ -91,7 +91,8 @@ describe('createMediaElement', () => {
   it('renders the template around an embed adapter and attaches to its iframe', () => {
     const Element = createMediaElement({
       adapter: { constructor: FakeEmbedAdapter },
-      target: iframeTarget(() => '<iframe part="iframe" title="Embedded player"></iframe>'),
+      target: iframeTarget,
+      template: () => '<iframe part="iframe" title="Embedded player"></iframe>',
     });
     const el = document.createElement(defineTestElement(Element));
 

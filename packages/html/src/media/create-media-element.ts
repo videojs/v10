@@ -22,11 +22,11 @@ export type {
 /**
  * Build a custom element that plays through an adapter and registers itself with the surrounding player.
  *
- * The target definition renders and resolves the adapter target. The element attaches the adapter to it and reflects
- * primitive adapter `defaultProps` as content attributes alongside any target-native attributes declared by the
- * definition. Connecting it inside a player registers it as the player's media, the same way the built-in
- * `<hlsjs-video>`, `<dash-video>`, and `<vimeo-video>` elements do. Subclass the result to add element behavior, then
- * register it with `customElements.define()`.
+ * The target definition supplies default rendering and resolves the adapter target. The element attaches the adapter to
+ * it and reflects primitive adapter `defaultProps` as content attributes alongside any target-native attributes
+ * declared by the definition. Connecting it inside a player registers it as the player's media, the same way the
+ * built-in `<hlsjs-video>`, `<dash-video>`, and `<vimeo-video>` elements do. Subclass the result to add element
+ * behavior, then register it with `customElements.define()`.
  *
  * @param options - The playback adapter and target definition used to render and manage its concrete target.
  */

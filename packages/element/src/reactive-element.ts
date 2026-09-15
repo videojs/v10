@@ -1,6 +1,6 @@
 import {
   createAttributeBindings,
-  preparePropertyUpgrade,
+  saveInstanceProperties,
   valueFromAttribute,
   type AttributeBindings,
 } from './attributes';
@@ -100,7 +100,7 @@ export class ReactiveElement extends HTMLElementBase {
 
     const { props } = resolve(this.constructor as typeof ReactiveElement);
 
-    this.#upgradeProperties = preparePropertyUpgrade(this, props.keys());
+    this.#upgradeProperties = saveInstanceProperties(this, props.keys());
 
     // Enqueue the first update. It won't run until connectedCallback calls
     // `this.enableUpdating(true)` which resolves the #updatePromise gate.

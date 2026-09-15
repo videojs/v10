@@ -1,9 +1,7 @@
-import { defineReflectedAttribute, setAttributeFromValue, type AttributeValue } from '@videojs/element';
-import { redispatchEvent } from '@videojs/utils/events';
+import { defineAttributeProperty, setAttributeFromValue, type AttributeValue } from '@videojs/element';
 import { isFunction } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
 
-import { isForwardedEvent } from '../html-media-adapter';
 import type { MediaAttributeBindings } from './attributes';
 import type { PlaybackAdapter } from './custom-media-element';
 
@@ -29,7 +27,7 @@ const elementOwned = new Set(['title']);
  * `addEventListener` or `title`, are left alone; in development, any other collision is reported. Underscore-prefixed
  * members are treated as private.
  */
-export function forwardAdapter(
+export function forwardAdapterMembers(
   prototype: object,
   Adapter: Constructor<object>,
   bindings: MediaAttributeBindings
@@ -93,16 +91,16 @@ export function forwardAdapter(
 }
 
 /**
- * Give the element an accessor for every routed property `forwardAdapter` did not: owned properties the adapter keeps
- * as fields rather than accessors read the adapter and write the attribute, and reflected properties read and write the
- * attribute alone.
+ * Give the element an accessor for every routed property `forwardAdapterMembers` did not: owned properties the adapter
+ * keeps as fields rather than accessors read the adapter and write the attribute, and reflected properties read and
+ * write the attribute alone.
  */
 export function reflectAttributes(prototype: HTMLElement, bindings: MediaAttributeBindings): string[] {
   const properties: string[] = [];
 
   for (const binding of bindings.byProperty.values()) {
     if (binding.destination === 'target') {
-      if (defineReflectedAttribute(prototype, binding)) properties.push(binding.property);
+      if (defineAttributeProperty(prototype, binding)) properties.push(binding.property);
 
       continue;
     }
@@ -124,48 +122,4 @@ export function reflectAttributes(prototype: HTMLElement, bindings: MediaAttribu
   }
 
   return properties;
-}
-
-interface Bridge {
-  handler: (event: Event) => void;
-  types: Set<string>;
-}
-
-const bridges = new WeakMap<AdapterElement, Bridge>();
-
-/**
- * Re-dispatch the adapter's events of one type on the element. Call it from `addEventListener`: the adapter is only
- * subscribed the first time someone listens for a type. An adapter's composed copy of an event its target dispatched
- * already reached the element through the shadow boundary, so those are left alone; anything the adapter raises itself
- * comes through, composed or not.
- */
-export function bridgeEvent(element: AdapterElement, type: string): void {
-  let bridge = bridges.get(element);
-
-  if (!bridge) {
-    bridge = {
-      types: new Set(),
-      handler: (event) => {
-        if (event.composed && isForwardedEvent(event)) return;
-
-        redispatchEvent(element, event);
-      },
-    };
-    bridges.set(element, bridge);
-  }
-
-  if (bridge.types.has(type)) return;
-
-  bridge.types.add(type);
-  element.adapter.addEventListener(type, bridge.handler);
-}
-
-/** Stop re-dispatching the adapter's events. Call it when the adapter is destroyed. */
-export function unbridgeEvents(element: AdapterElement): void {
-  const bridge = bridges.get(element);
-  if (!bridge) return;
-
-  for (const type of bridge.types) element.adapter.removeEventListener(type, bridge.handler);
-
-  bridges.delete(element);
 }

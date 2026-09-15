@@ -66,13 +66,17 @@ export class HlsBackgroundVideoElement extends HlsBackgroundVideoBase {
     super();
 
     renderShadowTemplate(this, {
-      ...namedNodeMapToObject(this.attributes),
-      muted: '',
-      loop: '',
-      autoplay: '',
-      playsinline: '',
-      disableremoteplayback: '',
-      disablepictureinpicture: '',
+      template: HlsBackgroundVideoElement.template,
+      context: {
+        ...namedNodeMapToObject(this.attributes),
+        muted: '',
+        loop: '',
+        autoplay: '',
+        playsinline: '',
+        disableremoteplayback: '',
+        disablepictureinpicture: '',
+      },
+      shadowRootOptions: HlsBackgroundVideoElement.shadowRootOptions,
     });
 
     // Neither Chrome nor Firefox honor a `muted` attribute set after

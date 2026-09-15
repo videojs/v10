@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vite-plus/test';
 
 import { HTMLAudioAdapter } from '../../html-audio-adapter';
 import { HTMLVideoAdapter } from '../../html-video-adapter';
@@ -213,7 +213,7 @@ const defineVideoElementWithOptions = () =>
 const defineAudioElement = () =>
   define('test-audio', CustomMediaElement({ adapter: { constructor: TestAudioAdapter }, target: audioTarget }));
 const defineEmbedElement = () =>
-  define('test-embed', CustomMediaElement({ adapter: { constructor: TestEmbedAdapter }, target: iframeTarget() }));
+  define('test-embed', CustomMediaElement({ adapter: { constructor: TestEmbedAdapter }, target: iframeTarget }));
 const defineFieldElement = () =>
   define('test-video', CustomMediaElement({ adapter: { constructor: TestFieldAdapter }, target: videoTarget }));
 
@@ -246,9 +246,12 @@ describe('CustomMediaElement', () => {
     it('renders a custom template', () => {
       const Ctor = CustomMediaElement({
         adapter: { constructor: TestEmbedAdapter },
-        target: iframeTarget(
-          ({ adapterProps }) => `<iframe title="Embedded player" data-src="${adapterProps.src}"></iframe>`
-        ),
+        target: iframeTarget,
+        template: ({ adapterProps }) => {
+          expectTypeOf(adapterProps).toEqualTypeOf<typeof TestEmbedAdapter.defaultProps>();
+
+          return `<iframe title="Embedded player" data-src="${adapterProps.src}"></iframe>`;
+        },
       });
       const { tag } = define('test-embed', Ctor);
       const container = document.createElement('div');
@@ -262,13 +265,27 @@ describe('CustomMediaElement', () => {
       expect(iframe.getAttribute('data-src')).toBe('https://example.com/embed');
     });
 
+    it('does not copy adapter attributes onto the default iframe', () => {
+      const { Ctor, tag } = defineEmbedElement();
+      const container = document.createElement('div');
+
+      document.body.append(container);
+      container.innerHTML = `<${tag} src="https://example.com/watch"></${tag}>`;
+
+      const element = container.querySelector(tag)! as InstanceType<typeof Ctor>;
+
+      expect(element.shadowRoot!.querySelector('iframe')!.hasAttribute('src')).toBe(false);
+      expect(element.adapter.src).toBe('https://example.com/watch');
+    });
+
     it('renders from the same adapter attribute declarations used by the element', () => {
       const Ctor = CustomMediaElement({
         adapter: {
           constructor: TestEmbedAdapter,
           attributes: { src: { attribute: 'playback-id' } },
         },
-        target: iframeTarget(({ adapterProps }) => `<iframe data-src="${adapterProps.src}"></iframe>`),
+        target: iframeTarget,
+        template: ({ adapterProps }) => `<iframe data-src="${adapterProps.src}"></iframe>`,
       });
       const { tag } = define('test-embed', Ctor);
       const container = document.createElement('div');
@@ -285,9 +302,7 @@ describe('CustomMediaElement', () => {
 
     it('accepts a definition with an arbitrary target', () => {
       const targetDefinition = {
-        render(element: HTMLElement) {
-          element.attachShadow({ mode: 'open' }).innerHTML = '<div data-playback-target></div>';
-        },
+        template: () => '<div data-playback-target></div>',
         resolve(element: HTMLElement) {
           return element.shadowRoot?.querySelector<HTMLDivElement>('[data-playback-target]') ?? null;
         },
@@ -332,6 +347,17 @@ describe('CustomMediaElement', () => {
       slotted.slot = 'media';
       el.appendChild(slotted);
       expect(el.target).toBe(slotted);
+    });
+
+    it('keeps an iframe target inside its shadow root', () => {
+      const el = create(defineEmbedElement());
+      const lightIframe = document.createElement('iframe');
+
+      lightIframe.slot = 'media';
+      el.append(lightIframe);
+
+      expect(el.target).toBe(el.shadowRoot!.querySelector('iframe'));
+      expect(el.target).not.toBe(lightIframe);
     });
 
     it('adopts a direct target child but not one nested in slotted content', () => {
@@ -651,9 +677,7 @@ describe('CustomMediaElement', () => {
     it('coerces reflected numeric target attributes in both directions', () => {
       const target = {
         attributes: { width: { type: Number, defaultValue: 640 } },
-        render(element: HTMLElement) {
-          element.attachShadow({ mode: 'open' }).innerHTML = '<div></div>';
-        },
+        template: () => '<div></div>',
         resolve(element: HTMLElement) {
           return element.shadowRoot?.querySelector('div') ?? null;
         },
@@ -718,10 +742,9 @@ describe('CustomMediaElement', () => {
     it('are not mirrored by an embed, whose template gets them all instead', () => {
       const Ctor = CustomMediaElement({
         adapter: { constructor: TestEmbedAdapter },
-        target: iframeTarget(
-          ({ adapterProps }) =>
-            `<iframe data-src="${adapterProps.src}" data-muted="${adapterProps.defaultMuted}"></iframe>`
-        ),
+        target: iframeTarget,
+        template: ({ adapterProps }) =>
+          `<iframe data-src="${adapterProps.src}" data-muted="${adapterProps.defaultMuted}"></iframe>`,
       });
       const { tag } = define('test-embed', Ctor);
       const container = document.createElement('div');
