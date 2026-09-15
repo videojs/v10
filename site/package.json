@@ -53,6 +53,7 @@
     "simple-git": "^3.36.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.3.3",
+    "video.js": "workspace:*",
     "vite": "^8.2.2"
   },
   "devDependencies": {
