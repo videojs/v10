@@ -11,6 +11,7 @@ import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import ResolveDocsLinks from '@/components/docs/ResolveDocsLinks.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import LegacyBanner from '@/components/LegacyBanner.astro';
+import PlatformInit from '@/components/PlatformInit.astro';
 import Posthog from '@/components/Posthog.astro';
 import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
@@ -157,6 +158,7 @@ const fullTitle =
     <slot name="head" />
 
     <ThemeInit />
+    <PlatformInit />
     <BannerInit />
   </head>
   <body

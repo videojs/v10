@@ -160,38 +160,19 @@
 
 /*
  * DocSearch only knows the platform's modifier key after hydration, so the server renders an empty keys container.
- * Show two blank key shapes until then, and fade the real keys in over them instead of popping.
+ * Paint the final keys as pseudo-elements until then, reading the platform flag PlatformInit sets before first paint,
+ * so hydration swaps in identical markup and nothing flashes on the way in or between pages.
  */
-.DocSearch-Button-Keys:empty::before,
+.DocSearch-Button-Keys:empty::before {
+  content: "\2318";
+}
+
+:root[data-platform="other"] .DocSearch-Button-Keys:empty::before {
+  content: "Ctrl";
+}
+
 .DocSearch-Button-Keys:empty::after {
-  display: block;
-  width: calc(var(--spacing) * 6);
-  height: calc(var(--spacing) * 5);
-  content: "";
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-}
-
-.dark .DocSearch-Button-Keys:empty::before,
-.dark .DocSearch-Button-Keys:empty::after {
-  background: var(--color-warm-gray);
-}
-
-.DocSearch-Button .DocSearch-Button-Key {
-  animation: docsearch-key-in 240ms ease-out both;
-}
-
-@keyframes docsearch-key-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .DocSearch-Button .DocSearch-Button-Key {
-    animation: none;
-  }
+  content: "K";
 }
 
 .DocSearch-Button-Key,
@@ -205,7 +186,9 @@
   text-underline-offset: 0.125em;
 }
 
-.DocSearch-Button .DocSearch-Button-Key {
+.DocSearch-Button .DocSearch-Button-Key,
+.DocSearch-Button-Keys:empty::before,
+.DocSearch-Button-Keys:empty::after {
   top: 0;
   display: inline-flex;
   align-items: center;
@@ -228,7 +211,9 @@
   box-shadow: none !important;
 }
 
-.dark .DocSearch-Button .DocSearch-Button-Key {
+.dark .DocSearch-Button .DocSearch-Button-Key,
+.dark .DocSearch-Button-Keys:empty::before,
+.dark .DocSearch-Button-Keys:empty::after {
   background: var(--color-warm-gray);
 }
 
