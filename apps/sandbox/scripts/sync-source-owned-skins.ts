@@ -17,7 +17,6 @@ const require = createRequire(import.meta.url);
 const shadcnBin = require.resolve('shadcn');
 const generatedDir = resolve(projectDir, 'app/_generated');
 const presets = ['video', 'audio', 'live-video', 'live-audio'] as const;
-const variants = ['', '-minimal'] as const;
 
 const inWorkspace = existsSync(resolve(workspaceDir, 'pnpm-workspace.yaml'));
 const localRegistry = existsSync(resolve(registryDir, 'react/registry.json'));
@@ -45,14 +44,34 @@ if (server) {
   });
 }
 
-/**
- * The three catalogs the sandbox can load. The Tailwind install owns the `@` alias and the theme stylesheet; the CSS
- * install lives under `@css`, so the two React variants never resolve into each other's files.
- */
+/** Each catalog gets its own project alias because the Sandbox loads combinations a real pick-one consumer never does. */
 const installs = [
-  { catalog: 'react', destination: 'components/videojs', alias: '@', theme: true },
-  { catalog: 'react/css', destination: 'css/components/videojs', alias: '@css', theme: false },
-  { catalog: 'html', destination: 'html/components/videojs', alias: '@', theme: false },
+  {
+    catalog: 'react',
+    destination: 'react-tailwind-default',
+    alias: '@registry-react-tailwind-default',
+    globalStyles: true,
+  },
+  {
+    catalog: 'react/minimal',
+    destination: 'react-tailwind-minimal',
+    alias: '@registry-react-tailwind-minimal',
+    globalStyles: false,
+  },
+  {
+    catalog: 'react/css',
+    destination: 'react-css-default',
+    alias: '@registry-react-css-default',
+    globalStyles: false,
+  },
+  {
+    catalog: 'react/css/minimal',
+    destination: 'react-css-minimal',
+    alias: '@registry-react-css-minimal',
+    globalStyles: false,
+  },
+  { catalog: 'html', destination: 'html-default', alias: '@registry-html-default', globalStyles: false },
+  { catalog: 'html/minimal', destination: 'html-minimal', alias: '@registry-html-minimal', globalStyles: false },
 ] as const;
 
 await rm(generatedDir, { recursive: true, force: true });
@@ -82,7 +101,7 @@ if (inWorkspace) {
   );
 }
 
-if (existsSync(resolve(generatedDir, 'components/videojs/skins'))) {
+if (existsSync(resolve(generatedDir, 'registry/react-tailwind-default/components/videojs'))) {
   console.log(`Installed 8 React Tailwind, 8 React CSS, and 8 HTML source-owned Sandbox skins from ${address}.`);
 }
 
@@ -104,19 +123,18 @@ function withoutPackagePins(source: string): string {
 /** What `app/styles.css` imports and scans, with nothing in it, so the app compiles without the registry skins. */
 async function writeEmptyRegistry(): Promise<void> {
   await rm(generatedDir, { recursive: true, force: true });
-  await mkdir(resolve(generatedDir, 'components'), { recursive: true });
-  await mkdir(resolve(generatedDir, 'html'), { recursive: true });
+  await mkdir(resolve(generatedDir, 'registry'), { recursive: true });
   await writeFile(resolve(generatedDir, 'styles.css'), '/* No registry skins were installed. */\n');
 }
 
 async function installCatalog(install: (typeof installs)[number], address: string): Promise<void> {
   const root = await mkdtemp(resolve(tmpdir(), `videojs-sandbox-${install.catalog.replaceAll('/', '-')}-`));
-  const destination = resolve(generatedDir, install.destination);
+  const destination = resolve(generatedDir, 'registry', install.destination);
 
   try {
     await writeFixture(root, `${address}/${install.catalog}`, install.alias);
 
-    const items = presets.flatMap((preset) => variants.map((variant) => `@videojs/${preset}${variant}`));
+    const items = presets.map((preset) => `@videojs/${preset}`);
 
     await runCommand(
       process.execPath,
@@ -124,14 +142,12 @@ async function installCatalog(install: (typeof installs)[number], address: strin
       root
     );
 
-    await mkdir(destination, { recursive: true });
-    await cp(resolve(root, 'src/components/videojs'), destination, { recursive: true });
+    await mkdir(resolve(destination, '..'), { recursive: true });
+    await cp(resolve(root, 'src'), destination, { recursive: true });
 
-    if (install.catalog.startsWith('react')) {
-      await cp(resolve(root, 'src/lib'), resolve(destination, '../../lib'), { recursive: true });
+    if (install.globalStyles) {
+      await writeFile(resolve(generatedDir, 'styles.css'), `@import "./registry/${install.destination}/index.css";\n`);
     }
-
-    if (install.theme) await cp(resolve(root, 'src/index.css'), resolve(generatedDir, 'styles.css'));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -193,7 +209,7 @@ async function writeFixture(root: string, address: string, alias: string): Promi
   await writeFile(resolve(root, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
   await writeFile(resolve(root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
   await writeFile(resolve(root, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
-  await writeFile(resolve(root, 'src/index.css'), '@import "./components/videojs/styles/theme.css";\n');
+  await writeFile(resolve(root, 'src/index.css'), '@import "./components/videojs/styles/base.css";\n');
   await writeFile(resolve(root, 'src/lib/utils.ts'), "export { cn } from 'cn';\n");
 }
 

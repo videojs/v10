@@ -3,7 +3,6 @@
 @layer base.theme, base.preferences;
 
 @import "./themes/theme.css";
-@import "./themes/minimal.css";
 @import "./themes/preferences.css";
 
 /* Interpolate progress before chapter bounds are applied. */

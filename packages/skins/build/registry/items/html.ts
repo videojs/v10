@@ -14,7 +14,9 @@ export function htmlRegistryItems(
     async create({ graph }) {
       const skins = await renderHtmlSkins(graph, { styling: target.styling });
 
-      return Promise.all(skins.map((skin) => htmlSkinItem(skin, graph, target)));
+      return Promise.all(
+        skins.filter((skin) => skin.theme === target.theme).map((skin) => htmlSkinItem(skin, graph, target))
+      );
     },
   };
 }

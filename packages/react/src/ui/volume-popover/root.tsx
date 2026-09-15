@@ -21,25 +21,32 @@ const unavailableVolume: MediaVolumeState = {
 
 export interface VolumePopoverRootProps extends PopoverRootProps {}
 
-/** Owns volume availability and the popover interaction lifecycle. */
+/** Owns the popover interaction lifecycle and provides volume availability to the parts. */
 export function VolumePopoverRoot({ children, ...props }: VolumePopoverRootProps): ReactNode {
-  const volume = usePlayer(selectVolume);
-  const [core] = useState(() => new VolumePopoverCore(props));
-
-  core.setProps(props);
-  core.setMedia(volume ?? unavailableVolume);
-
   return (
     <Popover.Root {...props}>
-      <VolumePopoverState core={core}>{children}</VolumePopoverState>
+      <VolumePopoverState {...props}>{children}</VolumePopoverState>
     </Popover.Root>
   );
 }
 
-function VolumePopoverState({ core, children }: { core: VolumePopoverCore; children?: ReactNode }): ReactNode {
-  const { popover } = usePopoverContext();
+/**
+ * Derives the volume-aware state inside the popover context. It subscribes to volume, owns the core, and reads the
+ * core's state all in one component: a core mutated in one component and read in another is invisible to React
+ * Compiler, which memoised the reading element and left the trigger in its mute-only fallback after volume became
+ * available.
+ */
+function VolumePopoverState({ children, ...props }: VolumePopoverRootProps): ReactNode {
+  // React Compiler cannot track state read through the mutable core instance.
+  'use no memo';
 
-  core.setInput(popover.input.current);
+  const volume = usePlayer(selectVolume);
+  const { popover, state: popoverState } = usePopoverContext();
+  const [core] = useState(() => new VolumePopoverCore(props));
+
+  core.setProps(props);
+  core.setMedia(volume ?? unavailableVolume);
+  core.setInput({ active: popoverState.open, status: popoverState.status });
   const state = core.getState();
 
   useEffect(() => {

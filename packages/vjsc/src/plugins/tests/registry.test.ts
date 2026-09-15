@@ -43,6 +43,32 @@ describe('vjscRegistryPlugin', () => {
     expect(output.output.some((item) => item.type === 'chunk')).toBe(false);
   });
 
+  it('supports item-specific installation and import roots', async () => {
+    const root = setup({
+      'components/root.tsx': `import { Helper } from './helper'; export function Root() { return <main>{Helper}</main>; } ${meta('root', 'block')}`,
+      'components/helper.tsx': `export const Helper = <aside/>; ${meta('helper', 'support')}`,
+    });
+    const output = await build(root, {
+      items: {
+        resolve({ module }) {
+          const item = describeItem(module);
+          if (item?.name !== 'helper') return item;
+
+          return {
+            ...item,
+            target: 'helper.tsx',
+            paths: { install: '@lib', import: '@/lib' },
+          };
+        },
+      },
+    });
+    const rootItem = registryItem(output, 'items', 'root');
+    const helperItem = registryItem(output, 'items', 'helper');
+
+    expect(helperItem.files.map((file: { target: string }) => file.target)).toEqual(['@lib/helper.tsx']);
+    expect(registryFile(output, 'items', rootItem, '/root.tsx')).toContain(`from '@/lib/helper'`);
+  });
+
   it('keeps transformed identities and dependencies selection-specific', async () => {
     const root = setup({
       'components/root.tsx': `import { Child } from './child'; export function Root() { return <main>{Child}</main>; } ${meta('root', 'block')}`,
@@ -234,6 +260,49 @@ describe('vjscRegistryPlugin', () => {
 
     expect(item.registryDependencies).toContain('@example/_style-theme');
     expect(registryFile(output, 'items', item, '/root.tsx')).toContain(`import '../styles/theme.css';`);
+  });
+
+  it('preserves an editable theme tree and imports its requested entry', async () => {
+    const root = setup({
+      'components/root.tsx': `export const Root = <main />; ${meta('root', 'block')}`,
+      'styles/base.css': '@import "./themes/theme.css";',
+      'styles/base.video.css': '@import "./base.css";\n.player { color: var(--accent); }',
+      'styles/themes/theme.css': ':root { --accent: red; }',
+    });
+    const output = await build(root, {
+      styles: {
+        theme: {
+          name: '_style-theme',
+          target: 'styles/base.css',
+          files: {
+            './styles/base.css': 'styles/base.css',
+            './styles/base.video.css': 'styles/base.video.css',
+            './styles/themes/theme.css': 'styles/themes/theme.css',
+          },
+          title: 'Theme',
+          description: 'Shared theme.',
+        },
+      },
+      items: {
+        resolve({ module }) {
+          const item = describeItem(module);
+
+          return item ? { ...item, theme: 'styles/base.video.css' } : null;
+        },
+      },
+    });
+    const item = registryItem(output, 'items', 'root');
+    const theme = registryItem(output, 'support', '_style-theme');
+
+    expect(item.registryDependencies).toContain('@example/_style-theme');
+    expect(registryFile(output, 'items', item, '/root.tsx')).toContain(`import '../styles/base.video.css';`);
+    expect(theme.files.map((file: { target: string }) => file.target)).toEqual([
+      'components/example/styles/base.css',
+      'components/example/styles/base.video.css',
+      'components/example/styles/themes/theme.css',
+    ]);
+    expect(registryFile(output, 'support', theme, '/base.css')).toBe('@import "./themes/theme.css";');
+    expect(registryFile(output, 'support', theme, '/themes/theme.css')).toContain('--accent: red');
   });
 
   it('emits asynchronously prepared source-owned files', async () => {

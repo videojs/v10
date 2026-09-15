@@ -1,0 +1,37 @@
+---
+export const prerender = false; // since we're reading cookies
+
+import { DEFAULT_FRAMEWORK } from '@/types/docs';
+import { getPreferencesServer } from '@/utils/docs/preferences';
+import { resolveDocsHref } from '@/utils/docs/routing';
+import { findGuideBySlug } from '@/utils/docs/sidebar';
+
+// Framework-agnostic guide URLs such as /docs/guides/installation resolve to the
+// reader's preferred framework, so pages outside the docs can link to a guide
+// without pinning one. Clients with JavaScript never get here: the links are
+// upgraded in place by ResolveDocsLinks before anyone clicks them.
+const slug = Astro.params.slug ?? '';
+
+if (findGuideBySlug(slug)) {
+  const { framework } = getPreferencesServer(Astro.cookies);
+  const url = resolveDocsHref({ slug, framework: framework ?? DEFAULT_FRAMEWORK });
+
+  return Astro.redirect(url, 307);
+}
+
+// Every other path under /docs lands here too and must produce the styled 404 page.
+// Astro cannot rewrite from an on-demand route to a prerendered page, and rendering the
+// error layout here would pull the whole site's component tree into the server function,
+// so fetch the prebuilt page and serve its body with a 404 status.
+// Netlify answers the fetch with the file (200); the dev server renders the route (404).
+const notFound = await fetch(new URL('/404.html', Astro.url)).catch(() => null);
+
+if (!notFound || (notFound.status !== 200 && notFound.status !== 404)) {
+  return new Response('Not Found', { status: 404 });
+}
+
+return new Response(notFound.body, {
+  status: 404,
+  headers: { 'content-type': 'text/html; charset=utf-8' },
+});
+---

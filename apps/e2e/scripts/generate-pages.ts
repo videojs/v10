@@ -458,11 +458,11 @@ document.getElementById('root')!.innerHTML = html\`
 
 function sourceHtmlPage(resource: string): string {
   return `import '@videojs/html/video/player';
-import { DefaultVideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=html&skin=default-video';
+import { VideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=html&skin=default-video&theme=default';
 import { MEDIA } from '../resources';
 
 const skin = String(
-  DefaultVideoSkin({
+  VideoSkin({
     'data-source-skin': '',
     poster: MEDIA.${resource}.poster,
     style: 'display: block; max-width: 800px; aspect-ratio: 16/9',
@@ -480,7 +480,7 @@ function sourceReactPage(resource: string): string {
   return `import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { DefaultVideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=react&skin=default-video';
+import { VideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=react&skin=default-video&theme=default';
 import { MEDIA } from '../resources';
 
 const { Player } = createPlayer({ features: videoFeatures });
@@ -488,13 +488,13 @@ const { Player } = createPlayer({ features: videoFeatures });
 function App() {
   return (
     <Player poster={MEDIA.${resource}.poster}>
-      <DefaultVideoSkin
+      <VideoSkin
         data-source-skin
         poster={MEDIA.${resource}.poster}
         style={{ maxWidth: 800, aspectRatio: '16/9' }}
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
-      </DefaultVideoSkin>
+      </VideoSkin>
     </Player>
   );
 }

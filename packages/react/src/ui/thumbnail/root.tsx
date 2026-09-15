@@ -1,5 +1,5 @@
 import { mapCuesToThumbnails, ThumbnailCore, ThumbnailDataAttrs } from '@videojs/core';
-import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
+import { createThumbnail, selectFullscreen, selectTextTrack } from '@videojs/core/dom';
 import type { CSSProperties, ForwardedRef } from 'react';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
@@ -21,12 +21,18 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
   componentProps: ThumbnailRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
+  // Image state and measured CSS constraints mutate outside React, so every forced render must recompute them.
+  'use no memo';
+
   const { render, className, style, time = 0, thumbnails: externalThumbnails, ...elementProps } = componentProps;
 
   const [core] = useState(() => new ThumbnailCore());
   const divRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const textTrack = useOptionalPlayer(selectTextTrack);
+
+  // Fullscreen container queries change the constraints without resizing an explicitly sized thumbnail.
+  useOptionalPlayer(selectFullscreen);
 
   // Force a render when the image loads, fails, or the root is resized.
   const [, setRenderToken] = useState(0);

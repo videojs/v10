@@ -13,6 +13,7 @@ import {
   skinMetaDefaults,
   skinUtils,
 } from './config.ts';
+import { skinClassNameMergeImport } from './imports.ts';
 import { packageSkinsPlugin } from './packages/plugin.ts';
 import { formatSource } from './registry/format.ts';
 import { registryItems } from './registry/items/index.ts';
@@ -58,12 +59,14 @@ export const skinBuildConfig: PackUserConfig = {
         format: formatSource,
         paths: registryPaths,
         imports: {
-          '@videojs/utils/style': `${registryPaths.import}/lib/resolve-class-name`,
+          '@videojs/utils/style': '@/lib/resolve-class-name',
+          [skinClassNameMergeImport]: '@/lib/utils',
         },
         packages: registryPackages,
         meta: {
           framework: target.framework,
           style: target.styling,
+          theme: target.theme,
         },
         items: registryItems(target),
         styles: registryStyles(target),
@@ -76,7 +79,11 @@ export const skinBuildConfig: PackUserConfig = {
           this.emitFile({
             type: 'asset',
             fileName: `${target.output}/catalog.json`,
-            source: `${JSON.stringify(skinCatalog, null, 2)}\n`,
+            source: `${JSON.stringify(
+              skinCatalog.filter((skin) => skin.theme === target.theme),
+              null,
+              2
+            )}\n`,
           });
         }
       },

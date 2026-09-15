@@ -7,6 +7,19 @@ export { SVTA_UNSUPPORTED_PLAYBACK_FEATURE, svtaCategory, svtaIndex } from '../.
 // from the manifest, rather than inferring it from the seekable window size.
 export type { MediaPlaylistMetadata } from '../../../media/types';
 export { getMediaPlaylistMetadata } from '../../../media/types';
+// HLS multivariant-playlist metadata: every `#EXT-X-SESSION-DATA` tag, read back
+// by `DATA-ID`. Apple's JSON chapters are the first consumer; the parser and its
+// `Chapter` shape ship alongside so a consumer can read the document itself.
+export type { MultivariantPlaylistMetadata, SessionDataEntry } from '../../../media/types';
+export { getMultivariantPlaylistMetadata, getSessionData } from '../../../media/types';
+export type {
+  Chapter,
+  ChapterImage,
+  ChapterMetadata,
+  HlsJsonChapter,
+  HlsJsonChapters,
+} from '../../../media/hls/parse-json-chapters';
+export { APPLE_HLS_CHAPTERS_DATA_ID, parseHlsJsonChapters } from '../../../media/hls/parse-json-chapters';
 // Non-zero-PTS relocation (spike): the coordination seam type + the shared-`min`
 // default and the per-type alternative, for a consumer swapping the policy via
 // `config.deriveStartMediaTime`.

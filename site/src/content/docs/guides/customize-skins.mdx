@@ -144,15 +144,21 @@ HTML skins use plain stylesheets, labeled Vanilla CSS. Each skin includes markup
 
 <RegistryStyling />
 
-### Connect the CLI to Video.js
+### Choose a theme and connect the CLI to Video.js
 
-Run this command once. It saves `@videojs` as a short prefix in `components.json`, so later commands can use names such as `@videojs/video`:
+Choose one theme for the Video.js source in your project. The command saves `@videojs` as a short prefix in `components.json`, so later commands can use names such as `@videojs/video`.
+
+For the Default theme:
 
 <RegistryCommand />
 
+For the Minimal theme:
+
+<RegistryCommand theme="minimal" />
+
 ### Install a skin
 
-Install the skin closest to the interface you want. Default skins use the preset name, and Minimal skins add `-minimal`:
+Install the preset closest to the interface you want. Item names stay the same in both theme catalogs:
 
 <ShadcnCommand action="add @videojs/video" />
 
@@ -163,11 +169,11 @@ The paths in the table start from the component location configured in `componen
 ### Use the installed skin
 
 <FrameworkCase frameworks={["react"]}>
-The skin's files are under `components/videojs/skins/<preset>`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
+The skin's files are under `components/videojs/<preset>`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The skin's files are under `components/videojs/skins/<preset>`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
+The skin's files are under `components/videojs/<preset>`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
 </FrameworkCase>
 
 ### Edit the installed files
@@ -177,12 +183,15 @@ Start with the file that owns the change you want:
 | Goal | Where to start |
 | ---- | -------------- |
 | Add, remove, or rearrange controls | `skin.tsx` in React or `skin.html` in HTML |
-| Change colors, surfaces, shadows, sizes, or motion across the skin | `components/videojs/styles/theme.css` |
+| Change default colors, surfaces, shadows, sizes, or motion across skins | `components/videojs/styles/themes/theme.css` |
+| Change only the Minimal theme or one media preset | `components/videojs/styles/themes/minimal.css`, `components/videojs/styles/video/theme.css`, or `components/videojs/styles/audio/theme.css` |
 | Change one control's appearance | That control's classes or stylesheet |
 | Change one control's interaction | That control's module |
 
 <FrameworkCase frameworks={["react"]}>
 The files for the control bar, gestures, keyboard shortcuts, settings menu, and status indicators are composed from `skin.tsx`. The UI components they use are installed as source too, so you can open and change each button or slider.
+
+The installed skin sets `data-theme` and `data-preset` on its `Container`. Keep those attributes when you replace `skin.tsx` or compose the installed UI components into a custom player. They select the theme and media-specific rules from the catalog you installed.
 
 - **Tailwind CSS.** Components use utility classes. The install adds the theme keys, utilities, and variants to your main CSS file. The skins require Tailwind CSS 4.3 or later and its default configuration. If your project prefixes Tailwind classes, update the installed components.
 - **Vanilla CSS.** Components use class names that start with `media-`, and the skin's `skin.css` stylesheet styles them.

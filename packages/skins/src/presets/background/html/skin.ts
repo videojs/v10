@@ -1,3 +1,4 @@
+import { SKIN_HELP_TEXT, SKIN_HELP_URL } from '@videojs/core';
 import { ReactiveElement } from '@videojs/element';
 import { ensureGlobalStyle } from '@videojs/utils/dom';
 
@@ -12,6 +13,7 @@ function getTemplateHTML() {
       <slot name="media"></slot>
       <slot></slot>
     </media-container>
+    <a rel="help" href="${SKIN_HELP_URL}" hidden>${SKIN_HELP_TEXT}</a>
   `;
 }
 

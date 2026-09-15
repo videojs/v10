@@ -11,6 +11,7 @@ export default defineConfig({
   globalSetup: resolve(import.meta.dirname, 'setup/global.ts'),
   projects: registryConsumerProjects.map((project) => ({
     name: project.name,
+    metadata: { theme: project.theme },
     use: {
       ...devices['Desktop Chrome'],
       baseURL: `http://127.0.0.1:${project.port}`,

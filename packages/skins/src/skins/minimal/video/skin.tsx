@@ -1,29 +1,23 @@
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
-import { BufferingIndicator } from '../../../components/feedback/buffering-indicator';
-import { ErrorDialog } from '../../../components/feedback/error-dialog';
+import { ErrorDialog } from '../../../components/dialogs/error-dialog';
+import { BufferingIndicator } from '../../../components/display/buffering-indicator';
+import { Poster } from '../../../components/display/poster';
 import { Container } from '../../../components/layout/container';
-import { Poster } from '../../../components/layout/poster';
 import type { SkinDescription } from '../../../meta';
-import { VideoGestures } from '../../shared/video/gestures';
-import { VideoHotkeys } from '../../shared/video/hotkeys';
+import { VideoGestures } from '../../shared/video/behaviors/gestures';
+import { VideoHotkeys } from '../../shared/video/behaviors/hotkeys';
+import { VideoStatusIndicators } from '../../shared/video/display/status-indicators';
 import videoSkinStyles from '../../shared/video/skin.styles';
-import { VideoStatusIndicators } from '../../shared/video/status-indicators';
-import { MinimalVideoControls } from './controls';
+import { MinimalVideoControls } from './layout/controls';
 
-export interface MinimalVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface VideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
   renderPoster?: PropsOf<typeof Poster>['renderImage'];
   renderThumbnail?: PropsOf<typeof MinimalVideoControls>['renderThumbnail'];
 }
 
-export function MinimalVideoSkin({
-  children,
-  className,
-  renderPoster,
-  renderThumbnail,
-  ...props
-}: MinimalVideoSkinProps = {}) {
+export function VideoSkin({ children, className, renderPoster, renderThumbnail, ...props }: VideoSkinProps = {}) {
   return (
     <Container className={[videoSkinStyles.root, className]} data-theme="minimal" data-preset="video" {...props}>
       <Slot>{children}</Slot>

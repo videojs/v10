@@ -1,7 +1,7 @@
 import { ErrorDialogCore, ErrorDialogDataAttrs } from '@videojs/core';
 import { selectError } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
-import { useRef } from 'react';
+import { useState } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -17,9 +17,11 @@ export interface ErrorDialogRootProps {
 export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   const errorState = usePlayer(selectError);
   const container = useContainer();
-  const lastError = useRef(errorState?.error ?? null);
+  // Keep the last error so the dialog can finish its close transition with content after the error clears. Adjusting
+  // state during render is the sanctioned way to derive it from props; writing a ref here would be invisible to React.
+  const [lastError, setLastError] = useState(errorState?.error ?? null);
 
-  if (errorState?.error) lastError.current = errorState.error;
+  if (errorState?.error && errorState.error !== lastError) setLastError(errorState.error);
 
   const errorStateRef = useLatestRef(errorState);
   const dialogContext = useDialogRoot({
@@ -36,7 +38,7 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   if (!errorState) return null;
 
   return (
-    <ErrorDialogContextProvider value={{ lastError: lastError.current }}>
+    <ErrorDialogContextProvider value={{ lastError }}>
       <DialogContextProvider value={dialogContext}>{children}</DialogContextProvider>
     </ErrorDialogContextProvider>
   );

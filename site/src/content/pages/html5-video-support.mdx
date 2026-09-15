@@ -1,0 +1,69 @@
+---
+title: "HTML5 video support"
+description: "Does this browser support HTML5 video? Almost certainly. Here's what that answer leaves out."
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import VideoCapabilities from '@/components/support/VideoCapabilities.astro';
+
+## Does this browser support HTML5 video?
+
+Almost certainly. Every current browser supports the `<video>` element. However, codec and streaming support still varies:
+
+<VideoCapabilities />
+
+## Why isn't HTML5 video enough?
+
+The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
+
+- **Adaptive streaming.** HLS plays natively in Safari and in a few mobile browsers. DASH plays natively nowhere. Everywhere else needs a JavaScript playback engine on top of Media Source Extensions, and a way to swap engines when the source changes.
+- **Consistent controls.** Chrome, Safari, and Firefox each draw their own controls. You can hide them, but you can't restyle or rearrange them.
+- **Captions, quality, speed, and chapters.** The browser gives you no menu to pick text tracks, no quality selector, no playback speed control, and no chapter markers.
+- **Accessibility.** Keyboard shortcuts, focus management, screen reader labels, and reduced-motion preferences are on you the moment you replace the native controls.
+- **Everything else.** Thumbnail previews, live stream UI, AirPlay and Chromecast, error recovery, playback analytics, and sources like YouTube, Vimeo, or Mux each need their own wiring.
+
+Video.js ships each of those as a component, so you take the ones you need and keep the rest of the web platform. Read more: <DocsLink slug="guides/why-videojs">Why Video.js?</DocsLink>
+
+## Get started with Video.js
+
+Here's a basic video player you can build with Video.js:
+
+```html title="index.html"
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+
+<video-player>
+  <video-skin>
+    <video src="/video.mp4" playsinline></video>
+  </video-skin>
+</video-player>
+```
+
+```tsx title="MyPlayer.tsx"
+import '@videojs/react/video/skin.css';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer({ src }: { src: string }) {
+  return (
+    <VideoPlayer>
+      <VideoSkin>
+        <Video src={src} playsInline />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+If you want to dive deeper, get started with our <DocsLink slug="guides/installation">installation guide</DocsLink>, which will guide you through generating a snippet that fits your use case.
+
+Video.js 8 remains documented at [legacy.videojs.org](https://legacy.videojs.org). If you're looking to upgrade to newer versions, start with <DocsLink slug="guides/migrate-from-video-js-8">Migrate from Video.js 8</DocsLink>.
+
+## For AI agents
+
+Every page on this site is available as markdown, this one included.
+
+- `https://videojs.org/llms.txt` indexes the documentation.
+- Append `.md` to any documentation URL, including this one, to get its markdown.
+- Send `Accept: text/markdown` when fetching a documentation URL and you'll get markdown back.
+
+<DocsLinkCard slug="guides/build-with-ai" description="How to give AI tools the context they need to build Video.js players alongside you">Build with AI</DocsLinkCard>

@@ -17,6 +17,15 @@
   status = 200
   force = true
 
+# The Video.js 8 embed snippet links to this URL from millions of pages.
+# Serve the page on the exact legacy URL rather than bouncing through the
+# alias redirect below. Listed first because Netlify takes the first match.
+[[redirects]]
+  from = "https://videojs.com/html5-video-support"
+  to = "/html5-video-support"
+  status = 200
+  force = true
+
 # Netlify aliases -> videojs.org
 [[redirects]]
   from = "https://videojs.com/*"
@@ -1145,12 +1154,6 @@
 [[redirects]]
   from = "/tags/*"
   to = "/blog"
-  status = 307
-
-# Redirect old support URL to new page
-[[redirects]]
-  from = "/html5-video-support"
-  to = "/support"
   status = 307
 
 # Misc v8 stragglers

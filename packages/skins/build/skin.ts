@@ -20,18 +20,29 @@ export function skinSourceDirectory(name: SkinName): string {
   return `${theme}/${preset}`;
 }
 
-/** Resolve the stable source-owned directory for a Skin. */
+/** Resolve the stable registry directory for a Skin preset. The selected catalog owns the theme. */
 export function skinDirectory(name: SkinName): string {
-  const preset = skinPreset(name);
-
-  return name.startsWith('minimal-') ? `skins/${preset}/minimal` : `skins/${preset}`;
+  return skinPreset(name);
 }
 
-/** Runtime stylesheet entry carrying the shared tokens plus one preset's tokens, relative to `src/styles`. */
-export function skinBaseStylesheet(preset: SkinPreset): string {
-  return preset === 'audio' || preset === 'live-audio' ? 'base.audio.css' : 'base.video.css';
+/** Runtime stylesheet entry carrying the shared, preset, and optional Minimal tokens relative to `src/styles`. */
+export function skinBaseStylesheet(preset: SkinPreset, theme: SkinTheme = 'default'): string {
+  const media = skinMedia(preset);
+
+  return `${media}/${theme === 'minimal' ? 'minimal' : 'base'}.css`;
+}
+
+/** Registry style item that owns one skin's exact stylesheet dependency closure. */
+export function skinStyleItemName(preset: SkinPreset, theme: SkinTheme): string {
+  const media = skinMedia(preset);
+
+  return `_style-${media}${theme === 'minimal' ? '-minimal' : ''}`;
 }
 
 export function isSkinPreset(value: string): value is SkinPreset {
   return skinPresets.some((preset) => preset === value);
+}
+
+function skinMedia(preset: SkinPreset): 'audio' | 'video' {
+  return preset === 'audio' || preset === 'live-audio' ? 'audio' : 'video';
 }

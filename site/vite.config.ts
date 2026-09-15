@@ -2,17 +2,20 @@ import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
-import type { ViteUserConfig } from 'vite-plus';
+import type { Plugin, ViteUserConfig } from 'vite-plus';
 
 import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../build/task.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
+
+// SAFETY: @vitejs/plugin-react and the workspace resolve Plugin from the catalog-pinned Vite implementation.
+const reactPlugins = react() as Plugin[];
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and
 // passed as a variable: Astro 7's `getViteConfig` param no longer surfaces the
 // Vite+ module augmentation, so a fresh object literal trips an excess-property
 // check on `test`. A variable is only checked for structural assignability.
 const config: ViteUserConfig = {
-  plugins: [demoPlaceholderPlugin(), react()],
+  plugins: [demoPlaceholderPlugin(), ...reactPlugins],
   test: {
     globals: true,
     environment: 'jsdom',

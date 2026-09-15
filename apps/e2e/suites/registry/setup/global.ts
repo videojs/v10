@@ -6,9 +6,14 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { FullConfig } from '@playwright/test';
-import { isString } from '@videojs/utils/predicate';
+import { isPlainObject, isString } from '@videojs/utils/predicate';
 
-import { registryConsumerProjects, registryConsumerSkins, type RegistryConsumerProject } from '../projects.ts';
+import {
+  publishedRegistryConsumerProject,
+  registryConsumerProjects,
+  registryConsumerSkins,
+  type RegistryConsumerProject,
+} from '../projects.ts';
 
 interface WorkspacePackage {
   readonly directory: string;
@@ -85,7 +90,7 @@ async function createConsumer(
 
   if (project.bundler === 'vite') await configureViteTypes(projectDir);
 
-  await configurePackage(projectDir, overrides);
+  await configurePackage(projectDir, overrides, overlayDependencies);
   await configureShadcn(project, projectDir, registryUrl);
   await applyOverlay(project, projectDir);
   await exerciseRegistryCli(project, projectDir);
@@ -139,7 +144,11 @@ async function scaffoldVite(project: RegistryConsumerProject): Promise<void> {
   );
 }
 
-async function configurePackage(projectDir: string, overrides: Readonly<Record<string, string>>): Promise<void> {
+async function configurePackage(
+  projectDir: string,
+  overrides: Readonly<Record<string, string>>,
+  dependencies: readonly string[]
+): Promise<void> {
   const path = resolve(projectDir, 'package.json');
   // SAFETY: the official scaffolds produce a package.json object; the fields read below are optional and object-spread
   // preserves the rest of that document.
@@ -154,7 +163,14 @@ async function configurePackage(projectDir: string, overrides: Readonly<Record<s
         packageManager: 'pnpm@12.3.4',
         dependencies: {
           ...manifest.dependencies,
-          ...Object.fromEntries(overlayDependencies.map((name) => [name, overrides[name]])),
+          ...Object.fromEntries(
+            dependencies.map((name) => {
+              const dependency = overrides[name];
+              if (!dependency) throw new Error(`Could not configure missing consumer dependency ${name}.`);
+
+              return [name, dependency];
+            })
+          ),
         },
       },
       null,
@@ -165,8 +181,9 @@ async function configurePackage(projectDir: string, overrides: Readonly<Record<s
   const workspace = [
     'packages:',
     "  - '.'",
-    'overrides:',
-    ...Object.entries(overrides).map(([name, value]) => `  '${name}': '${value}'`),
+    ...(Object.keys(overrides).length > 0
+      ? ['overrides:', ...Object.entries(overrides).map(([name, value]) => `  '${name}': '${value}'`)]
+      : []),
     'allowBuilds:',
     "  'esbuild@0.28.2': true",
     "  'unrs-resolver@1.12.2': true",
@@ -218,27 +235,29 @@ async function configureShadcn(
   );
 }
 
-async function exerciseRegistryCli(project: RegistryConsumerProject, projectDir: string): Promise<void> {
+async function exerciseRegistryCli(
+  project: RegistryConsumerProject,
+  projectDir: string,
+  skins: readonly string[] = registryConsumerSkins
+): Promise<void> {
   const search = await shadcn(['search', '@videojs', '--query', 'video', '--json', '--cwd', projectDir], projectDir);
   if (!search.stdout.includes('video')) throw new Error(`${project.name} could not find the Video Skin.`);
 
-  for (const skin of registryConsumerSkins) {
+  for (const skin of skins) {
     const view = await shadcn(['view', `@videojs/${skin}`, '--cwd', projectDir], projectDir);
     if (!view.stdout.includes(skin)) throw new Error(`${project.name} could not view ${skin}.`);
   }
 
   await shadcn(
-    ['add', ...registryConsumerSkins.map((skin) => `@videojs/${skin}`), '--yes', '--silent', '--cwd', projectDir],
+    ['add', ...skins.map((skin) => `@videojs/${skin}`), '--yes', '--silent', '--cwd', projectDir],
     projectDir
   );
 
   const extension = project.framework === 'react' ? 'tsx' : 'html';
 
   await Promise.all(
-    registryConsumerSkins.map((skin) => {
-      const skinDir = skin === 'video' ? 'skins/video' : 'skins/video/minimal';
-
-      return readFile(resolve(projectDir, `src/components/videojs/${skinDir}/skin.${extension}`), 'utf8');
+    skins.map((skin) => {
+      return readFile(resolve(projectDir, `src/components/videojs/${skin}/skin.${extension}`), 'utf8');
     })
   );
 
@@ -257,6 +276,7 @@ async function applyOverlay(project: RegistryConsumerProject, projectDir: string
     const pageDir = project.bundler === 'next' ? resolve(sourceDir, 'app') : sourceDir;
 
     await cp(resolve(overlaysDir, 'react/player.tsx'), resolve(pageDir, 'player.tsx'));
+    await cp(resolve(overlaysDir, 'react/media-probe.tsx'), resolve(pageDir, 'media-probe.tsx'));
 
     if (project.bundler === 'next') await cp(resolve(overlaysDir, 'next/page.tsx'), resolve(pageDir, 'page.tsx'));
   } else {
@@ -270,6 +290,39 @@ async function applyOverlay(project: RegistryConsumerProject, projectDir: string
 
   if (project.bundler === 'webpack' || project.bundler === 'rspack') {
     await cp(resolve(overlaysDir, 'static/serve.mjs'), resolve(projectDir, 'serve.mjs'));
+  }
+}
+
+/** Build a fresh Next app against the registry's exact npm pins, without workspace tarballs or package overrides. */
+export async function verifyPublishedRegistry(): Promise<void> {
+  await mkdir(generatedDir, { recursive: true });
+
+  const started = performance.now();
+  const project = publishedRegistryConsumerProject;
+  const projectDir = resolve(generatedDir, project.directory);
+  const packageTag = process.env.VIDEOJS_REGISTRY_PACKAGE_TAG;
+
+  await rm(projectDir, { recursive: true, force: true });
+
+  const overrides = packageTag ? await resolvePublishedPackageOverrides(registryPath(project), packageTag) : {};
+  const registry = createRegistryServer(overrides);
+
+  try {
+    const registryUrl = await listen(registry);
+
+    await scaffold(project);
+    await configurePackage(projectDir, {}, []);
+    await configureShadcn(project, projectDir, registryUrl);
+    await exerciseRegistryCli(project, projectDir);
+    await cp(resolve(overlaysDir, 'published/page.tsx'), resolve(projectDir, 'src/app/page.tsx'));
+    await verifyConsumer(project);
+
+    console.log(
+      `Verified ${packageTag ? `registry source against npm tag ${packageTag}` : 'published registry packages'} in ${elapsed(started)}.`
+    );
+  } finally {
+    await close(registry).catch(() => undefined);
+    await cleanup();
   }
 }
 
@@ -405,9 +458,9 @@ async function registryPackageRoots(): Promise<Set<string>> {
 }
 
 function registryPath(project: RegistryConsumerProject): string {
-  if (project.framework === 'html') return 'html';
+  const target = project.framework === 'html' ? 'html' : project.styling === 'css' ? 'react/css' : 'react';
 
-  return project.styling === 'css' ? 'react/css' : 'react';
+  return project.theme === 'minimal' ? `${target}/minimal` : target;
 }
 
 /** Package directories under `packages/`, descending one level into bucket directories such as `adapters/`. */
@@ -499,13 +552,13 @@ function createRegistryServer(overrides: Readonly<Record<string, string>>): Serv
     }
 
     response.setHeader('content-type', 'application/json; charset=utf-8');
-    response.end(withLocalPackages(source, overrides));
+    response.end(withRegistryPackages(source, overrides));
   });
 }
 
-function withLocalPackages(source: string, overrides: Readonly<Record<string, string>>): string {
-  // SAFETY: hosted registry files have already passed Shadcn schema validation. This local server only replaces exact
-  // package pins with their packed workspace artifacts before the stock CLI consumes the document.
+function withRegistryPackages(source: string, overrides: Readonly<Record<string, string>>): string {
+  // SAFETY: hosted registry files have already passed Shadcn schema validation. This local server only replaces their
+  // exact package pins with the requested workspace artifacts or published versions before the stock CLI consumes it.
   const document = JSON.parse(source) as { dependencies?: string[] };
   if (!document.dependencies) return source;
 
@@ -517,6 +570,43 @@ function withLocalPackages(source: string, overrides: Readonly<Record<string, st
   });
 
   return `${JSON.stringify(document)}\n`;
+}
+
+async function resolvePublishedPackageOverrides(
+  directory: string,
+  tag: string
+): Promise<Readonly<Record<string, string>>> {
+  if (!/^[0-9A-Za-z][0-9A-Za-z._-]*$/.test(tag)) throw new Error(`Invalid npm package tag or version ${tag}.`);
+
+  const packageNames = new Set<string>();
+  const path = resolve(registryDir, directory);
+
+  for (const entry of await readdir(path, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.json') || entry.name === 'catalog.json') continue;
+
+    const document: unknown = JSON.parse(await readFile(resolve(path, entry.name), 'utf8'));
+    if (!isPlainObject(document) || !Array.isArray(document.dependencies)) continue;
+
+    for (const dependency of document.dependencies) {
+      if (!isString(dependency)) continue;
+
+      const match = /^(@videojs\/[^@]+)@/.exec(dependency);
+
+      if (match?.[1]) packageNames.add(match[1]);
+    }
+  }
+
+  const resolved = await Promise.all(
+    [...packageNames].sort().map(async (name) => {
+      const result = await run('npm', ['view', `${name}@${tag}`, 'version', '--json']);
+      const version: unknown = JSON.parse(result.stdout);
+      if (!isString(version)) throw new Error(`Could not resolve an exact npm version for ${name}@${tag}.`);
+
+      return [name, `${name}@${version}`] as const;
+    })
+  );
+
+  return Object.fromEntries(resolved);
 }
 
 async function listen(server: Server): Promise<string> {

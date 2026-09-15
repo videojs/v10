@@ -1,3 +1,4 @@
+import type { HTMLMediaTargetLike } from '@videojs/media/dom';
 import { isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
@@ -37,6 +38,16 @@ export function withPreservedTextTracks<T>(media: HTMLMediaElement | null, actio
     return action();
   } finally {
     for (const snapshot of snapshots) restoreTextTrack(snapshot);
+  }
+}
+
+/** Disables and removes every text track created for the current hls.js source. */
+export function removeHlsTextTracks(media: HTMLMediaTargetLike | null): void {
+  const trackEls = media?.querySelectorAll<HTMLTrackElement>(`track[${HLS_TRACK_ATTR}]`) ?? [];
+
+  for (const trackEl of trackEls) {
+    trackEl.track.mode = 'disabled';
+    trackEl.remove();
   }
 }
 
@@ -128,7 +139,7 @@ export function HlsJsTextTracksMixin<Base extends Constructor<HlsEngineHost>>(Ba
       const media = this.target as HTMLVideoElement;
 
       const onTracksFound = (_event: string, data: NonNativeTextTracksData) => {
-        this.#clearTracks();
+        removeHlsTextTracks(this.target);
 
         for (const trackObj of data.tracks) {
           const baseTrackObj = trackObj.subtitleTrack ?? trackObj.closedCaptions;
@@ -216,16 +227,10 @@ export function HlsJsTextTracksMixin<Base extends Constructor<HlsEngineHost>>(Ba
         () => {
           engine.off(Hls.Events.NON_NATIVE_TEXT_TRACKS_FOUND, onTracksFound);
           engine.off(Hls.Events.CUES_PARSED, onCuesParsed);
-          this.#clearTracks();
+          removeHlsTextTracks(this.target);
         },
         { once: true }
       );
-    }
-
-    #clearTracks(): void {
-      const trackEls = this.target?.querySelectorAll?.(`track[${HLS_TRACK_ATTR}]`) ?? [];
-
-      trackEls.forEach((trackEl) => trackEl.remove());
     }
   }
 

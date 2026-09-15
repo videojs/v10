@@ -700,6 +700,202 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('does not interpret coarse playback updates as seeking', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getVideoLoadedFraction.mockReturnValue(0);
+    player.emit('onStateChange', STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(0.25);
+
+    await vi.waitFor(() => {
+      if (media.currentTime !== 0.25) throw new Error('time not polled yet');
+    });
+
+    expect(media.seeking).toBe(false);
+    expect(events).toEqual(['timeupdate']);
+    media.detach();
+  });
+
+  it('completes a programmatic seek during playback and resumes time updates', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.emit('onStateChange', STATE.PLAYING);
+    media.currentTime = 30;
+    await Promise.resolve();
+
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+    expect(player.seekTo).toHaveBeenCalledWith(30, true);
+
+    player.getVideoLoadedFraction.mockReturnValue(0.5);
+    player.emit('onStateChange', STATE.PLAYING);
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    expect(media.currentTime).toBe(30);
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+
+    player.getCurrentTime.mockReturnValue(29.75);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('seek not completed yet');
+    });
+
+    player.getCurrentTime.mockReturnValue(30.5);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 30.5) throw new Error('time not polled yet');
+    });
+
+    expect(media.seeking).toBe(false);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked', 'timeupdate']);
+    media.detach();
+  });
+
+  it('completes a programmatic backward seek after a coarse clock update', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(30);
+    player.emit('onStateChange', STATE.PLAYING);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 30) throw new Error('time not polled yet');
+    });
+    events.length = 0;
+
+    media.currentTime = 10;
+    await Promise.resolve();
+    player.getCurrentTime.mockReturnValue(10.25);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('seek not completed yet');
+    });
+
+    expect(media.currentTime).toBe(10.25);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    media.detach();
+  });
+
+  it('waits for the latest of overlapping programmatic seeks', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.emit('onStateChange', STATE.PLAYING);
+    media.currentTime = 10;
+    await Promise.resolve();
+    media.currentTime = 20;
+    await Promise.resolve();
+
+    player.getCurrentTime.mockReturnValue(10.25);
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    expect(media.currentTime).toBe(20);
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+
+    player.getCurrentTime.mockReturnValue(20.25);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('latest seek not completed yet');
+    });
+
+    expect(media.currentTime).toBe(20.25);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    expect(player.seekTo.mock.calls).toEqual([
+      [10, true],
+      [20, true],
+    ]);
+    media.detach();
+  });
+
+  it('does not complete a nearby seek while the player clock is unchanged', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(10);
+    player.emit('onStateChange', STATE.PLAYING);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 10) throw new Error('time not polled yet');
+    });
+    events.length = 0;
+
+    media.currentTime = 10.5;
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    expect(media.currentTime).toBe(10.5);
+    expect(media.seeking).toBe(true);
+    expect(events).toEqual(['seeking']);
+
+    player.getCurrentTime.mockReturnValue(10.25);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('nearby seek not completed yet');
+    });
+
+    expect(media.currentTime).toBe(10.25);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    media.detach();
+  });
+
+  it('settles a nearby seek that lands on the original clock time', async () => {
+    const media = new YouTubeAdapter();
+    const { player } = await attachAndLoad(media);
+    const events: string[] = [];
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+
+    for (const type of ['seeking', 'seeked', 'timeupdate'] as const) {
+      media.addEventListener(type, () => events.push(type));
+    }
+
+    player.getPlayerState.mockReturnValue(STATE.PLAYING);
+    player.getCurrentTime.mockReturnValue(10);
+    player.emit('onStateChange', STATE.PLAYING);
+    await vi.waitFor(() => {
+      if (media.currentTime !== 10) throw new Error('time not polled yet');
+    });
+    events.length = 0;
+
+    media.currentTime = 10.5;
+    await Promise.resolve();
+    now.mockReturnValue(2_000);
+    await vi.waitFor(() => {
+      if (media.seeking) throw new Error('seek not settled yet');
+    });
+
+    expect(media.currentTime).toBe(10);
+    expect(events).toEqual(['seeking', 'timeupdate', 'seeked']);
+    now.mockRestore();
+    media.detach();
+  });
+
   it('destroys the player on detach', async () => {
     const media = new YouTubeAdapter();
     const { player } = await attachAndLoad(media);

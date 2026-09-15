@@ -9,6 +9,13 @@ export type RegistryModuleTarget<Meta extends ModuleMeta = ModuleMeta> =
   | string
   | ((module: GraphModule<Meta>, root: GraphModule<Meta>) => string);
 
+export interface RegistryPaths {
+  /** Registry installation directory, such as `@components/videojs`. */
+  readonly install: string;
+  /** Absolute module specifier for imports, such as `@/components/videojs`. */
+  readonly import: string;
+}
+
 export interface RegistryStylesheetOutput {
   /** Installed path of the stylesheet bundled from this item's module closure. */
   readonly target: string;
@@ -20,16 +27,20 @@ export interface RegistryStylesheetOutput {
 export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = DistributiveOmit<RegistryItem, 'files'> & {
   /** Included registry path, such as `components` or `blocks`. */
   readonly group: string;
+  /** JavaScript directives prepended to the installed root module. */
+  readonly directives?: readonly string[] | undefined;
   /** Root-module target relative to the configured installation directory. */
   readonly target: RegistryModuleTarget<Meta>;
   /** Installed filename for the root module. Defaults to its source filename. */
   readonly filename?: string | undefined;
   /** Import replacements applied while packaging this item. */
   readonly imports?: Readonly<Record<string, string>> | undefined;
+  /** Item-specific installation and import roots. Defaults to the registry paths. */
+  readonly paths?: Partial<RegistryPaths> | undefined;
   /** Bundle the module closure's generated CSS into one installed stylesheet. */
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
-  /** Import the configured shared theme from this item's root module. */
-  readonly theme?: boolean | undefined;
+  /** Import the configured shared theme, or one or more installed stylesheets from registered theme items. */
+  readonly theme?: boolean | string | readonly string[] | undefined;
 };
 
 /** A file-backed Shadcn item which is not owned by one transformed graph module. */
@@ -57,16 +68,23 @@ export interface RegistryItemsOptions<Meta extends ModuleMeta = ModuleMeta> {
 }
 
 export type RegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'name' | 'type'> & {
+  /** Registry item name. Defaults to the target filename prefixed with `_style-`. */
+  readonly name?: string | undefined;
   /** Installed path of the shared theme stylesheet. */
   readonly target: string;
-  /** Authored CSS files relative to the VJSC graph root. */
+  /** Authored CSS files relative to the VJSC graph root, bundled into `target`. */
   readonly include?: readonly string[] | undefined;
+  /** Authored CSS sources and installed targets to preserve as separate editable files. */
+  readonly files?: Readonly<Record<string, string>> | undefined;
   /** Tailwind CSS source whose `@theme inline`, `@utility`, and `@custom-variant` rules extend the registry item. */
   readonly tailwind?: string | undefined;
 };
 
 export interface RegistryStylesOptions {
+  /** Primary shared theme item imported when a source item sets `theme: true`. */
   readonly theme?: RegistryThemeOptions | undefined;
+  /** Additional theme items selected when a source item's `theme` names one of their stylesheet targets. */
+  readonly themes?: readonly RegistryThemeOptions[] | undefined;
   /** Directory that receives compiled VJSC style files, or explicit installed paths by filename. */
   readonly files?: string | Readonly<Record<string, string>> | undefined;
 }
@@ -75,10 +93,7 @@ export interface VjscRegistryOptions<Meta extends ModuleMeta = ModuleMeta> {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
-  readonly paths: {
-    readonly install: string;
-    readonly import: string;
-  };
+  readonly paths: RegistryPaths;
   /** Directory below the Rolldown output root where this catalog is emitted. */
   readonly output?: string | undefined;
   /** Format each editable source before it is emitted. */

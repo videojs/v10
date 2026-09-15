@@ -1,18 +1,18 @@
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
-import { StatusAnnouncer } from '../../../components/feedback/status-announcer';
+import { StatusAnnouncer } from '../../../components/behaviors/status-announcer';
 import { Container } from '../../../components/layout/container';
 import type { SkinDescription } from '../../../meta';
-import { AudioErrorDialog } from '../../shared/audio/error-dialog';
+import { AudioErrorDialog } from '../../shared/audio/dialogs/error-dialog';
 import audioSkinStyles from '../../shared/audio/skin.styles';
-import { PlaybackHotkeys } from '../../shared/playback-hotkeys';
-import { DefaultAudioControls } from './controls';
+import { PlaybackHotkeys } from '../../shared/behaviors/playback-hotkeys';
+import { DefaultAudioControls } from './layout/controls';
 
-export interface DefaultAudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+export interface AudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
 }
 
-export function DefaultAudioSkin({ children, className, ...props }: DefaultAudioSkinProps = {}) {
+export function AudioSkin({ children, className, ...props }: AudioSkinProps = {}) {
   return (
     <Container className={[audioSkinStyles.root, className]} data-theme="default" data-preset="audio" {...props}>
       <Slot>{children}</Slot>

@@ -12,15 +12,15 @@ export interface SkinCatalogEntry {
   readonly live: boolean;
   /** Human-readable label such as `Default Live Video`. */
   readonly label: string;
-  /** Component exported by the authored skin module and the generated package module, such as `DefaultVideoSkin`. */
+  /** Theme-neutral component exported by the authored skin module, such as `VideoSkin`. */
   readonly exportName: string;
   /** Public React component name in `@videojs/react`, such as `MinimalVideoSkin`. */
   readonly component: string;
   /** Custom element tag names for the packaged CSS skin and the registry-installed Tailwind skin. */
   readonly tags: { readonly css: string; readonly tailwind: string };
-  /** Shadcn registry item name, such as `video` or `video-minimal`. */
+  /** Shadcn registry item name. Theme selection belongs to the registry catalog URL. */
   readonly registryItem: string;
-  /** Registry installation directory relative to the components path, such as `skins/video/minimal`. */
+  /** Registry installation directory relative to the components path, such as `video`. */
   readonly directory: string;
 }
 
@@ -37,10 +37,10 @@ function describe(name: SkinName): SkinCatalogEntry {
     media: preset.endsWith('audio') ? 'audio' : 'video',
     live: preset.startsWith('live-'),
     label: `${pascalCase(style.theme)} ${preset.split('-').map(pascalCase).join(' ')}`,
-    exportName: `${pascalCase(style.theme)}${pascalCase(preset)}Skin`,
+    exportName: `${pascalCase(preset)}Skin`,
     component: `${minimal ? 'Minimal' : ''}${pascalCase(preset)}Skin`,
     tags: { css: cssTag, tailwind: `${cssTag}-tailwind` },
-    registryItem: minimal ? `${preset}-minimal` : preset,
+    registryItem: preset,
     directory: skinDirectory(name),
   };
 }

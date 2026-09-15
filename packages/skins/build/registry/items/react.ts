@@ -23,7 +23,15 @@ export function reactRegistryItems(
       if (module.filename === skinUtils) return utilsItem(target);
 
       const variant = parseVariant(new URLSearchParams(module.params));
-      if (!variant || variant.target !== target.framework || variant.style !== target.styling) return null;
+
+      if (
+        !variant ||
+        variant.target !== target.framework ||
+        variant.style !== target.styling ||
+        variant.theme !== target.theme
+      ) {
+        return null;
+      }
 
       const meta = module.meta;
       if (meta?.type === 'skin') return variant.skin === meta.name ? skinItem(module, meta, target) : null;

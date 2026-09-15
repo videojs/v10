@@ -29,7 +29,7 @@ export async function loadAuthoredHtmlSkinTag(preset: SkinPreset, skin: Skin, st
   if (customElements.get(tagName)) return tagName;
 
   const module = await loadAuthoredSkinModule('html', preset, skin, styling);
-  const render = skinRender(module, authoredExportName(preset, skin));
+  const render = skinRender(module, authoredExportName(preset));
 
   return defineTemplateSkin(tagName, authoredTemplate(String(render())));
 }

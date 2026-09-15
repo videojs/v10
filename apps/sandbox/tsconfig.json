@@ -25,7 +25,12 @@
     "noEmit": true,
     "paths": {
       "@app/*": ["./app/*"],
-      "@css/*": ["./app/_generated/css/*"]
+      "@registry-react-tailwind-default/*": ["./app/_generated/registry/react-tailwind-default/*"],
+      "@registry-react-tailwind-minimal/*": ["./app/_generated/registry/react-tailwind-minimal/*"],
+      "@registry-react-css-default/*": ["./app/_generated/registry/react-css-default/*"],
+      "@registry-react-css-minimal/*": ["./app/_generated/registry/react-css-minimal/*"],
+      "@registry-html-default/*": ["./app/_generated/registry/html-default/*"],
+      "@registry-html-minimal/*": ["./app/_generated/registry/html-minimal/*"]
     }
   },
   "include": ["app", "src", "templates", "scripts", "types"],

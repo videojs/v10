@@ -23,6 +23,7 @@ import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 
+import { reactCompilerPlugin } from '../build/react-compiler.ts';
 import docsRedirects from './integrations/docs-redirects';
 import llmsMarkdown from './integrations/llms-markdown';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
@@ -52,6 +53,15 @@ const SITE_URL =
     : process.env.BRANCH === 'main'
       ? PRERELEASE_URL.origin
       : process.env.DEPLOY_PRIME_URL || PRODUCTION_URL.origin;
+
+// @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. Register only the compiler here;
+// the remaining plugins are already registered by Astro's integration. Limit compilation to site source because
+// workspace libraries resolve outside node_modules and already ship compiled output.
+const siteReactCompilerPlugin = reactCompilerPlugin({
+  compiler: true,
+  exclude: [/\.astro$/, /node_modules/],
+  include: /[/\\]site[/\\]src[/\\].*\.[jt]sx?$/,
+});
 
 // https://astro.build/config
 export default defineConfig({
@@ -115,11 +125,7 @@ export default defineConfig({
     }),
     docsRedirects(),
     llmsMarkdown(),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
-      },
-    }),
+    react(),
   ],
   prefetch: {
     prefetchAll: true,
@@ -182,7 +188,7 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
-    plugins: [demoPlaceholderPlugin(), tailwindcss(), svgr()],
+    plugins: [siteReactCompilerPlugin, demoPlaceholderPlugin(), tailwindcss(), svgr()],
     optimizeDeps: {
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.

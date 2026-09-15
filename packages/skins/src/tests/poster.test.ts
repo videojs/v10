@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { describe, expect, it } from 'vite-plus/test';
 
-const posterStyles = new URL('../styles/layout/poster.styles.ts', import.meta.url);
+const posterStyles = new URL('../styles/display/poster.styles.ts', import.meta.url);
 
 describe('poster styles', () => {
   it('hides the image part while it has no source', async () => {

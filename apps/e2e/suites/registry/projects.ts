@@ -1,5 +1,3 @@
-import { skinCatalog } from '../../../../packages/skins/build/catalog.ts';
-
 /** The tool that scaffolds, builds, and serves a consumer. Bundler compatibility is a property of the packages. */
 export type RegistryConsumerBundler = 'next' | 'vite' | 'webpack' | 'rspack';
 
@@ -8,6 +6,7 @@ interface RegistryConsumerProjectBase {
   readonly directory: string;
   readonly port: number;
   readonly bundler: RegistryConsumerBundler;
+  readonly theme: 'default' | 'minimal';
 }
 
 export type RegistryConsumerProject = RegistryConsumerProjectBase &
@@ -16,10 +15,19 @@ export type RegistryConsumerProject = RegistryConsumerProjectBase &
     | { readonly framework: 'html'; readonly styling: 'css' }
   );
 
-/** The on-demand video skins every consumer installs, by registry item name. */
-export const registryConsumerSkins = skinCatalog
-  .filter((entry) => entry.preset === 'video')
-  .map((entry) => entry.registryItem);
+/** The on-demand skins every theme catalog publishes under the same item names. */
+export const registryConsumerSkins = ['video', 'audio'] as const;
+
+/** Smallest consumer that proves generated source works with the exact package versions published to npm. */
+export const publishedRegistryConsumerProject = {
+  name: 'next-react-tailwind-published',
+  directory: 'next-react-tailwind-published',
+  framework: 'react',
+  styling: 'tailwind',
+  theme: 'default',
+  bundler: 'next',
+  port: 5315,
+} as const satisfies RegistryConsumerProject;
 
 /** External projects exercised against the local, hosted registry output. */
 export const registryConsumerProjects = [
@@ -28,14 +36,25 @@ export const registryConsumerProjects = [
     directory: 'next-react-tailwind',
     framework: 'react',
     styling: 'tailwind',
+    theme: 'default',
     bundler: 'next',
     port: 5310,
+  },
+  {
+    name: 'next-react-tailwind-minimal',
+    directory: 'next-react-tailwind-minimal',
+    framework: 'react',
+    styling: 'tailwind',
+    theme: 'minimal',
+    bundler: 'next',
+    port: 5316,
   },
   {
     name: 'next-react-css',
     directory: 'next-react-css',
     framework: 'react',
     styling: 'css',
+    theme: 'minimal',
     bundler: 'next',
     port: 5311,
   },
@@ -44,6 +63,7 @@ export const registryConsumerProjects = [
     directory: 'vite-html-css',
     framework: 'html',
     styling: 'css',
+    theme: 'default',
     bundler: 'vite',
     port: 5312,
   },
@@ -52,6 +72,7 @@ export const registryConsumerProjects = [
     directory: 'webpack-react-css',
     framework: 'react',
     styling: 'css',
+    theme: 'default',
     bundler: 'webpack',
     port: 5313,
   },
@@ -60,6 +81,7 @@ export const registryConsumerProjects = [
     directory: 'rspack-html-css',
     framework: 'html',
     styling: 'css',
+    theme: 'minimal',
     bundler: 'rspack',
     port: 5314,
   },

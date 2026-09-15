@@ -82,15 +82,10 @@ export function utilsItem(target: RegistryTarget): RegistryModuleItem<SkinModule
     } satisfies VideojsRegistryMeta,
     group: 'support',
     filename: 'resolve-class-name.ts',
-    target: 'lib/resolve-class-name.ts',
-    imports: {
-      '@videojs/utils/style': '@/lib/utils',
-    },
+    target: 'resolve-class-name.ts',
+    paths: { install: '@lib', import: '@/lib' },
   };
 }
-
-/** Shared theme stylesheet item every skin depends on. */
-export const themeStyleDependency = '@videojs/_style-theme';
 
 export function reactHelperDependency(target: RegistryTarget): string[] {
   return target.framework === 'react' ? ['@videojs/_resolve-class-name'] : [];

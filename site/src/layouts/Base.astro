@@ -8,6 +8,7 @@ import '@/styles/globals.css';
 
 import BannerInit from '@/components/BannerInit.astro';
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
+import ResolveDocsLinks from '@/components/docs/ResolveDocsLinks.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import LegacyBanner from '@/components/LegacyBanner.astro';
 import Posthog from '@/components/Posthog.astro';
@@ -193,6 +194,7 @@ const fullTitle =
         Skip to content
       </a>
       <PreferenceSync client:idle />
+      <ResolveDocsLinks />
 
       <PrereleaseBanner />
       <LegacyBanner />

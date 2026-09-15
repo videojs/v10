@@ -1,4 +1,5 @@
-import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { basename, dirname, isAbsolute, posix, relative, resolve as resolvePath } from 'node:path';
 
 import { type Registry, type RegistryItem, registryItemSchema, registrySchema } from 'shadcn/schema';
 
@@ -17,6 +18,7 @@ import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
 import { readTailwindRegistryTheme } from './tailwind';
 import type {
   RegistryModuleTarget,
+  RegistryThemeOptions,
   RegistryStylesheetOutput,
   RegistryStylesOptions,
   VjscRegistryOptions,
@@ -28,11 +30,18 @@ interface SourceBuild<Meta extends ModuleMeta> {
   readonly kind: 'source';
   readonly module: GraphModule<Meta>;
   readonly group: string;
+  readonly directives: readonly string[];
   readonly target: RegistryModuleTarget<Meta>;
   readonly filename?: string | undefined;
   readonly imports?: Readonly<Record<string, string>> | undefined;
+  readonly paths?: { readonly install?: string | undefined; readonly import?: string | undefined } | undefined;
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
-  readonly theme: boolean;
+  readonly theme: boolean | string | readonly string[];
+}
+
+interface PreservedStyleFile {
+  readonly source: string;
+  readonly target: string;
 }
 
 interface StyleBuild<Meta extends ModuleMeta> {
@@ -41,6 +50,7 @@ interface StyleBuild<Meta extends ModuleMeta> {
   readonly modules: readonly GraphModule<Meta>[];
   readonly target: string;
   readonly include?: readonly string[] | undefined;
+  readonly files?: readonly PreservedStyleFile[] | undefined;
   readonly asset?: string | undefined;
 }
 
@@ -144,14 +154,16 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
     const resolved = await options.items.resolve({ graph, module });
     if (!resolved) continue;
 
-    const { group, target, filename, imports, stylesheet, theme, ...item } = resolved;
+    const { group, directives, target, filename, imports, paths, stylesheet, theme, ...item } = resolved;
     const build: SourceBuild<Meta> = {
       kind: 'source',
       module,
       group,
+      directives: directives ?? [],
       target,
       ...(filename ? { filename } : {}),
       ...(imports ? { imports } : {}),
+      ...(paths ? { paths } : {}),
       ...(stylesheet ? { stylesheet } : {}),
       theme: theme ?? false,
     };
@@ -194,8 +206,18 @@ async function describeStyleItems<Meta extends ModuleMeta>(
     }
   }
 
-  if (styles.theme) {
-    const { target, include, tailwind, ...manifest } = styles.theme;
+  for (const theme of registryThemes(styles)) {
+    const { target, include, files, name = styleItemName(target), tailwind, ...manifest } = theme;
+    const preservedFiles = preservedStyleFiles(files);
+
+    if (include && preservedFiles.length > 0) {
+      throw new Error('Shadcn registry theme cannot bundle `include` files and preserve `files` at the same time.');
+    }
+
+    if (preservedFiles.length > 0 && !preservedFiles.some((file) => file.target === target)) {
+      throw new Error(`Shadcn registry theme files do not include their target: \`${target}\`.`);
+    }
+
     const tailwindTheme = tailwind ? await readTailwindRegistryTheme(graph.root, tailwind) : undefined;
     const cssVars = tailwindTheme
       ? {
@@ -206,12 +228,12 @@ async function describeStyleItems<Meta extends ModuleMeta>(
     const css = tailwindTheme ? { ...tailwindTheme.css, ...manifest.css } : manifest.css;
 
     items.push({
-      name: styleItemName(target),
+      name,
       type: 'registry:style',
       ...manifest,
       cssVars,
       css,
-      build: { kind: 'style', group: 'support', modules: [], target, include },
+      build: { kind: 'style', group: 'support', modules: [], target, include, files: preservedFiles },
     });
   }
 
@@ -227,7 +249,7 @@ async function describeStyleItems<Meta extends ModuleMeta>(
       title: `${options.name} ${label} styles`,
       description: `Shared ${label} styles installed with the source modules that use them.`,
       docs: 'Installed automatically with source modules that use these styles.',
-      meta: options.styles?.theme?.meta,
+      meta: registryThemes(options.styles)[0]?.meta,
       build: { kind: 'style', group: 'support', modules, target, asset },
     });
   }
@@ -385,11 +407,13 @@ async function buildPublishedItem<Meta extends ModuleMeta>(
       let source = stripStyleImports(rewritten.source);
 
       if (module.id === root.id) {
-        for (const styleTarget of [...styleOutputs.imports].sort().reverse()) {
+        for (const styleTarget of [...styleOutputs.imports].reverse()) {
           const stylesheetTarget = posix.join(normalizePath(options.paths.install), normalizePath(styleTarget));
 
           source = addStyleImport(source, relativeImport(module.target, stylesheetTarget));
         }
+
+        source = addDirectives(source, item.build.directives);
       }
 
       addUnique(sourceFiles, path, source, 'source');
@@ -429,10 +453,29 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   const dependencies = new Set<string>();
   const targets = new Set<string>();
 
-  if (styles?.theme && (hasStyles || item.build.theme)) {
-    targets.add(styles.theme.target);
+  const selections =
+    item.build.theme === false
+      ? styles?.theme
+        ? [false]
+        : []
+      : Array.isArray(item.build.theme)
+        ? item.build.theme
+        : [item.build.theme];
 
-    if (styles.theme.target !== item.build.stylesheet?.target) dependencies.add(styleItemName(styles.theme.target));
+  for (const selection of selections) {
+    const theme = resolveRegistryTheme(styles, selection, item.name);
+    const themeTarget = selection === true || selection === false ? theme.target : selection;
+    const themeFiles = theme.files ? Object.values(theme.files) : [];
+
+    if (themeFiles.length > 0 && !themeFiles.includes(themeTarget)) {
+      throw new Error(
+        `Shadcn item \`${item.name}\` imports a stylesheet outside its registry theme: \`${themeTarget}\`.`
+      );
+    }
+
+    targets.add(themeTarget);
+
+    if (themeTarget !== item.build.stylesheet?.target) dependencies.add(themeItemName(theme));
   }
 
   if (item.build.stylesheet) {
@@ -449,9 +492,7 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
     }
   }
 
-  const imports = [...targets].sort();
-
-  return { dependencies: [...dependencies].sort(), imports };
+  return { dependencies: [...dependencies].sort(), imports: [...targets] };
 }
 
 function styleFileEntries<Meta extends ModuleMeta>(
@@ -482,6 +523,26 @@ async function buildStyleItem<Meta extends ModuleMeta>(
   graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<BuiltItem> {
+  if (item.build.files && item.build.files.length > 0) {
+    const sourceFiles = new Map<string, string>();
+    const files = await Promise.all(
+      item.build.files.map(async (file): Promise<RegistryFile> => {
+        const path = posix.join('files', item.name, normalizePath(file.target));
+        const target = posix.join(normalizePath(options.paths.install), normalizePath(file.target));
+        const content = await readFile(resolvePath(graph.root, file.source), 'utf8');
+
+        addUnique(sourceFiles, path, content, 'source');
+        return { path, target, type: 'registry:style' };
+      })
+    );
+
+    return {
+      group: normalizeGroup(item.build.group),
+      sourceFiles,
+      manifest: buildManifest(item, options, files),
+    };
+  }
+
   const css = await registryStyles(
     item.name,
     item.build.modules,
@@ -577,6 +638,15 @@ function addStyleImport(source: string, specifier: string): string {
   return pragma.test(source) ? source.replace(pragma, `$1\n${statement}`) : `${statement}\n${source}`;
 }
 
+function addDirectives(source: string, directives: readonly string[]): string {
+  if (directives.length === 0) return source;
+
+  const pragma = /^(\/\*\* @jsxImportSource [^*]+\*\/\s*)/;
+  const statements = [...new Set(directives)].map((directive) => `${JSON.stringify(directive)};`).join('\n');
+
+  return pragma.test(source) ? source.replace(pragma, `$1\n${statements}\n\n`) : `${statements}\n\n${source}`;
+}
+
 function createLayout<Meta extends ModuleMeta>(
   root: GraphModule<Meta>,
   modules: readonly GraphModule<Meta>[],
@@ -587,7 +657,7 @@ function createLayout<Meta extends ModuleMeta>(
   const outputPaths = new Map<string, string>();
   const targets = new Map<string, string>();
   const rootFilename = normalizePath(item.build.filename ?? basename(root.sourcePath));
-  const installRoot = normalizePath(options.paths.install);
+  const installRoot = normalizePath(item.build.paths?.install ?? options.paths.install);
   const rootTarget = installedTarget(item, root, root, options);
 
   for (const module of modules) {
@@ -672,7 +742,7 @@ function publishedImport<Meta extends ModuleMeta>(
 ): string {
   const target = targetForModule(publication.item, publication.module, publication.module);
 
-  return posix.join(options.paths.import, stripScriptExtension(target));
+  return posix.join(publication.item.build.paths?.import ?? options.paths.import, stripScriptExtension(target));
 }
 
 function installedTarget<Meta extends ModuleMeta>(
@@ -681,7 +751,9 @@ function installedTarget<Meta extends ModuleMeta>(
   root: GraphModule<Meta>,
   options: VjscRegistryOptions<Meta>
 ): string {
-  return posix.join(normalizePath(options.paths.install), normalizePath(targetForModule(item, module, root)));
+  const installRoot = item.build.paths?.install ?? options.paths.install;
+
+  return posix.join(normalizePath(installRoot), normalizePath(targetForModule(item, module, root)));
 }
 
 function targetForModule<Meta extends ModuleMeta>(
@@ -701,6 +773,57 @@ function styleItemName(target: string): string {
   return `_style-${basename(target, '.css')}`;
 }
 
+function themeItemName(theme: RegistryThemeOptions): string {
+  return theme.name ?? styleItemName(theme.target);
+}
+
+function registryThemes(styles: RegistryStylesOptions | undefined): readonly RegistryThemeOptions[] {
+  return [...(styles?.theme ? [styles.theme] : []), ...(styles?.themes ?? [])];
+}
+
+function resolveRegistryTheme(
+  styles: RegistryStylesOptions | undefined,
+  selection: boolean | string,
+  itemName: string
+): RegistryThemeOptions {
+  if (selection === true || selection === false) {
+    if (!styles?.theme) {
+      throw new Error(`Shadcn item \`${itemName}\` requests a primary registry theme, but none is configured.`);
+    }
+
+    return styles.theme;
+  }
+
+  const themes = registryThemes(styles);
+
+  const matches = themes.filter(
+    (theme) => theme.target === selection || Object.values(theme.files ?? {}).includes(selection)
+  );
+
+  if (matches.length === 0) {
+    throw new Error(`Shadcn item \`${itemName}\` references an unknown registry theme target: \`${selection}\`.`);
+  }
+
+  if (matches.length > 1) {
+    throw new Error(`Shadcn item \`${itemName}\` has an ambiguous registry theme target: \`${selection}\`.`);
+  }
+
+  return matches[0]!;
+}
+
+function preservedStyleFiles(files: RegistryThemeOptions['files']): PreservedStyleFile[] {
+  if (!files) return [];
+
+  return Object.entries(files)
+    .map(([source, target]) => {
+      validateRelativePath(source, 'Shadcn registry theme source');
+      validateRelativePath(target, 'Shadcn registry theme target');
+
+      return { source, target };
+    })
+    .sort((left, right) => left.target.localeCompare(right.target));
+}
+
 function styleAssetItemName(asset: string): string {
   validateRelativePath(asset, 'VJSC style asset');
 
@@ -708,18 +831,10 @@ function styleAssetItemName(asset: string): string {
 }
 
 function validateOptions<Meta extends ModuleMeta>(options: VjscRegistryOptions<Meta>): void {
-  for (const [name, value] of Object.entries(options.paths)) {
-    if (name === 'import') continue;
+  validateRegistryPaths(options.paths, 'Shadcn registry');
 
-    validateRelativePath(value, `Shadcn registry ${name} path`);
-  }
-
-  if (!options.paths.import || options.paths.import.startsWith('.')) {
-    throw new Error(`Shadcn registry import path must be an absolute module specifier.`);
-  }
-
-  if (options.styles?.theme?.tailwind) {
-    validateRelativePath(options.styles.theme.tailwind, 'Shadcn registry Tailwind source');
+  for (const theme of registryThemes(options.styles)) {
+    if (theme.tailwind) validateRelativePath(theme.tailwind, 'Shadcn registry Tailwind source');
   }
 }
 
@@ -735,6 +850,8 @@ function validateItems<Meta extends ModuleMeta>(items: readonly (SourceItem<Meta
     assertNoCollision(names, item.name, owner, 'item name');
 
     if (item.build.kind === 'source') {
+      if (item.build.paths) validateRegistryPaths(item.build.paths, `Shadcn item ${item.name}`);
+
       assertNoCollision(modules, item.build.module.id, item.name, 'module publication');
     }
   }
@@ -840,6 +957,17 @@ function validateRelativePath(path: string, label: string): void {
     escapesRoot(normalized)
   ) {
     throw new Error(`${label} must be a non-empty relative path: \`${path}\`.`);
+  }
+}
+
+function validateRegistryPaths(
+  paths: { readonly install?: string | undefined; readonly import?: string | undefined },
+  label: string
+): void {
+  if (paths.install !== undefined) validateRelativePath(paths.install, `${label} install path`);
+
+  if (paths.import !== undefined && (!paths.import || paths.import.startsWith('.'))) {
+    throw new Error(`${label} import path must be an absolute module specifier.`);
   }
 }
 

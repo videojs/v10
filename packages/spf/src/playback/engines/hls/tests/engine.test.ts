@@ -2147,3 +2147,83 @@ http://example.com/audio-seg1.m4s
 
   engine.destroy();
 });
+
+it('projects Apple JSON chapters from EXT-X-SESSION-DATA into a hidden chapters track', async () => {
+  const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+    if (url.includes('playlist.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",FORMAT=JSON,URI="http://example.com/chapters.json"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+      );
+    }
+
+    if (url.includes('video-360p.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('chapters.json')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            { 'start-time': 0, titles: [{ language: 'und', title: 'Intro' }] },
+            { 'start-time': 4, titles: [{ language: 'und', title: 'Outro' }] },
+          ])
+        )
+      );
+    }
+
+    return unmockedFetchFallback(url);
+  });
+
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = mockFetch;
+
+  const engine = createHlsVideoEngine();
+  const mediaElement = document.createElement('video');
+
+  mediaElement.preload = 'auto';
+
+  engine.context.mediaElement.set(mediaElement);
+  engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
+  engine.state.preload.set('auto');
+
+  const chaptersTrack = () => mediaElement.querySelector<HTMLTrackElement>('track[kind="chapters"]');
+
+  await vi.waitFor(
+    () => {
+      expect(chaptersTrack()?.track.mode).toBe('hidden');
+      expect(chaptersTrack()?.track.cues?.length).toBe(2);
+    },
+    { timeout: 3000 }
+  );
+
+  // SAFETY: `loadChapters` adds `VTTCue`s only.
+  const cues = Array.from(chaptersTrack()!.track.cues!) as VTTCue[];
+
+  // The open last chapter ends at the largest safe integer; readers clamp.
+  expect(cues.map((cue) => [cue.startTime, cue.endTime, cue.text])).toEqual([
+    [0, 4, 'Intro'],
+    [4, Number.MAX_SAFE_INTEGER, 'Outro'],
+  ]);
+  // The chapters track's mode changes never registered as subtitle intent.
+  expect(engine.state.userTextTrackSelection.get()).toBeUndefined();
+
+  engine.destroy();
+
+  expect(chaptersTrack()).toBeNull();
+  globalThis.fetch = originalFetch;
+});

@@ -3,7 +3,7 @@ import clsx from 'clsx';
 
 import { shared } from '@/components/typography/styles';
 import { installMethod, skin, useCase } from '@/stores/installation';
-import { type RegistryFramework, registrySkinItem } from '@/utils/installation/shadcn';
+import { type RegistryFramework, registrySkinSelection } from '@/utils/installation/shadcn';
 
 import RegistryCommandClient from './RegistryCommandClient';
 
@@ -16,9 +16,9 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
   const $useCase = useStore(useCase);
   const $skin = useStore(skin);
   const $installMethod = useStore(installMethod);
-  const item = registrySkinItem({ useCase: $useCase, skin: $skin });
+  const selection = registrySkinSelection({ useCase: $useCase, skin: $skin });
 
-  if (!item) {
+  if (!selection) {
     return (
       <p className={clsx(shared.p, shared.prose)}>
         {$useCase === 'background-video'
@@ -31,8 +31,9 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
   return (
     <RegistryCommandClient
       framework={framework}
-      items={[item]}
+      items={[selection.item]}
       runner={$installMethod === 'cdn' ? 'npm' : $installMethod}
+      theme={selection.theme}
     />
   );
 }

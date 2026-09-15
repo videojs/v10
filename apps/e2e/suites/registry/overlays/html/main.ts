@@ -1,26 +1,23 @@
+import '@videojs/html/audio/player';
 import '@videojs/html/video/player';
 import '@videojs/html/media/hlsjs-video';
-import minimalSkin from '@/components/videojs/skins/video/minimal/skin.html?raw';
-import '@/components/videojs/skins/video/minimal/skin';
-import defaultSkin from '@/components/videojs/skins/video/skin.html?raw';
-import '@/components/videojs/skins/video/skin';
+import audioSkin from '@/components/videojs/audio/skin.html?raw';
+import '@/components/videojs/audio/skin';
+import videoSkin from '@/components/videojs/video/skin.html?raw';
+import '@/components/videojs/video/skin';
 
 import './style.css';
 
 const root = document.querySelector<HTMLDivElement>('#app');
 if (!root) throw new Error('Could not find the application root.');
 
-const skins = [
-  { name: 'default', template: defaultSkin },
-  { name: 'minimal', template: minimalSkin },
-];
+const mediaPlaceholder = '<!-- Add a compatible media element here. -->';
 
-root.innerHTML = skins
-  .map(
-    ({ name, template }) =>
-      `<video-player data-registry-skin="${name}">${template.replace(
-        '<!-- Add a compatible media element here. -->',
-        `<hlsjs-video aria-label="${name} registry validation video"></hlsjs-video>`
-      )}</video-player>`
-  )
-  .join('');
+root.innerHTML = `
+  <video-player data-registry-skin="video">
+    ${videoSkin.replace(mediaPlaceholder, '<hlsjs-video aria-label="Registry validation video"></hlsjs-video>')}
+  </video-player>
+  <audio-player data-registry-skin="audio">
+    ${audioSkin.replace(mediaPlaceholder, '<audio aria-label="Registry validation audio"></audio>')}
+  </audio-player>
+`;

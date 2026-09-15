@@ -43,6 +43,7 @@ describe('createShadcnRegistryFiles', () => {
             title: name,
             description: `${name}.`,
             group: 'skins',
+            directives: ['use client'],
             target(candidate, root) {
               return candidate.id === root.id ? `skins/${name}/skin.tsx` : `skins/${name}/ui/button.tsx`;
             },
@@ -55,6 +56,8 @@ describe('createShadcnRegistryFiles', () => {
 
     expect(defaultItem.registryDependencies).toEqual(['@example/button']);
     expect(defaultItem.files).toHaveLength(1);
+    expect(defaultItem.directives).toBeUndefined();
+    expect(sourceFile(files, 'skins/files/video/skins/video/skin.tsx')).toMatch(/^"use client";\n\n/);
     expect(minimalItem.registryDependencies).toBeUndefined();
     expect(minimalItem.files.map((file: { target: string }) => file.target)).toEqual([
       'components/example/skins/video-minimal/skin.tsx',
@@ -115,6 +118,226 @@ describe('createShadcnRegistryFiles', () => {
       'components/example/skins/video-minimal/ui/button.tsx',
       'components/example/skins/video-minimal/ui/rate-button.tsx',
     ]);
+  });
+
+  it('selects the registry theme item that owns a source theme target', async () => {
+    const graph = fixtureGraph();
+    const files = await createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'block') return null;
+
+          const theme = module.params.theme;
+
+          return {
+            name: `video-${theme}`,
+            type: 'registry:block',
+            title: `Video ${theme}`,
+            description: `Video ${theme}.`,
+            group: 'skins',
+            target(candidate, root) {
+              return candidate.id === root.id
+                ? `skins/video/${theme}.tsx`
+                : `skins/video/${theme}/${candidate.sourcePath}`;
+            },
+            theme: `styles/${theme}.css`,
+          };
+        },
+      },
+      styles: {
+        theme: {
+          name: '_style-default',
+          title: 'Default theme',
+          description: 'Default theme.',
+          target: 'styles/default.css',
+        },
+        themes: [
+          {
+            name: '_style-minimal',
+            title: 'Minimal theme',
+            description: 'Minimal theme.',
+            target: 'styles/minimal.css',
+          },
+        ],
+      },
+    });
+    const defaultItem = registryItem(files, 'skins/registry.json', 'video-default');
+    const minimalItem = registryItem(files, 'skins/registry.json', 'video-minimal');
+
+    expect(defaultItem.registryDependencies).toEqual(['@example/_style-default']);
+    expect(minimalItem.registryDependencies).toEqual(['@example/_style-minimal']);
+    expect(sourceFile(files, 'skins/files/video-default/skins/video/default.tsx')).toMatch(
+      /^import '\.\.\/\.\.\/styles\/default\.css';/
+    );
+    expect(sourceFile(files, 'skins/files/video-minimal/skins/video/minimal.tsx')).toMatch(
+      /^import '\.\.\/\.\.\/styles\/minimal\.css';/
+    );
+  });
+
+  it('imports multiple registered theme stylesheets in configured order', async () => {
+    const graph = fixtureGraph();
+    const files = await createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'component' || module.params.theme !== 'minimal') return null;
+
+          return {
+            name: 'button',
+            type: 'registry:ui',
+            title: 'Button',
+            description: 'Button.',
+            group: 'ui',
+            target: 'ui/button.tsx',
+            theme: ['styles/tokens.css', 'styles/overrides.css'],
+          };
+        },
+      },
+      styles: {
+        theme: {
+          name: '_style-base',
+          title: 'Base theme',
+          description: 'Base theme.',
+          target: 'styles/tokens.css',
+        },
+        themes: [
+          {
+            name: '_style-minimal',
+            title: 'Minimal theme',
+            description: 'Minimal theme.',
+            target: 'styles/overrides.css',
+          },
+        ],
+      },
+    });
+    const item = registryItem(files, 'ui/registry.json', 'button');
+    const source = sourceFile(files, 'ui/files/button/button.tsx');
+
+    expect(item.registryDependencies).toEqual(['@example/_style-base', '@example/_style-minimal']);
+    expect(source).toMatch(/^import '\.\.\/styles\/tokens\.css';\n\nimport '\.\.\/styles\/overrides\.css';/);
+  });
+
+  it('imports one registered theme before a source-owned stylesheet', async () => {
+    const graph = fixtureGraph();
+    const files = await createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (!module.meta || module.params.theme !== 'default') return null;
+
+          if (module.meta.type === 'component') {
+            return {
+              name: 'button',
+              type: 'registry:ui',
+              title: 'Button',
+              description: 'Button.',
+              group: 'ui',
+              target: 'ui/button.tsx',
+            };
+          }
+
+          return {
+            name: 'video',
+            type: 'registry:block',
+            title: 'Video',
+            description: 'Video.',
+            group: 'skins',
+            target: 'video/skin.tsx',
+            stylesheet: { target: 'audio/skin.css' },
+            theme: 'styles/theme.css',
+          };
+        },
+      },
+      styles: {
+        theme: {
+          name: '_style-theme',
+          title: 'Theme',
+          description: 'Theme.',
+          target: 'styles/theme.css',
+        },
+      },
+    });
+    const source = sourceFile(files, 'skins/files/video/default.tsx');
+
+    expect(source).toMatch(/^import '\.\.\/styles\/theme\.css';\n\nimport '\.\.\/audio\/skin\.css';/);
+  });
+
+  it('rejects a named theme target when no registry theme owns it', async () => {
+    const graph = fixtureGraph();
+    const files = createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'component' || module.params.theme !== 'default') return null;
+
+          return {
+            name: 'button',
+            type: 'registry:ui',
+            title: 'Button',
+            description: 'Button.',
+            group: 'ui',
+            target: 'ui/button.tsx',
+            theme: 'styles/missing.css',
+          };
+        },
+      },
+    });
+
+    await expect(files).rejects.toThrow(
+      'Shadcn item `button` references an unknown registry theme target: `styles/missing.css`.'
+    );
+  });
+
+  it('rejects a primary theme request when only additional themes are configured', async () => {
+    const graph = fixtureGraph();
+    const files = createShadcnRegistryFiles(graph, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: { install: 'components/example', import: '@/components/example' },
+      items: {
+        resolve({ module }) {
+          if (module.meta?.type !== 'component' || module.params.theme !== 'default') return null;
+
+          return {
+            name: 'button',
+            type: 'registry:ui',
+            title: 'Button',
+            description: 'Button.',
+            group: 'ui',
+            target: 'ui/button.tsx',
+            theme: true,
+          };
+        },
+      },
+      styles: {
+        themes: [
+          {
+            name: '_style-extra',
+            title: 'Extra theme',
+            description: 'Extra theme.',
+            target: 'styles/extra.css',
+          },
+        ],
+      },
+    });
+
+    await expect(files).rejects.toThrow(
+      'Shadcn item `button` requests a primary registry theme, but none is configured.'
+    );
   });
 });
 
@@ -220,4 +443,11 @@ function registryItem(files: Awaited<ReturnType<typeof createShadcnRegistryFiles
   if (!item) throw new Error(`Missing registry item: ${name}`);
 
   return item;
+}
+
+function sourceFile(files: Awaited<ReturnType<typeof createShadcnRegistryFiles>>, path: string): string {
+  const file = files.find((candidate) => candidate.path === path);
+  if (!file) throw new Error(`Missing source file: ${path}`);
+
+  return file.content;
 }

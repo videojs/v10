@@ -62,6 +62,38 @@ describe('VolumePopover', () => {
     }
   );
 
+  it('arms its trigger once volume level controls become available', async () => {
+    const { Wrapper, store } = createPlayerWrapper({ ...availableVolume, volumeAvailability: 'unavailable' });
+
+    render(
+      <Wrapper>
+        <VolumePopover.Root>
+          <VolumePopover.Trigger data-testid="trigger" render={<MuteButton>Mute</MuteButton>} />
+          <VolumePopover.Popup data-testid="popup">Slider</VolumePopover.Popup>
+        </VolumePopover.Root>
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('trigger').hasAttribute('aria-haspopup')).toBe(false);
+
+    act(() => {
+      store.state = availableVolume;
+      // SAFETY: the mock store records each subscribe call's listener as its only argument.
+      const subscriptions = store.subscribe.mock.calls as unknown as Array<[() => void]>;
+
+      for (const [notify] of subscriptions) notify();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('trigger').getAttribute('aria-haspopup')).toBe('dialog'));
+
+    fireEvent.click(screen.getByTestId('trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('trigger').getAttribute('aria-expanded')).toBe('true');
+      expect(screen.queryByTestId('popup')).not.toBeNull();
+    });
+  });
+
   it('closes an open popup when volume level controls become unavailable', async () => {
     const { Wrapper, store } = createPlayerWrapper(availableVolume);
 

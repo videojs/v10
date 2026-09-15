@@ -3,6 +3,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
+import { reactCompilerPlugin } from '../../build/react-compiler.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
@@ -28,7 +29,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   alias: srcAlias,
   // Pack does not yet preserve exact public CSS entry filenames, so retain the
   // focused source-to-dist copy until its CSS entry support can replace it.
-  plugins: [copyCssPlugin({ outDir: `dist/${mode}`, rebuild: false })],
+  plugins: [reactCompilerPlugin(), copyCssPlugin({ outDir: `dist/${mode}`, rebuild: false })],
 });
 
 export default defineConfig({
