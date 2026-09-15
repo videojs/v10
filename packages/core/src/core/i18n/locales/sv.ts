@@ -2,7 +2,7 @@ import type { Translations } from '../params';
 
 export default {
   buttons: {
-    play: 'Spela',
+    play: 'Spela upp',
     pause: 'Pausa',
     replay: 'Spela upp igen',
     mute: 'Ljud av',
@@ -25,13 +25,13 @@ export default {
     exit: 'Avsluta bild-i-bild',
   },
   live: {
-    playing: 'Spelar live',
+    playing: 'Sänds live',
     seekToEdge: 'Gå till live',
     badge: 'Live',
   },
   cast: {
-    start: 'Starta casting',
-    stop: 'Stoppa casting',
+    start: 'Börja casta',
+    stop: 'Sluta casta',
     connecting: 'Ansluter',
   },
   airplay: {
@@ -46,13 +46,13 @@ export default {
     duration: 'Total tid',
     remaining: 'Återstående tid',
     elapsedSuffix: '{duration} förfluten tid',
-    durationSuffix: '{duration} varaktighet',
+    durationSuffix: '{duration} total tid',
     remainingSuffix: '{duration} kvar',
     showElapsed: 'Visa förfluten tid, {duration}.',
-    showDuration: 'Visa längd, {duration}.',
+    showDuration: 'Visa total tid, {duration}.',
     showRemaining: 'Visa återstående tid, {duration}.',
     toggleElapsed: 'Växla mellan förfluten och återstående tid.',
-    toggleDuration: 'Växla mellan varaktighet och återstående tid.',
+    toggleDuration: 'Växla mellan total tid och återstående tid.',
     position: '{current} av {duration}',
     unknown: 'Mediet laddades inte, okänd tid.',
   },
@@ -66,29 +66,28 @@ export default {
     value: 'Volym {value}',
   },
   status: {
-    captionsOn: 'Text på',
-    captionsOff: 'Text av',
+    captionsOn: 'Textning på',
+    captionsOff: 'Textning av',
     paused: 'Pausad',
-    playing: 'Spelar',
+    playing: 'Spelas upp',
     fullscreen: 'Fullskärm',
-    pip: 'Bild i bild',
-    exitPip: 'Avsluta bild i bild',
+    pip: 'Bild-i-bild',
+    exitPip: 'Bild-i-bild avslutat',
     seekedTo: 'Hoppade till {time}',
   },
   container: {
     label: 'Mediaspelare',
   },
   errors: {
-    aborted: 'Du har avbrutit videouppspelningen.',
-    network: 'Ett nätverksfel gjorde att nedladdningen av videon avbröts.',
-    decode:
-      'Uppspelningen avbröts på grund av att videon är skadad, eller också för att videon använder funktioner som din webbläsare inte stöder.',
+    aborted: 'Du avbröt uppspelningen av mediet innan den var klar.',
+    network: 'Det gick inte att läsa in det här mediet på grund av ett nätverks- eller serverfel.',
+    decode: 'Det här mediet kunde inte spelas upp. Det kan vara skadat eller så stöder din webbläsare inte formatet.',
     source:
-      'Det gick inte att ladda videon, antingen på grund av ett server- eller nätverksfel, eller för att formatet inte stöds.',
-    encrypted: 'Mediat är krypterat och vi har inte nycklarna för att dekryptera det.',
+      'Det här mediet kunde inte läsas in. Det kan vara otillgängligt eller så stöder din webbläsare inte formatet.',
+    encrypted: 'Det här mediet kunde inte spelas upp eftersom det inte gick att dekryptera.',
     unplayable: 'Det här mediet stöds inte av spelaren.',
     title: 'Något gick fel.',
-    unexpected: 'Ett fel uppstod. Försök igen.',
+    unexpected: 'Ett oväntat fel inträffade.',
   },
   common: {
     empty: '',
