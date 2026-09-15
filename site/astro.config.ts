@@ -22,6 +22,7 @@ import mdxLang from 'shiki/langs/mdx.mjs';
 import ts from 'shiki/langs/ts.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
+import type { Plugin } from 'vite';
 import svgr from 'vite-plugin-svgr';
 
 import llmsMarkdown from './integrations/llms-markdown';
@@ -52,7 +53,16 @@ const SITE_URL =
       ? PRERELEASE_URL.origin
       : process.env.DEPLOY_PRIME_URL || PRODUCTION_URL.origin;
 
-const [reactCompilerPlugin] = viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] });
+interface VitePluginIdentity {
+  name: string;
+}
+
+function asWorkspacePlugin(value: VitePluginIdentity | undefined): Plugin | undefined {
+  // SAFETY: The producer and consumer resolve Plugin from the workspace's catalog-pinned Vite implementation.
+  return value as Plugin | undefined;
+}
+
+const reactCompilerPlugin = asWorkspacePlugin(viteReact({ compiler: true, exclude: [/\.astro$/, /node_modules/] })[0]);
 
 // @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first plugin
 // returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
