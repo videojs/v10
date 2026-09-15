@@ -3,14 +3,14 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Pusti',
-    pause: 'Pauza',
+    pause: 'Pauziraj',
     replay: 'Ponovi',
-    mute: 'Prigušen',
-    unmute: 'Ne-prigušen',
+    mute: 'Isključi zvuk',
+    unmute: 'Uključi zvuk',
   },
   seek: {
-    forward: 'Premotaj naprijed {seconds} sekundi',
-    backward: 'Premotaj nazad {seconds} sekundi',
+    forward: 'Premotaj naprijed {seconds} sek.',
+    backward: 'Premotaj nazad {seconds} sek.',
   },
   fullscreen: {
     enter: 'Puni ekran',
@@ -26,7 +26,7 @@ export default {
   },
   live: {
     playing: 'Reprodukcija uživo',
-    seekToEdge: 'Idi na live',
+    seekToEdge: 'Idi na prenos uživo',
     badge: 'Uživo',
   },
   cast: {
@@ -53,11 +53,11 @@ export default {
     showRemaining: 'Prikaži preostalo vrijeme, {duration}.',
     toggleElapsed: 'Prebacivanje između proteklog i preostalog vremena.',
     toggleDuration: 'Prebacivanje između trajanja i preostalog vremena.',
-    position: '{current} od {duration}',
+    position: '{current} / {duration}',
     unknown: 'Medij nije učitan, vrijeme nije poznato.',
   },
   playback: {
-    rate: 'Stopa reprodukcije {rate}',
+    rate: 'Brzina reprodukcije {rate}',
   },
   volume: {
     mutedValue: '{percent}, isključen zvuk',
@@ -73,20 +73,20 @@ export default {
     fullscreen: 'Puni ekran',
     pip: 'Slika u slici',
     exitPip: 'Izlaz iz slike u slici',
-    seekedTo: 'Premotano na {time}',
+    seekedTo: 'Premotano: {time}',
   },
   container: {
     label: 'Medijski plejer',
   },
   errors: {
-    aborted: 'Isključili ste reprodukciju videa.',
-    network: 'Video se prestao preuzimati zbog greške na mreži.',
-    decode: 'Reprodukcija videa je zaustavljenja zbog greške u formatu ili zbog verzije vašeg pretraživača.',
-    source: 'Video se ne može reproducirati zbog servera, greške u mreži ili je format ne podržan.',
-    encrypted: 'Medij je šifriran i nema ključeva za dešifriranje.',
+    aborted: 'Zaustavili ste reprodukciju medija prije nego što je završila.',
+    network: 'Ovaj medij nije moguće učitati zbog problema s mrežom ili serverom.',
+    decode: 'Ovaj medij nije moguće reproducirati. Možda je oštećen ili vaš preglednik ne podržava njegov format.',
+    source: 'Ovaj medij nije moguće učitati. Možda nije dostupan ili vaš preglednik ne podržava njegov format.',
+    encrypted: 'Ovaj medij nije moguće reproducirati jer ga nije moguće dešifrirati.',
     unplayable: 'Plejer ne podržava ovaj medij.',
     title: 'Nešto je pošlo po krivu.',
-    unexpected: 'Došlo je do greške. Pokušajte ponovo.',
+    unexpected: 'Došlo je do neočekivane greške.',
   },
   common: {
     empty: '',
