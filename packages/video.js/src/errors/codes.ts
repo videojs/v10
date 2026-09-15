@@ -8,15 +8,15 @@
  */
 export const LEGACY_ERROR_CODES = [
   /** `videojs('id')` / `videojs(el, options)` — the v8 factory. */
-  'VJS10_LEGACY_INIT',
+  'VJS8_LEGACY_INIT',
   /** `videojs.registerPlugin` / `videojs.getPlugin`. */
-  'VJS10_LEGACY_PLUGIN',
+  'VJS8_LEGACY_PLUGIN',
   /** `videojs.registerComponent` / `videojs.getComponent`. */
-  'VJS10_LEGACY_COMPONENT',
+  'VJS8_LEGACY_COMPONENT',
   /** `videojs.getPlayer(id)`. */
-  'VJS10_LEGACY_GET_PLAYER',
+  'VJS8_LEGACY_GET_PLAYER',
   /** `videojs.options`. */
-  'VJS10_LEGACY_OPTIONS',
+  'VJS8_LEGACY_OPTIONS',
 ] as const;
 
 export type LegacyErrorCode = (typeof LEGACY_ERROR_CODES)[number];
@@ -27,10 +27,10 @@ export function isLegacyErrorCode(value: unknown): value is LegacyErrorCode {
   return (LEGACY_ERROR_CODES as readonly unknown[]).includes(value);
 }
 
-/** The docs slug for a code: `VJS10_LEGACY_INIT` → `legacy-init`. */
+/** The docs slug for a code: `VJS8_LEGACY_INIT` → `legacy-init`. */
 export function getLegacyErrorSlug(code: LegacyErrorCode): string {
   return code
-    .replace(/^VJS10_/, '')
+    .replace(/^VJS8_/, '')
     .toLowerCase()
     .replaceAll('_', '-');
 }

@@ -47,12 +47,12 @@ describe('LEGACY_V8_LINE', () => {
 
 describe('getLegacyErrorRecord', () => {
   it('resolves the entry with its code, slug, URL, and stay-on-v8 line', () => {
-    expect(getLegacyErrorRecord('VJS10_LEGACY_PLUGIN')).toEqual({
-      code: 'VJS10_LEGACY_PLUGIN',
+    expect(getLegacyErrorRecord('VJS8_LEGACY_PLUGIN')).toEqual({
+      code: 'VJS8_LEGACY_PLUGIN',
       slug: 'legacy-plugin',
       url: 'https://videojs.org/errors/legacy-plugin',
       stayOnV8: LEGACY_V8_LINE,
-      ...LEGACY_ERRORS.VJS10_LEGACY_PLUGIN,
+      ...LEGACY_ERRORS.VJS8_LEGACY_PLUGIN,
     });
   });
 });
