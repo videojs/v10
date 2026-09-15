@@ -1,11 +1,16 @@
 ---
-import { BANNER_DISMISS_KEY } from '@/consts';
+import { BANNER_DISMISS_KEY, BANNER_SEEN_KEY } from '@/consts';
 ---
 
-<script is:inline define:vars={{ bannerKey: BANNER_DISMISS_KEY }}>
-  if (typeof localStorage !== "undefined" && typeof document !== "undefined") {
-    if (localStorage[bannerKey] === "true") {
-      document.documentElement.classList.add("banner-dismissed");
-    }
+{/* Hide the legacy banner before paint when it was dismissed, or once it has scrolled out of view this session. Deciding per document keeps the sticky nav and sidebar at one height across navigations instead of shifting with scroll. */}
+<script is:inline define:vars={{ bannerKey: BANNER_DISMISS_KEY, seenKey: BANNER_SEEN_KEY }}>
+  var hide = false;
+
+  try {
+    hide = localStorage[bannerKey] === "true" || sessionStorage[seenKey] === "true";
+  } catch (e) {}
+
+  if (hide) {
+    document.documentElement.classList.add("banner-dismissed");
   }
 </script>

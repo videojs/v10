@@ -29,14 +29,6 @@ const { docsSidebarId } = Astro.props;
   window.addEventListener("pagereveal", () => {
     const state = readState();
     const aside = document.getElementById(docsSidebarId);
-    const nav = document.querySelector("[data-site-nav]");
-
-    // Keep the banners above the nav out of view once the reader has scrolled past them. A new page starts at the
-    // top, which brings them back and drops the nav and sidebar by their height; going back restores the old scroll
-    // and lifts them again. Starting the new page just below the banners keeps both still across navigations.
-    if (state.bannersHidden && nav && !window.location.hash && window.scrollY < nav.offsetTop) {
-      window.scrollTo(0, nav.offsetTop);
-    }
 
     if (aside) {
       if (state.sidebarScroll !== undefined) {
@@ -82,11 +74,9 @@ const { docsSidebarId } = Astro.props;
 
   window.addEventListener("pageswap", () => {
     const aside = document.getElementById(docsSidebarId);
-    const nav = document.querySelector("[data-site-nav]");
-    const state = {
-      sidebarScroll: aside ? aside.scrollTop : undefined,
-      bannersHidden: Boolean(nav && nav.offsetTop > 0 && window.scrollY >= nav.offsetTop),
-    };
+    if (!aside) return;
+
+    const state = { sidebarScroll: aside.scrollTop };
 
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
