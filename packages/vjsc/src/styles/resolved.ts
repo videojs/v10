@@ -14,6 +14,7 @@ import {
   type StyleValue,
   validateStyleDefinition,
 } from './define';
+import type { DesignSystem } from './design-system';
 import { visitStyleRules } from './tree';
 
 const STYLE_RUNTIME_ENTRY = resolveStyleRuntimeEntry();
@@ -78,15 +79,23 @@ export function ruleForToken(
   return styles.modules.get(modulePath)?.get(tokenKey(tokenPath));
 }
 
-export function utilityGroupsForRule(rule: ResolvedStyleRule, variants: readonly string[] = []): readonly string[] {
+export function utilityGroupsForRule(
+  rule: ResolvedStyleRule,
+  variants: readonly string[] = [],
+  merge: DesignSystem['merge'] = twMerge
+): readonly string[] {
   const selected = variants.flatMap((variant) => rule.variantGroups[variant] ?? []);
   if (selected.length === 0) return rule.utilityGroups;
 
-  return mergeUtilityGroups([...rule.utilityGroups, ...selected]);
+  return mergeUtilityGroups([...rule.utilityGroups, ...selected], merge);
 }
 
-export function utilitiesForRule(rule: ResolvedStyleRule, variants: readonly string[] = []): readonly string[] {
-  return utilityGroupsForRule(rule, variants).flatMap(splitClassNames);
+export function utilitiesForRule(
+  rule: ResolvedStyleRule,
+  variants: readonly string[] = [],
+  merge: DesignSystem['merge'] = twMerge
+): readonly string[] {
+  return utilityGroupsForRule(rule, variants, merge).flatMap(splitClassNames);
 }
 
 export function isGroupMarker(value: string): boolean {
@@ -96,12 +105,13 @@ export function isGroupMarker(value: string): boolean {
 /** Map each named group marker to the semantic classes that declare it under the selected variants. */
 export function collectGroupOwners(
   rules: readonly ResolvedStyleRule[],
-  variants: readonly string[] = []
+  variants: readonly string[] = [],
+  merge: DesignSystem['merge'] = twMerge
 ): ReadonlyMap<string, readonly string[]> {
   const owners = new Map<string, string[]>();
 
   for (const rule of rules) {
-    for (const utility of utilitiesForRule(rule, variants)) {
+    for (const utility of utilitiesForRule(rule, variants, merge)) {
       if (!isGroupMarker(utility)) continue;
 
       const classNames = owners.get(utility) ?? [];
@@ -217,8 +227,8 @@ function splitUtilityGroups(value: StyleValue): string[] {
 }
 
 /** Preserve authored groups while removing utilities superseded by the selected variants. */
-function mergeUtilityGroups(groups: readonly string[]): readonly string[] {
-  const merged = twMerge(groups.join(' ')).split(/\s+/).filter(Boolean);
+function mergeUtilityGroups(groups: readonly string[], merge: DesignSystem['merge']): readonly string[] {
+  const merged = merge(groups.join(' ')).split(/\s+/).filter(Boolean);
   const retained = new Map<string, number>();
 
   for (const utility of merged) retained.set(utility, (retained.get(utility) ?? 0) + 1);

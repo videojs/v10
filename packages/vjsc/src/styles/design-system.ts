@@ -2,11 +2,14 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { __unstable__loadDesignSystem, compile, normalizePath } from '@tailwindcss/node';
+import { createTwMerge, defaultConfig } from 'cn/config';
 
 /** Operations style generation needs from a loaded Tailwind v4 design system. */
 export interface DesignSystem {
   /** Files that contribute to the loaded Tailwind design. */
   readonly watchFiles: ReadonlySet<string>;
+  /** Merge utilities using the loaded theme tokens. */
+  merge(utilities: string): string;
   /** Return whether Tailwind recognizes a candidate. */
   recognizesCandidate(candidate: string): boolean;
   /** Return Tailwind's compiled CSS for one candidate. */
@@ -21,9 +24,13 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   const base = dirname(absolute);
   const raw = readFileSync(absolute, 'utf8');
   const reference = `@reference "${normalizePath(absolute)}";`;
+  const watchFiles = await collectWatchFiles(absolute, reference);
   const design = await __unstable__loadDesignSystem(raw, { base });
+  const theme = Object.fromEntries(
+    Object.keys(defaultConfig().theme).map((group) => [group, design.theme.keysInNamespaces([`--${group}`])])
+  );
+  const merge = createTwMerge({ extend: { theme } });
   const candidateCache = new Map<string, string | undefined>();
-  const watchFiles = new Set([absolute]);
   const candidateCss = (candidate: string): string | undefined => {
     if (candidateCache.has(candidate)) return candidateCache.get(candidate);
 
@@ -56,10 +63,25 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
 
   return {
     watchFiles,
+    merge,
     recognizesCandidate(candidate: string): boolean {
       return candidateCss(candidate) !== undefined;
     },
     candidateCss,
     compileCss: compileReferencedCss,
   };
+}
+
+/** The Node design loader discards dependency callbacks; only the compiler exposes its resolved imports. */
+async function collectWatchFiles(path: string, reference: string): Promise<Set<string>> {
+  const files = new Set([path]);
+
+  await compile(reference, {
+    base: dirname(path),
+    onDependency(dependency) {
+      files.add(resolve(dependency));
+    },
+  });
+
+  return files;
 }
