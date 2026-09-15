@@ -26,7 +26,7 @@ export default {
   },
   live: {
     playing: 'Reproduzindo ao vivo',
-    seekToEdge: 'Ir para o ao vivo',
+    seekToEdge: 'Ir para a transmissão ao vivo',
     badge: 'Ao vivo',
   },
   cast: {
@@ -56,7 +56,7 @@ export default {
     position: '{current} de {duration}',
   },
   playback: {
-    rate: 'Velocidade {rate}',
+    rate: 'Velocidade de reprodução {rate}',
   },
   volume: {
     mutedValue: '{percent}, silenciado',
@@ -79,14 +79,15 @@ export default {
   },
   errors: {
     aborted: 'Você interrompeu a reprodução da mídia antes de ela terminar.',
-    network: 'Um erro na rede causou falha durante o download da mídia.',
+    network: 'Não foi possível carregar esta mídia devido a um problema de rede ou do servidor.',
     decode:
-      'A reprodução foi interrompida devido a um problema de mídia corrompida ou porque a mídia utiliza funções que seu navegador não suporta.',
-    source: 'A mídia não pode ser carregada, por uma falha de rede ou servidor ou o formato não é suportado.',
-    encrypted: 'A mídia está criptografada e não temos as chaves para descriptografar.',
+      'Não foi possível reproduzir esta mídia. Ela pode estar corrompida ou seu navegador pode não suportar o formato.',
+    source:
+      'Não foi possível carregar esta mídia. Ela pode estar indisponível ou seu navegador pode não suportar o formato.',
+    encrypted: 'Não foi possível reproduzir esta mídia porque não foi possível descriptografá-la.',
     unplayable: 'Esta mídia não é suportada pelo reprodutor.',
     title: 'Algo deu errado.',
-    unexpected: 'Ocorreu um erro. Tente novamente.',
+    unexpected: 'Ocorreu um erro inesperado.',
   },
   common: {
     empty: '',
