@@ -88,7 +88,7 @@ export default {
     encrypted: 'Impossibile riprodurre il contenuto multimediale perché non è stato possibile decriptarlo.',
     unplayable: 'Questo contenuto multimediale non è supportato dal lettore.',
     title: 'Qualcosa è andato storto.',
-    unexpected: 'Si è verificato un errore. Riprova.',
+    unexpected: 'Si è verificato un errore imprevisto.',
   },
   common: {
     empty: '',
