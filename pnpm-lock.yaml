@@ -1483,17 +1483,14 @@ importers:
         specifier: ^5.0.6
         version: 5.0.6
       '@vitejs/plugin-react':
-        specifier: ^5.2.0
-        version: 5.2.0(@voidzero-dev/vite-plus-core@0.2.8(@types/node@22.19.15)(@typescript/typescript6@6.0.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(unrun@0.2.39)(yaml@2.9.0))(supports-color@8.1.1)
+        specifier: ^6.1.1
+        version: 6.1.1(@voidzero-dev/vite-plus-core@0.2.8(@types/node@22.19.15)(@typescript/typescript6@6.0.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(unrun@0.2.39)(yaml@2.9.0))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
       '@vitest/ui':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
-      babel-plugin-react-compiler:
-        specifier: 1.0.0
-        version: 1.0.0
       jsdom:
         specifier: ^27.0.0
         version: 27.4.0(supports-color@8.1.1)
@@ -1503,6 +1500,9 @@ importers:
       oxc-parser:
         specifier: 0.146.0
         version: 0.146.0
+      oxc-transform-react:
+        specifier: 0.145.0
+        version: 0.145.0
       oxc-walker:
         specifier: ^1.1.1
         version: 1.1.1(@oxc-project/types@0.146.0)(oxc-parser@0.146.0)(rolldown@1.2.5)
@@ -15348,6 +15348,7 @@ snapshots:
   babel-plugin-react-compiler@1.0.0:
     dependencies:
       '@babel/types': 7.29.8
+    optional: true
 
   bail@2.0.2: {}
 

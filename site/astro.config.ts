@@ -7,6 +7,7 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
+import viteReact from '@vitejs/plugin-react';
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import astro from 'shiki/langs/astro.mjs';
 import bash from 'shiki/langs/bash.mjs';
@@ -109,11 +110,7 @@ export default defineConfig({
       ],
     }),
     llmsMarkdown(),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
-      },
-    }),
+    react(),
   ],
   prefetch: {
     prefetchAll: true,
@@ -170,7 +167,14 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
-    plugins: [demoPlaceholderPlugin(), tailwindcss(), svgr()],
+    plugins: [
+      // @astrojs/react does not expose @vitejs/plugin-react's native compiler option yet. The compiler is the first
+      // plugin returned by the Vite integration; the remaining plugins are already registered by Astro's integration.
+      viteReact({ compiler: true, exclude: /\.astro$/ })[0],
+      demoPlaceholderPlugin(),
+      tailwindcss(),
+      svgr(),
+    ],
     optimizeDeps: {
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.
