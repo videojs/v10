@@ -1,15 +1,16 @@
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { useTemporaryDirectories } from '../../../tests/temp-directory';
 import { createComponentSchema } from '../generate';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
+const temporaryDirectories = useTemporaryDirectories();
 
 function setup(): { dir: string; output: string; pattern: string } {
-  const dir = mkdtempSync(join(tmpdir(), 'videojs-components-'));
+  const dir = temporaryDirectories.createSync('videojs-components-');
 
   mkdirSync(join(dir, 'play-button'));
   mkdirSync(join(dir, 'slider'));

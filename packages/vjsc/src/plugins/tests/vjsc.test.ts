@@ -1,5 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
@@ -9,6 +8,7 @@ import { vjscPlugin } from '..';
 import { defineSchema } from '../../components/definition';
 import type { Graph } from '../../graph';
 import { defineComponentTarget } from '../../target/definition';
+import { useTemporaryDirectories } from '../../tests/temp-directory';
 
 const schema = defineSchema('@fixture/components', {});
 const target = defineComponentTarget<typeof schema>()(() => ({
@@ -28,10 +28,11 @@ const target = defineComponentTarget<typeof schema>()(() => ({
   ],
   jsx: { importSource: 'react', attributes: 'react' },
 }));
+const temporaryDirectories = useTemporaryDirectories();
 
 describe('vjscPlugin', () => {
   it('configures each module once and runs transforms owned by its selected targets', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-plugin-'));
+    const root = temporaryDirectories.createSync('vjsc-plugin-');
     const filename = join(root, 'fixture.ts');
     const id = `${filename}?target=react`;
     const configurations = new Map<string, number>();
