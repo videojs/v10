@@ -7,6 +7,7 @@
     "player",
     "videojs"
   ],
+  "homepage": "https://videojs.org",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
