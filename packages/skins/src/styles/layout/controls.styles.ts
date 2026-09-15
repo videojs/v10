@@ -12,7 +12,7 @@ const compactHidden = [
   'media-max-lg:group-[:not([data-visible])]/controls:opacity-0',
   'media-max-lg:group-[:not([data-visible])]/controls:scale-media-hidden',
   'media-max-lg:pointer-fine:group-[:not([data-visible])]/controls:blur-media-hidden',
-  'transition-[filter,opacity,scale,translate] duration-media-controls-half ease-out',
+  'transition-[filter,opacity,scale,translate] duration-media-controls-enter ease-out',
   'media-max-lg:group-[:not([data-visible])]/controls:duration-media-controls',
 ] as const;
 
@@ -33,7 +33,7 @@ export default styles({
     content: {
       utilities: [
         'group/controls text-media-controls-foreground text-shadow-media',
-        'duration-media-controls-half ease-out',
+        'duration-media-controls-enter ease-out',
       ],
       variants: {
         default: [

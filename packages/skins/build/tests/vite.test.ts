@@ -245,7 +245,7 @@ describe('Skins Vite workflow', () => {
     'renders a title primitive for %s',
     async (target) => {
       const result = await server.transformRequest(
-        `/../src/components/metadata/title.tsx?style=tailwind&target=${target}&skin=default-video`
+        `/../src/components/metadata/title.tsx?style=tailwind&target=${target}&skin=default-video&theme=default`
       );
 
       expect(result?.code).toContain(target === 'html' ? 'media-title' : 'Title');

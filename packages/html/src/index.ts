@@ -150,7 +150,6 @@ export { TimeSliderChapterTitleElement } from './ui/time-slider/chapter-title';
 export { TimeSliderChaptersElement } from './ui/time-slider/chapters';
 export { TimeSliderElement } from './ui/time-slider/element';
 export { TitleElement } from './ui/title/element';
-export { TitleValueElement } from './ui/title/value';
 export { tooltipGroupContext } from './ui/tooltip/context';
 export { TooltipElement } from './ui/tooltip/element';
 export { TooltipGroupElement } from './ui/tooltip/group';

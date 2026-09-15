@@ -10,9 +10,7 @@ export default function BasicUsage() {
     <Player title="Big Buck Bunny">
       <Container className="react-title-basic">
         <Video loop muted playsInline src="{{VJS10_DEMO_VIDEO_MP4}}" />
-        <Title.Root className="react-title-basic__title">
-          <Title.Value />
-        </Title.Root>
+        <Title className="react-title-basic__title" />
         <PlayButton
           className="react-title-basic__button"
           render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}

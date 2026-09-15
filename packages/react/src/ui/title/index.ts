@@ -1,1 +1,1 @@
-export * as Title from './index.parts';
+export * from './component';

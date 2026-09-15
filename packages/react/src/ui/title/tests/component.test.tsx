@@ -40,24 +40,14 @@ describe('Title', () => {
       ...controlsState(true),
       ...playbackState(true),
     });
-    const { getByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(getByTestId('title').textContent).toBe('Sintel');
   });
 
   it.each([true, false])('reflects controls visibility (%s) without hiding the title', (visible) => {
     const { Wrapper } = createPlayerWrapper({ ...metadataState('Sintel'), ...controlsState(visible) });
-    const { getByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(getByTestId('title').hasAttribute('data-visible')).toBe(visible);
     expect(getByTestId('title').textContent).toBe('Sintel');
@@ -65,12 +55,7 @@ describe('Title', () => {
 
   it('renders nothing without the metadata feature', () => {
     const { Wrapper } = createPlayerWrapper({ ...controlsState(true), ...playbackState(true) });
-    const { queryByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { queryByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(queryByTestId('title')).toBeNull();
   });
@@ -81,12 +66,7 @@ describe('Title', () => {
       ...controlsState(true),
       ...playbackState(true),
     });
-    const { queryByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { queryByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(queryByTestId('title')).toBeNull();
   });
@@ -97,36 +77,21 @@ describe('Title', () => {
       ...controlsState(false),
       ...playbackState(false),
     });
-    const { getByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(getByTestId('title').textContent).toBe('Sintel');
   });
 
   it('renders the title without the playback feature', () => {
     const { Wrapper } = createPlayerWrapper({ ...metadataState('Sintel'), ...controlsState(true) });
-    const { getByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(getByTestId('title').textContent).toBe('Sintel');
   });
 
   it('renders the title without the controls feature', () => {
     const { Wrapper } = createPlayerWrapper({ ...metadataState('Sintel'), ...playbackState(true) });
-    const { getByTestId } = render(
-      <Title.Root data-testid="title">
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(getByTestId('title').textContent).toBe('Sintel');
   });
@@ -138,9 +103,7 @@ describe('Title', () => {
       ...playbackState(true),
     });
     const { getByTestId } = render(
-      <Title.Root className={(state) => `title--${state.title.length}`} data-testid="title">
-        <Title.Value />
-      </Title.Root>,
+      <Title className={(state) => `title--${state.title.length}`} data-testid="title" />,
       {
         wrapper: Wrapper,
       }
@@ -149,22 +112,12 @@ describe('Title', () => {
     expect(getByTestId('title').className).toBe('title--6');
   });
 
-  it('preserves composed content and allows the value to be omitted', () => {
+  it('renders one element and supports element replacement', () => {
     const { Wrapper } = createPlayerWrapper(metadataState('Sintel'));
-    const { getByTestId, rerender } = render(
-      <Title.Root data-testid="title">
-        <span>Now playing: </span>
-        <Title.Value />
-      </Title.Root>,
-      { wrapper: Wrapper }
-    );
+    const { getByTestId } = render(<Title render={<h2 />} data-testid="title" />, { wrapper: Wrapper });
 
-    expect(getByTestId('title').textContent).toBe('Now playing: Sintel');
-    rerender(
-      <Title.Root data-testid="title">
-        <span>Custom content</span>
-      </Title.Root>
-    );
-    expect(getByTestId('title').textContent).toBe('Custom content');
+    expect(getByTestId('title').tagName).toBe('H2');
+    expect(getByTestId('title').textContent).toBe('Sintel');
+    expect(getByTestId('title').childElementCount).toBe(0);
   });
 });

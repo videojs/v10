@@ -25,7 +25,6 @@ interface PublicNameMap {
 }
 
 const componentParts: ComponentPartNameMap = {
-  Title: { Root: 'Title', Value: 'TitleValue' },
   Controls: {
     Root: 'Controls',
     Backdrop: 'ControlsBackdrop',

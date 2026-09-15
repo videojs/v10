@@ -5,11 +5,7 @@ import type { SkinComponentDescription } from '../../meta';
 import styles from '../../styles/metadata/title.styles';
 
 export function Title({ className, ...props }: Props = {}) {
-  return (
-    <$.Title.Root className={[styles.root, className]} {...props}>
-      <$.Title.Value className={styles.content} />
-    </$.Title.Root>
-  );
+  return <$.Title className={[styles.root, className]} {...props} />;
 }
 
 export const meta = {

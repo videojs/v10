@@ -31,27 +31,27 @@ import basicUsageHtmlTs from "@/components/docs/demos/title/html/css/BasicUsage.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Title.Root><Title.Value /></Title.Root>
+  <Title />
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <media-title><media-title-value></media-title-value></media-title>
+  <media-title></media-title>
   ```
 </FrameworkCase>
 
 ## Behavior
 
-The component shows the name of what is playing. The root owns visibility and the value part renders the resolved text. Set the
-title on the player; compose other content alongside the value part.
+The component renders the resolved title directly as text. Set the title on the player;
+no child element is required.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
   <Player title="Big Buck Bunny">
     <Container>
       <Video src="video.mp4" />
-      <Title.Root><Title.Value /></Title.Root>
+      <Title />
     </Container>
   </Player>
   ```
@@ -61,7 +61,7 @@ title on the player; compose other content alongside the value part.
   ```html
   <video-player content-title="Big Buck Bunny">
     <video src="video.mp4"></video>
-    <media-title><media-title-value></media-title-value></media-title>
+    <media-title></media-title>
   </video-player>
   ```
 </FrameworkCase>
@@ -99,8 +99,8 @@ feature</DocsLink>, which the video and audio presets include.
 
 Set it to `null` to hand the title back to the media.
 
-The root exposes `data-visible` while controls are visible. Use that hook to animate the
-title with the controls; the value part owns only the title text.
+The component exposes `data-visible` while controls are visible. Use that hook to animate
+the title with the controls.
 
 ## Styling
 
@@ -145,7 +145,7 @@ To fade the title in and out with the controls, use the root’s `data-visible` 
 branch in JavaScript than in CSS:
 
 ```tsx
-<Title.Root className={(state) => (state.title.length > 40 ? "title title--long" : "title")}><Title.Value /></Title.Root>
+<Title className={(state) => (state.title.length > 40 ? "title title--long" : "title")} />
 ```
 </FrameworkCase>
 

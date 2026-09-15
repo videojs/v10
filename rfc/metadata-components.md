@@ -9,7 +9,7 @@ date: 2026-09-14
 
 We need to display a media title in the video skins, with a gradient and visibility transitions. We also need a public component structure that remains useful if we later display a description or other metadata. The question is which responsibilities belong to a title component, a shared metadata surface, and the skin.
 
-The working implementation uses `Title.Root` and `Title.Value` in React, and `media-title` with `media-title-value` in HTML. The root owns title availability and reflects controls visibility; the value renders text. This is a candidate design, not an accepted contract.
+The working implementation uses a standalone `Title` in React and `media-title` in HTML. It owns its text and title availability, and reflects controls visibility. Skins render the gradient with a pseudo-element. The compound options below remain proposals for discussion.
 
 A title-specific root currently disappears when the title is empty. Putting a future description inside it would therefore hide valid description content too. Renaming that root to “metadata” would not resolve the underlying ownership question.
 
@@ -93,7 +93,7 @@ After agreement, align the implementation, examples, registration imports, styli
 
 - [Metadata resolution](../packages/core/src/dom/store/features/metadata.ts)
 - [Title state and empty behavior](../packages/core/src/core/ui/title/core.ts)
-- [Working HTML title root](../packages/html/src/ui/title/element.ts) and [React title root](../packages/react/src/ui/title/root.tsx)
+- [Working HTML title root](../packages/html/src/ui/title/element.ts) and [React title root](../packages/react/src/ui/title/component.tsx)
 - [Skin composition](../packages/skins/src/components/metadata/title.tsx) and [title styles](../packages/skins/src/styles/metadata/title.styles.ts)
 - [Existing indicator composition](../packages/core/src/core/ui/seek-indicator/component.ts)
 

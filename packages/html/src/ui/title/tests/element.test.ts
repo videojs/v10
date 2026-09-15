@@ -115,7 +115,6 @@ async function setup(store?: object) {
 
   const title = createElement(TitleElement);
 
-  title.append(document.createElement('media-title-value'));
   document.body.append(provider);
   provider.append(title);
   await title.updateComplete;
@@ -223,7 +222,7 @@ describe('TitleElement', () => {
     await waitForAssertion(() => expect(title.textContent).toBe('Big Buck Bunny'));
   });
 
-  it.each([false, true])('updates title state with a content wrapper and reconnects (shadow: %s)', async (shadow) => {
+  it.each([false, true])('updates title state and reconnects (shadow: %s)', async (shadow) => {
     const store = createStore<PlayerTarget>()(combine(metadataFeature, controlsFeature, playbackFeature));
     const provider = createElement(UIElement);
 
@@ -231,19 +230,14 @@ describe('TitleElement', () => {
     const host = createElement(UIElement);
     const root = shadow ? host.attachShadow({ mode: 'open' }) : host;
     const title = createElement(TitleElement);
-    const content = document.createElement('media-title-value');
 
-    const label = document.createElement('span');
-
-    label.textContent = 'Now playing: ';
-    title.append(label, content);
     root.append(title);
     provider.append(host);
     document.body.append(provider);
 
     setPlayerConfigValue(store, metadataFeature.config!.title, 'VJS City');
     await waitForAssertion(() => {
-      expect(content.textContent).toBe('VJS City');
+      expect(title.textContent).toBe('VJS City');
       expect(title.hidden).toBe(false);
       expect(title.hasAttribute('data-visible')).toBe(true);
     });
@@ -261,22 +255,9 @@ describe('TitleElement', () => {
     setPlayerConfigValue(store, metadataFeature.config!.title, 'Restored title');
     provider.append(host);
     await waitForAssertion(() => {
-      expect(content.textContent).toBe('Restored title');
+      expect(title.textContent).toBe('Restored title');
       expect(title.hidden).toBe(false);
-      expect(title.contains(content)).toBe(true);
+      expect(title.childElementCount).toBe(0);
     });
-  });
-
-  it('preserves composed content when the value part is omitted', async () => {
-    const store = createTitleStore();
-    const { title } = await setup(store);
-    const content = document.createElement('span');
-
-    content.textContent = 'Custom content';
-    title.replaceChildren(content);
-    setTitle(store, 'Sintel');
-    await waitForAssertion(() => expect(title.hidden).toBe(false));
-    expect(title.contains(content)).toBe(true);
-    expect(content.textContent).toBe('Custom content');
   });
 });

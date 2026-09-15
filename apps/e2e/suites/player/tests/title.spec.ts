@@ -6,7 +6,6 @@ for (const framework of ['html', 'react']) {
       await page.goto(`/title.html?framework=${framework}&skin=${skin}`);
 
       const title = page.locator('.media-title');
-      const content = title.locator(':scope > .media-title-content');
       const input = page.getByRole('textbox', { name: 'Title' });
 
       await expect(title).toHaveText('A long video title that should stay clear of the player controls');
@@ -14,24 +13,19 @@ for (const framework of ['html', 'react']) {
       expect(await title.evaluate((element) => element.tagName)).toBe(framework === 'html' ? 'MEDIA-TITLE' : 'DIV');
       await expect(page.locator('.media-metadata')).toHaveCount(0);
       await expect(title).toHaveAttribute('class', 'media-title');
-      await expect(content).toHaveAttribute('class', 'media-title-content');
-      expect(await content.evaluate((element) => element.tagName)).toBe(
-        framework === 'html' ? 'MEDIA-TITLE-VALUE' : 'DIV'
-      );
-      await expect(title.locator(':scope > *')).toHaveCount(1);
-      expect(await title.evaluate((element) => getComputedStyle(element, '::before').content)).toBe('none');
+      await expect(title.locator(':scope > *')).toHaveCount(0);
       expect(await title.evaluate((element) => element.parentElement?.classList.contains('media-container'))).toBe(
         true
       );
       await expect(title).toHaveAttribute('data-visible');
       await expect(title).toHaveCSS('opacity', '1');
-      await expect(content).toHaveCSS('white-space', 'normal');
-      await expect(content).toHaveCSS('overflow-wrap', 'anywhere');
+      await expect(title).toHaveCSS('white-space', 'normal');
+      await expect(title).toHaveCSS('overflow-wrap', 'anywhere');
       await expect(title).not.toHaveAttribute('title');
       await expect(title).not.toHaveAttribute('aria-hidden', 'true');
 
       if (skin === 'default') {
-        const titleEnd = await content.evaluate((element) => {
+        const titleEnd = await title.evaluate((element) => {
           const style = getComputedStyle(element);
 
           return element.getBoundingClientRect().right - parseFloat(style.paddingRight);
@@ -42,15 +36,12 @@ for (const framework of ['html', 'react']) {
       }
 
       const container = page.locator('.media-container');
-      const gradient = await title.evaluate((element) => getComputedStyle(element).backgroundImage);
+      const titleBounds = await title.boundingBox();
+      const containerBounds = await container.boundingBox();
 
-      expect(gradient).toContain('linear-gradient');
-      await container.evaluate((element: HTMLElement) =>
-        element.style.setProperty('--media-controls-gradient', 'none')
-      );
-      expect(await title.evaluate((element) => getComputedStyle(element).backgroundImage)).toBe(gradient);
-      await container.evaluate((element: HTMLElement) => element.style.removeProperty('--media-controls-gradient'));
-      expect((await title.boundingBox())!.height).toBeCloseTo((await container.boundingBox())!.height, 0);
+      expect(titleBounds!.y).toBeCloseTo(containerBounds!.y, 0);
+      expect(titleBounds!.height).toBeLessThan(containerBounds!.height);
+      expect(await title.evaluate((element) => element.scrollHeight)).toBeLessThanOrEqual(titleBounds!.height + 1);
 
       await page.getByRole('button', { name: 'Play', exact: true }).click();
       await page.mouse.move(600, 400);

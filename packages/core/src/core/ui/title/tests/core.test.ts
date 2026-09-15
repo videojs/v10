@@ -27,7 +27,19 @@ describe('TitleCore', () => {
 
       const state = core.getState(createMediaState({ title: '' }));
 
-      expect(state).toEqual({ title: '', hidden: true });
+      expect(state).toEqual({ title: '', hidden: true, visible: false });
+    });
+
+    it.each([true, false])('reflects controls visibility (%s)', (controlsVisible) => {
+      const state = new TitleCore().getState(createMediaState(), { controlsVisible });
+
+      expect(state.visible).toBe(controlsVisible);
+      expect(state.hidden).toBe(false);
+    });
+
+    it('defaults visibility to false without controls', () => {
+      expect(new TitleCore().getState(createMediaState()).visible).toBe(false);
+      expect(new TitleCore().getState(createMediaState(), null).visible).toBe(false);
     });
 
     it('treats a whitespace-only title as a title', () => {
@@ -35,7 +47,7 @@ describe('TitleCore', () => {
 
       const state = core.getState(createMediaState({ title: '   ' }));
 
-      expect(state).toEqual({ title: '   ', hidden: false });
+      expect(state).toEqual({ title: '   ', hidden: false, visible: false });
     });
   });
 });

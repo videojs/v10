@@ -7,10 +7,9 @@ import { PlayerController } from '../../player/controller';
 import { UIElement } from '../ui-element';
 
 /**
- * Groups the title's content and reflects its visibility state.
+ * Displays the resolved content title.
  *
- * Set the title through the player's `content-title` attribute. Place a `<media-title-value>` inside this element to
- * render the resolved text alongside any author-owned content.
+ * The element owns its text content. Set the title through the player's `content-title` attribute.
  */
 export class TitleElement extends UIElement {
   static readonly tagName = 'media-title';
@@ -33,14 +32,11 @@ export class TitleElement extends UIElement {
     const metadata = this.#metadataState.value;
     if (!metadata) return;
 
-    const state = this.#core.getState(metadata);
+    const state = this.#core.getState(metadata, this.#controlsState.value);
 
-    const value = this.querySelector('media-title-value');
-
-    if (value) value.textContent = state.title;
+    this.textContent = state.title;
 
     this.hidden = state.hidden;
-    this.toggleAttribute('data-visible', this.#controlsState.value?.controlsVisible ?? false);
 
     applyStateDataAttrs(this, state, TitleDataAttrs);
   }

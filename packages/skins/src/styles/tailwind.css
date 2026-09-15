@@ -69,7 +69,7 @@
   --duration-media-slow: var(--media-duration-slow);
   --duration-media-slower: var(--media-duration-slower);
   --duration-media-controls: var(--media-duration-controls);
-  --duration-media-controls-half: calc(var(--media-duration-controls) / 2);
+  --duration-media-controls-enter: calc(var(--media-duration-controls) / 2);
   --duration-media-menu: var(--media-duration-menu);
   --duration-media-dialog: var(--media-duration-dialog);
   --duration-media-indicator: var(--media-duration-indicator);

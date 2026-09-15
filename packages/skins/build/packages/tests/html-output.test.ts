@@ -39,12 +39,10 @@ describe('generated HTML package skins', () => {
     expect(stylesheet.length).toBeGreaterThan(10_000);
 
     if (skin.endsWith('video')) {
-      expect(template).toMatch(
-        /<media-title class="media-title">\s*<media-title-value class="media-title-content">\s*<\/media-title-value>\s*<\/media-title>/
-      );
+      expect(template).toMatch(/<media-title class="media-title">\s*<\/media-title>/);
       expect(template).not.toContain('media-metadata');
       expect(tags).toContain('title');
-      expect(stylesheet).toContain('.media-title-content[data-hidden]');
+      expect(stylesheet).toContain('.media-title:not([data-visible])');
     } else {
       expect(tags).not.toContain('title');
     }
