@@ -31,9 +31,6 @@ import '@videojs/react/live-audio/skin.css';
 import '@videojs/react/live-audio/minimal-skin.css';
 import '@videojs/react/background/skin.css';
 
-// SAFETY: custom properties are valid inline style keys; React's type only lists standard properties.
-const playerStyle = { '--media-border-radius': 'calc(var(--spacing) * 4)' } as React.CSSProperties;
-
 const FILE_RENDERERS: Renderer[] = ['html5-video', 'html5-audio'];
 const HLS_RENDERERS: Renderer[] = ['hls', 'mux-video', 'mux-audio'];
 
@@ -95,13 +92,9 @@ function VideoPreview({ skin: $skin, source, live }: { skin: Skin; source: Sourc
           {media}
         </Container>
       ) : $skin.startsWith('minimal') ? (
-        <MinimalSkin className="aspect-video w-full" style={playerStyle}>
-          {media}
-        </MinimalSkin>
+        <MinimalSkin className="aspect-video w-full">{media}</MinimalSkin>
       ) : (
-        <FullSkin className="aspect-video w-full" style={playerStyle}>
-          {media}
-        </FullSkin>
+        <FullSkin className="aspect-video w-full">{media}</FullSkin>
       )}
     </Player>
   );
@@ -124,13 +117,9 @@ function AudioPreview({ skin: $skin, source, live }: { skin: Skin; source: Sourc
         {$skin === 'none' ? (
           <Container className="w-full max-w-md [&_audio]:w-full">{media}</Container>
         ) : $skin.startsWith('minimal') ? (
-          <MinimalSkin className="w-full max-w-md" style={playerStyle}>
-            {media}
-          </MinimalSkin>
+          <MinimalSkin className="w-full max-w-md">{media}</MinimalSkin>
         ) : (
-          <FullSkin className="w-full max-w-md" style={playerStyle}>
-            {media}
-          </FullSkin>
+          <FullSkin className="w-full max-w-md">{media}</FullSkin>
         )}
       </Player>
     </div>
@@ -140,7 +129,7 @@ function AudioPreview({ skin: $skin, source, live }: { skin: Skin; source: Sourc
 function BackgroundPreview({ source }: { source: Source }) {
   return (
     <BackgroundVideoPlayer>
-      <BackgroundVideoSkin className="aspect-video w-full overflow-hidden rounded-2xl" style={playerStyle}>
+      <BackgroundVideoSkin className="aspect-video w-full overflow-hidden rounded-2xl">
         <BackgroundVideo
           key={source.url}
           src={source.url}
