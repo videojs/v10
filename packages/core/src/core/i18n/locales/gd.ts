@@ -14,19 +14,19 @@ export default {
   },
   fullscreen: {
     enter: 'Làn-sgrìn',
-    exit: 'Fàg làn-sgrìn',
+    exit: 'Fàg an làn-sgrìn',
   },
   captions: {
-    enable: 'Cuir capsaidean air',
-    disable: 'Toir capsaidean dheth',
+    enable: 'Cuir caipseanan air',
+    disable: 'Thoir caipseanan dheth',
   },
   pip: {
-    enter: 'Dealbh beag anns a’ dealbh mhòr',
-    exit: 'Fàg dealbh beag anns a’ dealbh mhòr',
+    enter: 'Dealbh am broinn deilbh',
+    exit: 'Fàg dealbh am broinn deilbh',
   },
   live: {
     playing: 'A’ cluich beò',
-    seekToEdge: 'Tèarmann gu beò',
+    seekToEdge: 'Sir an sruth beò',
     badge: 'Beò',
   },
   cast: {
@@ -35,11 +35,11 @@ export default {
     connecting: 'A’ ceangal',
   },
   airplay: {
-    start: 'Tòisich AirPlay',
+    start: 'Tòisich air AirPlay',
     stop: 'Cuir stad air AirPlay',
   },
   slider: {
-    seek: 'Lorg',
+    seek: 'Sireadh',
   },
   time: {
     current: 'An ùine làithreach',
@@ -54,10 +54,10 @@ export default {
     toggleElapsed: 'Toglaich eadar an ùine a chaidh seachad agus an ùine air fhàgail.',
     toggleDuration: 'Toglaich eadar an fhaid agus an ùine air fhàgail.',
     position: '{current} à {duration}',
-    unknown: 'Cha deach na meadhanan a luchdadh, àm neo-aithnichte.',
+    unknown: 'Cha deach am meadhan a luchdadh, àm neo-aithnichte.',
   },
   playback: {
-    rate: 'Reat cluich {rate}',
+    rate: 'Reat na cluiche {rate}',
   },
   volume: {
     mutedValue: '{percent}, air mùchadh',
@@ -71,24 +71,24 @@ export default {
     paused: 'Air stad',
     playing: 'A’ cluich',
     fullscreen: 'Làn-sgrìn',
-    pip: 'Dealbh beag anns a’ dealbh mhòr',
-    exitPip: 'Fàg dealbh beag',
+    pip: 'Dealbh am broinn deilbh',
+    exitPip: 'Fàg dealbh am broinn deilbh',
     seekedTo: 'Air a leum gu {time}',
   },
   container: {
     label: 'Cluicheadair mheadhanan',
   },
   errors: {
-    aborted: 'Sguir thu de chluich a’ mheadhain',
-    network: 'Cha deach leinn an còrr dhen mheadhan a luchdadh a-nuas ri linn mearachd lìonraidh.',
+    aborted: 'Sguir thu de chluich a’ mheadhain mus do chrìochnaich e.',
+    network: 'Cha ghabh am meadhan seo a luchdadh ri linn duilgheadas lìonraidh no frithealaiche.',
     decode:
-      'Sguir sinn de chluich a’ mheadhain – dh’fhaoidte gu bheil e coirbte no gu bheil gleus aig a’ mheadhan nach cuir am brabhsair taic ris.',
+      'Cha ghabh am meadhan seo a chluich – dh’fhaoidte gu bheil e coirbte no nach cuir am brabhsair agad taic ris an fhòrmat aige.',
     source:
-      'Cha b’ urrainn dhuinn am meadhan a luchdadh – dh’fhaoidte gun do dh’fhàillig leis an fhrithealaiche no an lìonra no nach cuir sinn taic ris an fhòrmat.',
-    encrypted: 'Tha am meadhan crioptaichte ’s chan eil iuchair dì-chrioptachaidh againn dha.',
+      'Cha ghabh am meadhan seo a luchdadh – dh’fhaoidte nach eil e ri fhaighinn no nach cuir am brabhsair agad taic ris an fhòrmat aige.',
+    encrypted: 'Cha ghabh am meadhan seo a chluich a chionn ’s nach gabh a dhì-chrioptachadh.',
     unplayable: 'Cha toir an cluicheadair taic dhan mheadhan seo.',
     title: 'Chaidh rudeigin ceàrr.',
-    unexpected: 'Thachair mearachd. Feuch ris a-rithist.',
+    unexpected: 'Thachair mearachd ris nach robh dùil.',
   },
   common: {
     empty: '',
@@ -101,7 +101,7 @@ export default {
     default: 'Bunaiteach',
     speed: 'Astar',
     captions: 'Caipseanan',
-    playbackRate: 'Reat cluich',
+    playbackRate: 'Reat na cluiche',
     back: 'Air ais',
     off: 'Dheth',
     auto: 'Fèin-obrachail',
