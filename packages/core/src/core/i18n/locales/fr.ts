@@ -5,7 +5,7 @@ export default {
     play: 'Lecture',
     pause: 'Pause',
     replay: 'Revoir',
-    mute: 'Mettre en sourdine',
+    mute: 'Couper le son',
     unmute: 'Activer le son',
   },
   seek: {
@@ -21,8 +21,8 @@ export default {
     disable: 'Désactiver les sous-titres',
   },
   pip: {
-    enter: "Image dans l'image",
-    exit: "Quitter le mode image dans l'image",
+    enter: 'Image dans l’image',
+    exit: 'Quitter le mode image dans l’image',
   },
   live: {
     playing: 'Lecture en direct',
@@ -53,7 +53,7 @@ export default {
     showRemaining: 'Afficher le temps restant, {duration}.',
     toggleElapsed: 'Basculer entre le temps écoulé et le temps restant.',
     toggleDuration: 'Basculer entre la durée et le temps restant.',
-    position: '{current} de {duration}',
+    position: '{current} sur {duration}',
     unknown: 'Média non chargé, durée inconnue.',
   },
   playback: {
@@ -73,22 +73,22 @@ export default {
     fullscreen: 'Plein écran',
     pip: 'Image dans l’image',
     exitPip: 'Quitter l’image dans l’image',
-    seekedTo: 'Position de lecture : {time}',
+    seekedTo: 'Position de lecture : {time}',
   },
   container: {
     label: 'Lecteur multimédia',
   },
   errors: {
-    aborted: 'Vous avez interrompu la lecture de la vidéo.',
-    network: 'Une erreur de réseau a interrompu le téléchargement de la vidéo.',
+    aborted: 'Vous avez interrompu la lecture du média avant la fin.',
+    network: 'Ce média n’a pas pu être chargé en raison d’un problème de réseau ou de serveur.',
     decode:
-      "La lecture de la vidéo a été interrompue à cause d'un problème de corruption ou parce que la vidéo utilise des fonctionnalités non prises en charge par votre navigateur.",
+      'Ce média n’a pas pu être lu. Il est peut-être endommagé, ou votre navigateur ne prend pas en charge son format.',
     source:
-      "Cette vidéo n'a pas pu être chargée, soit parce que le serveur ou le réseau a échoué ou parce que le format n'est pas reconnu.",
-    encrypted: "Le média est chiffré et nous n'avons pas les clés pour le déchiffrer.",
-    unplayable: "Ce média n'est pas pris en charge par le lecteur.",
+      'Ce média n’a pas pu être chargé. Il est peut-être indisponible, ou votre navigateur ne prend pas en charge son format.',
+    encrypted: 'Ce média n’a pas pu être lu, car son déchiffrement a échoué.',
+    unplayable: 'Ce média n’est pas pris en charge par le lecteur.',
     title: 'Une erreur s’est produite.',
-    unexpected: 'Une erreur s’est produite. Veuillez réessayer.',
+    unexpected: 'Une erreur inattendue s’est produite.',
   },
   common: {
     empty: '',
