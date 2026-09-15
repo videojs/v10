@@ -1,7 +1,7 @@
 import { throwLegacyError } from './errors/legacy-error';
 
 /**
- * The Video.js 8 module surface, each member throwing its `VJS10_LEGACY_*` code.
+ * The Video.js 8 module surface, each member throwing its `VJS8_LEGACY_*` code.
  *
  * A developer following a v8 example runs `npm install video.js` and calls `videojs('my-video')`. Without these stubs
  * that fails as "undefined is not a function"; with them it fails with a code that can only lead to its error page.
@@ -19,27 +19,27 @@ export interface LegacyVideojs {
 }
 
 export function registerPlugin(..._args: unknown[]): never {
-  throwLegacyError('VJS10_LEGACY_PLUGIN');
+  throwLegacyError('VJS8_LEGACY_PLUGIN');
 }
 
 export function getPlugin(..._args: unknown[]): never {
-  throwLegacyError('VJS10_LEGACY_PLUGIN');
+  throwLegacyError('VJS8_LEGACY_PLUGIN');
 }
 
 export function registerComponent(..._args: unknown[]): never {
-  throwLegacyError('VJS10_LEGACY_COMPONENT');
+  throwLegacyError('VJS8_LEGACY_COMPONENT');
 }
 
 export function getComponent(..._args: unknown[]): never {
-  throwLegacyError('VJS10_LEGACY_COMPONENT');
+  throwLegacyError('VJS8_LEGACY_COMPONENT');
 }
 
 export function getPlayer(..._args: unknown[]): never {
-  throwLegacyError('VJS10_LEGACY_GET_PLAYER');
+  throwLegacyError('VJS8_LEGACY_GET_PLAYER');
 }
 
 function throwOptions(): never {
-  throwLegacyError('VJS10_LEGACY_OPTIONS');
+  throwLegacyError('VJS8_LEGACY_OPTIONS');
 }
 
 /**
@@ -56,7 +56,7 @@ export const options: Record<string, never> = new Proxy(Object.freeze({}), {
 
 const videojs: LegacyVideojs = Object.assign(
   function videojs(..._args: unknown[]): never {
-    throwLegacyError('VJS10_LEGACY_INIT');
+    throwLegacyError('VJS8_LEGACY_INIT');
   },
   { registerPlugin, getPlugin, registerComponent, getComponent, getPlayer, options }
 );
