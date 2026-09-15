@@ -126,6 +126,9 @@ function dtsStubsPlugin(outDir: string): BuildPlugin {
   };
 }
 
+/** Comment at the top of every CDN entry, so anything that fetches the script finds its way to the docs. */
+const CDN_BANNER = '/*! Video.js | https://videojs.org/about-this-player */';
+
 const cdnPackConfigs: PackUserConfig[] = [];
 
 for (const mode of ['dev', 'prod'] satisfies CdnBuildMode[]) {
@@ -143,6 +146,8 @@ for (const mode of ['dev', 'prod'] satisfies CdnBuildMode[]) {
     clean: false,
     dts: false,
     minify: isProd,
+    // Only the files a page loads directly carry the banner; shared chunks stay bare.
+    outputOptions: { banner: (chunk) => (chunk.isEntry ? CDN_BANNER : '') },
     deps: {
       alwaysBundle: [/.*/],
       onlyBundle: false,
