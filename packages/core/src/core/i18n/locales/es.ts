@@ -88,7 +88,7 @@ export default {
     encrypted: 'No se ha podido reproducir este contenido multimedia porque no se ha podido descifrar.',
     unplayable: 'El reproductor no admite este contenido multimedia.',
     title: 'Algo ha salido mal.',
-    unexpected: 'Se ha producido un error. Inténtalo de nuevo.',
+    unexpected: 'Se ha producido un error inesperado.',
   },
   common: {
     empty: '',
