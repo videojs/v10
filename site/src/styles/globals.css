@@ -109,6 +109,9 @@
   --color-magenta-dark: #922e4f;
 
   /* Typography */
+  --font-weight-code-normal: 400;
+  --font-weight-normal: 450;
+
   --tracking-*: initial;
   --tracking-tightest: -0.03em;
   --tracking-tighter: -0.02em;
@@ -180,7 +183,7 @@
   --text-code: 0.875em; /* 14px */
   --text-code--line-height: inherit;
   --text-code--letter-spacing: var(--tracking-normal);
-  --text-code--font-weight: var(--font-weight-normal);
+  --text-code--font-weight: var(--font-weight-code-normal);
 
   /* animations */
   --animate-marquee: marquee 30s linear infinite;
