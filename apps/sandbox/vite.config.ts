@@ -359,6 +359,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         '@videojs/media > dashjs',
         '@videojs/media > hls.js',
         '@videojs/media > mux-embed',
+        '@videojs/react > react-compiler-runtime',
         'react',
         'react-dom',
         'react-dom/client',

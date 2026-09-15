@@ -15,6 +15,9 @@ export function ControlsRoot({
   children,
   visibility = ControlsCore.defaultProps.visibility,
 }: ControlsRootProps): ReactNode {
+  // React Compiler cannot track state read through the mutable core instance.
+  'use no memo';
+
   const controls = usePlayer(selectControls);
   const [core] = useState(() => new ControlsCore());
 

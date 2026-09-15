@@ -23,6 +23,9 @@ export interface VolumePopoverRootProps extends PopoverRootProps {}
 
 /** Owns volume availability and the popover interaction lifecycle. */
 export function VolumePopoverRoot({ children, ...props }: VolumePopoverRootProps): ReactNode {
+  // React Compiler cannot track state read through the mutable core instance.
+  'use no memo';
+
   const volume = usePlayer(selectVolume);
   const [core] = useState(() => new VolumePopoverCore(props));
 
@@ -37,6 +40,9 @@ export function VolumePopoverRoot({ children, ...props }: VolumePopoverRootProps
 }
 
 function VolumePopoverState({ core, children }: { core: VolumePopoverCore; children?: ReactNode }): ReactNode {
+  // React Compiler cannot track state read through the mutable core instance.
+  'use no memo';
+
   const { popover } = usePopoverContext();
 
   core.setInput(popover.input.current);
