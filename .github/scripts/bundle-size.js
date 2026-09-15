@@ -2,7 +2,8 @@
  * Measures bundle sizes for all packages.
  *
  * Auto-discovers packages from `packages/`, reads their `exports` field to find
- * entry points, and externalizes `peerDependencies`.
+ * entry points, and externalizes `peerDependencies` plus dependencies that
+ * support published output without belonging to the library implementation.
  *
  * Each JS export is bundled independently. Sizes are initial static graph
  * totals (minified + brotli); lazy dynamic chunks are measured separately so
@@ -50,6 +51,9 @@ const SKIP_PACKAGES = new Set([
 
 /** Packages that get categorized breakdowns in the report. */
 const CATEGORIZED_PACKAGES = new Set(['html', 'react']);
+
+/** Published support dependencies excluded from library implementation sizes. */
+const REPORT_EXTERNAL_DEPENDENCIES = new Set(['react-compiler-runtime']);
 
 /** UI compound component parts — excluded from the report. */
 const UI_PARTS = new Set([
@@ -471,9 +475,12 @@ function discoverPackages() {
     if (!pkgJson.exports) continue;
 
     const pkgName = pkgJson.name;
-    const external = pkgJson.peerDependencies
-      ? Object.keys(pkgJson.peerDependencies)
-      : [];
+    const external = [
+      ...Object.keys(pkgJson.peerDependencies ?? {}),
+      ...Object.keys(pkgJson.dependencies ?? {}).filter((dependency) =>
+        REPORT_EXTERNAL_DEPENDENCIES.has(dependency),
+      ),
+    ];
 
     let rootPath = null;
     const subpaths = [];
