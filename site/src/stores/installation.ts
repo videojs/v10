@@ -2,6 +2,7 @@ import { atom, onMount, type WritableAtom } from 'nanostores';
 
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import {
+  coerceToPreset,
   DEFAULT_SELECTION,
   type InstallationSelection,
   parseInstallationSearch,
@@ -74,3 +75,15 @@ for (const store of Object.values(selectionAtoms)) {
     return store.listen(writeUrl);
   });
 }
+
+// A new use case can leave the skin and media pointing at options its preset does not offer. Fit them here, from the
+// store's own values, so every island agrees. Pickers fixing the store from their rendered props raced hydration: the
+// rendered use case was still the server default while the store already held the URL's picks. Registered after the
+// mount hooks above so this permanent listener does not mount the store before those hooks exist.
+useCase.listen((next) => {
+  const fitted = coerceToPreset(next, skin.get(), renderer.get());
+
+  if (fitted.skin !== skin.get()) skin.set(fitted.skin);
+
+  if (fitted.renderer !== renderer.get()) renderer.set(fitted.renderer);
+});

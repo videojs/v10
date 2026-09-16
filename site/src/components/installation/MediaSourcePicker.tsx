@@ -103,23 +103,12 @@ export default function MediaSourcePicker() {
   const detection = detectRenderer($sourceUrl, $useCase);
   const detectedRenderer = detection?.renderer ?? null;
 
-  // Auto-select renderer when the detected renderer or use case changes.
-  // Uses the primitive `detectedRenderer` string instead of the `detection`
-  // object to avoid re-firing on every render (new object reference each time),
-  // which would override manual selection.
+  // Follow the detected renderer for a pasted URL. Uses the primitive `detectedRenderer` string instead of the
+  // `detection` object so the effect does not re-fire on every render and override a manual selection. Fitting the
+  // renderer to the use case lives in the store.
   useEffect(() => {
-    if (detectedRenderer) {
-      renderer.set(detectedRenderer);
-    } else {
-      // No valid detection — ensure current renderer is valid for use case
-      const current = renderer.get();
-      const validRenderers = getInstallationPreset($useCase).renderers;
-
-      if (!validRenderers.includes(current)) {
-        renderer.set(validRenderers[0]!);
-      }
-    }
-  }, [detectedRenderer, $useCase]);
+    if (detectedRenderer) renderer.set(detectedRenderer);
+  }, [detectedRenderer]);
 
   const hasUrl = $sourceUrl.trim().length > 0;
   const showDetectionMatch = hasUrl && detection && detection.renderer === $renderer;

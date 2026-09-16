@@ -42,7 +42,7 @@ function isInstallMethod(value: string): value is InstallMethod {
 }
 
 /** Mirror of the CLI's skin mapping: the flag names a tier, the preset decides whether that is the video or audio skin. */
-function skinFromFlag(flag: string, useCase: UseCase): Skin | undefined {
+export function skinFromFlag(flag: string, useCase: UseCase): Skin | undefined {
   if (!isSkinFlag(flag)) return undefined;
 
   const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
@@ -55,10 +55,27 @@ function skinFromFlag(flag: string, useCase: UseCase): Skin | undefined {
   return map[flag];
 }
 
-function skinToFlag(skin: Skin): SkinFlag {
+export function skinToFlag(skin: Skin): SkinFlag {
   if (skin === 'none') return 'none';
 
   return skin.startsWith('minimal') ? 'minimal' : 'default';
+}
+
+/**
+ * Fit a skin and media pick to a preset: the skin keeps its tier but follows the preset's media type, and media the
+ * preset cannot play falls back to its first option.
+ */
+export function coerceToPreset(
+  useCase: UseCase,
+  skin: Skin,
+  media: Renderer
+): Pick<InstallationSelection, 'skin' | 'renderer'> {
+  const renderers = getInstallationPreset(useCase).renderers;
+
+  return {
+    skin: skinFromFlag(skinToFlag(skin), useCase)!,
+    renderer: renderers.includes(media) ? media : renderers[0]!,
+  };
 }
 
 /**

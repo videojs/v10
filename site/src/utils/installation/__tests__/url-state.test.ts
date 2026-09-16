@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_SELECTION, parseInstallationSearch, serializeInstallationSearch } from '../url-state';
+import { coerceToPreset, DEFAULT_SELECTION, parseInstallationSearch, serializeInstallationSearch } from '../url-state';
 
 describe('parseInstallationSearch', () => {
   it('returns the defaults for an empty query', () => {
@@ -72,5 +72,15 @@ describe('serializeInstallationSearch', () => {
     expect(serializeInstallationSearch({ ...DEFAULT_SELECTION, installMethod: 'bun' }, '?utm_source=x')).toBe(
       '?utm_source=x&install-method=bun'
     );
+  });
+});
+
+describe('coerceToPreset', () => {
+  it('keeps the skin tier across media types and drops media the preset cannot play', () => {
+    expect(coerceToPreset('default-audio', 'minimal-video', 'youtube')).toEqual({
+      skin: 'minimal-audio',
+      renderer: 'html5-audio',
+    });
+    expect(coerceToPreset('live-video', 'none', 'mux-video')).toEqual({ skin: 'none', renderer: 'mux-video' });
   });
 });

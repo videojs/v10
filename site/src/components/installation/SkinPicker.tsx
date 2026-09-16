@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import { skin } from '@/stores/installation';
 import { getInstallationPreset, type Skin } from '@/utils/installation/types';
@@ -28,15 +26,6 @@ export default function SkinPicker() {
   const $useCase = useSelection('useCase');
 
   const options = getInstallationPreset($useCase).mediaType === 'audio' ? AUDIO_SKINS : VIDEO_SKINS;
-
-  // Auto-switch skin when use case changes and current skin is invalid
-  useEffect(() => {
-    const validValues = options.map((o) => o.value);
-
-    if (!validValues.includes(skin.get())) {
-      skin.set(options[0].value);
-    }
-  }, [options]);
 
   return (
     <CardRadioGroup
