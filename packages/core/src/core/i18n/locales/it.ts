@@ -3,7 +3,7 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Riproduci',
-    pause: 'Metti in pausa',
+    pause: 'Pausa',
     replay: 'Riproduci di nuovo',
     mute: 'Disattiva l’audio',
     unmute: 'Attiva l’audio',
@@ -14,7 +14,7 @@ export default {
   },
   fullscreen: {
     enter: 'Schermo intero',
-    exit: 'Esci dallo schermo intero',
+    exit: 'Esci da schermo intero',
   },
   captions: {
     enable: 'Attiva i sottotitoli',
