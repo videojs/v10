@@ -1,4 +1,6 @@
-@layer base.theme {
+@layer base.theme, base.preset, base.preferences;
+
+@layer base.preset {
   .media-skin:is([data-preset="video"], [data-preset="live-video"]) {
     --media-frame-border: var(--media-border-color, light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.15)));
     --media-controls-gradient: linear-gradient(

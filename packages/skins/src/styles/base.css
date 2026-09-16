@@ -1,6 +1,6 @@
 @layer base, components, utilities;
-/* Preference overrides win over theme tokens regardless of selector specificity. */
-@layer base.theme, base.preferences;
+/* Preset adaptations and preference overrides win over theme tokens regardless of import order. */
+@layer base.theme, base.preset, base.preferences;
 
 @import "./themes/theme.css";
 @import "./themes/preferences.css";

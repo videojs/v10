@@ -1,3 +1,5 @@
+@layer base.theme, base.preset, base.preferences;
+
 @layer base.theme {
   .media-skin[data-theme="minimal"] {
     --media-control-corner-shape: squircle;
@@ -5,7 +7,7 @@
     --media-control-size: calc(var(--media-spacing) * 9.5);
     --media-controls-radius: calc(var(--media-spacing) * 3);
     --media-popover: oklch(0 0 0 / 0.5);
-    --media-border: oklch(from currentColor l c h / 0.1);
+    --media-border: oklch(1 0 0 / 0.1);
     --media-shadow-surface: 0 1px 2px oklch(0 0 0 / 0.2);
     --media-shadow-thumb: 0 0 0 1px rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.15);
     --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.5);
