@@ -5,7 +5,7 @@ import { MuxVideo } from '../mux-video';
 customElements.define('test-mux-video', MuxVideo);
 
 beforeEach(() => {
-  // The SPF-backed adapter starts fetching as soon as a source is assigned.
+  // Loading a Mux source fetches optional metadata and may probe native HLS playlists.
   // Keep URL-shaping tests offline and leave no request pending at teardown.
   vi.stubGlobal(
     'fetch',
