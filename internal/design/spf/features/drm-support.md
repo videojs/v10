@@ -65,9 +65,10 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   the boundary. `exchangeLicenses` is composed **first**:
   `createComposition` calls cleanups in registration order, so its
   sessions must close before the detach.
-- **FairPlay-AirPlay handoff:** implemented, EME path plus the legacy
-  `WebKitMediaKeys` fallback the measured sender bug makes mandatory (see
-  Open questions); end-to-end device verification owed.
+- **FairPlay-AirPlay handoff:** implemented and verified playing on a
+  receiver (macOS/Safari 26.6.2 → Roku TV, 2026-09-16), by way of the
+  legacy `WebKitMediaKeys` fallback the measured sender bug makes
+  mandatory (see Open questions).
   A live AirPlay session takes playback off MSE onto the native-HLS
   fallback `<source>`, whose key requests arrive as `skd` — which the
   MediaKeys negotiated for `sinf`/`cenc` cannot serve. `setupMediaKeys`
@@ -339,11 +340,13 @@ in, and the component updater left enabled. Four simpler shapes were measured an
 only; the fixture's own comment records them, so a second DRM test inherits a working CDM rather than
 rediscovering it.
 
-### AirPlay handoff: manual, and still owed
+### AirPlay handoff: manual
 
 No automated coverage reaches this path — Playwright cannot drive an AirPlay picker, and the receiver is
-a second physical device. The unit tests pin protocol and lifecycle against stubs; **nothing yet proves
-a receiver plays a FairPlay source through it.** Until someone runs this, the handoff is unverified:
+a second physical device. The unit tests pin protocol and lifecycle against stubs; the device pass below
+is what proves it. **Passed 2026-09-16** on macOS/Safari 26.6.2 → Roku TV for the Mux source with AirPlay
+engaged mid-playback; the other steps remain unexercised. Re-run it whenever the handoff or the legacy
+module changes:
 
 1. Start the opt-in HTTPS sandbox (`apps/sandbox/vite.config.https.ts`; `SANDBOX_HTTPS_CERT` /
    `SANDBOX_HTTPS_KEY` for a warning-free origin) and open the `spf-drm` page in macOS Safari.
@@ -373,11 +376,15 @@ path.
   Lean: (c) — confirm against the load behaviors' FSM shape when
   implementation starts.
 - **FairPlay-AirPlay runtime handoff.** Resolved 2026-09-11, built
-  2026-09-16, including the legacy fallback. The shape and its rationale
-  are recorded under Status. What remains open is **end-to-end
-  verification**: the fallback's unit tests pin protocol and lifecycle
-  against stubs, and no receiver has yet played a FairPlay source through
-  the completed path.
+  2026-09-16 including the legacy fallback, and **verified playing on a
+  receiver the same day**: macOS/Safari 26.6.2 → Roku TV, Mux FairPlay
+  source, AirPlay engaged mid-playback. EME is refused, the session hands
+  over to the legacy key system, and the receiver plays decrypted.
+
+  Verified on one sender, one receiver, one provider, one transition.
+  Still unexercised: disengage and resume, engaging before first play, a
+  source change during a session, EZDRM, and Apple TV — the last matters
+  least now, since the sender bug reproduces independently of receiver.
 
   **The legacy `WebKitMediaKeys` / `com.apple.fps.1_0` fallback is no
   longer deferred — it is required.** Its deferral was conditioned on a
@@ -402,8 +409,11 @@ path.
   `application/octet-stream` for a raw CKC — the conventions the engine
   already encodes.
 
-  Legacy lacks SPC v3 and works for `src=` only, so it stays the
-  fallback and never the primary path. The EME handoff is needed
+  The fallback is not optional on this Safari: it is the only path that
+  reaches a playing receiver today. Legacy lacks SPC v3 and works for
+  `src=` only, so it stays the fallback and never the primary path — EME
+  is still attempted first, and resumes being the path that works the
+  moment WebKit stops refusing it. The EME handoff is needed
   regardless: the init-data type, not the bug, is what the MSE
   negotiation cannot satisfy. Delete the fallback when WebKit fixes this
   — nothing sniffs an OS, so a fixed sender stops taking the path on its
