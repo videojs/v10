@@ -33,6 +33,7 @@ pnpm -F site astro check
 - Inspect `src/styles/globals.css` before choosing Tailwind classes. Prefer existing theme tokens and semantic utilities.
 - Use the custom `intent:` variant for pointer/focus intent where existing site code does; do not replace it mechanically with `hover:`.
 - Prefer a token-based utility when one fits. For a non-token one-off, use an inline style instead of an arbitrary-value class such as `min-h-[120px]`.
+- Use `text-muted` for metadata and chrome only: eyebrows, captions, group labels, key hints, placeholders, inactive nav states, icons, and empty-value dashes. Text a reader has to read keeps full contrast in light mode, where grey on manila reads poorly, with hierarchy carried by size (`text-p3`, `text-p4`); use `dark:text-muted` if it should soften in dark mode.
 - When a non-token value needs a responsive, dark-mode, or other Tailwind variant, bridge it through an inline CSS custom property, for example `style="--md-min-h: 120px"` with `class="md:min-h-(--md-min-h)"`.
 - Use `clsx` in React and `class:list` in Astro for conditional classes.
 - React islands are independent roots. Use Nanostores for cross-island state instead of React context.

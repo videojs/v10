@@ -217,6 +217,8 @@
   /* Light surfaces sit above the page color rather than below it, so cards and inputs read as paper, not mud. */
   --surface: color-mix(in srgb, var(--color-manila-light) 78%, white);
   --surface-raised: color-mix(in srgb, var(--color-manila-light) 55%, white);
+  /* Muted is for metadata and chrome, not for text a reader has to read: grey on manila reads poorly, so readable
+     secondary text keeps full contrast here and may soften only in dark mode (see site/AGENTS.md). */
   --muted: color-mix(in srgb, var(--color-faded-black) 65%, transparent);
   --hover: var(--color-manila-50);
 }
