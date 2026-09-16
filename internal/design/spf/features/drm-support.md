@@ -377,6 +377,12 @@ session survives the handover at all on this stream. If it does and EZDRM still
 500s, the next evidence would have to come from EZDRM — the demo endpoint gives
 nothing back to work with.
 
+One thing that attempt has already established: **EZDRM over AirPlay fails in
+Shaka too** (macOS Safari 26.6.2 → Roku), at the same `generateRequest` refusal,
+on its native-HLS path. So this is not an EZDRM-versus-this-engine problem —
+every player hits the same wall, and this engine is the only one that tries to
+get past it.
+
 ### AirPlay handoff: manual
 
 No automated coverage reaches this path — Playwright cannot drive an AirPlay picker, and the receiver is
@@ -438,9 +444,21 @@ path.
     against a Mux asset — no engine involved. Plays on the sender, fails
     when cast. Independently reproduced by Santi Puppo; the sample is
     archived in Slack (`FairPlay DRM AirPlay bug test suite iOS 26`).
+  - **Shaka Player 5.x**, its own demo, macOS Safari 26.6.2 → Roku TV.
+    Both Mux and EZDRM fail on engaging AirPlay with
+    `DRM.FAILED_TO_GENERATE_LICENSE_REQUEST`, whose payload is the same
+    `NotSupportedError`. Shaka uses **native HLS** for FairPlay on Safari
+    (`useNativeHlsForFairPlay`), so this reproduces with no MediaSource
+    anywhere — the bug is not MSE-specific.
 
-  Two senders, two receivers, and a framework-free reproducer, so the
-  fault is WebKit's rather than anything in this composition. That sample
+  Three independent implementations, two providers, two receivers, two
+  sender OS versions, and both the MSE and native-HLS pipelines. The
+  fault is WebKit's, not this composition's, and not any engine's.
+
+  **Shaka has no legacy fallback and stops there; this engine plays.**
+  That is the clearest statement of what the fallback buys: on the same
+  Mux source, same Safari, same receiver, the player without it fails and
+  the player with it does not. That sample
   also corroborates the implementation: it filters to `skd`, negotiates
   against `application/vnd.apple.mpegurl`, and POSTs the raw SPC as
   `application/octet-stream` for a raw CKC — the conventions the engine
