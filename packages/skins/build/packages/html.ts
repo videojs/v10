@@ -8,6 +8,7 @@ import { iconImports } from '../target/html-render.ts';
 import { htmlComponentTarget } from '../target/html.tsx';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
+import { propertyStyles } from './properties.ts';
 import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
 const packageRoot = 'packages/html/src';
@@ -45,6 +46,13 @@ export async function createHtmlPackageSkins(
       })
     );
   }
+
+  // Shadow-root @property rules do not register with the host document.
+  const properties = [...generated]
+    .filter(([path]) => path.endsWith('/skin.css'))
+    .map(([, css]) => propertyStyles(css));
+
+  addGenerated(generated, `${internalRoot}/properties.css`, [...new Set(properties)].join('\n'));
 
   await addCopiedFiles(generated, options.workspaceDir, [
     ['packages/skins/src/presets/background/html/skin.ts', `${packageRoot}/presets/background/skin.ts`],
