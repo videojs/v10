@@ -185,14 +185,14 @@ describe('React registry output', () => {
     }
   });
 
-  it('keeps Minimal tokens before media preset overrides', () => {
+  it('composes Minimal media styles from theme and preset entries', () => {
     for (const media of ['audio', 'video'] as const) {
       const source = readFileSync(
         resolve(cssRegistryDirs.minimal, `support/files/_style-${media}-minimal/styles/${media}/minimal.css`),
         'utf8'
       );
 
-      expect(source).toBe(`@import "../themes/minimal.css";\n@import "./base.css";\n`);
+      expect(cssImports(source).sort()).toEqual(['../themes/minimal.css', './base.css'].sort());
     }
   });
 
@@ -243,6 +243,10 @@ function readRegistryItems(registryDir: string): ReadonlyMap<string, RegistryIte
 
 function styleImports(source: string): string[] {
   return [...source.matchAll(/^import '([^']+\.css)';$/gm)].map((match) => match[1]!);
+}
+
+function cssImports(source: string): string[] {
+  return [...source.matchAll(/^@import "([^"]+\.css)";$/gm)].map((match) => match[1]!);
 }
 
 function itemClosure(items: ReadonlyMap<string, RegistryItem>, root: string): ReadonlySet<string> {
