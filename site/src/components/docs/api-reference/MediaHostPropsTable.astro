@@ -10,7 +10,6 @@ import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import type { HostPropertyDef } from '@/types/media-reference';
 import ApiTable from './ApiTable.astro';
 import DetailRow from './DetailRow.astro';
-import InlineCode from './InlineCode.astro';
 
 interface Props {
   hostProperties: Record<string, HostPropertyDef>;
@@ -37,11 +36,11 @@ const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompar
             <MarkdownCode>{name}</MarkdownCode>
           </td>
           <td class="w-full">
-            <InlineCode code={def.type} />
+            <MarkdownCode code={def.type} />
           </td>
           <td>
             {def.default ? (
-              <InlineCode code={def.default} />
+              <MarkdownCode code={def.default} />
             ) : (
               <span class="text-muted">—</span>
             )}

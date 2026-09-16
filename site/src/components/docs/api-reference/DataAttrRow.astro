@@ -2,7 +2,6 @@
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import AnchorLink from './AnchorLink.astro';
 import DetailRow from './DetailRow.astro';
-import InlineCode from './InlineCode.astro';
 
 interface Props {
   name: string;
@@ -33,6 +32,6 @@ const id = `${componentName}-attr-${name}`;
     </span>
   </td>
   <td class="w-full">
-    {type ? <InlineCode code={type} /> : <span class="text-muted">—</span>}
+    {type ? <MarkdownCode code={type} /> : <span class="text-muted">—</span>}
   </td>
 </DetailRow>

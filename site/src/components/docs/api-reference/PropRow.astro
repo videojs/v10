@@ -2,7 +2,6 @@
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import AnchorLink from './AnchorLink.astro';
 import DetailRow from './DetailRow.astro';
-import InlineCode from './InlineCode.astro';
 import { getPropReferenceNames } from './prop-reference-names';
 
 interface Props {
@@ -64,9 +63,9 @@ const showAttribute = Boolean(attributeName && attributeName !== propertyName);
     }
   </td>
   <td class="w-full">
-    <InlineCode code={type} />
+    <MarkdownCode code={type} />
   </td>
   <td>
-    {defaultValue ? <InlineCode code={defaultValue} /> : <span class="text-muted">—</span>}
+    {defaultValue ? <MarkdownCode code={defaultValue} /> : <span class="text-muted">—</span>}
   </td>
 </DetailRow>

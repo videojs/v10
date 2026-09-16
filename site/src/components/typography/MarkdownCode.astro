@@ -1,16 +1,28 @@
 ---
 import type { HTMLTag, Polymorphic } from 'astro/types';
+import { type InlineLang, highlightInline } from '@/components/Code/inlineHighlighter';
 import { twMerge } from '@/utils/twMerge';
 
 import { shared } from './styles';
 
+/**
+ * Inline code. Markdown backticks render the slot as-is; pass `code` instead to syntax-highlight a short snippet such
+ * as a type or default value in API reference tables.
+ */
 type Props<Tag extends HTMLTag = 'code'> = Polymorphic<{ as: Tag }> & {
+  code?: string;
+  lang?: InlineLang;
   class?: string;
 };
 
-const { as: Tag = 'code', class: className, ...props } = Astro.props;
+const { as: Tag = 'code', code, lang = 'ts', class: className, ...props } = Astro.props;
 ---
 
 {
-  /* oxfmt-ignore */}
-<Tag class={twMerge(shared.code, className)} {...props}><slot /></Tag>
+  code !== undefined ? (
+    <Tag class={twMerge(shared.code, className)} data-code-inline set:html={highlightInline(code, lang)} {...props} />
+  ) : (
+    /* oxfmt-ignore */
+    <Tag class={twMerge(shared.code, className)} {...props}><slot /></Tag>
+  )
+}

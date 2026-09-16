@@ -11,7 +11,7 @@ import P from '@/components/typography/P.astro';
 import type { ReturnValue } from '@/types/util-reference';
 import ApiTable from './ApiTable.astro';
 import DetailRow from './DetailRow.astro';
-import InlineCode from './InlineCode.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import InlineMarkdown from './InlineMarkdown.astro';
 import StateRow from './StateRow.astro';
 
@@ -53,13 +53,13 @@ const fieldsToggleColumn = fields.some(([, field]) => Boolean(field.detailedType
         toggleColumn={Boolean(returnValue.detailedType)}
       >
         <td class="w-full">
-          <InlineCode code={returnValue.type} />
+          <MarkdownCode code={returnValue.type} />
         </td>
       </DetailRow>
     </ApiTable>
   ) : (
     <P>
-      <InlineCode code={returnValue.type} />
+      <MarkdownCode code={returnValue.type} />
       {returnValue.description && (
         <>
           {" — "}
