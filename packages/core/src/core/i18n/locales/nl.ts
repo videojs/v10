@@ -25,7 +25,7 @@ export default {
     exit: 'Beeld-in-beeld stoppen',
   },
   live: {
-    playing: 'Live wordt afgespeeld',
+    playing: 'Wordt live afgespeeld',
     seekToEdge: 'Naar de livestream gaan',
     badge: 'Live',
   },
