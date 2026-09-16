@@ -32,6 +32,17 @@ describe('errorFeature', () => {
     expect(store.state.error).toBe(error);
   });
 
+  it('syncs an existing media error on attach', () => {
+    const video = createErrorCapableVideo();
+    const error = { code: 4, message: 'Source unsupported.' } satisfies ErrorLike;
+    const store = createStore<PlayerTarget>()(errorFeature);
+
+    Object.defineProperty(video, 'error', { value: error, configurable: true });
+    store.attach({ media: video, container: null });
+
+    expect(store.state.error).toBe(error);
+  });
+
   it('dismisses the current error', () => {
     const video = createErrorCapableVideo();
     const store = createStore<PlayerTarget>()(errorFeature);
