@@ -163,7 +163,7 @@ Keep documentation clear, human, and useful. Here are the key rules:
 ### `<FrameworkCase>` and `<StyleCase>`
 First, understand that the guide you write will be rendered for every framework / style combination (e.g., HTML + CSS, React + CSS) unless you restrict it to specific frameworks in the sidebar config as shown above.
 
-Use the `<FrameworkCase>` and `<StyleCase>` components to conditionally show content to just one framework or style:
+Use the `<FrameworkCase>` and `<StyleCase>` components to conditionally show content to just one framework or style. `<FrameworkCase>` resolves at build time, so content for other frameworks is left out of the page entirely. `<StyleCase>` follows the reader's style preference, so its content is rendered for every style and shown or hidden with CSS:
 
 ```mdx
 <FrameworkCase frameworks={["react"]}>
