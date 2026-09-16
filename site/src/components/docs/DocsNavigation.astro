@@ -2,7 +2,6 @@
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
 import type { Guide, SupportedFramework } from '@/types/docs';
-import { filterSidebar, getSectionsForGuide } from '@/utils/docs/sidebar';
 
 type Props = {
   prev: Guide | null;
@@ -18,11 +17,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
 }
 
 // The innermost sidebar section, so "Previous · Getting Started" says where the link leads.
-const filteredSidebar = filterSidebar(framework);
 
-function getSection(slug: string): string | undefined {
-  return getSectionsForGuide(slug, filteredSidebar).at(-1);
-}
 ---
 
 <nav
@@ -37,7 +32,7 @@ function getSection(slug: string): string | undefined {
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p4 text-muted" style="grid-area: direction;">
-          Previous{getSection(prev.slug) && <> · {getSection(prev.slug)}</>}
+          Previous
         </div>
         <div class="text-p2 font-semibold text-balance" style="grid-area: title">
           {prev.sidebarLabel || docTitles.get(prev.slug)}
@@ -58,7 +53,7 @@ function getSection(slug: string): string | undefined {
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p4 text-muted" style="grid-area: direction;">
-          {getSection(next.slug) && <>{getSection(next.slug)} · </>}Next
+          Next
         </div>
         <div class="text-p2 font-semibold text-balance" style="grid-area: title">
           {next.sidebarLabel || docTitles.get(next.slug)}
