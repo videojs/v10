@@ -98,7 +98,6 @@ export interface Guide {
    * Slugs this page used to live at, such as `concepts/security`. Each one redirects here for every framework the page
    * renders in, so moving a page between type folders costs one line. Old slugs must not exist as pages.
    */
-  redirectFrom?: string[];
 }
 
 // Plain link to a page outside the docs (e.g. /changelog) — rendered with an

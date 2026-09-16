@@ -39,7 +39,7 @@ Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a
 
 Concept pages and how-to guides share one folder and one URL prefix, `guides/`. The difference is the shape of the page, not its address. Reference has its own folder because the api-docs-builder owns its shape. The site derives that split from the path and shows it in the eyebrow above the title (for example "Guide › Playback").
 
-A unit test, `pnpm -F site test diataxis`, guards the line between the two folders: no title starts with "How to", no reference page carries how-to sections or a `<CustomUiNote />`, every page is in the sidebar, and no redirected slug still exists. Whether a guide reads as a concept or a how-to is a judgement you make while writing and reviewing, with the compass below. The test helps by printing, as warnings only, any heading on a Concepts-section page that opens with a task verb such as "Add" or "Configure".
+A unit test, `pnpm -F site test diataxis`, guards the line between the two folders: no title starts with "How to", no reference page carries how-to sections or a `<CustomUiNote />`, and every page is in the sidebar. Whether a guide reads as a concept or a how-to is a judgement you make while writing and reviewing, with the compass below. The test helps by printing, as warnings only, any heading on a Concepts-section page that opens with a task verb such as "Add" or "Configure".
 
 To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask two questions: does the content inform **action** (practical steps) or **cognition** (understanding)? And does it serve the reader's **study** (acquiring skills) or their **work** (applying them)?
 
@@ -125,13 +125,13 @@ The sidebar label defaults to the guide's `title` frontmatter; override it with 
 }
 ```
 
-When a page moves to a different folder, keep its old address alive by listing the old slug on the new entry. The site turns each one into a redirect for every framework the page renders in, for both the page and its `.md` twin:
+When a page changes slug, keep its old address alive with a rule in `site/netlify.toml`. Add one for the page and one for its `.md` twin, using `:framework` so a single rule covers every framework, and place them above the section-wide rules so a page that changed section as well lands in one hop:
 
-```ts
-{
-  slug: 'guides/content-security-policy',
-  redirectFrom: ['concepts/security'],
-}
+```toml
+[[redirects]]
+  from = "/docs/framework/:framework/concepts/security"
+  to = "/docs/framework/:framework/guides/content-security-policy"
+  status = 301
 ```
 
 <Aside type="note">

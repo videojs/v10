@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vite-plus/test';
 import { getDocTypeFromId, isSection } from '../../../types/docs';
 import type { DocPage } from '../diataxis';
 import { findDiataxisIssues, findTaskHeadings } from '../diataxis';
-import { getRedirectedSlugs } from '../redirects';
 import { getAllGuideSlugs } from '../sidebar';
 
 const CONTENT_ROOT = resolve(process.cwd(), 'src/content/docs');
@@ -94,14 +93,6 @@ describe('docs content', () => {
     const orphans = pages.map((entry) => entry.id).filter((id) => !registered.has(id));
 
     expect(orphans).toEqual([]);
-  });
-
-  it('keeps redirected slugs free of live pages', async () => {
-    const { sidebar } = await import('../../../docs.config');
-    const live = new Set([...pages.map((entry) => entry.id), ...getAllGuideSlugs(sidebar)]);
-    const collisions = getRedirectedSlugs(sidebar).filter((slug) => live.has(slug));
-
-    expect(collisions).toEqual([]);
   });
 
   it('warns about task headings on concept pages', async () => {

@@ -70,4 +70,4 @@ Likely cause, then the fix.
 - [ ] Exact export, prop, event, and attribute names throughout
 - [ ] `<CustomUiNote />` after the summary when the guide assumes custom UI; omitted otherwise
 - [ ] Ends with Related components, Related API, or Related guides lists of lone `<DocsLink>` items, which the site folds into one Related pages section
-- [ ] Sidebar entry added in `src/docs.config.ts`, with `redirectFrom` for any slug the page moved away from; `pnpm -F site test diataxis` passes
+- [ ] Sidebar entry added in `src/docs.config.ts`; a `netlify.toml` redirect for any slug the page moved away from; `pnpm -F site test diataxis` passes
