@@ -1,5 +1,4 @@
 import type {
-  FunctionDeclaration,
   JSXOpeningElement,
   Node,
   Function as OxcFunction,
@@ -588,7 +587,7 @@ interface HostRefSignature {
  * composes its own refs through `render`, such as buttons and popup triggers.
  */
 function forwardHostRef(
-  declaration: FunctionDeclaration,
+  declaration: OxcFunction,
   parent: Node | null | undefined,
   root: ForwardedTarget,
   signature: HostRefSignature,
