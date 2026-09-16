@@ -351,6 +351,10 @@ const SOURCE_MAP = {
         'com.apple.fps': {
           licenseUrl: 'https://fps.ezdrm.com/api/licenses/b99ed9e5-c641-49d1-bfa8-43692b686ddb',
           serverCertificateUrl: 'https://fps.ezdrm.com/demo/video/eleisure.cer',
+          // `skd://fps.ezdrm.com/;b99ed9e5-…` — the asset id is what follows the
+          // `;`, where the default takes everything after the scheme. Only the
+          // legacy AirPlay path reads this; over EME the CDM gets the URI whole.
+          fairPlayContentId: (keyUri) => keyUri.slice(keyUri.lastIndexOf(';') + 1),
         },
       },
     },

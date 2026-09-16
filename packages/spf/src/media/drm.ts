@@ -96,6 +96,16 @@ export interface DrmSystemConfig {
    * default.
    */
   certificateResponse?: DrmResponseTransform;
+  /**
+   * How this provider's `skd://` key URI names the asset, for the legacy FairPlay path only — see
+   * {@link FairPlayContentId}. Defaults to {@link defaultFairPlayContentId}.
+   *
+   * Not a transform, and deliberately not reachable from one: the content id is packed into the session's
+   * initialization data, so the CDM has already sealed it inside the SPC by the time any request exists. A provider
+   * that instead sends its asset id _beside_ the SPC — KeyOS's `assetId` form field, Irdeto's URL query — wants
+   * {@link licenseRequest}, not this.
+   */
+  fairPlayContentId?: FairPlayContentId;
 }
 
 /**
@@ -278,6 +288,28 @@ export interface DrmRequest {
 export type DrmRequestTransform = (request: DrmRequest) => DrmRequest | Promise<DrmRequest>;
 
 /**
+ * Derive the content id a FairPlay session binds to, from the key's `skd://` URI.
+ *
+ * Provider-specific because the URI's structure is: Mux carries a query (`skd://mux?keyId=…&playbackId=…`), EZDRM an
+ * asset id after a `;`, Axinom a `keyid:iv` pair. No rule covers them, so the deployment that knows its provider says.
+ *
+ * Only the legacy `WebKitMediaKeys` path consults this, and only because the content id is packed into the session's
+ * initialization data there — the CDM then embeds it in the SPC, so nothing downstream can correct it. The EME path
+ * derives no content id at all: `generateRequest('skd', …)` hands the CDM the URI untouched.
+ */
+export type FairPlayContentId = (keyUri: string) => string;
+
+/**
+ * What a FairPlay content id is when a source names no {@link FairPlayContentId}: everything after the scheme, which is
+ * Apple's own sample convention and what Mux's license server expects.
+ */
+export function defaultFairPlayContentId(keyUri: string): string {
+  const start = keyUri.indexOf('skd://');
+
+  return start === -1 ? keyUri : keyUri.slice(start + 'skd://'.length);
+}
+
+/**
  * Rewrite a DRM response — a license or an app certificate — before it reaches the CDM. Async, for the same reason a
  * {@link DrmRequestTransform} is: an unwrap may need to fetch. Returns the bytes the CDM expects (`session.update` /
  * `setServerCertificate`), unwrapping any server envelope (CKC in XML/JSON, a JSON license) the raw bytes carry.
@@ -455,6 +487,8 @@ export function sourceDrmSystems(
           certificateRequest: (request: DrmRequest) => entry()?.certificateRequest?.(request) ?? request,
           certificateResponse: (response: Uint8Array<ArrayBuffer>) =>
             entry()?.certificateResponse?.(response) ?? response,
+          fairPlayContentId: (keyUri: string) =>
+            entry()?.fairPlayContentId?.(keyUri) ?? defaultFairPlayContentId(keyUri),
         },
       ];
     })

@@ -15,7 +15,7 @@
  */
 import { listen } from '@videojs/utils/dom';
 
-import type { DrmSystemConfig, KeySystemModule } from '../drm';
+import { defaultFairPlayContentId, type DrmSystemConfig, type KeySystemModule } from '../drm';
 import { SVTA_BAD_LICENSE_REQUEST, SVTA_DRM_LICENSE_RESPONSE_REJECTED, SVTA_DRM_SESSION_ERROR } from '../errors';
 import { fetchLicense, type ReportDrmCondition, unwrapLicense } from './license-sessions';
 
@@ -105,8 +105,16 @@ export function openLegacyLicenseSession({
 
   installKeys(element);
 
+  // The provider decides what part of its own `skd://` URI names the asset;
+  // the CDM seals that into the SPC, so this is the last point it can be set.
+  const keyUri = keyUriFromInitData(initData);
+  const contentId = (entry.fairPlayContentId ?? defaultFairPlayContentId)(keyUri);
+
   // `webkitKeys` is set by `installKeys`, or it threw.
-  const session = element.webkitKeys!.createSession(FAIRPLAY_CONTENT_TYPE, packInitData(initData, certificate));
+  const session = element.webkitKeys!.createSession(
+    FAIRPLAY_CONTENT_TYPE,
+    packInitData(initData, contentId, certificate)
+  );
 
   const exchange = async (message: BufferSource) => {
     let license: Uint8Array<ArrayBuffer>;
@@ -192,13 +200,17 @@ export function openLegacyLicenseSession({
 /**
  * Repack `webkitneedkey` initialization data into what `WebKitMediaKeys.createSession()` expects.
  *
- * In: the raw event data — a `skd://` URI as UTF-16LE, in newer WebKit builds behind a 4-byte little-endian byte count.
- * Out: that data verbatim, then the content ID and the application certificate, each behind their own 4-byte
- * little-endian byte count.
+ * In: the raw event data — a `skd://` URI as UTF-16LE, in newer WebKit builds behind a 4-byte little-endian byte count
+ * — plus the content id its provider derives from that URI. Out: that data verbatim, then the content ID and the
+ * application certificate, each behind their own 4-byte little-endian byte count.
  */
-export function packInitData(initData: ArrayBuffer, certificate: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> {
+export function packInitData(
+  initData: ArrayBuffer,
+  contentIdText: string,
+  certificate: Uint8Array<ArrayBuffer>
+): Uint8Array<ArrayBuffer> {
   const source = new Uint8Array(initData);
-  const contentId = toUtf16LE(getContentId(initData));
+  const contentId = toUtf16LE(contentIdText);
 
   const packed = new Uint8Array(source.byteLength + 4 + contentId.byteLength + 4 + certificate.byteLength);
   const view = new DataView(packed.buffer);
@@ -223,14 +235,15 @@ export function packInitData(initData: ArrayBuffer, certificate: Uint8Array<Arra
 }
 
 /**
- * The content ID FairPlay keys the session on: everything after the scheme in the `skd://` URI. Locating the scheme
- * rather than skipping a fixed prefix covers both the bare URI older WebKit sends and the length-prefixed form.
+ * The `skd://` URI out of `webkitneedkey`'s initialization data, whole — scheme included, so a provider's resolver sees
+ * exactly what its manifest declared. Locating the scheme rather than skipping a fixed prefix covers both the bare URI
+ * older WebKit sends and the length-prefixed form newer builds do.
  */
-export function getContentId(initData: ArrayBuffer): string {
+export function keyUriFromInitData(initData: ArrayBuffer): string {
   const decoded = new TextDecoder('utf-16le').decode(initData);
   const start = decoded.indexOf('skd://');
 
-  return start === -1 ? decoded : decoded.slice(start + 'skd://'.length);
+  return start === -1 ? decoded : decoded.slice(start);
 }
 
 function toUtf16LE(value: string): Uint8Array<ArrayBuffer> {
