@@ -63,8 +63,33 @@ signals.state.presentation.set({ url: source.src });
 // `setupAirPlayFairPlay` is serving the receiver. `false` / `false` with a
 // stalled `currentTime` means the receiver asked for nothing, or asked and was
 // refused; check `errors`.
+/** The DRM/AirPlay facts. Split out because these change on edges, not per frame. */
+const drmSnapshot = () => ({
+  // WebKit's raw flag, then the session fact `setupAirPlay` derives from it.
+  wireless: (video as { webkitCurrentPlaybackTargetIsWireless?: boolean }).webkitCurrentPlaybackTargetIsWireless,
+  loadingSuspended: signals.state.loadingSuspended?.get(),
+  segmentLoadingBlocked: signals.state.segmentLoadingBlocked.get(),
+  negotiatedKeySystem: signals.state.negotiatedKeySystem.get(),
+  mseKeys: Boolean(signals.context.mediaKeys.get()),
+  elementKeys: Boolean(video.mediaKeys),
+  errors: signals.state.errors.get()?.map((error) => error.code),
+});
+
+// An AirPlay pass is run at the device, not at the keyboard, and the live pane
+// below repaints out from under a selection. So every *change* to the DRM facts
+// is also logged — the console keeps a copyable transition log, and the
+// interesting moments here are all edges.
+let lastDrm = '';
+
 setInterval(() => {
   const quality = video.getVideoPlaybackQuality?.();
+  const drm = drmSnapshot();
+  const serialized = JSON.stringify(drm);
+
+  if (serialized !== lastDrm) {
+    lastDrm = serialized;
+    console.log(`[spf-drm] t=${video.currentTime.toFixed(2)}`, drm);
+  }
 
   statusPre.textContent = JSON.stringify(
     {
@@ -73,14 +98,7 @@ setInterval(() => {
       videoSize: `${video.videoWidth}x${video.videoHeight}`,
       framesDecoded: quality?.totalVideoFrames,
       framesDropped: quality?.droppedVideoFrames,
-      // WebKit's raw flag, then the session fact `setupAirPlay` derives from it.
-      wireless: (video as { webkitCurrentPlaybackTargetIsWireless?: boolean }).webkitCurrentPlaybackTargetIsWireless,
-      loadingSuspended: signals.state.loadingSuspended?.get(),
-      segmentLoadingBlocked: signals.state.segmentLoadingBlocked.get(),
-      negotiatedKeySystem: signals.state.negotiatedKeySystem.get(),
-      mseKeys: Boolean(signals.context.mediaKeys.get()),
-      elementKeys: Boolean(video.mediaKeys),
-      errors: signals.state.errors.get()?.map((error) => error.code),
+      ...drm,
     },
     null,
     2
