@@ -15,6 +15,8 @@ import { createHlsVideoEngine } from '@videojs/spf/hls';
 
 const video = document.getElementById('video') as HTMLVideoElement;
 const statusPre = document.getElementById('status') as HTMLPreElement;
+const heading = document.getElementById('heading') as HTMLHeadingElement;
+const subheading = document.getElementById('subheading') as HTMLParagraphElement;
 
 const params = new URLSearchParams(location.search);
 
@@ -24,6 +26,19 @@ const source = restrictDrmSystems(
   SOURCES[sourceKey as keyof typeof SOURCES]?.source as { src: string; drm: DrmSystemsConfig },
   params.get('drm')
 ) as { src: string; drm: DrmSystemsConfig };
+
+// Say which source and which key systems are actually loaded — the page serves
+// every DRM entry, so a fixed title just misreports whatever `?source=` picked.
+const drmFilter = params.get('drm');
+
+heading.textContent = `SPF DRM — ${SOURCES[sourceKey as keyof typeof SOURCES]?.label ?? sourceKey}`;
+subheading.textContent = [
+  `source=${sourceKey}`,
+  `configured: ${Object.keys(source?.drm ?? {}).join(', ') || 'none'}`,
+  drmFilter ? `drm=${drmFilter}` : null,
+]
+  .filter(Boolean)
+  .join('  ·  ');
 
 let signals!: HlsVideoEngineSignals;
 const engine = createHlsVideoEngine({
