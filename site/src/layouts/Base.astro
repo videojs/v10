@@ -163,7 +163,7 @@ const fullTitle =
   </head>
   <body
     class:list={[
-      "relative",
+      "relative h-svh overflow-hidden",
       "font-sans text-p2 text-pretty",
       "bg-manila-light text-faded-black dark:bg-faded-black dark:text-manila-light",
       "min-w-80",
@@ -185,7 +185,7 @@ const fullTitle =
         // BaseUI requires body.relative and div.isolate
         "isolate",
         // Opaque and stacked above the fixed easter egg so it only peeks out on overscroll
-        "relative z-0 min-h-screen bg-manila-light dark:bg-faded-black",
+        "relative z-0 flex h-svh min-h-0 flex-col overflow-hidden bg-manila-light dark:bg-faded-black",
       ]}
       data-overscroll-page
     >
@@ -200,7 +200,14 @@ const fullTitle =
 
       <PrereleaseBanner />
       <LegacyBanner />
-      <slot />
+      <div
+        data-page-scroll
+        class="relative min-h-0 flex-1 overflow-y-auto"
+        style="container-type:size"
+      >
+        <slot name="sticky-header" />
+        <slot />
+      </div>
     </div>
     {
       easterEgg && (
@@ -209,10 +216,6 @@ const fullTitle =
           // the end of the page wheel deltas slide the page up over the pinned color blocks and it springs back when
           // the gesture stops. Touch devices keep the browser's own rubber-band, which already reveals them.
           (() => {
-            const page = document.querySelector("[data-overscroll-page]");
-            const reveal = document.querySelector("[data-overscroll-reveal]");
-            if (!page || !reveal) return;
-
             let offset = 0;
             let releaseTimer;
             // The reveal only arms on a fresh gesture that starts while the page is already at its end. A fast scroll
@@ -220,16 +223,28 @@ const fullTitle =
             let lastWheelAt = 0;
             const GESTURE_GAP_MS = 250;
 
-            const atPageEnd = () =>
-              window.innerHeight + window.scrollY >=
-              document.documentElement.scrollHeight - 1;
+            const atPageEnd = () => {
+              const scrollContainer = document.querySelector("[data-page-scroll]");
+
+              return (
+                scrollContainer &&
+                scrollContainer.scrollTop + scrollContainer.clientHeight >=
+                  scrollContainer.scrollHeight - 1
+              );
+            };
 
             const apply = () => {
+              const page = document.querySelector("[data-overscroll-page]");
+              if (!page) return;
+
               page.style.transition = "none";
               page.style.transform = offset ? `translate3d(0, ${-offset}px, 0)` : "";
             };
 
             const release = () => {
+              const page = document.querySelector("[data-overscroll-page]");
+              if (!page) return;
+
               offset = 0;
               page.style.transition = "transform 600ms var(--ease-soft)";
               page.style.transform = "";
@@ -245,6 +260,9 @@ const fullTitle =
 
                 const pulling = event.deltaY > 0 && atPageEnd() && (freshGesture || offset > 0);
                 if (!pulling && offset === 0) return;
+
+                const reveal = document.querySelector("[data-overscroll-reveal]");
+                if (!reveal) return;
 
                 const max = reveal.offsetHeight;
                 // Ease off as the blocks come fully into view so the pull feels elastic rather than linear.

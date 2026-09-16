@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+import { navigate } from 'astro:transitions/client';
 import type { ReactNode } from 'react';
 
 import Css3Logo from '@/assets/logos/brands/css3.svg?react';
@@ -17,8 +18,10 @@ import {
   STYLE_LABELS,
   SUPPORTED_FRAMEWORKS,
 } from '@/types/docs';
+import { DOCS_FRAMEWORK_NAVIGATION_INFO } from '@/utils/docs/navigation';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
+import { savePageScrollForNavigation } from '@/utils/docs/scroll';
 
 const FRAMEWORK_ICONS = {
   react: <ReactLogo className="size-4" />,
@@ -52,26 +55,17 @@ export function Selectors({ currentFramework, currentSlug, className }: Selector
       newFramework,
     });
 
+    // Same page, other framework: keep the query so installation picks survive the switch.
+    const target = shouldReplace ? url + window.location.search : url;
+
     if (shouldReplace) {
-      // Same page, other framework: keep the query so installation picks survive the switch.
-      const target = url + window.location.search;
-      // Base UI's scroll lock transfers html.scrollTop → body.scrollTop
-      const scrollLocked = document.documentElement.hasAttribute('data-base-ui-scroll-locked');
-      const scrollY = scrollLocked ? document.body.scrollTop : window.scrollY;
-
-      try {
-        sessionStorage.setItem(
-          'vjs-page-scroll',
-          JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY })
-        );
-      } catch {
-        // Ignore storage errors
-      }
-
-      window.location.replace(target);
-    } else {
-      window.location.href = url;
+      savePageScrollForNavigation(url);
     }
+
+    void navigate(target, {
+      history: shouldReplace ? 'replace' : 'push',
+      info: DOCS_FRAMEWORK_NAVIGATION_INFO,
+    });
   };
 
   const handleStyleChange = (newStyle: AnySupportedStyle) => {

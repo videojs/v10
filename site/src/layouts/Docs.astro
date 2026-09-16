@@ -1,5 +1,6 @@
 ---
 
+import { ClientRouter } from 'astro:transitions';
 import { type CollectionEntry, getCollection } from 'astro:content';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
@@ -38,40 +39,39 @@ const docsSidebarId = 'docs-sidebar';
 >
   <Fragment slot="priority-head">
     <StyleInit />
+    <ClientRouter />
   </Fragment>
   <Fragment slot="head">
-    <DocsSidebarRestoration docsSidebarId={docsSidebarId} />
+    <DocsSidebarRestoration />
     <MarkdownAlternate />
     <slot name="head" slot="head" />
   </Fragment>
+  <NavBarDocs slot="sticky-header">
+    <DocsSidebar
+      slot="mobile-nav"
+      framework={framework}
+      docTitles={docTitles}
+      docStabilities={docStabilities}
+    >
+      <Selectors client:idle currentFramework={framework} currentSlug={slug} />
+    </DocsSidebar>
+  </NavBarDocs>
   <div
     class:list={[
-      "grid min-h-screen grid-cols-1",
+      "grid grid-cols-1",
       "md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols)",
-      // The extra pixel is the nav's bottom border, so the content box stays an even height and 36px controls centre on
-      // whole pixels.
       "[--nav-h:calc(var(--spacing)*13+1px)] sm:[--nav-h:calc(var(--spacing)*13.5+1px)]",
     ]}
     style={{
       "--md-grid-cols": `calc(var(--spacing) * 70) minmax(0,1fr)`,
       "--lg-grid-cols": `calc(var(--spacing) * 75) minmax(0,1fr)`,
-      "grid-template-rows": "auto minmax(0,1fr)",
+      "min-height": "calc(100cqh - var(--nav-h))",
     }}
   >
-    <NavBarDocs class="col-span-full">
-      <DocsSidebar
-        slot="mobile-nav"
-        framework={framework}
-        docTitles={docTitles}
-        docStabilities={docStabilities}
-      >
-        <Selectors client:idle currentFramework={framework} currentSlug={slug} />
-      </DocsSidebar>
-    </NavBarDocs>
     <aside
       id={docsSidebarId}
       class="scrollbar-thin sticky z-10 hidden flex-col overflow-y-scroll border-line md:flex md:border-r"
-      style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
+      style="top: var(--nav-h); max-height: calc(100cqh - var(--nav-h));"
     >
       <DocsSidebar
         framework={framework}
@@ -88,7 +88,7 @@ const docsSidebarId = 'docs-sidebar';
       </DocsSidebar>
     </aside>
     <div>
-      <div class="flex flex-col" style="min-height:calc(100vh - var(--nav-h));">
+      <div class="flex flex-col" style="min-height:calc(100cqh - var(--nav-h));">
         <slot />
       </div>
       <Footer class="mt-auto" />

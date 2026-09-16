@@ -7,11 +7,9 @@ import { ACCENT_KEY, THEME_COLORS, THEME_KEY, TONE_KEY } from '@/consts';
   /* ts(2570) on localStorageKey is expected — astro check can't see define:vars injections (withastro/language-tools#711) */
 }
 <script is:inline define:vars={{ localStorageKey: THEME_KEY, accentKey: ACCENT_KEY, toneKey: TONE_KEY, themeColors: THEME_COLORS }}>
-  if (
-    typeof localStorage !== "undefined" &&
-    typeof document !== "undefined" &&
-    typeof document.documentElement !== "undefined"
-  ) {
+  function applyStoredAppearance(root, ownerDocument) {
+    if (!root || typeof localStorage === "undefined") return;
+
     let localStorageValue = localStorage[localStorageKey];
     const isValidKey =
       localStorageValue === "light" ||
@@ -26,17 +24,17 @@ import { ACCENT_KEY, THEME_COLORS, THEME_KEY, TONE_KEY } from '@/consts';
     let isDark = false;
 
     if (localStorageValue === "dark") {
-      document.documentElement.classList.add("dark");
       isDark = true;
     } else if (localStorageValue === "system") {
       if (
         typeof window.matchMedia !== "undefined" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches
       ) {
-        document.documentElement.classList.add("dark");
         isDark = true;
       }
     }
+
+    root.classList.toggle("dark", isDark);
 
     // Accent and dark tone ride the same pre-paint path; see stores/appearance.ts for the values.
     const accents = ["orange", "gold", "magenta", "red"];
@@ -44,13 +42,19 @@ import { ACCENT_KEY, THEME_COLORS, THEME_KEY, TONE_KEY } from '@/consts';
     const accent = accents.includes(localStorage[accentKey]) ? localStorage[accentKey] : "orange";
     const tone = tones.includes(localStorage[toneKey]) ? localStorage[toneKey] : "soft";
 
-    document.documentElement.dataset.accent = accent;
-    document.documentElement.dataset.tone = tone;
+    root.dataset.accent = accent;
+    root.dataset.tone = tone;
 
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    const themeColorMeta = ownerDocument.querySelector('meta[name="theme-color"]');
 
     if (themeColorMeta) {
       themeColorMeta.setAttribute("content", isDark ? themeColors[tone] : themeColors.light);
     }
   }
+
+  applyStoredAppearance(document.documentElement, document);
+
+  document.addEventListener("astro:before-swap", function (event) {
+    applyStoredAppearance(event.newDocument.documentElement, event.newDocument);
+  });
 </script>

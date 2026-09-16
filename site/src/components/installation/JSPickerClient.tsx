@@ -1,3 +1,5 @@
+import { navigate } from 'astro:transitions/client';
+
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
@@ -5,7 +7,9 @@ import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import type { SupportedFramework } from '@/types/docs';
 import { isValidFramework } from '@/types/docs';
+import { DOCS_FRAMEWORK_NAVIGATION_INFO } from '@/utils/docs/navigation';
 import { buildDocsUrl, resolveFrameworkChange } from '@/utils/docs/routing';
+import { savePageScrollForNavigation } from '@/utils/docs/scroll';
 
 /**
  * Frameworks the installation flow can start from. React and HTML switch the docs framework; Vue and Svelte open their
@@ -13,10 +17,10 @@ import { buildDocsUrl, resolveFrameworkChange } from '@/utils/docs/routing';
  */
 type PickerFramework = SupportedFramework | 'vue' | 'svelte';
 
-const INSTALL_PAGE_SLUGS: Record<'vue' | 'svelte', string> = {
+const INSTALL_PAGE_SLUGS = {
   vue: 'guides/installation-vue',
   svelte: 'guides/installation-svelte',
-};
+} satisfies Record<'vue' | 'svelte', string>;
 
 const OPTIONS: CardRadioOption<PickerFramework>[] = [
   {
@@ -64,44 +68,38 @@ export default function JSPickerClient({ currentFramework, currentSlug }: Props)
   const handleChange = (next: PickerFramework) => {
     if (next === selected) return;
 
+    let url: string;
+    let shouldReplace = false;
+
     if (next === 'vue' || next === 'svelte') {
-      window.location.href = buildDocsUrl('html', INSTALL_PAGE_SLUGS[next]);
-      return;
+      url = buildDocsUrl('html', INSTALL_PAGE_SLUGS[next]);
+    } else {
+      if (!isValidFramework(next)) return;
+
+      // Leaving a Vue or Svelte page: land on the main installation page for the chosen framework.
+      if (selected === 'vue' || selected === 'svelte') {
+        url = buildDocsUrl(next, 'guides/installation');
+      } else {
+        const result = resolveFrameworkChange({
+          currentFramework,
+          currentSlug,
+          newFramework: next,
+        });
+
+        url = result.url;
+        shouldReplace = result.shouldReplace;
+      }
     }
 
-    if (!isValidFramework(next)) return;
-
-    // Leaving a Vue or Svelte page: land on the main installation page for the chosen framework.
-    if (selected === 'vue' || selected === 'svelte') {
-      window.location.href = buildDocsUrl(next, 'guides/installation');
-      return;
-    }
-
-    const { url, shouldReplace } = resolveFrameworkChange({
-      currentFramework,
-      currentSlug,
-      newFramework: next,
-    });
+    savePageScrollForNavigation(url);
 
     if (shouldReplace) {
       // Same page, other framework: keep the query so installation picks survive the switch.
       const target = url + window.location.search;
-      // Base UI's scroll lock transfers html.scrollTop → body.scrollTop
-      const scrollLocked = document.documentElement.hasAttribute('data-base-ui-scroll-locked');
-      const scrollY = scrollLocked ? document.body.scrollTop : window.scrollY;
 
-      try {
-        sessionStorage.setItem(
-          'vjs-page-scroll',
-          JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY })
-        );
-      } catch {
-        // Ignore storage errors
-      }
-
-      window.location.replace(target);
+      void navigate(target, { history: 'replace', info: DOCS_FRAMEWORK_NAVIGATION_INFO });
     } else {
-      window.location.href = url;
+      void navigate(url, { history: 'push', info: DOCS_FRAMEWORK_NAVIGATION_INFO });
     }
   };
 

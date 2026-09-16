@@ -36,6 +36,9 @@ const { class: className } = Astro.props;
 <nav
   aria-label="Video.js"
   class:list={[
+    // The extra pixel is the bottom border, so the content box stays an even height and 36px controls centre on whole
+    // pixels.
+    "[--nav-h:calc(var(--spacing)*13+1px)] sm:[--nav-h:calc(var(--spacing)*13.5+1px)]",
     "sticky top-0 z-30 mx-auto flex w-full items-center justify-between border-b border-b-manila-75 bg-manila-light px-5 dark:border-line dark:bg-faded-black",
     className,
   ]}

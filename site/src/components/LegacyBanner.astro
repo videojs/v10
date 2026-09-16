@@ -1,9 +1,10 @@
 ---
-import { BANNER_DISMISS_KEY, BANNER_SEEN_KEY } from '@/consts';
+import { BANNER_DISMISS_KEY } from '@/consts';
 ---
 
 <div
   data-legacy-banner
+  data-astro-transition-persist="legacy-banner"
   class:list={[
     "banner-dismissed:hidden",
     "relative py-2 text-p3 md:text-p2",
@@ -47,35 +48,27 @@ import { BANNER_DISMISS_KEY, BANNER_SEEN_KEY } from '@/consts';
   </button>
 </div>
 
-<script is:inline define:vars={{ bannerKey: BANNER_DISMISS_KEY, seenKey: BANNER_SEEN_KEY }}>
-  var banner = document.querySelector("[data-legacy-banner]");
+<script is:inline define:vars={{ bannerKey: BANNER_DISMISS_KEY }}>
+  var legacyBanner = document.currentScript?.previousElementSibling;
+  var dismissBtn = legacyBanner?.querySelector(
+    "[data-legacy-banner-dismiss]",
+  );
 
-  // Once the banner scrolls off the top, later pages this session start without it (see BannerInit). The current
-  // page keeps it in the flow so nothing shifts under the reader.
-  if (banner && "IntersectionObserver" in window) {
-    var observer = new IntersectionObserver(function (entries) {
-      var entry = entries[0];
-
-      if (!entry.isIntersecting && entry.boundingClientRect.bottom <= 0) {
-        try {
-          sessionStorage.setItem(seenKey, "true");
-        } catch (e) {}
-
-        observer.disconnect();
+  if (legacyBanner) {
+    try {
+      if (localStorage[bannerKey] === "true") {
+        legacyBanner.setAttribute("hidden", "");
       }
-    });
-
-    observer.observe(banner);
+    } catch (e) {}
   }
 
-  var dismissBtn = document.querySelector("[data-legacy-banner-dismiss]");
-
-  if (dismissBtn) {
+  if (dismissBtn && legacyBanner) {
     dismissBtn.addEventListener("click", function () {
       try {
         localStorage.setItem(bannerKey, "true");
       } catch (e) {}
 
+      legacyBanner.setAttribute("hidden", "");
       document.documentElement.classList.add("banner-dismissed");
     });
   }

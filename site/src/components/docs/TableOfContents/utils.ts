@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
 
 import { API_REFERENCE_SUBSECTION_TITLES } from '@/utils/componentReferenceModel';
+import { getPageScrollContainer } from '@/utils/docs/scroll';
 
 export interface RailGeometry {
   stripeHeight: number;
@@ -127,6 +128,9 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
+    const scrollContainer = getPageScrollContainer();
+    const scrollTarget = scrollContainer ?? window;
+
     const handleScroll = () => {
       // globals.css SHOULD define a scroll-margin-top for headings
       // let's get the value of that, here
@@ -145,7 +149,7 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
       }
 
       scrollOffset = scrollOffset + 1;
-      const scrollPosition = window.scrollY + scrollOffset;
+      const activeLine = (scrollContainer?.getBoundingClientRect().top ?? 0) + scrollOffset;
 
       // Find the last heading that's above the scroll position
       let currentActiveId = '';
@@ -154,9 +158,9 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
         const element = document.getElementById(heading.slug);
 
         if (element) {
-          const elementTop = element.offsetTop;
+          const elementTop = element.getBoundingClientRect().top;
 
-          if (elementTop <= scrollPosition) {
+          if (elementTop <= activeLine) {
             currentActiveId = heading.slug;
           } else {
             break;
@@ -176,12 +180,12 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
     handleScroll();
 
     // Add scroll listeners
-    window.addEventListener('scroll', throttledHandleScroll);
-    window.addEventListener('scroll', debouncedHandleScroll);
+    scrollTarget.addEventListener('scroll', throttledHandleScroll);
+    scrollTarget.addEventListener('scroll', debouncedHandleScroll);
 
     return () => {
-      window.removeEventListener('scroll', throttledHandleScroll);
-      window.removeEventListener('scroll', debouncedHandleScroll);
+      scrollTarget.removeEventListener('scroll', throttledHandleScroll);
+      scrollTarget.removeEventListener('scroll', debouncedHandleScroll);
     };
   }, [headings]);
 

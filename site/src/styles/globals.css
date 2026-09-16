@@ -303,8 +303,7 @@ html.dark[data-tone="deep"] {
   }
 
   [id] {
-    /* this only works where nav-h is defined. currently, docs */
-    scroll-margin-top: calc(var(--nav-h) + var(--spacing) * 5 + var(--scroll-mt, 0px));
+    scroll-margin-top: calc(var(--nav-h, 0px) + var(--spacing) * 5 + var(--scroll-mt, 0px));
   }
 
   b,

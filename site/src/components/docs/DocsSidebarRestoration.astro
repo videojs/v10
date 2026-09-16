@@ -1,89 +1,13 @@
 ---
-
 /**
- * Sidebar scroll persistence using sessionStorage
- * Progressive enhancement - only runs in browsers with view transitions
+ * Sidebar and page scroll persistence for document and client-routed navigation.
  */
-
-interface Props {
-  docsSidebarId: string;
-}
-const { docsSidebarId } = Astro.props;
 ---
 
-<script is:inline define:vars={{ docsSidebarId }}>
-  const STORAGE_KEY = "vjs-sidebar-state";
+<script>
+  import { initializeDocsNavigation } from '@/utils/docs/navigation';
 
-  function readState() {
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-
-      return stored ? JSON.parse(stored) : {};
-    } catch (e) {
-      console.error("[Sidebar] Failed to restore state", e);
-
-      return {};
-    }
-  }
-
-  window.addEventListener("pagereveal", () => {
-    const state = readState();
-    const aside = document.getElementById(docsSidebarId);
-
-    if (aside) {
-      if (state.sidebarScroll !== undefined) {
-        aside.scrollTop = state.sidebarScroll;
-      }
-
-      // Keep the active link in view when arriving from a different section. Scroll the sidebar alone:
-      // scrollIntoView would also scroll the window to centre the link, which pushes the banner off the top of
-      // every docs page and shifts the content mid-transition.
-      const activeLink = aside.querySelector('a[aria-current="page"]');
-
-      if (activeLink) {
-        const asideRect = aside.getBoundingClientRect();
-        const linkRect = activeLink.getBoundingClientRect();
-
-        if (linkRect.top < asideRect.top || linkRect.bottom > asideRect.bottom) {
-          const linkCentre = linkRect.top + linkRect.height / 2;
-          const asideCentre = asideRect.top + asideRect.height / 2;
-
-          aside.scrollTop += linkCentre - asideCentre;
-        }
-      }
-    }
-
-    // Restore page scroll position (set by framework switch)
-    try {
-      const scrollData = sessionStorage.getItem("vjs-page-scroll");
-
-      if (scrollData) {
-        sessionStorage.removeItem("vjs-page-scroll");
-        const { url, scrollY } = JSON.parse(scrollData);
-
-        if (
-          url.replace(/\/$/, "") === window.location.pathname.replace(/\/$/, "")
-        ) {
-          window.scrollTo(0, scrollY);
-        }
-      }
-    } catch (e) {
-      // Ignore storage errors
-    }
-  });
-
-  window.addEventListener("pageswap", () => {
-    const aside = document.getElementById(docsSidebarId);
-    if (!aside) return;
-
-    const state = { sidebarScroll: aside.scrollTop };
-
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error("[Sidebar] Failed to save state", e);
-    }
-  });
+  initializeDocsNavigation();
 </script>
 
 {

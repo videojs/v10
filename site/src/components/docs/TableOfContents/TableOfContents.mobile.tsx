@@ -3,6 +3,8 @@ import type { MarkdownHeading } from 'astro';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
+import { getPageScrollContainer } from '@/utils/docs/scroll';
+
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { calculateRailGeometry } from './utils';
 
@@ -27,21 +29,32 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
   const railGeometry = calculateRailGeometry(headings.length, viewportLayout.availableHeight);
 
   useEffect(() => {
+    const scrollContainer = getPageScrollContainer();
     const updateViewportLayout = () => {
       const navHeightValue = triggerRef.current ? getComputedStyle(triggerRef.current).getPropertyValue('--nav-h') : '';
       const navHeight = Number.parseFloat(navHeightValue) || 52;
+      const scrollRect = scrollContainer?.getBoundingClientRect();
+      const scrollTop = scrollRect?.top ?? 0;
+      const scrollHeight = scrollRect?.height ?? window.innerHeight;
+      const contentHeight = Math.max(0, scrollHeight - navHeight);
 
       setViewportLayout({
-        availableHeight: Math.max(0, window.innerHeight - navHeight - 32),
-        railTop: navHeight + (window.innerHeight - navHeight) / 2,
+        availableHeight: Math.max(0, contentHeight - 32),
+        railTop: scrollTop + navHeight + contentHeight / 2,
       });
     };
+    const scrollContainerObserver =
+      scrollContainer && 'ResizeObserver' in window ? new ResizeObserver(updateViewportLayout) : null;
 
     updateViewportLayout();
+
+    if (scrollContainerObserver && scrollContainer) scrollContainerObserver.observe(scrollContainer);
+
     window.addEventListener('resize', updateViewportLayout);
     window.visualViewport?.addEventListener('resize', updateViewportLayout);
 
     return () => {
+      scrollContainerObserver?.disconnect();
       window.removeEventListener('resize', updateViewportLayout);
       window.visualViewport?.removeEventListener('resize', updateViewportLayout);
     };
@@ -61,10 +74,11 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
     if (!open) return;
 
     const closeOnDocumentScroll = () => setOpen(false);
+    const scrollTarget = getPageScrollContainer() ?? window;
 
-    window.addEventListener('scroll', closeOnDocumentScroll, { passive: true });
+    scrollTarget.addEventListener('scroll', closeOnDocumentScroll, { passive: true });
 
-    return () => window.removeEventListener('scroll', closeOnDocumentScroll);
+    return () => scrollTarget.removeEventListener('scroll', closeOnDocumentScroll);
   }, [open]);
 
   const handleNavigate = (slug: string) => {
