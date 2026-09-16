@@ -8,6 +8,7 @@ import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
+import InstallationCallouts from '@/components/installation/InstallationCallouts.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
@@ -33,15 +34,7 @@ Video.js is a **React video player component library**: composable primitives, h
 Video.js is an **HTML video player built on custom elements**: lightweight, framework-free components for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
 
-<Aside type="note" title="Release Candidate">
-Video.js v10 is a _release candidate_. This means we feel the API is stable and we're ready to start building with it. With your [feedback](https://github.com/videojs/v10/issues), a few docs tweaks, and maybe a bug fix or two, we're looking forward to shipping 10.0.0 very soon.
-
-[Read the Release Candidate blog post here](/blog/videojs-v10-release-candidate)
-</Aside>
-
-<Aside type="tip" title="Coming from another player?">
-Follow the migration guide for <DocsLink slug="guides/migrate-from-video-js-8">Video.js 8</DocsLink>, <DocsLink slug="guides/migrate-from-mux-player">Mux Player</DocsLink>, <DocsLink slug="guides/migrate-from-plyr">Plyr</DocsLink>, or <DocsLink slug="guides/migrate-from-media-chrome">Media Chrome</DocsLink>. Each maps your existing setup onto Video.js v10 instead of starting from scratch.
-</Aside>
+<InstallationCallouts />
 
 <LLMCase>
 <div data-cli-omit="installation">
