@@ -6,9 +6,12 @@
 //                                     its negotiation on browsers with several
 //                                     CDMs (Edge on Windows has Widevine AND
 //                                     PlayReady; unfiltered, Widevine wins).
-//   source=<SOURCES key>              Any DRM entry; defaults to `hls-drm`.
-//                                     `hls-drm-ezdrm` is the second FairPlay
-//                                     provider the AirPlay smoke wants.
+//   source=<SOURCES key>              Any entry, DRM or clear; defaults to
+//                                     `hls-drm`. `hls-drm-ezdrm` is the second
+//                                     FairPlay provider the AirPlay smoke
+//                                     wants, and a clear entry like `hls-3` is
+//                                     the control for telling WebKit's own
+//                                     AirPlay behavior apart from DRM's.
 import { restrictDrmSystems, SOURCES } from '@app/shared/sources';
 import type { DrmSystemsConfig, HlsVideoEngineSignals } from '@videojs/spf/hls';
 import { createHlsVideoEngine } from '@videojs/spf/hls';
@@ -22,19 +25,31 @@ const params = new URLSearchParams(location.search);
 
 // The generic license-server flavor of the shared Mux DRM asset by default.
 const sourceKey = params.get('source') ?? 'hls-drm';
-const source = restrictDrmSystems(
-  SOURCES[sourceKey as keyof typeof SOURCES]?.source as { src: string; drm: DrmSystemsConfig },
+const entry = SOURCES[sourceKey as keyof typeof SOURCES];
+
+// A DRM entry carries a structured `source`; a clear one carries only `url`.
+// Both are wanted here — a clear source is the control that separates WebKit's
+// own AirPlay handoff from anything DRM does.
+const source = (restrictDrmSystems(
+  entry?.source as { src: string; drm?: DrmSystemsConfig } | undefined,
   params.get('drm')
-) as { src: string; drm: DrmSystemsConfig };
+) ?? (entry?.url ? { src: entry.url } : undefined)) as { src: string; drm?: DrmSystemsConfig } | undefined;
+
+if (!source) {
+  const known = Object.keys(SOURCES).join(', ');
+
+  document.body.innerHTML = `<h1>Unknown source</h1><p><code>${sourceKey}</code> names no entry with a URL.</p><p>Known keys: ${known}</p>`;
+  throw new Error(`[spf-drm] no source for "${sourceKey}"`);
+}
 
 // Say which source and which key systems are actually loaded — the page serves
 // every DRM entry, so a fixed title just misreports whatever `?source=` picked.
 const drmFilter = params.get('drm');
 
-heading.textContent = `SPF DRM — ${SOURCES[sourceKey as keyof typeof SOURCES]?.label ?? sourceKey}`;
+heading.textContent = `SPF DRM — ${entry?.label ?? sourceKey}`;
 subheading.textContent = [
   `source=${sourceKey}`,
-  `configured: ${Object.keys(source?.drm ?? {}).join(', ') || 'none'}`,
+  `configured: ${Object.keys(source.drm ?? {}).join(', ') || 'none (clear source)'}`,
   drmFilter ? `drm=${drmFilter}` : null,
 ]
   .filter(Boolean)
@@ -54,22 +69,13 @@ video.preload = 'auto';
 signals.context.mediaElement.set(video);
 signals.state.presentation.set({ url: source.src });
 
-// Live status readout for the smoke probes (rendering, not just readyState).
-//
-// `mseKeys` vs `elementKeys` is the AirPlay handoff's invariant, readable at a
-// glance. `mseKeys` is what `setupMediaKeys` published; `elementKeys` is
-// whatever is actually attached. Outside a session they agree. During one the
-// pair should read `false` / `true` — `setupMediaKeys` has yielded and
-// `setupAirPlayFairPlay` is serving the receiver. `false` / `false` with a
-// stalled `currentTime` means the receiver asked for nothing, or asked and was
-// refused; check `errors`.
 // Raw key-request tap, deliberately unfiltered — `setupAirPlayFairPlay` serves
 // only `encrypted` events whose `initDataType` is `skd`, so a receiver whose
 // request arrives any other way would be dropped with nothing to show for it.
-// This says what actually fired. `webkitneedkey` is the discriminator: if it
-// fires and `encrypted` does not, the sender's EME cannot serve the session at
-// all and the deferred legacy `WebKitMediaKeys` path is the only thing that
-// could — a different problem from anything in this composition.
+// This says what actually fired. `webkitneedkey` is the one the legacy
+// `WebKitMediaKeys` path serves after the handover, so seeing it alongside a
+// `skd` `encrypted` is the normal shape on a sender whose EME refuses the
+// session.
 for (const type of ['encrypted', 'webkitneedkey'] as const) {
   video.addEventListener(type, (event) => {
     const { initDataType, initData } = event as MediaEncryptedEvent;
@@ -83,6 +89,16 @@ for (const type of ['encrypted', 'webkitneedkey'] as const) {
 }
 
 video.addEventListener('error', () => console.log('[spf-drm] element error', video.error?.code, video.error?.message));
+
+// Live status readout for the smoke probes (rendering, not just readyState).
+//
+// `mseKeys` vs `elementKeys` is the AirPlay handoff's invariant, readable at a
+// glance. `mseKeys` is what `setupMediaKeys` published; `elementKeys` is
+// whatever is actually attached. Outside a session they agree. During one the
+// pair should read `false` / `true` — `setupMediaKeys` has yielded and
+// `setupAirPlayFairPlay` is serving the receiver. `false` / `false` with a
+// stalled `currentTime` means the receiver asked for nothing, or asked and was
+// refused; check `errors`.
 
 /** The DRM/AirPlay facts. Split out because these change on edges, not per frame. */
 const drmSnapshot = () => ({
