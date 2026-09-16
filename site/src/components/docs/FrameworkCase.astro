@@ -1,6 +1,12 @@
 ---
-
-import type { SupportedFramework } from '@/types/docs';
+/**
+ * Renders its content only for the frameworks listed in `frameworks`, or for every framework when the prop is
+ * omitted.
+ *
+ * NOTE: this is the naive conditional-slot version, kept on this branch only to demonstrate the Astro hydration
+ * bug described in videojs/v10#1224. It breaks hydration on HTML pages. Do not merge.
+ */
+import { isValidFramework, type SupportedFramework } from '@/types/docs';
 
 interface Props {
   frameworks?: SupportedFramework[];
@@ -9,29 +15,7 @@ interface Props {
 const { frameworks } = Astro.props;
 const { framework } = Astro.params;
 
-// Only render if current framework matches, or if no frameworks specified (all frameworks)
-const shouldRender = !frameworks || frameworks.includes(framework as SupportedFramework);
+const shouldRender = !frameworks || (isValidFramework(framework) && frameworks.includes(framework));
 ---
 
-{
-  /*
-    What I WANT to do is
-    ```
-    {shouldRender && <slot />}
-    ```
-
-    But I'm running into some crazy problems with hydration.
-    Putting client:* in one of these conditionals causes Astro to just give up hydrating the whole app for some reason.
-    TODO: fix this
-
-    So, while I debug those... let's do this
-  */
-}
-<div
-  class="contents"
-  hidden={!shouldRender}
-  data-search-ignore={shouldRender ? undefined : "all"}
-  data-llms-ignore={shouldRender ? undefined : "all"}
->
-  <slot />
-</div>
+{shouldRender && <slot />}
