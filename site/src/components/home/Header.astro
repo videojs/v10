@@ -104,7 +104,7 @@ const { poster } = Astro.props;
 
     /* Paused until the poster has loaded, so the fade always reveals an image rather than an empty frame. */
     [data-hero-video] {
-      animation: hero-video-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--hero-delay, 900ms) both paused;
+      animation: hero-video-in 1100ms var(--ease-soft) var(--hero-delay, 900ms) both paused;
     }
 
     [data-hero-title] {

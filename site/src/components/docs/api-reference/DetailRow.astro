@@ -93,7 +93,7 @@ const cells = colspan + (toggleColumn ? 1 : 0);
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
-      grid-template-rows 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      grid-template-rows 280ms var(--ease-soft),
       opacity 200ms ease;
   }
 

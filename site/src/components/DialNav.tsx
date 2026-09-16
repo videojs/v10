@@ -86,7 +86,7 @@ export default function DialNav({ left, right }: DialNavProps) {
           style={{
             transformBox: 'view-box',
             transformOrigin: '50% 50%',
-            transition: `transform ${TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            transition: `transform ${TRANSITION_MS}ms var(--ease-in-out)`,
             transform: activeAngle !== null ? `rotate(${activeAngle}deg)` : undefined,
           }}
           className="absolute inset-0"

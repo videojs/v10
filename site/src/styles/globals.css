@@ -108,6 +108,9 @@
   --color-magenta: #cc3566;
   --color-magenta-dark: #922e4f;
 
+  /* Motion. The soft curve is the site's reveal easing: quick start, long settle. */
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
   /* Typography */
   --tracking-*: initial;
   --tracking-tightest: -0.03em;
