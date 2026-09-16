@@ -19,7 +19,7 @@ const { dataAttributes, componentName } = Astro.props;
 
 const attrs = Object.entries(dataAttributes);
 const hasTypes = attrs.some(([, def]) => Boolean(def.type));
-const toggleColumn = attrs.some(([, def]) => Boolean(def.detailedType));
+const toggleColumn = attrs.some(([, def]) => Boolean(def.description || def.detailedType));
 ---
 
 {

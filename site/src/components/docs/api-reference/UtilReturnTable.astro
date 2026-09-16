@@ -25,7 +25,7 @@ const { returnValue, utilName } = Astro.props;
 const fields = Object.entries(returnValue.fields ?? {});
 const hasFields = fields.length > 0;
 const hasDetail = !hasFields && Boolean(returnValue.detailedType || returnValue.description);
-const fieldsToggleColumn = fields.some(([, field]) => Boolean(field.detailedType));
+const fieldsToggleColumn = fields.some(([, field]) => Boolean(field.description || field.detailedType));
 ---
 
 {
@@ -43,14 +43,14 @@ const fieldsToggleColumn = fields.some(([, field]) => Boolean(field.detailedType
       ))}
     </ApiTable>
   ) : hasDetail ? (
-    <ApiTable columns={["Type"]} toggle={Boolean(returnValue.detailedType)}>
+    <ApiTable columns={["Type"]} toggle>
       <DetailRow
         id={`${utilName}-return-type`}
         name="return type"
         detailedType={returnValue.detailedType}
         description={returnValue.description}
         colspan={1}
-        toggleColumn={Boolean(returnValue.detailedType)}
+        toggleColumn
       >
         <td class="w-full">
           <MarkdownCode code={returnValue.type} />

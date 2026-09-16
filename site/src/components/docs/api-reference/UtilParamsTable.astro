@@ -15,7 +15,7 @@ interface Props {
 const { params, utilName } = Astro.props;
 
 const entries = Object.entries(params);
-const toggleColumn = entries.some(([, param]) => Boolean(param.detailedType));
+const toggleColumn = entries.some(([, param]) => Boolean(param.description || param.detailedType));
 ---
 
 <ApiTable columns={["Parameter", "Type", "Default"]} toggle={toggleColumn}>

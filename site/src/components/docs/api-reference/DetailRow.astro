@@ -1,11 +1,11 @@
 ---
 /**
- * One entry of an API reference table: a summary row, its description beneath, and an optional expandable panel
- * holding the full type.
+ * One entry of an API reference table: a compact summary row and an optional expandable panel holding its description
+ * and full type.
  *
- * Renders a `<tbody>` so the three rows share one top border and one hover state. The default slot provides the
- * summary cells; padding is applied to them here so row components stay bare `<td>`s. When `toggleColumn` is set the
- * table reserved a trailing column, and the disclosure button renders there for entries that have a full type.
+ * Renders a `<tbody>` so the summary and detail rows share one top border and one hover state. The default slot provides
+ * the summary cells; padding is applied to them here so row components stay bare `<td>`s. When `toggleColumn` is set
+ * the table reserves a trailing column, and the disclosure button renders there for entries that have detail.
  */
 import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import ServerCode from '@/components/Code/ServerCode.astro';
@@ -22,7 +22,7 @@ interface Props {
 
 const { id, name, detailedType, description, colspan, toggleColumn = false } = Astro.props;
 
-const hasDetail = Boolean(detailedType);
+const hasDetail = Boolean(description || detailedType);
 const cells = colspan + (toggleColumn ? 1 : 0);
 ---
 
@@ -34,12 +34,7 @@ const cells = colspan + (toggleColumn ? 1 : 0);
     hasDetail && "cursor-pointer intent:bg-surface/60 dark:intent:bg-surface",
   ]}
 >
-  <tr
-    class:list={[
-      "*:px-3 *:pt-3 *:align-top sm:*:px-4",
-      description ? "*:pb-1" : "*:pb-3",
-    ]}
-  >
+  <tr class="*:px-3 *:py-3 *:align-top sm:*:px-4">
     <slot />
     {
       toggleColumn && (
@@ -49,7 +44,7 @@ const cells = colspan + (toggleColumn ? 1 : 0);
               type="button"
               aria-expanded="false"
               aria-controls={`${id}-detail`}
-              aria-label={`Full type for ${name}`}
+              aria-label={`Details for ${name}`}
               data-apiref-toggle
               class="-my-0.5 flex size-6 items-center justify-center rounded-md text-muted corner-squircle intent:bg-hover intent:text-current"
             >
@@ -61,23 +56,33 @@ const cells = colspan + (toggleColumn ? 1 : 0);
     }
   </tr>
   {
-    description && (
-      <tr>
-        <td colspan={cells} class="px-3 pt-2 pb-3.5 text-p3 sm:px-4 dark:text-muted">
-          <InlineMarkdown content={description} />
-        </td>
-      </tr>
-    )
-  }
-  {
     hasDetail && (
       <tr id={`${id}-detail`}>
         <td colspan={cells} class="px-3 py-0 sm:px-4">
           {/* Rows cannot animate height, so the panel collapses through a 0fr → 1fr grid track instead of `hidden`. */}
           <div data-apiref-detail aria-hidden="true" inert>
             <div class="min-h-0 overflow-hidden">
-              <div class="mb-4 overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
-                <ServerCode code={detailedType!} lang="ts" />
+              <div class="mb-4 grid gap-4 rounded-md border border-line bg-surface-raised p-4 corner-squircle">
+                {
+                  description && (
+                    <div>
+                      <div class="mb-1 text-p4 font-bold uppercase tracking-wide text-muted">Description</div>
+                      <div class="text-p3">
+                        <InlineMarkdown content={description} />
+                      </div>
+                    </div>
+                  )
+                }
+                {
+                  detailedType && (
+                    <div>
+                      <div class="mb-1.5 text-p4 font-bold uppercase tracking-wide text-muted">Type</div>
+                      <div class="overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
+                        <ServerCode code={detailedType} lang="ts" />
+                      </div>
+                    </div>
+                  )
+                }
               </div>
             </div>
           </div>

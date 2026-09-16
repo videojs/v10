@@ -20,7 +20,7 @@ interface Props {
 const { hostProperties, componentName, nameLabel = 'Property' } = Astro.props;
 
 const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompare(b));
-const toggleColumn = entries.some(([, def]) => Boolean(def.detailedType));
+const toggleColumn = entries.some(([, def]) => Boolean(def.readonly || def.description || def.detailedType));
 ---
 
 <ApiTable columns={[nameLabel, "Type", "Default"]} toggle={toggleColumn}>
