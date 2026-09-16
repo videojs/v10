@@ -84,6 +84,8 @@ export default function JSPickerClient({ currentFramework, currentSlug }: Props)
     });
 
     if (shouldReplace) {
+      // Same page, other framework: keep the query so installation picks survive the switch.
+      const target = url + window.location.search;
       // Base UI's scroll lock transfers html.scrollTop → body.scrollTop
       const scrollLocked = document.documentElement.hasAttribute('data-base-ui-scroll-locked');
       const scrollY = scrollLocked ? document.body.scrollTop : window.scrollY;
@@ -97,7 +99,7 @@ export default function JSPickerClient({ currentFramework, currentSlug }: Props)
         // Ignore storage errors
       }
 
-      window.location.replace(url);
+      window.location.replace(target);
     } else {
       window.location.href = url;
     }
