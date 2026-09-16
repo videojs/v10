@@ -20,6 +20,7 @@ import { parseMultivariantPlaylist } from '../../../../media/hls/parse-multivari
 import { collectErrors } from '../../../behaviors/collect-errors';
 import { exchangeLicenses } from '../../../behaviors/dom/exchange-licenses';
 import { loadVideoSegments } from '../../../behaviors/dom/load-segments';
+import { setupAirPlayFairPlay } from '../../../behaviors/dom/setup-airplay-fairplay';
 import { setupMediaKeys } from '../../../behaviors/dom/setup-media-keys';
 import { setupMediaSource } from '../../../behaviors/dom/setup-mediasource';
 import { resolvePresentation } from '../../../behaviors/resolve-presentation';
@@ -59,5 +60,26 @@ describe('DRM as an optional composition', () => {
     expectTypeOf(drm.state.segmentLoadingBlocked.get()).toEqualTypeOf<boolean | undefined>();
     expectTypeOf(drm.state.negotiatedKeySystem.get()).toEqualTypeOf<string | undefined>();
     expectTypeOf(drm.context.mediaKeys.get()).toEqualTypeOf<MediaKeys | undefined>();
+  });
+
+  it('keeps the AirPlay FairPlay handoff slot-neutral, so a composition can drop it alone', () => {
+    // The handoff reads only slots the DRM pair already owns and writes none, so
+    // composing it changes no shape — which is what lets an engine drop it (and
+    // `fairPlayAirPlayKeySystem` with it) without disturbing the rest of DRM.
+    // Its own session fact, `loadingSuspended`, is observed rather than declared
+    // for the same reason: declaring it would materialize a slot on every DRM
+    // composition, AirPlay bridge or not.
+    const drmConfig = { config: { ...config, drm: {}, keySystems: [] } };
+    const withoutHandoff = createComposition([...BASE_PRE, exchangeLicenses, setupMediaKeys, ...BASE_POST], drmConfig);
+    const withHandoff = createComposition(
+      [...BASE_PRE, exchangeLicenses, setupAirPlayFairPlay, setupMediaKeys, ...BASE_POST],
+      drmConfig
+    );
+
+    expectTypeOf(withHandoff.state).toEqualTypeOf<typeof withoutHandoff.state>();
+    expectTypeOf(withHandoff.context).toEqualTypeOf<typeof withoutHandoff.context>();
+
+    // @ts-expect-error - the session fact belongs to `setupAirPlay`, never to this behavior
+    void withHandoff.state.loadingSuspended;
   });
 });

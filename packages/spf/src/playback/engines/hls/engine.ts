@@ -53,6 +53,7 @@ import { loadChapters } from '../../behaviors/dom/load-chapters';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
+import { setupAirPlayFairPlay } from '../../behaviors/dom/setup-airplay-fairplay';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaKeys } from '../../behaviors/dom/setup-media-keys';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
@@ -550,7 +551,13 @@ export function createHlsVideoEngine<const KeySystems extends readonly KeySystem
       // and the sessions it opens must close before `setupMediaKeys` detaches
       // the MediaKeys they belong to. Setup order costs nothing in return — its
       // precondition is reactive on `context.mediaKeys`.
+      //
+      // `setupAirPlayFairPlay` sits ahead of `setupMediaKeys` for the same
+      // reason. Both react to the AirPlay session's falling edge — one
+      // releasing the receiver's MediaKeys, the other negotiating MSE's afresh
+      // — and registration order is what puts the detach before the attach.
       exchangeLicenses,
+      setupAirPlayFairPlay,
       setupMediaKeys,
 
       // ── Non-zero-PTS relocation (spike) ──────────────────────────────────
