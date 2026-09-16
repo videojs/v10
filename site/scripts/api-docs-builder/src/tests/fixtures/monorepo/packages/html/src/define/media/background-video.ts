@@ -2,12 +2,10 @@
  * Mock background video registration — mirrors define/media/background-video.ts.
  *
  * Exercises: exclusion. BackgroundVideo uses MediaAttachMixin(HTMLElement)
- * without MediaPropsMixin. The builder should discover this file (it has
- * static tagName) but skip it because parseMixinChain returns null.
- * Its API reference is manually maintained in MDX (#1243).
+ * without a media factory. The builder should discover this file (it registers an element with a static tagName) but
+ * skip it because there is no composition to follow. Its API reference is manually maintained in MDX (#1243).
  */
-import { BackgroundVideo } from '../../media/background-video';
+import { BackgroundVideoElement } from '../../media/background-video';
+import { safeDefine } from '../../registration/safe-define';
 
-export class BackgroundVideoElement extends BackgroundVideo {
-  static readonly tagName = 'background-video';
-}
+safeDefine(BackgroundVideoElement);

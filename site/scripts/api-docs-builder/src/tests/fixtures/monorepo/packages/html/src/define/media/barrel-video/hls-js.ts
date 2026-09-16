@@ -1,5 +1,4 @@
-import { SimpleVideo } from '../../../media/simple-video';
+import { BarrelVideoElement } from '../../../media/barrel-video/hls-js';
+import { safeDefine } from '../../../registration/safe-define';
 
-export class BarrelVideoElement extends SimpleVideo {
-  static readonly tagName = 'barrel-video';
-}
+safeDefine(BarrelVideoElement);

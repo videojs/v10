@@ -1,4 +1,5 @@
 import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import { redispatchEvent } from '@videojs/utils/events';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
@@ -37,6 +38,16 @@ export interface MediaExtensionConstructor<T extends MediaExtension = MediaExten
 export interface MediaExtensions extends Map<MediaExtensionConstructor, MediaExtension> {
   get<T extends MediaExtension>(component: MediaExtensionConstructor<T>): T | undefined;
   set<T extends MediaExtension>(component: MediaExtensionConstructor<T>, instance: T): this;
+}
+
+const forwardedEvents = new WeakSet<Event>();
+
+/**
+ * Whether an event is an adapter's copy of one its target element dispatched. A composed copy already reached any
+ * element wrapping the target through the shadow boundary, so a bridge can leave it alone.
+ */
+export function isForwardedEvent(event: Event): boolean {
+  return forwardedEvents.has(event);
 }
 
 export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
@@ -119,7 +130,7 @@ export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends
   }
 
   #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    redispatchEvent(this, event, { beforeDispatch: (copy) => forwardedEvents.add(copy) });
   };
 
   /**

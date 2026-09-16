@@ -11,7 +11,7 @@ import {
   selectVolume,
 } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles } from '@videojs/utils/dom';
 
@@ -37,7 +37,7 @@ export class VolumeSliderElement extends UIElement {
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
-  } satisfies PropertyDeclarationMap<Exclude<keyof VolumeSliderCore.Props, 'value' | 'min' | 'max'>>;
+  } satisfies PropertyDeclarations;
 
   label: Text | string = '';
   step = VolumeSliderCore.defaultProps.step;

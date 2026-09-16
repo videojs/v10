@@ -1,5 +1,5 @@
 import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -11,7 +11,7 @@ export class MenuItemElement extends UIElement {
   static override properties = {
     disabled: { type: Boolean },
     commandfor: { type: String },
-  } satisfies PropertyDeclarationMap<'disabled' | 'commandfor'>;
+  } satisfies PropertyDeclarations;
 
   disabled = false;
   /** ID of a nested `<media-menu-content>` page to open when activated. */

@@ -1,11 +1,9 @@
-import { MuxAudio } from '../../../media/mux-audio/spf';
+import { MuxAudioElement } from '../../../media/mux-audio/spf';
 import { safeDefine } from '../../../registration/safe-define';
 
-export class MuxAudioElement extends MuxAudio {
-  static readonly tagName = 'mux-audio';
-}
-
 safeDefine(MuxAudioElement);
+
+export { MuxAudioElement };
 
 declare global {
   /** The Mux audio flavors in the build — see `../mux-video/spf` for why. */

@@ -4,8 +4,7 @@
  * Exercises: discovery of an audio element whose host mixin lives in another
  * workspace package.
  */
-import { SpfAudio } from '../../media/spf-audio';
+import { SpfAudioElement } from '../../media/spf-audio';
+import { safeDefine } from '../../registration/safe-define';
 
-export class SpfAudioElement extends SpfAudio {
-  static readonly tagName = 'spf-audio';
-}
+safeDefine(SpfAudioElement);

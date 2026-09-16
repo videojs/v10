@@ -1,6 +1,6 @@
 import { BufferingIndicatorCore, BufferingIndicatorDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectPlayback } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/controller';
@@ -11,7 +11,7 @@ export class BufferingIndicatorElement extends UIElement {
 
   static override properties = {
     delay: { type: Number },
-  } satisfies PropertyDeclarationMap<keyof BufferingIndicatorCore.Props>;
+  } satisfies PropertyDeclarations;
 
   delay = BufferingIndicatorCore.defaultProps.delay;
 

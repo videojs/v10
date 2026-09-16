@@ -1,5 +1,4 @@
-import { EmbedVideo } from '../../media/embed-video';
+import { EmbedVideoElement } from '../../media/embed-video';
+import { safeDefine } from '../../registration/safe-define';
 
-export class EmbedVideoElement extends EmbedVideo {
-  static readonly tagName = 'embed-video';
-}
+safeDefine(EmbedVideoElement);

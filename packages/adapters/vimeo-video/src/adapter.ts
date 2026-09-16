@@ -126,8 +126,8 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
   }
 
   /** Bind the iframe hosting the embed. The player follows once an embed URL resolves, maybe not until `load()`. */
-  attach(target: HTMLIFrameElement | null): void {
-    if (!target || this.#target === target) return;
+  attach(target: HTMLIFrameElement): void {
+    if (this.#target === target) return;
 
     if (this.#target) this.detach();
 

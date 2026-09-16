@@ -7,6 +7,15 @@ export interface AttributeSnapshotEntry {
 
 export type AttributeSnapshot = readonly AttributeSnapshotEntry[];
 
+/** Set an attribute to a changed string value, or remove it when the value is `null`. Equal values are not rewritten. */
+export function setAttributeValue(element: Element, name: string, value: string | null): void {
+  if (value === null) {
+    element.removeAttribute(name);
+  } else if (element.getAttribute(name) !== value) {
+    element.setAttribute(name, value);
+  }
+}
+
 /** Capture authored values for the selected attributes. */
 export function snapshotAttributes(element: Element, names: Iterable<string>): AttributeSnapshot {
   return [...names].map((name) => ({ name, value: element.getAttribute(name) }));
@@ -15,11 +24,7 @@ export function snapshotAttributes(element: Element, names: Iterable<string>): A
 /** Restore a snapshot created by `snapshotAttributes`. */
 export function restoreAttributes(element: Element, snapshot: AttributeSnapshot): void {
   for (const { name, value } of snapshot) {
-    if (value === null) {
-      element.removeAttribute(name);
-    } else {
-      element.setAttribute(name, value);
-    }
+    setAttributeValue(element, name, value);
   }
 }
 

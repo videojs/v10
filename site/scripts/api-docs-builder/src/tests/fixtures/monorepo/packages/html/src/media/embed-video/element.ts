@@ -1,0 +1,16 @@
+import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
+import { EmbedHost } from '../../../../media/src/dom/embed';
+
+function MediaAttachMixin(base: any) {
+  return base;
+}
+
+class EmbedCustomMediaElement extends CustomMediaElement({ adapter: { constructor: EmbedHost }, target: {} }) {}
+
+/**
+ * @mediaType video
+ * @mediaTarget iframe
+ */
+export class EmbedVideoElement extends MediaAttachMixin(EmbedCustomMediaElement) {
+  static readonly tagName = 'embed-video';
+}

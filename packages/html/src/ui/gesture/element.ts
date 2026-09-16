@@ -5,7 +5,7 @@ import {
   getGestureActionValue,
   resolveGestureAction,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { containerContext, playerContext } from '../../player/context';
@@ -15,7 +15,7 @@ import { UIElement } from '../ui-element';
 export class GestureElement extends UIElement {
   static readonly tagName = 'media-gesture';
 
-  static override properties: PropertyDeclarationMap = {
+  static override properties: PropertyDeclarations = {
     type: { type: String },
     action: { type: String },
     value: { type: Number },

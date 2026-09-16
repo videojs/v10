@@ -2,7 +2,7 @@ import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectBuffer, selectTime } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
 import { durationSuffixText, elapsedSuffixText, remainingSuffixText } from '@videojs/core/i18n/text/time';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { hasTimeRange } from '@videojs/media';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
@@ -21,7 +21,7 @@ export class TimeElement extends UIElement {
     negativeSign: { type: String, attribute: 'negative-sign' },
     label: { type: String },
     toggle: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
+  } satisfies PropertyDeclarations;
 
   type: TimeType = TimeCore.defaultProps.type;
   negativeSign = TimeCore.defaultProps.negativeSign;

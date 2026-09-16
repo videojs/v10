@@ -45,9 +45,11 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@lit/context": "^1.1.0"
+    "@lit/context": "^1.1.0",
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@lit/reactive-element": "^2.1.2",
     "happy-dom": "^20.11.1",
     "vite-plus": "catalog:",
     "vitest": "catalog:"

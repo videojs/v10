@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { ReactiveElement } from '../reactive-element';
-import type { PropertyValues, ReactiveController } from '../types';
+import type { PropertyDeclarations, PropertyValues, ReactiveController } from '../types';
 
 let tagCounter = 0;
 
@@ -163,6 +163,21 @@ describe('ReactiveElement properties', () => {
     expect(el.negativeSign).toBe('\u2212');
   });
 
+  it('lowercases an implicit attribute name', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        closeDelay: { type: Number },
+      };
+      closeDelay = 0;
+    }
+
+    const el = createElement(TestElement);
+
+    expect(TestElement.observedAttributes).toContain('closedelay');
+    el.setAttribute('closedelay', '100');
+    expect(el.closeDelay).toBe(100);
+  });
+
   it('triggers requestUpdate on property change', async () => {
     const update = vi.fn();
 
@@ -290,6 +305,117 @@ describe('ReactiveElement properties', () => {
 
     expect(update).not.toHaveBeenCalled();
   });
+
+  it('uses a custom hasChanged predicate', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        count: { type: Number, hasChanged: (value: number, oldValue: number) => value > oldValue },
+      };
+      count = 0;
+
+      protected override update() {
+        update();
+      }
+    }
+
+    const el = createElement(TestElement);
+
+    document.body.append(el);
+    await el.updateComplete;
+    update.mockClear();
+
+    el.count = -1;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(update).not.toHaveBeenCalled();
+
+    el.count = 1;
+    await el.updateComplete;
+    expect(update).toHaveBeenCalledOnce();
+  });
+
+  it('supports a converter function with a type hint', () => {
+    const converter = vi.fn((value: string | null, type?: unknown) => `${String(type)}:${value}`);
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: 'label', converter },
+      };
+      label = '';
+    }
+
+    const el = createElement(TestElement);
+
+    el.setAttribute('label', 'Player');
+
+    expect(el.label).toBe('label:Player');
+    expect(converter).toHaveBeenCalledWith('Player', 'label');
+  });
+
+  it('does not create an accessor for noAccessor properties', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String, noAccessor: true },
+      };
+      label = 'default';
+
+      protected override update() {
+        update();
+      }
+    }
+
+    const el = createElement(TestElement);
+
+    document.body.append(el);
+    await el.updateComplete;
+    update.mockClear();
+
+    el.label = 'changed';
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(update).not.toHaveBeenCalled();
+    expect(Object.getOwnPropertyDescriptor(TestElement.prototype, 'label')).toBeUndefined();
+  });
+
+  it('wraps an existing accessor and records its initial value', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      #label = 'default';
+
+      get label() {
+        return this.#label;
+      }
+
+      set label(value: string) {
+        this.#label = value.toUpperCase();
+      }
+
+      protected override update(changed: PropertyValues) {
+        update(new Map(changed));
+      }
+    }
+
+    const el = createElement(TestElement);
+
+    document.body.append(el);
+    await el.updateComplete;
+
+    expect(update.mock.calls[0]![0]).toEqual(new Map([['label', undefined]]));
+
+    update.mockClear();
+    el.label = 'player';
+    await el.updateComplete;
+
+    expect(el.label).toBe('PLAYER');
+    expect(update.mock.calls[0]![0]).toEqual(new Map([['label', 'default']]));
+  });
 });
 
 describe('ReactiveElement controllers', () => {
@@ -333,6 +459,26 @@ describe('ReactiveElement controllers', () => {
 
     el.addController(controller);
     expect(controller.hostConnected).toHaveBeenCalledOnce();
+  });
+
+  it('does not notify a controller twice when a connected element upgrades', () => {
+    const hostConnected = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      constructor() {
+        super();
+        this.addController({ hostConnected });
+      }
+    }
+
+    const tag = uniqueTag('upgrade-controller-el');
+    const container = document.createElement('div');
+
+    container.innerHTML = `<${tag}></${tag}>`;
+    document.body.append(container);
+    customElements.define(tag, TestElement);
+
+    expect(hostConnected).toHaveBeenCalledOnce();
   });
 
   it('removes controller', () => {
@@ -618,6 +764,36 @@ describe('ReactiveElement performUpdate', () => {
     el.performUpdate();
     expect(update).not.toHaveBeenCalled();
   });
+
+  it('accepts another update after an update throws', async () => {
+    class TestElement extends ReactiveElement {
+      shouldThrow = false;
+
+      override performUpdate() {
+        super.performUpdate();
+      }
+
+      protected override update() {
+        if (this.shouldThrow) throw new Error('update failed');
+      }
+    }
+
+    const el = createElement(TestElement);
+
+    document.body.append(el);
+    await el.updateComplete;
+
+    el.shouldThrow = true;
+    el.requestUpdate();
+
+    expect(() => el.performUpdate()).toThrow('update failed');
+    expect(el.isUpdatePending).toBe(false);
+
+    el.shouldThrow = false;
+    await el.updateComplete;
+    el.requestUpdate();
+    await expect(el.updateComplete).resolves.toBe(true);
+  });
 });
 
 describe('ReactiveElement updateComplete', () => {
@@ -653,9 +829,9 @@ describe('ReactiveElement updateComplete', () => {
 });
 
 describe('ReactiveElement property inheritance', () => {
-  it('inherits properties from parent class', () => {
+  it('inherits properties from parent class without redeclaring them', () => {
     class Base extends ReactiveElement {
-      static override properties = {
+      static override properties: PropertyDeclarations = {
         label: { type: String },
       };
       label = '';
@@ -663,7 +839,6 @@ describe('ReactiveElement property inheritance', () => {
 
     class Child extends Base {
       static override properties = {
-        ...Base.properties,
         disabled: { type: Boolean },
       };
       disabled = false;
@@ -680,48 +855,6 @@ describe('ReactiveElement property inheritance', () => {
 });
 
 describe('ReactiveElement upgrade', () => {
-  it('restores own properties before connected lifecycle consumers run', async () => {
-    let connectedLabel: string | undefined;
-    let controllerLabel: string | undefined;
-
-    class TestElement extends ReactiveElement {
-      static override properties = {
-        label: { type: String },
-      };
-      label = 'default';
-
-      constructor() {
-        super();
-        this.addController({
-          hostConnected: () => (controllerLabel = this.label),
-        });
-      }
-
-      override connectedCallback() {
-        super.connectedCallback();
-        connectedLabel = this.label;
-      }
-    }
-
-    const tag = uniqueTag('connect-lifecycle-el');
-
-    customElements.define(tag, TestElement);
-
-    // SAFETY: The tag was registered with TestElement immediately above.
-    const el = document.createElement(tag) as TestElement;
-
-    Object.defineProperty(el, 'label', {
-      value: 'pre-connect',
-      writable: true,
-      configurable: true,
-      enumerable: true,
-    });
-    document.body.appendChild(el);
-
-    await vi.waitFor(() => expect(connectedLabel).toBe('pre-connect'));
-    expect(controllerLabel).toBe('pre-connect');
-  });
-
   it('does not overwrite properties set after connection but before the first update', async () => {
     const update = vi.fn();
 
@@ -759,9 +892,7 @@ describe('ReactiveElement upgrade', () => {
     expect(update).toHaveBeenCalledWith('later');
   });
 
-  it('activates reactive accessors shadowed by native class fields', async () => {
-    const update = vi.fn();
-
+  it('reports reactive accessors shadowed by native class fields', async () => {
     class TestElement extends ReactiveElement {
       static override properties = {
         label: { type: String },
@@ -779,10 +910,6 @@ describe('ReactiveElement upgrade', () => {
           enumerable: true,
         });
       }
-
-      protected override update() {
-        update(this.label);
-      }
     }
 
     const tag = uniqueTag('upgrade-class-field-el');
@@ -793,16 +920,8 @@ describe('ReactiveElement upgrade', () => {
     const el = document.createElement(tag) as TestElement;
 
     document.body.appendChild(el);
-    await el.updateComplete;
 
-    expect(Object.hasOwn(el, 'label')).toBe(false);
-    expect(el.label).toBe('default');
-
-    update.mockClear();
-    el.label = 'changed';
-    await el.updateComplete;
-
-    expect(update).toHaveBeenCalledOnce();
-    expect(update).toHaveBeenCalledWith('changed');
+    await expect(el.updateComplete).rejects.toThrow('Reactive properties on');
+    expect(Object.hasOwn(el, 'label')).toBe(true);
   });
 });

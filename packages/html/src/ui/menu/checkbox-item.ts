@@ -1,5 +1,5 @@
 import { applyElementProps } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyDeclarations, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
@@ -12,7 +12,7 @@ export class MenuCheckboxItemElement extends UIElement {
   static override properties = {
     checked: { type: Boolean },
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<'checked' | 'disabled'>;
+  } satisfies PropertyDeclarations;
 
   checked = false;
   disabled = false;

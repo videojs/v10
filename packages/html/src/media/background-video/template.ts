@@ -26,7 +26,7 @@ export const VideoAttributes = [
  * Shared so the two can't drift in presentation. `object-fit` and `object-position` are the only styling hooks — a
  * background video has no controls to theme.
  */
-export function getTemplateHTML(attrs: Record<string, string>) {
+export function backgroundVideoTemplate(attrs: Record<string, string>) {
   return /*html*/ `
     <style>
       :host {

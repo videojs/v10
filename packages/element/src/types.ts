@@ -46,12 +46,6 @@ export interface ReactiveController {
    */
   hostDisconnected?(): void;
 
-  /**
-   * Called when the host is permanently destroyed. Unlike `hostDisconnected`, this signals that the host will not
-   * reconnect — all resources should be released.
-   */
-  hostDestroyed?(): void;
-
   /** Called during the client-side host update, just before the host calls its own update. */
   hostUpdate?(): void;
 
@@ -59,33 +53,42 @@ export interface ReactiveController {
   hostUpdated?(): void;
 }
 
-/** A Map of property keys to previous values, provided to lifecycle methods that receive changed properties. */
-export type PropertyValues = Map<string, unknown>;
-
-/** Defines options for a reactive property. */
-export interface PropertyDeclaration {
-  /**
-   * Indicates the type of the property. This is used as a hint to determine how to convert between attributes and
-   * properties.
-   */
-  readonly type?: typeof String | typeof Boolean | typeof Number;
-
-  /**
-   * Indicates the attribute name to use for this property. If a string, that string is used as the attribute name. By
-   * default, the lowercased property name is used.
-   */
-  readonly attribute?: string;
+/** A controller that can release permanent resources when used with `DestroyMixin`. */
+export interface DestroyController extends ReactiveController {
+  hostDestroyed?(): void;
 }
 
-/**
- * Map of property names to {@linkcode PropertyDeclaration} options.
- *
- * @example
- *   ```ts
- *   static override properties = {
- *   src: { type: String },
- *   muted: { type: Boolean },
- *   } satisfies PropertyDeclarationMap<keyof MyElement>;
- *   ```;
- */
-export type PropertyDeclarationMap<K extends string = string> = Record<K, PropertyDeclaration>;
+/** Converts property values to and from attribute values. */
+export interface ComplexAttributeConverter<Type = unknown, TypeHint = unknown> {
+  fromAttribute?(value: string | null, type?: TypeHint): Type;
+  toAttribute?(value: Type, type?: TypeHint): unknown;
+}
+
+type PropertyConverter<Type = unknown, TypeHint = unknown> =
+  | ComplexAttributeConverter<Type>
+  | ((value: string | null, type?: TypeHint) => Type);
+
+/** Defines the supported Lit-compatible options for a reactive property. */
+export interface PropertyDeclaration<Type = unknown, TypeHint = unknown> {
+  readonly attribute?: boolean | string;
+  readonly type?: TypeHint;
+  readonly converter?: PropertyConverter<Type, TypeHint>;
+  hasChanged?(value: Type, oldValue: Type): boolean;
+  readonly noAccessor?: boolean;
+}
+
+/** Map of properties to {@linkcode PropertyDeclaration} options. */
+export interface PropertyDeclarations {
+  readonly [key: string]: PropertyDeclaration;
+}
+
+/** A strongly typed map of property keys to their previous values. */
+export interface PropertyValueMap<T> extends Map<PropertyKey, unknown> {
+  get<K extends keyof T>(key: K): T[K] | undefined;
+  set<K extends keyof T>(key: K, value: T[K]): this;
+  has<K extends keyof T>(key: K): boolean;
+  delete<K extends keyof T>(key: K): boolean;
+}
+
+/** A map of property keys to previous values, provided to update lifecycle methods. */
+export type PropertyValues<T = any> = T extends object ? PropertyValueMap<T> : Map<PropertyKey, unknown>;
