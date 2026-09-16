@@ -23,6 +23,7 @@
 .actions button {
   padding: 4px 12px;
   font-size: 0.8125rem;
+  color: #111827;
   cursor: pointer;
   background: white;
   border: 1px solid #ccc;
