@@ -1,11 +1,15 @@
 {
   "name": "@videojs/adapter-test",
+  "version": "10.0.0-rc.2",
   "private": true,
   "description": "Shared test contracts for Video.js playback adapters",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
     "./iframe": "./src/iframe.ts"
+  },
+  "scripts": {
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "peerDependencies": {
     "vite-plus": "catalog:"
