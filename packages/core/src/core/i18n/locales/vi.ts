@@ -53,7 +53,7 @@ export default {
     showRemaining: 'Hiển thị thời gian còn lại, {duration}.',
     toggleElapsed: 'Chuyển đổi giữa thời gian đã phát và thời gian còn lại.',
     toggleDuration: 'Chuyển đổi giữa thời lượng và thời gian còn lại.',
-    position: '{current} / {duration}',
+    position: '{current} trên {duration}',
     unknown: 'Phương tiện không tải được, thời gian không xác định.',
   },
   playback: {
