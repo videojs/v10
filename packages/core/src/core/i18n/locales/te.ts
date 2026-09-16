@@ -39,7 +39,7 @@ export default {
     stop: 'AirPlay ఆపండి',
   },
   slider: {
-    seek: 'సమయాన్ని మార్చండి',
+    seek: 'సీక్ చేయండి',
   },
   time: {
     current: 'ప్రస్తుత సమయం',
