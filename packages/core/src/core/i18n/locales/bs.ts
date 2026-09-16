@@ -26,7 +26,7 @@ export default {
   },
   live: {
     playing: 'Reprodukcija uživo',
-    seekToEdge: 'Idi na prenos uživo',
+    seekToEdge: 'Idi na prijenos uživo',
     badge: 'Uživo',
   },
   cast: {
