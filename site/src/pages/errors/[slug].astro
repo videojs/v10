@@ -2,6 +2,7 @@
 import { LEGACY_V8_DOCS_URL, LEGACY_V8_INSTALL } from 'video.js/errors';
 
 import ServerCode from '@/components/Code/ServerCode.astro';
+import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 import A from '@/components/typography/A.astro';
 import CodeFrame from '@/components/typography/CodeFrame.astro';
 import H2 from '@/components/typography/H2.astro';
@@ -24,7 +25,7 @@ type Props = LegacyErrorPage;
 
 const page = Astro.props;
 
-const MIGRATION_GUIDE_SLUG = 'how-to/migrate-from-video-js-8';
+const MIGRATION_GUIDE_SLUG = 'guides/migrate-from-video-js-8';
 const description = `${page.code}: ${page.summary.replaceAll('`', '')}`;
 const v8DocsHost = new URL(LEGACY_V8_DOCS_URL).host;
 ---
@@ -34,6 +35,7 @@ const v8DocsHost = new URL(LEGACY_V8_DOCS_URL).host;
   description={description}
   canonical={new URL(page.path, PRODUCTION_URL).href}
 >
+  <MarkdownAlternate slot="head" />
   <article
     class="@container text-p2 sm:text-p15"
     data-search-content
