@@ -763,6 +763,10 @@
   to = "/docs/framework/:framework/guides/:splat"
   status = 301
 
+# Reference pages retired on purpose for now, even though their exports still exist; their old URLs stop at the 404
+# below rather than redirecting: use-media, use-media-attach, use-media-extension, use-media-instance, use-attach-media,
+# use-player-context, use-dialog-context, use-error-dialog-context, use-menu-context, use-optional-menu-context,
+# use-popover-context, use-tooltip-context, player-context, i-18-n-context, html-i-18-n-context, media-attach-mixin.
 # Missing pages under the new prefixes must 404 here; otherwise the hop below would bounce them between
 # reference/ and components/ forever. Existing files are served before either rule applies.
 [[redirects]]
