@@ -147,6 +147,12 @@ export const fairPlayKeySystem: KeySystemModule<'com.apple.fps'> = {
  *
  * Deliberately outside `DEFAULT_KEY_SYSTEMS`: it is reachable only through `setupAirPlayFairPlay`, so a composition
  * that drops that behavior drops this with it.
+ *
+ * Apple's FPS sample additionally pins `distinctiveIdentifier` and `persistentState` to `not-allowed`, where
+ * `buildKeySystemConfigurations` leaves both at the spec's `optional`. Not matched, because it buys nothing measurable:
+ * that sample reproduces the AirPlay `generateRequest` refusal _with_ those set, so they are not what the CDM is
+ * objecting to, and expressing them would widen `KeySystemModule` for every system to serve one. Revisit only with a
+ * case where the negotiation itself is refused.
  */
 export const fairPlayAirPlayKeySystem: KeySystemModule<'com.apple.fps'> = {
   keySystem: 'com.apple.fps',

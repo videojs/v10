@@ -65,7 +65,9 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   the boundary. `exchangeLicenses` is composed **first**:
   `createComposition` calls cleanups in registration order, so its
   sessions must close before the detach.
-- **FairPlay-AirPlay handoff:** implemented, device verification owed.
+- **FairPlay-AirPlay handoff:** implemented, EME path plus the legacy
+  `WebKitMediaKeys` fallback the measured sender bug makes mandatory (see
+  Open questions); end-to-end device verification owed.
   A live AirPlay session takes playback off MSE onto the native-HLS
   fallback `<source>`, whose key requests arrive as `skd` — which the
   MediaKeys negotiated for `sinf`/`cenc` cannot serve. `setupMediaKeys`
@@ -84,7 +86,13 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   ahead of `setupMediaKeys` so its detach precedes that re-attach on the
   shared falling edge; costs 283 B brotli on `/hls`, all recoverable by
   omitting it (`engine-drm-optional.test-d.ts` pins it slot-neutral).
-  Video engine only: the audio-only engine composes no DRM.
+  Video engine only: the audio-only engine composes no DRM. When EME
+  refuses `generateRequest` during the session — measured, not
+  hypothetical — the behavior hands over to `media/dom/fairplay-legacy.ts`
+  on that refusal alone, awaiting the EME detach first because
+  `webkitSetMediaKeys` is synchronous, and resuming from the cached
+  `webkitneedkey` payload rather than an `element.load()`, which under a
+  live receiver would destroy the session being established.
 - **Per-key-system composability:** each system is one
   `KeySystemModule` value (`media/drm.ts` for the DOM-free contract,
   `media/dom/key-systems.ts` for `widevineKeySystem`,
@@ -364,22 +372,43 @@ path.
   precede MediaSource attachment, which is what made (a) attractive.
   Lean: (c) — confirm against the load behaviors' FSM shape when
   implementation starts.
-- **FairPlay-AirPlay runtime handoff.** Resolved 2026-09-11 and built
-  2026-09-16; the shape and its rationale are recorded under Status.
-  What remains open is **verification**, not design: the unit tests pin
-  protocol and lifecycle against stubs only, and no AirPlay receiver has
-  played a FairPlay source through this path yet. Until that pass, treat
-  the handoff as unverified.
-  **The legacy fallback (`WebKitMediaKeys`, `com.apple.fps.1_0`) stays
-  deferred pending a device re-check.** Prior art: elements PR
+- **FairPlay-AirPlay runtime handoff.** Resolved 2026-09-11, built
+  2026-09-16, including the legacy fallback. The shape and its rationale
+  are recorded under Status. What remains open is **end-to-end
+  verification**: the fallback's unit tests pin protocol and lifecycle
+  against stubs, and no receiver has yet played a FairPlay source through
+  the completed path.
+
+  **The legacy `WebKitMediaKeys` / `com.apple.fps.1_0` fallback is no
+  longer deferred — it is required.** Its deferral was conditioned on a
+  device re-check of the Apple sender bug that elements PR
   [muxinc/elements#1277](https://github.com/muxinc/elements/pull/1277)
-  falls back to it only on `NotSupportedError` from `generateRequest`
-  while `webkitCurrentPlaybackTargetIsWireless`, non-sticky, with no OS
-  sniffing — an Apple sender bug on iOS/macOS 26.1–26.2 that may since be
-  fixed. Legacy lacks SPC v3 and works for `src=` only, so it is never the
-  primary path. The built handoff is needed regardless of whether that
-  bug persists: the init-data type, not the bug, is what the MSE
-  negotiation cannot satisfy.
+  works around, on the guess that iOS/macOS 26.1–26.2 "may since be
+  fixed". That re-check ran on 2026-09-16 and it is not fixed:
+
+  - **macOS/Safari 26.6.2 → Roku TV**, driving this engine: negotiation
+    for `initDataTypes: ['skd']` succeeds, then `generateRequest` throws
+    `NotSupportedError` — SVTA 4021, with `webkitneedkey` firing for the
+    same key alongside the `skd` `encrypted` event.
+  - **iOS 26.6.1 → macOS 26.6**, driving Apple's own FPS sample player
+    against a Mux asset — no engine involved. Plays on the sender, fails
+    when cast. Independently reproduced by Santi Puppo; the sample is
+    archived in Slack (`FairPlay DRM AirPlay bug test suite iOS 26`).
+
+  Two senders, two receivers, and a framework-free reproducer, so the
+  fault is WebKit's rather than anything in this composition. That sample
+  also corroborates the implementation: it filters to `skd`, negotiates
+  against `application/vnd.apple.mpegurl`, and POSTs the raw SPC as
+  `application/octet-stream` for a raw CKC — the conventions the engine
+  already encodes.
+
+  Legacy lacks SPC v3 and works for `src=` only, so it stays the
+  fallback and never the primary path. The EME handoff is needed
+  regardless: the init-data type, not the bug, is what the MSE
+  negotiation cannot satisfy. Delete the fallback when WebKit fixes this
+  — nothing sniffs an OS, so a fixed sender stops taking the path on its
+  own and the code goes cold before it goes away.
+
 - **MediaKeys re-use across sources.** When the consumer changes
   sources within the same key system + license server, should the
   engine re-use the existing MediaKeys instance or tear down and
