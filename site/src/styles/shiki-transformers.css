@@ -91,11 +91,12 @@
 }
 
 /*
- * Inline snippets highlighted by `highlightInline` carry both palettes; pick the dark one under `.dark`. They render
- * at the table text size rather than the relative inline-code size so the token colors stay legible.
+ * Inline snippets highlighted by `highlightInline` carry both palettes; pick the dark one under `.dark`. Inside table
+ * cells they match the cell text instead of stepping down like prose inline code, so the token colors stay legible at
+ * the smaller table size.
  */
-[data-code-inline] {
-  font-size: var(--text-p3);
+:is(td, th) [data-code-inline] {
+  font-size: 1em;
 }
 
 [data-code-inline] span {
