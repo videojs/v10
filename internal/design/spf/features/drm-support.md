@@ -85,8 +85,11 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   license a pipeline that is not playing — and dedupes nothing, because
   the receiver re-proxies its SPC on connect and on disconnect. Composed
   ahead of `setupMediaKeys` so its detach precedes that re-attach on the
-  shared falling edge; costs 283 B brotli on `/hls`, all recoverable by
-  omitting it (`engine-drm-optional.test-d.ts` pins it slot-neutral).
+  shared falling edge. Costs **1,028 B brotli** on `/hls`, all recoverable
+  by omitting the behavior — of which **612 B** is the legacy fallback
+  alone, separately deletable when WebKit stops needing it
+  (`engine-drm-optional.test-d.ts` pins the behavior slot-neutral, and
+  `media/dom/fairplay-legacy.ts` is reachable only through it).
   Video engine only: the audio-only engine composes no DRM. When EME
   refuses `generateRequest` during the session — measured, not
   hypothetical — the behavior hands over to `media/dom/fairplay-legacy.ts`
