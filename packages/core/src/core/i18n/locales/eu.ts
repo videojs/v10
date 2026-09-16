@@ -30,8 +30,8 @@ export default {
     badge: 'Zuzenean',
   },
   cast: {
-    start: 'Hasi igortzen',
-    stop: 'Gelditu igortzea',
+    start: 'Hasi transmititzen',
+    stop: 'Gelditu transmititzea',
     connecting: 'Konektatzen',
   },
   airplay: {
@@ -39,7 +39,7 @@ export default {
     stop: 'Gelditu AirPlay',
   },
   slider: {
-    seek: 'Bilatu',
+    seek: 'Kokapena',
   },
   time: {
     current: 'Uneko denbora',
