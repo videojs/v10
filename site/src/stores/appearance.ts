@@ -3,7 +3,8 @@ import { atom, onMount, type WritableAtom } from 'nanostores';
 import { ACCENT_KEY, THEME_KEY, TONE_KEY } from '@/consts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
-export const ACCENTS = ['orange', 'gold', 'magenta', 'red'] as const;
+/** Menu order follows the brand palette; orange stays the default. */
+export const ACCENTS = ['gold', 'orange', 'red', 'magenta'] as const;
 export const TONES = ['soft', 'deep'] as const;
 
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];

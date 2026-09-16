@@ -33,14 +33,14 @@ const TONE_OPTIONS = [
 ] satisfies { value: Tone; label: string }[];
 
 /**
- * Swatch colours are fixed brand values rather than theme tokens, since the accent token itself changes with the
- * selection and a swatch must keep showing its own colour.
+ * Swatches show the brand colour tokens rather than the accent token, which changes with the selection while a swatch
+ * must keep showing its own colour.
  */
 const ACCENT_SWATCHES = {
-  orange: { label: 'Orange', color: '#ff6200' },
-  gold: { label: 'Gold', color: '#e08a00' },
-  magenta: { label: 'Magenta', color: '#cc3566' },
-  red: { label: 'Red', color: '#eb3132' },
+  orange: { label: 'Orange', color: 'var(--color-orange)' },
+  gold: { label: 'Gold', color: 'var(--color-gold)' },
+  magenta: { label: 'Magenta', color: 'var(--color-magenta)' },
+  red: { label: 'Red', color: 'var(--color-red)' },
 } satisfies Record<Accent, { label: string; color: string }>;
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
