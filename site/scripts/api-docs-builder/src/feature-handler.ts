@@ -3,7 +3,7 @@ import * as path from 'node:path';
 
 import type { Expression, ObjectExpression, ObjectProperty, TSSignature, TSType } from 'oxc-parser';
 
-import { formatDetailedType } from './formatter.js';
+import { abbreviateType, formatDetailedType } from './formatter.js';
 import type { OxcProject, ResolvedDeclaration, ResolvedMember, SourceFile } from './oxc-project.js';
 import {
   expressionText,
@@ -328,9 +328,11 @@ function extractMembers(project: OxcProject, members: readonly ResolvedMember[])
     const description = getJSDocDescription(resolved.file, member);
 
     if (member.type === 'TSMethodSignature') {
-      const definition: FeatureActionDef = {
-        type: formatMethod(project, resolved.file, member, resolved.substitutions),
-      };
+      const type = formatMethod(project, resolved.file, member, resolved.substitutions);
+      const abbreviated = abbreviateType(name, type);
+      const definition: FeatureActionDef = { type: abbreviated ?? type };
+
+      if (abbreviated && abbreviated !== type) definition.detailedType = type;
 
       if (description) definition.description = description;
 
@@ -341,13 +343,15 @@ function extractMembers(project: OxcProject, members: readonly ResolvedMember[])
     if (member.type !== 'TSPropertySignature' || !member.typeAnnotation) continue;
 
     if (member.typeAnnotation.typeAnnotation.type === 'TSFunctionType') {
-      const definition: FeatureActionDef = {
-        type: formatDetailedType(
-          project,
-          { file: resolved.file, type: member.typeAnnotation.typeAnnotation, substitutions: resolved.substitutions },
-          member.optional
-        ),
-      };
+      const type = formatDetailedType(
+        project,
+        { file: resolved.file, type: member.typeAnnotation.typeAnnotation, substitutions: resolved.substitutions },
+        member.optional
+      );
+      const abbreviated = abbreviateType(name, type);
+      const definition: FeatureActionDef = { type: abbreviated ?? type };
+
+      if (abbreviated && abbreviated !== type) definition.detailedType = type;
 
       if (description) definition.description = description;
 

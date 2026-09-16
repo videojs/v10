@@ -2,6 +2,7 @@ import { z } from 'astro/zod';
 
 export const HostPropertyDefSchema = z.object({
   type: z.string(),
+  detailedType: z.string().optional(),
   description: z.string().optional(),
   readonly: z.boolean(),
   overridesNative: z.boolean().optional(),

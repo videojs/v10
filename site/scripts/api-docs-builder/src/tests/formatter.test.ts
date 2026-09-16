@@ -13,17 +13,30 @@ describe('abbreviateType', () => {
   it('abbreviates functions and callback unions', () => {
     expect(abbreviateType('selector', '((state: object) => string)')).toBe('function');
     expect(abbreviateType('selector', '((state: object) => string) | undefined')).toBe('undefined | function');
+    expect(abbreviateType('useMedia', '(() => Media | null)')).toBe('function');
+    expect(abbreviateType('useMedia', '(() => Media | null) | undefined')).toBe('undefined | function');
     expect(abbreviateType('onChange', '(value: string) => void')).toBe('function');
     expect(abbreviateType('label', "string | ((state: object) => string) | 'auto'")).toBe("string | 'auto' | function");
   });
 
+  it('does not treat nested unions or function properties as top-level function members', () => {
+    expect(abbreviateType('result', 'Promise<string | null> | undefined')).toBeUndefined();
+    expect(abbreviateType('config', '{ load: (() => void) }')).toBeUndefined();
+  });
+
   it('uses the conventional component display types', () => {
     expect(abbreviateType('className', 'string | ((state: object) => string)')).toBe('string | function');
+    expect(abbreviateType('className', 'string | ((state: SliderState) => string | undefined)')).toBe(
+      'string | function'
+    );
     expect(abbreviateType('style', 'CSSProperties | ((state: object) => CSSProperties)')).toBe(
       'CSSProperties | function'
     );
     expect(abbreviateType('render', 'ReactElement | ((state: object) => ReactElement)')).toBe(
       'ReactElement | function'
+    );
+    expect(abbreviateType('PlayerElement', 'typeof UIElement & ((...args: unknown) => PlayerElement)')).toBe(
+      'typeof UIElement & function'
     );
   });
 

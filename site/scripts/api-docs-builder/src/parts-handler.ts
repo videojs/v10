@@ -1,4 +1,4 @@
-import { formatDetailedType } from './formatter.js';
+import { abbreviateType, formatDetailedType } from './formatter.js';
 import type { OxcProject } from './oxc-project.js';
 import { getJSDoc, getJSDocDescription, staticName } from './oxc-project.js';
 import type { PropDef } from './types.js';
@@ -91,7 +91,10 @@ export function extractSubPartProps(filePath: string, project: OxcProject, local
       },
       resolved.member.optional
     );
-    const definition: PropDef = { type: formatted, frameworks: ['react'] };
+    const abbreviated = abbreviateType(name, formatted);
+    const definition: PropDef = { type: abbreviated ?? formatted, frameworks: ['react'] };
+
+    if (abbreviated && formatted !== abbreviated) definition.detailedType = formatted;
 
     if (documentation?.description) definition.description = documentation.description;
 

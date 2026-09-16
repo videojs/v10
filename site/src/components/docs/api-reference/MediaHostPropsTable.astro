@@ -20,9 +20,10 @@ interface Props {
 const { hostProperties, componentName, nameLabel = 'Property' } = Astro.props;
 
 const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompare(b));
+const toggleColumn = entries.some(([, def]) => Boolean(def.detailedType));
 ---
 
-<ApiTable columns={[nameLabel, "Type", "Default"]}>
+<ApiTable columns={[nameLabel, "Type", "Default"]} toggle={toggleColumn}>
   {
     entries.map(([name, def]) => {
       const id = `${componentName}-${name}`;
@@ -31,7 +32,14 @@ const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompar
         [readonlyNote, def.description].filter(Boolean).join(" ") || undefined;
 
       return (
-        <DetailRow id={id} name={name} description={description} colspan={3}>
+        <DetailRow
+          id={id}
+          name={name}
+          detailedType={def.detailedType}
+          description={description}
+          colspan={3}
+          toggleColumn={toggleColumn}
+        >
           <td>
             <MarkdownCode>{name}</MarkdownCode>
           </td>
