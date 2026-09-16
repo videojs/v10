@@ -16,11 +16,11 @@ const { id, name, description } = Astro.props;
 ---
 
 <tbody id={id} class="border-t border-line">
-  <tr class="*:px-3 *:py-3 *:align-top sm:*:px-4">
-    <td>
+  <tr>
+    <td class="px-3 py-3 align-top sm:px-4">
       <MarkdownCode>{name}</MarkdownCode>
     </td>
-    <td class="w-full text-muted">
+    <td class="w-full px-3 py-3 align-top text-muted sm:px-4">
       <InlineMarkdown content={description} fallback="" />
     </td>
   </tr>
