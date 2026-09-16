@@ -3,7 +3,7 @@ export const FRAMEWORK_STYLES = {
   html: ['css'],
 } as const;
 
-export const DOC_STABILITIES = ['experimental'] as const;
+export const DOC_STABILITIES = ['unstable'] as const;
 
 export type DocStability = (typeof DOC_STABILITIES)[number];
 

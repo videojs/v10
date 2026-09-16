@@ -4,6 +4,7 @@ import { getCollection, render } from 'astro:content';
 import clsx from 'clsx';
 import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton';
+import Aside from '@/components/Aside.astro';
 import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
 import EditPageButton from '@/components/docs/EditPageButton.astro';
@@ -170,6 +171,15 @@ const jsonLdSchema = createTechArticleSchema({
           </div>
           <p class="text-p2">{doc.data.description}</p>
         </header>
+        {
+          doc.data.stability === "unstable" && (
+            <Aside type="caution" title="Unstable API">
+              This API works today, but its shape is still settling and may change in a minor release. The implementation
+              underneath is production quality; what is not final is how you configure it from Video.js. Pin your version
+              and check the changelog when you upgrade.
+            </Aside>
+          )
+        }
         <Content components={{ ...defaultMarkdownComponents }} />
       </article>
       <footer class="mb-18 grid gap-5">
