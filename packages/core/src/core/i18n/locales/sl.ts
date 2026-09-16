@@ -5,8 +5,8 @@ export default {
     play: 'Predvajaj',
     pause: 'Začasno ustavi',
     replay: 'Predvajaj ponovno',
-    mute: 'Izključi zvok',
-    unmute: 'Vključi zvok',
+    mute: 'Izklopi zvok',
+    unmute: 'Vklopi zvok',
   },
   seek: {
     forward: 'Preskoči naprej {seconds} sek.',
