@@ -11,7 +11,7 @@ export default function SkinPickerSection({ children }: { children: React.ReactN
   return (
     <>
       {children}
-      <div className="mt-12">
+      <div className="mt-8">
         <SkinPicker />
       </div>
     </>
