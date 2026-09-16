@@ -23,6 +23,7 @@ interface WorkspacePackage {
 interface PackageManifest {
   readonly name?: string;
   readonly version?: string;
+  readonly packageManager?: string;
   readonly scripts?: Readonly<Record<string, string>>;
   readonly dependencies?: Readonly<Record<string, string>>;
   readonly optionalDependencies?: Readonly<Record<string, string>>;
@@ -153,6 +154,8 @@ async function configurePackage(
   // SAFETY: the official scaffolds produce a package.json object; the fields read below are optional and object-spread
   // preserves the rest of that document.
   const manifest = JSON.parse(await readFile(path, 'utf8')) as PackageManifest;
+  // SAFETY: the repository manifest declares the package manager used to run this suite.
+  const rootManifest = JSON.parse(await readFile(resolve(workspaceDir, 'package.json'), 'utf8')) as PackageManifest;
 
   await writeFile(
     path,
@@ -160,7 +163,7 @@ async function configurePackage(
       {
         ...manifest,
         private: true,
-        packageManager: 'pnpm@12.3.4',
+        packageManager: rootManifest.packageManager,
         dependencies: {
           ...manifest.dependencies,
           ...Object.fromEntries(
