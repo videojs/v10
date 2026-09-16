@@ -1,30 +1,145 @@
 ---
 import clsx from 'clsx';
 
+import BookIcon from '@/assets/icons/book.svg?react';
+import CodeIcon from '@/assets/icons/code.svg?react';
+import PuzzleIcon from '@/assets/icons/puzzle.svg?react';
+import PenIcon from '@/assets/icons/pen.svg?react';
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
-import type { DocStability, SupportedFramework } from '@/types/docs';
-import { filterSidebar } from '@/utils/docs/sidebar';
+import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
+import { isLink, isSection } from '@/types/docs';
+import { filterSidebar, findFirstGuide } from '@/utils/docs/sidebar';
 
 type Props = {
   framework: SupportedFramework;
   docTitles: Map<string, string>;
   docStabilities: Map<string, DocStability | undefined>;
   class?: string;
+  /**
+   * Give the active link's indicator a view-transition name so it slides between pages of the same section. Only one
+   * rendered sidebar per page may opt in; duplicate names would cancel the transition.
+   */
+  animateIndicator?: boolean;
 };
 
-const { framework, docTitles, docStabilities, class: className } = Astro.props;
+const { framework, docTitles, docStabilities, class: className, animateIndicator = false } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
+const currentPath = Astro.url.pathname;
+
+function containsActivePath(item: SidebarItemType): boolean {
+  if (isSection(item)) return item.contents.some(containsActivePath);
+
+  if (isLink(item)) return false;
+
+  return `/docs/framework/${framework}/${item.slug}` === currentPath;
+}
+
+// Top-level sections are the sidebar's switcher. Each entry links to its first guide; the entry that contains the
+// current page is open. Fall back to the first entry so index-style pages still show a navigation tree.
+const tabs = filteredSidebar.filter(isSection);
+const looseItems = filteredSidebar.filter((item) => !isSection(item));
+const activeTab = tabs.find(containsActivePath) ?? tabs[0];
+
+// Scoped to the section so switching sections fades instead of sliding the indicator across unrelated lists.
+const indicatorTransitionName =
+  animateIndicator && activeTab
+    ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    : undefined;
+
+// Cross-document view transition names for the section switcher. The highlight pill morphs to the newly selected tab
+// while each label cross-fades its colour above it; see the global styles below for the stacking.
+const tabTransition = (slug: string) =>
+  animateIndicator ? `view-transition-name: sidebar-tab-${slug}; view-transition-class: sidebar-tab-label` : undefined;
+const pillTransition = animateIndicator ? 'view-transition-name: sidebar-tab-pill' : undefined;
+const tabSlug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+const TAB_ICONS = {
+  Guides: BookIcon,
+  Components: PuzzleIcon,
+  API: CodeIcon,
+  'Writing Style': PenIcon,
+} satisfies Record<string, typeof BookIcon>;
 ---
 
 <div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
   <PreferenceUpdater client:idle currentFramework={framework} />
-  <nav aria-label="Docs sidebar" class="p-6">
+  {
+    tabs.length > 1 && (
+      <nav aria-label="Docs sections" class="px-6 pt-5">
+        <div class="mx-auto grid w-full max-w-3xl gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
+          {tabs.map((tab) => {
+            const isActive = tab === activeTab;
+            const Icon = TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS];
+
+            return (
+              <a
+                href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
+                aria-current={isActive ? "true" : undefined}
+                class:list={[
+                  // One weight for both states, so the label cross-fade during the transition is colour only.
+                  "relative isolate flex items-center rounded-md corner-squircle px-3 py-2 text-p3 leading-5 font-medium select-none",
+                  isActive
+                    ? "text-faded-black dark:text-manila-light"
+                    : "text-muted intent:text-faded-black dark:intent:text-manila-light",
+                ]}
+              >
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    class="absolute inset-0 -z-10 rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line"
+                    style={pillTransition}
+                  />
+                )}
+                <span class="flex flex-1 items-center gap-2.5" style={tabTransition(tabSlug(tab.sidebarLabel))}>
+                  {Icon && (
+                    <Icon
+                      className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span class="flex-1">{tab.sidebarLabel}</span>
+                  {tab.devOnly && (
+                    <span class="rounded-md corner-squircle bg-surface-raised px-1.5 py-0.5 text-p4 leading-none font-medium text-muted ring-1 ring-line">
+                      dev only
+                    </span>
+                  )}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+    )
+  }
+  <nav aria-label="Docs sidebar" class="px-6 pt-8 pb-6">
     {
-      filteredSidebar.map((item) => (
+      activeTab?.contents.map((item) => (
+        <SidebarItem
+          item={item}
+          framework={framework}
+          docTitles={docTitles}
+          docStabilities={docStabilities}
+          indicatorTransitionName={indicatorTransitionName}
+        />
+      ))
+    }
+    {
+      looseItems.map((item) => (
         <SidebarItem item={item} framework={framework} docTitles={docTitles} docStabilities={docStabilities} />
       ))
     }
   </nav>
 </div>
+
+<style is:global>
+  /* Keep the morphing pill beneath the labels while the page transition runs. */
+  ::view-transition-group(sidebar-tab-pill) {
+    z-index: 1;
+  }
+
+  ::view-transition-group(.sidebar-tab-label) {
+    z-index: 2;
+  }
+</style>

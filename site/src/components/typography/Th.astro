@@ -1,5 +1,4 @@
 ---
-
 import type { HTMLTag, Polymorphic } from 'astro/types';
 import { twMerge } from '@/utils/twMerge';
 
@@ -10,6 +9,12 @@ type Props<Tag extends HTMLTag = 'th'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'th', class: className, ...props } = Astro.props;
 ---
 
-<Tag class={twMerge("px-4 py-2 text-left font-bold", className)} {...props}>
+<Tag
+  class={twMerge(
+    "px-3 py-2.5 text-left font-display-compact text-p4 font-semibold text-muted uppercase sm:px-4 sm:font-display",
+    className,
+  )}
+  {...props}
+>
   <slot />
 </Tag>

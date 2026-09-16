@@ -10,7 +10,7 @@ This file contains site-specific gotchas. Read `site/README.md`, `site/package.j
 - Framework/style support and type guards: `src/types/docs.ts`
 - Sidebar and route availability: `src/docs.config.ts`
 - Design tokens and variants: `src/styles/globals.css`
-- Guide authoring: `src/content/docs/how-to/write-guides.mdx`
+- Guide authoring: `src/content/docs/writing-style/write-guides.mdx`
 - API builder contract: `scripts/api-docs-builder/src/tests/e2e.test.ts`
 - Deployment workflow: root `.github/workflows/`
 
@@ -40,7 +40,7 @@ pnpm -F site astro check
 
 ## Content
 
-- Read `src/content/docs/how-to/write-guides.mdx` before adding or reviewing site prose. It owns document types, frontmatter, sidebar registration, framework/style variants, voice, and MDX conventions.
+- Read `src/content/docs/writing-style/write-guides.mdx` before adding or reviewing site prose. It owns document types, frontmatter, sidebar registration, framework/style variants, voice, and MDX conventions.
 - Changelog source format and generation are owned by `src/content.config.ts` and the root changelog workflows; follow those sources rather than duplicating their extension rules here.
 - Blog filenames are `YYYY-MM-DD-slug.mdx`; `src/utils/globWithParser.ts` removes the date from the route slug.
 - Use `write-docs` or `review-docs` for prose workflows and `write-api-reference` for generated reference pages.

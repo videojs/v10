@@ -42,7 +42,7 @@ export default function ToggleGroup<T extends string = string>({
       disabled={disabled}
       className={twMerge(
         minimal ? 'flex gap-0' : 'grid max-w-95 mx-auto',
-        'w-full items-stretch p-0.75 border rounded-xs',
+        'w-full items-stretch p-0.75 border rounded-md corner-squircle',
         className
       )}
       aria-label={ariaLabel}

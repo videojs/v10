@@ -1,12 +1,24 @@
 ---
 import clsx from 'clsx';
+import sizes from '@/data/bundle-sizes.json';
 import { AnimatedBars } from '../AnimatedBars';
 
+/**
+ * Download-time comparison on a slow 4G connection. Sizes come from `src/data/bundle-sizes.json`, measured with the
+ * repository's bundle-size script; the connection speed matches the original chart's assumption.
+ */
+const KB_PER_SECOND = 50.5;
 const seconds = [0, 5, 10, 15, 20];
+
+const v8Kb = Math.round(sizes.baseline.initial / 1024);
+const v10Kb = Math.round(sizes.presets[0].initial / 1024);
+const v8Seconds = (v8Kb / KB_PER_SECOND).toFixed(2);
+const v10Seconds = (v10Kb / KB_PER_SECOND).toFixed(2);
+const v10Width = `${((v10Kb / v8Kb) * 100).toFixed(2)}%`;
 ---
 
 <AnimatedBars
-  className="rounded-xs border border-manila-dark bg-faded-black p-5 md:p-10 lg:p-15"
+  className="rounded-lg corner-squircle border border-manila-dark bg-faded-black p-5 md:p-10 lg:p-15"
   client:idle
 >
   <header class="text-p2">
@@ -22,7 +34,7 @@ const seconds = [0, 5, 10, 15, 20];
   </p>
   <div
     class="mt-4 mb-2 data-bar w-full md:mt-5 md:mb-2.5"
-    style="--data-bar-width: 100%; --data-bar-duration: 3.96s;"
+    style={`--data-bar-width: 100%; --data-bar-duration: ${v8Seconds}s;`}
   >
   </div>
   <div class="flex items-center gap-2.5">
@@ -34,34 +46,34 @@ const seconds = [0, 5, 10, 15, 20];
     <p
       class="flex gap-1 text-center font-display text-h5 text-manila-light uppercase lg:gap-2.5"
     >
-      <span class="font-bold">3.96s</span>
+      <span class="font-bold">{v8Seconds}s</span>
       <span>/</span>
-      <span class="whitespace-nowrap">200kB</span>
+      <span class="whitespace-nowrap">{v8Kb}kB</span>
     </p>
   </div>
   <p
-    class="mt-6 inline-block items-center rounded-full border border-orange bg-faded-black px-8 py-0.5 text-center font-display text-h5 font-bold text-orange uppercase md:hidden"
+    class="mt-6 inline-block items-center rounded-full border border-accent bg-faded-black px-8 py-0.5 text-center font-display text-h5 font-bold text-accent uppercase md:hidden"
   >
     VJS 10
   </p>
   <div
-    class="mt-4 mb-2 data-bar data-bar-orange md:mt-5 md:mb-2.5"
-    style="--data-bar-width: 18.75%; --data-bar-duration: 0.75s;"
+    class="mt-4 mb-2 data-bar data-bar-accent md:mt-5 md:mb-2.5"
+    style={`--data-bar-width: ${v10Width}; --data-bar-duration: ${v10Seconds}s;`}
   >
   </div>
 
   <div class="flex items-center gap-2.5">
     <p
-      class="hidden min-w-30 items-center justify-center rounded-full border border-orange bg-faded-black py-0 text-center font-display text-h5 font-bold text-orange uppercase md:flex"
+      class="hidden min-w-30 items-center justify-center rounded-full border border-accent bg-faded-black py-0 text-center font-display text-h5 font-bold text-accent uppercase md:flex"
     >
       VJS 10
     </p>
     <p
-      class="2xl flex gap-1 text-center font-display text-h5 text-orange uppercase lg:gap-2.5"
+      class="flex gap-1 text-center font-display text-h5 text-accent uppercase lg:gap-2.5"
     >
-      <span class="font-bold">0.75s</span>
+      <span class="font-bold">{v10Seconds}s</span>
       <span>/</span>
-      <span class="whitespace-nowrap">38kB</span>
+      <span class="whitespace-nowrap">{v10Kb}kB</span>
     </p>
   </div>
 

@@ -1,7 +1,7 @@
 ---
 
 /**
- * Sidebar state persistence using sessionStorage
+ * Sidebar scroll persistence using sessionStorage
  * Progressive enhancement - only runs in browsers with view transitions
  */
 
@@ -14,46 +14,49 @@ const { docsSidebarId } = Astro.props;
 <script is:inline define:vars={{ docsSidebarId }}>
   const STORAGE_KEY = "vjs-sidebar-state";
 
-  window.addEventListener("pagereveal", () => {
-    // Restore sidebar state
-    const aside = document.getElementById(docsSidebarId);
-
-    if (aside) {
+  function readState() {
+    try {
       const stored = sessionStorage.getItem(STORAGE_KEY);
 
-      if (stored) {
-        try {
-          const state = JSON.parse(stored);
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      console.error("[Sidebar] Failed to restore state", e);
 
-          if (state.sidebarScroll !== undefined) {
-            aside.scrollTop = state.sidebarScroll;
-          }
+      return {};
+    }
+  }
 
-          if (state.detailsState) {
-            document
-              .querySelectorAll(`#${docsSidebarId} details[id]`)
-              .forEach((details) => {
-                const savedState = state.detailsState[details.id];
+  window.addEventListener("pagereveal", () => {
+    const state = readState();
+    const aside = document.getElementById(docsSidebarId);
+    const nav = document.querySelector("[data-site-nav]");
 
-                if (savedState !== undefined) {
-                  details.open = savedState;
-                }
-              });
-          }
-        } catch (e) {
-          console.error("[Sidebar] Failed to restore state", e);
-        }
+    // Keep the banners above the nav out of view once the reader has scrolled past them. A new page starts at the
+    // top, which brings them back and drops the nav and sidebar by their height; going back restores the old scroll
+    // and lifts them again. Starting the new page just below the banners keeps both still across navigations.
+    if (state.bannersHidden && nav && !window.location.hash && window.scrollY < nav.offsetTop) {
+      window.scrollTo(0, nav.offsetTop);
+    }
+
+    if (aside) {
+      if (state.sidebarScroll !== undefined) {
+        aside.scrollTop = state.sidebarScroll;
       }
 
-      // Auto-expand sections containing active link (override saved state)
+      // Keep the active link in view when arriving from a different section. Scroll the sidebar alone:
+      // scrollIntoView would also scroll the window to centre the link, which pushes the banner off the top of
+      // every docs page and shifts the content mid-transition.
       const activeLink = aside.querySelector('a[aria-current="page"]');
 
       if (activeLink) {
-        let parent = activeLink.closest("details");
+        const asideRect = aside.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
 
-        while (parent && aside.contains(parent)) {
-          parent.open = true;
-          parent = parent.parentElement?.closest("details") ?? null;
+        if (linkRect.top < asideRect.top || linkRect.bottom > asideRect.bottom) {
+          const linkCentre = linkRect.top + linkRect.height / 2;
+          const asideCentre = asideRect.top + asideRect.height / 2;
+
+          aside.scrollTop += linkCentre - asideCentre;
         }
       }
     }
@@ -79,19 +82,10 @@ const { docsSidebarId } = Astro.props;
 
   window.addEventListener("pageswap", () => {
     const aside = document.getElementById(docsSidebarId);
-    if (!aside) return;
-
-    const detailsState = {};
-
-    document
-      .querySelectorAll(`#${docsSidebarId} details[id]`)
-      .forEach((details) => {
-        detailsState[details.id] = details.open;
-      });
-
+    const nav = document.querySelector("[data-site-nav]");
     const state = {
-      sidebarScroll: aside.scrollTop,
-      detailsState,
+      sidebarScroll: aside ? aside.scrollTop : undefined,
+      bannersHidden: Boolean(nav && nav.offsetTop > 0 && window.scrollY >= nav.offsetTop),
     };
 
     try {
@@ -117,5 +111,12 @@ const { docsSidebarId } = Astro.props;
   html,
   body {
     view-transition-name: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none;
+    }
   }
 </style>

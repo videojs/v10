@@ -19,7 +19,7 @@ const exportName = `${feature}Feature`;
 
 // Each framework documents createPlayer on its own reference page.
 const createPlayerSlug =
-  Astro.params.framework === 'react' ? 'reference/create-player' : 'reference/html-create-player';
+  Astro.params.framework === 'react' ? 'reference/api/create-player' : 'reference/api/html-create-player';
 
 // Membership comes from the generated preset references so the sentence tracks the real bundles.
 const bundles = (await getCollection('presetReference'))
@@ -62,12 +62,12 @@ const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledL
             <MarkdownCode>{bundle}</MarkdownCode>
           </>
         ))}{' '}
-        <DocsLink slug="concepts/presets">feature {bundles.length === 1 ? 'bundle' : 'bundles'}</DocsLink>{' '}
+        <DocsLink slug="guides/presets">feature {bundles.length === 1 ? 'bundle' : 'bundles'}</DocsLink>{' '}
         {bundles.length === 1 ? 'includes' : 'include'} this feature.
       </>
     ) : (
       <>
-        No packaged <DocsLink slug="concepts/presets">feature bundle</DocsLink> includes this feature — add it to your{' '}
+        No packaged <DocsLink slug="guides/presets">feature bundle</DocsLink> includes this feature — add it to your{' '}
         <DocsLink slug={createPlayerSlug}>
           <MarkdownCode>createPlayer</MarkdownCode>
         </DocsLink>{' '}

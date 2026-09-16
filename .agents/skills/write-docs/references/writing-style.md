@@ -154,7 +154,7 @@ When a page mentions another API or concept by name, link to it. Readers explori
 
 ```markdown
 // ✅ Natural
-See <DocsLink slug="concepts/events">Events</DocsLink> for the full list.
+See <DocsLink slug="guides/events">Events</DocsLink> for the full list.
 
 // ❌ Awkward
 For more information about events, please refer to the Events page.
@@ -162,7 +162,7 @@ For more information about events, please refer to the Events page.
 
 ```markdown
 // ✅ Linked
-Within a `Player`, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
+Within a `Player`, <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> is usually simpler.
 
 // ❌ Unlinked
 Within a `Player`, `usePlayer` is usually simpler.

@@ -2,12 +2,8 @@
 /**
  * Renders the state interface table for API reference.
  */
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { StateDef } from '@/types/component-reference';
+import ApiTable from './ApiTable.astro';
 import StateRow from './StateRow.astro';
 
 interface Props {
@@ -18,27 +14,20 @@ interface Props {
 const { state, componentName } = Astro.props;
 
 const stateEntries = Object.entries(state);
+const toggleColumn = stateEntries.some(([, def]) => Boolean(def.detailedType));
 ---
 
-<Table maxWidth={false} outerClass="my-6">
-  <Thead>
-    <Tr>
-      <Th>Property</Th>
-      <Th>Type</Th>
-      <Th>Details</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {
-      stateEntries.map(([name, def]) => (
-        <StateRow
-          name={name}
-          type={def.type}
-          detailedType={def.detailedType}
-          description={def.description}
-          componentName={componentName}
-        />
-      ))
-    }
-  </Tbody>
-</Table>
+<ApiTable columns={["Property", "Type"]} toggle={toggleColumn}>
+  {
+    stateEntries.map(([name, def]) => (
+      <StateRow
+        name={name}
+        type={def.type}
+        detailedType={def.detailedType}
+        description={def.description}
+        componentName={componentName}
+        toggleColumn={toggleColumn}
+      />
+    ))
+  }
+</ApiTable>
