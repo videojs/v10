@@ -36,10 +36,15 @@
  * access for `initDataTypes: ['skd']` and then throws `NotSupportedError` from `generateRequest` — self-inconsistent,
  * and the reason the pre-EME `WebKitMediaKeys` path still exists. That refusal, and only that refusal while the target
  * is wireless, hands the session over to `media/dom/fairplay-legacy.ts`; nothing sniffs an OS, so a fixed WebKit stops
- * taking the path by itself. The handover needs no `element.load()` to re-provoke the request — `webkitneedkey` fires
- * for the same key just before `encrypted`, so its payload is already in hand. That matters: `setupAirPlay` holds the
- * MediaSource rebuild precisely because a `load()` under a live receiver destroys the session being established, so the
- * call the shipped native path can afford would take this session down with it.
+ * taking the path by itself. The handover then reloads the resource, as the shipped native path does.
+ *
+ * Serving the `webkitneedkey` payload already in hand was tried instead, to avoid the reload — `setupAirPlay` holds the
+ * MediaSource rebuild precisely because a `load()` under a live receiver can destroy a session still being established.
+ * Measured on macOS/Safari 26.6.2 against a receiver, the legacy CDM refused that session outright:
+ * `MEDIA_KEYERR_UNKNOWN`, no OSStatus, no license ever requested. Releasing EME's keys is evidently not enough to leave
+ * the element servable by the old API, so the load algorithm has to run again and the payload from before it is not
+ * reused. Resource selection re-runs over the `<source>` children, where the native-HLS fallback still sits, so the
+ * receiver keeps its stream; playback restarts, which the handoff already was.
  *
  * Droppable. A composition omitting it carries neither `fairPlayAirPlayKeySystem` nor this file nor the legacy module,
  * and — since `loadingSuspended` is observed rather than declared — an engine without `setupAirPlay` never leaves
@@ -185,14 +190,6 @@ function setupAirPlayFairPlaySetup({
           /** The MediaKeys this behavior attached, for the conditional detach below. */
           let attached: MediaKeys | undefined;
 
-          /**
-           * The legacy API's own view of the pending key request, kept because both events fire for the same key and
-           * `webkitneedkey` lands first. Falling back therefore needs no `element.load()` to re-provoke the request —
-           * which matters: `setupAirPlay` holds the MediaSource rebuild precisely because a `load()` under a live
-           * receiver destroys the session being established. The shipped native path can afford that call; here it
-           * would take the session down with it.
-           */
-          let legacyInitData: ArrayBuffer | undefined;
           /** Non-sticky, per session: nothing here sniffs an OS, so a fixed WebKit simply stops taking this path. */
           let useLegacy = false;
 
@@ -375,7 +372,21 @@ function setupAirPlayFairPlaySetup({
 
             if (signal.aborted) return;
 
-            if (legacyInitData) void serveLegacy(legacyInitData);
+            // Reload the resource, as the shipped native path does. Serving the
+            // `webkitneedkey` payload already in hand was tried first and the
+            // CDM refused the session outright — `MEDIA_KEYERR_UNKNOWN`, no
+            // OSStatus, no license ever requested — measured against a receiver
+            // on macOS/Safari 26.6.2. Releasing EME's keys is evidently not
+            // enough to leave the element servable by the old API; the load
+            // algorithm has to run again. The fresh `webkitneedkey` that follows
+            // drives the exchange, so the cached payload is deliberately not
+            // reused: it belongs to the resource being replaced.
+            //
+            // Resource selection re-runs over the `<source>` children, where
+            // `setupAirPlay`'s native-HLS fallback still sits, so the receiver
+            // keeps its stream. Playback restarts — the handoff that got us here
+            // is already an interruption.
+            mediaElement.load();
           };
 
           const serve = async (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
@@ -398,19 +409,18 @@ function setupAirPlayFairPlaySetup({
             });
           };
 
-          // Both events fire for the same key, and `webkitneedkey` lands first —
-          // so its payload is captured whether or not it is ever needed, and
-          // serves the exchange directly once the session has been handed over.
+          // Armed from entry but inert until the handover, so the old key
+          // system is never installed on a sender whose EME works. Both events
+          // fire for the same key; after the reload it is this one that carries
+          // the request the legacy CDM can serve.
           listen(
             mediaElement,
             'webkitneedkey',
             (event) => {
               const { initData } = event as MediaEncryptedEvent;
-              if (!initData) return;
+              if (!initData || !useLegacy) return;
 
-              legacyInitData = initData;
-
-              if (useLegacy) void serveLegacy(initData);
+              void serveLegacy(initData);
             },
             { signal }
           );

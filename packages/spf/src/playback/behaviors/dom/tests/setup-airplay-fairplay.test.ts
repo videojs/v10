@@ -466,11 +466,23 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
       return session;
     });
 
-    // `webkitneedkey` lands first, as it does on device.
-    needKey(video);
+    // The reload is the handover's first step, so it is stubbed rather than
+    // run — a real one in a test element resets nothing useful and races the
+    // assertions.
+    const load = vi.fn();
+
+    Object.defineProperty(video, 'load', { value: load, configurable: true });
+
     receiverRequest(video);
 
-    return { ...harness, video, webkit, eme };
+    // EME is refused, the element is released, and the resource reloads.
+    await vi.waitFor(() => expect(load).toHaveBeenCalled());
+
+    // Only the request delivered *after* that reload can be served: the one
+    // from before it belongs to the resource being replaced.
+    needKey(video);
+
+    return { ...harness, video, webkit, eme, load };
   }
 
   it('hands the session to the legacy key system on the AirPlay refusal, and licenses through it', async () => {
@@ -494,6 +506,26 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
 
     // The refusal it recovered from is not reported: it no longer decides anything.
     expect(state.errors.get() ?? []).toEqual([]);
+
+    reactor.destroy();
+  });
+
+  it('ignores the key request delivered before the reload', async () => {
+    const eme = makeFakeEme();
+
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const { context, reactor } = setup();
+    const video = context.mediaElement.get()!;
+
+    goWireless(video, true);
+    const webkit = stubWebKitMediaKeys(video);
+
+    // Arrives while EME is still the active path, so it belongs to the
+    // resource the handover is about to replace.
+    needKey(video);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(webkit.created).toHaveLength(0);
 
     reactor.destroy();
   });
@@ -543,7 +575,6 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
 
     goWireless(video, true);
     stubWebKitMediaKeys(video);
-    needKey(video);
     receiverRequest(video);
 
     await vi.waitFor(() =>
