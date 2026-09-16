@@ -63,6 +63,27 @@ signals.state.presentation.set({ url: source.src });
 // `setupAirPlayFairPlay` is serving the receiver. `false` / `false` with a
 // stalled `currentTime` means the receiver asked for nothing, or asked and was
 // refused; check `errors`.
+// Raw key-request tap, deliberately unfiltered — `setupAirPlayFairPlay` serves
+// only `encrypted` events whose `initDataType` is `skd`, so a receiver whose
+// request arrives any other way would be dropped with nothing to show for it.
+// This says what actually fired. `webkitneedkey` is the discriminator: if it
+// fires and `encrypted` does not, the sender's EME cannot serve the session at
+// all and the deferred legacy `WebKitMediaKeys` path is the only thing that
+// could — a different problem from anything in this composition.
+for (const type of ['encrypted', 'webkitneedkey'] as const) {
+  video.addEventListener(type, (event) => {
+    const { initDataType, initData } = event as MediaEncryptedEvent;
+
+    console.log(`[spf-drm] ${type}`, {
+      initDataType: initDataType ?? '(none — legacy API)',
+      initDataBytes: initData?.byteLength,
+      wireless: (video as { webkitCurrentPlaybackTargetIsWireless?: boolean }).webkitCurrentPlaybackTargetIsWireless,
+    });
+  });
+}
+
+video.addEventListener('error', () => console.log('[spf-drm] element error', video.error?.code, video.error?.message));
+
 /** The DRM/AirPlay facts. Split out because these change on edges, not per frame. */
 const drmSnapshot = () => ({
   // WebKit's raw flag, then the session fact `setupAirPlay` derives from it.
