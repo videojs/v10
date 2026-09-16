@@ -6,7 +6,7 @@ import { CaptionsRadioGroupDataAttrs } from './data';
 export default defineComponent({
   name: 'CaptionsRadioGroup',
   parts: {
-    Root: defineComponent<CaptionsRadioGroupProps>(),
+    Root: defineComponent<CaptionsRadioGroupProps>({ element: false }),
     Value: defineComponent(),
     Options: defineComponent(),
   },

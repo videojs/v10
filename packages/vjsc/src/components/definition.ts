@@ -13,6 +13,12 @@ export interface ComponentPartDefinition<
   root?: Parts extends ComponentParts ? keyof Parts & string : never;
   parts?: Parts | undefined;
   dataAttrs?: Record<string, string> | undefined;
+  /**
+   * Whether the part owns an element in its contract. Set `false` for parts that only provide context or behavior to
+   * their children: framework bindings render nothing of their own for them, so a host ref cannot land anywhere.
+   * Defaults to `true`.
+   */
+  element?: boolean | undefined;
   readonly [__PROPS_BRAND__]?: Props;
 }
 
@@ -47,6 +53,23 @@ export function hasParts<Props extends object, Parts extends ComponentParts>(
   return Boolean(component.parts);
 }
 
+/**
+ * Find the definition a component path names, such as `Menu` with `['Trigger']` for `Menu.Trigger`. Returns `undefined`
+ * when the schema has no such component or part.
+ */
+export function findComponentPart(
+  schema: ComponentSchema,
+  component: string,
+  path: readonly string[] = []
+): ComponentPartDefinition<object, ComponentParts | undefined> | undefined {
+  let definition: ComponentPartDefinition<object, ComponentParts | undefined> | undefined =
+    schema.definitions[component];
+
+  for (const part of path) definition = definition?.parts?.[part];
+
+  return definition;
+}
+
 export type InferProps<T> = T extends ComponentPartDefinition<infer Props, ComponentParts | undefined> ? Props : never;
 
 export function defineComponent<Props extends object = EmptyProps>(): ComponentPartDefinition<Props>;
@@ -76,6 +99,10 @@ export function defineComponent<Props extends object = EmptyProps, const Parts e
 export function defineComponent<Props extends object = EmptyProps>(
   options: ComponentOptions<Props, undefined> & { name: string }
 ): ComponentDefinition<Props, undefined>;
+
+export function defineComponent<Props extends object = EmptyProps>(
+  options: ComponentOptions<Props, undefined>
+): ComponentPartDefinition<Props, undefined>;
 
 export function defineComponent<
   Props extends object = EmptyProps,

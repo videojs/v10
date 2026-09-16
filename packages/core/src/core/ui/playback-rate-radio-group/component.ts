@@ -6,7 +6,7 @@ import { PlaybackRateRadioGroupDataAttrs } from './data';
 export default defineComponent({
   name: 'PlaybackRateRadioGroup',
   parts: {
-    Root: defineComponent<PlaybackRateRadioGroupProps>(),
+    Root: defineComponent<PlaybackRateRadioGroupProps>({ element: false }),
     Value: defineComponent(),
     Options: defineComponent(),
   },

@@ -1,6 +1,7 @@
 /** @jsxImportSource vjsc/target */
 
-import type coreSchema from '@videojs/core/vjsc';
+import coreSchema from '@videojs/core/vjsc';
+import { findComponentPart } from 'vjsc/components';
 import {
   type ComponentRules,
   type ComponentTarget,
@@ -19,22 +20,6 @@ const componentSources = {
   PlaybackRateRadioGroup: '@videojs/react/ui/playback-rate-radio-group',
   QualityRadioGroup: '@videojs/react/ui/quality-radio-group',
 } as const satisfies Partial<Record<keyof CoreSchema['definitions'], string>>;
-
-// These React components only provide context or behavior and render no element, so a host ref has nowhere to land.
-// Every other `@videojs/react` component forwards its ref to the element it renders.
-const refLessComponents = new Set([
-  'AlertDialog.Root',
-  'Controls.Root',
-  'Dialog.Root',
-  'ErrorDialog.Root',
-  'Gesture',
-  'Hotkey',
-  'Menu.Root',
-  'Popover.Root',
-  'Tooltip.Provider',
-  'Tooltip.Root',
-  'VolumePopover.Root',
-]);
 
 export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(({
   target,
@@ -176,7 +161,9 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       ref: {
         forward: { from: 'react', name: 'forwardRef' },
         type: { from: 'react', name: 'ComponentRef' },
-        accepts: ({ imported, path }) => !refLessComponents.has([imported, ...(path ?? [])].join('.')),
+        // Every `@videojs/react` component forwards its ref to the element it renders, except the parts the schema
+        // marks as having no element of their own.
+        accepts: ({ imported, path }) => findComponentPart(coreSchema, imported, path)?.element !== false,
       },
       className: {
         merge: { from: skinClassNameMergeImport, name: 'cn' },

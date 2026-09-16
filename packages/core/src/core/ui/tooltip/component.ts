@@ -8,8 +8,8 @@ export default defineComponent({
   name: 'Tooltip',
   root: 'Root',
   parts: {
-    Provider: defineComponent<TooltipGroupProps>(),
-    Root: defineComponent<TooltipProps>(),
+    Provider: defineComponent<TooltipGroupProps>({ element: false }),
+    Root: defineComponent<TooltipProps>({ element: false }),
     Trigger: defineComponent(),
     Popup: defineComponent(),
     Arrow: defineComponent(),

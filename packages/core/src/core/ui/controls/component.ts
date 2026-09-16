@@ -7,7 +7,7 @@ export default defineComponent({
   name: 'Controls',
   root: 'Root',
   parts: {
-    Root: defineComponent<ControlsProps>(),
+    Root: defineComponent<ControlsProps>({ element: false }),
     Backdrop: defineComponent(),
     Content: defineComponent(),
     Group: defineComponent(),

@@ -7,7 +7,7 @@ export default defineComponent({
   name: 'VolumePopover',
   root: 'Root',
   parts: {
-    Root: defineComponent<VolumePopoverProps>(),
+    Root: defineComponent<VolumePopoverProps>({ element: false }),
     Trigger: defineComponent(),
     Popup: defineComponent(),
   },

@@ -6,7 +6,7 @@ import { QualityRadioGroupDataAttrs } from './data';
 export default defineComponent({
   name: 'QualityRadioGroup',
   parts: {
-    Root: defineComponent<QualityRadioGroupProps>(),
+    Root: defineComponent<QualityRadioGroupProps>({ element: false }),
     Value: defineComponent(),
     Options: defineComponent(),
   },

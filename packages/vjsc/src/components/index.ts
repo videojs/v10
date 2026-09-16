@@ -7,6 +7,7 @@ export {
   defineComponent,
   defineSchema,
   type EmptyProps,
+  findComponentPart,
 } from './definition';
 export {
   type BaseProps,

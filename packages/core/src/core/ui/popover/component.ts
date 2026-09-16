@@ -7,7 +7,7 @@ export default defineComponent({
   name: 'Popover',
   root: 'Root',
   parts: {
-    Root: defineComponent<PopoverProps>(),
+    Root: defineComponent<PopoverProps>({ element: false }),
     Trigger: defineComponent(),
     Popup: defineComponent(),
     Arrow: defineComponent(),

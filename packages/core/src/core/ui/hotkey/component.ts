@@ -2,4 +2,4 @@ import { defineComponent } from 'vjsc/components';
 
 import type { HotkeyProps } from './core';
 
-export default defineComponent<HotkeyProps>({ name: 'Hotkey' });
+export default defineComponent<HotkeyProps>({ name: 'Hotkey', element: false });

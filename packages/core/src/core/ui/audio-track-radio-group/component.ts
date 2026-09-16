@@ -6,7 +6,7 @@ import { AudioTrackRadioGroupDataAttrs } from './data';
 export default defineComponent({
   name: 'AudioTrackRadioGroup',
   parts: {
-    Root: defineComponent<AudioTrackRadioGroupProps>(),
+    Root: defineComponent<AudioTrackRadioGroupProps>({ element: false }),
     Value: defineComponent(),
     Options: defineComponent(),
   },

@@ -7,7 +7,7 @@ export default defineComponent({
   name: 'Menu',
   root: 'Root',
   parts: {
-    Root: defineComponent<MenuProps>(),
+    Root: defineComponent<MenuProps>({ element: false }),
     Trigger: defineComponent<MenuTriggerProps>(),
     Popup: defineComponent<MenuPopupProps>(),
     Content: defineComponent(),

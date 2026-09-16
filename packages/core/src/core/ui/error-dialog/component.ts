@@ -6,7 +6,7 @@ export default defineComponent({
   name: 'ErrorDialog',
   root: 'Root',
   parts: {
-    Root: defineComponent(),
+    Root: defineComponent({ element: false }),
     Backdrop: defineComponent(),
     Popup: defineComponent(),
     Title: defineComponent(),
