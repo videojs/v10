@@ -138,16 +138,37 @@ export function openLegacyLicenseSession({
     }
   };
 
-  listen(session, 'webkitkeymessage', (event) => void exchange((event as Event & { message: ArrayBuffer }).message), {
-    signal,
-  });
+  // Whether the CDM ever asked for a license. It separates the two ways this
+  // session fails: rejecting the initialization data outright — a malformed
+  // content id or certificate — from accepting it and then rejecting the
+  // license that came back. Without it `webkitkeyerror` says only "something".
+  let requested = false;
+
+  listen(
+    session,
+    'webkitkeymessage',
+    (event) => {
+      requested = true;
+      void exchange((event as Event & { message: ArrayBuffer }).message);
+    },
+    { signal }
+  );
   listen(
     session,
     'webkitkeyerror',
     () =>
       report({
         code: SVTA_DRM_SESSION_ERROR,
-        data: { keySystem: FAIRPLAY_LEGACY_KEY_SYSTEM, reason: JSON.stringify(session.error) },
+        data: {
+          keySystem: FAIRPLAY_LEGACY_KEY_SYSTEM,
+          // Read field by field: `WebKitMediaKeyError` carries these on its
+          // prototype, so serializing the object yields `{}` and loses the
+          // only part worth reporting. `systemCode` is the underlying
+          // OSStatus, which is what actually identifies a FairPlay failure.
+          errorCode: session.error?.code,
+          systemCode: session.error?.systemCode,
+          licenseRequested: requested,
+        },
       }),
     { signal }
   );
