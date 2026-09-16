@@ -18,7 +18,7 @@ vi.mock('@videojs/spf/hls-background-video', async (importOriginal) => {
   return {
     ...actual,
     HlsBackgroundVideoAdapter: class extends actual.HlsBackgroundVideoAdapter {
-      constructor(...args: unknown[]) {
+      constructor(...args: ConstructorParameters<typeof actual.HlsBackgroundVideoAdapter>) {
         super(...args);
         instances.push(this as never);
       }
