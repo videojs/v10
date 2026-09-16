@@ -13,7 +13,7 @@ import { jsxNamePath, type ModuleImports, sourceError } from '../ast';
 import { importedName, isComponentImport } from '../target/bindings';
 import type { ComponentTarget, TargetElement, TargetTransformContext } from '../target/definition';
 import { createTargetModuleImports, createTargetTypeImports } from '../target/module-imports';
-import { renderTargetElement, renderTargetPropsType } from '../target/render';
+import { renderTargetElement, renderTargetPropsType, renderTargetRefType } from '../target/render';
 import { renderTargetMarker } from '../target/render-target';
 import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
@@ -325,7 +325,8 @@ function renderDefinition(
     return `${prefix}const ${definition.local} = ${JSON.stringify(definition.className.join(' '))};`;
   }
 
-  const element = renderTargetElement(resolved.element, { target: resolved.target, imports: runtimeImports });
+  const context = { target: resolved.target, imports: runtimeImports };
+  const element = renderTargetElement(resolved.element, context);
   const props = renderTargetPropsType(resolved.element, typeImports);
 
   if (!props) {
@@ -337,9 +338,21 @@ function renderDefinition(
     );
   }
 
-  const classes = [...definition.className.map((className) => JSON.stringify(className)), 'className'];
+  const propsType = `${definition.local}Props`;
+  const signature = `${prefix}type ${propsType} = ${props};\n\n`;
+  const classes = [...definition.className.map((className) => JSON.stringify(className)), 'className'].join(', ');
+  const ref = resolved.target.jsx.ref;
 
-  return `${prefix}type ${definition.local}Props = ${props};\n\n${prefix}function ${definition.local}({ className, ...props }: ${definition.local}Props) {\n  return <${element} className={[${classes.join(', ')}]} {...props} />;\n}`;
+  if (!ref) {
+    return `${signature}${prefix}function ${definition.local}({ className, ...props }: ${propsType}) {\n  return <${element} className={[${classes}]} {...props} />;\n}`;
+  }
+
+  // The host composes its refs onto this element, so the ref has to arrive on every renderer, not only those that
+  // hand `ref` to a plain function component as a prop.
+  const forward = runtimeImports.reference(ref.forward);
+  const refType = renderTargetRefType(resolved.element, context, typeImports);
+
+  return `${signature}${prefix}const ${definition.local} = ${forward}<${refType}, ${propsType}>(function ${definition.local}({ className, ...props }: ${propsType}, ref) {\n  return <${element} ref={ref} className={[${classes}]} {...props} />;\n});`;
 }
 
 function lowerRenderDirective(

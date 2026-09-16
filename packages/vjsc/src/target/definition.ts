@@ -246,6 +246,21 @@ export type ComponentResolver<Schema extends ComponentSchema> = (
 export interface JsxImportBinding {
   readonly source: string;
   readonly imported: string;
+  /** Member path below the import, such as `['Trigger']` for `Menu.Trigger`. Absent for the import itself. */
+  readonly path?: readonly string[] | undefined;
+}
+
+/**
+ * How a target hands a host ref to components that render one element for their props. Without it, a ref placed on such
+ * a component only reaches the element on renderers that pass `ref` as an ordinary prop.
+ */
+export interface JsxRefOptions {
+  /** Runtime that gives a render function the host ref beside its props, such as React's `forwardRef`. */
+  readonly forward: TargetImport;
+  /** Type that names the ref an element or component exposes, such as React's `ComponentRef`. */
+  readonly type: TargetImport;
+  /** Whether a component rendered by this import accepts a host ref. Intrinsic elements always do. */
+  accepts?(binding: JsxImportBinding): boolean;
 }
 
 /** How a target merges authored `className` arrays into its runtime's class-name contract. */
@@ -267,6 +282,8 @@ export interface JsxOptions {
   readonly scope?: TargetImport | undefined;
   /** Lower `className={[...]}` arrays through the target's class-name runtime. Arrays are left as-is when unset. */
   readonly className?: JsxClassNameOptions | undefined;
+  /** Forward host refs through generated and authored components. Components stay plain functions when unset. */
+  readonly ref?: JsxRefOptions | undefined;
 }
 
 /** A `$render` binding declared with `defineRenderTarget`: the target picks the element that carries its classes. */

@@ -317,20 +317,33 @@ function renderTargetReference(
   context: TargetRenderContext,
   seen: Set<TargetReference>
 ): string {
+  const resolved = resolveTargetReference(reference, context.target, seen);
+
+  if (resolved.kind === 'element') {
+    if (resolved.import) context.imports.sideEffect(resolved.import.from);
+
+    return resolved.tagName;
+  }
+
+  return context.imports.reference(resolved.import);
+}
+
+type ResolvedTargetReference = Exclude<TargetReference, { kind: 'component' }>;
+
+/** Follow component references through the target until an element or import remains. */
+function resolveTargetReference(
+  reference: TargetReference,
+  target: ComponentTarget,
+  seen: Set<TargetReference>
+): ResolvedTargetReference {
   if (seen.has(reference)) throw new Error('vjsc/target: component target references form a cycle.');
 
   seen.add(reference);
 
-  if (reference.kind === 'element') {
-    if (reference.import) context.imports.sideEffect(reference.import.from);
-
-    return reference.tagName;
-  }
-
-  if (reference.kind === 'import') return context.imports.reference(reference.import);
+  if (reference.kind !== 'component') return reference;
 
   const path: ComponentPath = { component: reference.component, part: reference.part };
-  const resolved = context.target.components.resolve(path);
+  const resolved = target.components.resolve(path);
 
   if (!resolved || !isTargetElement(resolved)) {
     throw new Error(
@@ -338,7 +351,40 @@ function renderTargetReference(
     );
   }
 
-  return renderTargetReference(resolved[TARGET_ELEMENT], context, seen);
+  return resolveTargetReference(resolved[TARGET_ELEMENT], target, seen);
+}
+
+/** Whether the target's ref runtime lets a host ref reach what this element renders. */
+export function acceptsTargetRef(element: TargetElement, target: ComponentTarget): boolean {
+  const ref = target.jsx.ref;
+  if (!ref) return false;
+
+  const resolved = resolveTargetReference(element[TARGET_ELEMENT], target, new Set());
+  if (resolved.kind === 'element') return true;
+
+  const { from, name, path } = resolved.import;
+
+  return ref.accepts?.({ source: from, imported: name, path }) ?? true;
+}
+
+/**
+ * Render the type of the ref an element target exposes through the target's ref runtime: the intrinsic tag for an
+ * element, otherwise the rendered component's own ref type.
+ */
+export function renderTargetRefType(
+  element: TargetElement,
+  context: TargetRenderContext,
+  typeImports: ModuleImports
+): string {
+  const ref = context.target.jsx.ref;
+  if (!ref) throw new Error('vjsc/target: the component target has no ref runtime to type a host ref with.');
+
+  const resolved = resolveTargetReference(element[TARGET_ELEMENT], context.target, new Set());
+  const type = typeImports.reference(ref.type);
+
+  if (resolved.kind === 'element') return `${type}<${JSON.stringify(resolved.tagName)}>`;
+
+  return `${type}<typeof ${context.imports.reference(resolved.import)}>`;
 }
 
 function targetAttributeName(name: string, attributes: ComponentTarget['jsx']['attributes']): string {

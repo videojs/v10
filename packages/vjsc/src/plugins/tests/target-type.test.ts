@@ -2,7 +2,7 @@ import { type Plugin, rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { defineComponent, defineSchema } from '../../components/definition';
-import { defineComponentTarget } from '../../target/definition';
+import { type ComponentTarget, defineComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';
 import { componentTargetPlugin } from '../component-target';
 import { targetImportCleanupPlugin } from '../target-import-cleanup';
@@ -204,9 +204,57 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('children: ReactElement;');
     expect(source).not.toContain('children?:');
   });
+
+  it('forwards host refs through components whose props land on a ref-accepting target', async () => {
+    const refTarget: ComponentTarget = {
+      ...target,
+      jsx: {
+        ...target.jsx,
+        ref: {
+          forward: { from: 'react', name: 'forwardRef' },
+          type: { from: 'react', name: 'ComponentRef' },
+          accepts: ({ imported, path }) => !(imported === 'Tooltip' && path?.[0] === 'Root'),
+        },
+      },
+    };
+
+    const source = await transform(
+      `
+      import * as $ from '@fixture/components';
+      import { Box, type Props } from 'vjsc/components';
+
+      export function NamedButton({ named, ...props }: Props<{ named?: boolean }> = {}) {
+        return <$.PlayButton {...props} />;
+      }
+
+      export function Panel({ className, ...props }: Props = {}) {
+        return <Box {...props} />;
+      }
+
+      export function ButtonTooltip({ ...props }: Props = {}) {
+        return <$.Tooltip.Root {...props} />;
+      }
+    `,
+      refTarget
+    );
+
+    expect(source).toContain('import { forwardRef } from "react";');
+    expect(source).toMatch(/import type \{ [^}]*\bComponentRef\b[^}]* \} from "react";/);
+    expect(source).toContain(
+      'export const NamedButton = forwardRef<ComponentRef<typeof PlayButton>, NamedButtonProps>(function NamedButton({ named, ...props }: NamedButtonProps, ref) {'
+    );
+    expect(source).toContain('<PlayButton ref={ref} {...props} />');
+    expect(source).toContain(
+      'export const Panel = forwardRef<ComponentRef<"div">, PanelProps>(function Panel({ className, ...props }: PanelProps, ref) {'
+    );
+    expect(source).toMatch(/<(?:Box|div) ref=\{ref\} \{\.\.\.props\} \/>/);
+    expect(source).toMatch(/\{\.\.\.props\} \/>;\n\s*\}\);/);
+    expect(source).toContain('export function ButtonTooltip({ ...props }: ButtonTooltipProps = {})');
+    expect(source).not.toContain('<$.Tooltip.Root ref=');
+  });
 });
 
-async function transform(source: string): Promise<string> {
+async function transform(source: string, componentTarget: ComponentTarget = target): Promise<string> {
   let meta: unknown;
   const inspect: Plugin = {
     name: 'fixture:inspect',
@@ -221,9 +269,9 @@ async function transform(source: string): Promise<string> {
     transform: { jsx: 'preserve' },
     plugins: [
       fixturePlugin(source),
-      targetTypePlugin({ targets: [target] }),
-      componentTargetPlugin({ targets: [target] }),
-      targetImportCleanupPlugin({ targets: [target] }),
+      targetTypePlugin({ targets: [componentTarget] }),
+      componentTargetPlugin({ targets: [componentTarget] }),
+      targetImportCleanupPlugin({ targets: [componentTarget] }),
       componentSourcePlugin(),
       inspect,
     ],

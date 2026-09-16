@@ -1,4 +1,5 @@
 import type {
+  FunctionDeclaration,
   JSXOpeningElement,
   Node,
   Function as OxcFunction,
@@ -11,7 +12,14 @@ import type {
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
-import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
+import {
+  collectIdentifierNames,
+  createSourceText,
+  jsxNamePath,
+  type ModuleImports,
+  renderSourceRange,
+  type SourceEdit,
+} from '../ast';
 import {
   boundCanonicalPath,
   type CanonicalBindings,
@@ -33,6 +41,7 @@ import {
   type TargetReference,
 } from '../target/definition';
 import { createTargetModuleImports, createTargetTypeImports } from '../target/module-imports';
+import { acceptsTargetRef, renderTargetRefType } from '../target/render';
 import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
@@ -54,6 +63,16 @@ interface ResolvedProps {
   readonly children?: string | undefined;
 }
 
+interface ResolvedTarget {
+  readonly target: ComponentTarget;
+  readonly element: TargetElement;
+}
+
+/** The one target element an authored component spreads its remaining props onto, and every JSX opening that does. */
+interface ForwardedTarget extends ResolvedTarget {
+  readonly openings: readonly JSXOpeningElement[];
+}
+
 export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
     name: 'vjsc:target-types',
@@ -69,6 +88,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
         const typeImports = createTargetTypeImports(transform.ast, transform.magicString);
         const sourceInterfaces = collectSourceInterfaces(transform.ast);
+        const refName = hostRefName(collectIdentifierNames(transform.ast));
         let changed = transformSourceTypes(
           code,
           transform.ast,
@@ -142,7 +162,22 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
               transform.magicString!.appendLeft(insertion, declaration);
             }
 
-            transform.magicString!.overwrite(helper.annotation.start, helper.annotation.end, interfaceName);
+            const wrapped =
+              acceptsTargetRef(root.element, root.target) &&
+              forwardHostRef(
+                node,
+                parent,
+                root,
+                { annotation: helper.annotation, type: interfaceName, ref: refName },
+                imports,
+                typeImports,
+                transform.magicString!
+              );
+
+            if (!wrapped) {
+              transform.magicString!.overwrite(helper.annotation.start, helper.annotation.end, interfaceName);
+            }
+
             changed = true;
             this.skip();
           },
@@ -510,8 +545,8 @@ function forwardedTarget(
   declaration: OxcFunction,
   binding: string,
   bindings: TypeBindings
-): { readonly target: ComponentTarget; readonly element: TargetElement } | undefined {
-  const matches: Array<{ target: ComponentTarget; element: TargetElement }> = [];
+): ForwardedTarget | undefined {
+  const matches: Array<ResolvedTarget & { opening: JSXOpeningElement }> = [];
 
   walk(declaration, {
     enter(node, parent) {
@@ -526,14 +561,81 @@ function forwardedTarget(
 
       const resolved = openingTarget(parent, bindings);
 
-      if (resolved) matches.push(resolved);
+      if (resolved) matches.push({ ...resolved, opening: parent });
     },
   });
 
   const first = matches[0];
   if (!first) return undefined;
 
-  return matches.every((match) => sameTargetElement(first, match)) ? first : undefined;
+  if (!matches.every((match) => sameTargetElement(first, match))) return undefined;
+
+  return { target: first.target, element: first.element, openings: matches.map((match) => match.opening) };
+}
+
+interface HostRefSignature {
+  /** The authored props annotation the public interface name replaces. */
+  readonly annotation: TSType;
+  /** Name of the generated public props interface. */
+  readonly type: string;
+  /** Parameter name for the host ref, free of collisions with module identifiers. */
+  readonly ref: string;
+}
+
+/**
+ * Wrap an authored component in the target's ref runtime so the host ref lands on the element its props spread onto.
+ * Renderers without ref-as-prop would otherwise drop a ref placed on the plain function, which breaks any host that
+ * composes its own refs through `render`, such as buttons and popup triggers.
+ */
+function forwardHostRef(
+  declaration: FunctionDeclaration,
+  parent: Node | null | undefined,
+  root: ForwardedTarget,
+  signature: HostRefSignature,
+  imports: ModuleImports,
+  typeImports: ModuleImports,
+  magicString: RolldownMagicString
+): boolean {
+  const ref = root.target.jsx.ref;
+  const parameter = declaration.params[0];
+  if (!ref || !declaration.id || !parameter || declaration.params.length !== 1) return false;
+
+  if (declaration.async || declaration.generator) return false;
+
+  if (parent?.type !== 'Program' && parent?.type !== 'ExportNamedDeclaration') return false;
+
+  const name = declaration.id.name;
+  const forward = imports.reference(ref.forward);
+  const refType = renderTargetRefType(root.element, { target: root.target, imports }, typeImports);
+
+  magicString.overwrite(
+    declaration.start,
+    declaration.id.end,
+    `const ${name} = ${forward}<${refType}, ${signature.type}>(function ${name}`
+  );
+
+  // The wrapper always passes props, so a default object would only hide the ref parameter behind it.
+  magicString.overwrite(
+    signature.annotation.start,
+    Math.max(signature.annotation.end, parameter.end),
+    `${signature.type}, ${signature.ref}`
+  );
+
+  for (const opening of root.openings) magicString.appendLeft(opening.name.end, ` ref={${signature.ref}}`);
+
+  magicString.appendLeft(declaration.end, ');');
+
+  return true;
+}
+
+function hostRefName(used: ReadonlySet<string>): string {
+  if (!used.has('ref')) return 'ref';
+
+  let suffix = 1;
+
+  while (used.has(`ref${suffix}`)) suffix += 1;
+
+  return `ref${suffix}`;
 }
 
 function openingTarget(

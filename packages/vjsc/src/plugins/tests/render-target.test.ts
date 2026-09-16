@@ -22,9 +22,15 @@ const reactTarget = defineComponentTarget<typeof schema>()(({ element, imported 
     source: '@fixture/components',
     components: { resolve: ({ component }) => imported({ from: '@fixture/react', name: component }) },
     renderTargets: { Button: { element: Button } },
-    jsx: { importSource: 'react', attributes: 'react' },
+    jsx: {
+      importSource: 'react',
+      attributes: 'react',
+      ref: { forward: { from: 'react', name: 'forwardRef' }, type: { from: 'react', name: 'ComponentRef' } },
+    },
   };
 });
+
+const plainReactTarget = { ...reactTarget, jsx: { importSource: 'react', attributes: 'react' as const } };
 
 const htmlTarget = defineComponentTarget<typeof schema>()(({ element }) => ({
   source: '@fixture/components',
@@ -44,15 +50,28 @@ const definitionSource = `
 `;
 
 describe('renderTargetPlugin', () => {
-  it('lowers definitions and directives to React render props', async () => {
+  it('lowers definitions to ref-forwarding React components and directives to render props', async () => {
     const source = await transform(definitionSource, reactTarget);
 
-    expect(source).toContain('import type { ComponentProps } from "react";');
+    expect(source).toContain('import { forwardRef } from "react";');
+    expect(source).toContain('import type { ComponentProps, ComponentRef } from "react";');
     expect(source).toContain('export type ButtonProps = ComponentProps<"button">;');
-    expect(source).toContain('export function Button({ className, ...props }: ButtonProps)');
-    expect(source).toContain('<button className={["media-button", "grid p-0", className]} {...props} />');
+    expect(source).toContain(
+      'export const Button = forwardRef<ComponentRef<"button">, ButtonProps>(function Button({ className, ...props }: ButtonProps, ref) {'
+    );
+    expect(source).toContain('<button ref={ref} className={["media-button", "grid p-0", className]} {...props} />');
+    expect(source).toMatch(/\{\.\.\.props\} \/>;\n\}\);/);
     expect(source).toContain('render={<Button />}');
     expect(source).not.toContain('$render');
+  });
+
+  it('lowers definitions to plain React functions when the target has no ref runtime', async () => {
+    const source = await transform(definitionSource, plainReactTarget);
+
+    expect(source).toContain('import type { ComponentProps } from "react";');
+    expect(source).toContain('export function Button({ className, ...props }: ButtonProps)');
+    expect(source).toContain('<button className={["media-button", "grid p-0", className]} {...props} />');
+    expect(source).not.toContain('forwardRef');
   });
 
   it('lowers style render targets to HTML class names', async () => {

@@ -20,6 +20,22 @@ const componentSources = {
   QualityRadioGroup: '@videojs/react/ui/quality-radio-group',
 } as const satisfies Partial<Record<keyof CoreSchema['definitions'], string>>;
 
+// These React components only provide context or behavior and render no element, so a host ref has nowhere to land.
+// Every other `@videojs/react` component forwards its ref to the element it renders.
+const refLessComponents = new Set([
+  'AlertDialog.Root',
+  'Controls.Root',
+  'Dialog.Root',
+  'ErrorDialog.Root',
+  'Gesture',
+  'Hotkey',
+  'Menu.Root',
+  'Popover.Root',
+  'Tooltip.Provider',
+  'Tooltip.Root',
+  'VolumePopover.Root',
+]);
+
 export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(({
   target,
   code,
@@ -157,6 +173,11 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
     jsx: {
       importSource: 'react',
       attributes: 'react',
+      ref: {
+        forward: { from: 'react', name: 'forwardRef' },
+        type: { from: 'react', name: 'ComponentRef' },
+        accepts: ({ imported, path }) => !refLessComponents.has([imported, ...(path ?? [])].join('.')),
+      },
       className: {
         merge: { from: skinClassNameMergeImport, name: 'cn' },
         resolve: { from: '@videojs/utils/style', name: 'resolveClassName' },
