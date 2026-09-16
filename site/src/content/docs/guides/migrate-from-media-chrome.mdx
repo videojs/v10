@@ -18,9 +18,17 @@ Scoped to apps that compose their own player from Media Chrome elements. If you 
 
 Install Video.js and choose a <DocsLink slug="guides/presets">preset</DocsLink> (see <DocsLink slug="guides/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
-<FrameworkCase frameworks={['html']}>```bash npm install @videojs/html ```</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```bash
+npm install @videojs/html
+```
+</FrameworkCase>
 
-<FrameworkCase frameworks={['react']}>```bash npm install @videojs/react ```</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+```bash
+npm install @videojs/react
+```
+</FrameworkCase>
 
 ## Map the controller
 
@@ -85,7 +93,6 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
       display: inline-flex;
     }
     ```
-
   </TabsPanel>
 </TabsRoot>
 </FrameworkCase>
@@ -213,10 +220,8 @@ Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slide
 Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
 </FrameworkCase>
 
-<FrameworkCase frameworks={['react']}>
-  React buttons do not include visible content either. Use a button's `render` prop to add it, as
-  shown in [Map the controller](#map-the-controller). Build sliders from parts such as
-  `TimeSlider.Track`, `TimeSlider.Fill`, and `TimeSlider.Thumb`, then add your own CSS.
+<FrameworkCase frameworks={["react"]}>
+React buttons do not include visible content either. Use a button's `render` prop to add it, as shown in [Map the controller](#map-the-controller). Build sliders from parts such as `TimeSlider.Track`, `TimeSlider.Fill`, and `TimeSlider.Thumb`, then add your own CSS.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -302,9 +307,8 @@ Keep the skin when its CSS variables and content slots cover your changes. Build
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={['react']}>
-  React skins do not use Shadow DOM. Use `render` props when you build individual controls. Install
-  a ready-made skin's source when you need to change its control set or layout.
+<FrameworkCase frameworks={["react"]}>
+React skins do not use Shadow DOM. Use `render` props when you build individual controls. Install a ready-made skin's source when you need to change its control set or layout.
 </FrameworkCase>
 
 ## Control the player imperatively
@@ -339,10 +343,8 @@ function FullscreenShortcut() {
 
 The Media Chrome habit of scripting the media element directly still works, unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. The media element also stays the way to swap `src`, replace the media component, and listen for native events.
 
-<FrameworkCase frameworks={['react']}>
-  Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media`
-  slot to reach through. For the Video.js media object, call `useMedia` from a component inside the
-  player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+<FrameworkCase frameworks={["react"]}>
+Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 ## Known gaps
@@ -427,4 +429,3 @@ Work against the store directly: `selectVolume(store.state).setVolume(…)` on i
 - <DocsLink slug="guides/installation">Installation</DocsLink>
 - <DocsLink slug="guides/ui-components">UI components</DocsLink>
 - <DocsLink slug="guides/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
-```
