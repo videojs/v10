@@ -343,6 +343,40 @@ in, and the component updater left enabled. Four simpler shapes were measured an
 only; the fixture's own comment records them, so a second DRM test inherits a working CDM rather than
 rediscovering it.
 
+### EZDRM over AirPlay: unresolved
+
+EZDRM plays locally on this branch — Safari/macOS, over MSE, where the `sinf`
+session decrypts and no content id is involved. **Over AirPlay it has not played
+yet.** Recorded here because the next person will otherwise re-derive it.
+
+What was measured (macOS/Safari 26.6.2 → Roku TV, 2026-09-16):
+
+- Two attempts died during WebKit's pipeline switch before the receiver ever
+  requested a key — `WebKitBlobResource error 1`, which is resource selection
+  hitting the revoked MediaSource blob.
+- One attempt reached the legacy license exchange and EZDRM answered **HTTP
+  500**, retried four times by `fetchWithRetry` and reported as SVTA 4004.
+- That 500 is uninformative on its own: the endpoint answers 500 for *any*
+  malformed input, including an empty body (probed directly).
+
+Two fixes landed **after** those runs and have never been exercised together on
+EZDRM — the content-id resolver and the blob-source guard on the handover's
+reload. The 500 attempt in particular predates the resolver, so it was sending a
+content id we now know was wrong.
+
+Research says the shapes are right. Shaka's shipped EZDRM helper derives the
+content id as `initDataAsString.split(';').pop()`, which is byte-for-byte what
+`hls-drm-ezdrm`'s `fairPlayContentId` now does, and its request handler is
+`octetStreamFairPlayRequest_` — the raw-SPC octet-stream POST that is already
+this engine's default. Worth noting how unstandardised this is: Shaka's *default*
+content id is the URI's **domain**, where Apple's sample and this engine's
+default take everything after the scheme. Three defaults, three answers.
+
+So a further attempt is justified, and the open question is narrow: whether the
+session survives the handover at all on this stream. If it does and EZDRM still
+500s, the next evidence would have to come from EZDRM — the demo endpoint gives
+nothing back to work with.
+
 ### AirPlay handoff: manual
 
 No automated coverage reaches this path — Playwright cannot drive an AirPlay picker, and the receiver is
