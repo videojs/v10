@@ -25,7 +25,11 @@ export default function App() {
   return (
     <VideoPlayer>
       <Container>
-        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+        <Video
+          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+          muted
+          playsInline
+        />
 
         <ErrorDialog.Root>
           <ErrorDialog.Popup className="media-error">
@@ -46,17 +50,28 @@ export default function App() {
 ```html
 <video-player>
   <media-container>
-    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+    <video
+      src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+      muted
+      playsinline
+    ></video>
     <media-error-dialog>
-      <media-alert-dialog-title></media-alert-dialog-title>
-      <media-alert-dialog-description></media-alert-dialog-description>
-      <media-alert-dialog-close></media-alert-dialog-close>
+      <media-dialog-popup>
+        <media-dialog-title></media-dialog-title>
+        <media-dialog-description></media-dialog-description>
+        <media-dialog-close></media-dialog-close>
+      </media-dialog-popup>
     </media-error-dialog>
   </media-container>
 </video-player>
 <script type="module">
   import '@videojs/html/video/player';
+  import '@videojs/html/ui/container';
   import '@videojs/html/ui/error-dialog';
+  import '@videojs/html/ui/dialog-popup';
+  import '@videojs/html/ui/dialog-title';
+  import '@videojs/html/ui/dialog-description';
+  import '@videojs/html/ui/dialog-close';
 </script>
 ```
 

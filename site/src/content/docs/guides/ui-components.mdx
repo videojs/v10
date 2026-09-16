@@ -24,6 +24,8 @@ However, you should consider placing your components in `<Container>`. Component
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
+Each `@videojs/html/ui/*` import registers exactly one custom element. Compound components such as controls, sliders, menus, and dialogs need an import for the root and for every part you render, so a `<media-controls-content>` inside `<media-controls>` needs both `ui/controls` and `ui/controls-content`. Without its import, a part stays a plain element and never receives its state attributes. Each reference page lists the imports for its anatomy, and the skin entry points register everything their layout uses.
+
 UI components can go anywhere inside a <DocsLink slug="reference/components/player">`<video-player>`</DocsLink>.
 
 However, you should consider placing your components in `<media-container>`. Components in `<media-container>` will go fullscreen with the player, respond to user activity, and more.
@@ -57,21 +59,15 @@ import { PauseIcon, PlayIcon } from '@videojs/react/icons';
 
 <PlayButton
   render={(props, state) => (
-    <button {...props}>
-      {state.paused ? <PlayIcon /> : <PauseIcon />}
-    </button>
+    <button {...props}>{state.paused ? <PlayIcon /> : <PauseIcon />}</button>
   )}
-/>
+/>;
 ```
 
 `className` and `style` also accept functions of state for dynamic styling without a full render prop:
 
 ```tsx
-<PlayButton
-  className={(state) =>
-    state.paused ? 'btn btn--paused' : 'btn btn--playing'
-  }
-/>
+<PlayButton className={(state) => (state.paused ? 'btn btn--paused' : 'btn btn--playing')} />
 ```
 
 ### Data attributes and CSS custom properties
@@ -82,11 +78,19 @@ This lets you style state changes in pure CSS:
 
 ```css
 /* Show/hide icons based on play state */
-.play-icon  { display: none; }
-.pause-icon { display: none; }
+.play-icon {
+  display: none;
+}
+.pause-icon {
+  display: none;
+}
 
-button[data-paused] .play-icon        { display: inline; }
-button:not([data-paused]) .pause-icon { display: inline; }
+button[data-paused] .play-icon {
+  display: inline;
+}
+button:not([data-paused]) .pause-icon {
+  display: inline;
+}
 ```
 
 Each component's reference page documents its full set of data attributes.

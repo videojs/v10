@@ -1,5 +1,11 @@
 import '@videojs/html/video/player';
+import '@videojs/html/ui/container';
 import '@videojs/html/ui/dialog';
+import '@videojs/html/ui/dialog-backdrop';
+import '@videojs/html/ui/dialog-popup';
+import '@videojs/html/ui/dialog-title';
+import '@videojs/html/ui/dialog-description';
+import '@videojs/html/ui/dialog-close';
 
 document.querySelectorAll<HTMLElement>('.html-dialog-basic').forEach((demo) => {
   const dialog = demo.querySelector('media-dialog');

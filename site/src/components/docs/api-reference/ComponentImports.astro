@@ -7,12 +7,18 @@ import FrameworkCase from '../FrameworkCase.astro';
 
 interface Props {
   component: string;
-  html: string;
+  /**
+   * HTML `ui/*` entry points to import. Each entry registers exactly one custom element, so compound components list
+   * the root followed by every part shown in their anatomy.
+   */
+  html: string | string[];
   /** React entry point to import from when the component is not exported from the package root. */
   reactFrom?: string;
 }
 
 const { component, html, reactFrom = '@videojs/react' } = Astro.props;
+
+const htmlEntries = Array.isArray(html) ? html : [html];
 
 const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
   {
@@ -21,7 +27,7 @@ const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledL
     lang: 'tsx',
   },
   {
-    code: `import '@videojs/html/ui/${html}';`,
+    code: htmlEntries.map((entry) => `import '@videojs/html/ui/${entry}';`).join('\n'),
     framework: 'html',
     lang: 'ts',
   },
