@@ -47,7 +47,7 @@ export default {
     remaining: 'उरलेला वेळ',
     elapsedSuffix: '{duration} गेलेला वेळ',
     durationSuffix: '{duration} कालावधी',
-    remainingSuffix: '{duration} उरलेला',
+    remainingSuffix: '{duration} उरलेला वेळ',
     showElapsed: 'गेलेला वेळ दाखवा, {duration}.',
     showDuration: 'कालावधी दाखवा, {duration}.',
     showRemaining: 'उरलेला वेळ दाखवा, {duration}.',
@@ -104,6 +104,6 @@ export default {
     off: 'बंद',
     auto: 'स्वयंचलित',
     autoWithLabel: 'स्वयंचलित ({label})',
-    subtitles: 'सबटायटल',
+    subtitles: 'उपशीर्षके',
   },
 } as const satisfies Translations;
