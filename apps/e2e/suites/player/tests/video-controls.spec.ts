@@ -90,8 +90,8 @@ for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry
 for (const { framework, name, path } of UI_CONTRACT_PAGES) {
   test.describe(`Video Controls — ${name} UI`, () => {
     test.skip(
-      ({ browserName }) => framework === 'react' && browserName !== 'chromium',
-      'HTML covers browser-specific UI behavior; React UI integration runs in Chromium.'
+      ({ browserName }) => framework === 'react' && browserName === 'firefox',
+      'HTML covers Firefox-specific UI behavior; React UI integration runs in Chromium and WebKit.'
     );
 
     let player: PlayerPage;
