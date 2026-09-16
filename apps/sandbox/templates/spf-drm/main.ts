@@ -133,7 +133,13 @@ setInterval(() => {
 
   if (serialized !== lastDrm) {
     lastDrm = serialized;
-    console.log(`[spf-drm] t=${video.currentTime.toFixed(2)}`, drm);
+    // Source list and errors go in the *message*, not the object: Safari's
+    // console collapses object tails behind a `…`, and these are exactly the
+    // fields worth reading when something has gone wrong.
+    console.log(
+      `[spf-drm] t=${video.currentTime.toFixed(2)} sources=[${drm.sources.join(' ')}] errors=[${(drm.errors ?? []).join(' ')}]`,
+      drm
+    );
   }
 
   statusPre.textContent = JSON.stringify(
