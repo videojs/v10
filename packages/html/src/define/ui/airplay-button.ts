@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
+import { AirPlayButtonElement } from '../../ui/airplay-button/element';
 
 safeDefine(AirPlayButtonElement);
 

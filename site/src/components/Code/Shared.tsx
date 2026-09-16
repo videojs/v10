@@ -18,8 +18,8 @@ interface Highlighted {
 }
 
 // Build-time memo: identical (code, lang) pairs repeat across pages
-// (e.g. the same ejected skin block on both /concepts/skins and
-// /how-to/customize-skins). Shiki's codeToHast + hastToHtml is the
+// (e.g. the same install command on several skin references). Shiki's
+// codeToHast + hastToHtml is the
 // dominant cost per ServerCode; caching the rendered output reuses
 // it across every page in a single build.
 const highlightCache = new Map<string, Highlighted>();

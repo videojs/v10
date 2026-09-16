@@ -1,6 +1,6 @@
 {
   "name": "@videojs/icons",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-rc.2",
   "private": true,
   "description": "SVG icon library for Video.js",
   "keywords": [
@@ -58,6 +58,10 @@
     "./element": {
       "types": "./dist/element/index.d.ts",
       "default": "./dist/element/index.js"
+    },
+    "./element/base": {
+      "types": "./dist/element/base.d.ts",
+      "default": "./dist/element/base.js"
     },
     "./element/*": {
       "types": "./dist/element/*/index.d.ts",

@@ -6,7 +6,7 @@ import {
   type MediaSnapshotStore,
   toInputActionEvent,
 } from '../input-action';
-import { isSliderFocused } from '../slider-focus';
+import { isSliderFocused } from '../slider/focus';
 
 function mockStore(state: Record<string, unknown>): MediaSnapshotStore {
   return { state };

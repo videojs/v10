@@ -1,82 +1,21 @@
 import '@app/styles.css';
-import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
 import '@videojs/html/media/dash-video';
-import '@videojs/html/media/mux-data';
-import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
-import { loadVideoSkinTag } from '@app/shared/html/skins';
-import { renderStoryboard } from '@app/shared/html/storyboard';
-import {
-  onAutoplayChange,
-  onLoopChange,
-  onMutedChange,
-  onPreloadChange,
-  onSkinChange,
-  onSourceChange,
-} from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
+import '@videojs/html/extensions/mux-data';
+import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 
-const html = String.raw;
-
-const state = createHtmlSandboxState();
-const loadLatest = createLatestLoader();
-
-async function render() {
-  await prepareSandboxHtmlLocale();
-
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
-  if (!tag) return;
-
-  const storyboard = getStoryboardSrc(state.source);
-  const poster = getPosterSrc(state.source);
-  const mediaAttrs = renderMediaAttrs(state);
-
-  document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
+createHtmlSandbox({
+  player: 'video',
+  render: ({ skinTag, src, attrs, storyboard, poster }) => html`
     <video-player>
-      <${tag} class="aspect-video max-w-4xl mx-auto">
-        <dash-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin>
-          ${renderStoryboard(storyboard)}
-        </dash-video>
+      <${skinTag} class="sandbox-video-frame mx-auto max-w-4xl">
+        <dash-video${src} ${attrs} playsinline crossorigin>${storyboard}</dash-video>
         <!-- Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
              SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the
              sandbox env key is what attributes the views. -->
         <mux-data player-software-name="dash-video" env-key="o9b7ge20gji31ao0rub18505f"></mux-data>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
-      </${tag}>
+      </${skinTag}>
     </video-player>
-  `);
-}
-
-render();
-
-onSkinChange((skin) => {
-  state.skin = skin;
-  render();
+  `,
 });
-
-onSourceChange((source) => {
-  state.source = source;
-  render();
-});
-
-onAutoplayChange((autoplay) => {
-  state.autoplay = autoplay;
-  render();
-});
-
-onMutedChange((muted) => {
-  state.muted = muted;
-  render();
-});
-
-onLoopChange((loop) => {
-  state.loop = loop;
-  render();
-});
-
-onPreloadChange((preload) => {
-  state.preload = preload;
-  render();
-});
-
-bindSandboxHtmlLocaleChange(render);

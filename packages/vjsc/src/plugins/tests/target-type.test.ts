@@ -4,32 +4,67 @@ import { describe, expect, it } from 'vite-plus/test';
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
 import { componentTargetPlugin } from '../component-target';
 import { targetImportCleanupPlugin } from '../target-import-cleanup';
 import { targetTypePlugin } from '../target-type';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const schema = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
+  Tooltip: defineComponent({
+    name: 'Tooltip',
+    parts: {
+      Root: defineComponent(),
+    },
+  }),
+  Menu: defineComponent({
+    name: 'Menu',
+    parts: {
+      Trigger: defineComponent(),
+    },
+  }),
+  Poster: defineComponent({
+    name: 'Poster',
+    root: 'Root',
+    parts: {
+      Root: defineComponent(),
+      Image: defineComponent<{ src?: string | undefined }>(),
+    },
+  }),
 });
 
 const target = defineComponentTarget<typeof schema>()(({ element, imported }) => ({
   source: '@fixture/components',
-  resolve: ({ component }) =>
-    imported({
-      from: '@fixture/react',
-      name: component,
-      props: { from: '@fixture/react', name: component, path: ['Props'] },
-    }),
+  components: {
+    resolve: ({ component, part }) =>
+      imported({
+        from: '@fixture/react',
+        name: component,
+        path: part ? [part] : undefined,
+        props: {
+          from: '@fixture/react',
+          name: component,
+          path: [part ? `${part}Props` : 'Props'],
+          children: component === 'Poster' && part === 'Image' ? 'render' : undefined,
+        },
+      }),
+    rules: {
+      Menu: {
+        Trigger: () => undefined,
+      },
+    },
+  },
   primitives: {
     Box: element('div', {
       props: { from: 'react', name: 'ComponentProps', intrinsic: 'div' },
     }),
   },
   types: {
+    ClassNameValue: { from: 'clsx', name: 'ClassValue' },
     PropsOf: { from: 'react', name: 'ComponentProps' },
     VjscNode: { from: 'react', name: 'ReactNode' },
+    VjscElement: { from: 'react', name: 'ReactElement' },
   },
   jsx: { importSource: 'react', attributes: 'react' },
 }));
@@ -39,7 +74,8 @@ describe('targetTypePlugin', () => {
     const source = await transform(`
       'use client';
       import * as $ from '@fixture/components';
-      import { Box, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
+      import * as TypeOnly from '@fixture/components';
+      import { Box, type ClassNameValue, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
       import { Local } from './local';
       import { setup } from './setup';
       import type { BuildOnly } from './build-only';
@@ -48,13 +84,30 @@ describe('targetTypePlugin', () => {
         child?: VjscNode;
       }
 
+      export type CanonicalType = typeof TypeOnly.Menu.Trigger;
+
+      export interface NamedButtonProps extends BuildOnly {
+        named?: boolean;
+        className?: ClassNameValue;
+      }
+
+      export function NamedButton({ named, ...props }: Props<NamedButtonProps> = {}) {
+        return <$.PlayButton {...props} />;
+      }
+
       export function PlayButton(
-        { custom, ...props }: Props<{
-          custom?: boolean;
-          VjscNode?: string;
-          child?: VjscNode;
-          label?: 'VjscNode';
-        }> = {}
+        { custom, ...props }: Props<
+          {
+            custom?: boolean;
+            VjscNode?: string;
+            child?: VjscNode;
+            popupClassName?: ClassNameValue;
+            controlClassName?: PropsOf<typeof Local>['className'];
+            tooltipClassName?: PropsOf<typeof $.Tooltip.Root>['className'];
+            menuClassName?: PropsOf<typeof $.Menu.Trigger>['className'];
+            label?: 'VjscNode';
+          } & { nested?: { value: string } }
+        > = {}
       ) {
         return <$.PlayButton {...props} />;
       }
@@ -62,25 +115,94 @@ describe('targetTypePlugin', () => {
       export function Panel({ className, ...props }: Props = {}) {
         return <Box className={className} {...props} />;
       }
+
+      export function ButtonTooltip({ ...props }: Props = {}) {
+        return <$.Tooltip.Root {...props} />;
+      }
     `);
 
-    expect(source).toContain('import { PlayButton as PlayButtonPrimitive } from "@fixture/react";');
-    expect(source).toContain('import type { ComponentProps, ReactNode } from "react";');
-    expect(source).toContain('interface Alias extends ComponentProps<typeof Local>');
+    expect(source).toContain('PlayButton as PlayButtonPrimitive');
+    expect(source).toContain('Tooltip as TooltipPrimitive');
+    expect(source).toContain('import type { ClassValue } from "clsx";');
+    expect(source).toMatch(/import type \{ (?:ComponentProps, ReactNode|ReactNode, ComponentProps) \} from "react";/);
+    expect(source).toContain('interface Alias extends NonNullable<ComponentProps<typeof Local>>');
     expect(source).toContain('child?: ReactNode;');
+    expect(source).toContain('export interface NamedButtonProps extends Omit<PlayButtonPrimitive.Props, "children">');
+    expect(source).toContain('named?: boolean;');
+    expect(source).toContain('className?: ClassValue;');
+    expect(source).toContain('{ named, ...props }: NamedButtonProps = {}');
     expect(source).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, "children">');
     expect(source).toContain('custom?: boolean');
     expect(source).toContain('VjscNode?: string');
     expect(source).toContain('child?: ReactNode');
+    expect(source).toContain('popupClassName?: ClassValue');
+    expect(source).toContain("controlClassName?: NonNullable<ComponentProps<typeof Local>>['className']");
+    expect(source).toContain("tooltipClassName?: TooltipPrimitive.RootProps['className']");
+    expect(source).toContain("menuClassName?: MenuPrimitive.TriggerProps['className']");
     expect(source).toContain(`label?: 'VjscNode'`);
+    expect(source).toContain('nested?: { value: string }');
     expect(source).not.toContain('type VjscNode');
     expect(source).toContain('{ custom, ...props }: PlayButtonProps = {}');
-    expect(source).toContain('export interface PanelProps extends Omit<ComponentProps<"div">, "children">');
+    expect(source).toMatch(/}\n\nexport function PlayButton/);
+    expect(source).toContain('export type PanelProps = Omit<ComponentProps<"div">, "children">');
+    expect(source).toMatch(/export type PanelProps = [^\n]+;\n\nexport function Panel/);
+    expect(source).toContain('export type ButtonTooltipProps = Omit<TooltipPrimitive.RootProps, "children">');
+    expect(source).not.toContain('TooltipPrimitive.Root.RootProps');
     expect(source).not.toContain("from 'vjsc/components'");
     expect(source).not.toContain("from '@fixture/components'");
+    expect(source).toContain('import type * as TypeOnly from "@fixture/components";');
     expect(source).toContain("import { setup } from './setup';");
     expect(source).not.toContain("from './build-only'");
-    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type { ComponentProps, ReactNode }'));
+    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type'));
+  });
+
+  it('types children by the part that renders them', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      import { type PropsOf, type PropsWithChildren } from 'vjsc/components';
+
+      export interface PosterProps {
+        renderImage?: PropsOf<typeof $.Poster.Image>['children'];
+      }
+
+      export function Poster({ children, className, renderImage, ...props }: PropsWithChildren<PosterProps> = {}) {
+        return (
+          <$.Poster.Root className={className}>
+            <$.Poster.Image {...props}>{renderImage}</$.Poster.Image>
+            {children}
+          </$.Poster.Root>
+        );
+      }
+    `);
+
+    expect(source).toContain(
+      'export interface PosterProps extends Omit<PosterPrimitive.ImageProps, "children" | "render">'
+    );
+    expect(source).toContain('renderImage?: PosterPrimitive.ImageProps["render"];');
+    expect(source).toContain('children?: PosterPrimitive.RootProps["children"];');
+  });
+
+  it('leaves children alone when the authored props declare them', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      import { type PropsWithChildren, type VjscElement } from 'vjsc/components';
+
+      export interface FramedPosterProps {
+        children: VjscElement;
+      }
+
+      export function FramedPoster({ children, ...props }: PropsWithChildren<FramedPosterProps>) {
+        return (
+          <$.Poster.Root {...props}>
+            <$.Poster.Image>{children}</$.Poster.Image>
+          </$.Poster.Root>
+        );
+      }
+    `);
+
+    expect(source).toContain('export interface FramedPosterProps extends Omit<Poster.RootProps, "children">');
+    expect(source).toContain('children: ReactElement;');
+    expect(source).not.toContain('children?:');
   });
 });
 

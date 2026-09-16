@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { isDocument, isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement, isShadowRoot } from '../predicates';
+import {
+  isDocument,
+  isHTMLAudioElement,
+  isHTMLImageElement,
+  isHTMLMediaElement,
+  isHTMLVideoElement,
+  isShadowRoot,
+} from '../predicates';
 
 describe('DOM predicates', () => {
   describe('isDocument', () => {
@@ -11,6 +18,14 @@ describe('DOM predicates', () => {
     it('returns false for non-documents', () => {
       expect(isDocument(document.body)).toBe(false);
       expect(isDocument(null)).toBe(false);
+    });
+  });
+
+  describe('isHTMLImageElement', () => {
+    it('accepts only image elements', () => {
+      expect(isHTMLImageElement(document.createElement('img'))).toBe(true);
+      expect(isHTMLImageElement(document.createElement('picture'))).toBe(false);
+      expect(isHTMLImageElement(null)).toBe(false);
     });
   });
 

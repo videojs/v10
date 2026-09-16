@@ -6,6 +6,20 @@ description: Factory that creates framework i18n helpers with custom loading opt
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createI18n } from "@videojs/react/i18n";
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createI18n } from "@videojs/html/i18n";
+```
+</FrameworkCase>
+
 <FrameworkCase frameworks={["html"]}>
 
 `createI18n` returns a context-bound `ProviderMixin`, `TextMixin`, and `I18nController` for custom elements. Use it when you need a custom locale loader or custom i18n elements. Most apps use `<media-i18n>` and `<media-text>` from `@videojs/html/i18n`.

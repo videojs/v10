@@ -1,0 +1,213 @@
+import { PosterCore, PosterDataAttrs, type PosterImageLoadState } from '@videojs/core';
+import { applyStateDataAttrs, logMissingFeature, selectMetadata, selectPlayback } from '@videojs/core/dom';
+import type { PropertyValues } from '@videojs/element';
+import { findComposedElement, isHTMLImageElement } from '@videojs/utils/dom';
+
+import { playerContext } from '../../player/context';
+import { PlayerController } from '../../player/controller';
+import { UIElement } from '../ui-element';
+
+const SHADOW_CSS = `\
+:host {
+  display: block;
+}
+img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+}
+img:not([src]) {
+  visibility: hidden;
+}`;
+
+/**
+ * Whether anything already points this image somewhere, which answers both whether the author owns the source and
+ * whether there is a download to wait for. A `<source>` counts: inside a `<picture>` it can win over the `src`.
+ */
+function hasSource(img: HTMLImageElement): boolean {
+  if (img.hasAttribute('src') || img.hasAttribute('srcset')) return true;
+
+  const parent = img.parentElement;
+
+  return parent?.localName === 'picture' && parent.querySelector('source') !== null;
+}
+
+/**
+ * Whether `complete` on this image describes a request. It is also true for one that omits both `src` and `srcset`,
+ * whatever a parent `<picture>` is fetching on its behalf, so only an image sourced from its own attributes can be
+ * read.
+ */
+function hasOwnSource(img: HTMLImageElement): boolean {
+  return !!img.getAttribute('src') || img.hasAttribute('srcset');
+}
+
+/**
+ * The image the element draws when none is supplied, reachable from outside as `::part(image)`. Decorative by default,
+ * like the one each skin carries: a resolved URL says nothing about what it depicts.
+ */
+function createFallbackImage(): HTMLImageElement {
+  const img = document.createElement('img');
+
+  img.alt = '';
+  img.setAttribute('part', 'image');
+  img.setAttribute('decoding', 'async');
+
+  return img;
+}
+
+/** How the current source is faring. */
+type ImageLoadState = 'pending' | 'loaded' | 'error';
+
+/**
+ * `<media-poster>` — sets `src` on a poster image it does not own.
+ *
+ * The image is a child, as in `<picture>`, but sourcing runs the other way around: `<picture>` treats the `src` on its
+ * `<img>` as the fallback, while here an image with no source of its own is the one this element fills in. Give the
+ * child a `src`, a `srcset`, or `<source>` candidates and it is yours, left alone.
+ *
+ * Left empty, the element draws an image of its own in its shadow root. Supply one as a child to describe it or wrap
+ * it: `<media-poster><img alt="Keynote speaker"></media-poster>`. Inside a skin, an `<img slot="poster">` of yours
+ * replaces the one the skin carries.
+ */
+export class PosterElement extends UIElement {
+  static readonly tagName = 'media-poster';
+
+  readonly #core = new PosterCore();
+  readonly #shadow = this.attachShadow({ mode: 'open' });
+  readonly #fallback = createFallbackImage();
+  readonly #children = new MutationObserver(() => this.requestUpdate());
+
+  readonly #playback = new PlayerController(this, playerContext, selectPlayback);
+  readonly #metadata = new PlayerController(this, playerContext, selectMetadata);
+
+  #image: HTMLImageElement | null = null;
+  /** Whether `#image` had no source of its own when it became active. */
+  #owned = false;
+  #imageLoadState: ImageLoadState = 'pending';
+
+  #imageEvents: AbortController | null = null;
+  #disconnect: AbortController | null = null;
+
+  constructor() {
+    super();
+
+    const style = document.createElement('style');
+
+    style.textContent = SHADOW_CSS;
+    this.#shadow.append(style, document.createElement('slot'), this.#fallback);
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+
+    if (this.destroyed) return;
+
+    this.#disconnect = new AbortController();
+    const { signal } = this.#disconnect;
+
+    // Two ways the image can change: a skin's forwarding slot fills or empties,
+    // which bubbles here, or a child is added or removed, which announces nothing.
+    this.addEventListener('slotchange', () => this.requestUpdate(), { signal });
+    this.#children.observe(this, { childList: true, subtree: true });
+
+    if (__DEV__ && !this.#playback.value) {
+      logMissingFeature(this.localName, this.#playback.displayName ?? 'playback');
+    }
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.#adopt(null);
+    this.#children.disconnect();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+  }
+
+  get #loadState(): PosterImageLoadState {
+    if (!this.#image || !hasSource(this.#image)) return 'none';
+
+    return this.#imageLoadState === 'pending' ? 'loading' : this.#imageLoadState;
+  }
+
+  protected override update(changed: PropertyValues): void {
+    super.update(changed);
+
+    const playback = this.#playback.value;
+    if (!playback) return;
+
+    // `metadata` is optional: without it nothing resolves a URL, and this stays
+    // a visibility wrapper around whatever the author supplied.
+    this.#core.setMedia({
+      started: playback.started,
+      poster: this.#metadata.value?.poster ?? '',
+    });
+
+    const { src } = this.#core.getState();
+
+    // A skin forwards its own `<slot name="poster">` in, so the image may sit a slot or two down inside a `<picture>`.
+    this.#adopt(findComposedElement(this, isHTMLImageElement) ?? this.#fallback);
+    this.#applySource(src);
+
+    this.#core.setImageLoadState(this.#loadState);
+    applyStateDataAttrs(this, this.#core.getState(), PosterDataAttrs);
+  }
+
+  /**
+   * Ownership is settled once, when an image becomes active: after the first fill the `src` we set would itself look
+   * authored. Re-slot an image with a source to hand it back, the way React decides a field is controlled at mount.
+   */
+  #adopt(next: HTMLImageElement | null): void {
+    if (next === this.#image) return;
+
+    // An image that steps aside keeps downloading whatever we pointed it at.
+    if (this.#owned) this.#image?.removeAttribute('src');
+
+    this.#imageEvents?.abort();
+    this.#imageEvents = null;
+
+    this.#image = next;
+    this.#owned = next !== null && !hasSource(next);
+    this.#imageLoadState = 'pending';
+
+    // The fallback only occupies the shadow root while it is the active image,
+    // so a supplied image never sits beside a hidden one.
+    if (next === this.#fallback) this.#shadow.append(this.#fallback);
+    else if (next) this.#fallback.remove();
+
+    if (!next) return;
+
+    // An image that finished before we started listening never fires again, so
+    // its load state has to be read off it. Decoded pixels stand on their own;
+    // the absence of them only means failure once `complete` can be trusted.
+    if (next.naturalWidth > 0) this.#imageLoadState = 'loaded';
+    else if (next.complete && hasOwnSource(next)) this.#imageLoadState = 'error';
+
+    this.#imageEvents = new AbortController();
+    const { signal } = this.#imageEvents;
+    const settle = (loadState: ImageLoadState) => () => {
+      this.#imageLoadState = loadState;
+      this.requestUpdate();
+    };
+
+    next.addEventListener('load', settle('loaded'), { signal });
+    next.addEventListener('error', settle('error'), { signal });
+  }
+
+  #applySource(src: string): void {
+    const img = this.#image;
+    if (!img || !this.#owned) return;
+
+    if (!src) {
+      this.#imageLoadState = 'pending';
+      img.removeAttribute('src');
+    } else if (img.getAttribute('src') !== src) {
+      // Reset before the write, not after: how the last source fared says
+      // nothing about this one, and the write itself can settle it.
+      this.#imageLoadState = 'pending';
+      img.setAttribute('src', src);
+    }
+  }
+}

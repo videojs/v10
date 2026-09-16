@@ -1,7 +1,10 @@
 import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+import type { MediaBufferState, MediaTimeState } from './state';
+import { MediaReadyState } from './types';
 import type {
+  EngineAdapter,
   MediaAudioTrackCapability,
   MediaBufferCapability,
   MediaContentDataCapability,
@@ -20,8 +23,23 @@ import type {
   MediaVolumeCapability,
 } from './types';
 
-export function hasMetadata(media: MediaSourceCapability): boolean {
-  return media.readyState >= 1;
+export function hasMetadata(media: Pick<MediaSourceCapability, 'readyState'>): boolean {
+  return media.readyState >= MediaReadyState.HAVE_METADATA;
+}
+
+export type MediaTimeRangeState = Pick<MediaTimeState, 'duration'> & Pick<MediaBufferState, 'seekable'>;
+
+export function getTimeRangeEnd(media: MediaTimeRangeState): number {
+  if (Number.isFinite(media.duration) && media.duration > 0) return media.duration;
+
+  const end = media.seekable.at(-1)?.[1];
+  if (end === undefined || !Number.isFinite(end) || end <= 0) return 0;
+
+  return end;
+}
+
+export function hasTimeRange(media: MediaTimeRangeState): boolean {
+  return getTimeRangeEnd(media) > 0;
 }
 
 export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {
@@ -190,4 +208,16 @@ export function isQuerySelectorAllCapable<Element = unknown>(
   return (
     isObject(value) && 'querySelectorAll' in value && isFunction((value as Record<string, unknown>).querySelectorAll)
   );
+}
+
+/**
+ * Whether `value` is an adapter fronting a JS playback engine (an hls.js instance, a dash.js player, an SPF
+ * composition). Narrows to the caller's type so an adapter keeps its own members alongside `engine`.
+ */
+export function isEngineAdapter<T>(value: T): value is T & EngineAdapter {
+  if (!isObject(value)) return false;
+
+  const adapter = value as Record<string, unknown>;
+
+  return 'engine' in adapter && isFunction(adapter.destroy);
 }

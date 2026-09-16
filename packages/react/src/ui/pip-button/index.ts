@@ -1,1 +1,1 @@
-export * from './pip-button';
+export * from './component';

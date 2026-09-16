@@ -1,15 +1,10 @@
 import { createState } from '@videojs/store';
 
-import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../indicator/indicator-labels';
-import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/indicator-lifecycle';
-import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/indicator-lifecycle';
-import {
-  type InputAction,
-  type InputActionEvent,
-  isInputActionIncluded,
-  type MediaSnapshot,
-} from '../input-action/input-action';
-import { deriveStatus } from './status-indicator-status';
+import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../indicator/labels';
+import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/lifecycle';
+import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/lifecycle';
+import { type InputAction, type InputActionEvent, isInputActionIncluded, type MediaSnapshot } from '../input-action';
+import { deriveStatus } from './status';
 
 export interface StatusIndicatorProps extends IndicatorCoreProps {
   /** Input actions allowed to open the indicator. All supported actions are allowed when omitted. */

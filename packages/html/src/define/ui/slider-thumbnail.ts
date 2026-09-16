@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { SliderThumbnailElement } from '../../ui/slider/slider-thumbnail-element';
+import { SliderThumbnailElement } from '../../ui/slider/thumbnail';
 
 safeDefine(SliderThumbnailElement);
 

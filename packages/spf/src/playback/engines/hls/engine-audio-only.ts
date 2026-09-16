@@ -25,6 +25,7 @@ import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
+import { loadChapters } from '../../behaviors/dom/load-chapters';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { setupAudioBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -193,9 +194,9 @@ const shareSignals = makeShareSignals<HlsAudioEngineState, HlsAudioEngineContext
  * Create an audio-only HLS playback engine.
  *
  * Subtractive composition variant of `createHlsVideoEngine`: omits video-side behaviors (`resolveVideoTrack`,
- * `switchVideoTrack`, `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors (`switchTextTrack`,
- * `resolveTextTrack`, `syncTextTracks`, `setupTextTrackActors`, `loadTextTrackSegments`). The remaining audio pipeline
- * composes unchanged.
+ * `switchVideoTrack`, `setupVideoBufferActors`, `loadVideoSegments`) and subtitle behaviors (`switchTextTrack`,
+ * `resolveTextTrack`, `syncTextTracks`, `setupTextTrackActors`, `loadTextTrackSegments`). Chapters (`loadChapters`)
+ * stay: they are session data, not a subtitle rendition. The remaining audio pipeline composes unchanged.
  *
  * Handles both truly audio-only HLS sources (no video stream-inf) and mixed-AV HLS sources where the audio rendition is
  * selected and video / subtitle renditions are ignored at composition time. The variant decision is encoded by adapter
@@ -311,6 +312,11 @@ export function createHlsAudioEngine(
       // Force native `ended` if Chrome freezes the playhead short of the buffered end
       // after `endOfStream`. Inert for a clean-ending single-track source.
       recoverEndStall,
+
+      // Chapters. Not a subtitle behavior: an `<audio>` element carries text
+      // tracks too, and podcast-style sources ship chapters. With no
+      // `preferredSubtitleLanguage` on this config the `und` track leads.
+      loadChapters,
 
       // Adapter signal callback.
       shareSignals,

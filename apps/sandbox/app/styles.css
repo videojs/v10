@@ -1,25 +1,177 @@
 @import "tailwindcss" source(none);
+@import "./_generated/styles.css";
 
 @source "../app";
 @source "../templates";
-/*
- * Normally the Tailwind skin would be ejected into the consuming project.
- * @videojs/skins is private, so the sandbox scans the copies bundled into the
- * public packages. Keep these paths narrow: scanning either package root follows
- * workspace symlinks across thousands of generated files and blocks cold requests.
- */
-@source "../node_modules/@videojs/html/dist/default/define/audio";
-@source "../node_modules/@videojs/html/dist/default/define/live-audio";
-@source "../node_modules/@videojs/html/dist/default/define/live-video";
-@source "../node_modules/@videojs/html/dist/default/define/video";
-@source "../node_modules/@videojs/html/dist/default/skins/dist/default";
-@source "../node_modules/@videojs/react/dist/default/presets";
-@source "../node_modules/@videojs/react/dist/default/skins/dist/default";
+@source "./_generated/registry";
 
+/* The shell's scheme control pins `data-color-scheme`; without it the operating system decides. */
 :root {
   color-scheme: light dark;
 }
 
+:root[data-color-scheme="light"] {
+  color-scheme: light;
+}
+
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
+/* `dark:` follows the resolved scheme, so the control and the operating system drive the same switch. */
+@custom-variant dark {
+  &:where(:root[data-color-scheme="dark"], :root[data-color-scheme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-color-scheme="light"]), :root:not([data-color-scheme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
 @theme {
-  --font-sans: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  video-player,
+  live-video-player,
+  audio-player,
+  live-audio-player,
+  media-i18n {
+    display: contents;
+  }
+}
+
+/* Shared by HTML, React, and CDN previews, including pages opened outside the shell. */
+.sandbox-video-frame {
+  max-width: var(--sandbox-player-width, 56rem);
+  aspect-ratio: var(--sandbox-player-ratio, 16 / 9);
+}
+
+[data-aspect-ratio="intrinsic"] .sandbox-video-frame {
+  aspect-ratio: auto;
+}
+
+/* The skins don't place the title; the Mux pages overlay it to show the one the media loads for the asset. */
+.sandbox-media-title {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  padding: 0.75rem 1rem 2.5rem;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.7), transparent);
+  color: white;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+#root :has(> :is(audio-player, live-audio-player)) {
+  max-width: var(--sandbox-player-width, 36rem);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  @variant dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+}
+
+@layer base {
+  [data-slot] {
+    @apply border-border;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot] {
+    animation: none !important;
+    transition: none !important;
+  }
 }

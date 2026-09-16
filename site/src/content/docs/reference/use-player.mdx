@@ -15,6 +15,12 @@ import SelectorDemoReact from "@/components/docs/demos/use-player/react/css/Sele
 import selectorReactTsx from "@/components/docs/demos/use-player/react/css/Selector.tsx?raw";
 import selectorReactCss from "@/components/docs/demos/use-player/react/css/Selector.css?raw";
 
+## Import
+
+```tsx
+import { usePlayer } from "@videojs/react";
+```
+
 The `usePlayer` hook returned by <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> gives you access to the player store from any component within its `Player`. It's typed to the features you passed to `createPlayer`, and has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions.
 
 ```tsx

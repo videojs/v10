@@ -70,6 +70,7 @@ describe('formatInstallationCode', () => {
   it('formats the HTML live-video preset', () => {
     const result = formatInstallationCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
 
+    expect(result).toContain('npm install @videojs/html @videojs/hlsjs-video');
     expect(result).toContain('<live-video-player>');
     expect(result).toContain("import '@videojs/html/live-video/skin'");
   });
@@ -82,6 +83,7 @@ describe('formatInstallationCode', () => {
       renderer: 'mux-audio',
     });
 
+    expect(result).toContain('npm install @videojs/react @videojs/mux-audio');
     expect(result).toContain('<LiveAudioPlayer>');
     expect(result).toContain('<LiveAudioSkin>');
   });

@@ -61,11 +61,17 @@ If a style depends on a Video.js `data-*` state, Svelte may remove its selector 
 </style>
 ```
 
-`:defined` applies the state style only after the browser loads the element. These selectors matter when you eject a skin or compose controls yourself. Styles cannot reach controls inside a packaged skin; use its CSS custom properties, or <DocsLink slug="how-to/customize-skins">eject the skin</DocsLink> to own its markup and CSS.
+`:defined` applies the state style only after the browser loads the element. These selectors matter when you eject a skin or compose controls yourself. Styles cannot reach controls inside a packaged skin; use its CSS custom properties, or <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink> to change its markup and CSS.
 
 ## Pass objects as properties
 
 If you need to pass structured data, such as a Mux source, an HTML attribute will not work because attributes contain text. Pass the object directly, and Svelte assigns it to the custom element's JavaScript property:
+
+The Mux media ships as its own adapter package, so add it to the HTML installation used by this example:
+
+```bash
+pnpm add @videojs/html @videojs/mux-video
+```
 
 ```svelte
 <script lang="ts">

@@ -2,7 +2,8 @@
  * Measures bundle sizes for all packages.
  *
  * Auto-discovers packages from `packages/`, reads their `exports` field to find
- * entry points, and externalizes `peerDependencies`.
+ * entry points, and externalizes `peerDependencies` plus dependencies that
+ * support published output without belonging to the library implementation.
  *
  * Each JS export is bundled independently. Sizes are initial static graph
  * totals (minified + brotli); lazy dynamic chunks are measured separately so
@@ -15,7 +16,7 @@
  * CSS files are minified with esbuild then brotli-compressed.
  *
  * Each entry includes a `category` field for grouped reporting in html/react:
- * preset, media, player, skin, ui, or feature.
+ * preset, media, extension, player, skin, ui, or feature.
  *
  * Usage: node .github/scripts/bundle-size.js [--root repo-root] [--json output.json]
  */
@@ -50,6 +51,9 @@ const SKIP_PACKAGES = new Set([
 
 /** Packages that get categorized breakdowns in the report. */
 const CATEGORIZED_PACKAGES = new Set(['html', 'react']);
+
+/** Published support dependencies excluded from library implementation sizes. */
+const REPORT_EXTERNAL_DEPENDENCIES = new Set(['react-compiler-runtime']);
 
 /** UI compound component parts — excluded from the report. */
 const UI_PARTS = new Set([
@@ -162,7 +166,7 @@ function buildPresetEntry(pkgShortName, config, distDir) {
  * @property {string} name
  * @property {number} size
  * @property {'root' | 'subpath'} type
- * @property {string} [category] - preset, media, player, skin, ui, feature (only for html/react)
+ * @property {string} [category] - preset, media, extension, player, skin, ui, feature (only for html/react)
  * @property {'js' | 'css'} format
  * @property {number} [totalSize] - Initial + lazy dynamic chunk size
  * @property {number} [lazySize] - Lazy dynamic chunk size
@@ -348,6 +352,8 @@ function categorize(name) {
 
   if (subpath.startsWith('/media/')) return 'media';
 
+  if (subpath.startsWith('/extensions/')) return 'extension';
+
   if (subpath.startsWith('/ui/')) {
     // Skip compound component parts — only show main entries
     const uiName = subpath.slice('/ui/'.length);
@@ -430,24 +436,51 @@ function resolveWildcard(pkgDir, exportKey, exportValue) {
     }));
 }
 
+/**
+ * Package directories under `packages/`, sorted. A direct child without a package.json is a bucket (e.g. `adapters/`)
+ * whose children are packages.
+ */
+function listPackageDirs() {
+  const dirs = [];
+
+  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    const dir = join(PACKAGES_DIR, entry.name);
+
+    if (existsSync(join(dir, 'package.json'))) {
+      dirs.push(dir);
+      continue;
+    }
+
+    for (const child of readdirSync(dir, { withFileTypes: true })) {
+      if (child.isDirectory() && existsSync(join(dir, child.name, 'package.json'))) {
+        dirs.push(join(dir, child.name));
+      }
+    }
+  }
+
+  return dirs.sort((a, b) => basename(a).localeCompare(basename(b)));
+}
+
 /** Discover packages and their entry points from the filesystem. */
 function discoverPackages() {
   const packages = [];
 
-  for (const dirName of readdirSync(PACKAGES_DIR).sort()) {
+  for (const pkgDir of listPackageDirs()) {
+    const dirName = basename(pkgDir);
     if (SKIP_PACKAGES.has(dirName)) continue;
 
-    const pkgJsonPath = join(PACKAGES_DIR, dirName, 'package.json');
-    if (!existsSync(pkgJsonPath)) continue;
-
-    const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'));
+    const pkgJson = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8'));
     if (!pkgJson.exports) continue;
 
     const pkgName = pkgJson.name;
-    const pkgDir = join(PACKAGES_DIR, dirName);
-    const external = pkgJson.peerDependencies
-      ? Object.keys(pkgJson.peerDependencies)
-      : [];
+    const external = [
+      ...Object.keys(pkgJson.peerDependencies ?? {}),
+      ...Object.keys(pkgJson.dependencies ?? {}).filter((dependency) =>
+        REPORT_EXTERNAL_DEPENDENCIES.has(dependency),
+      ),
+    ];
 
     let rootPath = null;
     const subpaths = [];

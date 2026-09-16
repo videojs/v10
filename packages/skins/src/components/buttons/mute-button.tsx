@@ -1,0 +1,24 @@
+import type { MuteButtonProps as CoreProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';
+import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjsc';
+import type { Props } from 'vjsc/components';
+
+import type { SkinComponentDescription } from '../../meta';
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/buttons/mute-button.styles';
+import { Button } from './button';
+
+export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
+  return (
+    <$.MuteButton $render={Button} className={[styles.root, className]} {...props}>
+      <VolumeOffIcon className={[buttonStyles.icon, styles.offIcon]} />
+      <VolumeLowIcon className={[buttonStyles.icon, styles.lowIcon]} />
+      <VolumeHighIcon className={[buttonStyles.icon, styles.highIcon]} />
+    </$.MuteButton>
+  );
+}
+
+export const meta = {
+  title: 'Mute Button',
+  description: 'A state-aware mute button used by the volume control.',
+} as const satisfies SkinComponentDescription;

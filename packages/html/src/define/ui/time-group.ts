@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { TimeGroupElement } from '../../ui/time/time-group-element';
+import { TimeGroupElement } from '../../ui/time/group';
 
 safeDefine(TimeGroupElement);
 

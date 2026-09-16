@@ -26,7 +26,7 @@ Send playback to an Apple TV over AirPlay or a Chromecast over Google Cast while
 
 ## Recommended approach
 
-Use a <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> component with a <DocsLink slug="reference/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/airplay-button">AirPlayButton</DocsLink> for Safari. The prebuilt skins already include both buttons; add `GoogleCast` next to a streaming media component to enable the configurable Cast route.
+Use the <DocsLink slug="reference/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="reference/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/airplay-button">AirPlayButton</DocsLink> for Safari. The prebuilt skins already include both buttons; add `GoogleCast` next to a streaming media component to enable the configurable Cast route.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -51,7 +51,7 @@ Use a <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> component wit
   </StyleCase>
 </FrameworkCase>
 
-The demo pairs the streaming media component with `GoogleCast` in React or `<google-cast>` in HTML. Without that component, `CastButton` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
+The demo pairs the streaming media component with the `GoogleCast` extension in React or `<google-cast>` in HTML. Without that extension, `CastButton` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
 
 ## How it works
 
@@ -65,7 +65,7 @@ AirPlay uses WebKit's presentation APIs. Google Cast uses a sender and receiver:
 
 While connected, playback actions — play, pause, seek, volume — proxy to the remote device, and player state keeps reflecting the remote session. Local playback is suspended.
 
-The Google Cast SDK loads only when a `GoogleCast` component is present in a Chromium browser. Players without that component and browsers that cannot cast do not load it.
+The Google Cast SDK loads only when the `GoogleCast` extension is present in a Chromium browser. Players without that extension and browsers that cannot cast do not load it.
 
 ## Availability and constraints
 

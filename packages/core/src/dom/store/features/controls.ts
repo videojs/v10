@@ -217,6 +217,7 @@ export const controlsFeature = definePlayerFeature({
     listen(container, 'pointermove', onPointerMove, { signal });
     listen(container, 'pointerdown', onPointerDown, { signal });
     listen(container, 'pointerup', onPointerUp, { signal });
+    listen(container, 'keydown', setActive, { signal });
     listen(container, 'keyup', setActive, { signal });
     listen(
       container,

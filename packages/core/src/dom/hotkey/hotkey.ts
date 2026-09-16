@@ -1,7 +1,7 @@
 import { isMacOS } from '@videojs/utils/dom';
 
 import type { HotkeyProps } from '../../core/ui/hotkey/core';
-import { getMediaInputActionValue } from '../media-actions';
+import { getMediaInputActionValue } from '../media-action-value';
 import { HotkeyCoordinator } from './coordinator';
 
 export type HotkeyModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';

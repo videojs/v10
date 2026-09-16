@@ -3,16 +3,17 @@ import clsx from 'clsx';
 
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
-import type { SupportedFramework } from '@/types/docs';
+import type { DocStability, SupportedFramework } from '@/types/docs';
 import { filterSidebar } from '@/utils/docs/sidebar';
 
 type Props = {
   framework: SupportedFramework;
   docTitles: Map<string, string>;
+  docStabilities: Map<string, DocStability | undefined>;
   class?: string;
 };
 
-const { framework, docTitles, class: className } = Astro.props;
+const { framework, docTitles, docStabilities, class: className } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 ---
 
@@ -22,7 +23,7 @@ const filteredSidebar = filterSidebar(framework);
   <nav aria-label="Docs sidebar" class="p-6">
     {
       filteredSidebar.map((item) => (
-        <SidebarItem item={item} framework={framework} docTitles={docTitles} />
+        <SidebarItem item={item} framework={framework} docTitles={docTitles} docStabilities={docStabilities} />
       ))
     }
   </nav>

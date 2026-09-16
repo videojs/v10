@@ -17,3 +17,7 @@ export function isHTMLAudioElement(value: unknown): value is HTMLAudioElement {
 export function isHTMLMediaElement(value: unknown): value is HTMLMediaElement {
   return value instanceof HTMLMediaElement;
 }
+
+export function isHTMLImageElement(value: unknown): value is HTMLImageElement {
+  return value instanceof HTMLImageElement;
+}

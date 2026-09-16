@@ -15,6 +15,58 @@ const encoder = new TextEncoder();
 
 const decoder = new TextDecoder();
 
+// These properties accept unitless zero, but still need a length when it appears inside math.
+const zeroLengthProperties = new Set([
+  'width',
+  'min-width',
+  'max-width',
+  'height',
+  'min-height',
+  'max-height',
+  'inline-size',
+  'min-inline-size',
+  'max-inline-size',
+  'block-size',
+  'min-block-size',
+  'max-block-size',
+  'margin',
+  'margin-top',
+  'margin-right',
+  'margin-bottom',
+  'margin-left',
+  'margin-inline',
+  'margin-inline-start',
+  'margin-inline-end',
+  'margin-block',
+  'margin-block-start',
+  'margin-block-end',
+  'padding',
+  'padding-top',
+  'padding-right',
+  'padding-bottom',
+  'padding-left',
+  'padding-inline',
+  'padding-inline-start',
+  'padding-inline-end',
+  'padding-block',
+  'padding-block-start',
+  'padding-block-end',
+  'inset',
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'inset-inline',
+  'inset-inline-start',
+  'inset-inline-end',
+  'inset-block',
+  'inset-block-start',
+  'inset-block-end',
+  'gap',
+  'row-gap',
+  'column-gap',
+]);
+
 export function collectTailwindDefaults(rules: readonly Rule[]): Map<string, readonly TokenOrValue[]> {
   const defaults = new Map<string, readonly TokenOrValue[]>();
 
@@ -118,6 +170,13 @@ export function optimizeSemanticCss(css: string): string {
     .trim();
 }
 
+/** Drop exact duplicate declarations from every style rule in place, keeping the last occurrence. */
+export function dedupeRuleDeclarations(rules: readonly Rule[]): void {
+  visitCssRules(rules, (rule) => {
+    if (rule.type === 'style' && rule.value.declarations) removeExactDuplicateDeclarations(rule.value.declarations);
+  });
+}
+
 function removeExactDuplicateDeclarations(block: DeclarationBlock): void {
   if (block.declarations) block.declarations = keepLastExactDeclaration(block.declarations);
 
@@ -216,7 +275,10 @@ function inlineTailwindDeclarations(
     const declaration = cloneCssAst(source);
 
     if (declaration.property === 'custom' || declaration.property === 'unparsed') {
-      declaration.value.value = resolveTailwindTokens(declaration.value.value, environment, []);
+      const zeroLength =
+        declaration.property === 'unparsed' && zeroLengthProperties.has(declaration.value.propertyId.property);
+
+      declaration.value.value = resolveTailwindTokens(declaration.value.value, environment, [], zeroLength);
     } else if (JSON.stringify(declaration).includes('--tw-')) {
       throw new Error(
         `style emission: cannot inline Tailwind variables in parsed declaration '${declaration.property}'.`
@@ -232,7 +294,8 @@ function inlineTailwindDeclarations(
 function resolveTailwindTokens(
   tokens: readonly TokenOrValue[],
   environment: ReadonlyMap<string, readonly TokenOrValue[]>,
-  stack: readonly string[]
+  stack: readonly string[],
+  zeroLength = false
 ): TokenOrValue[] {
   const output: TokenOrValue[] = [];
 
@@ -251,18 +314,18 @@ function resolveTailwindTokens(
         const replacement = local ?? token.value.fallback;
         if (replacement == null) throw new Error(`style emission: cannot resolve Tailwind variable '${name}'.`);
 
-        output.push(...resolveTailwindTokens(replacement, environment, [...stack, name]));
+        output.push(...resolveTailwindTokens(replacement, environment, [...stack, name], zeroLength));
         continue;
       }
 
       if (token.value.fallback) {
-        token.value.fallback = resolveTailwindTokens(token.value.fallback, environment, stack);
+        token.value.fallback = resolveTailwindTokens(token.value.fallback, environment, stack, zeroLength);
       }
     } else if (token.type === 'function') {
-      token.value.arguments = resolveTailwindTokens(token.value.arguments, environment, stack);
+      token.value.arguments = resolveTailwindTokens(token.value.arguments, environment, stack, zeroLength);
     }
 
-    output.push(foldSimpleCalc(token));
+    output.push(foldSimpleCalc(token, zeroLength));
   }
 
   return normalizeTokenWhitespace(output);
@@ -362,7 +425,7 @@ function styleRuleKey(rule: Extract<Rule, { type: 'style' | 'nesting' }>): strin
   return `${rule.type}:${JSON.stringify(style.selectors)}`;
 }
 
-function foldSimpleCalc(token: TokenOrValue): TokenOrValue {
+function foldSimpleCalc(token: TokenOrValue, zeroLength: boolean): TokenOrValue {
   if (token.type !== 'function' || token.value.name !== 'calc') return token;
 
   const arguments_ = token.value.arguments.filter((argument) => !isWhitespaceToken(argument));
@@ -383,12 +446,18 @@ function foldSimpleCalc(token: TokenOrValue): TokenOrValue {
       continue;
     }
 
-    if (operator === '/' || dimension || !isNumericDimension(value)) return token;
+    if (operator === '/' || dimension || (!isNumericDimension(value) && !(zeroLength && value.type === 'var')))
+      return token;
 
     dimension = cloneCssAst(value);
   }
 
   if (!dimension) return { type: 'token', value: { type: 'number', value: scalar } };
+
+  // Keep a length inside nested math; the CSS serializer removes its unit where zero permits it.
+  if (zeroLength && scalar === 0) return { type: 'length', value: { unit: 'px', value: 0 } };
+
+  if (dimension.type === 'var') return token;
 
   scaleNumericDimension(dimension, scalar);
   return dimension;

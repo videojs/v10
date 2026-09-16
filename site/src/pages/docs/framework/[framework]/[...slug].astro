@@ -3,6 +3,7 @@ import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import clsx from 'clsx';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton';
+import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
 import EditPageButton from '@/components/docs/EditPageButton.astro';
 import { Selectors } from '@/components/docs/Selectors';
@@ -141,15 +142,19 @@ const jsonLdSchema = createTechArticleSchema({
           ]}
         >
           <div>
-            <H2Markdown
-              as="h1"
-              class={clsx(
-                "mt-0 mb-4 text-h25 @lg:text-h2",
-                isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
-              )}
-            >
-              {getDocTitle(doc, framework)}
-            </H2Markdown>
+            <div class="mb-4 flex flex-wrap items-center gap-3">
+              <H2Markdown
+                as="h1"
+                maxWidth={false}
+                class={clsx(
+                  "mt-0 mb-0 text-h25 @lg:text-h2",
+                  isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
+                )}
+              >
+                {getDocTitle(doc, framework)}
+              </H2Markdown>
+              {doc.data.stability && <ApiStabilityBadge stability={doc.data.stability} />}
+            </div>
             <p class="text-p2">{doc.data.description}</p>
           </div>
           <CopyMarkdownButton client:idle />

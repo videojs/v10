@@ -3,6 +3,7 @@ title: Metadata
 description: Resolved title and poster values for the player store
 ---
 
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
 import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -14,6 +15,10 @@ Resolves what is playing into two values your UI can render: `title` and `poster
 An empty string counts as a value and stops the chain: set `title` to `''` and the resolved title is `''`. Pass `null` to clear your value.
 
 The metadata feature is included by the `videoFeatures`, `audioFeatures`, `liveVideoFeatures`, and `liveAudioFeatures` <DocsLink slug="concepts/presets">presets</DocsLink>; apps that build a custom preset can compose it in directly.
+
+## Import
+
+<FeatureImports feature="metadata" />
 
 <FeatureReference feature="metadata" />
 

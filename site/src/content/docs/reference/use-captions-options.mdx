@@ -6,6 +6,12 @@ description: Hook to build captions menu options from the player text track stat
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { useCaptionsOptions } from "@videojs/react";
+```
+
 `useCaptionsOptions` returns the currently showing caption track, the available options (starting with an `Off` option), and a `setValue` callback for wiring caption selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> is not configured.
 
 ```tsx title="CaptionsMenu.tsx"

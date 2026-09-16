@@ -6,6 +6,14 @@ description: HTML custom element that renders a translated string by semantic ke
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+## Import
+
+```ts
+import "@videojs/html/i18n";
+```
+
+One import registers both `<media-i18n>` and `<media-text>`.
+
 <FrameworkCase frameworks={["html"]}>
 
 `<media-text>` renders a translated value inside a <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink> (or any ancestor with the i18n provider mixin). Set `token` to the semantic translation key and use the text content as its English fallback. Use it for authored component content, standalone labels, tooltips, or demos.

@@ -1,9 +1,5 @@
-export {
-  CaptionsRadioGroup,
-  type CaptionsRadioGroupItemProps,
-  type CaptionsRadioGroupItemState,
-  type CaptionsRadioGroupProps,
-} from './captions-radio-group';
+export * as CaptionsRadioGroup from './index.parts';
+export { CaptionsRadioGroupLegacy } from './component';
 export {
   type CaptionsOption,
   type CaptionsOptionsProps,

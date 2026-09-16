@@ -4,7 +4,24 @@ import { describe, expect, it } from 'vite-plus/test';
 import { ControlsCore } from '../core';
 
 describe('ControlsCore', () => {
+  describe('defaultProps', () => {
+    it('follows player visibility by default', () => {
+      expect(ControlsCore.defaultProps).toEqual({ visibility: 'auto' });
+    });
+  });
+
   describe('getState', () => {
+    it('returns null without controls state in auto mode', () => {
+      expect(new ControlsCore().getState()).toBeNull();
+    });
+
+    it('stays visible without controls state in always mode', () => {
+      expect(new ControlsCore({ visibility: 'always' }).getState()).toEqual({
+        visible: true,
+        userActive: true,
+      });
+    });
+
     it('returns visible: true when controlsVisible is true', () => {
       const core = new ControlsCore();
       const media = createControlsState({ controlsVisible: true });
@@ -26,6 +43,14 @@ describe('ControlsCore', () => {
       const media = createControlsState({ userActive: false });
 
       core.setMedia(media);
+      expect(core.getState()).toEqual({ visible: true, userActive: false });
+    });
+
+    it('keeps controls visible without overriding user activity in always mode', () => {
+      const core = new ControlsCore({ visibility: 'always' });
+
+      core.setMedia(createControlsState({ controlsVisible: false, userActive: false }));
+
       expect(core.getState()).toEqual({ visible: true, userActive: false });
     });
 
@@ -62,7 +87,7 @@ describe('ControlsCore', () => {
       const core = new ControlsCore();
 
       core.setMedia(createControlsState());
-      const state = core.getState();
+      const state = core.getState()!;
 
       const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
 

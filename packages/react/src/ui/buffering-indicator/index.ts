@@ -1,1 +1,1 @@
-export * from './buffering-indicator';
+export * from './component';

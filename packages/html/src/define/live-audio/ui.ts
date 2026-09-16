@@ -11,15 +11,15 @@ import {
   defineTooltip,
   defineVolumeSlider,
 } from '../../registration/ui-compounds';
-import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
-import { ContainerElement } from '../../ui/container/container-element';
-import { GestureElement } from '../../ui/gesture/gesture-element';
-import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
-import { LiveButtonElement } from '../../ui/live-button/live-button-element';
-import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
-import { PlayButtonElement } from '../../ui/play-button/play-button-element';
-import { PopoverElement } from '../../ui/popover/popover-element';
-import { TextElement } from '../../ui/text/text-element';
+import { BufferingIndicatorElement } from '../../ui/buffering-indicator/element';
+import { ContainerElement } from '../../ui/container/element';
+import { GestureElement } from '../../ui/gesture/element';
+import { HotkeyElement } from '../../ui/hotkey/element';
+import { LiveButtonElement } from '../../ui/live-button/element';
+import { MuteButtonElement } from '../../ui/mute-button/element';
+import { PlayButtonElement } from '../../ui/play-button/element';
+import { PopoverElement } from '../../ui/popover/element';
+import { TextElement } from '../../ui/text/element';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(ContainerElement);

@@ -7,6 +7,7 @@ description: Mux-specific name for the HLS background video component
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import MediaImports from '@/components/docs/api-reference/MediaImports.astro';
 
 MuxBackgroundVideo is the Mux-specific name for <DocsLink slug="reference/hls-background-video">HlsBackgroundVideo</DocsLink>. The two names use the same implementation and API.
 
@@ -14,17 +15,7 @@ Use this name when your source is a Mux HLS URL and the Mux identity makes the c
 
 ## Import
 
-<FrameworkCase frameworks={["react"]}>
-```tsx
-import { MuxBackgroundVideo } from '@videojs/react/media/mux-background-video';
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-import '@videojs/html/media/mux-background-video';
-```
-</FrameworkCase>
+<MediaImports media="mux-background-video" react="MuxBackgroundVideo" />
 
 ## Load a Mux source
 

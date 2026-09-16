@@ -1,5 +1,6 @@
-import { AudioTrackRadioGroup, Container, createPlayer, Menu } from '@videojs/react';
+import { Container, createPlayer, Menu } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { AudioTrackRadioGroup } from '@videojs/react/ui/audio-track-radio-group';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
@@ -9,24 +10,27 @@ const src = '{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}';
 function AudioMenu(): ReactNode {
   return (
     <Menu.Root side="top" align="end">
-      <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
-        Audio
-      </Menu.Trigger>
-      <Menu.Popup className="menu">
-        <Menu.Content>
-          <AudioTrackRadioGroup
-            className="menu-group"
-            renderItem={(props, item) => (
-              <Menu.RadioItem {...props} className="menu-item">
-                {item.label}
-                <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
-                  ✓
-                </Menu.ItemIndicator>
-              </Menu.RadioItem>
-            )}
-          />
-        </Menu.Content>
-      </Menu.Popup>
+      <AudioTrackRadioGroup.Root>
+        <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
+          Audio
+          <AudioTrackRadioGroup.Value className="menu-hint" />
+        </Menu.Trigger>
+        <Menu.Popup className="menu">
+          <Menu.Content>
+            <AudioTrackRadioGroup.Options
+              className="menu-group"
+              renderItem={(props, item) => (
+                <Menu.RadioItem {...props} className="menu-item">
+                  {item.label}
+                  <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
+                    ✓
+                  </Menu.ItemIndicator>
+                </Menu.RadioItem>
+              )}
+            />
+          </Menu.Content>
+        </Menu.Popup>
+      </AudioTrackRadioGroup.Root>
     </Menu.Root>
   );
 }

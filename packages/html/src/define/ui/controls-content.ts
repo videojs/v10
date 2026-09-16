@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { ControlsContentElement } from '../../ui/controls/controls-content-element';
+import { ControlsContentElement } from '../../ui/controls/content';
 
 safeDefine(ControlsContentElement);
 

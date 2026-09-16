@@ -37,22 +37,45 @@ export const playbackFeature = definePlayerFeature({
     const { media } = target;
     if (!isMediaPauseCapable(media) || !isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return;
 
-    const sync = () =>
+    // `currentTime` when playback last ran short of data, or `null` when it did
+    // not. Safari reports `HAVE_CURRENT_DATA` for the whole of some MSE streams
+    // while decoding and presenting normally, so `readyState` never climbs back
+    // over `HAVE_FUTURE_DATA` and `playing` never fires. A frame presented since
+    // then is proof the browser had future data after all.
+    let starvedAt: number | null = null;
+
+    const sync = () => {
+      const starved = media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !media.paused;
+
+      if (!starved) starvedAt = null;
+      else starvedAt ??= media.currentTime;
+
       set({
         paused: media.paused,
         ended: media.ended,
         started: !media.paused || media.currentTime > 0,
-        waiting: media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !media.paused,
+        waiting: starved && starvedAt === media.currentTime,
       });
+    };
+
+    // The browser reports running short of data; only an advancing `currentTime`
+    // reports recovering from it.
+    const starve = () => {
+      starvedAt = media.currentTime;
+      sync();
+    };
 
     sync();
 
-    listen(media, 'emptied', sync, { signal });
-    listen(media, 'play', sync, { signal });
+    listen(media, 'emptied', starve, { signal });
+    listen(media, 'play', starve, { signal });
     listen(media, 'pause', sync, { signal });
     listen(media, 'ended', sync, { signal });
     listen(media, 'playing', sync, { signal });
-    listen(media, 'waiting', sync, { signal });
+    listen(media, 'waiting', starve, { signal });
+    listen(media, 'seeking', starve, { signal });
     listen(media, 'seeked', sync, { signal });
+    listen(media, 'canplay', sync, { signal });
+    listen(media, 'timeupdate', sync, { signal });
   },
 });

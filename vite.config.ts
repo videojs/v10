@@ -20,11 +20,23 @@ const ignoredPaths = [
   '**/dist/**',
   '**/examples/**',
   'site/scripts/api-docs-builder/src/tests/fixtures/**',
-  '**/packages/html/cdn/**',
+  '**/packages/cdn/*.css',
+  '**/packages/cdn/*.d.ts',
+  '**/packages/cdn/*.js',
+  '**/packages/cdn/*.js.map',
+  '**/packages/cdn/archive/**',
+  '**/packages/cdn/chunks/**',
+  '**/packages/cdn/extensions/**',
+  '**/packages/cdn/locales/**',
+  '**/packages/cdn/media/**',
+  '**/packages/cdn/src/locales/**',
   '**/styles/vjs.css',
   '**/packages/*/types/**',
+  '**/packages/adapters/*/types/**',
+  '**/packages/extensions/*/types/**',
   'packages/core/src/core/ui/components.generated.ts',
   'tools/oxlint/anti-slop/**',
+  'tools/oxlint/videojs/**',
 ];
 
 export default defineConfig({
@@ -62,7 +74,10 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: ignoredPaths,
-    jsPlugins: [{ name: 'anti-slop', specifier: './tools/oxlint/anti-slop/index.ts' }],
+    jsPlugins: [
+      { name: 'anti-slop', specifier: './tools/oxlint/anti-slop/index.ts' },
+      { name: 'videojs', specifier: './tools/oxlint/videojs/index.ts' },
+    ],
     plugins: ['typescript', 'react'],
     options: {
       typeAware: false,
@@ -125,6 +140,15 @@ export default defineConfig({
         },
       },
       {
+        // Cores are mutated during render and read back with getState(). React Compiler only tracks the inputs when
+        // both happen in the same component; a core mutated in one component and read in another memoises stale state.
+        files: ['packages/react/src/**'],
+        excludeFiles: ['packages/react/src/**/tests/**', 'packages/react/src/testing/**'],
+        rules: {
+          'videojs/no-orphan-core-mutation': 'error',
+        },
+      },
+      {
         files: ['**/*.astro'],
         rules: {
           'no-unused-vars': 'off',
@@ -149,7 +173,13 @@ export default defineConfig({
       'prepare:dev': {
         command: 'node -e ""',
         cache: false,
-        dependsOn: ['site#api-docs:generate', 'site#ejected-skins', 'site#cdn-manifest', '@videojs/sandbox#setup'],
+        dependsOn: ['site#api-docs:generate', 'site#cdn-manifest', '@videojs/sandbox#setup', '@videojs/skins#generate'],
+      },
+      'typecheck:workspace': {
+        command: 'tsgo --build',
+        cache: false,
+        // The E2E suites are not project references, so type-check them as a task alongside the build graph.
+        dependsOn: ['@videojs/skins#generate', '@videojs/e2e#typecheck'],
       },
     },
   },

@@ -12,12 +12,15 @@ title: MuteButton              # PascalCase component name
 frameworkTitle:
   html: media-mute-button      # HTML custom element tag name
 description: A button component for muting and unmuting audio playback
+stability: beta                  # Optional; marks an individual API as beta
 ---
 ```
 
 - `title`: PascalCase React component name
 - `frameworkTitle.html`: The `static tagName` from the HTML element file
 - `description`: One-line description of the component
+- `stability`: Optional API maturity. Use `beta` when the API is available for testing but may still change; the site
+  adds the status to the page header and sidebar.
 
 ### Page Structure
 

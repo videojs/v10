@@ -13,12 +13,13 @@ the documented API patterns; it does not invoke the TypeScript compiler.
 | Core | `packages/core/src/core/ui/{name}/core.ts` | Props, State, defaultProps |
 | Data attrs | `packages/core/src/core/ui/{name}/data.ts` | Data attribute definitions |
 | CSS vars | `packages/core/src/core/ui/{name}/vars.ts` | CSS custom property definitions (optional) |
-| HTML element | `packages/html/src/ui/{name}/{name}-element.ts` | Custom element with `static tagName` |
+| HTML element | `packages/html/src/ui/{name}/element.ts` | Custom element with `static tagName` |
 | React parts | `packages/react/src/ui/{name}/index.parts.ts` | Multi-part detection (optional) |
 
-Qualified core helpers retain the qualifier, such as `segments-core.ts`. Additional part-scoped data attribute
-files use `{qualifier}-data.ts`, such as `item-data.ts`, and export the full component-qualified name
-(`MenuItemDataAttrs`).
+Every file in a component directory uses a simple role name (`core.ts`, `data.ts`, `vars.ts`, `component.ts`);
+helpers drop the folder prefix, such as `slider/segments.ts`. Additional part-scoped data attribute files also use a
+simple name, such as `menu/item.ts`. The builder discovers them by the `@parts` JSDoc tag on an exported const whose
+name ends in `DataAttrs` (`MenuItemDataAttrs`), not by file name.
 
 ## Naming Requirements
 
@@ -57,9 +58,13 @@ The same map covers media elements whose PascalCase name doesn't kebab-case to t
 
 **Single-part fallback**: When filtering leaves only one part (typically Root), the component uses single-part mode — the remaining part's props/state/data-attrs are promoted to the top level, not nested under `parts`.
 
-**Primary part identification**: The part whose React source file instantiates the component's Core class (matches `new \w+Core\(`). The primary part receives the shared core props/state/data-attrs/css-vars.
+**Primary part identification**: The part whose React source file instantiates the component's Core class (matches `new {Name}Core`). When no part does (the parts drive the core through hooks) or several do (they share one source file), the part exported as `Root` is primary. The primary part receives the shared core props/state/data-attrs/css-vars and the component's `element.ts`.
 
-**Non-primary parts**: Each gets its own element file at `{name}-{part}-element.ts`. Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`).
+**Shared source files**: Parts may be exported from one file (`export { XRoot as Root, XOptions as Options, XValue as Value } from './component'`). Their kebabs then derive from the export names (`root`, `options`, `value`) rather than the file name, and descriptions and `{LocalName}Props` resolve by local export name inside that file.
+
+**Non-primary parts**: Each gets its own element file at `packages/html/src/ui/{name}/{part}.ts` (e.g., `time/group.ts`). Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`). A nested React part source such as `./chapters/title` is honored when the same folder exists on the HTML side; otherwise the part is looked up flat in the component directory.
+
+**Namespace parts**: `export * as Thumbnail from './thumbnail/index.parts'` groups nested parts that render as `Slider.Thumbnail.Root` and `Slider.Thumbnail.Image` (part ids `thumbnail-root`, `thumbnail-image`). The nested index lives in a folder named after the namespace. Its `Root` maps to the element file of the same name (`slider/thumbnail.ts`, class `SliderThumbnailElement`); other nested parts map to `{namespace}-{part}.ts`. Nested exports may point at another component's file (`../../thumbnail/image`); that part is React-only unless an element file matches, and inherits data attributes from the component that owns the file. Domain variants may re-export the namespace (`export { Thumbnail } from '../slider/index.parts'`) and receive the same nested parts.
 
 **Framework-divergent parts**: All parts get `platforms.react`. Parts with a matching HTML element file also get `platforms.html`. The renderer filters parts by framework — React-only parts are hidden in HTML docs.
 

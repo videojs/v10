@@ -15,6 +15,12 @@ import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  discoverWorkspacePackages,
+  isMainCiTestPackage,
+  SPECIAL_TEST_PACKAGES,
+} from '../../.github/scripts/package-test-matrix.js';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 
@@ -32,11 +38,34 @@ function readJson(path) {
   return JSON.parse(stripped);
 }
 
-/** Lists package directory names that contain a package.json. */
+/**
+ * Lists package directories relative to `packages/`, e.g. `core` or `adapters/mux-video`. A direct child without a
+ * package.json is treated as a bucket and its children are listed instead.
+ */
 function getPackageDirs() {
-  return readdirSync(PACKAGES_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && existsSync(join(PACKAGES_DIR, d.name, 'package.json')))
-    .map((d) => d.name);
+  const dirs = [];
+
+  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    if (existsSync(join(PACKAGES_DIR, entry.name, 'package.json'))) {
+      dirs.push(entry.name);
+      continue;
+    }
+
+    for (const child of readdirSync(join(PACKAGES_DIR, entry.name), { withFileTypes: true })) {
+      if (child.isDirectory() && existsSync(join(PACKAGES_DIR, entry.name, child.name, 'package.json'))) {
+        dirs.push(`${entry.name}/${child.name}`);
+      }
+    }
+  }
+
+  return dirs;
+}
+
+/** The package's own directory name, without any bucket prefix. */
+function packageDirName(dir) {
+  return dir.slice(dir.lastIndexOf('/') + 1);
 }
 
 function readPackageJson(dir) {
@@ -48,14 +77,15 @@ function readPackageJson(dir) {
 function checkCiTestCoverage() {
   const warnings = [];
   const ciText = readText(join(ROOT, '.github/workflows/ci.yml'));
-
-  // Collect package names from the test matrix.
-  const matrixMatch = ciText.match(/matrix:\s*\n\s*package:\s*\n((?:\s*-\s*'[^']+'\s*\n)+)/);
   const testedInCi = new Set();
+  const hasDynamicPackageTests =
+    ciText.includes('node .github/scripts/package-test-matrix.js') &&
+    ciText.includes('matrix.packages') &&
+    ciText.includes('test:ci');
 
-  if (matrixMatch) {
-    for (const m of matrixMatch[1].matchAll(/'([^']+)'/g)) {
-      testedInCi.add(m[1]);
+  if (hasDynamicPackageTests) {
+    for (const pkg of discoverWorkspacePackages(ROOT)) {
+      if (isMainCiTestPackage(pkg) && !SPECIAL_TEST_PACKAGES.has(pkg.name)) testedInCi.add(pkg.name);
     }
   }
 
@@ -94,7 +124,8 @@ function checkCommitlintScopes() {
   const scopes = new Set([...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]));
 
   for (const dir of getPackageDirs()) {
-    const scope = SCOPE_ALIASES.get(dir) ?? dir;
+    const name = packageDirName(dir);
+    const scope = SCOPE_ALIASES.get(name) ?? name;
 
     if (!scopes.has(scope)) {
       warnings.push(`Package dir "${dir}" missing from commitlint scope-enum (expected scope: "${scope}")`);
@@ -180,7 +211,7 @@ function checkPackageMetadata() {
     if (pkg.private) continue;
 
     // Skip packages that don't need library metadata.
-    if (METADATA_EXCLUDE.has(dir)) continue;
+    if (METADATA_EXCLUDE.has(packageDirName(dir))) continue;
 
     // publishConfig.access is required for scoped public packages.
     if (pkg.publishConfig?.access !== 'public') {
@@ -275,10 +306,10 @@ function checkBundledDocs() {
 // ── Check 7: Define imports ──────────────────────────────────────────────────
 
 /**
- * Preset and UI define modules are side-effect-only registration entrypoints. Media define modules retain their
- * existing element exports for compatibility. Bare side-effect imports from relative paths can cause non-deterministic
- * registration order when loaded as native ESM in the browser, so registration must go through explicit safeDefine()
- * calls.
+ * Preset and UI define modules are side-effect-only registration entrypoints. Media and extension define modules retain
+ * their existing element exports for compatibility. Bare side-effect imports from relative paths can cause
+ * non-deterministic registration order when loaded as native ESM in the browser, so registration must go through
+ * explicit safeDefine() calls.
  */
 function checkDefineImports() {
   const warnings = [];
@@ -311,9 +342,11 @@ function checkDefineImports() {
     const content = readText(filePath);
     const relative = filePath.slice(ROOT.length + 1);
 
-    const isMediaDefine = relative.startsWith('packages/html/src/define/media/');
+    const exportsElement =
+      relative.startsWith('packages/html/src/define/media/') ||
+      relative.startsWith('packages/html/src/define/extensions/');
 
-    if (!isMediaDefine && /^\s*export\b/m.test(content)) {
+    if (!exportsElement && /^\s*export\b/m.test(content)) {
       warnings.push(`${relative}: define modules are registration-only and must not export values or types`);
     }
 

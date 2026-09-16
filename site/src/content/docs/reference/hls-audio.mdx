@@ -5,6 +5,7 @@ frameworkTitle:
 description: Audio-only HLS element that plays the audio rendition of an HLS stream
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -22,6 +23,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/hls-audio/html/css/BasicU
 import basicUsageHtmlTs from "@/components/docs/demos/hls-audio/html/css/BasicUsage.ts?raw";
 
 Audio-only HLS element that plays just the audio rendition of an HLS stream — even when the source is a mixed audio/video manifest. Useful for audio podcast players, background audio, and bandwidth-constrained contexts where downloading video data would be wasted. For full audio/video HLS playback, see [HlsVideo](/docs/framework/html/reference/hls-video/).
+
+## Import
+
+<MediaImports media="hls-audio" react="HlsAudio" />
 
 ## Examples
 

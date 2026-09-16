@@ -1,0 +1,23 @@
+import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';
+import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
+import type { Props } from 'vjsc/components';
+
+import type { SkinComponentDescription } from '../../meta';
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/buttons/captions-button.styles';
+import { Button } from './button';
+
+export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
+  return (
+    <$.CaptionsButton $render={Button} className={[styles.root, className]} {...props}>
+      <CaptionsOffIcon className={[buttonStyles.icon, styles.offIcon]} />
+      <CaptionsOnIcon className={[buttonStyles.icon, styles.onIcon]} />
+    </$.CaptionsButton>
+  );
+}
+
+export const meta = {
+  title: 'Captions Button',
+  description: 'A state-aware button that toggles captions and subtitles.',
+} as const satisfies SkinComponentDescription;

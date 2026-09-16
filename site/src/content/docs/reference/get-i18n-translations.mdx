@@ -7,6 +7,20 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { getI18nTranslations } from "@videojs/react/i18n";
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { getI18nTranslations } from "@videojs/html/i18n";
+```
+</FrameworkCase>
+
 `getI18nTranslations` walks the BCP 47 lookup chain (`es-MX` → `es` → `en`) and merges registry layers into one map. Providers combine this map with lazy-loaded built-in packs and provider overrides. Call it directly when building custom UI outside built-in controls.
 
 See <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink> for merge order and fallback rules.

@@ -51,6 +51,8 @@ export interface PartSource {
   isPrimary: boolean;
   /** Path to HTML element file. */
   htmlPath?: string;
+  /** Element class name inside `htmlPath` for non-primary parts (e.g., "SliderTrackElement"). */
+  htmlElementName?: string;
   /** Path to React component file (for JSDoc description extraction). */
   reactPath?: string;
   /** Path to data.ts for shared data attributes (sub-parts only). */
@@ -75,12 +77,14 @@ export interface ComponentSource {
   htmlPath?: string;
   /** Path to index.parts.ts (if multi-part) */
   partsIndexPath?: string;
-  /** Extra part-scoped data-attrs files ({qualifier}-data.ts with a `@parts` tag) */
+  /** Extra part-scoped data-attrs files (an exported `*DataAttrs` const with a `@parts` tag) */
   extraDataAttrs?: ExtraDataAttrsSource[];
 }
 
 export interface ExtraDataAttrsSource {
   path: string;
+  /** Exported `*DataAttrs` const that carries the `@parts` tag */
+  exportName: string;
   /** Part kebabs listed in the `@parts` JSDoc tag on the file's export */
   parts: string[];
 }

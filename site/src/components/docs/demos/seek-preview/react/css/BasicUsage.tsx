@@ -14,7 +14,9 @@ export default function BasicUsage() {
           <TimeSlider.Track className="media-slider-track">
             <TimeSlider.Fill className="media-slider-fill" />
           </TimeSlider.Track>
-          <Slider.Thumbnail className="media-slider-thumbnail" />
+          <Slider.Thumbnail.Root className="media-slider-thumbnail">
+            <Slider.Thumbnail.Image className="media-slider-thumbnail-image" />
+          </Slider.Thumbnail.Root>
         </TimeSlider.Root>
       </Container>
     </Player>

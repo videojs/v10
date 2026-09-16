@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Bytt mellom avspilt og gjenstående tid.',
     toggleDuration: 'Bytt mellom varighet og gjenstående tid.',
     position: '{current} av {duration}',
+    unknown: 'Mediet er ikke lastet inn, ukjent tid.',
   },
   playback: {
     rate: 'Avspillingshastighet {rate}',

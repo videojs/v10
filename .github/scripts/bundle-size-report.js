@@ -117,6 +117,7 @@ function entryLabel(entryName, pkg) {
 const CATEGORY_ORDER = [
   'preset',
   'media',
+  'extension',
   'player',
   'skin',
   'ui',
@@ -126,6 +127,7 @@ const CATEGORY_ORDER = [
 const CATEGORY_LABELS = {
   preset: 'Presets',
   media: 'Media',
+  extension: 'Extensions',
   player: 'Players',
   skin: 'Skins',
   ui: 'UI Components',

@@ -7,18 +7,42 @@
     "declarationDir": "../../../types/playback/adapters"
   },
   "references": [
-    { "path": "../../../../utils" },
-    { "path": "../../../../media" },
-    { "path": "../../core" },
-    { "path": "../../network" },
-    { "path": "../../media" },
-    { "path": "../../media/dom" },
-    { "path": "../primitives" },
-    { "path": "../behaviors" },
-    { "path": "../behaviors/dom" },
-    { "path": "../actors" },
-    { "path": "../actors/dom" },
-    { "path": "../engines/hls" }
+    {
+      "path": "../../../../utils"
+    },
+    {
+      "path": "../../../../media"
+    },
+    {
+      "path": "../../core"
+    },
+    {
+      "path": "../../network"
+    },
+    {
+      "path": "../../media"
+    },
+    {
+      "path": "../../media/dom"
+    },
+    {
+      "path": "../primitives"
+    },
+    {
+      "path": "../behaviors"
+    },
+    {
+      "path": "../behaviors/dom"
+    },
+    {
+      "path": "../actors"
+    },
+    {
+      "path": "../actors/dom"
+    },
+    {
+      "path": "../engines/hls"
+    }
   ],
   "include": ["./**/*.ts"]
 }

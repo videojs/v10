@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Toggle between elapsed and remaining time.',
     toggleDuration: 'Toggle between duration and remaining time.',
     position: '{current} of {duration}',
+    unknown: 'Media not loaded, unknown time.',
   },
   playback: {
     rate: 'Playback rate {rate}',

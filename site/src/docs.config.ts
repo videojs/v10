@@ -18,16 +18,18 @@ export const sidebar: Sidebar = [
     ],
   },
   {
-    sidebarLabel: 'Getting started',
-    // May change when we revisit this section's boundary with Concepts (#1105)
-    llmsDescription: 'Installation, project setup, and introductory guides.',
+    sidebarLabel: 'Start here',
+    llmsDescription: 'Install Video.js, understand its main pieces, or move an existing player to Video.js 10.',
     contents: [
       { slug: 'how-to/installation' },
+      { slug: 'concepts/overview' },
+      { slug: 'concepts/why-videojs' },
+      { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
       {
         sidebarLabel: 'Migrate to Video.js 10',
+        defaultOpen: false,
         llmsDescription:
           'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
-        defaultOpen: false,
         contents: [
           { slug: 'how-to/migrate-from-video-js-8', sidebarLabel: 'From Video.js 8' },
           { slug: 'how-to/migrate-from-mux-player', sidebarLabel: 'From Mux Player' },
@@ -35,18 +37,23 @@ export const sidebar: Sidebar = [
           { slug: 'how-to/migrate-from-media-chrome', sidebarLabel: 'From Media Chrome' },
         ],
       },
-      { slug: 'concepts/why-videojs' },
-      { slug: 'concepts/overview' },
+    ],
+  },
+  {
+    sidebarLabel: 'Tooling',
+    defaultOpen: false,
+    llmsDescription: 'Guidance for AI tools, browser support, TypeScript, bundlers, and loading Video.js from a CDN.',
+    contents: [
       { slug: 'how-to/build-with-ai' },
-      { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
-      { href: '/changelog', sidebarLabel: 'Changelog' },
       { slug: 'concepts/browser-support' },
       { slug: 'concepts/typescript' },
       { slug: 'concepts/bundlers' },
+      { slug: 'concepts/cdn', frameworks: ['html'] },
     ],
   },
   {
     sidebarLabel: 'Concepts',
+    defaultOpen: false,
     llmsDescription:
       'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
     contents: [
@@ -63,8 +70,9 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'How to',
+    defaultOpen: false,
     llmsDescription:
-      "Task-oriented guides that each answer one goal in the reader's words. Some cover custom player UI; others configure a preset, skin, media component, or integration. Guides lead with the recommended path, then the constraints and variations needed to apply it.",
+      "Task-oriented guides that each answer one goal in the reader's words. Some cover custom player UI; others configure a preset, skin, media component, or extension. Guides lead with the recommended path, then the constraints and variations needed to apply it.",
     contents: [
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/build-your-own-component' },
@@ -72,6 +80,7 @@ export const sidebar: Sidebar = [
       {
         sidebarLabel: 'Integrate with a framework',
         defaultOpen: false,
+        llmsDescription: 'Guides for using the HTML version of Video.js with Vue, Nuxt, Svelte, or SvelteKit.',
         contents: [
           { slug: 'how-to/use-videojs-with-vue', sidebarLabel: 'Vue and Nuxt', frameworks: ['html'] },
           { slug: 'how-to/use-videojs-with-svelte', sidebarLabel: 'Svelte and SvelteKit', frameworks: ['html'] },
@@ -96,14 +105,30 @@ export const sidebar: Sidebar = [
     ],
   },
   {
-    sidebarLabel: 'API Reference',
-    llmsDescription:
-      'Reference for every public export, grouped by what it is: UI components, media components, player features, and utilities.',
+    sidebarLabel: 'Components',
+    defaultOpen: false,
+    llmsDescription: 'API reference for skins, interface components, media components, and service integrations.',
     contents: [
       {
-        sidebarLabel: 'UI Components',
+        sidebarLabel: 'Skins',
         defaultOpen: false,
-        llmsDescription: 'API Reference for UI components for building media player interfaces.',
+        llmsDescription: 'API reference for the packaged skins each preset ships.',
+        contents: [
+          { slug: 'reference/video-skin' },
+          { slug: 'reference/video-minimal-skin' },
+          { slug: 'reference/audio-skin' },
+          { slug: 'reference/audio-minimal-skin' },
+          { slug: 'reference/live-video-skin' },
+          { slug: 'reference/live-video-minimal-skin' },
+          { slug: 'reference/live-audio-skin' },
+          { slug: 'reference/live-audio-minimal-skin' },
+          { slug: 'reference/background-video-skin' },
+        ],
+      },
+      {
+        sidebarLabel: 'UI',
+        defaultOpen: false,
+        llmsDescription: 'API reference for components used to build a media player interface.',
         contents: [
           { slug: 'reference/player' },
           { slug: 'reference/player-container' },
@@ -121,12 +146,10 @@ export const sidebar: Sidebar = [
           { slug: 'reference/error-dialog' },
           { slug: 'reference/fullscreen-button' },
           { slug: 'reference/gesture' },
-          { slug: 'reference/google-cast' },
           { slug: 'reference/hotkey' },
           { slug: 'reference/live-button' },
           { slug: 'reference/menu' },
           { slug: 'reference/mute-button' },
-          { slug: 'reference/mux-data' },
           { slug: 'reference/pip-button' },
           { slug: 'reference/play-button' },
           { slug: 'reference/playback-rate-button' },
@@ -150,9 +173,9 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Media Components',
+        sidebarLabel: 'Media',
         defaultOpen: false,
-        llmsDescription: 'API Reference for media components that handle streaming protocols and media playback.',
+        llmsDescription: 'API reference for media components that handle streaming protocols and playback.',
         contents: [
           { slug: 'reference/audio' },
           { slug: 'reference/background-video' },
@@ -172,9 +195,23 @@ export const sidebar: Sidebar = [
           { slug: 'reference/twitch-video' },
           { slug: 'reference/video' },
           { slug: 'reference/vimeo-video' },
+          { slug: 'reference/wistia-video' },
           { slug: 'reference/youtube-video' },
         ],
       },
+      {
+        sidebarLabel: 'Extensions',
+        defaultOpen: false,
+        llmsDescription: 'API reference for extensions that connect external services to the player.',
+        contents: [{ slug: 'reference/google-cast' }, { slug: 'reference/mux-data' }],
+      },
+    ],
+  },
+  {
+    sidebarLabel: 'Helpers',
+    defaultOpen: false,
+    llmsDescription: 'Reference for player features and lower-level tools used to build or extend a player.',
+    contents: [
       {
         sidebarLabel: 'Player Features',
         defaultOpen: false,
@@ -223,6 +260,7 @@ export const sidebar: Sidebar = [
           {
             sidebarLabel: 'Advanced',
             defaultOpen: false,
+            llmsDescription: 'Lower-level translation, player context, lifecycle, attachment, and state tools.',
             contents: [
               { slug: 'reference/translation-phrases', sidebarLabel: 'Translation keys' },
               { slug: 'reference/register-i18n', sidebarLabel: 'registerI18n' },
@@ -249,7 +287,7 @@ export const sidebar: Sidebar = [
               { slug: 'reference/use-hotkey-shortcut', frameworks: ['react'] },
               { slug: 'reference/use-latest-ref', frameworks: ['react'] },
               { slug: 'reference/use-media-attach', frameworks: ['react'] },
-              { slug: 'reference/use-media-component', frameworks: ['react'] },
+              { slug: 'reference/use-media-extension', frameworks: ['react'] },
               { slug: 'reference/use-media-instance', frameworks: ['react'] },
               { slug: 'reference/use-menu-context', frameworks: ['react'] },
               { slug: 'reference/use-optional-container', frameworks: ['react'] },

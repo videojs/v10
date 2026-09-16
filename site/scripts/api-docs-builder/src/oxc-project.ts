@@ -511,17 +511,35 @@ export class OxcProject {
       if (!entry.isDirectory()) continue;
 
       const packageRoot = path.join(packagesDir, entry.name);
-      const manifestPath = path.join(packageRoot, 'package.json');
-      let packageName = `@videojs/${entry.name}`;
 
-      if (fs.existsSync(manifestPath)) {
-        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as { name?: string };
-
-        if (manifest.name) packageName = manifest.name;
+      // Fixture packages may omit a manifest, so `src/` also marks a package directory.
+      if (fs.existsSync(path.join(packageRoot, 'package.json')) || fs.existsSync(path.join(packageRoot, 'src'))) {
+        this.#indexPackage(entry.name, packageRoot);
+        continue;
       }
 
-      this.#packageRoots.set(packageName, packageRoot);
+      // Anything else is a bucket (e.g. `adapters/`) whose children are packages.
+      for (const child of fs.readdirSync(packageRoot, { withFileTypes: true })) {
+        if (!child.isDirectory()) continue;
+
+        const childRoot = path.join(packageRoot, child.name);
+
+        if (fs.existsSync(path.join(childRoot, 'package.json'))) this.#indexPackage(child.name, childRoot);
+      }
     }
+  }
+
+  #indexPackage(dirName: string, packageRoot: string): void {
+    const manifestPath = path.join(packageRoot, 'package.json');
+    let packageName = `@videojs/${dirName}`;
+
+    if (fs.existsSync(manifestPath)) {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as { name?: string };
+
+      if (manifest.name) packageName = manifest.name;
+    }
+
+    this.#packageRoots.set(packageName, packageRoot);
   }
 }
 

@@ -5,6 +5,7 @@ frameworkTitle:
 description: Audio component that plays Spotify tracks, episodes, playlists, and shows through the Spotify embed
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/spotify-audio/html/css/Ba
 import basicUsageHtmlTs from "@/components/docs/demos/spotify-audio/html/css/BasicUsage.ts?raw";
 
 The [Spotify embed](https://developer.spotify.com/documentation/embeds) accepts tracks, episodes, albums, playlists, shows, and artists. Podcast episodes play in full for signed-out listeners; music plays as a preview until the listener logs in to Spotify.
+
+## Import
+
+<MediaImports media="spotify-audio" package="@videojs/spotify-audio" react="SpotifyAudio" />
 
 ## Load a source
 

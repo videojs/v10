@@ -5,6 +5,7 @@ frameworkTitle:
 description: Video component that plays Twitch videos and live channels through the Twitch embed player
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/twitch-video/html/css/Bas
 import basicUsageHtmlTs from "@/components/docs/demos/twitch-video/html/css/BasicUsage.ts?raw";
 
 The [Twitch embed player](https://dev.twitch.tv/docs/embed/video-and-clips/) handles both recorded videos and live channels. Its own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Twitch's UI instead.
+
+## Import
+
+<MediaImports media="twitch-video" package="@videojs/twitch-video" react="TwitchVideo" />
 
 ## Load a source
 

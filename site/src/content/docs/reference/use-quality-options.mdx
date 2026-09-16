@@ -6,6 +6,12 @@ description: Hook to build video quality menu options from the player rendition 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { useQualityOptions } from "@videojs/react";
+```
+
 `useQualityOptions` returns the current quality value, the available options, and a `setValue` callback for wiring quality selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
 
 ```tsx title="QualityMenu.tsx"

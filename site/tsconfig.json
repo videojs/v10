@@ -11,5 +11,5 @@
     "strictNullChecks": true
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "scripts/ejected-skins/templates"]
+  "exclude": ["dist"]
 }

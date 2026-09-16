@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
 A lightweight reactive custom element base class for Video.js. Type-aligned with [Lit's ReactiveElement](https://github.com/lit/lit/tree/main/packages/reactive-element) but stripped down to only what we use.
 

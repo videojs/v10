@@ -15,6 +15,12 @@ import SelectorDemoReact from "@/components/docs/demos/use-store/react/css/Selec
 import selectorReactTsx from "@/components/docs/demos/use-store/react/css/Selector.tsx?raw";
 import selectorReactCss from "@/components/docs/demos/use-store/react/css/Selector.css?raw";
 
+## Import
+
+```tsx
+import { useStore } from "@videojs/react";
+```
+
 `useStore` subscribes to a store instance directly. It has the same two overloads as <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> — without a selector for store access, or with a selector for reactive state. Within `Player`, `usePlayer` is usually simpler since it reads the store from context. Reach for `useStore` when you have a store instance directly or need to derive computed values from the store.
 
 ## Examples

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { VimeoVideo } from '../vimeo-video/media';
+import { VimeoVideo } from '../vimeo-video/adapter';
 
 let tagCounter = 0;
 

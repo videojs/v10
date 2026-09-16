@@ -41,6 +41,13 @@ export interface AddressableObject {
  */
 export interface MediaElementLike {
   preload: string;
+  /**
+   * DOM attribute-reflection surface, present on real elements. Where it exists, reflected IDL properties like
+   * `preload` report a browser-dependent UA default even when no attribute was authored — so consumers that need author
+   * intent must gate property reads on attribute presence. A non-DOM implementation may omit it; its properties carry
+   * no UA defaults and are authored by construction.
+   */
+  hasAttribute?(qualifiedName: string): boolean;
 }
 
 // =============================================================================
@@ -401,6 +408,62 @@ export const MEDIA_PLAYLIST_METADATA_KEY = 'mediaPlaylist';
 /** Typed read of the media-playlist metadata stashed in `ham.metadata`. */
 export function getMediaPlaylistMetadata(ham: Pick<Ham, 'metadata'>): MediaPlaylistMetadata | undefined {
   return ham.metadata?.[MEDIA_PLAYLIST_METADATA_KEY] as MediaPlaylistMetadata | undefined;
+}
+
+// =============================================================================
+// Multivariant Playlist Metadata
+// =============================================================================
+
+/**
+ * One `#EXT-X-SESSION-DATA` tag from a multivariant playlist: arbitrary session-level data keyed by a reverse-DNS
+ * `DATA-ID`, carried either inline (`VALUE`) or by reference (`URI`). A playlist may repeat a `DATA-ID` with different
+ * `LANGUAGE`s, so entries are a list, not a map. The parser records what the tag says; fetching a `uri` is the business
+ * of whichever behavior recognizes the `DATA-ID` (e.g. `com.apple.hls.chapters`).
+ */
+export interface SessionDataEntry {
+  /** `DATA-ID` — identifies the datum (reverse-DNS by convention). */
+  dataId: string;
+  /** `VALUE` — the inline datum. A tag carries either `value` or `uri`, never both. */
+  value?: string;
+  /** `URI` — where the datum lives, fully resolved against the playlist URL. */
+  uri?: string;
+  /**
+   * `FORMAT` of the resource at `uri` — `JSON` (a JSON document, the default) or `RAW` (an opaque binary). Only present
+   * alongside `uri`; the spec says to ignore `FORMAT` on an inline `VALUE`.
+   */
+  format?: 'JSON' | 'RAW';
+  /** `LANGUAGE` — RFC 5646 tag for the language of `value`. */
+  language?: string;
+}
+
+/**
+ * Playlist-level metadata surfaced from a parsed multivariant playlist. Like {@link MediaPlaylistMetadata}, these are
+ * HLS delivery specifics with no CMAF-HAM counterpart, so they live under `Ham.metadata` (read via
+ * `getMultivariantPlaylistMetadata` / `getSessionData`) rather than as first-class `Presentation` fields.
+ */
+export interface MultivariantPlaylistMetadata {
+  /** Every `#EXT-X-SESSION-DATA` tag, in playlist order. */
+  sessionData: SessionDataEntry[];
+}
+
+/** Key under `Ham.metadata` where {@link MultivariantPlaylistMetadata} is stored. */
+export const MULTIVARIANT_PLAYLIST_METADATA_KEY = 'multivariantPlaylist';
+
+/** Typed read of the multivariant-playlist metadata stashed in `ham.metadata`. */
+export function getMultivariantPlaylistMetadata(ham: Pick<Ham, 'metadata'>): MultivariantPlaylistMetadata | undefined {
+  // SAFETY: `parseMultivariantPlaylist` is the only writer of this key, and it
+  // writes a `MultivariantPlaylistMetadata`.
+  return ham.metadata?.[MULTIVARIANT_PLAYLIST_METADATA_KEY] as MultivariantPlaylistMetadata | undefined;
+}
+
+/**
+ * The presentation's `#EXT-X-SESSION-DATA` entries, optionally narrowed to one `DATA-ID`. Empty when the playlist
+ * carried none, so consumers need no presence check.
+ */
+export function getSessionData(ham: Pick<Ham, 'metadata'>, dataId?: string): SessionDataEntry[] {
+  const entries = getMultivariantPlaylistMetadata(ham)?.sessionData ?? [];
+
+  return dataId === undefined ? entries : entries.filter((entry) => entry.dataId === dataId);
 }
 
 // =============================================================================

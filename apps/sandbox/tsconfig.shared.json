@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./app/shared",
+    "declarationDir": "./types/shared",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["app/shared/mux.ts", "app/shared/sources.ts"],
+  "references": [
+    {
+      "path": "../../packages/media"
+    }
+  ]
+}

@@ -1,15 +1,15 @@
 import { createState } from '@videojs/store';
 
-import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../indicator/indicator-labels';
-import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/indicator-lifecycle';
-import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/indicator-lifecycle';
-import type { InputActionEvent, MediaSnapshot } from '../input-action/input-action';
+import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../indicator/labels';
+import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/lifecycle';
+import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/lifecycle';
+import type { InputActionEvent, MediaSnapshot } from '../input-action';
 import {
   deriveVolumeStatus,
   type IndicatorVolumeLevel,
   isVolumeIndicatorAction,
   predictVolumeActionOutcome,
-} from './volume-indicator-status';
+} from './status';
 
 export interface VolumeIndicatorProps extends IndicatorCoreProps {
   /** Internal translated label overrides supplied by framework adapters. */

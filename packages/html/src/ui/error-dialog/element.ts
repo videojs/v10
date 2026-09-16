@@ -1,0 +1,190 @@
+import {
+  type DialogInput,
+  ErrorDialogCore,
+  ErrorDialogDataAttrs,
+  getErrorDialogDismissText,
+  getErrorDialogTitleText,
+  getErrorDialogUnexpectedText,
+  resolveErrorDialogDescription,
+} from '@videojs/core';
+import {
+  applyStateDataAttrs,
+  createDialog,
+  createTransition,
+  type DialogApi,
+  type DialogModality,
+  selectError,
+} from '@videojs/core/dom';
+import { translateText } from '@videojs/core/i18n';
+import type { PropertyValues } from '@videojs/element';
+import { ContextConsumer, ContextProvider } from '@videojs/element/context';
+import type { ErrorLike } from '@videojs/media';
+import { SnapshotController } from '@videojs/store/html';
+
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
+import { containerContext, playerContext } from '../../player/context';
+import { PlayerController } from '../../player/controller';
+import { dialogContext } from '../dialog/context';
+import { UIElement } from '../ui-element';
+
+let idCounter = 0;
+
+function hasAuthoredContent(host: HTMLElement): boolean {
+  return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
+}
+
+export class ErrorDialogElement extends UIElement {
+  static readonly tagName = 'media-error-dialog';
+
+  readonly #core = new ErrorDialogCore();
+  readonly #provider = new ContextProvider(this, { context: dialogContext });
+  readonly #popupId = `vjs-error-dialog-popup-${idCounter++}`;
+  readonly #titleId = `vjs-error-dialog-title-${idCounter++}`;
+  readonly #descriptionId = `vjs-error-dialog-desc-${idCounter++}`;
+  readonly #errorState = new PlayerController(this, playerContext, selectError);
+  readonly #i18n = new I18nController(this, i18nContext);
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
+
+  #dialog: DialogApi | null = null;
+  #snapshot: SnapshotController<DialogInput> | null = null;
+  #modalitySnapshot: SnapshotController<DialogModality> | null = null;
+  #lastError: ErrorLike | null = null;
+  #lastDescription: ReturnType<typeof resolveErrorDialogDescription> | null = null;
+  #seenCopyParts = new WeakSet<HTMLElement>();
+  #authoredCopyParts = new WeakSet<HTMLElement>();
+
+  constructor() {
+    super();
+    this.#core.setTitleId(this.#titleId);
+    this.#core.setDescriptionId(this.#descriptionId);
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+
+    if (this.destroyed) return;
+
+    this.#dialog = createDialog({
+      transition: createTransition(),
+      onOpenChange: (nextOpen: boolean) => {
+        if (!nextOpen) {
+          this.#errorState.value?.dismissError();
+        }
+      },
+    });
+
+    if (this.#snapshot) {
+      this.#snapshot.track(this.#dialog.input);
+    } else {
+      this.#snapshot = new SnapshotController(this, this.#dialog.input);
+    }
+
+    if (this.#modalitySnapshot) {
+      this.#modalitySnapshot.track(this.#dialog.modality);
+    } else {
+      this.#modalitySnapshot = new SnapshotController(this, this.#dialog.modality);
+    }
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#dialog?.destroy();
+    this.#dialog = null;
+  }
+
+  protected override willUpdate(_changed: PropertyValues): void {
+    super.willUpdate(_changed);
+
+    if (!this.#dialog) return;
+
+    this.#dialog.setInteractionRoot(this.#container.value?.container ?? null);
+
+    const errorState = this.#errorState.value;
+    const hasError = Boolean(errorState?.error);
+    const { active: isOpen } = this.#dialog.input.current;
+
+    if (errorState?.error) {
+      this.#lastError = errorState.error;
+    }
+
+    const errorForCopy = errorState?.error ?? (isOpen ? this.#lastError : null);
+
+    this.#syncDialogCopy(errorForCopy);
+
+    if (!hasError && !isOpen) {
+      this.#lastError = null;
+      this.#lastDescription = null;
+    }
+
+    if (hasError && !isOpen) {
+      this.#dialog.open();
+    } else if (!hasError && isOpen) {
+      this.#dialog.close();
+    }
+  }
+
+  protected override update(_changed: PropertyValues): void {
+    super.update(_changed);
+
+    if (!this.#dialog) return;
+
+    const input = this.#dialog.input.current;
+
+    this.#core.setInput(input);
+    this.#core.setDocumentModal(this.#dialog.modality.current.documentModal);
+    const state = this.#core.getState();
+
+    applyStateDataAttrs(this, state, ErrorDialogDataAttrs);
+
+    this.#provider.setValue({
+      state,
+      stateAttrMap: ErrorDialogDataAttrs,
+      dialog: this.#dialog,
+      popupId: this.#popupId,
+      popupAttrs: this.#core.getPopupAttrs(state),
+      close: () => this.#dialog?.close(),
+    });
+  }
+
+  #syncDialogCopy(error: ErrorLike | null): void {
+    const t = this.#i18n.value;
+    const title = this.querySelector<HTMLElement>('media-dialog-title');
+
+    if (title && !this.#hasAuthoredCopy(title)) {
+      title.textContent = translateText(getErrorDialogTitleText(), t);
+    }
+
+    const desc = this.querySelector<HTMLElement>('media-dialog-description');
+
+    if (desc && !this.#hasAuthoredCopy(desc)) {
+      const description = error ? resolveErrorDialogDescription(error) : null;
+
+      if (description) {
+        this.#lastDescription = description;
+      }
+
+      const copy = description ?? this.#lastDescription;
+
+      desc.textContent = copy ? translateText(copy, t) : translateText(getErrorDialogUnexpectedText(), t);
+    }
+
+    const close = this.querySelector<HTMLElement>('media-dialog-close');
+
+    if (close && !this.#hasAuthoredCopy(close)) {
+      close.textContent = translateText(getErrorDialogDismissText(), t);
+    }
+  }
+
+  #hasAuthoredCopy(el: HTMLElement): boolean {
+    if (!this.#seenCopyParts.has(el)) {
+      this.#seenCopyParts.add(el);
+
+      if (hasAuthoredContent(el)) {
+        this.#authoredCopyParts.add(el);
+      }
+    }
+
+    return this.#authoredCopyParts.has(el);
+  }
+}

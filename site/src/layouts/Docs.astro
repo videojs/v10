@@ -23,6 +23,7 @@ const { doc, framework, slug } = Astro.props;
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
 const docTitles = new Map(allDocs.map((d) => [d.id, getDocTitle(d, framework)]));
+const docStabilities = new Map(allDocs.map((d) => [d.id, d.data.stability]));
 
 const seoCategory = `${FRAMEWORK_LABELS[framework]} Video Player`;
 const docsSidebarId = 'docs-sidebar';
@@ -57,6 +58,7 @@ const docsSidebarId = 'docs-sidebar';
         slot="mobile-nav"
         framework={framework}
         docTitles={docTitles}
+        docStabilities={docStabilities}
       />
     </NavBarDocs>
     <aside
@@ -64,7 +66,7 @@ const docsSidebarId = 'docs-sidebar';
       class="sticky z-10 hidden flex-col overflow-y-auto border-manila-75 md:flex md:border-r dark:border-warm-gray"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
-      <DocsSidebar framework={framework} docTitles={docTitles} class="flex-1">
+      <DocsSidebar framework={framework} docTitles={docTitles} docStabilities={docStabilities} class="flex-1">
         <Selectors
           client:idle
           currentFramework={framework}

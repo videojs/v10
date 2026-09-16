@@ -1,14 +1,9 @@
 import { createState } from '@videojs/store';
 
-import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/indicator-lifecycle';
-import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/indicator-lifecycle';
-import type { InputActionEvent, MediaSnapshot } from '../input-action/input-action';
-import {
-  formatCurrentTime,
-  getSeekDirection,
-  type IndicatorDirection,
-  isSeekIndicatorAction,
-} from './seek-indicator-status';
+import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/lifecycle';
+import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/lifecycle';
+import type { InputActionEvent, MediaSnapshot } from '../input-action';
+import { formatCurrentTime, getSeekDirection, type IndicatorDirection, isSeekIndicatorAction } from './status';
 
 export interface SeekIndicatorProps extends IndicatorCoreProps {
   /** Delay in milliseconds before the indicator closes. */

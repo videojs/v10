@@ -1,14 +1,14 @@
 'use client';
 
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
-import type { MuxContentData } from '@videojs/media/dom/mux/source';
+import type { MuxContentData } from '@videojs/mux-video';
 import { useCallback, useSyncExternalStore } from 'react';
 
 /**
  * What the storyboard track needs from whichever Mux Media renders it.
  *
- * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one satisfy it identically, so this component
- * carries no engine.
+ * Structural on purpose: the hls.js-backed `MuxVideoAdapter` and the SPF-backed one satisfy it identically, so this
+ * component carries no engine.
  */
 export interface MuxStoryboardMedia {
   readonly streamType: MediaStreamType | undefined;

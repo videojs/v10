@@ -1,37 +1,29 @@
 'use client';
 
-import type { HlsAudioMediaProps } from '@videojs/spf/hls-audio';
-import { hlsAudioMediaDefaultProps } from '@videojs/spf/hls-audio';
-import type { MuxMediaProps } from '@videojs/spf/mux-audio';
-import { MuxAudioMedia, muxMediaDefaultProps } from '@videojs/spf/mux-audio';
-import type { AudioHTMLAttributes, ReactNode } from 'react';
-import { forwardRef } from 'react';
+import { type MuxAdapterProps, MuxAudioAdapter } from '@videojs/mux-audio/spf';
+import type { HlsAudioAdapterProps } from '@videojs/spf/hls-audio';
+import { type AudioHTMLAttributes, forwardRef, type ReactNode } from 'react';
 
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-// `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
+// `src` and `source` come from `MuxAdapterProps`: the Mux Media owns both, and its
 // `source` is the structured Mux one rather than the generic engine's.
 export interface MuxAudioProps
   extends
-    Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps | keyof MuxMediaProps>,
-    Partial<Omit<HlsAudioMediaProps, 'src'>>,
-    Partial<MuxMediaProps> {
+    Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioAdapterProps | keyof MuxAdapterProps>,
+    Partial<Omit<HlsAudioAdapterProps, 'src'>>,
+    Partial<MuxAdapterProps> {
   children?: ReactNode;
 }
 
-const muxAudioDefaultProps: Omit<HlsAudioMediaProps, 'src'> & MuxMediaProps = {
-  ...hlsAudioMediaDefaultProps,
-  ...muxMediaDefaultProps,
-};
-
 export const MuxAudio = forwardRef<HTMLAudioElement, MuxAudioProps>(function MuxAudio({ children, ...props }, ref) {
-  const media = useMediaInstance(MuxAudioMedia);
+  const media = useMediaInstance(MuxAudioAdapter);
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);
-  const htmlProps = useSyncProps(media, props, muxAudioDefaultProps);
+  const htmlProps = useSyncProps(media, props, MuxAudioAdapter.defaultProps);
 
   return (
     <audio ref={composedRef} {...htmlProps}>

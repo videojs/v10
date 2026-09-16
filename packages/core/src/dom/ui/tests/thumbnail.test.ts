@@ -187,6 +187,35 @@ describe('createThumbnail', () => {
       handle.destroy();
     });
 
+    it('moves event handling to a replacement image', () => {
+      const first = createMockImg();
+      const second = createMockImg();
+      const onStateChange = vi.fn();
+      let img = first;
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      handle.updateSrc('sprite.jpg');
+
+      img = second;
+      handle.connect();
+      onStateChange.mockClear();
+
+      first.dispatchEvent(new Event('error'));
+      expect(onStateChange).not.toHaveBeenCalled();
+
+      second.dispatchEvent(new Event('load'));
+      expect(handle.loading).toBe(false);
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.destroy();
+    });
+
     it('sets error on img error', () => {
       const img = createMockImg();
       const onStateChange = vi.fn();
@@ -469,6 +498,28 @@ describe('createThumbnail', () => {
       expect(handle.loading).toBe(false);
       expect(handle.error).toBe(true);
       expect(onStateChange).toHaveBeenCalled();
+
+      handle.destroy();
+    });
+
+    it('stays quiet when a settled image is handed back after a ref swap', () => {
+      const img = createMockImg();
+      const onStateChange = vi.fn();
+
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+
+      const handle = createThumbnail(createOptions({ getImg: () => img, onStateChange }));
+
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      // React detaches and reattaches the same node when a callback ref changes identity.
+      handle.disconnectImg(img);
+      handle.connect();
+
+      expect(handle.loading).toBe(false);
+      expect(onStateChange).toHaveBeenCalledOnce();
 
       handle.destroy();
     });

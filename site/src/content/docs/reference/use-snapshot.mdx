@@ -6,6 +6,12 @@ description: Hook to subscribe to a State container's current value
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { useSnapshot } from "@videojs/store/react";
+```
+
 `useSnapshot` subscribes to a `State` container and returns its current value, re-rendering when the value changes. It has two overloads:
 
 **Full state** -- returns the entire state object.

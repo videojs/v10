@@ -12,6 +12,12 @@ import BasicUsageDemoReact from "@/components/docs/demos/use-translator/react/cs
 import basicUsageReactTsx from "@/components/docs/demos/use-translator/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-translator/react/css/BasicUsage.css?raw";
 
+## Import
+
+```tsx
+import { useTranslator } from "@videojs/react";
+```
+
 <FrameworkCase frameworks={["react"]}>
 
 `useTranslator` returns the translator from the nearest <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Control components pass text descriptors from core `getLabel()`. Custom UI can pass an opaque key with its English fallback.

@@ -6,6 +6,14 @@ description: HTML custom element that resolves locale and supplies translations 
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+## Import
+
+```ts
+import "@videojs/html/i18n";
+```
+
+One import registers both `<media-i18n>` and `<media-text>`.
+
 <FrameworkCase frameworks={["html"]}>
 
 `<media-i18n>` applies the i18n provider mixin to a subtree. Wrap a player, standalone controls, or one of several players that need different locales with this element. Without it, HTML controls use English defaults.

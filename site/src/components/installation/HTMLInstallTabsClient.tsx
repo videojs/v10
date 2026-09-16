@@ -5,8 +5,9 @@ import { useEffect, useRef } from 'react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
-import { installMethod, renderer } from '@/stores/installation';
+import { installMethod, renderer, skin, useCase } from '@/stores/installation';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
+import { generateHTMLInstallCode } from '@/utils/installation/codegen';
 import type { InstallMethod } from '@/utils/installation/types';
 
 import HTMLCdnCodeBlock from './HTMLCdnCodeBlock';
@@ -19,8 +20,11 @@ interface HTMLInstallTabsProps {
 export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   const ref = useRef<HTMLDivElement>(null);
   const $renderer = useStore(renderer);
+  const $skin = useStore(skin);
+  const $useCase = useStore(useCase);
 
   const supportsCdn = rendererSupportsCdn($renderer, cdnMedia);
+  const install = generateHTMLInstallCode({ renderer: $renderer, skin: $skin, useCase: $useCase }, cdnMedia);
 
   // Mirror the active install-method tab into the store so the usage code block
   // can react (e.g. CDN omits the TypeScript imports). Observing from the stable
@@ -77,16 +81,16 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
           </TabsPanel>
         )}
         <TabsPanel value="npm" initial={!supportsCdn}>
-          <ClientCode code="npm install @videojs/html" lang="bash" />
+          <ClientCode code={install.npm} lang="bash" />
         </TabsPanel>
         <TabsPanel value="pnpm">
-          <ClientCode code="pnpm add @videojs/html" lang="bash" />
+          <ClientCode code={install.pnpm} lang="bash" />
         </TabsPanel>
         <TabsPanel value="yarn">
-          <ClientCode code="yarn add @videojs/html" lang="bash" />
+          <ClientCode code={install.yarn} lang="bash" />
         </TabsPanel>
         <TabsPanel value="bun">
-          <ClientCode code="bun add @videojs/html" lang="bash" />
+          <ClientCode code={install.bun} lang="bash" />
         </TabsPanel>
       </TabsRoot>
       {!supportsCdn && (

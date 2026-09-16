@@ -1,7 +1,7 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { PopoverAlign, PopoverSide } from '../popover/core';
+import type { PopoverAlign, PopoverBoundary, PopoverSide } from '../popover/core';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
@@ -10,6 +10,8 @@ export interface TooltipProps {
   side?: PopoverSide | undefined;
   /** Alignment of the tooltip along the trigger's edge. */
   align?: PopoverAlign | undefined;
+  /** Boundary used to constrain the tooltip position. */
+  boundary?: PopoverBoundary | undefined;
   /** Controlled open state. */
   open?: boolean | undefined;
   /** Initial open state for uncontrolled usage. */
@@ -26,6 +28,8 @@ export interface TooltipProps {
   sticky?: boolean | undefined;
 }
 
+type TooltipCoreProps = Omit<TooltipProps, 'boundary'>;
+
 export interface TooltipInput extends TransitionState {}
 
 export interface TooltipState extends TransitionFlags {
@@ -40,7 +44,7 @@ export interface TooltipState extends TransitionFlags {
 }
 
 export class TooltipCore {
-  static readonly defaultProps: NonNullableObject<TooltipProps> = {
+  static readonly defaultProps: NonNullableObject<TooltipCoreProps> = {
     side: 'top',
     align: 'center',
     open: false,
@@ -54,11 +58,11 @@ export class TooltipCore {
 
   #props = { ...TooltipCore.defaultProps };
 
-  constructor(props?: TooltipProps) {
+  constructor(props?: TooltipCoreProps) {
     if (props) this.setProps(props);
   }
 
-  setProps(props: TooltipProps): void {
+  setProps(props: TooltipCoreProps): void {
     this.#props = defaults(props, TooltipCore.defaultProps);
   }
 
@@ -89,7 +93,7 @@ export class TooltipCore {
 }
 
 export namespace TooltipCore {
-  export type Props = TooltipProps;
+  export type Props = TooltipCoreProps;
   export type State = TooltipState;
   export type Input = TooltipInput;
 }

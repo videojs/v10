@@ -5,6 +5,7 @@ frameworkTitle:
 description: HLS video element powered by hls.js for adaptive bitrate streaming
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/hlsjs-video/html/css/Basi
 import basicUsageHtmlTs from "@/components/docs/demos/hlsjs-video/html/css/BasicUsage.ts?raw";
 
 HLS video element powered by [hls.js](https://github.com/video-dev/hls.js/) for adaptive bitrate streaming, with full feature support across every browser. It's more compatible than the default [HlsVideo](/docs/framework/html/reference/hls-video/), which is smaller and covers most HLS playback. For browser-native playback, see [NativeHlsVideo](/docs/framework/html/reference/native-hls-video/).
+
+## Import
+
+<MediaImports media="hlsjs-video" package="@videojs/hlsjs-video" react="HlsJsVideo" />
 
 ## Examples
 

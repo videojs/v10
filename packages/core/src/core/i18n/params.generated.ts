@@ -36,6 +36,7 @@ export interface TranslationParams {
   'time.toggleElapsed': never;
   'time.toggleDuration': never;
   'time.position': { current: string | number; duration: string | number };
+  'time.unknown': never;
   'playback.rate': { rate: string | number };
   'volume.mutedValue': { percent: string | number };
   'volume.muted': never;

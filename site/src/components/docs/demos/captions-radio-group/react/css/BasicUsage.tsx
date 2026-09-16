@@ -1,4 +1,5 @@
-import { CaptionsRadioGroup, Container, createPlayer, Menu } from '@videojs/react';
+import { Container, createPlayer, Menu } from '@videojs/react';
+import { CaptionsRadioGroup } from '@videojs/react/ui/captions-radio-group';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
@@ -7,24 +8,27 @@ const { Player } = createPlayer({ features: videoFeatures });
 function CaptionsMenu(): ReactNode {
   return (
     <Menu.Root side="top" align="end">
-      <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
-        Captions
-      </Menu.Trigger>
-      <Menu.Popup className="menu">
-        <Menu.Content>
-          <CaptionsRadioGroup
-            className="menu-group"
-            renderItem={(props, item) => (
-              <Menu.RadioItem {...props} className="menu-item">
-                {item.label}
-                <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
-                  ✓
-                </Menu.ItemIndicator>
-              </Menu.RadioItem>
-            )}
-          />
-        </Menu.Content>
-      </Menu.Popup>
+      <CaptionsRadioGroup.Root>
+        <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
+          Captions
+          <CaptionsRadioGroup.Value className="menu-hint" />
+        </Menu.Trigger>
+        <Menu.Popup className="menu">
+          <Menu.Content>
+            <CaptionsRadioGroup.Options
+              className="menu-group"
+              renderItem={(props, item) => (
+                <Menu.RadioItem {...props} className="menu-item">
+                  {item.label}
+                  <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
+                    ✓
+                  </Menu.ItemIndicator>
+                </Menu.RadioItem>
+              )}
+            />
+          </Menu.Content>
+        </Menu.Popup>
+      </CaptionsRadioGroup.Root>
     </Menu.Root>
   );
 }

@@ -1,18 +1,22 @@
 import { realpathSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 
-export interface ParsedModuleId {
+/** Matches script module ids, with or without a transform query, for plugin transform filters. */
+export const SCRIPT_MODULE_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+
+export interface TransformModule {
+  readonly id: string;
   readonly filename: string;
-  readonly parameters: URLSearchParams;
+  readonly params: URLSearchParams;
 }
 
 /** Split a host module ID into its physical filename and query parameters. */
-export function parseModuleId(id: string): ParsedModuleId {
+export function parseModuleId(id: string): TransformModule {
   const queryIndex = id.indexOf('?');
 
   return queryIndex === -1
-    ? { filename: id, parameters: new URLSearchParams() }
-    : { filename: id.slice(0, queryIndex), parameters: new URLSearchParams(id.slice(queryIndex + 1)) };
+    ? { id, filename: id, params: new URLSearchParams() }
+    : { id, filename: id.slice(0, queryIndex), params: new URLSearchParams(id.slice(queryIndex + 1)) };
 }
 
 /** Return the physical filename portion of a host module ID. */
@@ -37,7 +41,7 @@ export function normalizeModuleId(id: string): string {
   const parsed = parseModuleId(id);
   const filename = isAbsolute(parsed.filename) ? resolveModuleFilename(parsed.filename) : parsed.filename;
 
-  return moduleId(filename, parsed.parameters);
+  return moduleId(filename, parsed.params);
 }
 
 /** Normalize a resolved filesystem module ID while leaving package and virtual IDs untouched. */
@@ -45,7 +49,7 @@ export function normalizeResolvedId(id: string): string {
   return isAbsolute(moduleFilename(id)) ? normalizeModuleId(id) : id;
 }
 
-export function isVjscModule(id: string): boolean {
+export function isScriptModule(id: string): boolean {
   return /\.(?:[cm]?[jt]s|[jt]sx)$/.test(moduleFilename(id));
 }
 
@@ -55,4 +59,16 @@ function resolveModuleFilename(filename: string): string {
   } catch {
     return resolve(filename);
   }
+}
+
+/** The Rolldown module type for a script filename. */
+export function scriptModuleType(filename: string): 'js' | 'jsx' | 'ts' | 'tsx' {
+  const name = moduleFilename(filename);
+  if (name.endsWith('.tsx')) return 'tsx';
+
+  if (name.endsWith('.jsx')) return 'jsx';
+
+  if (/\.[cm]?ts$/.test(name)) return 'ts';
+
+  return 'js';
 }

@@ -18,7 +18,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-      issues: write
       pull-requests: write
 
     steps:
@@ -59,41 +58,27 @@ jobs:
 
             Tasks:
             1. Find the pull request associated with the head SHA using the GitHub API
-               and record its author.
+               and check its current state. If there is no associated open pull
+               request, stop without posting a comment or creating an issue.
             2. Inspect failed job logs, Playwright reports/traces, and the pull request diff.
             3. Classify the failure as one of:
                - `real regression` — product behavior is broken.
                - `expected change` — behavior is intentional and the test or snapshot is stale.
                - `inconclusive` — evidence is insufficient or the failure appears flaky/infrastructural.
-            4. Create one issue for the failure using `gh issue create --assignee AUTHOR`,
-               where `AUTHOR` is the pull request author. Before creating it, check for
-               an existing open issue whose body contains both `<!-- e2e-failure -->`
-               and `<!-- trigger-pr:PR_NUMBER -->`; reuse it instead of creating a
-               duplicate. Do not add labels. Use a Conventional Commits title based
-               on the classification, with a concise lower-case `SHORT_FAILURE`:
-               - `fix: resolve SHORT_FAILURE from #PR_NUMBER` for a real regression.
-               - `test: update SHORT_FAILURE from #PR_NUMBER` for an expected change.
-               - `chore(ci): investigate SHORT_FAILURE from #PR_NUMBER` when inconclusive.
-               Use this issue structure:
-               - `<!-- e2e-failure -->`
-               - `<!-- trigger-pr:PR_NUMBER -->`
+            4. Recheck that the pull request is still open, then post or update one
+               concise diagnostic comment on it. Include the marker
+               `<!-- e2e-failure-triage:${{ github.event.workflow_run.id }} -->`.
+               If a comment with that marker exists, update it instead of adding
+               another. Use this comment structure:
                - `## Summary` with the classification and observable failure.
-               - `## Triggering PR` with its title and URL.
                - `## Failed run` with the run URL, head SHA, and affected tests.
                - `## Evidence` with the relevant log, trace, and diff findings.
                - `## Likely cause`, clearly separating verified facts from inferences.
                - `## Recommended actions` with concrete debugging pointers.
-            5. Post or update one concise pull request comment linking the issue and
-               summarizing the classification. Include the marker
-               `<!-- e2e-failure-triage:${{ github.event.workflow_run.id }} -->`.
 
-            If GitHub does not allow the author to be assigned, create the issue without
-            an assignee, identify `@author` as the owner in its body, and explain the
-            assignment limitation in the pull request comment.
-
-            Do not edit files, push commits, open or merge pull requests, rerun
-            workflows, or make any GitHub change other than the diagnostic issue and
-            pull request comment.
+            Do not create issues, edit files, push commits, open or merge pull requests,
+            rerun workflows, or make any GitHub change other than the diagnostic pull
+            request comment.
 
   fix-main:
     name: Diagnose main failure
@@ -172,10 +157,20 @@ jobs:
                with `gh issue create --assignee AUTHOR`. Before creating it, check for an
                existing open issue whose body contains both `<!-- e2e-failure -->` and
                `<!-- trigger-pr:PR_NUMBER -->`; reuse it instead of creating a duplicate.
-               Do not add labels. Use the same classification-based Conventional Commits
-               titles and the same `Summary`, `Triggering PR`, `Failed run`, `Evidence`,
-               `Likely cause`, and `Recommended actions` sections as the pull request
-               failure workflow.
+               Do not add labels. Use a Conventional Commits title based on the
+               classification, with a concise lower-case `SHORT_FAILURE`:
+               - `fix: resolve SHORT_FAILURE from #PR_NUMBER` for a real regression.
+               - `test: update SHORT_FAILURE from #PR_NUMBER` for an expected change.
+               - `chore(ci): investigate SHORT_FAILURE from #PR_NUMBER` when inconclusive.
+               Use this issue structure:
+               - `<!-- e2e-failure -->`
+               - `<!-- trigger-pr:PR_NUMBER -->`
+               - `## Summary` with the classification and observable failure.
+               - `## Triggering PR` with its title and URL.
+               - `## Failed run` with the run URL, head SHA, and affected tests.
+               - `## Evidence` with the relevant log, trace, and diff findings.
+               - `## Likely cause`, clearly separating verified facts from inferences.
+               - `## Recommended actions` with concrete debugging pointers.
 
             If GitHub does not allow the author to be assigned, create the issue or draft
             pull request without an assignee, identify `@author` as the owner in its body,

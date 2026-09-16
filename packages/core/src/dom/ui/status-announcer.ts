@@ -1,6 +1,6 @@
 import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/core';
 import { getMediaSnapshot, type MediaSnapshotStore } from './input-action';
-import { isSliderFocused } from './slider-focus';
+import { isSliderFocused } from './slider/focus';
 
 export interface StatusAnnouncerStore extends MediaSnapshotStore {
   readonly target: unknown | null;

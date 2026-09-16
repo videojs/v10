@@ -5,6 +5,7 @@ frameworkTitle:
 description: HLS video element using the browser's built-in HLS support
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/native-hls-video/html/css
 import basicUsageHtmlTs from "@/components/docs/demos/native-hls-video/html/css/BasicUsage.ts?raw";
 
 HLS video element that relies on the browser's native HLS support. Works on Safari and other browsers with built-in HLS playback. For cross-browser HLS support, use [HlsJsVideo](/docs/framework/html/reference/hlsjs-video/) instead.
+
+## Import
+
+<MediaImports media="native-hls-video" react="NativeHlsVideo" />
 
 ## Examples
 

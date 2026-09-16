@@ -1,12 +1,13 @@
 {
   "name": "@videojs/utils",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-rc.2",
   "description": "Utility functions and helpers for Video.js",
   "keywords": [
     "media",
     "utils",
     "videojs"
   ],
+  "homepage": "https://videojs.org",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

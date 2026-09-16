@@ -238,7 +238,7 @@ endOfStream,
   completeness rides on `Track.duration` finiteness, so "is live" needs
   no state of its own.
 
-**Above-engine surface:** `packages/spf/src/playback/adapters/hls-video/adapter.ts`
+**Above-engine surface:** `packages/spf/src/playback/adapters/hls-video/mixin.ts`
 exposes `streamType`, `targetLiveWindow`, and `liveEdgeStart` with
 `streamtypechange` / `targetlivewindowchange` events — the
 `MediaStreamTypeCapability` + `MediaLiveCapability` contract that

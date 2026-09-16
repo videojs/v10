@@ -10,7 +10,8 @@ export function isStandardPreload(value: unknown): value is StandardPreload {
 
 /**
  * Default `preload` value used as the fallback across behaviors (`syncPreload`, `resolvePresentation`,
- * `isBlockingPreload`). Matches the `<video>`/`<audio>` element's implicit default.
+ * `isBlockingPreload`). SPF's own default, deliberately independent of the `<video>`/`<audio>` element's implicit
+ * default — that one is UA policy and browser-dependent (`'metadata'` Chromium, `'auto'` WebKit), never a source.
  */
 export const DEFAULT_PRELOAD = 'metadata';
 

@@ -14,9 +14,9 @@
  * gauge/ — Multi-part component. Exercises: primary part detection via Core instantiation, sub-parts with/without HTML
  * elements, React-only parts (no platforms.html), sub-part data-attr inheritance (stateAttrMap heuristic), non-boolean
  * type inference (number, string literal union via type alias), extra @parts-tagged data-attrs files attaching to the
- * listed parts (label-data.ts). slider/ — Base multi-part component. Exercises: base component whose parts are
- * re-exported by domain variants. volume-slider/ — Domain variant. Exercises: re-exported parts from slider,
- * origin-based element + data-attr resolution, re-exported parts are never primary, always multi-part (no fallback).
+ * listed parts (label.ts). slider/ — Base multi-part component. Exercises: base component whose parts are re-exported
+ * by domain variants. volume-slider/ — Domain variant. Exercises: re-exported parts from slider, origin-based element +
+ * data-attr resolution, re-exported parts are never primary, always multi-part (no fallback).
  *
  * Utils (already existing fixtures for hooks, controllers, selectors, etc.): Exercises: hook discovery, controller
  * discovery, @public context, create* factory, mixin display name stripping, selector discovery,
@@ -234,7 +234,8 @@ describe('Component pipeline (end-to-end)', () => {
   //
   // Parts are discovered from index.parts.ts exports:
   //   - PRIMARY PART: The part whose React source instantiates the
-  //     component's own Core class (matches `new {Name}Core\b`).
+  //     component's own Core class (matches `new {Name}Core\b`). When
+  //     no part does, or several do, the part named `Root` is chosen.
   //     Gets: shared core Props/State, data-attrs, CSS vars, root tagName.
   //   - SUB-PARTS: All other parts. Get: their own tagName (if element
   //     file exists), description from React JSDoc, shared data-attrs
@@ -242,6 +243,10 @@ describe('Component pipeline (end-to-end)', () => {
   //     React props from `{LocalName}Props` interface.
   //   - REACT-ONLY PARTS: Sub-parts with no matching HTML element file.
   //     Get platforms.react but NOT platforms.html.
+  //   - NAMESPACE PARTS: `export * as Preview from './preview/index.parts'`
+  //     expands the nested index into `Preview.Root`, `Preview.Label`, ...
+  //     keyed `preview-root`, `preview-label`. The nested Root maps to the
+  //     element file named after the namespace (`slider/preview.ts`).
   //
   // Non-boolean data-attr types are inferred from StateAttrMap<State>:
   //   - number → type: "number"
@@ -381,11 +386,11 @@ describe('Component pipeline (end-to-end)', () => {
       expect(marker.platforms.react).toEqual({});
     });
 
-    // Extra data-attrs files ({qualifier}-data.ts, next to the main data.ts)
-    // declare their target parts with a
-    // @parts JSDoc tag. This covers attrs that a DOM layer applies to
+    // Extra data-attrs files (any simple name next to the main data.ts)
+    // declare their target parts with a @parts JSDoc tag on an exported
+    // *DataAttrs const. This covers attrs that a DOM layer applies to
     // parts directly, invisible to the per-part stateAttrMap heuristic
-    // (e.g. item-data.ts applied by create-menu.ts).
+    // (e.g. menu/item.ts applied by dom/ui/menu/menu.ts).
     it('extra @parts-tagged data-attrs file attaches to listed parts', () => {
       const parts = findComponent('Gauge')!.reference.parts!;
 
@@ -401,6 +406,102 @@ describe('Component pipeline (end-to-end)', () => {
       // parts not listed in @parts are untouched
       expect(parts.track!.dataAttributes).toEqual({});
       expect(parts.indicator!.dataAttributes['data-emphasized']).toBeUndefined();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // MULTI-PART WITH A SHARED SOURCE FILE: OptionGroup
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Option groups export Root, Options, and Value from one `component.tsx`
+  // and drive the core through hooks, so no React source constructs it.
+  //   - Part kebabs derive from the export names instead of the shared
+  //     file name, so the parts do not collapse into one record.
+  //   - `Root` becomes the primary part by fallback and gets the core
+  //     data plus the component's `element.ts` (tag name and events).
+  //   - Descriptions and sub-part props resolve by local export name
+  //     inside the shared file.
+
+  describe('OptionGroup (multi-part, shared source file)', () => {
+    it('keeps one part per export', () => {
+      const ref = findComponent('OptionGroup')!.reference;
+
+      expect(ref.props).toEqual({});
+      expect(ref.platforms).toEqual({});
+      expect(Object.keys(ref.parts!).sort()).toEqual(['options', 'root', 'value']);
+    });
+
+    it('falls back to Root as the primary part', () => {
+      const root = findComponent('OptionGroup')!.reference.parts!.root!;
+
+      expect(root.name).toBe('Root');
+      expect(root.description).toBe(
+        'Owns option state and shares it with an enclosing menu. Does not render a DOM element.'
+      );
+      expect(root.props.label).toMatchObject({ type: 'string', default: "''" });
+      expect(root.props.formatOption).toMatchObject({ type: 'function' });
+      expect(root.state.value).toMatchObject({ type: 'string' });
+      expect(root.dataAttributes['data-value']).toMatchObject({ description: 'The selected option value.' });
+      expect(root.platforms.html).toEqual({
+        tagName: 'media-option-group',
+        events: [{ name: 'value-change', description: 'Emitted when the selected option changes.' }],
+      });
+      expect(root.platforms.react).toEqual({});
+    });
+
+    it('resolves sub-parts by export name inside the shared file', () => {
+      const parts = findComponent('OptionGroup')!.reference.parts!;
+
+      expect(parts.options!.description).toBe('Renders items for the available options.');
+      expect(parts.options!.props.renderItem).toMatchObject({
+        type: '((value: string) => unknown)',
+        frameworks: ['react'],
+      });
+      expect(parts.options!.platforms).toEqual({ react: {} });
+
+      expect(parts.value!.description).toBe('Displays the selected option label.');
+      expect(parts.value!.props.className).toMatchObject({ type: 'string' });
+      expect(parts.value!.platforms).toEqual({ react: {} });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // MULTI-PART WITH A NAMESPACE RE-EXPORT: Slider
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // slider/index.parts.ts re-exports `./preview/index.parts` as the
+  // `Preview` namespace. Its nested exports become dotted parts:
+  //   - Preview.Root → slider/preview.ts (element named after the namespace)
+  //   - Preview.Label → gauge/label.tsx (nested re-export of another
+  //     component's React-only part)
+
+  describe('Slider (multi-part with a namespace re-export)', () => {
+    it('expands the namespace into dotted parts', () => {
+      const parts = findComponent('Slider')!.reference.parts!;
+
+      expect(Object.keys(parts).sort()).toEqual(['preview-label', 'preview-root', 'root', 'thumb', 'track']);
+    });
+
+    it('nested Root resolves the element named after the namespace', () => {
+      const root = findComponent('Slider')!.reference.parts!['preview-root']!;
+
+      expect(root.name).toBe('Preview.Root');
+      expect(root.description).toBe('Positions preview content at the slider pointer.');
+      expect(root.props.offset).toMatchObject({
+        type: 'number',
+        description: 'Distance between the preview and the track, in pixels.',
+        frameworks: ['react'],
+      });
+      expect(root.platforms.html).toEqual({ tagName: 'media-slider-preview' });
+      expect(root.platforms.react).toEqual({});
+    });
+
+    it('nested re-export of another component stays React-only', () => {
+      const label = findComponent('Slider')!.reference.parts!['preview-label']!;
+
+      expect(label.name).toBe('Preview.Label');
+      expect(label.description).toBe('An accessible label for the gauge value. Renders a `<span>` element.');
+      expect(label.platforms).toEqual({ react: {} });
     });
   });
 
@@ -435,6 +536,15 @@ describe('Component pipeline (end-to-end)', () => {
       expect(ref.parts!.track).toBeDefined();
     });
 
+    it('re-exported namespace (Preview) expands from the slider origin', () => {
+      const parts = findComponent('VolumeSlider')!.reference.parts!;
+
+      expect(parts['preview-root']!.name).toBe('Preview.Root');
+      expect(parts['preview-root']!.platforms.html).toEqual({ tagName: 'media-slider-preview' });
+      expect(parts['preview-label']!.name).toBe('Preview.Label');
+      expect(parts['preview-label']!.platforms).toEqual({ react: {} });
+    });
+
     it('local primary part (Root) gets VolumeSlider core data', () => {
       const root = findComponent('VolumeSlider')!.reference.parts!.root!;
 
@@ -443,7 +553,7 @@ describe('Component pipeline (end-to-end)', () => {
       expect(root.props.orientation).toBeDefined();
       // State comes from VolumeSliderState
       expect(root.state.volume).toBeDefined();
-      // HTML tag comes from volume-slider-element.ts
+      // HTML tag comes from volume-slider/element.ts
       expect(root.platforms.html).toEqual({ tagName: 'media-volume-slider' });
       expect(root.platforms.react).toEqual({});
     });
@@ -452,7 +562,7 @@ describe('Component pipeline (end-to-end)', () => {
       const thumb = findComponent('VolumeSlider')!.reference.parts!.thumb!;
 
       expect(thumb.name).toBe('Thumb');
-      // HTML tag comes from SLIDER's element file (slider-thumb-element.ts),
+      // HTML tag comes from SLIDER's element file (slider/thumb.ts),
       // not volume-slider's directory
       expect(thumb.platforms.html).toEqual({ tagName: 'media-slider-thumb' });
       expect(thumb.platforms.react).toEqual({});
@@ -1474,7 +1584,7 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - Attribute classification: standard attributes remain an MDN-linked list;
 //     Video.js-specific attributes use their corresponding host definitions.
 //   - Methods: native media methods are extracted ONCE per media type from the
-//     shared base host classes (media-host + video-host/audio-host).
+//     shared base host classes (html-media-adapter + html-video-adapter/html-audio-adapter).
 //   - Properties: the inherited native surface is compact, while source-authored
 //     definitions retain types, defaults, and descriptions.
 //   - Event buckets: custom (@fires-tagged) events live ONLY in `custom`, never
@@ -1602,7 +1712,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts native media methods from the shared base host classes', () => {
       const ref = findElement('SimpleVideo')!.reference;
 
-      // Video methods = media-host methods + video-host methods, deduped + sorted.
+      // Video methods = html-media-adapter methods + html-video-adapter methods, deduped + sorted.
       // Lifecycle methods (attach/detach/destroy) and accessors are excluded.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play', 'requestFullscreen']);
     });
@@ -1610,9 +1720,9 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts native passthrough properties from the shared base host classes', () => {
       const ref = findElement('SimpleVideo')!.reference;
 
-      // Video native properties = media-host + video-host accessors, filtered to
+      // Video native properties = html-media-adapter + html-video-adapter accessors, filtered to
       // genuine native members and deduped against hostProperties. `currentTime`
-      // and `volume` come from media-host; `videoWidth` is video-only.
+      // and `volume` come from html-media-adapter; `videoWidth` is video-only.
       expect(ref.platforms.html.properties.native).toEqual(['currentTime', 'videoWidth', 'volume']);
       // Video.js-specific base accessors receive full definitions instead.
       expect(ref.platforms.html.properties.native).not.toContain('streamType');
@@ -1896,7 +2006,7 @@ describe('Media element pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
   //
   // A media element whose host extends another host (mirrors
-  // MuxVideoMedia extending HlsMedia). The builder must walk the
+  // MuxVideoAdapter extending HlsMedia). The builder must walk the
   // extends chain to include inherited properties. Child properties
   // override parent definitions.
 
@@ -1948,14 +2058,34 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.engine.readonly).toBe(true);
     });
 
-    it('resolves spread defaults through the parent defaultProps import', () => {
-      // extendingMediaDefaultProps = { ...complexMediaDefaultProps, ... } —
-      // the builder must follow the spread to the imported object literal.
+    it('resolves spread defaults through the parent host static defaultProps', () => {
+      // ExtendingHost.defaultProps = { ...ComplexHost.defaultProps, ... } —
+      // the builder must follow the spread to the parent's static literal.
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
 
       expect(props.src.default).toBe("''");
       expect(props.debug.default).toBe('false');
       expect(props.streamType.default).toBe("'unknown'");
+    });
+
+    it('extracts the React surface from a static defaultProps that spreads the parent host', () => {
+      const react = findElement('ExtendingVideo')!.reference.platforms.react;
+
+      expect(react).toMatchObject({ target: 'video', acceptsNativeProps: true });
+      expect(Object.keys(react!.props).sort()).toEqual([
+        'config',
+        'debug',
+        'maxResolution',
+        'playbackId',
+        'preferPlayback',
+        'preload',
+        'src',
+        'streamType',
+        'tokens',
+        'type',
+      ]);
+      expect(react!.props.maxResolution.default).toBe('1080');
+      expect(react!.props.streamType.default).toBe("'unknown'");
     });
 
     it('extracts own defaults alongside spread defaults', () => {
@@ -2125,13 +2255,13 @@ describe('Media element pipeline (end-to-end)', () => {
   //
   // An audio element whose host's only mixin lives in a different workspace
   // package (spf), reached through that package's barrel file — mirrors
-  // HlsAudioMedia extending HlsAudioMediaMixin from @videojs/spf/hls.
+  // HlsAudioAdapter extending HlsAudioMixin from @videojs/spf/hls.
   //
   // Also exercises:
   //   - @fires-declared event descriptions for events outside the native
   //     contract (audiomodechange also has a dispatch site, manifestparsed does
   //     not — the @fires tag alone surfaces both)
-  //   - Defaults co-located with the mixin (spfAudioOnlyMediaDefaultProps)
+  //   - Defaults on the mixin's inner class (SpfAudioOnly.defaultProps)
   //   - AudioEvents capability contract
 
   describe('SpfAudio (cross-package mixin, audio host)', () => {
@@ -2205,7 +2335,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts audio methods from the shared base host (no video-only methods)', () => {
       const ref = findElement('SpfAudio')!.reference;
 
-      // Audio methods = media-host methods + audio-host methods. The fixture
+      // Audio methods = html-media-adapter methods + html-audio-adapter methods. The fixture
       // audio host adds none, so video-only methods (requestFullscreen) are absent.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play']);
       expect(ref.platforms.html.methods).not.toContain('requestFullscreen');
@@ -2214,7 +2344,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts native properties from the shared base host (no video-only props)', () => {
       const ref = findElement('SpfAudio')!.reference;
 
-      // Audio native properties = media-host accessors only (audio host adds
+      // Audio native properties = html-media-adapter accessors only (audio host adds
       // none), filtered to native members and deduped against hostProperties
       // (src is re-declared by the mixin). videoWidth is video-only → absent.
       expect(ref.platforms.html.properties.native).toEqual(['currentTime', 'volume']);

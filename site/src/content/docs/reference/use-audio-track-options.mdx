@@ -6,6 +6,12 @@ description: Hook to build audio track menu options from the player audio track 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { useAudioTrackOptions } from "@videojs/react";
+```
+
 `useAudioTrackOptions` returns the currently enabled audio track, the available options, and a `setValue` callback for wiring track selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> is not configured.
 
 ```tsx title="AudioMenu.tsx"

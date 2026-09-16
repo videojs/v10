@@ -1,0 +1,16 @@
+---
+import ModuleImports from './ModuleImports.astro';
+
+interface Props {
+  /** Module name: the suffix of the `media/` subpath on both platforms and of the CDN bundle. */
+  media: string;
+  /** Package to install beside the framework package, when the module is not built in. */
+  package?: string;
+  /** Named export from `@videojs/react/media/<media>`. */
+  react: string;
+}
+
+const { media, package: pkg, react } = Astro.props;
+---
+
+<ModuleImports name={media} package={pkg} packageOnlyInstall={true} react={react} subpath="media" />

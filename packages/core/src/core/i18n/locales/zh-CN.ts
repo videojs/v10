@@ -54,6 +54,7 @@ export default {
     toggleElapsed: '在已播放时间和剩余时间之间切换。',
     toggleDuration: '在时长和剩余时间之间切换。',
     position: '{current}，总时长 {duration}',
+    unknown: '媒体未加载，时间未知。',
   },
   playback: {
     rate: '播放速度 {rate}',

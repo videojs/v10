@@ -43,7 +43,7 @@ function formatHTMLInstallation(opts: InstallationOptions): string {
 }
 
 function formatReactInstallation(opts: InstallationOptions): string {
-  const install = generateReactInstallCode();
+  const install = generateReactInstallCode(opts);
   const create = generateReactCreateCode(opts);
   const usage = generateReactUsageCode(opts);
 

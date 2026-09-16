@@ -1,7 +1,7 @@
 import { isUndefined } from '@videojs/utils/predicate';
 
 import { DEFAULT_SEEK_STEP } from '../../core/ui/constants';
-import { getMediaInputActionValue } from '../media-actions';
+import { getMediaInputActionValue } from '../media-action-value';
 import type { GestureRegion } from './gesture';
 
 /** Resolves the effective value for a gesture action from its explicit value and region. */

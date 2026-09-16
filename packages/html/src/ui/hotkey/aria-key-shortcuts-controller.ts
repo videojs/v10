@@ -4,7 +4,7 @@ import { ContextConsumer } from '@videojs/element/context';
 
 import type { ContainerContextConsumer } from '../../player/context';
 import { containerContext } from '../../player/context';
-import type { PlayerControllerHost } from '../../player/player-controller';
+import type { PlayerControllerHost } from '../../player/controller';
 
 export interface AriaKeyShortcutsControllerOptions {
   value?: (() => number | undefined) | undefined;

@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.1...@videojs/cli@10.0.0-rc.2) (2026-09-09)
+
+
+### Miscellaneous Chores
+
+* **@videojs/cli:** Synchronize videojs versions
+
+## [10.0.0-rc.1](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.32...@videojs/cli@10.0.0-rc.1) (2026-09-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567))
+
+### Code Refactoring
+
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567)) ([12b08e3](https://github.com/videojs/v10/commit/12b08e3b0c3c07e5948f74a8cf6fce96c8b8eba7))
+
 ## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.31...@videojs/cli@10.0.0-beta.32) (2026-08-26)
 
 

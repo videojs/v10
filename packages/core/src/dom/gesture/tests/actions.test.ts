@@ -91,6 +91,13 @@ describe('seekStep', () => {
     resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }));
     expect(seek).toHaveBeenCalledWith(20);
   });
+
+  it('seeks before the time range is known', () => {
+    const seek = vi.fn();
+
+    resolveGestureAction('seekStep')!(ctx({ currentTime: 0, duration: 0, seeking: false, seek }, 5));
+    expect(seek).toHaveBeenCalledWith(5);
+  });
 });
 
 describe('volumeStep', () => {

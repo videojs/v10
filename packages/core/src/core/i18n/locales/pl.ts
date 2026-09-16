@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Przełącz między czasem, który upłynął, a pozostałym czasem.',
     toggleDuration: 'Przełącz między czasem trwania a pozostałym czasem.',
     position: '{current} z {duration}',
+    unknown: 'Multimedia nie zostały załadowane, czas jest nieznany.',
   },
   playback: {
     rate: 'Prędkość odtwarzania {rate}',

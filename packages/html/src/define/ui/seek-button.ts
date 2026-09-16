@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
+import { SeekButtonElement } from '../../ui/seek-button/element';
 
 safeDefine(SeekButtonElement);
 

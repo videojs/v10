@@ -9,6 +9,5 @@
     "useDefineForClassFields": false
   },
   "include": ["src"],
-  "exclude": ["src/cdn/locales"],
   "references": [{ "path": "../core" }, { "path": "../icons" }]
 }

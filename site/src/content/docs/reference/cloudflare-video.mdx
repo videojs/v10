@@ -5,6 +5,7 @@ frameworkTitle:
 description: Video component that plays Cloudflare Stream videos through the Stream player
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/cloudflare-video/html/css
 import basicUsageHtmlTs from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.ts?raw";
 
 [Cloudflare Stream](https://developers.cloudflare.com/stream/) runs in an embedded player. Its own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Cloudflare's UI instead.
+
+## Import
+
+<MediaImports media="cloudflare-video" package="@videojs/cloudflare-video" react="CloudflareVideo" />
 
 ## Load a source
 

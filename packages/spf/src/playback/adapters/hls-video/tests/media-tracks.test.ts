@@ -1,10 +1,10 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 import { effect } from '../../../../core/signals/effect';
 import { signal } from '../../../../core/signals/primitives';
-import { HlsVideoMediaMediaTracksMixin } from '../media-tracks';
+import { HlsVideoMediaTracksMixin } from '../media-tracks';
 
 // The projection only touches these five engine-state signals; a fake engine
 // backed by real signals is enough to drive the effects.
@@ -22,7 +22,7 @@ function createEngine() {
 
 type Engine = ReturnType<typeof createEngine>;
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   engine: Engine;
   constructor(engine: Engine) {
     super();
@@ -30,7 +30,7 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const HlsVideoMediaMediaTracks = HlsVideoMediaMediaTracksMixin(MediaTracksMixin(FakeHost as any));
+const HlsVideoMediaTracks = HlsVideoMediaTracksMixin(MediaTracksMixin(FakeHost as any));
 
 const presentation = (video: any[], audio: any[] = [], url = 'https://example.com/master.m3u8') => ({
   id: 'pres-1',
@@ -76,13 +76,13 @@ const flush = () =>
     sig.set(1);
   });
 
-describe('HlsVideoMediaMediaTracksMixin', () => {
+describe('HlsVideoMediaTracksMixin', () => {
   let engine: Engine;
   let host: any;
 
   beforeEach(() => {
     engine = createEngine();
-    host = new HlsVideoMediaMediaTracks(engine) as any;
+    host = new HlsVideoMediaTracks(engine) as any;
   });
 
   afterEach(() => {

@@ -8,11 +8,16 @@ import {
   transform,
 } from 'lightningcss';
 
-import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
+import { cloneCssAst, collectRuleClasses, hasNestedCssRules, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile } from './output';
 import { replaceRuleClasses } from './selectors';
-import { collectTailwindDefaults, inlinePrivateTailwindVariables, optimizeSemanticCss } from './tailwind-values';
+import {
+  collectTailwindDefaults,
+  dedupeRuleDeclarations,
+  inlinePrivateTailwindVariables,
+  optimizeSemanticCss,
+} from './tailwind-values';
 
 const encoder = new TextEncoder();
 
@@ -37,7 +42,7 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 
   const files = new Map<string, string>();
 
-  for (const file of [...options.files].sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const file of options.files) {
     const analyzed = analyzedFiles.get(file);
     if (!analyzed) throw new Error(`Style output '${file.name}' was not compiled.`);
 
@@ -50,8 +55,10 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFile): string {
   const relationshipOwners = new Set(file.groupOwners.values());
   const scopeRootClasses = new Set(file.rules.filter((rule) => rule.scopeRoot).map((rule) => rule.className));
-  const scoped = scope ? `@scope (${scope}) {\n${css}\n}` : css;
-  const wrapped = `@layer ${file.layer} {\n${scoped}\n}`;
+  const shadowHostClasses = new Set(file.rules.filter((rule) => rule.shadowHost).map((rule) => rule.className));
+  const split = scope ? splitUnscopedRules(css, scope, shadowHostClasses) : { scoped: css, unscoped: '' };
+  const scoped = scope ? `@scope (${scope}) {\n${split.scoped}\n}` : split.scoped;
+  const wrapped = `@layer ${file.layer} {\n${scoped}\n${split.unscoped}\n}`;
 
   return optimizeSemanticCss(
     decoder.decode(
@@ -77,6 +84,150 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
           },
         },
       }).code
+    )
+  );
+}
+
+/**
+ * Keep the rules `@scope` cannot serve outside the scope block. Slotted nodes sit outside a shadow tree's CSS scope, so
+ * their rules move out. WebKit never matches a scoped rule whose subject hosts a shadow root or is slotted into one, so
+ * a rule on a shadow host class is emitted twice: the scoped rule stays for engines that match it, and a copy with the
+ * scope root as a zero-specificity ancestor follows for WebKit. The copy never outranks the original, so the cascade
+ * elsewhere is unchanged. Conditional at-rules retain their conditions when their matching rules move or copy.
+ */
+function splitUnscopedRules(css: string, scope: string, shadowHostClasses: ReadonlySet<string>) {
+  let hasSlottedRules = false;
+  let hasShadowHostRules = false;
+  const isShadowHostRule = (rule: Rule) => !isSlottedStyleRule(rule) && isShadowHostStyleRule(rule, shadowHostClasses);
+  const scoped = filterCssRules(css, (rule) => {
+    const slotted = isSlottedStyleRule(rule);
+
+    hasSlottedRules ||= slotted;
+    hasShadowHostRules ||= isShadowHostRule(rule);
+
+    return !slotted;
+  });
+
+  const slotted = hasSlottedRules ? filterCssRules(css, isSlottedStyleRule) : '';
+  const shadowHosts = hasShadowHostRules ? prefixScope(filterCssRules(css, isShadowHostRule), scope) : '';
+
+  return { scoped, unscoped: `${slotted}\n${shadowHosts}` };
+}
+
+/** Prefix every selector with the scope root as a zero-specificity ancestor, standing in for the `@scope` block. */
+function prefixScope(css: string, scope: string): string {
+  const root = parseSelector(`:where(${scope})`);
+
+  return decoder.decode(
+    transform({
+      filename: 'shadow-hosts.css',
+      code: encoder.encode(css),
+      visitor: {
+        Rule: {
+          style(rule) {
+            const selectors = rule.value.selectors.map((selector) => [
+              ...root.map(cloneCssAst),
+              { type: 'combinator', value: 'descendant' } as const,
+              ...selector.map(cloneCssAst),
+            ]);
+
+            return withoutNullValues({ ...cloneCssAst(rule), value: { ...cloneCssAst(rule.value), selectors } });
+          },
+        },
+      },
+    }).code
+  );
+}
+
+function parseSelector(text: string): Selector {
+  let parsed: Selector | undefined;
+
+  transform({
+    filename: 'selector.css',
+    code: encoder.encode(`${text} { --vjsc: 0; }`),
+    visitor: {
+      Rule: {
+        style(rule) {
+          parsed = cloneCssAst(rule.value.selectors[0]);
+        },
+      },
+    },
+  });
+
+  if (!parsed) throw new Error(`Could not parse the CSS scope selector '${text}'.`);
+
+  return parsed;
+}
+
+function filterCssRules(css: string, include: (rule: Rule) => boolean): string {
+  return decoder.decode(
+    transform({
+      filename: 'semantic.css',
+      code: encoder.encode(css),
+      visitor: {
+        StyleSheet(stylesheet) {
+          return withoutNullValues({
+            ...cloneCssAst(stylesheet),
+            rules: filterNestedRules(stylesheet.rules, include),
+          });
+        },
+      },
+    }).code
+  );
+}
+
+function filterNestedRules(rules: readonly Rule[], include: (rule: Rule) => boolean): Rule[] {
+  const filtered: Rule[] = [];
+
+  for (const rule of rules) {
+    if (hasNestedCssRules(rule)) {
+      const nested = filterNestedRules(rule.value.rules, include);
+
+      if (nested.length > 0) {
+        const cloned = cloneCssAst(rule);
+
+        cloned.value.rules = nested;
+        filtered.push(withoutNullValues(cloned));
+      }
+
+      continue;
+    }
+
+    if (include(rule)) filtered.push(cloneCssAst(rule));
+  }
+
+  return filtered;
+}
+
+/**
+ * A rule with a selector whose subject carries a shadow host class. The subject is the last compound, so a relationship
+ * selector such as `:where(.owner)[data-x] .subject` counts by its `.subject`, and a pseudo-element on the subject is
+ * looked past.
+ */
+function isShadowHostStyleRule(rule: Rule, shadowHostClasses: ReadonlySet<string>): boolean {
+  return (
+    rule.type === 'style' &&
+    rule.value.selectors.some((selector) =>
+      subjectCompound(selector).some((component) => component.type === 'class' && shadowHostClasses.has(component.name))
+    )
+  );
+}
+
+function subjectCompound(selector: Selector): Selector {
+  let start = 0;
+
+  for (const [index, component] of selector.entries()) {
+    if (component.type === 'combinator') start = index + 1;
+  }
+
+  return selector.slice(start).filter((component) => component.type !== 'pseudo-element');
+}
+
+function isSlottedStyleRule(rule: Rule): boolean {
+  return (
+    rule.type === 'style' &&
+    rule.value.selectors.some((selector) =>
+      selector.some((component) => component.type === 'pseudo-element' && component.kind === 'slotted')
     )
   );
 }
@@ -211,6 +362,10 @@ function semanticRootClass(rule: Rule, semanticClassNames: ReadonlySet<string>):
 }
 
 function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
+  const cloned = rules.map(cloneCssAst);
+
+  dedupeRuleDeclarations(cloned);
+
   const result = transform({
     filename: 'rendered.css',
     code: encoder.encode(''),
@@ -219,14 +374,14 @@ function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
       StyleSheet() {
         return withoutNullValues({
           ...cloneCssAst(template),
-          rules: rules.map(cloneCssAst),
+          rules: cloned,
           licenseComments: [],
         });
       },
     },
   });
 
-  return optimizeSemanticCss(decoder.decode(result.code).trim());
+  return decoder.decode(result.code).trim();
 }
 
 function assertNoRelationshipMarkers(rule: Rule, bindings: ReadonlyMap<string, string>): void {

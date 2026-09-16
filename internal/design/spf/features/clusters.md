@@ -156,7 +156,7 @@ Fetching, parsing, and modeling HLS / HAS media — the data structures the rest
 
 **Signals.** Manifest fetching, multivariant playlist parsing, media playlist parsing, presentation modeling; `parseMultivariantPlaylist`, `parseMediaPlaylist`; state slot `presentation` (resolved vs unresolved); `presentation-resolved` state-machine transitions; `PartiallyResolvedTextTrack`-style modeling shapes; HLS attribute extraction.
 
-**Docs.** None yet. The architectural deep-dive [`presentation-modeling.md`](../presentation-modeling.md) covers the format-neutral data shape and per-track resolution layer that feature docs in this cluster would consume.
+**Docs.** `chapters` (its session-data slice: `#EXT-X-SESSION-DATA` recorded under `presentation.metadata`, read via `getSessionData`). The architectural deep-dive [`presentation-modeling.md`](../presentation-modeling.md) covers the format-neutral data shape and per-track resolution layer that feature docs in this cluster consume.
 
 **Foundational primitives.** `Presentation` data shape; `resolvePresentation` behavior + the per-track `resolve*Track` family that patches resolved tracks back into `presentation`.
 

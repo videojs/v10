@@ -2,15 +2,16 @@
 
 [![package-badge]][package]
 
-> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
 ## Overview
 
-`@videojs/media` provides the media contracts, state types, DOM hosts, and playback engine adapters
-used by Video.js packages.
+`@videojs/media` provides the engine-neutral media contracts, state types, DOM hosts, and shared behavior used by
+Video.js packages.
 
-Runtime-agnostic media APIs are exported from `@videojs/media`. Browser-specific APIs and playback
-engines are available from the `@videojs/media/dom` subpaths.
+Runtime-agnostic APIs are exported from `@videojs/media`. Browser hosts and the custom media element live at
+`@videojs/media/dom`. Playback adapters such as `@videojs/hlsjs-video`, `@videojs/mux-video`,
+`@videojs/dash-video`, or `@videojs/shaka-video` are separate packages.
 
 ## Community
 

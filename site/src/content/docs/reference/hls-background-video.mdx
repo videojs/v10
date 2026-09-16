@@ -7,6 +7,7 @@ description: HLS background video without controls, audio, captions, or adaptive
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import MediaImports from '@/components/docs/api-reference/MediaImports.astro';
 
 HlsBackgroundVideo plays an HLS source through the SPF background engine. It is fixed to muted, autoplaying, inline, looped playback and omits controls, audio, text, DRM, and adaptive rendition switching.
 
@@ -14,17 +15,7 @@ See <DocsLink slug="how-to/add-a-background-video">Add a background video</DocsL
 
 ## Import
 
-<FrameworkCase frameworks={["react"]}>
-```tsx
-import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-import '@videojs/html/media/hls-background-video';
-```
-</FrameworkCase>
+<MediaImports media="hls-background-video" react="HlsBackgroundVideo" />
 
 ## Source behavior
 

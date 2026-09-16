@@ -1,1 +1,1 @@
-export * from './airplay-button';
+export * from './component';

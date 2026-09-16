@@ -1,0 +1,16 @@
+---
+import ModuleImports from './ModuleImports.astro';
+
+interface Props {
+  /** Extension name: the suffix of the `extensions/` subpath on both platforms and of the CDN bundle. */
+  extension: string;
+  /** Package to install beside the framework package, when the module is not built in. */
+  package?: string;
+  /** Named export from `@videojs/react/extensions/<extension>`. */
+  react: string;
+}
+
+const { extension, package: pkg, react } = Astro.props;
+---
+
+<ModuleImports name={extension} package={pkg} react={react} subpath="extensions" />

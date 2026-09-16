@@ -1,11 +1,10 @@
 /**
- * Mock spf hls barrel — mirrors the @videojs/spf/hls subpath entry.
+ * Mock spf hls barrel — mirrors the @videojs/spf/hls-audio subpath entry.
  *
  * The import + bare `export { … }` shape matches what tsdown emits in rolled-up
  * entry `.d.ts` files (import the implementation, re-export without a module
  * specifier). The builder must follow the import binding to the declaration.
  */
-import { SpfAudioOnlyMediaMixin } from '../playback/engines/hls/adapter-audio-only';
+import { SpfAudioOnlyMixin } from '../playback/engines/hls/adapter-audio-only';
 
-export { spfAudioOnlyMediaDefaultProps } from '../playback/engines/hls/adapter-audio-only';
-export { SpfAudioOnlyMediaMixin };
+export { SpfAudioOnlyMixin };

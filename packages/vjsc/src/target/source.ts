@@ -1,11 +1,11 @@
-import type { JSXAttribute, JSXElement, JSXOpeningElement } from '@oxc-project/types';
+import type { JSXAttribute, JSXElement, JSXElementName, JSXOpeningElement } from '@oxc-project/types';
 
 import { createSourceText, renderSourceRange, type SourceText } from '../ast';
-import type { SourceProps } from './definition';
+import { type SourceProps, type TargetOutput, type TargetReplacement, TARGET_REPLACEMENT } from './definition';
 
-export const SOURCE_PROPS = Symbol('vjsc/source-props');
-export const SOURCE_PROP = Symbol('vjsc/source-prop');
-export const SOURCE_CHILDREN = Symbol('vjsc/source-children');
+export const SOURCE_PROPS = Symbol.for('vjsc/source-props');
+export const SOURCE_PROP = Symbol.for('vjsc/source-prop');
+export const SOURCE_CHILDREN = Symbol.for('vjsc/source-children');
 
 export interface SourcePropsToken {
   readonly [SOURCE_PROPS]: true;
@@ -27,6 +27,8 @@ export interface SourceChildrenToken {
   readonly value: string;
   /** Opening-tag offset when the children contain exactly one JSX element. */
   readonly rootOpeningEnd?: number | undefined;
+  /** Whether the single root is a component invocation rather than an intrinsic element. */
+  readonly rootComponent?: boolean | undefined;
 }
 
 export function singleJsxElementChild(node: JSXElement): JSXElement | undefined {
@@ -115,7 +117,14 @@ export function createSourceChildren(
     source: normalized,
     value: rendered.value,
     ...(rootOpeningEnd !== undefined ? { rootOpeningEnd } : {}),
+    ...(rootOpening ? { rootComponent: isComponentName(rootOpening.name) } : {}),
   };
+}
+
+function isComponentName(name: JSXElementName): boolean {
+  if (name.type === 'JSXIdentifier') return /^[A-Z]/.test(name.name);
+
+  return name.type === 'JSXMemberExpression';
 }
 
 export function isSourcePropsToken(value: unknown): value is SourcePropsToken {
@@ -129,6 +138,31 @@ export function isSourcePropToken(value: unknown): value is SourcePropToken {
 export function isSourceChildrenToken(value: unknown): value is SourceChildrenToken {
   return Boolean(
     value && typeof value === 'object' && (value as Partial<SourceChildrenToken>)[SOURCE_CHILDREN] === true
+  );
+}
+
+export function createTargetReplacement(
+  source: SourceText,
+  branchStart: number,
+  branchEnd: number,
+  partStart: number,
+  partEnd: number,
+  output: TargetOutput
+): TargetReplacement {
+  return {
+    [TARGET_REPLACEMENT]: true,
+    source,
+    branchStart,
+    branchEnd,
+    partStart,
+    partEnd,
+    output,
+  };
+}
+
+export function isTargetReplacement(value: unknown): value is TargetReplacement {
+  return Boolean(
+    value && typeof value === 'object' && (value as Partial<TargetReplacement>)[TARGET_REPLACEMENT] === true
   );
 }
 

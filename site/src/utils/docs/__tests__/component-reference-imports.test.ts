@@ -20,7 +20,9 @@ describe('component reference imports', () => {
 
     for (const { file, source } of componentReferences) {
       expect(source, file).toContain(componentImport);
-      expect(source, file).toMatch(/## Import\n\n<ComponentImports component="[^"]+" html="[^"]+" \/>/);
+      expect(source, file).toMatch(
+        /## Import\n\n<ComponentImports component="[^"]+" html="[^"]+"( reactFrom="[^"]+")? \/>/
+      );
       expect(source.indexOf('## Import'), file).toBeLessThan(source.indexOf('## Anatomy'));
       expect(source.indexOf('## Anatomy'), file).toBeLessThan(source.indexOf('<ComponentReference component="'));
     }

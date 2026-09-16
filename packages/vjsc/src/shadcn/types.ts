@@ -1,77 +1,110 @@
-import type { RegistryItem, Registry as ShadcnRegistrySchema } from 'shadcn/schema';
+import type { RegistryItem } from 'shadcn/schema';
 
-import type { ComponentMeta } from '../components/meta';
+import type { ModuleMeta } from '../components/meta';
+import type { GraphModule, Graph } from '../graph';
 
-type RegistryItemType = RegistryItem['type'];
+type DistributiveOmit<Value, Key extends PropertyKey> = Value extends unknown ? Omit<Value, Key> : never;
 
-export type ShadcnRegistry = ShadcnRegistrySchema;
-export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
-export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
+export type RegistryModuleTarget<Meta extends ModuleMeta = ModuleMeta> =
+  | string
+  | ((module: GraphModule<Meta>, root: GraphModule<Meta>) => string);
 
-export interface ShadcnModule<Item extends ComponentMeta = ComponentMeta> {
-  /** Full host module ID, including its VJSC transform query. */
-  readonly id: string;
-  /** Absolute physical source filename. */
-  readonly filename: string;
-  /** VJSC transform selection used to produce this editable module. */
-  readonly transform: Readonly<Record<string, string>>;
-  readonly meta?: Item | undefined;
+export interface RegistryPaths {
+  /** Registry installation directory, such as `@components/videojs`. */
+  readonly install: string;
+  /** Absolute module specifier for imports, such as `@/components/videojs`. */
+  readonly import: string;
 }
 
-export interface ShadcnItem<Item extends ComponentMeta = ComponentMeta> {
-  /** Discovered module published by this item. */
-  readonly module: ShadcnModule<Item>;
-  readonly name: string;
-  readonly type: Extract<RegistryItemType, 'registry:block' | 'registry:component' | 'registry:lib'>;
-  readonly title: string;
-  readonly description: string;
-  /** Installed filename for the item's root module. Defaults to its source filename. */
+export interface RegistryStylesheetOutput {
+  /** Installed path of the stylesheet bundled from this item's module closure. */
+  readonly target: string;
+  /** Additional authored CSS files relative to the VJSC graph root. */
+  readonly include?: readonly string[] | undefined;
+}
+
+/** Public Shadcn fields and installation policy for one transformed graph module. */
+export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = DistributiveOmit<RegistryItem, 'files'> & {
+  /** Included registry path, such as `components` or `blocks`. */
+  readonly group: string;
+  /** JavaScript directives prepended to the installed root module. */
+  readonly directives?: readonly string[] | undefined;
+  /** Root-module target relative to the configured installation directory. */
+  readonly target: RegistryModuleTarget<Meta>;
+  /** Installed filename for the root module. Defaults to its source filename. */
   readonly filename?: string | undefined;
-  readonly meta?: RegistryItem['meta'];
+  /** Import replacements applied while packaging this item. */
+  readonly imports?: Readonly<Record<string, string>> | undefined;
+  /** Item-specific installation and import roots. Defaults to the registry paths. */
+  readonly paths?: Partial<RegistryPaths> | undefined;
+  /** Bundle the module closure's generated CSS into one installed stylesheet. */
+  readonly stylesheet?: RegistryStylesheetOutput | undefined;
+  /** Import the configured shared theme, or one or more installed stylesheets from registered theme items. */
+  readonly theme?: boolean | string | readonly string[] | undefined;
+};
+
+/** A file-backed Shadcn item which is not owned by one transformed graph module. */
+export type RegistryCreatedItem = RegistryItem & {
+  /** Included registry path, such as `components` or `blocks`. */
+  readonly group: string;
+};
+
+export interface RegistryItemContext<Meta extends ModuleMeta = ModuleMeta> {
+  readonly graph: Graph<Meta>;
+  readonly module: GraphModule<Meta>;
 }
 
-export interface ShadcnStyle {
-  /** CSS entry whose relative imports are published with it. */
-  readonly input: string;
+export interface RegistryCreateContext<Meta extends ModuleMeta = ModuleMeta> {
+  readonly graph: Graph<Meta>;
+}
+
+export interface RegistryItemsOptions<Meta extends ModuleMeta = ModuleMeta> {
+  resolve(
+    context: RegistryItemContext<Meta>
+  ): RegistryModuleItem<Meta> | null | Promise<RegistryModuleItem<Meta> | null>;
+  create?(
+    context: RegistryCreateContext<Meta>
+  ): readonly RegistryCreatedItem[] | Promise<readonly RegistryCreatedItem[]>;
+}
+
+export type RegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'name' | 'type'> & {
+  /** Registry item name. Defaults to the target filename prefixed with `_style-`. */
   readonly name?: string | undefined;
-  /** Installed filename for the CSS entry. Defaults to its source filename. */
-  readonly filename?: string | undefined;
-  readonly title?: string | undefined;
-  readonly description?: string | undefined;
-  readonly meta?: RegistryItem['meta'];
+  /** Installed path of the shared theme stylesheet. */
+  readonly target: string;
+  /** Authored CSS files relative to the VJSC graph root, bundled into `target`. */
+  readonly include?: readonly string[] | undefined;
+  /** Authored CSS sources and installed targets to preserve as separate editable files. */
+  readonly files?: Readonly<Record<string, string>> | undefined;
+  /** Tailwind CSS source whose `@theme inline`, `@utility`, and `@custom-variant` rules extend the registry item. */
+  readonly tailwind?: string | undefined;
+};
+
+export interface RegistryStylesOptions {
+  /** Primary shared theme item imported when a source item sets `theme: true`. */
+  readonly theme?: RegistryThemeOptions | undefined;
+  /** Additional theme items selected when a source item's `theme` names one of their stylesheet targets. */
+  readonly themes?: readonly RegistryThemeOptions[] | undefined;
+  /** Directory that receives compiled VJSC style files, or explicit installed paths by filename. */
+  readonly files?: string | Readonly<Record<string, string>> | undefined;
 }
 
-export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta> {
-  /** Root containing editable registry source. */
-  readonly root: string;
-  /** Complete root-relative source inventory loaded through the host graph. */
-  readonly include: string | readonly string[];
-  readonly exclude?: string | readonly string[] | undefined;
-  readonly publish: {
-    /**
-     * Select the target configurations loaded for each discovered file. Component metadata is captured later from
-     * transformed host modules and is therefore not available in this inventory hook.
-     */
-    readonly modules?:
-      | ((
-          module: Omit<ShadcnModule<Item>, 'meta'>,
-          modules: readonly Omit<ShadcnModule<Item>, 'meta'>[]
-        ) => readonly Readonly<Record<string, string>>[])
-      | undefined;
-    /** Describe the published registry items after every requested transformation is complete. */
-    readonly items: (modules: readonly ShadcnModule<Item>[]) => readonly ShadcnItem<Item>[];
-  };
+export interface VjscRegistryOptions<Meta extends ModuleMeta = ModuleMeta> {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
-  readonly paths: {
-    readonly output: string;
-    readonly source: string;
-    readonly install: string;
-    readonly import: string;
-  };
+  readonly paths: RegistryPaths;
+  /** Directory below the Rolldown output root where this catalog is emitted. */
+  readonly output?: string | undefined;
+  /** Format each editable source before it is emitted. */
+  readonly format?:
+    | ((source: { readonly path: string; readonly content: string }) => string | Promise<string>)
+    | undefined;
   /** Editable-source import strings whose installation specifier is exceptional. */
   readonly imports?: Readonly<Record<string, string>> | undefined;
+  /** Exact package requirements used instead of bare discovered dependency names. */
+  readonly packages?: Readonly<Record<string, string>> | undefined;
+  readonly items: RegistryItemsOptions<Meta>;
+  readonly styles?: RegistryStylesOptions | undefined;
   readonly meta?: RegistryItem['meta'];
-  readonly styles?: ShadcnStyle | undefined;
 }

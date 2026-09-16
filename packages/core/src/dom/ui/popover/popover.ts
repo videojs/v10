@@ -5,7 +5,7 @@ import type { PopoverInput } from '../../../core/ui/popover/core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
-import type { PopupGroup, PopupGroupCloseReason } from './popup-group';
+import type { PopupGroup, PopupGroupCloseReason } from './group';
 
 export type PopoverOpenChangeReason =
   | 'click'
@@ -180,6 +180,15 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     // element only when the transition is ready to collect animations.
     const opening = layer.open(() => popupEl);
     if (!opening) return;
+
+    // Let platform adapters commit `data-starting-style` before exposing an
+    // already-mounted popup. Showing synchronously starts the transition from
+    // its visible styles before reactive HTML updates can apply the start state.
+    queueMicrotask(() => {
+      if (layer.signal.aborted || !state.current.active || state.current.status === 'ending') return;
+
+      tryShowPopover(popupEl);
+    });
 
     options.group?.()?.open(groupMember);
 

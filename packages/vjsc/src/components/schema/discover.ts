@@ -5,7 +5,7 @@ import { parseSync } from 'oxc-parser';
 
 import { toArray } from '../../utils/array';
 import { absolutePath, fileStem } from '../../utils/path';
-import type { ComponentDefinition, ComponentRecord } from '../definition';
+import type { ComponentDefinition, ComponentPartDefinition, ComponentParts } from '../definition';
 
 export interface ComponentFileSet {
   readonly include: string;
@@ -13,19 +13,19 @@ export interface ComponentFileSet {
   readonly name: (filename: string) => string;
 }
 
-export type ComponentSource = string | ComponentFileSet;
+export type ComponentInput = string | ComponentFileSet;
 
 export interface DiscoverSchemaOptions {
   readonly cwd: string;
-  readonly include: readonly ComponentSource[];
+  readonly include: readonly ComponentInput[];
   readonly exclude?: string | readonly string[] | undefined;
 }
 
-export interface ManifestSchemaComponent {
-  readonly kind: 'manifest';
+export interface DefinedSchemaComponent {
+  readonly kind: 'definition';
   readonly fileName: string;
   readonly name: string;
-  readonly definition: ComponentDefinition<object, ComponentRecord | undefined>;
+  readonly definition: ComponentDefinition<object, ComponentParts | undefined>;
 }
 
 export interface FileSchemaComponent {
@@ -35,7 +35,7 @@ export interface FileSchemaComponent {
   readonly definition: ComponentDefinition<object, undefined>;
 }
 
-export type SchemaComponent = ManifestSchemaComponent | FileSchemaComponent;
+export type SchemaComponent = DefinedSchemaComponent | FileSchemaComponent;
 
 export interface DiscoveredSchema {
   readonly components: readonly SchemaComponent[];
@@ -46,7 +46,7 @@ export interface DiscoveredSchema {
 export function discoverSchema(options: DiscoverSchemaOptions): DiscoveredSchema {
   const components = options.include.flatMap<SchemaComponent>((source) =>
     typeof source === 'string'
-      ? discoverManifests(source, options.exclude, options.cwd)
+      ? discoverDefinitions(source, options.exclude, options.cwd)
       : discoverFiles(source, options.cwd)
   );
 
@@ -56,15 +56,15 @@ export function discoverSchema(options: DiscoverSchemaOptions): DiscoveredSchema
   };
 }
 
-function discoverManifests(
+function discoverDefinitions(
   pattern: string,
   exclude: string | readonly string[] | undefined,
   cwd: string
-): ManifestSchemaComponent[] {
+): DefinedSchemaComponent[] {
   return globSync(pattern, { cwd, ...(exclude ? { exclude: toArray(exclude) } : {}) }).map((path) => {
     const fileName = absolutePath(cwd, path);
 
-    return { kind: 'manifest', fileName, ...parseComponentManifest(fileName) };
+    return { kind: 'definition', fileName, ...parseComponentDefinitionFile(fileName) };
   });
 }
 
@@ -80,7 +80,7 @@ function discoverFiles(source: ComponentFileSet, cwd: string): FileSchemaCompone
   });
 }
 
-function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent, 'definition' | 'name'> {
+function parseComponentDefinitionFile(fileName: string): Pick<DefinedSchemaComponent, 'definition' | 'name'> {
   const parsed = parseSync(fileName, readFileSync(fileName, 'utf8'));
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
@@ -95,7 +95,7 @@ function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent,
 
   return {
     name: definition.name,
-    definition,
+    definition: definition as ComponentDefinition<object, ComponentParts | undefined>,
   };
 }
 
@@ -110,10 +110,7 @@ function isDefineComponentCall(node: unknown): node is CallExpression {
   return callee.type === 'Identifier' && callee.name === 'defineComponent';
 }
 
-function parseComponentDefinition(
-  call: CallExpression,
-  fileName: string
-): ComponentDefinition<object, ComponentRecord | undefined> {
+function parseComponentDefinition(call: CallExpression, fileName: string): ParsedComponentDefinition {
   const argument = call.arguments[0];
   if (!argument) return {};
 
@@ -124,7 +121,7 @@ function parseComponentDefinition(
   const definition: {
     name?: string;
     root?: string;
-    parts?: Record<string, ComponentDefinition<object, ComponentRecord | undefined>>;
+    parts?: ComponentParts;
   } = {};
 
   for (const property of argument.properties) {
@@ -158,8 +155,12 @@ function parseComponentDefinition(
     );
   }
 
-  return definition as ComponentDefinition<object, ComponentRecord | undefined>;
+  return definition as ParsedComponentDefinition;
 }
+
+type ParsedComponentDefinition = ComponentPartDefinition<object, ComponentParts | undefined> & {
+  readonly name?: string | undefined;
+};
 
 function staticPropertyName(name: PropertyKey): string {
   if (name.type === 'Identifier') return name.name;

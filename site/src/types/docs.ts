@@ -3,6 +3,10 @@ export const FRAMEWORK_STYLES = {
   html: ['css'],
 } as const;
 
+export const DOC_STABILITIES = ['beta'] as const;
+
+export type DocStability = (typeof DOC_STABILITIES)[number];
+
 export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
 export type SupportedStyle<F extends SupportedFramework> = (typeof FRAMEWORK_STYLES)[F][number];
 export type AnySupportedStyle = SupportedStyle<SupportedFramework>;

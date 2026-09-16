@@ -1,5 +1,5 @@
 import { safeDefine } from '../../registration/safe-define';
-import { VolumeIndicatorValueElement } from '../../ui/volume-indicator/volume-indicator-value-element';
+import { VolumeIndicatorValueElement } from '../../ui/volume-indicator/value';
 
 safeDefine(VolumeIndicatorValueElement);
 

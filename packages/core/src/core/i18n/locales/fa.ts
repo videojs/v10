@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'تغییر بین زمان سپری‌شده و زمان باقی‌مانده.',
     toggleDuration: 'تغییر بین مدت‌زمان و زمان باقی‌مانده.',
     position: '{current} از {duration}',
+    unknown: 'رسانه بارگذاری نشده، زمان نامشخص.',
   },
   playback: {
     rate: 'سرعت پخش {rate}',

@@ -13,22 +13,22 @@ import {
   defineTime,
   defineTooltip,
 } from '../../registration/ui-compounds';
-import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
-import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
-import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
-import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
-import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
-import { ContainerElement } from '../../ui/container/container-element';
-import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
-import { GestureElement } from '../../ui/gesture/gesture-element';
-import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
-import { LiveButtonElement } from '../../ui/live-button/live-button-element';
-import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
-import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
-import { PlayButtonElement } from '../../ui/play-button/play-button-element';
-import { PopoverElement } from '../../ui/popover/popover-element';
-import { PosterElement } from '../../ui/poster/poster-element';
-import { TextElement } from '../../ui/text/text-element';
+import { AirPlayButtonElement } from '../../ui/airplay-button/element';
+import { BufferingIndicatorElement } from '../../ui/buffering-indicator/element';
+import { CaptionsButtonElement } from '../../ui/captions-button/element';
+import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/element';
+import { CastButtonElement } from '../../ui/cast-button/element';
+import { ContainerElement } from '../../ui/container/element';
+import { FullscreenButtonElement } from '../../ui/fullscreen-button/element';
+import { GestureElement } from '../../ui/gesture/element';
+import { HotkeyElement } from '../../ui/hotkey/element';
+import { LiveButtonElement } from '../../ui/live-button/element';
+import { MuteButtonElement } from '../../ui/mute-button/element';
+import { PiPButtonElement } from '../../ui/pip-button/element';
+import { PlayButtonElement } from '../../ui/play-button/element';
+import { PopoverElement } from '../../ui/popover/element';
+import { PosterElement } from '../../ui/poster/element';
+import { TextElement } from '../../ui/text/element';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(ContainerElement);

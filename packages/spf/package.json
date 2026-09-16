@@ -1,6 +1,6 @@
 {
   "name": "@videojs/spf",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-rc.2",
   "description": "Stream Processing Framework for Video.js 10",
   "keywords": [
     "hls",
@@ -9,6 +9,7 @@
     "video",
     "videojs"
   ],
+  "homepage": "https://videojs.org",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -58,21 +59,6 @@
       "types": "./dist/dev/hls-video.d.ts",
       "development": "./dist/dev/hls-video.js",
       "default": "./dist/default/hls-video.js"
-    },
-    "./mux-audio": {
-      "types": "./dist/dev/mux-audio.d.ts",
-      "development": "./dist/dev/mux-audio.js",
-      "default": "./dist/default/mux-audio.js"
-    },
-    "./mux-background-video": {
-      "types": "./dist/dev/mux-background-video.d.ts",
-      "development": "./dist/dev/mux-background-video.js",
-      "default": "./dist/default/mux-background-video.js"
-    },
-    "./mux-video": {
-      "types": "./dist/dev/mux-video.d.ts",
-      "development": "./dist/dev/mux-video.js",
-      "default": "./dist/default/mux-video.js"
     }
   },
   "publishConfig": {

@@ -21,6 +21,8 @@ When prose conflicts with executable sources, follow the executable source and u
 - `packages/store`: framework-neutral state plus `/html` and `/react` bindings.
 - `packages/spf`: stream-processing primitives, DOM bindings, playback engine, and the SPF-backed Medias. Depends on `packages/media`, never the reverse.
 - `packages/media`: media contracts and state; browser hosts and third-party playback engines live under `/dom`.
+- `packages/adapters/*`: one playback adapter package per engine or embed (`hlsjs-video`, `mux-video`, `youtube-video`, …) plus the private `mux` helper they share.
+- `packages/extensions/*`: player extensions such as `google-cast` and `mux-data`.
 - `packages/core`: runtime-neutral player logic; DOM bindings live under `/dom`.
 - `packages/html`, `packages/react`: platform players.
 - `packages/icons`, `packages/skins`: private shared assets and styling.
@@ -74,11 +76,11 @@ Checked-in skills are direct children of `.agents/skills/`. `pnpm install` expos
 
 - API: `design-api`, `review-api`
 - Bundler plugins: `create-rolldown-plugin`, `create-vite-plugin`, `transform-rolldown-code`
+- VJSC component anatomy: `create-vjsc-component`
 - UI implementation: `create-html-component`, `create-react-component`, `implement-ui-transition`, `implement-accessible-ui`
 - UI review: `review-html-component`, `review-react-component`, `review-accessibility`
 - UI design: `write-html-component-design`, `write-react-component-design`, `review-html-component-design`, `review-react-component-design`
 - Docs and records: `write-docs`, `review-docs`, `write-api-reference`, `write-design-doc`, `write-rfc`
-- Site styling: `migrate-css-to-tailwind`, `review-tailwind-migration`
 - Toolchain workflows: `configure-vite-plus`
 - Skin parity: `maintain-vjsc-skin-gaps`
 - Delivery: `investigate-issue`, `create-issue`, `review-branch`, `commit-pr`

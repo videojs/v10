@@ -1,15 +1,13 @@
-export type {
-  ComponentFileSet,
-  ComponentSource,
-  CreateSchemaModuleOptions,
-  SchemaModule,
-} from './components/schema/generate';
-export { createSchemaModule } from './components/schema/generate';
 export {
-  moduleFilename,
-  moduleId,
-  normalizeModuleId,
-  normalizeResolvedId,
-  type ParsedModuleId,
-  parseModuleId,
-} from './utils/module-id';
+  type VjscComponentSchemaOptions,
+  vjscComponentSchemaPlugin,
+  type EntriesOptions,
+  type MetaOptions,
+  type SourceEntry,
+  type TransformModule,
+  type VjscPluginOptions,
+  vjscPlugin,
+  type VjscRegistryOptions,
+  vjscRegistryPlugin,
+  type TransformOptions,
+} from './plugins/index';

@@ -11,7 +11,7 @@ describe('module ID utilities', () => {
 
     expect(id).toBe('/source/component.tsx?framework=react&skin=minimal');
     expect(moduleFilename(id)).toBe('/source/component.tsx');
-    expect(Object.fromEntries(parseModuleId(id).parameters)).toEqual({ framework: 'react', skin: 'minimal' });
+    expect(Object.fromEntries(parseModuleId(id).params)).toEqual({ framework: 'react', skin: 'minimal' });
     expect(normalizeModuleId('/source/component.tsx?skin=minimal&framework=react')).toBe(id);
     expect(normalizeResolvedId('virtual:component?skin=minimal&framework=react')).toBe(
       'virtual:component?skin=minimal&framework=react'

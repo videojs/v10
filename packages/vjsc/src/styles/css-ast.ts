@@ -1,7 +1,19 @@
 import type { Rule, Selector, SelectorComponent } from 'lightningcss';
 
+/**
+ * Deep-clone a Lightning CSS AST fragment. The AST is plain JSON data, and this runs on every rule, selector, and token
+ * the renderer touches, where `structuredClone` spends most of its time in per-call overhead.
+ */
 export function cloneCssAst<T>(value: T): T {
-  return structuredClone(value);
+  if (Array.isArray(value)) return value.map(cloneCssAst) as T;
+
+  if (!value || typeof value !== 'object') return value;
+
+  const clone: Record<string, unknown> = {};
+
+  for (const key of Object.keys(value)) clone[key] = cloneCssAst((value as Record<string, unknown>)[key]);
+
+  return clone as T;
 }
 
 /**

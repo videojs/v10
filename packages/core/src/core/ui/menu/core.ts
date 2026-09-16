@@ -1,7 +1,7 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { PopoverAlign, PopoverSide } from '../popover/core';
+import type { PopoverAlign, PopoverBoundary, PopoverSide } from '../popover/core';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
@@ -12,6 +12,8 @@ export interface MenuProps {
   side?: PopoverSide | undefined;
   /** Alignment along the trigger's edge. Root menus only. */
   align?: PopoverAlign | undefined;
+  /** Boundary used to constrain the root menu popup. */
+  boundary?: PopoverBoundary | undefined;
   /** Controlled open state. */
   open?: boolean | undefined;
   /** Initial open state (uncontrolled). */
@@ -22,8 +24,26 @@ export interface MenuProps {
   closeOnOutsideClick?: boolean | undefined;
 }
 
+type MenuCoreProps = Omit<MenuProps, 'boundary'>;
+
 export interface MenuTriggerProps {
   disabled?: boolean | undefined;
+}
+
+export interface MenuPopupProps {
+  /** Keep the popup mounted while closed. */
+  keepMounted?: boolean | undefined;
+}
+
+export interface MenuOptionState {
+  /** Selected value displayed by an option group's `Value` part. */
+  value: string;
+  /** Whether the menu trigger should be disabled. */
+  disabled: boolean;
+  /** Whether the menu trigger should be hidden. */
+  hidden: boolean;
+  /** Whether the menu has a meaningful option available. */
+  availability: 'available' | 'unavailable' | 'unsupported';
 }
 
 export interface MenuItemProps {
@@ -33,6 +53,28 @@ export interface MenuItemProps {
 export interface MenuItemIndicatorProps {
   checked?: boolean | undefined;
   forceMount?: boolean | undefined;
+}
+
+/** Combines direct and nested option-menu state for a parent trigger. */
+export function resolveMenuOptionState(states: Iterable<MenuOptionState>): MenuOptionState | null {
+  const options = [...states];
+  if (options.length === 0) return null;
+
+  const visible = options.filter((state) => !state.hidden);
+  const available = visible.filter((state) => state.availability === 'available');
+  const availability =
+    available.length > 0
+      ? 'available'
+      : options.every((state) => state.availability === 'unsupported')
+        ? 'unsupported'
+        : 'unavailable';
+
+  return {
+    value: options.length === 1 ? options[0]!.value : '',
+    disabled: visible.length === 0 || visible.every((state) => state.disabled),
+    hidden: visible.length === 0,
+    availability,
+  };
 }
 
 /** Runtime input derived by framework adapters and `createTransition`. */
@@ -53,7 +95,7 @@ export interface MenuState extends TransitionFlags {
 
 /** Base menu logic: ARIA attributes and open/close state computation. */
 export class MenuCore {
-  static readonly defaultProps: NonNullableObject<MenuProps> = {
+  static readonly defaultProps: NonNullableObject<MenuCoreProps> = {
     side: 'bottom',
     align: 'start',
     open: false,
@@ -65,15 +107,15 @@ export class MenuCore {
   #props = { ...MenuCore.defaultProps };
   #input: MenuInput | null = null;
 
-  get props(): Readonly<NonNullableObject<MenuProps>> {
+  get props(): Readonly<NonNullableObject<MenuCoreProps>> {
     return this.#props;
   }
 
-  constructor(props?: MenuProps) {
+  constructor(props?: MenuCoreProps) {
     if (props) this.setProps(props);
   }
 
-  setProps(props: MenuProps): void {
+  setProps(props: MenuCoreProps): void {
     this.#props = defaults(props, MenuCore.defaultProps);
   }
 
@@ -117,7 +159,7 @@ export class MenuCore {
 }
 
 export namespace MenuCore {
-  export type Props = MenuProps;
+  export type Props = MenuCoreProps;
   export type State = MenuState;
   export type Input = MenuInput;
 }

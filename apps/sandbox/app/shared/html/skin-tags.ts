@@ -1,24 +1,26 @@
 import type { Skin } from '@app/types';
 
-type SkinTagMap = Record<Skin, { video: string; audio: string }>;
+/** The player preset a skin is built for, which is how the skins catalog and the framework packages name them. */
+export type SkinPreset = 'video' | 'audio' | 'live-video' | 'live-audio';
 
-export const CSS_SKIN_TAGS: SkinTagMap = {
-  default: { video: 'video-skin', audio: 'audio-skin' },
-  minimal: { video: 'video-minimal-skin', audio: 'audio-minimal-skin' },
-};
+export function skinPreset(player: 'video' | 'audio', live: boolean): SkinPreset {
+  return live ? `live-${player}` : player;
+}
 
-export const TAILWIND_SKIN_TAGS: SkinTagMap = {
-  default: { video: 'video-skin-tailwind', audio: 'audio-skin-tailwind' },
-  minimal: { video: 'video-minimal-skin-tailwind', audio: 'audio-minimal-skin-tailwind' },
-};
+/** The custom element the framework package registers for a skin, such as `video-minimal-skin`. */
+export function packageSkinTag(preset: SkinPreset, skin: Skin): string {
+  return skin === 'minimal' ? `${preset}-minimal-skin` : `${preset}-skin`;
+}
 
-/** Custom element tag names for the live HLS video preset (`@videojs/html/live-video` skins). */
-export const LIVE_VIDEO_CSS_SKIN_TAGS: Record<Skin, string> = {
-  default: 'live-video-skin',
-  minimal: 'live-video-minimal-skin',
-};
+/**
+ * The element the sandbox defines around a registry-installed template. Named the way the skins catalog records the
+ * registry tag, so the two agree even though the html registry ships the CSS styling.
+ */
+export function registrySkinTag(preset: SkinPreset, skin: Skin): string {
+  return `${packageSkinTag(preset, skin)}-tailwind`;
+}
 
-export const LIVE_VIDEO_TAILWIND_SKIN_TAGS: Record<Skin, string> = {
-  default: 'live-video-skin-tailwind',
-  minimal: 'live-video-minimal-skin-tailwind',
-};
+/** The element the sandbox defines around a compiled authored skin, one per styling since each is its own module. */
+export function authoredSkinTag(preset: SkinPreset, skin: Skin, styling: 'css' | 'tailwind'): string {
+  return `${packageSkinTag(preset, skin)}-authored-${styling}`;
+}

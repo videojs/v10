@@ -2,17 +2,20 @@ import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
-import type { ViteUserConfig } from 'vite-plus';
+import type { Plugin, ViteUserConfig } from 'vite-plus';
 
 import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../build/task.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
+
+// SAFETY: @vitejs/plugin-react and the workspace resolve Plugin from the catalog-pinned Vite implementation.
+const reactPlugins = react() as Plugin[];
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and
 // passed as a variable: Astro 7's `getViteConfig` param no longer surfaces the
 // Vite+ module augmentation, so a fresh object literal trips an excess-property
 // check on `test`. A variable is only checked for structural assignability.
 const config: ViteUserConfig = {
-  plugins: [demoPlaceholderPlugin(), react()],
+  plugins: [demoPlaceholderPlugin(), ...reactPlugins],
   test: {
     globals: true,
     environment: 'jsdom',
@@ -38,11 +41,18 @@ const config: ViteUserConfig = {
           { pattern: 'package.json', base: 'workspace' },
           { pattern: 'pnpm-lock.yaml', base: 'workspace' },
           { pattern: 'tsconfig.base.json', base: 'workspace' },
-          { pattern: 'packages/{core,html,media,react,spf,utils}/package.json', base: 'workspace' },
-          { pattern: 'packages/{core,html,media,react,spf,utils}/src/**', base: 'workspace' },
+          {
+            pattern:
+              'packages/{cdn,core,dash.js,hls.js,html,media,mux-data,react,shaka,spf,utils,vimeo,wistia}/package.json',
+            base: 'workspace',
+          },
+          {
+            pattern: 'packages/{cdn,core,dash.js,hls.js,html,media,mux-data,react,shaka,spf,utils,vimeo,wistia}/src/**',
+            base: 'workspace',
+          },
           { pattern: '!packages/**/*.tsbuildinfo', base: 'workspace' },
-          { pattern: '!packages/html/src/cdn/locales', base: 'workspace' },
-          { pattern: '!packages/html/src/cdn/locales/**', base: 'workspace' },
+          { pattern: '!packages/cdn/src/locales', base: 'workspace' },
+          { pattern: '!packages/cdn/src/locales/**', base: 'workspace' },
         ],
         output: [
           'src/content/generated-component-reference/**',
@@ -51,12 +61,6 @@ const config: ViteUserConfig = {
           'src/content/generated-media-reference/**',
           'src/content/generated-preset-reference/**',
         ],
-      },
-      'ejected-skins': {
-        command: 'tsx scripts/build-ejected-skins.ts',
-        dependsOn: workspaceTaskDependencies(),
-        input: cachedTaskInputs,
-        output: ['src/content/ejected-skins.json'],
       },
       'cdn-manifest': {
         command: 'tsx scripts/build-cdn-manifest.ts',
@@ -70,7 +74,7 @@ const config: ViteUserConfig = {
         // them for cross-task cache reuse.
         command:
           "SHLVL=0 XPC_SERVICE_NAME=0 npm_lifecycle_event=vite-plus npm_lifecycle_script='astro build' astro build",
-        dependsOn: ['api-docs:generate', 'ejected-skins', 'cdn-manifest'],
+        dependsOn: ['api-docs:generate', 'cdn-manifest'],
         // Astro regenerates and consumes collection schemas during one build.
         // They are tool-managed state rather than stable inputs or outputs.
         input: [...cachedTaskInputs, '!.astro/**', '!.netlify/**'],
@@ -86,9 +90,17 @@ const config: ViteUserConfig = {
         ],
       },
       dev: {
+        // Serves whatever generated content and package builds already exist. Depending on
+        // the generators here would replay every workspace build task on each start, several
+        // seconds even when fully cached, so the root `dev:site` script (`scripts/dev.ts`)
+        // runs `dev:prepare` only when they are missing or explicitly requested.
         command: 'NETLIFY_DEV=1 astro dev',
         cache: false,
-        dependsOn: ['api-docs:generate', 'ejected-skins', 'cdn-manifest'],
+      },
+      'dev:prepare': {
+        command: 'node -e ""',
+        cache: false,
+        dependsOn: ['api-docs:generate', 'cdn-manifest'],
       },
       'test:ci': {
         command: 'pnpm test',

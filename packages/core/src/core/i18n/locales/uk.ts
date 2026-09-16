@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Перемикання між минулим часом і часом, що залишився.',
     toggleDuration: 'Перемикання між тривалістю і часом, що залишився.',
     position: '{current} з {duration}',
+    unknown: 'Медіафайл не завантажено, час невідомий.',
   },
   playback: {
     rate: 'Швидкість відтворення {rate}',

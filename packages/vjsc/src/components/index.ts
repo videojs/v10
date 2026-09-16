@@ -1,4 +1,13 @@
-export * from './definition';
+export {
+  type ComponentDefinition,
+  type ComponentDefinitions,
+  type ComponentPartDefinition,
+  type ComponentParts,
+  type ComponentSchema,
+  defineComponent,
+  defineSchema,
+  type EmptyProps,
+} from './definition';
 export {
   type BaseProps,
   Box,
@@ -6,7 +15,7 @@ export {
   type ClassNameValue,
   type Component,
   type ComponentType,
-  type CreateComponentResult,
+  type ComponentFrom,
   createComponent,
   Fragment,
   type JSX,
@@ -26,4 +35,5 @@ export {
   type VjscElement,
   type VjscNode,
 } from './jsx-runtime';
-export type { ComponentMeta } from './meta';
+export type { ComponentMeta, ModuleMeta } from './meta';
+export { defineRenderTarget, type RenderTargetDefinition } from './render';

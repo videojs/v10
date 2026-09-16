@@ -84,6 +84,12 @@ Background video autoplays, loops, stays muted, and omits interactive controls. 
 
 <FrameworkCase frameworks={["react"]}>
 
+Install the SPF adapter with the React façade:
+
+```bash
+pnpm add @videojs/react @videojs/spf
+```
+
 ```tsx
 import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
 
@@ -94,6 +100,12 @@ export default function Hero() {
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+
+Install the SPF adapter with the HTML façade:
+
+```bash
+pnpm add @videojs/html @videojs/spf
+```
 
 ```html
 <hls-background-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-background-video>

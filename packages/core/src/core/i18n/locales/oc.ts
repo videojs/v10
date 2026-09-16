@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Alternar entre lo temps passat e lo temps que demòra.',
     toggleDuration: 'Alternar entre la durada e lo temps que demòra.',
     position: '{current} sus {duration}',
+    unknown: 'Mèdia pas cargat, temps desconegut.',
   },
   playback: {
     rate: 'Velocitat de lectura {rate}',

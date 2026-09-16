@@ -1,6 +1,6 @@
 {
   "name": "@videojs/store",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-rc.2",
   "description": "Reactive state management for external systems.",
   "keywords": [
     "media",
@@ -9,6 +9,7 @@
     "store",
     "videojs"
   ],
+  "homepage": "https://videojs.org",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -51,7 +52,8 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "react-compiler-runtime": "^1.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",

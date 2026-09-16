@@ -1,5 +1,6 @@
-import type { TooltipGroupCore } from '../../../core/ui/tooltip/group-core';
+import type { TooltipGroupCore } from '../../../core/ui/tooltip/group';
 import type { UIPointerEvent } from '../event';
+import type { PopupGroup } from '../popover/group';
 import {
   createPopover,
   type PopoverApi,
@@ -9,7 +10,6 @@ import {
   type PopoverPopupProps,
   type PopoverTriggerProps,
 } from '../popover/popover';
-import type { PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';

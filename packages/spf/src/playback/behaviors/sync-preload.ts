@@ -3,10 +3,13 @@
  *
  * Two effects:
  *
- * - **Read (DOM → state)** — on `context.mediaElement` swap or `state.presentation.url` change, copies
- *   `mediaElement.preload` into `state.preload` if it's a W3C value and `state.preload` isn't holding an extended
- *   (non-W3C) value. When the DOM has no W3C opinion and `state.preload` is undefined, backfills from
- *   `config.defaultPreload` (default-default `'metadata'`) so `state.preload` is never undefined in steady state.
+ * - **Read (DOM → state)** — on `context.mediaElement` swap or `state.presentation.url` change, copies the media
+ *   element's _authored_ preload into `state.preload` if it's a W3C value and `state.preload` isn't holding an extended
+ *   (non-W3C) value. Author intent only: on a DOM element the `preload` IDL property reports a browser-dependent UA
+ *   default even when no attribute was set (`'metadata'` Chromium, `'auto'` WebKit), so the property is consulted only
+ *   when the element carries a `preload` content attribute — a UA default is never a source. When the element has no
+ *   authored W3C opinion and `state.preload` is undefined, backfills from `config.defaultPreload` (default-default
+ *   `'metadata'`) so `state.preload` is never undefined in steady state.
  * - **Write (state → DOM)** — on `state.preload` change or `context.mediaElement` swap, writes `state.preload` back to
  *   `mediaElement.preload` if the value is W3C.
  *
@@ -63,12 +66,21 @@ function syncPreloadSetup({
     // Extended sticky: leave non-W3C values (e.g. 'canplay') alone.
     if (current !== undefined && !isStandardPreload(current)) return;
 
-    const target: StandardPreload | undefined =
-      mediaElement && isStandardPreload(mediaElement.preload)
+    // Author intent only: a DOM element's `preload` property reports a UA
+    // default when no attribute was authored (the shadow <video> under an SPF
+    // Media never carries one), so gate the property read on attribute
+    // presence. An element without attribute reflection has no UA defaults —
+    // its property is authored by construction.
+    const authoredPreload =
+      mediaElement && (!mediaElement.hasAttribute || mediaElement.hasAttribute('preload'))
         ? mediaElement.preload
-        : current === undefined
-          ? defaultPreload
-          : undefined;
+        : undefined;
+
+    const target: StandardPreload | undefined = isStandardPreload(authoredPreload)
+      ? authoredPreload
+      : current === undefined
+        ? defaultPreload
+        : undefined;
     if (target === undefined || target === current) return;
 
     state.preload.set(target);

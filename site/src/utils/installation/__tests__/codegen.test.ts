@@ -9,6 +9,7 @@ import {
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
+import type { Renderer } from '../types';
 
 const baseHTML: InstallationOptions = {
   framework: 'html',
@@ -81,6 +82,37 @@ describe('generateHTMLInstallCode', () => {
 
     expect(result.cdn).toContain('media/hlsjs-video.js');
   });
+
+  it('installs the selected playback adapter', () => {
+    const hls = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' }, manifest);
+    const dash = generateHTMLInstallCode({ ...baseHTML, renderer: 'dash' }, manifest);
+
+    expect(hls.npm).toBe('npm install @videojs/html @videojs/hlsjs-video');
+    expect(dash.pnpm).toBe('pnpm add @videojs/html @videojs/dash-video');
+  });
+
+  it('installs the adapter package for every embed renderer', () => {
+    const expected: Record<string, string> = {
+      cloudflare: '@videojs/cloudflare-video',
+      spotify: '@videojs/spotify-audio',
+      tiktok: '@videojs/tiktok-video',
+      twitch: '@videojs/twitch-video',
+      vimeo: '@videojs/vimeo-video',
+      youtube: '@videojs/youtube-video',
+    };
+
+    for (const [renderer, adapter] of Object.entries(expected)) {
+      const result = generateHTMLInstallCode({ ...baseHTML, renderer: renderer as Renderer }, manifest);
+
+      expect(result.npm).toBe(`npm install @videojs/html ${adapter}`);
+    }
+  });
+
+  it('installs only the framework for built-in renderers', () => {
+    for (const renderer of ['html5-video', 'html5-audio', 'background-video'] as const) {
+      expect(generateHTMLInstallCode({ ...baseHTML, renderer }, manifest).npm).toBe('npm install @videojs/html');
+    }
+  });
 });
 
 describe('generateReactInstallCode', () => {
@@ -91,6 +123,12 @@ describe('generateReactInstallCode', () => {
     expect(result.pnpm).toBe('pnpm add @videojs/react');
     expect(result.yarn).toBe('yarn add @videojs/react');
     expect(result.bun).toBe('bun add @videojs/react');
+  });
+
+  it('installs the selected playback adapter', () => {
+    const result = generateReactInstallCode({ renderer: 'mux-video' });
+
+    expect(result.npm).toBe('npm install @videojs/react @videojs/mux-video');
   });
 });
 

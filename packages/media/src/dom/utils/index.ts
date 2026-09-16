@@ -1,4 +1,4 @@
 export { serializeEmbedParams } from './embed-params';
-export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from './media-components';
+export { addMediaExtension, getMediaExtensions, getMediaOwner, getMediaProp, setMediaProp } from './media-extensions';
 
 export { createTimeRange } from './time-ranges';

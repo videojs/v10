@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
-import { jsx } from '../../target/jsx-runtime';
+import { Host, jsx } from '../../target/jsx-runtime';
 import { readComponentSource } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
 import { type ComponentTargetSelection, componentTargetPlugin } from '../component-target';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 
@@ -31,6 +31,15 @@ const schema = defineSchema('@fixture/components', {
       Content: defineComponent(),
     },
   }),
+  OptionGroup: defineComponent({
+    name: 'OptionGroup',
+    root: 'Root',
+    parts: {
+      Root: defineComponent(),
+      Value: defineComponent(),
+      Options: defineComponent(),
+    },
+  }),
   Slider: defineComponent({
     name: 'Slider',
     root: 'Root',
@@ -48,51 +57,68 @@ const schema = defineSchema('@fixture/components', {
 
 const reactTarget = defineComponentTarget<typeof schema>()(({ target, element, imported }) => ({
   source: '@fixture/components',
-  resolve: ({ component, part }) =>
-    imported({
-      from: '@fixture/react',
-      name: component,
-      ...(part ? { path: part.split('.') } : {}),
-    }),
   components: {
-    Poster: ({ props, children }) => jsx(target.Poster, { render: children, ...props }),
-    Popover: ({ props, parts }) => [
-      parts.Trigger.children,
-      jsx(target.Popover.Popup, {
-        ...props.merge(parts.Popup.props),
-        children: parts.Popup.children,
+    resolve: ({ component, part }) =>
+      imported({
+        from: '@fixture/react',
+        name: component,
+        ...(part ? { path: part.split('.') } : {}),
       }),
-    ],
-    Slider: {
-      Thumbnail: {
-        Root: element('div'),
+    rules: {
+      Menu: {
+        Trigger: ({ props, children }) => jsx(target.Menu.Trigger, { ...props, children }),
+      },
+      Poster: ({ props, children }) => jsx(target.Poster, { render: children, ...props }),
+      Popover: ({ props, parts }) => [
+        parts.Trigger.children,
+        jsx(target.Popover.Popup, {
+          ...props.merge(parts.Popup.props),
+          children: parts.Popup.children,
+        }),
+      ],
+      Slider: {
+        Thumbnail: {
+          Root: element('div'),
+        },
       },
     },
   },
   jsx: { importSource: 'react', attributes: 'react' },
 }));
 
-const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element }) => {
+const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element, unwrap }) => {
   const Button = element('button');
   const Svg = element('svg');
 
   return {
     source: '@fixture/components',
-    resolve: ({ component }) =>
-      element(`media-${component.toLowerCase()}`, {
-        import: { from: '@fixture/elements', sideEffect: true },
-      }),
     components: {
-      PlayButton: () =>
-        jsx(Svg, {
-          viewBox: '0 0 18 18',
-          preserveAspectRatio: 'xMidYMid meet',
-          strokeWidth: 2,
-          xlinkHref: '#icon',
+      resolve: ({ component }) =>
+        element(`media-${component.toLowerCase()}`, {
+          import: { from: '@fixture/elements', sideEffect: true },
         }),
-      Menu: {
-        Trigger: ({ props, children, id }) => jsx(Button, { commandfor: id('content'), ...props, children }),
-        Content: ({ props, children, id }) => jsx(target.Menu.Content, { id: id('content'), ...props, children }),
+      rules: {
+        OptionGroup: { Root: unwrap() },
+        Poster: ({ props, children }) => jsx(Host, { ...props, className: 'poster', children }),
+        PlayButton: () =>
+          jsx(Svg, {
+            viewBox: '0 0 18 18',
+            preserveAspectRatio: 'xMidYMid meet',
+            strokeWidth: 2,
+            xlinkHref: '#icon',
+          }),
+        Menu: ({ parts, id }) => {
+          const contentId = id('content');
+          const trigger = parts.Trigger.one();
+          const content = parts.Content.one();
+
+          return [
+            trigger.replaceWith(jsx(Button, { commandfor: contentId, ...trigger.props, children: trigger.children })),
+            content.replaceWith(
+              jsx(target.Menu.Content, { id: contentId, ...content.props, children: content.children })
+            ),
+          ];
+        },
       },
     },
     jsx: {
@@ -140,7 +166,7 @@ describe('componentTargetPlugin', () => {
       {
         targets: (module) => {
           selectedId = module.id;
-          return module.parameters.get('target') === 'react' ? [reactTarget] : [];
+          return module.params.get('target') === 'react' ? [reactTarget] : [];
         },
       }
     );
@@ -174,6 +200,71 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain('<Scope prefix=');
   });
 
+  it('preserves wrappers around parts replaced by a component rewrite', async () => {
+    const source = await transform(
+      `
+        import * as $ from '@fixture/components';
+        const Decorator = ({ children }) => children;
+        export const menu = (
+          <$.Menu.Root>
+            <Decorator><$.Menu.Trigger>Open</$.Menu.Trigger></Decorator>
+            <$.Menu.Content>Options</$.Menu.Content>
+          </$.Menu.Root>
+        );
+      `,
+      { targets: [htmlTarget] }
+    );
+
+    expect(source).toContain('<Decorator><button commandfor="__vjsc-id-');
+    expect(source).toContain('>Open</button></Decorator>');
+    expect(source).toContain('<media-menu id="__vjsc-id-');
+    expect(source).not.toContain('<$.');
+  });
+
+  it('collects compound parts through roots erased by the target', async () => {
+    const source = await transform(
+      `
+        import * as $ from '@fixture/components';
+        export const menu = (
+          <$.Menu.Root>
+            <$.OptionGroup.Root>
+              <$.Menu.Trigger>Open</$.Menu.Trigger>
+              <$.Menu.Content><$.OptionGroup.Options /></$.Menu.Content>
+            </$.OptionGroup.Root>
+          </$.Menu.Root>
+        );
+      `,
+      { targets: [htmlTarget] }
+    );
+    const commandFor = /commandfor="([^"]+)"/.exec(source)?.[1];
+    const contentId = / id="([^"]+)"/.exec(source)?.[1];
+
+    expect(commandFor).toBe(contentId);
+    expect(source).toContain('<media-optiongroup />');
+    expect(source).not.toContain('OptionGroup.Root');
+    expect(source).not.toContain('<$.');
+  });
+
+  it('rejects replacements that would duplicate one source branch', async () => {
+    await expect(
+      transform(
+        `
+          import * as $ from '@fixture/components';
+          const Decorator = ({ children }) => children;
+          export const menu = (
+            <$.Menu.Root>
+              <Decorator>
+                <$.Menu.Trigger>Open</$.Menu.Trigger>
+                <$.Menu.Content>Options</$.Menu.Content>
+              </Decorator>
+            </$.Menu.Root>
+          );
+        `,
+        { targets: [htmlTarget] }
+      )
+    ).rejects.toThrow('replacing both parts would duplicate their shared wrapper');
+  });
+
   it('preserves SVG attribute spelling in HTML target output', async () => {
     const source = await transform(`import * as $ from '@fixture/components'; export const icon = <$.PlayButton />;`, {
       targets: [htmlTarget],
@@ -182,6 +273,20 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain(
       '<svg viewBox="0 0 18 18" preserveAspectRatio="xMidYMid meet" stroke-width={2} xlink:href="#icon" />'
     );
+  });
+
+  it('preserves component prop names when forwarding HTML host props', async () => {
+    const source = await transform(
+      `
+        import * as $ from '@fixture/components';
+        const CustomPoster = (props) => <img {...props} />;
+        export const poster = <$.Poster src="poster.jpg"><CustomPoster /></$.Poster>;
+      `,
+      { targets: [htmlTarget] }
+    );
+
+    expect(source).toMatch(/<CustomPoster\s+className="poster"\s+src="poster\.jpg"\s*\/>/);
+    expect(source).not.toContain('class="poster"');
   });
 
   it('lowers canonical components retained by an outer rewrite', async () => {
@@ -208,6 +313,17 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain('<Poster render={<>');
     expect(source).toContain('<PlayButton />');
     expect(source).toContain('<span>Caption</span>');
+  });
+
+  it('does not infer host delegation from trigger children', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      export const elementTrigger = <$.Menu.Root><$.Menu.Trigger><$.PlayButton /></$.Menu.Trigger></$.Menu.Root>;
+      export const textTrigger = <$.Menu.Root><$.Menu.Trigger>Open</$.Menu.Trigger></$.Menu.Root>;
+    `);
+
+    expect(source).toContain('<Menu.Trigger><PlayButton /></Menu.Trigger>');
+    expect(source).toContain('<Menu.Trigger>Open</Menu.Trigger>');
   });
 
   it('keeps nested component roots out of the parent part collection', async () => {

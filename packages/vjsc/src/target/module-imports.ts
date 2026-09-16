@@ -9,3 +9,8 @@ export function createTargetModuleImports(ast: Program, magicString: RolldownMag
     defaultImportName: 'Target',
   });
 }
+
+/** Collect the `import type` statements a target transform needs for generated props and type aliases. */
+export function createTargetTypeImports(ast: Program, magicString: RolldownMagicString): ModuleImports {
+  return new ModuleImports(ast, magicString, { kind: 'type', collisionSuffix: 'Type' });
+}

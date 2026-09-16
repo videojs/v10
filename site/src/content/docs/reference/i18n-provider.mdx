@@ -7,6 +7,12 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+## Import
+
+```tsx
+import { I18nProvider } from "@videojs/react";
+```
+
 <FrameworkCase frameworks={["react"]}>
 
 `I18nProvider` resolves the active locale, lazy-loads built-in packs, merges registry and provider layers, and exposes a translator through context. Wrap it around a player or custom controls that should translate.

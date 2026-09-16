@@ -64,7 +64,7 @@ pnpm -F site astro check
 
 ## API references
 
-Generated reference JSON is gitignored and rebuilt by `pnpm -F site api-docs`, dev, and build. Do not hand-edit it. Change the TypeScript/JSDoc input or the builder, run the generator, and inspect the output. Keep the builder E2E suite passing.
+Generated reference JSON is gitignored and rebuilt by `pnpm -F site api-docs`, `pnpm dev:site --prepare`, the root `pnpm dev`, and build. `pnpm dev:site` reuses existing output and only generates it when missing, so refresh it after changing package source or JSDoc. Do not hand-edit it. Change the TypeScript/JSDoc input or the builder, run the generator, and inspect the output. Keep the builder E2E suite passing.
 
 ## Verification
 

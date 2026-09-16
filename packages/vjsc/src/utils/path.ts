@@ -24,3 +24,8 @@ export function isInsideRoot(root: string, path: string): boolean {
 export function escapesRoot(path: string): boolean {
   return path === '..' || path.startsWith('../');
 }
+
+/** Remove a script module extension so the path can be used as an import specifier. */
+export function stripScriptExtension(path: string): string {
+  return path.replace(/\.(?:[cm]?[jt]sx?)$/, '');
+}

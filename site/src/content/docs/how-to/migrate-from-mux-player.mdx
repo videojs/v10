@@ -7,7 +7,7 @@ import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-Mux Player combines HLS playback, UI, analytics, captions, remote playback, and keyboard shortcuts in one element. Video.js v10 composes those responsibilities from a player, media component, skin, and optional integrations.
+Mux Player combines HLS playback, UI, analytics, captions, remote playback, and keyboard shortcuts in one element. Video.js v10 composes those responsibilities from a player, media component, skin, and optional <DocsLink slug="concepts/overview">extensions</DocsLink>.
 
 This guide moves a working Mux Player embed to those pieces, then maps the settings and APIs you are most likely to need next.
 
@@ -79,9 +79,9 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>, the Mux media, and analytics:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-data.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/extensions/mux-data.js"></script>
 
 <video-player content-title="Test VOD">
   <video-skin style="aspect-ratio: 16 / 9">
@@ -103,13 +103,17 @@ From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>
 </script>
 ```
 
-If you use a bundler instead of the CDN, the imports are the same three pieces:
+If you use a bundler instead of the CDN, the imports are the same three pieces plus the Mux Data extension:
+
+```bash
+npm install @videojs/html @videojs/mux-video @videojs/mux-data
+```
 
 ```js
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 import '@videojs/html/media/mux-video';
-import '@videojs/html/media/mux-data';
+import '@videojs/html/extensions/mux-data';
 ```
 
 </FrameworkCase>
@@ -133,7 +137,7 @@ export function MyPlayer() {
 `@videojs/react` gives you real React components rather than one component wrapping a custom element.
 
 ```bash
-npm install @videojs/react
+npm install @videojs/react @videojs/mux-video @videojs/mux-data
 ```
 
 Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/presets">preset</DocsLink>, then add the Mux media and analytics components:
@@ -143,7 +147,7 @@ Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/p
 
 import '@videojs/react/video/skin.css';
 import { VideoPlayer, VideoSkin } from '@videojs/react/video';
-import { MuxData } from '@videojs/react/media/mux-data';
+import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 
 export function MyPlayer() {
@@ -172,7 +176,7 @@ The `'use client'` directive is there because the player owns browser state.
 </FrameworkCase>
 
 <Aside type="caution" title="Analytics changes from opt-out to opt-in">
-Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `MuxData` component shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
+Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `MuxData` extension shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
 </Aside>
 
 A few things worth calling out:
@@ -181,7 +185,7 @@ A few things worth calling out:
 - **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
-- **Chromecast is opt-in.** Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> when you want it; leave the integration out when you don't.
+- **Chromecast is opt-in.** Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> when you want it; leave the extension out when you don't.
 
 ### Move your layout styles
 
@@ -303,7 +307,7 @@ Signed playback behaves the way it does in Mux Player: a token replaces every ot
 
 ## Analytics moves to its own element
 
-Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/mux-data">Mux Data</DocsLink> component, placed inside the player.
+Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/mux-data">Mux Data extension</DocsLink>, placed inside the player.
 
 <FrameworkCase frameworks={["html"]}>
 | Mux Player | Video.js v10 |
@@ -337,7 +341,7 @@ Your metadata keys don't change. They're the same `snake_case` names Mux Data ha
 
 Mux Player used the same title for analytics and on-screen display. Video.js separates them.
 
-For analytics, use `metadata.video_title` on the Mux Data component.
+For analytics, use `metadata.video_title` on the Mux Data extension.
 
 <FrameworkCase frameworks={["html"]}>
 For display, use `content-title` on the player.
@@ -346,6 +350,8 @@ For display, use `content-title` on the player.
 <FrameworkCase frameworks={["react"]}>
 For display, use `title` on the player.
 </FrameworkCase>
+
+An asset titled in the Mux dashboard supplies its own: the Mux media loads the asset's metadata and the player falls back to that title when none is set on it, so the display title is optional for Mux-hosted video.
 
 The title reaches player state, but the packaged skins don't place it in their layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of a packaged skin, or place it in an ejected or custom layout, when you want viewers to see it:
 
@@ -460,13 +466,13 @@ Give the skin a class you own:
 ```
 </FrameworkCase>
 
-`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
+`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> has the full list.
 
 The skins use a different visual design, so you may not need to replace Mux Player's `primaryColor` and `secondaryColor` directly. Start with `--media-accent-color`. Restyle individual surfaces, or eject the skin, only when you need a closer palette match.
 
 ### Level 3: eject
 
-**Ejecting** means copying the skin's source into your project and editing it, the way you would a shadcn component. The packaged skin isn't compiled magic; it's a tree of components, so ejecting starts as copy and paste. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
+For changes to controls, layout, or interactions, eject the skin into your project. Its components and styles become files you own. <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink> covers the setup and available skins.
 
 This is the level that per-control tweaks need, and it's a genuine step up in effort from a Mux Player attribute. `forward-seek-offset="30"` was one character. In Video.js, the skins bake their seek step into their keyboard shortcuts and gestures, so changing it means editing those lines:
 
@@ -573,8 +579,8 @@ Unlike Mux Player, you'll have to pick a live preset yourself; it won't switch a
 Register the live preset and Mux media. From the CDN:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/live-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/live-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
 
 <live-video-player>
   <live-video-skin>
@@ -791,9 +797,9 @@ Program Date Time has no convenience surface: no `getStartDate()`, no `currentPd
 
 Ordered roughly by how many migrations they'll touch.
 
-- Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer looks each of which you can eject, but it's a real difference if you shipped `theme="classic"`.
+- Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer looks you can eject, but it's a real difference if you shipped `theme="classic"`.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
-- The controls auto-hide delay isn't configurable, and there's no disabled state for the controls ([#1728](https://github.com/videojs/v10/issues/1728)).
+- The controls auto-hide delay isn't configurable ([#1728](https://github.com/videojs/v10/issues/1728)). Always-visible controls are available through `visibility="always"` on the controls component in a custom or ejected skin.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide.
 - Smaller conveniences without homes yet: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)). Unmuting from zero volume already restores a sensible level, so Mux Player's smart-unmute behavior carries over.
 

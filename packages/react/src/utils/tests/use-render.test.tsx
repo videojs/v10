@@ -265,6 +265,17 @@ describe('renderElement', () => {
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
     });
 
+    it('keeps a single callback ref attached across renders', () => {
+      const ref = vi.fn();
+      const { rerender } = render(<TestComponent ref={ref} />);
+      const element = ref.mock.calls[0]![0];
+
+      rerender(<TestComponent ref={ref} active />);
+
+      expect(ref).toHaveBeenCalledTimes(1);
+      expect(ref).toHaveBeenCalledWith(element);
+    });
+
     it('forwards array of refs', () => {
       const ref1 = createRef<HTMLDivElement>();
       const ref2 = createRef<HTMLDivElement>();

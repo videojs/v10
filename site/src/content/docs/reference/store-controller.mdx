@@ -6,6 +6,12 @@ description: Reactive controller for subscribing to store state in HTML custom e
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```ts
+import { StoreController } from "@videojs/store/html";
+```
+
 `StoreController` is a reactive controller for accessing store state and actions in custom elements. It accepts a store instance or a context, resolving the store automatically.
 
 **Without selector** -- returns the store instance directly. Does NOT subscribe to changes. Use this to access store actions.

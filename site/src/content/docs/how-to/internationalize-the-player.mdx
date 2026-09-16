@@ -245,21 +245,21 @@ import '@videojs/html/i18n/locales/ja/register';
 CDN locale modules call `registerI18n` on import. Pin every URL to the same version:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/locales/es.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/locales/es.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 ```
 
-For custom strings, import `registerI18n` from the version-pinned `cdn/i18n.js` that matches your player script. The player's chunks import that exact URL, so a different or unversioned URL loads a second copy of the module with its own registry, and your strings never reach the player. Load your module before the player script so the strings are registered when the elements upgrade:
+For custom strings, import `registerI18n` from the version-pinned `i18n.js` that matches your player script. The player's chunks import that exact URL, so a different or unversioned URL loads a second copy of the module with its own registry, and your strings never reach the player. Load your module before the player script so the strings are registered when the elements upgrade:
 
 ```js title="my-locale.js"
-import { registerI18n } from '{{VJS10_HTML_CDN_BASE}}/i18n.js';
+import { registerI18n } from '{{VJS10_CDN_BASE}}/i18n.js';
 
 registerI18n('es', { buttons: { play: 'Reproducir', pause: 'Pausa' } });
 ```
 
 ```html
 <script type="module" src="/my-locale.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 ```
 
 </FrameworkCase>

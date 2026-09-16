@@ -1,1 +1,1 @@
-export * from './thumbnail';
+export * as Thumbnail from './index.parts';

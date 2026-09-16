@@ -6,6 +6,12 @@ description: Hook to access the full player context value
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { usePlayerContext } from "@videojs/react";
+```
+
 `usePlayerContext` returns the full `PlayerContextValue` object for lower-level integrations that need direct access to player context fields.
 
 ```tsx title="DebugPanel.tsx"

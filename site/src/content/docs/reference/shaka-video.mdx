@@ -3,8 +3,10 @@ title: ShakaVideo
 frameworkTitle:
   html: shaka-video
 description: Video element powered by Shaka Player for DASH, HLS, and progressive playback with DRM
+stability: beta
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -23,6 +25,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/shaka-video/html/css/Basi
 import basicUsageHtmlTs from "@/components/docs/demos/shaka-video/html/css/BasicUsage.ts?raw";
 
 Choose [Shaka Player](https://github.com/shaka-project/shaka-player) when one media component needs to play DASH, HLS, and progressive files, or when playback requires DRM.
+
+## Import
+
+<MediaImports media="shaka-video" package="@videojs/shaka-video" react="ShakaVideo" />
 
 ## Load a source
 

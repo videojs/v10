@@ -30,6 +30,33 @@ export type Context = import('./context').Context;
       expect(source.slice(reference.start + 1, reference.end - 1)).toBe(reference.specifier);
     }
   });
+
+  it('records the value bindings of import declarations', () => {
+    const references = analyzeImports(
+      `
+import value from "static";
+import * as everything from './all';
+import { type Props, render as paint, "string name" as named } from './mixed';
+import './effect';
+export { helper } from './helper';
+`,
+      'source.ts'
+    );
+
+    expect(references.map(({ specifier, bindings }) => ({ specifier, bindings }))).toEqual([
+      { specifier: 'static', bindings: [{ imported: 'default', local: 'value' }] },
+      { specifier: './all', bindings: [{ imported: '*', local: 'everything' }] },
+      {
+        specifier: './mixed',
+        bindings: [
+          { imported: 'render', local: 'paint' },
+          { imported: 'string name', local: 'named' },
+        ],
+      },
+      { specifier: './effect', bindings: [] },
+      { specifier: './helper', bindings: [] },
+    ]);
+  });
 });
 
 describe('replaceImportSpecifiers', () => {

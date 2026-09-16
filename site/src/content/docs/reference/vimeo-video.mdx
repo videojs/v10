@@ -5,6 +5,7 @@ frameworkTitle:
 description: Video component that plays Vimeo videos and live events through the Vimeo player
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/vimeo-video/html/css/Basi
 import basicUsageHtmlTs from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.ts?raw";
 
 Of the embed-backed media components, the [Vimeo player SDK](https://developer.vimeo.com/player/sdk) comes closest to a native `<video>`: volume, mute, playback rate, seeking, looping, and picture-in-picture all work, and the embed pushes real events instead of being polled. Vimeo's own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Vimeo's UI instead.
+
+## Import
+
+<MediaImports media="vimeo-video" package="@videojs/vimeo-video" react="VimeoVideo" />
 
 ## Load a source
 

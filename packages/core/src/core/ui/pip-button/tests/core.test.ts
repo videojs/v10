@@ -73,6 +73,17 @@ describe('PiPButtonCore', () => {
       expect(state.hidden).toBe(true);
     });
 
+    it('keeps active PiP enabled and visible when entry is unavailable', () => {
+      const core = new PiPButtonCore();
+
+      core.setMedia(createMediaState({ pip: true, pipAvailability: 'unavailable' }));
+      const state = core.getState();
+
+      expect(state.availability).toBe('unavailable');
+      expect(state.disabled).toBe(false);
+      expect(state.hidden).toBe(false);
+    });
+
     it('marks disabled when the disabled prop is set', () => {
       const core = new PiPButtonCore({ disabled: true });
 
@@ -155,6 +166,15 @@ describe('PiPButtonCore', () => {
       const media = createMediaState({ pip: true });
 
       await core.toggle(media);
+      expect(media.exitPictureInPicture).toHaveBeenCalled();
+    });
+
+    it('calls exitPictureInPicture when entry becomes unavailable', async () => {
+      const core = new PiPButtonCore();
+      const media = createMediaState({ pip: true, pipAvailability: 'unavailable' });
+
+      await core.toggle(media);
+
       expect(media.exitPictureInPicture).toHaveBeenCalled();
     });
 

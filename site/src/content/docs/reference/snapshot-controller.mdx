@@ -6,6 +6,12 @@ description: Reactive controller for subscribing to a State container in HTML cu
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```ts
+import { SnapshotController } from "@videojs/store/html";
+```
+
 `SnapshotController` subscribes to a `State` container and triggers host updates when state changes. It has two overloads:
 
 **Full state** -- returns the entire state object. Re-renders on any state change.

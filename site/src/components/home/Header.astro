@@ -1,9 +1,7 @@
 ---
 import MuxLogoSmall from '@/assets/logos/mux-small.svg?react';
 import BetaPill from '@/components/BetaPill';
-import FrameworkControl from '@/components/home/FrameworkControl';
 import HeroVideo from '@/components/home/HeroVideo';
-import SkinControl from '@/components/home/SkinControl';
 import { MUX_URL } from '@/consts';
 
 interface Props {
@@ -15,7 +13,7 @@ const { poster } = Astro.props;
 
 <header
   class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
-  style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux' 'control'; --md-grid-template-areas: 'video' 'mux' 'description' 'control'"
+  style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
 >
   <BetaPill
     className="mb-7 justify-self-center sm:hidden"
@@ -32,7 +30,7 @@ const { poster } = Astro.props;
   </h1>
   {/* the additional px-5 is intentional */}
   <p
-    class="mx-auto mb-20 w-full max-w-195 px-5 text-center text-p2 text-balance text-warm-gray md:mb-25 lg:text-p1 dark:text-manila-light"
+    class="mx-auto w-full max-w-195 px-5 text-center text-p2 text-balance text-warm-gray lg:text-p1 dark:text-manila-light"
     style="grid-area:description"
   >
     For over 15 years, Video.js has been the world's web video player. Now
@@ -59,11 +57,4 @@ const { poster } = Astro.props;
       <MuxLogoSmall width="100%" />
     </a>
   </p>
-  <div
-    class="grid grid-cols-1 items-center justify-center gap-9 md:grid-cols-2"
-    style="grid-area:control"
-  >
-    <SkinControl client:idle />
-    <FrameworkControl client:idle className="hidden md:grid" />
-  </div>
 </header>

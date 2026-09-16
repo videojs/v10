@@ -12,7 +12,7 @@ export {
   onI18nRegistryChange,
   registerI18n,
 } from '@videojs/core/i18n';
-export { I18nTextMixin, MediaTextElement } from '../ui/text/text-element';
+export { I18nTextMixin, MediaTextElement } from '../ui/text/element';
 export type { I18nContext, I18nContext as I18nLitContext, I18nContextValue } from './context';
 export { i18nContext, i18nContext as context } from './context';
 export { I18nController } from './controller';

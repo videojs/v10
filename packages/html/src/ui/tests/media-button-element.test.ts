@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../i18n';
 import { containerContext, playerContext } from '../../player/context';
-import { PlayButtonElement } from '../play-button/play-button-element';
+import { PlayButtonElement } from '../play-button/element';
 import { UIElement } from '../ui-element';
 
 let tagCounter = 0;

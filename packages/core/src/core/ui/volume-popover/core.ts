@@ -33,6 +33,6 @@ export class VolumePopoverCore extends PopoverCore {
 }
 
 export namespace VolumePopoverCore {
-  export type Props = VolumePopoverProps;
+  export type Props = PopoverCore.Props;
   export type State = VolumePopoverState;
 }

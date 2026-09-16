@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Create or restructure a repository skill. Use for repeatable agent workflows, portable metadata, resource layout, or context-budget cleanup.
+description: Create repository skills. Use for repeatable agent workflows.
 ---
 
 # Create a skill

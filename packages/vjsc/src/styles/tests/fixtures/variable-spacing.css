@@ -1,0 +1,5 @@
+@import "tailwindcss" theme(inline);
+
+@theme inline {
+  --spacing: var(--test-spacing);
+}

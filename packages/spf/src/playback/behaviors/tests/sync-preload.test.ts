@@ -92,6 +92,68 @@ describe('syncPreload', () => {
       cleanup();
     });
 
+    // DOM-reflected elements (#2532): the `preload` IDL property reports a
+    // browser-dependent UA default even when no attribute was authored, so the
+    // read gates on `hasAttribute` when the element exposes it. Fakes below
+    // model a real element: property always populated, attribute optional.
+    describe('authored attribute gate (UA default is never a source)', () => {
+      it('ignores the preload property when the element carries no preload attribute', () => {
+        const state = makeState();
+        // A bare shadow <video>: no attribute, property reports the UA default.
+        const context = makeContext({ mediaElement: { preload: 'auto', hasAttribute: () => false } });
+
+        const cleanup = syncPreload.setup({ state, context });
+
+        // SPF's own default, not the element's UA default.
+        expect(state.preload.get()).toBe('metadata');
+
+        cleanup();
+      });
+
+      it('does not clobber a prior state.preload when an attribute-less element attaches', async () => {
+        const state = makeState({ preload: 'none' });
+        const context = makeContext();
+
+        const cleanup = syncPreload.setup({ state, context });
+
+        context.mediaElement.set({ preload: 'auto', hasAttribute: () => false });
+        await Promise.resolve();
+
+        expect(state.preload.get()).toBe('none');
+
+        cleanup();
+      });
+
+      it('does not clobber state.preload on presentation.url change when the element has no preload attribute', async () => {
+        const state = makeState({ preload: 'none', presentation: { url: 'a.m3u8' } });
+        const context = makeContext({ mediaElement: { preload: 'auto', hasAttribute: () => false } });
+
+        const cleanup = syncPreload.setup({ state, context });
+
+        state.presentation.set({ url: 'b.m3u8' });
+        await Promise.resolve();
+
+        expect(state.preload.get()).toBe('none');
+
+        cleanup();
+      });
+
+      it('adopts the preload property when the element carries a preload attribute (most-recent-wins on attach)', async () => {
+        const state = makeState({ preload: 'none' });
+        const context = makeContext();
+
+        const cleanup = syncPreload.setup({ state, context });
+
+        context.mediaElement.set({ preload: 'auto', hasAttribute: (name) => name === 'preload' });
+
+        await vi.waitFor(() => {
+          expect(state.preload.get()).toBe('auto');
+        });
+
+        cleanup();
+      });
+    });
+
     it('does not clear state.preload when mediaElement is removed', () => {
       const state = makeState({ preload: 'auto' });
       const context = makeContext();

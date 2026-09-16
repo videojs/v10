@@ -12,6 +12,12 @@ import BasicUsageDemoReact from "@/components/docs/demos/use-media/react/css/Bas
 import basicUsageReactTsx from "@/components/docs/demos/use-media/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-media/react/css/BasicUsage.css?raw";
 
+## Import
+
+```tsx
+import { useMedia } from "@videojs/react";
+```
+
 `useMedia` returns the media object attached to the current player. It returns `null` until the media mounts. Call it inside the matching `Player`.
 
 The media object may be an `HTMLVideoElement` or a Video.js media object that controls one. It always provides `play()`. Check `isMediaPauseCapable(media)` before using `pause()` because lightweight media implementations do not have to provide it.

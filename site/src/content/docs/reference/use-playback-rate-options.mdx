@@ -6,6 +6,12 @@ description: Hook to build playback rate menu options from the player playback r
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { usePlaybackRateOptions } from "@videojs/react";
+```
+
 `usePlaybackRateOptions` returns the current playback rate, the available options, and `setRate` / `setValue` callbacks for wiring rate selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-playback-rate">playback rate feature</DocsLink> is not configured.
 
 ```tsx title="SpeedMenu.tsx"

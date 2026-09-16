@@ -11,7 +11,7 @@ export interface DesignSystem {
   recognizesCandidate(candidate: string): boolean;
   /** Return Tailwind's compiled CSS for one candidate. */
   candidateCss(candidate: string): string | undefined;
-  /** Compile semantic CSS containing Tailwind directives such as `@apply`. */
+  /** Compile semantic CSS containing Tailwind directives such as `@apply`. Results are memoized by source. */
   compileCss(css: string): Promise<string>;
 }
 
@@ -34,15 +34,24 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
     return compiled;
   };
 
-  const compileReferencedCss = async (css: string): Promise<string> => {
-    const compiler = await compile(`${reference}\n${css}`, {
+  const compiled = new Map<string, Promise<string>>();
+  const compileReferencedCss = (css: string): Promise<string> => {
+    const cached = compiled.get(css);
+    if (cached) return cached;
+
+    const result = compile(`${reference}\n${css}`, {
       base,
       onDependency(path) {
         watchFiles.add(resolve(path));
       },
+    }).then((compiler) => compiler.build([]));
+
+    compiled.set(css, result);
+    result.catch(() => {
+      if (compiled.get(css) === result) compiled.delete(css);
     });
 
-    return compiler.build([]);
+    return result;
   };
 
   return {

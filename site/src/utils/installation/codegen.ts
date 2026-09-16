@@ -105,6 +105,36 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
   return skin === 'minimal-video' || skin === 'minimal-audio' ? 'minimal-skin' : 'skin';
 }
 
+/**
+ * The optional peer that ships a renderer's adapter, or `null` for the renderers `@videojs/html` and `@videojs/react`
+ * play on their own. Every renderer is listed so a new one cannot be added without deciding what it installs.
+ */
+function getAdapterPackage(renderer: Renderer): string | null {
+  const packages: Record<Renderer, string | null> = {
+    'background-video': null,
+    cloudflare: '@videojs/cloudflare-video',
+    dash: '@videojs/dash-video',
+    hls: '@videojs/hlsjs-video',
+    'html5-audio': null,
+    'html5-video': null,
+    'mux-audio': '@videojs/mux-audio',
+    'mux-video': '@videojs/mux-video',
+    spotify: '@videojs/spotify-audio',
+    tiktok: '@videojs/tiktok-video',
+    twitch: '@videojs/twitch-video',
+    vimeo: '@videojs/vimeo-video',
+    youtube: '@videojs/youtube-video',
+  };
+
+  return packages[renderer];
+}
+
+function installPackages(framework: '@videojs/html' | '@videojs/react', renderer: Renderer): string {
+  const adapter = getAdapterPackage(renderer);
+
+  return adapter === null ? framework : `${framework} ${adapter}`;
+}
+
 // ---------------------------------------------------------------------------
 // HTML Install
 // ---------------------------------------------------------------------------
@@ -113,12 +143,14 @@ export function generateHTMLInstallCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
   cdnMediaSubpaths: readonly string[]
 ): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+  const packages = installPackages('@videojs/html', opts.renderer);
+
   return {
     cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths),
-    npm: 'npm install @videojs/html',
-    pnpm: 'pnpm add @videojs/html',
-    yarn: 'yarn add @videojs/html',
-    bun: 'bun add @videojs/html',
+    npm: `npm install ${packages}`,
+    pnpm: `pnpm add ${packages}`,
+    yarn: `yarn add ${packages}`,
+    bun: `bun add ${packages}`,
   };
 }
 
@@ -126,12 +158,16 @@ export function generateHTMLInstallCode(
 // React Install
 // ---------------------------------------------------------------------------
 
-export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+export function generateReactInstallCode(
+  opts: Pick<InstallationOptions, 'renderer'> = { renderer: 'html5-video' }
+): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+  const packages = installPackages('@videojs/react', opts.renderer);
+
   return {
-    npm: 'npm install @videojs/react',
-    pnpm: 'pnpm add @videojs/react',
-    yarn: 'yarn add @videojs/react',
-    bun: 'bun add @videojs/react',
+    npm: `npm install ${packages}`,
+    pnpm: `pnpm add ${packages}`,
+    yarn: `yarn add ${packages}`,
+    bun: `bun add ${packages}`,
   };
 }
 

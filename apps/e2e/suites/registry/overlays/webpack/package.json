@@ -1,0 +1,23 @@
+{
+  "name": "webpack-react-css",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "css-loader": "7.1.5",
+    "html-webpack-plugin": "5.6.8",
+    "style-loader": "4.0.0",
+    "ts-loader": "9.6.2",
+    "typescript": "5.9.3",
+    "webpack": "5.110.3",
+    "webpack-cli": "7.2.3"
+  }
+}

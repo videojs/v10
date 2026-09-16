@@ -2,13 +2,23 @@
 
 [![package-badge]][package]
 
-> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
 ## Overview
 
 `@videojs/html` is a comprehensive library for building media players with vanilla JavaScript and
 Web Components. It provides a complete set of Custom Elements, state management, controllers,
 and utilities for creating feature-rich, accessible video and audio players.
+
+Playback engines are optional adapter packages. Install the adapter that matches the façade you import, for example:
+
+```bash
+pnpm add @videojs/html @videojs/hlsjs-video
+```
+
+```ts
+import '@videojs/html/media/hlsjs-video';
+```
 
 ## Documentation
 

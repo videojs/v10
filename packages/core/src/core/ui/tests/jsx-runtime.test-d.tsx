@@ -21,7 +21,7 @@ import { Slot, Text } from 'vjsc/components';
 describe('constrained JSX', () => {
   it('accepts typed components and nested compound parts', () => {
     void (
-      <Controls.Root>
+      <Controls.Root visibility="auto">
         <Controls.Content className="controls">
           <Tooltip.Provider delay={300}>
             <Controls.Group>

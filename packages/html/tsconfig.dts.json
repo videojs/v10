@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": false,
     "incremental": false,
+    "declarationMap": false,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@/*": ["./src/*"]

@@ -7,6 +7,14 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+## Import
+
+```ts
+import { createSelector } from "@videojs/store";
+```
+
+`createSelector` is also re-exported from `@videojs/react` and `@videojs/html`.
+
 `createSelector` creates a type-safe selector function for a given slice. The returned selector extracts that slice's state from the full store state, or returns `undefined` if the slice is not configured.
 
 The built-in selectors (<DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-buffer">`selectBuffer`</DocsLink>, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.

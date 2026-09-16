@@ -1,15 +1,12 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
+import { reactCompilerPlugin } from '../../build/react-compiler.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
-const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
@@ -29,11 +26,10 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   // they need their own entries to stay separate chunks: importing one flavor
   // must never pull the other engine in with it.
   entry: ['src/**/index.{ts,tsx}', 'src/media/*/{hls-js,spf}.tsx', i18nLocaleEntries],
-  deps: {
-    alwaysBundle: [/^@videojs\/skins/],
-  },
   alias: srcAlias,
-  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}`, rebuild: false })],
+  // Pack does not yet preserve exact public CSS entry filenames, so retain the
+  // focused source-to-dist copy until its CSS entry support can replace it.
+  plugins: [reactCompilerPlugin(), copyCssPlugin({ outDir: `dist/${mode}`, rebuild: false })],
 });
 
 export default defineConfig({
@@ -41,7 +37,7 @@ export default defineConfig({
     tasks: {
       build: {
         command: 'vp pack',
-        dependsOn: workspaceTaskDependencies(),
+        dependsOn: [...workspaceTaskDependencies(), '@videojs/skins#generate'],
         input: cachedTaskInputs,
         output: ['dist/**'],
       },

@@ -2,24 +2,33 @@
 import type { HTMLAttributes } from 'astro/types';
 import { ChevronRight } from 'lucide-react';
 import { isValidFramework } from '@/types/docs';
-import { resolveDocsLinkUrl } from '@/utils/docs/routing';
+import { resolveDocsHref } from '@/utils/docs/routing';
+import { findGuideBySlug } from '@/utils/docs/sidebar';
 
 interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   slug: string;
+  /** Heading ID within the target guide. */
+  anchor?: string;
   description?: string;
 }
-const { slug, description } = Astro.props;
+const { slug, anchor, description } = Astro.props;
 
 const { framework: paramFramework } = Astro.params;
 
-if (!paramFramework || !isValidFramework(paramFramework)) {
-  throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
+if (paramFramework && !isValidFramework(paramFramework)) {
+  throw new Error(`Invalid framework param "${paramFramework}".`);
 }
 
-const { url: href } = resolveDocsLinkUrl({
-  targetSlug: slug,
-  contextFramework: paramFramework,
-});
+if (!findGuideBySlug(slug)) {
+  throw new Error(`No guide found with slug "${slug}"`);
+}
+
+// Outside the docs there is no framework in context, so the href is the agnostic
+// /docs/<slug> form. `data-docs-slug` lets ResolveDocsLinks upgrade it on the client.
+const contextFramework = isValidFramework(paramFramework) ? paramFramework : null;
+const url = resolveDocsHref({ slug, framework: contextFramework });
+const href = anchor ? `${url}#${anchor}` : url;
+const docsSlug = contextFramework ? undefined : slug;
 ---
 
 <div
@@ -27,6 +36,7 @@ const { url: href } = resolveDocsLinkUrl({
 >
   <a
     href={href}
+    data-docs-slug={docsSlug}
     class="flex items-center justify-between gap-4 rounded-xs border border-manila-dark p-4 no-underline md:pl-6 dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
   >
     {

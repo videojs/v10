@@ -74,7 +74,23 @@ The feature needs the player container for activity tracking; without a containe
 
 ### Always-visible controls
 
-Skip the visibility wiring: render your controls without consuming `controlsVisible`. State still tracks activity for anything else that needs it.
+Set `visibility="always"` on <DocsLink slug="reference/controls">Controls</DocsLink>. The controls stay visible and report the user as active while the feature keeps tracking activity for anything else that needs it. The packaged audio skins use this mode.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Controls.Root visibility="always">
+  <Controls.Content className="controls">...</Controls.Content>
+</Controls.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-controls visibility="always">
+  <media-controls-content class="controls">...</media-controls-content>
+</media-controls>
+```
+</FrameworkCase>
 
 ### Custom show/hide styling
 

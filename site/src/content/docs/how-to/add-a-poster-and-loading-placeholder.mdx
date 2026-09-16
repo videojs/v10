@@ -11,13 +11,19 @@ A poster is the image shown before your video plays. There are several places to
 1. **Let the media provide it.** Some media components create a poster from the source, so there is nothing extra to host or keep in sync.
 2. **Set `poster` on the player.** With a packaged skin, that is all a static image needs.
 3. **Take control of the image** when you need a framework image component, a `<picture>` element, or a loading placeholder. The skin renders your image instead of its own.
-4. **Keep it working in an <DocsLink slug="how-to/customize-skins">ejected skin</DocsLink>.** The player's `poster` still reaches the Poster component your skin renders, or you can set the image's source yourself.
+4. **Keep it working in an <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">ejected skin</DocsLink>.** The player's `poster` still reaches the Poster component your skin renders, or you can set the image's source yourself.
 
 ## Let the media provide a poster
 
 Some media components choose a poster for you. For example, `MuxVideo` creates one from its playback ID:
 
 <FrameworkCase frameworks={["react"]}>
+
+Install the React façade and the Mux playback adapter:
+
+```bash
+pnpm add @videojs/react @videojs/mux-video
+```
 
 ```tsx
 import '@videojs/react/video/skin.css';
@@ -45,6 +51,12 @@ export function MyPlayer() {
 
 <FrameworkCase frameworks={["html"]}>
 
+Install the HTML façade and the Mux playback adapter:
+
+```bash
+pnpm add @videojs/html @videojs/mux-video
+```
+
 ```html
 <video-player>
   <video-skin>
@@ -55,6 +67,11 @@ export function MyPlayer() {
     ></mux-video>
   </video-skin>
 </video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+  import '@videojs/html/media/mux-video';
+</script>
 ```
 
 </FrameworkCase>
@@ -250,23 +267,25 @@ Ejecting a skin changes nothing about the first two approaches: the player's `po
 
 <FrameworkCase frameworks={["react"]}>
 
-Poster renders an `<img>` and fills its `src` from the player, so `srcSet`, `sizes`, `loading`, and the rest of the image attributes are yours. Provide your own `src` or `srcSet` and Video.js leaves the image alone.
+`Poster.Root` owns visibility and loading state. `Poster.Image` renders the image and fills its `src` from the player, so `srcSet`, `sizes`, `loading`, and the rest of the image attributes are yours. Provide your own `src` or `srcSet` and Video.js leaves the image alone.
 
-When your UI already includes Poster, apply a placeholder through its `render` prop:
+When your UI already includes Poster, apply a placeholder through the image's `render` prop:
 
 ```tsx
-<Poster
-  render={(props) => (
-    <img
-      {...props}
-      style={{
-        ...props.style,
-        background:
-          "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
-      }}
-    />
-  )}
-/>
+<Poster.Root>
+  <Poster.Image
+    render={(props) => (
+      <img
+        {...props}
+        style={{
+          ...props.style,
+          background:
+            "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
+        }}
+      />
+    )}
+  />
+</Poster.Root>
 ```
 
 </FrameworkCase>
@@ -326,5 +345,5 @@ Use fewer pixels and stronger compression. The placeholder only needs to suggest
 
 ## Related guides
 
-- <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="how-to/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink>
 - <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>

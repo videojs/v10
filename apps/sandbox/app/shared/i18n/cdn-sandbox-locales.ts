@@ -1,4 +1,4 @@
-import { getI18nTranslations, registerI18n } from '@videojs/html/cdn/i18n';
+import { getI18nTranslations, registerI18n } from '@videojs/cdn/i18n';
 
 import { createBrowserSandboxPrefetch } from './browser-sandbox-prefetch';
 import { cdnLocaleLoaders } from './cdn-locale-loaders.generated';

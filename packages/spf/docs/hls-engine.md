@@ -41,6 +41,11 @@ Text selection is resolved through the same constraint model as other tracks. DO
 
 Owned actors load WebVTT segments and cues. They are destroyed on source replacement with the other per-source resources.
 
+Chapters are separate from selection: when the multivariant playlist carries Apple JSON chapters as session data, a
+behavior fetches the document and projects one hidden `chapters` track per language onto the element; the open last
+chapter ends at the largest safe integer and readers clamp it to the media duration. The audio-only engine composes it
+too.
+
 ## Multi-CDN behavior
 
 The engine derives comparable CDN identifiers from track URLs. Track selection prefers one active CDN across media types, while failed-CDN state temporarily removes candidates and later expires through the failover monitor.
@@ -56,7 +61,7 @@ Defaults are resolved at the engine boundary and passed to the behaviors that co
 ## Current sources
 
 - Composition, state, context, and configuration: `packages/spf/src/playback/engines/hls/engine.ts`
-- Adapter behavior: `packages/spf/src/playback/adapters/hls-video/adapter.ts`
+- Adapter behavior: `packages/spf/src/playback/adapters/hls-video/mixin.ts`
 - Behaviors and tests: `packages/spf/src/playback/behaviors/`
 - Actors and tests: `packages/spf/src/playback/actors/`
 - Media and network algorithms: `packages/spf/src/media/` and `packages/spf/src/network/`

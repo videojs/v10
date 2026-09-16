@@ -1,4 +1,4 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { createStore } from '@videojs/store';
 import type { WebKitVideoElement } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -487,7 +487,7 @@ describe('fullscreenFeature', () => {
   });
 });
 
-describe('fullscreenFeature with HTMLVideoElementHost', () => {
+describe('fullscreenFeature with HTMLVideoAdapter', () => {
   let originalFullscreenEnabled: boolean | undefined;
 
   beforeEach(() => {
@@ -512,7 +512,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
     it('syncs initial state on attach', () => {
       const video = createMockVideo();
       const container = document.createElement('div');
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -525,7 +525,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
 
     it('reflects host.isFullscreen when document.fullscreenElement is the underlying video', () => {
       const video = createMockVideo();
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -551,7 +551,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
 
       const video = createMockVideo();
       const container = document.createElement('div');
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -585,7 +585,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
 
       video.webkitPresentationMode = 'inline';
       const container = document.createElement('div');
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -619,7 +619,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const container = document.createElement('div');
 
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -636,7 +636,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const video = createMockVideo();
 
       video.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -660,7 +660,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
 
       video.webkitSetPresentationMode = vi.fn();
       const container = document.createElement('div');
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -679,7 +679,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
       const video = createMockVideo();
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 
@@ -711,7 +711,7 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
       const container = document.createElement('div');
 
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-      const host = new HTMLVideoElementHost();
+      const host = new HTMLVideoAdapter();
 
       host.attach(video);
 

@@ -55,6 +55,8 @@ function createBindingPath(code: string): TargetBinding {
     get(target, property) {
       if (property === TARGET_EXPRESSION) return target[TARGET_EXPRESSION];
 
+      if (property === TARGET_SPREAD) return expression;
+
       if (typeof property === 'string') return createBindingPath(`${code}.${property}`);
 
       return (target as TargetBinding & Readonly<Record<PropertyKey, unknown>>)[property];

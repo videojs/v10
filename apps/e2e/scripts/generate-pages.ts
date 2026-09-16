@@ -1,19 +1,23 @@
 /**
  * Generates Vite test pages from PageEntry definitions.
  *
- * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `apps/vite/src/pages/`, which is
- * gitignored — every page there comes from this script, including the special ones (ejected skins, captions, background
- * video), which take their own templates rather than the player shell.
+ * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `suites/player/app/src/pages/`,
+ * which is gitignored — every page there comes from this script, including the special ones (ejected skins, captions,
+ * background video), which take their own templates rather than the player shell.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dirname, '../apps/vite/src/pages');
+const OUT_DIR = resolve(__dirname, '../suites/player/app/src/pages');
+const SOURCE_VIDEO_SKIN = relative(
+  OUT_DIR,
+  resolve(__dirname, '../../../packages/skins/src/skins/default/video/skin.tsx')
+).replaceAll('\\', '/');
 
 // ---------------------------------------------------------------------------
 // Media type config — maps media element name to its import + attributes
@@ -134,8 +138,8 @@ const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
 
 // CDN import paths (override standard imports)
 const CDN_IMPORTS: Record<string, string[]> = {
-  video: ['@videojs/html/cdn/video'],
-  'hlsjs-video': ['@videojs/html/cdn/video', '@videojs/html/cdn/media/hlsjs-video'],
+  video: ['@videojs/cdn/video'],
+  'hlsjs-video': ['@videojs/cdn/video', '@videojs/cdn/media/hlsjs-video'],
 };
 
 // ---------------------------------------------------------------------------
@@ -148,7 +152,21 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'background' | 'source-html' | 'source-react';
+  category?: 'cdn' | 'captions' | 'background' | 'background-preset' | 'source-html' | 'source-react';
+  /** The packaged skin theme; the default skin unless set. */
+  skin?: 'minimal';
+}
+
+type SkinTheme = NonNullable<PageDef['skin']> | 'default';
+
+/** The custom element a packaged HTML skin registers. */
+function htmlSkinTag(media: 'video' | 'audio', skin: SkinTheme): string {
+  return skin === 'minimal' ? `${media}-minimal-skin` : `${media}-skin`;
+}
+
+/** The entry a packaged skin ships under for both frameworks, as `video/skin` or `video/minimal-skin`. */
+function skinEntry(media: 'video' | 'audio', skin: SkinTheme): string {
+  return skin === 'minimal' ? `${media}/minimal-skin` : `${media}/skin`;
 }
 
 // ---------------------------------------------------------------------------
@@ -175,8 +193,9 @@ function resourceHasPoster(resource: string): boolean {
   return resource === 'mp4' || resource === 'hlsTs' || resource === 'hlsFmp4';
 }
 
-function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
+function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[], skin: SkinTheme): string {
   const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
+  const tag = htmlSkinTag('video', skin);
 
   const storyboard = config.hasStoryboard
     ? `\n        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />`
@@ -195,18 +214,19 @@ const html = String.raw;
 
 document.getElementById('root')!.innerHTML = html\`
   <video-player>
-    <video-skin style="max-width: 800px; aspect-ratio: 16/9">
+    <${tag} style="max-width: 800px; aspect-ratio: 16/9">
       <${config.element} src="\${MEDIA.${resource}.url}"${attrs}>${storyboard}
       </${config.element}>${poster}
-    </video-skin>
+    </${tag}>
   </video-player>
 \`;
 `;
 }
 
-function htmlAudioPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
+function htmlAudioPage(config: MediaTypeConfig, resource: string, imports: string[], skin: SkinTheme): string {
   const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
   const attrs = config.attrs ? ` ${config.attrs}` : '';
+  const tag = htmlSkinTag('audio', skin);
 
   return `${allImports}
 
@@ -215,23 +235,26 @@ const html = String.raw;
 document.getElementById('root')!.innerHTML = html\`
   <div style="max-width: 600px; margin: 0 auto">
     <audio-player>
-      <audio-skin>
+      <${tag}>
         <${config.element} src="\${MEDIA.${resource}.url}"${attrs}></${config.element}>
-      </audio-skin>
+      </${tag}>
     </audio-player>
   </div>
 \`;
 `;
 }
 
-function reactVideoPage(media: string, resource: string, config: MediaTypeConfig): string {
+function reactVideoPage(media: string, resource: string, config: MediaTypeConfig, skin: SkinTheme): string {
   const reactMedia = REACT_MEDIA[media];
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultVideo = media === 'video';
+  const Skin = skin === 'minimal' ? 'MinimalVideoSkin' : 'VideoSkin';
+  const skinImport =
+    skin === 'minimal' ? `\nimport { MinimalVideoSkin } from '@videojs/react/video/minimal-skin';` : '';
   const mediaImport = isDefaultVideo
-    ? `import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer, VideoSkin } from '@videojs/react/video';`;
+    ? `import { Video, VideoPlayer${skin === 'minimal' ? '' : ', VideoSkin'} } from '@videojs/react/video';${skinImport}`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer${skin === 'minimal' ? '' : ', VideoSkin'} } from '@videojs/react/video';${skinImport}`;
 
   const posterProp = config.hasPoster && resourceHasPoster(resource) ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
@@ -239,17 +262,17 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
     : '';
 
   return `${mediaImport}
-import '@videojs/react/video/skin.css';
+import '@videojs/react/${skinEntry('video', skin)}.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
 function App() {
   return (
     <VideoPlayer${posterProp}>
-      <VideoSkin style={{ maxWidth: 800, aspectRatio: '16/9' }}>
+      <${Skin} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
-      </VideoSkin>
+      </${Skin}>
     </VideoPlayer>
   );
 }
@@ -258,26 +281,29 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
-function reactAudioPage(media: string, resource: string): string {
+function reactAudioPage(media: string, resource: string, skin: SkinTheme): string {
   const reactMedia = REACT_MEDIA[media];
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultAudio = media === 'audio';
+  const Skin = skin === 'minimal' ? 'MinimalAudioSkin' : 'AudioSkin';
+  const skinImport =
+    skin === 'minimal' ? `\nimport { MinimalAudioSkin } from '@videojs/react/audio/minimal-skin';` : '';
   const mediaImport = isDefaultAudio
-    ? `import { Audio, AudioPlayer, AudioSkin } from '@videojs/react/audio';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer, AudioSkin } from '@videojs/react/audio';`;
+    ? `import { Audio, AudioPlayer${skin === 'minimal' ? '' : ', AudioSkin'} } from '@videojs/react/audio';${skinImport}`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer${skin === 'minimal' ? '' : ', AudioSkin'} } from '@videojs/react/audio';${skinImport}`;
 
   return `${mediaImport}
-import '@videojs/react/audio/skin.css';
+import '@videojs/react/${skinEntry('audio', skin)}.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
 function App() {
   return (
     <AudioPlayer>
-      <AudioSkin style={{ maxWidth: 600, margin: '0 auto' }}>
+      <${Skin} style={{ maxWidth: 600, margin: '0 auto' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} />
-      </AudioSkin>
+      </${Skin}>
     </AudioPlayer>
   );
 }
@@ -356,6 +382,55 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
+/** The handwritten Background preset, kept separate from the engine-only fixtures above. */
+function backgroundPresetPage(framework: PageDef['framework'], resource: string): string {
+  if (framework === 'react') {
+    return `import {
+  BackgroundVideo,
+  BackgroundVideoPlayer,
+  BackgroundVideoSkin,
+} from '@videojs/react/background';
+import '@videojs/react/background/skin.css';
+import { createRoot } from 'react-dom/client';
+import { MEDIA } from '../resources';
+
+function App() {
+  return (
+    <BackgroundVideoPlayer>
+      <BackgroundVideoSkin
+        className="background-preset"
+        style={{ width: 640, height: 360, objectFit: 'contain' }}
+      >
+        <img alt="" data-background-poster src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+        <BackgroundVideo data-background-media src={MEDIA.${resource}.url} />
+      </BackgroundVideoSkin>
+    </BackgroundVideoPlayer>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+  }
+
+  return `import '@videojs/html/background/player';
+import '@videojs/html/background/skin';
+import '@videojs/html/background/video';
+import { MEDIA } from '../resources';
+
+document.getElementById('root')!.innerHTML = String.raw\`
+  <background-video-player>
+    <background-video-skin
+      class="background-preset"
+      style="width: 640px; height: 360px; --media-object-fit: contain"
+    >
+      <img alt="" data-background-poster src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+      <background-video data-background-media src="\${MEDIA.${resource}.url}"></background-video>
+    </background-video-skin>
+  </background-video-player>
+\`;
+`;
+}
+
 function captionsPage(resource: string): string {
   const captionVtt = 'WEBVTT\\n\\n00:00:00.000 --> 00:00:30.000\\nThis is a test caption';
 
@@ -381,81 +456,13 @@ document.getElementById('root')!.innerHTML = html\`
 `;
 }
 
-function ejectedHtmlPage(resource: string): string {
-  // Path from pages/ to the site content
-  const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
-
-  return `import '@videojs/html/icons/element';
-import ejectedSkins from '${jsonPath}';
-import { MEDIA } from '../resources';
-
-interface EjectedSkinEntry {
-  id: string;
-  html?: string;
-  css?: string;
-}
-
-const skin = (ejectedSkins as EjectedSkinEntry[]).find((s) => s.id === 'default-video');
-
-if (!skin?.html || !skin?.css) {
-  throw new Error('Ejected skin "default-video" not found. Run \\\`pnpm -F site ejected-skins\\\` first.');
-}
-
-const style = document.createElement('style');
-style.textContent = skin.css;
-document.head.appendChild(style);
-
-const playerMatch = skin.html.match(/<video-player\\b[^>]*>[\\s\\S]*<\\/video-player>/);
-
-if (!playerMatch) {
-  throw new Error('Could not find <video-player> in ejected HTML output.');
-}
-
-const root = document.getElementById('root')!;
-root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
-
-const video = root.querySelector('video');
-const poster = root.querySelector('media-poster img');
-
-if (!video || !poster) {
-  throw new Error('Ejected skin "default-video" is missing video media.');
-}
-
-video.src = MEDIA.${resource}.url;
-video.crossOrigin = 'anonymous';
-video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />\`;
-poster.src = MEDIA.${resource}.poster;
-poster.alt = 'Video poster';
-
-// Ejected layouts have no <video-skin>, so register the player (context owner)
-// before the light DOM UI elements that consume it.
-await import('@videojs/html/video/player');
-await import('@videojs/html/video/ui');
-`;
-}
-
-function ejectedReactPage(resource: string): string {
-  return `import { createRoot } from 'react-dom/client';
-import { VideoPlayer } from '../_generated/ejected-react-video-skin';
-import { MEDIA } from '../resources';
-
-function App() {
-  return <VideoPlayer src={MEDIA.${resource}.url} poster={MEDIA.${resource}.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }} />;
-}
-
-createRoot(document.getElementById('root')!).render(<App />);
-`;
-}
-
 function sourceHtmlPage(resource: string): string {
-  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
-
   return `import '@videojs/html/video/player';
-import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
+import { VideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=html&skin=default-video&theme=default';
 import { MEDIA } from '../resources';
 
 const skin = String(
-  DefaultVideoSkin({
+  VideoSkin({
     'data-source-skin': '',
     poster: MEDIA.${resource}.poster,
     style: 'display: block; max-width: 800px; aspect-ratio: 16/9',
@@ -470,12 +477,10 @@ document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${
 }
 
 function sourceReactPage(resource: string): string {
-  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
-
   return `import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { DefaultVideoSkin } from '${source}?style=css&target=react&skin=default-video';
+import { VideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=react&skin=default-video&theme=default';
 import { MEDIA } from '../resources';
 
 const { Player } = createPlayer({ features: videoFeatures });
@@ -483,13 +488,13 @@ const { Player } = createPlayer({ features: videoFeatures });
 function App() {
   return (
     <Player poster={MEDIA.${resource}.poster}>
-      <DefaultVideoSkin
+      <VideoSkin
         data-source-skin
         poster={MEDIA.${resource}.poster}
         style={{ maxWidth: 800, aspectRatio: '16/9' }}
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
-      </DefaultVideoSkin>
+      </VideoSkin>
     </Player>
   );
 }
@@ -544,6 +549,22 @@ const PAGES: PageDef[] = [
     resource: 'hlsFmp4',
     category: 'background',
   },
+  {
+    name: 'HTML Background Preset',
+    path: 'html-background-preset',
+    framework: 'html',
+    media: 'hls-background-video',
+    resource: 'mp4',
+    category: 'background-preset',
+  },
+  {
+    name: 'React Background Preset',
+    path: 'react-background-preset',
+    framework: 'react',
+    media: 'hls-background-video',
+    resource: 'mp4',
+    category: 'background-preset',
+  },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
     name: 'HTML Shaka Video HLS',
@@ -586,6 +607,40 @@ const PAGES: PageDef[] = [
   // React Audio
   { name: 'React Audio MP4', path: 'react-audio-mp4', framework: 'react', media: 'audio', resource: 'mp4' },
 
+  // Minimal skins, for the layout snapshots
+  {
+    name: 'HTML Video Minimal MP4',
+    path: 'html-video-minimal-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+  {
+    name: 'React Video Minimal MP4',
+    path: 'react-video-minimal-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+  {
+    name: 'HTML Audio Minimal MP4',
+    path: 'html-audio-minimal-mp4',
+    framework: 'html',
+    media: 'audio',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+  {
+    name: 'React Audio Minimal MP4',
+    path: 'react-audio-minimal-mp4',
+    framework: 'react',
+    media: 'audio',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+
   // CDN
   { name: 'CDN Video MP4', path: 'cdn-video-mp4', framework: 'html', media: 'video', resource: 'mp4', category: 'cdn' },
   {
@@ -605,24 +660,6 @@ const PAGES: PageDef[] = [
     media: 'video',
     resource: 'mp4',
     category: 'captions',
-  },
-
-  // Ejected Skins
-  {
-    name: 'Ejected HTML Video MP4',
-    path: 'ejected-html-video-mp4',
-    framework: 'html',
-    media: 'video',
-    resource: 'mp4',
-    category: 'ejected-html',
-  },
-  {
-    name: 'Ejected React Video MP4',
-    path: 'ejected-react-video-mp4',
-    framework: 'react',
-    media: 'video',
-    resource: 'mp4',
-    category: 'ejected-react',
   },
 
   // Generated canonical Skin fixtures for focused container/parity coverage.
@@ -657,7 +694,10 @@ function getImports(page: PageDef, config: MediaTypeConfig): string[] {
   }
 
   const playerType = config.isAudio ? 'audio' : 'video';
-  const base = [`import '@videojs/html/${playerType}/player';`, `import '@videojs/html/${playerType}/skin';`];
+  const base = [
+    `import '@videojs/html/${playerType}/player';`,
+    `import '@videojs/html/${skinEntry(playerType, page.skin ?? 'default')}';`,
+  ];
 
   for (const imp of config.imports) {
     base.push(`import '${imp}';`);
@@ -680,22 +720,25 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
       page.framework === 'react'
         ? reactBackgroundVideoPage(page.media, page.resource)
         : backgroundVideoPage(config, page.resource);
+  } else if (page.category === 'background-preset') {
+    ts = backgroundPresetPage(page.framework, page.resource);
   } else if (page.category === 'captions') {
     ts = captionsPage(page.resource);
-  } else if (page.category === 'ejected-html') {
-    ts = ejectedHtmlPage(page.resource);
-  } else if (page.category === 'ejected-react') {
-    ts = ejectedReactPage(page.resource);
   } else if (page.category === 'source-html') {
     ts = sourceHtmlPage(page.resource);
   } else if (page.category === 'source-react') {
     ts = sourceReactPage(page.resource);
   } else if (page.framework === 'react') {
-    ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
+    ts = config.isAudio
+      ? reactAudioPage(page.media, page.resource, page.skin ?? 'default')
+      : reactVideoPage(page.media, page.resource, config, page.skin ?? 'default');
   } else {
     const imports = getImports(page, config);
+    const skin = page.skin ?? 'default';
 
-    ts = config.isAudio ? htmlAudioPage(config, page.resource, imports) : htmlVideoPage(config, page.resource, imports);
+    ts = config.isAudio
+      ? htmlAudioPage(config, page.resource, imports, skin)
+      : htmlVideoPage(config, page.resource, imports, skin);
   }
 
   const html = htmlShell(page.name, `${page.path}.${ext}`);

@@ -16,6 +16,17 @@ media-controls {
   width: 100%;
 }
 
+:host(:focus) {
+  /* The host matches :focus when a shadow control is focused; keep page styles from adding a second ring. */
+  outline: none !important;
+}
+
+/* Media fills the skin; important keeps page styles from adding internal spacing. */
+::slotted(video),
+::slotted(audio) {
+  margin: 0 !important;
+}
+
 media-container {
   min-width: 0;
   min-height: 0;

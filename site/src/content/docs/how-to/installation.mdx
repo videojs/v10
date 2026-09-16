@@ -11,7 +11,10 @@ import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
+import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
+import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
+import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -20,10 +23,11 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
-import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
-<Aside type="caution" title="Beta Software">
-Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md) for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
+<Aside type="note" title="Release Candidate">
+Video.js v10 is a _release candidate_. This means we feel the API is stable and we're ready to start building with it. With your [feedback](https://github.com/videojs/v10/issues), a few docs tweaks, and maybe a bug fix or two, we're looking forward to shipping 10.0.0 very soon.
+
+[Read the Release Candidate blog post here](/blog/videojs-v10-release-candidate)
 </Aside>
 
 <FrameworkCase frameworks={["react"]}>
@@ -63,10 +67,10 @@ If you're an agent, interview your user and offer to run the CLI for them, or of
 </div>
 
 <FrameworkCase frameworks={["react"]}>
-If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
+If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/react/how-to/customize-skins#eject-and-edit-a-skin) to eject the closest skin. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/html/how-to/customize-skins#eject-and-edit-a-skin) to eject the closest skin. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 </LLMCase>
 
@@ -116,6 +120,10 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   <RendererPicker client:idle />
 </ContentWidth>
 
+<Aside type="tip" title="Want a smaller HLS bundle?">
+This guide uses <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. To experiment with our lightweight HLS engine and reduce your bundle size, try <DocsLink slug="reference/hls-video">HlsVideo</DocsLink>.
+</Aside>
+
 </HumanCase>
 
 <div data-cli-replace="installation" class="contents">
@@ -126,34 +134,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="Installation">
-      <Tab client:idle value="npm" initial>npm</Tab>
-      <Tab client:idle value="pnpm">pnpm</Tab>
-      <Tab client:idle value="yarn">yarn</Tab>
-      <Tab client:idle value="bun">bun</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="npm" initial>
-      ```bash
-      npm install @videojs/react
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="pnpm">
-      ```bash
-      pnpm add @videojs/react
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="yarn">
-      ```bash
-      yarn add @videojs/react
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="bun">
-      ```bash
-      bun add @videojs/react
-      ```
-    </TabsPanel>
-  </TabsRoot>
+  <ReactInstallTabs client:idle />
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -195,9 +176,19 @@ Add it to your components folder in a new file.
 
 That's it! You now have a working Video.js player.
 
+## Change the skin's controls or layout
+
+To add, remove, or rearrange the skin you selected, eject it into your project. If your project does not have a `components.json` file, <DocsLink slug="how-to/customize-skins" anchor="set-up-the-shadcn-cli">set up the CLI first</DocsLink>. Then choose how you want the skin's styles written and run the command below to copy its files:
+
+<RegistryStyling />
+
+<InstallationRegistryCommand />
+
+<DocsLinkCard slug="how-to/customize-skins" anchor="eject-and-edit-a-skin" description="Learn which files to edit and how to update your copy later">Customize skins</DocsLinkCard>
+
 ## Choose what to do next
 
-<DocsLinkCard slug="how-to/customize-skins" description="Customize a packaged skin or eject it for full control">Customize skins</DocsLinkCard>
+<DocsLinkCard slug="how-to/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
 
 <DocsLinkCard slug="concepts/overview" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
 
@@ -214,6 +205,8 @@ That's it! You now have a working Video.js player.
 <DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
 
 <FrameworkCase frameworks={["html"]}>
+<DocsLinkCard slug="concepts/cdn" description="See every bundle the CDN serves and the layout rules behind the URLs">CDN</DocsLinkCard>
+
 <DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
 </FrameworkCase>
 

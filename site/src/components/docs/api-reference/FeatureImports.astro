@@ -1,0 +1,78 @@
+---
+import { getCollection } from 'astro:content';
+import type { BundledLanguage } from 'shiki';
+
+import ServerCode from '@/components/Code/ServerCode.astro';
+import CodeFrame from '@/components/typography/CodeFrame.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import DocsLink from '../DocsLink.astro';
+import FrameworkCase from '../FrameworkCase.astro';
+
+interface Props {
+  /** Feature key as the generated references name it, e.g. "playback" — the same value `<FeatureReference>` takes. */
+  feature: string;
+}
+
+const { feature } = Astro.props;
+const exportName = `${feature}Feature`;
+
+// Each framework documents createPlayer on its own reference page.
+const createPlayerSlug =
+  Astro.params.framework === 'react' ? 'reference/create-player' : 'reference/html-create-player';
+
+// Membership comes from the generated preset references so the sentence tracks the real bundles.
+const bundles = (await getCollection('presetReference'))
+  .filter((entry) => entry.data.features.some((included) => included.name === feature))
+  .map((entry) => entry.data.featureBundle)
+  .sort();
+
+const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
+  {
+    code: `import { ${exportName} } from '@videojs/react';`,
+    framework: 'react',
+    lang: 'tsx',
+  },
+  {
+    code: `import { ${exportName} } from '@videojs/html';`,
+    framework: 'html',
+    lang: 'ts',
+  },
+];
+---
+
+{
+  imports.map(({ code, framework, lang }) => (
+    <FrameworkCase frameworks={[framework]}>
+      <CodeFrame lang={lang}>
+        <ServerCode code={code} lang={lang} />
+      </CodeFrame>
+    </FrameworkCase>
+  ))
+}
+
+<P>
+  {
+    bundles.length > 0 ? (
+      <>
+        The{' '}
+        {bundles.map((bundle, index) => (
+          <>
+            {index > 0 && (index < bundles.length - 1 ? ', ' : bundles.length > 2 ? ', and ' : ' and ')}
+            <MarkdownCode>{bundle}</MarkdownCode>
+          </>
+        ))}{' '}
+        <DocsLink slug="concepts/presets">feature {bundles.length === 1 ? 'bundle' : 'bundles'}</DocsLink>{' '}
+        {bundles.length === 1 ? 'includes' : 'include'} this feature.
+      </>
+    ) : (
+      <>
+        No packaged <DocsLink slug="concepts/presets">feature bundle</DocsLink> includes this feature — add it to your{' '}
+        <DocsLink slug={createPlayerSlug}>
+          <MarkdownCode>createPlayer</MarkdownCode>
+        </DocsLink>{' '}
+        features yourself.
+      </>
+    )
+  }
+</P>

@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'অতিক্রান্ত সময় ও বাকি সময়ের মধ্যে টগল করুন।',
     toggleDuration: 'মোট সময় ও বাকি সময়ের মধ্যে টগল করুন।',
     position: '{duration} এর মধ্যে {current}',
+    unknown: 'মিডিয়া লোড হয়নি, সময় অজানা।',
   },
   playback: {
     rate: 'প্লেব্যাক রেট {rate}',

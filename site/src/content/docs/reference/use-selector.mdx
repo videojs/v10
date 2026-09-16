@@ -6,10 +6,16 @@ description: Low-level hook for subscribing to derived state with customizable e
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
+## Import
+
+```tsx
+import { useSelector } from "@videojs/react";
+```
+
 `useSelector` is a low-level hook that subscribes to an external store using React's `useSyncExternalStore`. It accepts a `subscribe` function, a `getSnapshot` function, a `selector` to derive state, and an optional `isEqual` comparator (defaults to `shallowEqual`).
 
 ```tsx title="TimeDisplay.tsx"
-import { useSelector, shallowEqual } from "@videojs/store/react";
+import { useSelector, shallowEqual } from "@videojs/react";
 
 function TimeDisplay({ store }) {
   const time = useSelector(

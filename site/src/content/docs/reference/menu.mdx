@@ -111,7 +111,36 @@ Root menus inside a <DocsLink slug="reference/player-container">Container</DocsL
 
 In React, create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the active Content. In HTML, add another `<media-menu-content>` as a sibling, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
 
-Media option groups can render the current selection beside a submenu trigger. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink>.
+Media option groups share their option state with the enclosing menu: the selected value, and whether the options are disabled, hidden, or available. The menu's trigger inherits the disabled and hidden state and exposes `data-availability`, and the menu closes if its options disappear while open. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink>.
+
+<FrameworkCase frameworks={["react"]}>
+Wrap a submenu's `Menu.Trigger` and `Menu.Content` in the group's `Root` part, and render its `Value` part inside the trigger to show the current selection:
+
+```tsx
+<Menu.Root>
+  <QualityRadioGroup.Root>
+    <Menu.Trigger>
+      Quality
+      <QualityRadioGroup.Value />
+    </Menu.Trigger>
+    <Menu.Content>
+      <QualityRadioGroup.Options renderItem={...} />
+    </Menu.Content>
+  </QualityRadioGroup.Root>
+</Menu.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The generated radio group publishes its state to the `<media-menu>` that contains it. Add an element with `data-part="hint"` inside the parent `<media-menu-item>` and the menu writes the selected label into it:
+
+```html
+<media-menu-item commandfor="quality-menu">
+  Quality
+  <span data-part="hint"></span>
+</media-menu-item>
+```
+</FrameworkCase>
 
 ## Styling
 

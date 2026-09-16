@@ -59,7 +59,7 @@ export interface SliderState {
   dragging: boolean;
   /** Whether the pointer is over the slider. */
   pointing: boolean;
-  /** Whether dragging or pointing is active. */
+  /** Whether dragging, pointing, or focus is active. */
   interactive: boolean;
   /** Axis of slider movement. */
   orientation: 'horizontal' | 'vertical';

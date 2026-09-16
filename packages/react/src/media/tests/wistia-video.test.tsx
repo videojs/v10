@@ -3,15 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { WistiaVideo } from '../wistia-video';
 
-// Connecting a real player reaches for Wistia's CDN and runs an embed, where this component only renders
-// the tag and writes attributes. `@videojs/media` is what depends on the package; this one names it as a
-// devDependency so the specifier below can resolve, and imports it nowhere else.
-vi.mock('@wistia/wistia-player', () => {
+// Connecting a real player reaches for Wistia's CDN and runs an embed, where this component only renders the tag and
+// writes attributes. Reuse the adapter's engine-free helpers while replacing the entry that registers the real player.
+vi.mock('@videojs/wistia-video', async () => {
+  const helpers = await vi.importActual<typeof import('@videojs/wistia-video/helpers')>(
+    '@videojs/wistia-video/helpers'
+  );
+
   class WistiaPlayer extends HTMLElement {
     static observedAttributes: string[] = [];
   }
+
   customElements.define('wistia-player', WistiaPlayer);
-  return { WistiaPlayer };
+  return { ...helpers, WISTIA_PLAYER_TAG: 'wistia-player' };
 });
 
 const SRC = 'https://wesleyluyten.wistia.com/medias/oifkgmxnkb';
@@ -25,6 +29,19 @@ function renderPlayer(ui: React.ReactElement): HTMLElement {
 }
 
 describe('WistiaVideo', () => {
+  it('routes media event props to the element, which React wires only for <video> and <audio>', () => {
+    const onPlay = vi.fn((event: Event) => event.currentTarget);
+    const onTimeUpdate = vi.fn();
+    const player = renderPlayer(<WistiaVideo src={SRC} onPlay={onPlay} onTimeUpdate={onTimeUpdate} />);
+
+    player.dispatchEvent(new Event('play'));
+    player.dispatchEvent(new Event('timeupdate'));
+
+    expect(onPlay).toHaveBeenCalledTimes(1);
+    expect(onPlay).toHaveReturnedWith(player);
+    expect(onTimeUpdate).toHaveBeenCalledTimes(1);
+  });
+
   it('resolves a Wistia URL to the media id the player wants', () => {
     expect(renderPlayer(<WistiaVideo src={SRC} />).getAttribute('media-id')).toBe('oifkgmxnkb');
   });

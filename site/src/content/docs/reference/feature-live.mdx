@@ -3,6 +3,7 @@ title: Live
 description: Live edge state for the player store
 ---
 
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
 import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -16,9 +17,13 @@ Both values are `NaN` when the media does not provide live-edge information.
 
 Use the <DocsLink slug="reference/feature-buffer">buffer feature</DocsLink> to find the times a viewer can seek to. Its `seekable` value contains `[start, end]` pairs. On a sliding live stream, the oldest and newest available times both move forward.
 
-The `liveVideoFeatures` and `liveAudioFeatures` presets include this feature. They do not include the <DocsLink slug="reference/feature-stream-type">stream type feature</DocsLink>, so `selectStreamType` returns `undefined` unless you add it to a custom player.
+The live presets do not include the <DocsLink slug="reference/feature-stream-type">stream type feature</DocsLink>, so `selectStreamType` returns `undefined` unless you add it to a custom player.
 
 The <DocsLink slug="reference/feature-time">time feature</DocsLink> reports the end of the available live video as `duration`, even when the browser reports `Infinity`. To check for live playback, use `!Number.isNaN(targetLiveWindow)` instead of checking `duration`.
+
+## Import
+
+<FeatureImports feature="live" />
 
 <FeatureReference feature="live" />
 

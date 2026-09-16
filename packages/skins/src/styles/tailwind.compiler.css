@@ -1,0 +1,13 @@
+@layer base, components, utilities;
+
+@import "tailwindcss" theme(inline);
+@import "./themes/minimal.css";
+@import "./base.css";
+@import "./video/captions.css";
+@import "./video/theme.css";
+@import "./audio/theme.css";
+@import "./tailwind.css";
+
+@theme inline {
+  --spacing: var(--media-spacing);
+}

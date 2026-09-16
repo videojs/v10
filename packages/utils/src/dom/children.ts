@@ -28,6 +28,41 @@ export function findElementChild(parent: Element, predicate: ElementPredicate): 
   return null;
 }
 
+/**
+ * Return what an element composes: the elements assigned to a slot, or otherwise its own children.
+ *
+ * A slot with nothing assigned yields its fallback content, so the result always describes what renders.
+ */
+export function getComposedChildren(parent: Element): Element[] {
+  if (parent instanceof HTMLSlotElement) {
+    const assigned = parent.assignedElements();
+    if (assigned.length > 0) return assigned;
+  }
+
+  return [...parent.children];
+}
+
+/**
+ * Find the first descendant accepted by the predicate, following slots to what they compose.
+ *
+ * Depth-first from the root's composed children, so an element slotted in from outside is found even through a
+ * forwarding slot or a wrapper such as `<picture>`. The root itself is never returned.
+ */
+export function findComposedElement<T extends Element>(root: Element, predicate: ElementTypePredicate<T>): T | null;
+export function findComposedElement(root: Element, predicate: ElementPredicate): Element | null;
+export function findComposedElement(root: Element, predicate: ElementPredicate): Element | null {
+  const children = getComposedChildren(root);
+
+  for (const [index, child] of children.entries()) {
+    if (predicate(child, index)) return child;
+
+    const nested = findComposedElement(child, predicate);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
 /** Follow a single-child relationship from the root until it ends or cycles. */
 export function followElementPath<T extends Element>(root: T, getNext: (element: T) => T | null): T[] {
   const path: T[] = [];

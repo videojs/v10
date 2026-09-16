@@ -6,7 +6,7 @@ export const SliderDataAttrs = {
   dragging: 'data-dragging',
   /** Present when the pointer is over the slider. */
   pointing: 'data-pointing',
-  /** Present when dragging or pointing is active. */
+  /** Present when dragging, pointing, or focus is active. */
   interactive: 'data-interactive',
   /** Current axis of slider movement (`horizontal` or `vertical`). */
   orientation: 'data-orientation',

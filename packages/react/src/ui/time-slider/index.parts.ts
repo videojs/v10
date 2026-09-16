@@ -15,9 +15,6 @@ export {
 export {
   TimeSliderChapterTitle as ChapterTitle,
   type TimeSliderChapterTitleProps as ChapterTitleProps,
-} from './time-slider-chapters/time-slider-chapter-title';
-export {
-  TimeSliderChapters as Chapters,
-  type TimeSliderChaptersProps as ChaptersProps,
-} from './time-slider-chapters/time-slider-chapters';
-export { TimeSliderRoot as Root, type TimeSliderRootProps as RootProps } from './time-slider-root';
+} from './chapter-title';
+export { TimeSliderChapters as Chapters, type TimeSliderChaptersProps as ChaptersProps } from './chapters';
+export { TimeSliderRoot as Root, type TimeSliderRootProps as RootProps } from './root';

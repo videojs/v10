@@ -5,6 +5,7 @@ frameworkTitle:
 description: Video component that plays TikTok videos through the TikTok embed player
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/tiktok-video/html/css/Bas
 import basicUsageHtmlTs from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.ts?raw";
 
 The [TikTok embed player](https://developers.tiktok.com/doc/embed-player) expects portrait video and won't draw its chrome below 325×578, so the element starts at that size rather than the usual 300×150.
+
+## Import
+
+<MediaImports media="tiktok-video" package="@videojs/tiktok-video" react="TikTokVideo" />
 
 ## Load a source
 

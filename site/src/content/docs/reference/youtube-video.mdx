@@ -5,6 +5,7 @@ frameworkTitle:
 description: Video component that plays YouTube videos and playlists through the YouTube IFrame player
 ---
 
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -23,6 +24,10 @@ import basicUsageHtmlCss from "@/components/docs/demos/youtube-video/html/css/Ba
 import basicUsageHtmlTs from "@/components/docs/demos/youtube-video/html/css/BasicUsage.ts?raw";
 
 The [YouTube IFrame player](https://developers.google.com/youtube/iframe_api_reference) keeps its own chrome hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use YouTube's UI instead.
+
+## Import
+
+<MediaImports media="youtube-video" package="@videojs/youtube-video" react="YouTubeVideo" />
 
 ## Load a source
 

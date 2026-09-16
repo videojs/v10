@@ -16,7 +16,7 @@ import { extractDataAttrs } from './data-attrs-handler.js';
 import { abbreviateType } from './formatter.js';
 import { extractHtml } from './html-handler.js';
 import { getJSDocTag, OxcProject, staticName } from './oxc-project.js';
-import { extractPartDescription, extractParts, extractSubPartProps } from './parts-handler.js';
+import { extractPartDescription, extractParts, extractSubPartProps, type PartExport } from './parts-handler.js';
 import type {
   ComponentReference,
   ComponentSource,
@@ -32,7 +32,7 @@ import type {
   PropDef,
   StateDef,
 } from './types.js';
-import { kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
+import { kebabToPascal, log, partKebabFromSource, pascalToKebab, sortProps } from './utils.js';
 
 // ─── Overrides ─────────────────────────────────────────────────────
 
@@ -40,10 +40,10 @@ import { kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
 // pages — re-exported here for the builder's existing import surface.
 export { NAME_OVERRIDES };
 
-// Parts whose HTML element file doesn't follow the `{component}-{part}-element.ts` convention.
+// Parts whose HTML element file basename differs from the part kebab.
 // Key: `{component}/{part-kebab}`, Value: element file basename (without `.ts`).
 export const PART_ELEMENT_OVERRIDES: Record<string, string> = {
-  'tooltip/provider': 'tooltip-group-element',
+  'tooltip/provider': 'group',
 };
 
 // ─── Build Helpers ─────────────────────────────────────────────────
@@ -133,48 +133,47 @@ function buildHtmlPlatform(htmlData: HtmlExtraction): NonNullable<PartReference[
 
 // ─── Discovery ─────────────────────────────────────────────────────
 
-// Extra data-attrs files in a component dir ({qualifier}-data.ts)
-// declare their target parts with a `@parts item, radio-item` JSDoc tag on
-// the exported const. They cover attrs a DOM layer applies to part elements
-// directly, which the per-part stateAttrMap heuristic can't see (e.g.
-// item-data.ts applied by create-menu).
-function dataAttrsComponentName(fileBasename: string, componentKebab: string): string {
-  const qualifier = fileBasename.replace(/-data\.ts$/, '');
-
-  return kebabToPascal(`${componentKebab}-${qualifier}`);
-}
-
-function discoverExtraDataAttrs(componentDir: string, componentKebab: string): ExtraDataAttrsSource[] {
+// Extra data-attrs files in a component dir declare their target parts with
+// a `@parts item, radio-item` JSDoc tag on an exported `*DataAttrs` const.
+// They cover attrs a DOM layer applies to part elements directly, which the
+// per-part stateAttrMap heuristic can't see (e.g. menu/item.ts applied by
+// dom/ui/menu/menu.ts). Any simple file name works; discovery keys off the
+// tag, not the file name.
+function discoverExtraDataAttrs(componentDir: string): ExtraDataAttrsSource[] {
   const extras: ExtraDataAttrsSource[] = [];
 
-  for (const file of fs.readdirSync(componentDir)) {
-    if (!file.endsWith('-data.ts')) continue;
+  for (const entry of fs.readdirSync(componentDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.ts') || entry.name === 'data.ts') continue;
 
-    const filePath = path.join(componentDir, file);
-    const exportName = `${dataAttrsComponentName(file, componentKebab)}DataAttrs`;
+    const filePath = path.join(componentDir, entry.name);
     const content = fs.readFileSync(filePath, 'utf-8');
+    if (!content.includes('@parts')) continue;
+
     const parsed = parseSync(filePath, content);
     const sourceFile = { filePath, source: content, program: parsed.program, comments: parsed.comments };
-    let tagValue: string | undefined;
 
     for (const statement of parsed.program.body) {
-      const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
+      if (statement.type !== 'ExportNamedDeclaration') continue;
+
+      const declaration = statement.declaration;
       if (declaration?.type !== 'VariableDeclaration') continue;
 
-      const declaresExport = declaration.declarations.some((entry) => staticName(entry.id) === exportName);
+      const exportName = declaration.declarations
+        .map((declarator) => staticName(declarator.id))
+        .find((name) => name?.endsWith('DataAttrs'));
+      if (!exportName) continue;
 
-      if (declaresExport) tagValue = getJSDocTag(sourceFile, declaration, 'parts');
+      const tagValue = getJSDocTag(sourceFile, declaration, 'parts');
+      if (!tagValue) continue;
+
+      const parts = tagValue
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (parts.length === 0) continue;
+
+      extras.push({ path: filePath, exportName, parts });
     }
-
-    if (!tagValue) continue;
-
-    const parts = tagValue
-      .split(',')
-      .map((part) => part.trim())
-      .filter(Boolean);
-    if (parts.length === 0) continue;
-
-    extras.push({ path: filePath, parts });
   }
 
   return extras;
@@ -218,7 +217,7 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
     const coreFile = path.join(componentDir, 'core.ts');
     const dataAttrsFile = path.join(componentDir, 'data.ts');
     const cssVarsFile = path.join(componentDir, 'vars.ts');
-    const htmlFile = path.join(htmlUiPath, dir.name, `${dir.name}-element.ts`);
+    const htmlFile = path.join(htmlUiPath, dir.name, 'element.ts');
 
     const source: ComponentSource = {
       name: componentName,
@@ -237,7 +236,7 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
 
     if (fs.existsSync(partsIndexFile)) source.partsIndexPath = partsIndexFile;
 
-    const extraDataAttrs = discoverExtraDataAttrs(componentDir, dir.name);
+    const extraDataAttrs = discoverExtraDataAttrs(componentDir);
 
     if (extraDataAttrs.length > 0) source.extraDataAttrs = extraDataAttrs;
 
@@ -275,11 +274,34 @@ function usesDataAttrs(filePath: string): boolean {
   }
 }
 
-function resolvePartElement(htmlDir: string, componentKebab: string, source: string, partKebab: string): string {
-  const override = PART_ELEMENT_OVERRIDES[`${componentKebab}/${partKebab}`];
-  const relative = source.replace(/^\.\//, '');
+interface PartElementFile {
+  path: string;
+  /**
+   * Element class name, derived from the component folder and file basename (`slider/track.ts` ->
+   * `SliderTrackElement`).
+   */
+  className: string;
+}
 
-  return path.join(htmlDir, override ? `${override}.ts` : `${relative}-element.ts`);
+// Part element files sit beside the primary `element.ts` and are named after the part kebab
+// (`slider/track.ts`). A nested React part source (`./chapters/title`) is honored when the
+// same folder exists on the HTML side; otherwise the part is looked up flat in the component dir.
+function resolvePartElement(
+  htmlDir: string,
+  componentKebab: string,
+  source: string,
+  partKebab: string
+): PartElementFile | undefined {
+  const basename = PART_ELEMENT_OVERRIDES[`${componentKebab}/${partKebab}`] ?? partKebab;
+  const relativeDir = path.dirname(source.replace(/^\.\//, ''));
+  const candidates = [path.join(htmlDir, `${basename}.ts`)];
+
+  if (relativeDir !== '.') candidates.unshift(path.join(htmlDir, relativeDir, `${basename}.ts`));
+
+  const filePath = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!filePath) return undefined;
+
+  return { path: filePath, className: `${kebabToPascal(`${componentKebab}-${basename}`)}Element` };
 }
 
 export function discoverParts(source: ComponentSource, program: OxcProject, monorepoRoot: string): PartSource[] {
@@ -291,40 +313,56 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
   const partExports = extractParts(source.partsIndexPath, program);
   if (partExports.length === 0) return [];
 
-  const localExports = partExports.filter((p) => p.source.startsWith('./'));
-  const nonLocalExports = partExports.filter((p) => !p.source.startsWith('./'));
-  if (localExports.length === 0 && nonLocalExports.length === 0) return [];
+  const namedExports = partExports.filter((p) => p.kind === 'named');
+  const localExports = namedExports.filter((p) => p.source.startsWith('./'));
+  const nonLocalExports = namedExports.filter((p) => !p.source.startsWith('./'));
+  const namespaceExports = partExports.filter((p) => p.kind === 'namespace' && p.source.startsWith('./'));
 
   const componentKebab = source.kebab;
   const htmlDir = path.join(htmlUiPath, componentKebab);
 
+  // Parts that share one source file (`./component` exporting Root, Options, and Value) are named after
+  // their export; a file-derived kebab would collide and collapse them into a single part.
+  const sharedSources = new Set(
+    localExports.map((part) => part.source).filter((value, index, all) => all.indexOf(value) !== index)
+  );
+
   const parts: PartSource[] = [];
 
   for (const partExport of localExports) {
-    const kebab = partKebabFromSource(partExport.source, componentKebab);
+    const kebab = sharedSources.has(partExport.source)
+      ? pascalToKebab(partExport.name)
+      : partKebabFromSource(partExport.source, componentKebab);
 
-    const subPartElementFile = resolvePartElement(htmlDir, componentKebab, partExport.source, kebab);
-    const hasSubPartElement = fs.existsSync(subPartElementFile);
+    const partElement = resolvePartElement(htmlDir, componentKebab, partExport.source, kebab);
 
     const reactFile = path.join(path.dirname(source.partsIndexPath!), `${partExport.source.replace('./', '')}.tsx`);
     const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
 
-    const isPrimary = !!reactPath && instantiatesCore(reactPath, source.name);
-
-    const subPartUsesDataAttrs = !isPrimary && !!reactPath && usesDataAttrs(reactPath);
-
-    const part: PartSource = {
+    parts.push({
       name: partExport.name,
       localName: partExport.localName,
       kebab,
-      isPrimary,
-      htmlPath: hasSubPartElement ? subPartElementFile : isPrimary ? source.htmlPath : undefined,
+      isPrimary: !!reactPath && instantiatesCore(reactPath, source.name),
+      htmlPath: partElement?.path,
+      htmlElementName: partElement?.className,
       reactPath,
-      dataAttrsPath: subPartUsesDataAttrs ? source.dataAttrsPath : undefined,
-      dataAttrsComponentName: subPartUsesDataAttrs ? source.name : undefined,
-    };
+    });
+  }
 
-    parts.push(part);
+  selectPrimaryPart(parts, source);
+
+  for (const part of parts) {
+    if (part.isPrimary || !part.reactPath || !usesDataAttrs(part.reactPath)) continue;
+
+    part.dataAttrsPath = source.dataAttrsPath;
+    part.dataAttrsComponentName = source.name;
+  }
+
+  for (const namespaceExport of namespaceExports) {
+    parts.push(
+      ...discoverNamespaceParts(namespaceExport, source.partsIndexPath, componentKebab, htmlDir, coreUiPath, program)
+    );
   }
 
   if (nonLocalExports.length > 0) {
@@ -353,10 +391,16 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
         const originExport = originExports.find((o) => o.name === reExport.name);
         if (!originExport) continue;
 
+        if (originExport.kind === 'namespace') {
+          parts.push(
+            ...discoverNamespaceParts(originExport, originPartsFile, originKebab, originHtmlDir, coreUiPath, program)
+          );
+          continue;
+        }
+
         const kebab = partKebabFromSource(originExport.source, originKebab);
 
-        const subPartElementFile = resolvePartElement(originHtmlDir, originKebab, originExport.source, kebab);
-        const hasSubPartElement = fs.existsSync(subPartElementFile);
+        const partElement = resolvePartElement(originHtmlDir, originKebab, originExport.source, kebab);
 
         const reactFile = path.join(originReactDir, `${originExport.source.replace('./', '')}.tsx`);
         const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
@@ -372,7 +416,8 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
           localName: originExport.localName,
           kebab,
           isPrimary: false,
-          htmlPath: hasSubPartElement ? subPartElementFile : undefined,
+          htmlPath: partElement?.path,
+          htmlElementName: partElement?.className,
           reactPath,
           dataAttrsPath: originDataAttrsPath,
           dataAttrsComponentName: originComponentName,
@@ -383,21 +428,79 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
     }
   }
 
-  const primaryCount = parts.filter((p) => p.isPrimary).length;
+  return parts.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+}
 
-  if (primaryCount > 1) {
-    let foundFirst = false;
+// A namespace re-export (`export * as Thumbnail from './thumbnail/index.parts'`) groups nested parts that render
+// as `Slider.Thumbnail.Root` and `Slider.Thumbnail.Image`. The nested index sits in a folder named after the
+// namespace; its `Root` maps to the element file of that name (`slider/thumbnail.ts`), other nested parts to
+// `{namespace}-{part}.ts`. Nested exports may point outside the component (`../../thumbnail/image`); those parts
+// take their React file, and any data attributes, from the component that owns that file.
+function discoverNamespaceParts(
+  namespaceExport: PartExport,
+  partsIndexPath: string,
+  componentKebab: string,
+  htmlDir: string,
+  coreUiPath: string,
+  program: OxcProject
+): PartSource[] {
+  const nestedIndexFile = path.resolve(path.dirname(partsIndexPath), `${namespaceExport.source}.ts`);
+  if (!fs.existsSync(nestedIndexFile)) return [];
 
-    for (const p of parts) {
-      if (p.isPrimary) {
-        if (foundFirst) p.isPrimary = false;
+  const namespaceKebab = pascalToKebab(namespaceExport.name);
+  const nestedDir = path.dirname(nestedIndexFile);
+  const parts: PartSource[] = [];
 
-        foundFirst = true;
-      }
-    }
+  for (const nestedExport of extractParts(nestedIndexFile, program)) {
+    if (nestedExport.kind !== 'named') continue;
+
+    const partKebab = partKebabFromSource(nestedExport.source, namespaceKebab);
+    const elementBasename = nestedExport.name === 'Root' ? namespaceKebab : `${namespaceKebab}-${partKebab}`;
+    const partElement = resolvePartElement(
+      htmlDir,
+      componentKebab,
+      `./${namespaceKebab}/${partKebab}`,
+      elementBasename
+    );
+
+    const reactFile = path.resolve(nestedDir, `${nestedExport.source}.tsx`);
+    const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
+
+    const ownerKebab = reactPath ? path.basename(path.dirname(reactPath)) : componentKebab;
+    const ownerDataAttrsFile = path.join(coreUiPath, ownerKebab, 'data.ts');
+    const ownsDataAttrs = !!reactPath && usesDataAttrs(reactPath) && fs.existsSync(ownerDataAttrsFile);
+
+    parts.push({
+      name: `${namespaceExport.name}.${nestedExport.name}`,
+      localName: nestedExport.localName,
+      kebab: `${namespaceKebab}-${partKebab}`,
+      isPrimary: false,
+      htmlPath: partElement?.path,
+      htmlElementName: partElement?.className,
+      reactPath,
+      dataAttrsPath: ownsDataAttrs ? ownerDataAttrsFile : undefined,
+      dataAttrsComponentName: ownsDataAttrs ? kebabToPascal(ownerKebab) : undefined,
+    });
   }
 
-  return parts.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+  return parts.sort(
+    (a, b) => Number(b.kebab === `${namespaceKebab}-root`) - Number(a.kebab === `${namespaceKebab}-root`)
+  );
+}
+
+// Exactly one local part carries the shared core data and the component's root element. Several parts
+// qualify when they share a source file that constructs the core; none qualifies when the React parts
+// drive the core through hooks instead of constructing it. Both cases fall back to the `Root` part.
+function selectPrimaryPart(parts: PartSource[], source: ComponentSource): void {
+  const primaries = parts.filter((part) => part.isPrimary);
+  const root = parts.find((part) => part.name === 'Root');
+
+  const primary = primaries.length === 0 ? root : (primaries.find((part) => part.name === 'Root') ?? primaries[0]);
+  if (!primary) return;
+
+  for (const part of parts) part.isPrimary = part === primary;
+
+  primary.htmlPath ??= source.htmlPath;
 }
 
 // ─── Component Reference Building ──────────────────────────────────
@@ -468,9 +571,10 @@ function buildMultiPartReference(
 
       partsRecord[part.kebab] = partRef;
     } else {
-      const elementName = part.htmlPath ? kebabToPascal(path.basename(part.htmlPath, '.ts')) : undefined;
       const htmlData =
-        part.htmlPath && elementName ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
+        part.htmlPath && part.htmlElementName
+          ? extractHtml(part.htmlPath, program, source.name, part.htmlElementName)
+          : null;
 
       const dataAttrsData =
         part.dataAttrsPath && part.dataAttrsComponentName
@@ -506,11 +610,11 @@ function buildMultiPartReference(
   }
 
   for (const extra of source.extraDataAttrs ?? []) {
-    const componentName = dataAttrsComponentName(path.basename(extra.path), source.kebab);
+    const componentName = extra.exportName.replace(/DataAttrs$/, '');
     const extraData = extractDataAttrs(extra.path, program, componentName);
 
     if (!extraData) {
-      log.warn(`No ${componentName}DataAttrs export found in ${extra.path}; skipping @parts merge`);
+      log.warn(`No ${extra.exportName} export found in ${extra.path}; skipping @parts merge`);
       continue;
     }
 

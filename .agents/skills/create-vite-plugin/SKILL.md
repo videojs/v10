@@ -21,7 +21,7 @@ Inspect the installed Vite and Rolldown versions, application config, neighborin
 
 Read [references/api-and-host-contracts.md](references/api-and-host-contracts.md) when choosing between a raw Rolldown plugin, `build.rolldownOptions.plugins`, a top-level Vite plugin, or an environment-aware plugin.
 
-Use `packages/vjsc/src/vite/index.ts` as the thin-adapter example, `packages/vjsc/src/plugins/tests` for direct Rolldown coverage, and `packages/skins/vjsc/tests/vite.test.ts` as the Vite host test anchor.
+Use `packages/vjsc/src/vite/index.ts` as the thin-adapter example, `packages/vjsc/src/plugins/tests` for direct Rolldown coverage, and `packages/skins/build/tests/vite.test.ts` as the Vite host test anchor.
 
 ## Validation
 

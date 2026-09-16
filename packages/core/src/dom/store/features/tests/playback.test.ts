@@ -38,6 +38,66 @@ describe('playbackFeature', () => {
       expect(store.state.waiting).toBe(true);
     });
 
+    it('clears waiting once currentTime advances below HAVE_FUTURE_DATA', () => {
+      const video = createMockVideo({
+        paused: false,
+        readyState: HTMLMediaElement.HAVE_CURRENT_DATA,
+        currentTime: 0,
+      });
+
+      const store = createStore<PlayerTarget>()(playbackFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.waiting).toBe(true);
+
+      // Safari holds HAVE_CURRENT_DATA for the whole of some MSE streams, so a
+      // presented frame is the only evidence that playback ever recovered.
+      video.currentTime = 0.5;
+      video.dispatchEvent(new Event('timeupdate'));
+
+      expect(store.state.waiting).toBe(false);
+    });
+
+    it('keeps waiting while currentTime does not advance', () => {
+      const video = createMockVideo({
+        paused: false,
+        readyState: HTMLMediaElement.HAVE_CURRENT_DATA,
+        currentTime: 4,
+      });
+
+      const store = createStore<PlayerTarget>()(playbackFeature);
+
+      store.attach({ media: video, container: null });
+
+      video.dispatchEvent(new Event('timeupdate'));
+
+      expect(store.state.waiting).toBe(true);
+    });
+
+    it('restores waiting when the browser reports starvation again', () => {
+      const video = createMockVideo({
+        paused: false,
+        readyState: HTMLMediaElement.HAVE_CURRENT_DATA,
+        currentTime: 0,
+      });
+
+      const store = createStore<PlayerTarget>()(playbackFeature);
+
+      store.attach({ media: video, container: null });
+
+      video.currentTime = 12;
+      video.dispatchEvent(new Event('timeupdate'));
+      expect(store.state.waiting).toBe(false);
+
+      video.dispatchEvent(new Event('waiting'));
+      expect(store.state.waiting).toBe(true);
+
+      video.currentTime = 12.25;
+      video.dispatchEvent(new Event('timeupdate'));
+      expect(store.state.waiting).toBe(false);
+    });
+
     it('detects started from currentTime', () => {
       const video = createMockVideo({
         paused: true,

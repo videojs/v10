@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vite-plus/test';
 import { viteOxcPlugin } from '../oxc';
 
 const ENTRY_ID = 'vite-oxc-fixture.js';
+const STYLE_ENTRY_ID = 'vite-oxc-style-fixture.js';
+const STYLE_ID = 'vite-oxc-fixture.css';
 
 describe('viteOxcPlugin', () => {
   it('supplies the AST and MagicString metadata omitted by Vite', async () => {
@@ -63,6 +65,35 @@ describe('viteOxcPlugin', () => {
     expect(sourceMap?.sources.length).toBeGreaterThan(0);
   });
 
+  it('passes stylesheet modules through without parsing them', async () => {
+    let styleAst: unknown = 'unset';
+    const transform: Plugin = {
+      name: 'vite-oxc-style-transform',
+      transform: {
+        filter: { id: /\.css$/ },
+        handler(_code, id, meta) {
+          if (id === STYLE_ID) styleAst = (meta as { ast?: unknown }).ast;
+
+          return null;
+        },
+      },
+    };
+
+    await expect(
+      build({
+        configFile: false,
+        logLevel: 'silent',
+        plugins: [fixturePlugin(), viteOxcPlugin(transform)],
+        build: {
+          write: false,
+          rolldownOptions: { input: STYLE_ENTRY_ID },
+        },
+      })
+    ).resolves.toBeDefined();
+
+    expect(styleAst).toBeUndefined();
+  });
+
   it('reports positioned transform errors against the authored source', async () => {
     const transform: Plugin = {
       name: 'vite-oxc-positioned-error',
@@ -110,13 +141,21 @@ function metadataProbe(record: (hasMetadata: boolean) => void): Plugin {
 }
 
 function fixturePlugin(): Plugin {
+  const modules: Record<string, string> = {
+    [ENTRY_ID]: `globalThis.value = 'before';`,
+    [STYLE_ENTRY_ID]: `import './${STYLE_ID}';`,
+    [STYLE_ID]: `@layer components { .fixture { color: red; } }`,
+  };
+
   return {
     name: 'vite-oxc-fixture',
     resolveId(id) {
-      return id === ENTRY_ID ? id : null;
+      const name = id.startsWith('./') ? id.slice(2) : id;
+
+      return name in modules ? name : null;
     },
     load(id) {
-      return id === ENTRY_ID ? `globalThis.value = 'before';` : null;
+      return modules[id] ?? null;
     },
   };
 }

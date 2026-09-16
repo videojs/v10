@@ -15,7 +15,8 @@ export const baseConfig = {
       nativeMagicString: true,
     },
   },
-  ignoreWatch: [/[/\\]packages[/\\][^/\\]+[/\\]dist(?:[/\\]|$)/],
+  // Matches `packages/<name>/dist` and bucketed `packages/<bucket>/<name>/dist`.
+  ignoreWatch: [/[/\\]packages[/\\](?:[^/\\]+[/\\])?[^/\\]+[/\\]dist(?:[/\\]|$)/],
   report: process.env.CI === 'true',
 } satisfies PackUserConfig;
 
@@ -25,7 +26,10 @@ export function packageBuildConfig(mode: PackageBuildMode, platform: 'browser' |
     ...baseConfig,
     platform,
     format: 'es' as const,
-    sourcemap: true,
+    // The default build is unminified, so source maps add ~1,400 files to the
+    // published packages for little debugging value. Bundlers pick the `dev`
+    // build through the `development` condition, which keeps its maps.
+    sourcemap: mode === 'dev',
     clean: !isWatchMode,
     hash: false,
     unbundle: true,

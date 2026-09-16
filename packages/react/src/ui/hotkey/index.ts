@@ -1,1 +1,1 @@
-export * from './hotkey';
+export * from './component';

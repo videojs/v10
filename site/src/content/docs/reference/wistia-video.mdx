@@ -1,0 +1,105 @@
+---
+title: WistiaVideo
+frameworkTitle:
+  html: wistia-video
+description: Video component that plays Wistia-hosted videos through Wistia's web component
+---
+
+import MediaImports from "@/components/docs/api-reference/MediaImports.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/wistia-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/wistia-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/wistia-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/wistia-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/wistia-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/wistia-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/wistia-video/html/css/BasicUsage.ts?raw";
+
+`WistiaVideo` adapts Wistia's own `<wistia-player>` web component to the Video.js media contract. Wistia's chrome stays hidden by default so a Video.js player skin can control playback; set `controls` to use Wistia's UI.
+
+## Import
+
+<MediaImports media="wistia-video" package="@videojs/wistia-video" react="WistiaVideo" />
+
+## Load a source
+
+`src` accepts a Wistia media URL or hashed media ID. A `wtime` query parameter sets the initial playback position.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<WistiaVideo src="https://example.wistia.com/medias/abcde12345?wtime=30" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<wistia-video src="https://example.wistia.com/medias/abcde12345?wtime=30"></wistia-video>
+```
+</FrameworkCase>
+
+## Wistia options
+
+Pass Wistia player options through `source`. `mediaId` selects the media; other properties such as `playerColor`, `qualityMin`, and `roundedPlayer` are forwarded to Wistia.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<WistiaVideo
+  source={{
+    mediaId: 'abcde12345',
+    playerColor: '54bbff',
+    qualityMin: 540,
+  }}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+const video = document.querySelector('wistia-video');
+video.source = {
+  mediaId: 'abcde12345',
+  playerColor: '54bbff',
+  qualityMin: 540,
+};
+```
+</FrameworkCase>
+
+## Behavior
+
+- Every Wistia media is treated as on-demand video. Live windows, remote playback, and picture-in-picture are unavailable.
+- `controls` switches Wistia's own chrome and pointer interaction on. Without it, pointer events pass through to the Video.js skin.
+- `loop`, `muted`, `autoplay`, `poster`, and `preload` are translated to Wistia's option names. Wistia always plays inline, so `playsInline` has no additional effect.
+- Changing the media ID loads a new Wistia player. Changing only player options keeps the current player and playback session.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>

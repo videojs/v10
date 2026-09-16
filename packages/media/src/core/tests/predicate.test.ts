@@ -2,11 +2,46 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import {
+  getTimeRangeEnd,
+  hasTimeRange,
   isMediaBufferCapable,
   isMediaContentDataCapable,
   isMediaRemotePlaybackCapable,
   isMediaTextTrackCapable,
 } from '../predicate';
+
+describe('getTimeRangeEnd', () => {
+  it('prefers a finite duration', () => {
+    expect(getTimeRangeEnd({ duration: 120, seekable: [[10, 100]] })).toBe(120);
+  });
+
+  it('falls back to the last seekable end', () => {
+    expect(
+      getTimeRangeEnd({
+        duration: 0,
+        seekable: [
+          [10, 20],
+          [30, 90],
+        ],
+      })
+    ).toBe(90);
+  });
+
+  it('returns zero when the time range is unknown', () => {
+    expect(getTimeRangeEnd({ duration: 0, seekable: [] })).toBe(0);
+  });
+});
+
+describe('hasTimeRange', () => {
+  it('accepts either a duration or seekable range', () => {
+    expect(hasTimeRange({ duration: 120, seekable: [] })).toBe(true);
+    expect(hasTimeRange({ duration: 0, seekable: [[10, 90]] })).toBe(true);
+  });
+
+  it('rejects an unknown time range', () => {
+    expect(hasTimeRange({ duration: 0, seekable: [] })).toBe(false);
+  });
+});
 
 describe('isMediaContentDataCapable', () => {
   it('uses undefined as the unsupported sentinel', () => {

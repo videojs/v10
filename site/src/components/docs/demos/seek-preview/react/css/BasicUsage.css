@@ -62,3 +62,7 @@
 .media-slider-thumbnail[data-hidden] {
   display: none;
 }
+
+.media-slider-thumbnail-image {
+  display: block;
+}

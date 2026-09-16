@@ -1,3 +1,3 @@
-import { ContainerElement } from '../../ui/container/container-element';
+import { ContainerElement } from '../../ui/container/element';
 
 export { ContainerElement };

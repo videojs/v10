@@ -12,6 +12,12 @@ import BasicUsageDemoReact from "@/components/docs/demos/use-button/react/css/Ba
 import basicUsageReactTsx from "@/components/docs/demos/use-button/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-button/react/css/BasicUsage.css?raw";
 
+## Import
+
+```tsx
+import { useButton } from "@videojs/react";
+```
+
 `useButton` provides button behavior including keyboard activation and accessibility checks. It returns a `getButtonProps` function for spreading onto a `<button>` element and a `buttonRef` for validation.
 
 `getButtonProps` merges internal button props (click/keyboard handlers, disabled state) with any external props you pass in. Use <DocsLink slug="reference/render-element">`renderElement`</DocsLink> to render the button with state-driven props and render prop support. In development mode, `buttonRef` warns if the rendered element is not a `<button>`.

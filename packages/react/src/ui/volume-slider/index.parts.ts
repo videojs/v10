@@ -10,4 +10,4 @@ export {
   Value,
   type ValueProps,
 } from '../slider/index.parts';
-export { VolumeSliderRoot as Root, type VolumeSliderRootProps as RootProps } from './volume-slider-root';
+export { VolumeSliderRoot as Root, type VolumeSliderRootProps as RootProps } from './root';

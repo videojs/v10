@@ -43,6 +43,15 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
   return elementAny.ref ?? elementAny.props?.ref;
 }
 
+function mergeRefs<T>(...refs: (Ref<T> | Ref<T>[] | undefined)[]): Ref<T> | undefined {
+  const flatRefs = refs.flat().filter((ref): ref is Ref<T> => ref !== null && ref !== undefined);
+  if (flatRefs.length === 0) return undefined;
+
+  if (flatRefs.length === 1) return flatRefs[0];
+
+  return composeRefs(...flatRefs);
+}
+
 /**
  * Render a UI component element.
  *
@@ -95,7 +104,7 @@ export function renderElement<
 
   if (isFunction(render)) {
     // Render function: call with props and state
-    const mergedRef = composeRefs(ref, mergedProps.ref);
+    const mergedRef = mergeRefs(ref, mergedProps.ref);
 
     return render({ ...mergedProps, ref: mergedRef } as HTMLProps, state);
   }
@@ -103,7 +112,7 @@ export function renderElement<
   if (isValidElement(render)) {
     const elementRef = getElementRef(render);
 
-    const mergedRef = composeRefs(ref, mergedProps.ref, elementRef);
+    const mergedRef = mergeRefs(ref, mergedProps.ref, elementRef);
 
     const elementProps = mergeProps(mergedProps, render.props as Record<string, unknown>);
 
@@ -113,7 +122,7 @@ export function renderElement<
   }
 
   // Default tag
-  const mergedRef = composeRefs(ref, mergedProps.ref);
+  const mergedRef = mergeRefs(ref, mergedProps.ref);
 
   mergedProps.ref = mergedRef;
 

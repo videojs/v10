@@ -237,11 +237,15 @@ export function buildMimeCodec(track: { mimeType: string; codecs?: string[] }): 
  * @returns True if the codec is supported
  */
 export function isCodecSupported(mimeCodec: string): boolean {
-  if (!supportsMediaSource()) {
-    return false;
+  if (supportsMediaSource()) {
+    return MediaSource.isTypeSupported(mimeCodec);
   }
 
-  return MediaSource.isTypeSupported(mimeCodec);
+  if (supportsManagedMediaSource()) {
+    return ManagedMediaSource!.isTypeSupported(mimeCodec);
+  }
+
+  return false;
 }
 
 /**

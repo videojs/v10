@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'గడిచిన సమయం మరియు మిగిలిన సమయం మధ్య మార్చండి.',
     toggleDuration: 'నిడివి మరియు మిగిలిన సమయం మధ్య మార్చండి.',
     position: '{current} యొక్క {duration}',
+    unknown: 'మీడియా లోడ్ కాలేదు, సమయం తెలియదు.',
   },
   playback: {
     rate: 'ప్లేబ్యాక్ రేట్ {rate}',

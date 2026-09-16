@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Preklopi med preteklim in preostalim časom.',
     toggleDuration: 'Preklopi med trajanjem in preostalim časom.',
     position: '{current} od {duration}',
+    unknown: 'Predstavnostna vsebina se ni naložila, čas ni znan.',
   },
   playback: {
     rate: 'Hitrost predvajanja {rate}',

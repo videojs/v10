@@ -278,6 +278,32 @@ describe('isCodecSupported', () => {
     // Test with unlikely/unsupported codec
     expect(isCodecSupported('video/invalid; codecs="fake"')).toBe(false);
   });
+
+  it('falls back to ManagedMediaSource.isTypeSupported when classic MediaSource is absent — the iPhone shape', () => {
+    const isTypeSupported = vi.fn((type: string) => type.includes('avc1'));
+
+    vi.stubGlobal('MediaSource', undefined);
+    vi.stubGlobal('ManagedMediaSource', { isTypeSupported });
+
+    try {
+      expect(isCodecSupported('video/mp4; codecs="avc1.42E01E"')).toBe(true);
+      expect(isCodecSupported('video/mp4; codecs="hvc1.2.4.L123.B0"')).toBe(false);
+      expect(isTypeSupported).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('returns false when neither MediaSource API exists', () => {
+    vi.stubGlobal('MediaSource', undefined);
+    vi.stubGlobal('ManagedMediaSource', undefined);
+
+    try {
+      expect(isCodecSupported('video/mp4; codecs="avc1.42E01E"')).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe('waitForMediaSourceOpen', () => {

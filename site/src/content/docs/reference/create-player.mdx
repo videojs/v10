@@ -11,6 +11,13 @@ import BasicUsageDemoReact from "@/components/docs/demos/create-player/react/css
 import basicUsageReactTsx from "@/components/docs/demos/create-player/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/create-player/react/css/BasicUsage.css?raw";
 
+## Import
+
+```tsx
+import { createPlayer } from "@videojs/react";
+import { videoFeatures } from "@videojs/react/video";
+```
+
 `createPlayer` is the entry point for setting up a Video.js player in React. It accepts a configuration object with a `features` array and returns hooks and components for building a player.
 
 The hook is typed according to the provided features, giving you full type safety for state selectors and actions.

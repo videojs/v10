@@ -1,6 +1,6 @@
 {
   "name": "@videojs/element",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-rc.2",
   "description": "Lightweight reactive custom element base for Video.js",
   "keywords": [
     "custom-element",
@@ -8,6 +8,7 @@
     "reactive",
     "videojs"
   ],
+  "homepage": "https://videojs.org",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

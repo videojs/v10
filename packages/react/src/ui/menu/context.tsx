@@ -1,6 +1,6 @@
-import type { MenuCore, MenuState } from '@videojs/core';
+import type { MenuCore, MenuOptionState, MenuState } from '@videojs/core';
 import type { MediaContainer, MenuApi, MenuPopupApi, PositioningBoundary } from '@videojs/core/dom';
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useLayoutEffect, useState } from 'react';
 
 export interface MenuContextValue {
   core: MenuCore;
@@ -13,6 +13,8 @@ export interface MenuContextValue {
   anchorName: string;
   boundary: PositioningBoundary;
   container: MediaContainer | null;
+  optionState: MenuOptionState | null;
+  setOptionState: (source: symbol, state: MenuOptionState | null) => void;
 }
 
 const MenuContext = createContext<MenuContextValue | null>(null);
@@ -30,6 +32,22 @@ export function useMenuContext(): MenuContextValue {
 /** Returns the nearest menu context, or `null` outside `Menu.Root`. */
 export function useOptionalMenuContext(): MenuContextValue | null {
   return useContext(MenuContext);
+}
+
+/** Publishes a specialized option group's selected value and availability to its enclosing menu. */
+export function useMenuOptionState(state: MenuOptionState): void {
+  const menu = useOptionalMenuContext();
+  const setOptionState = menu?.setOptionState;
+  const [source] = useState(() => Symbol('menu-option'));
+  const { value, disabled, hidden, availability } = state;
+
+  useLayoutEffect(() => {
+    if (!setOptionState) return undefined;
+
+    setOptionState(source, { value, disabled, hidden, availability });
+
+    return () => setOptionState(source, null);
+  }, [availability, disabled, hidden, setOptionState, source, value]);
 }
 
 export interface MenuPopupContextValue {

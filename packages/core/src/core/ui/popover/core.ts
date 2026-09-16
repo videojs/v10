@@ -8,11 +8,15 @@ export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
 export type PopoverAlign = 'start' | 'center' | 'end';
 
+export type PopoverBoundary = 'viewport' | 'container' | (string & {});
+
 export interface PopoverProps {
   /** Preferred side of the trigger for the popup. */
   side?: PopoverSide | undefined;
   /** Alignment of the popup along the trigger's edge. */
   align?: PopoverAlign | undefined;
+  /** Boundary used to constrain the popup position. */
+  boundary?: PopoverBoundary | undefined;
   /**
    * - `false` (default): non-modal; background content remains interactive.
    * - `true`: modal; sets `aria-modal="true"` on the popup.
@@ -35,6 +39,8 @@ export interface PopoverProps {
   closeDelay?: number | undefined;
 }
 
+type PopoverCoreProps = Omit<PopoverProps, 'boundary'>;
+
 /**
  * The raw transition state managed by `createTransition`. Uses `active` (not `open`) to distinguish the generic
  * transition state machine from the domain-specific `PopoverState.open`.
@@ -51,7 +57,7 @@ export interface PopoverState extends TransitionFlags {
 }
 
 export class PopoverCore {
-  static readonly defaultProps: NonNullableObject<PopoverProps> = {
+  static readonly defaultProps: NonNullableObject<PopoverCoreProps> = {
     side: 'top',
     align: 'center',
     modal: false,
@@ -66,11 +72,11 @@ export class PopoverCore {
 
   #props = { ...PopoverCore.defaultProps };
 
-  constructor(props?: PopoverProps) {
+  constructor(props?: PopoverCoreProps) {
     if (props) this.setProps(props);
   }
 
-  setProps(props: PopoverProps): void {
+  setProps(props: PopoverCoreProps): void {
     this.#props = defaults(props, PopoverCore.defaultProps);
   }
 
@@ -111,7 +117,7 @@ export class PopoverCore {
 }
 
 export namespace PopoverCore {
-  export type Props = PopoverProps;
+  export type Props = PopoverCoreProps;
   export type State = PopoverState;
   export type Input = PopoverInput;
 }
