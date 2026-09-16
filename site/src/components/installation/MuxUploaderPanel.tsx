@@ -192,7 +192,7 @@ export default function MuxUploaderPanel() {
           </span>
           <span className="flex flex-col gap-1">
             <span className="text-p15 font-semibold text-balance">Drop a video to host it for free on Mux</span>
-            <span className="text-muted text-p3 text-balance">
+            <span className="text-p3 dark:text-muted text-balance">
               We transcode it into an HLS stream and set it as your source above.
             </span>
           </span>
@@ -211,7 +211,7 @@ export default function MuxUploaderPanel() {
         <MuxUploaderStatus muxUploader="mux-uploader" className="text-p3" />
         <MuxUploaderRetry muxUploader="mux-uploader" className="text-p3" />
         <MuxUploaderProgress type="percentage" muxUploader="mux-uploader" className="text-p3 font-mono" />
-        <span className="text-muted text-p4 mt-2 inline-flex items-center gap-1.5">
+        <span className="text-p4 dark:text-muted mt-2 inline-flex items-center gap-1.5">
           Powered by{' '}
           <a
             href={MUX_URL}

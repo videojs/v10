@@ -80,7 +80,9 @@ export function AppearanceControls({ className }: { className?: string }) {
           pending={!isHydrated}
           disabled={isHydrated && !darkActive}
         />
-        {isHydrated && !darkActive && <span className="text-muted text-p4">Applies when the dark theme is on.</span>}
+        {isHydrated && !darkActive && (
+          <span className="text-p4 dark:text-muted">Applies when the dark theme is on.</span>
+        )}
       </Field>
       <Field label="Accent">
         <div role="radiogroup" aria-label="Accent color" className="flex items-center gap-2.5">

@@ -150,7 +150,7 @@ export default function MediaSourcePicker() {
             className="corner-squircle border-line bg-surface text-p3 placeholder:text-muted intent:border-line-strong focus-visible:border-line-strong focus-visible:outline-gold h-10 w-full rounded-lg border pr-3 pl-9 shadow-xs focus-visible:outline-2 focus-visible:outline-offset-1"
           />
         </div>
-        <p className="text-muted text-p4" aria-live="polite">
+        <p className="text-p4 dark:text-muted" aria-live="polite">
           {showDetectionMatch ? (
             <>
               This looks like {articleFor(detection.renderer)}{' '}
