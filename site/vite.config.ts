@@ -42,8 +42,33 @@ const config: ViteUserConfig = {
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/utils/**', 'src/components/**', 'src/types/**', 'scripts/api-docs-builder/src/**'],
-      exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**'],
+      // Cover executable site logic, not Astro templates, rendered demos, React UI,
+      // type-only modules, or the API builder's input fixtures.
+      include: ['src/utils/**/*.ts', 'src/types/docs.ts', 'scripts/api-docs-builder/src/*.ts'],
+      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**', '**/tests/**'],
+      // Negative thresholds cap the existing uncovered-item debt. Unlike a single
+      // percentage, adding a large well-covered file cannot hide a regression in
+      // another domain.
+      thresholds: {
+        'scripts/api-docs-builder/src/*.ts': {
+          statements: -572,
+          branches: -766,
+          functions: -52,
+          lines: -306,
+        },
+        'src/utils/**/*.ts': {
+          statements: -241,
+          branches: -198,
+          functions: -55,
+          lines: -205,
+        },
+        'src/types/docs.ts': {
+          statements: -3,
+          branches: -2,
+          functions: -1,
+          lines: -1,
+        },
+      },
     },
   },
   run: {
@@ -122,7 +147,7 @@ const config: ViteUserConfig = {
         dependsOn: ['api-docs:generate', 'cdn-manifest'],
       },
       'test:ci': {
-        command: 'pnpm test',
+        command: 'pnpm test:coverage',
         cache: false,
         dependsOn: workspaceTaskDependencies(),
       },

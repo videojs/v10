@@ -10,7 +10,7 @@
     "test": "vp test run",
     "test:watch": "vp test",
     "test:ui": "vp test --ui",
-    "test:coverage": "vp test --coverage"
+    "test:coverage": "vp test run --coverage"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.3.4",
