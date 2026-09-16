@@ -404,6 +404,26 @@ function stubWebKitMediaKeys(video: HTMLMediaElement) {
 /** The exact refusal `generateRequest` raises during an AirPlay session on an affected sender. */
 const airPlayRefusal = () => new DOMException('The operation is not supported.', 'NotSupportedError');
 
+/** A negotiated CDM that accepts everything up to `generateRequest`, then refuses it the way an affected sender does. */
+function makeRefusingEme() {
+  const eme = makeFakeEme();
+
+  vi.mocked(eme.mediaKeys.createSession).mockImplementation(() => {
+    const session = new EventTarget() as never as MediaKeySession;
+
+    (session as { generateRequest: unknown }).generateRequest = vi.fn(async () => {
+      throw airPlayRefusal();
+    });
+    (session as { update: unknown }).update = vi.fn(async () => {});
+    (session as { close: unknown }).close = vi.fn(async () => {});
+    (session as { keyStatuses: unknown }).keyStatuses = new Map();
+    return session;
+  });
+  vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+
+  return eme;
+}
+
 function goWireless(video: HTMLMediaElement, wireless: boolean) {
   Object.defineProperty(video, 'webkitCurrentPlaybackTargetIsWireless', {
     value: wireless,
@@ -580,6 +600,65 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
     await vi.waitFor(() =>
       expect(state.errors.get()?.map((error) => error.code)).toContain(SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED)
     );
+
+    reactor.destroy();
+  });
+
+  it('restores position and playback across the reload', async () => {
+    makeRefusingEme();
+    const { context, reactor } = setup();
+    const video = context.mediaElement.get()!;
+
+    goWireless(video, true);
+    stubWebKitMediaKeys(video);
+
+    // Mid-playback when the handover fires. `load()` would reset both.
+    Object.defineProperty(video, 'currentTime', { value: 42, configurable: true, writable: true });
+    Object.defineProperty(video, 'paused', { value: false, configurable: true, writable: true });
+    const play = vi.fn(async () => {});
+
+    Object.defineProperty(video, 'play', { value: play, configurable: true });
+    Object.defineProperty(video, 'load', {
+      value: vi.fn(() => {
+        // What the real load algorithm does to the element.
+        Object.defineProperty(video, 'currentTime', { value: 0, configurable: true, writable: true });
+        Object.defineProperty(video, 'paused', { value: true, configurable: true, writable: true });
+      }),
+      configurable: true,
+    });
+
+    receiverRequest(video);
+
+    await vi.waitFor(() => expect(video.currentTime).toBe(0));
+
+    video.dispatchEvent(new Event('loadedmetadata'));
+
+    expect(video.currentTime).toBe(42);
+    expect(play).toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('does not resume playback that was paused before the handover', async () => {
+    makeRefusingEme();
+    const { context, reactor } = setup();
+    const video = context.mediaElement.get()!;
+
+    goWireless(video, true);
+    stubWebKitMediaKeys(video);
+
+    Object.defineProperty(video, 'paused', { value: true, configurable: true, writable: true });
+    const play = vi.fn(async () => {});
+
+    Object.defineProperty(video, 'play', { value: play, configurable: true });
+    Object.defineProperty(video, 'load', { value: vi.fn(), configurable: true });
+
+    receiverRequest(video);
+
+    await vi.waitFor(() => expect((video as unknown as { load: ReturnType<typeof vi.fn> }).load).toHaveBeenCalled());
+    video.dispatchEvent(new Event('loadedmetadata'));
+
+    expect(play).not.toHaveBeenCalled();
 
     reactor.destroy();
   });

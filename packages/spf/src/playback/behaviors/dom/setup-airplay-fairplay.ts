@@ -384,8 +384,42 @@ function setupAirPlayFairPlaySetup({
             //
             // Resource selection re-runs over the `<source>` children, where
             // `setupAirPlay`'s native-HLS fallback still sits, so the receiver
-            // keeps its stream. Playback restarts — the handoff that got us here
-            // is already an interruption.
+            // keeps its stream.
+            //
+            // The load algorithm resets `currentTime` to 0 and forces `paused`,
+            // so the position and the playing state are captured here and put
+            // back once metadata is available. Without it, engaging AirPlay
+            // mid-playback silently leaves the receiver paused at the start and
+            // the viewer has to press play again — measured on a receiver.
+            //
+            // Restored here rather than through `state.startPosition`:
+            // `setupAirPlay` is that slot's only writer and binds it to the
+            // session's *falling* edge, so a second writer on the rising edge
+            // would be writing over a command it does not own. The reload is
+            // this behavior's, so the repair is too.
+            const position = mediaElement.currentTime;
+            const wasPlaying = !mediaElement.paused;
+
+            listen(
+              mediaElement,
+              'loadedmetadata',
+              () => {
+                if (signal.aborted) return;
+
+                if (position > 0) mediaElement.currentTime = position;
+
+                if (!wasPlaying) return;
+
+                // The user gesture that started the session may have expired by
+                // now, so this can be refused; degrade to paused-at-position,
+                // as `setupAirPlay`'s own session-end resume does.
+                mediaElement.play().catch((error) => {
+                  console.warn('[setupAirPlayFairPlay] resume after handover rejected — staying paused:', error);
+                });
+              },
+              { signal, once: true }
+            );
+
             mediaElement.load();
           };
 
