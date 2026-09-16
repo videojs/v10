@@ -139,6 +139,22 @@ export const fairPlayKeySystem: KeySystemModule<'com.apple.fps'> = {
 };
 
 /**
+ * FairPlay as an AirPlay receiver asks for it. Same key system and KEYFORMAT as {@link fairPlayKeySystem}, so it reads
+ * the same `#EXT-X-KEY` and licenses against the same `com.apple.fps` config entry — only the init-data type differs,
+ * and that difference is the whole reason the handoff exists. During a session WebKit plays the native-HLS fallback
+ * `<source>` on the receiver, whose key requests arrive as `skd`; MediaKeys negotiated for MSE's `sinf`/`cenc` cannot
+ * serve them.
+ *
+ * Deliberately outside `DEFAULT_KEY_SYSTEMS`: it is reachable only through `setupAirPlayFairPlay`, so a composition
+ * that drops that behavior drops this with it.
+ */
+export const fairPlayAirPlayKeySystem: KeySystemModule<'com.apple.fps'> = {
+  keySystem: 'com.apple.fps',
+  keyFormats: ['com.apple.streamingkeydelivery'],
+  initDataTypes: ['skd'],
+};
+
+/**
  * W3C Clear Key — the one key system the EME spec requires, so every Chromium ships it, including the bundled test
  * browsers that carry no proprietary CDM. That makes it the full-pipeline EME test vehicle (negotiate → attach →
  * license → decode with no Widevine/PlayReady/FairPlay available), and a legitimate choice for low-value content.

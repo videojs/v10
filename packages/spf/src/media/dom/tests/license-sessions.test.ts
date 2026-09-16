@@ -271,4 +271,50 @@ describe('listenForEncryptedInitData', () => {
 
     expect(seen).toEqual(['sinf:1,2', 'sinf:3']);
   });
+
+  it('serves every repeat when dedupe is off', () => {
+    const video = document.createElement('video');
+    const seen: string[] = [];
+
+    listenForEncryptedInitData(
+      video,
+      (type, bytes) => seen.push(`${type}:${[...bytes].join(',')}`),
+      new AbortController().signal,
+      {
+        dedupe: false,
+      }
+    );
+
+    const fire = (bytes: number[]) =>
+      video.dispatchEvent(
+        Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new Uint8Array(bytes).buffer })
+      );
+
+    // An AirPlay receiver re-proxies the same content id on connect and on
+    // disconnect; collapsing the second request strands the session.
+    fire([1, 2]);
+    fire([1, 2]);
+
+    expect(seen).toEqual(['skd:1,2', 'skd:1,2']);
+  });
+
+  it('ignores init-data types it was not asked for', () => {
+    const video = document.createElement('video');
+    const seen: string[] = [];
+
+    listenForEncryptedInitData(video, (type) => seen.push(type), new AbortController().signal, {
+      initDataTypes: ['skd'],
+    });
+
+    const fire = (initDataType: string) =>
+      video.dispatchEvent(
+        Object.assign(new Event('encrypted'), { initDataType, initData: new Uint8Array([1]).buffer })
+      );
+
+    fire('sinf');
+    fire('skd');
+    fire('cenc');
+
+    expect(seen).toEqual(['skd']);
+  });
 });

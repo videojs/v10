@@ -193,15 +193,31 @@ export function openLicenseSession({
   return session;
 }
 
+/** Narrows what {@link listenForEncryptedInitData} serves. */
+export interface EncryptedInitDataOptions {
+  /**
+   * Skip init data byte-identical to something already served. Defaults to `true`, which is what the MSE path needs:
+   * demuxed audio and video both fire `encrypted` for the same key.
+   *
+   * `false` for the AirPlay path, where a repeat is a second genuine request rather than an echo — the receiver proxies
+   * its own SPC through the sender's CDM on connect and again on disconnect, and dropping the second one strands the
+   * session.
+   */
+  dedupe?: boolean;
+  /** Serve only these init-data types. Every type when omitted. */
+  initDataTypes?: readonly string[];
+}
+
 /**
  * The event-driven path for keys without inline init data (FairPlay `skd://`): protection surfaces only once an
- * appended init segment fires `encrypted` (`sinf` on the MSE path). Deduped by init-data bytes, because demuxed audio
- * and video both fire for the same key. Listens until `signal` aborts.
+ * appended init segment fires `encrypted` (`sinf` on the MSE path, `skd` from an AirPlay receiver). Listens until
+ * `signal` aborts.
  */
 export function listenForEncryptedInitData(
   mediaElement: HTMLMediaElement,
   onInitData: (initDataType: string, initData: Uint8Array<ArrayBuffer>) => void,
-  signal: AbortSignal
+  signal: AbortSignal,
+  { dedupe = true, initDataTypes }: EncryptedInitDataOptions = {}
 ): void {
   const seen: Uint8Array[] = [];
 
@@ -212,10 +228,16 @@ export function listenForEncryptedInitData(
       const { initDataType, initData } = event as MediaEncryptedEvent;
       if (!initData) return;
 
-      const bytes = new Uint8Array(initData);
-      if (seen.some((prior) => prior.length === bytes.length && prior.every((byte, i) => byte === bytes[i]))) return;
+      if (initDataTypes && !initDataTypes.includes(initDataType)) return;
 
-      seen.push(bytes);
+      const bytes = new Uint8Array(initData);
+
+      if (dedupe) {
+        if (seen.some((prior) => prior.length === bytes.length && prior.every((byte, i) => byte === bytes[i]))) return;
+
+        seen.push(bytes);
+      }
+
       onInitData(initDataType, bytes);
     },
     { signal }
