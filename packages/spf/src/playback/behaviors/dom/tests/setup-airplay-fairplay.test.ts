@@ -663,6 +663,39 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
     reactor.destroy();
   });
 
+  it('waits for the revoked MediaSource blob to detach before reloading', async () => {
+    makeRefusingEme();
+    const { context, reactor } = setup();
+    const video = context.mediaElement.get()!;
+
+    goWireless(video, true);
+    stubWebKitMediaKeys(video);
+
+    // The engine prepends its MediaSource blob; the AirPlay fallback follows.
+    // Reloading now would select the blob.
+    const blob = document.createElement('source');
+
+    blob.type = 'video/mp4';
+    blob.src = 'blob:https://example.com/dead';
+    video.prepend(blob);
+
+    const load = vi.fn();
+
+    Object.defineProperty(video, 'load', { value: load, configurable: true });
+
+    receiverRequest(video);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(load).not.toHaveBeenCalled();
+
+    // `setupMediaSource` finishes its detach.
+    blob.remove();
+
+    await vi.waitFor(() => expect(load).toHaveBeenCalled());
+
+    reactor.destroy();
+  });
+
   it('closes the legacy session and releases the element on state exit', async () => {
     const { webkit, state, reactor, video } = await refuseEme();
 

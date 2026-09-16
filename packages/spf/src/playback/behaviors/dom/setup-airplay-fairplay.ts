@@ -285,6 +285,30 @@ function setupAirPlayFairPlaySetup({
           // CDM.
           let negotiation: Promise<MediaKeys | undefined> | undefined;
 
+          /** Settles once no revoked MediaSource blob is left among the element's `<source>` children. */
+          const blobSourceDetached = () =>
+            new Promise<void>((resolve) => {
+              const blobSource = () => mediaElement.querySelector('source[src^="blob:"]');
+              if (!blobSource()) return resolve();
+
+              const observer = new MutationObserver(() => {
+                if (blobSource()) return;
+
+                observer.disconnect();
+                resolve();
+              });
+
+              observer.observe(mediaElement, { childList: true });
+              signal.addEventListener(
+                'abort',
+                () => {
+                  observer.disconnect();
+                  resolve();
+                },
+                { once: true }
+              );
+            });
+
           /**
            * The legacy path, for a sender whose EME refuses to generate a request during the session. Reached only from
            * that refusal, so an unaffected WebKit never installs the old key system at all.
@@ -369,6 +393,19 @@ function setupAirPlayFairPlaySetup({
               attached = undefined;
               await attachMediaKeys(mediaElement, null).catch(() => {});
             }
+
+            if (signal.aborted) return;
+
+            // Wait out the MediaSource detach first. Resource selection takes
+            // the `<source>` children in order, the engine *prepends* the
+            // MediaSource blob and `setupAirPlay` *appends* the native-HLS
+            // fallback — so reloading while a revoked blob is still first
+            // selects it, which is what `WebKitBlobResource error 1` is. The
+            // detach is `setupMediaSource`'s to do and it is already underway
+            // by here; this only declines to race it. Bounded by the behavior's
+            // own signal rather than a timer: if the session ends while
+            // waiting, the abort resolves it and the reload never happens.
+            await blobSourceDetached();
 
             if (signal.aborted) return;
 
