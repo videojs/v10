@@ -109,6 +109,14 @@ const drmSnapshot = () => ({
   negotiatedKeySystem: signals.state.negotiatedKeySystem.get(),
   mseKeys: Boolean(signals.context.mediaKeys.get()),
   elementKeys: Boolean(video.mediaKeys),
+  // Resource selection takes the `<source>` children in order, and the engine
+  // *prepends* the MediaSource blob while `setupAirPlay` *appends* the
+  // native-HLS fallback. So any `load()` while a dead blob is still first
+  // selects it — which is what `WebKitBlobResource error 1` is. Listing them
+  // says whether that was possible at each transition.
+  sources: [...video.querySelectorAll('source')].map((el) =>
+    el.src.startsWith('blob:') ? 'blob(mse)' : el.src.endsWith('.m3u8') ? 'hls(fallback)' : el.src.slice(0, 24)
+  ),
   errors: signals.state.errors.get()?.map((error) => error.code),
 });
 
