@@ -30,8 +30,8 @@ export default {
     badge: 'Live',
   },
   cast: {
-    start: 'Aloita striimaus',
-    stop: 'Lopeta striimaus',
+    start: 'Aloita lähetys',
+    stop: 'Lopeta lähetys',
     connecting: 'Yhdistetään',
   },
   airplay: {
