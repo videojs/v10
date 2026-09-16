@@ -383,6 +383,31 @@ on its native-HLS path. So this is not an EZDRM-versus-this-engine problem —
 every player hits the same wall, and this engine is the only one that tries to
 get past it.
 
+### Android Chrome / Widevine L1: untested, needs hardware
+
+The one matrix cell with **no empirical signal**, and the gap widened on 2026-09-08
+when the robustness ladder began leading with `HW_SECURE_ALL` — the rung only an
+L1 device negotiates. Every desktop CDM in the matrix stops at `SW_SECURE_DECODE`,
+so nothing else exercises it.
+
+Not deferred by choice: the available Android device cannot load the sandbox at
+all, for reasons unrelated to DRM. It needs one person with a capable device.
+
+What to run, and what to report back:
+
+1. Same Wi-Fi as the dev host, Chrome, accept the self-signed cert (EME needs a
+   secure context).
+2. Open `spf-drm` and read the probe line logged at load —
+   `[spf-drm] CDM robustness tiers accepted:`. **Does the Widevine list contain
+   `HW_SECURE_ALL`?** That single line is the signal this cell is missing.
+3. Then `?drm=widevine`, `?source=hls-drm-widevine-cwip`, `?source=hls-drm-axinom`:
+   does each negotiate `com.widevine.alpha` and actually decode
+   (`framesDecoded` climbing, not merely `readyState`)?
+4. `?source=hls-drm-unlicensed` should refuse with 4008 causes then a 2011 verdict.
+
+The specific risk: the hardware-first rung negotiating a configuration Android
+then cannot decode over MSE. Negotiation succeeding is not the check — decode is.
+
 ### AirPlay handoff: manual
 
 No automated coverage reaches this path — Playwright cannot drive an AirPlay picker, and the receiver is
