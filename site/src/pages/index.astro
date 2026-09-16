@@ -23,7 +23,8 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=${posterTime}`;
     fetchpriority="high"
     slot="priority-head"
   />
-  <NavBar pill={false} />
+  {/* The home page stays on literal orange; the logo follows the accent everywhere else. */}
+  <NavBar pill={false} class="[--color-accent:var(--color-orange)]" />
   <main id="main-content">
     <Header poster={poster} />
     <GetStartedBanner />
