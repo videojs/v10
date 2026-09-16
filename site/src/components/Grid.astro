@@ -1,0 +1,25 @@
+---
+import type { HTMLTag, Polymorphic } from 'astro/types';
+import { clsx } from 'clsx';
+import { twMerge } from '@/utils/twMerge';
+
+/**
+ * Responsive grid for content that should share rows: link cards, images, related pages. One column on small screens,
+ * `columns` from the `md` breakpoint up. Available in MDX without an import.
+ */
+type Props<Tag extends HTMLTag = 'div'> = Polymorphic<{ as: Tag }> & {
+  columns?: 2 | 3 | 4;
+  class?: string;
+};
+
+const { as: Tag = 'div', columns = 2, class: className, ...props } = Astro.props;
+
+const COLUMN_CLASSES = { 2: 'md:grid-cols-2', 3: 'md:grid-cols-3', 4: 'md:grid-cols-4' } satisfies Record<
+  NonNullable<Props['columns']>,
+  string
+>;
+---
+
+<Tag class={twMerge(clsx('grid grid-cols-1 gap-4', COLUMN_CLASSES[columns]), className)} {...props}>
+  <slot />
+</Tag>

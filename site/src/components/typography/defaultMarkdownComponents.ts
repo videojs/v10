@@ -1,4 +1,5 @@
 import RelatedLinks from '../docs/RelatedLinks.astro';
+import Grid from '../Grid.astro';
 import A from './A.astro';
 import Blockquote from './Blockquote.astro';
 import CodeFrame from './CodeFrame.astro';
@@ -43,6 +44,7 @@ const defaultMarkdownComponents = {
   img: Img,
   code: MarkdownCode,
   CodeFrame,
+  Grid,
   RelatedLinks,
   table: Table,
   thead: Thead,

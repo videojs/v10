@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import ChevronRight from '@/assets/icons/chevron-right.svg?react';
+import Grid from '@/components/Grid.astro';
 import { isValidFramework } from '@/types/docs';
 import { resolveDocsLinkUrl } from '@/utils/docs/routing';
 import type { RelatedLink } from '@/utils/satteriRelatedLinks';
@@ -41,7 +42,7 @@ const cards = items.map((item) => {
 
 <section class="mx-auto my-6 w-full max-w-3xl">
   {label && <h3 class="mb-3 font-display text-h4 uppercase text-muted select-none">{label}</h3>}
-  <ul class="grid gap-4 sm:grid-cols-2">
+  <Grid as="ul" class="sm:grid-cols-2">
   {
     cards.map((card) => (
       <li class="docs-link-card">
@@ -58,5 +59,5 @@ const cards = items.map((item) => {
       </li>
     ))
   }
-  </ul>
+  </Grid>
 </section>
