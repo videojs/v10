@@ -4,12 +4,13 @@
  * Validates that manually-maintained lists across config files stay in sync with the actual package structure. Run via
  * `pnpm check:workspace`.
  *
- * Checks: 1. CI test coverage — every testable package is tested in CI 2. Commitlint scopes — every package dir is a
- * valid commit scope 3. Root tsconfig references — every composite project is referenced 4. Package metadata —
- * non-private packages have required fields 5. Release-please config — every versioned package is registered 6. Bundled
- * docs — package publishing wires include generated docs 7. Define imports — no bare side-effect imports from relative
- * paths 8. i18n locales — tag lists match locale files and generated stubs 9. Agent context — portable skill metadata,
- * compatibility imports, and budgets 10. Internal records — organized design docs, frontmatter, and lifecycle status
+ * Checks: 1. CI test ownership — every testable workspace and root-level test suite is tested in CI 2. Commitlint
+ * scopes — every package dir is a valid commit scope 3. Root tsconfig references — every composite project is
+ * referenced 4. Package metadata — non-private packages have required fields 5. Release-please config — every versioned
+ * package is registered 6. Bundled docs — package publishing wires include generated docs 7. Define imports — no bare
+ * side-effect imports from relative paths 8. i18n locales — tag lists match locale files and generated stubs 9. Agent
+ * context — portable skill metadata, compatibility imports, and budgets 10. Internal records — organized design docs,
+ * frontmatter, and lifecycle status
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -72,11 +73,58 @@ function readPackageJson(dir) {
   return readJson(join(PACKAGES_DIR, dir, 'package.json'));
 }
 
-// ── Check 1: CI test coverage ───────────────────────────────────────────────
+// ── Check 1: CI test ownership ────────────────────────────────────────────
 
-function checkCiTestCoverage() {
+const TEST_FILE_RE = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
+const NON_WORKSPACE_TEST_SUITES = [
+  {
+    directory: '.github/scripts/tests',
+    ciEvidence: ['node --test .github/scripts/tests/', 'pnpm test:size'],
+  },
+  {
+    directory: 'build/plugins/tests',
+    ciEvidence: ['pnpm test:build'],
+  },
+  {
+    directory: 'tools/oxlint/anti-slop/rules/tests',
+    ciEvidence: ['tools/oxlint/anti-slop/rules/tests'],
+  },
+  {
+    directory: 'tools/oxlint/videojs/rules/tests',
+    ciEvidence: ['tools/oxlint/videojs/rules/tests'],
+  },
+];
+
+const E2E_TEST_SUITES = [
+  {
+    directory: 'apps/e2e/suites/player/tests',
+    ciEvidence: ['suites/player/playwright.config.ts'],
+  },
+  {
+    directory: 'apps/e2e/suites/registry/tests',
+    ciEvidence: ['#test:registry'],
+  },
+  {
+    directory: 'apps/e2e/suites/sandbox/tests',
+    ciEvidence: ['#test:sandbox'],
+  },
+  {
+    directory: 'apps/e2e/suites/skin-parity/tests',
+    ciEvidence: ['#test:skin-parity'],
+  },
+];
+
+function checkCiTestOwnership() {
   const warnings = [];
   const ciText = readText(join(ROOT, '.github/workflows/ci.yml'));
+  const workflowText = readdirSync(join(ROOT, '.github/workflows'))
+    .filter((file) => file.endsWith('.yml') || file.endsWith('.yaml'))
+    .map((file) => readText(join(ROOT, '.github/workflows', file)))
+    .join('\n');
+  const workspacePackages = discoverWorkspacePackages(ROOT);
+  const workspaceDirectories = [...workspacePackages]
+    .map(({ directory }) => directory)
+    .sort((a, b) => b.length - a.length);
   const testedInCi = new Set();
   const hasDynamicPackageTests =
     ciText.includes('node .github/scripts/package-test-matrix.js') &&
@@ -84,7 +132,7 @@ function checkCiTestCoverage() {
     ciText.includes('test:ci');
 
   if (hasDynamicPackageTests) {
-    for (const pkg of discoverWorkspacePackages(ROOT)) {
+    for (const pkg of workspacePackages) {
       if (isMainCiTestPackage(pkg) && !SPECIAL_TEST_PACKAGES.has(pkg.name)) testedInCi.add(pkg.name);
     }
   }
@@ -95,13 +143,52 @@ function checkCiTestCoverage() {
     testedInCi.add(m[1]);
   }
 
-  // Find packages that have a "test" script but aren't tested in CI.
-  for (const dir of getPackageDirs()) {
-    const pkg = readPackageJson(dir);
-    if (!pkg.scripts?.test) continue;
+  if (workflowText.includes('vp run site#test:ci')) testedInCi.add('site');
+
+  if (E2E_TEST_SUITES.every(({ ciEvidence }) => ciEvidence.every((evidence) => workflowText.includes(evidence)))) {
+    testedInCi.add('@videojs/e2e');
+  }
+
+  const testFiles = listFiles(ROOT, (path) => TEST_FILE_RE.test(path)).map((path) => relativePath(path));
+
+  for (const pkg of workspacePackages) {
+    const hasTestFiles = testFiles.some((path) => path.startsWith(`${pkg.directory}/`));
+    if (!hasTestFiles) continue;
+
+    const hasTestScript = Object.keys(pkg.scripts).some((script) => script === 'test' || script.startsWith('test:'));
+
+    if (!hasTestScript) {
+      warnings.push(`${pkg.name} owns test files but has no test script`);
+      continue;
+    }
 
     if (!testedInCi.has(pkg.name)) {
-      warnings.push(`${pkg.name} has a "test" script but is not tested in CI`);
+      warnings.push(`${pkg.name} owns test files but is not tested in CI`);
+    }
+  }
+
+  const nonWorkspaceTestFiles = testFiles.filter(
+    (path) => !workspaceDirectories.some((directory) => path.startsWith(`${directory}/`))
+  );
+
+  for (const path of nonWorkspaceTestFiles) {
+    if (!NON_WORKSPACE_TEST_SUITES.some(({ directory }) => path.startsWith(`${directory}/`))) {
+      warnings.push(`${path}: test file has no workspace or root test-suite owner`);
+    }
+  }
+
+  for (const path of testFiles.filter((file) => file.startsWith('apps/e2e/'))) {
+    if (!E2E_TEST_SUITES.some(({ directory }) => path.startsWith(`${directory}/`))) {
+      warnings.push(`${path}: E2E test file has no CI suite owner`);
+    }
+  }
+
+  for (const suite of NON_WORKSPACE_TEST_SUITES) {
+    const ownsTests = nonWorkspaceTestFiles.some((path) => path.startsWith(`${suite.directory}/`));
+    const isTestedInCi = suite.ciEvidence.some((evidence) => workflowText.includes(evidence));
+
+    if (ownsTests && !isTestedInCi) {
+      warnings.push(`${suite.directory}: root test suite is not tested in CI`);
     }
   }
 
@@ -920,7 +1007,7 @@ function checkInternalRecords() {
 // ── Main ────────────────────────────────────────────────────────────────────
 
 const checks = [
-  { name: 'CI test coverage', fn: checkCiTestCoverage },
+  { name: 'CI test ownership', fn: checkCiTestOwnership },
   { name: 'Commitlint scopes', fn: checkCommitlintScopes },
   { name: 'Root tsconfig references', fn: checkTsconfigReferences },
   { name: 'Package metadata', fn: checkPackageMetadata },
