@@ -32,11 +32,21 @@
  * calls cleanups in registration order, so the receiver MediaKeys detach before the re-entering negotiation attaches
  * its own.
  *
- * Droppable. A composition omitting it carries neither `fairPlayAirPlayKeySystem` nor this file, and — since
- * `loadingSuspended` is observed rather than declared — an engine without `setupAirPlay` never leaves
- * `'preconditions-unmet'` anyway. The legacy `WebKitMediaKeys` / `com.apple.fps.1_0` fallback for senders whose EME
- * cannot generate a request at all during a session stays out of scope, pending a device re-check (drm-support.md).
+ * **EME first, then the legacy key system.** Measured on macOS/Safari 26.6.2 against a real receiver: the CDM grants
+ * access for `initDataTypes: ['skd']` and then throws `NotSupportedError` from `generateRequest` — self-inconsistent,
+ * and the reason the pre-EME `WebKitMediaKeys` path still exists. That refusal, and only that refusal while the target
+ * is wireless, hands the session over to `media/dom/fairplay-legacy.ts`; nothing sniffs an OS, so a fixed WebKit stops
+ * taking the path by itself. The handover needs no `element.load()` to re-provoke the request — `webkitneedkey` fires
+ * for the same key just before `encrypted`, so its payload is already in hand. That matters: `setupAirPlay` holds the
+ * MediaSource rebuild precisely because a `load()` under a live receiver destroys the session being established, so the
+ * call the shipped native path can afford would take this session down with it.
+ *
+ * Droppable. A composition omitting it carries neither `fairPlayAirPlayKeySystem` nor this file nor the legacy module,
+ * and — since `loadingSuspended` is observed rather than declared — an engine without `setupAirPlay` never leaves
+ * `'preconditions-unmet'` anyway.
  */
+import { listen } from '@videojs/utils/dom';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
@@ -51,11 +61,18 @@ import {
   requestKeySystemAccess,
   resolveDrmUrl,
 } from '../../../media/dom/eme';
+import {
+  FAIRPLAY_LEGACY_KEY_SYSTEM,
+  isAirPlayGenerateRequestRefusal,
+  openLegacyLicenseSession,
+  supportsWebKitFairPlay,
+} from '../../../media/dom/fairplay-legacy';
 import { fairPlayAirPlayKeySystem } from '../../../media/dom/key-systems';
 import { listenForEncryptedInitData, openLicenseSession } from '../../../media/dom/license-sessions';
 import {
   SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_INITIALIZATION_ERROR,
+  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
   type SvtaError,
 } from '../../../media/errors';
@@ -168,6 +185,29 @@ function setupAirPlayFairPlaySetup({
           /** The MediaKeys this behavior attached, for the conditional detach below. */
           let attached: MediaKeys | undefined;
 
+          /**
+           * The legacy API's own view of the pending key request, kept because both events fire for the same key and
+           * `webkitneedkey` lands first. Falling back therefore needs no `element.load()` to re-provoke the request —
+           * which matters: `setupAirPlay` holds the MediaSource rebuild precisely because a `load()` under a live
+           * receiver destroys the session being established. The shipped native path can afford that call; here it
+           * would take the session down with it.
+           */
+          let legacyInitData: ArrayBuffer | undefined;
+          /** Non-sticky, per session: nothing here sniffs an OS, so a fixed WebKit simply stops taking this path. */
+          let useLegacy = false;
+
+          // Fetched once and shared by both paths. EME hands it to the CDM;
+          // the legacy API packs it into the session's init data instead, which
+          // is why it is mandatory there and merely usual here.
+          let certificateRequest: Promise<Uint8Array<ArrayBuffer> | undefined> | undefined;
+          const serverCertificate = () =>
+            (certificateRequest ??= (async () => {
+              const url = resolveDrmUrl(entry.serverCertificateUrl);
+              if (url === undefined) return undefined;
+
+              return fetchServerCertificate(fairPlayAirPlayKeySystem, entry, url, signal);
+            })());
+
           const negotiate = async (): Promise<MediaKeys | undefined> => {
             const licenseUrl = resolveDrmUrl(entry.licenseUrl);
 
@@ -212,9 +252,9 @@ function setupAirPlayFairPlaySetup({
 
             if (certificateUrl !== undefined) {
               try {
-                await mediaKeys.setServerCertificate(
-                  await fetchServerCertificate(fairPlayAirPlayKeySystem, entry, certificateUrl, signal)
-                );
+                const certificate = await serverCertificate();
+
+                if (certificate) await mediaKeys.setServerCertificate(certificate);
               } catch (error) {
                 if (signal.aborted) return undefined;
 
@@ -248,9 +288,101 @@ function setupAirPlayFairPlaySetup({
           // CDM.
           let negotiation: Promise<MediaKeys | undefined> | undefined;
 
+          /**
+           * The legacy path, for a sender whose EME refuses to generate a request during the session. Reached only from
+           * that refusal, so an unaffected WebKit never installs the old key system at all.
+           */
+          const serveLegacy = async (initData: ArrayBuffer) => {
+            const licenseUrl = resolveDrmUrl(entry.licenseUrl);
+            if (licenseUrl === undefined || signal.aborted) return;
+
+            // Mandatory here, unlike EME: it is packed into the session's init
+            // data, so there is nothing to open a session with.
+            let certificate: Uint8Array<ArrayBuffer> | undefined;
+
+            try {
+              certificate = await serverCertificate();
+            } catch (error) {
+              if (signal.aborted) return;
+
+              report({
+                code: SVTA_DRM_CERTIFICATE_ERROR,
+                data: { keySystem: FAIRPLAY_LEGACY_KEY_SYSTEM, reason: String(error) },
+              });
+              return;
+            }
+
+            if (signal.aborted) return;
+
+            if (!certificate) {
+              report({
+                code: SVTA_DRM_CERTIFICATE_ERROR,
+                data: {
+                  keySystem: FAIRPLAY_LEGACY_KEY_SYSTEM,
+                  reason: 'the legacy key system packs the certificate into the session, so one must be configured',
+                },
+              });
+              return;
+            }
+
+            try {
+              openLegacyLicenseSession({
+                mediaElement,
+                module: fairPlayAirPlayKeySystem,
+                entry,
+                licenseUrl,
+                certificate,
+                initData,
+                signal,
+                report,
+              });
+            } catch (error) {
+              report({
+                code: SVTA_DRM_INITIALIZATION_ERROR,
+                data: { keySystem: FAIRPLAY_LEGACY_KEY_SYSTEM, reason: String(error) },
+              });
+            }
+          };
+
+          /**
+           * Hand the session over to the legacy API. EME has to release the element's keys before the old API can claim
+           * them, and the request it failed on is not re-issued — but `webkitneedkey` has already delivered the same
+           * key request, so the cached payload is what resumes the exchange.
+           */
+          const fallBackToLegacy = async (error: unknown) => {
+            if (useLegacy) return;
+
+            if (!isAirPlayGenerateRequestRefusal(error, mediaElement) || !supportsWebKitFairPlay(mediaElement)) {
+              report({
+                code: SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+                data: { keySystem: fairPlayAirPlayKeySystem.keySystem, reason: String(error) },
+              });
+              return;
+            }
+
+            useLegacy = true;
+
+            // Awaited, not fired off: EME must have released the element before
+            // the legacy API claims it, and `webkitSetMediaKeys` is synchronous
+            // — so racing them installs the old key system onto an element the
+            // CDM still holds. No identity check here, unlike the state-exit
+            // detach: `setupMediaKeys` cannot have re-attached while the session
+            // is live, so whatever is on the element is ours.
+            if (attached) {
+              attached = undefined;
+              await attachMediaKeys(mediaElement, null).catch(() => {});
+            }
+
+            if (signal.aborted) return;
+
+            if (legacyInitData) void serveLegacy(legacyInitData);
+          };
+
           const serve = async (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
+            if (useLegacy) return;
+
             const mediaKeys = await (negotiation ??= negotiate());
-            if (!mediaKeys || signal.aborted) return;
+            if (!mediaKeys || signal.aborted || useLegacy) return;
 
             openLicenseSession({
               mediaKeys,
@@ -262,8 +394,26 @@ function setupAirPlayFairPlaySetup({
               initData,
               signal,
               report,
+              onGenerateRequestError: (error) => void fallBackToLegacy(error),
             });
           };
+
+          // Both events fire for the same key, and `webkitneedkey` lands first —
+          // so its payload is captured whether or not it is ever needed, and
+          // serves the exchange directly once the session has been handed over.
+          listen(
+            mediaElement,
+            'webkitneedkey',
+            (event) => {
+              const { initData } = event as MediaEncryptedEvent;
+              if (!initData) return;
+
+              legacyInitData = initData;
+
+              if (useLegacy) void serveLegacy(initData);
+            },
+            { signal }
+          );
 
           listenForEncryptedInitData(
             mediaElement,

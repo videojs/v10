@@ -136,6 +136,7 @@ export function openLicenseSession({
   initData,
   signal,
   report,
+  onGenerateRequestError,
 }: {
   mediaKeys: MediaKeys;
   keySystem: string;
@@ -146,6 +147,12 @@ export function openLicenseSession({
   initData: Uint8Array<ArrayBuffer>;
   signal: AbortSignal;
   report: ReportDrmCondition;
+  /**
+   * Takes ownership of a `generateRequest` rejection instead of it being reported, for a caller holding a fallback that
+   * may still succeed. It reports for itself when it cannot recover — otherwise a recovered source would carry a 4021
+   * describing an attempt that no longer decides anything.
+   */
+  onGenerateRequestError?: (error: unknown) => void;
 }): MediaKeySession {
   const session = mediaKeys.createSession();
 
@@ -186,6 +193,11 @@ export function openLicenseSession({
 
   session.generateRequest(initDataType, initData).catch((error) => {
     if (signal.aborted) return;
+
+    if (onGenerateRequestError) {
+      onGenerateRequestError(error);
+      return;
+    }
 
     report({ code: SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED, data: { keySystem, reason: String(error) } });
   });
