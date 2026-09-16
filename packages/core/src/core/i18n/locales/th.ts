@@ -53,7 +53,7 @@ export default {
     showRemaining: 'แสดงเวลาที่เหลือ {duration}',
     toggleElapsed: 'สลับระหว่างเวลาที่ผ่านไปกับเวลาที่เหลือ',
     toggleDuration: 'สลับระหว่างระยะเวลากับเวลาที่เหลือ',
-    position: '{current} / {duration}',
+    position: '{current} จาก {duration}',
     unknown: 'ไม่ได้โหลดสื่อ ไม่ทราบเวลา',
   },
   playback: {
