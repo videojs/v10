@@ -3,14 +3,14 @@ import type { Translations } from '../params';
 export default {
   buttons: {
     play: 'Oynat',
-    pause: 'Dayandır',
+    pause: 'Fasilə',
     replay: 'Yenidən oynat',
     mute: 'Səssiz et',
     unmute: 'Səsi aç',
   },
   seek: {
-    forward: '{seconds} saniyə irəli çək',
-    backward: '{seconds} saniyə geri çək',
+    forward: '{seconds} saniyə irəliyə',
+    backward: '{seconds} saniyə geriyə',
   },
   fullscreen: {
     enter: 'Tam ekran',
@@ -98,7 +98,7 @@ export default {
     audio: 'Səs',
     default: 'Defolt',
     speed: 'Sürət',
-    captions: 'Altyazılar',
+    captions: 'Qapalı altyazılar',
     playbackRate: 'Oynatma sürəti',
     back: 'Geri',
     off: 'Söndürülmüş',
