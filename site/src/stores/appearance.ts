@@ -1,6 +1,6 @@
 import { atom, onMount, type WritableAtom } from 'nanostores';
 
-import { ACCENT_KEY, THEME_KEY, TONE_KEY } from '@/consts';
+import { ACCENT_KEY, THEME_COLORS, THEME_KEY, TONE_KEY } from '@/consts';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
 /** Menu order follows the brand palette; orange stays the default. */
@@ -10,13 +10,6 @@ export const TONES = ['soft', 'deep'] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 export type Accent = (typeof ACCENTS)[number];
 export type Tone = (typeof TONES)[number];
-
-/** Page background per resolved theme and tone, mirrored into the `theme-color` meta tag for browser chrome. */
-const THEME_COLORS = {
-  light: '#ebe4c1',
-  deep: '#151414',
-  soft: '#1e1d1d',
-} as const;
 
 // Storage is absent during server rendering; every access goes through this optional handle.
 const storage: Storage | undefined = globalThis.localStorage;
