@@ -103,8 +103,8 @@ export default {
     playbackRate: 'Afspilningshastighed',
     back: 'Tilbage',
     off: 'Fra',
-    auto: 'Auto',
-    autoWithLabel: 'Auto ({label})',
+    auto: 'Automatisk',
+    autoWithLabel: 'Automatisk ({label})',
     subtitles: 'Undertekster',
   },
 } as const satisfies Translations;
