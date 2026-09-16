@@ -1,3 +1,4 @@
+import { expectIframeAdapterDefaults, iframeAdapterDeferredSourceContract } from '@videojs/adapter-test/iframe';
 import { MediaError, type Video } from '@videojs/media';
 import { loadScript } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -82,14 +83,6 @@ afterEach(() => {
 
 function createIframe(): HTMLIFrameElement {
   return document.createElement('iframe');
-}
-
-/** An iframe as React renders it before a source resolves: `src` present but empty. */
-function createEmptySrcIframe(): HTMLIFrameElement {
-  const iframe = document.createElement('iframe');
-
-  iframe.setAttribute('src', '');
-  return iframe;
 }
 
 /**
@@ -362,17 +355,20 @@ describe('buildCloudflareIframeSrc', () => {
 
 describe('CloudflareAdapter', () => {
   it('has expected default state before attach', () => {
-    const media = new CloudflareAdapter();
+    expectIframeAdapterDefaults(new CloudflareAdapter(), CloudflareAdapter.defaultProps.src);
+  });
 
-    expect(media.engine).toBe(null);
-    expect(media.target).toBe(null);
-    expect(media.paused).toBe(true);
-    expect(media.ended).toBe(false);
-    expect(media.currentTime).toBe(0);
-    expect(media.duration).toBeNaN();
-    expect(media.src).toBe(CloudflareAdapter.defaultProps.src);
-    expect(media.buffered.length).toBe(0);
-    expect(media.played.length).toBeGreaterThanOrEqual(1);
+  iframeAdapterDeferredSourceContract({
+    adapterName: 'CloudflareAdapter',
+    createAdapter: () => new CloudflareAdapter(),
+    createIframe,
+    firstSource: VIDEO_ID,
+    replacementSource: OTHER_VIDEO_ID,
+    expectedFirstEmbed: `https://iframe.videodelivery.net/${VIDEO_ID}`,
+    expectedReplacementEmbed: `https://iframe.videodelivery.net/${OTHER_VIDEO_ID}`,
+    flush: flushDeferredEmbed,
+    waitForEngine,
+    assertSingleBuild: () => expect(MockPlayer.instances).toHaveLength(1),
   });
 
   it('offers no picture-in-picture surface', () => {
@@ -482,71 +478,6 @@ describe('CloudflareAdapter', () => {
     await waitForEngine(media);
     expect(media.engine).not.toBe(null);
     media.detach();
-  });
-
-  it('defers the player until a source arrives', async () => {
-    const media = new CloudflareAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-
-    // How every framework builds the element: created first, `src` set after.
-    const iframe = createIframe();
-
-    media.attach(iframe);
-    expect(iframe.getAttribute('src')).toBe(null);
-    expect(media.engine).toBe(null);
-    expect(loadstart).not.toHaveBeenCalled();
-
-    media.src = VIDEO_ID;
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain(`https://iframe.videodelivery.net/${VIDEO_ID}`);
-    expect(loadstart).toHaveBeenCalledTimes(1);
-    await waitForEngine(media);
-    media.detach();
-  });
-
-  it('defers the player for an iframe rendered with an empty src', async () => {
-    const media = new CloudflareAdapter();
-    // React renders `src=""` before a source resolves. The `src` property reports
-    // the document URL for it, so only the attribute says there is no embed.
-    const iframe = createEmptySrcIframe();
-
-    media.attach(iframe);
-    expect(media.engine).toBe(null);
-
-    media.src = VIDEO_ID;
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain(`https://iframe.videodelivery.net/${VIDEO_ID}`);
-    await waitForEngine(media);
-    media.detach();
-  });
-
-  it('builds a deferred embed once for repeated source changes in the same task', async () => {
-    const media = new CloudflareAdapter();
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    media.src = VIDEO_ID;
-    media.src = OTHER_VIDEO_ID;
-    await waitForEngine(media);
-
-    expect(iframe.getAttribute('src')).toContain(`https://iframe.videodelivery.net/${OTHER_VIDEO_ID}`);
-    expect(MockPlayer.instances.length).toBe(1);
-    media.detach();
-  });
-
-  it('does not leave play() waiting while the embed is deferred', async () => {
-    const media = new CloudflareAdapter();
-
-    media.attach(createIframe());
-
-    // No embed means no player is coming to report a load; waiting would hang.
-    await expect(media.play()).resolves.toBeUndefined();
-    expect(media.engine).toBe(null);
   });
 
   it('waits for a deferred embed to load before playing', async () => {

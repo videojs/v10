@@ -1,0 +1,13 @@
+{
+  "name": "@videojs/adapter-test",
+  "private": true,
+  "description": "Shared test contracts for Video.js playback adapters",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    "./iframe": "./src/iframe.ts"
+  },
+  "peerDependencies": {
+    "vite-plus": "catalog:"
+  }
+}
