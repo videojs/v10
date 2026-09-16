@@ -1,14 +1,13 @@
-import { useStore } from '@nanostores/react';
-
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { renderer, skin, useCase } from '@/stores/installation';
 import { generateReactCreateCode } from '@/utils/installation/codegen';
 
+import { useSelection } from './useSelection';
+
 export default function ReactCreateCodeBlock() {
-  const $useCase = useStore(useCase);
-  const $skin = useStore(skin);
-  const $renderer = useStore(renderer);
+  const $useCase = useSelection('useCase');
+  const $skin = useSelection('skin');
+  const $renderer = useSelection('renderer');
 
   const result = generateReactCreateCode({
     useCase: $useCase,

@@ -1,8 +1,7 @@
-import { useStore } from '@nanostores/react';
-
 import ClientCode from '@/components/Code/ClientCode';
-import { renderer, skin, useCase } from '@/stores/installation';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
+
+import { useSelection } from './useSelection';
 
 interface HTMLCdnCodeBlockProps {
   /** Media subpaths that ship a CDN build, from the cdn-media manifest. */
@@ -10,9 +9,9 @@ interface HTMLCdnCodeBlockProps {
 }
 
 export default function HTMLCdnCodeBlock({ cdnMedia }: HTMLCdnCodeBlockProps) {
-  const $useCase = useStore(useCase);
-  const $skin = useStore(skin);
-  const $renderer = useStore(renderer);
+  const $useCase = useSelection('useCase');
+  const $skin = useSelection('skin');
+  const $renderer = useSelection('renderer');
 
   return <ClientCode code={generateCdnCode($useCase, $skin, $renderer, cdnMedia)} lang="html" />;
 }

@@ -1,11 +1,11 @@
-import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
 
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import { skin, useCase } from '@/stores/installation';
+import { skin } from '@/stores/installation';
 import { getInstallationPreset, type Skin } from '@/utils/installation/types';
 
 import SkinPreview from './SkinPreview';
+import { useSelection } from './useSelection';
 
 function option(value: Skin, label: string, description: string): CardRadioOption<Skin> {
   return { value, label, description, media: <SkinPreview skin={value} className="size-6" /> };
@@ -24,8 +24,8 @@ const AUDIO_SKINS: CardRadioOption<Skin>[] = [
 ];
 
 export default function SkinPicker() {
-  const $skin = useStore(skin);
-  const $useCase = useStore(useCase);
+  const $skin = useSelection('skin');
+  const $useCase = useSelection('useCase');
 
   const options = getInstallationPreset($useCase).mediaType === 'audio' ? AUDIO_SKINS : VIDEO_SKINS;
 

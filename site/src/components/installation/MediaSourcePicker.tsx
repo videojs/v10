@@ -1,5 +1,4 @@
 import { Input } from '@base-ui/react/input';
-import { useStore } from '@nanostores/react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -14,12 +13,13 @@ import VimeoLogo from '@/assets/logos/brands/vimeo.svg?react';
 import YoutubeLogo from '@/assets/logos/brands/youtube.svg?react';
 import MuxLogo from '@/assets/logos/mux-small.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
-import { renderer, sourceUrl, useCase } from '@/stores/installation';
+import { renderer, sourceUrl } from '@/stores/installation';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
 import { getInstallationPreset, type Renderer } from '@/utils/installation/types';
 
 import MuxUploaderPanel from './MuxUploaderPanel';
+import { useSelection } from './useSelection';
 
 /** Protocols without a brand mark get a monogram so every card still has a recognizable badge. */
 function Monogram({ children }: { children: string }) {
@@ -62,9 +62,9 @@ const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
 const COMMIT_DELAY_MS = 500;
 
 export default function MediaSourcePicker() {
-  const $renderer = useStore(renderer);
-  const $useCase = useStore(useCase);
-  const $sourceUrl = useStore(sourceUrl);
+  const $renderer = useSelection('renderer');
+  const $useCase = useSelection('useCase');
+  const $sourceUrl = useSelection('sourceUrl');
 
   // The input edits a local draft and commits to the store after a pause, or at once on paste, blur, or Enter. The
   // preview reloads its media on every store change, and a half-typed URL fails the media URL safety check, opens

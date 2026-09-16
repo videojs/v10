@@ -1,4 +1,3 @@
-import { useStore } from '@nanostores/react';
 import type { ReactNode } from 'react';
 
 import Film from '@/assets/icons/film.svg?react';
@@ -9,6 +8,8 @@ import Radio from '@/assets/icons/radio.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
 import { useCase } from '@/stores/installation';
 import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installation/types';
+
+import { useSelection } from './useSelection';
 
 const USE_CASE_MEDIA: Record<UseCase, ReactNode> = {
   'default-video': <Film className="size-6" />,
@@ -27,7 +28,7 @@ const USE_CASE_DESCRIPTIONS: Record<UseCase, string> = {
 };
 
 export default function UseCasePicker() {
-  const $useCase = useStore(useCase);
+  const $useCase = useSelection('useCase');
 
   return (
     <CardRadioGroup

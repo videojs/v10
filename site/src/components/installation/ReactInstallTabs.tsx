@@ -1,12 +1,11 @@
-import { useStore } from '@nanostores/react';
-
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { renderer } from '@/stores/installation';
 import { generateReactInstallCode } from '@/utils/installation/codegen';
 
+import { useSelection } from './useSelection';
+
 export default function ReactInstallTabs() {
-  const install = generateReactInstallCode({ renderer: useStore(renderer) });
+  const install = generateReactInstallCode({ renderer: useSelection('renderer') });
 
   return (
     <TabsRoot>

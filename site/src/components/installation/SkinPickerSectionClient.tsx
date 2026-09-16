@@ -1,11 +1,8 @@
-import { useStore } from '@nanostores/react';
-
-import { useCase } from '@/stores/installation';
-
 import SkinPicker from './SkinPicker';
+import { useSelection } from './useSelection';
 
 export default function SkinPickerSection({ children }: { children: React.ReactNode }) {
-  const $useCase = useStore(useCase);
+  const $useCase = useSelection('useCase');
   // Hide for background-video use case
   if ($useCase === 'background-video') return null;
 

@@ -16,10 +16,11 @@ import {
   VJS10_DEMO_LIVE,
   VJS10_DEMO_VIDEO,
 } from '@/consts';
-import { renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
 import { getInstallationPreset, type Renderer, type Skin, type UseCase } from '@/utils/installation/types';
 import useIsHydrated from '@/utils/useIsHydrated';
+
+import { useSelection } from './useSelection';
 
 import '@videojs/react/video/skin.css';
 import '@videojs/react/video/minimal-skin.css';
@@ -159,10 +160,10 @@ function BackgroundPreview({ source }: { source: Source }) {
  * answers "what does this skin look like?" without leaving the page.
  */
 export default function InstallationPreview() {
-  const $useCase = useStore(useCase);
-  const $skin = useStore(skin);
-  const $renderer = useStore(renderer);
-  const $sourceUrl = useStore(sourceUrl);
+  const $useCase = useSelection('useCase');
+  const $skin = useSelection('skin');
+  const $renderer = useSelection('renderer');
+  const $sourceUrl = useSelection('sourceUrl');
   const framework = useStore(currentFramework);
   const isHydrated = useIsHydrated();
 

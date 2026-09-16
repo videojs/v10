@@ -1,16 +1,15 @@
-import { useStore } from '@nanostores/react';
-
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { generateHTMLUsageCode } from '@/utils/installation/codegen';
 
+import { useSelection } from './useSelection';
+
 export default function HTMLUsageCodeBlock() {
-  const $useCase = useStore(useCase);
-  const $skin = useStore(skin);
-  const $renderer = useStore(renderer);
-  const $installMethod = useStore(installMethod);
-  const $sourceUrl = useStore(sourceUrl);
+  const $useCase = useSelection('useCase');
+  const $skin = useSelection('skin');
+  const $renderer = useSelection('renderer');
+  const $installMethod = useSelection('installMethod');
+  const $sourceUrl = useSelection('sourceUrl');
 
   const result = generateHTMLUsageCode({
     useCase: $useCase,
