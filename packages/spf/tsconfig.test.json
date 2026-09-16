@@ -5,5 +5,5 @@
     "incremental": false,
     "noEmit": true
   },
-  "include": ["src/**/*.d.ts"]
+  "include": ["src/**/*.d.ts", "src/**/*.test-d.ts"]
 }

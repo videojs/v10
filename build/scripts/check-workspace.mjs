@@ -12,6 +12,7 @@
  * context — portable skill metadata, compatibility imports, and budgets 10. Internal records — organized design docs,
  * frontmatter, and lifecycle status
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -75,11 +76,11 @@ function readPackageJson(dir) {
 
 // ── Check 1: CI test ownership ────────────────────────────────────────────
 
-const TEST_FILE_RE = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
+export const TEST_FILE_RE = /\.(?:test(?:-d)?|spec)\.[cm]?[jt]sx?$/;
 const NON_WORKSPACE_TEST_SUITES = [
   {
     directory: '.github/scripts/tests',
-    ciEvidence: ['node --test .github/scripts/tests/', 'pnpm test:size'],
+    ciEvidence: ['pnpm test:size'],
   },
   {
     directory: 'build/plugins/tests',
@@ -94,6 +95,22 @@ const NON_WORKSPACE_TEST_SUITES = [
     ciEvidence: ['tools/oxlint/videojs/rules/tests'],
   },
 ];
+
+export function listRepositoryFiles(root, predicate) {
+  const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+
+  return files
+    .split('\0')
+    .filter(Boolean)
+    .filter((path) => existsSync(join(root, path)) && predicate(path));
+}
+
+export function hasCiEvidence(workflowText, evidence) {
+  return evidence.some((command) => workflowText.includes(command));
+}
 
 const E2E_TEST_SUITES = [
   {
@@ -149,7 +166,7 @@ function checkCiTestOwnership() {
     testedInCi.add('@videojs/e2e');
   }
 
-  const testFiles = listFiles(ROOT, (path) => TEST_FILE_RE.test(path)).map((path) => relativePath(path));
+  const testFiles = listRepositoryFiles(ROOT, (path) => TEST_FILE_RE.test(path));
 
   for (const pkg of workspacePackages) {
     const hasTestFiles = testFiles.some((path) => path.startsWith(`${pkg.directory}/`));
@@ -185,7 +202,7 @@ function checkCiTestOwnership() {
 
   for (const suite of NON_WORKSPACE_TEST_SUITES) {
     const ownsTests = nonWorkspaceTestFiles.some((path) => path.startsWith(`${suite.directory}/`));
-    const isTestedInCi = suite.ciEvidence.some((evidence) => workflowText.includes(evidence));
+    const isTestedInCi = hasCiEvidence(workflowText, suite.ciEvidence);
 
     if (ownsTests && !isTestedInCi) {
       warnings.push(`${suite.directory}: root test suite is not tested in CI`);
@@ -1019,24 +1036,30 @@ const checks = [
   { name: 'Internal records', fn: checkInternalRecords },
 ];
 
-let failed = 0;
+function runChecks() {
+  let failed = 0;
 
-for (const check of checks) {
-  const result = check.fn();
+  for (const check of checks) {
+    const result = check.fn();
 
-  if (result.ok) {
-    console.log(`\x1b[32m✓\x1b[0m ${check.name}`);
-  } else {
-    failed++;
-    console.log(`\x1b[31m✗\x1b[0m ${check.name}`);
+    if (result.ok) {
+      console.log(`\x1b[32m✓\x1b[0m ${check.name}`);
+    } else {
+      failed++;
+      console.log(`\x1b[31m✗\x1b[0m ${check.name}`);
 
-    for (const w of result.warnings) {
-      console.log(`    ${w}`);
+      for (const w of result.warnings) {
+        console.log(`    ${w}`);
+      }
     }
   }
+
+  console.log();
+  console.log(`${checks.length - failed} passed, ${failed} failed`);
+
+  return failed;
 }
 
-console.log();
-console.log(`${checks.length - failed} passed, ${failed} failed`);
-
-process.exit(failed > 0 ? 1 : 0);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exit(runChecks() > 0 ? 1 : 0);
+}
