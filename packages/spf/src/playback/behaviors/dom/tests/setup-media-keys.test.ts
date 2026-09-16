@@ -433,4 +433,69 @@ describe('setupMediaKeys', () => {
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBeUndefined());
     expect(attachMediaKeys).toHaveBeenCalledWith(video, null);
   });
+
+  describe('with an AirPlay session', () => {
+    /**
+     * A composition carrying `setupAirPlay`, which is the only thing that declares `loadingSuspended`. Everywhere else
+     * in this file the slot is absent, which is the shape of an engine without an AirPlay bridge.
+     */
+    function setupWithAirPlay(presentation: MediaKeysState['presentation'], suspended = false) {
+      const state = { ...makeState({ presentation }), loadingSuspended: signal<boolean | undefined>(suspended) };
+      const context = makeContext({ mediaElement: document.createElement('video') });
+      const reactor = setupMediaKeys.setup({
+        state,
+        context,
+        config: { drm: DRM_CONFIG, keySystems: DEFAULT_KEY_SYSTEMS },
+      });
+
+      return { state, context, reactor };
+    }
+
+    it('yields the element while the session holds, and re-negotiates on the falling edge', async () => {
+      const eme = makeFakeEme();
+
+      vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+      const { state, context, reactor } = setupWithAirPlay(makePresentation([FAIRPLAY_KEY]));
+      const video = context.mediaElement.get()!;
+
+      await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+      vi.mocked(attachMediaKeys).mockClear();
+      vi.mocked(requestKeySystemAccess).mockClear();
+
+      // Session engages. The MediaKeys negotiated for `sinf`/`cenc` can't serve
+      // the receiver's `skd` requests, so the element is handed back.
+      state.loadingSuspended.set(true);
+
+      await vi.waitFor(() => expect(context.mediaKeys.get()).toBeUndefined());
+      expect(attachMediaKeys).toHaveBeenCalledWith(video, null);
+      expect(state.negotiatedKeySystem.get()).toBeUndefined();
+      // The gate comes down with it — `loadingSuspended` is what parks the
+      // dispatchers during a session, and leaving both up would double-hold.
+      expect(state.segmentLoadingBlocked.get()).toBe(false);
+
+      // Falling edge: the reactor re-enters and negotiates afresh.
+      state.loadingSuspended.set(false);
+
+      await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+      expect(requestKeySystemAccess).toHaveBeenCalledTimes(1);
+      expect(attachMediaKeys).toHaveBeenCalledWith(video, eme.mediaKeys);
+      expect(state.negotiatedKeySystem.get()).toBe('com.widevine.alpha');
+
+      reactor.destroy();
+    });
+
+    it('never negotiates when the session is already live at attach', async () => {
+      const eme = makeFakeEme();
+
+      vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+      const { state, reactor } = setupWithAirPlay(makePresentation([FAIRPLAY_KEY]), true);
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(requestKeySystemAccess).not.toHaveBeenCalled();
+      expect(state.segmentLoadingBlocked.get()).toBeFalsy();
+
+      reactor.destroy();
+    });
+  });
 });

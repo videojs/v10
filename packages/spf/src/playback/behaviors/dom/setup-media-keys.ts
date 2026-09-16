@@ -27,6 +27,11 @@
  * slots, and detaches MediaKeys (`setMediaKeys(null)`) before the next source's setup runs. Teardown-per-source is
  * deliberate — MediaKeys re-use across sources is an optimization with prior art (see drm-support.md).
  *
+ * A live AirPlay session routes through that same exit. Playback moves off MSE onto the native-HLS fallback `<source>`
+ * the receiver plays, and the MediaKeys negotiated here cannot serve the `skd` requests it raises — so an observed
+ * `loadingSuspended` yields the element, and `setupAirPlayFairPlay` negotiates for the receiver in the gap. The falling
+ * edge re-enters and re-negotiates with no extra machinery.
+ *
  * Sole writer of `context.mediaKeys`, `state.negotiatedKeySystem`, and `state.segmentLoadingBlocked`. Composed into
  * `createHlsVideoEngine` unconditionally today, degenerate on a clear source (the derived state never leaves
  * `'preconditions-unmet'`). A composition that omits it — along with `exchangeLicenses` and the two DRM-aware config
@@ -234,9 +239,29 @@ function setupMediaKeysSetup({
   // schedules a fresh task.
   const runner = new RecurringRunner<void>(runOnce);
 
+  // `loadingSuspended` is observed, never declared: the slot exists only where
+  // a feature behavior declares and writes it (`setupAirPlay`), so it lives
+  // behind a cast rather than in the typed slice above — declaring it in
+  // `stateKeys` is what would materialize it. Absent slot means never
+  // suspended, which is the right answer for every composition without an
+  // AirPlay bridge. Shape redefined locally (canonical:
+  // `SegmentLoadingState['loadingSuspended']`) to avoid a load-segments import.
+  const loadingSuspended = (state as { loadingSuspended?: ReadonlySignal<boolean | undefined> }).loadingSuspended;
+
   const derivedStateSignal = computed<MediaKeysFsmState>(() => {
     const presentation = state.presentation.get();
     if (!context.mediaElement.get() || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
+
+    // An AirPlay session takes playback off MSE entirely: WebKit plays the
+    // native-HLS fallback `<source>` on the receiver, whose key requests arrive
+    // as `skd` and cannot be served by MediaKeys negotiated for `sinf`/`cenc`.
+    // Yield the element rather than hold a CDM that can answer nothing —
+    // `setupAirPlayFairPlay` negotiates for the receiver while this is parked,
+    // and the state-exit cleanup below is already the MediaKeys-only reset that
+    // handoff wants. Re-negotiation rides the falling edge for free: the
+    // reactor re-enters once the session settles, alongside the MediaSource
+    // rebuild.
+    if (loadingSuspended?.get()) return 'preconditions-unmet';
 
     // Keys are declared per media playlist, so this flips only once an
     // encrypted rendition has resolved — exactly when encrypted segments
