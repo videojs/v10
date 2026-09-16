@@ -317,7 +317,12 @@ html.dark[data-tone="deep"] {
     background-color: var(--color-bright-yellow);
   }
 
-  .dark * {
+  /* On the root so the viewport scrollbar and form controls follow the theme; `color-scheme` inherits from here. */
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
     color-scheme: dark;
   }
 }
@@ -331,6 +336,8 @@ html.dark[data-tone="deep"] {
   }
 }
 
+/* Include the root itself: `.dark *` alone leaves the viewport scrollbar on the light thumb. */
+.dark,
 .dark * {
   scrollbar-color: var(--line-strong) transparent;
 
