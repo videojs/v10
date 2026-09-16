@@ -29,6 +29,7 @@
         "@videojs/mux-video",
         "@videojs/native-hls-video",
         "@videojs/react",
+        "@videojs/remotion-video",
         "@videojs/shaka-video",
         "@videojs/skins",
         "@videojs/spf",
@@ -131,6 +132,12 @@
     },
     "packages/adapters/native-hls-video": {
       "component": "@videojs/native-hls-video",
+      "prerelease": true,
+      "prerelease-type": "rc",
+      "versioning": "prerelease"
+    },
+    "packages/adapters/remotion-video": {
+      "component": "@videojs/remotion-video",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"

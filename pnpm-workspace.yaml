@@ -54,6 +54,12 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.8
   vitest: 4.1.10
   vite-plus: 0.2.8
+  # Remotion throws `Multiple versions of Remotion detected` when its packages
+  # disagree, and @remotion/player carries an exact `remotion` dependency of its
+  # own. Catalog them so every workspace package resolves the same version.
+  remotion: 4.0.522
+  '@remotion/player': 4.0.522
+  '@remotion/media': 4.0.522
 overrides:
   vite: 'catalog:'
   vitest: 'catalog:'
