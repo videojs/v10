@@ -156,4 +156,39 @@ setInterval(() => {
   );
 }, 500);
 
+// One-time capability probe, harness-only and separate from the engine's own
+// negotiation. The readout says which key system was negotiated but not at which
+// robustness tier, and on Android that tier is the whole question: L1 accepts
+// `HW_SECURE_ALL`, which is the rung the ladder leads with and the one no
+// desktop CDM in the matrix reaches. Logged once at load.
+void (async () => {
+  const tiers = ['HW_SECURE_ALL', 'HW_SECURE_DECODE', 'HW_SECURE_CRYPTO', 'SW_SECURE_DECODE', 'SW_SECURE_CRYPTO', ''];
+  const systems = ['com.widevine.alpha', 'com.microsoft.playready', 'com.apple.fps'];
+  const accepted: Record<string, string[]> = {};
+
+  for (const keySystem of systems) {
+    for (const robustness of tiers) {
+      try {
+        await navigator.requestMediaKeySystemAccess(keySystem, [
+          {
+            initDataTypes: keySystem === 'com.apple.fps' ? ['skd', 'sinf', 'cenc'] : ['cenc'],
+            videoCapabilities: [
+              {
+                contentType:
+                  keySystem === 'com.apple.fps' ? 'application/vnd.apple.mpegurl' : 'video/mp4; codecs="avc1.4d401f"',
+                robustness,
+              },
+            ],
+          },
+        ]);
+        (accepted[keySystem] ??= []).push(robustness || '(unstamped)');
+      } catch {
+        // Refused — not a failure, just not a tier this CDM holds.
+      }
+    }
+  }
+
+  console.log('[spf-drm] CDM robustness tiers accepted:', accepted);
+})();
+
 Object.assign(window as object, { engine, signals, video });
