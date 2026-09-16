@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite-plus';
+import { configDefaults } from 'vite-plus/test/config';
 
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { registryTargets } from './build/registry/targets.ts';
@@ -89,7 +90,7 @@ export default defineConfig({
           name: 'skins',
           root: packageDir,
           include: ['build/**/*.test.ts', 'src/**/*.test.ts'],
-          exclude: viteIntegrationTests,
+          exclude: [...configDefaults.exclude, ...viteIntegrationTests],
         },
       },
       {
