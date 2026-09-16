@@ -376,7 +376,7 @@ html.dark[data-tone="deep"] {
   }
 }
 
-@utility data-bar-accent {
+@utility data-bar-orange {
   background-image: url("/data-bar-orange.svg");
 }
 
@@ -393,7 +393,7 @@ html.dark[data-tone="deep"] {
   }
 }
 
-@utility horizontal-bars-accent {
+@utility horizontal-bars-orange {
   background-image: url("/horizontal-bar-orange.svg");
 }
 
