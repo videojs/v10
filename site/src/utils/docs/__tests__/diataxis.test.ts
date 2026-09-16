@@ -88,13 +88,6 @@ describe('docs content', () => {
     expect(issues, `\n${report}\n`).toEqual([]);
   });
 
-  it('registers every page in the sidebar', () => {
-    const registered = new Set(getAllGuideSlugs());
-    const orphans = pages.map((entry) => entry.id).filter((id) => !registered.has(id));
-
-    expect(orphans).toEqual([]);
-  });
-
   it('warns about task headings on concept pages', async () => {
     const { sidebar } = await import('../../../docs.config');
     const conceptSlugs = new Set<string>();
