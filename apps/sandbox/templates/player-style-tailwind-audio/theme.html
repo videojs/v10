@@ -1,0 +1,213 @@
+<media-container
+  class="media-skin ps-tailwind-audio @container block w-full shadow-xl shadow-black/5"
+  data-theme="tailwind-audio"
+  data-preset="audio"
+>
+  <slot></slot>
+
+  <!--
+    The theme draws its icons with `<use href="#id">` against this sprite, which the original defines at the top
+    of its template, outside the controller. It has to come across with the markup or every control renders an
+    empty box of the right size.
+  -->
+  <svg class="hidden">
+    <symbol id="backward" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 5L5 8M5 8L8 11M5 8H13.5C16.5376 8 19 10.4624 19 13.5C19 15.4826 18.148 17.2202 17 18.188"></path>
+      <path d="M5 15V19"></path>
+      <path
+        d="M8 18V16C8 15.4477 8.44772 15 9 15H10C10.5523 15 11 15.4477 11 16V18C11 18.5523
+        10.5523 19 10 19H9C8.44772 19 8 18.5523 8 18Z"
+      ></path>
+    </symbol>
+
+    <symbol id="play" viewBox="0 0 24 24">
+      <path
+        fill-rule="evenodd"
+        d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0
+        3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
+        clip-rule="evenodd"
+      />
+    </symbol>
+
+    <symbol id="pause" viewBox="0 0 24 24">
+      <path
+        fill-rule="evenodd"
+        d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0
+      01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0
+      01-.75.75H15a.75.75 0 01-.75-.75V5.25z"
+        clip-rule="evenodd"
+      />
+    </symbol>
+
+    <symbol id="forward" viewBox="0 0 24 24">
+      <path
+        d="M16 5L19 8M19 8L16 11M19 8H10.5C7.46243 8 5 10.4624 5 13.5C5 15.4826 5.85204 17.2202 7 18.188"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      ></path>
+      <path d="M13 15V19" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path
+        d="M16 18V16C16 15.4477 16.4477 15 17 15H18C18.5523 15 19 15.4477 19 16V18C19 18.5523 18.5523 19 18
+      19H17C16.4477 19 16 18.5523 16 18Z"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      ></path>
+    </symbol>
+
+    <symbol id="high" viewBox="0 0 24 24">
+      <path
+        d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0
+      001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276
+      2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06
+      8.25 8.25 0 000-11.668.75.75 0 010-1.06z"
+      ></path>
+      <path
+        d="M15.932 7.757a.75.75 0 011.061 0 6 6 0 010 8.486.75.75 0 01-1.06-1.061 4.5 4.5 0 000-6.364.75.75 0
+      010-1.06z"
+      ></path>
+    </symbol>
+
+    <symbol id="off" viewBox="0 0 24 24">
+      <path
+        d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0
+      001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276
+      2.561-1.06V4.06zM17.78 9.22a.75.75 0 10-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 001.06 1.06l1.72-1.72 1.72
+      1.72a.75.75 0 101.06-1.06L20.56 12l1.72-1.72a.75.75 0 00-1.06-1.06l-1.72 1.72-1.72-1.72z"
+      />
+    </symbol>
+  </svg>
+
+  <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+
+  <!-- Narrow layout: a full-width scrubber above the bar. -->
+  <media-time-slider class="relative block h-2 w-full cursor-pointer @md:hidden">
+    <media-slider-track class="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-md bg-slate-50">
+      <media-slider-buffer
+        class="absolute inset-y-0 left-0 bg-black/[0.02]"
+        style="width: var(--media-slider-buffer, 0%)"
+      ></media-slider-buffer>
+      <media-slider-fill
+        class="absolute inset-y-0 left-0 bg-indigo-600"
+        style="width: var(--media-slider-fill, 0%)"
+      ></media-slider-fill>
+    </media-slider-track>
+    <media-slider-thumb
+      class="absolute top-1/2 h-4 w-1 -translate-x-1/2 -translate-y-1/2 bg-indigo-600 shadow-[0_0_0_2px_rgb(255_255_255_/_0.9)]"
+      style="left: var(--media-slider-fill, 0%)"
+    ></media-slider-thumb>
+    <media-slider-preview
+      class="bottom-full mb-1 grid justify-items-center opacity-0 transition-opacity data-[pointing]:opacity-100"
+      overflow="clamp"
+    >
+      <media-slider-value class="text-xs text-slate-600" type="pointer"></media-slider-value>
+    </media-slider-preview>
+  </media-time-slider>
+
+  <div
+    class="flex h-20 w-full items-center justify-between bg-white px-4 @md:h-16 @md:rounded-md @md:ring-1 @md:ring-slate-700/10"
+  >
+    <media-seek-button seconds="-10" class="group h-8 w-8 rounded-full p-0 text-slate-700" aria-label="Back 10 seconds">
+      <svg
+        class="h-7 w-7 fill-none stroke-slate-500 group-hover:stroke-slate-700"
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+      >
+        <use href="#backward" />
+      </svg>
+    </media-seek-button>
+
+    <media-play-button
+      class="mx-3 grid h-10 w-10 place-content-center rounded-full bg-slate-700 p-2 text-white hover:bg-slate-900"
+    >
+      <svg class="ps-play-icon relative left-px h-full w-full fill-current" aria-hidden="true" viewBox="0 0 24 24">
+        <use href="#play" />
+      </svg>
+      <svg class="ps-pause-icon hidden h-full w-full fill-current" viewBox="0 0 24 24" aria-hidden="true">
+        <use href="#pause" />
+      </svg>
+    </media-play-button>
+
+    <media-seek-button
+      seconds="10"
+      class="group relative h-8 w-8 rounded-full p-0 text-slate-700"
+      aria-label="Forward 10 seconds"
+    >
+      <svg
+        class="h-7 w-7 fill-none stroke-slate-500 group-hover:stroke-slate-700"
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+      >
+        <use href="#forward" />
+      </svg>
+    </media-seek-button>
+
+    <div class="mx-4 hidden h-full border-l border-slate-700/10 @md:block"></div>
+
+    <media-time type="current" class="hidden rounded-md text-sm text-slate-500 tabular-nums @md:block"></media-time>
+
+    <!-- Wide layout: the scrubber sits inside the bar between the two readouts. -->
+    <media-time-slider class="relative m-2 hidden h-2 flex-1 cursor-pointer @md:block">
+      <media-slider-track
+        class="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-md bg-slate-50"
+      >
+        <media-slider-buffer
+          class="absolute inset-y-0 left-0 bg-black/[0.02]"
+          style="width: var(--media-slider-buffer, 0%)"
+        ></media-slider-buffer>
+        <media-slider-fill
+          class="absolute inset-y-0 left-0 bg-indigo-600"
+          style="width: var(--media-slider-fill, 0%)"
+        ></media-slider-fill>
+      </media-slider-track>
+      <media-slider-thumb
+        class="absolute top-1/2 h-4 w-1 -translate-x-1/2 -translate-y-1/2 bg-indigo-600 shadow-[0_0_0_2px_rgb(255_255_255_/_0.9)]"
+        style="left: var(--media-slider-fill, 0%)"
+      ></media-slider-thumb>
+      <media-slider-preview
+        class="bottom-full mb-1 grid justify-items-center opacity-0 transition-opacity data-[pointing]:opacity-100"
+        overflow="clamp"
+      >
+        <media-slider-value class="text-xs text-slate-600" type="pointer"></media-slider-value>
+      </media-slider-preview>
+    </media-time-slider>
+
+    <media-time type="duration" class="hidden text-sm text-slate-500 tabular-nums @md:block"></media-time>
+
+    <media-playback-rate-button class="rounded-md px-2 text-sm text-slate-500"></media-playback-rate-button>
+
+    <media-mute-button class="group relative order-first rounded-md text-slate-700 @md:order-none">
+      <svg
+        class="ps-vol-off hidden h-5 w-5 fill-slate-500 stroke-slate-500 group-hover:fill-slate-700 group-hover:stroke-slate-700"
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+      >
+        <use href="#off" />
+      </svg>
+      <svg
+        class="ps-vol-low hidden h-5 w-5 fill-slate-500 stroke-slate-500 group-hover:fill-slate-700 group-hover:stroke-slate-700"
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+      >
+        <use href="#high" />
+      </svg>
+      <svg
+        class="ps-vol-medium hidden h-5 w-5 fill-slate-500 stroke-slate-500 group-hover:fill-slate-700 group-hover:stroke-slate-700"
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+      >
+        <use href="#high" />
+      </svg>
+      <svg
+        class="ps-vol-high h-5 w-5 fill-slate-500 stroke-slate-500 group-hover:fill-slate-700 group-hover:stroke-slate-700"
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+      >
+        <use href="#high" />
+      </svg>
+    </media-mute-button>
+  </div>
+</media-container>

@@ -1,0 +1,454 @@
+/*
+ * Notflix, ported from `@player.style/notflix` (media-chrome) to Video.js 10 elements.
+ *
+ * Light DOM through the sandbox's `defineTemplateSkin`, so every rule is scoped under `.ps-notflix` by hand.
+ *
+ * The original scales its whole interface by stepping `--media-font-size` at four breakpoints. v10 has no breakpoint
+ * attributes, so the steps become container queries on the skin root — the same mechanism the packaged skins use.
+ */
+
+.ps-notflix {
+  --ps-accent: #ea3323;
+  --ps-panel: rgb(38 38 38);
+  --ps-font-size: 10px;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-notflix / inline-size;
+
+  background: #000;
+  color: #fff;
+  font-size: var(--ps-font-size);
+  font-family: system-ui, sans-serif;
+  line-height: 1;
+}
+
+.ps-notflix > video,
+.ps-notflix > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+.ps-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-loading[data-visible] {
+  display: grid;
+}
+
+.ps-spinner {
+  width: 4em;
+  height: 4em;
+}
+
+/* --- Chrome --- */
+
+.ps-chrome {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-time-bar {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 2em;
+  padding: 0 0.4em;
+}
+
+.ps-remaining {
+  padding: 0 0.4em 0 0.8em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Time slider --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  flex: 1;
+  height: 1.4em;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 0.25em;
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: gray;
+  transition: height 0.1s;
+}
+
+.ps-range:hover .ps-track {
+  height: 0.4em;
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: #d3d3d3;
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-accent);
+}
+
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 1em;
+  height: 1em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ps-accent);
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin: 0 0 0.8em;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  box-shadow: rgb(0 0 0 / 0.8) 0 0 1em;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  padding: 0.5em 9px;
+  background: var(--ps-panel);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 0.4em;
+}
+
+.ps-btn {
+  display: grid;
+  place-content: center;
+  padding: 1.5em 0.9em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ps-btn[data-hidden],
+.ps-btn[data-availability="unavailable"],
+.ps-btn[data-availability="unsupported"] {
+  display: none;
+}
+
+.ps-icon {
+  display: block;
+  height: 2em;
+  width: auto;
+  fill: currentcolor;
+  transition: transform 0.2s ease;
+}
+
+.ps-btn:hover .ps-icon {
+  transform: scale(1.3);
+  transition: transform 0.15s;
+}
+
+/* Icon state: data attributes where media-chrome used named slots. */
+.ps-pause-icon,
+.ps-fs-exit,
+.ps-vol-off,
+.ps-vol-low,
+.ps-vol-medium {
+  display: none;
+}
+
+.ps-btn:not([data-paused]) .ps-play-icon {
+  display: none;
+}
+
+.ps-btn:not([data-paused]) .ps-pause-icon {
+  display: block;
+}
+
+.ps-btn[data-fullscreen] .ps-fs-enter {
+  display: none;
+}
+
+.ps-btn[data-fullscreen] .ps-fs-exit {
+  display: block;
+}
+
+.ps-btn[data-volume-level="off"] .ps-vol-high,
+.ps-btn[data-volume-level="low"] .ps-vol-high,
+.ps-btn[data-volume-level="medium"] .ps-vol-high {
+  display: none;
+}
+
+.ps-btn[data-volume-level="off"] .ps-vol-off,
+.ps-btn[data-volume-level="low"] .ps-vol-low,
+.ps-btn[data-volume-level="medium"] .ps-vol-medium {
+  display: block;
+}
+
+.ps-title {
+  flex-shrink: 999;
+  margin: 0 auto;
+  overflow: hidden;
+  font-size: 1.2em;
+  white-space: nowrap;
+}
+
+/* --- Volume, revealed by hovering the mute button --- */
+
+.ps-volume {
+  position: relative;
+}
+
+.ps-volume-range {
+  position: absolute;
+  top: 0.7em;
+  left: 0.5em;
+  overflow: hidden;
+  transform: rotate(-90deg) translateY(50%);
+  transform-origin: 0 0;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.1s,
+    visibility 0.1s;
+}
+
+.ps-volume:hover .ps-volume-range,
+.ps-volume:focus-within .ps-volume-range {
+  visibility: visible;
+  opacity: 1;
+  transition:
+    opacity 0.1s 0.2s,
+    visibility 0s;
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 7em;
+  height: 1.5em;
+  padding: 0 1em;
+  border-radius: 2px;
+  background: var(--ps-panel);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 1em;
+  top: 50%;
+  height: 0.5em;
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: gray;
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-accent);
+}
+
+.ps-vthumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 1em;
+  height: 1em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ps-accent);
+}
+
+/* --- Captions menu --- */
+
+.ps-menu {
+  position: absolute;
+  right: 10px;
+  bottom: 100%;
+  margin-bottom: 15px;
+  border-radius: 2px;
+  background: var(--ps-panel);
+  font-size: 1.2em;
+}
+
+.ps-menu:not([data-open]) {
+  display: none;
+}
+
+.ps-menu-header {
+  padding: 0.4em 2em 0 1em;
+  font-weight: 500;
+  font-size: 1.2em;
+  line-height: 1.5;
+  letter-spacing: 0.01rem;
+}
+
+.ps-radio-group {
+  display: block;
+  padding-bottom: 0.4em;
+}
+
+.ps-menu-item {
+  display: block;
+  padding: 0.2em 2em 0.2em 1em;
+  color: rgb(179 179 179);
+  font-size: 1em;
+  line-height: 1.7;
+  cursor: pointer;
+}
+
+.ps-menu-item[data-checked],
+.ps-menu-item[aria-checked="true"] {
+  color: #fff;
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 2px;
+  background: var(--ps-panel);
+  font-size: 1.4em;
+  text-align: center;
+}
+
+.ps-dialog-description {
+  font-size: 0.875em;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 2px;
+  background: var(--ps-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}
+
+/* The original's four breakpoints, at the same stops. */
+@container ps-notflix (inline-size >= 576px) {
+  .ps-notflix {
+    --ps-font-size: 12px;
+  }
+
+  .ps-title {
+    padding-right: 15%;
+  }
+
+  .ps-menu {
+    right: 15px;
+    margin-bottom: 25px;
+  }
+}
+
+@container ps-notflix (inline-size >= 768px) {
+  .ps-notflix {
+    --ps-font-size: 14px;
+  }
+}
+
+@container ps-notflix (inline-size >= 1440px) {
+  .ps-notflix {
+    --ps-font-size: 16px;
+  }
+}
