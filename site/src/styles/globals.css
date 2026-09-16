@@ -76,6 +76,8 @@
   --font-*: initial;
   /* --font-instrument-sans and --font-ibm-plex-mono are defined in Base.astro */
   --font-sans: var(--font-instrument-sans);
+  /* Body tracking is non-zero, which makes optional ligatures droppable; only the low-level property keeps them. */
+  --font-sans--font-feature-settings: "liga" 1, "clig" 1;
   --font-mono: var(--font-ibm-plex-mono);
   --font-display-compact: "Eurostile LT Pro", "Eurostile LT Pro Fallback", sans-serif;
   --font-display: "Eurostile LT Pro Extended", "Eurostile LT Pro Extended Fallback", sans-serif;
@@ -118,9 +120,9 @@
   --tracking-tight: -0.01em;
   --tracking-normal: 0;
 
-  /* Body copy runs half a percent tighter than the shared scale, to offset its 450 weight. */
-  --tracking-body-tight: -0.015em;
-  --tracking-body: -0.005em;
+  /* Body copy runs a quarter percent tighter than the shared scale, to offset its 450 weight. */
+  --tracking-body-tight: -0.0125em;
+  --tracking-body: -0.0025em;
 
   --text-*: initial;
 
