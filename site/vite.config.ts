@@ -10,6 +10,7 @@ import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 
 // SAFETY: @vitejs/plugin-react and the workspace resolve Plugin from the catalog-pinned Vite implementation.
 const reactPlugins = react() as Plugin[];
+const domTests = ['src/utils/docs/__tests__/preferences.test.ts', 'src/utils/mux/__tests__/auth-flow.test.ts'];
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and
 // passed as a variable: Astro 7's `getViteConfig` param no longer surfaces the
@@ -25,18 +26,14 @@ const config: ViteUserConfig = {
         test: {
           name: 'site',
           include: configDefaults.include,
-          exclude: [
-            ...configDefaults.exclude,
-            'src/utils/docs/__tests__/preferences.test.ts',
-            'src/utils/mux/__tests__/auth-flow.test.ts',
-          ],
+          exclude: [...configDefaults.exclude, ...domTests],
         },
       },
       {
         extends: true,
         test: {
           name: 'site/dom',
-          include: ['src/utils/docs/__tests__/preferences.test.ts', 'src/utils/mux/__tests__/auth-flow.test.ts'],
+          include: domTests,
           environment: 'jsdom',
           setupFiles: ['./src/test-setup.ts'],
         },
