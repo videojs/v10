@@ -5,26 +5,66 @@ description: Build a working HTML player from Video.js browser-ready CDN files
 
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
+import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
+import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import InstallationPreview from '@/components/installation/InstallationPreview';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
+import ReleaseCandidateNotice from '@/components/installation/ReleaseCandidateNotice.astro';
+import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import UseCasePicker from '@/components/installation/UseCasePicker';
+
+Video.js can run directly from browser-ready files on jsDelivr. This HTML-only path needs no package manager or build step: choose a player, load its scripts, and add the generated custom-element markup to your page.
+
+<ReleaseCandidateNotice />
 
 <InstallationMethodNav />
 
-Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` in prebuilt, browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
+## Choose your use case
 
-```html title="index.html"
-<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+Choose the ready-made player that is closest to what you are building. Live presets add live-edge controls; background video is muted and loops behind your content.
 
-<video-player>
-  <video-skin>
-    <video src="video.mp4"></video>
-  </video-skin>
-</video-player>
-```
+<ContentWidth margins="lg">
+  <UseCasePicker client:idle />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <SkinPickerSection />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <InstallationPreview client:visible />
+</ContentWidth>
+
+## Choose your media source
+
+Choose what the player will play. The CDN page only shows sources with a browser-ready bundle.
+
+<ContentWidth margins="lg">
+  <CdnMediaSourcePicker />
+</ContentWidth>
+
+## Load Video.js
+
+Add these generated module scripts to your page. They register the player, selected skin, media element, and any extension the source needs.
+
+<ContentWidth>
+  <CdnCodeBlock />
+</ContentWidth>
+
+## Add your player
+
+Place this generated markup where the player should appear. It uses the media source you selected above.
+
+<ContentWidth>
+  <HTMLUsageCodeBlock client:idle installMethod="cdn" />
+</ContentWidth>
 
 That's it! You now have a working Video.js player without a package manager or build step.
 
-## URLs
+## Understand CDN URLs
 
 Every file the CDN serves follows one URL pattern:
 

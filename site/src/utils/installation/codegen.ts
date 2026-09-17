@@ -348,6 +348,168 @@ export function generateHTMLUsageCode(
 }
 
 // ---------------------------------------------------------------------------
+// Vue and Svelte
+// ---------------------------------------------------------------------------
+
+const FRAMEWORK_SOURCE_PLACEHOLDER = '__VIDEOJS_FRAMEWORK_SOURCE__';
+
+function indentBlock(value: string, indent: string): string {
+  return value
+    .split('\n')
+    .map((line) => `${indent}${line}`)
+    .join('\n');
+}
+
+function getHTMLCustomElementTags(useCase: UseCase, skin: Skin, renderer: Renderer): string[] {
+  const tags = [getPlayerTag(useCase)];
+
+  if (skin !== 'none' || useCase === 'background-video') {
+    tags.push(getSkinTag(useCase, skin === 'none' ? 'video' : skin));
+  }
+
+  const mediaTag = getRendererTag(renderer);
+
+  if (mediaTag.includes('-')) tags.push(mediaTag);
+
+  if (isMuxRenderer(renderer)) tags.push('mux-data');
+
+  return [...new Set(tags)];
+}
+
+export interface VueCustomElementConfigCode {
+  'vite.config.ts': string;
+  'nuxt.config.ts': string;
+}
+
+export interface VueCreateCode {
+  'VideoPlayer.vue': string;
+}
+
+export interface VueUsageCode {
+  'App.vue': string;
+}
+
+export interface SvelteCreateCode {
+  'VideoPlayer.svelte': string;
+}
+
+export interface SvelteUsageCode {
+  '+page.svelte': string;
+  'App.svelte': string;
+}
+
+export function generateVueCustomElementConfigCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+): VueCustomElementConfigCode {
+  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer)
+    .map((tag) => `'${tag}'`)
+    .join(', ');
+  const elementSet = `const videoJsElements = new Set([${tags}]);`;
+
+  return {
+    'vite.config.ts': `import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
+
+${elementSet}
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => videoJsElements.has(tag),
+        },
+      },
+    }),
+  ],
+});`,
+    'nuxt.config.ts': `${elementSet}
+
+export default defineNuxtConfig({
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => videoJsElements.has(tag),
+    },
+  },
+});`,
+  };
+}
+
+export function generateVueCreateCode(opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>): VueCreateCode {
+  const imports = generateHTMLImports(opts.useCase, opts.skin, opts.renderer);
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, FRAMEWORK_SOURCE_PLACEHOLDER).replace(
+    `src="${FRAMEWORK_SOURCE_PLACEHOLDER}"`,
+    ':src="src"'
+  );
+
+  return {
+    'VideoPlayer.vue': `<script setup lang="ts">
+${imports}
+
+defineProps<{ src: string }>();
+</script>
+
+<template>
+${indentBlock(markup, '  ')}
+</template>`,
+  };
+}
+
+export function generateVueUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+): VueUsageCode {
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+
+  return {
+    'App.vue': `<script setup lang="ts">
+import VideoPlayer from './components/VideoPlayer.vue';
+</script>
+
+<template>
+  <h1>Welcome to My App</h1>
+  <VideoPlayer src="${source}" />
+</template>`,
+  };
+}
+
+export function generateSvelteCreateCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+): SvelteCreateCode {
+  const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.renderer), '  ');
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, FRAMEWORK_SOURCE_PLACEHOLDER).replace(
+    `src="${FRAMEWORK_SOURCE_PLACEHOLDER}"`,
+    'src={src}'
+  );
+
+  return {
+    'VideoPlayer.svelte': `<script lang="ts">
+${imports}
+
+  let { src }: { src: string } = $props();
+</script>
+
+${markup}`,
+  };
+}
+
+export function generateSvelteUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+): SvelteUsageCode {
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+  const component = (path: string) => `<script lang="ts">
+  import VideoPlayer from '${path}';
+</script>
+
+<h1>Welcome to My App</h1>
+<VideoPlayer src="${source}" />`;
+
+  return {
+    '+page.svelte': component('$lib/VideoPlayer.svelte'),
+    'App.svelte': component('./lib/VideoPlayer.svelte'),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // React Create
 // ---------------------------------------------------------------------------
 

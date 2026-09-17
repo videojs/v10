@@ -61,7 +61,11 @@ const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
 /** How long typing may pause before the draft URL reaches the preview. */
 const COMMIT_DELAY_MS = 500;
 
-export default function MediaSourcePicker() {
+interface Props {
+  supportedRenderers?: Renderer[];
+}
+
+export default function MediaSourcePicker({ supportedRenderers }: Props) {
   const $renderer = useSelection('renderer');
   const $useCase = useSelection('useCase');
   const $sourceUrl = useSelection('sourceUrl');
@@ -99,9 +103,18 @@ export default function MediaSourcePicker() {
     commitTimer.current = setTimeout(() => commit(value), COMMIT_DELAY_MS);
   }
 
-  const renderers = getInstallationPreset($useCase).renderers;
+  const presetRenderers = getInstallationPreset($useCase).renderers;
+  const renderers = supportedRenderers
+    ? presetRenderers.filter((value) => supportedRenderers.includes(value))
+    : presetRenderers;
+  const firstRenderer = renderers[0];
+  const rendererSupported = renderers.includes($renderer);
   const detection = detectRenderer($sourceUrl, $useCase);
-  const detectedRenderer = detection?.renderer ?? null;
+  const detectedRenderer = detection && renderers.includes(detection.renderer) ? detection.renderer : null;
+
+  useEffect(() => {
+    if (!rendererSupported && firstRenderer) renderer.set(firstRenderer);
+  }, [firstRenderer, rendererSupported]);
 
   // Follow the detected renderer for a pasted URL. Uses the primitive `detectedRenderer` string instead of the
   // `detection` object so the effect does not re-fire on every render and override a manual selection. Fitting the
@@ -112,7 +125,7 @@ export default function MediaSourcePicker() {
 
   const hasUrl = $sourceUrl.trim().length > 0;
   const showDetectionMatch = hasUrl && detection && detection.renderer === $renderer;
-  const showDetectionSuggestion = hasUrl && detection && detection.renderer !== $renderer;
+  const showDetectionSuggestion = hasUrl && detection && detectedRenderer && detection.renderer !== $renderer;
   const showNoMatch = hasUrl && !detection;
 
   return (
