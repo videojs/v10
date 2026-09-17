@@ -64,6 +64,12 @@
     "Astro": {
       "formatter": [{ "language_server": { "name": "oxfmt" } }],
       "code_action": "source.fixAll.oxc"
+    },
+    "Markdown": {
+      "format_on_save": "off"
+    },
+    "MDX": {
+      "format_on_save": "off"
     }
   }
 }
