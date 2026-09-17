@@ -46,6 +46,8 @@ export const REGISTRY_TEMPLATES = [
   'astro',
 ] as const satisfies readonly RegistryTemplate[];
 
+const HTML_REGISTRY_TEMPLATES = ['vite', 'astro', 'laravel'] as const satisfies readonly RegistryTemplate[];
+
 export const REGISTRY_THEMES = ['default', 'minimal'] as const satisfies readonly RegistryTheme[];
 
 export const REGISTRY_THEME_LABELS = {
@@ -111,6 +113,19 @@ export function defaultRegistryStyling(framework: RegistryFramework): RegistrySt
 
 export function defaultRegistryTemplate(framework: RegistryProjectFramework): RegistryTemplate {
   return framework === 'react' ? 'next' : 'vite';
+}
+
+/** The Shadcn project templates that can host each Video.js source framework. */
+export function registryTemplates(framework: RegistryFramework): readonly RegistryTemplate[] {
+  return framework === 'react' ? REGISTRY_TEMPLATES : HTML_REGISTRY_TEMPLATES;
+}
+
+/** Keep a project-template choice valid when the source framework changes. */
+export function resolveRegistryTemplate(
+  framework: RegistryFramework,
+  template: RegistryTemplate | null
+): RegistryTemplate {
+  return template && registryTemplates(framework).includes(template) ? template : defaultRegistryTemplate(framework);
 }
 
 /** Keep a styling choice made for one framework valid for another. */

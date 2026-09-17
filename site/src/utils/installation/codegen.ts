@@ -651,7 +651,9 @@ export function generateSourceReactCreateCode(
   // A registry theme changes the source behind the stable item name. Both the Default and Minimal catalogs export the
   // same local component (`VideoSkin`, `AudioSkin`, and so on).
   const skinComponent = `${preset.componentPrefix}Skin`;
-  const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
+  const rendererProps = isVideoLikeRenderer(renderer)
+    ? `src={${JSON.stringify(source)}} playsInline`
+    : `src={${JSON.stringify(source)}}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
   const presetImports = [playerComponent];
   let mediaImport: string | null = null;
@@ -672,11 +674,7 @@ export function generateSourceReactCreateCode(
   ].join('\n');
 
   return {
-    'app/page.tsx': `'use client';
-
-${imports}
-
-const src = ${JSON.stringify(source)};
+    'app/page.tsx': `${imports}
 
 export default function Page() {
   return (
@@ -719,7 +717,9 @@ export function generateSourceHTMLUsageCode(
     media: generateMediaMarkup(tag, source, playsInline, renderer, ''),
     player: `<${getPlayerTag(useCase)}>
   <!-- Paste the contents of components/videojs/${preset.flag}/skin.html here. -->
-</${getPlayerTag(useCase)}>`,
+</${getPlayerTag(useCase)}>
+
+<script type="module" src="/src/player.ts"></script>`,
     skinFile: `components/videojs/${preset.flag}/skin.html`,
   };
 }
