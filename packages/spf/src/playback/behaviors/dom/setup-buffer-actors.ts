@@ -59,6 +59,7 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
+import { credentialsFetch } from '../../primitives/credentials-fetch';
 import { failoverFetch } from '../../primitives/failover-fetch';
 import type { MessagePipelines } from '../../primitives/segment-load-pipeline';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';
@@ -244,7 +245,8 @@ export const setupVideoBufferActors = defineBehavior({
       (next) => state.bandwidthState.set(next)
     );
     // Engine `config` layers over the per-type defaults; `failoverFetch` reads
-    // its `selectedKey` + `getCdnId` from the merged result.
+    // its `selectedKey` + `getCdnId` from the merged result. Credentials wrap
+    // innermost so a failed credentialed request still trips the CDN.
     const typeConfig = { ...VIDEO_TYPE_CONFIG, ...config };
 
     return setupBufferActors({
@@ -253,7 +255,7 @@ export const setupVideoBufferActors = defineBehavior({
       config: {
         ...typeConfig,
         messagePipelines: config[VIDEO_TYPE_CONFIG.messagePipelinesKey],
-        fetch: failoverFetch(trackedFetch, state, typeConfig),
+        fetch: failoverFetch(credentialsFetch(trackedFetch, state), state, typeConfig),
       },
     });
   },
@@ -296,7 +298,7 @@ export const setupAudioBufferActors = defineBehavior({
       config: {
         ...typeConfig,
         messagePipelines: config[AUDIO_TYPE_CONFIG.messagePipelinesKey],
-        fetch: failoverFetch(fetchStream, state, typeConfig),
+        fetch: failoverFetch(credentialsFetch(fetchStream, state), state, typeConfig),
       },
     });
   },
