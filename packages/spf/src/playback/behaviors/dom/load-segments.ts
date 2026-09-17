@@ -219,6 +219,15 @@ function setupSegmentLoading<
           const loader = context[loaderKey].get();
           if (!track || !loader) return;
 
+          // The policy gates need the same re-read, and for a sharper reason: on
+          // an encrypted source they rise in the *same flush* that resolves the
+          // first rendition, because `setupMediaKeys` keys off the same event.
+          // The machine can therefore commit to a dispatching state while the
+          // gate is still down and arrive here after it is up. Composition order
+          // alone does not close that window — it only decides whether the gate
+          // write lands before or after this body runs.
+          if (state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get()) return;
+
           loader.send({ type: 'load', track });
         },
       },
@@ -236,6 +245,9 @@ function setupSegmentLoading<
           segmentBoundarySignal.get();
           const loader = peek(context[loaderKey]);
           if (!track || !loader) return;
+
+          // Same concurrent-rise window as `'metadata-only'`'s entry; see there.
+          if (state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get()) return;
 
           const currentTime = peek(state.currentTime) ?? 0;
 
