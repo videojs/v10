@@ -72,7 +72,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.10",
     "browserslist": "^4.28.1",
-    "caniuse-lite": "^1.0.30001781",
+    "caniuse-lite": "^1.0.30001810",
     "jsdom": "^27.0.0",
     "linkedom": "^0.18.12",
     "oxc-parser": "0.146.0",
