@@ -582,12 +582,26 @@ path.
   resolved presentation. An ABR switch across a key boundary then has
   no session for the new key. `#EXT-X-SESSION-KEY` — the standard way
   to declare every key up front — is deliberately not parsed, so
-  nothing masks it. Axinom's MultiKey vector plays because the smoke
-  never left the initially-selected tier, and the multi-key pin test
-  passes because it is handed a presentation with every variant already
-  resolved, which the engine does not produce at entry. The fix is the
-  same reactive re-scan named above, which is why this is tracked with
-  on-demand licensing in #2863 rather than separately.
+  nothing masks it. The multi-key pin test passes because it is handed a
+  presentation with every variant already resolved, which the engine
+  does not produce at entry.
+
+  **Axinom's MultiKey vector is a live repro, measured from its
+  manifests 2026-09-17:** five variants, **two** distinct KEYIDs split
+  at the 480->720 boundary (288/360/480 on `C83C4EA8...`, 720/1080 on
+  `C868C702...`), no `EXT-X-SESSION-KEY`, and each variant playlist
+  declaring only its own key — as a Widevine PSSH and an `skd://` URI
+  naming the same keyid. It plays because a smoke that stays on one side
+  of that boundary only ever needs the key it licensed. Crossing it
+  needs a key with no session. This also corrects a claim carried in
+  the sandbox source comment and the risk assessment, that the asset
+  shows a license POST per ladder key at startup: only the selected
+  variant is resolved, so exactly one key is declared and one license
+  fetched. The fan-out is over *declared* keys, which in production is
+  one.
+
+  The fix is the same reactive re-scan named above, which is why this is
+  tracked with on-demand licensing in #2863 rather than separately.
 - **Output-protection-aware ABR coordination.** Renditions tagged
   with security-level / HDCP requirements interact with video-ABR
   and hevc-variant-selection. ABR's candidate set should be filtered

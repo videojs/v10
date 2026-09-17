@@ -438,11 +438,21 @@ const SOURCE_MAP = {
     },
   },
   'hls-drm-axinom-multikey': {
-    // Axinom's H.264 CMAF cbcs MultiKey vector: a distinct Widevine key per
-    // quality tier (three KEYIDs across the ladder), the studio-policy shape
-    // nothing else in this set exercises. SPF licenses every declared key
-    // eagerly at startup, so this asset shows three license POSTs before the
-    // first frame — the fan-out the pinning test in exchange-licenses pins.
+    // Axinom's H.264 CMAF cbcs MultiKey vector: distinct Widevine keys across
+    // the quality ladder, the studio-policy shape nothing else in this set
+    // exercises. Measured 2026-09-17 from the manifests: five variants, **two**
+    // distinct KEYIDs, split at the 480->720 boundary (288/360/480 share
+    // C83C4EA8..., 720/1080 share C868C702...), no `EXT-X-SESSION-KEY`, and
+    // each variant playlist declares only its own key — twice, once as a
+    // Widevine PSSH and once as an `skd://` URI naming the same keyid.
+    //
+    // So this does NOT show a license POST per ladder key at startup, as an
+    // earlier version of this comment claimed. `resolve-track` resolves only
+    // the selected variant, so exactly one key is declared when
+    // `exchangeLicenses` runs, and exactly one license is fetched. The eager
+    // fan-out the pin test pins is over *declared* keys, which in production is
+    // one. Crossing 480<->720 therefore needs a key that was never licensed —
+    // the defect tracked in #2863.
     //
     // Widevine only, for the same reason as `hls-drm-axinom`: its FairPlay
     // request over MSE cannot convey the `skd://keyid:iv` content id this
