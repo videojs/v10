@@ -1,23 +1,30 @@
 import { useStore } from '@nanostores/react';
-import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
-import { Select } from '@/components/Select';
+import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import { registryFramework, registryStyling, registryTemplate } from '@/stores/registry';
 import { defaultRegistryTemplate, type RegistryFramework } from '@/utils/installation/shadcn';
 
-const ICONS = {
-  react: <ReactLogo className="size-4" />,
-  html: <Html5Logo className="size-4" />,
-} satisfies Record<RegistryFramework, ReactNode>;
+const OPTIONS: CardRadioOption<RegistryFramework>[] = [
+  {
+    value: 'react',
+    label: 'React',
+    description: 'Components and hooks for React 19',
+    media: <ReactLogo className="size-7" />,
+  },
+  {
+    value: 'html',
+    label: 'HTML',
+    description: 'Custom elements for any stack',
+    media: <Html5Logo className="size-7" />,
+  },
+];
 
-const OPTIONS = (['react', 'html'] as const).map((value) => ({
-  value,
-  label: value === 'react' ? 'React' : 'HTML',
-  icon: ICONS[value],
-}));
+function isRegistryFramework(value: string | null): value is RegistryFramework {
+  return value === 'react' || value === 'html';
+}
 
 function updatePanels(framework: RegistryFramework) {
   for (const panel of document.querySelectorAll<HTMLElement>('[data-shadcn-framework]')) {
@@ -32,11 +39,34 @@ function updatePanels(framework: RegistryFramework) {
 
 export default function ShadcnFrameworkSelect() {
   const framework = useStore(registryFramework);
+  const urlReady = useRef(false);
 
-  useEffect(() => updatePanels(framework), [framework]);
+  useEffect(() => {
+    if (!urlReady.current) {
+      urlReady.current = true;
+      const value = new URLSearchParams(location.search).get('framework');
+      const initialFramework = isRegistryFramework(value) ? value : 'react';
 
-  const handleChange = (next: RegistryFramework | null) => {
-    if (!next || next === framework) return;
+      if (initialFramework !== framework) {
+        registryFramework.set(initialFramework);
+        registryTemplate.set(defaultRegistryTemplate(initialFramework));
+        registryStyling.set(null);
+        updatePanels(initialFramework);
+        return;
+      }
+    }
+
+    updatePanels(framework);
+
+    const params = new URLSearchParams(location.search);
+
+    params.set('framework', framework);
+
+    history.replaceState(history.state, '', `${location.pathname}?${params.toString()}${location.hash}`);
+  }, [framework]);
+
+  const handleChange = (next: RegistryFramework) => {
+    if (next === framework) return;
 
     registryFramework.set(next);
     registryTemplate.set(defaultRegistryTemplate(next));
@@ -44,15 +74,12 @@ export default function ShadcnFrameworkSelect() {
   };
 
   return (
-    <div className="grid gap-1.5">
-      <p className="text-p4 font-medium">Player</p>
-      <Select
-        value={framework}
-        onChange={handleChange}
-        options={OPTIONS}
-        aria-label="Select player"
-        className="justify-self-start"
-      />
-    </div>
+    <CardRadioGroup
+      value={framework}
+      onChange={handleChange}
+      options={OPTIONS}
+      aria-label="Select player framework"
+      minColumnWidth="14rem"
+    />
   );
 }

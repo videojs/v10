@@ -1,0 +1,9 @@
+---
+import { getCollection } from 'astro:content';
+
+import HTMLCdnCodeBlock from '@/components/installation/HTMLCdnCodeBlock';
+
+const cdnMedia = (await getCollection('cdnMedia')).map((entry) => entry.id);
+---
+
+<HTMLCdnCodeBlock client:idle cdnMedia={cdnMedia} />

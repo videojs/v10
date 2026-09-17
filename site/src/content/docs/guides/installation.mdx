@@ -7,6 +7,7 @@ description: Install the Video.js packages and build a working player with acces
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import ReleaseCandidateNotice from '@/components/installation/ReleaseCandidateNotice.astro';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
@@ -28,8 +29,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
 
-<InstallationMethodNav />
-
 <FrameworkCase frameworks={["react"]}>
 Video.js is a **React video player component library**: composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
@@ -37,11 +36,9 @@ Video.js is a **React video player component library**: composable primitives, h
 Video.js is an **HTML video player built on custom elements**: lightweight, framework-free components for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
 
-<Aside type="note" title="Release Candidate">
-Video.js v10 is a _release candidate_. This means we feel the API is stable and we're ready to start building with it. With your [feedback](https://github.com/videojs/v10/issues), a few docs tweaks, and maybe a bug fix or two, we're looking forward to shipping 10.0.0 very soon.
+<ReleaseCandidateNotice />
 
-[Read the Release Candidate blog post here](/blog/videojs-v10-release-candidate)
-</Aside>
+<InstallationMethodNav />
 
 <Aside type="tip" title="Coming from another player?">
 Follow the migration guide for <DocsLink slug="guides/migrate-from-video-js-8">Video.js 8</DocsLink>, <DocsLink slug="guides/migrate-from-mux-player">Mux Player</DocsLink>, <DocsLink slug="guides/migrate-from-plyr">Plyr</DocsLink>, or <DocsLink slug="guides/migrate-from-media-chrome">Media Chrome</DocsLink>. Each maps your existing setup onto Video.js v10 instead of starting from scratch.

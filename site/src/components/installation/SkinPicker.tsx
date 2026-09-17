@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import { skin } from '@/stores/installation';
 import { getInstallationPreset, type Skin } from '@/utils/installation/types';
@@ -21,11 +23,21 @@ const AUDIO_SKINS: CardRadioOption<Skin>[] = [
   option('none', 'No skin', 'Bring your own UI built from the components'),
 ];
 
-export default function SkinPicker() {
+interface Props {
+  includeNoSkin?: boolean;
+}
+
+export default function SkinPicker({ includeNoSkin = true }: Props) {
   const $skin = useSelection('skin');
   const $useCase = useSelection('useCase');
 
-  const options = getInstallationPreset($useCase).mediaType === 'audio' ? AUDIO_SKINS : VIDEO_SKINS;
+  const allOptions = getInstallationPreset($useCase).mediaType === 'audio' ? AUDIO_SKINS : VIDEO_SKINS;
+  const options = includeNoSkin ? allOptions : allOptions.filter(({ value }) => value !== 'none');
+  const firstSkin = options[0]!.value;
+
+  useEffect(() => {
+    if (!includeNoSkin && $skin === 'none') skin.set(firstSkin);
+  }, [$skin, firstSkin, includeNoSkin]);
 
   return (
     <CardRadioGroup

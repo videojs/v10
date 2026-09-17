@@ -9,6 +9,11 @@ import {
   generateSourceHTMLUsageCode,
   generateSourceMediaInstallCode,
   generateSourceReactCreateCode,
+  generateSvelteCreateCode,
+  generateSvelteUsageCode,
+  generateVueCreateCode,
+  generateVueCustomElementConfigCode,
+  generateVueUsageCode,
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
@@ -392,6 +397,35 @@ describe('generateHTMLUsageCode', () => {
     // A distinct asset from the on-demand demo, so the live player actually
     // reports live-edge state.
     expect(live.html).not.toEqual(onDemand.html);
+  });
+});
+
+describe('Vue and Svelte code generation', () => {
+  const hlsOptions = { ...baseHTML, renderer: 'hls' as const };
+
+  it('configures Vue to pass the selected custom elements to the browser', () => {
+    const code = generateVueCustomElementConfigCode(hlsOptions);
+
+    expect(code['vite.config.ts']).toContain("'video-player', 'video-skin', 'hlsjs-video'");
+    expect(code['nuxt.config.ts']).toContain('isCustomElement: (tag) => videoJsElements.has(tag)');
+  });
+
+  it('creates a Vue component and usage example from the selected player', () => {
+    const player = generateVueCreateCode(hlsOptions)['VideoPlayer.vue'];
+    const usage = generateVueUsageCode({ ...hlsOptions, sourceUrl: 'https://example.com/live.m3u8' })['App.vue'];
+
+    expect(player).toContain("import '@videojs/html/media/hlsjs-video'");
+    expect(player).toContain('<hlsjs-video :src="src" playsinline>');
+    expect(usage).toContain('<VideoPlayer src="https://example.com/live.m3u8" />');
+  });
+
+  it('creates Svelte and SvelteKit examples from the selected player', () => {
+    const player = generateSvelteCreateCode(hlsOptions)['VideoPlayer.svelte'];
+    const usage = generateSvelteUsageCode({ ...hlsOptions, sourceUrl: 'https://example.com/live.m3u8' });
+
+    expect(player).toContain('<hlsjs-video src={src} playsinline>');
+    expect(usage['+page.svelte']).toContain("import VideoPlayer from '$lib/VideoPlayer.svelte'");
+    expect(usage['App.svelte']).toContain('<VideoPlayer src="https://example.com/live.m3u8" />');
   });
 });
 

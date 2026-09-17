@@ -5,11 +5,13 @@ description: Add editable Video.js skin source to a React or HTML project and bu
 
 import Aside from '@/components/Aside.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
-import Step from '@/components/docs/Step.astro';
-import Steps from '@/components/docs/Steps.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
+import ReleaseCandidateNotice from '@/components/installation/ReleaseCandidateNotice.astro';
+import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import UseCasePicker from '@/components/installation/UseCasePicker';
 import RegistryOptions from '@/components/registry/RegistryOptions.astro';
 import RegistryInitCommand from '@/components/registry/RegistryInitCommand.astro';
 import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
@@ -19,29 +21,39 @@ import SourceMediaInstall from '@/components/registry/SourceMediaInstall';
 import SourceReactPlayer from '@/components/registry/SourceReactPlayer';
 import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 
-<InstallationMethodNav />
+Use Shadcn to add a Video.js skin's components, layout, styles, and interactions to your React or HTML project. The CLI copies the files into your app so you can change them like any other source code.
 
-Use Shadcn when you want the skin's components, layout, styles, and interactions in your project. The CLI copies the files; you can then change them like any other source code.
+<ReleaseCandidateNotice />
+
+<InstallationMethodNav />
 
 <Aside type="note">
 Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
 </Aside>
 
-## Choose your player and skin
+## Choose your JS framework
 
-React skins can use Tailwind CSS 4 or Vanilla CSS. HTML skins use Vanilla CSS.
+React projects use components and hooks. HTML projects use custom elements and work with any stack. This choice stays on this page and is saved in the URL.
 
-<ContentWidth>
+<ContentWidth margins="lg">
   <ShadcnFrameworkSelect client:idle />
 </ContentWidth>
 
-<ShadcnFrameworkCase framework="react">
-  <RegistryOptions framework="react" kind="catalog" installation />
-</ShadcnFrameworkCase>
+## Choose your use case
 
-<ShadcnFrameworkCase framework="html">
-  <RegistryOptions framework="html" kind="catalog" installation />
-</ShadcnFrameworkCase>
+Choose the ready-made player that is closest to what you are building. The Shadcn registry does not currently provide the background video skin as source.
+
+<ContentWidth margins="lg">
+  <UseCasePicker client:idle includeBackground={false} />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <SkinPickerSection includeNoSkin={false} source />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <InstallationPreview client:visible />
+</ContentWidth>
 
 ## Choose your media source
 
@@ -51,33 +63,53 @@ Choose what the player will play. If that source needs a playback adapter, the i
   <MediaSourcePicker client:idle />
 </ContentWidth>
 
-## Add the skin source and build your player
+## Initialize Shadcn
 
 Run the commands from the app directory that contains `components.json`, or where you want the CLI to create it. In a monorepo, run them from the app workspace or pass `--cwd <path>`.
 
 <ShadcnFrameworkCase framework="react">
-<Steps>
-<Step number={1} title="If the app does not have components.json, initialize it first">
-
 <RegistryOptions framework="react" kind="template" />
 
-<RegistryInitCommand framework="react" />
-</Step>
+<RegistryInitCommand framework="react" installation />
+</ShadcnFrameworkCase>
 
-<Step number={2} title="Connect the Video.js registry and add the skin source">
+<ShadcnFrameworkCase framework="html">
+<RegistryOptions framework="html" kind="template" />
+
+<RegistryInitCommand framework="html" installation />
+</ShadcnFrameworkCase>
+
+If the app already has `components.json`, skip this section.
+
+## Add the skin source
+
+React skins can use Tailwind CSS 4 or Vanilla CSS. HTML skins use Vanilla CSS. Choose the styling that matches your app, then connect the Video.js registry and add the skin selected above.
+
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="styling" />
 
 <InstallationRegistryCommand framework="react" />
 
 The files are added under `components/videojs/<skin>`. The registry item also installs `@videojs/react`.
-</Step>
+</ShadcnFrameworkCase>
 
-<Step number={3} title="Install the media adapter, if this source needs one">
+<ShadcnFrameworkCase framework="html">
+<RegistryOptions framework="html" kind="styling" />
+
+<InstallationRegistryCommand framework="html" />
+
+The files are added under `components/videojs/<skin>`. The registry item also installs `@videojs/html`.
+</ShadcnFrameworkCase>
+
+## Install the media adapter
+
+Some media sources need a separate playback adapter. The command follows the source you selected above.
 
 <SourceMediaInstall client:idle />
-</Step>
 
-<Step number={4} title="Create and use your player">
+## Build and use your player
 
+<ShadcnFrameworkCase framework="react">
 Add this component:
 
 <ContentWidth>
@@ -89,40 +121,14 @@ Then render it in your app. The example uses the media source selected above.
 <ContentWidth>
   <ReactUsageCodeBlock client:idle />
 </ContentWidth>
-</Step>
-</Steps>
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-<Steps>
-<Step number={1} title="If the app does not have components.json, initialize it first">
-
-<RegistryOptions framework="html" kind="template" />
-
-<RegistryInitCommand framework="html" />
-</Step>
-
-<Step number={2} title="Connect the Video.js registry and add the skin source">
-
-<InstallationRegistryCommand framework="html" />
-
-The files are added under `components/videojs/<skin>`. The registry item also installs `@videojs/html`.
-</Step>
-
-<Step number={3} title="Install the media adapter, if this source needs one">
-
-<SourceMediaInstall client:idle />
-</Step>
-
-<Step number={4} title="Add the media and use your player">
-
 <ContentWidth>
   <SourceHTMLPlayer client:idle />
 </ContentWidth>
 
 Load the resulting script with `<script type="module" src="/src/player.ts"></script>` (adjust the path for your project).
-</Step>
-</Steps>
 </ShadcnFrameworkCase>
 
 That's it! You now have a working Video.js player whose skin source lives in your project.

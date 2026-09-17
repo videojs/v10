@@ -2,9 +2,22 @@
 import H2Markdown from '../typography/H2Markdown.astro';
 import P from '../typography/P.astro';
 import SkinPickerSectionClient from './SkinPickerSectionClient.tsx';
+
+interface Props {
+  includeNoSkin?: boolean;
+  source?: boolean;
+}
+
+const { includeNoSkin = true, source = false } = Astro.props;
 ---
 
-<SkinPickerSectionClient client:idle>
+<SkinPickerSectionClient client:idle includeNoSkin={includeNoSkin}>
   <H2Markdown>Choose your skin</H2Markdown>
-  <P>Choose how your player looks. You can add the files for any skin to your project and edit them later.</P>
+  <P>
+    {
+      source
+        ? 'Choose the skin source the CLI will add to your project. You can edit its components, layout, styles, and interactions.'
+        : 'Choose how your player looks. You can add the files for any skin to your project and edit them later.'
+    }
+  </P>
 </SkinPickerSectionClient>
