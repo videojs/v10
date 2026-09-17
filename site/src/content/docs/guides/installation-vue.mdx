@@ -19,6 +19,7 @@ import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 
 Video.js does not ship a first-party Vue package yet, so Vue and Nuxt apps use the `@videojs/html` custom elements directly in their templates.
 
@@ -70,7 +71,7 @@ Vue's template compiler treats unknown tags as Vue components and warns when it 
 
 <VueConfigCodeBlock client:idle />
 
-## Create your player
+## Add your player
 
 Add a single-file component that imports the elements it renders. The imports register the selected player, skin, media, and extensions with the browser; the template composes them.
 
@@ -78,9 +79,7 @@ Add a single-file component that imports the elements it renders. The imports re
   <VueCreateCodeBlock client:idle />
 </ContentWidth>
 
-## Use your player
-
-Render the component anywhere in your app and pass it a source.
+Then render the component anywhere in your app and pass it the media source you selected above.
 
 <ContentWidth>
   <VueUsageCodeBlock client:idle />
@@ -98,24 +97,19 @@ Keep the element imports static. Nuxt renders the custom-element markup on the s
 
 ## Choose what to do next
 
+<DocsLinkCards label="Customize">
 <DocsLinkCard slug="guides/vue" description="Read player state, pass objects as properties, and configure Nuxt">Use Video.js with Vue and Nuxt</DocsLinkCard>
-
 <DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
-
 <DocsLinkCard slug="guides/architecture" description="Learn how the player, skins, media, and UI components fit together">Architecture</DocsLinkCard>
+</DocsLinkCards>
 
-## Prepare for production
-
+<DocsLinkCards label="Deploy">
 <DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
-
 <DocsLinkCard slug="guides/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
-
 <DocsLinkCard slug="guides/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
-
 <DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
-
 <DocsLinkCard slug="guides/cdn" description="See every bundle the CDN serves and the layout rules behind the URLs">CDN</DocsLinkCard>
-
 <DocsLinkCard slug="guides/self-hosting" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+</DocsLinkCards>
 
 Something not quite right? You can [submit an issue](https://github.com/videojs/v10/issues) and ask for help, or explore [other support options](/html5-video-support).

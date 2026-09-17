@@ -4,6 +4,8 @@ description: Add editable Video.js skin source to a React or HTML project and bu
 ---
 
 import Aside from '@/components/Aside.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
@@ -90,7 +92,7 @@ React skins can use Tailwind CSS 4 or Vanilla CSS. HTML skins use Vanilla CSS. C
 
 <InstallationRegistryCommand framework="react" />
 
-The files are added under `components/videojs/<skin>`. The registry item also installs `@videojs/react`.
+The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/react`.
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
@@ -98,25 +100,21 @@ The files are added under `components/videojs/<skin>`. The registry item also in
 
 <InstallationRegistryCommand framework="html" />
 
-The files are added under `components/videojs/<skin>`. The registry item also installs `@videojs/html`.
+The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/html`.
 </ShadcnFrameworkCase>
-
-## Install the media adapter
-
-Some media sources need a separate playback adapter. The command follows the source you selected above.
 
 <SourceMediaInstall client:idle />
 
-## Build and use your player
+## Add your player
 
 <ShadcnFrameworkCase framework="react">
-Add this component:
+Add this component. It imports the player and media from the package, then imports the selected skin from your project.
 
 <ContentWidth>
   <SourceReactPlayer client:idle />
 </ContentWidth>
 
-Then render it in your app. The example uses the media source selected above.
+Then render it in your app with the media source you selected above.
 
 <ContentWidth>
   <ReactUsageCodeBlock client:idle />
@@ -135,4 +133,19 @@ That's it! You now have a working Video.js player whose skin source lives in you
 
 ## Change the skin source
 
-Start in `components/videojs/<skin>/skin.tsx` for React or `skin.html` for HTML. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+Start in `components/videojs/<preset>/skin.tsx` for React or `components/videojs/<preset>/skin.html` for HTML. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+
+## Choose what to do next
+
+<DocsLinkCards label="Customize">
+<DocsLinkCard slug="guides/customize-skins" anchor="style-skin-source" description="Change the installed layout, controls, styles, and interactions">Customize skin source</DocsLinkCard>
+<DocsLinkCard slug="guides/architecture" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
+<DocsLinkCard slug="guides/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
+</DocsLinkCards>
+
+<DocsLinkCards label="Deploy">
+<DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
+<DocsLinkCard slug="guides/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
+<DocsLinkCard slug="guides/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
+<DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
+</DocsLinkCards>

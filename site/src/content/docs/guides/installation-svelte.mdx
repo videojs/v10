@@ -18,6 +18,7 @@ import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 
 Video.js does not ship a first-party Svelte package yet, so Svelte and SvelteKit apps use the `@videojs/html` custom elements directly in their markup.
 
@@ -63,7 +64,7 @@ Install the HTML elements and any playback adapter your selected media source ne
 
 <HTMLInstallTabs />
 
-## Create your player
+## Add your player
 
 Add a component that imports the elements it renders. Svelte passes hyphenated tags through to the browser, so no compiler configuration is needed. The imports register the selected player, skin, media, and extensions; the markup composes them.
 
@@ -71,9 +72,7 @@ Add a component that imports the elements it renders. Svelte passes hyphenated t
   <SvelteCreateCodeBlock client:idle />
 </ContentWidth>
 
-## Use your player
-
-Render the component in a page and pass it a source.
+Then render the component in a page and pass it the media source you selected above.
 
 <ContentWidth>
   <SvelteUsageCodeBlock client:idle />
@@ -91,24 +90,19 @@ Keep the element imports static. SvelteKit renders the custom-element markup on 
 
 ## Choose what to do next
 
+<DocsLinkCards label="Customize">
 <DocsLinkCard slug="guides/svelte" description="Read player state in onMount, pass objects as properties, and configure SvelteKit">Use Video.js with Svelte and SvelteKit</DocsLinkCard>
-
 <DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
-
 <DocsLinkCard slug="guides/architecture" description="Learn how the player, skins, media, and UI components fit together">Architecture</DocsLinkCard>
+</DocsLinkCards>
 
-## Prepare for production
-
+<DocsLinkCards label="Deploy">
 <DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
-
 <DocsLinkCard slug="guides/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
-
 <DocsLinkCard slug="guides/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
-
 <DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
-
 <DocsLinkCard slug="guides/cdn" description="See every bundle the CDN serves and the layout rules behind the URLs">CDN</DocsLinkCard>
-
 <DocsLinkCard slug="guides/self-hosting" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+</DocsLinkCards>
 
 Something not quite right? You can [submit an issue](https://github.com/videojs/v10/issues) and ask for help, or explore [other support options](/html5-video-support).

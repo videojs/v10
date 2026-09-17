@@ -4,8 +4,17 @@
  * contents`, so the links become direct grid items and share row heights.
  */
 import Grid from '@/components/Grid.astro';
+
+interface Props {
+  label?: string;
+}
+
+const { label } = Astro.props;
 ---
 
-<Grid class="docs-link-cards mx-auto my-8 w-full max-w-3xl [&_.docs-link-card]:contents">
-  <slot />
-</Grid>
+<section class="mx-auto my-8 w-full max-w-3xl">
+  {label && <h3 class="mb-3 font-display text-h4 uppercase text-muted select-none">{label}</h3>}
+  <Grid class="docs-link-cards [&_.docs-link-card]:contents">
+    <slot />
+  </Grid>
+</section>
