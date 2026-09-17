@@ -59,8 +59,9 @@ const resolvedTwitterImage = twitterImage
 
 const seoSuffix = suffix ?? SEO_SUFFIX;
 const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
+const includesSiteTitle = pageTitle === SITE_TITLE || pageTitle.endsWith(` | ${SITE_TITLE}`);
 const fullTitle =
-  pageTitle === SITE_TITLE ? `${SITE_TITLE} | ${seoSuffix}` : `${pageTitle} | ${SITE_TITLE} | ${seoSuffix}`;
+  includesSiteTitle ? `${pageTitle} | ${seoSuffix}` : `${pageTitle} | ${SITE_TITLE} | ${seoSuffix}`;
 ---
 
 <html lang="en">
