@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildAgnosticDocsUrl, resolveDocsHref } from '../routing';
+import { buildAgnosticDocsUrl, isDocsGuideActive, resolveDocsHref } from '../routing';
 
 describe('buildAgnosticDocsUrl', () => {
   it('points at the docs landing page without a slug', () => {
@@ -10,6 +10,20 @@ describe('buildAgnosticDocsUrl', () => {
 
   it('uses the preference-aware installation landing page', () => {
     expect(buildAgnosticDocsUrl('guides/installation')).toBe('/docs/guides/installation');
+  });
+});
+
+describe('isDocsGuideActive', () => {
+  it('keeps installation active across every installation route', () => {
+    expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/react')).toBe(true);
+    expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/shadcn')).toBe(true);
+    expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/cdn')).toBe(true);
+    expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/vue')).toBe(true);
+  });
+
+  it('still requires an exact URL for other guides', () => {
+    expect(isDocsGuideActive('html', 'guides/architecture', '/docs/framework/html/guides/architecture')).toBe(true);
+    expect(isDocsGuideActive('html', 'guides/architecture', '/docs/guides/installation/html')).toBe(false);
   });
 });
 

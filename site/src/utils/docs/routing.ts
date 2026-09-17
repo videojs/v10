@@ -27,6 +27,13 @@ export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): 
   return `/docs/framework/${framework}/${guideSlug}`;
 }
 
+/** Match a sidebar guide against the current URL, keeping installation selected across all installation methods. */
+export function isDocsGuideActive(framework: SupportedFramework, guideSlug: string, currentPath: string): boolean {
+  if (guideSlug === 'guides/installation') return currentPath.startsWith('/docs/guides/installation');
+
+  return buildDocsUrl(framework, guideSlug) === currentPath;
+}
+
 /**
  * Build a framework-agnostic docs URL. `/docs` and `/docs/<slug>` are server routes that redirect to the reader's
  * preferred framework, and `resolveDocsHref` upgrades them on the client when the preference is known.
