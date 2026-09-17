@@ -1,10 +1,13 @@
 ---
-title: CDN
-description: The files the Video.js CDN serves and the layout rules behind their URLs
+title: CDN Installation Guide
+description: Build a working HTML player from Video.js browser-ready CDN files
 ---
 
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+
+<InstallationMethodNav />
 
 Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` in prebuilt, browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
 
@@ -17,6 +20,8 @@ Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` i
   </video-skin>
 </video-player>
 ```
+
+That's it! You now have a working Video.js player without a package manager or build step.
 
 ## URLs
 

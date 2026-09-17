@@ -78,6 +78,17 @@ export function isValidFramework(value: string | undefined | null): value is Sup
   return SUPPORTED_FRAMEWORKS.includes(value as SupportedFramework);
 }
 
+/** Resolve a public installation route segment to the docs framework that renders it. */
+export function resolveDocsFramework(value: string | undefined | null): SupportedFramework | null {
+  if (isValidFramework(value)) return value;
+
+  if (value === 'vue' || value === 'svelte' || value === 'cdn') return 'html';
+
+  if (value === 'shadcn') return 'react';
+
+  return null;
+}
+
 export function isValidStyleForFramework(
   framework: SupportedFramework,
   style: string | undefined | null

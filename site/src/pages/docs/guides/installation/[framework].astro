@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import DocsPage from '@/components/docs/DocsPage.astro';
+import type { SupportedFramework } from '@/types/docs';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs');
+  const installationRoutes = {
+    react: { framework: 'react', frameworks: ['react'], slug: 'guides/installation' },
+    html: { framework: 'html', frameworks: ['html'], slug: 'guides/installation' },
+    vue: { framework: 'html', frameworks: ['html'], slug: 'guides/installation-vue' },
+    svelte: { framework: 'html', frameworks: ['html'], slug: 'guides/installation-svelte' },
+    shadcn: { framework: 'react', frameworks: ['react', 'html'], slug: 'guides/installation-shadcn' },
+    cdn: { framework: 'html', frameworks: ['html'], slug: 'guides/cdn' },
+  } as const satisfies Record<
+    string,
+    { framework: SupportedFramework; frameworks: readonly SupportedFramework[]; slug: string }
+  >;
+
+  return Object.entries(installationRoutes).map(([route, config]) => {
+    const doc = docs.find((entry) => entry.id === config.slug);
+    if (!doc) throw new Error(`Missing installation document: ${config.slug}`);
+
+    return {
+      params: { framework: route },
+      props: { doc, ...config },
+    };
+  });
+}
+
+interface Props {
+  doc: CollectionEntry<'docs'>;
+  framework: SupportedFramework;
+  frameworks: readonly SupportedFramework[];
+  slug: string;
+}
+
+const { doc, framework, frameworks, slug } = Astro.props;
+---
+
+<DocsPage doc={doc} framework={framework} frameworks={frameworks} slug={slug} />

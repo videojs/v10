@@ -8,7 +8,7 @@ describe('buildAgnosticDocsUrl', () => {
     expect(buildAgnosticDocsUrl(null)).toBe('/docs');
   });
 
-  it('nests the guide slug under /docs', () => {
+  it('uses the preference-aware installation landing page', () => {
     expect(buildAgnosticDocsUrl('guides/installation')).toBe('/docs/guides/installation');
   });
 });
@@ -20,13 +20,20 @@ describe('resolveDocsHref', () => {
   });
 
   it('resolves the first guide for a framework without a slug', () => {
-    expect(resolveDocsHref({ slug: null, framework: 'html' })).toMatch(/^\/docs\/framework\/html\//);
+    expect(resolveDocsHref({ slug: null, framework: 'html' })).toBe('/docs/guides/installation/html');
   });
 
   it('keeps the slug when the guide exists for the framework', () => {
     expect(resolveDocsHref({ slug: 'guides/installation', framework: 'react' })).toBe(
-      '/docs/framework/react/guides/installation'
+      '/docs/guides/installation/react'
     );
+  });
+
+  it('uses the canonical Shadcn and CDN installation routes', () => {
+    expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'react' })).toBe(
+      '/docs/guides/installation/shadcn'
+    );
+    expect(resolveDocsHref({ slug: 'guides/cdn', framework: 'html' })).toBe('/docs/guides/installation/cdn');
   });
 
   it('throws for an unknown guide slug', () => {

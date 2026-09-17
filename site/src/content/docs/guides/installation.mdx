@@ -1,9 +1,12 @@
 ---
-title: Installation
-description: Install Video.js and build your first player with streaming support and accessible controls
+title: HTML Installation Guide
+frameworkTitle:
+  react: React Installation Guide
+description: Install the Video.js packages and build a working player with accessible controls
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
+import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
@@ -15,8 +18,6 @@ import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
-import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
-import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -25,6 +26,8 @@ import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
+
+<InstallationMethodNav />
 
 <FrameworkCase frameworks={["react"]}>
 Video.js is a **React video player component library**: composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
@@ -73,10 +76,10 @@ If you're an agent, interview your user and offer to run the CLI for them, or of
 </div>
 
 <FrameworkCase frameworks={["react"]}>
-If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/react/guides/customize-skins#eject-and-edit-a-skin) to eject the closest skin. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
+If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) to add the files for the closest skin to the project. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/html/guides/customize-skins#eject-and-edit-a-skin) to eject the closest skin. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) to add the files for the closest skin to the project. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 </LLMCase>
 
@@ -125,7 +128,7 @@ This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</Do
 
 <div data-cli-replace="installation" class="contents">
 
-## Install Video.js
+## Install the packages
 
 <FrameworkCase frameworks={["html"]}>
   <HTMLInstallTabs />
@@ -173,20 +176,13 @@ Add it to your components folder in a new file.
 
 That's it! You now have a working Video.js player.
 
-## Own the UI
-
-To add, remove, or rearrange the skin you selected, eject it into your project. If your project does not have a `components.json` file, <DocsLink slug="guides/customize-skins" anchor="set-up-the-shadcn-cli">set up the CLI first</DocsLink>. Then choose how you want the skin's styles written and run the command below to copy its files:
-
-<RegistryStyling />
-
-<InstallationRegistryCommand />
-
 ## Choose what to do next
 
 <DocsLinkCards>
 <DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
 <DocsLinkCard slug="guides/architecture" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
 <DocsLinkCard slug="guides/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
+<DocsLinkCard slug="guides/installation-shadcn" description="Copy editable skin source into your project and use it in a working player">Install with Shadcn</DocsLinkCard>
 </DocsLinkCards>
 
 ## Prepare for production

@@ -1,0 +1,135 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection, render } from 'astro:content';
+import clsx from 'clsx';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
+import CopyMarkdownButton from '@/components/CopyMarkdownButton';
+import Aside from '@/components/Aside.astro';
+import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
+import DocsNavigation from '@/components/docs/DocsNavigation.astro';
+import EditPageButton from '@/components/docs/EditPageButton.astro';
+import { TableOfContents } from '@/components/docs/TableOfContents';
+import JsonLd from '@/components/JsonLd.astro';
+import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
+import H2Markdown from '@/components/typography/H2Markdown.astro';
+import { PRODUCTION_URL } from '@/consts';
+import DocsLayout from '@/layouts/Docs.astro';
+import type { SupportedFramework } from '@/types/docs';
+import { DOC_TYPE_LABELS } from '@/types/docs';
+import { filterSidebar, getAdjacentGuides, getSectionsForGuide } from '@/utils/docs/sidebar';
+import { getDocTitle, isCodeIdentifier } from '@/utils/docs/title';
+import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
+
+interface Props {
+  doc: CollectionEntry<'docs'>;
+  framework: SupportedFramework;
+  frameworks?: readonly SupportedFramework[];
+  slug: string;
+}
+
+const { doc, framework, frameworks = [framework], slug } = Astro.props;
+const { Content, headings, remarkPluginFrontmatter } = await render(doc);
+const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
+const filteredHeadings = conditionalHeadings
+  ? conditionalHeadings.filter((heading: any) => !heading.frameworks || heading.frameworks.includes(framework))
+  : headings;
+const { prev, next } = getAdjacentGuides(slug, framework);
+const allDocs = await getCollection('docs');
+const docTitles = new Map(allDocs.map((entry) => [entry.id, getDocTitle(entry, framework)]));
+const filteredSidebar = filterSidebar(framework);
+const sections = getSectionsForGuide(slug, filteredSidebar);
+const category = sections[1] ?? sections[0];
+const typeLabel = DOC_TYPE_LABELS[doc.data.type];
+const section = sections.at(-1);
+const eyebrowSection = section?.toLowerCase().startsWith(typeLabel.toLowerCase()) ? undefined : section;
+const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
+const jsonLdSchema = createTechArticleSchema({
+  title: getDocTitle(doc, framework),
+  description: doc.data.description,
+  url: pageUrl,
+  updatedDate: doc.data.updatedDate,
+  readingTime: remarkPluginFrontmatter.readingTimeMinutes,
+  articleSection: sections.length > 0 ? sections.join(' > ') : undefined,
+});
+---
+
+<DocsLayout doc={doc} framework={framework} slug={slug}>
+  <JsonLd slot="head" schema={jsonLdSchema} />
+  <main
+    class:list={[
+      "flex-1",
+      "grid grid-cols-1 xl:grid-cols-(--xl-grid-cols)",
+      "[grid-template-areas:var(--grid-template-areas)] xl:[grid-template-areas:var(--xl-grid-template-areas)]",
+      "grid-rows-(--grid-rows) xl:grid-rows-1",
+    ]}
+    style="
+      --xl-grid-cols: minmax(0, 1fr) calc(var(--spacing) * 59);
+      --grid-template-areas: 'toc' 'article';
+      --grid-rows: min-content minmax(0, 1fr);
+      --xl-grid-template-areas: 'article toc';
+    "
+  >
+    <div
+      class="sticky z-20 overflow-y-auto"
+      style="grid-area: toc; top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
+    >
+      <TableOfContents client:idle headings={filteredHeadings} />
+    </div>
+    <div id="main-content" class="@container flex flex-col px-6 lg:px-12" style="grid-area: article;">
+      <article
+        class="mb-18 flex-1"
+        data-search-content
+        data-llms-content
+        data-llms-description={doc.data.description}
+        data-framework={framework}
+        data-frameworks={frameworks.join(',')}
+        data-site="docs"
+        data-category={category}
+        data-type={doc.data.type}
+      >
+        <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-10 pb-8">
+          <div class="mb-2 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
+            <p class="flex items-center gap-1.5 font-display text-h4 uppercase text-accent select-none">
+              {typeLabel}
+              {eyebrowSection && (
+                <>
+                  <ChevronRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+                  <span class="text-muted">{eyebrowSection}</span>
+                </>
+              )}
+            </p>
+            <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
+          </div>
+          <div class="mb-4 flex flex-wrap items-center gap-3">
+            <H2Markdown
+              as="h1"
+              maxWidth={false}
+              class={clsx(
+                "mt-0 mb-0 text-h25 leading-tight @lg:text-h2 @lg:leading-tight",
+                isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
+              )}
+            >
+              {getDocTitle(doc, framework)}
+            </H2Markdown>
+            {doc.data.stability && <ApiStabilityBadge stability={doc.data.stability} />}
+          </div>
+          <p class="text-p2">{doc.data.description}</p>
+        </header>
+        {
+          doc.data.stability === "unstable" && (
+            <Aside type="caution" title="Unstable API">
+              This API works today, but its shape is still settling and may change in a minor release. The implementation
+              underneath is production quality; what is not final is how you configure it from Video.js. Pin your version
+              and check the changelog when you upgrade.
+            </Aside>
+          )
+        }
+        <Content components={{ ...defaultMarkdownComponents }} />
+      </article>
+      <footer class="mb-18 grid gap-5">
+        <DocsNavigation prev={prev} next={next} framework={framework} docTitles={docTitles} />
+        <EditPageButton filePath={`site/src/content/docs/${doc.id}.mdx`} />
+      </footer>
+    </div>
+  </main>
+</DocsLayout>

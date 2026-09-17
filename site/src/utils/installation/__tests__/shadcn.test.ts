@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  defaultRegistryTemplate,
   defaultRegistryStyling,
   REGISTRY_PRESETS,
   REGISTRY_SKINS,
+  REGISTRY_TEMPLATES,
   registryInstallCommands,
   registryNamespaceUrl,
   registrySkinSelection,
@@ -11,6 +13,7 @@ import {
   resolveRegistryStyling,
   shadcnAddCommand,
   shadcnCommand,
+  shadcnInitCommand,
   shadcnRegistryAddCommand,
 } from '../shadcn';
 
@@ -53,6 +56,24 @@ describe('shadcnAddCommand', () => {
       'pnpm dlx shadcn@latest add @videojs/video @videojs/play-button'
     );
     expect(shadcnCommand('bun', 'init')).toBe('bunx --bun shadcn@latest init');
+  });
+});
+
+describe('shadcnInitCommand', () => {
+  it('offers every supported React project template', () => {
+    expect(REGISTRY_TEMPLATES).toEqual(['next', 'vite', 'start', 'laravel', 'react-router', 'astro']);
+  });
+
+  it('defaults each app framework to a suitable project template', () => {
+    expect(defaultRegistryTemplate('react')).toBe('next');
+    expect(defaultRegistryTemplate('html')).toBe('vite');
+    expect(defaultRegistryTemplate('vue')).toBe('vite');
+    expect(defaultRegistryTemplate('svelte')).toBe('vite');
+  });
+
+  it('sets the selected project template', () => {
+    expect(shadcnInitCommand('pnpm', 'start')).toBe('pnpm dlx shadcn@latest init --template start');
+    expect(shadcnInitCommand('npm', 'vite')).toBe('npx shadcn@latest init --template vite');
   });
 });
 

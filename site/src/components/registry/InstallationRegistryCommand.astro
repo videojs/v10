@@ -1,14 +1,18 @@
 ---
-/** The source-install command for whatever skin the installation page's pickers selected. */
+/** The registry command for whatever skin the installation page's pickers selected. */
 import { isValidFramework } from '@/types/docs';
+import type { RegistryFramework } from '@/utils/installation/shadcn';
 
 import InstallationRegistryCommandClient from './InstallationRegistryCommandClient';
 
-const { framework } = Astro.params;
-
-if (!isValidFramework(framework)) {
-  throw new Error(`InstallationRegistryCommand needs a framework route, received ${framework}.`);
+interface Props {
+  framework?: RegistryFramework;
 }
+
+const { framework: frameworkProp } = Astro.props;
+const routeFramework = Astro.params.framework;
+const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
+if (!framework) throw new Error(`InstallationRegistryCommand needs a framework route, received ${routeFramework}.`);
 ---
 
 <InstallationRegistryCommandClient client:idle framework={framework} />

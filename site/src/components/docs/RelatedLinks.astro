@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import Grid from '@/components/Grid.astro';
-import { isValidFramework } from '@/types/docs';
+import { resolveDocsFramework } from '@/types/docs';
 import { resolveDocsLinkUrl } from '@/utils/docs/routing';
 import type { RelatedLink } from '@/utils/satteriRelatedLinks';
 
@@ -17,11 +17,9 @@ interface Props {
   label?: string;
 }
 
-const { framework: paramFramework } = Astro.params;
-
-if (!paramFramework || !isValidFramework(paramFramework)) {
-  throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
-}
+const routeFramework = Astro.params.framework;
+const paramFramework = resolveDocsFramework(routeFramework);
+if (!paramFramework) throw new Error(`Invalid or missing framework param "${routeFramework ?? 'undefined'}".`);
 
 // SAFETY: the plugin is the only producer of this attribute and always serialises `RelatedLink[]`.
 const items = JSON.parse(Astro.props.items) as RelatedLink[];

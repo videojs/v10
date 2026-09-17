@@ -55,6 +55,67 @@
 # Docs pages that moved or were renamed on the redesign, listed before the section-wide rules below so a page that
 # changed slug as well as section lands on its new address in one hop. Each page has a .md twin.
 [[redirects]]
+  from = "/docs/framework/react/guides/installation"
+  to = "/docs/guides/installation/react"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/react/guides/installation.md"
+  to = "/docs/guides/installation/react.md"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/installation"
+  to = "/docs/guides/installation/html"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/installation.md"
+  to = "/docs/guides/installation/html.md"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/installation-vue"
+  to = "/docs/guides/installation/vue"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/installation-vue.md"
+  to = "/docs/guides/installation/vue.md"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/installation-svelte"
+  to = "/docs/guides/installation/svelte"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/installation-svelte.md"
+  to = "/docs/guides/installation/svelte.md"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/cdn"
+  to = "/docs/guides/installation/cdn"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/html/guides/cdn.md"
+  to = "/docs/guides/installation/cdn.md"
+  status = 301
+
+# Redirect the earlier short-form installation routes.
+[[redirects]]
+  from = "/docs/installation"
+  to = "/docs/guides/installation"
+  status = 301
+
+[[redirects]]
+  from = "/docs/installation/*"
+  to = "/docs/guides/installation/:splat"
+  status = 301
+
+[[redirects]]
   from = "/docs/framework/react/concepts/custom-element-lifecycle"
   to = "/docs/framework/react/guides/build-your-own-component"
   status = 301
@@ -216,12 +277,12 @@
 
 [[redirects]]
   from = "/docs/framework/html/concepts/cdn"
-  to = "/docs/framework/html/guides/cdn"
+  to = "/docs/guides/installation/cdn"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/html/concepts/cdn.md"
-  to = "/docs/framework/html/guides/cdn.md"
+  to = "/docs/guides/installation/cdn.md"
   status = 301
 
 [[redirects]]
