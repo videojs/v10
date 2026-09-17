@@ -33,3 +33,6 @@ Built-in locales live in `locales/`. The locale build generates lazy loaders, CD
 
 Do not copy Video.js v8 locale JSON blindly. V10 uses semantic keys and different ARIA-label
 semantics.
+
+To decide what a translated value should say, and to source it and check it against the known
+pitfalls, follow the `write-locale-translations` skill.

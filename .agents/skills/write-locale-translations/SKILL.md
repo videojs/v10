@@ -1,5 +1,5 @@
 ---
-name: maintain-locale-strings
+name: write-locale-translations
 description: Translate or audit the values in a Video.js locale pack. Use when a key needs values, en.ts copy changes underneath a pack, or one pack needs an audit.
 ---
 
@@ -13,7 +13,7 @@ Produce translated values for one locale pack in `packages/core/src/core/i18n/lo
 - `locales/en.ts` reworded a value, so the pack still translates the old English.
 - One pack needs an audit of the values it already carries.
 
-Do not use this workflow to add a whole new locale; follow "Adding a built-in locale" in `packages/core/src/core/i18n/README.md`. Do not use it to author the English source copy, for RTL layout work, for the generated mirrors under `packages/html`, `packages/react`, and `packages/cdn`, or for branch and change-description mechanics.
+`packages/core/src/core/i18n/README.md` covers the mechanics: where a pack lives, how to register a tag, what to regenerate. This workflow covers the translation judgment behind the values, so reach for the README to add or wire up a locale and reach for this to decide what a value should say. It does not cover authoring the English source copy, RTL layout work, or the generated mirrors under `packages/html`, `packages/react`, and `packages/cdn`.
 
 ## Workflow
 
@@ -24,13 +24,14 @@ Do not use this workflow to add a whole new locale; follow "Adding a built-in lo
 
 ## Example
 
-Input: #1822 rewrote the English `errors.*` copy, so `es.ts` still translates the old text.
+Input: #1822 reworded `errors.aborted` in `en.ts`, so `es.ts` still translates the old English.
 
-Output: Value-only edits to `es.ts`, one table row per key.
+Output: A value-only edit to `es.ts`, carrying the source the new wording rests on.
 
-```md
-| key | current | proposed | why (source) |
-| errors.aborted | Ha anulado la reproducción… | Has detenido la reproducción… | YouTube Help es |
+```ts
+// was: 'Ha anulado la reproducción del vídeo.' (translated the pre-#1822 "You aborted the media playback")
+aborted: 'Has detenido la reproducción del contenido multimedia antes de que terminara.',
+// source: YouTube es-ES player, "Has detenido la reproducción"
 ```
 
 ## Validation
