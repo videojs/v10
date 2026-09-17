@@ -560,17 +560,20 @@ ${indent}<MuxData />`;
 }
 
 export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-): Record<'MyPlayer.tsx', string> {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+): Record<'app/page.tsx', string> {
   const { useCase, skin, renderer } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const playerComponent = getPresetPlayer(useCase);
+  const source = resolveSourceUrl(opts.sourceUrl, renderer, useCase);
 
   const isBackgroundVideo = useCase === 'background-video';
   const isNoSkin = skin === 'none';
   const group = getInstallationPreset(useCase).group;
 
-  const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
+  const rendererProps = isVideoLikeRenderer(renderer)
+    ? `src={${JSON.stringify(source)}} playsInline`
+    : `src={${JSON.stringify(source)}}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
 
   let presetImport: string;
@@ -625,17 +628,13 @@ export function generateReactCreateCode(
   ].join('\n');
 
   return {
-    'MyPlayer.tsx': `${imports}
+    'app/page.tsx': `${imports}
 
-interface MyPlayerProps {
-  src: string;
-}
-
-export const MyPlayer = ({ src }: MyPlayerProps) => {
+export default function Page() {
   return (
 ${playerJsx}
   );
-};`,
+}`,
   };
 }
 
@@ -721,28 +720,5 @@ export function generateSourceHTMLUsageCode(
 
 <script type="module" src="/src/player.ts"></script>`,
     skinFile: `components/videojs/${preset.flag}/skin.html`,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// React Usage
-// ---------------------------------------------------------------------------
-
-export function generateReactUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
-): Record<'App.tsx', string> {
-  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
-
-  return {
-    'App.tsx': `import { MyPlayer } from '../components/player';
-
-export const HomePage = () => {
-  return (
-    <div>
-      <h1>Welcome to My App</h1>
-      <MyPlayer src="${source}" />
-    </div>
-  );
-};`,
   };
 }

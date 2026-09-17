@@ -19,7 +19,6 @@ import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
-import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -162,16 +161,10 @@ Some bundlers default to an IIFE output format. Loading that bundle without `typ
 
 ## Add your player
 
-Add this component to your project. It imports the selected player, skin, media, and extensions from the packages you installed.
+Add the player directly to `app/page.tsx`. It imports the selected player, skin, media, and extensions from the packages you installed.
 
 <ContentWidth>
   <ReactCreateCodeBlock client:idle />
-</ContentWidth>
-
-Then render it in your app with the media source you selected above.
-
-<ContentWidth>
-  <ReactUsageCodeBlock client:idle />
 </ContentWidth>
 </FrameworkCase>
 
