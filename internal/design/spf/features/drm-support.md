@@ -383,39 +383,49 @@ on its native-HLS path. So this is not an EZDRM-versus-this-engine problem —
 every player hits the same wall, and this engine is the only one that tries to
 get past it.
 
-### Android Chrome / Widevine L1: untested, needs hardware
+### Android Chrome / Widevine L1: verified 2026-09-17
 
-The one matrix cell with **no empirical signal**, and the gap widened on 2026-09-08
-when the robustness ladder began leading with `HW_SECURE_ALL` — the rung only an
-L1 device negotiates. Every desktop CDM in the matrix stops at `SW_SECURE_DECODE`,
-so nothing else exercises it.
+Closed on a **SauceLabs real Android device** driving the public Vercel preview of
+the `spf-drm` sandbox page. This was the last cell with no empirical signal, and
+the one that mattered most: the ladder began leading with `HW_SECURE_ALL` on
+2026-09-08, and every desktop CDM in the matrix stops at `SW_SECURE_DECODE`, so
+nothing else ever exercised the leading rung.
 
-**Partially covered 2026-09-17** on an L3 emulator: Mux (cbcs), CWIP (cenc),
-Axinom (header auth) and Axinom MultiKey all negotiate `com.widevine.alpha` and
-decode, the clear control plays, and the unlicensed source refuses with 4008
-causes then the 2011 verdict. So Android Chrome's MSE and decode paths work, and
-the ladder's descent is exercised — an L3 CDM refuses every hardware rung.
+The probe answered it outright — `com.widevine.alpha` accepted **all six** rungs:
 
-That does **not** close this cell. An emulator has no hardware-backed CDM by
-construction, so `HW_SECURE_ALL` is refused there exactly as on desktop and the
-leading rung remains unexercised anywhere. The available physical device cannot
-load the sandbox at all, for reasons unrelated to DRM. It needs one person with a
-capable device.
+```
+HW_SECURE_ALL, HW_SECURE_DECODE, HW_SECURE_CRYPTO,
+SW_SECURE_DECODE, SW_SECURE_CRYPTO, (unstamped)
+```
 
-What to run, and what to report back:
+A hardware-backed CDM, so a genuine L1 device rather than a farm image degraded to
+L3. On the Mux source it then negotiated `com.widevine.alpha` over MSE
+(`sources: ['blob(mse)']`, `initDataType: 'cenc'`, 570-byte init data) with keys
+attached on both sides (`mseKeys` and `elementKeys` true) and an empty `errors`
+list. CWIP, Axinom and Axinom MultiKey behaved as on every other environment, and
+the unlicensed source refused with 4008 causes then the 2011 verdict.
 
-1. Same Wi-Fi as the dev host, Chrome, accept the self-signed cert (EME needs a
-   secure context).
-2. Open `spf-drm` and read the probe line logged at load —
-   `[spf-drm] CDM robustness tiers accepted:`. **Does the Widevine list contain
-   `HW_SECURE_ALL`?** That single line is the signal this cell is missing.
-3. Then `?drm=widevine`, `?source=hls-drm-widevine-cwip`, `?source=hls-drm-axinom`:
-   does each negotiate `com.widevine.alpha` and actually decode
-   (`framesDecoded` climbing, not merely `readyState`)?
-4. `?source=hls-drm-unlicensed` should refuse with 4008 causes then a 2011 verdict.
+**One soft edge, recorded honestly:** the status readout prints the negotiated
+*key system*, not the negotiated *robustness*. That the CDM accepts `HW_SECURE_ALL`
+is measured; that the engine's negotiation actually settled on it is inferred —
+soundly, because `HW_SECURE_ALL` is the ladder's first rung and the CDM accepts
+it, so the first pass succeeds and no path descends to a lower rung. Surfacing the
+negotiated robustness in the readout would make this direct rather than inferred,
+and is the obvious small follow-up if the distinction ever matters.
 
-The specific risk: the hardware-first rung negotiating a configuration Android
-then cannot decode over MSE. Negotiation succeeding is not the check — decode is.
+The original worry — the hardware-first rung negotiating a configuration Android
+then cannot decode over MSE — did not materialize.
+
+**How to re-run this cell**, since the mechanics are non-obvious:
+
+- SauceLabs **supports DevTools for Android Chrome**, so the console is readable;
+  this is what made the probe line reachable at all.
+- Use the branch's Vercel preview for a public HTTPS origin. EME needs a secure
+  context, so a plain-HTTP tunnel will not do.
+- **Do not read the video region.** An L1 CDM decodes into secure memory and
+  Android excludes secure surfaces from screen capture, so a working L1 stream is
+  *black* in any device-farm view. Judge by `framesDecoded`, `currentTime` and
+  `errors` instead — pixels are evidence of nothing here, in either direction.
 
 ### AirPlay handoff: manual
 
