@@ -15,6 +15,6 @@ Most to least applicable:
 ## Hygiene
 
 - Google Help pages in many locales carry a footer noting AI-assisted translation. Use one only where a second independent source agrees, or where the page quotes a shipped player tooltip verbatim.
-- Declare a failed fetch rather than working around it. An English fallback page or a bot-challenge page is not evidence.
-- Cite one link per value you change. A value resting on internal consistency with the rest of the pack instead of a citable page is allowed if you say so and flag it for a native speaker to confirm.
+- A failed fetch is not evidence, and neither is an English fallback page or a bot-challenge page; do not work around one.
+- Cite one link per value you change. A value resting on internal consistency with the rest of the pack instead of a citable page is allowed; flag it for a native speaker to confirm.
 - Do not copy Video.js v8 locale JSON. V10 uses semantic keys and different ARIA-label semantics.

@@ -17,7 +17,7 @@ Produce translated values for one locale pack in `packages/core/src/core/i18n/lo
 
 ## Workflow
 
-1. Identify which values are stale by diffing the pack against current `en.ts` key by key, and note the ones you deliberately leave alone.
+1. Identify which values are stale by diffing the pack against current `en.ts` key by key; a value whose English source has not changed stays as it is.
 2. Research each value against localized first-party UI for the same control, with one citation per value. Read `references/evidence-sources.md` when choosing and citing. Never translate unsourced, and never derive one pack from a related one; zh-TW is not converted zh-CN.
 3. Check the wording against `references/language-pitfalls.md`, then edit values only, preserving the key set, key order, and the full `{placeholder}` multiset.
 4. Verify by re-deriving each value from `en.ts` and its old value, re-fetching every citation, and running a codepoint scan for homoglyphs, stray scripts, NBSP, and double spaces. cspell ignores non-English packs, so that scan is the only mechanical guard on the text itself. A translated value is research-backed rather than native-authored, so a native-speaker check is worth requesting.
