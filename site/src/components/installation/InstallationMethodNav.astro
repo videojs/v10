@@ -6,13 +6,19 @@ import Check from '@/assets/icons/check.svg?react';
 
 const pathname = Astro.url.pathname;
 const active = pathname.endsWith('/shadcn') ? 'shadcn' : pathname.endsWith('/cdn') ? 'cdn' : 'packaged';
+const packagedHref =
+  active === 'packaged'
+    ? pathname
+    : active === 'cdn'
+      ? '/docs/guides/installation/html'
+      : '/docs/guides/installation/react';
 
 const items = [
   {
     id: 'packaged',
     label: 'Packaged',
     description: 'Install packages and use a ready-made skin.',
-    href: '/docs/guides/installation',
+    href: packagedHref,
     Icon: NpmLogo,
   },
   {
@@ -32,11 +38,16 @@ const items = [
 ] as const;
 ---
 
-<nav aria-label="Installation method" class="mx-auto mt-5 mb-12 grid max-w-3xl gap-3 sm:grid-cols-3">
+<nav
+  aria-label="Installation method"
+  data-installation-method-nav
+  class="mx-auto mt-5 mb-12 grid max-w-3xl gap-3 sm:grid-cols-3"
+>
   {
     items.map(({ id, label, description, href, Icon }) => (
       <a
         href={href}
+        data-installation-method={id}
         aria-current={active === id ? "page" : undefined}
         class:list={[
           'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
@@ -72,3 +83,58 @@ const items = [
     ))
   }
 </nav>
+
+<script>
+  import { savePageScrollForNavigation } from '@/utils/docs/pageScroll';
+
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-installation-method-nav] a')) {
+    link.addEventListener('click', (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        link.target === '_blank'
+      ) {
+        return;
+      }
+
+      const current = new URL(window.location.href);
+      const target = new URL(link.href);
+      const method = link.dataset.installationMethod;
+
+      target.search = current.search;
+
+      if (method === 'packaged') {
+        if (current.pathname.endsWith('/shadcn')) {
+          const framework = current.searchParams.get('framework') === 'html' ? 'html' : 'react';
+
+          target.pathname = `/docs/guides/installation/${framework}`;
+        }
+
+        target.searchParams.delete('framework');
+      } else if (method === 'shadcn') {
+        const framework = current.pathname.endsWith('/react')
+          ? 'react'
+          : current.pathname.endsWith('/shadcn') && current.searchParams.get('framework') !== 'html'
+            ? 'react'
+            : 'html';
+
+        target.searchParams.set('framework', framework);
+      } else if (method === 'cdn') {
+        target.searchParams.delete('framework');
+      }
+
+      if (target.href === current.href) {
+        event.preventDefault();
+        return;
+      }
+
+      event.preventDefault();
+      savePageScrollForNavigation(target);
+      window.location.href = target.href;
+    });
+  }
+</script>
