@@ -2,15 +2,18 @@
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 ---
 
-<p>
-  Packaged skins keep their controls and layout inside Video.js. When you need to add, remove, rearrange, or deeply
-  restyle controls, use Shadcn to add the skin source to your project. Its components, layout, styles, and interactions
-  become local files you can change.
-</p>
+<div class="mx-auto my-6 w-full max-w-3xl rounded-xl corner-squircle border border-line bg-surface p-5 md:p-6">
+  <p class="mt-0">
+    Packaged skins keep their controls and layout inside Video.js. When you need to add, remove, rearrange, or deeply
+    restyle controls, use Shadcn to add the skin source to your project. Its components, layout, styles, and interactions
+    become local files you can change.
+  </p>
 
-<DocsLinkCard
-  slug="guides/installation-shadcn"
-  description="Add editable skin source and build a working React or HTML player"
->
-  Install Video.js with Shadcn
-</DocsLinkCard>
+  <DocsLinkCard
+    slug="guides/installation-shadcn"
+    description="Add editable skin source and build a working React or HTML player"
+    class="mx-0 mb-0 mt-5 max-w-none md:grid-cols-1"
+  >
+    Install Video.js with Shadcn
+  </DocsLinkCard>
+</div>

@@ -4,6 +4,7 @@ import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import { resolveDocsFramework } from '@/types/docs';
 import { resolveDocsHref } from '@/utils/docs/routing';
 import { findGuideBySlug } from '@/utils/docs/sidebar';
+import { twMerge } from '@/utils/twMerge';
 
 interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   slug: string;
@@ -11,7 +12,7 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   anchor?: string;
   description?: string;
 }
-const { slug, anchor, description } = Astro.props;
+const { slug, anchor, description, class: className } = Astro.props;
 
 const routeFramework = Astro.params.framework;
 const paramFramework = resolveDocsFramework(routeFramework);
@@ -30,7 +31,10 @@ const docsSlug = contextFramework ? undefined : slug;
 ---
 
 <div
-  class="docs-link-card mx-auto my-8 grid w-full max-w-3xl grid-cols-1 gap-4 has-[+_.docs-link-card]:mb-4 md:grid-cols-2 [&+.docs-link-card]:mt-4"
+  class={twMerge(
+    "docs-link-card mx-auto my-8 grid w-full max-w-3xl grid-cols-1 gap-4 has-[+_.docs-link-card]:mb-4 md:grid-cols-2 [&+.docs-link-card]:mt-4",
+    className,
+  )}
 >
   <a
     href={href}
