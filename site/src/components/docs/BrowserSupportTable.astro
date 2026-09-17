@@ -1,0 +1,142 @@
+---
+/**
+ * Build-time browser support data for the Browser support guide. Versions and usage come from the root browserslist
+ * query and `caniuse-lite`, so the page moves with dependency updates instead of hand edits.
+ */
+import A from '@/components/typography/A.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import {
+  caniuseVersion,
+  type CssRequirementKind,
+  cssRequirementSupport,
+  effectiveCoverage,
+  effectiveFloor,
+  resolveSupportedBrowsers,
+  SUPPORT_BROWSERS,
+} from '@/utils/browser-support';
+
+interface Props {
+  kind: 'browsers' | 'coverage' | 'requirements';
+}
+
+const { kind } = Astro.props;
+
+const browsers = resolveSupportedBrowsers();
+const support = cssRequirementSupport();
+const floor = effectiveFloor(support);
+const renderedCoverage = effectiveCoverage(support);
+
+const KIND_LABEL = {
+  required: 'Required',
+  degrades: 'Degrades',
+  guarded: 'Has a fallback',
+} satisfies Record<CssRequirementKind, string>;
+
+const percent = (value: number) => `${value.toFixed(1)}%`;
+
+const UNSUPPORTED = 'Not supported';
+
+/** Read versions as a list rather than a dash range so screen readers announce both numbers. */
+function listVersions(versions: readonly string[]): string {
+  const shown = versions.map((version) => version.split('-')[0] ?? version);
+  if (shown.length === 0) return 'None';
+
+  if (shown.length === 1) return shown[0]!;
+
+  return `${shown.slice(0, -1).join(', ')} and ${shown[shown.length - 1]}`;
+}
+
+/** The effective floor as prose: "Chrome 120, Edge 120, …, and Safari on iOS 17.4". */
+const floorList = SUPPORT_BROWSERS.map(({ id, name }) => `${name} ${floor[id] ?? UNSUPPORTED}`);
+const floorSentence = `${floorList.slice(0, -1).join(', ')}, and ${floorList[floorList.length - 1]}`;
+---
+
+{
+  kind === 'browsers' && (
+    <Table>
+      <caption class="sr-only">Supported browsers and the versions the support policy resolves to today</caption>
+      <Thead>
+        <Tr>
+          <Th scope="col">Browser</Th>
+          <Th scope="col">Versions</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {browsers.map((browser) => (
+          <Tr>
+            <Td as="th" scope="row" class="text-left font-medium">
+              {browser.name}
+            </Td>
+            <Td class="tabular-nums">{listVersions(browser.versions)}</Td>
+          </Tr>
+        ))}
+      </Tbody>
+    </Table>
+  )
+}
+
+{
+  kind === 'coverage' && (
+    <P>
+      In practice the packaged skins render in {floorSentence} and later. Those versions account for{' '}
+      {percent(renderedCoverage)} of global web usage according to{' '}
+      <A href="https://github.com/browserslist/caniuse-lite">caniuse-lite</A> {caniuseVersion()}, and this figure updates
+      when we update that data.
+    </P>
+  )
+}
+
+{
+  kind === 'requirements' && (
+    <Table maxWidth={false}>
+      <caption class="sr-only">
+        First browser version that fully supports each CSS feature the packaged skins use, with the share of global web
+        usage on supporting browsers. Feature names link to their caniuse.com support data. "Not supported" means the
+        browser has no full support. The effective floor row is the newest required version in each column.
+      </caption>
+      <Thead>
+        <Tr>
+          <Th scope="col">Feature</Th>
+          {SUPPORT_BROWSERS.map((browser) => <Th scope="col">{browser.name}</Th>)}
+          <Th scope="col">Global support</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {support.map(({ requirement, firstVersion, globalSupport, caniuseUrl }) => (
+          <Tr>
+            <Td as="th" scope="row" class="text-left font-medium">
+              <A href={caniuseUrl}>
+                <MarkdownCode>{requirement.label}</MarkdownCode>
+              </A>
+              <span class="mt-1 block text-p4 font-normal">
+                {KIND_LABEL[requirement.kind]}. {requirement.effect}.
+              </span>
+            </Td>
+            {SUPPORT_BROWSERS.map((browser) => (
+              <Td class="tabular-nums">{firstVersion[browser.id] ?? UNSUPPORTED}</Td>
+            ))}
+            <Td class="tabular-nums">{percent(globalSupport)}</Td>
+          </Tr>
+        ))}
+      </Tbody>
+      <Tbody as="tfoot" class="bg-surface">
+        <Tr>
+          <Td as="th" scope="row" class="text-left font-bold">
+            Effective floor
+          </Td>
+          {SUPPORT_BROWSERS.map((browser) => (
+            <Td class="font-bold tabular-nums">{floor[browser.id] ?? UNSUPPORTED}</Td>
+          ))}
+          <Td class="font-bold tabular-nums">{percent(renderedCoverage)}</Td>
+        </Tr>
+      </Tbody>
+    </Table>
+  )
+}

@@ -59,6 +59,7 @@ export const sidebar: Sidebar = [
           {
             slug: 'guides/content-security-policy',
           },
+          { slug: 'guides/support-older-browsers' },
         ],
       },
       {
