@@ -390,8 +390,17 @@ when the robustness ladder began leading with `HW_SECURE_ALL` — the rung only 
 L1 device negotiates. Every desktop CDM in the matrix stops at `SW_SECURE_DECODE`,
 so nothing else exercises it.
 
-Not deferred by choice: the available Android device cannot load the sandbox at
-all, for reasons unrelated to DRM. It needs one person with a capable device.
+**Partially covered 2026-09-17** on an L3 emulator: Mux (cbcs), CWIP (cenc),
+Axinom (header auth) and Axinom MultiKey all negotiate `com.widevine.alpha` and
+decode, the clear control plays, and the unlicensed source refuses with 4008
+causes then the 2011 verdict. So Android Chrome's MSE and decode paths work, and
+the ladder's descent is exercised — an L3 CDM refuses every hardware rung.
+
+That does **not** close this cell. An emulator has no hardware-backed CDM by
+construction, so `HW_SECURE_ALL` is refused there exactly as on desktop and the
+leading rung remains unexercised anywhere. The available physical device cannot
+load the sandbox at all, for reasons unrelated to DRM. It needs one person with a
+capable device.
 
 What to run, and what to report back:
 
