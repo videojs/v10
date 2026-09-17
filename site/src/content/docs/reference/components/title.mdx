@@ -43,8 +43,9 @@ import basicUsageHtmlTs from "@/components/docs/demos/title/html/css/BasicUsage.
 
 ## Behavior
 
-The component renders the resolved title directly as text. Set the title on the player;
-no child element is required.
+The component renders the resolved title directly as text and owns that text on both
+platforms: React does not accept `children`, and the HTML element replaces any authored
+content whenever the title updates. Set the title on the player instead.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
