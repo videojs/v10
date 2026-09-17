@@ -350,7 +350,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
   };
 
   const buttonClassName = clsx(
-    'flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full corner-squircle text-p3 font-semibold cursor-pointer select-none',
+    'flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full corner-squircle text-p3 font-medium cursor-pointer select-none',
     variant === 'compact'
       ? 'bg-warm-gray text-manila-light border border-manila-light/15 intent:border-manila-light/30'
       : 'bg-surface-raised border border-line intent:border-line-strong'
