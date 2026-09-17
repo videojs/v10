@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Sidebar } from '../../../types/docs';
-import { resolveDocsLinkUrl, resolveFrameworkChange, resolveIndexRedirect } from '../routing';
+import { getFrameworkFromDocsPath, resolveDocsLinkUrl, resolveFrameworkChange, resolveIndexRedirect } from '../routing';
 
 // Mock the validation functions from @/types/docs to use mock framework/style configuration
 // Note: This mock is hoisted, so we define MOCK_FRAMEWORK_STYLES inside the factory
@@ -91,6 +91,19 @@ describe('routing utilities', () => {
     },
     guideHtmlOnly,
   ];
+
+  describe('getFrameworkFromDocsPath', () => {
+    it('returns the framework from an explicit docs route', () => {
+      expect(getFrameworkFromDocsPath('/docs/framework/react/guides/installation')).toBe('react');
+      expect(getFrameworkFromDocsPath('/docs/framework/html')).toBe('html');
+    });
+
+    it('ignores framework-agnostic and invalid routes', () => {
+      expect(getFrameworkFromDocsPath('/docs/guides/installation')).toBeNull();
+      expect(getFrameworkFromDocsPath('/docs/framework/vue/guides/installation')).toBeNull();
+      expect(getFrameworkFromDocsPath('/blog/framework/react')).toBeNull();
+    });
+  });
 
   describe('resolveIndexRedirect', () => {
     describe('with framework param', () => {

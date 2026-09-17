@@ -1,5 +1,9 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
+import { currentFramework } from '@/stores/preferences';
+
+import { setFrameworkPreferenceClient } from './preferences';
+import { getFrameworkFromDocsPath } from './routing';
 import {
   getPageScrollFromHistory,
   getPageScrollTop,
@@ -40,6 +44,15 @@ function isFrameworkNavigation(info?: { docsNavigation?: string } | null): boole
 
 function setFrameworkTransitionSuppressed(target: Document, suppressed: boolean): void {
   target.documentElement.toggleAttribute(FRAMEWORK_NAVIGATION_ATTRIBUTE, suppressed);
+}
+
+/** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
+export function syncFrameworkPreferenceFromUrl(url: URL): void {
+  const framework = getFrameworkFromDocsPath(url.pathname);
+  if (!framework) return;
+
+  currentFramework.set(framework);
+  setFrameworkPreferenceClient(framework);
 }
 
 function readSidebarState(): SidebarState {
@@ -120,6 +133,8 @@ export function initializeDocsNavigation(): void {
   const { signal } = controller;
 
   window.__videojsDocsNavigationController = controller;
+
+  syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
   let historyScrollToRestore: number | null = null;
   let saveScrollFrame = 0;
@@ -226,6 +241,7 @@ export function initializeDocsNavigation(): void {
   };
 
   const prepareSwap = (navigationEvent: TransitionBeforeSwapEvent) => {
+    syncFrameworkPreferenceFromUrl(navigationEvent.to);
     saveSidebarState();
     setFrameworkTransitionSuppressed(navigationEvent.newDocument, isFrameworkNavigation(navigationEvent.info));
   };
