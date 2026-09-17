@@ -218,7 +218,7 @@ describe('React registry output', () => {
 
       expect(readItemRoot(registryDir, items.get('slider')!)).toContain("'group-data-dragging/slider:scale-90',");
       expect(readItemRoot(registryDir, items.get('captions-menu')!)).toContain(
-        "'not-data-submenu:data-[child-open]:-translate-x-full',"
+        "'not-data-submenu:data-child-open:-translate-x-full',"
       );
     }
   });

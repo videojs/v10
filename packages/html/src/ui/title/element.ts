@@ -34,7 +34,9 @@ export class TitleElement extends UIElement {
 
     const state = this.#core.getState(metadata, this.#controlsState.value);
 
-    this.textContent = state.title;
+    // Controls visibility also triggers updates, so only touch the text node when the title changed.
+    // Replacing it needlessly makes assistive tech re-announce a title that should stay put.
+    if (this.textContent !== state.title) this.textContent = state.title;
 
     this.hidden = state.hidden;
 

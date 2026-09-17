@@ -222,6 +222,22 @@ describe('TitleElement', () => {
     await waitForAssertion(() => expect(title.textContent).toBe('Big Buck Bunny'));
   });
 
+  it('keeps the same text node when only controls visibility changes', async () => {
+    const store: TitleStore = createTitleStore();
+    const { title } = await setup(store);
+
+    setTitle(store, 'Sintel');
+    await waitForAssertion(() => expect(title.textContent).toBe('Sintel'));
+
+    const textNode = title.firstChild;
+
+    store.toggleControls();
+    await waitForAssertion(() => expect(title.hasAttribute('data-visible')).toBe(false));
+
+    expect(title.firstChild).toBe(textNode);
+    expect(title.textContent).toBe('Sintel');
+  });
+
   it.each([false, true])('updates title state and reconnects (shadow: %s)', async (shadow) => {
     const store = createStore<PlayerTarget>()(combine(metadataFeature, controlsFeature, playbackFeature));
     const provider = createElement(UIElement);
