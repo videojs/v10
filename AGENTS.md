@@ -80,6 +80,7 @@ Checked-in skills are direct children of `.agents/skills/`. `pnpm install` expos
 - UI implementation: `create-html-component`, `create-react-component`, `implement-ui-transition`, `implement-accessible-ui`
 - UI review: `review-html-component`, `review-react-component`, `review-accessibility`
 - UI design: `write-html-component-design`, `write-react-component-design`, `review-html-component-design`, `review-react-component-design`
+- i18n: `maintain-locale-strings`
 - Docs and records: `write-docs`, `review-docs`, `write-api-reference`, `write-design-doc`, `write-rfc`
 - Toolchain workflows: `configure-vite-plus`
 - Skin parity: `maintain-vjsc-skin-gaps`
