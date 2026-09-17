@@ -24,7 +24,7 @@ Produce translated values for one locale pack in `packages/core/src/core/i18n/lo
 
 ## Example
 
-Input: #1822 reworded `errors.aborted` in `en.ts`, so `es.ts` still translates the old English.
+Input: When #1822 reworded `errors.aborted` in `en.ts`, `es.ts` was left translating the old English.
 
 Output: A value-only edit to `es.ts`, carrying the source the new wording rests on.
 
