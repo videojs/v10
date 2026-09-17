@@ -5,6 +5,8 @@ description: Build a working HTML player from Video.js browser-ready CDN files
 
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
 import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
@@ -146,10 +148,16 @@ Everything else at the root, like the content-hashed `default-*.js` files, is a 
 
 <OwnTheUI />
 
-Shadcn adds source files and package dependencies, so this path uses a package manager and build step instead of CDN-only scripts.
+## Choose what to do next
 
-## Related guides
+<DocsLinkCards label="Customize">
+<DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
+<DocsLinkCard slug="guides/installation-shadcn" description="Add editable skin source and build a working React or HTML player">Install with Shadcn</DocsLinkCard>
+<DocsLinkCard slug="guides/internationalization" description="Load another locale or add your own translations">Internationalize the player</DocsLinkCard>
+</DocsLinkCards>
 
-- <DocsLink slug="guides/installation">Installation</DocsLink>
-- <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink>
-- <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>
+<DocsLinkCards label="Deploy">
+<DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
+<DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
+<DocsLinkCard slug="guides/self-hosting" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+</DocsLinkCards>
