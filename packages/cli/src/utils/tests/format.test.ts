@@ -43,14 +43,16 @@ describe('formatInstallationCode', () => {
     expect(result).toContain('## HTML');
   });
 
-  it('formats React with install, create, and use sections', () => {
+  it('formats React with install and add-player sections', () => {
     const result = formatInstallationCode(baseReact);
 
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('npm install @videojs/react');
-    expect(result).toContain('## Create your player');
-    expect(result).toContain('MyPlayer');
-    expect(result).toContain('## Use your player');
+    expect(result).toContain('## Add your player');
+    expect(result).toContain('Add to `app/page.tsx`');
+    expect(result).toContain('export default function Page()');
+    expect(result).not.toContain('MyPlayer');
+    expect(result.match(/```tsx/g)).toHaveLength(1);
   });
 
   it('uses pnpm install command when specified', () => {
