@@ -157,7 +157,6 @@ export function initializeDocsNavigation(): void {
   syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
-    savePageScrollToHistory();
     setFrameworkTransitionSuppressed(document, isFrameworkNavigation(navigationEvent.info));
   };
 

@@ -83,6 +83,20 @@ describe('framework navigation scroll', () => {
     expect(window.history.state).toEqual({ index: 3, scrollX: 12, scrollY: 640 });
   });
 
+  it('does not overwrite the destination history entry during traversal', () => {
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(640);
+    window.history.replaceState({ index: 2, scrollX: 0, scrollY: 275 }, '');
+
+    initializeDocsNavigation();
+
+    const event = new Event('astro:before-preparation');
+
+    Object.assign(event, { navigationType: 'traverse', info: null });
+    document.dispatchEvent(event);
+
+    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 275 });
+  });
+
   it('does not interrupt navigation when session storage is unavailable', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Storage disabled');
