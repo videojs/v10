@@ -115,11 +115,7 @@ export function MyPlayer() {
         <PlayButton
           render={(props, state) => (
             <button {...props} className="play-button">
-              {state.paused ? (
-                <span className="play-icon">Play</span>
-              ) : (
-                <span className="pause-icon">Pause</span>
-              )}
+              {state.paused ? <span className="play-icon">Play</span> : <span className="pause-icon">Pause</span>}
             </button>
           )}
         />
@@ -150,19 +146,19 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 - **`<media-container>` and `<media-controls>`** — layout, focus, and autohide.
 - **Dedicated elements** — `<media-hotkey>`, `<media-gesture>`, and friends, declared in markup.
 
-| Media Chrome attribute                                    | Video.js v10                          | How                                                                                                                                                                                |
-| --------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `audio`                                                   | the audio preset                      | Choose an audio player and audio skin rather than toggling at runtime.                                                                                                             |
-| `autohide`                                                | `media-controls` (built in)           | Controls auto-hide after inactivity automatically. `autohide="-1"` becomes `visibility="always"` on `media-controls`; the delay is currently fixed, see [Known gaps](#known-gaps). |
-| `fullscreenelement`                                       | `media-container`                     | Fullscreen targets the container element.                                                                                                                                          |
-| `gesturesdisabled`                                        | `media-gesture disabled`, or omit     | Disable per gesture element, or leave the gestures out.                                                                                                                            |
-| `nohotkeys`                                               | `media-hotkey disabled`, or omit      | Disable per hotkey element, or leave them out.                                                                                                                                     |
-| `hotkeys="noarrowleft …"`                                 | individual `media-hotkey`             | Each shortcut is its own element, so remove the ones you don't want.                                                                                                               |
-| `keyboardforwardseekoffset`, `keyboardbackwardseekoffset` | `value` on `media-hotkey`             | Set the signed seek amount per element.                                                                                                                                            |
-| `defaultsubtitles`                                        | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag.                          |
-| `defaultstreamtype`                                       | `streamType` feature                  | Partial: derived from the media, with no pre-load default.                                                                                                                         |
-| `liveedgeoffset`, `seektoliveoffset`                      | live media engine                     | Live-edge behavior lives in the playback engine, not a UI attribute.                                                                                                               |
-| `lang`                                                    | i18n translator                       | Localization is configured through the <DocsLink slug="guides/internationalization">translator and locale registry</DocsLink>.                                                     |
+| Media Chrome attribute | Video.js v10 | How |
+|---|---|---|
+| `audio` | the audio preset | Choose an audio player and audio skin rather than toggling at runtime. |
+| `autohide` | `media-controls` (built in) | Controls auto-hide after inactivity automatically. `autohide="-1"` becomes `visibility="always"` on `media-controls`; the delay is currently fixed, see [Known gaps](#known-gaps). |
+| `fullscreenelement` | `media-container` | Fullscreen targets the container element. |
+| `gesturesdisabled` | `media-gesture disabled`, or omit | Disable per gesture element, or leave the gestures out. |
+| `nohotkeys` | `media-hotkey disabled`, or omit | Disable per hotkey element, or leave them out. |
+| `hotkeys="noarrowleft …"` | individual `media-hotkey` | Each shortcut is its own element, so remove the ones you don't want. |
+| `keyboardforwardseekoffset`, `keyboardbackwardseekoffset` | `value` on `media-hotkey` | Set the signed seek amount per element. |
+| `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
+| `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
+| `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
+| `lang` | i18n translator | Localization is configured through the <DocsLink slug="guides/internationalization">translator and locale registry</DocsLink>. |
 
 ### Hotkeys
 
@@ -193,20 +189,20 @@ Remove an element or set `disabled` to turn a gesture off.
 
 Most names match. These are the renames that bite:
 
-| Media Chrome                                              | Video.js v10                             | Note                                           |
-| --------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------- |
-| `media-controller`                                        | a player plus `media-container`          | one element becomes two: state and layout      |
-| `media-control-bar`                                       | `media-controls`, `media-controls-group` | grouping                                       |
-| `media-time-range`                                        | `media-time-slider`                      | "range" becomes "slider"                       |
-| `media-volume-range`                                      | `media-volume-slider`                    | "range" becomes "slider"                       |
-| `media-time-display`, `media-duration-display`            | `media-time`                             | one element, set via attribute                 |
-| `media-loading-indicator`                                 | `media-buffering-indicator`              | rename                                         |
-| `media-poster-image`                                      | `media-poster`                           | rename, and the image source moves — see below |
-| `media-seek-backward-button`, `media-seek-forward-button` | `media-seek-button`                      | one element, direction via signed `seconds`    |
-| `media-rendition-menu`                                    | `media-quality-radio-group`              | inside `media-menu`                            |
-| `media-captions-menu`                                     | `media-captions-radio-group`             | inside `media-menu`                            |
-| `media-playback-rate-menu`                                | `media-playback-rate-radio-group`        | inside `media-menu`                            |
-| `media-audio-track-menu`                                  | `media-audio-track-radio-group`          | inside `media-menu`                            |
+| Media Chrome | Video.js v10 | Note |
+|---|---|---|
+| `media-controller` | a player plus `media-container` | one element becomes two: state and layout |
+| `media-control-bar` | `media-controls`, `media-controls-group` | grouping |
+| `media-time-range` | `media-time-slider` | "range" becomes "slider" |
+| `media-volume-range` | `media-volume-slider` | "range" becomes "slider" |
+| `media-time-display`, `media-duration-display` | `media-time` | one element, set via attribute |
+| `media-loading-indicator` | `media-buffering-indicator` | rename |
+| `media-poster-image` | `media-poster` | rename, and the image source moves — see below |
+| `media-seek-backward-button`, `media-seek-forward-button` | `media-seek-button` | one element, direction via signed `seconds` |
+| `media-rendition-menu` | `media-quality-radio-group` | inside `media-menu` |
+| `media-captions-menu` | `media-captions-radio-group` | inside `media-menu` |
+| `media-playback-rate-menu` | `media-playback-rate-radio-group` | inside `media-menu` |
+| `media-audio-track-menu` | `media-audio-track-radio-group` | inside `media-menu` |
 
 Unchanged names: `media-play-button`, `media-mute-button`, `media-fullscreen-button`, `media-pip-button`, `media-airplay-button`, `media-cast-button`, `media-captions-button`, `media-playback-rate-button`, `media-tooltip`, and `media-thumbnail`.
 
@@ -232,7 +228,6 @@ React buttons do not include visible content either. Use a button's `render` pro
   <img src="/poster.jpg" alt="" decoding="async" />
 </media-poster>
 ```
-
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -249,7 +244,6 @@ These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider
   </Container>
 </VideoPlayer>
 ```
-
 </FrameworkCase>
 
 ## Rewrite your styles
@@ -258,9 +252,7 @@ Media Chrome reflects state as `media*` attributes such as `mediapaused`; Video.
 
 ```css
 /* Media Chrome */
-media-play-button[mediapaused] .play-icon {
-  display: inline;
-}
+media-play-button[mediapaused] .play-icon { display: inline; }
 ```
 
 <FrameworkCase frameworks={["html"]}>
@@ -283,14 +275,14 @@ Continuous values use CSS custom properties: sliders expose `--media-slider-fill
 
 Media Chrome and Video.js both use names beginning with `--media-`, but that shared prefix is a naming convention, not a compatibility layer. Keep a variable only when its documented meaning matches.
 
-| Media Chrome theme variable                         | Packaged Video.js skin | Migration                                                                                           |
-| --------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `--media-accent-color` or `--media-range-bar-color` | `--media-accent-color` | Closest match for slider fills and accented controls.                                               |
-| `--media-primary-color`                             | no direct equivalent   | Often colors every control icon in Media Chrome; Video.js's accent variable has narrower semantics. |
-| `--media-secondary-color`                           | no direct equivalent   | Author CSS or eject when you need this palette role.                                                |
-| `--media-control-background`                        | no direct equivalent   | Author CSS or eject.                                                                                |
-| `--media-control-hover-background`                  | no direct equivalent   | Author CSS or eject.                                                                                |
-| `--media-range-track-height`                        | no direct equivalent   | Author slider CSS or eject.                                                                         |
+| Media Chrome theme variable | Packaged Video.js skin | Migration |
+|---|---|---|
+| `--media-accent-color` or `--media-range-bar-color` | `--media-accent-color` | Closest match for slider fills and accented controls. |
+| `--media-primary-color` | no direct equivalent | Often colors every control icon in Media Chrome; Video.js's accent variable has narrower semantics. |
+| `--media-secondary-color` | no direct equivalent | Author CSS or eject when you need this palette role. |
+| `--media-control-background` | no direct equivalent | Author CSS or eject. |
+| `--media-control-hover-background` | no direct equivalent | Author CSS or eject. |
+| `--media-range-track-height` | no direct equivalent | Author slider CSS or eject. |
 
 The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit` for broad customization. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
 
@@ -304,7 +296,6 @@ Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the sk
 Keep playback event handlers on your `<video>` or `<audio>`. When you build a custom control bar, attach click and input handlers directly to those controls. With a ready-made skin, read media or player state instead of listening for clicks inside the skin.
 
 Keep the skin when its CSS variables and content slots cover your changes. Build a custom control bar when you want to start from scratch. Eject the skin when you want its existing layout and styles but need to change the controls inside it.
-
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -323,7 +314,6 @@ const player = document.querySelector('video-player');
 
 player.store.state.toggleFullscreen();
 ```
-
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -338,7 +328,6 @@ function FullscreenShortcut() {
   return null;
 }
 ```
-
 </FrameworkCase>
 
 The Media Chrome habit of scripting the media element directly still works, unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. The media element also stays the way to swap `src`, replace the media component, and listen for native events.
@@ -373,9 +362,7 @@ The skin root is an inline-size container named `media-root`, so write responsiv
 
 ```css
 @container media-root (width > 40rem) {
-  .media-controls {
-    /* wide layout */
-  }
+  .media-controls { /* wide layout */ }
 }
 ```
 
@@ -393,26 +380,25 @@ import { selectVolume, usePlayer } from '@videojs/react';
 import { useEffect, useState } from 'react';
 
 function PersistVolume() {
-const volume = usePlayer(selectVolume);
-const [readyToSave, setReadyToSave] = useState(false);
+  const volume = usePlayer(selectVolume);
+  const [readyToSave, setReadyToSave] = useState(false);
 
-useEffect(() => {
-const saved = localStorage.getItem('vjs:volume');
-if (saved !== null) {
-const savedVolume = Number(saved);
-if (Number.isFinite(savedVolume)) volume.setVolume(savedVolume);
+  useEffect(() => {
+    const saved = localStorage.getItem('vjs:volume');
+    if (saved !== null) {
+      const savedVolume = Number(saved);
+      if (Number.isFinite(savedVolume)) volume.setVolume(savedVolume);
+    }
+    setReadyToSave(true);
+  }, []);
+
+  useEffect(() => {
+    if (!readyToSave) return;
+    localStorage.setItem('vjs:volume', String(volume.volume));
+  }, [readyToSave, volume.volume]);
+
+  return null;
 }
-setReadyToSave(true);
-}, []);
-
-useEffect(() => {
-if (!readyToSave) return;
-localStorage.setItem('vjs:volume', String(volume.volume));
-}, [readyToSave, volume.volume]);
-
-return null;
-}
-
 ```
 </FrameworkCase>
 

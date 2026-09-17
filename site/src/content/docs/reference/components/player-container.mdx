@@ -82,7 +82,6 @@ customElements.define('my-container', MyContainer);
 Extending `ContainerElement` automatically registers the element with the nearest player when it connects and releases that registration when it disconnects.
 
 Import `@videojs/html/ui/container` when you only need to register the standard `<media-container>` element.
-
 </FrameworkCase>
 
 ## What it does
@@ -117,7 +116,6 @@ The container is the visual box around your media and controls. Put sizing, aspe
   <media-controls><media-controls-content>...</media-controls-content></media-controls>
 </media-container>
 ```
-
 </FrameworkCase>
 
 When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps controls and other UI visible on top of the video, since they're children of the container.
@@ -158,20 +156,16 @@ A <DocsLink slug="guides/skins">skin</DocsLink> is a container plus UI controls.
 Style `VideoSkin` for the player's outer size and aspect ratio. Its `skin.css` import makes the built-in container fill that space and positions the media, controls, poster, and overlays.
 
 If you omit `VideoSkin` to build custom UI, render and style `Container` yourself. See [Layout and fullscreen](#layout-and-fullscreen) for the complete layout example.
-
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 Style `<video-skin>` for the player's outer size and aspect ratio. Importing the skin registers the styles that make the built-in container fill that space and position the media, controls, poster, and overlays.
 
 If you omit `<video-skin>` to build custom UI, render and style `<media-container>` yourself. See [Layout and fullscreen](#layout-and-fullscreen) for the complete layout example.
-
 </FrameworkCase>
 
 ## Inside vs. outside the container
 
-<DocsLink slug="reference/components/player">`Player`</DocsLink> gives components access to state
-and actions. `Container` layers on physical behaviors — fullscreen, activity detection, and gesture
-handling. Components work in both places; the container just adds those extras.
+<DocsLink slug="reference/components/player">`Player`</DocsLink> gives components access to state and actions. `Container` layers on physical behaviors — fullscreen, activity detection, and gesture handling. Components work in both places; the container just adds those extras.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -196,12 +190,10 @@ handling. Components work in both places; the container just adds those extras.
     <media-controls><media-controls-content>...</media-controls-content></media-controls>  <!-- fullscreen, activity detection, gestures -->
   </media-container>
 
-<media-transcript></media-transcript> <!-- state & actions, but no container behaviors -->
-<playlist-sidebar></playlist-sidebar> <!-- state & actions, but no container behaviors -->
+  <media-transcript></media-transcript>     <!-- state & actions, but no container behaviors -->
+  <playlist-sidebar></playlist-sidebar>     <!-- state & actions, but no container behaviors -->
 </video-player>
-
 ```
 </FrameworkCase>
 
 A play button outside the container still reads playback state and can toggle play/pause — it just won't go fullscreen with the player or respond to the container's idle state.
-```
