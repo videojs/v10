@@ -570,6 +570,24 @@ path.
   temporal-rotation asset exists in the test set, and generating a
   real-DRM one needs a license server serving rotating keys
   (clear-key / CENC rotation wouldn't exercise the WV/PR/FP path).
+
+  **The same entry-time capture has a second consequence, on VOD, found
+  by Cursor Bugbot on #2291 and confirmed 2026-09-17: per-tier keys are
+  licensed only for the variant selected at entry.** `resolve-track`
+  gates on a selection, so only the selected rendition's media playlist
+  is resolved, and `declaredDrmKeys` counts keys on resolved tracks
+  only. A studio-policy ladder with a distinct KEYID per tier therefore
+  declares one key at entry; `exchangeLicenses` cannot re-enter to see
+  the rest, because `derivedStateSignal` stays `'licensing'` for any
+  resolved presentation. An ABR switch across a key boundary then has
+  no session for the new key. `#EXT-X-SESSION-KEY` — the standard way
+  to declare every key up front — is deliberately not parsed, so
+  nothing masks it. Axinom's MultiKey vector plays because the smoke
+  never left the initially-selected tier, and the multi-key pin test
+  passes because it is handed a presentation with every variant already
+  resolved, which the engine does not produce at entry. The fix is the
+  same reactive re-scan named above, which is why this is tracked with
+  on-demand licensing in #2863 rather than separately.
 - **Output-protection-aware ABR coordination.** Renditions tagged
   with security-level / HDCP requirements interact with video-ABR
   and hevc-variant-selection. ABR's candidate set should be filtered
