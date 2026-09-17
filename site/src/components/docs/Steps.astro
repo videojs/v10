@@ -1,0 +1,13 @@
+---
+import { twMerge } from '@/utils/twMerge';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<ol class={twMerge('mx-auto my-8 max-w-3xl', className)}>
+  <slot />
+</ol>

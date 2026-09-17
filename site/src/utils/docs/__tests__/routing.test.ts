@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Sidebar } from '../../../types/docs';
-import { getFrameworkFromDocsPath, resolveDocsLinkUrl, resolveFrameworkChange, resolveIndexRedirect } from '../routing';
+import {
+  buildDocsUrl,
+  getFrameworkFromDocsPath,
+  resolveDocsLinkUrl,
+  resolveFrameworkChange,
+  resolveIndexRedirect,
+} from '../routing';
 
 // Mock the validation functions from @/types/docs to use mock framework/style configuration
 // Note: This mock is hoisted, so we define MOCK_FRAMEWORK_STYLES inside the factory
@@ -184,7 +190,7 @@ describe('routing utilities', () => {
           params: {},
         });
 
-        expect(result.url).toBe(`/docs/framework/react/${result.selectedSlug}`);
+        expect(result.url).toBe(buildDocsUrl('react', result.selectedSlug));
       });
     });
   });

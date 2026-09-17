@@ -33,6 +33,20 @@ export interface PackageDocumentationOptions {
 
 const DOCS_SITE_BASE = 'https://videojs.org';
 
+const INSTALLATION_DOCUMENTS = {
+  html: [
+    ['docs/guides/installation/html.md', 'guides/installation.md'],
+    ['docs/guides/installation/vue.md', 'guides/installation-vue.md'],
+    ['docs/guides/installation/svelte.md', 'guides/installation-svelte.md'],
+    ['docs/guides/installation/shadcn.md', 'guides/installation-shadcn.md'],
+    ['docs/guides/installation/cdn.md', 'guides/cdn.md'],
+  ],
+  react: [
+    ['docs/guides/installation/react.md', 'guides/installation.md'],
+    ['docs/guides/installation/shadcn.md', 'guides/installation-shadcn.md'],
+  ],
+} as const satisfies Record<Framework, readonly (readonly [source: string, destination: string])[]>;
+
 function isPackageDocsTarget(value: string): value is PackageDocsTarget {
   return value === 'cli' || value in PACKAGE_NAMES;
 }
@@ -42,18 +56,61 @@ export function stripFooter(content: string): string {
 }
 
 export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
+  const sourceDir = posix.dirname(sourceSlug);
+  let rewritten = content;
+
+  for (const [source, destination] of INSTALLATION_DOCUMENTS[framework]) {
+    const publicPath = `/${source.replace(/\.md$/, '')}`;
+    const canonicalPattern = new RegExp(
+      `(\\]\\()(?:https?://[^\\s)]+)?${escapeForRegex(publicPath)}(?:\\.md|/)?(?=[)#])`,
+      'g'
+    );
+
+    rewritten = rewritten.replace(canonicalPattern, (_match, prefix: string) => {
+      return prefix + toRelativePath(sourceDir, destination);
+    });
+  }
+
   const frameworkPath = `/docs/framework/${framework}/`;
   const pattern = new RegExp(
     `(\\]\\()(?:https?://[^\\s)]+)?${escapeForRegex(frameworkPath)}([^\\s)#]*?)(\\.md|\\.txt|/)?(?=[)#])`,
     'g'
   );
-  const sourceDir = posix.dirname(sourceSlug);
 
-  return content.replace(pattern, (match, prefix: string, slug: string, extension: string | undefined) => {
+  return rewritten.replace(pattern, (match, prefix: string, slug: string, extension: string | undefined) => {
     if (!slug) return match;
 
     return prefix + toRelativePath(sourceDir, `${slug}${extension === '.txt' ? '.txt' : '.md'}`);
   });
+}
+
+function copyInstallationDocumentation({
+  siteDist,
+  targetDirectory,
+  framework,
+  rewriteLocalLinks,
+}: {
+  siteDist: string;
+  targetDirectory: string;
+  framework: Framework;
+  rewriteLocalLinks: boolean;
+}): number {
+  let copied = 0;
+
+  for (const [source, destination] of INSTALLATION_DOCUMENTS[framework]) {
+    const sourcePath = join(siteDist, source);
+    if (!existsSync(sourcePath)) continue;
+
+    const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
+    const transformed = rewriteLocalLinks ? rewriteLinks(raw, sourceSlug(destination), framework) : raw;
+    const destinationPath = join(targetDirectory, destination);
+
+    mkdirSync(dirname(destinationPath), { recursive: true });
+    writeFileSync(destinationPath, transformed, 'utf-8');
+    copied += 1;
+  }
+
+  return copied;
 }
 
 export function synthesizeReadme({
@@ -179,6 +236,12 @@ export function packageDocumentation({
 
       copiedFiles += copyFrameworkDocumentation({
         sourceDirectory,
+        targetDirectory: frameworkTarget,
+        framework,
+        rewriteLocalLinks: target !== 'cli',
+      });
+      copiedFiles += copyInstallationDocumentation({
+        siteDist,
         targetDirectory: frameworkTarget,
         framework,
         rewriteLocalLinks: target !== 'cli',

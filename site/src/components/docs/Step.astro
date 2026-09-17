@@ -1,0 +1,25 @@
+---
+interface Props {
+  number: number;
+  title: string;
+}
+
+const { number, title } = Astro.props;
+---
+
+<li
+  class="relative grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4 pb-10 last:pb-0 before:absolute before:top-8 before:bottom-0 before:left-[0.9375rem] before:w-px before:bg-line last:before:hidden"
+>
+  <span
+    aria-hidden="true"
+    class="z-10 flex size-8 items-center justify-center rounded-lg corner-squircle bg-surface-raised text-p3 font-semibold ring-1 ring-line"
+  >
+    {number}
+  </span>
+  <div class="min-w-0 pt-1">
+    <p class="m-0 font-semibold">{title}</p>
+    <div class="[&>*:last-child]:mb-0!">
+      <slot />
+    </div>
+  </div>
+</li>

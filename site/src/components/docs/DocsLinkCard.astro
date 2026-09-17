@@ -1,7 +1,7 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 import ChevronRight from '@/assets/icons/chevron-right.svg?react';
-import { isValidFramework } from '@/types/docs';
+import { resolveDocsFramework } from '@/types/docs';
 import { resolveDocsHref } from '@/utils/docs/routing';
 import { findGuideBySlug } from '@/utils/docs/sidebar';
 
@@ -13,11 +13,9 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
 }
 const { slug, anchor, description } = Astro.props;
 
-const { framework: paramFramework } = Astro.params;
-
-if (paramFramework && !isValidFramework(paramFramework)) {
-  throw new Error(`Invalid framework param "${paramFramework}".`);
-}
+const routeFramework = Astro.params.framework;
+const paramFramework = resolveDocsFramework(routeFramework);
+if (routeFramework && !paramFramework) throw new Error(`Invalid framework param "${routeFramework}".`);
 
 if (!findGuideBySlug(slug)) {
   throw new Error(`No guide found with slug "${slug}"`);
@@ -25,7 +23,7 @@ if (!findGuideBySlug(slug)) {
 
 // Outside the docs there is no framework in context, so the href is the agnostic
 // /docs/<slug> form. `data-docs-slug` lets ResolveDocsLinks upgrade it on the client.
-const contextFramework = isValidFramework(paramFramework) ? paramFramework : null;
+const contextFramework = paramFramework;
 const url = resolveDocsHref({ slug, framework: contextFramework });
 const href = anchor ? `${url}#${anchor}` : url;
 const docsSlug = contextFramework ? undefined : slug;

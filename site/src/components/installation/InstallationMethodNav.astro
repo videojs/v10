@@ -1,0 +1,31 @@
+---
+const pathname = Astro.url.pathname;
+const active = pathname.endsWith('/shadcn') ? 'shadcn' : pathname.endsWith('/cdn') ? 'cdn' : 'packaged';
+
+const items = [
+  { id: 'packaged', label: 'Packaged', href: '/docs/guides/installation' },
+  { id: 'shadcn', label: 'Shadcn', href: '/docs/guides/installation/shadcn' },
+  { id: 'cdn', label: 'CDN', href: '/docs/guides/installation/cdn' },
+] as const;
+---
+
+<nav aria-label="Installation method" class="mx-auto mb-10 max-w-3xl" data-llms-ignore data-search-ignore>
+  <div class="inline-flex items-center gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
+    {
+      items.map((item) => (
+        <a
+          href={item.href}
+          aria-current={active === item.id ? "page" : undefined}
+          class:list={[
+            "rounded-md corner-squircle px-3 py-1.5 text-p3 font-medium select-none",
+            active === item.id
+              ? "bg-surface-raised text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
+              : "text-muted intent:text-faded-black dark:intent:text-manila-light",
+          ]}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </div>
+</nav>

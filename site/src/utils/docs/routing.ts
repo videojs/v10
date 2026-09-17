@@ -4,8 +4,26 @@ import { DEFAULT_FRAMEWORK, isValidFramework } from '@/types/docs';
 
 import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 
-/** Build a docs URL from framework and guide slug components. */
+export const CANONICAL_INSTALLATION_SLUGS = new Set([
+  'guides/installation',
+  'guides/installation-vue',
+  'guides/installation-svelte',
+  'guides/installation-shadcn',
+  'guides/cdn',
+]);
+
+/** Build the public URL for a guide, including the canonical installation routes. */
 export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): string {
+  if (guideSlug === 'guides/installation') return `/docs/guides/installation/${framework}`;
+
+  if (guideSlug === 'guides/installation-vue') return '/docs/guides/installation/vue';
+
+  if (guideSlug === 'guides/installation-svelte') return '/docs/guides/installation/svelte';
+
+  if (guideSlug === 'guides/installation-shadcn') return '/docs/guides/installation/shadcn';
+
+  if (guideSlug === 'guides/cdn') return '/docs/guides/installation/cdn';
+
   return `/docs/framework/${framework}/${guideSlug}`;
 }
 
@@ -14,6 +32,16 @@ export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): 
  * preferred framework, and `resolveDocsHref` upgrades them on the client when the preference is known.
  */
 export function buildAgnosticDocsUrl(guideSlug?: string | null): string {
+  if (guideSlug === 'guides/installation') return '/docs/guides/installation';
+
+  if (guideSlug === 'guides/installation-vue') return '/docs/guides/installation/vue';
+
+  if (guideSlug === 'guides/installation-svelte') return '/docs/guides/installation/svelte';
+
+  if (guideSlug === 'guides/installation-shadcn') return '/docs/guides/installation/shadcn';
+
+  if (guideSlug === 'guides/cdn') return '/docs/guides/installation/cdn';
+
   return guideSlug ? `/docs/${guideSlug}` : '/docs';
 }
 

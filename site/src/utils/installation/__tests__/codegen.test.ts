@@ -6,6 +6,9 @@ import {
   generateReactCreateCode,
   generateReactInstallCode,
   generateReactUsageCode,
+  generateSourceHTMLUsageCode,
+  generateSourceMediaInstallCode,
+  generateSourceReactCreateCode,
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
@@ -637,5 +640,41 @@ describe('generateReactUsageCode', () => {
 
     expect(live['App.tsx']).toContain('.m3u8');
     expect(live['App.tsx']).not.toEqual(onDemand['App.tsx']);
+  });
+});
+
+describe('source installation code', () => {
+  it('installs only the selected adapter after the registry installs the player package', () => {
+    expect(generateSourceMediaInstallCode('html5-video')).toBeNull();
+    expect(generateSourceMediaInstallCode('hls')?.npm).toBe('npm install @videojs/hlsjs-video');
+    expect(generateSourceMediaInstallCode('mux-video')?.pnpm).toBe('pnpm add @videojs/mux-video @videojs/mux-data');
+  });
+
+  it('uses the local React skin source with the selected media adapter', () => {
+    const code = generateSourceReactCreateCode({ ...baseReact, renderer: 'hls' })['MyPlayer.tsx'];
+
+    expect(code).toContain("import { VideoSkin } from '@/components/videojs/video/skin'");
+    expect(code).toContain("import { VideoPlayer } from '@videojs/react/video'");
+    expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
+    expect(code).toContain('<HlsJsVideo src={src} playsInline />');
+    expect(code).not.toContain('@videojs/react/video/skin.css');
+  });
+
+  it('keeps the local component name stable when the Minimal catalog is selected', () => {
+    const code = generateSourceReactCreateCode({ ...baseReact, skin: 'minimal-video' })['MyPlayer.tsx'];
+
+    expect(code).toContain("import { VideoSkin } from '@/components/videojs/video/skin'");
+    expect(code).not.toContain('MinimalVideoSkin');
+  });
+
+  it('shows the exact HTML skin file, media markup, and registrations to edit', () => {
+    const code = generateSourceHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+
+    expect(code.skinFile).toBe('components/videojs/video/skin.html');
+    expect(code.media).toContain('<hlsjs-video src=');
+    expect(code.imports).toContain("import '@videojs/html/video/player'");
+    expect(code.imports).toContain("import '@videojs/html/media/hlsjs-video'");
+    expect(code.imports).toContain("import '@/components/videojs/video/skin'");
+    expect(code.player).toContain('<video-player>');
   });
 });

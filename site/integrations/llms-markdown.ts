@@ -16,6 +16,7 @@ interface PageEntry {
   description?: string;
   sort?: string;
   framework?: string;
+  frameworks?: string[];
   markdown?: string;
 }
 
@@ -76,7 +77,7 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(html, turndown, siteUrl);
             if (!page) return;
 
-            const { markdown, title, description, sort, framework } = page;
+            const { markdown, title, description, sort, framework, frameworks } = page;
 
             // Write markdown file as sibling to the directory
             // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
@@ -88,7 +89,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
-              docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework, markdown });
+              docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework, frameworks, markdown });
             } else if (pathname.startsWith('blog/')) {
               blogPages.push({ pathname: `/${pathname}`, title, description, sort });
             } else if (pathname.startsWith('changelog/')) {
@@ -122,13 +123,13 @@ export default function llmsMarkdown(): AstroIntegration {
         const docsByFramework = new Map<string, PageEntry[]>();
 
         for (const doc of docsPages) {
-          const fw = doc.framework ?? 'unknown';
+          const frameworks = doc.frameworks ?? [doc.framework ?? 'unknown'];
 
-          if (!docsByFramework.has(fw)) {
-            docsByFramework.set(fw, []);
+          for (const fw of frameworks) {
+            if (!docsByFramework.has(fw)) docsByFramework.set(fw, []);
+
+            docsByFramework.get(fw)!.push(doc);
           }
-
-          docsByFramework.get(fw)!.push(doc);
         }
 
         // Write per-framework docs sub-indexes
@@ -270,6 +271,7 @@ interface ConvertedPage {
   description?: string;
   sort?: string;
   framework?: string;
+  frameworks?: string[];
 }
 
 /** Convert a rendered page's `[data-llms-content]` regions to Markdown, or `null` when the page has none. */
@@ -318,8 +320,10 @@ function convertPage(html: string, turndown: TurndownService, siteUrl: string): 
 
   const frameworkAttr = contentElements[0]?.getAttribute('data-framework');
   const framework = frameworkAttr || undefined;
+  const frameworksAttr = contentElements[0]?.getAttribute('data-frameworks');
+  const frameworks = frameworksAttr ? frameworksAttr.split(',').filter(Boolean) : undefined;
 
-  return { markdown, title, description, sort, framework };
+  return { markdown, title, description, sort, framework, frameworks };
 }
 
 /**
@@ -493,6 +497,14 @@ function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string
 
 function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEntry> {
   const prefix = `/docs/framework/${framework}/`;
+  const installationSlugs = new Map<string, { slug: string; frameworks: string[] }>([
+    ['/docs/guides/installation/react', { slug: 'guides/installation', frameworks: ['react'] }],
+    ['/docs/guides/installation/html', { slug: 'guides/installation', frameworks: ['html'] }],
+    ['/docs/guides/installation/vue', { slug: 'guides/installation-vue', frameworks: ['html'] }],
+    ['/docs/guides/installation/svelte', { slug: 'guides/installation-svelte', frameworks: ['html'] }],
+    ['/docs/guides/installation/shadcn', { slug: 'guides/installation-shadcn', frameworks: ['react', 'html'] }],
+    ['/docs/guides/installation/cdn', { slug: 'guides/cdn', frameworks: ['html'] }],
+  ]);
   const pageBySlug = new Map<string, PageEntry>();
 
   for (const page of pages) {
@@ -500,7 +512,12 @@ function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEnt
       const slug = page.pathname.slice(prefix.length).replace(/\/$/, '');
 
       pageBySlug.set(slug, page);
+      continue;
     }
+
+    const installation = installationSlugs.get(page.pathname.replace(/\/$/, ''));
+
+    if (installation?.frameworks.includes(framework)) pageBySlug.set(installation.slug, page);
   }
 
   return pageBySlug;

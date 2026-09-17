@@ -10,6 +10,7 @@ import SidebarItem from '@/components/docs/SidebarItem.astro';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
 import { filterSidebar, findFirstGuide } from '@/utils/docs/sidebar';
+import { buildDocsUrl } from '@/utils/docs/routing';
 
 type Props = {
   framework: SupportedFramework;
@@ -32,7 +33,7 @@ function containsActivePath(item: SidebarItemType): boolean {
 
   if (isLink(item)) return false;
 
-  return `/docs/framework/${framework}/${item.slug}` === currentPath;
+  return buildDocsUrl(framework, item.slug) === currentPath;
 }
 
 // Top-level sections are the sidebar's switcher. Each entry links to its first guide; the entry that contains the
@@ -75,7 +76,7 @@ const TAB_ICONS = {
 
             return (
               <a
-                href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
+                href={buildDocsUrl(framework, findFirstGuide(framework, tab.contents))}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
                   // One weight for both states prevents a layout shift when the active section changes.

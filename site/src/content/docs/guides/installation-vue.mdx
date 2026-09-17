@@ -1,14 +1,17 @@
 ---
-title: 'Install with Vue'
+title: 'Vue Installation Guide'
 description: 'Install Video.js in a Vue or Nuxt app with the HTML custom elements'
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
+import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+
+<InstallationMethodNav />
 
 Video.js does not ship a first-party Vue package yet, so Vue and Nuxt apps use the `@videojs/html` custom elements directly in their templates.
 
@@ -114,8 +117,8 @@ defineProps<{ src: string }>();
   <video-player>
     <!--
       Skins contain the entire player UI and are easily swappable.
-      They can each be "ejected" for full control and customization
-      of UI components.
+      Add the skin files to your project for full control over its
+      UI components.
     -->
     <video-skin>
       <!--

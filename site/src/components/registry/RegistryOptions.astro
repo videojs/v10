@@ -1,0 +1,36 @@
+---
+/** A project-template or registry source choice placed beside the command it controls. */
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import { isValidFramework } from '@/types/docs';
+import type { RegistryFramework, RegistryPreset, RegistryTheme } from '@/utils/installation/shadcn';
+
+import RegistryOptionsClient from './RegistryOptionsClient';
+
+interface Props {
+  /** Skin selected before the page's skin selector changes it. */
+  defaultSkin?: RegistryPreset;
+  /** Theme selected before the page's theme selector changes it. */
+  defaultTheme?: RegistryTheme;
+  kind: 'template' | 'catalog' | 'styling';
+  /** Start the skin and theme selectors from the choices made earlier on the installation page. */
+  installation?: boolean;
+  /** Explicit source framework for routes that are not nested under a docs framework. */
+  framework?: RegistryFramework;
+}
+
+const { defaultSkin, defaultTheme, installation = false, kind, framework: frameworkProp } = Astro.props;
+const routeFramework = Astro.params.framework;
+const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
+if (!framework) throw new Error(`RegistryOptions needs a framework route, received ${routeFramework}.`);
+---
+
+<ContentWidth>
+  <RegistryOptionsClient
+    client:idle
+    defaultSkin={defaultSkin}
+    defaultTheme={defaultTheme}
+    framework={framework}
+    installation={installation}
+    kind={kind}
+  />
+</ContentWidth>

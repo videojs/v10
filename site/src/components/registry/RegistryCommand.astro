@@ -1,25 +1,39 @@
 ---
 /**
- * The `registry add` and `add` commands for registry items, following the page's styling select box. Without items it
- * only registers the `@videojs` namespace.
+ * The `registry add` and `add` commands for registry items, following the page's registry selectors. Without a selected
+ * skin or fixed items it only registers the `@videojs` namespace.
  */
 import { isValidFramework } from '@/types/docs';
-import type { RegistryTheme, ShadcnRunner } from '@/utils/installation/shadcn';
+import type { RegistryFramework, RegistryPreset, RegistryTheme, ShadcnRunner } from '@/utils/installation/shadcn';
 
 import RegistryCommandClient from './RegistryCommandClient';
 
 interface Props {
+  /** Skin to add until the page's skin selector changes it. Omit for commands with fixed items. */
+  defaultSkin?: RegistryPreset;
+  /** Keep the supplied skin and theme fixed instead of following shared page selectors. */
+  fixedSelection?: boolean;
   /** Registry item names, without the `@videojs/` namespace. */
   items?: string[];
   /** Show one package manager instead of tabs. */
   runner?: ShadcnRunner;
-  /** Theme catalog to register. */
+  /** Theme to use until the page's theme selector changes it. */
   theme?: RegistryTheme;
+  framework?: RegistryFramework;
 }
 
-const { items = [], runner, theme = 'default' } = Astro.props;
-const { framework } = Astro.params;
-if (!isValidFramework(framework)) throw new Error(`RegistryCommand needs a framework route, received ${framework}.`);
+const { defaultSkin, fixedSelection = false, items = [], runner, theme = 'default', framework: frameworkProp } = Astro.props;
+const routeFramework = Astro.params.framework;
+const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
+if (!framework) throw new Error(`RegistryCommand needs a framework route, received ${routeFramework}.`);
 ---
 
-<RegistryCommandClient client:idle framework={framework} items={items} runner={runner} theme={theme} />
+<RegistryCommandClient
+  client:idle
+  defaultSkin={defaultSkin}
+  fixedSelection={fixedSelection}
+  framework={framework}
+  items={items}
+  runner={runner}
+  theme={theme}
+/>

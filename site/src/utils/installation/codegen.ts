@@ -112,7 +112,7 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
  * The optional peer that ships a renderer's adapter, or `null` for the renderers `@videojs/html` and `@videojs/react`
  * play on their own. Every renderer is listed so a new one cannot be added without deciding what it installs.
  */
-function getAdapterPackage(renderer: Renderer): string | null {
+export function getAdapterPackage(renderer: Renderer): string | null {
   const packages: Record<Renderer, string | null> = {
     'background-video': null,
     cloudflare: '@videojs/cloudflare-video',
@@ -130,6 +130,29 @@ function getAdapterPackage(renderer: Renderer): string | null {
   };
 
   return packages[renderer];
+}
+
+/** Packages a source install still needs after the registry item installs the core React or HTML package. */
+export function generateSourceMediaInstallCode(
+  renderer: Renderer
+): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> | null {
+  const packages: string[] = [];
+  const adapter = getAdapterPackage(renderer);
+
+  if (adapter !== null) packages.push(adapter);
+
+  if (isMuxRenderer(renderer)) packages.push(MUX_DATA_PACKAGE);
+
+  if (packages.length === 0) return null;
+
+  const value = packages.join(' ');
+
+  return {
+    npm: `npm install ${value}`,
+    pnpm: `pnpm add ${value}`,
+    yarn: `yarn add ${value}`,
+    bun: `bun add ${value}`,
+  };
 }
 
 function installPackages(framework: '@videojs/html' | '@videojs/react', renderer: Renderer): string {
@@ -276,8 +299,8 @@ ${generateMediaMarkup(tag, src, playsInline, renderer, '  ')}
 <${playerTag}>
   <!--
     Skins contain the entire player UI and are easily swappable.
-    They can each be "ejected" for full control and customization
-    of UI components.
+    Add the skin files to your project for full control over its
+    UI components.
    -->
   <${skinTag}>
 ${skinMediaComment}
@@ -451,6 +474,90 @@ export const MyPlayer = ({ src }: MyPlayerProps) => {
 ${playerJsx}
   );
 };`,
+  };
+}
+
+/** Build a React player around a skin component copied into the app by Shadcn. */
+export function generateSourceReactCreateCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+): Record<'MyPlayer.tsx', string> {
+  const { useCase, renderer } = opts;
+  const preset = getInstallationPreset(useCase);
+  const playerComponent = getPresetPlayer(useCase);
+  const rendererComponent = getRendererComponent(renderer);
+  // A registry theme changes the source behind the stable item name. Both the Default and Minimal catalogs export the
+  // same local component (`VideoSkin`, `AudioSkin`, and so on).
+  const skinComponent = `${preset.componentPrefix}Skin`;
+  const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
+  const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
+  const presetImports = [playerComponent];
+  let mediaImport: string | null = null;
+
+  if (isPresetRenderer(renderer)) {
+    presetImports.push(rendererComponent);
+  } else {
+    mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
+  }
+
+  const imports = [
+    `import { ${presetImports.join(', ')} } from '@videojs/react/${preset.group}';`,
+    ...(mediaImport ? [mediaImport] : []),
+    ...(isMuxRenderer(renderer)
+      ? [`import { MuxData } from '@videojs/react/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`]
+      : []),
+    `import { ${skinComponent} } from '@/components/videojs/${preset.flag}/skin';`,
+  ].join('\n');
+
+  return {
+    'MyPlayer.tsx': `${imports}
+
+interface MyPlayerProps {
+  src: string;
+}
+
+export const MyPlayer = ({ src }: MyPlayerProps) => {
+  return (
+    <${playerComponent}>
+      <${skinComponent}>
+        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
+      </${skinComponent}>
+    </${playerComponent}>
+  );
+};`,
+  };
+}
+
+export interface SourceHTMLUsageCode {
+  imports: string;
+  media: string;
+  player: string;
+  skinFile: string;
+}
+
+/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
+export function generateSourceHTMLUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+): SourceHTMLUsageCode {
+  const { useCase, renderer } = opts;
+  const preset = getInstallationPreset(useCase);
+  const mediaSubpath = getMediaSubpath(renderer);
+  const tag = getRendererTag(renderer);
+  const source = resolveSourceUrl(opts.sourceUrl, renderer, useCase);
+  const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  const imports = [
+    `import '@videojs/html/${preset.group}/player';`,
+    ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
+    ...(isMuxRenderer(renderer) ? [`import '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`] : []),
+    `import '@/components/videojs/${preset.flag}/skin';`,
+  ].join('\n');
+
+  return {
+    imports,
+    media: generateMediaMarkup(tag, source, playsInline, renderer, ''),
+    player: `<${getPlayerTag(useCase)}>
+  <!-- Paste the contents of components/videojs/${preset.flag}/skin.html here. -->
+</${getPlayerTag(useCase)}>`,
+    skinFile: `components/videojs/${preset.flag}/skin.html`,
   };
 }
 
