@@ -363,6 +363,13 @@ const SOURCE_MAP = {
     // Microsoft's public PlayReady test server, configured entirely through its
     // own URL query. Lets the PlayReady vertical be exercised without Mux as a
     // second variable; still needs a PlayReady CDM, so Windows/Edge only.
+    //
+    // `ckt` must be one of `aes128bitctr` / `aes128bitcbc` / `keyexchange` —
+    // this asset is cbcs, so `aes128bitcbc`. It read `aescbc` until 2026-09-17,
+    // which the server rejected with a SOAP fault naming the parameter:
+    // `ServiceSpecificException: Error: Invalid config data in ckt`, surfaced as
+    // SVTA 4004 on an HTTP 500. Nothing validates this string before a real CDM
+    // sends a real challenge, so it can only be caught on Windows.
     label: 'HLS - DRM PlayReady (Microsoft)',
     type: 'hls',
     subType: 'mp4',
@@ -372,7 +379,7 @@ const SOURCE_MAP = {
       drm: {
         'com.microsoft.playready': {
           licenseUrl:
-            'https://test.playready.microsoft.com/service/rightsmanager.asmx?cfg=(persist:false,ck:W31bfVt9W31bfVt9W31bfQ==,ckt:aescbc)',
+            'https://test.playready.microsoft.com/service/rightsmanager.asmx?cfg=(persist:false,ck:W31bfVt9W31bfVt9W31bfQ==,ckt:aes128bitcbc)',
         },
       },
     },
