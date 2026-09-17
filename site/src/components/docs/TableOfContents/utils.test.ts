@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { calculateRailGeometry } from './utils';
+import { calculateActiveHeadingOffset, calculateRailGeometry } from './utils';
+
+describe('calculateActiveHeadingOffset', () => {
+  it('combines document scroll padding with the heading scroll margin', () => {
+    expect(calculateActiveHeadingOffset('96px', '20px')).toBe(116);
+  });
+
+  it('uses the available offset when the other value is not numeric', () => {
+    expect(calculateActiveHeadingOffset('auto', '20px')).toBe(20);
+  });
+
+  it('falls back when neither offset is available', () => {
+    expect(calculateActiveHeadingOffset('auto', '')).toBe(125);
+  });
+});
 
 describe('calculateRailGeometry', () => {
   it('uses the default stripe height and gap when the rail fits', () => {

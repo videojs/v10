@@ -11,6 +11,19 @@ export interface RailGeometry {
   gap: number;
 }
 
+const DEFAULT_ACTIVE_HEADING_OFFSET = 125;
+
+/** Resolve the viewport line where a heading becomes active from the document padding and target margin. */
+export function calculateActiveHeadingOffset(scrollPaddingTop: string, scrollMarginTop: string): number {
+  const scrollPadding = Number.parseFloat(scrollPaddingTop);
+  const scrollMargin = Number.parseFloat(scrollMarginTop);
+  const hasScrollPadding = !Number.isNaN(scrollPadding);
+  const hasScrollMargin = !Number.isNaN(scrollMargin);
+  if (!hasScrollPadding && !hasScrollMargin) return DEFAULT_ACTIVE_HEADING_OFFSET;
+
+  return (hasScrollPadding ? scrollPadding : 0) + (hasScrollMargin ? scrollMargin : 0);
+}
+
 /** Keep the full heading map visible by reducing gaps first, then stripe height. */
 export function calculateRailGeometry(headingCount: number, availableHeight: number): RailGeometry {
   const stripeHeight = 1;
@@ -128,24 +141,10 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
 
   useEffect(() => {
     const handleScroll = () => {
-      // globals.css SHOULD define a scroll-margin-top for headings
-      // let's get the value of that, here
-      let scrollOffset = 125; // idk, a sensible default
       const idElement = document.querySelector('main [id]');
-
-      if (idElement) {
-        const computedStyle = getComputedStyle(idElement);
-        const scrollMarginTop = computedStyle.scrollMarginTop;
-
-        if (scrollMarginTop) {
-          const parsed = Number.parseFloat(scrollMarginTop);
-
-          if (!Number.isNaN(parsed)) scrollOffset = parsed;
-        }
-      }
-
-      scrollOffset = scrollOffset + 1;
-      const activeLine = scrollOffset;
+      const scrollPaddingTop = getComputedStyle(document.documentElement).scrollPaddingTop;
+      const scrollMarginTop = idElement ? getComputedStyle(idElement).scrollMarginTop : '';
+      const activeLine = calculateActiveHeadingOffset(scrollPaddingTop, scrollMarginTop) + 1;
 
       // Find the last heading that's above the scroll position
       let currentActiveId = '';
