@@ -72,12 +72,8 @@ declare module '@/utils/installation/codegen' {
   ): HTMLUsageCode;
 
   export function generateReactCreateCode(
-    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-  ): Record<'MyPlayer.tsx', string>;
-
-  export function generateReactUsageCode(
-    opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
-  ): Record<'App.tsx', string>;
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+  ): Record<'app/page.tsx', string>;
 }
 
 declare module '@/utils/installation/detect-renderer' {

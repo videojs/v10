@@ -4,7 +4,6 @@ import {
   generateHTMLUsageCode,
   generateReactCreateCode,
   generateReactInstallCode,
-  generateReactUsageCode,
   type InstallationOptions,
 } from '@/utils/installation/codegen';
 
@@ -45,7 +44,6 @@ function formatHTMLInstallation(opts: InstallationOptions): string {
 function formatReactInstallation(opts: InstallationOptions): string {
   const install = generateReactInstallCode(opts);
   const create = generateReactCreateCode(opts);
-  const usage = generateReactUsageCode(opts);
 
   const sections: string[] = [];
 
@@ -56,12 +54,9 @@ function formatReactInstallation(opts: InstallationOptions): string {
   sections.push('## Install Video.js\n');
   sections.push(`\`\`\`bash\n${install[opts.installMethod]}\n\`\`\``);
 
-  sections.push('\n## Create your player\n');
-  sections.push('Add to `./components/player/index.tsx`:\n');
-  sections.push(`\`\`\`tsx\n${create['MyPlayer.tsx']}\n\`\`\``);
-
-  sections.push('\n## Use your player\n');
-  sections.push(`\`\`\`tsx\n${usage['App.tsx']}\n\`\`\``);
+  sections.push('\n## Add your player\n');
+  sections.push('Add to `app/page.tsx`:\n');
+  sections.push(`\`\`\`tsx\n${create['app/page.tsx']}\n\`\`\``);
 
   return sections.join('\n');
 }

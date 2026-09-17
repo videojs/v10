@@ -374,15 +374,17 @@ describe('handleDocs', () => {
     });
 
     describe('React framework', () => {
-      it('generates npm installation with create and use sections', async () => {
+      it('generates npm installation with one add-player section', async () => {
         await handleDocs(reactFlags(), ['guides/installation']);
         const out = output();
 
         expect(out).toContain('## Install Video.js');
         expect(out).toContain('npm install @videojs/react');
-        expect(out).toContain('## Create your player');
-        expect(out).toContain('MyPlayer');
-        expect(out).toContain('## Use your player');
+        expect(out).toContain('## Add your player');
+        expect(out).toContain('Add to `app/page.tsx`');
+        expect(out).toContain('export default function Page()');
+        expect(out).not.toContain('MyPlayer');
+        expect(out.match(/```tsx/g)).toHaveLength(1);
       });
 
       it('generates HLS media variant', async () => {
