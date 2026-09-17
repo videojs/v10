@@ -364,20 +364,21 @@ const SOURCE_MAP = {
     // own URL query. Lets the PlayReady vertical be exercised without Mux as a
     // second variable; still needs a PlayReady CDM, so Windows/Edge only.
     //
-    // The `cfg` query is Microsoft's, and only a real CDM sending a real
-    // challenge reaches its validation — so both of these could only be caught
-    // on Windows, and both read wrong until 2026-09-17:
+    // The `cfg` query is copied verbatim from the asset's own `WRMHEADER`
+    // `LA_URL`, which is the authority on how this content was keyed:
     //
-    // - `ckt` takes `aes128bitctr` / `aes128bitcbc` / `keyexchange`. This asset
-    //   is cbcs, so `aes128bitcbc`; it said `aescbc`, and the server answered
-    //   HTTP 500 with `Invalid config data in ckt` (SVTA 4004).
-    // - No explicit content key. It pinned `ck:W31bfVt9…`, which is not a
-    //   parameter the server documents — the key is `contentkey` — so the
-    //   license came back 200 and playback still never started: a license
-    //   carrying the wrong key is silent, since the CDM marks it usable and
-    //   decode simply produces nothing. Microsoft's own test content is keyed
-    //   from the KID in its WRMHEADER via the Test Key Seed, which is what the
-    //   server does when no key is named.
+    //   <LA_URL>http://experimental1.azurewebsites.net/rightsmanager.asmx
+    //           ?cfg=(ck:W31bfVt9W31bfVt9W31bfQ==,ckt:AES128BitCBC)</LA_URL>
+    //   <KID ALGID="AESCBC" VALUE="AAAAEAAQABAQABAAAAAAAQ==">
+    //
+    // Only the host differs: the one the header names is dead (connection
+    // refused, 2026-09-17), so this points at the documented public test
+    // server instead. The `cfg` is otherwise unchanged, casing included.
+    //
+    // It read `ckt:aescbc` until 2026-09-17 — not a value the server takes —
+    // and answered HTTP 500 with `Invalid config data in ckt` (SVTA 4004).
+    // Nothing validates this string until a real CDM sends a real challenge,
+    // which is why it could only ever be caught on Windows.
     label: 'HLS - DRM PlayReady (Microsoft)',
     type: 'hls',
     subType: 'mp4',
@@ -387,7 +388,7 @@ const SOURCE_MAP = {
       drm: {
         'com.microsoft.playready': {
           licenseUrl:
-            'https://test.playready.microsoft.com/service/rightsmanager.asmx?cfg=(persist:false,ckt:aes128bitcbc)',
+            'https://test.playready.microsoft.com/service/rightsmanager.asmx?cfg=(ck:W31bfVt9W31bfVt9W31bfQ==,ckt:AES128BitCBC)',
         },
       },
     },
