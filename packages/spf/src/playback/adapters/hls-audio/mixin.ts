@@ -7,6 +7,7 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   type SvtaError,
 } from '../../../media/errors';
+import { crossOriginToRequestCredentials } from '../../../network/request-credentials';
 import {
   createHlsAudioEngine,
   type HlsAudioEngineConfig,
@@ -25,6 +26,11 @@ import {
 export interface HlsAudioAdapterProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
+  /**
+   * The element's CORS-settings attribute. `use-credentials` also sends cookies with every manifest, playlist, and
+   * segment request the engine makes; any other value leaves those requests at the platform default.
+   */
+  crossOrigin: string | null;
   disableRemotePlayback: boolean;
 }
 
@@ -64,10 +70,15 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  *   audio-only delivery even when the source is a mixed-AV HLS manifest.
  */
 export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  // See the video mixin: guards the `super` write so a base without the
+  // accessor doesn't end up with a shadowing data property.
+  const baseReflectsCrossOrigin = 'crossOrigin' in BaseClass.prototype;
+
   class HlsAudioImpl extends BaseClass {
     static readonly defaultProps: HlsAudioAdapterProps = {
       src: '',
       preload: '',
+      crossOrigin: null,
       disableRemotePlayback: false,
     };
 
@@ -87,6 +98,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #config: HlsAudioEngineConfig;
     #signals!: HlsAudioEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsAudioImpl.defaultProps.preload;
+    #crossOrigin: string | null = HlsAudioImpl.defaultProps.crossOrigin;
     #disableRemotePlayback: boolean = HlsAudioImpl.defaultProps.disableRemotePlayback;
     #error: HlsVideoMediaError | null = null;
     /** Reported condition currently surfaced — see the video adapter's note. */
@@ -170,6 +182,16 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
+
+      // Pre-attach author intent reaches the element now; otherwise an element
+      // already carrying `crossorigin` is the intent. See the video mixin.
+      if (this.#crossOrigin !== null) {
+        if (baseReflectsCrossOrigin) super.crossOrigin = this.#crossOrigin;
+      } else {
+        this.#crossOrigin = mediaElement.crossOrigin;
+      }
+
+      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(this.#crossOrigin));
     }
 
     detach(): void {
@@ -182,6 +204,25 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#cancelPendingPlay();
       this.#stopErrorSync();
       this.#engine.destroy();
+    }
+
+    // -------------------------------------------------------------------------
+    // crossOrigin — synchronous IDL attribute (WHATWG §4.8.11.2)
+    // Reflected onto the media element as usual, and the author's
+    // request-credentials intent for the engine's own fetches. See the video
+    // mixin and `crossOriginToRequestCredentials`.
+    // -------------------------------------------------------------------------
+
+    get crossOrigin(): string | null {
+      return this.#crossOrigin;
+    }
+
+    set crossOrigin(value: string | null) {
+      this.#crossOrigin = value;
+
+      if (baseReflectsCrossOrigin) super.crossOrigin = value;
+
+      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(value));
     }
 
     // -------------------------------------------------------------------------

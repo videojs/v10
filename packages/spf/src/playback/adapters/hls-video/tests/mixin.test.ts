@@ -472,6 +472,130 @@ describe('HlsVideoAdapterCore', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // crossOrigin — synchronous IDL attribute (WHATWG §4.8.11.2) doubling as the
+  // engine's request-credentials intent
+  // ---------------------------------------------------------------------------
+  describe('crossOrigin', () => {
+    it('is null before any crossOrigin is set, leaving request credentials at the platform default', () => {
+      const media = new HlsVideoAdapterCore();
+
+      expect(media.crossOrigin).toBeNull();
+      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+    });
+
+    it('reflects the set value synchronously', () => {
+      const media = new HlsVideoAdapterCore();
+
+      media.crossOrigin = 'use-credentials';
+      expect(media.crossOrigin).toBe('use-credentials');
+    });
+
+    it('maps use-credentials to credentialed engine requests', () => {
+      const media = new HlsVideoAdapterCore();
+
+      media.crossOrigin = 'use-credentials';
+      expect(media.engine.state.requestCredentials.get()).toBe('include');
+    });
+
+    it('leaves anonymous at the platform default and clears a previous include', () => {
+      const media = new HlsVideoAdapterCore();
+
+      media.crossOrigin = 'use-credentials';
+      media.crossOrigin = 'anonymous';
+      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+
+      media.crossOrigin = 'use-credentials';
+      media.crossOrigin = null;
+      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+    });
+
+    it('adopts the crossorigin attribute of an attached element when none was set', () => {
+      const media = new HlsVideoAdapterCore();
+      const el = document.createElement('video');
+
+      el.setAttribute('crossorigin', 'use-credentials');
+      media.attach(el);
+
+      expect(media.crossOrigin).toBe('use-credentials');
+      expect(media.engine.state.requestCredentials.get()).toBe('include');
+    });
+
+    it("keeps an explicit crossOrigin over the attached element's attribute", () => {
+      const media = new HlsVideoAdapterCore();
+      const el = document.createElement('video');
+
+      el.setAttribute('crossorigin', 'anonymous');
+      media.crossOrigin = 'use-credentials';
+      media.attach(el);
+
+      expect(media.crossOrigin).toBe('use-credentials');
+      expect(media.engine.state.requestCredentials.get()).toBe('include');
+    });
+
+    it('does not shadow the accessor on a base without one', () => {
+      const media = new HlsVideoAdapterCore();
+
+      media.crossOrigin = 'use-credentials';
+      media.crossOrigin = 'anonymous';
+
+      expect(Object.hasOwn(media, 'crossOrigin')).toBe(false);
+      expect(media.crossOrigin).toBe('anonymous');
+    });
+
+    it('reflects onto the media element through a base that owns the attribute', () => {
+      class Base {
+        target: HTMLMediaElement | null = null;
+        attach(target: HTMLMediaElement) {
+          this.target = target;
+        }
+        detach() {}
+        get crossOrigin(): string | null {
+          return this.target?.crossOrigin ?? null;
+        }
+        set crossOrigin(value: string | null) {
+          if (this.target) this.target.crossOrigin = value;
+        }
+      }
+
+      class TestAdapter extends HlsVideoMixin(Base) {}
+
+      const media = new TestAdapter();
+      const el = document.createElement('video');
+
+      // Set before attach: the base cannot reflect yet, so attach applies it.
+      media.crossOrigin = 'use-credentials';
+      media.attach(el);
+      expect(el.crossOrigin).toBe('use-credentials');
+
+      // Set after attach: reflected immediately.
+      media.crossOrigin = 'anonymous';
+      expect(el.crossOrigin).toBe('anonymous');
+      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+    });
+
+    it('sends the manifest request with the mapped credentials mode', async () => {
+      const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(() => new Promise(() => {}));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const media = new HlsVideoAdapterCore();
+
+      media.crossOrigin = 'use-credentials';
+      media.preload = 'auto';
+      media.src = 'https://cdn.example.com/master.m3u8';
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      // SAFETY: `fetchResolvable` always calls `fetch` with a `Request`.
+      const request = fetchMock.mock.calls[0]![0] as Request;
+
+      expect(request.url).toBe('https://cdn.example.com/master.m3u8');
+      expect(request.credentials).toBe('include');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // destroy() — explicit teardown (separate from detach)
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {
