@@ -1,6 +1,6 @@
 # Evidence sources
 
-Read when choosing and citing a value. Every changed row needs one link a reviewer can open.
+Read when choosing and citing a value. Every value you change needs one link anyone can open and check.
 
 ## Preferred corpora
 
@@ -16,5 +16,5 @@ Most to least applicable:
 
 - Google Help pages in many locales carry a footer noting AI-assisted translation. Use one only where a second independent source agrees, or where the page quotes a shipped player tooltip verbatim.
 - Declare a failed fetch rather than working around it. An English fallback page or a bot-challenge page is not evidence.
-- Cite one link per changed row. A row resting on internal consistency with the rest of the pack instead of a citable page is allowed if you say so and leave it for the native reviewer to weigh.
+- Cite one link per value you change. A value resting on internal consistency with the rest of the pack instead of a citable page is allowed if you say so and flag it for a native speaker to confirm.
 - Do not copy Video.js v8 locale JSON. V10 uses semantic keys and different ARIA-label semantics.
