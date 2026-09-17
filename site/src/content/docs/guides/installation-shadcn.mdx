@@ -10,7 +10,6 @@ import ContentWidth from '@/components/frames/ContentWidth.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
-import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
 import ReleaseCandidateNotice from '@/components/installation/ReleaseCandidateNotice.astro';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
@@ -26,6 +25,10 @@ import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 Use Shadcn to add a Video.js skin's components, layout, styles, and interactions to your React or HTML project. The CLI copies the files into your app so you can change them like any other source code.
 
 <ReleaseCandidateNotice />
+
+## Choose your installation method
+
+Start with packages, add editable source, or load the browser-ready player from a CDN.
 
 <InstallationMethodNav />
 
@@ -108,16 +111,10 @@ The files are added under `components/videojs/<preset>`. The registry item also 
 ## Add your player
 
 <ShadcnFrameworkCase framework="react">
-Add this component. It imports the player and media from the package, then imports the selected skin from your project.
+Add the player directly to `app/page.tsx`. It imports the player and media from the package, then imports the selected skin from your project.
 
 <ContentWidth>
   <SourceReactPlayer client:idle />
-</ContentWidth>
-
-Then render it in your app with the media source you selected above.
-
-<ContentWidth>
-  <ReactUsageCodeBlock client:idle />
 </ContentWidth>
 </ShadcnFrameworkCase>
 

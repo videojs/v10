@@ -685,17 +685,30 @@ describe('source installation code', () => {
   });
 
   it('uses the local React skin source with the selected media adapter', () => {
-    const code = generateSourceReactCreateCode({ ...baseReact, renderer: 'hls' })['MyPlayer.tsx'];
+    const code = generateSourceReactCreateCode({ ...baseReact, renderer: 'hls' })['app/page.tsx'];
 
+    expect(code).toContain("'use client'");
     expect(code).toContain("import { VideoSkin } from '@/components/videojs/video/skin'");
     expect(code).toContain("import { VideoPlayer } from '@videojs/react/video'");
     expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
     expect(code).toContain('<HlsJsVideo src={src} playsInline />');
+    expect(code).toContain('export default function Page()');
     expect(code).not.toContain('@videojs/react/video/skin.css');
+    expect(code).not.toContain('MyPlayer');
+  });
+
+  it('adds the selected player directly to the app page', () => {
+    const code = generateSourceReactCreateCode(baseReact)['app/page.tsx'];
+
+    expect(code).toContain(`<VideoPlayer>
+      <VideoSkin>
+        <Video src={src} playsInline />
+      </VideoSkin>
+    </VideoPlayer>`);
   });
 
   it('keeps the local component name stable when the Minimal catalog is selected', () => {
-    const code = generateSourceReactCreateCode({ ...baseReact, skin: 'minimal-video' })['MyPlayer.tsx'];
+    const code = generateSourceReactCreateCode({ ...baseReact, skin: 'minimal-video' })['app/page.tsx'];
 
     expect(code).toContain("import { VideoSkin } from '@/components/videojs/video/skin'");
     expect(code).not.toContain('MinimalVideoSkin');
