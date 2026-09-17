@@ -10,7 +10,9 @@ import {
   registryNamespaceUrl,
   registrySkinSelection,
   registryStylings,
+  registryTemplates,
   resolveRegistryStyling,
+  resolveRegistryTemplate,
   shadcnAddCommand,
   shadcnCommand,
   shadcnInitCommand,
@@ -69,6 +71,18 @@ describe('shadcnInitCommand', () => {
     expect(defaultRegistryTemplate('html')).toBe('vite');
     expect(defaultRegistryTemplate('vue')).toBe('vite');
     expect(defaultRegistryTemplate('svelte')).toBe('vite');
+  });
+
+  it('only offers compatible project templates for HTML source', () => {
+    expect(registryTemplates('react')).toEqual(['next', 'vite', 'start', 'laravel', 'react-router', 'astro']);
+    expect(registryTemplates('html')).toEqual(['vite', 'astro', 'laravel']);
+  });
+
+  it('falls back when a project template does not support the source framework', () => {
+    expect(resolveRegistryTemplate('html', 'next')).toBe('vite');
+    expect(resolveRegistryTemplate('html', 'astro')).toBe('astro');
+    expect(resolveRegistryTemplate('react', 'next')).toBe('next');
+    expect(resolveRegistryTemplate('react', null)).toBe('next');
   });
 
   it('sets the selected project template', () => {
