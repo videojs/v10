@@ -59,15 +59,21 @@ import { PauseIcon, PlayIcon } from '@videojs/react/icons';
 
 <PlayButton
   render={(props, state) => (
-    <button {...props}>{state.paused ? <PlayIcon /> : <PauseIcon />}</button>
+    <button {...props}>
+      {state.paused ? <PlayIcon /> : <PauseIcon />}
+    </button>
   )}
-/>;
+/>
 ```
 
 `className` and `style` also accept functions of state for dynamic styling without a full render prop:
 
 ```tsx
-<PlayButton className={(state) => (state.paused ? 'btn btn--paused' : 'btn btn--playing')} />
+<PlayButton
+  className={(state) =>
+    state.paused ? 'btn btn--paused' : 'btn btn--playing'
+  }
+/>
 ```
 
 ### Data attributes and CSS custom properties
@@ -78,19 +84,11 @@ This lets you style state changes in pure CSS:
 
 ```css
 /* Show/hide icons based on play state */
-.play-icon {
-  display: none;
-}
-.pause-icon {
-  display: none;
-}
+.play-icon  { display: none; }
+.pause-icon { display: none; }
 
-button[data-paused] .play-icon {
-  display: inline;
-}
-button:not([data-paused]) .pause-icon {
-  display: inline;
-}
+button[data-paused] .play-icon        { display: inline; }
+button:not([data-paused]) .pause-icon { display: inline; }
 ```
 
 Each component's reference page documents its full set of data attributes.
