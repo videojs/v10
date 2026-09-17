@@ -32,6 +32,10 @@ export interface CssRequirement {
 /**
  * Features found in the generated skin stylesheets. `required` features have no fallback and the skin does not render
  * without them; `degrades` features lose one visual detail; `guarded` features sit inside `@supports` and fall back.
+ *
+ * Only features caniuse tracks belong here. `oklch()`, `light-dark()`, `@property`, relative colors, and
+ * `contrast-color()` have no caniuse entry (`css-lch-lab` covers `lab()` and `lch()` only), so the guide describes them
+ * in prose with MDN data instead.
  */
 export const CSS_REQUIREMENTS: readonly CssRequirement[] = [
   { id: 'css-cascade-scope', label: '@scope', kind: 'required', effect: 'No component styling' },
@@ -51,7 +55,6 @@ export const CSS_REQUIREMENTS: readonly CssRequirement[] = [
     effect: 'Large-screen sizing is lost',
   },
   { id: 'css-dir-pseudo', label: ':dir()', kind: 'required', effect: 'Right-to-left layout is lost' },
-  { id: 'css-lch-lab', label: 'oklch() colors', kind: 'required', effect: 'Theme colors are lost' },
   { id: 'css-relative-colors', label: 'Relative color syntax', kind: 'degrades', effect: 'Adaptive shadows are lost' },
   {
     id: 'css-scrollbar',
