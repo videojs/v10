@@ -5,6 +5,7 @@ description: 'Install Video.js in a Svelte or SvelteKit app with the HTML custom
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -122,6 +123,10 @@ That's it! You now have a working Video.js player.
 <Aside type="note" title="Server rendering with SvelteKit">
 Keep the element imports static. SvelteKit renders the custom-element markup on the server, and the browser upgrades it when the page loads. Put code that needs the element or browser APIs in `onMount`. See <DocsLink slug="guides/svelte" anchor="use-sveltekit">Use SvelteKit</DocsLink> for the details.
 </Aside>
+
+## Own the UI
+
+<OwnTheUI />
 
 ## Choose what to do next
 

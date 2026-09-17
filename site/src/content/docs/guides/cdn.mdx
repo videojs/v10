@@ -6,6 +6,7 @@ description: Build a working HTML player from Video.js browser-ready CDN files
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 
 <InstallationMethodNav />
 
@@ -111,6 +112,12 @@ Every JavaScript entry has a `.dev.js` sibling, such as `video.dev.js`, built wi
 ## Shared chunks
 
 Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink> covers it.
+
+## Own the UI
+
+<OwnTheUI />
+
+Shadcn adds source files and package dependencies, so this path uses a package manager and build step instead of CDN-only scripts.
 
 ## Related guides
 

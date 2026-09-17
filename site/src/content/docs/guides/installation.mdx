@@ -7,6 +7,7 @@ description: Install the Video.js packages and build a working player with acces
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
@@ -176,13 +177,16 @@ Add it to your components folder in a new file.
 
 That's it! You now have a working Video.js player.
 
+## Own the UI
+
+<OwnTheUI />
+
 ## Choose what to do next
 
 <DocsLinkCards>
 <DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
 <DocsLinkCard slug="guides/architecture" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
 <DocsLinkCard slug="guides/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
-<DocsLinkCard slug="guides/installation-shadcn" description="Copy editable skin source into your project and use it in a working player">Install with Shadcn</DocsLinkCard>
 </DocsLinkCards>
 
 ## Prepare for production

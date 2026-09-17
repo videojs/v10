@@ -1,31 +1,67 @@
 ---
+import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
+import NpmLogo from '@/assets/logos/brands/npm.svg?react';
+import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
+
 const pathname = Astro.url.pathname;
 const active = pathname.endsWith('/shadcn') ? 'shadcn' : pathname.endsWith('/cdn') ? 'cdn' : 'packaged';
 
 const items = [
-  { id: 'packaged', label: 'Packaged', href: '/docs/guides/installation' },
-  { id: 'shadcn', label: 'Shadcn', href: '/docs/guides/installation/shadcn' },
-  { id: 'cdn', label: 'CDN', href: '/docs/guides/installation/cdn' },
+  {
+    id: 'packaged',
+    label: 'Packaged',
+    description: 'Install packages and use a ready-made skin.',
+    href: '/docs/guides/installation',
+    Icon: NpmLogo,
+  },
+  {
+    id: 'shadcn',
+    label: 'Shadcn',
+    description: 'Add editable skin source to your project.',
+    href: '/docs/guides/installation/shadcn',
+    Icon: ShadcnLogo,
+  },
+  {
+    id: 'cdn',
+    label: 'CDN',
+    description: 'Load the HTML player from jsDelivr.',
+    href: '/docs/guides/installation/cdn',
+    Icon: JsdelivrLogo,
+  },
 ] as const;
 ---
 
-<nav aria-label="Installation method" class="mx-auto mb-10 max-w-3xl" data-llms-ignore data-search-ignore>
-  <div class="inline-flex items-center gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
+<section class="mx-auto mb-12 max-w-3xl" aria-labelledby="installation-method-heading">
+  <h2 id="installation-method-heading" class="mb-3 font-display text-h2">Choose your installation method</h2>
+  <p class="mb-5">Start with packages, add editable source, or load the browser-ready player from a CDN.</p>
+
+  <nav aria-label="Installation method" class="grid gap-3 sm:grid-cols-3">
     {
-      items.map((item) => (
+      items.map(({ id, label, description, href, Icon }) => (
         <a
-          href={item.href}
-          aria-current={active === item.id ? "page" : undefined}
+          href={href}
+          aria-current={active === id ? "page" : undefined}
           class:list={[
-            "rounded-md corner-squircle px-3 py-1.5 text-p3 font-medium select-none",
-            active === item.id
-              ? "bg-surface-raised text-faded-black shadow-xs ring-1 ring-line dark:text-manila-light"
-              : "text-muted intent:text-faded-black dark:intent:text-manila-light",
+            'group flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
+            'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
+            active === id
+              ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
+              : 'border-line intent:border-line-strong',
           ]}
         >
-          {item.label}
+          <span
+            aria-hidden="true"
+            class="flex size-11 shrink-0 items-center justify-center rounded-lg corner-squircle border border-line bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light"
+          >
+            <Icon className="size-7" />
+          </span>
+          <span class="min-w-0">
+            <span class="block font-semibold">{label}</span>
+            <span class="mt-0.5 block text-p4 dark:text-muted">{description}</span>
+          </span>
         </a>
       ))
     }
-  </div>
-</nav>
+  </nav>
+</section>

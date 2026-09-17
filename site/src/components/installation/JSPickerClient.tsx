@@ -2,7 +2,7 @@ import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
-import { Select, type SelectOption } from '@/components/Select';
+import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import type { SupportedFramework } from '@/types/docs';
 
 /**
@@ -11,26 +11,30 @@ import type { SupportedFramework } from '@/types/docs';
  */
 type PickerFramework = SupportedFramework | 'vue' | 'svelte';
 
-const OPTIONS: SelectOption<PickerFramework>[] = [
+const OPTIONS: CardRadioOption<PickerFramework>[] = [
   {
     value: 'react',
     label: 'React',
-    icon: <ReactLogo className="size-4" />,
+    description: 'Components and hooks for React 19',
+    media: <ReactLogo className="size-7" />,
   },
   {
     value: 'html',
     label: 'HTML',
-    icon: <Html5Logo className="size-4" />,
+    description: 'Custom elements for any stack',
+    media: <Html5Logo className="size-7" />,
   },
   {
     value: 'vue',
     label: 'Vue',
-    icon: <VueLogo className="size-4" />,
+    description: 'Vue 3 and Nuxt, using the custom elements',
+    media: <VueLogo className="size-7" />,
   },
   {
     value: 'svelte',
     label: 'Svelte',
-    icon: <SvelteLogo className="size-4" />,
+    description: 'Svelte 5 and SvelteKit, using the custom elements',
+    media: <SvelteLogo className="size-7" />,
   },
 ];
 
@@ -46,15 +50,11 @@ export default function JSPickerClient({ currentFramework }: Props) {
   };
 
   return (
-    <div className="grid gap-1.5">
-      <p className="text-p4 font-medium">Framework</p>
-      <Select
-        value={currentFramework}
-        onChange={(next) => next && handleChange(next)}
-        options={OPTIONS}
-        aria-label="Select framework"
-        className="justify-self-start"
-      />
-    </div>
+    <CardRadioGroup
+      value={currentFramework}
+      onChange={handleChange}
+      options={OPTIONS}
+      aria-label="Select JS framework"
+    />
   );
 }

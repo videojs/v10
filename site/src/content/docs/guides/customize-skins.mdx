@@ -122,24 +122,26 @@ If a packaged skin is close to the interface you want, add its source to your pr
 
 Video.js publishes the skin files in an installable catalog. The [`shadcn` CLI](https://ui.shadcn.com/docs/cli) copies those files into your project, whether you use React or HTML.
 
+The selected skin is generally placed under `components/videojs/<preset>`, with shared controls and styles alongside it under `components/videojs`. The exact root follows the components alias in `components.json`. The CLI can also install package dependencies, update `components.json`, and add shared styles to your main CSS file.
+
 <Aside type="note">
 Commit your work before installing or updating source. You can then review every file the CLI adds or replaces.
 </Aside>
 
 ### Add the source
 
-The Shadcn installation guide lets you choose React or HTML, the skin, styling approach, theme, and media source. It then adds the skin source and shows how to use it in a working player.
+The Shadcn installation guide handles project setup, lets you choose the skin and styling, and shows how to use the installed source in a working player.
 
 <DocsLinkCard slug="guides/installation-shadcn" description="Add editable skin source and build a working React or HTML player">Install Video.js with Shadcn</DocsLinkCard>
 
 ### Use the installed skin
 
 <FrameworkCase frameworks={["react"]}>
-The files are under `components/videojs/<preset>`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
+The skin's entry file is `components/videojs/<preset>/skin.tsx`. Keep importing the player and media from `@videojs/react`. Import the installed skin component from `skin.tsx`, then render it around your media where you previously rendered the packaged skin.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The files are under `components/videojs/<preset>`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
+The skin directory contains `skin.html`, `skin.ts`, and `skin.css`. Keep importing the player and media from `@videojs/html`. Import the installed `skin.ts` once, then paste the markup from `skin.html` inside your player around the media element.
 </FrameworkCase>
 
 ### Edit the installed files
