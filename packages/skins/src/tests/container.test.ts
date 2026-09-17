@@ -11,4 +11,10 @@ describe('container styles', () => {
     expect(source).toContain('[&>slot::slotted(video)]:h-full [&>slot::slotted(video)]:w-full');
     expect(source).toContain('[&>slot::slotted(video)]:object-media');
   });
+
+  it('lets the container shrink inside the Shadow DOM host grid', async () => {
+    const source = await readFile(containerStyles, 'utf8');
+
+    expect(source).toContain("'min-h-0 min-w-0'");
+  });
 });

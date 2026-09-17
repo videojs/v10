@@ -20,7 +20,9 @@ export default styles({
       ],
       variants: {
         // The HTML skin slots the page's media, which the base `video` rule cannot reach across the shadow boundary.
+        // The container is also a grid item of the skin host, so it must not inherit `min-*: auto` from its content.
         'shadow-dom': [
+          'min-h-0 min-w-0',
           '[&>slot::slotted(video)]:m-0 [&>slot::slotted(video)]:block [&>slot::slotted(video)]:h-full [&>slot::slotted(video)]:w-full',
           '[&>slot::slotted(video)]:max-w-full [&>slot::slotted(video)]:rounded-[inherit] [&>slot::slotted(video)]:object-media',
         ],

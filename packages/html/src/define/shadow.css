@@ -1,14 +1,8 @@
 /* -------------------------------------------------------------------------- */
-/* Shared styles for all HTML skins                                           */
+/* Shadow-root integration for all HTML skins                                 */
 /* -------------------------------------------------------------------------- */
 
-media-tooltip-group,
-media-dialog,
-media-alert-dialog,
-media-error-dialog,
-media-controls {
-  display: contents;
-}
+/* Resets and component styles come from the skins package. This file only bridges the host and its slotted media. */
 
 :host {
   /* `display:grid` fixes a weird issue with Safari when setting aspect-ratio */
@@ -25,14 +19,4 @@ media-controls {
 ::slotted(video),
 ::slotted(audio) {
   margin: 0 !important;
-}
-
-media-container {
-  min-width: 0;
-  min-height: 0;
-}
-
-/* Hide the volume popover when its slider is unavailable. */
-.media-popover--volume:has(media-volume-slider[data-hidden]) {
-  display: none;
 }

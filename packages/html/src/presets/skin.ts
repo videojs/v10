@@ -9,10 +9,10 @@ import {
 } from '@videojs/utils/dom';
 
 import globalStyles from '../define/global.css?inline';
-import sharedStyles from '../define/shared.css?inline';
+import shadowStyles from '../define/shadow.css?inline';
 
 const STYLES_ID = '__media-styles';
-const sharedSheet = createShadowStyle(sharedStyles);
+const shadowSheet = createShadowStyle(shadowStyles);
 
 /**
  * Base element for skin definitions. Attaches a shadow root, clones `static template` into it, and applies shared +
@@ -39,7 +39,7 @@ export class SkinElement extends ReactiveElement {
 
       this.shadowRoot!.append(createHelpLink(this.ownerDocument));
 
-      const sheets: ShadowStyle[] = [sharedSheet];
+      const sheets: ShadowStyle[] = [shadowSheet];
 
       if (ctor.styles) {
         sheets.push(ctor.styles);
