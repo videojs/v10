@@ -253,6 +253,89 @@ describe('HlsJsAdapter', () => {
     });
   });
 
+  describe('content type', () => {
+    // An extensionless URL, so the engine decision rests on `type` alone.
+    const SRC = 'https://example.com/asset?id=42';
+
+    function createMseMedia() {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const video = document.createElement('video');
+
+      document.body.appendChild(video);
+
+      const media = new HlsJsAdapter();
+
+      media.attach(video);
+
+      return media;
+    }
+
+    it.each([
+      'application/vnd.apple.mpegurl',
+      'application/x-mpegURL',
+      'application/x-mpegurl',
+      'APPLICATION/VND.APPLE.MPEGURL',
+      'application/mpegurl',
+      'audio/mpegurl',
+      'audio/x-mpegurl',
+      'application/vnd.apple.mpegurl; charset=utf-8',
+    ])('plays `%s` through hls.js', (type) => {
+      const media = createMseMedia();
+
+      media.source = { src: SRC, type };
+      media.load();
+
+      expect(media.engine).toBeInstanceOf(Hls);
+      expect(media.videoRenditions).toBeDefined();
+    });
+
+    it.each(['video/mp4', 'VIDEO/MP4'])('hands `%s` to the browser', (type) => {
+      const media = createMseMedia();
+
+      media.source = { src: SRC, type };
+      media.load();
+
+      expect(media.engine).toBeNull();
+      expect(media.videoRenditions).toBeUndefined();
+    });
+
+    it('hands an unrecognized type to the browser and warns in dev', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const media = createMseMedia();
+
+      media.source = { src: 'https://example.com/master.m3u8', type: 'application/octet-stream' };
+      media.load();
+
+      expect(media.engine).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('application/octet-stream'));
+    });
+
+    it('does not warn for a recognized alias', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const media = createMseMedia();
+
+      media.source = { src: SRC, type: 'application/x-mpegURL' };
+      media.load();
+
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('does not recreate the engine when only the HLS spelling changes', () => {
+      const media = createMseMedia();
+
+      media.source = { src: SRC, type: 'application/vnd.apple.mpegurl' };
+      media.load();
+
+      const engine = media.engine;
+
+      media.source = { src: SRC, type: 'application/x-mpegURL' };
+      media.load();
+
+      expect(media.engine).toBe(engine);
+    });
+  });
+
   describe('drm', () => {
     const WIDEVINE_LICENSE = 'https://license.test/widevine';
     const FAIRPLAY_LICENSE = 'https://license.test/fairplay';

@@ -33,6 +33,21 @@ export const ContentTypes = {
   MP4: 'video/mp4',
 };
 
+/**
+ * Every MIME type that means HLS in the wild, lowercased. `application/vnd.apple.mpegurl` is the registered one, but
+ * `application/x-mpegURL` predates it and is what most servers, CDNs, and older Video.js guides hand out, so a source
+ * naming any of these has to reach hls.js rather than fall through to native playback.
+ */
+const HLS_CONTENT_TYPES: ReadonlySet<string> = new Set([
+  ContentTypes.M3U8,
+  'application/x-mpegurl',
+  'application/mpegurl',
+  'audio/mpegurl',
+  'audio/x-mpegurl',
+]);
+
+const MP4_CONTENT_TYPES: ReadonlySet<string> = new Set([ContentTypes.MP4]);
+
 export const StreamTypes = MediaStreamTypes;
 
 export interface HlsJsAdapterProps {
@@ -55,7 +70,12 @@ export interface HlsJsAdapterProps {
 export interface HlsSource {
   /** Manifest URL. Mirrors the host's `src` property. */
   src?: string | undefined;
-  /** MIME type of the source. Takes precedence over inference from `src`. */
+  /**
+   * MIME type of the source. Takes precedence over inference from `src`.
+   *
+   * Matched case-insensitively, and the legacy HLS spellings (`application/x-mpegURL`, `audio/mpegurl`, …) count as
+   * `application/vnd.apple.mpegurl`. Anything unrecognized is treated as a URL the browser plays on its own.
+   */
   type?: SourceType | undefined;
   /**
    * Preferred playback path: `'mse'` for hls.js, `'native'` for the browser's own HLS support. Ignored when the
@@ -376,8 +396,14 @@ export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps 
       const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize, minAutoResolution } =
         this.#source ?? {};
       const { hlsJs, nativeHls } = engine ?? {};
-      const contentType = type ?? inferContentType(this.src);
+      const contentType = resolveContentType(type, this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
+
+      if (__DEV__ && type && !contentType) {
+        console.warn(
+          `[vjs-media] Unrecognized \`source.type\` "${type}". HLS sources should use \`${ContentTypes.M3U8}\` (or \`application/x-mpegURL\`); the browser is being handed this source to play natively, so hls.js features such as quality selection are unavailable.`
+        );
+      }
 
       if (__DEV__ && !useMse) {
         const ignored = Object.entries({ maxAutoResolution, capRenditionToPlayerSize, minAutoResolution })
@@ -494,7 +520,7 @@ export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps 
   #engineConfigKey() {
     const { type, preferPlayback, drm, engine } = this.#source ?? {};
 
-    return { drm, engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
+    return { drm, engine, preferPlayback, contentType: resolveContentType(type, this.src) };
   }
 
   #engineDestroy() {
@@ -525,6 +551,24 @@ function withDrmSystems(
   // hls.js declares `serverCertificateUrl` without `undefined`, which an
   // omittable property here is allowed to carry. The values are the same.
   return { emeEnabled: true, ...hlsJs, drmSystems: drmSystems as HlsJsConfig['drmSystems'] };
+}
+
+/**
+ * The canonical content type the engine decision is made on: an explicit `type` folded onto its canonical spelling, or
+ * what the URL suggests when there is none. An explicit type nobody recognizes resolves to `undefined` rather than
+ * falling back to inference — the author said what the source is, and guessing over them would make `type` mean
+ * different things depending on its value.
+ */
+function resolveContentType(type: string | undefined, src: string): SourceType | undefined {
+  if (!type) return inferContentType(src);
+
+  // Parameters (`; charset=...`) and case carry no meaning for the engine choice.
+  const normalized = (type.split(';')[0] ?? '').trim().toLowerCase();
+  if (HLS_CONTENT_TYPES.has(normalized)) return ContentTypes.M3U8;
+
+  if (MP4_CONTENT_TYPES.has(normalized)) return ContentTypes.MP4;
+
+  return undefined;
 }
 
 function inferContentType(src: string): SourceType {
