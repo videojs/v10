@@ -5,6 +5,7 @@ description: 'Install Video.js in a Vue or Nuxt app with the HTML custom element
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -152,6 +153,10 @@ That's it! You now have a working Video.js player.
 <Aside type="note" title="Server rendering with Nuxt">
 Keep the element imports static. Nuxt renders the custom-element markup on the server, and the browser upgrades it when the page loads. If you need to read player state or call player methods, wait until Vue has mounted the element. See <DocsLink slug="guides/vue" anchor="use-nuxt">Use Nuxt</DocsLink> for client-only registration.
 </Aside>
+
+## Own the UI
+
+<OwnTheUI />
 
 ## Choose what to do next
 
