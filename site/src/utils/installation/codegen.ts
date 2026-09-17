@@ -641,12 +641,13 @@ ${playerJsx}
 
 /** Build a React player around a skin component copied into the app by Shadcn. */
 export function generateSourceReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-): Record<'MyPlayer.tsx', string> {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+): Record<'app/page.tsx', string> {
   const { useCase, renderer } = opts;
   const preset = getInstallationPreset(useCase);
   const playerComponent = getPresetPlayer(useCase);
   const rendererComponent = getRendererComponent(renderer);
+  const source = resolveSourceUrl(opts.sourceUrl, renderer, useCase);
   // A registry theme changes the source behind the stable item name. Both the Default and Minimal catalogs export the
   // same local component (`VideoSkin`, `AudioSkin`, and so on).
   const skinComponent = `${preset.componentPrefix}Skin`;
@@ -671,13 +672,13 @@ export function generateSourceReactCreateCode(
   ].join('\n');
 
   return {
-    'MyPlayer.tsx': `${imports}
+    'app/page.tsx': `'use client';
 
-interface MyPlayerProps {
-  src: string;
-}
+${imports}
 
-export const MyPlayer = ({ src }: MyPlayerProps) => {
+const src = ${JSON.stringify(source)};
+
+export default function Page() {
   return (
     <${playerComponent}>
       <${skinComponent}>
@@ -685,7 +686,7 @@ export const MyPlayer = ({ src }: MyPlayerProps) => {
       </${skinComponent}>
     </${playerComponent}>
   );
-};`,
+}`,
   };
 }
 

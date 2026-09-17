@@ -2,6 +2,7 @@
 import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
 import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
+import Check from '@/assets/icons/check.svg?react';
 
 const pathname = Astro.url.pathname;
 const active = pathname.endsWith('/shadcn') ? 'shadcn' : pathname.endsWith('/cdn') ? 'cdn' : 'packaged';
@@ -31,37 +32,43 @@ const items = [
 ] as const;
 ---
 
-<section class="mx-auto mt-16 mb-12 max-w-3xl" aria-labelledby="installation-method-heading">
-  <h2 id="installation-method-heading" class="mb-3 font-display text-h2">Choose your installation method</h2>
-  <p class="mb-5">Start with packages, add editable source, or load the browser-ready player from a CDN.</p>
-
-  <nav aria-label="Installation method" class="grid gap-3 sm:grid-cols-3">
-    {
-      items.map(({ id, label, description, href, Icon }) => (
-        <a
-          href={href}
-          aria-current={active === id ? "page" : undefined}
+<nav aria-label="Installation method" class="mx-auto mt-5 mb-12 grid max-w-3xl gap-3 sm:grid-cols-3">
+  {
+    items.map(({ id, label, description, href, Icon }) => (
+      <a
+        href={href}
+        aria-current={active === id ? "page" : undefined}
+        class:list={[
+          'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
+          'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
+          active === id
+            ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
+            : 'border-line intent:border-line-strong',
+        ]}
+      >
+        <span
+          aria-hidden="true"
+          class="flex size-11 shrink-0 items-center justify-center rounded-lg corner-squircle border border-line bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light"
+        >
+          <Icon className="size-7" />
+        </span>
+        <span class="min-w-0 flex-1 pr-8">
+          <span class="block font-semibold">{label}</span>
+          <span class="mt-0.5 block text-p4 dark:text-muted">{description}</span>
+        </span>
+        <span
+          aria-hidden="true"
           class:list={[
-            'group flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
-            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
-            'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
+            'absolute top-3 right-3 flex size-5 items-center justify-center rounded-full border transition',
             active === id
-              ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
-              : 'border-line intent:border-line-strong',
+              ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
+              : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100',
           ]}
         >
-          <span
-            aria-hidden="true"
-            class="flex size-11 shrink-0 items-center justify-center rounded-lg corner-squircle border border-line bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light"
-          >
-            <Icon className="size-7" />
-          </span>
-          <span class="min-w-0">
-            <span class="block font-semibold">{label}</span>
-            <span class="mt-0.5 block text-p4 dark:text-muted">{description}</span>
-          </span>
-        </a>
-      ))
-    }
-  </nav>
-</section>
+          <Check className="size-4" />
+        </span>
+      </a>
+    ))
+  }
+</nav>

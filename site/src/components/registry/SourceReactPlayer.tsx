@@ -9,17 +9,18 @@ export default function SourceReactPlayer() {
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
+    sourceUrl: useSelection('sourceUrl'),
   });
 
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="React implementation">
         <Tab value="player" initial>
-          components/player/index.tsx
+          app/page.tsx
         </Tab>
       </TabsList>
       <TabsPanel value="player" initial>
-        <ClientCode code={code['MyPlayer.tsx']} lang="tsx" />
+        <ClientCode code={code['app/page.tsx']} lang="tsx" />
       </TabsPanel>
     </TabsRoot>
   );
