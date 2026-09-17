@@ -375,10 +375,25 @@ const SOURCE_MAP = {
     // refused, 2026-09-17), so this points at the documented public test
     // server instead. The `cfg` is otherwise unchanged, casing included.
     //
-    // It read `ckt:aescbc` until 2026-09-17 — not a value the server takes —
-    // and answered HTTP 500 with `Invalid config data in ckt` (SVTA 4004).
-    // Nothing validates this string until a real CDM sends a real challenge,
-    // which is why it could only ever be caught on Windows.
+    // **This vector has never been seen to play, and may be unusable.** It read
+    // `ckt:aescbc` until 2026-09-17 — not a value the server takes — and
+    // answered HTTP 500 with `Invalid config data in ckt` (SVTA 4004). That
+    // string came from Shaka's own demo asset list, which still carries it, so
+    // it was wrong from the day it was added here and the earlier "PlayReady
+    // verified" pass must have rested on Mux alone.
+    //
+    // With `ckt` corrected the license returns 200 and decode still never
+    // starts — the silent shape of a wrong content key. Shaka cannot be used to
+    // check it: its demo requests `com.microsoft.playready.recommendation` and
+    // `.recommendation.3000`, which Edge refuses, so it fails to negotiate
+    // PlayReady at all on the machine where this engine licenses Mux fine.
+    // Note the asset's own `LA_URL` names a host that no longer resolves, which
+    // fits a fixture nobody has revalidated.
+    //
+    // Kept because a PlayReady vector without Mux as a second variable is worth
+    // having if it can be revived; Mux is the verified PlayReady evidence
+    // meanwhile. Nothing validates this string until a real CDM sends a real
+    // challenge, so it can only ever be exercised on Windows.
     label: 'HLS - DRM PlayReady (Microsoft)',
     type: 'hls',
     subType: 'mp4',
