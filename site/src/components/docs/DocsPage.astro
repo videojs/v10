@@ -25,9 +25,10 @@ interface Props {
   framework: SupportedFramework;
   frameworks?: readonly SupportedFramework[];
   slug: string;
+  stabilizeHeader?: boolean;
 }
 
-const { doc, framework, frameworks = [framework], slug } = Astro.props;
+const { doc, framework, frameworks = [framework], slug, stabilizeHeader = false } = Astro.props;
 const { Content, headings, remarkPluginFrontmatter } = await render(doc);
 const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
 const filteredHeadings = conditionalHeadings
@@ -100,7 +101,12 @@ const jsonLdSchema = createTechArticleSchema({
             </p>
             <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
           </div>
-          <div class="mb-4 flex flex-wrap items-center gap-3">
+          <div
+            class:list={[
+              "mb-4 flex flex-wrap items-center gap-3",
+              stabilizeHeader && "min-h-24 @sm:min-h-18 @xl:min-h-9",
+            ]}
+          >
             <H2Markdown
               as="h1"
               maxWidth={false}
@@ -113,7 +119,7 @@ const jsonLdSchema = createTechArticleSchema({
             </H2Markdown>
             {doc.data.stability && <ApiStabilityBadge stability={doc.data.stability} />}
           </div>
-          <p class="text-p2">{doc.data.description}</p>
+          <p class:list={["text-p2", stabilizeHeader && "min-h-12 @xl:min-h-6"]}>{doc.data.description}</p>
         </header>
         {
           doc.data.stability === "unstable" && (

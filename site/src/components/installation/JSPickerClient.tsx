@@ -1,9 +1,12 @@
+import { navigate } from 'astro:transitions/client';
+
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import type { SupportedFramework } from '@/types/docs';
+import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 
 /**
  * Frameworks the installation flow can start from. React and HTML switch the docs framework; Vue and Svelte open their
@@ -46,7 +49,10 @@ export default function JSPickerClient({ currentFramework }: Props) {
   const handleChange = (next: PickerFramework) => {
     if (next === currentFramework) return;
 
-    window.location.href = `/docs/guides/installation/${next}${window.location.search}`;
+    const target = `/docs/guides/installation/${next}${window.location.search}`;
+
+    savePageScrollForNavigation(target);
+    void navigate(target, { history: 'push', info: DOCS_FRAMEWORK_NAVIGATION_INFO });
   };
 
   return (
