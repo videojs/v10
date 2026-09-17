@@ -230,7 +230,7 @@ The poster belongs to player state rather than the media, which lets the skin co
 ```
 </FrameworkCase>
 
-The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">Title</DocsLink> component as a child of the skin, or place it in an ejected or custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference.
+The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">Title</DocsLink> component as a child of the skin, or place it in the skin layout you added to your project or in a custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference.
 
 ### Your CSS
 
@@ -365,15 +365,15 @@ video-player {
 
 `--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="guides/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> has the full list.
 
-### Level 3: eject
+### Level 3: edit skin source
 
-For changes to controls, layout, or interactions, eject the skin into your project. Its components and styles become files you own. <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink> covers the setup and available skins.
+For changes to controls, layout, or interactions, add the skin source to your project. Its components and styles become local files. <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> covers the setup and available skins.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 
 <FrameworkCase frameworks={["html"]}>
 
-Keep the player and skin registration imports. The skin import registers the container and UI elements that your ejected layout uses; you do not render the skin element itself:
+Keep the player and skin registration imports. The skin import registers the container and UI elements that the copied layout uses; you do not render the skin element itself:
 
 ```js
 import '@videojs/html/video/player';
@@ -461,18 +461,18 @@ export function MyPlayer() {
 
 Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
 
-Ejecting is also where you take on the skin's CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, so the copied source includes the skin's stylesheet next to its markup.
+When you add the skin files, you also take on their CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, so the copied files include the skin's stylesheet next to its markup.
 
 ## Plugins
 
 v10 has no plugin system. There's no `videojs.registerPlugin`, no `player.myPlugin()`, and no plugin lifecycle.
 
-That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skins you can eject, media elements you can swap. Most of what plugins did is now ordinary composition.
+That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skin files you can change, and media elements you can swap. Most of what plugins did is now ordinary composition.
 
 Audit your plugins and sort them into four piles:
 
 - **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace with the matching media component. See [Techs become media components](#techs-become-media-components).
-- **UI additions** (extra buttons, overlays, custom control bars). Rebuild as components in an ejected skin, or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
+- **UI additions** (extra buttons, overlays, custom control bars). Rebuild them by editing the skin files in your project, or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
 - **Workarounds** for v8 limitations. Check whether the limitation still exists before you port anything.
 - **Genuinely missing features** (ads, playlists). These need real work, and some have no home yet. Get them on the list early, because they'll drive your timeline.
 
@@ -692,7 +692,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the default HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
-- The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom or ejected skin.
+- The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom layout or a skin layout in your project.
 - No full-window fullscreen fallback. v8 had one for browsers without the Fullscreen API; [support is around 96%](https://caniuse.com/fullscreen) now.
 - Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality; picking renditions by resolution won't be added ([#1415](https://github.com/videojs/v10/issues/1415)).
 - Two skins, and no runtime theme switch.
