@@ -9,7 +9,7 @@ import type { SupportedFramework } from '@/types/docs';
 import { isValidFramework } from '@/types/docs';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO } from '@/utils/docs/navigation';
 import { buildDocsUrl, resolveFrameworkChange } from '@/utils/docs/routing';
-import { savePageScrollForNavigation } from '@/utils/docs/scroll';
+import { savePageScrollForNavigation } from '@/utils/page-scroll';
 
 /**
  * Frameworks the installation flow can start from. React and HTML switch the docs framework; Vue and Svelte open their

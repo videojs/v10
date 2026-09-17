@@ -5,7 +5,7 @@ import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
 
 import { API_REFERENCE_SUBSECTION_TITLES } from '@/utils/componentReferenceModel';
-import { getPageScrollContainer } from '@/utils/docs/scroll';
+import { getPageScrollContainer } from '@/utils/page-scroll';
 
 export interface RailGeometry {
   stripeHeight: number;

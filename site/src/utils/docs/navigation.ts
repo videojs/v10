@@ -4,13 +4,6 @@ import { currentFramework } from '@/stores/preferences';
 
 import { setFrameworkPreferenceClient } from './preferences';
 import { getFrameworkFromDocsPath } from './routing';
-import {
-  getPageScrollFromHistory,
-  getPageScrollTop,
-  PAGE_SCROLL_STORAGE_KEY,
-  restorePageScroll,
-  savePageScrollToHistory,
-} from './scroll';
 
 const DOCS_SIDEBAR_ID = 'docs-sidebar';
 const SIDEBAR_STORAGE_KEY = 'vjs-sidebar-state';
@@ -31,11 +24,6 @@ declare global {
 
 type SidebarState = {
   sidebarScroll?: number;
-};
-
-type SavedPageScroll = {
-  url?: string;
-  scrollY?: number;
 };
 
 function isFrameworkNavigation(info?: { docsNavigation?: string } | null): boolean {
@@ -105,27 +93,6 @@ function restoreSidebarState(): void {
   }
 }
 
-function restoreSavedPageScroll(removeAfterRestore = true): boolean {
-  try {
-    const stored = sessionStorage.getItem(PAGE_SCROLL_STORAGE_KEY);
-    if (!stored) return false;
-
-    const { url, scrollY }: SavedPageScroll = JSON.parse(stored);
-    const matchesCurrentPath = url?.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '');
-    if (!matchesCurrentPath || !Number.isFinite(scrollY ?? Number.NaN)) return false;
-
-    restorePageScroll(scrollY ?? 0);
-
-    if (removeAfterRestore) {
-      sessionStorage.removeItem(PAGE_SCROLL_STORAGE_KEY);
-    }
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function initializeDocsNavigation(): void {
   window.__videojsDocsNavigationController?.abort();
 
@@ -136,108 +103,8 @@ export function initializeDocsNavigation(): void {
 
   syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
-  let historyScrollToRestore: number | null = null;
-  let saveScrollFrame = 0;
-  const historyScrollPositions = new Map<number, number>();
-
-  const getHistoryIndex = () => {
-    const index = window.history.state?.index;
-
-    return Number.isFinite(index) ? index : null;
-  };
-
-  const rememberPageScroll = (scrollY = getPageScrollTop()) => {
-    const historyIndex = getHistoryIndex();
-
-    if (historyIndex !== null) historyScrollPositions.set(historyIndex, scrollY);
-  };
-
-  const initialHistoryIndex = getHistoryIndex();
-  const initialHistoryScroll = getPageScrollFromHistory();
-
-  if (initialHistoryIndex !== null && initialHistoryScroll !== null) {
-    historyScrollPositions.set(initialHistoryIndex, initialHistoryScroll);
-  }
-
-  const saveCurrentPageScroll = () => {
-    saveScrollFrame = 0;
-    savePageScrollToHistory();
-  };
-
-  const schedulePageScrollSave = (event: Event) => {
-    if (!(event.target instanceof HTMLElement) || !event.target.matches('[data-page-scroll]')) return;
-
-    // Remember every observed position synchronously so a Back/Forward traversal cannot outrun the throttled history
-    // write and overwrite the destination entry with the page being left.
-    rememberPageScroll(event.target.scrollTop);
-
-    if (saveScrollFrame) return;
-
-    saveScrollFrame = requestAnimationFrame(saveCurrentPageScroll);
-  };
-
-  const restoreAfterSwap = () => {
-    restoreSidebarState();
-
-    if (historyScrollToRestore !== null) {
-      restorePageScroll(historyScrollToRestore);
-    } else {
-      // Keep a framework destination available until swapped scripts and islands have initialized.
-      restoreSavedPageScroll(false);
-    }
-  };
-
-  const finishRestore = () => {
-    requestAnimationFrame(() => {
-      if (historyScrollToRestore !== null) {
-        restorePageScroll(historyScrollToRestore);
-      } else {
-        restoreSavedPageScroll();
-      }
-
-      historyScrollToRestore = null;
-      savePageScrollToHistory();
-      rememberPageScroll();
-      setFrameworkTransitionSuppressed(document, false);
-    });
-  };
-
-  const restoreDocumentState = () => {
-    restoreSidebarState();
-
-    if (!restoreSavedPageScroll()) {
-      const historyScroll = getPageScrollFromHistory();
-
-      if (historyScroll !== null) restorePageScroll(historyScroll);
-    }
-
-    rememberPageScroll();
-  };
-
-  const saveDocumentState = () => {
-    saveSidebarState();
-    rememberPageScroll();
-    savePageScrollToHistory();
-  };
-
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
-    const frameworkNavigation = isFrameworkNavigation(navigationEvent.info);
-
-    setFrameworkTransitionSuppressed(document, frameworkNavigation);
-
-    if (navigationEvent.navigationType === 'traverse') {
-      cancelAnimationFrame(saveScrollFrame);
-      saveScrollFrame = 0;
-
-      const historyIndex = getHistoryIndex();
-
-      historyScrollToRestore =
-        (historyIndex === null ? undefined : historyScrollPositions.get(historyIndex)) ?? getPageScrollFromHistory();
-    } else {
-      historyScrollToRestore = null;
-      rememberPageScroll();
-      savePageScrollToHistory();
-    }
+    setFrameworkTransitionSuppressed(document, isFrameworkNavigation(navigationEvent.info));
   };
 
   const prepareSwap = (navigationEvent: TransitionBeforeSwapEvent) => {
@@ -246,16 +113,16 @@ export function initializeDocsNavigation(): void {
     setFrameworkTransitionSuppressed(navigationEvent.newDocument, isFrameworkNavigation(navigationEvent.info));
   };
 
-  signal.addEventListener('abort', () => cancelAnimationFrame(saveScrollFrame), { once: true });
-  document.addEventListener('scroll', schedulePageScrollSave, { capture: true, passive: true, signal });
   document.addEventListener('astro:before-preparation', prepareNavigation, { signal });
   document.addEventListener('astro:before-swap', prepareSwap, { signal });
-  document.addEventListener('astro:after-swap', restoreAfterSwap, { signal });
-  document.addEventListener('astro:page-load', finishRestore, { signal });
-  window.addEventListener('pageshow', restoreDocumentState, { signal });
-  window.addEventListener('pagehide', saveDocumentState, { signal });
+  document.addEventListener('astro:after-swap', restoreSidebarState, { signal });
+  document.addEventListener(
+    'astro:page-load',
+    () => requestAnimationFrame(() => setFrameworkTransitionSuppressed(document, false)),
+    { signal }
+  );
+  window.addEventListener('pageshow', restoreSidebarState, { signal });
+  window.addEventListener('pagehide', saveSidebarState, { signal });
 
-  // Module scripts are deferred, so the page scroller exists here. Restore immediately as well as on pageshow so a
-  // cached script that initializes after the page event cannot miss reload restoration.
-  restoreDocumentState();
+  restoreSidebarState();
 }

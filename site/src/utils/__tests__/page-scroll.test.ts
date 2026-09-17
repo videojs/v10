@@ -2,12 +2,23 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   getPageScrollFromHistory,
+  initializePageScrollRestoration,
   PAGE_SCROLL_HISTORY_STATE_KEY,
   PAGE_SCROLL_STORAGE_KEY,
   restorePageScroll,
   savePageScrollForNavigation,
   savePageScrollToHistory,
-} from '../scroll';
+} from '../page-scroll';
+
+function appendPageScroller(scrollTop = 0): HTMLElement {
+  const scrollContainer = document.createElement('div');
+
+  scrollContainer.dataset.pageScroll = '';
+  scrollContainer.scrollTop = scrollTop;
+  document.body.append(scrollContainer);
+
+  return scrollContainer;
+}
 
 describe('savePageScrollForNavigation', () => {
   afterEach(() => {
@@ -18,11 +29,7 @@ describe('savePageScrollForNavigation', () => {
   });
 
   it('saves the page container position for the destination path', () => {
-    const scrollContainer = document.createElement('div');
-
-    scrollContainer.dataset.pageScroll = '';
-    scrollContainer.scrollTop = 420;
-    document.body.append(scrollContainer);
+    appendPageScroller(420);
 
     savePageScrollForNavigation('/docs/framework/html/guides/installation-vue?source=picker');
 
@@ -60,11 +67,7 @@ describe('page scroll history', () => {
   });
 
   it('stores the page container position on the current history entry', () => {
-    const scrollContainer = document.createElement('div');
-
-    scrollContainer.dataset.pageScroll = '';
-    scrollContainer.scrollTop = 640;
-    document.body.append(scrollContainer);
+    appendPageScroller(640);
     window.history.replaceState({ index: 3, scrollX: 0, scrollY: 0 }, '');
 
     savePageScrollToHistory();
@@ -78,12 +81,12 @@ describe('page scroll history', () => {
     expect(getPageScrollFromHistory()).toBe(640);
   });
 
-  it('does not create history state before the client router initializes it', () => {
-    const replaceState = vi.spyOn(window.history, 'replaceState');
+  it('creates history state for pages without the client router', () => {
+    appendPageScroller(320);
 
     savePageScrollToHistory();
 
-    expect(replaceState).not.toHaveBeenCalled();
+    expect(window.history.state).toEqual({ [PAGE_SCROLL_HISTORY_STATE_KEY]: 320 });
   });
 
   it('ignores invalid saved positions', () => {
@@ -93,17 +96,42 @@ describe('page scroll history', () => {
   });
 
   it('restores the page container without moving the window', () => {
-    const scrollContainer = document.createElement('div');
+    const scrollContainer = appendPageScroller();
     const scrollTo = vi.fn();
     const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 
-    scrollContainer.dataset.pageScroll = '';
     scrollContainer.scrollTo = scrollTo;
-    document.body.append(scrollContainer);
 
     restorePageScroll(520);
 
     expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 520 });
     expect(windowScrollTo).not.toHaveBeenCalled();
+  });
+});
+
+describe('initializePageScrollRestoration', () => {
+  afterEach(() => {
+    window.__videojsPageScrollController?.abort();
+    delete window.__videojsPageScrollController;
+    document.querySelector('[data-page-scroll]')?.remove();
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '');
+    vi.restoreAllMocks();
+  });
+
+  it('restores a non-router page position from its history entry after reload', () => {
+    const scrollContainer = appendPageScroller(730);
+    const scrollTo = vi.fn();
+
+    scrollContainer.scrollTo = scrollTo;
+    initializePageScrollRestoration();
+
+    window.dispatchEvent(new Event('pagehide'));
+    expect(window.history.state).toEqual({ [PAGE_SCROLL_HISTORY_STATE_KEY]: 730 });
+
+    scrollContainer.scrollTop = 0;
+    window.dispatchEvent(new Event('pageshow'));
+
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 730 });
   });
 });

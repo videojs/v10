@@ -3,7 +3,7 @@ import type { MarkdownHeading } from 'astro';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
-import { getPageScrollContainer } from '@/utils/docs/scroll';
+import { getPageScrollContainer } from '@/utils/page-scroll';
 
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { calculateRailGeometry } from './utils';

@@ -11,6 +11,7 @@ import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import ResolveDocsLinks from '@/components/docs/ResolveDocsLinks.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import LegacyBanner from '@/components/LegacyBanner.astro';
+import PageScrollRestoration from '@/components/PageScrollRestoration.astro';
 import PlatformInit from '@/components/PlatformInit.astro';
 import Posthog from '@/components/Posthog.astro';
 import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
@@ -197,6 +198,7 @@ const fullTitle =
       </a>
       <PreferenceSync client:idle />
       <ResolveDocsLinks />
+      <PageScrollRestoration />
 
       <PrereleaseBanner />
       <LegacyBanner />

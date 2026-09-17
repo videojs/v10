@@ -21,7 +21,7 @@ import {
 import { DOCS_FRAMEWORK_NAVIGATION_INFO } from '@/utils/docs/navigation';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
-import { savePageScrollForNavigation } from '@/utils/docs/scroll';
+import { savePageScrollForNavigation } from '@/utils/page-scroll';
 
 const FRAMEWORK_ICONS = {
   react: <ReactLogo className="size-4" />,
