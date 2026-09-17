@@ -11,7 +11,6 @@ import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import ResolveDocsLinks from '@/components/docs/ResolveDocsLinks.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import LegacyBanner from '@/components/LegacyBanner.astro';
-import PageScrollRestoration from '@/components/PageScrollRestoration.astro';
 import PlatformInit from '@/components/PlatformInit.astro';
 import Posthog from '@/components/Posthog.astro';
 import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
@@ -164,7 +163,7 @@ const fullTitle =
   </head>
   <body
     class:list={[
-      "relative h-svh overflow-hidden",
+      "relative",
       "font-sans text-p2 text-pretty",
       "bg-manila-light text-faded-black dark:bg-faded-black dark:text-manila-light",
       "min-w-80",
@@ -186,7 +185,7 @@ const fullTitle =
         // BaseUI requires body.relative and div.isolate
         "isolate",
         // Opaque and stacked above the fixed easter egg so it only peeks out on overscroll
-        "relative z-0 flex h-svh min-h-0 flex-col overflow-hidden bg-manila-light dark:bg-faded-black",
+        "relative z-0 min-h-screen bg-manila-light dark:bg-faded-black",
       ]}
       data-overscroll-page
     >
@@ -198,18 +197,16 @@ const fullTitle =
       </a>
       <PreferenceSync client:idle />
       <ResolveDocsLinks />
-      <PageScrollRestoration />
 
-      <PrereleaseBanner />
-      <LegacyBanner />
       <div
-        data-page-scroll
-        class="relative min-h-0 flex-1 overflow-y-auto"
-        style="container-type:size"
+        data-banner-container
+        data-astro-transition-persist="site-banners"
+        class="sticky top-0 z-40"
       >
-        <slot name="sticky-header" />
-        <slot />
+        <PrereleaseBanner />
+        <LegacyBanner />
       </div>
+      <slot />
     </div>
     {
       easterEgg && (
@@ -225,15 +222,9 @@ const fullTitle =
             let lastWheelAt = 0;
             const GESTURE_GAP_MS = 250;
 
-            const atPageEnd = () => {
-              const scrollContainer = document.querySelector("[data-page-scroll]");
-
-              return (
-                scrollContainer &&
-                scrollContainer.scrollTop + scrollContainer.clientHeight >=
-                  scrollContainer.scrollHeight - 1
-              );
-            };
+            const atPageEnd = () =>
+              window.innerHeight + window.scrollY >=
+              document.documentElement.scrollHeight - 1;
 
             const apply = () => {
               const page = document.querySelector("[data-overscroll-page]");

@@ -7,6 +7,7 @@ import { getFrameworkFromDocsPath } from './routing';
 
 const DOCS_SIDEBAR_ID = 'docs-sidebar';
 const SIDEBAR_STORAGE_KEY = 'vjs-sidebar-state';
+const PAGE_SCROLL_STORAGE_KEY = 'vjs-page-scroll';
 const FRAMEWORK_NAVIGATION_ATTRIBUTE = 'data-docs-framework-navigation';
 
 export const DOCS_FRAMEWORK_NAVIGATION_INFO = { docsNavigation: 'framework' } as const;
@@ -26,12 +27,29 @@ type SidebarState = {
   sidebarScroll?: number;
 };
 
+type SavedPageScroll = {
+  url?: string;
+  scrollY?: number;
+};
+
 function isFrameworkNavigation(info?: { docsNavigation?: string } | null): boolean {
   return info?.docsNavigation === 'framework';
 }
 
 function setFrameworkTransitionSuppressed(target: Document, suppressed: boolean): void {
   target.documentElement.toggleAttribute(FRAMEWORK_NAVIGATION_ATTRIBUTE, suppressed);
+}
+
+function savePageScrollToHistory(): void {
+  const state = window.history.state ?? {};
+  const { scrollX, scrollY } = window;
+  if (state.scrollX === scrollX && state.scrollY === scrollY) return;
+
+  try {
+    window.history.replaceState({ ...state, scrollX, scrollY }, '');
+  } catch {
+    // Scroll tracking should not interrupt navigation when history state is unavailable.
+  }
 }
 
 /** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
@@ -41,6 +59,40 @@ export function syncFrameworkPreferenceFromUrl(url: URL): void {
 
   currentFramework.set(framework);
   setFrameworkPreferenceClient(framework);
+}
+
+/** Preserve the reading position for a framework switch that replaces the current guide with its equivalent. */
+export function savePageScrollForNavigation(url: string): void {
+  try {
+    window.sessionStorage.setItem(
+      PAGE_SCROLL_STORAGE_KEY,
+      JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY: window.scrollY })
+    );
+  } catch {
+    // Navigation should still work when storage is unavailable.
+  }
+}
+
+function restoreSavedPageScroll(removeAfterRestore = true): boolean {
+  try {
+    const stored = window.sessionStorage.getItem(PAGE_SCROLL_STORAGE_KEY);
+    if (!stored) return false;
+
+    const { url, scrollY }: SavedPageScroll = JSON.parse(stored);
+    const matchesCurrentPath = url?.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '');
+    if (!matchesCurrentPath || !Number.isFinite(scrollY ?? Number.NaN)) return false;
+
+    window.scrollTo({ left: 0, top: scrollY });
+    savePageScrollToHistory();
+
+    if (removeAfterRestore) {
+      window.sessionStorage.removeItem(PAGE_SCROLL_STORAGE_KEY);
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function readSidebarState(): SidebarState {
@@ -98,12 +150,14 @@ export function initializeDocsNavigation(): void {
 
   const controller = new AbortController();
   const { signal } = controller;
+  let saveScrollFrame = 0;
 
   window.__videojsDocsNavigationController = controller;
 
   syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
+    savePageScrollToHistory();
     setFrameworkTransitionSuppressed(document, isFrameworkNavigation(navigationEvent.info));
   };
 
@@ -113,16 +167,46 @@ export function initializeDocsNavigation(): void {
     setFrameworkTransitionSuppressed(navigationEvent.newDocument, isFrameworkNavigation(navigationEvent.info));
   };
 
+  const schedulePageScrollSave = () => {
+    if (saveScrollFrame) return;
+
+    saveScrollFrame = requestAnimationFrame(() => {
+      saveScrollFrame = 0;
+      savePageScrollToHistory();
+    });
+  };
+
+  const saveDocumentState = () => {
+    cancelAnimationFrame(saveScrollFrame);
+    saveScrollFrame = 0;
+    savePageScrollToHistory();
+    saveSidebarState();
+  };
+
+  signal.addEventListener('abort', () => cancelAnimationFrame(saveScrollFrame), { once: true });
   document.addEventListener('astro:before-preparation', prepareNavigation, { signal });
   document.addEventListener('astro:before-swap', prepareSwap, { signal });
-  document.addEventListener('astro:after-swap', restoreSidebarState, { signal });
+  document.addEventListener(
+    'astro:after-swap',
+    () => {
+      restoreSidebarState();
+      restoreSavedPageScroll(false);
+    },
+    { signal }
+  );
   document.addEventListener(
     'astro:page-load',
-    () => requestAnimationFrame(() => setFrameworkTransitionSuppressed(document, false)),
+    () =>
+      requestAnimationFrame(() => {
+        restoreSavedPageScroll();
+        setFrameworkTransitionSuppressed(document, false);
+      }),
     { signal }
   );
   window.addEventListener('pageshow', restoreSidebarState, { signal });
-  window.addEventListener('pagehide', saveSidebarState, { signal });
+  window.addEventListener('scroll', schedulePageScrollSave, { passive: true, signal });
+  window.addEventListener('pagehide', saveDocumentState, { signal });
 
   restoreSidebarState();
+  restoreSavedPageScroll();
 }

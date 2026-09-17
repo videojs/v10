@@ -10,3 +10,28 @@ import { BANNER_DISMISS_KEY } from '@/consts';
     }
   } catch (e) {}
 </script>
+
+<script>
+  let bannerObserver: ResizeObserver | undefined;
+
+  const observeBannerHeight = () => {
+    bannerObserver?.disconnect();
+
+    const bannerContainer = document.querySelector<HTMLElement>('[data-banner-container]');
+    const updateBannerHeight = () => {
+      const height = bannerContainer?.getBoundingClientRect().height ?? 0;
+
+      document.documentElement.style.setProperty('--banner-height', `${height}px`);
+    };
+
+    updateBannerHeight();
+
+    if (bannerContainer && 'ResizeObserver' in window) {
+      bannerObserver = new ResizeObserver(updateBannerHeight);
+      bannerObserver.observe(bannerContainer);
+    }
+  };
+
+  observeBannerHeight();
+  document.addEventListener('astro:page-load', observeBannerHeight);
+</script>

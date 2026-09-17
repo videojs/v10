@@ -46,32 +46,33 @@ const docsSidebarId = 'docs-sidebar';
     <MarkdownAlternate />
     <slot name="head" slot="head" />
   </Fragment>
-  <NavBarDocs slot="sticky-header">
-    <DocsSidebar
-      slot="mobile-nav"
-      framework={framework}
-      docTitles={docTitles}
-      docStabilities={docStabilities}
-    >
-      <Selectors client:idle currentFramework={framework} currentSlug={slug} />
-    </DocsSidebar>
-  </NavBarDocs>
   <div
+    data-docs-layout
     class:list={[
       "grid grid-cols-1",
       "md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols)",
-      "[--nav-h:calc(var(--spacing)*13+1px)] sm:[--nav-h:calc(var(--spacing)*13.5+1px)]",
     ]}
     style={{
       "--md-grid-cols": `calc(var(--spacing) * 70) minmax(0,1fr)`,
       "--lg-grid-cols": `calc(var(--spacing) * 75) minmax(0,1fr)`,
-      "min-height": "calc(100cqh - var(--nav-h))",
+      "grid-template-rows": "auto minmax(0,1fr)",
+      "min-height": "calc(100vh - var(--banner-height))",
     }}
   >
+    <NavBarDocs class="col-span-full">
+      <DocsSidebar
+        slot="mobile-nav"
+        framework={framework}
+        docTitles={docTitles}
+        docStabilities={docStabilities}
+      >
+        <Selectors client:idle currentFramework={framework} currentSlug={slug} />
+      </DocsSidebar>
+    </NavBarDocs>
     <aside
       id={docsSidebarId}
       class="scrollbar-thin sticky z-10 hidden flex-col overflow-y-scroll border-line md:flex md:border-r"
-      style="top: var(--nav-h); max-height: calc(100cqh - var(--nav-h));"
+      style="top: calc(var(--banner-height) + var(--nav-h)); max-height: calc(100vh - var(--banner-height) - var(--nav-h));"
     >
       <DocsSidebar
         framework={framework}
@@ -88,7 +89,10 @@ const docsSidebarId = 'docs-sidebar';
       </DocsSidebar>
     </aside>
     <div>
-      <div class="flex flex-col" style="min-height:calc(100cqh - var(--nav-h));">
+      <div
+        class="flex flex-col"
+        style="min-height:calc(100vh - var(--banner-height) - var(--nav-h));"
+      >
         <slot />
       </div>
       <Footer class="mt-auto" />
