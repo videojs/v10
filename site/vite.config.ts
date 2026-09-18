@@ -3,12 +3,14 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 import type { Plugin, ViteUserConfig } from 'vite-plus';
+import { configDefaults } from 'vite-plus/test/config';
 
 import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../build/task.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 
 // SAFETY: @vitejs/plugin-react and the workspace resolve Plugin from the catalog-pinned Vite implementation.
 const reactPlugins = react() as Plugin[];
+const domTests = ['src/utils/docs/__tests__/preferences.test.ts', 'src/utils/mux/__tests__/auth-flow.test.ts'];
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and
 // passed as a variable: Astro 7's `getViteConfig` param no longer surfaces the
@@ -18,8 +20,25 @@ const config: ViteUserConfig = {
   plugins: [demoPlaceholderPlugin(), ...reactPlugins],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.ts'],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'site',
+          include: configDefaults.include,
+          exclude: [...configDefaults.exclude, ...domTests],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'site/dom',
+          include: domTests,
+          environment: 'jsdom',
+          setupFiles: ['./src/test-setup.ts'],
+        },
+      },
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
