@@ -3,51 +3,95 @@ title: Browser support
 description: Browsers and rendering environments supported by Video.js 10, and what the stylesheets need from them
 ---
 
-import Aside from '@/components/Aside.astro';
 import BrowserSupportTable from '@/components/docs/BrowserSupportTable.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js 10 supports current browsers and is open about what it needs from them. This page explains the policy, shows the versions it resolves to today, and lists the CSS features the packaged skins depend on, so you can judge what an older browser will show.
+Video.js 10 supports the **latest two stable versions** of Chrome, Edge, Firefox, Safari, and Safari on iOS. This page shows the versions that means today, what the packaged skins need from a browser, and how to reach older ones.
 
 ## Browser baseline
 
-We support the **latest two stable versions** of Chrome, Edge, Firefox, Safari, and Safari on iOS. The build reads that policy from a [browserslist](https://browsersl.ist) query in the repository, and this page resolves the same query when the docs are built:
+The build reads the policy from a [browserslist](https://browsersl.ist) query in the repository, and this page resolves the same query when the docs are built:
 
 <BrowserSupportTable kind="browsers" />
 
-These are the versions we test in and fix bugs for. Older versions often work, but we do not hold back a platform feature to keep them working.
+These are the versions we test in and fix bugs for. We build directly on the web platform, with [custom elements](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements), [`@scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope), [container queries](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries), and [anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning), and we do not hold a feature back to keep older versions working. Older versions often work anyway:
 
 <BrowserSupportTable kind="coverage" />
 
-### Why evergreen?
-
-Video.js 10 builds directly on the web platform: [custom elements](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements), [CSS custom properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties), [`@scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope), [container queries](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries), [anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning), and modern JavaScript. Targeting evergreen browsers lets us:
-
-- **Ship smaller bundles** by leaving out polyfills and transpilation for older syntax
-- **Use platform-native features** such as anchor positioning instead of JavaScript equivalents
-- **Keep the core slim** so the HTML and React packages add only what they need
-
 ## What the stylesheets need
 
-The packaged skins are generated CSS. Most of it is ordinary layout, but a handful of newer features hold a skin together, and they fall into three groups:
+The packaged skins are generated CSS, and a handful of newer features hold a skin together. **Required** features have no fallback: without them the player shows no component styling, and `@scope` alone sets the floor. **Degrades** features lose one visual detail. **Has a fallback** features sit inside [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports); anchor positioning falls back to positions computed in JavaScript.
 
-- **Required.** No fallback exists. A browser without the feature shows the player with no component styling or a broken layout. `@scope` wraps almost every rule, so it sets the floor on its own.
-- **Degrades.** One visual detail is lost: a shadow, a blur, or a themed scrollbar. The player stays usable.
-- **Has a fallback.** The rule sits inside [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports). Anchor positioning is the main case: popups and tooltips fall back to positions computed in JavaScript.
-
-The table lists the first version of each browser that fully supports the feature, read from [caniuse-lite](https://github.com/browserslist/caniuse-lite) when the docs build. Feature names link to their [caniuse.com](https://caniuse.com/) support data. The **effective floor** is the newest of the required versions in each column: below it, the packaged skins do not render.
+The table reads the first fully supporting version of each feature from [caniuse-lite](https://github.com/browserslist/caniuse-lite) when the docs build, and feature names link to [caniuse.com](https://caniuse.com/). The **effective floor** is the newest required version in each column.
 
 <BrowserSupportTable kind="requirements" />
 
-A few features the skins use have no caniuse entry. [`oklch()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch) defines every theme color and is required, but it arrived in Chrome 111, Firefox 113, and Safari 15.4, all older than the floor above, so it does not move it. The rest degrade on their own. [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark) sets the default frame border, [relative color syntax](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors) tints shadows from `currentColor`, [`@property`](https://developer.mozilla.org/en-US/docs/Web/CSS/@property) lets slider fills transition smoothly, and [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color) picks readable text for the accent color. Without them the border, tint, or transition drops out, and accent text falls back to the inherited color. Set `--media-accent-text-color` when you support browsers without `contrast-color()`; <DocsLink slug="guides/customize-skins">Customize skins</DocsLink> lists that property.
+A few features have no caniuse entry. [`oklch()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch) is required but older than the floor (Chrome 111, Firefox 113, Safari 15.4). [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark), [relative colors](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors), [`@property`](https://developer.mozilla.org/en-US/docs/Web/CSS/@property), and [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color) each degrade on their own; set `--media-accent-text-color` from <DocsLink slug="guides/customize-skins">Customize skins</DocsLink> if you support browsers without `contrast-color()`. [Firefox ESR](https://www.mozilla.org/en-US/firefox/enterprise/) releases older than 146 lack `@scope`, so the skins render unstyled there.
 
-<Aside type="note" title="Firefox ESR">
-[Firefox Extended Support Release](https://www.mozilla.org/en-US/firefox/enterprise/) ships a fixed version for a year. Releases older than Firefox 146 lack `@scope`, so the packaged skins render without component styling there. <DocsLink slug="guides/support-older-browsers">Support older browsers</DocsLink> shows how to recompile the stylesheet if your audience runs ESR.
-</Aside>
+The JavaScript has a lower floor: ES2022 syntax, with newer APIs feature-detected, so it runs in Chrome 102, Firefox 112, and Safari 16.4 or later. The stylesheet decides whether an older browser shows a working player.
 
-### JavaScript
+### Support older browsers
 
-The JavaScript has a lower floor than the CSS. It ships as ES2022, so [class static blocks](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Static_initialization_blocks) and [private fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements) are the newest syntax, and every newer platform API is checked before use: anchor positioning, [`AbortSignal.any()`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static), [constructable stylesheets](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet/CSSStyleSheet), and the media APIs that only one engine provides, such as AirPlay, [Remote Playback](https://developer.mozilla.org/en-US/docs/Web/API/Remote_Playback_API), [Picture-in-Picture](https://developer.mozilla.org/en-US/docs/Web/API/Picture-in-Picture_API), and [`ManagedMediaSource`](https://developer.mozilla.org/en-US/docs/Web/API/ManagedMediaSource). The result runs in Chrome 102, Firefox 112, and Safari 16.4 or later, so the stylesheet is what decides whether an older browser shows a working player.
+To reach browsers below the floor, recompile the skin stylesheet with fallbacks. Only a stylesheet your build processes can be recompiled: React skins are imported CSS files, HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink> first, and CDN bundles need <DocsLink slug="guides/self-hosting">self-hosting</DocsLink> plus an eject.
+
+[lightningcss](https://lightningcss.dev/transpilation.html) and [postcss-preset-env](https://preset-env.cssdb.org/) both read a browserslist query and add what those browsers lack: they flatten nesting and rewrite `:dir()`, range media queries, `light-dark()`, and `oklch()` in ordinary declarations, and add vendor prefixes. Neither rewrites `@scope` or `:scope`, so a small plugin flattens each block into descendant selectors prefixed with [`:where(root)`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where), which adds no specificity. The PostCSS version, picked up by Vite, Next.js, and most bundlers from `postcss.config.mjs`:
+
+```bash
+npm install --save-dev postcss postcss-preset-env postcss-selector-parser
+```
+
+```js title="postcss.config.mjs"
+import presetEnv from 'postcss-preset-env';
+import selectorParser from 'postcss-selector-parser';
+
+/** Rewrite `@scope (<root>) { … }` into descendant selectors that older browsers understand. */
+function flattenScope() {
+  const rewrite = (selector, root) =>
+    selectorParser((selectors) => {
+      selectors.each((sel) => {
+        let referencesRoot = false;
+
+        sel.walk((node) => {
+          if (node.type === 'nesting' || (node.type === 'pseudo' && node.value === ':scope')) {
+            node.replaceWith(selectorParser.string({ value: root }));
+            referencesRoot = true;
+          }
+        });
+
+        if (!referencesRoot) {
+          sel.prepend(selectorParser.combinator({ value: ' ' }));
+          sel.prepend(selectorParser.string({ value: `:where(${root})` }));
+        }
+      });
+    }).processSync(selector);
+
+  return {
+    postcssPlugin: 'flatten-scope',
+    OnceExit(css) {
+      const scopes = [];
+      css.walkAtRules('scope', (atRule) => scopes.push(atRule));
+
+      // Innermost first, so a nested scope is flattened before its parent prefixes it.
+      for (const atRule of scopes.reverse()) {
+        const match = /^\(\s*(.+?)\s*\)\s*$/.exec(atRule.params);
+        if (!match || /\)\s*to\s*\(/.test(atRule.params)) continue;
+
+        atRule.walkRules((rule) => {
+          rule.selectors = rule.selectors.map((selector) => rewrite(selector.trim(), match[1]));
+        });
+        atRule.replaceWith(atRule.nodes);
+      }
+    },
+  };
+}
+flattenScope.postcss = true;
+
+export default {
+  plugins: [flattenScope(), presetEnv({ browsers: 'baseline widely available', stage: 2 })],
+};
+```
+
+The result renders in Chrome 111, Firefox 121, and Safari 16.4 or later, the floor [Tailwind CSS 4 documents](https://tailwindcss.com/docs/compatibility#browser-support), because `:has()`, `@container`, `@layer`, and `color-mix()` have no fallback. Flattening `@scope` trades scope proximity for source order; the packaged skins never nest a component inside itself, so the output matches. Run `npx browserslist "baseline widely available"` to see what the query resolves to today, or pick another query for your audience.
 
 ## Rendering contexts
 
@@ -71,7 +115,6 @@ Video.js components render valid markup on the server. Interactivity — state m
 
 ## Related guides
 
-- <DocsLink slug="guides/support-older-browsers">Support older browsers</DocsLink>
 - <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
 - <DocsLink slug="guides/installation">Installation</DocsLink>
 - <DocsLink slug="guides/bundlers">Bundlers</DocsLink>

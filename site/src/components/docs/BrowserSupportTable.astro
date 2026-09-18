@@ -20,6 +20,7 @@ import {
   effectiveFloor,
   resolveSupportedBrowsers,
   SUPPORT_BROWSERS,
+  type SupportBrowserId,
 } from '@/utils/browser-support';
 
 interface Props {
@@ -51,6 +52,22 @@ function listVersions(versions: readonly string[]): string {
   if (shown.length === 1) return shown[0]!;
 
   return `${shown.slice(0, -1).join(', ')} and ${shown[shown.length - 1]}`;
+}
+
+/**
+ * Column groups for the requirements table. Chrome and Edge, and Safari and Safari on iOS, ship features together, so
+ * each pair shares a column; a cell shows both values only when they differ.
+ */
+const COLUMN_GROUPS = [
+  { label: 'Chrome and Edge', ids: ['chrome', 'edge'] },
+  { label: 'Firefox', ids: ['firefox'] },
+  { label: 'Safari and iOS', ids: ['safari', 'ios_saf'] },
+] as const satisfies readonly { label: string; ids: readonly SupportBrowserId[] }[];
+
+function groupCell(values: Record<SupportBrowserId, string | null>, ids: readonly SupportBrowserId[]): string {
+  const shown = ids.map((id) => values[id] ?? UNSUPPORTED);
+
+  return new Set(shown).size === 1 ? shown[0]! : shown.join(' / ');
 }
 
 /** The effective floor as prose: "Chrome 120, Edge 120, …, and Safari on iOS 17.4". */
@@ -95,16 +112,17 @@ const floorSentence = `${floorList.slice(0, -1).join(', ')}, and ${floorList[flo
 
 {
   kind === 'requirements' && (
-    <Table maxWidth={false}>
+    <Table>
       <caption class="sr-only">
         First browser version that fully supports each CSS feature the packaged skins use, with the share of global web
         usage on supporting browsers. Feature names link to their caniuse.com support data. "Not supported" means the
-        browser has no full support. The effective floor row is the newest required version in each column.
+        browser has no full support. Paired browsers share a column and show two values only when they differ. The
+        effective floor row is the newest required version in each column.
       </caption>
       <Thead>
         <Tr>
           <Th scope="col">Feature</Th>
-          {SUPPORT_BROWSERS.map((browser) => <Th scope="col">{browser.name}</Th>)}
+          {COLUMN_GROUPS.map((group) => <Th scope="col">{group.label}</Th>)}
           <Th scope="col">Global support</Th>
         </Tr>
       </Thead>
@@ -119,9 +137,7 @@ const floorSentence = `${floorList.slice(0, -1).join(', ')}, and ${floorList[flo
                 {KIND_LABEL[requirement.kind]}. {requirement.effect}.
               </span>
             </Td>
-            {SUPPORT_BROWSERS.map((browser) => (
-              <Td class="tabular-nums">{firstVersion[browser.id] ?? UNSUPPORTED}</Td>
-            ))}
+            {COLUMN_GROUPS.map((group) => <Td class="tabular-nums">{groupCell(firstVersion, group.ids)}</Td>)}
             <Td class="tabular-nums">{percent(globalSupport)}</Td>
           </Tr>
         ))}
@@ -131,9 +147,7 @@ const floorSentence = `${floorList.slice(0, -1).join(', ')}, and ${floorList[flo
           <Td as="th" scope="row" class="text-left font-bold">
             Effective floor
           </Td>
-          {SUPPORT_BROWSERS.map((browser) => (
-            <Td class="font-bold tabular-nums">{floor[browser.id] ?? UNSUPPORTED}</Td>
-          ))}
+          {COLUMN_GROUPS.map((group) => <Td class="font-bold tabular-nums">{groupCell(floor, group.ids)}</Td>)}
           <Td class="font-bold tabular-nums">{percent(renderedCoverage)}</Td>
         </Tr>
       </Tbody>

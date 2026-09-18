@@ -38,7 +38,9 @@ describe('BrowserSupportTable', () => {
     const html = await render('requirements');
 
     expect(html).toContain('<caption class="sr-only">');
-    expect(html.match(/<th[^>]*scope="col"/g)).toHaveLength(SUPPORT_BROWSERS.length + 2);
+    expect(html.match(/<th[^>]*scope="col"/g)).toHaveLength(5);
+    expect(html).toContain('Chrome and Edge');
+    expect(html).toContain('Safari and iOS');
     expect(html.match(/<th[^>]*scope="row"/g)).toHaveLength(CSS_REQUIREMENTS.length + 1);
     expect(html).toContain('<tfoot');
     expect(html).toContain('Effective floor');
