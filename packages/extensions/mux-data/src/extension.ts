@@ -36,9 +36,17 @@ function engineOf(media: Media): unknown {
   return isEngineAdapter(adapter) ? adapter.engine : null;
 }
 
-/** The media's source URL as the player sees it (an adapter reports its HLS URL, not the `blob:` it plays). */
+/**
+ * The media's source URL as the player sees it. An adapter reports the URL it plays on `src`, not the `blob:` it feeds
+ * the element. A plain `<video>` that picks from `<source>` children leaves `src` empty and reports the pick on
+ * `currentSrc`; a `blob:` there is a MediaSource handle, not a video, so it does not count.
+ */
 function srcOf(media: Media): string {
-  return isMediaSourceCapable(media) ? media.src : '';
+  if (!isMediaSourceCapable(media)) return '';
+
+  if (media.src) return media.src;
+
+  return media.currentSrc.startsWith('blob:') ? '' : media.currentSrc;
 }
 
 /**
