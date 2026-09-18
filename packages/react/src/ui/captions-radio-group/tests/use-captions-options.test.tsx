@@ -69,6 +69,7 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
     setMedia: vi.fn(),
     container: null,
     setContainer: vi.fn(),
+    registerExtension: vi.fn(() => vi.fn()),
   };
 
   return {
