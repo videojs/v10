@@ -85,7 +85,8 @@ const items = [
 </nav>
 
 <script>
-  import { savePageScrollForNavigation } from '@/utils/docs/pageScroll';
+  import { navigate } from 'astro:transitions/client';
+  import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 
   for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-installation-method-nav] a')) {
     link.addEventListener('click', (event) => {
@@ -133,8 +134,13 @@ const items = [
       }
 
       event.preventDefault();
-      savePageScrollForNavigation(target);
-      window.location.href = target.href;
+      const targetPath = `${target.pathname}${target.search}${target.hash}`;
+
+      savePageScrollForNavigation(targetPath);
+      void navigate(targetPath, {
+        history: 'push',
+        info: DOCS_FRAMEWORK_NAVIGATION_INFO,
+      });
     });
   }
 </script>
