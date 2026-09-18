@@ -17,6 +17,10 @@ describe('abbreviateType', () => {
     expect(abbreviateType('useMedia', '(() => Media | null) | undefined')).toBe('undefined | function');
     expect(abbreviateType('onChange', '(value: string) => void')).toBe('function');
     expect(abbreviateType('label', "string | ((state: object) => string) | 'auto'")).toBe("string | 'auto' | function");
+    expect(abbreviateType('transform', '((value: string) => string) | ((value: number) => number)')).toBe('function');
+    expect(abbreviateType('transform', '((value: string) => string) | ((value: number) => number) | undefined')).toBe(
+      'undefined | function'
+    );
   });
 
   it('does not treat nested unions or function properties as top-level function members', () => {

@@ -171,7 +171,7 @@ export function abbreviateType(name: string, type: string): string | undefined {
   }
 
   if (abbreviatedFunctionMembers.length > 0) {
-    return [...otherMembers, ...abbreviatedFunctionMembers].join(' | ');
+    return uniq([...otherMembers, ...abbreviatedFunctionMembers]).join(' | ');
   }
 
   // Short unions (less than 3 members and under 40 chars) → no abbreviation
