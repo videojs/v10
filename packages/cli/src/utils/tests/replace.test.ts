@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { replaceMarker, stripOmitMarkers } from '../replace.js';
+import { replaceMarker, selectMarker, stripOmitMarkers } from '../replace.js';
 
 describe('replaceMarker', () => {
   it('replaces content between markers', () => {
@@ -124,5 +124,28 @@ line 3
 end`;
 
     expect(stripOmitMarkers(markdown)).toBe('start\nend');
+  });
+});
+
+describe('selectMarker', () => {
+  it('keeps the selected branch and removes its siblings', () => {
+    const markdown = `before
+<!-- cli:framework react -->
+React instructions
+<!-- /cli:framework react -->
+<!-- cli:framework html -->
+HTML instructions
+<!-- /cli:framework html -->
+after`;
+
+    expect(selectMarker(markdown, 'framework', 'html')).toBe('before\n\nHTML instructions\nafter');
+  });
+
+  it('leaves unrelated markers unchanged', () => {
+    const markdown = `<!-- cli:replace installation -->
+content
+<!-- /cli:replace installation -->`;
+
+    expect(selectMarker(markdown, 'framework', 'react')).toBe(markdown);
   });
 });

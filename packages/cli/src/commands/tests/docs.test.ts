@@ -18,6 +18,32 @@ Placeholder for CLI-generated code.
 
 Footer content.`;
 
+const SHADCN_INSTALLATION_DOC = `${INSTALLATION_DOC}
+
+## Change the skin source
+
+<!-- cli:framework react -->
+### React
+
+Edit the React skin source.
+<!-- /cli:framework react -->
+
+<!-- cli:framework html -->
+### HTML
+
+Edit the HTML skin source.
+<!-- /cli:framework html -->
+
+## Choose what to do next
+
+<!-- cli:framework react -->
+[Customize skin source](https://videojs.org/docs/framework/react/guides/customize-skins)
+<!-- /cli:framework react -->
+
+<!-- cli:framework html -->
+[Customize skin source](https://videojs.org/docs/framework/html/guides/customize-skins)
+<!-- /cli:framework html -->`;
+
 const REGULAR_DOC = `# Skins
 
 Video.js comes with several skins.`;
@@ -78,6 +104,7 @@ function errors(): string {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   stdout = [];
   stderr = [];
   vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
@@ -91,12 +118,13 @@ beforeEach(() => {
   });
 
   (readBundledDoc as Mock).mockImplementation((_fw: string, slug: string) => {
+    if (slug === 'guides/installation-shadcn') return SHADCN_INSTALLATION_DOC;
+
     if (
       [
         'guides/installation',
         'guides/installation-vue',
         'guides/installation-svelte',
-        'guides/installation-shadcn',
         'guides/installation-cdn',
       ].includes(slug)
     ) {
@@ -243,6 +271,13 @@ describe('handleDocs', () => {
         )
       ).rejects.toThrow(ExitError);
       expect(errors()).toContain('Conflicting package managers: "npm" and "pnpm"');
+    });
+
+    it('names the legacy package-manager flag when it is invalid for CDN installation', async () => {
+      await expect(handleDocs({ 'install-method': 'npm' }, ['guides/installation/cdn'])).rejects.toThrow(ExitError);
+
+      expect(errors()).toContain('Remove `--install-method`');
+      expect(errors()).not.toContain('Remove `--package-manager`');
     });
 
     it('rejects the headless skin as a Shadcn theme', async () => {
@@ -559,7 +594,34 @@ describe('handleDocs', () => {
         expect(out).toContain('pnpm dlx shadcn@latest init --template next');
         expect(out).toContain('pnpm dlx shadcn@latest add @videojs/video');
         expect(out).toContain("from '@/components/videojs/video/skin'");
+        expect(out).toContain('Edit the React skin source');
+        expect(out).not.toContain('Edit the HTML skin source');
+        expect(out).toContain('/docs/framework/react/guides/customize-skins');
+        expect(out).not.toContain('/docs/framework/html/guides/customize-skins');
         expect(readBundledDoc).toHaveBeenCalledWith('react', 'guides/installation-shadcn');
+      });
+
+      it('keeps only HTML follow-up guidance in a tailored Shadcn guide', async () => {
+        await handleDocs(
+          {
+            framework: 'html',
+            preset: 'video',
+            theme: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+            template: 'vite',
+            styling: 'css',
+          },
+          ['guides/installation/shadcn']
+        );
+        const out = output();
+
+        expect(out).toContain('Edit the HTML skin source');
+        expect(out).not.toContain('Edit the React skin source');
+        expect(out).toContain('/docs/framework/html/guides/customize-skins');
+        expect(out).not.toContain('/docs/framework/react/guides/customize-skins');
+        expect(readBundledDoc).toHaveBeenCalledWith('html', 'guides/installation-shadcn');
       });
 
       it('supports a packaged Vue choice from the generic route', async () => {
@@ -708,7 +770,31 @@ describe('handleDocs', () => {
 
       expect(p.intro).toHaveBeenCalledWith('Video.js Installation');
       expect(p.select).toHaveBeenCalled();
+      expect(p.outro).toHaveBeenCalledTimes(1);
       expect(output()).toContain('## Install Video.js');
+    });
+
+    it('prints the introduction before prompting for an installation method', async () => {
+      (p.select as Mock).mockResolvedValueOnce('packaged');
+
+      await handleDocs(
+        {
+          framework: 'html',
+          preset: 'video',
+          skin: 'default',
+          media: 'html5-video',
+          'source-url': '',
+          'package-manager': 'npm',
+        },
+        ['guides/installation'],
+        { interactive: true }
+      );
+
+      expect(p.intro).toHaveBeenCalledTimes(1);
+      expect((p.intro as Mock).mock.invocationCallOrder[0]).toBeLessThan(
+        (p.select as Mock).mock.invocationCallOrder[0]!
+      );
+      expect(p.outro).toHaveBeenCalledTimes(1);
     });
 
     it('source-url without --media still requires prompting (detection is a hint, not auto-set)', async () => {

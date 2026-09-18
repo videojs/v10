@@ -19,6 +19,7 @@ import {
 import {
   getInstallationPreset,
   type InstallMethod,
+  INSTALLATION_SKIN_FLAGS,
   type Renderer,
   type Skin,
   USE_CASES,
@@ -157,7 +158,9 @@ export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
   const result = map[skinFlag];
 
   if (!result) {
-    console.error(`Invalid skin: "${skinFlag}". Must be "default", "minimal", or "none".`);
+    console.error(
+      `Invalid skin: "${skinFlag}". Must be ${INSTALLATION_SKIN_FLAGS.map((flag) => `"${flag}"`).join(', ')}.`
+    );
     process.exit(1);
   }
 

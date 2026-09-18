@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
+import { isInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   REGISTRY_STYLING_LABELS,
   REGISTRY_TEMPLATE_LABELS,
@@ -11,17 +12,8 @@ import {
 } from '@/utils/installation/shadcn';
 import { getInstallationPreset, USE_CASES } from '@/utils/installation/types';
 
-const routes = ['react', 'html', 'vue', 'svelte', 'shadcn', 'cdn'] as const;
-
-type InstallationRoute = (typeof routes)[number];
-
 const route = Astro.params.framework;
-
-function isInstallationRoute(value: string | undefined): value is InstallationRoute {
-  return routes.some((candidate) => candidate === value);
-}
-
-if (!isInstallationRoute(route)) throw new Error(`Unsupported installation route: ${route}`);
+if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
 
 const isShadcn = route === 'shadcn';
 const isCdn = route === 'cdn';

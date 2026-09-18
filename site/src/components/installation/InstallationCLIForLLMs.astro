@@ -1,34 +1,36 @@
 ---
-const routes = ['react', 'html', 'vue', 'svelte', 'shadcn', 'cdn'] as const;
-
-type InstallationRoute = (typeof routes)[number];
+import { isInstallationRouteSegment } from '@/utils/installation/routes';
+import {
+  REGISTRY_STYLINGS,
+  REGISTRY_TEMPLATES,
+  REGISTRY_THEMES,
+  SHADCN_RUNNER_NAMES,
+} from '@/utils/installation/shadcn';
+import { getInstallationPreset, INSTALLATION_SKIN_FLAGS, USE_CASES } from '@/utils/installation/types';
 
 const route = Astro.params.framework;
-
-function isInstallationRoute(value: string | undefined): value is InstallationRoute {
-  return routes.some((candidate) => candidate === value);
-}
-
-if (!isInstallationRoute(route)) throw new Error(`Unsupported installation route: ${route}`);
+if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
 
 const isShadcn = route === 'shadcn';
 const isCdn = route === 'cdn';
-const presets = isShadcn
-  ? 'video|audio|live-video|live-audio'
-  : 'video|audio|live-video|live-audio|background-video';
-const skins = 'default|minimal|none';
-const media = `html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify${isShadcn ? '' : '|background-video'}`;
+const useCases = USE_CASES.filter((useCase) => !isShadcn || useCase !== 'background-video');
+const presets = useCases.map((useCase) => getInstallationPreset(useCase).flag).join('|');
+const skins = INSTALLATION_SKIN_FLAGS.join('|');
+const media = [...new Set(useCases.flatMap((useCase) => getInstallationPreset(useCase).renderers))].join('|');
 const command = [
   `npx @videojs/cli docs guides/installation/${route} \\`,
   ...(isShadcn ? ['  --framework <react|html> \\'] : []),
   `  --preset <${presets}> \\`,
-  ...(isShadcn ? ['  --theme <default|minimal> \\'] : [`  --skin <${skins}> \\`]),
+  ...(isShadcn ? [`  --theme <${REGISTRY_THEMES.join('|')}> \\`] : [`  --skin <${skins}> \\`]),
   `  --media <${media}> \\`,
   ...(isCdn ? ['  --source-url <url>'] : ['  --source-url <url> \\']),
   ...(isShadcn
-    ? ['  --template <next|vite|start|laravel|react-router|astro> \\', '  --styling <tailwind|css> \\']
+    ? [
+        `  --template <${REGISTRY_TEMPLATES.join('|')}> \\`,
+        `  --styling <${REGISTRY_STYLINGS.join('|')}> \\`,
+      ]
     : []),
-  ...(!isCdn ? ['  --package-manager <npm|pnpm|yarn|bun>'] : []),
+  ...(!isCdn ? [`  --package-manager <${SHADCN_RUNNER_NAMES.join('|')}>`] : []),
 ].join('\n');
 ---
 

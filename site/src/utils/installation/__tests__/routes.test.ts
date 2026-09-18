@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { getInstallationRoutePath, INSTALLATION_ROUTES, INSTALLATION_ROUTE_SEGMENTS } from '../routes';
+import {
+  getInstallationRoutePath,
+  INSTALLATION_ROUTES,
+  INSTALLATION_ROUTE_SEGMENTS,
+  isInstallationRouteSegment,
+} from '../routes';
 
 describe('installation routes', () => {
   it('defines the six public installation pages', () => {
@@ -23,5 +28,11 @@ describe('installation routes', () => {
       frameworks: ['react', 'html'],
     });
     expect(INSTALLATION_ROUTES.cdn).toMatchObject({ framework: 'html', frameworks: ['html'] });
+  });
+
+  it('validates installation route segments', () => {
+    expect(isInstallationRouteSegment('shadcn')).toBe(true);
+    expect(isInstallationRouteSegment('angular')).toBe(false);
+    expect(isInstallationRouteSegment(undefined)).toBe(false);
   });
 });

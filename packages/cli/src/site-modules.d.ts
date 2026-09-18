@@ -33,6 +33,7 @@ declare module '@/utils/installation/types' {
     live: boolean;
     renderers: readonly Renderer[];
   }
+  export const INSTALLATION_SKIN_FLAGS: readonly ['default', 'minimal', 'none'];
   export const USE_CASES: UseCase[];
   export function getInstallationPreset(useCase: UseCase): InstallationPreset;
 }
@@ -126,8 +127,10 @@ declare module '@/utils/installation/shadcn' {
   export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
   export const REGISTRY_STYLING_LABELS: Record<RegistryStyling, string>;
+  export const REGISTRY_STYLINGS: readonly RegistryStyling[];
   export const REGISTRY_TEMPLATE_LABELS: Record<RegistryTemplate, string>;
   export const REGISTRY_TEMPLATES: readonly RegistryTemplate[];
+  export const REGISTRY_THEMES: readonly RegistryTheme[];
   export const SHADCN_RUNNER_NAMES: readonly ShadcnRunner[];
 
   export function defaultRegistryStyling(framework: RegistryFramework): RegistryStyling;

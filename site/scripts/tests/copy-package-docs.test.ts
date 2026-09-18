@@ -61,6 +61,23 @@ describe('stripFooter', () => {
     expect(stripFooter(input)).toBe(['# Index', '- entry'].join('\n'));
   });
 
+  it('removes every framework line from a multi-framework page footer', () => {
+    const input = [
+      '# Shadcn Installation Guide',
+      '',
+      'Body content.',
+      '',
+      '---',
+      '',
+      'React documentation: https://videojs.org/docs/framework/react/llms.txt',
+      'HTML documentation: https://videojs.org/docs/framework/html/llms.txt',
+      'All documentation: https://videojs.org/llms.txt',
+      '',
+    ].join('\n');
+
+    expect(stripFooter(input)).toBe(['# Shadcn Installation Guide', '', 'Body content.'].join('\n'));
+  });
+
   it('leaves content without a footer unchanged', () => {
     const input = '# Heading\n\nBody.';
 
