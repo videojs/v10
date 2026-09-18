@@ -1,6 +1,10 @@
-import { describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { throttle } from '../throttle';
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('throttle', () => {
   it('fires on trailing edge after the specified delay', () => {
@@ -17,8 +21,6 @@ describe('throttle', () => {
 
     expect(callback).toHaveBeenCalledOnce();
     expect(callback).toHaveBeenCalledWith('first');
-
-    vi.useRealTimers();
   });
 
   it('coalesces rapid calls and uses the latest arguments', () => {
@@ -35,8 +37,6 @@ describe('throttle', () => {
 
     expect(callback).toHaveBeenCalledOnce();
     expect(callback).toHaveBeenCalledWith('third');
-
-    vi.useRealTimers();
   });
 
   it('cancel prevents the pending invocation', () => {
@@ -51,8 +51,6 @@ describe('throttle', () => {
     vi.advanceTimersByTime(200);
 
     expect(callback).not.toHaveBeenCalled();
-
-    vi.useRealTimers();
   });
 
   it('accepts new calls after cancel', () => {
@@ -69,8 +67,6 @@ describe('throttle', () => {
 
     expect(callback).toHaveBeenCalledOnce();
     expect(callback).toHaveBeenCalledWith('after-cancel');
-
-    vi.useRealTimers();
   });
 
   it('schedules a new timer after the previous one fires', () => {
@@ -88,8 +84,6 @@ describe('throttle', () => {
 
     expect(callback).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenLastCalledWith('second-batch');
-
-    vi.useRealTimers();
   });
 
   it('cancel is a no-op when no timer is pending', () => {
@@ -111,8 +105,6 @@ describe('throttle with leading: true', () => {
 
     expect(callback).toHaveBeenCalledOnce();
     expect(callback).toHaveBeenCalledWith('first');
-
-    vi.useRealTimers();
   });
 
   it('coalesces calls within the cooldown to a trailing invocation', () => {
@@ -135,8 +127,6 @@ describe('throttle with leading: true', () => {
     // Trailing fires with latest args.
     expect(callback).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenLastCalledWith('third');
-
-    vi.useRealTimers();
   });
 
   it('resets to leading after cooldown expires with no pending calls', () => {
@@ -157,8 +147,6 @@ describe('throttle with leading: true', () => {
     throttled('batch-2');
     expect(callback).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenLastCalledWith('batch-2');
-
-    vi.useRealTimers();
   });
 
   it('chains trailing into a new cooldown window', () => {
@@ -184,8 +172,6 @@ describe('throttle with leading: true', () => {
     vi.advanceTimersByTime(100);
     expect(callback).toHaveBeenCalledTimes(3);
     expect(callback).toHaveBeenLastCalledWith('c');
-
-    vi.useRealTimers();
   });
 
   it('cancel prevents trailing invocation', () => {
@@ -204,8 +190,6 @@ describe('throttle with leading: true', () => {
 
     // Only the leading call, no trailing.
     expect(callback).toHaveBeenCalledOnce();
-
-    vi.useRealTimers();
   });
 
   it('accepts new leading call after cancel', () => {
@@ -220,8 +204,6 @@ describe('throttle with leading: true', () => {
     throttled('after-cancel');
     expect(callback).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenLastCalledWith('after-cancel');
-
-    vi.useRealTimers();
   });
 
   it('cancel is a no-op when no timer is pending', () => {
