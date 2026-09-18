@@ -13,7 +13,7 @@ import {
   type Accent,
   ACCENTS,
   accent as accentStore,
-  resolveTheme,
+  systemDark,
   type ThemePreference,
   themePreference,
   type Tone,
@@ -58,7 +58,8 @@ export function AppearanceControls({ className }: { className?: string }) {
   const preference = useStore(themePreference);
   const currentAccent = useStore(accentStore);
   const currentTone = useStore(toneStore);
-  const darkActive = isHydrated && resolveTheme(preference) === 'dark';
+  const osDark = useStore(systemDark);
+  const darkActive = isHydrated && (preference === 'system' ? osDark : preference === 'dark');
 
   return (
     <div className={clsx('flex flex-col gap-5', className)}>

@@ -54,6 +54,12 @@ import { ACCENT_KEY, THEME_COLORS, THEME_KEY, TONE_KEY } from '@/consts';
 
   applyStoredAppearance(document.documentElement, document);
 
+  // Follow the OS while the stored preference is "system". This lives here, not in the appearance store, so it runs on
+  // every page whether or not the appearance controls ever mount.
+  window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", function () {
+    applyStoredAppearance(document.documentElement, document);
+  });
+
   document.addEventListener("astro:before-swap", function (event) {
     applyStoredAppearance(event.newDocument.documentElement, event.newDocument);
   });
