@@ -1,3 +1,4 @@
+export * from './extensions';
 export * from './feature';
 export * from './gesture/action-value';
 export * from './gesture/actions';
