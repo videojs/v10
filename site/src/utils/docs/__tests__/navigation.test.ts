@@ -133,6 +133,29 @@ describe('framework navigation scroll', () => {
     expect(scrollTo).toHaveBeenCalledWith({ left: 12, top: 640 });
   });
 
+  it('does not retry a reload position after a client navigation starts', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callback(0);
+
+      return 1;
+    });
+    vi.spyOn(performance, 'getEntriesByType').mockReturnValue([{ type: 'reload' } as PerformanceNavigationTiming]);
+    window.history.replaceState({ index: 3, scrollX: 12, scrollY: 640 }, '');
+
+    initializeDocsNavigation();
+
+    const event = new Event('astro:before-preparation');
+
+    Object.assign(event, { info: null });
+    document.dispatchEvent(event);
+    document.dispatchEvent(new Event('astro:page-load'));
+
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith({ left: 12, top: 640 });
+  });
+
   it('leaves indexed history positions to Astro outside document reloads', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 

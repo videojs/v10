@@ -192,6 +192,8 @@ export function initializeDocsNavigation(): void {
   syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
+    // A client navigation supersedes the post-layout retry captured for the initial document reload.
+    reloadScroll = null;
     setFrameworkTransitionSuppressed(document, isFrameworkNavigation(navigationEvent.info));
   };
 
