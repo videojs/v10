@@ -6,7 +6,7 @@ import {
   combinePlayerFeatureConfigs,
   type InferPlayerConfig,
   type PlayerExtension,
-  PlayerExtensionHost,
+  PlayerExtensionCoordinator,
   type PlayerFeatureConfig,
   type PlayerStore,
   type PlayerTarget,
@@ -117,8 +117,8 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     // Re-attaches the store to the current target; set by the attach effect below while a target is attached.
     const reattach = useRef<(() => void) | null>(null);
-    const [extensions] = useState(() => new PlayerExtensionHost(() => reattach.current?.()));
-    const registerExtension = useCallback((extension: PlayerExtension) => extensions.add(extension), [extensions]);
+    const [extensions] = useState(() => new PlayerExtensionCoordinator(() => reattach.current?.()));
+    const registerExtension = useCallback((extension: PlayerExtension) => extensions.register(extension), [extensions]);
 
     useDestroy(store);
 

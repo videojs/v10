@@ -23,15 +23,15 @@ export interface PlayerExtensionConstructor<T extends PlayerExtension = PlayerEx
 /**
  * Holds one extension per class for a player and keeps them attached to the player's current target.
  *
- * The player wraps its media with {@link PlayerExtensionHost.wrap} before attaching the store, and re-attaches the store
- * whenever `onChange` fires so features re-read members an extension now owns (such as `remote`).
+ * The player wraps its media with {@link PlayerExtensionCoordinator.wrap} before attaching the store, and re-attaches
+ * the store whenever `onChange` fires so features re-read members an extension now owns (such as `remote`).
  */
-export class PlayerExtensionHost {
+export class PlayerExtensionCoordinator {
   readonly #extensions = new Map<PlayerExtensionConstructor, PlayerExtension>();
   readonly #onChange: () => void;
   #target: PlayerTarget | null = null;
 
-  /** @param onChange - Called after an extension is added or removed. */
+  /** @param onChange - Called after an extension is registered or released. */
   constructor(onChange: () => void) {
     this.#onChange = onChange;
   }
@@ -48,7 +48,7 @@ export class PlayerExtensionHost {
    * Register `extension`, replacing any earlier instance of the same class, and attach it to the current target.
    * Returns a release callback that only removes this exact instance.
    */
-  add(extension: PlayerExtension): () => void {
+  register(extension: PlayerExtension): () => void {
     const Extension = extension.constructor as PlayerExtensionConstructor;
     const previous = this.#extensions.get(Extension);
 
@@ -62,7 +62,7 @@ export class PlayerExtensionHost {
       this.#onChange();
     }
 
-    return () => this.#remove(extension);
+    return () => this.#release(extension);
   }
 
   /** Attach every extension to `target`; a target with the same media and container is a no-op. */
@@ -103,7 +103,7 @@ export class PlayerExtensionHost {
     return createPlayerMedia(media, () => this.#extensions.values());
   }
 
-  #remove(extension: PlayerExtension): void {
+  #release(extension: PlayerExtension): void {
     const Extension = extension.constructor as PlayerExtensionConstructor;
     if (this.#extensions.get(Extension) !== extension) return;
 
