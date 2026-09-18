@@ -13,7 +13,6 @@ const active = framework === 'react';
   class="contents"
   data-shadcn-framework={framework}
   hidden={!active}
-  data-search-ignore={active ? undefined : "all"}
 >
   <div hidden data-llms-only>
     <h3>{framework === 'react' ? 'React' : 'HTML'}</h3>

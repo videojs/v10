@@ -20,11 +20,20 @@ type Props = {
   /**
    * Give the active link's indicator a view-transition name so it slides between pages of the same section. Only one
    * rendered sidebar per page may opt in; duplicate names would cancel the transition.
-   */
+  */
   animateIndicator?: boolean;
+  /** Persist the route framework. Pages with an in-page framework selector own this preference instead. */
+  updateFrameworkPreference?: boolean;
 };
 
-const { framework, docTitles, docStabilities, class: className, animateIndicator = false } = Astro.props;
+const {
+  framework,
+  docTitles,
+  docStabilities,
+  class: className,
+  animateIndicator = false,
+  updateFrameworkPreference = true,
+} = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 const currentPath = Astro.url.pathname;
 
@@ -65,7 +74,7 @@ const TAB_ICONS = {
 
 <div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
-  <PreferenceUpdater client:idle currentFramework={framework} />
+  {updateFrameworkPreference && <PreferenceUpdater client:idle currentFramework={framework} />}
   {
     tabs.length > 1 && (
       <nav aria-label="Docs sections" class="px-6 pt-5">

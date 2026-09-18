@@ -4,8 +4,9 @@ import { useEffect, useRef } from 'react';
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import { registryFramework, registryStyling, registryTemplate } from '@/stores/registry';
-import { defaultRegistryTemplate, type RegistryFramework } from '@/utils/installation/shadcn';
+import { registryFramework, selectRegistryFramework } from '@/stores/registry';
+import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
+import type { RegistryFramework } from '@/utils/installation/shadcn';
 
 const OPTIONS: CardRadioOption<RegistryFramework>[] = [
   {
@@ -31,9 +32,6 @@ function updatePanels(framework: RegistryFramework) {
     const active = panel.dataset.shadcnFramework === framework;
 
     panel.hidden = !active;
-
-    if (active) panel.removeAttribute('data-search-ignore');
-    else panel.setAttribute('data-search-ignore', 'all');
   }
 }
 
@@ -45,12 +43,12 @@ export default function ShadcnFrameworkSelect() {
     if (!urlReady.current) {
       urlReady.current = true;
       const value = new URLSearchParams(location.search).get('framework');
-      const initialFramework = isRegistryFramework(value) ? value : 'react';
+      const preferredFramework = getFrameworkPreferenceClient();
+      const initialFramework = isRegistryFramework(value) ? value : (preferredFramework ?? 'react');
+
+      selectRegistryFramework(initialFramework);
 
       if (initialFramework !== framework) {
-        registryFramework.set(initialFramework);
-        registryTemplate.set(defaultRegistryTemplate(initialFramework));
-        registryStyling.set(null);
         updatePanels(initialFramework);
         return;
       }
@@ -68,9 +66,7 @@ export default function ShadcnFrameworkSelect() {
   const handleChange = (next: RegistryFramework) => {
     if (next === framework) return;
 
-    registryFramework.set(next);
-    registryTemplate.set(defaultRegistryTemplate(next));
-    registryStyling.set(null);
+    selectRegistryFramework(next);
   };
 
   return (

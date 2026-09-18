@@ -1,5 +1,7 @@
 import { atom } from 'nanostores';
 
+import { currentFramework } from '@/stores/preferences';
+import { setFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import type {
   RegistryFramework,
   RegistryPreset,
@@ -7,6 +9,7 @@ import type {
   RegistryTemplate,
   RegistryTheme,
 } from '@/utils/installation/shadcn';
+import { defaultRegistryTemplate } from '@/utils/installation/shadcn';
 
 /** React or HTML source shown on the standalone Shadcn installation page. */
 export const registryFramework = atom<RegistryFramework>('react');
@@ -25,3 +28,15 @@ export const registryTemplate = atom<RegistryTemplate | null>(null);
 
 /** The skin theme catalog selected on the page; `null` lets an installation skin supply the initial choice. */
 export const registryTheme = atom<RegistryTheme | null>(null);
+
+/** Select the Shadcn source framework and keep the site-wide docs preference in sync. */
+export function selectRegistryFramework(framework: RegistryFramework): void {
+  if (registryFramework.get() !== framework) {
+    registryFramework.set(framework);
+    registryTemplate.set(defaultRegistryTemplate(framework));
+    registryStyling.set(null);
+  }
+
+  currentFramework.set(framework);
+  setFrameworkPreferenceClient(framework);
+}
