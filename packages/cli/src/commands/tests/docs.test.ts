@@ -221,6 +221,44 @@ describe('handleDocs', () => {
       ).rejects.toThrow(ExitError);
       expect(errors()).toContain('CDN installation only supports HTML');
     });
+
+    it('errors when a canonical route conflicts with the framework flag', async () => {
+      await expect(handleDocs({ framework: 'react' }, ['guides/installation/vue'])).rejects.toThrow(ExitError);
+      expect(errors()).toContain('Conflicting installation frameworks: "vue" and "react"');
+    });
+
+    it('errors when a canonical route conflicts with the method flag', async () => {
+      await expect(handleDocs({ method: 'cdn' }, ['guides/installation/react'])).rejects.toThrow(ExitError);
+      expect(errors()).toContain('Conflicting installation methods: "packaged" and "cdn"');
+    });
+
+    it('errors when the old and new package-manager flags conflict', async () => {
+      await expect(
+        handleDocs(
+          {
+            'install-method': 'pnpm',
+            'package-manager': 'npm',
+          },
+          ['guides/installation/react']
+        )
+      ).rejects.toThrow(ExitError);
+      expect(errors()).toContain('Conflicting package managers: "npm" and "pnpm"');
+    });
+
+    it('rejects the headless skin as a Shadcn theme', async () => {
+      await expect(handleDocs({ framework: 'react', skin: 'none' }, ['guides/installation/shadcn'])).rejects.toThrow(
+        ExitError
+      );
+      expect(errors()).toContain('Invalid Shadcn theme: "none"');
+    });
+
+    it.each([{ template: 'next' }, { styling: 'tailwind' }, { theme: 'default' }])(
+      'rejects Shadcn-only flags on packaged routes',
+      async (flags) => {
+        await expect(handleDocs(flags, ['guides/installation/react'])).rejects.toThrow(ExitError);
+        expect(errors()).toContain('only apply to Shadcn installation');
+      }
+    );
   });
 
   describe('regular docs', () => {
@@ -523,6 +561,76 @@ describe('handleDocs', () => {
         expect(out).toContain("from '@/components/videojs/video/skin'");
         expect(readBundledDoc).toHaveBeenCalledWith('react', 'guides/installation-shadcn');
       });
+
+      it('supports a packaged Vue choice from the generic route', async () => {
+        await handleDocs(
+          {
+            method: 'packaged',
+            framework: 'vue',
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+          },
+          ['guides/installation']
+        );
+
+        expect(output()).toContain('pnpm add @videojs/html');
+        expect(readBundledDoc).toHaveBeenCalledWith('html', 'guides/installation-vue');
+      });
+
+      it.each([
+        {
+          slug: 'guides/installation-vue',
+          flags: {
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+          },
+          document: ['html', 'guides/installation-vue'],
+        },
+        {
+          slug: 'guides/installation-svelte',
+          flags: {
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+          },
+          document: ['html', 'guides/installation-svelte'],
+        },
+        {
+          slug: 'guides/installation-shadcn',
+          flags: {
+            framework: 'react',
+            preset: 'video',
+            theme: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+            template: 'next',
+            styling: 'tailwind',
+          },
+          document: ['react', 'guides/installation-shadcn'],
+        },
+        {
+          slug: 'guides/cdn',
+          flags: {
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+          },
+          document: ['html', 'guides/cdn'],
+        },
+      ])('keeps the legacy $slug route working', async ({ slug, flags, document }) => {
+        await handleDocs(flags, [slug]);
+        expect(readBundledDoc).toHaveBeenCalledWith(...document);
+      });
     });
   });
 
@@ -547,6 +655,8 @@ describe('handleDocs', () => {
       expect(errors()).toContain('Packaged');
       expect(errors()).toContain('Shadcn');
       expect(errors()).toContain('CDN');
+      expect(errors()).toContain('Packaged  guides/installation/{react|html|vue|svelte}');
+      expect(errors()).not.toContain(' /guides/installation');
       expect(p.select).not.toHaveBeenCalled();
     });
 
