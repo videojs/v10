@@ -98,8 +98,10 @@ describe('framework navigation scroll', () => {
     const aside = document.getElementById('docs-sidebar')!;
     const [hiddenLink, visibleLink] = aside.querySelectorAll<HTMLElement>('a');
     const visibleRect = visibleLink!.getBoundingClientRect();
-    const hiddenRects = { length: 0, item: () => null } satisfies DOMRectList;
-    const visibleRects = { 0: visibleRect, length: 1, item: () => visibleRect } satisfies DOMRectList;
+    const hiddenRects = Object.assign([] as DOMRect[], { item: () => null }) satisfies DOMRectList;
+    const visibleRects = Object.assign([visibleRect], {
+      item: (index: number) => (index === 0 ? visibleRect : null),
+    }) satisfies DOMRectList;
 
     vi.spyOn(hiddenLink!, 'getClientRects').mockReturnValue(hiddenRects);
     vi.spyOn(visibleLink!, 'getClientRects').mockReturnValue(visibleRects);
