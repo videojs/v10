@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.2...@videojs/cli@10.0.0-rc.3) (2026-09-18)
+
+
+### Features
+
+* **site:** redesign docs site and reorganize doc sections ([#2645](https://github.com/videojs/v10/issues/2645)) ([db116f7](https://github.com/videojs/v10/commit/db116f7bb98608aca43549a1fed806ad911904e6))
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.1...@videojs/cli@10.0.0-rc.2) (2026-09-09)
 
 
