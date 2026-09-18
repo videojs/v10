@@ -81,7 +81,7 @@ function splitTopLevel(type: string, separator: '|' | '&'): string[] {
     else if (character === '[') brackets++;
     else if (character === ']') brackets--;
     else if (character === '<') angles++;
-    else if (character === '>') angles = Math.max(0, angles - 1);
+    else if (character === '>' && type[i - 1] !== '=') angles = Math.max(0, angles - 1);
 
     if (character === separator && parentheses === 0 && braces === 0 && brackets === 0 && angles === 0) {
       parts.push(type.slice(start, i).trim());
@@ -99,6 +99,24 @@ function splitTopLevelUnion(type: string): string[] {
 
 function splitTopLevelIntersection(type: string): string[] {
   return splitTopLevel(type, '&');
+}
+
+function abbreviateFunctionMember(type: string): string | undefined {
+  if (isFunctionType(type)) return 'function';
+
+  const intersectionMembers = splitTopLevelIntersection(type);
+  if (intersectionMembers.length === 1) return undefined;
+
+  let abbreviated = false;
+  const displayMembers = intersectionMembers.map((member) => {
+    if (!isFunctionType(member)) return member;
+
+    abbreviated = true;
+
+    return 'function';
+  });
+
+  return abbreviated ? displayMembers.join(' & ') : undefined;
 }
 
 /**
@@ -141,28 +159,24 @@ export function abbreviateType(name: string, type: string): string | undefined {
     return 'object';
   }
 
-  const intersectionMembers = splitTopLevelIntersection(type);
+  const unionMembers = splitTopLevelUnion(type);
+  const abbreviatedFunctionMembers: string[] = [];
+  const otherMembers: string[] = [];
 
-  if (type.includes('=>') && intersectionMembers.length > 1) {
-    const nonFunctionParts = intersectionMembers.filter((part) => !isFunctionType(part));
-    if (nonFunctionParts.length > 0) return `${nonFunctionParts.join(' & ')} & function`;
+  for (const member of unionMembers) {
+    const abbreviated = abbreviateFunctionMember(member);
 
-    return 'function';
+    if (abbreviated) abbreviatedFunctionMembers.push(abbreviated);
+    else otherMembers.push(member);
   }
 
-  const unionMembers = splitTopLevelUnion(type);
+  if (abbreviatedFunctionMembers.length > 0) {
+    return [...otherMembers, ...abbreviatedFunctionMembers].join(' | ');
+  }
 
   // Short unions (less than 3 members and under 40 chars) → no abbreviation
-  if (unionMembers.length === 1 || (unionMembers.length < 3 && type.length < 40 && !type.includes('=>'))) {
+  if (unionMembers.length < 3 && type.length < 40) {
     return undefined;
-  }
-
-  // Function in union → "type | function"
-  if (type.includes('=>')) {
-    const nonFunctionParts = unionMembers.filter((part) => !isFunctionType(part));
-    if (nonFunctionParts.length > 0) return `${nonFunctionParts.join(' | ')} | function`;
-
-    return 'function';
   }
 
   // Any other type > 40 chars → truncated for display, full in detailedType

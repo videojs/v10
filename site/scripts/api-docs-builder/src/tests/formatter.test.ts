@@ -22,6 +22,19 @@ describe('abbreviateType', () => {
   it('does not treat nested unions or function properties as top-level function members', () => {
     expect(abbreviateType('result', 'Promise<string | null> | undefined')).toBeUndefined();
     expect(abbreviateType('config', '{ load: (() => void) }')).toBeUndefined();
+    expect(abbreviateType('result', 'Promise<() => void> | undefined')).toBeUndefined();
+    expect(abbreviateType('result', 'Array<() => void> | null')).toBeUndefined();
+    expect(abbreviateType('config', '{ load: (() => void) } | undefined')).toBeUndefined();
+    expect(abbreviateType('factory', 'Record<string, (state: State) => string | undefined>')).toBe(
+      'Record<string, (state: State) => stri...'
+    );
+  });
+
+  it('abbreviates only top-level function intersections', () => {
+    expect(abbreviateType('PlayerElement', 'typeof UIElement & ((...args: unknown) => PlayerElement)')).toBe(
+      'typeof UIElement & function'
+    );
+    expect(abbreviateType('value', 'A & (() => void) | undefined')).toBe('undefined | A & function');
   });
 
   it('uses the conventional component display types', () => {
@@ -34,9 +47,6 @@ describe('abbreviateType', () => {
     );
     expect(abbreviateType('render', 'ReactElement | ((state: object) => ReactElement)')).toBe(
       'ReactElement | function'
-    );
-    expect(abbreviateType('PlayerElement', 'typeof UIElement & ((...args: unknown) => PlayerElement)')).toBe(
-      'typeof UIElement & function'
     );
   });
 
