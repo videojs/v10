@@ -91,7 +91,17 @@ beforeEach(() => {
   });
 
   (readBundledDoc as Mock).mockImplementation((_fw: string, slug: string) => {
-    if (slug === 'guides/installation') return INSTALLATION_DOC;
+    if (
+      [
+        'guides/installation',
+        'guides/installation-vue',
+        'guides/installation-svelte',
+        'guides/installation-shadcn',
+        'guides/cdn',
+      ].includes(slug)
+    ) {
+      return INSTALLATION_DOC;
+    }
 
     if (slug === 'concepts/skins') return REGULAR_DOC;
 
@@ -151,16 +161,38 @@ describe('handleDocs', () => {
     });
 
     it('errors with invalid preset', async () => {
-      await expect(handleDocs({ framework: 'html', preset: 'livestream' }, ['guides/installation'])).rejects.toThrow(
-        ExitError
-      );
+      await expect(
+        handleDocs(
+          {
+            method: 'packaged',
+            framework: 'html',
+            preset: 'livestream',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'npm',
+          },
+          ['guides/installation']
+        )
+      ).rejects.toThrow(ExitError);
       expect(errors()).toContain('Invalid preset: "livestream"');
       expect(errors()).toContain('"live-video"');
     });
 
     it('errors with invalid skin', async () => {
       await expect(
-        handleDocs({ framework: 'html', preset: 'video', skin: 'custom' }, ['guides/installation'])
+        handleDocs(
+          {
+            method: 'packaged',
+            framework: 'html',
+            preset: 'video',
+            skin: 'custom',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'npm',
+          },
+          ['guides/installation']
+        )
       ).rejects.toThrow(ExitError);
       expect(errors()).toContain('Invalid skin: "custom"');
     });
@@ -187,7 +219,7 @@ describe('handleDocs', () => {
       await expect(
         handleDocs({ framework: 'react', 'install-method': 'cdn' }, ['guides/installation'])
       ).rejects.toThrow(ExitError);
-      expect(errors()).toContain('Invalid install method: "cdn"');
+      expect(errors()).toContain('CDN installation only supports HTML');
     });
   });
 
@@ -245,10 +277,10 @@ describe('handleDocs', () => {
         await handleDocs(htmlFlags({ 'install-method': 'cdn' }), ['guides/installation']);
         const out = output();
 
-        expect(out).toContain('## Install Video.js');
+        expect(out).toContain('## Load Video.js');
         expect(out).toContain('<script');
         expect(out).not.toContain('## TypeScript imports');
-        expect(out).toContain('## HTML');
+        expect(out).toContain('## Add your player');
       });
 
       it('switches install command for pnpm', async () => {
@@ -400,6 +432,98 @@ describe('handleDocs', () => {
         expect(out).toContain('<LiveAudioSkin>');
       });
     });
+
+    describe('canonical routes', () => {
+      it('infers packaged React and accepts the package-manager flag', async () => {
+        await handleDocs(
+          {
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+          },
+          ['guides/installation/react']
+        );
+
+        expect(output()).toContain('pnpm add @videojs/react');
+        expect(readBundledDoc).toHaveBeenCalledWith('react', 'guides/installation');
+      });
+
+      it('generates the Vue guide from the shared choices', async () => {
+        await handleDocs(
+          {
+            preset: 'video',
+            skin: 'default',
+            media: 'hls',
+            'source-url': 'https://example.com/live.m3u8',
+            'package-manager': 'pnpm',
+          },
+          ['guides/installation/vue']
+        );
+        const out = output();
+
+        expect(out).toContain('pnpm add @videojs/html @videojs/hlsjs-video');
+        expect(out).toContain('## Register the custom elements');
+        expect(out).toContain('components/VideoPlayer.vue');
+      });
+
+      it('generates the Svelte guide from the shared choices', async () => {
+        await handleDocs(
+          {
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'bun',
+          },
+          ['guides/installation/svelte']
+        );
+        const out = output();
+
+        expect(out).toContain('bun add @videojs/html');
+        expect(out).toContain('src/lib/VideoPlayer.svelte');
+        expect(out).toContain('src/routes/+page.svelte');
+      });
+
+      it('generates the CDN guide without a framework or package manager', async () => {
+        await handleDocs(
+          {
+            preset: 'video',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+          },
+          ['guides/installation/cdn']
+        );
+
+        expect(output()).toContain('## Load Video.js');
+        expect(output()).toContain('<script type="module"');
+        expect(readBundledDoc).toHaveBeenCalledWith('html', 'guides/cdn');
+      });
+
+      it('generates a tailored Shadcn guide', async () => {
+        await handleDocs(
+          {
+            framework: 'react',
+            preset: 'video',
+            theme: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'package-manager': 'pnpm',
+            template: 'next',
+            styling: 'tailwind',
+          },
+          ['guides/installation/shadcn']
+        );
+        const out = output();
+
+        expect(out).toContain('pnpm dlx shadcn@latest init --template next');
+        expect(out).toContain('pnpm dlx shadcn@latest add @videojs/video');
+        expect(out).toContain("from '@/components/videojs/video/skin'");
+        expect(readBundledDoc).toHaveBeenCalledWith('react', 'guides/installation-shadcn');
+      });
+    });
   });
 
   describe('framework resolution', () => {
@@ -416,6 +540,27 @@ describe('handleDocs', () => {
   });
 
   describe('prompting behavior', () => {
+    it('prints the method decision tree instead of prompting in a non-interactive process', async () => {
+      await expect(handleDocs({}, ['guides/installation'], { interactive: false })).rejects.toThrow(ExitError);
+
+      expect(errors()).toContain('Choose an installation route');
+      expect(errors()).toContain('Packaged');
+      expect(errors()).toContain('Shadcn');
+      expect(errors()).toContain('CDN');
+      expect(p.select).not.toHaveBeenCalled();
+    });
+
+    it('lists missing flags for a canonical route without prompting', async () => {
+      await expect(
+        handleDocs({ preset: 'video' }, ['guides/installation/react'], { interactive: false })
+      ).rejects.toThrow(ExitError);
+
+      expect(errors()).toContain('Missing installation flags');
+      expect(errors()).toContain('--skin');
+      expect(errors()).toContain('--package-manager');
+      expect(p.select).not.toHaveBeenCalled();
+    });
+
     it('does not prompt when all flags are provided', async () => {
       await handleDocs(
         {
@@ -440,7 +585,9 @@ describe('handleDocs', () => {
         .mockResolvedValueOnce('npm'); // installMethod
       (p.text as Mock).mockResolvedValueOnce(''); // sourceUrl
 
-      await handleDocs({ framework: 'html', preset: 'video' }, ['guides/installation']);
+      await handleDocs({ method: 'packaged', framework: 'html', preset: 'video' }, ['guides/installation'], {
+        interactive: true,
+      });
 
       expect(p.intro).toHaveBeenCalledWith('Video.js Installation');
       expect(p.select).toHaveBeenCalled();
@@ -454,7 +601,11 @@ describe('handleDocs', () => {
         .mockResolvedValueOnce('hls') // media (user confirms detection hint)
         .mockResolvedValueOnce('npm'); // installMethod
 
-      await handleDocs({ framework: 'html', 'source-url': 'https://example.com/video.m3u8' }, ['guides/installation']);
+      await handleDocs(
+        { method: 'packaged', framework: 'html', 'source-url': 'https://example.com/video.m3u8' },
+        ['guides/installation'],
+        { interactive: true }
+      );
 
       expect(p.intro).toHaveBeenCalled();
       expect(p.select).toHaveBeenCalled();

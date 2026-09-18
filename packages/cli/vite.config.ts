@@ -16,6 +16,7 @@ const siteAliases = {
   '@/utils/installation/cdn-code': resolve(siteSrcDir, 'utils/installation/cdn-code.ts'),
   '@/utils/installation/detect-renderer': resolve(siteSrcDir, 'utils/installation/detect-renderer.ts'),
   '@/utils/installation/renderer-options': resolve(siteSrcDir, 'utils/installation/renderer-options.ts'),
+  '@/utils/installation/shadcn': resolve(siteSrcDir, 'utils/installation/shadcn.ts'),
   '@/consts': resolve(siteSrcDir, 'consts.ts'),
 };
 

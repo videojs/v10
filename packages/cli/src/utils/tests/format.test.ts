@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import type { InstallationOptions } from '@/utils/installation/codegen';
 
-import { formatInstallationCode } from '../format.js';
+import {
+  formatCdnInstallation,
+  formatInstallationCode,
+  formatShadcnInstallation,
+  formatSvelteInstallation,
+  formatVueInstallation,
+} from '../format.js';
 
 const baseHTML: InstallationOptions = {
   framework: 'html',
@@ -88,5 +94,58 @@ describe('formatInstallationCode', () => {
     expect(result).toContain('npm install @videojs/react @videojs/mux-audio');
     expect(result).toContain('<LiveAudioPlayer>');
     expect(result).toContain('<LiveAudioSkin>');
+  });
+});
+
+describe('framework installation formats', () => {
+  it('formats a dedicated CDN guide', () => {
+    const result = formatCdnInstallation({ ...baseHTML, installMethod: 'cdn' });
+
+    expect(result).toContain('## Load Video.js');
+    expect(result).toContain('<script type="module"');
+    expect(result).toContain('## Add your player');
+  });
+
+  it('formats Vue configuration, component, and usage', () => {
+    const result = formatVueInstallation({ ...baseHTML, installMethod: 'pnpm' });
+
+    expect(result).toContain('pnpm add @videojs/html');
+    expect(result).toContain('vite.config.ts');
+    expect(result).toContain('nuxt.config.ts');
+    expect(result).toContain('components/VideoPlayer.vue');
+    expect(result).toContain('App.vue');
+  });
+
+  it('formats Svelte and SvelteKit usage', () => {
+    const result = formatSvelteInstallation({ ...baseHTML, installMethod: 'bun' });
+
+    expect(result).toContain('bun add @videojs/html');
+    expect(result).toContain('src/lib/VideoPlayer.svelte');
+    expect(result).toContain('src/routes/+page.svelte');
+    expect(result).toContain('src/App.svelte');
+  });
+
+  it('formats Shadcn initialization, registry commands, and local React source', () => {
+    const result = formatShadcnInstallation(baseReact, {
+      framework: 'react',
+      runner: 'pnpm',
+      styling: 'tailwind',
+      template: 'next',
+    });
+
+    expect(result).toContain('pnpm dlx shadcn@latest init --template next');
+    expect(result).toContain('pnpm dlx shadcn@latest add @videojs/video');
+    expect(result).toContain("from '@/components/videojs/video/skin'");
+  });
+
+  it('includes an adapter command and HTML source steps when needed', () => {
+    const result = formatShadcnInstallation(
+      { ...baseHTML, renderer: 'hls', installMethod: 'yarn' },
+      { framework: 'html', runner: 'yarn', styling: 'css', template: 'vite' }
+    );
+
+    expect(result).toContain('yarn add @videojs/hlsjs-video');
+    expect(result).toContain('components/videojs/video/skin.html');
+    expect(result).toContain("import '@videojs/html/media/hlsjs-video'");
   });
 });

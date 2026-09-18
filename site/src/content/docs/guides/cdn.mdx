@@ -25,6 +25,7 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 <InstallationChoicesForLLMs />
 
 <HumanCase>
+<div data-cli-omit="installation" class="contents">
 
 ## Choose your installation method
 
@@ -56,7 +57,11 @@ Choose what the player will play. The CDN page only shows sources with a browser
   <CdnMediaSourcePicker />
 </ContentWidth>
 
+</div>
+
 </HumanCase>
+
+<div data-cli-replace="installation" class="contents">
 
 ## Load Video.js
 
@@ -73,6 +78,8 @@ Place this generated markup where the player should appear. It uses the media so
 <ContentWidth>
   <HTMLUsageCodeBlock client:idle installMethod="cdn" />
 </ContentWidth>
+
+</div>
 
 That's it! You now have a working Video.js player without a package manager or build step.
 

@@ -31,6 +31,7 @@ import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 <InstallationChoicesForLLMs />
 
 <HumanCase>
+<div data-cli-omit="installation" class="contents">
 
 ## Choose your installation method
 
@@ -74,7 +75,11 @@ Choose what the player will play. If that source needs a playback adapter, the i
   <MediaSourcePicker client:idle />
 </ContentWidth>
 
+</div>
+
 </HumanCase>
+
+<div data-cli-replace="installation" class="contents">
 
 ## Initialize Shadcn
 
@@ -139,6 +144,8 @@ Add the player directly to `app/page.tsx`. It imports the player and media from 
   </Step>
 </Steps>
 </ShadcnFrameworkCase>
+
+</div>
 
 That's it! You now have a working Video.js player whose skin source lives in your project.
 
