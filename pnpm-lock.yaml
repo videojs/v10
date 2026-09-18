@@ -466,6 +466,9 @@ importers:
         specifier: workspace:*
         version: link:../../utils
     devDependencies:
+      '@videojs/adapter-test':
+        specifier: workspace:*
+        version: link:../test
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -642,6 +645,9 @@ importers:
         specifier: workspace:*
         version: link:../../utils
     devDependencies:
+      '@videojs/adapter-test':
+        specifier: workspace:*
+        version: link:../test
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -652,6 +658,12 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@22.19.15)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(@voidzero-dev/vite-plus-core@0.2.8(@types/node@22.19.15)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(yaml@2.9.0))(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))
 
+  packages/adapters/test:
+    dependencies:
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@22.19.15)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(@voidzero-dev/vite-plus-core@0.2.8(@types/node@22.19.15)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(yaml@2.9.0))(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(yaml@2.9.0)
+
   packages/adapters/tiktok-video:
     dependencies:
       '@videojs/media':
@@ -661,6 +673,9 @@ importers:
         specifier: workspace:*
         version: link:../../utils
     devDependencies:
+      '@videojs/adapter-test':
+        specifier: workspace:*
+        version: link:../test
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -680,6 +695,9 @@ importers:
         specifier: workspace:*
         version: link:../../utils
     devDependencies:
+      '@videojs/adapter-test':
+        specifier: workspace:*
+        version: link:../test
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -702,6 +720,9 @@ importers:
         specifier: 2.30.3
         version: 2.30.3
     devDependencies:
+      '@videojs/adapter-test':
+        specifier: workspace:*
+        version: link:../test
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -743,6 +764,9 @@ importers:
         specifier: workspace:*
         version: link:../../utils
     devDependencies:
+      '@videojs/adapter-test':
+        specifier: workspace:*
+        version: link:../test
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
