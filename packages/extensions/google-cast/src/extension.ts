@@ -94,8 +94,8 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
   };
 
   /**
-   * The media started loading a new source locally. While casting, follow it on the receiver; the provider remembers
-   * what it last loaded so the several `loadstart`s one local load can produce reach the receiver once.
+   * The media started loading a new source locally. While casting, follow it on the receiver; the provider claims the
+   * source before it starts loading, so the several `loadstart`s one local load can produce reach the receiver once.
    */
   #onLoadStart = () => {
     const provider = this.#provider;

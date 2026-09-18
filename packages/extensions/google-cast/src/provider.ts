@@ -61,7 +61,10 @@ export class GoogleCastProvider {
     return this.#remotePlayback;
   }
 
-  /** Source last sent to the receiver by this provider, or `null` while nothing has been. */
+  /**
+   * Source this provider has sent, or is sending, to the receiver. `null` while nothing is on its way, after a
+   * disconnect, and after a failed load so the same source can be retried.
+   */
   get loadedSrc() {
     return this.#loadedSrc;
   }
@@ -152,6 +155,25 @@ export class GoogleCastProvider {
       return;
     }
 
+    // Claim the source before anything is awaited, so a `loadstart` that lands while the request is still being built
+    // sees it as already on its way to the receiver.
+    this.#loadedSrc = src;
+
+    try {
+      const request = await this.#createLoadRequest(src);
+
+      await currentSession()?.loadMedia(request);
+    } catch (error) {
+      // Free the source for a retry, unless a newer load has claimed another one since.
+      if (this.#loadedSrc === src) this.#loadedSrc = null;
+
+      throw error;
+    }
+
+    this.target?.dispatchEvent(new Event('volumechange'));
+  }
+
+  async #createLoadRequest(src: string) {
     const mediaInfo = new chrome.cast.media.MediaInfo(src, this.#googleCast.contentType ?? '');
 
     mediaInfo.customData = this.#googleCast.customData ?? null;
@@ -212,10 +234,7 @@ export class GoogleCastProvider {
     request.autoplay = !this.#localPaused;
     request.activeTrackIds = activeTrackIds;
 
-    this.#loadedSrc = src;
-    await currentSession()?.loadMedia(request);
-
-    this.target?.dispatchEvent(new Event('volumechange'));
+    return request;
   }
 
   get paused() {
