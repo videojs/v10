@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { currentFramework } from '@/stores/preferences';
 
-import { initializeDocsNavigation, savePageScrollForNavigation, syncFrameworkPreferenceFromUrl } from '../navigation';
+import {
+  DOCS_FRAMEWORK_NAVIGATION_INFO,
+  initializeDocsNavigation,
+  savePageScrollForNavigation,
+  syncFrameworkPreferenceFromUrl,
+} from '../navigation';
 import { FRAMEWORK_COOKIE, getFrameworkPreferenceClient } from '../preferences';
 
 describe('syncFrameworkPreferenceFromUrl', () => {
@@ -41,8 +46,12 @@ describe('framework navigation scroll', () => {
   afterEach(() => {
     window.__videojsDocsNavigationController?.abort();
     delete window.__videojsDocsNavigationController;
+    currentFramework.set(null);
+    document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
+    document.documentElement.removeAttribute('data-base-ui-scroll-locked');
+    document.body.scrollTop = 0;
     vi.restoreAllMocks();
   });
 
@@ -57,6 +66,21 @@ describe('framework navigation scroll', () => {
     });
   });
 
+  it('saves the locked body position while a Base UI popup is open', () => {
+    document.documentElement.setAttribute('data-base-ui-scroll-locked', '');
+    document.body.scrollTop = 315;
+
+    savePageScrollForNavigation('/docs/framework/react/guides/installation');
+
+    expect(JSON.parse(window.sessionStorage.getItem('vjs-page-scroll')!)).toEqual({
+      url: '/docs/framework/react/guides/installation',
+      scrollY: 315,
+    });
+
+    document.documentElement.removeAttribute('data-base-ui-scroll-locked');
+    document.body.scrollTop = 0;
+  });
+
   it('restores a saved document position when the destination initializes', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 
@@ -65,6 +89,21 @@ describe('framework navigation scroll', () => {
       'vjs-page-scroll',
       JSON.stringify({ url: '/docs/framework/html/guides/installation', scrollY: 420 })
     );
+
+    initializeDocsNavigation();
+
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 420 });
+    expect(window.sessionStorage.getItem('vjs-page-scroll')).toBeNull();
+  });
+
+  it('restores only the latest handoff when a framework navigation is superseded', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const scrollY = vi.spyOn(window, 'scrollY', 'get').mockReturnValue(275);
+
+    savePageScrollForNavigation('/docs/framework/html/guides/installation-vue');
+    scrollY.mockReturnValue(420);
+    savePageScrollForNavigation('/docs/framework/html/guides/installation-svelte');
+    window.history.replaceState(null, '', '/docs/framework/html/guides/installation-svelte');
 
     initializeDocsNavigation();
 
@@ -83,15 +122,93 @@ describe('framework navigation scroll', () => {
     expect(window.history.state).toEqual({ index: 3, scrollX: 12, scrollY: 640 });
   });
 
+  it('restores an indexed Astro history position on a document reload', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+
+    vi.spyOn(performance, 'getEntriesByType').mockReturnValue([{ type: 'reload' } as PerformanceNavigationTiming]);
+    window.history.replaceState({ index: 3, scrollX: 12, scrollY: 640 }, '');
+
+    initializeDocsNavigation();
+
+    expect(scrollTo).toHaveBeenCalledWith({ left: 12, top: 640 });
+  });
+
+  it('leaves indexed history positions to Astro outside document reloads', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+
+    vi.spyOn(performance, 'getEntriesByType').mockReturnValue([{ type: 'navigate' } as PerformanceNavigationTiming]);
+    window.history.replaceState({ index: 3, scrollX: 12, scrollY: 640 }, '');
+
+    initializeDocsNavigation();
+
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('does not turn a stateless browser entry into partial Astro history state', () => {
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(640);
+    window.history.replaceState(null, '');
+
+    initializeDocsNavigation();
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(window.history.state).toBeNull();
+  });
+
+  it('leaves ordinary scroll history updates to Astro', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
+    initializeDocsNavigation();
+    window.dispatchEvent(new Event('scroll'));
+
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  it('clears a saved position that belongs to a different destination', () => {
+    window.history.replaceState(null, '', '/docs/framework/html/guides/installation');
+    window.sessionStorage.setItem(
+      'vjs-page-scroll',
+      JSON.stringify({ url: '/docs/framework/react/guides/installation', scrollY: 420 })
+    );
+
+    initializeDocsNavigation();
+
+    expect(window.sessionStorage.getItem('vjs-page-scroll')).toBeNull();
+  });
+
+  it('repairs the departing history entry before a push swap while Base UI has moved scroll onto the body', () => {
+    document.documentElement.setAttribute('data-base-ui-scroll-locked', '');
+    document.body.scrollTop = 315;
+    window.history.replaceState({ index: 2, scrollX: 0, scrollY: 0 }, '');
+
+    initializeDocsNavigation();
+
+    const event = new Event('astro:before-swap');
+
+    Object.assign(event, {
+      navigationType: 'push',
+      info: DOCS_FRAMEWORK_NAVIGATION_INFO,
+      to: new URL('https://videojs.org/docs/framework/react/guides/installation'),
+      newDocument: document.implementation.createHTMLDocument(),
+    });
+    document.dispatchEvent(event);
+
+    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 315 });
+  });
+
   it('does not overwrite the destination history entry during traversal', () => {
     vi.spyOn(window, 'scrollY', 'get').mockReturnValue(640);
     window.history.replaceState({ index: 2, scrollX: 0, scrollY: 275 }, '');
 
     initializeDocsNavigation();
 
-    const event = new Event('astro:before-preparation');
+    const event = new Event('astro:before-swap');
 
-    Object.assign(event, { navigationType: 'traverse', info: null });
+    Object.assign(event, {
+      navigationType: 'traverse',
+      info: null,
+      to: new URL('https://videojs.org/docs/framework/html/guides/installation'),
+      newDocument: document.implementation.createHTMLDocument(),
+    });
     document.dispatchEvent(event);
 
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 275 });

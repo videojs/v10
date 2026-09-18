@@ -12,6 +12,8 @@ import { BANNER_DISMISS_KEY } from '@/consts';
 </script>
 
 <script>
+  import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
+
   let bannerObserver: ResizeObserver | undefined;
 
   const observeBannerHeight = () => {
@@ -32,6 +34,16 @@ import { BANNER_DISMISS_KEY } from '@/consts';
     }
   };
 
+  const preserveBannerState = (event: TransitionBeforeSwapEvent) => {
+    const currentRoot = document.documentElement;
+    const nextRoot = event.newDocument.documentElement;
+    const height = currentRoot.style.getPropertyValue('--banner-height');
+
+    nextRoot.style.setProperty('--banner-height', height);
+    nextRoot.classList.toggle('banner-dismissed', currentRoot.classList.contains('banner-dismissed'));
+  };
+
   observeBannerHeight();
+  document.addEventListener('astro:before-swap', preserveBannerState);
   document.addEventListener('astro:page-load', observeBannerHeight);
 </script>

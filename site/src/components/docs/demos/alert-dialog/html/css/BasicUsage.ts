@@ -5,11 +5,22 @@ import '@videojs/html/ui/dialog-title';
 import '@videojs/html/ui/dialog-description';
 import '@videojs/html/ui/dialog-close';
 
-document.querySelectorAll<HTMLElement>('.html-alert-dialog-basic').forEach((demo) => {
-  const trigger = demo.querySelector<HTMLButtonElement>('.html-alert-dialog-basic__trigger');
-  const dialog = demo.querySelector('media-alert-dialog');
+const initializedDemos = new WeakSet<HTMLElement>();
 
-  trigger?.addEventListener('click', () => {
-    if (dialog) dialog.open = true;
+function initializeDemos(): void {
+  document.querySelectorAll<HTMLElement>('.html-alert-dialog-basic').forEach((demo) => {
+    if (initializedDemos.has(demo)) return;
+
+    initializedDemos.add(demo);
+
+    const trigger = demo.querySelector<HTMLButtonElement>('.html-alert-dialog-basic__trigger');
+    const dialog = demo.querySelector('media-alert-dialog');
+
+    trigger?.addEventListener('click', () => {
+      if (dialog) dialog.open = true;
+    });
   });
-});
+}
+
+initializeDemos();
+document.addEventListener('astro:page-load', initializeDemos);

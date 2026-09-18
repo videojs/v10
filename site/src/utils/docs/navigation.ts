@@ -32,6 +32,11 @@ type SavedPageScroll = {
   scrollY?: number;
 };
 
+type DocumentScrollPosition = {
+  left: number;
+  top: number;
+};
+
 function isFrameworkNavigation(info?: { docsNavigation?: string } | null): boolean {
   return info?.docsNavigation === 'framework';
 }
@@ -40,9 +45,31 @@ function setFrameworkTransitionSuppressed(target: Document, suppressed: boolean)
   target.documentElement.toggleAttribute(FRAMEWORK_NAVIGATION_ATTRIBUTE, suppressed);
 }
 
+function getDocumentScrollPosition() {
+  if (document.documentElement.hasAttribute('data-base-ui-scroll-locked')) {
+    return { scrollX: document.body.scrollLeft, scrollY: document.body.scrollTop };
+  }
+
+  return { scrollX: window.scrollX, scrollY: window.scrollY };
+}
+
+function getReloadScrollPosition(): DocumentScrollPosition | null {
+  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (navigation?.type !== 'reload') return null;
+
+  const state = window.history.state;
+  if (!state || typeof state !== 'object' || !Number.isFinite(state.index)) return null;
+
+  if (!Number.isFinite(state.scrollX) || !Number.isFinite(state.scrollY)) return null;
+
+  return { left: state.scrollX, top: state.scrollY };
+}
+
 function savePageScrollToHistory(): void {
-  const state = window.history.state ?? {};
-  const { scrollX, scrollY } = window;
+  const state = window.history.state;
+  if (!state || typeof state !== 'object' || !Number.isFinite(state.index)) return;
+
+  const { scrollX, scrollY } = getDocumentScrollPosition();
   if (state.scrollX === scrollX && state.scrollY === scrollY) return;
 
   try {
@@ -66,7 +93,10 @@ export function savePageScrollForNavigation(url: string): void {
   try {
     window.sessionStorage.setItem(
       PAGE_SCROLL_STORAGE_KEY,
-      JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY: window.scrollY })
+      JSON.stringify({
+        url: new URL(url, window.location.origin).pathname,
+        scrollY: getDocumentScrollPosition().scrollY,
+      })
     );
   } catch {
     // Navigation should still work when storage is unavailable.
@@ -80,7 +110,12 @@ function restoreSavedPageScroll(removeAfterRestore = true): boolean {
 
     const { url, scrollY }: SavedPageScroll = JSON.parse(stored);
     const matchesCurrentPath = url?.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '');
-    if (!matchesCurrentPath || !Number.isFinite(scrollY ?? Number.NaN)) return false;
+
+    if (!matchesCurrentPath || !Number.isFinite(scrollY ?? Number.NaN)) {
+      window.sessionStorage.removeItem(PAGE_SCROLL_STORAGE_KEY);
+
+      return false;
+    }
 
     window.scrollTo({ left: 0, top: scrollY });
     savePageScrollToHistory();
@@ -150,7 +185,7 @@ export function initializeDocsNavigation(): void {
 
   const controller = new AbortController();
   const { signal } = controller;
-  let saveScrollFrame = 0;
+  let reloadScroll = getReloadScrollPosition();
 
   window.__videojsDocsNavigationController = controller;
 
@@ -161,28 +196,30 @@ export function initializeDocsNavigation(): void {
   };
 
   const prepareSwap = (navigationEvent: TransitionBeforeSwapEvent) => {
+    // Astro has already chosen the destination by this boundary, but push/replace navigation still owns the departing
+    // history entry. Repair it here in case an open Base UI popup moved the document offset onto the body.
+    if (navigationEvent.navigationType !== 'traverse') {
+      savePageScrollToHistory();
+    }
+
     syncFrameworkPreferenceFromUrl(navigationEvent.to);
     saveSidebarState();
     setFrameworkTransitionSuppressed(navigationEvent.newDocument, isFrameworkNavigation(navigationEvent.info));
   };
 
-  const schedulePageScrollSave = () => {
-    if (saveScrollFrame) return;
-
-    saveScrollFrame = requestAnimationFrame(() => {
-      saveScrollFrame = 0;
-      savePageScrollToHistory();
-    });
-  };
-
   const saveDocumentState = () => {
-    cancelAnimationFrame(saveScrollFrame);
-    saveScrollFrame = 0;
     savePageScrollToHistory();
     saveSidebarState();
   };
 
-  signal.addEventListener('abort', () => cancelAnimationFrame(saveScrollFrame), { once: true });
+  const restoreReloadScroll = () => {
+    if (!reloadScroll) return false;
+
+    window.scrollTo(reloadScroll);
+
+    return true;
+  };
+
   document.addEventListener('astro:before-preparation', prepareNavigation, { signal });
   document.addEventListener('astro:before-swap', prepareSwap, { signal });
   document.addEventListener(
@@ -197,15 +234,17 @@ export function initializeDocsNavigation(): void {
     'astro:page-load',
     () =>
       requestAnimationFrame(() => {
-        restoreSavedPageScroll();
+        if (!restoreSavedPageScroll()) restoreReloadScroll();
+
+        reloadScroll = null;
         setFrameworkTransitionSuppressed(document, false);
       }),
     { signal }
   );
   window.addEventListener('pageshow', restoreSidebarState, { signal });
-  window.addEventListener('scroll', schedulePageScrollSave, { passive: true, signal });
   window.addEventListener('pagehide', saveDocumentState, { signal });
 
   restoreSidebarState();
-  restoreSavedPageScroll();
+
+  if (!restoreSavedPageScroll()) restoreReloadScroll();
 }

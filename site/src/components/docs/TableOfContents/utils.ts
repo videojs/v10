@@ -1,4 +1,5 @@
 import type { MarkdownHeading } from 'astro';
+import { navigate } from 'astro:transitions/client';
 import debounce from 'just-debounce-it';
 import throttle from 'just-throttle';
 import type { RefObject } from 'react';
@@ -100,14 +101,11 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
   });
 }
 
-/** Navigate to a heading by scrolling it into view and updating the URL */
+/** Navigate to a heading through Astro so its history index and scroll state stay intact. */
 export function navigateToHeading(slug: string): void {
   const element = document.getElementById(slug);
 
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth' });
-    window.history.pushState({}, '', `#${slug}`);
-  }
+  if (element) void navigate(`#${slug}`);
 }
 
 interface UseAutoScrollOptions {
