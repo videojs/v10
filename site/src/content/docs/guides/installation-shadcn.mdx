@@ -10,6 +10,7 @@ import Steps from '@/components/docs/Steps.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import InstallationCLIForLLMs from '@/components/installation/InstallationCLIForLLMs.astro';
 import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
@@ -21,7 +22,6 @@ import RegistryOptions from '@/components/registry/RegistryOptions.astro';
 import RegistryInitCommand from '@/components/registry/RegistryInitCommand.astro';
 import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
 import ShadcnFrameworkCase from '@/components/registry/ShadcnFrameworkCase.astro';
-import ShadcnFrameworkSelect from '@/components/registry/ShadcnFrameworkSelect';
 import SourceMediaInstall from '@/components/registry/SourceMediaInstall';
 import SourceReactPlayer from '@/components/registry/SourceReactPlayer';
 import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
@@ -37,15 +37,15 @@ import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 
 ## Choose your JS framework
 
-React projects use components and hooks. HTML projects use custom elements and work with any stack. This choice stays on this page and is saved in the URL.
+Choose the framework your app uses. Shadcn is available for React and HTML. Choosing Vue or Svelte opens the supported packaged guide.
 
 <ContentWidth margins="lg">
-  <ShadcnFrameworkSelect client:idle />
+  <JSPicker />
 </ContentWidth>
 
 ## Choose how to install
 
-Start with packages, add editable source, or load the browser-ready player from a CDN.
+Choose from the installation options available for your framework.
 
 <InstallationMethodNav />
 

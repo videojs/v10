@@ -11,6 +11,7 @@ import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import InstallationCLIForLLMs from '@/components/installation/InstallationCLIForLLMs.astro';
 import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
@@ -28,9 +29,17 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 <HumanCase>
 <div data-cli-omit="installation" class="contents">
 
+## Choose your JS framework
+
+Choose the framework your app uses. CDN is available for HTML. Choosing React, Vue, or Svelte opens a supported installation guide.
+
+<ContentWidth margins="lg">
+  <JSPicker />
+</ContentWidth>
+
 ## Choose how to install
 
-Start with packages, add editable source, or load the browser-ready player from a CDN.
+Choose from the installation options available for your framework.
 
 <InstallationMethodNav />
 
