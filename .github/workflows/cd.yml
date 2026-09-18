@@ -148,6 +148,25 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs['packages/cdn--tag_name'] }}
           VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
 
+      # The archive lived on the @videojs/html release until #2598 moved it to
+      # @videojs/cdn. Installers still watching the html release page need a trail
+      # to the new location, so append a pointer to its notes. Skip when the note is
+      # already present so a re-run does not append it twice.
+      - name: Link the archive from the @videojs/html release
+        if: ${{ steps.release.outputs['packages/html--release_created'] == 'true' }}
+        run: |
+          BODY=$(gh release view "$HTML_TAG" --json body --jq '.body')
+          if grep -qF "$CDN_URL" <<< "$BODY"; then exit 0; fi
+
+          NOTE="The self-hosting archive (\`videojs-cdn-${VERSION}.zip\`, \`.tar.gz\`, and \`SHA256SUMS\`) is attached to the [${CDN_TAG}](${CDN_URL}) release."
+          printf '%s\n\n---\n\n%s\n' "$BODY" "$NOTE" | gh release edit "$HTML_TAG" --notes-file -
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HTML_TAG: ${{ steps.release.outputs['packages/html--tag_name'] }}
+          CDN_TAG: ${{ steps.release.outputs['packages/cdn--tag_name'] }}
+          CDN_URL: ${{ steps.release.outputs['packages/cdn--html_url'] }}
+          VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
+
       - name: Update site/v10 branch
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: git push origin HEAD:refs/heads/site/v10 --force
