@@ -355,7 +355,7 @@ An asset titled in the Mux dashboard supplies its own: the Mux media loads the a
 
 The packaged video and live-video skins show the resolved title at the top of the player and fade it with the controls, so the embeds above already display it. The <DocsLink slug="reference/components/title" anchor="styling">Title</DocsLink> component sets `data-visible` while the controls are visible, so your skin overrides can move it differently. The audio skins have no title display.
 
-An ejected or custom layout shows the title only where you place the component:
+An ejected or custom layout shows the title only where you place the component. Keep it inside the container so it overlays the media:
 
 <FrameworkCase frameworks={["html"]}>
 ```js
@@ -364,21 +364,25 @@ import '@videojs/html/ui/title';
 
 ```html
 <video-player content-title="Test VOD">
-  <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
-  <media-title></media-title>
+  <media-container class="player-surface">
+    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
+    <media-title></media-title>
+  </media-container>
 </video-player>
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { Title } from '@videojs/react';
+import { Container, Title } from '@videojs/react';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
 
 <VideoPlayer title="Test VOD">
-  <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
-  <Title />
+  <Container className="player-surface">
+    <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
+    <Title />
+  </Container>
 </VideoPlayer>
 ```
 </FrameworkCase>
