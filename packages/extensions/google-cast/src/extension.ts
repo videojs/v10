@@ -1,11 +1,12 @@
+import type { MediaOverride, PlayerExtension, PlayerTarget } from '@videojs/core/dom';
 import type { MediaStreamType } from '@videojs/media';
-import type { AnyHTMLMediaAdapter, HTMLMediaTargetLike, MediaExtension } from '@videojs/media/dom';
+import { getMediaElement, type HTMLMediaTargetLike } from '@videojs/media/dom';
 
-import { GoogleCastProvider } from './google-cast-provider';
+import { GoogleCastProvider } from './provider';
 import { requiresCastFramework } from './utils';
 
 export interface GoogleCastExtensionProps {
-  /** Source URL loaded on the Cast receiver. Falls back to the adapter's `src` / `currentSrc`. */
+  /** Source URL loaded on the Cast receiver. Falls back to the media's `src` / `currentSrc`. */
   src?: string | undefined;
   /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
   contentType?: string | undefined;
@@ -17,7 +18,12 @@ export interface GoogleCastExtensionProps {
   customData?: Record<string, unknown> | null | undefined;
 }
 
-export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExtension {
+/**
+ * Player extension that adds Google Cast to whatever media the player attaches: a plain `<video>`, a custom media
+ * element, or a media adapter. While a cast session is connected, playback members the player reads route to the
+ * receiver; otherwise only `remote` is taken over so the cast button can prompt.
+ */
+export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExtension {
   static readonly defaultProps: GoogleCastExtensionProps = {
     src: undefined,
     contentType: undefined,
@@ -31,52 +37,76 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
   #streamType: MediaStreamType | undefined;
   #receiver: string | undefined;
   #customData: Record<string, unknown> | null | undefined;
-  #adapter: AnyHTMLMediaAdapter | null = null;
+  #media: HTMLMediaTargetLike | null = null;
   #provider: GoogleCastProvider | null = null;
-  #override: Partial<HTMLMediaTargetLike> | null = null;
+  #override: MediaOverride | null = null;
 
   constructor(props: GoogleCastExtensionProps = {}) {
     Object.assign(this, props);
   }
 
-  setAdapter(adapter: AnyHTMLMediaAdapter) {
-    if (!requiresCastFramework()) return;
+  attach({ media }: PlayerTarget) {
+    // Every media the player resolves (native element, custom media element, adapter) exposes this surface.
+    const target = media as HTMLMediaTargetLike;
+    if (this.#media === target) return;
 
-    this.#adapter = adapter;
+    this.detach();
+    this.#media = target;
 
-    if (!this.#provider) {
+    if (requiresCastFramework() && !this.#provider) {
       this.#provider = new GoogleCastProvider(this);
       this.#provider.remote.addEventListener('connect', this.#onStateChange);
       this.#provider.remote.addEventListener('disconnect', this.#onStateChange);
       this.#override = this.#createRemoteOverride();
     }
-  }
 
-  attach(target: HTMLMediaTargetLike) {
-    this.#provider?.attach(target);
+    // The provider drives the native element when there is one: its `<track>` children carry the real modes, and
+    // events dispatched there already forward through any custom element or adapter to the player's listeners.
+    this.#provider?.attach((getMediaElement(target) as HTMLMediaTargetLike | null) ?? target);
+    target.addEventListener('loadstart', this.#onLoadStart);
   }
 
   detach() {
+    this.#media?.removeEventListener('loadstart', this.#onLoadStart);
+    this.#media = null;
     this.#provider?.detach();
   }
 
   destroy() {
+    this.detach();
     this.#provider?.destroy();
     this.#provider = null;
-    this.#adapter = null;
+    this.#override = null;
+  }
+
+  get mediaOverride() {
+    return this.#override;
   }
 
   #onStateChange = () => {
     if (!this.#provider) return;
 
     if (this.#provider.remote.state === 'connected') {
-      this.#override = this.#provider;
+      this.#override = this.#provider as MediaOverride;
     } else {
       this.#override = this.#createRemoteOverride();
     }
   };
 
-  #createRemoteOverride(): Partial<HTMLMediaTargetLike> {
+  /**
+   * The media started loading a new source locally. While casting, follow it on the receiver; the provider claims the
+   * source before it starts loading, so the several `loadstart`s one local load can produce reach the receiver once.
+   */
+  #onLoadStart = () => {
+    const provider = this.#provider;
+    if (!provider || provider.remote.state !== 'connected') return;
+
+    if (provider.loadedSrc === this.src) return;
+
+    void provider.load();
+  };
+
+  #createRemoteOverride(): MediaOverride {
     const provider = this.#provider!;
 
     return {
@@ -86,14 +116,14 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
     };
   }
 
-  get targetOverride() {
-    return this.#override;
-  }
-
   /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
   get src() {
     return (
-      this.#src ?? this.#adapter?.querySelector('source')?.src ?? this.#adapter?.src ?? this.#adapter?.currentSrc ?? ''
+      this.#src ??
+      this.#media?.querySelector<HTMLSourceElement>('source')?.src ??
+      this.#media?.src ??
+      this.#media?.currentSrc ??
+      ''
     );
   }
 
@@ -116,9 +146,9 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
     this.#load();
   }
 
-  /** Stream type used on the Cast receiver. Falls back to the adapter's `streamType` if it exposes one. */
+  /** Stream type used on the Cast receiver. Falls back to the media's `streamType` if it exposes one. */
   get streamType() {
-    return this.#streamType ?? (this.#adapter as { streamType?: MediaStreamType } | null)?.streamType;
+    return this.#streamType ?? this.#media?.streamType;
   }
 
   set streamType(value: MediaStreamType | undefined) {
@@ -153,8 +183,8 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
   }
 
   #load() {
-    if (this.#adapter?.remote.state === 'connected') {
-      this.#adapter.load();
+    if (this.#provider?.remote.state === 'connected') {
+      void this.#provider.load();
     }
   }
 }

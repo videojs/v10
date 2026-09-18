@@ -1,4 +1,4 @@
-import type { MediaContainer } from '@videojs/core/dom';
+import type { MediaContainer, PlayerExtension } from '@videojs/core/dom';
 import type { Media } from '@videojs/media';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
@@ -11,6 +11,8 @@ export interface PlayerContextValue {
   setMedia: Dispatch<SetStateAction<Media | null>>;
   container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
+  /** Register a player extension with this player. Returns a release callback for that exact instance. */
+  registerExtension: (extension: PlayerExtension) => () => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -118,4 +120,11 @@ export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null
   const ctx = useContext(PlayerContext);
 
   return ctx?.setContainer;
+}
+
+/** Access the extension registrar for adding a player extension to the surrounding player. */
+export function useExtensionRegistrar(): PlayerContextValue['registerExtension'] | undefined {
+  const ctx = useContext(PlayerContext);
+
+  return ctx?.registerExtension;
 }

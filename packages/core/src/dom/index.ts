@@ -1,3 +1,6 @@
+export * from './extensions/coordinator';
+export * from './extensions/extension';
+export * from './extensions/media';
 export * from './feature';
 export * from './gesture/action-value';
 export * from './gesture/actions';

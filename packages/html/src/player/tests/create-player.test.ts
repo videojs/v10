@@ -3,12 +3,16 @@ import {
   backgroundFeatures,
   features,
   metadataFeature,
+  type PlayerExtension,
+  type PlayerTarget,
   type PopupGroup,
   videoFeatures,
+  volumeFeature,
 } from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { PlayerExtensionElement } from '../../extensions/player-extension-element';
 import { BackgroundVideo } from '../../media/background-video';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { ContainerElement } from '../../ui/container/element';
@@ -181,6 +185,100 @@ describe('createPlayer', () => {
 
     second.remove();
     await vi.waitFor(() => expect(player.store.target).toBeNull());
+  });
+
+  describe('extensions', () => {
+    class MutedExtension implements PlayerExtension {
+      attach = vi.fn<(target: PlayerTarget) => void>();
+      detach = vi.fn();
+
+      get mediaOverride() {
+        return { muted: true };
+      }
+    }
+
+    class MutedExtensionElement extends PlayerExtensionElement<MutedExtension> {
+      get instance() {
+        return this.extension;
+      }
+
+      protected createExtension() {
+        return new MutedExtension();
+      }
+    }
+
+    const extensionTag = defineTestElement(MutedExtensionElement);
+
+    it('attaches extensions to a plain video and routes store reads through their overrides', async () => {
+      const { PlayerElement } = createPlayer({ features: [volumeFeature] });
+      const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+      const video = document.createElement('video');
+      const extension = document.createElement(extensionTag) as MutedExtensionElement;
+
+      player.append(video, extension);
+      document.body.append(player);
+
+      await vi.waitFor(() => expect(player.store.target).not.toBeNull());
+
+      const media = player.store.target?.media as HTMLVideoElement | undefined;
+
+      expect(extension.instance.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }));
+      expect(media).not.toBe(video);
+      expect(media).toBeInstanceOf(HTMLVideoElement);
+      expect(media?.muted).toBe(true);
+      expect(player.store.state.muted).toBe(true);
+      expect(video.muted).toBe(false);
+    });
+
+    it('re-attaches the store when an extension arrives after the media', async () => {
+      const { PlayerElement } = createPlayer({ features: [volumeFeature] });
+      const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+      const video = document.createElement('video');
+
+      player.append(video);
+      document.body.append(player);
+
+      await vi.waitFor(() => expect(player.store.target?.media).toBe(video));
+      expect(player.store.state.muted).toBe(false);
+
+      const extension = document.createElement(extensionTag) as MutedExtensionElement;
+
+      player.append(extension);
+
+      expect(extension.instance.attach).toHaveBeenCalledTimes(1);
+      expect(player.store.target?.media).not.toBe(video);
+      expect(player.store.state.muted).toBe(true);
+
+      extension.remove();
+
+      expect(extension.instance.detach).toHaveBeenCalledTimes(1);
+      expect(player.store.target?.media).toBe(video);
+      expect(player.store.state.muted).toBe(false);
+    });
+
+    it('moves extensions with the media and detaches them with the store', async () => {
+      const { PlayerElement } = createPlayer({ features: backgroundFeatures });
+      const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+      const first = document.createElement('video');
+      const second = document.createElement('video');
+      const extension = document.createElement(extensionTag) as MutedExtensionElement;
+
+      player.append(extension, first);
+      document.body.append(player);
+
+      await vi.waitFor(() => expect(extension.instance.attach).toHaveBeenCalledTimes(1));
+
+      first.replaceWith(second);
+      await vi.waitFor(() => expect(extension.instance.attach).toHaveBeenCalledTimes(2));
+
+      expect(extension.instance.detach).toHaveBeenCalledTimes(1);
+      expect(extension.instance.attach).toHaveBeenLastCalledWith(expect.objectContaining({ media: second }));
+
+      second.remove();
+      await vi.waitFor(() => expect(player.store.target).toBeNull());
+
+      expect(extension.instance.detach).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('does not retain disconnected context media as a native fallback', async () => {
