@@ -320,6 +320,18 @@ describe('waitForMediaSourceOpen', () => {
     await waitForMediaSourceOpen(mediaSource, controller.signal);
   });
 
+  it('resolves immediately when readyState is already ended', async () => {
+    const mediaSource = createMediaSource();
+
+    Object.defineProperty(mediaSource, 'readyState', { value: 'ended', configurable: true });
+    const addEventListener = vi.spyOn(mediaSource, 'addEventListener');
+    const controller = new AbortController();
+
+    await waitForMediaSourceOpen(mediaSource, controller.signal);
+
+    expect(addEventListener).not.toHaveBeenCalled();
+  });
+
   it('resolves once readyState transitions out of closed via sourceopen', async () => {
     const mediaSource = createMediaSource();
 

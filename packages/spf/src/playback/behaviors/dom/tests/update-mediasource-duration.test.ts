@@ -4,6 +4,14 @@ import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../../media/types';
 import { updateMediaSourceDuration } from '../update-mediasource-duration';
 
+// A signal change first re-runs the reactor monitor, then activates the entry
+// for its new state on the following microtask.
+const flushReactor = () => Promise.resolve().then(() => Promise.resolve());
+
+// Crossing a task boundary drains every microtask queued by the reactor, so a
+// negative assertion cannot pass merely because another reactor turn is pending.
+const flushReactorTask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
 function setupUpdateMediaSourceDuration() {
   const state = { presentation: signal<MaybeResolvedPresentation | undefined>(undefined) };
   const context = { mediaSource: signal<MediaSource | undefined>(undefined) };
@@ -27,12 +35,27 @@ function makeMediaSource({
 
   return Object.create(MediaSource.prototype, {
     readyState: { value: readyState, writable: true },
-    duration: { value: duration, writable: true },
+    duration: { value: duration, writable: true, configurable: true },
     sourceBuffers: { value: sourceBuffers as unknown as SourceBufferList, writable: false },
     addEventListener: { value: target.addEventListener.bind(target) },
     removeEventListener: { value: target.removeEventListener.bind(target) },
     dispatchEvent: { value: target.dispatchEvent.bind(target) },
   }) as MediaSource;
+}
+
+function trackDurationWrites(mediaSource: MediaSource) {
+  let duration = mediaSource.duration;
+  const setDuration = vi.fn((value: number) => {
+    duration = value;
+  });
+
+  Object.defineProperty(mediaSource, 'duration', {
+    configurable: true,
+    get: () => duration,
+    set: setDuration,
+  });
+
+  return setDuration;
 }
 
 function transitionMediaSource(mediaSource: MediaSource, readyState: MediaSource['readyState'], eventType: string) {
@@ -92,10 +115,13 @@ describe('updateMediaSourceDuration', () => {
     });
 
     // Simulate presentation.duration changing (e.g. recalculated) — must not re-fire
+    const setDuration = trackDurationWrites(mockMediaSource);
+
     state.presentation.set({ duration: 120 } as Presentation);
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(mockMediaSource.duration).toBe(60); // unchanged
+    await flushReactorTask();
+    expect(setDuration).not.toHaveBeenCalled();
+    expect(mockMediaSource.duration).toBe(60);
 
     reactor.destroy();
   });
@@ -109,7 +135,7 @@ describe('updateMediaSourceDuration', () => {
     state.presentation.set({ duration: 60 } as Presentation);
 
     // Behavior is awaiting sourceopen — duration not yet written.
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushReactor();
     expect(mockMediaSource.duration).toBeNaN();
 
     // MediaSource opens — write proceeds.
@@ -130,10 +156,14 @@ describe('updateMediaSourceDuration', () => {
     context.mediaSource.set(mockMediaSource);
     state.presentation.set({ duration: 60 } as Presentation);
 
-    // Race: endOfStream lands before sourceopen — readyState jumps to 'ended'.
+    // Race: endOfStream lands while awaiting sourceopen — readyState jumps to 'ended'.
+    await flushReactor();
+    const setDuration = trackDurationWrites(mockMediaSource);
+
     transitionMediaSource(mockMediaSource, 'ended', 'sourceended');
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await flushReactorTask();
+    expect(setDuration).not.toHaveBeenCalled();
     expect(mockMediaSource.duration).toBeNaN();
 
     reactor.destroy();
@@ -189,7 +219,7 @@ describe('updateMediaSourceDuration', () => {
     state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
 
     // Awaiting sourceopen — nothing written yet.
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushReactor();
     expect(mockMediaSource.duration).toBeNaN();
 
     // MediaSource opens — Infinity is written.
@@ -216,7 +246,7 @@ describe('updateMediaSourceDuration', () => {
     state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
 
     // Buffer still updating — must not have written yet (and must not throw).
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushReactor();
     expect(mockMediaSource.duration).toBe(30);
 
     // Append finishes — Infinity is written, overriding the finite value.
@@ -286,7 +316,7 @@ describe('updateMediaSourceDuration', () => {
     state.presentation.set({ duration: 60 } as Presentation);
 
     // Duration must not be set while buffer is still updating
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushReactor();
     expect(mockMediaSource.duration).toBeNaN();
 
     // Buffer finishes — duration should now be set
@@ -310,12 +340,12 @@ describe('updateMediaSourceDuration', () => {
     state.presentation.set({ duration: 60 } as Presentation);
 
     // Neither buffer done — duration must not be set
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushReactor();
     expect(mockMediaSource.duration).toBeNaN();
 
     // Only first done — second still updating
     finishA();
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushReactor();
     expect(mockMediaSource.duration).toBeNaN();
 
     // Second done — now duration should be set
@@ -362,11 +392,15 @@ describe('updateMediaSourceDuration', () => {
 
     // Simulate endOfStream() being called concurrently while the task is waiting —
     // transitions readyState to 'ended' before the task can set duration
+    await flushReactor();
+    const setDuration = trackDurationWrites(mockMediaSource);
+
     (mockMediaSource as MediaSource & { readyState: MediaSource['readyState'] }).readyState = 'ended';
     finishUpdating();
 
     // Should resolve without throwing, and duration should NOT be set
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await flushReactorTask();
+    expect(setDuration).not.toHaveBeenCalled();
     expect(mockMediaSource.duration).toBeNaN();
 
     reactor.destroy();
@@ -389,9 +423,12 @@ describe('updateMediaSourceDuration', () => {
     });
 
     // Further state changes must not trigger another set
+    const setDuration = trackDurationWrites(mockMediaSource);
+
     state.presentation.set({ duration: 90 } as Presentation);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(mockMediaSource.duration).toBe(60); // unchanged
+    await flushReactorTask();
+    expect(setDuration).not.toHaveBeenCalled();
+    expect(mockMediaSource.duration).toBe(60);
 
     reactor.destroy();
   });
