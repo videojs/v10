@@ -57,20 +57,6 @@ const packagedFrameworks = [
 
 <div hidden data-llms-only>
   <div data-cli-omit="installation">
-    <h2>Choose your installation method</h2>
-
-    <p>Pick one starting path. These are alternatives, not steps to run in sequence.</p>
-
-    <ul>
-      {
-        methodLinks.map(({ label, href, description }) => (
-          <li>
-            <a href={href}>{label}</a>: {description}
-          </li>
-        ))
-      }
-    </ul>
-
     {
       !isCdn && (
         <>
@@ -115,6 +101,20 @@ const packagedFrameworks = [
     }
 
     {isCdn && <p>The CDN installation is HTML-only.</p>}
+
+    <h2>Choose how to install</h2>
+
+    <p>Pick one starting path. These are alternatives, not steps to run in sequence.</p>
+
+    <ul>
+      {
+        methodLinks.map(({ label, href, description }) => (
+          <li>
+            <a href={href}>{label}</a>: {description}
+          </li>
+        ))
+      }
+    </ul>
 
     <h2>Choose your use case</h2>
 
