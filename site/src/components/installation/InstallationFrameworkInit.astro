@@ -1,0 +1,105 @@
+---
+import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
+---
+
+<style is:global>
+  [data-shadcn-framework="html"] {
+    display: none;
+  }
+
+  html[data-registry-framework="html"] [data-shadcn-framework="react"] {
+    display: none;
+  }
+
+  html[data-registry-framework="html"] [data-shadcn-framework="html"] {
+    display: contents;
+  }
+
+  [data-shadcn-method-card]:not([data-installation-frameworks~="react"]) {
+    display: none;
+    pointer-events: none;
+  }
+
+  html[data-registry-framework="html"] [data-shadcn-method-card] {
+    display: flex;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  @media (min-width: 40rem) {
+    [data-shadcn-method-card]:not([data-installation-frameworks~="react"]) {
+      display: flex;
+      visibility: hidden;
+    }
+  }
+
+  html[data-registry-framework="html"]
+    [data-installation-framework-picker]
+    [data-card-radio-value="react"] {
+    border-color: var(--color-line) !important;
+    background: var(--color-surface) !important;
+    box-shadow: none !important;
+  }
+
+  html[data-registry-framework="html"]
+    [data-installation-framework-picker]
+    [data-card-radio-value="react"]
+    [data-card-radio-check] {
+    scale: 0.75;
+    border-color: var(--color-line-strong) !important;
+    background: transparent !important;
+    color: transparent !important;
+    opacity: 0;
+  }
+
+  html[data-registry-framework="html"]
+    [data-installation-framework-picker]
+    [data-card-radio-value="html"] {
+    border-color: var(--color-accent) !important;
+    background: var(--color-surface-raised) !important;
+    box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-sm) !important;
+  }
+
+  html[data-registry-framework="html"]
+    [data-installation-framework-picker]
+    [data-card-radio-value="html"]
+    [data-card-radio-check] {
+    scale: 1;
+    border-color: var(--color-accent) !important;
+    background: var(--color-accent) !important;
+    color: var(--color-manila-light) !important;
+    opacity: 1;
+  }
+</style>
+
+<script is:inline define:vars={{ frameworkCookie: FRAMEWORK_COOKIE }}>
+  function applyInstallationFramework(url, root) {
+    if (!root) return;
+
+    const isShadcn = url.pathname.replace(/\/$/, "") === "/docs/guides/installation/shadcn";
+
+    if (!isShadcn) {
+      delete root.dataset.registryFramework;
+      return;
+    }
+
+    const requested = new URLSearchParams(url.search).get("framework");
+    const saved = document.cookie
+      .split(";")
+      .map((cookie) => cookie.trim().split("="))
+      .find(([key]) => key === frameworkCookie)?.[1];
+    const framework = requested === "html" || requested === "react"
+      ? requested
+      : saved === "html" || saved === "react"
+        ? saved
+        : "react";
+
+    root.dataset.registryFramework = framework;
+  }
+
+  applyInstallationFramework(window.location, document.documentElement);
+
+  document.addEventListener("astro:before-swap", function (event) {
+    applyInstallationFramework(event.to, event.newDocument.documentElement);
+  });
+</script>

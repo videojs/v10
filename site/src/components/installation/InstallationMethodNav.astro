@@ -8,7 +8,7 @@ if (!isInstallationRouteSegment(framework)) throw new Error(`Unsupported install
 const routeFramework = INSTALLATION_ROUTES[framework].pickerFramework;
 ---
 
-<InstallationMethodNavClient client:idle currentFramework={routeFramework} route={framework} />
+<InstallationMethodNavClient client:load currentFramework={routeFramework} route={framework} />
 
 <script>
   import { initializeInstallationMethodNavigation } from '@/utils/installation/method-navigation';

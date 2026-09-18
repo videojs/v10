@@ -1,7 +1,8 @@
 import { atom } from 'nanostores';
 
 import { currentFramework } from '@/stores/preferences';
-import { setFrameworkPreferenceClient } from '@/utils/docs/preferences';
+import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from '@/utils/docs/preferences';
+import { isRegistryFramework } from '@/utils/installation/framework-navigation';
 import type {
   RegistryFramework,
   RegistryPreset,
@@ -11,8 +12,20 @@ import type {
 } from '@/utils/installation/shadcn';
 import { defaultRegistryTemplate } from '@/utils/installation/shadcn';
 
+function getInitialRegistryFramework(): RegistryFramework {
+  if (!globalThis.window) return 'react';
+
+  const requestedFramework = new URLSearchParams(window.location.search).get('framework');
+
+  if (window.location.pathname.replace(/\/$/, '').endsWith('/docs/guides/installation/shadcn')) {
+    if (isRegistryFramework(requestedFramework)) return requestedFramework;
+  }
+
+  return getFrameworkPreferenceClient() ?? 'react';
+}
+
 /** React or HTML source shown on the standalone Shadcn installation page. */
-export const registryFramework = atom<RegistryFramework>('react');
+export const registryFramework = atom<RegistryFramework>(getInitialRegistryFramework());
 
 /**
  * The styling catalog the registry commands point at. `null` means the framework's default: Tailwind for React, vanilla
