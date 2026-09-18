@@ -174,7 +174,9 @@ describe('selectVideoTrack', () => {
     // survivor rather than the first candidate.
     const reactor = selectVideoTrack.setup({
       state,
-      config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === 'video-high')] },
+      config: {
+        videoRules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === 'video-high')],
+      },
     });
 
     await new Promise((resolve) => setTimeout(resolve, 50));

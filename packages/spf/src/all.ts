@@ -115,8 +115,10 @@ export { syncPreload } from './playback/behaviors/sync-preload';
 // =============================================================================
 
 export type {
+  SwitchAudioTrackConfig,
   SwitchTextTrackConfig,
   SwitchVideoTrackConfig,
+  TrackSwitchingSharedConfig,
   TrackSwitchingState,
 } from './playback/behaviors/track-switching';
 export {

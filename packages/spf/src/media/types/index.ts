@@ -230,12 +230,20 @@ export type TextTrack = Track & {
  *
  * Takes the minimal codec-bearing shape both video and audio candidates carry. `mimeType` is optional so unprobeable
  * candidates (no MIME) can be passed straight through as playable rather than dropped.
+ *
+ * `config` is the composition's config, handed along by `excludeUnplayableTracks` so an extended probe can read the
+ * props it defines off it — `canPlayTrackWithDrm` reads `drm` and `keySystems` — through a cast, the way the selection
+ * rules read their own. Untyped here because the predicate composes into configs that share nothing else; a probe that
+ * needs nothing from it ignores it.
  */
-export type CanPlayTrack = (track: {
-  mimeType?: string;
-  codecs?: string[];
-  metadata?: Record<string, unknown>;
-}) => boolean;
+export type CanPlayTrack = (
+  track: {
+    mimeType?: string;
+    codecs?: string[];
+    metadata?: Record<string, unknown>;
+  },
+  config?: unknown
+) => boolean;
 
 /**
  * Minimal text-track cue shape — start time, end time, and display text.
@@ -352,6 +360,25 @@ export const SEGMENT_TIME_EPSILON = 0.0001;
 // =============================================================================
 
 /**
+ * One `#EXT-X-KEY` declaration whose `METHOD` isn't `NONE`, raw attribute values as authored. For Widevine and
+ * PlayReady, Mux carries a complete PSSH / PRO as a `data:` URI — the manifest-driven init-data source for EME session
+ * creation. `KEYFORMATVERSIONS` is deliberately not captured: nothing consumes it, and Mux emits the non-spec singular
+ * `KEYFORMATVERSION` anyway.
+ */
+export interface MediaPlaylistKey {
+  /** `METHOD` — e.g. `SAMPLE-AES`, `AES-128`. Never `NONE`. */
+  method: string;
+  /** `URI`, resolved against the playlist URL (absolute `data:` / `skd://` pass through). */
+  uri?: string;
+  /** `KEYFORMAT` — key-system identity; absent means `identity` per RFC 8216. */
+  keyFormat?: string;
+  /** `KEYID` — non-spec but common extension attribute, hex as authored (`0x…`). */
+  keyId?: string;
+  /** `IV` — hex as authored (`0x…`). */
+  iv?: string;
+}
+
+/**
  * Playlist-level metadata surfaced from a parsed media playlist. HLS delivery specifics — not part of the generic
  * CMAF-HAM model — so they live under `Ham.metadata` (read via `getMediaPlaylistMetadata`) rather than as first-class
  * `Track` fields:
@@ -374,13 +401,20 @@ export interface MediaPlaylistMetadata {
    * Deliberately _not_ a model-level `protection` shape. CMAF-HAM puts `protection` on `SwitchingSet`, but that can't
    * express two real cases: a clear lead (`METHOD=NONE` segments followed by encrypted ones — protection varies along
    * the timeline within one rendition) or key rotation (its single `defaultKid` can't represent a key changing over
-   * time). Modeling it properly belongs to DRM support; until then this records the one fact a playlist reliably gives
-   * us. Per-rendition because that's HLS's granularity — `EXT-X-KEY` is a media-playlist tag.
+   * time). The structured declarations live in `keys`; this remains the summary fact. Per-rendition because that's
+   * HLS's granularity — `EXT-X-KEY` is a media-playlist tag.
    *
    * Conservative for a clear lead: a rendition whose opening segments are clear still reads as encrypted, so it's
    * judged unplayable rather than played until it breaks.
    */
   encrypted?: boolean;
+  /**
+   * Structured `#EXT-X-KEY` declarations (`METHOD` ≠ `NONE`), deduped by full attribute identity (rotation-heavy
+   * playlists re-declare the same key before each segment run) and present only when the rendition carries any.
+   * `encrypted` derives from this list; see its note on why protection stays HLS-vocabulary metadata rather than a
+   * model-level `protection` shape.
+   */
+  keys?: readonly MediaPlaylistKey[];
   /**
    * `EXT-X-SERVER-CONTROL` `HOLD-BACK` (seconds) — the server's declared distance from the live edge for clients
    * playing _complete_ segments. Absent when the server doesn't advertise it, in which case the spec default (3 ×

@@ -14,6 +14,11 @@
  * Html and react expose everything here as `<mux-background-video>` / `MuxBackgroundVideo` too. Same classes, so the
  * name is a naming choice and nothing more.
  */
-export type { HlsBackgroundVideoAdapterAPI, HlsBackgroundVideoAdapterProps, HlsVideoMediaError } from './mixin';
+export type {
+  HlsBackgroundVideoAdapterAPI,
+  HlsBackgroundVideoAdapterOptions,
+  HlsBackgroundVideoAdapterProps,
+  HlsVideoMediaError,
+} from './mixin';
 export { HlsBackgroundVideoAdapterCore, HlsBackgroundVideoMixin } from './mixin';
 export { HlsBackgroundVideoAdapter } from './adapter';

@@ -35,6 +35,14 @@ export default defineConfig({
         dependsOn: ['@videojs/sandbox#setup'],
         cache: false,
       },
+      // Opt-in: needs a local Chrome to borrow a Widevine CDM from, and runs headed.
+      // Skips itself where that is missing, so it is safe to invoke anywhere — but it
+      // is deliberately out of `test:all`, since hosted CI can never satisfy it.
+      'test:drm': {
+        command: 'playwright test --config suites/drm/playwright.config.ts',
+        dependsOn: ['@videojs/sandbox#setup'],
+        cache: false,
+      },
       'test:registry': {
         command: 'playwright test --config suites/registry/playwright.config.ts',
         dependsOn: ['@videojs/skins#build:shadcn', '@videojs/react#build', '@videojs/html#build'],

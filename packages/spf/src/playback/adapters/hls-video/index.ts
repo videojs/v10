@@ -5,7 +5,14 @@
  * _is_ how a composed engine is consumed. `HlsVideoAdapter` is that facade, and this entry point is separate from
  * `@videojs/spf/hls` so wiring the engine directly doesn't pull the Media (or `@videojs/media`) in with it.
  */
-export type { HlsVideoAdapterAPI, HlsVideoMediaError, HlsVideoAdapterProps, HlsVideoMediaStreamType } from './mixin';
+export type {
+  HlsVideoAdapterAPI,
+  HlsVideoAdapterOptions,
+  HlsVideoAdapterProps,
+  HlsVideoMediaError,
+  HlsVideoMediaStreamType,
+  HlsVideoSource,
+} from './mixin';
 export { HlsVideoAdapterCore, HlsVideoMixin } from './mixin';
 export { HlsVideoAdapter } from './adapter';
 export { HlsVideoMediaTracksMixin } from './media-tracks';

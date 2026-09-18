@@ -21,9 +21,17 @@ import {
   hasUnsupportedFeatureCause,
   withAlternativeMediaSuggestion,
 } from '../hls-video/error-surface';
+import type { HlsVideoSource } from '../hls-video/mixin';
+
+/** What `new HlsAudioAdapter(options)` accepts; see `HlsVideoAdapterOptions` for why it is typed here. */
+export interface HlsAudioAdapterOptions {
+  /** Engine config forwarded to `createHlsAudioEngine`. */
+  config?: HlsAudioEngineConfig;
+}
 
 export interface HlsAudioAdapterProps {
   src: string;
+  source: HlsVideoSource | null;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
 }
@@ -67,6 +75,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsAudioImpl extends BaseClass {
     static readonly defaultProps: HlsAudioAdapterProps = {
       src: '',
+      source: null,
       preload: '',
       disableRemotePlayback: false,
     };
@@ -95,13 +104,14 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
+    #source: HlsVideoSource | null = HlsAudioImpl.defaultProps.source;
 
     constructor(...args: any[]) {
       super(...args);
 
-      const { config } = args?.[0] ?? {};
+      const { config } = (args[0] ?? {}) as HlsAudioAdapterOptions;
 
-      this.#config = config;
+      this.#config = config ?? {};
       this.#engine = this.#createEngine();
 
       // Promote the first fatal condition out of the engine's reported sequence
@@ -238,6 +248,37 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // Unchanged URL, no reload — see the video adapter's note.
       if (value === this.src) return;
 
+      this.#source = value ? { src: value } : null;
+      this.#applySrc(value);
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Structured source, the same shape the video flavor takes so one object serves either.
+     *
+     * `drm` is accepted and inert: this engine composes no EME. It is kept in the shape rather than removed so a source
+     * can be handed to both flavors — and because Mux encrypts video renditions and leaves audio clear, so a protected
+     * playback ID plays here regardless.
+     *
+     * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
+     */
+    get source(): HlsVideoSource | null {
+      return this.#source;
+    }
+
+    set source(value: HlsVideoSource | null) {
+      const source = value ?? null;
+      if (source === this.#source) return;
+
+      this.#source = source;
+      this.#applySrc(source?.src ?? '');
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /** Point the engine at a URL; an unchanged one is not a reload request. */
+    #applySrc(value: string): void {
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
       this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }
@@ -299,7 +340,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsAudioImpl as unknown as MixinReturn<Base, HlsAudioAdapterAPI> & {
+  return HlsAudioImpl as unknown as MixinReturn<Base, HlsAudioAdapterAPI, [options?: HlsAudioAdapterOptions]> & {
     readonly alternativeMediaSuggestion: string | undefined;
     readonly defaultProps: HlsAudioAdapterProps;
   };

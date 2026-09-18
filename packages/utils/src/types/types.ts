@@ -20,8 +20,19 @@ export type AnyConstructor<T, Arguments extends unknown[] = any[]> =
 
 export type Mixin<Base, Result> = <T extends Constructor<Base>>(Base: T) => T & Constructor<Result>;
 
-export type MixinReturn<Base extends AnyConstructor<any>, Props> = Constructor<InstanceType<Base> & Props> &
-  Omit<Base, 'prototype'>;
+/**
+ * The constructor type a class mixin returns: the base's instance type plus `Props`, with the base's statics.
+ *
+ * `Arguments` names the constructor's parameters. A mixin class itself must declare `constructor(...args: any[])`, so
+ * this is the one place the options it reads off `args[0]` can be typed for callers. It defaults to the base's own
+ * parameters: a mixin that adds nothing at construction forwards what its base accepts, so a typed constructor deeper
+ * in the chain stays typed rather than widening back to `any[]` at every layer above it.
+ */
+export type MixinReturn<
+  Base extends AnyConstructor<any>,
+  Props,
+  Arguments extends unknown[] = ConstructorParameters<Base>,
+> = Constructor<InstanceType<Base> & Props, Arguments> & Omit<Base, 'prototype'>;
 
 export type Falsy<T> = T | false | null | undefined;
 

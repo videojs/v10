@@ -35,15 +35,17 @@
  *
  * The pick is the chain's result mapped to a slot value by `resolveSelection` (default: the head,
  * `applyRules(...)[0]`). Each variant supplies its **constraints + rule chain (+ optional resolveSelection)** via
- * config; `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video and audio run constraints
- * `[excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs]` then rules `[filterByUserSelection,
- * preferCodecFamilies, preferActiveCdn, rankByBandwidth]` and take the head; video inserts `playerResolutionCap` after
- * the active-CDN scope, and `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack` takes none.
- * `switchTextTrack` differs — selection is _optional_ (captions are opt-in / off-able), so it runs
- * `[excludeFailedCdns]` + `[preferActiveCdn]` and supplies a text terminal (`pickResolvedTextTrack`) that resolves
- * standing user intent (`userTextTrackSelection`, incl. `'off'`) and may yield no selection. (The active-CDN _scope_ is
- * the sticky-pick half of multi-CDN; the failed-CDN _constraint_ is the failover half — prune the cooled-down CDN, the
- * scope falls to the next.)
+ * config; `setupTrackSwitching` owns only the lifecycle and runs what it's given. Both chains are themselves config: a
+ * per-type key pair (`videoConstraints` / `videoRules`, `audioConstraints` / `audioRules`, `textConstraints` /
+ * `textRules`) that replaces the whole chain, defaulting to the `DEFAULT_*` constants below. Per type because one
+ * engine config reaches every variant. Video and audio default to constraints `[excludeFailedCdns,
+ * excludeUnplayableTracks, stickToSelectedCodecs]` then rules `[filterByUserSelection, preferCodecFamilies,
+ * preferActiveCdn, rankByBandwidth]` and take the head; video inserts `playerResolutionCap` after the active-CDN scope,
+ * and `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack` takes none. `switchTextTrack` differs —
+ * selection is _optional_ (captions are opt-in / off-able), so it runs `[excludeFailedCdns]` + `[preferActiveCdn]` and
+ * supplies a text terminal (`pickResolvedTextTrack`) that resolves standing user intent (`userTextTrackSelection`,
+ * incl. `'off'`) and may yield no selection. (The active-CDN _scope_ is the sticky-pick half of multi-CDN; the
+ * failed-CDN _constraint_ is the failover half — prune the cooled-down CDN, the scope falls to the next.)
  *
  * When the pre-pass prunes a type that _has_ tracks to empty, the behavior clears the selection (so a now-unplayable
  * pick can't linger and stall) and reports the type's `noSupportedTrackCode`. Which constraint emptied the set is
@@ -91,6 +93,7 @@ import {
   preferCodecFamilies,
   sameCandidateSet,
 } from '../primitives/selection-rules';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 import { type ErrorEmitterState, emitError } from './collect-errors';
 
 // ============================================================================
@@ -111,15 +114,10 @@ export interface TrackSwitchingState {
 }
 
 /**
- * Config for `switchVideoTrack` — the ABR tuning read by its ranker rule (`rankByBandwidth`). `quality.safetyMargin` is
- * the bandwidth-headroom multiplier; `quality.upgradeMargin` the hysteresis ratio gating upgrades; `bandwidth` tunes
- * the estimator; `initialBandwidth` is the pre-sample fallback. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15),
- * `DEFAULT_BANDWIDTH_CONFIG`, `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
+ * Config both `switchVideoTrack` and `switchAudioTrack` read — the cross-cutting fields one engine config serves to
+ * every variant. Each variant's own config extends this with its chains (and, for video, its ABR tuning).
  */
-export interface SwitchVideoTrackConfig {
-  quality?: Partial<QualityConfig>;
-  bandwidth?: Partial<BandwidthConfig>;
-  initialBandwidth?: number;
+export interface TrackSwitchingSharedConfig {
   /** Override CDN-id derivation (shared by the CDN scope + failover constraint). */
   getCdnId?: GetCdnId;
   /**
@@ -137,6 +135,38 @@ export interface SwitchVideoTrackConfig {
    * Defaults to `DEFAULT_PREFERRED_CODECS` (AVC + AAC); pass `[]` to disable.
    */
   preferredCodecs?: string[];
+}
+
+/**
+ * Config for `switchVideoTrack`: its chains, plus the ABR tuning read by its ranker rule (`rankByBandwidth`).
+ * `quality.safetyMargin` is the bandwidth-headroom multiplier; `quality.upgradeMargin` the hysteresis ratio gating
+ * upgrades; `bandwidth` tunes the estimator; `initialBandwidth` is the pre-sample fallback. Defaults:
+ * `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15), `DEFAULT_BANDWIDTH_CONFIG`, `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
+ */
+export interface SwitchVideoTrackConfig extends TrackSwitchingSharedConfig {
+  /**
+   * The hard-constraint pre-pass and rule chain `switchVideoTrack` runs, replacing {@link DEFAULT_VIDEO_CONSTRAINTS} /
+   * {@link DEFAULT_VIDEO_RULES} outright — the same whole-chain contract as `selectVideoTrack`'s `videoConstraints` /
+   * `videoRules`. Spread the default to extend it: `[...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems]` is how
+   * the DRM composition prunes on a slot only it carries. Keyed per type because one engine config reaches every
+   * variant.
+   */
+  videoConstraints?: readonly SwitchVideoTrackRule[];
+  videoRules?: readonly SwitchVideoTrackRule[];
+  quality?: Partial<QualityConfig>;
+  bandwidth?: Partial<BandwidthConfig>;
+  initialBandwidth?: number;
+}
+
+/**
+ * Config for `switchAudioTrack`: its chains over the shared fields. Audio ranks through the same `rankByBandwidth` but
+ * carries no ABR tuning — with no audio `bandwidthState` the ranker's tuning is inert, and the ranker always yields a
+ * pick.
+ */
+export interface SwitchAudioTrackConfig extends TrackSwitchingSharedConfig {
+  /** `switchAudioTrack`'s chains, replacing {@link DEFAULT_AUDIO_CONSTRAINTS} / {@link DEFAULT_AUDIO_RULES}. */
+  audioConstraints?: readonly SwitchAudioTrackRule[];
+  audioRules?: readonly SwitchAudioTrackRule[];
 }
 
 /** Default initial-bandwidth value before bandwidth measurements arrive. */
@@ -767,6 +797,82 @@ export function setupTrackSwitching<
 }
 
 // ============================================================================
+// Default chains
+//
+// Each variant resolves its chains as `config?.<type>Constraints ?? DEFAULT_…`
+// and `config?.<type>Rules ?? DEFAULT_…`, mirroring `select-tracks.ts`. The
+// rule aliases name what a chain entry is for one variant: a `SelectionRule`
+// over its candidates, its lifecycle state map, and its base config. Video and
+// audio are typed over `SwitchableTrack`, the candidate shape their variants
+// infer up to (see the text variant's note); text pins `TextTrackCandidate`
+// because its terminal reads text-only fields. A rule declared against a
+// narrower state or config view (the ranker's optional `bandwidthState`, the
+// CDN rules' `getCdnId`) satisfies the alias the same way it satisfied the
+// inline chain it used to sit in.
+// ============================================================================
+
+/** A constraint or rule in `switchVideoTrack`'s chains. */
+export type SwitchVideoTrackRule = SelectionRule<
+  SwitchableTrack,
+  TrackSwitchingStateMap<'selectedVideoTrackId'>,
+  AnySlotMap,
+  TrackSwitchingConfig<'selectedVideoTrackId', SwitchableTrack>
+>;
+
+/** A constraint or rule in `switchAudioTrack`'s chains. */
+export type SwitchAudioTrackRule = SelectionRule<
+  SwitchableTrack,
+  TrackSwitchingStateMap<'selectedAudioTrackId'>,
+  AnySlotMap,
+  TrackSwitchingConfig<'selectedAudioTrackId', SwitchableTrack>
+>;
+
+/** A constraint or rule in `switchTextTrack`'s chains. */
+export type SwitchTextTrackRule = SelectionRule<
+  TextTrackCandidate,
+  TrackSwitchingStateMap<'selectedTextTrackId'>,
+  AnySlotMap,
+  TrackSwitchingConfig<'selectedTextTrackId', TextTrackCandidate>
+>;
+
+/** Default video pre-pass: failed CDNs, capability, codec-family stickiness. */
+export const DEFAULT_VIDEO_CONSTRAINTS: readonly SwitchVideoTrackRule[] = [
+  excludeFailedCdns,
+  excludeUnplayableTracks,
+  stickToSelectedCodecs,
+];
+
+/** Default video chain: user intent, codec family, active CDN, player resolution, then the bandwidth ranker. */
+export const DEFAULT_VIDEO_RULES: readonly SwitchVideoTrackRule[] = [
+  filterByUserSelection,
+  preferCodecFamilies,
+  preferActiveCdn,
+  playerResolutionCap,
+  rankByBandwidth,
+];
+
+/** Default audio pre-pass: the video one over audio candidates. */
+export const DEFAULT_AUDIO_CONSTRAINTS: readonly SwitchAudioTrackRule[] = [
+  excludeFailedCdns,
+  excludeUnplayableTracks,
+  stickToSelectedCodecs,
+];
+
+/** Default audio chain: the video one without the player-resolution cap. */
+export const DEFAULT_AUDIO_RULES: readonly SwitchAudioTrackRule[] = [
+  filterByUserSelection,
+  preferCodecFamilies,
+  preferActiveCdn,
+  rankByBandwidth,
+];
+
+/** Default text pre-pass: failed CDNs only — an MSE codec probe is the wrong question for WebVTT. */
+export const DEFAULT_TEXT_CONSTRAINTS: readonly SwitchTextTrackRule[] = [excludeFailedCdns];
+
+/** Default text chain: the active-CDN scope; the pick itself is the text terminal's (`pickResolvedTextTrack`). */
+export const DEFAULT_TEXT_RULES: readonly SwitchTextTrackRule[] = [preferActiveCdn];
+
+// ============================================================================
 // Variant: switchVideoTrack — bandwidth-driven ABR
 // ============================================================================
 
@@ -794,11 +900,11 @@ export const switchVideoTrack = defineBehavior({
       state,
       config: {
         ...config,
-        selectionKey: 'selectedVideoTrackId',
-        userSelectionKey: 'userVideoTrackSelection',
+        selectionKey: VIDEO_TYPE_CONFIG.selectedKey,
+        userSelectionKey: VIDEO_TYPE_CONFIG.userSelectionKey,
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
-        constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
-        rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, playerResolutionCap, rankByBandwidth],
+        constraints: config?.[VIDEO_TYPE_CONFIG.constraintsKey] ?? DEFAULT_VIDEO_CONSTRAINTS,
+        rules: config?.[VIDEO_TYPE_CONFIG.rulesKey] ?? DEFAULT_VIDEO_RULES,
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),
@@ -828,27 +934,23 @@ export const switchAudioTrack = defineBehavior({
     ...otherProps
   }: {
     state: TrackSwitchingStateMap<'selectedAudioTrackId'>;
-    // Shares the video config shape so the engine config spreads through (CDN
-    // derivation + any future cross-cutting fields).
-    config?: SwitchVideoTrackConfig;
+    config?: SwitchAudioTrackConfig;
   }) =>
     setupTrackSwitching({
       ...otherProps,
       state,
       config: {
-        // Spread engine config so cross-cutting fields (`getCdnId`, future shared
-        // tuning) flow through like they do for video, then override the per-type
-        // wiring. Video-only ABR tuning (`quality`/`bandwidth`/`initialBandwidth`)
-        // rides along into the shared `rankByBandwidth` too; harmless since audio
-        // has no `bandwidthState` to act on it and the ranker always yields a pick.
-        // FOLLOW-UP: a shared config type for the genuinely cross-cutting fields
-        // would keep video-only tuning out of audio entirely (CJP).
+        // Spread engine config so the shared fields (`getCdnId`, `canPlayTrack`,
+        // `preferredCodecs`) flow through like they do for video, then override
+        // the per-type wiring. The engine's video-only ABR tuning rides along at
+        // runtime into the shared `rankByBandwidth`; harmless, since audio has no
+        // `bandwidthState` to act on it (see `SwitchAudioTrackConfig`).
         ...config,
-        selectionKey: 'selectedAudioTrackId',
-        userSelectionKey: 'userAudioTrackSelection',
+        selectionKey: AUDIO_TYPE_CONFIG.selectedKey,
+        userSelectionKey: AUDIO_TYPE_CONFIG.userSelectionKey,
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
-        constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
-        rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, rankByBandwidth],
+        constraints: config?.[AUDIO_TYPE_CONFIG.constraintsKey] ?? DEFAULT_AUDIO_CONSTRAINTS,
+        rules: config?.[AUDIO_TYPE_CONFIG.rulesKey] ?? DEFAULT_AUDIO_RULES,
         noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
       },
     }),
@@ -866,6 +968,9 @@ export const switchAudioTrack = defineBehavior({
 export interface SwitchTextTrackConfig extends TextSelectionConfig {
   /** Override CDN-id derivation (shared by the failed-CDN constraint + active-CDN scope). */
   getCdnId?: GetCdnId;
+  /** `switchTextTrack`'s chains, replacing {@link DEFAULT_TEXT_CONSTRAINTS} / {@link DEFAULT_TEXT_RULES}. */
+  textConstraints?: readonly SwitchTextTrackRule[];
+  textRules?: readonly SwitchTextTrackRule[];
 }
 
 /**
@@ -903,10 +1008,10 @@ export const switchTextTrack = defineBehavior({
       state,
       config: {
         ...config,
-        selectionKey: 'selectedTextTrackId',
+        selectionKey: TEXT_TYPE_CONFIG.selectedKey,
         getTracks: (presentation) => getTracksByType(presentation, 'text') as readonly TextTrackCandidate[],
-        constraints: [excludeFailedCdns],
-        rules: [preferActiveCdn],
+        constraints: config?.[TEXT_TYPE_CONFIG.constraintsKey] ?? DEFAULT_TEXT_CONSTRAINTS,
+        rules: config?.[TEXT_TYPE_CONFIG.rulesKey] ?? DEFAULT_TEXT_RULES,
         resolveSelection: pickResolvedTextTrack,
       },
     }),
