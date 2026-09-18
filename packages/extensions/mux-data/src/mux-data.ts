@@ -1,5 +1,7 @@
-import { isEngineAdapter } from '@videojs/media';
-import type { AnyHTMLMediaAdapter } from '@videojs/media/dom';
+import type { PlayerExtension, PlayerTarget } from '@videojs/core/dom';
+import { isEngineAdapter, isMediaSourceCapable, type Media } from '@videojs/media';
+import { getMediaAdapter, getMediaElement } from '@videojs/media/dom';
+import { listen } from '@videojs/utils/dom';
 import Mux from 'mux-embed';
 
 import { getPlayerVersion } from './env';
@@ -24,14 +26,28 @@ const MUX_VIDEO_DOMAIN = 'mux.com';
 type LiveMuxMonitor = Extract<NonNullable<HTMLVideoElement['mux']>, { deleted: false }>;
 
 /**
- * The JS engine behind `adapter`, if it fronts one. Engines are unrelated types (an hls.js instance, a dash.js player,
- * an SPF composition); which of them Mux Data can hook is decided by {@link toMuxDataEngineOptions}, not here.
+ * The JS engine behind `media`, if it (or the adapter it fronts) drives one. Engines are unrelated types (an hls.js
+ * instance, a dash.js player, an SPF composition); which of them Mux Data can hook is decided by
+ * {@link toMuxDataEngineOptions}, not here.
  */
-function engineOf(adapter: AnyHTMLMediaAdapter): unknown {
+function engineOf(media: Media): unknown {
+  const adapter = getMediaAdapter(media) ?? media;
+
   return isEngineAdapter(adapter) ? adapter.engine : null;
 }
 
-export class MuxDataExtension implements MuxDataExtensionProps {
+/** The media's source URL as the player sees it (an adapter reports its HLS URL, not the `blob:` it plays). */
+function srcOf(media: Media): string {
+  return isMediaSourceCapable(media) ? media.src : '';
+}
+
+/**
+ * Player extension that monitors the player's media with the Mux Data SDK.
+ *
+ * The SDK needs the native element, so a custom media element or adapter is resolved to the `<video>` it fronts; a
+ * plain `<video>` is monitored directly. Source and engine changes are read from the media the player attached.
+ */
+export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension {
   static readonly defaultProps: MuxDataExtensionProps = {
     MuxDataSdk: Mux,
     beaconCollectionDomain: undefined,
@@ -55,7 +71,8 @@ export class MuxDataExtension implements MuxDataExtensionProps {
   #playerSoftwareName: string | undefined = MuxDataExtension.defaultProps.playerSoftwareName;
   #playerSoftwareVersion: string | undefined = MuxDataExtension.defaultProps.playerSoftwareVersion;
   #playerInitTime: number | undefined = this.#generatePlayerInitTime();
-  #adapter: AnyHTMLMediaAdapter | null = null;
+  #media: Media | null = null;
+  #stopListening: (() => void) | null = null;
   #target: HTMLVideoElement | null = null;
   // What the live monitor currently reflects, so a sync can react only to what changed.
   #monitoredSrc: string | null = null;
@@ -68,33 +85,26 @@ export class MuxDataExtension implements MuxDataExtensionProps {
     Object.assign(this, props);
   }
 
-  setAdapter(adapter: AnyHTMLMediaAdapter) {
-    if (this.#adapter === adapter) return;
+  attach({ media }: PlayerTarget) {
+    if (this.#media === media) return;
 
-    this.#adapter?.removeEventListener('loadstart', this.#syncMonitor);
-    this.#adapter = adapter;
-    this.#adapter.addEventListener('loadstart', this.#syncMonitor);
+    this.detach();
+    this.#media = media;
+    this.#stopListening = listen(media, 'loadstart', this.#syncMonitor);
 
-    this.#syncMonitor();
-  }
-
-  attach(target: HTMLVideoElement) {
-    if (this.#target === target) return;
-
-    this.#destroyMonitor();
-    this.#target = target;
     this.#syncMonitor();
   }
 
   detach() {
     this.#destroyMonitor();
+    this.#stopListening?.();
+    this.#stopListening = null;
+    this.#media = null;
     this.#target = null;
   }
 
   destroy() {
     this.detach();
-    this.#adapter?.removeEventListener('loadstart', this.#syncMonitor);
-    this.#adapter = null;
   }
 
   get MuxDataSdk() {
@@ -224,9 +234,10 @@ export class MuxDataExtension implements MuxDataExtensionProps {
 
   /**
    * Reconcile the monitor with the media's current state. Called on every `loadstart`, but the event is only a hint:
-   * the media's `src` and `engine` are compared against what the monitor already reflects, so a same-video `load()`
-   * (remote playback engaging, an engine rebuild, a MediaSource re-attach) is a no-op, a video change becomes a
-   * `videochange` on the live monitor, and only a missing monitor starts a new one.
+   * the media's element, `src`, and `engine` are compared against what the monitor already reflects, so a same-video
+   * `load()` (remote playback engaging, an engine rebuild, a MediaSource re-attach) is a no-op, a video change becomes
+   * a `videochange` on the live monitor, and only a missing monitor — or a new element behind the media — starts a new
+   * one.
    */
   #syncMonitor = () => {
     void this.#sync();
@@ -239,20 +250,29 @@ export class MuxDataExtension implements MuxDataExtensionProps {
     await (this.#pendingSync = Promise.resolve());
     this.#pendingSync = null;
 
-    const target = this.#target;
-    const adapter = this.#adapter;
-    if (!this.MuxDataSdk || !target || !adapter) return;
+    const media = this.#media;
+    if (!media) return;
+
+    // A custom media element or adapter can swap the element it fronts without the player noticing.
+    const target = getMediaElement(media) as HTMLVideoElement | null;
+
+    if (target !== this.#target) {
+      this.#destroyMonitor();
+      this.#target = target;
+    }
+
+    if (!this.MuxDataSdk || !target) return;
 
     const mux = target.mux;
 
     if (!mux || mux.deleted) {
-      this.#monitor(target, adapter);
+      this.#monitor(target, media);
       return;
     }
 
-    this.#syncEngineHook(mux, engineOf(adapter));
+    this.#syncEngineHook(mux, engineOf(media));
 
-    const src = adapter.src;
+    const src = srcOf(media);
     if (src === this.#monitoredSrc) return;
 
     // A cleared source isn't a new video (the element's own events wind the view down), and it isn't tracked: the
@@ -265,11 +285,11 @@ export class MuxDataExtension implements MuxDataExtensionProps {
 
     // A monitor started before the first source has its pending view: name the video rather than change it.
     if (isFirstSource) {
-      mux.updateData(this.#videoData(adapter));
+      mux.updateData(this.#videoData(media));
       return;
     }
 
-    mux.emit('videochange', this.#videoData(adapter));
+    mux.emit('videochange', this.#videoData(media));
   }
 
   /** Keep engine telemetry hooked to the engine actually playing, without restarting the monitor. */
@@ -295,7 +315,7 @@ export class MuxDataExtension implements MuxDataExtensionProps {
     this.#engineHook = options.hlsjs ? 'hlsjs' : options.dashjs ? 'dashjs' : null;
   }
 
-  #monitor(target: HTMLVideoElement, adapter: AnyHTMLMediaAdapter) {
+  #monitor(target: HTMLVideoElement, media: Media) {
     const {
       debug,
       beaconCollectionDomain,
@@ -306,10 +326,11 @@ export class MuxDataExtension implements MuxDataExtensionProps {
       playerInitTime: player_init_time,
     } = this;
 
-    const engineOptions = toMuxDataEngineOptions(engineOf(adapter));
+    const engine = engineOf(media);
+    const engineOptions = toMuxDataEngineOptions(engine);
 
-    this.#monitoredSrc = adapter.src;
-    this.#trackEngine(engineOf(adapter), engineOptions);
+    this.#monitoredSrc = srcOf(media);
+    this.#trackEngine(engine, engineOptions);
 
     this.MuxDataSdk?.monitor(target, {
       debug,
@@ -324,7 +345,7 @@ export class MuxDataExtension implements MuxDataExtensionProps {
         ...(player_software_name ? { player_software: player_software_name } : {}),
         ...(player_software_version ? { player_software_version } : {}),
         ...(player_init_time ? { player_init_time } : {}),
-        ...this.#videoData(adapter),
+        ...this.#videoData(media),
       },
     });
   }
@@ -333,10 +354,10 @@ export class MuxDataExtension implements MuxDataExtensionProps {
    * The video-scoped beacon data: the session id, the derived `video_id`, and the caller's metadata, which may override
    * both. Built fresh per use — the caller's `metadata` object is never mutated.
    */
-  #videoData(adapter: AnyHTMLMediaAdapter) {
+  #videoData(media: Media) {
     const metadata = this.metadata ?? {};
     const view_session_id = metadata.view_session_id ?? (this.#viewSessionId ??= this.MuxDataSdk?.utils.generateUUID());
-    const video_id = toVideoId({ metadata, src: adapter.src });
+    const video_id = toVideoId({ metadata, src: srcOf(media) });
 
     const derived: NonNullable<MuxDataOptions['data']> = {};
 

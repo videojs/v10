@@ -1,4 +1,6 @@
-import { addMediaExtension, type HTMLMediaTargetLike, HTMLVideoAdapter } from '@videojs/media/dom';
+import { createPlayerMedia } from '@videojs/core/dom';
+import type { Media } from '@videojs/media';
+import type { HTMLMediaTargetLike } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastProvider } from '../google-cast-provider';
@@ -100,32 +102,36 @@ describe('GoogleCastProvider', () => {
 });
 
 describe('GoogleCastExtension', () => {
-  it('loads the cast framework when the host remote is read while attached', () => {
+  it('loads the cast framework when the player reads remote while attached', () => {
     vi.stubGlobal('chrome', {});
 
-    const host = new HTMLVideoAdapter();
     const { target } = createTarget();
+    const googleCast = new GoogleCastExtension();
 
-    host.attach(target as Parameters<HTMLVideoAdapter['attach']>[0]);
-
-    addMediaExtension(host, new GoogleCastExtension());
+    googleCast.attach({ media: target as Media, container: null });
     expect(ensureCastFramework).not.toHaveBeenCalled();
 
-    // The component's override must expose `remote` as an accessor so host
+    // The extension's override must expose `remote` as an accessor so player
     // reads reach the provider's lazy-loading getter.
-    void host.remote;
+    const media = createPlayerMedia(target as Media, () => [googleCast]);
+
+    void (media as HTMLMediaTargetLike).remote;
 
     expect(ensureCastFramework).toHaveBeenCalled();
   });
 
-  it('does not load the cast framework when the host remote is read before attach', () => {
+  it('does not load the cast framework when remote is read after detach', () => {
     vi.stubGlobal('chrome', {});
 
-    const host = new HTMLVideoAdapter();
+    const { target } = createTarget();
+    const googleCast = new GoogleCastExtension();
 
-    addMediaExtension(host, new GoogleCastExtension());
+    googleCast.attach({ media: target as Media, container: null });
+    googleCast.detach();
 
-    void host.remote;
+    const media = createPlayerMedia(target as Media, () => [googleCast]);
+
+    void (media as HTMLMediaTargetLike).remote;
 
     expect(ensureCastFramework).not.toHaveBeenCalled();
   });
