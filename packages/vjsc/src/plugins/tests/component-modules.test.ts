@@ -1,17 +1,19 @@
-import { mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { realpathSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
+import { useTemporaryDirectories } from '../../tests/temp-directory';
 import { moduleFilename } from '../../utils/module-id';
 import { componentModulesPlugin } from '../component-modules';
 
+const temporaryDirectories = useTemporaryDirectories();
+
 describe('componentModulesPlugin', () => {
   it('propagates the full transform query through relative source dependencies', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-component-modules-'));
+    const root = temporaryDirectories.createSync('vjsc-component-modules-');
     const entry = join(root, 'entry.tsx');
     const child = join(root, 'child.tsx');
     const model = join(root, 'model.ts');
@@ -55,7 +57,7 @@ describe('componentModulesPlugin', () => {
   });
 
   it('asks the selector once per module id', async () => {
-    const root = realpathSync(mkdtempSync(join(tmpdir(), 'vjsc-component-modules-')));
+    const root = realpathSync(temporaryDirectories.createSync('vjsc-component-modules-'));
     const entry = join(root, 'entry.tsx');
 
     writeFileSync(join(root, 'first.tsx'), `export const First = () => <b />;`);

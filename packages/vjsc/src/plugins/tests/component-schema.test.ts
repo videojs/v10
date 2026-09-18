@@ -1,5 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
@@ -7,10 +6,13 @@ import { build } from 'vite-plus/pack';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { vjscComponentSchemaPlugin } from '..';
+import { useTemporaryDirectories } from '../../tests/temp-directory';
+
+const temporaryDirectories = useTemporaryDirectories();
 
 describe('vjscComponentSchemaPlugin', () => {
   it('creates a schema entry directly from inline bundler configuration', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-component-schema-plugin-'));
+    const root = temporaryDirectories.createSync('vjsc-component-schema-plugin-');
     const sourceDir = join(root, 'play-button');
     const source = join(sourceDir, 'play-button-component.ts');
     const existing = join(root, 'existing.ts');
@@ -41,7 +43,7 @@ describe('vjscComponentSchemaPlugin', () => {
   });
 
   it('provides its companion declaration to the host build', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-component-schema-plugin-'));
+    const root = temporaryDirectories.createSync('vjsc-component-schema-plugin-');
     const sourceDir = join(root, 'play-button');
 
     mkdirSync(sourceDir);

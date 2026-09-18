@@ -1,10 +1,12 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { useTemporaryDirectories } from '../../tests/temp-directory';
 import { createResolvedStyles, loadStyleModule } from '../resolved';
+
+const temporaryDirectories = useTemporaryDirectories();
 
 async function writeStyleModule(directory: string, name: string, className: string, utilities: string) {
   const file = join(directory, `${name}.styles.ts`);
@@ -19,7 +21,7 @@ async function writeStyleModule(directory: string, name: string, className: stri
 
 describe('loadStyleModule', () => {
   it('normalizes one module independently of the set that imports it', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'vjsc-resolved-'));
+    const directory = await temporaryDirectories.create('vjsc-resolved-');
     const button = await loadStyleModule(await writeStyleModule(directory, 'button', 'media-button', 'grid p-0'));
 
     expect([...button.rules.keys()]).toEqual(['root']);
@@ -36,7 +38,7 @@ describe('loadStyleModule', () => {
 
 describe('createResolvedStyles', () => {
   it('merges loaded modules and reuses their rule maps', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'vjsc-resolved-'));
+    const directory = await temporaryDirectories.create('vjsc-resolved-');
     const button = await loadStyleModule(await writeStyleModule(directory, 'button', 'media-button', 'grid'));
     const icon = await loadStyleModule(await writeStyleModule(directory, 'icon', 'media-icon', 'size-4'));
     const merged = createResolvedStyles([button, icon]);
@@ -48,7 +50,7 @@ describe('createResolvedStyles', () => {
   });
 
   it('rejects one class defined by two modules in the same set', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'vjsc-resolved-'));
+    const directory = await temporaryDirectories.create('vjsc-resolved-');
     const button = await loadStyleModule(await writeStyleModule(directory, 'button', 'media-button', 'grid'));
     const copy = await loadStyleModule(await writeStyleModule(directory, 'copy', 'media-button', 'flex'));
 

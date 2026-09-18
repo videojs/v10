@@ -6,6 +6,5 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/tests/**"]
+  "include": ["src/**/*.ts"]
 }
