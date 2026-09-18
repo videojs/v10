@@ -29,7 +29,7 @@ describe('parseInstallationSearch', () => {
     expect(selection.useCase).toBe('live-audio');
     expect(selection.renderer).toBe('mux-audio');
     expect(selection.skin).toBe('audio');
-    expect(selection.installMethod).toBe('cdn');
+    expect(selection.installMethod).toBe('npm');
   });
 
   it('keeps the source url verbatim', () => {
@@ -51,7 +51,7 @@ describe('serializeInstallationSearch', () => {
         skin: 'minimal-video',
         renderer: 'hls',
         sourceUrl: '',
-        installMethod: 'cdn',
+        installMethod: 'npm',
       })
     ).toBe('?preset=live-video&skin=minimal');
   });

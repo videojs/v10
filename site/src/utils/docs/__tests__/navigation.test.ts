@@ -4,6 +4,7 @@ import { currentFramework } from '@/stores/preferences';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
+  findVisibleActiveSidebarLink,
   initializeDocsNavigation,
   savePageScrollForNavigation,
   syncFrameworkPreferenceFromUrl,
@@ -72,6 +73,7 @@ describe('framework navigation scroll', () => {
     window.history.replaceState(null, '', '/');
     document.documentElement.removeAttribute('data-base-ui-scroll-locked');
     document.body.scrollTop = 0;
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 
@@ -84,6 +86,25 @@ describe('framework navigation scroll', () => {
       url: '/docs/framework/react/guides/installation',
       scrollY: 275,
     });
+  });
+
+  it('restores against the visible active link when another framework sidebar is hidden', () => {
+    document.body.innerHTML = `
+      <aside id="docs-sidebar">
+        <div hidden><a aria-current="page">React installation</a></div>
+        <div><a aria-current="page">HTML installation</a></div>
+      </aside>
+    `;
+    const aside = document.getElementById('docs-sidebar')!;
+    const [hiddenLink, visibleLink] = aside.querySelectorAll<HTMLElement>('a');
+    const visibleRect = visibleLink!.getBoundingClientRect();
+    const hiddenRects = { length: 0, item: () => null } satisfies DOMRectList;
+    const visibleRects = { 0: visibleRect, length: 1, item: () => visibleRect } satisfies DOMRectList;
+
+    vi.spyOn(hiddenLink!, 'getClientRects').mockReturnValue(hiddenRects);
+    vi.spyOn(visibleLink!, 'getClientRects').mockReturnValue(visibleRects);
+
+    expect(findVisibleActiveSidebarLink(aside)).toBe(visibleLink);
   });
 
   it('saves the locked body position while a Base UI popup is open', () => {

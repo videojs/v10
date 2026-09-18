@@ -1,8 +1,8 @@
 ---
-import Aside from '@/components/Aside.astro';
-import DocsLink from '@/components/docs/DocsLink.astro';
 import P from '@/components/typography/P.astro';
 import { isInstallationRouteSegment } from '@/utils/installation/routes';
+import ShadcnFrameworkCase from '../registry/ShadcnFrameworkCase.astro';
+import InstallationMigrationNotice from './InstallationMigrationNotice.astro';
 import ReleaseCandidateNotice from './ReleaseCandidateNotice.astro';
 
 const route = Astro.params.framework;
@@ -66,10 +66,17 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
 
 <ReleaseCandidateNotice />
 
-<Aside type="tip" title="Coming from another player?">
-  Follow the migration guide for <DocsLink slug="guides/migrate-from-video-js-8">Video.js 8</DocsLink>, <DocsLink
-    slug="guides/migrate-from-mux-player">Mux Player</DocsLink
-  >, <DocsLink slug="guides/migrate-from-plyr">Plyr</DocsLink>, or <DocsLink
-    slug="guides/migrate-from-media-chrome">Media Chrome</DocsLink
-  >. Each maps your existing setup onto Video.js v10 instead of starting from scratch.
-</Aside>
+{
+  route === 'shadcn' ? (
+    <>
+      <ShadcnFrameworkCase framework="react" llmsHeadingLevel={2}>
+        <InstallationMigrationNotice framework="react" />
+      </ShadcnFrameworkCase>
+      <ShadcnFrameworkCase framework="html" llmsHeadingLevel={2}>
+        <InstallationMigrationNotice framework="html" />
+      </ShadcnFrameworkCase>
+    </>
+  ) : (
+    <InstallationMigrationNotice />
+  )
+}
