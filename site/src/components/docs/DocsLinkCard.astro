@@ -15,19 +15,23 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
 const { slug, anchor, description, class: className } = Astro.props;
 
 const routeFramework = Astro.params.framework;
-const paramFramework = resolveDocsFramework(routeFramework);
-if (routeFramework && !paramFramework) throw new Error(`Invalid framework param "${routeFramework}".`);
+const registryFrameworkSelection = routeFramework === 'shadcn';
+const paramFramework = registryFrameworkSelection ? null : resolveDocsFramework(routeFramework);
+
+if (routeFramework && !registryFrameworkSelection && !paramFramework) {
+  throw new Error(`Invalid framework param "${routeFramework}".`);
+}
 
 if (!findGuideBySlug(slug)) {
   throw new Error(`No guide found with slug "${slug}"`);
 }
 
-// Outside the docs there is no framework in context, so the href is the agnostic
-// /docs/<slug> form. `data-docs-slug` lets ResolveDocsLinks upgrade it on the client.
-const contextFramework = paramFramework;
+// The query-controlled Shadcn route uses React as a valid server fallback. `data-docs-slug` lets ResolveDocsLinks
+// follow the live React or HTML preference on the client; outside docs it upgrades the agnostic fallback the same way.
+const contextFramework = paramFramework ?? (registryFrameworkSelection ? 'react' : null);
 const url = resolveDocsHref({ slug, framework: contextFramework });
 const href = anchor ? `${url}#${anchor}` : url;
-const docsSlug = contextFramework ? undefined : slug;
+const docsSlug = paramFramework ? undefined : slug;
 ---
 
 <div

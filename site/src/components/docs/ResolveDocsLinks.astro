@@ -8,15 +8,7 @@
 ---
 
 <script>
-  import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
-  import { resolveDocsHref } from '@/utils/docs/routing';
+  import { initializeDocsLinks } from '@/utils/docs/links';
 
-  const framework = getFrameworkPreferenceClient();
-
-  for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[data-docs-slug]')) {
-    const slug = anchor.dataset.docsSlug || null;
-    const hash = anchor.hash;
-
-    anchor.href = resolveDocsHref({ slug, framework }) + hash;
-  }
+  initializeDocsLinks();
 </script>

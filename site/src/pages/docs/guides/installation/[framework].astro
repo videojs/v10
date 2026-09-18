@@ -3,57 +3,12 @@ import type { CollectionEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 import DocsPage from '@/components/docs/DocsPage.astro';
 import type { SupportedFramework } from '@/types/docs';
+import { INSTALLATION_ROUTES } from '@/utils/installation/routes';
 
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
-  const installationRoutes = {
-    react: {
-      description: 'Install Video.js in React and build an accessible, customizable video player with composable controls',
-      framework: 'react',
-      frameworks: ['react'],
-      slug: 'guides/installation',
-    },
-    html: {
-      description: 'Install Video.js with HTML custom elements and build an accessible, customizable video player',
-      framework: 'html',
-      frameworks: ['html'],
-      slug: 'guides/installation',
-    },
-    vue: {
-      description: 'Install Video.js in Vue or Nuxt and build a video player with HTML custom elements',
-      framework: 'html',
-      frameworks: ['html'],
-      slug: 'guides/installation-vue',
-    },
-    svelte: {
-      description: 'Install Video.js in Svelte or SvelteKit and build a video player with HTML custom elements',
-      framework: 'html',
-      frameworks: ['html'],
-      slug: 'guides/installation-svelte',
-    },
-    shadcn: {
-      description: 'Use the Video.js Shadcn registry to add editable skin source and build a React or HTML video player',
-      framework: 'react',
-      frameworks: ['react', 'html'],
-      slug: 'guides/installation-shadcn',
-    },
-    cdn: {
-      description: 'Load Video.js from jsDelivr and build an HTML video player without a package manager',
-      framework: 'html',
-      frameworks: ['html'],
-      slug: 'guides/cdn',
-    },
-  } as const satisfies Record<
-    string,
-    {
-      description: string;
-      framework: SupportedFramework;
-      frameworks: readonly SupportedFramework[];
-      slug: string;
-    }
-  >;
 
-  return Object.entries(installationRoutes).map(([route, config]) => {
+  return Object.entries(INSTALLATION_ROUTES).map(([route, config]) => {
     const doc = docs.find((entry) => entry.id === config.slug);
     if (!doc) throw new Error(`Missing installation document: ${config.slug}`);
 

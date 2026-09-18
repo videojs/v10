@@ -1,16 +1,10 @@
 import { sidebar as defaultSidebar } from '@/docs.config';
 import type { Sidebar, SupportedFramework } from '@/types/docs';
-import { DEFAULT_FRAMEWORK, isValidFramework } from '@/types/docs';
+import { DEFAULT_FRAMEWORK, isValidFramework, resolveDocsFramework } from '@/types/docs';
 
 import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 
-export const CANONICAL_INSTALLATION_SLUGS = new Set([
-  'guides/installation',
-  'guides/installation-vue',
-  'guides/installation-svelte',
-  'guides/installation-shadcn',
-  'guides/cdn',
-]);
+export { CANONICAL_INSTALLATION_SLUGS } from '@/utils/installation/routes';
 
 /** Build the public URL for a guide, including the canonical installation routes. */
 export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): string {
@@ -52,11 +46,26 @@ export function buildAgnosticDocsUrl(guideSlug?: string | null): string {
   return guideSlug ? `/docs/${guideSlug}` : '/docs';
 }
 
-/** Read the explicit framework segment from a docs URL. Framework-agnostic and invalid paths return null. */
+/** Read the framework selected by an explicit docs route. Framework-agnostic and invalid paths return null. */
 export function getFrameworkFromDocsPath(pathname: string): SupportedFramework | null {
   const framework = pathname.match(/^\/docs\/framework\/([^/]+)(?:\/|$)/)?.[1];
+  if (isValidFramework(framework)) return framework;
 
-  return isValidFramework(framework) ? framework : null;
+  const installationRoute = pathname.match(/^\/docs\/guides\/installation\/([^/]+)(?:\/|$)/)?.[1];
+  if (installationRoute === 'shadcn') return null;
+
+  return resolveDocsFramework(installationRoute);
+}
+
+/** Read the selected framework from a docs URL, including Shadcn's query-controlled source framework. */
+export function getFrameworkFromDocsUrl(url: URL): SupportedFramework | null {
+  if (url.pathname.replace(/\/$/, '') === '/docs/guides/installation/shadcn') {
+    const framework = url.searchParams.get('framework');
+
+    return isValidFramework(framework) ? framework : null;
+  }
+
+  return getFrameworkFromDocsPath(url.pathname);
 }
 
 /** Input for resolveDocsHref */

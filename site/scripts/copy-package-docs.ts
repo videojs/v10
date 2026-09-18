@@ -12,6 +12,12 @@ import {
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  getInstallationRoutePath,
+  INSTALLATION_ROUTES,
+  INSTALLATION_ROUTE_SEGMENTS,
+} from '../src/utils/installation/routes';
+
 const scriptPath = fileURLToPath(import.meta.url);
 const siteDirectory = resolve(dirname(scriptPath), '..');
 const workspaceRoot = resolve(siteDirectory, '..');
@@ -33,19 +39,16 @@ export interface PackageDocumentationOptions {
 
 const DOCS_SITE_BASE = 'https://videojs.org';
 
+function installationDocuments(framework: Framework): ReadonlyArray<readonly [source: string, destination: string]> {
+  return INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
+    INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
+  ).map((route) => [`${getInstallationRoutePath(route).slice(1)}.md`, `${INSTALLATION_ROUTES[route].slug}.md`]);
+}
+
 const INSTALLATION_DOCUMENTS = {
-  html: [
-    ['docs/guides/installation/html.md', 'guides/installation.md'],
-    ['docs/guides/installation/vue.md', 'guides/installation-vue.md'],
-    ['docs/guides/installation/svelte.md', 'guides/installation-svelte.md'],
-    ['docs/guides/installation/shadcn.md', 'guides/installation-shadcn.md'],
-    ['docs/guides/installation/cdn.md', 'guides/cdn.md'],
-  ],
-  react: [
-    ['docs/guides/installation/react.md', 'guides/installation.md'],
-    ['docs/guides/installation/shadcn.md', 'guides/installation-shadcn.md'],
-  ],
-} as const satisfies Record<Framework, readonly (readonly [source: string, destination: string])[]>;
+  html: installationDocuments('html'),
+  react: installationDocuments('react'),
+} satisfies Record<Framework, readonly (readonly [source: string, destination: string])[]>;
 
 function isPackageDocsTarget(value: string): value is PackageDocsTarget {
   return value === 'cli' || value in PACKAGE_NAMES;

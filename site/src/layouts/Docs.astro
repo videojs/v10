@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import { type CollectionEntry, getCollection } from 'astro:content';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
+import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
 import Footer from '@/components/FooterDocs.astro';
@@ -56,6 +57,7 @@ const docsSidebarId = 'docs-sidebar';
     <MarkdownAlternate />
     <slot name="head" slot="head" />
   </Fragment>
+  <PreferenceUpdater client:idle currentFramework={framework} />
   <div
     data-docs-layout
     class:list={[
@@ -75,7 +77,6 @@ const docsSidebarId = 'docs-sidebar';
         framework={framework}
         docTitles={docTitles}
         docStabilities={docStabilities}
-        updateFrameworkPreference={!registryFrameworkSelection}
       >
         <Selectors
           client:idle
@@ -96,7 +97,6 @@ const docsSidebarId = 'docs-sidebar';
         docStabilities={docStabilities}
         class="flex-1"
         animateIndicator
-        updateFrameworkPreference={!registryFrameworkSelection}
       >
         <Selectors
           client:idle

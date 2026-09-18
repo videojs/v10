@@ -31,6 +31,26 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
+  it('synchronizes canonical installation routes', () => {
+    currentFramework.set('react');
+    document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
+
+    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/cdn'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('synchronizes the query-controlled Shadcn framework', () => {
+    currentFramework.set('react');
+    document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
+
+    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
   it('does not change the preference for a framework-agnostic route', () => {
     currentFramework.set('html');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
