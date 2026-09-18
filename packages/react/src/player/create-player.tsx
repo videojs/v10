@@ -5,6 +5,8 @@ import {
   type AudioPlayerStore,
   combinePlayerFeatureConfigs,
   type InferPlayerConfig,
+  type PlayerExtension,
+  PlayerExtensionHost,
   type PlayerFeatureConfig,
   type PlayerStore,
   type PlayerTarget,
@@ -18,7 +20,7 @@ import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import { pick } from '@videojs/utils/object';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { PlayerContextProvider, useMedia, usePlayerContext } from './context';
@@ -113,6 +115,11 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
 
+    // Re-attaches the store to the current target; set by the attach effect below while a target is attached.
+    const reattach = useRef<(() => void) | null>(null);
+    const [extensions] = useState(() => new PlayerExtensionHost(() => reattach.current?.()));
+    const registerExtension = useCallback((extension: PlayerExtension) => extensions.add(extension), [extensions]);
+
     useDestroy(store);
 
     // Sync committed configuration props to the existing store.
@@ -145,10 +152,32 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
         return;
       }
 
-      return store.attach({ media, container });
-    }, [media, container, store]);
+      // Extensions attach before the store so their overrides are in place when
+      // features first read the media; the store sees the media through their facade.
+      const target: PlayerTarget = { media, container };
 
-    const value = useMemo(() => ({ store, media, setMedia, container, setContainer }), [store, media, container]);
+      extensions.attach(target);
+
+      let detach = store.attach({ media: extensions.wrap(media), container });
+
+      // Features hold members read at attach time (such as `remote`), so an
+      // extension added or removed later re-attaches the store to the same target.
+      reattach.current = () => {
+        detach();
+        detach = store.attach({ media: extensions.wrap(media), container });
+      };
+
+      return () => {
+        reattach.current = null;
+        detach();
+        extensions.detach();
+      };
+    }, [media, container, store, extensions]);
+
+    const value = useMemo(
+      () => ({ store, media, setMedia, container, setContainer, registerExtension }),
+      [store, media, container, registerExtension]
+    );
 
     return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
   }
