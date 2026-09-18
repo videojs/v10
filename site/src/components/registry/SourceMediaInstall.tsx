@@ -9,8 +9,8 @@ export default function SourceMediaInstall() {
   if (!install) return null;
 
   return (
-    <section className="mx-auto mt-16 w-full max-w-3xl" aria-labelledby="media-adapter-heading">
-      <h2 id="media-adapter-heading" className="font-display text-h3 @lg:text-h25 mb-8 leading-tight uppercase">
+    <section className="mx-auto mt-16 w-full max-w-3xl" aria-labelledby="install-the-media-adapter">
+      <h2 id="install-the-media-adapter" className="font-display text-h3 @lg:text-h25 mb-8 leading-tight uppercase">
         Install the media adapter
       </h2>
       <p className={`${shared.p} ${shared.prose}`}>
