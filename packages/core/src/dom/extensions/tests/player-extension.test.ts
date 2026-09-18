@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { PlayerTarget } from '../../player';
-import { type PlayerExtension, PlayerExtensionHost } from '../player-extension';
+import { type PlayerExtension, PlayerExtensionCoordinator } from '../player-extension';
 
 class TrackingExtension implements PlayerExtension {
   attach = vi.fn<(target: PlayerTarget) => void>();
@@ -19,92 +19,92 @@ function createTarget(): PlayerTarget {
   return { media: document.createElement('video'), container: null };
 }
 
-describe('PlayerExtensionHost', () => {
+describe('PlayerExtensionCoordinator', () => {
   it('attaches a registered extension to the current target immediately', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const target = createTarget();
     const extension = new TrackingExtension();
 
-    host.attach(target);
-    host.add(extension);
+    coordinator.attach(target);
+    coordinator.register(extension);
 
     expect(extension.attach).toHaveBeenCalledWith(target);
-    expect(host.get(TrackingExtension)).toBe(extension);
+    expect(coordinator.get(TrackingExtension)).toBe(extension);
   });
 
   it('attaches extensions registered before a target once one arrives', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const target = createTarget();
     const extension = new TrackingExtension();
 
-    host.add(extension);
+    coordinator.register(extension);
     expect(extension.attach).not.toHaveBeenCalled();
 
-    host.attach(target);
+    coordinator.attach(target);
     expect(extension.attach).toHaveBeenCalledWith(target);
   });
 
-  it('notifies on add and remove', () => {
+  it('notifies on register and release', () => {
     const onChange = vi.fn();
-    const host = new PlayerExtensionHost(onChange);
+    const coordinator = new PlayerExtensionCoordinator(onChange);
     const extension = new TrackingExtension();
 
-    const remove = host.add(extension);
+    const remove = coordinator.register(extension);
 
     expect(onChange).toHaveBeenCalledTimes(1);
 
     remove();
     expect(onChange).toHaveBeenCalledTimes(2);
-    expect(host.get(TrackingExtension)).toBeUndefined();
+    expect(coordinator.get(TrackingExtension)).toBeUndefined();
   });
 
-  it('is a no-op to add the same instance twice', () => {
+  it('is a no-op to register the same instance twice', () => {
     const onChange = vi.fn();
-    const host = new PlayerExtensionHost(onChange);
+    const coordinator = new PlayerExtensionCoordinator(onChange);
     const extension = new TrackingExtension();
 
-    host.attach(createTarget());
-    host.add(extension);
-    host.add(extension);
+    coordinator.attach(createTarget());
+    coordinator.register(extension);
+    coordinator.register(extension);
 
     expect(extension.attach).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('replaces an earlier instance of the same class and detaches it', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const first = new TrackingExtension();
     const second = new TrackingExtension();
 
-    host.attach(createTarget());
+    coordinator.attach(createTarget());
 
-    const removeFirst = host.add(first);
+    const removeFirst = coordinator.register(first);
 
-    host.add(second);
+    coordinator.register(second);
 
     expect(first.detach).toHaveBeenCalledTimes(1);
     expect(second.attach).toHaveBeenCalledTimes(1);
-    expect(host.get(TrackingExtension)).toBe(second);
+    expect(coordinator.get(TrackingExtension)).toBe(second);
 
     // A stale release callback cannot remove the newer instance.
     removeFirst();
-    expect(host.get(TrackingExtension)).toBe(second);
+    expect(coordinator.get(TrackingExtension)).toBe(second);
   });
 
   it('moves extensions between targets and ignores an unchanged one', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const extension = new TrackingExtension();
     const first = createTarget();
     const second = createTarget();
 
-    host.add(extension);
-    host.attach(first);
-    host.attach({ media: first.media, container: first.container });
+    coordinator.register(extension);
+    coordinator.attach(first);
+    coordinator.attach({ media: first.media, container: first.container });
 
     expect(extension.attach).toHaveBeenCalledTimes(1);
     expect(extension.detach).not.toHaveBeenCalled();
 
-    host.attach(second);
+    coordinator.attach(second);
 
     expect(extension.detach).toHaveBeenCalledTimes(1);
     expect(extension.attach).toHaveBeenCalledTimes(2);
@@ -112,35 +112,35 @@ describe('PlayerExtensionHost', () => {
   });
 
   it('detaches extensions without destroying them', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const extension = new TrackingExtension();
 
-    host.attach(createTarget());
-    host.add(extension);
-    host.detach();
+    coordinator.attach(createTarget());
+    coordinator.register(extension);
+    coordinator.detach();
 
     expect(extension.detach).toHaveBeenCalledTimes(1);
     expect(extension.destroy).not.toHaveBeenCalled();
 
     // Removing while detached must not detach again.
-    host.destroy();
+    coordinator.destroy();
     expect(extension.detach).toHaveBeenCalledTimes(1);
     expect(extension.destroy).not.toHaveBeenCalled();
-    expect(host.size).toBe(0);
+    expect(coordinator.size).toBe(0);
   });
 
   it('returns the media itself while no extension is registered', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const { media } = createTarget();
 
-    expect(host.wrap(media)).toBe(media);
+    expect(coordinator.wrap(media)).toBe(media);
   });
 
   it('wraps the media once an extension is registered', () => {
-    const host = new PlayerExtensionHost(() => {});
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const video = document.createElement('video');
-    const remove = host.add(new MutedExtension());
-    const wrapped = host.wrap(video);
+    const remove = coordinator.register(new MutedExtension());
+    const wrapped = coordinator.wrap(video);
 
     expect(wrapped).not.toBe(video);
     expect(wrapped.muted).toBe(true);

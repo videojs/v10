@@ -1,7 +1,7 @@
 import {
   type MediaContainer,
   type PlayerExtension,
-  PlayerExtensionHost,
+  PlayerExtensionCoordinator,
   type PlayerFeatureConfig,
   type PlayerStore,
   type PlayerTarget,
@@ -76,9 +76,9 @@ export function createPlayerElement<Store extends PlayerStore>(
     #mediaRegistrations: Registration<Media>[] = [];
     #containerRegistrations: Registration<MediaContainer>[] = [];
     #observer = new MutationObserver(() => this.#syncNativeMedia());
-    #extensions = new PlayerExtensionHost(() => this.#syncExtensions());
+    #extensions = new PlayerExtensionCoordinator(() => this.#syncExtensions());
 
-    #registerExtension = (extension: PlayerExtension): (() => void) => this.#extensions.add(extension);
+    #registerExtension = (extension: PlayerExtension): (() => void) => this.#extensions.register(extension);
 
     #registerMedia = (media: Media): (() => void) => {
       const registration = { value: media };
