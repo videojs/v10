@@ -55,7 +55,7 @@ function isPackageDocsTarget(value: string): value is PackageDocsTarget {
 }
 
 export function stripFooter(content: string): string {
-  return content.replace(/\n+---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
+  return content.replace(/\n+---\n\n(?:\w+ documentation: https:\/\/.*\n)*All documentation: https:\/\/.*\n*$/, '');
 }
 
 export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {

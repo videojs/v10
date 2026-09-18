@@ -55,6 +55,10 @@ export const CANONICAL_INSTALLATION_SLUGS: ReadonlySet<string> = new Set(
   Object.values(INSTALLATION_ROUTES).map(({ slug }) => slug)
 );
 
+export function isInstallationRouteSegment(value: string | undefined): value is InstallationRouteSegment {
+  return INSTALLATION_ROUTE_SEGMENTS.some((route) => route === value);
+}
+
 export function getInstallationRoutePath(route: InstallationRouteSegment): string {
   return `/docs/guides/installation/${route}`;
 }

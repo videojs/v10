@@ -84,7 +84,7 @@ Every JavaScript entry has a `.dev.js` sibling, such as `video.dev.js`, built wi
 
 ## Shared chunks
 
-Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink> covers it.
+Everything else at the root, including content-hashed files such as `adapter-<hash>.js`, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink> covers it.
 
 ## Related guides
 

@@ -5,8 +5,11 @@ import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
 import {
   type RegistryFramework,
   type RegistryStyling,
+  REGISTRY_STYLINGS,
   REGISTRY_TEMPLATES,
   type RegistryTemplate,
+  type RegistryTheme,
+  REGISTRY_THEMES,
   registryStylings,
   registryTemplates,
   type ShadcnRunner,
@@ -15,6 +18,7 @@ import {
 import {
   getInstallationPreset,
   type InstallMethod as CodegenInstallMethod,
+  INSTALLATION_SKIN_FLAGS,
   type Renderer,
   USE_CASES,
   type UseCase,
@@ -50,7 +54,7 @@ import {
   promptShadcnSetup,
   supportsCdnInstall,
 } from '../utils/prompts.js';
-import { replaceMarker, stripOmitMarkers } from '../utils/replace.js';
+import { replaceMarker, selectMarker, stripOmitMarkers } from '../utils/replace.js';
 
 export interface ParsedFlags {
   framework?: string;
@@ -217,7 +221,8 @@ interface ResolvedInstallationTarget {
 async function resolveInstallationTarget(
   route: InstallationTarget,
   flags: ParsedFlags,
-  interactive: boolean
+  interactive: boolean,
+  beginPrompting: () => void
 ): Promise<ResolvedInstallationTarget> {
   const explicitMethod = flags.method ? validateInstallationMethod(flags.method) : undefined;
   const legacyInstallMethod = flags['install-method']
@@ -237,6 +242,7 @@ async function resolveInstallationTarget(
       process.exit(1);
     }
 
+    beginPrompting();
     method = await promptInstallationMethod();
   }
 
@@ -265,6 +271,7 @@ async function resolveInstallationTarget(
 
     if (method === 'cdn') throw new Error('CDN installation should resolve the HTML framework automatically');
 
+    beginPrompting();
     framework = await promptInstallationFramework(method);
   }
 
@@ -281,7 +288,12 @@ async function resolveInstallationTarget(
   const packageManager = oneChoice('package managers', explicitPackageManager, legacyPackageManager);
 
   if (method === 'cdn' && packageManager) {
-    console.error('CDN installation does not use a package manager. Remove `--package-manager`.');
+    const suppliedFlags = [
+      explicitPackageManager ? '`--package-manager`' : null,
+      legacyPackageManager ? '`--install-method`' : null,
+    ].filter((flag): flag is string => flag !== null);
+
+    console.error(`CDN installation does not use a package manager. Remove ${suppliedFlags.join(' and ')}.`);
     process.exit(1);
   }
 
@@ -307,28 +319,31 @@ function validateRegistryTemplate(value: string, framework: RegistryFramework): 
 }
 
 function validateRegistryStyling(value: string, framework: RegistryFramework): RegistryStyling {
-  if (value !== 'css' && value !== 'tailwind') {
-    console.error(`Invalid Shadcn styling: "${value}". Valid options: css, tailwind`);
+  if (!REGISTRY_STYLINGS.some((candidate) => candidate === value)) {
+    console.error(`Invalid Shadcn styling: "${value}". Valid options: ${REGISTRY_STYLINGS.join(', ')}`);
     process.exit(1);
   }
 
+  // SAFETY: the membership check above narrows the external string to the shared styling union.
+  const styling = value as RegistryStyling;
   const valid = registryStylings(framework);
 
-  if (!valid.includes(value)) {
-    console.error(`Styling "${value}" is not compatible with ${framework}. Valid options: ${valid.join(', ')}`);
+  if (!valid.includes(styling)) {
+    console.error(`Styling "${styling}" is not compatible with ${framework}. Valid options: ${valid.join(', ')}`);
     process.exit(1);
   }
 
-  return value;
+  return styling;
 }
 
-function validateRegistryTheme(value: string): 'default' | 'minimal' {
-  if (value !== 'default' && value !== 'minimal') {
-    console.error(`Invalid Shadcn theme: "${value}". Valid options: default, minimal`);
+function validateRegistryTheme(value: string): RegistryTheme {
+  if (!REGISTRY_THEMES.some((candidate) => candidate === value)) {
+    console.error(`Invalid Shadcn theme: "${value}". Valid options: ${REGISTRY_THEMES.join(', ')}`);
     process.exit(1);
   }
 
-  return value;
+  // SAFETY: the membership check above narrows the external string to the shared theme union.
+  return value as RegistryTheme;
 }
 
 function toRegistryFramework(framework: InstallationFramework): RegistryFramework {
@@ -369,27 +384,29 @@ const INSTALLATION_DECISION_HELP = `Choose an installation route:
   CDN       guides/installation/cdn
             or --method cdn
 
-Package-managed routes use --package-manager <npm|pnpm|yarn|bun>.
+Package-managed routes use --package-manager <${SHADCN_RUNNER_NAMES.join('|')}>.
 The older --install-method flag remains compatible.`;
+
+const PRESET_FLAGS = USE_CASES.map((useCase) => getInstallationPreset(useCase).flag);
 
 const DOCS_HELP = `Usage: @videojs/cli docs <slug> [--framework <html|react>]
        @videojs/cli docs --list [--framework <html|react>]
 
 Installation routing:
-  --method <packaged|shadcn|cdn>
-  --framework <react|html|vue|svelte>
-  --package-manager <npm|pnpm|yarn|bun>
+  --method <${INSTALLATION_METHODS.join('|')}>
+  --framework <${INSTALLATION_FRAMEWORKS.join('|')}>
+  --package-manager <${SHADCN_RUNNER_NAMES.join('|')}>
 
 Player flags:
-  --preset <video|audio|live-video|live-audio|background-video>
-  --skin <default|minimal|none>
+  --preset <${PRESET_FLAGS.join('|')}>
+  --skin <${INSTALLATION_SKIN_FLAGS.join('|')}>
   --source-url <url>
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video>
+  --media <${ALL_RENDERERS.join('|')}>
 
 Shadcn flags:
-  --template <next|vite|start|laravel|react-router|astro>
-  --styling <tailwind|css>
-  --theme <default|minimal>
+  --template <${REGISTRY_TEMPLATES.join('|')}>
+  --styling <${REGISTRY_STYLINGS.join('|')}>
+  --theme <${REGISTRY_THEMES.join('|')}>
 
 Compatibility:
   --install-method <cdn|npm|pnpm|yarn|bun>
@@ -402,7 +419,14 @@ async function handleInstallationDocs(
   flags: ParsedFlags,
   interactive: boolean
 ): Promise<void> {
-  const target = await resolveInstallationTarget(route, flags, interactive);
+  let prompted = false;
+  const beginPrompting = () => {
+    if (prompted) return;
+
+    p.intro('Video.js Installation');
+    prompted = true;
+  };
+  const target = await resolveInstallationTarget(route, flags, interactive, beginPrompting);
 
   if (target.method !== 'shadcn' && (flags.template || flags.styling || flags.theme)) {
     console.error('`--template`, `--styling`, and `--theme` only apply to Shadcn installation.');
@@ -431,7 +455,7 @@ async function handleInstallationDocs(
     process.exit(1);
   }
 
-  if (missing.length > 0) p.intro('Video.js Installation');
+  if (missing.length > 0) beginPrompting();
 
   const codegenFramework: Framework = target.framework === 'react' ? 'react' : 'html';
   const codegenInstallMethod: CodegenInstallMethod | undefined =
@@ -457,7 +481,7 @@ async function handleInstallationDocs(
     shadcnSetup = await promptShadcnSetup(registryFramework, partialSetup);
   }
 
-  if (missing.length > 0) p.outro('');
+  if (prompted) p.outro('');
 
   const validation = validateInstallationOptions(opts);
 
@@ -507,7 +531,13 @@ async function handleInstallationDocs(
     generated = formatInstallationCode(opts);
   }
 
-  const output = stripOmitMarkers(replaceMarker(markdown, 'installation', generated));
+  let output = replaceMarker(markdown, 'installation', generated);
+
+  if (target.method === 'shadcn') {
+    output = selectMarker(output, 'framework', toRegistryFramework(target.framework));
+  }
+
+  output = stripOmitMarkers(output);
 
   printVersionHeader();
   console.log(output);

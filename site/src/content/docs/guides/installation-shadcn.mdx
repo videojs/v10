@@ -4,8 +4,6 @@ description: Use the Video.js Shadcn registry to add editable skin source and bu
 ---
 
 import Aside from '@/components/Aside.astro';
-import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
-import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import Step from '@/components/docs/Step.astro';
 import Steps from '@/components/docs/Steps.astro';
@@ -16,6 +14,7 @@ import InstallationMethodNav from '@/components/installation/InstallationMethodN
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
+import ShadcnNextSteps from '@/components/installation/ShadcnNextSteps.astro';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import RegistryOptions from '@/components/registry/RegistryOptions.astro';
@@ -164,15 +163,10 @@ Start in `components/videojs/<preset>/skin.html`. Follow the [Customize skins](/
 
 ## Choose what to do next
 
-<DocsLinkCards label="Customize">
-<DocsLinkCard slug="guides/customize-skins" anchor="style-skin-source" description="Change the installed layout, controls, styles, and interactions">Customize skin source</DocsLinkCard>
-<DocsLinkCard slug="guides/architecture" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
-<DocsLinkCard slug="guides/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
-</DocsLinkCards>
+<ShadcnFrameworkCase framework="react">
+<ShadcnNextSteps framework="react" />
+</ShadcnFrameworkCase>
 
-<DocsLinkCards label="Deploy">
-<DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
-<DocsLinkCard slug="guides/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
-<DocsLinkCard slug="guides/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
-<DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
-</DocsLinkCards>
+<ShadcnFrameworkCase framework="html">
+<ShadcnNextSteps framework="html" />
+</ShadcnFrameworkCase>

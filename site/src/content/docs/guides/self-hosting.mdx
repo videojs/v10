@@ -90,7 +90,7 @@ To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
 
 <Aside type="caution" title="Copy the whole package directory">
   The CDN entry files like `video.js` and `media/hlsjs-video.js` are not standalone. They import
-  shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them.
+  shared, content-hashed chunks (such as `adapter-<hash>.js` and `create-player-<hash>.js`) that live alongside them.
   Copying a single file breaks at runtime, so mirror the entire `@videojs/cdn` directory and keep its layout
   intact.
 </Aside>
@@ -124,7 +124,9 @@ Every bundle inlines its own CSS and applies it when the custom element upgrades
 
 The background preset keeps its light-DOM rules in `background.css` instead.
 
-The rest — `video.css`, `audio.css`, one per skin, and the `shadow.css` they build on — are shadow-DOM styles. No skin exposes a `::part`, so linking these from the document has no effect. They apply only inside a shadow root, which each skin builds and styles itself.
+The skin sheets, such as `video.css` and `audio.css`, combine the shared document rules, shadow-host rules, and complete skin styles. The JavaScript bundle applies the same styles automatically. Use the matching sheet inside a declarative shadow root when you render a skin template on the server. Linking it from the document does not style markup inside an existing shadow root.
+
+`shadow.css` contains only the shared host and slotted-media rules. Use it as a base when you write your own shadow-root skin; it is not a complete skin stylesheet.
 
 <Aside type="note" title="Declarative shadow DOM">
 A skin skips building and styling its shadow root when one already exists, so markup that ships a `<template shadowrootmode="open">` has to carry the matching stylesheet inside that template. Today only `background-video-skin` exposes its template for server rendering; the other skins keep theirs in JavaScript, so this path needs a hand-written template.

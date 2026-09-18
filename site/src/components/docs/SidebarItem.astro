@@ -94,6 +94,7 @@ const linkClass = [
     <a
       aria-current={isActive ? "page" : undefined}
       class:list={linkClass}
+      data-docs-slug={item.slug}
       style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
       href={buildDocsUrl(framework, item.slug)}
     >

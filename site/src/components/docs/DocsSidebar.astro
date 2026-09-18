@@ -77,10 +77,12 @@ const TAB_ICONS = {
           {tabs.map((tab) => {
             const isActive = tab === activeTab;
             const Icon = TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS];
+            const firstGuide = findFirstGuide(framework, tab.contents);
 
             return (
               <a
-                href={buildDocsUrl(framework, findFirstGuide(framework, tab.contents))}
+                href={buildDocsUrl(framework, firstGuide)}
+                data-docs-slug={firstGuide}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
                   // One weight for both states prevents a layout shift when the active section changes.
