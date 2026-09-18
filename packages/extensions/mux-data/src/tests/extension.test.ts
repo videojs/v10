@@ -80,6 +80,11 @@ function attach(data: MuxDataExtension, adapter: FakeAdapter) {
   return video;
 }
 
+/** The test environment's `currentSrc` never reflects resource selection, so stand in for the browser's pick. */
+function setCurrentSrc(video: HTMLVideoElement, value: string) {
+  Object.defineProperty(video, 'currentSrc', { value, configurable: true });
+}
+
 // Syncing is deferred by a microtask so all props settle first.
 async function settle() {
   await Promise.resolve();
@@ -128,6 +133,53 @@ describe('MuxDataExtension', () => {
       video,
       expect.objectContaining({ data: expect.objectContaining({ video_id: 'https://example.com/video.mp4' }) })
     );
+  });
+
+  it('reads the selected source of a plain video that loads from source children', async () => {
+    const { sdk, monitor, emit } = createSdk();
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+
+    // Resource selection from `<source>` children leaves `src` empty and reports the pick on `currentSrc`.
+    setCurrentSrc(video, 'https://example.com/first.mp4');
+    data.attach({ media: video, container: null });
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledWith(
+      video,
+      expect.objectContaining({ data: expect.objectContaining({ video_id: 'https://example.com/first.mp4' }) })
+    );
+
+    setCurrentSrc(video, 'https://example.com/second.mp4');
+    video.dispatchEvent(new Event('loadstart'));
+    await settle();
+
+    expect(emit).toHaveBeenCalledWith(
+      'videochange',
+      expect.objectContaining({ video_id: 'https://example.com/second.mp4' })
+    );
+  });
+
+  it('does not treat a blob currentSrc as a video', async () => {
+    const { sdk, monitor, emit } = createSdk();
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
+    const adapter = new FakeEngineAdapter();
+
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
+
+    const video = attach(data, adapter);
+
+    await settle();
+
+    // The adapter cleared its source but the element still holds the MediaSource it was fed.
+    adapter.src = '';
+    setCurrentSrc(video, 'blob:https://example.com/0f3a');
+    adapter.dispatchEvent(new Event('loadstart'));
+    await settle();
+
+    expect(monitor).toHaveBeenCalledTimes(1);
+    expect(emit).not.toHaveBeenCalled();
   });
 
   it('does not monitor media without a native element behind it', async () => {
