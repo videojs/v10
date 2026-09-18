@@ -180,33 +180,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
 </ContentWidth>
 
 <script>
-  document
-    .querySelectorAll<HTMLButtonElement>("[data-preset-toggle]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        const expanded = button.getAttribute("aria-expanded") === "true";
+  import { initializeTableDisclosures } from './disclosures';
 
-        button.setAttribute("aria-expanded", String(!expanded));
-
-        const row = button.closest<HTMLTableRowElement>("[data-preset-row]");
-
-        if (row) row.toggleAttribute("data-expanded", !expanded);
-
-        const detail = document.getElementById(
-          button.getAttribute("aria-controls")!,
-        );
-
-        if (detail) detail.hidden = expanded;
-      });
-    });
-
-  document
-    .querySelectorAll<HTMLTableRowElement>("[data-preset-row]")
-    .forEach((row) => {
-      row.addEventListener("click", (e) => {
-        if ((e.target as Element).closest("a, button")) return;
-
-        row.querySelector<HTMLButtonElement>("[data-preset-toggle]")?.click();
-      });
-    });
+  initializeTableDisclosures();
 </script>
