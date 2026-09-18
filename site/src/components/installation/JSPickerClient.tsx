@@ -52,10 +52,8 @@ interface Props {
   route: InstallationRouteSegment;
 }
 
-function updateShadcnPanels(framework: RegistryFramework) {
-  for (const panel of document.querySelectorAll<HTMLElement>('[data-shadcn-framework]')) {
-    panel.hidden = panel.dataset.shadcnFramework !== framework;
-  }
+function updateShadcnFramework(framework: RegistryFramework) {
+  document.documentElement.dataset.registryFramework = framework;
 }
 
 export default function JSPickerClient({ currentFramework, route }: Props) {
@@ -76,12 +74,12 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
       selectRegistryFramework(initialFramework);
 
       if (initialFramework !== registrySelection) {
-        updateShadcnPanels(initialFramework);
+        updateShadcnFramework(initialFramework);
         return;
       }
     }
 
-    updateShadcnPanels(registrySelection);
+    updateShadcnFramework(registrySelection);
 
     const params = new URLSearchParams(location.search);
 

@@ -20,6 +20,14 @@ describe('InstallationMethodNavClient', () => {
     expect(markup).toContain('data-installation-method="cdn"');
   });
 
+  it('reserves every method slot on Shadcn so its query selection cannot move the grid', () => {
+    const markup = renderToString(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
+
+    expect(markup).toContain('data-installation-method="cdn"');
+    expect(markup).toContain('data-installation-frameworks="html"');
+    expect(markup).toContain('data-shadcn-method-card=""');
+  });
+
   it('shows only Packaged for Vue and Svelte', () => {
     const vue = renderToString(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
     const svelte = renderToString(<InstallationMethodNavClient currentFramework="svelte" route="svelte" />);

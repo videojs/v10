@@ -56,6 +56,7 @@ export default function CardRadioGroup<T extends string = string>({
           <Radio.Root
             key={option.value}
             value={option.value}
+            data-card-radio-value={option.value}
             disabled={option.disabled}
             className={clsx(
               'group relative flex min-w-0 text-left transition duration-150 ease-out select-none',
@@ -73,6 +74,7 @@ export default function CardRadioGroup<T extends string = string>({
             <Radio.Indicator className="sr-only" />
             <span
               aria-hidden="true"
+              data-card-radio-check
               className={clsx(
                 'flex shrink-0 items-center justify-center rounded-lg corner-squircle border border-line',
                 'bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light',

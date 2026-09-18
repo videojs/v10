@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import { type CollectionEntry, getCollection } from 'astro:content';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
+import InstallationFrameworkInit from '@/components/installation/InstallationFrameworkInit.astro';
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
@@ -58,6 +59,7 @@ const docsSidebarId = 'docs-sidebar';
 >
   <Fragment slot="priority-head">
     <StyleInit />
+    <InstallationFrameworkInit />
     <ClientRouter />
   </Fragment>
   <Fragment slot="head">
@@ -86,7 +88,6 @@ const docsSidebarId = 'docs-sidebar';
             slot="mobile-nav"
             class="contents"
             data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
-            hidden={registryFrameworkSelection && sidebarFramework !== framework}
           >
             <DocsSidebar
               framework={sidebarFramework}
@@ -114,7 +115,6 @@ const docsSidebarId = 'docs-sidebar';
           <div
             class="contents"
             data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
-            hidden={registryFrameworkSelection && sidebarFramework !== framework}
           >
             <DocsSidebar
               framework={sidebarFramework}
