@@ -43,11 +43,11 @@ pnpm add @videojs/html @videojs/google-cast @videojs/hlsjs-video
 ## Recommended approach
 
 <FrameworkCase frameworks={["react"]}>
-Use the <DocsLink slug="reference/components/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">AirPlayButton</DocsLink> for Safari. The packaged skins already include both buttons; add `GoogleCast` next to a streaming media component to enable the configurable Cast route.
+Use the <DocsLink slug="reference/components/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">AirPlayButton</DocsLink> for Safari. The packaged skins already include both buttons; add `GoogleCast` anywhere inside the player to enable the configurable Cast route. It works with any media the player attaches, including a plain `<Video />`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Use the <DocsLink slug="reference/components/google-cast">`<google-cast>` extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">`<media-cast-button>`</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">`<media-airplay-button>`</DocsLink> for Safari. The packaged skins already include both buttons; add `<google-cast>` next to a streaming media component to enable the configurable Cast route.
+Use the <DocsLink slug="reference/components/google-cast">`<google-cast>` extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">`<media-cast-button>`</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">`<media-airplay-button>`</DocsLink> for Safari. The packaged skins already include both buttons; add `<google-cast>` anywhere inside the player to enable the configurable Cast route. It works with any media the player attaches, including a plain `<video>`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -74,11 +74,11 @@ Use the <DocsLink slug="reference/components/google-cast">`<google-cast>` extens
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-The demo pairs the streaming media component with the `GoogleCast` extension. Without that extension, `CastButton` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
+The demo pairs the media component with the `GoogleCast` extension. Without that extension, `CastButton` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The demo pairs the streaming media element with the `<google-cast>` extension. Without that extension, `<media-cast-button>` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
+The demo pairs the media element with the `<google-cast>` extension. Without that extension, `<media-cast-button>` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
 </FrameworkCase>
 
 ## How it works
