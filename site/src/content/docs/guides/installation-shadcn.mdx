@@ -35,7 +35,15 @@ import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 <HumanCase>
 <div data-cli-omit="installation" class="contents">
 
-## Choose your installation method
+## Choose your JS framework
+
+React projects use components and hooks. HTML projects use custom elements and work with any stack. This choice stays on this page and is saved in the URL.
+
+<ContentWidth margins="lg">
+  <ShadcnFrameworkSelect client:idle />
+</ContentWidth>
+
+## Choose how to install
 
 Start with packages, add editable source, or load the browser-ready player from a CDN.
 
@@ -44,14 +52,6 @@ Start with packages, add editable source, or load the browser-ready player from 
 <Aside type="note">
 Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
 </Aside>
-
-## Choose your JS framework
-
-React projects use components and hooks. HTML projects use custom elements and work with any stack. This choice stays on this page and is saved in the URL.
-
-<ContentWidth margins="lg">
-  <ShadcnFrameworkSelect client:idle />
-</ContentWidth>
 
 ## Choose your use case
 
