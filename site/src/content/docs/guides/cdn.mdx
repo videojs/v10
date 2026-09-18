@@ -11,14 +11,20 @@ import ContentWidth from '@/components/frames/ContentWidth.astro';
 import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
 import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
+import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
+import HumanCase from '@/components/docs/HumanCase.astro';
 
 <InstallationOverview />
+
+<InstallationChoicesForLLMs />
+
+<HumanCase>
 
 ## Choose your installation method
 
@@ -49,6 +55,8 @@ Choose what the player will play. The CDN page only shows sources with a browser
 <ContentWidth margins="lg">
   <CdnMediaSourcePicker />
 </ContentWidth>
+
+</HumanCase>
 
 ## Load Video.js
 

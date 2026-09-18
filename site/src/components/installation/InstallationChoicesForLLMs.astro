@@ -1,0 +1,186 @@
+---
+import { getCollection } from 'astro:content';
+
+import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
+import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
+import {
+  REGISTRY_STYLING_LABELS,
+  REGISTRY_TEMPLATE_LABELS,
+  registryStylings,
+  registryTemplates,
+} from '@/utils/installation/shadcn';
+import { getInstallationPreset, USE_CASES } from '@/utils/installation/types';
+
+const routes = ['react', 'html', 'vue', 'svelte', 'shadcn', 'cdn'] as const;
+
+type InstallationRoute = (typeof routes)[number];
+
+const route = Astro.params.framework;
+
+function isInstallationRoute(value: string | undefined): value is InstallationRoute {
+  return routes.some((candidate) => candidate === value);
+}
+
+if (!isInstallationRoute(route)) throw new Error(`Unsupported installation route: ${route}`);
+
+const isShadcn = route === 'shadcn';
+const isCdn = route === 'cdn';
+const packagedHref = isCdn ? '/docs/guides/installation/html' : isShadcn ? '/docs/guides/installation/react' : `/docs/guides/installation/${route}`;
+const useCases = USE_CASES.filter((useCase) => !isShadcn || useCase !== 'background-video');
+const cdnMediaSubpaths = isCdn ? (await getCollection('cdnMedia')).map((entry) => entry.id) : [];
+const mediaChoices = useCases.map((useCase) => {
+  const preset = getInstallationPreset(useCase);
+  const renderers = preset.renderers.filter(
+    (renderer) => !isCdn || rendererSupportsCdn(renderer, cdnMediaSubpaths),
+  );
+
+  return { label: preset.label, renderers };
+});
+
+const methodLinks = [
+  {
+    label: 'Packaged',
+    href: packagedHref,
+    description: 'Install packages and import a ready-made skin.',
+  },
+  {
+    label: 'Shadcn',
+    href: '/docs/guides/installation/shadcn',
+    description: 'Copy editable skin source into a React or HTML project.',
+  },
+  {
+    label: 'CDN',
+    href: '/docs/guides/installation/cdn',
+    description: 'Load the HTML player from jsDelivr without a package manager or build step.',
+  },
+] as const;
+
+const packagedFrameworks = [
+  ['React', 'Components and hooks for React 19.', '/docs/guides/installation/react'],
+  ['HTML', 'Custom elements for any stack.', '/docs/guides/installation/html'],
+  ['Vue', 'Vue 3 and Nuxt using the HTML custom elements.', '/docs/guides/installation/vue'],
+  ['Svelte', 'Svelte 5 and SvelteKit using the HTML custom elements.', '/docs/guides/installation/svelte'],
+] as const;
+---
+
+<div hidden data-llms-only>
+  <div data-cli-omit="installation">
+    <h2>Choose your installation method</h2>
+
+    <p>Pick one starting path. These are alternatives, not steps to run in sequence.</p>
+
+    <ul>
+      {
+        methodLinks.map(({ label, href, description }) => (
+          <li>
+            <a href={href}>{label}</a>: {description}
+          </li>
+        ))
+      }
+    </ul>
+
+    {
+      !isCdn && (
+        <>
+          <h2>Choose your JS framework</h2>
+
+          {isShadcn ? (
+            <>
+              <p>The Shadcn registry generates React or HTML source.</p>
+              <ul>
+                {(['react', 'html'] as const).map((framework) => (
+                  <li>
+                    <strong>{framework === 'react' ? 'React' : 'HTML'}</strong>
+                    <ul>
+                      <li>
+                        Project templates:{' '}
+                        {registryTemplates(framework)
+                          .map((template) => REGISTRY_TEMPLATE_LABELS[template])
+                          .join(', ')}
+                      </li>
+                      <li>
+                        Styling:{' '}
+                        {registryStylings(framework)
+                          .map((styling) => REGISTRY_STYLING_LABELS[styling])
+                          .join(', ')}
+                      </li>
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <ul>
+              {packagedFrameworks.map(([label, description, href]) => (
+                <li>
+                  <a href={href}>{label}</a>: {description}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )
+    }
+
+    {isCdn && <p>The CDN installation is HTML-only.</p>}
+
+    <h2>Choose your use case</h2>
+
+    <ul>
+      {
+        useCases.map((useCase) => {
+          const preset = getInstallationPreset(useCase);
+
+          return (
+            <li>
+              <strong>{preset.label}</strong> (<code>{preset.flag}</code>)
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    <h2>Choose your skin</h2>
+
+    <ul>
+      <li><strong>Default</strong>: full controls, menus, captions, and dialogs.</li>
+      <li><strong>Minimal</strong>: play, seek, and volume controls.</li>
+      {!isShadcn && <li><strong>No skin</strong>: player and media behavior without a packaged UI.</li>}
+    </ul>
+
+    {
+      isShadcn && (
+        <p>
+          Shadcn copies either the Default or Minimal skin source into the project. It does not currently provide the
+          background video skin or a no-skin option.
+        </p>
+      )
+    }
+
+    <h2>Choose your media source</h2>
+
+    <p>Available media sources depend on the use case:</p>
+
+    <ul>
+      {
+        mediaChoices.map(({ label, renderers }) => (
+          <li>
+            <strong>{label}</strong>:{' '}
+            {renderers.map((renderer) => `${RENDERER_LABELS[renderer]} (${renderer})`).join(', ')}
+          </li>
+        ))
+      }
+    </ul>
+
+    <p>
+      A source URL is optional. An empty value uses working demo media. The generated installation includes a playback
+      adapter when the selected media source needs one; native HTML5 media and background video need no separate
+      adapter.
+    </p>
+
+    <p>
+      The code below is a complete example for the default Video, Default skin, and HTML5 Video choices. Generate
+      tailored instructions when you need another combination.
+    </p>
+  </div>
+</div>
