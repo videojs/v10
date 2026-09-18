@@ -20,10 +20,9 @@ export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
 export type AnyHTMLMediaAdapter<Target extends HTMLMediaTargetLike = any> = HTMLMediaAdapter<Target, any>;
 
 /**
- * Forwards a media surface to an attached native-like target and re-dispatches the target's events on itself.
- *
- * Player extensions (Google Cast, Mux Data) no longer live here; the player wraps the media it resolves and routes
- * members through `@videojs/core/dom` player extensions, so this adapter is a pure host.
+ * Forwards a media surface to an attached native-like target and re-dispatches the target's events on itself. Every
+ * getter, setter, and method reaches the target directly; anything that intercepts media members sits above this
+ * adapter, at the player.
  */
 export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
