@@ -38,7 +38,7 @@ const mocks = vi.hoisted(() => {
   return { FakeProvider };
 });
 
-vi.mock('../google-cast-provider', () => ({
+vi.mock('../provider', () => ({
   GoogleCastProvider: mocks.FakeProvider,
 }));
 

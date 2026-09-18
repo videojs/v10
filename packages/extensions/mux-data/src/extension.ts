@@ -4,8 +4,8 @@ import { getMediaAdapter, getMediaElement } from '@videojs/media/dom';
 import { listen } from '@videojs/utils/dom';
 import Mux from 'mux-embed';
 
+import { type MuxDataEngineOptions, toMuxDataEngineOptions } from './engine';
 import { getPlayerVersion } from './env';
-import { type MuxDataEngineOptions, toMuxDataEngineOptions } from './mux-data-engine';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
 export interface MuxDataExtensionProps {

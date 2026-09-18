@@ -2,7 +2,7 @@ import type { MediaOverride, PlayerExtension, PlayerTarget } from '@videojs/core
 import type { MediaStreamType } from '@videojs/media';
 import { getMediaElement, type HTMLMediaTargetLike } from '@videojs/media/dom';
 
-import { GoogleCastProvider } from './google-cast-provider';
+import { GoogleCastProvider } from './provider';
 import { requiresCastFramework } from './utils';
 
 export interface GoogleCastExtensionProps {

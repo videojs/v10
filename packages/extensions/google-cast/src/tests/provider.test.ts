@@ -3,8 +3,8 @@ import type { Media } from '@videojs/media';
 import type { HTMLMediaTargetLike } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { GoogleCastProvider } from '../google-cast-provider';
 import { GoogleCastExtension } from '../index';
+import { GoogleCastProvider } from '../provider';
 import { ensureCastFramework } from '../registry';
 
 vi.mock('../registry', async (importOriginal) => {
