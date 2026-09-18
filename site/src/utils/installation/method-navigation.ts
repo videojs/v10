@@ -1,8 +1,9 @@
 import { navigate } from 'astro:transitions/client';
 
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
+import type { InstallationMethod } from '@/utils/installation/method-options';
 
-export type InstallationMethod = 'packaged' | 'shadcn' | 'cdn';
+export type { InstallationMethod } from '@/utils/installation/method-options';
 
 declare global {
   interface Window {

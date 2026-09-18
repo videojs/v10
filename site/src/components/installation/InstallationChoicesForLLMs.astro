@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
+import { getInstallationMethodsForFramework } from '@/utils/installation/method-options';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
 import { isInstallationRouteSegment } from '@/utils/installation/routes';
 import {
@@ -31,76 +32,85 @@ const mediaChoices = useCases.map((useCase) => {
 
 const methodLinks = [
   {
+    id: 'packaged',
     label: 'Packaged',
     href: packagedHref,
     description: 'Install packages and import a ready-made skin.',
   },
   {
+    id: 'shadcn',
     label: 'Shadcn',
     href: '/docs/guides/installation/shadcn',
     description: 'Copy editable skin source into a React or HTML project.',
   },
   {
+    id: 'cdn',
     label: 'CDN',
     href: '/docs/guides/installation/cdn',
     description: 'Load the HTML player from jsDelivr without a package manager or build step.',
   },
 ] as const;
 
-const packagedFrameworks = [
-  ['React', 'Components and hooks for React 19.', '/docs/guides/installation/react'],
-  ['HTML', 'Custom elements for any stack.', '/docs/guides/installation/html'],
-  ['Vue', 'Vue 3 and Nuxt using the HTML custom elements.', '/docs/guides/installation/vue'],
-  ['Svelte', 'Svelte 5 and SvelteKit using the HTML custom elements.', '/docs/guides/installation/svelte'],
+const frameworks = [
+  ['react', 'React', 'Components and hooks for React 19.', '/docs/guides/installation/react'],
+  ['html', 'HTML', 'Custom elements for any stack.', '/docs/guides/installation/html'],
+  ['vue', 'Vue', 'Vue 3 and Nuxt using the HTML custom elements.', '/docs/guides/installation/vue'],
+  ['svelte', 'Svelte', 'Svelte 5 and SvelteKit using the HTML custom elements.', '/docs/guides/installation/svelte'],
 ] as const;
+
+const methodLabels = { packaged: 'Packaged', shadcn: 'Shadcn', cdn: 'CDN' } as const;
+const selectedFrameworks = route === 'shadcn' ? (['react', 'html'] as const) : [route === 'cdn' ? 'html' : route];
+const availableMethods = new Set(selectedFrameworks.flatMap(getInstallationMethodsForFramework));
+const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has(id));
 ---
 
 <div hidden data-llms-only>
   <div data-cli-omit="installation">
-    {
-      !isCdn && (
-        <>
-          <h2>Choose your JS framework</h2>
+    <h2>Choose your JS framework</h2>
 
-          {isShadcn ? (
-            <>
-              <p>The Shadcn registry generates React or HTML source.</p>
-              <ul>
-                {(['react', 'html'] as const).map((framework) => (
+    <p>Your framework filters the installation methods shown next.</p>
+
+    <ul>
+      {
+        frameworks.map(([id, label, description, href]) => (
+          <li>
+            <a href={href}>{label}</a>: {description} Available methods:{' '}
+            {getInstallationMethodsForFramework(id)
+              .map((method) => methodLabels[method])
+              .join(', ')}.
+          </li>
+        ))
+      }
+    </ul>
+
+    {
+      isShadcn && (
+        <>
+          <p>The Shadcn registry generates React or HTML source. Vue and Svelte use Packaged.</p>
+          <ul>
+            {(['react', 'html'] as const).map((framework) => (
+              <li>
+                <strong>{framework === 'react' ? 'React' : 'HTML'}</strong>
+                <ul>
                   <li>
-                    <strong>{framework === 'react' ? 'React' : 'HTML'}</strong>
-                    <ul>
-                      <li>
-                        Project templates:{' '}
-                        {registryTemplates(framework)
-                          .map((template) => REGISTRY_TEMPLATE_LABELS[template])
-                          .join(', ')}
-                      </li>
-                      <li>
-                        Styling:{' '}
-                        {registryStylings(framework)
-                          .map((styling) => REGISTRY_STYLING_LABELS[styling])
-                          .join(', ')}
-                      </li>
-                    </ul>
+                    Project templates:{' '}
+                    {registryTemplates(framework)
+                      .map((template) => REGISTRY_TEMPLATE_LABELS[template])
+                      .join(', ')}
                   </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <ul>
-              {packagedFrameworks.map(([label, description, href]) => (
-                <li>
-                  <a href={href}>{label}</a>: {description}
-                </li>
-              ))}
-            </ul>
-          )}
+                  <li>
+                    Styling:{' '}
+                    {registryStylings(framework)
+                      .map((styling) => REGISTRY_STYLING_LABELS[styling])
+                      .join(', ')}
+                  </li>
+                </ul>
+              </li>
+            ))}
+          </ul>
         </>
       )
     }
-
-    {isCdn && <p>The CDN installation is HTML-only.</p>}
 
     <h2>Choose how to install</h2>
 
@@ -108,7 +118,7 @@ const packagedFrameworks = [
 
     <ul>
       {
-        methodLinks.map(({ label, href, description }) => (
+        availableMethodLinks.map(({ label, href, description }) => (
           <li>
             <a href={href}>{label}</a>: {description}
           </li>
