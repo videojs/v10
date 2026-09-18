@@ -6,6 +6,7 @@ description: Install Video.js packages and build an accessible, customizable vid
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
+import InstallationCLIForLLMs from '@/components/installation/InstallationCLIForLLMs.astro';
 import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
@@ -32,35 +33,9 @@ import LLMCase from '@/components/docs/LLMCase.astro';
 
 <InstallationChoicesForLLMs />
 
+<InstallationCLIForLLMs />
+
 <LLMCase>
-<div data-cli-omit="installation">
-
-The installation docs have three routes. Choose one before generating code:
-
-- **Packaged** installs packages and uses a ready-made skin. Use `guides/installation/react`, `guides/installation/html`, `guides/installation/vue`, or `guides/installation/svelte`.
-- **Shadcn** adds editable skin source. Use `guides/installation/shadcn` with `--framework react` or `--framework html`.
-- **CDN** loads the HTML player from jsDelivr without a package manager. Use `guides/installation/cdn`.
-
-You can also use the generic `guides/installation` slug with `--method packaged`, `--method shadcn`, or `--method cdn`.
-
-In an interactive terminal, missing choices are prompted. Agents, automation, and CI receive a list of missing flags instead of an interactive prompt. Pass an empty `--source-url` to use demo media.
-
-For a packaged React installation:
-
-```bash
-npx @videojs/cli docs guides/installation/react \
-  --preset <video|audio|live-video|live-audio|background-video> \
-  --skin <default|minimal|none> \
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video> \
-  --source-url <url> \
-  --package-manager <npm|pnpm|yarn|bun>
-```
-
-The older `--install-method <cdn|npm|pnpm|yarn|bun>` flag remains compatible. New commands separate the installation method from `--package-manager` so the decision is unambiguous.
-
-If you're an agent, ask the user only for choices that cannot be inferred from their project, then run the matching canonical installation route.
-</div>
-
 <FrameworkCase frameworks={["react"]}>
 If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) to add the files for the closest skin to the project. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
