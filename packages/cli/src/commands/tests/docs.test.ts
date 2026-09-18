@@ -97,19 +97,19 @@ beforeEach(() => {
         'guides/installation-vue',
         'guides/installation-svelte',
         'guides/installation-shadcn',
-        'guides/cdn',
+        'guides/installation-cdn',
       ].includes(slug)
     ) {
       return INSTALLATION_DOC;
     }
 
-    if (slug === 'concepts/skins') return REGULAR_DOC;
+    if (slug === 'concepts/skins' || slug === 'guides/cdn') return REGULAR_DOC;
 
     return null;
   });
   (readLlmsTxt as Mock).mockReturnValue(LLMS_TXT);
   (docExistsInAnyFramework as Mock).mockImplementation((slug: string) =>
-    ['guides/installation', 'concepts/skins'].includes(slug)
+    ['guides/installation', 'guides/cdn', 'concepts/skins'].includes(slug)
   );
   (getConfigValue as Mock).mockReturnValue(undefined);
 });
@@ -537,7 +537,7 @@ describe('handleDocs', () => {
 
         expect(output()).toContain('## Load Video.js');
         expect(output()).toContain('<script type="module"');
-        expect(readBundledDoc).toHaveBeenCalledWith('html', 'guides/cdn');
+        expect(readBundledDoc).toHaveBeenCalledWith('html', 'guides/installation-cdn');
       });
 
       it('generates a tailored Shadcn guide', async () => {
@@ -618,14 +618,14 @@ describe('handleDocs', () => {
           document: ['react', 'guides/installation-shadcn'],
         },
         {
-          slug: 'guides/cdn',
+          slug: 'guides/installation-cdn',
           flags: {
             preset: 'video',
             skin: 'default',
             media: 'html5-video',
             'source-url': '',
           },
-          document: ['html', 'guides/cdn'],
+          document: ['html', 'guides/installation-cdn'],
         },
       ])('keeps the legacy $slug route working', async ({ slug, flags, document }) => {
         await handleDocs(flags, [slug]);
@@ -635,6 +635,13 @@ describe('handleDocs', () => {
   });
 
   describe('framework resolution', () => {
+    it('keeps the CDN environment guide separate from CDN installation', async () => {
+      await handleDocs({ framework: 'html' }, ['guides/cdn']);
+
+      expect(output()).toContain(REGULAR_DOC);
+      expect(readBundledDoc).toHaveBeenCalledWith('html', 'guides/cdn');
+    });
+
     it('uses --framework flag directly', async () => {
       await handleDocs({ framework: 'html' }, ['concepts/skins']);
       expect(getConfigValue).not.toHaveBeenCalled();

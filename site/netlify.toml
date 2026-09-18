@@ -94,16 +94,6 @@
   to = "/docs/guides/installation/svelte.md"
   status = 301
 
-[[redirects]]
-  from = "/docs/framework/html/guides/cdn"
-  to = "/docs/guides/installation/cdn"
-  status = 301
-
-[[redirects]]
-  from = "/docs/framework/html/guides/cdn.md"
-  to = "/docs/guides/installation/cdn.md"
-  status = 301
-
 # Redirect the earlier proposed short-form installation routes.
 [[redirects]]
   from = "/docs/installation"
@@ -277,12 +267,12 @@
 
 [[redirects]]
   from = "/docs/framework/html/concepts/cdn"
-  to = "/docs/guides/installation/cdn"
+  to = "/docs/framework/html/guides/cdn"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/html/concepts/cdn.md"
-  to = "/docs/guides/installation/cdn.md"
+  to = "/docs/framework/html/guides/cdn.md"
   status = 301
 
 [[redirects]]

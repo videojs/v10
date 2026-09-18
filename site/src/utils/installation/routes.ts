@@ -47,7 +47,7 @@ export const INSTALLATION_ROUTES = {
     description: 'Load Video.js from jsDelivr and build an HTML video player without a package manager',
     framework: 'html',
     frameworks: ['html'],
-    slug: 'guides/cdn',
+    slug: 'guides/installation-cdn',
   },
 } as const satisfies Record<InstallationRouteSegment, InstallationRouteConfig>;
 
