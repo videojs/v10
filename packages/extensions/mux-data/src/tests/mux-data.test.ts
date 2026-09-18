@@ -30,7 +30,7 @@ function createSdk() {
   return { sdk, monitor, emit, updateData, addHLSJS, removeHLSJS, addDashJS, removeDashJS, destroy };
 }
 
-/** A real adapter whose `src` lives on the adapter, so tests can set it without attaching a target. */
+/** A real adapter whose `src` lives on the adapter, like the HLS adapters that play a `blob:` URL. */
 class FakeAdapter extends HTMLVideoAdapter {
   #src = '';
 
@@ -70,6 +70,16 @@ class FakeDashJsEngine {
   off() {}
 }
 
+/** Attach `adapter` to a fresh `<video>` and hand it to the extension the way the player does. */
+function attach(data: MuxDataExtension, adapter: FakeAdapter) {
+  const video = document.createElement('video');
+
+  adapter.attach(video);
+  data.attach({ media: adapter, container: null });
+
+  return video;
+}
+
 // Syncing is deferred by a microtask so all props settle first.
 async function settle() {
   await Promise.resolve();
@@ -85,16 +95,14 @@ describe('MuxDataExtension', () => {
     expect(new MuxDataExtension({ playerSoftwareName: 'mux-video' }).playerSoftwareName).toBe('mux-video');
   });
 
-  it('monitors the attached target with the configured data', async () => {
+  it('monitors the element behind the media with the configured data', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    const video = attach(data, adapter);
 
     await settle();
 
@@ -106,14 +114,30 @@ describe('MuxDataExtension', () => {
     );
   });
 
-  it('does not monitor before a target is attached', async () => {
+  it('monitors a plain video element directly', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+
+    video.src = 'https://example.com/video.mp4';
+    data.attach({ media: video, container: null });
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledWith(
+      video,
+      expect.objectContaining({ data: expect.objectContaining({ video_id: 'https://example.com/video.mp4' }) })
+    );
+  });
+
+  it('does not monitor media without a native element behind it', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk });
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
+    data.attach({ media: adapter, container: null });
 
     await settle();
 
@@ -123,13 +147,11 @@ describe('MuxDataExtension', () => {
   it('keeps the monitor across a same-source loadstart', async () => {
     const { sdk, monitor, emit, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     // e.g. remote playback engaging or a MediaSource re-attach reruns `load()`.
@@ -144,13 +166,11 @@ describe('MuxDataExtension', () => {
   it('emits videochange on the live monitor when the source changes', async () => {
     const { sdk, monitor, emit, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     adapter.src = 'https://stream.mux.com/def456.m3u8';
@@ -165,11 +185,9 @@ describe('MuxDataExtension', () => {
   it('names the pending view instead of changing videos when the first source arrives', async () => {
     const { sdk, monitor, emit, updateData } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -186,13 +204,11 @@ describe('MuxDataExtension', () => {
   it('emits videochange for a new video loaded after the source was cleared', async () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     adapter.src = '';
@@ -212,13 +228,11 @@ describe('MuxDataExtension', () => {
   it('hooks a new engine into the live monitor instead of re-monitoring', async () => {
     const { sdk, monitor, addHLSJS, removeHLSJS, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     // An engine rebuild with the same source reruns `load()` with a new instance.
@@ -245,14 +259,12 @@ describe('MuxDataExtension', () => {
   it('monitors a dash.js engine through the dash.js integration', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.engine = new FakeDashJsEngine();
     adapter.src = 'https://example.com/manifest.mpd';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
 
     await settle();
 
@@ -266,13 +278,11 @@ describe('MuxDataExtension', () => {
   it('monitors an adapter with no engine from the media element alone', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeAdapter();
 
     adapter.src = 'https://example.com/video.mp4';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
 
     await settle();
 
@@ -286,13 +296,11 @@ describe('MuxDataExtension', () => {
   it('keeps one view session id across video changes', async () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     const [, options] = monitor.mock.lastCall!;
@@ -311,13 +319,11 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor } = createSdk();
     const metadata = { view_session_id: 'caller-session', video_title: 'Some Title' };
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', metadata });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     const [, options] = monitor.mock.lastCall!;
@@ -330,32 +336,32 @@ describe('MuxDataExtension', () => {
     const { sdk } = createSdk();
     const metadata = { video_title: 'Some Title' };
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', metadata });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
     await settle();
 
     expect(metadata).toEqual({ video_title: 'Some Title' });
   });
 
-  it('destroys the old target monitor when attached to a new target', async () => {
+  it('re-monitors when the media swaps the element it fronts', async () => {
     const { sdk, monitor, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const first = document.createElement('video');
-    const second = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(first);
+    const first = attach(data, adapter);
+
     await settle();
 
-    data.attach(second);
+    const second = document.createElement('video');
+
+    adapter.detach();
+    adapter.attach(second);
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(destroy).toHaveBeenCalledTimes(1);
@@ -364,25 +370,30 @@ describe('MuxDataExtension', () => {
     expect(monitor).toHaveBeenLastCalledWith(second, expect.anything());
   });
 
-  it('follows the adapter when registered with another target', async () => {
-    const { sdk, monitor, emit } = createSdk();
+  it('follows the media the player attaches', async () => {
+    const { sdk, monitor, emit, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk });
-    const video = document.createElement('video');
     const first = new FakeEngineAdapter();
     const second = new FakeEngineAdapter();
 
     first.src = 'https://stream.mux.com/abc123.m3u8';
     second.src = 'https://stream.mux.com/def456.m3u8';
 
-    data.setAdapter(first);
-    data.attach(video);
+    const firstVideo = attach(data, first);
+
     await settle();
 
-    data.setAdapter(second);
+    const secondVideo = attach(data, second);
+
     await settle();
 
-    expect(monitor).toHaveBeenCalledTimes(1);
-    expect(emit).toHaveBeenCalledWith('videochange', expect.objectContaining({ video_id: 'def456' }));
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(firstVideo.mux).toBeUndefined();
+    expect(monitor).toHaveBeenCalledTimes(2);
+    expect(monitor).toHaveBeenLastCalledWith(
+      secondVideo,
+      expect.objectContaining({ data: expect.objectContaining({ video_id: 'def456' }) })
+    );
 
     emit.mockClear();
     first.dispatchEvent(new Event('loadstart'));
@@ -391,14 +402,15 @@ describe('MuxDataExtension', () => {
     expect(emit).not.toHaveBeenCalled();
   });
 
-  it('destroys active monitoring on destroy', () => {
+  it('destroys active monitoring on destroy', async () => {
     const data = new MuxDataExtension();
     const video = document.createElement('video');
     const destroy = vi.fn();
 
     Object.defineProperty(video, 'mux', { value: { destroy }, writable: true, configurable: true });
 
-    data.attach(video);
+    data.attach({ media: video, container: null });
+    await settle();
     data.destroy();
 
     expect(destroy).toHaveBeenCalledTimes(1);
@@ -408,13 +420,11 @@ describe('MuxDataExtension', () => {
   it('stops syncing after destroy', async () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
-    const video = document.createElement('video');
     const adapter = new FakeEngineAdapter();
 
     adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setAdapter(adapter);
-    data.attach(video);
+    attach(data, adapter);
 
     await settle();
 
