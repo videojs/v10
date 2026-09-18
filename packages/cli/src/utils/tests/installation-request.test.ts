@@ -12,6 +12,8 @@ describe('installation request routing', () => {
 
   it('keeps the internal content slugs as aliases', () => {
     expect(parseInstallationSlug('guides/installation-vue')).toEqual({ method: 'packaged', framework: 'vue' });
+    expect(parseInstallationSlug('guides/installation-svelte')).toEqual({ method: 'packaged', framework: 'svelte' });
+    expect(parseInstallationSlug('guides/installation-shadcn')).toEqual({ method: 'shadcn' });
     expect(parseInstallationSlug('guides/cdn')).toEqual({ method: 'cdn', framework: 'html' });
   });
 

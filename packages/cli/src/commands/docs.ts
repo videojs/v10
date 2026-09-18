@@ -362,11 +362,11 @@ function missingInstallationFlags(flags: ParsedFlags, target: ResolvedInstallati
 }
 
 const INSTALLATION_DECISION_HELP = `Choose an installation route:
-  Packaged  /guides/installation/{react|html|vue|svelte}
+  Packaged  guides/installation/{react|html|vue|svelte}
             or --method packaged --framework <framework>
-  Shadcn    /guides/installation/shadcn --framework <react|html>
+  Shadcn    guides/installation/shadcn --framework <react|html>
             or --method shadcn --framework <react|html>
-  CDN       /guides/installation/cdn
+  CDN       guides/installation/cdn
             or --method cdn
 
 Package-managed routes use --package-manager <npm|pnpm|yarn|bun>.
