@@ -6,7 +6,7 @@ import { useSelection } from '../installation/useSelection';
 
 export default function SourceMediaInstall() {
   const install = generateSourceMediaInstallCode(useSelection('renderer'));
-  if (!install) return null;
+  if (!install) return <span id="install-the-media-adapter" hidden data-conditional-heading-placeholder />;
 
   return (
     <section className="mx-auto mt-16 w-full max-w-3xl" aria-labelledby="install-the-media-adapter">

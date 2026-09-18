@@ -106,7 +106,11 @@ export function filterRenderedHeadings(
   headings: MarkdownHeading[],
   getElementById: (id: string) => HTMLElement | null = (id) => document.getElementById(id)
 ): MarkdownHeading[] {
-  return headings.filter((heading) => getElementById(heading.slug) !== null);
+  return headings.filter((heading) => {
+    const element = getElementById(heading.slug);
+
+    return element !== null && !element.hasAttribute('data-conditional-heading-placeholder');
+  });
 }
 
 /** Follow headings mounted or removed by hydrated islands, such as a selected media adapter's install step. */

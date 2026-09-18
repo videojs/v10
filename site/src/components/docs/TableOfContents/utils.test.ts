@@ -80,4 +80,13 @@ describe('filterRenderedHeadings', () => {
       headings[2],
     ]);
   });
+
+  it('omits static anchor placeholders for conditional headings', () => {
+    const heading = { depth: 2, text: 'Install the media adapter', slug: 'install-the-media-adapter' };
+    const placeholder = document.createElement('span');
+
+    placeholder.dataset.conditionalHeadingPlaceholder = '';
+
+    expect(filterRenderedHeadings([heading], () => placeholder)).toEqual([]);
+  });
 });
