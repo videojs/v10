@@ -11,6 +11,7 @@ import { registryFramework, selectRegistryFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import {
+  isRegistryFramework,
   type InstallationPickerFramework,
   resolveInstallationFrameworkNavigation,
 } from '@/utils/installation/framework-navigation';
@@ -49,10 +50,6 @@ const OPTIONS: CardRadioOption<InstallationPickerFramework>[] = [
 interface Props {
   currentFramework: InstallationPickerFramework;
   route: InstallationRouteSegment;
-}
-
-function isRegistryFramework(value: string | null): value is RegistryFramework {
-  return value === 'react' || value === 'html';
 }
 
 function updateShadcnPanels(framework: RegistryFramework) {

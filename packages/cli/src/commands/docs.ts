@@ -385,7 +385,8 @@ const INSTALLATION_DECISION_HELP = `Choose an installation route:
             or --method cdn
 
 Package-managed routes use --package-manager <${SHADCN_RUNNER_NAMES.join('|')}>.
-The older --install-method flag remains compatible.`;
+The older --install-method flag remains compatible. On a canonical route, it cannot change the route's installation
+method; package-manager values still select its package manager.`;
 
 const PRESET_FLAGS = USE_CASES.map((useCase) => getInstallationPreset(useCase).flag);
 

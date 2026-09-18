@@ -2,9 +2,13 @@
 import { getCollection } from 'astro:content';
 
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
-import { getInstallationMethodsForFramework } from '@/utils/installation/method-options';
+import {
+  getInstallationMethodsForFramework,
+  INSTALLATION_METHOD_OPTIONS,
+  type InstallationMethod,
+} from '@/utils/installation/method-options';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import { isInstallationRouteSegment } from '@/utils/installation/routes';
+import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   REGISTRY_STYLING_LABELS,
   REGISTRY_TEMPLATE_LABELS,
@@ -18,6 +22,7 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
 
 const isShadcn = route === 'shadcn';
 const isCdn = route === 'cdn';
+const routeConfig = INSTALLATION_ROUTES[route];
 const packagedHref = isCdn ? '/docs/guides/installation/html' : isShadcn ? '/docs/guides/installation/react' : `/docs/guides/installation/${route}`;
 const useCases = USE_CASES.filter((useCase) => !isShadcn || useCase !== 'background-video');
 const cdnMediaSubpaths = isCdn ? (await getCollection('cdnMedia')).map((entry) => entry.id) : [];
@@ -30,26 +35,12 @@ const mediaChoices = useCases.map((useCase) => {
   return { label: preset.label, renderers };
 });
 
-const methodLinks = [
-  {
-    id: 'packaged',
-    label: 'Packaged',
-    href: packagedHref,
-    description: 'Install packages and import a ready-made skin.',
-  },
-  {
-    id: 'shadcn',
-    label: 'Shadcn',
-    href: '/docs/guides/installation/shadcn',
-    description: 'Copy editable skin source into a React or HTML project.',
-  },
-  {
-    id: 'cdn',
-    label: 'CDN',
-    href: '/docs/guides/installation/cdn',
-    description: 'Load the HTML player from jsDelivr without a package manager or build step.',
-  },
-] as const;
+const methodHrefs = {
+  packaged: packagedHref,
+  shadcn: '/docs/guides/installation/shadcn',
+  cdn: '/docs/guides/installation/cdn',
+} satisfies Record<InstallationMethod, string>;
+const methodLinks = INSTALLATION_METHOD_OPTIONS.map((option) => ({ ...option, href: methodHrefs[option.id] }));
 
 const frameworks = [
   ['react', 'React', 'Components and hooks for React 19.', '/docs/guides/installation/react'],
@@ -58,8 +49,9 @@ const frameworks = [
   ['svelte', 'Svelte', 'Svelte 5 and SvelteKit using the HTML custom elements.', '/docs/guides/installation/svelte'],
 ] as const;
 
-const methodLabels = { packaged: 'Packaged', shadcn: 'Shadcn', cdn: 'CDN' } as const;
-const selectedFrameworks = route === 'shadcn' ? (['react', 'html'] as const) : [route === 'cdn' ? 'html' : route];
+const getMethodLabel = (method: InstallationMethod) =>
+  INSTALLATION_METHOD_OPTIONS.find(({ id }) => id === method)?.label ?? method;
+const selectedFrameworks = isShadcn ? routeConfig.frameworks : [routeConfig.pickerFramework];
 const availableMethods = new Set(selectedFrameworks.flatMap(getInstallationMethodsForFramework));
 const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has(id));
 ---
@@ -75,9 +67,7 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
         frameworks.map(([id, label, description, href]) => (
           <li>
             <a href={href}>{label}</a>: {description} Available methods:{' '}
-            {getInstallationMethodsForFramework(id)
-              .map((method) => methodLabels[method])
-              .join(', ')}.
+            {getInstallationMethodsForFramework(id).map(getMethodLabel).join(', ')}.
           </li>
         ))
       }
@@ -118,9 +108,9 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
 
     <ul>
       {
-        availableMethodLinks.map(({ label, href, description }) => (
+        availableMethodLinks.map(({ label, href, details }) => (
           <li>
-            <a href={href}>{label}</a>: {description}
+            <a href={href}>{label}</a>: {details}
           </li>
         ))
       }
@@ -152,10 +142,13 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
 
     {
       isShadcn && (
-        <p>
-          Shadcn copies either the Default or Minimal skin source into the project. It does not currently provide the
-          background video skin or a no-skin option.
-        </p>
+        <>
+          <p>
+            Shadcn copies either the Default or Minimal skin source into the project. It does not currently provide the
+            background video skin or a no-skin option.
+          </p>
+          <p>Commit your work first so you can review every file the CLI adds or replaces.</p>
+        </>
       )
     }
 

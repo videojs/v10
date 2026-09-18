@@ -260,6 +260,18 @@ describe('handleDocs', () => {
       expect(errors()).toContain('Conflicting installation methods: "packaged" and "cdn"');
     });
 
+    it('limits the legacy install-method flag to the method selected by a canonical route', async () => {
+      await expect(handleDocs({ 'install-method': 'cdn' }, ['guides/installation/html'])).rejects.toThrow(ExitError);
+      expect(errors()).toContain('Conflicting installation methods: "packaged" and "cdn"');
+    });
+
+    it('rejects Vue for Shadcn installation', async () => {
+      await expect(handleDocs({ method: 'shadcn', framework: 'vue' }, ['guides/installation'])).rejects.toThrow(
+        ExitError
+      );
+      expect(errors()).toContain('Shadcn installation supports React and HTML source');
+    });
+
     it('errors when the old and new package-manager flags conflict', async () => {
       await expect(
         handleDocs(

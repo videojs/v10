@@ -7,7 +7,7 @@ export interface InstallationFrameworkNavigation {
   target: string;
 }
 
-function isRegistryFramework(framework: InstallationPickerFramework): framework is SupportedFramework {
+export function isRegistryFramework(framework: string | null): framework is SupportedFramework {
   return framework === 'react' || framework === 'html';
 }
 

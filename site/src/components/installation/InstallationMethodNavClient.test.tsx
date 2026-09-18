@@ -26,6 +26,9 @@ describe('InstallationMethodNavClient', () => {
 
     expect(vue).toContain('data-installation-method="packaged"');
     expect(vue).not.toContain('data-installation-method="shadcn"');
+    expect(vue).toContain('max-w-3xl');
+    expect(vue).toContain('sm:grid-cols-3');
+    expect(vue).toContain('mx-auto');
     expect(svelte).toContain('data-installation-method="packaged"');
     expect(svelte).not.toContain('data-installation-method="cdn"');
   });
