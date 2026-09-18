@@ -88,8 +88,9 @@ export function versionNumber(version: string): number {
   return Number.parseFloat(version.split('-')[0] ?? version);
 }
 
+/** Show the first version of a caniuse range without a trailing `.0`, so Safari 16.0 and iOS 16.0 both read "16". */
 function displayVersion(version: string): string {
-  return version.split('-')[0] ?? version;
+  return (version.split('-')[0] ?? version).replace(/\.0$/, '');
 }
 
 /** Resolve the browserslist query into one row per policy browser. */
