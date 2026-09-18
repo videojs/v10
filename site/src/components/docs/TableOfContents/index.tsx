@@ -2,7 +2,7 @@ import type { MarkdownHeading } from 'astro';
 
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { TableOfContentsMobile } from './TableOfContents.mobile';
-import { filterHeadingsForToc, navigateToHeading, useActiveHeading } from './utils';
+import { filterHeadingsForToc, navigateToHeading, useActiveHeading, useRenderedHeadings } from './utils';
 
 interface TableOfContentsProps {
   headings: MarkdownHeading[];
@@ -10,9 +10,10 @@ interface TableOfContentsProps {
 
 export function TableOfContents({ headings }: TableOfContentsProps) {
   const filteredHeadings = filterHeadingsForToc(headings);
-  const activeId = useActiveHeading(filteredHeadings);
+  const renderedHeadings = useRenderedHeadings(filteredHeadings);
+  const activeId = useActiveHeading(renderedHeadings);
 
-  if (filteredHeadings.length === 0) {
+  if (renderedHeadings.length === 0) {
     // Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
     // oxlint-disable-next-line react/jsx-no-useless-fragment
     return <></>;
@@ -21,13 +22,13 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
   return (
     <>
       <TableOfContentsMobile
-        headings={filteredHeadings}
+        headings={renderedHeadings}
         activeId={activeId}
         onNavigate={navigateToHeading}
         className="xl:hidden"
       />
       <TableOfContentsDesktop
-        headings={filteredHeadings}
+        headings={renderedHeadings}
         activeId={activeId}
         onNavigate={navigateToHeading}
         className="hidden xl:block"

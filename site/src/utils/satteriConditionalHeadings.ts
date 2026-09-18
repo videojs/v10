@@ -101,6 +101,18 @@ export function satteriConditionalHeadings(): MdastPluginInput {
             publish(ctx);
             injectMediaReferenceHeadings(node, headings);
             break;
+          case 'SkinPickerSection':
+            publish(ctx);
+            headings.push({ depth: 2, text: 'Choose your skin', slug: 'choose-your-skin' });
+            break;
+          case 'SourceMediaInstall':
+            publish(ctx);
+            headings.push({
+              depth: 2,
+              text: 'Install the media adapter',
+              slug: 'install-the-media-adapter',
+            });
+            break;
         }
       },
     });
