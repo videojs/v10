@@ -27,6 +27,7 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 <InstallationChoicesForLLMs />
 
 <HumanCase>
+<div data-cli-omit="installation" class="contents">
 
 ## Choose your installation method
 
@@ -66,7 +67,11 @@ Paste a media URL to detect its source type, pick one directly, or upload a vide
   <MediaSourcePicker client:idle />
 </ContentWidth>
 
+</div>
+
 </HumanCase>
+
+<div data-cli-replace="installation" class="contents">
 
 ## Install the packages
 
@@ -87,6 +92,8 @@ Then render the component in a page and pass it the media source you selected ab
 <ContentWidth>
   <SvelteUsageCodeBlock client:idle />
 </ContentWidth>
+
+</div>
 
 That's it! You now have a working Video.js player.
 

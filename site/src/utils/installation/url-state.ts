@@ -8,8 +8,8 @@ import {
 } from './types';
 
 /**
- * The installation picks that live in the page URL, using the same names and vocabulary as `@videojs/cli docs`, so a
- * URL and a CLI command describe the same player: `?preset=live-video&skin=minimal&media=hls&install-method=npm`.
+ * The installation picks that live in the page URL. `install-method` is retained for URL compatibility; the CLI exposes
+ * the installation route and package manager separately as `--method` and `--package-manager`.
  */
 export interface InstallationSelection {
   useCase: UseCase;

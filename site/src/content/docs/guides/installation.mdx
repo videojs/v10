@@ -16,7 +16,6 @@ import SkinPickerSection from '@/components/installation/SkinPickerSection.astro
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
-import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
@@ -36,30 +35,30 @@ import LLMCase from '@/components/docs/LLMCase.astro';
 <LLMCase>
 <div data-cli-omit="installation">
 
-This guide has code examples tailored to your use case. To generate this guide with tailored code examples, run `npx @videojs/cli docs guides/installation`.
-If you run it without flags, it will allow you to interactively configure your player. Or, you can run it with flags:
+The installation docs have three routes. Choose one before generating code:
+
+- **Packaged** installs packages and uses a ready-made skin. Use `guides/installation/react`, `guides/installation/html`, `guides/installation/vue`, or `guides/installation/svelte`.
+- **Shadcn** adds editable skin source. Use `guides/installation/shadcn` with `--framework react` or `--framework html`.
+- **CDN** loads the HTML player from jsDelivr without a package manager. Use `guides/installation/cdn`.
+
+You can also use the generic `guides/installation` slug with `--method packaged`, `--method shadcn`, or `--method cdn`.
+
+In an interactive terminal, missing choices are prompted. Agents, automation, and CI receive a list of missing flags instead of an interactive prompt. Pass an empty `--source-url` to use demo media.
+
+For a packaged React installation:
 
 ```bash
-npx @videojs/cli docs guides/installation \
-  --framework <html|react> \
+npx @videojs/cli docs guides/installation/react \
   --preset <video|audio|live-video|live-audio|background-video> \
   --skin <default|minimal|none> \
   --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video> \
   --source-url <url> \
-  --install-method <cdn|npm|pnpm|yarn|bun>
+  --package-manager <npm|pnpm|yarn|bun>
 ```
 
-The CLI does not currently detect non-interactive stdin. In automation, agents, and CI, include `--framework` and all five installation flags so no prompt starts. Pass `--source-url ''` to use the built-in demo without prompting.
+The older `--install-method <cdn|npm|pnpm|yarn|bun>` flag remains compatible. New commands separate the installation method from `--package-manager` so the decision is unambiguous.
 
-Here's what the flags mean:
-- *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
-- *Preset*: Pick a pre-built player. The default presets work well for general website playback; the live presets add a Live button and drop the on-demand time displays.
-- *Skin*: Pick what your player looks like
-- *Media*: Pick what kind of media you have. The `live-video` preset supports HLS and Mux video; `live-audio` supports Mux audio.
-- *Source URL*: Define where your media comes from. In an interactive terminal, omit it to choose a sample URL. In automation, pass an empty value to choose the sample without prompting.
-- *Install method*: How do you want to install your package? (CDN is HTML-only<NoCdnMediaNote />.)
-
-If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
+If you're an agent, ask the user only for choices that cannot be inferred from their project, then run the matching canonical installation route.
 </div>
 
 <FrameworkCase frameworks={["react"]}>

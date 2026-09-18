@@ -74,6 +74,78 @@ declare module '@/utils/installation/codegen' {
   export function generateReactCreateCode(
     opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
   ): Record<'app/page.tsx', string>;
+
+  export function generateVueCustomElementConfigCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+  ): Record<'vite.config.ts' | 'nuxt.config.ts', string>;
+
+  export function generateVueCreateCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+  ): Record<'VideoPlayer.vue', string>;
+
+  export function generateVueUsageCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  ): Record<'App.vue', string>;
+
+  export function generateSvelteCreateCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+  ): Record<'VideoPlayer.svelte', string>;
+
+  export function generateSvelteUsageCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  ): Record<'+page.svelte' | 'App.svelte', string>;
+
+  export function generateSourceMediaInstallCode(
+    renderer: Renderer
+  ): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> | null;
+
+  export function generateSourceReactCreateCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+  ): Record<'app/page.tsx', string>;
+
+  export interface SourceHTMLUsageCode {
+    imports: string;
+    media: string;
+    player: string;
+    skinFile: string;
+  }
+
+  export function generateSourceHTMLUsageCode(
+    opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  ): SourceHTMLUsageCode;
+}
+
+declare module '@/utils/installation/shadcn' {
+  import type { Skin, UseCase } from '@/utils/installation/types';
+
+  export type RegistryFramework = 'html' | 'react';
+  export type RegistryTemplate = 'next' | 'vite' | 'start' | 'laravel' | 'react-router' | 'astro';
+  export type RegistryStyling = 'css' | 'tailwind';
+  export type RegistryTheme = 'default' | 'minimal';
+  export type RegistryPreset = 'audio' | 'live-audio' | 'live-video' | 'video';
+  export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
+
+  export const REGISTRY_STYLING_LABELS: Record<RegistryStyling, string>;
+  export const REGISTRY_TEMPLATE_LABELS: Record<RegistryTemplate, string>;
+  export const REGISTRY_TEMPLATES: readonly RegistryTemplate[];
+  export const SHADCN_RUNNER_NAMES: readonly ShadcnRunner[];
+
+  export function defaultRegistryStyling(framework: RegistryFramework): RegistryStyling;
+  export function defaultRegistryTemplate(framework: RegistryFramework): RegistryTemplate;
+  export function registryStylings(framework: RegistryFramework): readonly RegistryStyling[];
+  export function registryTemplates(framework: RegistryFramework): readonly RegistryTemplate[];
+  export function shadcnInitCommand(runner: ShadcnRunner, template: RegistryTemplate): string;
+  export function registryInstallCommands(
+    runner: ShadcnRunner,
+    framework: RegistryFramework,
+    styling: RegistryStyling,
+    items: readonly string[],
+    theme?: RegistryTheme
+  ): string;
+  export function registrySkinSelection(options: {
+    useCase: UseCase;
+    skin: Skin;
+  }): { item: RegistryPreset; theme: RegistryTheme } | null;
 }
 
 declare module '@/utils/installation/detect-renderer' {
