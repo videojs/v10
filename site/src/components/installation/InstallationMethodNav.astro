@@ -11,7 +11,7 @@ const packagedHref =
     ? pathname
     : active === 'cdn'
       ? '/docs/guides/installation/html'
-      : '/docs/guides/installation/react';
+      : '/docs/guides/installation';
 
 const items = [
   {
@@ -85,62 +85,7 @@ const items = [
 </nav>
 
 <script>
-  import { navigate } from 'astro:transitions/client';
-  import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
+  import { initializeInstallationMethodNavigation } from '@/utils/installation/method-navigation';
 
-  for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-installation-method-nav] a')) {
-    link.addEventListener('click', (event) => {
-      if (
-        event.defaultPrevented ||
-        event.button !== 0 ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey ||
-        link.target === '_blank'
-      ) {
-        return;
-      }
-
-      const current = new URL(window.location.href);
-      const target = new URL(link.href);
-      const method = link.dataset.installationMethod;
-
-      target.search = current.search;
-
-      if (method === 'packaged') {
-        if (current.pathname.endsWith('/shadcn')) {
-          const framework = current.searchParams.get('framework') === 'html' ? 'html' : 'react';
-
-          target.pathname = `/docs/guides/installation/${framework}`;
-        }
-
-        target.searchParams.delete('framework');
-      } else if (method === 'shadcn') {
-        const framework = current.pathname.endsWith('/react')
-          ? 'react'
-          : current.pathname.endsWith('/shadcn') && current.searchParams.get('framework') !== 'html'
-            ? 'react'
-            : 'html';
-
-        target.searchParams.set('framework', framework);
-      } else if (method === 'cdn') {
-        target.searchParams.delete('framework');
-      }
-
-      if (target.href === current.href) {
-        event.preventDefault();
-        return;
-      }
-
-      event.preventDefault();
-      const targetPath = `${target.pathname}${target.search}${target.hash}`;
-
-      savePageScrollForNavigation(targetPath);
-      void navigate(targetPath, {
-        history: 'push',
-        info: DOCS_FRAMEWORK_NAVIGATION_INFO,
-      });
-    });
-  }
+  initializeInstallationMethodNavigation();
 </script>

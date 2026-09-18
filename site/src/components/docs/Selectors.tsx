@@ -22,6 +22,7 @@ import {
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 const FRAMEWORK_ICONS = {
   react: <ReactLogo className="size-4" />,
@@ -47,12 +48,16 @@ export function Selectors({
 }: SelectorProps) {
   const preferredFramework = useStore(frameworkStore);
   const currentStyle = useStore(styleStore);
-  const displayedFramework = registryFrameworkSelection ? (preferredFramework ?? currentFramework) : currentFramework;
+  const isHydrated = useIsHydrated();
+  const displayedFramework =
+    registryFrameworkSelection && isHydrated ? (preferredFramework ?? currentFramework) : currentFramework;
 
   // The store is empty on the server and on the client's first render alike, so both fall back to the framework's
   // default style. That keeps the markup identical through hydration and stops the trigger flashing empty on every
   // page load; PreferenceUpdater then swaps in the stored choice if it differs.
-  const displayedStyle = currentStyle ?? getDefaultStyle(currentFramework);
+  const displayedStyle = isHydrated
+    ? (currentStyle ?? getDefaultStyle(currentFramework))
+    : getDefaultStyle(currentFramework);
 
   const handleFrameworkChange = (newFramework: SupportedFramework) => {
     if (!isValidFramework(newFramework) || newFramework === displayedFramework) return;

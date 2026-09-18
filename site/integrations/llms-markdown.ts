@@ -9,6 +9,11 @@ import TurndownService from 'turndown';
 import { sidebar } from '../src/docs.config';
 import type { Sidebar, SupportedFramework } from '../src/types/docs';
 import { isLink, isSection, isValidFramework } from '../src/types/docs';
+import {
+  getInstallationRoutePath,
+  INSTALLATION_ROUTES,
+  INSTALLATION_ROUTE_SEGMENTS,
+} from '../src/utils/installation/routes';
 
 interface PageEntry {
   pathname: string;
@@ -497,14 +502,13 @@ function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string
 
 function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEntry> {
   const prefix = `/docs/framework/${framework}/`;
-  const installationSlugs = new Map<string, { slug: string; frameworks: string[] }>([
-    ['/docs/guides/installation/react', { slug: 'guides/installation', frameworks: ['react'] }],
-    ['/docs/guides/installation/html', { slug: 'guides/installation', frameworks: ['html'] }],
-    ['/docs/guides/installation/vue', { slug: 'guides/installation-vue', frameworks: ['html'] }],
-    ['/docs/guides/installation/svelte', { slug: 'guides/installation-svelte', frameworks: ['html'] }],
-    ['/docs/guides/installation/shadcn', { slug: 'guides/installation-shadcn', frameworks: ['react', 'html'] }],
-    ['/docs/guides/installation/cdn', { slug: 'guides/cdn', frameworks: ['html'] }],
-  ]);
+  const installationSlugs = new Map<string, { slug: string; frameworks: readonly SupportedFramework[] }>(
+    INSTALLATION_ROUTE_SEGMENTS.map((route) => {
+      const { slug, frameworks } = INSTALLATION_ROUTES[route];
+
+      return [getInstallationRoutePath(route), { slug, frameworks }];
+    })
+  );
   const pageBySlug = new Map<string, PageEntry>();
 
   for (const page of pages) {
@@ -517,7 +521,9 @@ function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEnt
 
     const installation = installationSlugs.get(page.pathname.replace(/\/$/, ''));
 
-    if (installation?.frameworks.includes(framework)) pageBySlug.set(installation.slug, page);
+    if (installation?.frameworks.some((candidate) => candidate === framework)) {
+      pageBySlug.set(installation.slug, page);
+    }
   }
 
   return pageBySlug;

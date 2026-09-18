@@ -7,6 +7,7 @@ import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGrou
 import { registryFramework, selectRegistryFramework } from '@/stores/registry';
 import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import type { RegistryFramework } from '@/utils/installation/shadcn';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 const OPTIONS: CardRadioOption<RegistryFramework>[] = [
   {
@@ -37,6 +38,7 @@ function updatePanels(framework: RegistryFramework) {
 
 export default function ShadcnFrameworkSelect() {
   const framework = useStore(registryFramework);
+  const isHydrated = useIsHydrated();
   const urlReady = useRef(false);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function ShadcnFrameworkSelect() {
 
   return (
     <CardRadioGroup
-      value={framework}
+      value={isHydrated ? framework : 'react'}
       onChange={handleChange}
       options={OPTIONS}
       aria-label="Select player framework"

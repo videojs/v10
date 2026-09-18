@@ -5,7 +5,6 @@ import BookIcon from '@/assets/icons/book.svg?react';
 import CodeIcon from '@/assets/icons/code.svg?react';
 import PuzzleIcon from '@/assets/icons/puzzle.svg?react';
 import PenIcon from '@/assets/icons/pen.svg?react';
-import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
@@ -22,8 +21,6 @@ type Props = {
    * rendered sidebar per page may opt in; duplicate names would cancel the transition.
   */
   animateIndicator?: boolean;
-  /** Persist the route framework. Pages with an in-page framework selector own this preference instead. */
-  updateFrameworkPreference?: boolean;
 };
 
 const {
@@ -32,7 +29,6 @@ const {
   docStabilities,
   class: className,
   animateIndicator = false,
-  updateFrameworkPreference = true,
 } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 const currentPath = Astro.url.pathname;
@@ -74,7 +70,6 @@ const TAB_ICONS = {
 
 <div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
-  {updateFrameworkPreference && <PreferenceUpdater client:idle currentFramework={framework} />}
   {
     tabs.length > 1 && (
       <nav aria-label="Docs sections" class="px-6 pt-5">

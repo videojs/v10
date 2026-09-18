@@ -104,7 +104,7 @@
   to = "/docs/guides/installation/cdn.md"
   status = 301
 
-# Redirect the earlier short-form installation routes.
+# Redirect the earlier proposed short-form installation routes.
 [[redirects]]
   from = "/docs/installation"
   to = "/docs/guides/installation"

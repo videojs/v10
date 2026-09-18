@@ -5,16 +5,17 @@ import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import type { SupportedFramework } from '@/types/docs';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
+import {
+  type InstallationPickerFramework,
+  resolveInstallationFrameworkNavigation,
+} from '@/utils/installation/framework-navigation';
 
 /**
  * Frameworks the installation flow can start from. React and HTML switch the docs framework; Vue and Svelte open their
  * own installation pages, which build on the HTML custom elements.
  */
-type PickerFramework = SupportedFramework | 'vue' | 'svelte';
-
-const OPTIONS: CardRadioOption<PickerFramework>[] = [
+const OPTIONS: CardRadioOption<InstallationPickerFramework>[] = [
   {
     value: 'react',
     label: 'React',
@@ -42,17 +43,17 @@ const OPTIONS: CardRadioOption<PickerFramework>[] = [
 ];
 
 interface Props {
-  currentFramework: PickerFramework;
+  currentFramework: InstallationPickerFramework;
 }
 
 export default function JSPickerClient({ currentFramework }: Props) {
-  const handleChange = (next: PickerFramework) => {
+  const handleChange = (next: InstallationPickerFramework) => {
     if (next === currentFramework) return;
 
-    const target = `/docs/guides/installation/${next}${window.location.search}`;
+    const { target, history } = resolveInstallationFrameworkNavigation(currentFramework, next, window.location.search);
 
     savePageScrollForNavigation(target);
-    void navigate(target, { history: 'push', info: DOCS_FRAMEWORK_NAVIGATION_INFO });
+    void navigate(target, { history, info: DOCS_FRAMEWORK_NAVIGATION_INFO });
   };
 
   return (

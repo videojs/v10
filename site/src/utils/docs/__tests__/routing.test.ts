@@ -5,6 +5,7 @@ import {
   buildAgnosticDocsUrl,
   buildDocsUrl,
   getFrameworkFromDocsPath,
+  getFrameworkFromDocsUrl,
   isDocsGuideActive,
   resolveDocsHref,
   resolveDocsLinkUrl,
@@ -107,10 +108,37 @@ describe('routing utilities', () => {
       expect(getFrameworkFromDocsPath('/docs/framework/html')).toBe('html');
     });
 
+    it('returns the framework from canonical installation routes', () => {
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/react')).toBe('react');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/html')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/vue')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/svelte')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/cdn')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/shadcn')).toBeNull();
+    });
+
     it('ignores framework-agnostic and invalid routes', () => {
       expect(getFrameworkFromDocsPath('/docs/guides/installation')).toBeNull();
       expect(getFrameworkFromDocsPath('/docs/framework/vue/guides/installation')).toBeNull();
       expect(getFrameworkFromDocsPath('/blog/framework/react')).toBeNull();
+    });
+  });
+
+  describe('getFrameworkFromDocsUrl', () => {
+    it('returns the framework selected on the Shadcn route', () => {
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'))
+      ).toBe('html');
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react'))
+      ).toBe('react');
+    });
+
+    it('does not invent a Shadcn framework when the query is missing or invalid', () => {
+      expect(getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'))).toBeNull();
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'))
+      ).toBeNull();
     });
   });
 
