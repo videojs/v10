@@ -47,8 +47,8 @@ const indicatorTransitionName =
     ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     : undefined;
 
-// Cross-document view transition names for the section switcher. The highlight pill morphs to the newly selected tab
-// while each label cross-fades its colour above it; see the global styles below for the stacking.
+// Cross-document view transition names for the section switcher. Framework changes temporarily disable these names
+// so the sidebar updates atomically, while section navigation keeps the pill and label transitions.
 const tabTransition = (slug: string) =>
   animateIndicator ? `view-transition-name: sidebar-tab-${slug}; view-transition-class: sidebar-tab-label` : undefined;
 const pillTransition = animateIndicator ? 'view-transition-name: sidebar-tab-pill' : undefined;
@@ -78,7 +78,7 @@ const TAB_ICONS = {
                 href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
-                  // One weight for both states, so the label cross-fade during the transition is colour only.
+                  // One weight for both states prevents a layout shift when the active section changes.
                   "relative isolate flex items-center rounded-md corner-squircle px-3 py-2 text-p3 leading-5 font-medium select-none",
                   isActive
                     ? "text-faded-black dark:text-manila-light"
@@ -88,11 +88,16 @@ const TAB_ICONS = {
                 {isActive && (
                   <span
                     aria-hidden="true"
+                    data-docs-view-transition
                     class="absolute inset-0 -z-10 rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line"
                     style={pillTransition}
                   />
                 )}
-                <span class="flex flex-1 items-center gap-2.5" style={tabTransition(tabSlug(tab.sidebarLabel))}>
+                <span
+                  class="flex flex-1 items-center gap-2.5"
+                  data-docs-view-transition
+                  style={tabTransition(tabSlug(tab.sidebarLabel))}
+                >
                   {Icon && (
                     <Icon
                       className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
@@ -141,5 +146,10 @@ const TAB_ICONS = {
 
   ::view-transition-group(.sidebar-tab-label) {
     z-index: 2;
+  }
+
+  /* Framework switches replace the whole sidebar. Suppress named snapshots for that navigation to avoid flashes. */
+  html[data-docs-framework-navigation] [data-docs-view-transition] {
+    view-transition-name: none !important;
   }
 </style>

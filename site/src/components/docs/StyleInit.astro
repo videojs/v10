@@ -40,9 +40,11 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
     defaultStyle: defaultStyleConfig,
   }}
 >
-  if (typeof localStorage !== "undefined" && typeof document !== "undefined") {
+  function applyStoredStyle(url, root) {
+    if (!root || typeof localStorage === "undefined") return;
+
     // Extract framework from URL: /docs/framework/{framework}/...
-    const pathMatch = window.location.pathname.match(
+    const pathMatch = url.pathname.match(
       /\/docs\/framework\/([^/]+)/,
     );
     const framework = pathMatch?.[1];
@@ -53,7 +55,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
       const storageKey = keyPrefix + framework;
 
       // Check for ?style= query param (enables deep-linking)
-      const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(url.search);
       const queryStyle = urlParams.get("style");
 
       let style;
@@ -72,7 +74,13 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
         }
       }
 
-      document.documentElement.dataset.style = style;
+      root.dataset.style = style;
     }
   }
+
+  applyStoredStyle(window.location, document.documentElement);
+
+  document.addEventListener("astro:before-swap", function (event) {
+    applyStoredStyle(event.to, event.newDocument.documentElement);
+  });
 </script>

@@ -1,4 +1,4 @@
-import { atom, onMount, type WritableAtom } from 'nanostores';
+import { atom, onMount, type ReadableAtom, type WritableAtom } from 'nanostores';
 
 import { ACCENT_KEY, THEME_COLORS, THEME_KEY, TONE_KEY } from '@/consts';
 
@@ -24,9 +24,9 @@ function readStored<T extends string>(key: string, valid: readonly T[], fallback
 /**
  * Appearance preferences: theme, accent colour, and how deep the dark surfaces go.
  *
- * `ThemeInit.astro` applies the stored values to `<html>` before first paint. These atoms pick them up on first
- * subscription, so server-rendered controls match the client's first render and the stored choice arrives as an update,
- * then keep the document and storage in sync as the user changes them.
+ * `ThemeInit.astro` applies the stored values to `<html>` before first paint and re-applies them when the OS scheme
+ * changes. These atoms pick them up on first subscription, so server-rendered controls match the client's first render
+ * and the stored choice arrives as an update, then keep the document and storage in sync as the user changes them.
  */
 function preferenceAtom<T extends string>(key: string, valid: readonly T[], fallback: T): WritableAtom<T> {
   const store = atom<T>(fallback);
@@ -75,15 +75,21 @@ export function applyAppearance(): void {
     ?.setAttribute('content', theme === 'dark' ? THEME_COLORS[currentTone] : THEME_COLORS.light);
 }
 
-// Follow the OS while the preference is "system".
-onMount(themePreference, () => {
+/**
+ * Whether the OS currently prefers a dark scheme. `ThemeInit.astro` owns applying that to the document; this atom only
+ * exists so rendered controls can react to the change while they are mounted.
+ */
+const osPrefersDark = atom(false);
+
+export const systemDark: ReadableAtom<boolean> = osPrefersDark;
+
+onMount(osPrefersDark, () => {
   const media = globalThis.matchMedia?.('(prefers-color-scheme: dark)');
   if (!media) return;
 
-  const onChange = () => {
-    if (themePreference.get() === 'system') applyAppearance();
-  };
+  const onChange = () => osPrefersDark.set(media.matches);
 
+  onChange();
   media.addEventListener('change', onChange);
 
   return () => media.removeEventListener('change', onChange);

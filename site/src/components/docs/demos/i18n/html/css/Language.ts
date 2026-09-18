@@ -2,19 +2,31 @@ import { LOCALES } from '@videojs/html/i18n';
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 
-const root = document.querySelector<HTMLElement>('.html-i18n-language');
-const select = root?.querySelector('select');
-const provider = root?.querySelector('media-i18n');
 const languageNames = new Intl.DisplayNames(['en'], { type: 'language' });
+const initializedDemos = new WeakSet<HTMLElement>();
 
-for (const locale of ['en', ...LOCALES]) {
-  const option = document.createElement('option');
+function initializeDemos(): void {
+  document.querySelectorAll<HTMLElement>('.html-i18n-language').forEach((demo) => {
+    if (initializedDemos.has(demo)) return;
 
-  option.value = locale;
-  option.textContent = languageNames.of(locale) ?? locale;
-  select?.append(option);
+    initializedDemos.add(demo);
+
+    const select = demo.querySelector('select');
+    const provider = demo.querySelector('media-i18n');
+
+    for (const locale of ['en', ...LOCALES]) {
+      const option = document.createElement('option');
+
+      option.value = locale;
+      option.textContent = languageNames.of(locale) ?? locale;
+      select?.append(option);
+    }
+
+    select?.addEventListener('change', () => {
+      provider?.setAttribute('lang', select.value);
+    });
+  });
 }
 
-select?.addEventListener('change', () => {
-  provider?.setAttribute('lang', select.value);
-});
+initializeDemos();
+document.addEventListener('astro:page-load', initializeDemos);

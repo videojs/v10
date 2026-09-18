@@ -7,16 +7,28 @@ import '@videojs/html/ui/dialog-title';
 import '@videojs/html/ui/dialog-description';
 import '@videojs/html/ui/dialog-close';
 
-document.querySelectorAll<HTMLElement>('.html-dialog-basic').forEach((demo) => {
-  const dialog = demo.querySelector('media-dialog');
-  const video = demo.querySelector('video');
+const initializedDemos = new WeakSet<HTMLElement>();
 
-  dialog?.addEventListener('open-change', (event) => {
-    if (!video) return;
+function initializeDemos(): void {
+  document.querySelectorAll<HTMLElement>('.html-dialog-basic').forEach((demo) => {
+    if (initializedDemos.has(demo)) return;
 
-    const { open } = (event as CustomEvent<{ open: boolean }>).detail;
+    initializedDemos.add(demo);
 
-    if (open) void video.play().catch(() => {});
-    else video.pause();
+    const dialog = demo.querySelector('media-dialog');
+    const video = demo.querySelector('video');
+
+    dialog?.addEventListener('open-change', (event) => {
+      if (!video) return;
+
+      // SAFETY: `media-dialog` defines `open-change` with an `{ open }` detail payload.
+      const { open } = (event as CustomEvent<{ open: boolean }>).detail;
+
+      if (open) void video.play().catch(() => {});
+      else video.pause();
+    });
   });
-});
+}
+
+initializeDemos();
+document.addEventListener('astro:page-load', initializeDemos);

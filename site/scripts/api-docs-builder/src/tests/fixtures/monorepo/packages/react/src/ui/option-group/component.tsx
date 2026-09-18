@@ -16,6 +16,8 @@ export function OptionGroupRoot(_props: OptionGroupRootProps) {
 }
 
 export interface OptionGroupOptionsProps {
+  /** Class name or function returning a class name from state. */
+  className?: string | ((state: string) => string | undefined);
   /** Render one consumer-owned item for every option. */
   renderItem: (value: string) => unknown;
 }

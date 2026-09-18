@@ -123,7 +123,7 @@ const jsonLdSchema = createTechArticleSchema({
   >
     <div
       class="sticky z-20 overflow-y-auto"
-      style="grid-area: toc; top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
+      style="grid-area: toc; top: calc(var(--banner-height) + var(--nav-h)); max-height: calc(100vh - var(--banner-height) - var(--nav-h));"
     >
       <TableOfContents client:idle headings={filteredHeadings} />
     </div>

@@ -9,6 +9,7 @@
   align-self: flex-start;
   padding: 8px 20px;
   font-variant-numeric: tabular-nums;
+  color: #111827;
   cursor: pointer;
   background: #f5f5f5;
   border: 1px solid #ccc;

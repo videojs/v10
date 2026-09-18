@@ -1,4 +1,5 @@
 import type { MarkdownHeading } from 'astro';
+import { navigate } from 'astro:transitions/client';
 import debounce from 'just-debounce-it';
 import throttle from 'just-throttle';
 import type { RefObject } from 'react';
@@ -9,6 +10,19 @@ import { API_REFERENCE_SUBSECTION_TITLES } from '@/utils/componentReferenceModel
 export interface RailGeometry {
   stripeHeight: number;
   gap: number;
+}
+
+const DEFAULT_ACTIVE_HEADING_OFFSET = 125;
+
+/** Resolve the viewport line where a heading becomes active from the document padding and target margin. */
+export function calculateActiveHeadingOffset(scrollPaddingTop: string, scrollMarginTop: string): number {
+  const scrollPadding = Number.parseFloat(scrollPaddingTop);
+  const scrollMargin = Number.parseFloat(scrollMarginTop);
+  const hasScrollPadding = !Number.isNaN(scrollPadding);
+  const hasScrollMargin = !Number.isNaN(scrollMargin);
+  if (!hasScrollPadding && !hasScrollMargin) return DEFAULT_ACTIVE_HEADING_OFFSET;
+
+  return (hasScrollPadding ? scrollPadding : 0) + (hasScrollMargin ? scrollMargin : 0);
 }
 
 /** Keep the full heading map visible by reducing gaps first, then stripe height. */
@@ -87,14 +101,11 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
   });
 }
 
-/** Navigate to a heading by scrolling it into view and updating the URL */
+/** Navigate to a heading through Astro so its history index and scroll state stay intact. */
 export function navigateToHeading(slug: string): void {
   const element = document.getElementById(slug);
 
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth' });
-    window.history.pushState({}, '', `#${slug}`);
-  }
+  if (element) void navigate(`#${slug}`);
 }
 
 interface UseAutoScrollOptions {
@@ -128,24 +139,10 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
 
   useEffect(() => {
     const handleScroll = () => {
-      // globals.css SHOULD define a scroll-margin-top for headings
-      // let's get the value of that, here
-      let scrollOffset = 125; // idk, a sensible default
       const idElement = document.querySelector('main [id]');
-
-      if (idElement) {
-        const computedStyle = getComputedStyle(idElement);
-        const scrollMarginTop = computedStyle.scrollMarginTop;
-
-        if (scrollMarginTop) {
-          const parsed = Number.parseFloat(scrollMarginTop);
-
-          if (!Number.isNaN(parsed)) scrollOffset = parsed;
-        }
-      }
-
-      scrollOffset = scrollOffset + 1;
-      const scrollPosition = window.scrollY + scrollOffset;
+      const scrollPaddingTop = getComputedStyle(document.documentElement).scrollPaddingTop;
+      const scrollMarginTop = idElement ? getComputedStyle(idElement).scrollMarginTop : '';
+      const activeLine = calculateActiveHeadingOffset(scrollPaddingTop, scrollMarginTop) + 1;
 
       // Find the last heading that's above the scroll position
       let currentActiveId = '';
@@ -154,9 +151,9 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
         const element = document.getElementById(heading.slug);
 
         if (element) {
-          const elementTop = element.offsetTop;
+          const elementTop = element.getBoundingClientRect().top;
 
-          if (elementTop <= scrollPosition) {
+          if (elementTop <= activeLine) {
             currentActiveId = heading.slug;
           } else {
             break;

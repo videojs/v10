@@ -11,7 +11,7 @@ interface Props {
 const { actions, featureName } = Astro.props;
 
 const actionEntries = Object.entries(actions);
-const toggleColumn = actionEntries.some(([, def]) => Boolean(def.detailedType));
+const toggleColumn = actionEntries.some(([, def]) => Boolean(def.description || def.detailedType));
 ---
 
 <ApiTable columns={["Action", "Type"]} toggle={toggleColumn}>

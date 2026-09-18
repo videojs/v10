@@ -28,20 +28,30 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
 
   useEffect(() => {
     const updateViewportLayout = () => {
-      const navHeightValue = triggerRef.current ? getComputedStyle(triggerRef.current).getPropertyValue('--nav-h') : '';
-      const navHeight = Number.parseFloat(navHeightValue) || 52;
+      const computedStyle = triggerRef.current ? getComputedStyle(triggerRef.current) : null;
+      const bannerHeight = Number.parseFloat(computedStyle?.getPropertyValue('--banner-height') ?? '') || 0;
+      const navHeight = Number.parseFloat(computedStyle?.getPropertyValue('--nav-h') ?? '') || 52;
+      const stickyHeaderHeight = bannerHeight + navHeight;
+      const contentHeight = Math.max(0, window.innerHeight - stickyHeaderHeight);
 
       setViewportLayout({
-        availableHeight: Math.max(0, window.innerHeight - navHeight - 32),
-        railTop: navHeight + (window.innerHeight - navHeight) / 2,
+        availableHeight: Math.max(0, contentHeight - 32),
+        railTop: stickyHeaderHeight + contentHeight / 2,
       });
     };
+    const bannerContainer = document.querySelector('[data-banner-container]');
+    const bannerObserver =
+      bannerContainer && 'ResizeObserver' in window ? new ResizeObserver(updateViewportLayout) : null;
 
     updateViewportLayout();
+
+    if (bannerObserver && bannerContainer) bannerObserver.observe(bannerContainer);
+
     window.addEventListener('resize', updateViewportLayout);
     window.visualViewport?.addEventListener('resize', updateViewportLayout);
 
     return () => {
+      bannerObserver?.disconnect();
       window.removeEventListener('resize', updateViewportLayout);
       window.visualViewport?.removeEventListener('resize', updateViewportLayout);
     };

@@ -86,6 +86,11 @@ export class ComplexHost extends HTMLVideoAdapter {
     return this.#engine;
   }
 
+  /** Callback invoked when playback is ready. */
+  get onReady(): ((value: string) => void) | undefined {
+    return undefined;
+  }
+
   /** Current stream type. */
   get streamType(): string {
     return this.#streamType;

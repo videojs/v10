@@ -454,7 +454,13 @@ describe('Component pipeline (end-to-end)', () => {
 
       expect(parts.options!.description).toBe('Renders items for the available options.');
       expect(parts.options!.props.renderItem).toMatchObject({
-        type: '((value: string) => unknown)',
+        type: 'function',
+        detailedType: '((value: string) => unknown)',
+        frameworks: ['react'],
+      });
+      expect(parts.options!.props.className).toMatchObject({
+        type: 'string | function',
+        detailedType: 'string | ((state: string) => string | undefined)',
         frameworks: ['react'],
       });
       expect(parts.options!.platforms).toEqual({ react: {} });
@@ -881,7 +887,10 @@ describe('Util pipeline (end-to-end)', () => {
       // Public members as fields
       expect(overload.returnValue.fields).toBeDefined();
       expect(overload.returnValue.fields!.value).toBeDefined();
-      expect(overload.returnValue.fields!.track).toBeDefined();
+      expect(overload.returnValue.fields!.track).toMatchObject({
+        type: 'function',
+        detailedType: '(() => void)',
+      });
     });
 
     it('controller param descriptions have "- " prefix stripped', () => {
@@ -1234,11 +1243,13 @@ describe('Feature pipeline (end-to-end)', () => {
       const actions = findFeature('playback')!.reference.actions;
 
       expect(actions.play).toBeDefined();
-      expect(actions.play!.type).toContain('Promise');
+      expect(actions.play).toMatchObject({ type: 'function' });
+      expect(actions.play!.detailedType).toContain('Promise');
       expect(actions.play!.description).toBe('Start playback.');
 
       expect(actions.pause).toBeDefined();
-      expect(actions.pause!.type).toContain('void');
+      expect(actions.pause).toMatchObject({ type: 'function' });
+      expect(actions.pause!.detailedType).toContain('void');
       expect(actions.pause!.description).toBe('Pause playback.');
     });
 
@@ -1301,12 +1312,14 @@ describe('Feature pipeline (end-to-end)', () => {
 
       // setVolume has a parameter and returns a number
       expect(actions.setVolume).toBeDefined();
-      expect(actions.setVolume!.type).toContain('number');
+      expect(actions.setVolume).toMatchObject({ type: 'function' });
+      expect(actions.setVolume!.detailedType).toContain('number');
       expect(actions.setVolume!.description).toBe('Set volume (clamped 0-1). Returns the clamped value.');
 
       // toggleMuted returns a boolean
       expect(actions.toggleMuted).toBeDefined();
-      expect(actions.toggleMuted!.type).toContain('boolean');
+      expect(actions.toggleMuted).toMatchObject({ type: 'function' });
+      expect(actions.toggleMuted!.detailedType).toContain('boolean');
       expect(actions.toggleMuted!.description).toBe('Toggle mute state. Returns the new muted value.');
     });
   });
@@ -1823,6 +1836,7 @@ describe('Media element pipeline (end-to-end)', () => {
         'debug',
         'engine',
         'isFullscreen',
+        'onReady',
         'preferPlayback',
         'preload',
         'src',
@@ -1838,6 +1852,12 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.preferPlayback.description).toBe("Whether to prefer `'mse'` or `'native'` playback.");
       expect(props.debug.description).toBe('Enable debug logging.');
       expect(props.engine.description).toBe('The underlying playback engine instance.');
+      expect(props.onReady).toMatchObject({
+        type: 'function',
+        detailedType: '((value: string) => void) | undefined',
+        description: 'Callback invoked when playback is ready.',
+        readonly: true,
+      });
     });
 
     it('marks readonly properties correctly', () => {

@@ -1,8 +1,11 @@
 {/* Platform detection before paint. DocSearch only learns the modifier key after hydration; the CSS placeholder keys read this flag so the trigger paints its final glyphs immediately and hydration changes nothing visible. The test matches DocSearch's own. */}
 <script is:inline>
-  document.documentElement.dataset.platform = /(Mac|iPhone|iPod|iPad)/i.test(
-    navigator.platform,
-  )
+  const platform = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)
     ? "mac"
     : "other";
+
+  document.documentElement.dataset.platform = platform;
+  document.addEventListener("astro:before-swap", function (event) {
+    event.newDocument.documentElement.dataset.platform = platform;
+  });
 </script>

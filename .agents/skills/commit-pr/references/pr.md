@@ -67,7 +67,6 @@ Place issue references at the top of the body, before Summary.
 - File lists (reviewers see the diff)
 - Auto-generated changelogs
 - Excessive implementation details (use `<details>` if needed)
-- Screenshots unless UI change (prefer before/after if included)
 
 ## Examples
 

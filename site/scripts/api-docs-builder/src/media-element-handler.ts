@@ -553,8 +553,11 @@ function applyClassMembers(
   }
 
   for (const [name, getter] of getters) {
-    const definition: HostPropertyDef = { type: getter.type, readonly: !setters.has(name) };
+    const abbreviated = abbreviateType(name, getter.type);
+    const definition: HostPropertyDef = { type: abbreviated ?? getter.type, readonly: !setters.has(name) };
     const description = getter.description ?? properties[name]?.description;
+
+    if (abbreviated && abbreviated !== getter.type) definition.detailedType = getter.type;
 
     if (description) definition.description = description;
 

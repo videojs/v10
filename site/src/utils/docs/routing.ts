@@ -17,6 +17,13 @@ export function buildAgnosticDocsUrl(guideSlug?: string | null): string {
   return guideSlug ? `/docs/${guideSlug}` : '/docs';
 }
 
+/** Read the explicit framework segment from a docs URL. Framework-agnostic and invalid paths return null. */
+export function getFrameworkFromDocsPath(pathname: string): SupportedFramework | null {
+  const framework = pathname.match(/^\/docs\/framework\/([^/]+)(?:\/|$)/)?.[1];
+
+  return isValidFramework(framework) ? framework : null;
+}
+
 /** Input for resolveDocsHref */
 export interface DocsHrefInput {
   /** Guide to link to. `null` means the docs landing page (first guide for the framework). */

@@ -8,21 +8,25 @@ import type { PropDef } from './types.js';
 /**
  * Detect if a type string is a single function type (vs a top-level union).
  *
- * Tracks bracket depth to find the matching `)` for the opening `(` of the parameter list, then checks if `=>` follows.
+ * Removes parentheses around the whole type, then finds the end of the parameter list and checks if `=>` follows.
  * Returns `false` for top-level unions that happen to contain a function member (e.g., `((state: object) => string) |
  * undefined`).
  */
 function isFunctionType(type: string): boolean {
-  if (!type.startsWith('(')) return false;
+  let value = type.trim();
+
+  while (hasOuterParentheses(value)) value = value.slice(1, -1).trim();
+
+  if (!value.startsWith('(')) return false;
 
   let depth = 0;
 
-  for (let i = 0; i < type.length; i++) {
-    if (type[i] === '(' || type[i] === '{' || type[i] === '[') depth++;
-    else if (type[i] === ')' || type[i] === '}' || type[i] === ']') depth--;
+  for (let i = 0; i < value.length; i++) {
+    if (value[i] === '(') depth++;
+    else if (value[i] === ')') depth--;
 
     if (depth === 0) {
-      return type
+      return value
         .slice(i + 1)
         .trimStart()
         .startsWith('=>');
@@ -30,6 +34,89 @@ function isFunctionType(type: string): boolean {
   }
 
   return false;
+}
+
+function hasOuterParentheses(type: string): boolean {
+  if (!type.startsWith('(') || !type.endsWith(')')) return false;
+
+  let depth = 0;
+
+  for (let i = 0; i < type.length; i++) {
+    if (type[i] === '(') depth++;
+    else if (type[i] === ')') depth--;
+
+    if (depth === 0) return i === type.length - 1;
+  }
+
+  return false;
+}
+
+function splitTopLevel(type: string, separator: '|' | '&'): string[] {
+  const parts: string[] = [];
+  let start = 0;
+  let parentheses = 0;
+  let braces = 0;
+  let brackets = 0;
+  let angles = 0;
+  let quote: "'" | '"' | '`' | undefined;
+
+  for (let i = 0; i < type.length; i++) {
+    const character = type[i]!;
+
+    if (quote) {
+      if (character === quote && type[i - 1] !== '\\') quote = undefined;
+
+      continue;
+    }
+
+    if (character === "'" || character === '"' || character === '`') {
+      quote = character;
+      continue;
+    }
+
+    if (character === '(') parentheses++;
+    else if (character === ')') parentheses--;
+    else if (character === '{') braces++;
+    else if (character === '}') braces--;
+    else if (character === '[') brackets++;
+    else if (character === ']') brackets--;
+    else if (character === '<') angles++;
+    else if (character === '>' && type[i - 1] !== '=') angles = Math.max(0, angles - 1);
+
+    if (character === separator && parentheses === 0 && braces === 0 && brackets === 0 && angles === 0) {
+      parts.push(type.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+
+  parts.push(type.slice(start).trim());
+  return parts;
+}
+
+function splitTopLevelUnion(type: string): string[] {
+  return splitTopLevel(type, '|');
+}
+
+function splitTopLevelIntersection(type: string): string[] {
+  return splitTopLevel(type, '&');
+}
+
+function abbreviateFunctionMember(type: string): string | undefined {
+  if (isFunctionType(type)) return 'function';
+
+  const intersectionMembers = splitTopLevelIntersection(type);
+  if (intersectionMembers.length === 1) return undefined;
+
+  let abbreviated = false;
+  const displayMembers = intersectionMembers.map((member) => {
+    if (!isFunctionType(member)) return member;
+
+    abbreviated = true;
+
+    return 'function';
+  });
+
+  return abbreviated ? displayMembers.join(' & ') : undefined;
 }
 
 /**
@@ -40,7 +127,7 @@ function isFunctionType(type: string): boolean {
 export function abbreviateType(name: string, type: string): string | undefined {
   // Pure function types (no union) → "function"
   // Also matches function types whose return is a union (e.g., `(state: object) => X | undefined`)
-  if (type.includes('=>') && (!type.includes(' | ') || isFunctionType(type))) {
+  if (isFunctionType(type)) {
     return 'function';
   }
 
@@ -72,18 +159,24 @@ export function abbreviateType(name: string, type: string): string | undefined {
     return 'object';
   }
 
-  // Short unions (less than 3 members and under 40 chars) → no abbreviation
-  if (!type.includes(' | ') || (type.split(' | ').length < 3 && type.length < 40 && !type.includes('=>'))) {
-    return undefined;
+  const unionMembers = splitTopLevelUnion(type);
+  const abbreviatedFunctionMembers: string[] = [];
+  const otherMembers: string[] = [];
+
+  for (const member of unionMembers) {
+    const abbreviated = abbreviateFunctionMember(member);
+
+    if (abbreviated) abbreviatedFunctionMembers.push(abbreviated);
+    else otherMembers.push(member);
   }
 
-  // Function in union → "type | function"
-  if (type.includes('=>')) {
-    const parts = type.split(' | ');
-    const nonFunctionParts = parts.filter((p) => !p.includes('=>'));
-    if (nonFunctionParts.length > 0) return `${nonFunctionParts.join(' | ')} | function`;
+  if (abbreviatedFunctionMembers.length > 0) {
+    return uniq([...otherMembers, ...abbreviatedFunctionMembers]).join(' | ');
+  }
 
-    return 'function';
+  // Short unions (less than 3 members and under 40 chars) → no abbreviation
+  if (unionMembers.length < 3 && type.length < 40) {
+    return undefined;
   }
 
   // Any other type > 40 chars → truncated for display, full in detailedType

@@ -5,6 +5,16 @@ import '@videojs/html/ui/volume-indicator';
 import '@videojs/html/ui/volume-indicator-fill';
 import '@videojs/html/ui/volume-indicator-value';
 
-const video = document.querySelector<HTMLVideoElement>('.html-volume-indicator-basic video');
+const initializedVideos = new WeakSet<HTMLVideoElement>();
 
-if (video) video.volume = 0.5;
+function initializeDemos(): void {
+  document.querySelectorAll<HTMLVideoElement>('.html-volume-indicator-basic video').forEach((video) => {
+    if (initializedVideos.has(video)) return;
+
+    initializedVideos.add(video);
+    video.volume = 0.5;
+  });
+}
+
+initializeDemos();
+document.addEventListener('astro:page-load', initializeDemos);

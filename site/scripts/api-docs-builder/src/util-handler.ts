@@ -358,7 +358,11 @@ function buildControllerReturn(project: OxcProject, file: SourceFile, declaratio
       type = member.kind === 'get' ? returns : `((${params}) => ${returns})`;
     }
 
-    const field: NonNullable<ReturnValue['fields']>[string] = { type };
+    const abbreviated = abbreviateType(name, type);
+    const field: NonNullable<ReturnValue['fields']>[string] = { type: abbreviated ?? type };
+
+    if (abbreviated && abbreviated !== type) field.detailedType = type;
+
     const description = getJSDoc(file, member)?.description;
 
     if (description) field.description = description;

@@ -31,8 +31,6 @@ export const THEME_COLORS = {
   deep: '#151414',
 } as const;
 export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
-/** Session flag set once the legacy banner has scrolled out of view, so later pages start without it. */
-export const BANNER_SEEN_KEY = 'vjs-legacy-banner-seen';
 export const BLOG_PAGE_SIZE = 10;
 export const CDN_URL_BASE = `https://cdn.jsdelivr.net/npm`;
 export const VJS10_VERSION = htmlPackage.version;

@@ -198,8 +198,14 @@ const fullTitle =
       <PreferenceSync client:idle />
       <ResolveDocsLinks />
 
-      <PrereleaseBanner />
-      <LegacyBanner />
+      <div
+        data-banner-container
+        data-astro-transition-persist="site-banners"
+        class="sticky top-0 z-40"
+      >
+        <PrereleaseBanner />
+        <LegacyBanner />
+      </div>
       <slot />
     </div>
     {
@@ -209,10 +215,6 @@ const fullTitle =
           // the end of the page wheel deltas slide the page up over the pinned color blocks and it springs back when
           // the gesture stops. Touch devices keep the browser's own rubber-band, which already reveals them.
           (() => {
-            const page = document.querySelector("[data-overscroll-page]");
-            const reveal = document.querySelector("[data-overscroll-reveal]");
-            if (!page || !reveal) return;
-
             let offset = 0;
             let releaseTimer;
             // The reveal only arms on a fresh gesture that starts while the page is already at its end. A fast scroll
@@ -225,11 +227,17 @@ const fullTitle =
               document.documentElement.scrollHeight - 1;
 
             const apply = () => {
+              const page = document.querySelector("[data-overscroll-page]");
+              if (!page) return;
+
               page.style.transition = "none";
               page.style.transform = offset ? `translate3d(0, ${-offset}px, 0)` : "";
             };
 
             const release = () => {
+              const page = document.querySelector("[data-overscroll-page]");
+              if (!page) return;
+
               offset = 0;
               page.style.transition = "transform 600ms var(--ease-soft)";
               page.style.transform = "";
@@ -245,6 +253,9 @@ const fullTitle =
 
                 const pulling = event.deltaY > 0 && atPageEnd() && (freshGesture || offset > 0);
                 if (!pulling && offset === 0) return;
+
+                const reveal = document.querySelector("[data-overscroll-reveal]");
+                if (!reveal) return;
 
                 const max = reveal.offsetHeight;
                 // Ease off as the blocks come fully into view so the pull feels elastic rather than linear.

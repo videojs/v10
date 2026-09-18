@@ -15,11 +15,12 @@ Preserve unrelated user changes. Do not stage or rewrite files you cannot attrib
    - Scope selection: `references/scope.md`
    - Branch naming: `references/branch.md`
    - PR title/body: `references/pr.md`
+   - Evidence for observable skin or site visual changes: `references/visual-evidence.md`
 3. Split changes into semantic commits when they represent independently reviewable purposes. Never use `git add .`; stage explicit paths or a reviewed set.
 4. Run the checks appropriate to each commit before committing.
 5. Use a conventional commit accepted by `commitlint.config.js`; treat that config and recent history as the current source of truth.
 6. Push only when requested. Check for an existing PR before creating one.
-7. Build the PR description from the complete branch diff, not only the last commit. Explain motivation, behavior, verification, and relevant issue links.
+7. Build the PR description from the complete branch diff, not only the last commit. Explain motivation, behavior, verification, and relevant issue links. For observable changes to skin or site visual elements, choose proportional evidence using `references/visual-evidence.md`.
 8. Report commit hashes, checks, and the PR URL.
 
 Do not amend, force-push, change an existing PR title, or update an existing PR body without clear user authorization.

@@ -187,9 +187,8 @@ export default function InstallationPreview() {
       : effectiveSkin.startsWith('minimal')
         ? 'the minimal skin'
         : 'the default skin';
-  const referenceHref = skinPage
-    ? `/docs/framework/${isHydrated && framework ? framework : 'react'}/components/${skinPage}`
-    : null;
+  const referenceHref =
+    isHydrated && framework && skinPage ? `/docs/framework/${framework}/components/${skinPage}` : null;
 
   return (
     <figure className="flex flex-col gap-3">
