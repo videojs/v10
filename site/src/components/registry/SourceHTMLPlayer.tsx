@@ -1,5 +1,6 @@
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import { shared } from '@/components/typography/styles';
 import { generateSourceHTMLUsageCode } from '@/utils/installation/codegen';
 
 import { useSelection } from '../installation/useSelection';
@@ -35,7 +36,7 @@ export default function SourceHTMLPlayer({ part }: Props) {
   if (part === 'media') {
     return (
       <>
-        <p>
+        <p className={`${shared.p} ${shared.prose}`}>
           In <code>{code.skinFile}</code>, replace the “Add a compatible media element here” comment with:
         </p>
         <CodeBlock code={code.media} label="skin.html" lang="html" />
@@ -46,7 +47,7 @@ export default function SourceHTMLPlayer({ part }: Props) {
   if (part === 'imports') {
     return (
       <>
-        <p>
+        <p className={`${shared.p} ${shared.prose}`}>
           Create <code>src/player.ts</code> and import the player, media, and installed skin:
         </p>
         <CodeBlock code={code.imports} label="src/player.ts" lang="ts" />
@@ -56,7 +57,9 @@ export default function SourceHTMLPlayer({ part }: Props) {
 
   return (
     <>
-      <p>Paste the updated skin markup inside the player, then load the entry module:</p>
+      <p className={`${shared.p} ${shared.prose}`}>
+        Paste the updated skin markup inside the player, then load the entry module:
+      </p>
       <CodeBlock code={code.player} label="index.html" lang="html" />
     </>
   );

@@ -1,4 +1,5 @@
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
+import { shared } from '@/components/typography/styles';
 import { generateSourceMediaInstallCode } from '@/utils/installation/codegen';
 
 import { useSelection } from '../installation/useSelection';
@@ -12,7 +13,7 @@ export default function SourceMediaInstall() {
       <h2 id="media-adapter-heading" className="font-display text-h3 @lg:text-h25 mb-8 leading-tight uppercase">
         Install the media adapter
       </h2>
-      <p className="my-4 leading-relaxed">
+      <p className={`${shared.p} ${shared.prose}`}>
         This media source needs a separate playback adapter. Install it with your package manager.
       </p>
       <PackageManagerTabs commands={install} />
