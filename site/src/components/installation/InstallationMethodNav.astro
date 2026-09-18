@@ -1,15 +1,11 @@
 ---
 import InstallationMethodNavClient from './InstallationMethodNavClient';
-import { isInstallationRouteSegment } from '@/utils/installation/routes';
+import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 
 const { framework } = Astro.params;
 if (!isInstallationRouteSegment(framework)) throw new Error(`Unsupported installation route: ${framework}`);
 
-const routeFramework = framework === 'react' || framework === 'html' || framework === 'vue' || framework === 'svelte'
-  ? framework
-  : framework === 'cdn'
-    ? 'html'
-    : 'react';
+const routeFramework = INSTALLATION_ROUTES[framework].pickerFramework;
 ---
 
 <InstallationMethodNavClient client:idle currentFramework={routeFramework} route={framework} />

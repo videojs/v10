@@ -64,8 +64,8 @@ const command = [
         <p>CDN installation is HTML-only and does not use a package manager.</p>
       ) : (
         <p>
-          The older <code>--install-method &lt;cdn|npm|pnpm|yarn|bun&gt;</code> flag remains compatible. New commands keep
-          the installation method and package manager as separate decisions.
+          The older <code>--install-method &lt;cdn|npm|pnpm|yarn|bun&gt;</code> flag remains compatible. On a canonical route,
+          it cannot change the route's installation method; package-manager values still select its package manager.
         </p>
       )
     }
