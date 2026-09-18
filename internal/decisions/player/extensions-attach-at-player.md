@@ -19,6 +19,6 @@ The facade is a `Proxy`, which [media/architecture](/internal/design/media/archi
 
 ## Sources
 
-- Contract and facade: [`player-extension.ts`](/packages/core/src/dom/extensions/player-extension.ts), [`player-media.ts`](/packages/core/src/dom/extensions/player-media.ts)
+- Contract, coordinator, and facade: [`extension.ts`](/packages/core/src/dom/extensions/extension.ts), [`coordinator.ts`](/packages/core/src/dom/extensions/coordinator.ts), [`media.ts`](/packages/core/src/dom/extensions/media.ts)
 - Player wiring: [`element.ts`](/packages/html/src/player/element.ts), [`create-player.tsx`](/packages/react/src/player/create-player.tsx)
 - Plain `<video>` coverage: the `extensions` cases in [`create-player.test.ts`](/packages/html/src/player/tests/create-player.test.ts) and [`create-player.test.tsx`](/packages/react/src/player/tests/create-player.test.tsx)

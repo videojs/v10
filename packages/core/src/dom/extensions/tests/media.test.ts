@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { createPlayerMedia, type MediaOverride, type MediaOverrideSource } from '../player-media';
+import { createPlayerMedia, type MediaOverride, type MediaOverrideSource } from '../media';
 
 class MutedOverride implements MediaOverrideSource {
   get mediaOverride() {

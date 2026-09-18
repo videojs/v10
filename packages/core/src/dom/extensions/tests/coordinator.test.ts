@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { PlayerTarget } from '../../player';
-import { type PlayerExtension, PlayerExtensionCoordinator } from '../player-extension';
+import { PlayerExtensionCoordinator } from '../coordinator';
+import type { PlayerExtension } from '../extension';
 
 class TrackingExtension implements PlayerExtension {
   attach = vi.fn<(target: PlayerTarget) => void>();
