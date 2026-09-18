@@ -355,10 +355,11 @@ An asset titled in the Mux dashboard supplies its own: the Mux media loads the a
 
 The packaged video and live-video skins show the resolved title at the top of the player and fade it with the controls, so the embeds above already display it. The <DocsLink slug="reference/components/title" anchor="styling">Title</DocsLink> component sets `data-visible` while the controls are visible, so your skin overrides can move it differently. The audio skins have no title display.
 
-An ejected or custom layout shows the title only where you place the component. Keep it inside the container so it overlays the media:
+An ejected or custom layout shows the title only where you place the component. Keep it inside the sized container from [Move your layout styles](#move-your-layout-styles) so it overlays the media:
 
 <FrameworkCase frameworks={["html"]}>
 ```js
+import '@videojs/html/ui/container';
 import '@videojs/html/ui/title';
 ```
 
@@ -379,7 +380,7 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
 
 <VideoPlayer title="Test VOD">
-  <Container className="player-surface">
+  <Container style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
     <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
     <Title />
   </Container>
