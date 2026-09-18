@@ -1203,6 +1203,9 @@ importers:
       '@videojs/core':
         specifier: workspace:*
         version: link:../core
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@babel/runtime':
         specifier: ^7.25.0
