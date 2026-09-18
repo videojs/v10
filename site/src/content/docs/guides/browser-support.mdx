@@ -19,7 +19,7 @@ These are the versions we test in and fix bugs for. We build directly on the web
 
 <BrowserSupportTable kind="coverage" />
 
-## What the stylesheets need
+## CSS requirements
 
 The packaged skins are generated CSS, and a handful of newer features hold a skin together. **Required** features have no fallback: without them the player shows no component styling, and `@scope` alone sets the floor. **Degrades** features lose one visual detail. **Has a fallback** features sit inside [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports); anchor positioning falls back to positions computed in JavaScript.
 
