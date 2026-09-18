@@ -24,7 +24,7 @@ export const DEFAULT_SELECTION: InstallationSelection = {
   skin: 'video',
   renderer: 'html5-video',
   sourceUrl: '',
-  installMethod: 'cdn',
+  installMethod: 'npm',
 };
 
 const INSTALL_METHODS: readonly InstallMethod[] = ['cdn', 'npm', 'pnpm', 'yarn', 'bun'];

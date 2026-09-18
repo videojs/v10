@@ -7,13 +7,31 @@ import Grid from '@/components/Grid.astro';
 
 interface Props {
   label?: string;
+  /** Keep the visible heading level while nesting this label correctly in generated Markdown. */
+  llmsHeadingLevel?: 4;
 }
 
-const { label } = Astro.props;
+const { label, llmsHeadingLevel } = Astro.props;
 ---
 
 <section class="mx-auto my-8 w-full max-w-3xl">
-  {label && <h3 class="mb-3 font-display text-h4 uppercase text-muted select-none">{label}</h3>}
+  {
+    label && (
+      <>
+        <h3
+          class="mb-3 font-display text-h4 uppercase text-muted select-none"
+          data-llms-ignore={llmsHeadingLevel ? true : undefined}
+        >
+          {label}
+        </h3>
+        {llmsHeadingLevel === 4 && (
+          <div hidden data-llms-only>
+            <h4>{label}</h4>
+          </div>
+        )}
+      </>
+    )
+  }
   <Grid class="docs-link-cards [&_.docs-link-card]:contents">
     <slot />
   </Grid>

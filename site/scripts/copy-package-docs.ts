@@ -102,7 +102,7 @@ function copyInstallationDocumentation({
 
   for (const [source, destination] of INSTALLATION_DOCUMENTS[framework]) {
     const sourcePath = join(siteDist, source);
-    if (!existsSync(sourcePath)) continue;
+    if (!existsSync(sourcePath)) throw new Error(`Missing installation documentation source: ${sourcePath}`);
 
     const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
     const transformed = rewriteLocalLinks ? rewriteLinks(raw, sourceSlug(destination), framework) : raw;

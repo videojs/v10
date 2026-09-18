@@ -153,6 +153,13 @@ function saveSidebarState(): void {
   }
 }
 
+/** Find the active link in the sidebar tree that is currently rendered. */
+export function findVisibleActiveSidebarLink(aside: HTMLElement): HTMLElement | undefined {
+  return Array.from(aside.querySelectorAll<HTMLElement>('a[aria-current="page"]')).find(
+    (link) => link.getClientRects().length > 0
+  );
+}
+
 function restoreSidebarState(): void {
   const state = readSidebarState();
   const aside = document.getElementById(DOCS_SIDEBAR_ID);
@@ -165,8 +172,9 @@ function restoreSidebarState(): void {
   }
 
   // Keep the active link in view when arriving from a different section. Scroll the sidebar alone because
-  // scrollIntoView would also move the document.
-  const activeLink = aside.querySelector<HTMLElement>('a[aria-current="page"]');
+  // scrollIntoView would also move the document. Multi-framework pages render one hidden sidebar per inactive
+  // framework, so select the active link that participates in layout rather than the first match in DOM order.
+  const activeLink = findVisibleActiveSidebarLink(aside);
   if (!activeLink) return;
 
   const asideRect = aside.getBoundingClientRect();

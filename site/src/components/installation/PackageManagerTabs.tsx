@@ -18,6 +18,7 @@ export default function PackageManagerTabs({ commands, syncSelection = true }: P
   const selectedRunner: ShadcnRunner = $installMethod === 'cdn' ? 'npm' : $installMethod;
 
   useEffect(() => {
+    // Canonicalize legacy packaged URLs that used `install-method=cdn`; CDN now has its own guide.
     if (syncSelection && installMethod.get() === 'cdn') installMethod.set('npm');
   }, [syncSelection]);
 
