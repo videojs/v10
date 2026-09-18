@@ -439,7 +439,7 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video'");
     expect(code).toContain('<VideoPlayer>');
     expect(code).toContain('<VideoSkin>');
-    expect(code).toContain('<Video src={"');
+    expect(code).toContain('<Video src="');
     expect(code).toContain('playsInline />');
     expect(code).toContain('export default function Page()');
     expect(code).toContain("from '@videojs/react/video'");
@@ -452,7 +452,7 @@ describe('generateReactCreateCode', () => {
 
     expect(code).toContain("import { VideoPlayer, VideoSkin } from '@videojs/react/video'");
     expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
-    expect(code).toContain('<HlsJsVideo src={"');
+    expect(code).toContain('<HlsJsVideo src="');
     expect(code).toContain('playsInline />');
   });
 
@@ -461,7 +461,7 @@ describe('generateReactCreateCode', () => {
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { DashVideo } from '@videojs/react/media/dash-video'");
-    expect(code).toContain('<DashVideo src={"');
+    expect(code).toContain('<DashVideo src="');
     expect(code).toContain('playsInline />');
   });
 
@@ -471,7 +471,7 @@ describe('generateReactCreateCode', () => {
       sourceUrl: 'https://example.com/video.mp4',
     })['app/page.tsx'];
 
-    expect(code).toContain('<Video src={"https://example.com/video.mp4"} playsInline />');
+    expect(code).toContain('<Video src="https://example.com/video.mp4" playsInline />');
   });
 
   it('uses separate media import for Mux video', () => {
@@ -479,7 +479,7 @@ describe('generateReactCreateCode', () => {
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { MuxVideo } from '@videojs/react/media/mux-video'");
-    expect(code).toContain('<MuxVideo src={"');
+    expect(code).toContain('<MuxVideo src="');
     expect(code).toContain('playsInline />');
   });
 
@@ -503,7 +503,7 @@ describe('generateReactCreateCode', () => {
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { VimeoVideo } from '@videojs/react/media/vimeo-video'");
-    expect(code).toContain('<VimeoVideo src={"');
+    expect(code).toContain('<VimeoVideo src="');
     expect(code).not.toContain('playsInline');
   });
 
@@ -519,7 +519,7 @@ describe('generateReactCreateCode', () => {
       const code = generateReactCreateCode({ ...baseReact, renderer })['app/page.tsx'];
 
       expect(code).toContain(`import { ${component} } from '@videojs/react/media/${subpath}'`);
-      expect(code).toContain(`<${component} src={"`);
+      expect(code).toContain(`<${component} src="`);
       expect(code).not.toContain('playsInline');
     }
   });
@@ -533,7 +533,7 @@ describe('generateReactCreateCode', () => {
     })['app/page.tsx'];
 
     expect(code).toContain("import { SpotifyAudio } from '@videojs/react/media/spotify-audio'");
-    expect(code).toContain('<SpotifyAudio src={"');
+    expect(code).toContain('<SpotifyAudio src="');
   });
 
   it('uses audio features and components', () => {
@@ -550,7 +550,7 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { AudioPlayer, AudioSkin, Audio } from '@videojs/react/audio'");
     expect(code).toContain('<AudioPlayer>');
     expect(code).toContain('<AudioSkin>');
-    expect(code).toContain('<Audio src={"');
+    expect(code).toContain('<Audio src="');
     expect(code).not.toContain('playsInline');
   });
 
@@ -568,7 +568,7 @@ describe('generateReactCreateCode', () => {
 
     expect(code).not.toContain('VideoSkin');
     expect(code).not.toContain('skin.css');
-    expect(code).toContain('<Video src={"');
+    expect(code).toContain('<Video src="');
     expect(code).toContain('playsInline />');
     expect(code).toContain("from '@videojs/react/video'");
   });
@@ -582,7 +582,7 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video'");
     expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
     expect(code).toContain("import '@videojs/react/live-video/skin.css'");
-    expect(code).toContain('<HlsJsVideo src={"');
+    expect(code).toContain('<HlsJsVideo src="');
     expect(code).toContain('playsInline />');
   });
 
@@ -673,7 +673,7 @@ describe('source installation code', () => {
     expect(code).toContain("import { VideoSkin } from '@/components/videojs/video/skin'");
     expect(code).toContain("import { VideoPlayer } from '@videojs/react/video'");
     expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
-    expect(code).toContain('<HlsJsVideo src={"');
+    expect(code).toContain('<HlsJsVideo src="');
     expect(code).toContain('playsInline />');
     expect(code).toContain('export default function Page()');
     expect(code).not.toContain('@videojs/react/video/skin.css');
@@ -688,7 +688,7 @@ describe('source installation code', () => {
 
     expect(code).toContain(`<VideoPlayer>
       <VideoSkin>
-        <Video src={"https://example.com/video.mp4"} playsInline />
+        <Video src="https://example.com/video.mp4" playsInline />
       </VideoSkin>
     </VideoPlayer>`);
     expect(code).not.toContain('const src');

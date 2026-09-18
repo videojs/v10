@@ -22,7 +22,8 @@ interface Props {
   image?: ImageMetadata | string;
   twitterImage?: ImageMetadata | string;
   canonical?: string;
-  suffix?: string;
+  /** SEO title suffix. Pass `false` to keep the title to `Page | Video.js`. */
+  suffix?: string | false;
   withCompact?: boolean;
   /**
    * Pin the color-block easter egg behind the page so it is only revealed when the document rubber-bands past its
@@ -57,11 +58,17 @@ const resolvedTwitterImage = twitterImage
     ? resolveImageUrl(image)
     : autoTwitterImage;
 
-const seoSuffix = suffix ?? SEO_SUFFIX;
+const seoSuffix = suffix === false ? null : (suffix ?? SEO_SUFFIX);
 const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
 const includesSiteTitle = pageTitle === SITE_TITLE || pageTitle.endsWith(` | ${SITE_TITLE}`);
 const fullTitle =
-  includesSiteTitle ? `${pageTitle} | ${seoSuffix}` : `${pageTitle} | ${SITE_TITLE} | ${seoSuffix}`;
+  includesSiteTitle
+    ? seoSuffix
+      ? `${pageTitle} | ${seoSuffix}`
+      : pageTitle
+    : seoSuffix
+      ? `${pageTitle} | ${SITE_TITLE} | ${seoSuffix}`
+      : `${pageTitle} | ${SITE_TITLE}`;
 ---
 
 <html lang="en">

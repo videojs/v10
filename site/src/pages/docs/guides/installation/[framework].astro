@@ -7,15 +7,50 @@ import type { SupportedFramework } from '@/types/docs';
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
   const installationRoutes = {
-    react: { framework: 'react', frameworks: ['react'], slug: 'guides/installation' },
-    html: { framework: 'html', frameworks: ['html'], slug: 'guides/installation' },
-    vue: { framework: 'html', frameworks: ['html'], slug: 'guides/installation-vue' },
-    svelte: { framework: 'html', frameworks: ['html'], slug: 'guides/installation-svelte' },
-    shadcn: { framework: 'react', frameworks: ['react', 'html'], slug: 'guides/installation-shadcn' },
-    cdn: { framework: 'html', frameworks: ['html'], slug: 'guides/cdn' },
+    react: {
+      description: 'Install Video.js in React and build an accessible, customizable video player with composable controls',
+      framework: 'react',
+      frameworks: ['react'],
+      slug: 'guides/installation',
+    },
+    html: {
+      description: 'Install Video.js with HTML custom elements and build an accessible, customizable video player',
+      framework: 'html',
+      frameworks: ['html'],
+      slug: 'guides/installation',
+    },
+    vue: {
+      description: 'Install Video.js in Vue or Nuxt and build a video player with HTML custom elements',
+      framework: 'html',
+      frameworks: ['html'],
+      slug: 'guides/installation-vue',
+    },
+    svelte: {
+      description: 'Install Video.js in Svelte or SvelteKit and build a video player with HTML custom elements',
+      framework: 'html',
+      frameworks: ['html'],
+      slug: 'guides/installation-svelte',
+    },
+    shadcn: {
+      description: 'Use the Video.js Shadcn registry to add editable skin source and build a React or HTML video player',
+      framework: 'react',
+      frameworks: ['react', 'html'],
+      slug: 'guides/installation-shadcn',
+    },
+    cdn: {
+      description: 'Load Video.js from jsDelivr and build an HTML video player without a package manager',
+      framework: 'html',
+      frameworks: ['html'],
+      slug: 'guides/cdn',
+    },
   } as const satisfies Record<
     string,
-    { framework: SupportedFramework; frameworks: readonly SupportedFramework[]; slug: string }
+    {
+      description: string;
+      framework: SupportedFramework;
+      frameworks: readonly SupportedFramework[];
+      slug: string;
+    }
   >;
 
   return Object.entries(installationRoutes).map(([route, config]) => {
@@ -31,12 +66,22 @@ export async function getStaticPaths() {
 
 interface Props {
   doc: CollectionEntry<'docs'>;
+  description: string;
   framework: SupportedFramework;
   frameworks: readonly SupportedFramework[];
   slug: string;
 }
 
-const { doc, framework, frameworks, slug } = Astro.props;
+const { doc, description, framework, frameworks, slug } = Astro.props;
 ---
 
-<DocsPage doc={doc} framework={framework} frameworks={frameworks} slug={slug} stabilizeHeader />
+<DocsPage
+  doc={doc}
+  description={description}
+  framework={framework}
+  frameworks={frameworks}
+  slug={slug}
+  stabilizeHeader
+  registryFrameworkSelection={frameworks.length > 1}
+  conciseMetadata
+/>

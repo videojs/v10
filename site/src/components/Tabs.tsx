@@ -110,9 +110,10 @@ interface TabProps {
   value: string;
   children: React.ReactNode;
   initial?: boolean;
+  onSelect?: (value: string) => void;
   variant?: TabsVariant;
 }
-export function Tab({ value, children, initial, variant = 'compact' }: TabProps) {
+export function Tab({ value, children, initial, onSelect, variant = 'compact' }: TabProps) {
   const isHydrated = useIsHydrated();
   const ref = useRef<HTMLButtonElement>(null);
   const [isActive, setIsActive] = useState(initial);
@@ -126,6 +127,8 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   }, [value]);
 
   const onClick = () => {
+    onSelect?.(value);
+
     if (ref.current) {
       // set data-tab-active on this button to true
       ref.current.setAttribute('data-tab-active', 'true');

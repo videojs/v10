@@ -1,6 +1,6 @@
 ---
 title: Shadcn Installation Guide
-description: Add editable Video.js skin source to a React or HTML project and build a working player
+description: Use the Video.js Shadcn registry to add editable skin source and build a React or HTML video player
 ---
 
 import Aside from '@/components/Aside.astro';
@@ -136,7 +136,13 @@ That's it! You now have a working Video.js player whose skin source lives in you
 
 ## Change the skin source
 
-Start in `components/videojs/<preset>/skin.tsx` for React or `components/videojs/<preset>/skin.html` for HTML. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+<ShadcnFrameworkCase framework="react">
+Start in `components/videojs/<preset>/skin.tsx`. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+Start in `components/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+</ShadcnFrameworkCase>
 
 ## Choose what to do next
 

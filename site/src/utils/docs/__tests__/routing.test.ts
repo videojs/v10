@@ -2,8 +2,11 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Sidebar } from '../../../types/docs';
 import {
+  buildAgnosticDocsUrl,
   buildDocsUrl,
   getFrameworkFromDocsPath,
+  isDocsGuideActive,
+  resolveDocsHref,
   resolveDocsLinkUrl,
   resolveFrameworkChange,
   resolveIndexRedirect,
@@ -388,6 +391,43 @@ describe('routing utilities', () => {
 
         expect(result.url).toBe('/docs/framework/react/concepts/everyone');
       });
+    });
+  });
+
+  describe('canonical installation routes', () => {
+    it('builds the preference-aware installation landing page', () => {
+      expect(buildAgnosticDocsUrl()).toBe('/docs');
+      expect(buildAgnosticDocsUrl(null)).toBe('/docs');
+      expect(buildAgnosticDocsUrl('guides/installation')).toBe('/docs/guides/installation');
+    });
+
+    it('keeps installation active across every installation route', () => {
+      expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/react')).toBe(true);
+      expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/shadcn')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/cdn')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/vue')).toBe(true);
+    });
+
+    it('still requires an exact URL for other guides', () => {
+      expect(isDocsGuideActive('html', 'guides/architecture', '/docs/framework/html/guides/architecture')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/architecture', '/docs/guides/installation/html')).toBe(false);
+    });
+
+    it('resolves the canonical framework and method URLs', () => {
+      expect(resolveDocsHref({ slug: null, framework: null })).toBe('/docs');
+      expect(resolveDocsHref({ slug: 'guides/installation', framework: null })).toBe('/docs/guides/installation');
+      expect(resolveDocsHref({ slug: null, framework: 'html' })).toBe('/docs/guides/installation/html');
+      expect(resolveDocsHref({ slug: 'guides/installation', framework: 'react' })).toBe(
+        '/docs/guides/installation/react'
+      );
+      expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'react' })).toBe(
+        '/docs/guides/installation/shadcn'
+      );
+      expect(resolveDocsHref({ slug: 'guides/cdn', framework: 'html' })).toBe('/docs/guides/installation/cdn');
+    });
+
+    it('rejects unknown guide slugs', () => {
+      expect(() => resolveDocsHref({ slug: 'guides/does-not-exist', framework: 'html' })).toThrow(/No guide found/);
     });
   });
 });

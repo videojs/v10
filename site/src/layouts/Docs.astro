@@ -15,11 +15,21 @@ import Base from './Base.astro';
 
 type Props = {
   doc: CollectionEntry<'docs'>;
+  description?: string;
   framework: SupportedFramework;
   slug: string;
+  registryFrameworkSelection?: boolean;
+  conciseMetadata?: boolean;
 };
 
-const { doc, framework, slug } = Astro.props;
+const {
+  doc,
+  description = doc.data.description,
+  framework,
+  slug,
+  registryFrameworkSelection = false,
+  conciseMetadata = false,
+} = Astro.props;
 
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
@@ -32,8 +42,8 @@ const docsSidebarId = 'docs-sidebar';
 
 <Base
   title={getDocTitle(doc, framework)}
-  suffix={`Open Source ${FRAMEWORK_LABELS[framework]} Video Player`}
-  description={`${doc.data.description} — Video.js ${seoCategory}.`}
+  suffix={conciseMetadata ? false : `Open Source ${FRAMEWORK_LABELS[framework]} Video Player`}
+  description={conciseMetadata ? description : `${description} — Video.js ${seoCategory}.`}
   easterEgg="thin"
   easterEggClass="md:left-70 lg:left-75"
 >
@@ -65,8 +75,14 @@ const docsSidebarId = 'docs-sidebar';
         framework={framework}
         docTitles={docTitles}
         docStabilities={docStabilities}
+        updateFrameworkPreference={!registryFrameworkSelection}
       >
-        <Selectors client:idle currentFramework={framework} currentSlug={slug} />
+        <Selectors
+          client:idle
+          currentFramework={framework}
+          currentSlug={slug}
+          registryFrameworkSelection={registryFrameworkSelection}
+        />
       </DocsSidebar>
     </NavBarDocs>
     <aside
@@ -80,11 +96,13 @@ const docsSidebarId = 'docs-sidebar';
         docStabilities={docStabilities}
         class="flex-1"
         animateIndicator
+        updateFrameworkPreference={!registryFrameworkSelection}
       >
         <Selectors
           client:idle
           currentFramework={framework}
           currentSlug={slug}
+          registryFrameworkSelection={registryFrameworkSelection}
         />
       </DocsSidebar>
     </aside>

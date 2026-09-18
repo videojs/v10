@@ -22,13 +22,25 @@ import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
 
 interface Props {
   doc: CollectionEntry<'docs'>;
+  description?: string;
   framework: SupportedFramework;
   frameworks?: readonly SupportedFramework[];
   slug: string;
   stabilizeHeader?: boolean;
+  registryFrameworkSelection?: boolean;
+  conciseMetadata?: boolean;
 }
 
-const { doc, framework, frameworks = [framework], slug, stabilizeHeader = false } = Astro.props;
+const {
+  doc,
+  description = doc.data.description,
+  framework,
+  frameworks = [framework],
+  slug,
+  stabilizeHeader = false,
+  registryFrameworkSelection = false,
+  conciseMetadata = false,
+} = Astro.props;
 const { Content, headings, remarkPluginFrontmatter } = await render(doc);
 const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
 const filteredHeadings = conditionalHeadings
@@ -46,7 +58,7 @@ const eyebrowSection = section?.toLowerCase().startsWith(typeLabel.toLowerCase()
 const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createTechArticleSchema({
   title: getDocTitle(doc, framework),
-  description: doc.data.description,
+  description,
   url: pageUrl,
   updatedDate: doc.data.updatedDate,
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
@@ -54,7 +66,14 @@ const jsonLdSchema = createTechArticleSchema({
 });
 ---
 
-<DocsLayout doc={doc} framework={framework} slug={slug}>
+<DocsLayout
+  doc={doc}
+  description={description}
+  framework={framework}
+  slug={slug}
+  registryFrameworkSelection={registryFrameworkSelection}
+  conciseMetadata={conciseMetadata}
+>
   <JsonLd slot="head" schema={jsonLdSchema} />
   <main
     class:list={[
@@ -81,7 +100,7 @@ const jsonLdSchema = createTechArticleSchema({
         class="mb-18 flex-1"
         data-search-content
         data-llms-content
-        data-llms-description={doc.data.description}
+        data-llms-description={description}
         data-framework={framework}
         data-frameworks={frameworks.join(',')}
         data-site="docs"
@@ -119,7 +138,7 @@ const jsonLdSchema = createTechArticleSchema({
             </H2Markdown>
             {doc.data.stability && <ApiStabilityBadge stability={doc.data.stability} />}
           </div>
-          <p class:list={["text-p2", stabilizeHeader && "min-h-12 @xl:min-h-6"]}>{doc.data.description}</p>
+          <p class:list={["text-p2", stabilizeHeader && "min-h-12 @xl:min-h-6"]}>{description}</p>
         </header>
         {
           doc.data.stability === "unstable" && (
