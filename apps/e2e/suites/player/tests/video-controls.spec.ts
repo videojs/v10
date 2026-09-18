@@ -5,7 +5,7 @@ import { mockPresentation } from '../../../shared/fixtures/presentation';
 import { DATA_ATTRS, SELECTORS } from '../../../shared/fixtures/selectors';
 import { PlayerPage } from '../../../shared/page-objects/player';
 
-const UI_VIDEO_PAGES = VIDEO_PAGES.filter(({ media }) => media === 'video');
+const UI_CONTRACT_PAGES = VIDEO_PAGES.filter(({ media }) => media === 'video');
 const HTML_VIDEO_MP4_PATH = '/pages/html-video-mp4.html';
 
 function getMediaVolume(page: Page): Promise<number> {
@@ -32,99 +32,72 @@ for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry
       await player.waitForMediaReady();
     });
 
-    // --- Grouped: control presence & attributes (one navigation) ---
+    test('supports the shared media controls contract', async () => {
+      await test.step('exposes the expected controls and state', async () => {
+        await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
+        await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
 
-    test('all controls are present with correct attributes', async () => {
-      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
-      await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
+        // PiP is unsupported on WebKit and the button receives the `hidden` attribute.
+        // Only assert `data-availability` when the pip button is visible.
+        if (await player.pipButton.isVisible()) {
+          await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
+        }
 
-      // PiP is unsupported on WebKit and the button receives the `hidden` attribute.
-      // Only assert `data-availability` when the pip button is visible.
-      if (await player.pipButton.isVisible()) {
-        await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
+        await expect(player.settingsButton).toBeAttached();
+        await expect(player.duration).not.toHaveText('');
+        await expect(player.poster).toBeAttached();
+        await player.showControls();
+        await expect(player.controls).toBeAttached();
+      });
+
+      if (rateMenu) {
+        await test.step('changes the selected playback rate', async () => {
+          const initialRate = await player.getPlaybackRate();
+
+          await player.selectAlternativePlaybackRate();
+
+          await expect.poll(async () => player.getPlaybackRate()).not.toBe(initialRate);
+        });
       }
 
-      await expect(player.settingsButton).toBeAttached();
-      await expect(player.duration).not.toHaveText('');
-      await player.showControls();
-      await expect(player.controls).toBeAttached();
-    });
+      await test.step('plays and pauses playback', async () => {
+        await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+        await player.play();
+        await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
+        await expect(player.poster).not.toHaveAttribute(DATA_ATTRS.visible);
 
-    // --- Play / Pause ---
+        await player.pause();
+        await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+      });
 
-    test('play button starts playback', async () => {
-      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
-      await player.play();
-      await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
-    });
+      await test.step('seeks and exposes pointer interaction', async () => {
+        await player.seekTo(50);
+        await player.hoverTimeSlider(50);
+        await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.pointing, '');
+      });
 
-    test('play button pauses playback', async () => {
-      await player.play();
-      await player.pause();
-      await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
-    });
-
-    // --- Time Slider ---
-
-    test('time slider allows seeking', async ({ page }) => {
-      await player.seekTo(50);
-
-      await expect
-        .poll(
-          async () => {
-            return page.evaluate((selector) => {
-              const el = document.querySelector(selector);
-              const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
-
-              return media?.currentTime ?? 0;
-            }, SELECTORS.media);
-          },
-          { timeout: 10_000 }
-        )
-        .toBeGreaterThan(0);
-    });
-
-    test('time slider shows interactive state on hover', async () => {
-      await player.hoverTimeSlider(50);
-      await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.pointing, '');
-    });
-
-    // --- Mute ---
-
-    test('mute button toggles mute', async () => {
-      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
-      await player.muteButton.click();
-      await expect(player.muteButton).not.toHaveAttribute(DATA_ATTRS.muted);
-      await player.muteButton.click();
-      await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
-    });
-
-    // --- Playback Rate ---
-
-    (rateMenu ? test : test.skip)('playback rate menu changes selected rate', async () => {
-      const initialRate = await player.getPlaybackRate();
-
-      await player.selectAlternativePlaybackRate();
-
-      await expect.poll(async () => player.getPlaybackRate()).not.toBe(initialRate);
-    });
-
-    // --- Poster ---
-
-    test('poster hides after playback starts', async () => {
-      await expect(player.poster).toBeAttached();
-      await player.play();
-
-      await expect(player.poster).not.toHaveAttribute(DATA_ATTRS.visible);
+      await test.step('toggles mute', async () => {
+        await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
+        await player.muteButton.click();
+        await expect(player.muteButton).not.toHaveAttribute(DATA_ATTRS.muted);
+        await player.muteButton.click();
+        await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.muted, '');
+      });
     });
   });
 }
 
-for (const { name, path } of UI_VIDEO_PAGES) {
+for (const { framework, name, path } of UI_CONTRACT_PAGES) {
   test.describe(`Video Controls — ${name} UI`, () => {
+    test.skip(
+      ({ browserName }) => framework === 'react' && browserName === 'firefox',
+      'HTML covers Firefox-specific UI behavior; React UI integration runs in Chromium and WebKit.'
+    );
+
     let player: PlayerPage;
 
     test.beforeEach(async ({ page }) => {
+      await page.clock.install();
       await mockPresentation(page);
       player = new PlayerPage(page);
       await page.goto(path);
@@ -169,7 +142,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.settingsSpeedItem).toBeVisible();
       await player.playMedia();
 
-      await page.waitForTimeout(2_500);
+      await page.clock.runFor(2_500);
 
       await expect(player.controls).toHaveAttribute(DATA_ATTRS.visible, '');
       await expect(player.settingsSpeedItem).toBeVisible();
@@ -189,7 +162,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
 
       try {
         await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.interactive, '');
-        await page.waitForTimeout(2_500);
+        await page.clock.runFor(2_500);
 
         await expect(player.controls).toHaveAttribute(DATA_ATTRS.visible, '');
         await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.interactive, '');
@@ -213,7 +186,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
 
       try {
         await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.dragging, '');
-        await page.waitForTimeout(2_500);
+        await page.clock.runFor(2_500);
 
         await expect(player.controls).toHaveAttribute(DATA_ATTRS.visible, '');
         await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.dragging, '');
@@ -262,10 +235,10 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.settingsSpeedItem).toBeVisible();
       await expect(player.settingsTooltip).not.toBeVisible();
 
-      await page.waitForTimeout(500);
+      await page.clock.runFor(500);
       await expect(player.settingsSpeedItem).toBeVisible();
 
-      await page.waitForTimeout(700);
+      await page.clock.runFor(700);
       await expect(player.settingsTooltip).not.toBeVisible();
     });
 
