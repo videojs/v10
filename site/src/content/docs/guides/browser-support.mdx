@@ -5,6 +5,7 @@ description: Browsers and rendering environments supported by Video.js 10, and w
 
 import BrowserSupportTable from '@/components/docs/BrowserSupportTable.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 Video.js 10 supports the **latest two stable versions** of Chrome, Edge, Firefox, Safari, and Safari on iOS. This page shows the versions that means today, what the packaged skins need from a browser, and how to reach older ones.
 
@@ -32,7 +33,19 @@ The JavaScript has a lower floor: ES2022 syntax, with newer APIs feature-detecte
 
 ### Support older browsers
 
-To reach browsers below the floor, recompile the skin stylesheet with fallbacks. Only a stylesheet your build processes can be recompiled: React skins are imported CSS files, HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink> first, and CDN bundles need <DocsLink slug="guides/self-hosting">self-hosting</DocsLink> plus an eject.
+To reach browsers below the floor, recompile the skin stylesheet with fallbacks. Only a stylesheet your build processes can be recompiled.
+
+<FrameworkCase frameworks={["react"]}>
+
+Skins are stylesheets you import, such as `@videojs/react/video/skin.css`, so your bundler's CSS pipeline already sees them and nothing else changes.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+Packaged HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink> first; the ejected `skin.css` is a file in your project. CDN bundles inline their CSS too, so a CDN player needs <DocsLink slug="guides/self-hosting">self-hosting</DocsLink> plus an eject.
+
+</FrameworkCase>
 
 [lightningcss](https://lightningcss.dev/transpilation.html) and [postcss-preset-env](https://preset-env.cssdb.org/) both read a browserslist query and add what those browsers lack: they flatten nesting and rewrite `:dir()`, range media queries, `light-dark()`, and `oklch()` in ordinary declarations, and add vendor prefixes. Neither rewrites `@scope` or `:scope`, so a small plugin flattens each block into descendant selectors prefixed with [`:where(root)`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where), which adds no specificity. The PostCSS version, picked up by Vite, Next.js, and most bundlers from `postcss.config.mjs`:
 
