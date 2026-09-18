@@ -211,7 +211,7 @@ function oneChoice<T extends string>(label: string, ...values: Array<T | undefin
 interface ResolvedInstallationTarget {
   framework: InstallationFramework;
   method: InstallationMethod;
-  packageManager?: ShadcnRunner;
+  packageManager: ShadcnRunner | undefined;
 }
 
 async function resolveInstallationTarget(
@@ -262,6 +262,8 @@ async function resolveInstallationTarget(
       console.error(INSTALLATION_DECISION_HELP);
       process.exit(1);
     }
+
+    if (method === 'cdn') throw new Error('CDN installation should resolve the HTML framework automatically');
 
     framework = await promptInstallationFramework(method);
   }
@@ -446,10 +448,11 @@ async function handleInstallationDocs(
 
   if (target.method === 'shadcn') {
     const registryFramework = toRegistryFramework(target.framework);
-    const partialSetup: PartialShadcnFlags = {
-      styling: flags.styling ? validateRegistryStyling(flags.styling, registryFramework) : undefined,
-      template: flags.template ? validateRegistryTemplate(flags.template, registryFramework) : undefined,
-    };
+    const partialSetup: PartialShadcnFlags = {};
+
+    if (flags.styling) partialSetup.styling = validateRegistryStyling(flags.styling, registryFramework);
+
+    if (flags.template) partialSetup.template = validateRegistryTemplate(flags.template, registryFramework);
 
     shadcnSetup = await promptShadcnSetup(registryFramework, partialSetup);
   }
