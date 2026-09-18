@@ -1,90 +1,12 @@
 ---
-title: CDN Installation Guide
-description: Load Video.js from jsDelivr and build an HTML video player without a package manager
+title: CDN
+description: Understand the browser-ready bundles, stylesheets, and URL layout published by the Video.js CDN
 ---
 
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
-import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
-import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
-import ContentWidth from '@/components/frames/ContentWidth.astro';
-import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
-import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
-import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
-import InstallationCLIForLLMs from '@/components/installation/InstallationCLIForLLMs.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
-import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
-import InstallationOverview from '@/components/installation/InstallationOverview.astro';
-import InstallationPreview from '@/components/installation/InstallationPreview';
-import OwnTheUI from '@/components/installation/OwnTheUI.astro';
-import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
-import UseCasePicker from '@/components/installation/UseCasePicker';
-import HumanCase from '@/components/docs/HumanCase.astro';
 
-<InstallationOverview />
-
-<InstallationChoicesForLLMs />
-
-<InstallationCLIForLLMs />
-
-<HumanCase>
-<div data-cli-omit="installation" class="contents">
-
-## Choose your installation method
-
-Start with packages, add editable source, or load the browser-ready player from a CDN.
-
-<InstallationMethodNav />
-
-## Choose your use case
-
-Choose the ready-made player that is closest to what you are building. Live presets add live-edge controls; background video is muted and loops behind your content.
-
-<ContentWidth margins="lg">
-  <UseCasePicker client:idle />
-</ContentWidth>
-
-<ContentWidth margins="lg">
-  <SkinPickerSection />
-</ContentWidth>
-
-<ContentWidth margins="lg">
-  <InstallationPreview client:visible />
-</ContentWidth>
-
-## Choose your media source
-
-Choose what the player will play. The CDN page only shows sources with a browser-ready bundle.
-
-<ContentWidth margins="lg">
-  <CdnMediaSourcePicker />
-</ContentWidth>
-
-</div>
-
-</HumanCase>
-
-<div data-cli-replace="installation" class="contents">
-
-## Load Video.js
-
-Add these generated module scripts to your page. They register the player, selected skin, media element, and any extension the source needs.
-
-<ContentWidth>
-  <CdnCodeBlock />
-</ContentWidth>
-
-## Add your player
-
-Place this generated markup where the player should appear. It uses the media source you selected above.
-
-<ContentWidth>
-  <HTMLUsageCodeBlock client:idle installMethod="cdn" />
-</ContentWidth>
-
-</div>
-
-That's it! You now have a working Video.js player without a package manager or build step.
+Start with the <DocsLink slug="guides/installation-cdn">CDN Installation Guide</DocsLink> to load Video.js and add a working player. This guide documents the browser-ready files the CDN serves and the layout rules behind their URLs.
 
 ## CDN URLs
 
@@ -164,20 +86,8 @@ Every JavaScript entry has a `.dev.js` sibling, such as `video.dev.js`, built wi
 
 Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink> covers it.
 
-## Own the UI
+## Related guides
 
-<OwnTheUI />
-
-## Choose what to do next
-
-<DocsLinkCards label="Customize">
-<DocsLinkCard slug="guides/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
-<DocsLinkCard slug="guides/installation-shadcn" description="Add editable skin source and build a working React or HTML player">Install with Shadcn</DocsLinkCard>
-<DocsLinkCard slug="guides/internationalization" description="Load another locale or add your own translations">Internationalize the player</DocsLinkCard>
-</DocsLinkCards>
-
-<DocsLinkCards label="Deploy">
-<DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
-<DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
-<DocsLinkCard slug="guides/self-hosting" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
-</DocsLinkCards>
+- <DocsLink slug="guides/installation-cdn">CDN Installation Guide</DocsLink>
+- <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink>
+- <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>

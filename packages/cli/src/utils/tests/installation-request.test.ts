@@ -14,7 +14,7 @@ describe('installation request routing', () => {
     expect(parseInstallationSlug('guides/installation-vue')).toEqual({ method: 'packaged', framework: 'vue' });
     expect(parseInstallationSlug('guides/installation-svelte')).toEqual({ method: 'packaged', framework: 'svelte' });
     expect(parseInstallationSlug('guides/installation-shadcn')).toEqual({ method: 'shadcn' });
-    expect(parseInstallationSlug('guides/cdn')).toEqual({ method: 'cdn', framework: 'html' });
+    expect(parseInstallationSlug('guides/installation-cdn')).toEqual({ method: 'cdn', framework: 'html' });
   });
 
   it('maps public choices to bundled documents', () => {
@@ -34,5 +34,6 @@ describe('installation request routing', () => {
 
   it('ignores unrelated documentation slugs', () => {
     expect(parseInstallationSlug('guides/skins')).toBeNull();
+    expect(parseInstallationSlug('guides/cdn')).toBeNull();
   });
 });
