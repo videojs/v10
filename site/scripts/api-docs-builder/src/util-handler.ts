@@ -256,6 +256,14 @@ function buildReturnValue(project: OxcProject, type: ResolvedType): ReturnValue 
 
   if (abbreviated && abbreviated !== formatted) value.detailedType = formatted;
 
+  // A callable type such as `Selector` (a function carrying a `displayName`) is its signature, not a bag of properties.
+  const callable = project
+    .interfaceMembers(type)
+    .some(
+      ({ member }) => member.type === 'TSCallSignatureDeclaration' || member.type === 'TSConstructSignatureDeclaration'
+    );
+  if (callable) return value;
+
   const fields = buildTypeFields(project, type);
 
   if (Object.keys(fields).length > 0) value.fields = fields;
