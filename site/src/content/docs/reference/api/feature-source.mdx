@@ -34,7 +34,7 @@ function SourceInfo() {
   const source = usePlayer(selectSource);
   if (!source) return null;
 
-  return <span>{source.src}</span>;
+  return <span>{source.source ?? 'No source'}</span>;
 }
 ```
 </FrameworkCase>
