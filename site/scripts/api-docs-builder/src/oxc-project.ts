@@ -601,6 +601,29 @@ export function unwrapObjectExpression(expression: Expression | null | undefined
   return unwrapped.type === 'ObjectExpression' ? unwrapped : undefined;
 }
 
+/**
+ * The type a parameter declares, wherever the parser hangs it. A default value (`name = value`) wraps the pattern in an
+ * `AssignmentPattern` whose `left` carries the annotation, and a rest parameter (`...name: T[]`) keeps it on the rest
+ * element rather than on its argument.
+ */
+export function parameterTypeAnnotation(
+  parameter: import('oxc-parser').ParamPattern,
+  pattern: BindingPattern
+): TSType | undefined {
+  if (parameter.type === 'RestElement' && parameter.typeAnnotation) return parameter.typeAnnotation.typeAnnotation;
+
+  const target = pattern.type === 'AssignmentPattern' ? pattern.left : pattern;
+
+  return target.typeAnnotation?.typeAnnotation ?? undefined;
+}
+
+/** A parameter is optional when marked `?`, given a default value, or declared as a rest parameter. */
+export function isOptionalParameter(parameter: import('oxc-parser').ParamPattern, pattern: BindingPattern): boolean {
+  if (parameter.type === 'RestElement' || pattern.type === 'AssignmentPattern') return true;
+
+  return 'optional' in pattern && !!pattern.optional;
+}
+
 export function unwrapType(type: TSType): TSType {
   let current = type;
 
