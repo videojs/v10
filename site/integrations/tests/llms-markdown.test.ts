@@ -139,6 +139,67 @@ describe('convertPage', () => {
     );
   });
 
+  it('moves a hidden detail row into the toggle cell and joins its definition list', () => {
+    const markdown = convert(`
+      <table>
+        <thead><tr><th>Import</th><th>Description</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td><code>@videojs/html/video</code></td><td>Video preset.</td><td><button></button></td></tr>
+          <tr hidden><td colspan="3"><dl>
+            <dt>Feature bundle</dt><dd><code>videoFeatures</code></dd>
+            <dt>Features</dt><dd><a href="/a">playback</a>, <a href="/b">time</a></dd>
+          </dl></td></tr>
+        </tbody>
+      </table>`);
+
+    expect(markdown).toBe(
+      [
+        '| Import | Description | Details |',
+        '| --- | --- | --- |',
+        '| `@videojs/html/video` | Video preset. | **Feature bundle:** `videoFeatures`; **Features:** [playback](https://videojs.org/a), [time](https://videojs.org/b) |',
+      ].join('\n')
+    );
+  });
+
+  it('joins a list inside a table cell with semicolons', () => {
+    const markdown = convert(
+      '<table><tr><th>Name</th><th>Description</th></tr><tr><td><code>level</code></td><td>Derived level:<ul><li><code>off</code>: muted</li><li><code>low</code>: quiet</li></ul></td></tr></table>'
+    );
+
+    expect(markdown).toBe(
+      '| Name | Description |\n| --- | --- |\n| `level` | Derived level: `off`: muted; `low`: quiet |'
+    );
+  });
+
+  it('escapes angle brackets in prose and keeps code spans in link cards', () => {
+    expect(convert('<p>Now &lt;audio&gt; can join, 1 &lt; 2.</p>')).toBe('Now \\<audio> can join, 1 < 2.');
+
+    const card = convert(
+      '<div class="docs-link-card"><a href="/x"><span>Read more about <code>&lt;media-container&gt;</code></span><svg></svg></a></div>'
+    );
+
+    expect(card).toBe('- [Read more about `<media-container>`](https://videojs.org/x)');
+  });
+
+  it('points same-page links at the heading slugs a renderer derives', () => {
+    const markdown = convert(
+      '<p><a href="#root-css">Root vars</a> and <a href="#thumb-css">thumb vars</a>.</p><h4 id="root-css">CSS custom properties</h4><h4 id="thumb-css">CSS custom properties</h4>'
+    );
+
+    expect(markdown).toContain('[Root vars](#css-custom-properties) and [thumb vars](#css-custom-properties-1).');
+  });
+
+  it('demotes step titles to bold text and keeps identifiers unescaped', () => {
+    const steps = convert(
+      '<ol><li class="step"><span data-llms-ignore>1</span><div><h3 data-step-title>Add the element</h3><div><p>Body</p></div></div></li></ol>'
+    );
+
+    expect(steps).toBe('1. **Add the element**\n\n   Body');
+    expect(convert('<p>VJS8_LEGACY_INIT is <code>Promise</code>-based.</p><hr>')).toBe(
+      'VJS8_LEGACY_INIT is `Promise`-based.\n\n---'
+    );
+  });
+
   it('keeps heading text that a transparent wrapper would otherwise eject', () => {
     expect(convert('<h3 id="root"><div class="contents">Root</div></h3><p>Body</p>')).toBe('### Root\n\nBody');
   });
@@ -174,13 +235,13 @@ describe('convertPage', () => {
     expect(markdown).toBe(
       [
         '> **Caution: Load your script as a module**',
-        '> ',
+        '>',
         '> Use `type="module"`.',
-        '> ',
+        '>',
         '> Second paragraph.',
         '',
         '> **Note**',
-        '> ',
+        '>',
         '> Plain note.',
       ].join('\n')
     );
@@ -353,7 +414,7 @@ describe('buildSectionFiles', () => {
     expect(guides.index).toContain(`This section in one file (about 1k tokens): ${guides.fullUrl}\n\n`);
     expect(guides.index).toContain(`- [Page](${SITE_URL}/docs/framework/html/${slug}.md): Desc.`);
     expect(guides.index).toMatch(
-      /\n---\n\nHTML documentation: https:\/\/videojs\.org\/docs\/framework\/html\/llms\.txt\nAll documentation: https:\/\/videojs\.org\/llms\.txt\n$/
+      /[^\n]\n\n---\n\nHTML documentation: https:\/\/videojs\.org\/docs\/framework\/html\/llms\.txt\nAll documentation: https:\/\/videojs\.org\/llms\.txt\n$/
     );
     expect(guides.full).toMatch(
       /^# Video\.js v10 — HTML Guides \(complete\)\n\n> Every HTML guides page in one file \(about 1k tokens\)\. Index with descriptions: /
@@ -382,9 +443,16 @@ describe('generateChronologicalIndex', () => {
     );
   });
 
-  it('prints an optional note under the title', () => {
-    expect(generateChronologicalIndex('Blog', [], SITE_URL, 'Older posts.')).toContain(
-      '# Video.js v10 — Blog\n\n> Older posts.\n\n'
+  it('prints an optional note under the title and one blank line before the footer', () => {
+    const index = generateChronologicalIndex(
+      'Blog',
+      [{ pathname: '/blog/a', title: 'A', description: 'Post.', sort: '2026-01-01T00:00:00.000Z' }],
+      SITE_URL,
+      'Older posts.'
+    );
+
+    expect(index).toBe(
+      '# Video.js v10 — Blog\n\n> Older posts.\n\n- [A](https://videojs.org/blog/a.md): Post. (2026-01-01)\n\n---\n\nAll documentation: https://videojs.org/llms.txt\n'
     );
   });
 });

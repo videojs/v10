@@ -205,12 +205,21 @@ describe('rewriteIndexHeader', () => {
     ).toContain('The whole set in one file: ../../llms-full.txt');
   });
 
+  it('keeps a section description ahead of the package context and drops the section size', () => {
+    const section =
+      '# Guides\n\n> Guides for Video.js. Every page below is also available as Markdown at its `.md` URL. This section in one file (about 98k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n';
+
+    expect(rewriteIndexHeader(section, { framework: 'html', fileName: 'guides/llms.txt', version: '1.0.0' })).toBe(
+      '# Guides\n\n> Guides for Video.js. Bundled with `@videojs/html` v1.0.0. Links are relative paths to files in this directory. The whole set in one file: ../llms-full.txt\n'
+    );
+  });
+
   it('points the complete file back at the index and omits an unknown version', () => {
     const full =
       '# Title\n\n> Every React docs page in one file. Index with descriptions: https://videojs.org/docs/framework/react/llms.txt\n';
 
     expect(rewriteIndexHeader(full, { framework: 'react', fileName: 'llms-full.txt', version: undefined })).toBe(
-      '# Title\n\n> Bundled with `@videojs/react`. Links are relative paths to files in this directory. Index with descriptions: ./llms.txt\n'
+      '# Title\n\n> Bundled with `@videojs/react`. Links are relative paths to files in this directory. Every page in one file. Index with descriptions: ./llms.txt\n'
     );
   });
 });
@@ -308,12 +317,19 @@ describe('packageDocumentation', () => {
     writeInstallationDocs(fixture.siteDist, 'html');
     writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs\n\n> Header\n');
     writeDoc(fixture.siteDist, 'html', 'llms-full.txt', '# Docs\n\n> Header\n');
-    writeDoc(fixture.siteDist, 'html', 'guides/llms.txt', '# Guides\n\n> Header\n');
+    writeDoc(
+      fixture.siteDist,
+      'html',
+      'guides/llms.txt',
+      '# Guides\n\n> Every page below is also available as Markdown at its `.md` URL. This section in one file (about 9k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n'
+    );
     writeDoc(fixture.siteDist, 'html', 'guides/llms-full.txt', '# Guides\n\n> Header\n');
 
     packageDocumentation({ target: 'html', siteDist: fixture.siteDist, packagesDirectory: fixture.packagesDirectory });
 
-    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/guides/llms.txt'))).toBe(true);
+    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/llms.txt'), 'utf-8')).toBe(
+      '# Guides\n\n> Bundled with `@videojs/html`. Links are relative paths to files in this directory. The whole set in one file: ../llms-full.txt\n'
+    );
     expect(existsSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'))).toBe(true);
     expect(existsSync(join(fixture.packagesDirectory, 'html/docs/guides/llms-full.txt'))).toBe(false);
   });
@@ -346,7 +362,7 @@ describe('packageDocumentation', () => {
       '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. The whole set in one file: ./llms-full.txt\n'
     );
     expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'), 'utf-8')).toBe(
-      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. Index with descriptions: ./llms.txt\n'
+      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. Every page in one file. Index with descriptions: ./llms.txt\n'
     );
   });
 
