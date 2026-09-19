@@ -54,7 +54,7 @@ The default presets are `/video` and `/audio`. These cover the baseline controls
 ## What's in a preset
 
 <FrameworkCase frameworks={["react"]}>
-Each React preset exports a named, preconfigured player component and typed `usePlayer` hook, plus the building blocks needed to extend its features, copy its skin files into your project, or swap its media element:
+Each React preset exports a named, preconfigured player component and typed `usePlayer` hook, plus the building blocks needed to extend its features, add its skin source to your project, or swap its media element:
 
 - **Player** — A player component named for the preset, such as `VideoPlayer`, already configured with the preset's feature bundle.
 - **Typed hook** — A `usePlayer` hook whose state and actions match the preset.
@@ -95,7 +95,7 @@ A complete player imports `video/player` and one skin. Each skin registration in
 
 ## Customizing a preset
 
-You can customize a preset in three ways: extend its feature bundle, copy its skin files into your project, or swap its media element.
+You can customize a preset in three ways: extend its feature bundle, add its skin source to your project, or swap its media element.
 
 ### Extend the feature bundle
 
@@ -147,7 +147,7 @@ function Hero() {
 ```
 </FrameworkCase>
 
-### Skin files
+### Skin source
 
 If a preset's skin is close but not quite right, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add its source to your project</DocsLink> and customize its components and styles.
 

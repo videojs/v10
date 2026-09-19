@@ -207,7 +207,7 @@ function RegistryCatalogSelects({
   );
 }
 
-/** Chooses the Shadcn project template or the skin, styling, and theme used to add editable skin files. */
+/** Chooses the Shadcn project template or the skin, styling, and theme used to add skin source. */
 export default function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
   const hydrated = useIsHydrated();
 

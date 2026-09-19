@@ -299,7 +299,7 @@ ${generateMediaMarkup(tag, src, playsInline, renderer, '  ')}
 <${playerTag}>
   <!--
     Skins contain the entire player UI and are easily swappable.
-    Add the skin files to your project for full control over its
+    Add the skin source to your project for full control over its
     UI components.
    -->
   <${skinTag}>

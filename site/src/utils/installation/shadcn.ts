@@ -11,7 +11,7 @@ export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
 /** Where `packages/skins` publishes its hosted registry; see its `netlify.toml`. */
 export const REGISTRY_ORIGIN = 'https://shadcn.videojs.org';
 export const REGISTRY_NAMESPACE = '@videojs';
-/** Where the CLI places added skin files, relative to the project's components alias. */
+/** Where the CLI places added skin source, relative to the project's components alias. */
 export const REGISTRY_INSTALL_DIRECTORY = 'components/videojs';
 
 export const SHADCN_RUNNER_NAMES = ['npm', 'pnpm', 'yarn', 'bun'] as const satisfies readonly ShadcnRunner[];

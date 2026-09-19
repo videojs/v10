@@ -461,18 +461,18 @@ export function MyPlayer() {
 
 Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
 
-When you add the skin files, you also take on their CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, so the copied files include the skin's stylesheet next to its markup.
+When you add the skin source, you also take on its CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, so the added source includes the skin's stylesheet next to its markup.
 
 ## Plugins
 
 v10 has no plugin system. There's no `videojs.registerPlugin`, no `player.myPlugin()`, and no plugin lifecycle.
 
-That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skin files you can change, and media elements you can swap. Most of what plugins did is now ordinary composition.
+That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skin source you can change, and media elements you can swap. Most of what plugins did is now ordinary composition.
 
 Audit your plugins and sort them into four piles:
 
 - **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace with the matching media component. See [Techs become media components](#techs-become-media-components).
-- **UI additions** (extra buttons, overlays, custom control bars). Rebuild them by editing the skin files in your project, or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
+- **UI additions** (extra buttons, overlays, custom control bars). Rebuild them by editing the skin source in your project, or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
 - **Workarounds** for v8 limitations. Check whether the limitation still exists before you port anything.
 - **Genuinely missing features** (ads, playlists). These need real work, and some have no home yet. Get them on the list early, because they'll drive your timeline.
 

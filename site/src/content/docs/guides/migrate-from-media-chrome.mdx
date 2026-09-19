@@ -279,10 +279,10 @@ Media Chrome and Video.js both use names beginning with `--media-`, but that sha
 | --------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
 | `--media-accent-color` or `--media-range-bar-color` | `--media-accent-color` | Closest match for slider fills and accented controls.                                               |
 | `--media-primary-color`                             | no direct equivalent   | Often colors every control icon in Media Chrome; Video.js's accent variable has narrower semantics. |
-| `--media-secondary-color`                           | no direct equivalent   | Add the skin files and author this palette role in your CSS.                                        |
-| `--media-control-background`                        | no direct equivalent   | Add the skin files and author the CSS.                                                              |
-| `--media-control-hover-background`                  | no direct equivalent   | Add the skin files and author the CSS.                                                              |
-| `--media-range-track-height`                        | no direct equivalent   | Add the skin files and author the slider CSS.                                                       |
+| `--media-secondary-color`                           | no direct equivalent   | Add the skin source and author this palette role in your CSS.                                       |
+| `--media-control-background`                        | no direct equivalent   | Add the skin source and author the CSS.                                                             |
+| `--media-control-hover-background`                  | no direct equivalent   | Add the skin source and author the CSS.                                                             |
+| `--media-range-track-height`                        | no direct equivalent   | Add the skin source and author the slider CSS.                                                      |
 
 The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit` for broad customization. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
 
@@ -295,7 +295,7 @@ Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the sk
 
 Keep playback event handlers on your `<video>` or `<audio>`. When you build a custom control bar, attach click and input handlers directly to those controls. With a ready-made skin, read media or player state instead of listening for clicks inside the skin.
 
-Keep the skin when its CSS variables and content slots cover your changes. Build a custom control bar when you want to start from scratch. Add the skin files to your project when you want its existing layout and styles but need to change the controls inside it.
+Keep the skin when its CSS variables and content slots cover your changes. Build a custom control bar when you want to start from scratch. Add the skin source to your project when you want its existing layout and styles but need to change the controls inside it.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

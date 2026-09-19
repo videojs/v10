@@ -119,7 +119,7 @@ Packaged skins do not provide settings for adding, removing, or rearranging cont
 
 If a packaged skin is close to the interface you want, add its source to your project and edit it. The source contains the skin's controls, layout, styles, and interactions.
 
-Video.js publishes the skin files in an installable catalog. The [`shadcn` CLI](https://ui.shadcn.com/docs/cli) copies those files into your project, whether you use React or HTML.
+Video.js publishes skin source in an installable catalog. The [`shadcn` CLI](https://ui.shadcn.com/docs/cli) adds that source to your project, whether you use React or HTML.
 
 The selected skin is generally placed under `components/videojs/<preset>`, with shared controls and styles alongside it under `components/videojs`. The exact root follows the components alias in `components.json`. The CLI can also install package dependencies, update `components.json`, and add shared styles to your main CSS file.
 
@@ -168,7 +168,7 @@ The installed skin sets `data-theme` and `data-preset` on its `Container`. Keep 
 The `skin.html` file contains the layout. The `skin.ts` module registers the custom elements and loads `skin.css`. Elements use class names that start with `media-`; change a class in `skin.html` or a rule in the stylesheet to change one part of the interface.
 </FrameworkCase>
 
-### Inspect or update the skin files
+### Inspect or update the skin source
 
 Use the CLI's `search` command to find source and `view` to inspect it before installation:
 

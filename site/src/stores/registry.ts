@@ -20,7 +20,7 @@ export const registryFramework = atom<RegistryFramework>('react');
  */
 export const registryStyling = atom<RegistryStyling | null>(null);
 
-/** The skin files added by the registry command; `null` lets the page supply its contextual default. */
+/** The skin source added by the registry command; `null` lets the page supply its contextual default. */
 export const registrySkin = atom<RegistryPreset | null>(null);
 
 /** The project template passed to `shadcn init`; `null` lets the selected framework supply its default. */
