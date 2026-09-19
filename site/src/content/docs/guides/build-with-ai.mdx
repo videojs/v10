@@ -6,6 +6,7 @@ description: 'How to give AI tools the context they need to build Video.js playe
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
+import HumanCase from '@/components/docs/HumanCase.astro';
 
 Video.js publishes all of its documentation in AI-friendly formats. This page covers how to feed that documentation to your tools.
 
@@ -18,11 +19,15 @@ AI tools might not know the Video.js API out of the box. You need to give them d
 Every doc page is available as markdown, so you can provide your model with focused content instead of HTML. Three ways to get it:
 
 <FrameworkCase frameworks={["react"]}>
-1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
+1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude.
+
+   <HumanCase>
+   The button looks something like this...
 
    <CopyMarkdownButton client:idle />
+   </HumanCase>
 
-2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 250 KB as HTML and about 4 KB as Markdown.
+2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 230 KB as HTML and about 4 KB as Markdown.
 
    ```bash title="Terminal"
    curl -H "Accept: text/markdown" \
@@ -44,11 +49,15 @@ Every doc page is available as markdown, so you can provide your model with focu
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
+1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude.
+
+   <HumanCase>
+   The button looks something like this...
 
    <CopyMarkdownButton client:idle />
+   </HumanCase>
 
-2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 250 KB as HTML and about 4 KB as Markdown.
+2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 230 KB as HTML and about 4 KB as Markdown.
 
    ```bash title="Terminal"
    curl -H "Accept: text/markdown" \
@@ -74,13 +83,13 @@ Every doc page is available as markdown, so you can provide your model with focu
 <FrameworkCase frameworks={["react"]}>
 [`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
 
-If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/react/llms-full.txt`](https://videojs.org/docs/framework/react/llms-full.txt) has every React doc page in one file.
+If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/react/llms-full.txt`](https://videojs.org/docs/framework/react/llms-full.txt) has every React doc page in one file. That file is larger than most context windows, so each documentation tab also has its own index and complete file: [guides](https://videojs.org/docs/framework/react/guides/llms.txt), [components](https://videojs.org/docs/framework/react/reference/components/llms.txt), and [API](https://videojs.org/docs/framework/react/reference/api/llms.txt), each with an `llms-full.txt` beside it.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 [`videojs.org/docs/framework/html/llms.txt`](https://videojs.org/docs/framework/html/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
 
-If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/html/llms-full.txt`](https://videojs.org/docs/framework/html/llms-full.txt) has every HTML doc page in one file.
+If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/html/llms-full.txt`](https://videojs.org/docs/framework/html/llms-full.txt) has every HTML doc page in one file. That file is larger than most context windows, so each documentation tab also has its own index and complete file: [guides](https://videojs.org/docs/framework/html/guides/llms.txt), [components](https://videojs.org/docs/framework/html/reference/components/llms.txt), and [API](https://videojs.org/docs/framework/html/reference/api/llms.txt), each with an `llms-full.txt` beside it.
 </FrameworkCase>
 
 ## Set up your tools

@@ -116,6 +116,39 @@ function copyInstallationDocumentation({
   return copied;
 }
 
+/**
+ * The web indexes introduce themselves in terms of `.md` URLs and point at each other by absolute address. Inside a
+ * package they are files on disk, so restate the header for that setting: which package and version the copy belongs
+ * to, that links are relative paths, and where the companion index lives.
+ */
+export function rewriteIndexHeader(
+  content: string,
+  { framework, fileName, version }: { framework: Framework; fileName: string; version: string | undefined }
+): string {
+  const packageName = PACKAGE_NAMES[framework];
+  const versionSuffix = version ? ` v${version}` : '';
+  const context = `Bundled with \`${packageName}\`${versionSuffix}. Links are relative paths to files in this directory.`;
+  const depth = fileName.split('/').length - 1;
+  const isComplete = basename(fileName) === 'llms-full.txt';
+
+  // The first blockquote line is the header. A section index opens with the section's own description, which stays.
+  return content.replace(/^> .*$/m, (line) => {
+    const original = line.slice(2);
+    const size = /\((about [^)]+)\)/.exec(original)?.[1];
+    const description =
+      !isComplete && !original.startsWith('Every page below') ? original.split(/ ?Every page below/)[0]?.trim() : '';
+    const lead = description ? `${description} ` : '';
+
+    if (isComplete)
+      return `> ${lead}${context} Every page in one file${size ? ` (${size})` : ''}. Index with descriptions: ./llms.txt`;
+
+    // Only the framework-level complete file is bundled, so a section index points up to it without quoting a size.
+    if (depth > 0) return `> ${lead}${context} The whole set in one file: ${'../'.repeat(depth)}llms-full.txt`;
+
+    return `> ${lead}${context} The whole set in one file: ./llms-full.txt${size ? ` (${size})` : ''}`;
+  });
+}
+
 export function synthesizeReadme({
   framework,
   version,
@@ -186,20 +219,30 @@ function copyFrameworkDocumentation({
   targetDirectory,
   framework,
   rewriteLocalLinks,
+  version,
 }: {
   sourceDirectory: string;
   targetDirectory: string;
   framework: Framework;
   rewriteLocalLinks: boolean;
+  version: string | undefined;
 }): number {
-  const files = walkDocumentation(sourceDirectory);
+  // Section-level complete files repeat what the framework-level one already carries; bundle only the latter.
+  const files = walkDocumentation(sourceDirectory).filter(
+    (sourcePath) => basename(sourcePath) !== 'llms-full.txt' || dirname(sourcePath) === sourceDirectory
+  );
 
   for (const sourcePath of files) {
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
     const raw = readFileSync(sourcePath, 'utf-8');
     const withoutFooter = stripFooter(raw);
+    const isIndex = /^llms(?:-full)?\.txt$/.test(basename(relativePath));
     const transformed = rewriteLocalLinks
-      ? rewriteLinks(withoutFooter, sourceSlug(relativePath), framework)
+      ? rewriteLinks(
+          isIndex ? rewriteIndexHeader(withoutFooter, { framework, fileName: relativePath, version }) : withoutFooter,
+          sourceSlug(relativePath),
+          framework
+        )
       : withoutFooter;
 
     const destinationPath = join(targetDirectory, relativePath);
@@ -242,6 +285,7 @@ export function packageDocumentation({
         targetDirectory: frameworkTarget,
         framework,
         rewriteLocalLinks: target !== 'cli',
+        version,
       });
       copiedFiles += copyInstallationDocumentation({
         siteDist,

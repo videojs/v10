@@ -4,20 +4,33 @@ description: Bundler requirements for Video.js package exports, CSS, and wrapper
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 Before the browser runs your application, a bundler such as Vite combines its imports into files the browser can load. Your bundler must understand the import paths published by Video.js packages.
 
 ## Package exports
 
-Each Video.js package has an `exports` field in its `package.json`. This field lists the import paths that applications and libraries can use, such as `@videojs/html/video/player` and `@videojs/react/live-video`.
+<FrameworkCase frameworks={["react"]}>
+Each Video.js package has an `exports` field in its `package.json`. This field lists the import paths that applications and libraries can use, such as `@videojs/react/video` and `@videojs/react/live-video`.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+Each Video.js package has an `exports` field in its `package.json`. This field lists the import paths that applications and libraries can use, such as `@videojs/html/video/player` and `@videojs/html/video/skin`.
+</FrameworkCase>
 
 If an older bundler reports that one of these paths is missing or not exported, upgrade the bundler before adding an alias that bypasses the package's public API.
 
 ## Vite compatibility
 
+<FrameworkCase frameworks={["react"]}>
+Use a current Vite release. Testing confirmed that Vite 5.4.19 can load Video.js JavaScript and CSS package exports. Vite 3.2.8 can load the JavaScript, but it cannot load an exported stylesheet such as `@videojs/react/video/skin.css`.
+
+React skins ship their stylesheet as a separate export: an application that renders `VideoSkin` from `@videojs/react/video` also imports `@videojs/react/video/skin.css`, so this limitation applies to every React application that uses a packaged skin.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
 Use a current Vite release. Testing confirmed that Vite 5.4.19 can load Video.js JavaScript and CSS package exports. Vite 3.2.8 can load the JavaScript, but it cannot load an exported stylesheet such as `@videojs/html/video/skin.css`.
 
 Packaged HTML skins import their own styles, so an HTML application using `@videojs/html/video/skin` doesn't need to import `skin.css` separately. The CSS limitation matters only when your application imports that stylesheet directly.
+</FrameworkCase>
 
 ## Externalize Video.js in a wrapper library
 
@@ -25,6 +38,24 @@ You can skip this section when building an application.
 
 If you publish a library that expects its users to install Video.js separately, leave Video.js out of your library's bundle. Rollup calls a dependency left out of the bundle **external**.
 
+<FrameworkCase frameworks={["react"]}>
+Rollup's array form matches only the exact package name, so `external: ['@videojs/react']` misses imports such as `@videojs/react/video`.
+
+Match the package name and everything below it instead:
+
+```js title="rollup.config.js"
+const videojsPeers = ['@videojs/react'];
+
+export default {
+  external(id) {
+    return videojsPeers.some(
+      (packageName) => id === packageName || id.startsWith(`${packageName}/`)
+    );
+  }
+};
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
 Rollup's array form matches only the exact package name, so `external: ['@videojs/html']` misses imports such as `@videojs/html/video/player`.
 
 Match the package name and everything below it instead:
@@ -40,6 +71,7 @@ export default {
   }
 };
 ```
+</FrameworkCase>
 
 Add every `@videojs/*` package your library imports directly to `videojsPeers` and list it in `peerDependencies`.
 

@@ -84,6 +84,10 @@ describe('formatType', () => {
     ['React.CSSProperties', 'CSSProperties'],
     ['Map<string, number>', 'Map<string, number>'],
     ['(x: string) => void', '((x: string) => void)'],
+    ['{ (state: State): Result; displayName?: string }', '{ (state: State): Result; displayName?: string }'],
+    ['{ run(count?: number, ...rest: string[]): void }', '{ run(count?: number, ...rest: string[]): void }'],
+    ['new (host: HTMLElement) => Controller', '(new (host: HTMLElement) => Controller)'],
+    ['Tag | (string & {})', 'Tag | string & {}'],
   ])('formats %s', (input, expected, removeUndefined = false) => {
     expect(formatType(parseType(input), removeUndefined)).toBe(expected);
   });

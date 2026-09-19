@@ -41,6 +41,7 @@ const description =
     >
       <div
         class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+        data-llms-ignore
       >
         <FormattedDate date={entry.data.date} />
         {
@@ -55,6 +56,11 @@ const description =
       <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
         {title}
       </h1>
+      <div hidden data-llms-only>
+        <p>
+          Released {entry.data.date.toISOString().slice(0, 10)}.{entry.data.breaking && " Contains breaking changes."}
+        </p>
+      </div>
       <a
         href={entry.data.compareUrl}
         class="inline-flex items-center gap-1 underline intent:decoration-gold"

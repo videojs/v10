@@ -2,7 +2,15 @@ import { uniq } from 'es-toolkit/array';
 import type { BindingPattern, ParamPattern, TSSignature, TSType } from 'oxc-parser';
 
 import type { OxcProject, ResolvedMember, ResolvedType, SourceFile } from './oxc-project.js';
-import { getJSDoc, sourceText, staticName, typeNameText, unwrapType } from './oxc-project.js';
+import {
+  getJSDoc,
+  isOptionalParameter,
+  parameterTypeAnnotation,
+  sourceText,
+  staticName,
+  typeNameText,
+  unwrapType,
+} from './oxc-project.js';
 import type { PropDef } from './types.js';
 
 /**
@@ -262,6 +270,10 @@ export function formatDetailedType(
           return formatType(type, removeUndefined);
         }
 
+        // An interface with no members of its own (`interface X extends Y {}`) expands to nothing; keep its name.
+        const body = unwrapType(resolved.type);
+        if (body.type === 'TSTypeLiteral' && body.members.length === 0) return formatType(type, removeUndefined);
+
         visited.add(key);
         return formatDetailedType(project, resolved, removeUndefined, visited);
       }
@@ -390,7 +402,8 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
   }
 
   if (node.type === 'TSTypeLiteral') {
-    if (node.members.length === 0) return 'object';
+    // `{}` is a type of its own (`string & {}` keeps literals out of a union); `object` would misstate it.
+    if (node.members.length === 0) return '{}';
 
     return `{ ${node.members
       .map((member) => formatSignature(type.file, member, type.substitutions))
@@ -414,7 +427,7 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
     const params = node.params.map((parameter) => formatParameter(type.file, parameter, type.substitutions)).join(', ');
     const returnType = formatType({ ...type, type: node.returnType.typeAnnotation }, false);
 
-    return `((${params}) => ${returnType})`;
+    return `(${node.type === 'TSConstructorType' ? 'new ' : ''}(${params}) => ${returnType})`;
   }
 
   if (node.type === 'TSTupleType') {
@@ -515,7 +528,8 @@ function formatSignature(
     return `${name}${member.optional ? '?' : ''}(${params}): ${returnType}`;
   }
 
-  return normalizeTypeText(sourceText(file, member));
+  // Call and construct signatures fall back to source text, which ends in the member's own semicolon.
+  return normalizeTypeText(sourceText(file, member)).replace(/;$/, '');
 }
 
 function formatParameter(
@@ -527,9 +541,10 @@ function formatParameter(
   if (!pattern) return '...: unknown';
 
   const name = bindingName(pattern);
-  const annotation = pattern.typeAnnotation?.typeAnnotation;
-  const optional = 'optional' in pattern && pattern.optional;
-  const type = annotation ? formatType({ file, type: annotation, substitutions }, !!optional) : 'unknown';
+  const annotation = parameterTypeAnnotation(parameter, pattern);
+  // A rest parameter is optional by nature but reads `...name`, not `...name?`.
+  const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter, pattern);
+  const type = annotation ? formatType({ file, type: annotation, substitutions }, optional) : 'unknown';
 
   return `${parameter.type === 'RestElement' ? '...' : ''}${name}${optional ? '?' : ''}: ${type}`;
 }
@@ -544,6 +559,8 @@ function parameterPattern(parameter: ParamPattern): BindingPattern | undefined {
 
 function bindingName(pattern: BindingPattern): string {
   if (pattern.type === 'Identifier') return pattern.name;
+
+  if (pattern.type === 'AssignmentPattern') return bindingName(pattern.left);
 
   return '...';
 }

@@ -27,7 +27,7 @@ I&rsquo;ve added all this to VideoJS 1.1.2, but here&rsquo;s the basics of how i
 ```javascript
 var video = document.getElementById("your_video");
 var children = video.children;
-for (var i=0,j=children.length; i&lt;j; i++) {
+for (var i=0,j=children.length; i<j; i++) {
   if (children[i].tagName.toUpperCase() == "SOURCE") {
     var canPlay = video.canPlayType(children[i].type);
     if(canPlay == "probably" || canPlay == "maybe") {

@@ -6,8 +6,6 @@ description: 'Persist volume, caption, and quality preferences across sessions b
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-Persist player preferences — volume, muted, captions, quality — so returning users get the setup they left with.
-
 The player doesn't persist preferences itself today. Player state gives you everything needed to wire persistence to the storage you choose — local storage, your backend, or per-profile settings.
 
 ## Recommended approach
@@ -246,8 +244,10 @@ Notifications batch per microtask, but a drag still produces many ticks. Debounc
 
 ## Related API
 
-- <DocsLink slug="reference/api/use-player">usePlayer</DocsLink>
-- <DocsLink slug="reference/api/use-store">useStore</DocsLink>
+- <DocsLink slug="reference/api/use-player" frameworks="react">usePlayer</DocsLink>
+- <DocsLink slug="reference/api/use-store" frameworks="react">useStore</DocsLink>
+- <DocsLink slug="reference/api/player-controller" frameworks="html">PlayerController</DocsLink>
+- <DocsLink slug="reference/api/store-controller" frameworks="html">StoreController</DocsLink>
 - <DocsLink slug="reference/api/feature-volume">Volume feature</DocsLink>
 - <DocsLink slug="reference/api/feature-text-tracks">Text track feature</DocsLink>
 

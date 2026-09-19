@@ -7,6 +7,8 @@ export interface RelatedLink {
   slug: string;
   label: string;
   anchor?: string;
+  /** Frameworks the item applies to; omitted means every framework. */
+  frameworks?: string[];
 }
 
 /** Heading text for the single section that replaces the authored "Related …" headings. */
@@ -56,7 +58,8 @@ function isBlankText(node: Node, ctx: MdastVisitorContext): boolean {
 
 /**
  * A list item qualifies when its only meaningful content is one `<DocsLink slug="…">label</DocsLink>`. MDX parses a tag
- * that fills the line as a flow element and an inline one as a text element inside a paragraph; accept both.
+ * that fills the line as a flow element and an inline one as a text element inside a paragraph; accept both. A
+ * `frameworks="react"` attribute limits the item to the listed frameworks.
  */
 function readItem(item: Node, ctx: MdastVisitorContext): RelatedLink | null {
   let content = (asJsx(item).children ?? []).filter((child) => !isBlankText(child, ctx));
@@ -75,6 +78,13 @@ function readItem(item: Node, ctx: MdastVisitorContext): RelatedLink | null {
   const anchor = stringAttribute(asJsx(link), 'anchor');
 
   if (anchor) related.anchor = anchor;
+
+  const frameworks = stringAttribute(asJsx(link), 'frameworks')
+    ?.split(',')
+    .map((framework) => framework.trim())
+    .filter(Boolean);
+
+  if (frameworks?.length) related.frameworks = frameworks;
 
   return related;
 }

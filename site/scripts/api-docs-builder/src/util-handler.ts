@@ -16,7 +16,15 @@ import type { ParamDef, ReturnValue, UtilOverload, UtilReference } from '../../.
 import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
 import { abbreviateType, formatDetailedType } from './formatter.js';
 import type { NamedDeclaration, ResolvedType, SourceFile } from './oxc-project.js';
-import { getJSDoc, OxcProject, sourceText, staticName, unwrapExpression } from './oxc-project.js';
+import {
+  getJSDoc,
+  isOptionalParameter,
+  OxcProject,
+  parameterTypeAnnotation,
+  sourceText,
+  staticName,
+  unwrapExpression,
+} from './oxc-project.js';
 import { log } from './utils.js';
 
 export interface UtilEntry {
@@ -224,9 +232,9 @@ function buildParameter(
   const name = bindingName(pattern);
   if (!name) return undefined;
 
-  const annotation = pattern.typeAnnotation?.typeAnnotation;
-  const optional = parameter.type === 'RestElement' || ('optional' in pattern && pattern.optional);
-  const type = annotation ? formatDetailedType(project, { file, type: annotation }, !!optional) : 'unknown';
+  const annotation = parameterTypeAnnotation(parameter, pattern);
+  const optional = isOptionalParameter(parameter, pattern);
+  const type = annotation ? formatDetailedType(project, { file, type: annotation }, optional) : 'unknown';
   const abbreviated = abbreviateType(name, type);
   const value: ParamDef = { type: abbreviated ?? type };
 
@@ -247,6 +255,14 @@ function buildReturnValue(project: OxcProject, type: ResolvedType): ReturnValue 
   const value: ReturnValue = { type: abbreviated ?? formatted };
 
   if (abbreviated && abbreviated !== formatted) value.detailedType = formatted;
+
+  // A callable type such as `Selector` (a function carrying a `displayName`) is its signature, not a bag of properties.
+  const callable = project
+    .interfaceMembers(type)
+    .some(
+      ({ member }) => member.type === 'TSCallSignatureDeclaration' || member.type === 'TSConstructSignatureDeclaration'
+    );
+  if (callable) return value;
 
   const fields = buildTypeFields(project, type);
 
@@ -380,7 +396,7 @@ function parameterText(project: OxcProject, file: SourceFile, parameter: ParamPa
   if (!pattern) return '...: unknown';
 
   const name = bindingName(pattern) ?? '...';
-  const annotation = pattern.typeAnnotation?.typeAnnotation;
+  const annotation = parameterTypeAnnotation(parameter, pattern);
 
   return `${parameter.type === 'RestElement' ? '...' : ''}${name}: ${annotation ? formatDetailedType(project, { file, type: annotation }, false) : 'unknown'}`;
 }

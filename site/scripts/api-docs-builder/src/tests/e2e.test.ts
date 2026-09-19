@@ -893,6 +893,18 @@ describe('Util pipeline (end-to-end)', () => {
       });
     });
 
+    it('types defaulted and rest parameters from their own annotations', () => {
+      const useCompare = findByName('useCompare', 'react');
+      const { parameters } = useCompare!.data.overloads[0]!;
+
+      expect(parameters.value).toMatchObject({ type: 'T', required: true });
+      expect(parameters.isEqual).toMatchObject({ type: 'function' });
+      expect(parameters.isEqual!.detailedType).toContain('(a: T, b: T) => boolean');
+      expect(parameters.isEqual!.required).toBeUndefined();
+      expect(parameters.tags).toMatchObject({ type: 'string[]' });
+      expect(parameters.tags!.required).toBeUndefined();
+    });
+
     it('controller param descriptions have "- " prefix stripped', () => {
       const snapshot = findByName('SnapshotController', 'html');
       const hostParam = snapshot!.data.overloads[0]!.parameters.host;
