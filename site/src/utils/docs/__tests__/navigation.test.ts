@@ -56,6 +56,49 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
+  it('uses the saved preference when the Shadcn query is missing', () => {
+    currentFramework.set('react');
+    registryFramework.set('react');
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+
+    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(registryFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('normalizes a queryless Shadcn entry without replacing its history or scroll state', () => {
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+    window.history.replaceState(
+      { index: 2, scrollX: 0, scrollY: 360 },
+      '',
+      '/docs/guides/installation/shadcn?preset=audio'
+    );
+
+    initializeDocsNavigation();
+
+    expect(window.location.search).toBe('?preset=audio&framework=html');
+    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
+    expect(registryFramework.get()).toBe('html');
+  });
+
+  it('normalizes a queryless Shadcn entry after client navigation', () => {
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+    window.history.replaceState({ index: 2, scrollX: 0, scrollY: 360 }, '', '/docs');
+
+    initializeDocsNavigation();
+    window.history.replaceState(
+      { index: 3, scrollX: 0, scrollY: 360 },
+      '',
+      '/docs/guides/installation/shadcn?preset=audio'
+    );
+    document.dispatchEvent(new Event('astro:after-swap'));
+
+    expect(window.location.search).toBe('?preset=audio&framework=html');
+    expect(window.history.state).toEqual({ index: 3, scrollX: 0, scrollY: 360 });
+  });
+
   it('does not change the preference for a framework-agnostic route', () => {
     currentFramework.set('html');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;

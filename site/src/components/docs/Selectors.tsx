@@ -7,8 +7,8 @@ import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import { Select, type SelectOption } from '@/components/Select';
-import { currentFramework as frameworkStore, currentStyle as styleStore } from '@/stores/preferences';
-import { selectRegistryFramework } from '@/stores/registry';
+import { currentStyle as styleStore } from '@/stores/preferences';
+import { registryFramework, selectRegistryFramework } from '@/stores/registry';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
@@ -33,6 +33,16 @@ const STYLE_ICONS = {
   css: <Css3Logo className="size-4" />,
 } satisfies Record<AnySupportedStyle, ReactNode>;
 
+function focusVisibleFrameworkSelector() {
+  requestAnimationFrame(() => {
+    const selector = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="select-framework"]')).find(
+      (element) => element.getClientRects().length > 0
+    );
+
+    selector?.focus({ preventScroll: true });
+  });
+}
+
 interface SelectorProps {
   currentFramework: SupportedFramework;
   currentSlug: string;
@@ -46,11 +56,10 @@ export function Selectors({
   registryFrameworkSelection = false,
   className,
 }: SelectorProps) {
-  const preferredFramework = useStore(frameworkStore);
+  const selectedRegistryFramework = useStore(registryFramework);
   const currentStyle = useStore(styleStore);
   const isHydrated = useIsHydrated();
-  const displayedFramework =
-    registryFrameworkSelection && isHydrated ? (preferredFramework ?? currentFramework) : currentFramework;
+  const displayedFramework = registryFrameworkSelection && isHydrated ? selectedRegistryFramework : currentFramework;
 
   // The store is empty on the server and on the client's first render alike, so both fall back to the framework's
   // default style. That keeps the markup identical through hydration and stops the trigger flashing empty on every
@@ -64,6 +73,7 @@ export function Selectors({
 
     if (registryFrameworkSelection) {
       selectRegistryFramework(newFramework);
+      focusVisibleFrameworkSelector();
       return;
     }
 

@@ -1,21 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { describe, expect, it } from 'vite-plus/test';
 
-const mocks = vi.hoisted(() => ({
-  navigate: vi.fn(),
-  savePageScrollForNavigation: vi.fn(),
-}));
-
-vi.mock('astro:transitions/client', () => ({ navigate: mocks.navigate }));
-vi.mock('@/utils/docs/navigation', () => ({
-  DOCS_FRAMEWORK_NAVIGATION_INFO: { docsNavigation: 'framework' },
-  savePageScrollForNavigation: mocks.savePageScrollForNavigation,
-}));
-
-import {
-  initializeInstallationMethodNavigation,
-  resolveInstallationMethodHref,
-  resolveInstallationMethodUrl,
-} from '../method-navigation';
+import { resolveInstallationMethodHref, resolveInstallationMethodUrl } from '../method-navigation';
 import { DEFAULT_SELECTION } from '../url-state';
 
 describe('resolveInstallationMethodUrl', () => {
@@ -100,59 +85,5 @@ describe('resolveInstallationMethodHref', () => {
     expect(result).toBe(
       '/docs/guides/installation/cdn?preset=audio&skin=minimal&source-url=https%3A%2F%2Fexample.com%2Faudio.mp3'
     );
-  });
-});
-
-describe('initializeInstallationMethodNavigation', () => {
-  afterEach(() => {
-    window.__videojsInstallationMethodNavigationController?.abort();
-    delete window.__videojsInstallationMethodNavigationController;
-    window.history.replaceState(null, '', '/');
-    document.body.replaceChildren();
-    vi.clearAllMocks();
-  });
-
-  it('handles cards swapped into the document after initialization', async () => {
-    window.history.replaceState(null, '', '/docs/guides/installation/react?preset=audio');
-    const interceptedByAstro = vi.fn();
-
-    document.addEventListener(
-      'click',
-      (event) => {
-        if (!event.defaultPrevented) interceptedByAstro();
-      },
-      { once: true }
-    );
-    initializeInstallationMethodNavigation();
-    document.body.innerHTML = `
-      <nav data-installation-method-nav>
-        <a data-installation-method="shadcn" href="/docs/guides/installation/shadcn">Shadcn</a>
-      </nav>
-    `;
-
-    document.querySelector<HTMLAnchorElement>('a')!.click();
-    await Promise.resolve();
-
-    expect(mocks.navigate).toHaveBeenLastCalledWith('/docs/guides/installation/shadcn?preset=audio&framework=react', {
-      history: 'push',
-      info: { docsNavigation: 'framework' },
-    });
-    expect(interceptedByAstro).not.toHaveBeenCalled();
-
-    document.body.innerHTML = `
-      <nav data-installation-method-nav>
-        <a data-installation-method="cdn" href="/docs/guides/installation/cdn">CDN</a>
-      </nav>
-    `;
-    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?preset=audio&framework=react');
-
-    document.querySelector<HTMLAnchorElement>('a')!.click();
-    await Promise.resolve();
-
-    expect(mocks.navigate).toHaveBeenLastCalledWith('/docs/guides/installation/cdn?preset=audio', {
-      history: 'push',
-      info: { docsNavigation: 'framework' },
-    });
-    expect(mocks.navigate).toHaveBeenCalledTimes(2);
   });
 });

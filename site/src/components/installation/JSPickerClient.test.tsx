@@ -14,7 +14,9 @@ vi.mock('@/components/CardRadioGroup', () => ({
 import JSPickerClient from './JSPickerClient';
 
 describe('JSPickerClient', () => {
-  afterEach(() => registryFramework.set('react'));
+  afterEach(() => {
+    registryFramework.set('react');
+  });
 
   it('shows every framework on every installation route', () => {
     const markup = renderToString(<JSPickerClient currentFramework="html" route="cdn" />);
@@ -23,11 +25,11 @@ describe('JSPickerClient', () => {
     expect(markup).toContain('data-testid="framework">html</span>');
   });
 
-  it('uses the query-initialized registry selection on Shadcn', () => {
+  it('prerenders one picker from the Shadcn route while the client store hydrates', () => {
     registryFramework.set('html');
+    const markup = renderToString(<JSPickerClient currentFramework="react" route="shadcn" />);
 
-    expect(renderToString(<JSPickerClient currentFramework="react" route="shadcn" />)).toContain(
-      'data-testid="framework">html</span>'
-    );
+    expect(markup).toContain('data-testid="framework">react</span>');
+    expect(markup.match(/data-testid="framework"/g)).toHaveLength(1);
   });
 });

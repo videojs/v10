@@ -1,7 +1,8 @@
 ---
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
+import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
 
-/** Match Shadcn's prerendered framework card to its query before the React picker hydrates. */
+/** Match Shadcn's prerendered framework content to its query before the React islands hydrate. */
 ---
 
 <style is:global>
@@ -17,50 +18,20 @@ import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
     display: contents;
   }
 
-  html[data-registry-framework="html"]
-    [data-installation-framework-picker]
-    [data-card-radio-value="react"] {
-    border-color: var(--color-line) !important;
-    background: var(--color-surface) !important;
-    box-shadow: none !important;
+  [data-shadcn-html-method] {
+    display: none;
   }
 
-  html[data-registry-framework="html"]
-    [data-installation-framework-picker]
-    [data-card-radio-value="react"]
-    [data-card-radio-check] {
-    scale: 0.75;
-    border-color: var(--color-line-strong) !important;
-    background: transparent !important;
-    color: transparent !important;
-    opacity: 0;
-  }
-
-  html[data-registry-framework="html"]
-    [data-installation-framework-picker]
-    [data-card-radio-value="html"] {
-    border-color: var(--color-accent) !important;
-    background: var(--color-surface-raised) !important;
-    box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-sm) !important;
-  }
-
-  html[data-registry-framework="html"]
-    [data-installation-framework-picker]
-    [data-card-radio-value="html"]
-    [data-card-radio-check] {
-    scale: 1;
-    border-color: var(--color-accent) !important;
-    background: var(--color-accent) !important;
-    color: var(--color-manila-light) !important;
-    opacity: 1;
+  html[data-registry-framework="html"] [data-shadcn-html-method] {
+    display: flex;
   }
 </style>
 
-<script is:inline define:vars={{ frameworkCookie: FRAMEWORK_COOKIE }}>
+<script is:inline define:vars={{ frameworkCookie: FRAMEWORK_COOKIE, shadcnPath: SHADCN_INSTALLATION_PATH }}>
   function applyInstallationFramework(url, root) {
     if (!root) return;
 
-    const isShadcn = url.pathname.replace(/\/$/, "") === "/docs/guides/installation/shadcn";
+    const isShadcn = url.pathname.replace(/\/$/, "") === shadcnPath;
 
     if (!isShadcn) {
       delete root.dataset.registryFramework;

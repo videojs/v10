@@ -1,9 +1,10 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
 import { currentFramework } from '@/stores/preferences';
-import { selectRegistryFramework } from '@/stores/registry';
+import { syncRegistryFramework } from '@/stores/registry';
+import { isShadcnInstallationUrl, resolveShadcnFramework } from '@/utils/installation/framework-navigation';
 
-import { setFrameworkPreferenceClient } from './preferences';
+import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
 import { getFrameworkFromDocsUrl } from './routing';
 
 const DOCS_SIDEBAR_ID = 'docs-sidebar';
@@ -82,17 +83,30 @@ function savePageScrollToHistory(): void {
 
 /** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
 export function syncFrameworkPreferenceFromUrl(url: URL): void {
-  const framework = getFrameworkFromDocsUrl(url);
-  if (!framework) return;
+  if (isShadcnInstallationUrl(url)) {
+    const fallback = getFrameworkPreferenceClient() ?? 'react';
+    const framework = resolveShadcnFramework(url, fallback);
 
-  if (url.pathname.replace(/\/$/, '') === '/docs/guides/installation/shadcn') {
-    selectRegistryFramework(framework);
+    if (framework) syncRegistryFramework(framework);
 
     return;
   }
 
+  const framework = getFrameworkFromDocsUrl(url);
+  if (!framework) return;
+
   currentFramework.set(framework);
   setFrameworkPreferenceClient(framework);
+}
+
+function normalizeCurrentShadcnUrl(url: URL): void {
+  if (!isShadcnInstallationUrl(url) || getFrameworkFromDocsUrl(url)) return;
+
+  const framework = resolveShadcnFramework(url, getFrameworkPreferenceClient() ?? 'react');
+  if (!framework) return;
+
+  url.searchParams.set('framework', framework);
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
 }
 
 /** Preserve the reading position for a framework switch that replaces the current guide with its equivalent. */
@@ -204,7 +218,10 @@ export function initializeDocsNavigation(): void {
 
   window.__videojsDocsNavigationController = controller;
 
-  syncFrameworkPreferenceFromUrl(new URL(window.location.href));
+  const currentUrl = new URL(window.location.href);
+
+  syncFrameworkPreferenceFromUrl(currentUrl);
+  normalizeCurrentShadcnUrl(currentUrl);
 
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
     // A client navigation supersedes the post-layout retry captured for the initial document reload.
@@ -242,6 +259,7 @@ export function initializeDocsNavigation(): void {
   document.addEventListener(
     'astro:after-swap',
     () => {
+      normalizeCurrentShadcnUrl(new URL(window.location.href));
       restoreSidebarState();
       restoreSavedPageScroll(false);
     },

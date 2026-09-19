@@ -8,6 +8,6 @@ if (!isInstallationRouteSegment(framework)) throw new Error(`Unsupported install
 const routeFramework = INSTALLATION_ROUTES[framework].pickerFramework;
 ---
 
-<div data-installation-framework-picker>
+<div>
   <JSPickerClient client:load currentFramework={routeFramework} route={framework} />
 </div>

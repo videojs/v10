@@ -11,7 +11,7 @@ import StyleInit from '@/components/docs/StyleInit.astro';
 import Footer from '@/components/FooterDocs.astro';
 import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
-import { FRAMEWORK_LABELS, SUPPORTED_FRAMEWORKS, type SupportedFramework } from '@/types/docs';
+import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
 import Base from './Base.astro';
 
@@ -37,14 +37,14 @@ const {
 
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
+const sidebarFrameworks = registryFrameworkSelection ? frameworks : [framework];
 const docTitlesByFramework = new Map(
-  SUPPORTED_FRAMEWORKS.map((candidate) => [
+  sidebarFrameworks.map((candidate) => [
     candidate,
     new Map(allDocs.map((doc) => [doc.id, getDocTitle(doc, candidate)])),
   ])
 );
 const docStabilities = new Map(allDocs.map((d) => [d.id, d.data.stability]));
-const sidebarFrameworks = registryFrameworkSelection ? frameworks : [framework];
 
 const seoCategory = `${FRAMEWORK_LABELS[framework]} Video Player`;
 const docsSidebarId = 'docs-sidebar';
@@ -88,7 +88,6 @@ const docsSidebarId = 'docs-sidebar';
             slot="mobile-nav"
             class="contents"
             data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
-            hidden={registryFrameworkSelection && sidebarFramework !== framework}
           >
             <DocsSidebar
               framework={sidebarFramework}
@@ -116,7 +115,6 @@ const docsSidebarId = 'docs-sidebar';
           <div
             class="contents"
             data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
-            hidden={registryFrameworkSelection && sidebarFramework !== framework}
           >
             <DocsSidebar
               framework={sidebarFramework}

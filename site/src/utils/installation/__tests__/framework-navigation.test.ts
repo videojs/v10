@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { resolveInstallationFrameworkNavigation } from '../framework-navigation';
+import {
+  isShadcnInstallationUrl,
+  resolveInstallationFrameworkNavigation,
+  resolveShadcnFramework,
+} from '../framework-navigation';
 
 describe('resolveInstallationFrameworkNavigation', () => {
   it('replaces equivalent React and HTML installation pages', () => {
@@ -49,5 +53,27 @@ describe('resolveInstallationFrameworkNavigation', () => {
       target: '/docs/guides/installation/react?preset=audio',
       history: 'push',
     });
+  });
+});
+
+describe('resolveShadcnFramework', () => {
+  it('uses a valid query before the saved fallback', () => {
+    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html');
+
+    expect(resolveShadcnFramework(url, 'react')).toBe('html');
+  });
+
+  it('uses the saved fallback for a missing or invalid query', () => {
+    expect(resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')).toBe('html');
+    expect(
+      resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
+    ).toBe('react');
+  });
+
+  it('does not resolve non-Shadcn routes', () => {
+    const url = new URL('https://videojs.org/docs/guides/installation/react?framework=html');
+
+    expect(isShadcnInstallationUrl(url)).toBe(false);
+    expect(resolveShadcnFramework(url, 'react')).toBeNull();
   });
 });

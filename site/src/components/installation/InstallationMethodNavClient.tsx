@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react';
+import { navigate } from 'astro:transitions/client';
 import clsx from 'clsx';
-import type { ComponentType, SVGProps } from 'react';
+import type { ComponentType, MouseEvent, SVGProps } from 'react';
 
 import Check from '@/assets/icons/check.svg?react';
 import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
@@ -8,7 +9,8 @@ import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { registryFramework } from '@/stores/registry';
-import type { InstallationPickerFramework } from '@/utils/installation/framework-navigation';
+import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
+import { isRegistryFramework, type InstallationPickerFramework } from '@/utils/installation/framework-navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
 import {
   getInstallationMethodsForFramework,
@@ -16,6 +18,7 @@ import {
   type InstallationMethod,
 } from '@/utils/installation/method-options';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
+import { getInstallationRoutePath } from '@/utils/installation/routes';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 const ICONS = {
@@ -36,11 +39,15 @@ function getActiveMethod(route: InstallationRouteSegment): InstallationMethod {
 }
 
 function getMethodBaseHref(method: InstallationMethod, framework: InstallationPickerFramework): string {
-  if (method === 'packaged') return `/docs/guides/installation/${framework}`;
+  if (method === 'packaged') return getInstallationRoutePath(framework);
 
-  if (method === 'shadcn') return `/docs/guides/installation/shadcn?framework=${framework}`;
+  if (method === 'shadcn') {
+    if (!isRegistryFramework(framework)) throw new Error(`Shadcn does not support ${framework}.`);
 
-  return '/docs/guides/installation/cdn';
+    return `${getInstallationRoutePath('shadcn')}?framework=${framework}`;
+  }
+
+  return getInstallationRoutePath('cdn');
 }
 
 export default function InstallationMethodNavClient({ currentFramework, route }: Props) {
@@ -54,7 +61,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const framework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = getInstallationMethodsForFramework(framework);
-  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => availableMethods.includes(id));
+  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => route === 'shadcn' || availableMethods.includes(id));
 
   const getMethodHref = (method: InstallationMethod) => {
     const baseHref = getMethodBaseHref(method, framework);
@@ -76,6 +83,36 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     );
   };
 
+  const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    const current = new URL(window.location.href);
+    const target = new URL(href, current);
+
+    event.preventDefault();
+
+    if (target.href === current.href) return;
+
+    const targetPath = `${target.pathname}${target.search}${target.hash}`;
+
+    savePageScrollForNavigation(targetPath);
+    queueMicrotask(() => {
+      void navigate(targetPath, {
+        history: 'push',
+        info: DOCS_FRAMEWORK_NAVIGATION_INFO,
+      });
+    });
+  };
+
   return (
     <nav
       aria-label="Installation method"
@@ -84,12 +121,15 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     >
       {items.map(({ id, label, description }) => {
         const Icon = ICONS[id];
+        const href = getMethodHref(id);
 
         return (
           <a
             key={id}
-            href={getMethodHref(id)}
+            href={href}
+            onClick={(event) => handleNavigation(event, href)}
             data-installation-method={id}
+            data-shadcn-html-method={route === 'shadcn' && id === 'cdn' ? '' : undefined}
             aria-current={active === id ? 'page' : undefined}
             className={clsx(
               'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
