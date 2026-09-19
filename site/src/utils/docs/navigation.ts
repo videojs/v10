@@ -3,7 +3,7 @@ import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from
 import { currentFramework } from '@/stores/preferences';
 
 import { setFrameworkPreferenceClient } from './preferences';
-import { getFrameworkFromDocsPath } from './routing';
+import { getFrameworkFromDocsUrl } from './routing';
 
 const DOCS_SIDEBAR_ID = 'docs-sidebar';
 const SIDEBAR_STORAGE_KEY = 'vjs-sidebar-state';
@@ -81,7 +81,7 @@ function savePageScrollToHistory(): void {
 
 /** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
 export function syncFrameworkPreferenceFromUrl(url: URL): void {
-  const framework = getFrameworkFromDocsPath(url.pathname);
+  const framework = getFrameworkFromDocsUrl(url);
   if (!framework) return;
 
   currentFramework.set(framework);

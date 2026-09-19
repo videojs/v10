@@ -112,7 +112,7 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
  * The optional peer that ships a renderer's adapter, or `null` for the renderers `@videojs/html` and `@videojs/react`
  * play on their own. Every renderer is listed so a new one cannot be added without deciding what it installs.
  */
-function getAdapterPackage(renderer: Renderer): string | null {
+export function getAdapterPackage(renderer: Renderer): string | null {
   const packages: Record<Renderer, string | null> = {
     'background-video': null,
     cloudflare: '@videojs/cloudflare-video',
@@ -130,6 +130,29 @@ function getAdapterPackage(renderer: Renderer): string | null {
   };
 
   return packages[renderer];
+}
+
+/** Packages a source install still needs after the registry item installs the core React or HTML package. */
+export function generateSourceMediaInstallCode(
+  renderer: Renderer
+): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> | null {
+  const packages: string[] = [];
+  const adapter = getAdapterPackage(renderer);
+
+  if (adapter !== null) packages.push(adapter);
+
+  if (isMuxRenderer(renderer)) packages.push(MUX_DATA_PACKAGE);
+
+  if (packages.length === 0) return null;
+
+  const value = packages.join(' ');
+
+  return {
+    npm: `npm install ${value}`,
+    pnpm: `pnpm add ${value}`,
+    yarn: `yarn add ${value}`,
+    bun: `bun add ${value}`,
+  };
 }
 
 function installPackages(framework: '@videojs/html' | '@videojs/react', renderer: Renderer): string {
@@ -276,8 +299,8 @@ ${generateMediaMarkup(tag, src, playsInline, renderer, '  ')}
 <${playerTag}>
   <!--
     Skins contain the entire player UI and are easily swappable.
-    They can each be "ejected" for full control and customization
-    of UI components.
+    Add the skin files to your project for full control over its
+    UI components.
    -->
   <${skinTag}>
 ${skinMediaComment}
@@ -322,6 +345,168 @@ export function generateHTMLUsageCode(
     opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer) : undefined;
 
   return { html, imports };
+}
+
+// ---------------------------------------------------------------------------
+// Vue and Svelte
+// ---------------------------------------------------------------------------
+
+const FRAMEWORK_SOURCE_PLACEHOLDER = '__VIDEOJS_FRAMEWORK_SOURCE__';
+
+function indentBlock(value: string, indent: string): string {
+  return value
+    .split('\n')
+    .map((line) => `${indent}${line}`)
+    .join('\n');
+}
+
+function getHTMLCustomElementTags(useCase: UseCase, skin: Skin, renderer: Renderer): string[] {
+  const tags = [getPlayerTag(useCase)];
+
+  if (skin !== 'none' || useCase === 'background-video') {
+    tags.push(getSkinTag(useCase, skin === 'none' ? 'video' : skin));
+  }
+
+  const mediaTag = getRendererTag(renderer);
+
+  if (mediaTag.includes('-')) tags.push(mediaTag);
+
+  if (isMuxRenderer(renderer)) tags.push('mux-data');
+
+  return [...new Set(tags)];
+}
+
+export interface VueCustomElementConfigCode {
+  'vite.config.ts': string;
+  'nuxt.config.ts': string;
+}
+
+export interface VueCreateCode {
+  'VideoPlayer.vue': string;
+}
+
+export interface VueUsageCode {
+  'App.vue': string;
+}
+
+export interface SvelteCreateCode {
+  'VideoPlayer.svelte': string;
+}
+
+export interface SvelteUsageCode {
+  '+page.svelte': string;
+  'App.svelte': string;
+}
+
+export function generateVueCustomElementConfigCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+): VueCustomElementConfigCode {
+  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer)
+    .map((tag) => `'${tag}'`)
+    .join(', ');
+  const elementSet = `const videoJsElements = new Set([${tags}]);`;
+
+  return {
+    'vite.config.ts': `import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
+
+${elementSet}
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => videoJsElements.has(tag),
+        },
+      },
+    }),
+  ],
+});`,
+    'nuxt.config.ts': `${elementSet}
+
+export default defineNuxtConfig({
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => videoJsElements.has(tag),
+    },
+  },
+});`,
+  };
+}
+
+export function generateVueCreateCode(opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>): VueCreateCode {
+  const imports = generateHTMLImports(opts.useCase, opts.skin, opts.renderer);
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, FRAMEWORK_SOURCE_PLACEHOLDER).replace(
+    `src="${FRAMEWORK_SOURCE_PLACEHOLDER}"`,
+    ':src="src"'
+  );
+
+  return {
+    'VideoPlayer.vue': `<script setup lang="ts">
+${imports}
+
+defineProps<{ src: string }>();
+</script>
+
+<template>
+${indentBlock(markup, '  ')}
+</template>`,
+  };
+}
+
+export function generateVueUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+): VueUsageCode {
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+
+  return {
+    'App.vue': `<script setup lang="ts">
+import VideoPlayer from './components/VideoPlayer.vue';
+</script>
+
+<template>
+  <h1>Welcome to My App</h1>
+  <VideoPlayer src="${source}" />
+</template>`,
+  };
+}
+
+export function generateSvelteCreateCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+): SvelteCreateCode {
+  const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.renderer), '  ');
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, FRAMEWORK_SOURCE_PLACEHOLDER).replace(
+    `src="${FRAMEWORK_SOURCE_PLACEHOLDER}"`,
+    'src={src}'
+  );
+
+  return {
+    'VideoPlayer.svelte': `<script lang="ts">
+${imports}
+
+  let { src }: { src: string } = $props();
+</script>
+
+${markup}`,
+  };
+}
+
+export function generateSvelteUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+): SvelteUsageCode {
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+  const component = (path: string) => `<script lang="ts">
+  import VideoPlayer from '${path}';
+</script>
+
+<h1>Welcome to My App</h1>
+<VideoPlayer src="${source}" />`;
+
+  return {
+    '+page.svelte': component('$lib/VideoPlayer.svelte'),
+    'App.svelte': component('./lib/VideoPlayer.svelte'),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -375,17 +560,20 @@ ${indent}<MuxData />`;
 }
 
 export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-): Record<'MyPlayer.tsx', string> {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+): Record<'app/page.tsx', string> {
   const { useCase, skin, renderer } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const playerComponent = getPresetPlayer(useCase);
+  const source = resolveSourceUrl(opts.sourceUrl, renderer, useCase);
 
   const isBackgroundVideo = useCase === 'background-video';
   const isNoSkin = skin === 'none';
   const group = getInstallationPreset(useCase).group;
 
-  const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
+  const rendererProps = isVideoLikeRenderer(renderer)
+    ? `src=${JSON.stringify(source)} playsInline`
+    : `src=${JSON.stringify(source)}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
 
   let presetImport: string;
@@ -440,39 +628,97 @@ export function generateReactCreateCode(
   ].join('\n');
 
   return {
-    'MyPlayer.tsx': `${imports}
+    'app/page.tsx': `${imports}
 
-interface MyPlayerProps {
-  src: string;
-}
-
-export const MyPlayer = ({ src }: MyPlayerProps) => {
+export default function Page() {
   return (
 ${playerJsx}
   );
-};`,
+}`,
   };
 }
 
-// ---------------------------------------------------------------------------
-// React Usage
-// ---------------------------------------------------------------------------
+/** Build a React player around a skin component copied into the app by Shadcn. */
+export function generateSourceReactCreateCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+): Record<'app/page.tsx', string> {
+  const { useCase, renderer } = opts;
+  const preset = getInstallationPreset(useCase);
+  const playerComponent = getPresetPlayer(useCase);
+  const rendererComponent = getRendererComponent(renderer);
+  const source = resolveSourceUrl(opts.sourceUrl, renderer, useCase);
+  // A registry theme changes the source behind the stable item name. Both the Default and Minimal catalogs export the
+  // same local component (`VideoSkin`, `AudioSkin`, and so on).
+  const skinComponent = `${preset.componentPrefix}Skin`;
+  const rendererProps = isVideoLikeRenderer(renderer)
+    ? `src=${JSON.stringify(source)} playsInline`
+    : `src=${JSON.stringify(source)}`;
+  const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
+  const presetImports = [playerComponent];
+  let mediaImport: string | null = null;
 
-export function generateReactUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
-): Record<'App.tsx', string> {
-  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+  if (isPresetRenderer(renderer)) {
+    presetImports.push(rendererComponent);
+  } else {
+    mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
+  }
+
+  const imports = [
+    `import { ${presetImports.join(', ')} } from '@videojs/react/${preset.group}';`,
+    ...(mediaImport ? [mediaImport] : []),
+    ...(isMuxRenderer(renderer)
+      ? [`import { MuxData } from '@videojs/react/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`]
+      : []),
+    `import { ${skinComponent} } from '@/components/videojs/${preset.flag}/skin';`,
+  ].join('\n');
 
   return {
-    'App.tsx': `import { MyPlayer } from '../components/player';
+    'app/page.tsx': `${imports}
 
-export const HomePage = () => {
+export default function Page() {
   return (
-    <div>
-      <h1>Welcome to My App</h1>
-      <MyPlayer src="${source}" />
-    </div>
+    <${playerComponent}>
+      <${skinComponent}>
+        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
+      </${skinComponent}>
+    </${playerComponent}>
   );
-};`,
+}`,
+  };
+}
+
+export interface SourceHTMLUsageCode {
+  imports: string;
+  media: string;
+  player: string;
+  skinFile: string;
+}
+
+/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
+export function generateSourceHTMLUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+): SourceHTMLUsageCode {
+  const { useCase, renderer } = opts;
+  const preset = getInstallationPreset(useCase);
+  const mediaSubpath = getMediaSubpath(renderer);
+  const tag = getRendererTag(renderer);
+  const source = resolveSourceUrl(opts.sourceUrl, renderer, useCase);
+  const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  const imports = [
+    `import '@videojs/html/${preset.group}/player';`,
+    ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
+    ...(isMuxRenderer(renderer) ? [`import '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`] : []),
+    `import '@/components/videojs/${preset.flag}/skin';`,
+  ].join('\n');
+
+  return {
+    imports,
+    media: generateMediaMarkup(tag, source, playsInline, renderer, ''),
+    player: `<${getPlayerTag(useCase)}>
+  <!-- Paste the contents of components/videojs/${preset.flag}/skin.html here. -->
+</${getPlayerTag(useCase)}>
+
+<script type="module" src="/src/player.ts"></script>`,
+    skinFile: `components/videojs/${preset.flag}/skin.html`,
   };
 }

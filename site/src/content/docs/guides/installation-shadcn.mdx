@@ -1,0 +1,168 @@
+---
+title: Shadcn Installation Guide
+description: Use the Video.js Shadcn registry to add editable skin source and build a React or HTML video player
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
+import HumanCase from '@/components/docs/HumanCase.astro';
+import Step from '@/components/docs/Step.astro';
+import Steps from '@/components/docs/Steps.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import InstallationOverview from '@/components/installation/InstallationOverview.astro';
+import InstallationPreview from '@/components/installation/InstallationPreview';
+import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
+import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import UseCasePicker from '@/components/installation/UseCasePicker';
+import RegistryOptions from '@/components/registry/RegistryOptions.astro';
+import RegistryInitCommand from '@/components/registry/RegistryInitCommand.astro';
+import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
+import ShadcnFrameworkCase from '@/components/registry/ShadcnFrameworkCase.astro';
+import ShadcnFrameworkSelect from '@/components/registry/ShadcnFrameworkSelect';
+import SourceMediaInstall from '@/components/registry/SourceMediaInstall';
+import SourceReactPlayer from '@/components/registry/SourceReactPlayer';
+import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
+
+<InstallationOverview />
+
+<InstallationChoicesForLLMs />
+
+<HumanCase>
+
+## Choose your installation method
+
+Start with packages, add editable source, or load the browser-ready player from a CDN.
+
+<InstallationMethodNav />
+
+<Aside type="note">
+Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
+</Aside>
+
+## Choose your JS framework
+
+React projects use components and hooks. HTML projects use custom elements and work with any stack. This choice stays on this page and is saved in the URL.
+
+<ContentWidth margins="lg">
+  <ShadcnFrameworkSelect client:idle />
+</ContentWidth>
+
+## Choose your use case
+
+Choose the ready-made player that is closest to what you are building. The Shadcn registry does not currently provide the background video skin as source.
+
+<ContentWidth margins="lg">
+  <UseCasePicker client:idle includeBackground={false} />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <SkinPickerSection includeNoSkin={false} source />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <InstallationPreview client:visible />
+</ContentWidth>
+
+## Choose your media source
+
+Choose what the player will play. If that source needs a playback adapter, the installation steps include it.
+
+<ContentWidth margins="lg">
+  <MediaSourcePicker client:idle />
+</ContentWidth>
+
+</HumanCase>
+
+## Initialize Shadcn
+
+Run the commands from the app directory that contains `components.json`, or where you want the CLI to create it. In a monorepo, run them from the app workspace or pass `--cwd <path>`.
+
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="template" />
+
+<RegistryInitCommand framework="react" installation />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<RegistryOptions framework="html" kind="template" />
+
+<RegistryInitCommand framework="html" installation />
+</ShadcnFrameworkCase>
+
+If the app already has `components.json`, skip this section.
+
+## Add the skin source
+
+React skins can use Tailwind CSS 4 or Vanilla CSS. HTML skins use Vanilla CSS. Choose the styling that matches your app, then connect the Video.js registry and add the skin selected above.
+
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="styling" />
+
+<InstallationRegistryCommand framework="react" />
+
+The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/react`.
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<RegistryOptions framework="html" kind="styling" />
+
+<InstallationRegistryCommand framework="html" />
+
+The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/html`.
+</ShadcnFrameworkCase>
+
+<SourceMediaInstall client:idle />
+
+## Add your player
+
+<ShadcnFrameworkCase framework="react">
+Add the player directly to `app/page.tsx`. It imports the player and media from the package, then imports the selected skin from your project.
+
+<ContentWidth>
+  <SourceReactPlayer client:idle />
+</ContentWidth>
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<Steps>
+  <Step number={1} title="Add the media element">
+    <SourceHTMLPlayer client:idle part="media" />
+  </Step>
+  <Step number={2} title="Register the custom elements">
+    <SourceHTMLPlayer client:idle part="imports" />
+  </Step>
+  <Step number={3} title="Add the player to your page">
+    <SourceHTMLPlayer client:idle part="player" />
+  </Step>
+</Steps>
+</ShadcnFrameworkCase>
+
+That's it! You now have a working Video.js player whose skin source lives in your project.
+
+## Change the skin source
+
+<ShadcnFrameworkCase framework="react">
+Start in `components/videojs/<preset>/skin.tsx`. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+Start in `components/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+</ShadcnFrameworkCase>
+
+## Choose what to do next
+
+<DocsLinkCards label="Customize">
+<DocsLinkCard slug="guides/customize-skins" anchor="style-skin-source" description="Change the installed layout, controls, styles, and interactions">Customize skin source</DocsLinkCard>
+<DocsLinkCard slug="guides/architecture" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
+<DocsLinkCard slug="guides/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
+</DocsLinkCards>
+
+<DocsLinkCards label="Deploy">
+<DocsLinkCard slug="guides/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
+<DocsLinkCard slug="guides/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
+<DocsLinkCard slug="guides/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
+<DocsLinkCard slug="guides/content-security-policy" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
+</DocsLinkCards>

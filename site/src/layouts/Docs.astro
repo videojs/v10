@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import { type CollectionEntry, getCollection } from 'astro:content';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
+import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
 import Footer from '@/components/FooterDocs.astro';
@@ -15,11 +16,21 @@ import Base from './Base.astro';
 
 type Props = {
   doc: CollectionEntry<'docs'>;
+  description?: string;
   framework: SupportedFramework;
   slug: string;
+  registryFrameworkSelection?: boolean;
+  conciseMetadata?: boolean;
 };
 
-const { doc, framework, slug } = Astro.props;
+const {
+  doc,
+  description = doc.data.description,
+  framework,
+  slug,
+  registryFrameworkSelection = false,
+  conciseMetadata = false,
+} = Astro.props;
 
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
@@ -32,8 +43,8 @@ const docsSidebarId = 'docs-sidebar';
 
 <Base
   title={getDocTitle(doc, framework)}
-  suffix={`Open Source ${FRAMEWORK_LABELS[framework]} Video Player`}
-  description={`${doc.data.description} — Video.js ${seoCategory}.`}
+  suffix={conciseMetadata ? false : `Open Source ${FRAMEWORK_LABELS[framework]} Video Player`}
+  description={conciseMetadata ? description : `${description} — Video.js ${seoCategory}.`}
   easterEgg="thin"
   easterEggClass="md:left-70 lg:left-75"
 >
@@ -46,6 +57,7 @@ const docsSidebarId = 'docs-sidebar';
     <MarkdownAlternate />
     <slot name="head" slot="head" />
   </Fragment>
+  <PreferenceUpdater client:idle currentFramework={framework} />
   <div
     data-docs-layout
     class:list={[
@@ -66,7 +78,12 @@ const docsSidebarId = 'docs-sidebar';
         docTitles={docTitles}
         docStabilities={docStabilities}
       >
-        <Selectors client:idle currentFramework={framework} currentSlug={slug} />
+        <Selectors
+          client:idle
+          currentFramework={framework}
+          currentSlug={slug}
+          registryFrameworkSelection={registryFrameworkSelection}
+        />
       </DocsSidebar>
     </NavBarDocs>
     <aside
@@ -85,6 +102,7 @@ const docsSidebarId = 'docs-sidebar';
           client:idle
           currentFramework={framework}
           currentSlug={slug}
+          registryFrameworkSelection={registryFrameworkSelection}
         />
       </DocsSidebar>
     </aside>

@@ -52,4 +52,13 @@ describe('satteriConditionalHeadings', () => {
 
     expect(headings.find((h) => h.text === 'CSS Only')?.styles).toEqual(['css']);
   });
+
+  it('injects headings rendered by installation components', () => {
+    const headings = collect('<SkinPickerSection />\n\n<SourceMediaInstall client:idle />');
+
+    expect(headings).toEqual([
+      { depth: 2, text: 'Choose your skin', slug: 'choose-your-skin' },
+      { depth: 2, text: 'Install the media adapter', slug: 'install-the-media-adapter' },
+    ]);
+  });
 });

@@ -5,11 +5,11 @@ import BookIcon from '@/assets/icons/book.svg?react';
 import CodeIcon from '@/assets/icons/code.svg?react';
 import PuzzleIcon from '@/assets/icons/puzzle.svg?react';
 import PenIcon from '@/assets/icons/pen.svg?react';
-import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
 import { filterSidebar, findFirstGuide } from '@/utils/docs/sidebar';
+import { buildDocsUrl, isDocsGuideActive } from '@/utils/docs/routing';
 
 type Props = {
   framework: SupportedFramework;
@@ -19,11 +19,17 @@ type Props = {
   /**
    * Give the active link's indicator a view-transition name so it slides between pages of the same section. Only one
    * rendered sidebar per page may opt in; duplicate names would cancel the transition.
-   */
+  */
   animateIndicator?: boolean;
 };
 
-const { framework, docTitles, docStabilities, class: className, animateIndicator = false } = Astro.props;
+const {
+  framework,
+  docTitles,
+  docStabilities,
+  class: className,
+  animateIndicator = false,
+} = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 const currentPath = Astro.url.pathname;
 
@@ -32,7 +38,7 @@ function containsActivePath(item: SidebarItemType): boolean {
 
   if (isLink(item)) return false;
 
-  return `/docs/framework/${framework}/${item.slug}` === currentPath;
+  return isDocsGuideActive(framework, item.slug, currentPath);
 }
 
 // Top-level sections are the sidebar's switcher. Each entry links to its first guide; the entry that contains the
@@ -64,7 +70,6 @@ const TAB_ICONS = {
 
 <div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
-  <PreferenceUpdater client:idle currentFramework={framework} />
   {
     tabs.length > 1 && (
       <nav aria-label="Docs sections" class="px-6 pt-5">
@@ -75,7 +80,7 @@ const TAB_ICONS = {
 
             return (
               <a
-                href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
+                href={buildDocsUrl(framework, findFirstGuide(framework, tab.contents))}
                 aria-current={isActive ? "true" : undefined}
                 class:list={[
                   // One weight for both states prevents a layout shift when the active section changes.

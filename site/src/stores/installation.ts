@@ -1,3 +1,4 @@
+import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { atom, onMount, type WritableAtom } from 'nanostores';
 
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
@@ -33,7 +34,8 @@ export const selectionAtoms: SelectionAtoms = {
   sourceUrl,
   installMethod,
 };
-let hydratedFromUrl = false;
+let hydratedUrl: string | null = null;
+let syncingFromUrl = false;
 
 function currentSelection(): InstallationSelection {
   return {
@@ -45,34 +47,55 @@ function currentSelection(): InstallationSelection {
   };
 }
 
-function readUrl(): void {
-  if (hydratedFromUrl || !globalThis.location) return;
+/** Replace every installation pick from a destination URL before its islands render. */
+export function syncInstallationSelectionFromUrl(url?: URL): void {
+  const target = url ?? (globalThis.location ? new URL(globalThis.location.href) : null);
+  if (!target) return;
 
-  hydratedFromUrl = true;
-  const selection = parseInstallationSearch(location.search);
+  const urlKey = `${target.pathname}${target.search}`;
+  if (hydratedUrl === urlKey) return;
 
-  // Use case first: the skin and media pickers validate against it when they react to a change.
-  useCase.set(selection.useCase);
-  skin.set(selection.skin);
-  renderer.set(selection.renderer);
-  sourceUrl.set(selection.sourceUrl);
-  installMethod.set(selection.installMethod);
+  hydratedUrl = urlKey;
+  syncingFromUrl = true;
+  const selection = parseInstallationSearch(target.search);
+
+  try {
+    // Use case first: the skin and media pickers validate against it when they react to a change.
+    useCase.set(selection.useCase);
+    skin.set(selection.skin);
+    renderer.set(selection.renderer);
+    sourceUrl.set(selection.sourceUrl);
+    installMethod.set(selection.installMethod);
+  } finally {
+    syncingFromUrl = false;
+  }
 }
 
 function writeUrl(): void {
-  if (!hydratedFromUrl || !globalThis.history) return;
+  if (!hydratedUrl || syncingFromUrl || !globalThis.history) return;
 
   const search = serializeInstallationSearch(currentSelection(), location.search);
   const url = `${location.pathname}${search}${location.hash}`;
 
-  if (url !== `${location.pathname}${location.search}${location.hash}`) history.replaceState(history.state, '', url);
+  if (url !== `${location.pathname}${location.search}${location.hash}`) {
+    history.replaceState(history.state, '', url);
+    hydratedUrl = `${location.pathname}${search}`;
+  }
 }
 
 for (const store of Object.values(selectionAtoms)) {
   onMount(store, () => {
-    readUrl();
+    syncInstallationSelectionFromUrl();
 
     return store.listen(writeUrl);
+  });
+}
+
+if (globalThis.document) {
+  document.addEventListener('astro:before-swap', (event: TransitionBeforeSwapEvent) => {
+    if (event.to.pathname.startsWith('/docs/guides/installation/')) {
+      syncInstallationSelectionFromUrl(event.to);
+    }
   });
 }
 

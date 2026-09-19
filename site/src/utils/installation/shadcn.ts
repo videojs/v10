@@ -1,33 +1,67 @@
 import { getInstallationPreset, type Skin, type UseCase } from './types';
 
 export type RegistryFramework = 'html' | 'react';
+export type RegistryProjectFramework = RegistryFramework | 'svelte' | 'vue';
+export type RegistryTemplate = 'next' | 'vite' | 'start' | 'laravel' | 'react-router' | 'astro';
 export type RegistryStyling = 'css' | 'tailwind';
 export type RegistryTheme = 'default' | 'minimal';
+export type RegistryPreset = 'audio' | 'live-audio' | 'live-video' | 'video';
 export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 /** Where `packages/skins` publishes its hosted registry; see its `netlify.toml`. */
 export const REGISTRY_ORIGIN = 'https://shadcn.videojs.org';
 export const REGISTRY_NAMESPACE = '@videojs';
-/** Where the CLI places installed source, relative to the project's components alias. */
+/** Where the CLI places added skin files, relative to the project's components alias. */
 export const REGISTRY_INSTALL_DIRECTORY = 'components/videojs';
 
-export const SHADCN_RUNNERS: Record<ShadcnRunner, string> = {
+export const SHADCN_RUNNER_NAMES = ['npm', 'pnpm', 'yarn', 'bun'] as const satisfies readonly ShadcnRunner[];
+
+export const SHADCN_RUNNERS = {
   npm: 'npx shadcn@latest',
   pnpm: 'pnpm dlx shadcn@latest',
   yarn: 'yarn dlx shadcn@latest',
   bun: 'bunx --bun shadcn@latest',
-};
+} as const satisfies Record<ShadcnRunner, string>;
 
-export const REGISTRY_STYLING_LABELS: Record<RegistryStyling, string> = {
+export const REGISTRY_STYLING_LABELS = {
   tailwind: 'Tailwind CSS',
   css: 'Vanilla CSS',
-};
+} as const satisfies Record<RegistryStyling, string>;
+
+export const REGISTRY_TEMPLATE_LABELS = {
+  next: 'Next.js',
+  vite: 'Vite',
+  start: 'TanStack Start',
+  laravel: 'Laravel',
+  'react-router': 'React Router',
+  astro: 'Astro',
+} as const satisfies Record<RegistryTemplate, string>;
+
+export const REGISTRY_TEMPLATES = [
+  'next',
+  'vite',
+  'start',
+  'laravel',
+  'react-router',
+  'astro',
+] as const satisfies readonly RegistryTemplate[];
+
+const HTML_REGISTRY_TEMPLATES = ['vite', 'astro', 'laravel'] as const satisfies readonly RegistryTemplate[];
+
+export const REGISTRY_THEMES = ['default', 'minimal'] as const satisfies readonly RegistryTheme[];
+
+export const REGISTRY_THEME_LABELS = {
+  default: 'Default',
+  minimal: 'Minimal',
+} as const satisfies Record<RegistryTheme, string>;
+
+export const DEFAULT_REGISTRY_PRESET = 'video' satisfies RegistryPreset;
 
 export interface RegistrySkin {
   /** Registry item name, such as `video` or `live-audio`. */
-  readonly item: string;
+  readonly item: RegistryPreset;
   readonly label: string;
-  readonly preset: 'audio' | 'live-audio' | 'live-video' | 'video';
+  readonly preset: RegistryPreset;
   readonly theme: RegistryTheme;
   /** Where the skin installs, relative to the components alias. */
   readonly directory: string;
@@ -77,6 +111,23 @@ export function defaultRegistryStyling(framework: RegistryFramework): RegistrySt
   return registryStylings(framework)[0]!;
 }
 
+export function defaultRegistryTemplate(framework: RegistryProjectFramework): RegistryTemplate {
+  return framework === 'react' ? 'next' : 'vite';
+}
+
+/** The Shadcn project templates that can host each Video.js source framework. */
+export function registryTemplates(framework: RegistryFramework): readonly RegistryTemplate[] {
+  return framework === 'react' ? REGISTRY_TEMPLATES : HTML_REGISTRY_TEMPLATES;
+}
+
+/** Keep a project-template choice valid when the source framework changes. */
+export function resolveRegistryTemplate(
+  framework: RegistryFramework,
+  template: RegistryTemplate | null
+): RegistryTemplate {
+  return template && registryTemplates(framework).includes(template) ? template : defaultRegistryTemplate(framework);
+}
+
 /** Keep a styling choice made for one framework valid for another. */
 export function resolveRegistryStyling(framework: RegistryFramework, styling: RegistryStyling | null): RegistryStyling {
   return styling && registryStylings(framework).includes(styling) ? styling : defaultRegistryStyling(framework);
@@ -96,6 +147,10 @@ export function registryNamespaceUrl(
 
 export function shadcnCommand(runner: ShadcnRunner, action: string): string {
   return `${SHADCN_RUNNERS[runner]} ${action}`;
+}
+
+export function shadcnInitCommand(runner: ShadcnRunner, template: RegistryTemplate): string {
+  return shadcnCommand(runner, `init --template ${template}`);
 }
 
 /** Points the `@videojs` namespace at one catalog; Shadcn writes it into `components.json`. */
@@ -127,7 +182,7 @@ export function registryInstallCommands(
   return commands.join('\n');
 }
 
-/** The catalog and item for an installation selection, or `null` when that selection cannot be ejected. */
+/** The catalog and item for an installation selection, or `null` when its files are unavailable. */
 export function registrySkinSelection({
   useCase,
   skin,
@@ -137,8 +192,11 @@ export function registrySkinSelection({
 }): Pick<RegistrySkin, 'item' | 'theme'> | null {
   if (useCase === 'background-video' || skin === 'none') return null;
 
+  const item = REGISTRY_PRESETS.find((preset) => preset.item === getInstallationPreset(useCase).flag)?.item;
+  if (!item) return null;
+
   return {
-    item: getInstallationPreset(useCase).flag,
+    item,
     theme: skin.startsWith('minimal-') ? 'minimal' : 'default',
   };
 }

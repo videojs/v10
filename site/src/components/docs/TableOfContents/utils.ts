@@ -101,6 +101,38 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
   });
 }
 
+/** Keep client-rendered conditional headings in the TOC only while their target exists on the page. */
+export function filterRenderedHeadings(
+  headings: MarkdownHeading[],
+  getElementById: (id: string) => HTMLElement | null = (id) => document.getElementById(id)
+): MarkdownHeading[] {
+  return headings.filter((heading) => {
+    const element = getElementById(heading.slug);
+
+    return element !== null && !element.hasAttribute('data-conditional-heading-placeholder');
+  });
+}
+
+/** Follow headings mounted or removed by hydrated islands, such as a selected media adapter's install step. */
+export function useRenderedHeadings(headings: MarkdownHeading[]): MarkdownHeading[] {
+  const [renderedHeadings, setRenderedHeadings] = useState(headings);
+
+  useEffect(() => {
+    const update = () => setRenderedHeadings(filterRenderedHeadings(headings));
+
+    update();
+
+    const content = document.querySelector('[data-llms-content]') ?? document.body;
+    const observer = new MutationObserver(update);
+
+    observer.observe(content, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, [headings]);
+
+  return renderedHeadings;
+}
+
 /** Navigate to a heading through Astro so its history index and scroll state stay intact. */
 export function navigateToHeading(slug: string): void {
   const element = document.getElementById(slug);

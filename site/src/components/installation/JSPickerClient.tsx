@@ -5,23 +5,17 @@ import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import type { SupportedFramework } from '@/types/docs';
-import { isValidFramework } from '@/types/docs';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
-import { buildDocsUrl, resolveFrameworkChange } from '@/utils/docs/routing';
+import {
+  type InstallationPickerFramework,
+  resolveInstallationFrameworkNavigation,
+} from '@/utils/installation/framework-navigation';
 
 /**
  * Frameworks the installation flow can start from. React and HTML switch the docs framework; Vue and Svelte open their
  * own installation pages, which build on the HTML custom elements.
  */
-type PickerFramework = SupportedFramework | 'vue' | 'svelte';
-
-const INSTALL_PAGE_SLUGS = {
-  vue: 'guides/installation-vue',
-  svelte: 'guides/installation-svelte',
-} satisfies Record<'vue' | 'svelte', string>;
-
-const OPTIONS: CardRadioOption<PickerFramework>[] = [
+const OPTIONS: CardRadioOption<InstallationPickerFramework>[] = [
   {
     value: 'react',
     label: 'React',
@@ -49,58 +43,25 @@ const OPTIONS: CardRadioOption<PickerFramework>[] = [
 ];
 
 interface Props {
-  currentFramework: SupportedFramework;
-  currentSlug: string;
+  currentFramework: InstallationPickerFramework;
 }
 
-function pickerValue(currentFramework: SupportedFramework, currentSlug: string): PickerFramework {
-  if (currentSlug === INSTALL_PAGE_SLUGS.vue) return 'vue';
+export default function JSPickerClient({ currentFramework }: Props) {
+  const handleChange = (next: InstallationPickerFramework) => {
+    if (next === currentFramework) return;
 
-  if (currentSlug === INSTALL_PAGE_SLUGS.svelte) return 'svelte';
+    const { target, history } = resolveInstallationFrameworkNavigation(currentFramework, next, window.location.search);
 
-  return currentFramework;
-}
-
-export default function JSPickerClient({ currentFramework, currentSlug }: Props) {
-  const selected = pickerValue(currentFramework, currentSlug);
-
-  const handleChange = (next: PickerFramework) => {
-    if (next === selected) return;
-
-    let url: string;
-    let shouldReplace = false;
-
-    if (next === 'vue' || next === 'svelte') {
-      url = buildDocsUrl('html', INSTALL_PAGE_SLUGS[next]);
-    } else {
-      if (!isValidFramework(next)) return;
-
-      // Leaving a Vue or Svelte page: land on the main installation page for the chosen framework.
-      if (selected === 'vue' || selected === 'svelte') {
-        url = buildDocsUrl(next, 'guides/installation');
-      } else {
-        const result = resolveFrameworkChange({
-          currentFramework,
-          currentSlug,
-          newFramework: next,
-        });
-
-        url = result.url;
-        shouldReplace = result.shouldReplace;
-      }
-    }
-
-    savePageScrollForNavigation(url);
-
-    if (shouldReplace) {
-      // Same page, other framework: keep the query so installation picks survive the switch.
-      const target = url + window.location.search;
-
-      void navigate(target, { history: 'replace', info: DOCS_FRAMEWORK_NAVIGATION_INFO });
-    } else {
-      void navigate(url, { history: 'push', info: DOCS_FRAMEWORK_NAVIGATION_INFO });
-    }
+    savePageScrollForNavigation(target);
+    void navigate(target, { history, info: DOCS_FRAMEWORK_NAVIGATION_INFO });
   };
 
-  return <CardRadioGroup value={selected} onChange={handleChange} options={OPTIONS} aria-label="Select JS framework" />;
+  return (
+    <CardRadioGroup
+      value={currentFramework}
+      onChange={handleChange}
+      options={OPTIONS}
+      aria-label="Select JS framework"
+    />
+  );
 }

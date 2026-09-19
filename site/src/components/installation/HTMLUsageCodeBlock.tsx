@@ -4,11 +4,15 @@ import { generateHTMLUsageCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
 
-export default function HTMLUsageCodeBlock() {
+interface Props {
+  installMethod?: 'cdn';
+}
+
+export default function HTMLUsageCodeBlock({ installMethod }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
-  const $installMethod = useSelection('installMethod');
+  const selectedInstallMethod = useSelection('installMethod');
   const $sourceUrl = useSelection('sourceUrl');
 
   const result = generateHTMLUsageCode({
@@ -16,7 +20,7 @@ export default function HTMLUsageCodeBlock() {
     skin: $skin,
     renderer: $renderer,
     sourceUrl: $sourceUrl,
-    installMethod: $installMethod,
+    installMethod: installMethod ?? selectedInstallMethod,
   });
 
   return (

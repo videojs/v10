@@ -2,6 +2,7 @@
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
 import type { Guide, SupportedFramework } from '@/types/docs';
+import { buildDocsUrl } from '@/utils/docs/routing';
 
 type Props = {
   prev: Guide | null;
@@ -11,10 +12,6 @@ type Props = {
 };
 
 const { prev, next, framework, docTitles } = Astro.props;
-
-function getGuideUrl(framework: SupportedFramework, slug: string): string {
-  return `/docs/framework/${framework}/${slug}`;
-}
 
 // The innermost sidebar section, so "Previous · Getting Started" says where the link leads.
 
@@ -27,7 +24,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
   {
     prev ? (
       <a
-        href={getGuideUrl(framework, prev.slug)}
+        href={buildDocsUrl(framework, prev.slug)}
         class="grid items-center gap-x-2 rounded-lg corner-squircle border border-manila-dark p-4 dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
@@ -48,7 +45,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
   {
     next ? (
       <a
-        href={getGuideUrl(framework, next.slug)}
+        href={buildDocsUrl(framework, next.slug)}
         class="grid items-center gap-x-2 rounded-lg corner-squircle border border-manila-dark p-4 text-right dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >

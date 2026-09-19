@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Sidebar } from '../../../types/docs';
-import { getFrameworkFromDocsPath, resolveDocsLinkUrl, resolveFrameworkChange, resolveIndexRedirect } from '../routing';
+import {
+  buildAgnosticDocsUrl,
+  buildDocsUrl,
+  getFrameworkFromDocsPath,
+  getFrameworkFromDocsUrl,
+  isDocsGuideActive,
+  resolveDocsHref,
+  resolveDocsLinkUrl,
+  resolveFrameworkChange,
+  resolveIndexRedirect,
+} from '../routing';
 
 // Mock the validation functions from @/types/docs to use mock framework/style configuration
 // Note: This mock is hoisted, so we define MOCK_FRAMEWORK_STYLES inside the factory
@@ -98,10 +108,37 @@ describe('routing utilities', () => {
       expect(getFrameworkFromDocsPath('/docs/framework/html')).toBe('html');
     });
 
+    it('returns the framework from canonical installation routes', () => {
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/react')).toBe('react');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/html')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/vue')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/svelte')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/cdn')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/shadcn')).toBeNull();
+    });
+
     it('ignores framework-agnostic and invalid routes', () => {
       expect(getFrameworkFromDocsPath('/docs/guides/installation')).toBeNull();
       expect(getFrameworkFromDocsPath('/docs/framework/vue/guides/installation')).toBeNull();
       expect(getFrameworkFromDocsPath('/blog/framework/react')).toBeNull();
+    });
+  });
+
+  describe('getFrameworkFromDocsUrl', () => {
+    it('returns the framework selected on the Shadcn route', () => {
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'))
+      ).toBe('html');
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react'))
+      ).toBe('react');
+    });
+
+    it('does not invent a Shadcn framework when the query is missing or invalid', () => {
+      expect(getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'))).toBeNull();
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'))
+      ).toBeNull();
     });
   });
 
@@ -184,7 +221,7 @@ describe('routing utilities', () => {
           params: {},
         });
 
-        expect(result.url).toBe(`/docs/framework/react/${result.selectedSlug}`);
+        expect(result.url).toBe(buildDocsUrl('react', result.selectedSlug));
       });
     });
   });
@@ -382,6 +419,43 @@ describe('routing utilities', () => {
 
         expect(result.url).toBe('/docs/framework/react/concepts/everyone');
       });
+    });
+  });
+
+  describe('canonical installation routes', () => {
+    it('builds the preference-aware installation landing page', () => {
+      expect(buildAgnosticDocsUrl()).toBe('/docs');
+      expect(buildAgnosticDocsUrl(null)).toBe('/docs');
+      expect(buildAgnosticDocsUrl('guides/installation')).toBe('/docs/guides/installation');
+    });
+
+    it('keeps installation active across every installation route', () => {
+      expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/react')).toBe(true);
+      expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/shadcn')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/cdn')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/vue')).toBe(true);
+    });
+
+    it('still requires an exact URL for other guides', () => {
+      expect(isDocsGuideActive('html', 'guides/architecture', '/docs/framework/html/guides/architecture')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/architecture', '/docs/guides/installation/html')).toBe(false);
+    });
+
+    it('resolves the canonical framework and method URLs', () => {
+      expect(resolveDocsHref({ slug: null, framework: null })).toBe('/docs');
+      expect(resolveDocsHref({ slug: 'guides/installation', framework: null })).toBe('/docs/guides/installation');
+      expect(resolveDocsHref({ slug: null, framework: 'html' })).toBe('/docs/guides/installation/html');
+      expect(resolveDocsHref({ slug: 'guides/installation', framework: 'react' })).toBe(
+        '/docs/guides/installation/react'
+      );
+      expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'react' })).toBe(
+        '/docs/guides/installation/shadcn'
+      );
+      expect(resolveDocsHref({ slug: 'guides/cdn', framework: 'html' })).toBe('/docs/guides/installation/cdn');
+    });
+
+    it('rejects unknown guide slugs', () => {
+      expect(() => resolveDocsHref({ slug: 'guides/does-not-exist', framework: 'html' })).toThrow(/No guide found/);
     });
   });
 });

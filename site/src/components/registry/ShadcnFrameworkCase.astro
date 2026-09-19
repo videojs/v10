@@ -1,0 +1,21 @@
+---
+import type { RegistryFramework } from '@/utils/installation/shadcn';
+
+interface Props {
+  framework: RegistryFramework;
+}
+
+const { framework } = Astro.props;
+const active = framework === 'react';
+---
+
+<div
+  class="contents"
+  data-shadcn-framework={framework}
+  hidden={!active}
+>
+  <div hidden data-llms-only>
+    <h3>{framework === 'react' ? 'React' : 'HTML'}</h3>
+  </div>
+  <slot />
+</div>

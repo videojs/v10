@@ -1,0 +1,91 @@
+---
+import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
+import NpmLogo from '@/assets/logos/brands/npm.svg?react';
+import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
+import Check from '@/assets/icons/check.svg?react';
+
+const pathname = Astro.url.pathname;
+const active = pathname.endsWith('/shadcn') ? 'shadcn' : pathname.endsWith('/cdn') ? 'cdn' : 'packaged';
+const packagedHref =
+  active === 'packaged'
+    ? pathname
+    : active === 'cdn'
+      ? '/docs/guides/installation/html'
+      : '/docs/guides/installation';
+
+const items = [
+  {
+    id: 'packaged',
+    label: 'Packaged',
+    description: 'Install packages and use a ready-made skin.',
+    href: packagedHref,
+    Icon: NpmLogo,
+  },
+  {
+    id: 'shadcn',
+    label: 'Shadcn',
+    description: 'Add editable skin source to your project.',
+    href: '/docs/guides/installation/shadcn',
+    Icon: ShadcnLogo,
+  },
+  {
+    id: 'cdn',
+    label: 'CDN',
+    description: 'Load the HTML player from jsDelivr.',
+    href: '/docs/guides/installation/cdn',
+    Icon: JsdelivrLogo,
+  },
+] as const;
+---
+
+<nav
+  aria-label="Installation method"
+  data-installation-method-nav
+  class="mx-auto mt-5 mb-12 grid max-w-3xl gap-3 sm:grid-cols-3"
+>
+  {
+    items.map(({ id, label, description, href, Icon }) => (
+      <a
+        href={href}
+        data-installation-method={id}
+        aria-current={active === id ? "page" : undefined}
+        class:list={[
+          'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
+          'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
+          active === id
+            ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
+            : 'border-line intent:border-line-strong',
+        ]}
+      >
+        <span
+          aria-hidden="true"
+          class="flex size-11 shrink-0 items-center justify-center rounded-lg corner-squircle border border-line bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light"
+        >
+          <Icon className="size-7" />
+        </span>
+        <span class="min-w-0 flex-1 pr-8">
+          <span class="block font-semibold">{label}</span>
+          <span class="mt-0.5 block text-p4 dark:text-muted">{description}</span>
+        </span>
+        <span
+          aria-hidden="true"
+          class:list={[
+            'absolute top-3 right-3 flex size-5 items-center justify-center rounded-full border transition',
+            active === id
+              ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
+              : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100',
+          ]}
+        >
+          <Check className="size-4" />
+        </span>
+      </a>
+    ))
+  }
+</nav>
+
+<script>
+  import { initializeInstallationMethodNavigation } from '@/utils/installation/method-navigation';
+
+  initializeInstallationMethodNavigation();
+</script>

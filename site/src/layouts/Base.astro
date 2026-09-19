@@ -2,7 +2,7 @@
 import { Font } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
-import { PRODUCTION_URL, SEO_SUFFIX, SITE_TITLE, THEME_COLORS } from '@/consts';
+import { PRODUCTION_URL, SITE_TITLE, THEME_COLORS } from '@/consts';
 
 import '@/styles/globals.css';
 
@@ -15,6 +15,7 @@ import PlatformInit from '@/components/PlatformInit.astro';
 import Posthog from '@/components/Posthog.astro';
 import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
+import { buildPageTitle } from '@/utils/seo/title';
 
 interface Props {
   title: string | string[];
@@ -22,7 +23,8 @@ interface Props {
   image?: ImageMetadata | string;
   twitterImage?: ImageMetadata | string;
   canonical?: string;
-  suffix?: string;
+  /** SEO title suffix. Pass `false` to keep the title to `Page | Video.js`. */
+  suffix?: string | false;
   withCompact?: boolean;
   /**
    * Pin the color-block easter egg behind the page so it is only revealed when the document rubber-bands past its
@@ -57,10 +59,7 @@ const resolvedTwitterImage = twitterImage
     ? resolveImageUrl(image)
     : autoTwitterImage;
 
-const seoSuffix = suffix ?? SEO_SUFFIX;
-const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
-const fullTitle =
-  pageTitle === SITE_TITLE ? `${SITE_TITLE} | ${seoSuffix}` : `${pageTitle} | ${SITE_TITLE} | ${seoSuffix}`;
+const fullTitle = buildPageTitle(title, suffix);
 ---
 
 <html lang="en">

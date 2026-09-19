@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 
 import Film from '@/assets/icons/film.svg?react';
 import Image from '@/assets/icons/image.svg?react';
@@ -27,14 +28,23 @@ const USE_CASE_DESCRIPTIONS: Record<UseCase, string> = {
   'background-video': 'Muted, looping video behind your content',
 };
 
-export default function UseCasePicker() {
+interface Props {
+  includeBackground?: boolean;
+}
+
+export default function UseCasePicker({ includeBackground = true }: Props) {
   const $useCase = useSelection('useCase');
+  const options = includeBackground ? USE_CASES : USE_CASES.filter((value) => value !== 'background-video');
+
+  useEffect(() => {
+    if (!includeBackground && $useCase === 'background-video') useCase.set('default-video');
+  }, [$useCase, includeBackground]);
 
   return (
     <CardRadioGroup
       value={$useCase}
       onChange={(value) => useCase.set(value)}
-      options={USE_CASES.map((value) => ({
+      options={options.map((value) => ({
         value,
         label: getInstallationPreset(value).label,
         description: USE_CASE_DESCRIPTIONS[value],

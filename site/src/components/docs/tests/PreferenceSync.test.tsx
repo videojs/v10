@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { currentFramework } from '@/stores/preferences';
@@ -29,5 +29,14 @@ describe('PreferenceSync', () => {
 
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('persists later framework changes', () => {
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+    render(<PreferenceSync />);
+
+    act(() => currentFramework.set('react'));
+
+    expect(getFrameworkPreferenceClient()).toBe('react');
   });
 });

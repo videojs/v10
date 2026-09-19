@@ -1,12 +1,11 @@
 ---
-import type { SupportedFramework } from '@/types/docs';
 import JSPickerClient from './JSPickerClient';
 
-const { framework, slug } = Astro.params;
+const { framework } = Astro.params;
+const routeFramework = framework === 'react' || framework === 'html' || framework === 'vue' || framework === 'svelte'
+  ? framework
+  : null;
+const currentFramework = routeFramework ?? 'react';
 ---
 
-<JSPickerClient
-  client:idle
-  currentFramework={framework as SupportedFramework}
-  currentSlug={slug as string}
-/>
+<JSPickerClient client:idle currentFramework={currentFramework} />

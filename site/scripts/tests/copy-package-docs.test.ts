@@ -75,6 +75,17 @@ describe('rewriteLinks', () => {
     expect(rewriteLinks(input, 'llms', 'react')).toBe('- [Installation](./guides/installation.md): desc');
   });
 
+  it('rewrites canonical installation links to their bundled guide paths', () => {
+    const input = [
+      '[Packaged](https://videojs.org/docs/guides/installation/react.md)',
+      '[Shadcn](/docs/guides/installation/shadcn)',
+    ].join('\n');
+
+    expect(rewriteLinks(input, 'llms', 'react')).toBe(
+      ['[Packaged](./guides/installation.md)', '[Shadcn](./guides/installation-shadcn.md)'].join('\n')
+    );
+  });
+
   it('rewrites a root-relative same-framework link with a trailing slash', () => {
     const input = 'See [Play Button](/docs/framework/react/components/play-button/) for details.';
 
@@ -190,6 +201,30 @@ describe('packageDocumentation', () => {
       '[Install](../guides/installation.md)'
     );
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/README.md'), 'utf-8')).toContain('v10.0.0-test');
+  });
+
+  it('places canonical installation Markdown at the package guide paths', () => {
+    const fixture = createFixture();
+
+    writeDoc(fixture.siteDist, 'react', 'llms.txt', '[Install](/docs/guides/installation/react.md)');
+    const installation = join(fixture.siteDist, 'docs/guides/installation/react.md');
+
+    mkdirSync(join(installation, '..'), { recursive: true });
+    writeFileSync(installation, '# React Installation Guide');
+
+    expect(
+      packageDocumentation({
+        target: 'react',
+        siteDist: fixture.siteDist,
+        packagesDirectory: fixture.packagesDirectory,
+      })
+    ).toBe(2);
+    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/guides/installation.md'), 'utf-8')).toBe(
+      '# React Installation Guide'
+    );
+    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/llms.txt'), 'utf-8')).toBe(
+      '[Install](./guides/installation.md)'
+    );
   });
 
   it('packages both CLI frameworks while preserving online links', () => {

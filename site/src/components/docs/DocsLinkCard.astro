@@ -1,9 +1,10 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 import ChevronRight from '@/assets/icons/chevron-right.svg?react';
-import { isValidFramework } from '@/types/docs';
+import { resolveDocsFramework } from '@/types/docs';
 import { resolveDocsHref } from '@/utils/docs/routing';
 import { findGuideBySlug } from '@/utils/docs/sidebar';
+import { twMerge } from '@/utils/twMerge';
 
 interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   slug: string;
@@ -11,28 +12,33 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   anchor?: string;
   description?: string;
 }
-const { slug, anchor, description } = Astro.props;
+const { slug, anchor, description, class: className } = Astro.props;
 
-const { framework: paramFramework } = Astro.params;
+const routeFramework = Astro.params.framework;
+const registryFrameworkSelection = routeFramework === 'shadcn';
+const paramFramework = registryFrameworkSelection ? null : resolveDocsFramework(routeFramework);
 
-if (paramFramework && !isValidFramework(paramFramework)) {
-  throw new Error(`Invalid framework param "${paramFramework}".`);
+if (routeFramework && !registryFrameworkSelection && !paramFramework) {
+  throw new Error(`Invalid framework param "${routeFramework}".`);
 }
 
 if (!findGuideBySlug(slug)) {
   throw new Error(`No guide found with slug "${slug}"`);
 }
 
-// Outside the docs there is no framework in context, so the href is the agnostic
-// /docs/<slug> form. `data-docs-slug` lets ResolveDocsLinks upgrade it on the client.
-const contextFramework = isValidFramework(paramFramework) ? paramFramework : null;
+// The query-controlled Shadcn route uses React as a valid server fallback. `data-docs-slug` lets ResolveDocsLinks
+// follow the live React or HTML preference on the client; outside docs it upgrades the agnostic fallback the same way.
+const contextFramework = paramFramework ?? (registryFrameworkSelection ? 'react' : null);
 const url = resolveDocsHref({ slug, framework: contextFramework });
 const href = anchor ? `${url}#${anchor}` : url;
-const docsSlug = contextFramework ? undefined : slug;
+const docsSlug = paramFramework ? undefined : slug;
 ---
 
 <div
-  class="docs-link-card mx-auto my-8 grid w-full max-w-3xl grid-cols-1 gap-4 has-[+_.docs-link-card]:mb-4 md:grid-cols-2 [&+.docs-link-card]:mt-4"
+  class={twMerge(
+    "docs-link-card mx-auto my-8 grid w-full max-w-3xl grid-cols-1 gap-4 has-[+_.docs-link-card]:mb-4 md:grid-cols-2 [&+.docs-link-card]:mt-4",
+    className,
+  )}
 >
   <a
     href={href}

@@ -1,7 +1,12 @@
 import { navigate } from 'astro:transitions/client';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { calculateActiveHeadingOffset, calculateRailGeometry, navigateToHeading } from './utils';
+import {
+  calculateActiveHeadingOffset,
+  calculateRailGeometry,
+  filterRenderedHeadings,
+  navigateToHeading,
+} from './utils';
 
 vi.mock('astro:transitions/client', () => ({ navigate: vi.fn() }));
 
@@ -58,5 +63,30 @@ describe('calculateRailGeometry', () => {
 
   it('keeps the default geometry for a single stripe', () => {
     expect(calculateRailGeometry(1, 1)).toEqual({ stripeHeight: 1, gap: 4 });
+  });
+});
+
+describe('filterRenderedHeadings', () => {
+  it('omits conditional headings without a rendered target', () => {
+    const headings = [
+      { depth: 2, text: 'Choose your media source', slug: 'choose-your-media-source' },
+      { depth: 2, text: 'Install the media adapter', slug: 'install-the-media-adapter' },
+      { depth: 2, text: 'Add your player', slug: 'add-your-player' },
+    ];
+    const renderedIds = new Set(['choose-your-media-source', 'add-your-player']);
+
+    expect(filterRenderedHeadings(headings, (id) => (renderedIds.has(id) ? document.body : null))).toEqual([
+      headings[0],
+      headings[2],
+    ]);
+  });
+
+  it('omits static anchor placeholders for conditional headings', () => {
+    const heading = { depth: 2, text: 'Install the media adapter', slug: 'install-the-media-adapter' };
+    const placeholder = document.createElement('span');
+
+    placeholder.dataset.conditionalHeadingPlaceholder = '';
+
+    expect(filterRenderedHeadings([heading], () => placeholder)).toEqual([]);
   });
 });

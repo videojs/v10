@@ -7,7 +7,8 @@ import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import { Select, type SelectOption } from '@/components/Select';
-import { currentStyle as styleStore } from '@/stores/preferences';
+import { currentFramework as frameworkStore, currentStyle as styleStore } from '@/stores/preferences';
+import { selectRegistryFramework } from '@/stores/registry';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
@@ -21,6 +22,7 @@ import {
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 const FRAMEWORK_ICONS = {
   react: <ReactLogo className="size-4" />,
@@ -34,19 +36,36 @@ const STYLE_ICONS = {
 interface SelectorProps {
   currentFramework: SupportedFramework;
   currentSlug: string;
+  registryFrameworkSelection?: boolean;
   className?: string;
 }
 
-export function Selectors({ currentFramework, currentSlug, className }: SelectorProps) {
+export function Selectors({
+  currentFramework,
+  currentSlug,
+  registryFrameworkSelection = false,
+  className,
+}: SelectorProps) {
+  const preferredFramework = useStore(frameworkStore);
   const currentStyle = useStore(styleStore);
+  const isHydrated = useIsHydrated();
+  const displayedFramework =
+    registryFrameworkSelection && isHydrated ? (preferredFramework ?? currentFramework) : currentFramework;
 
   // The store is empty on the server and on the client's first render alike, so both fall back to the framework's
   // default style. That keeps the markup identical through hydration and stops the trigger flashing empty on every
   // page load; PreferenceUpdater then swaps in the stored choice if it differs.
-  const displayedStyle = currentStyle ?? getDefaultStyle(currentFramework);
+  const displayedStyle = isHydrated
+    ? (currentStyle ?? getDefaultStyle(currentFramework))
+    : getDefaultStyle(currentFramework);
 
   const handleFrameworkChange = (newFramework: SupportedFramework) => {
-    if (!isValidFramework(newFramework) || newFramework === currentFramework) return;
+    if (!isValidFramework(newFramework) || newFramework === displayedFramework) return;
+
+    if (registryFrameworkSelection) {
+      selectRegistryFramework(newFramework);
+      return;
+    }
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
@@ -99,7 +118,7 @@ export function Selectors({ currentFramework, currentSlug, className }: Selector
       <div className="mx-auto grid w-full max-w-3xl gap-4 sm:grid-cols-2 md:grid-cols-1">
         <div className="grid gap-1.5">
           <Select
-            value={currentFramework}
+            value={displayedFramework}
             onChange={(next) => next && handleFrameworkChange(next)}
             options={frameworkOptions}
             aria-label="Select framework"

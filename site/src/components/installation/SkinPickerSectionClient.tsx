@@ -1,7 +1,12 @@
 import SkinPicker from './SkinPicker';
 import { useSelection } from './useSelection';
 
-export default function SkinPickerSection({ children }: { children: React.ReactNode }) {
+interface Props {
+  children: React.ReactNode;
+  includeNoSkin?: boolean;
+}
+
+export default function SkinPickerSection({ children, includeNoSkin = true }: Props) {
   const $useCase = useSelection('useCase');
   // Hide for background-video use case
   if ($useCase === 'background-video') return null;
@@ -12,7 +17,7 @@ export default function SkinPickerSection({ children }: { children: React.ReactN
     <>
       {children}
       <div className="mt-8">
-        <SkinPicker />
+        <SkinPicker includeNoSkin={includeNoSkin} />
       </div>
     </>
   );
