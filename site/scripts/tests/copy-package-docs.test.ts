@@ -193,6 +193,18 @@ describe('rewriteIndexHeader', () => {
     );
   });
 
+  it('points a section index up at the bundled framework-level complete file', () => {
+    const section =
+      '# Guides\n\n> Every page below is also available as Markdown. This section in one file: https://videojs.org/docs/framework/html/guides/llms-full.txt\n';
+
+    expect(rewriteIndexHeader(section, { framework: 'html', fileName: 'guides/llms.txt', version: '1.0.0' })).toBe(
+      '# Guides\n\n> Bundled with `@videojs/html` v1.0.0. Links are relative paths to files in this directory. The whole set in one file: ../llms-full.txt\n'
+    );
+    expect(
+      rewriteIndexHeader(section, { framework: 'html', fileName: 'reference/api/llms.txt', version: undefined })
+    ).toContain('The whole set in one file: ../../llms-full.txt');
+  });
+
   it('points the complete file back at the index and omits an unknown version', () => {
     const full =
       '# Title\n\n> Every React docs page in one file. Index with descriptions: https://videojs.org/docs/framework/react/llms.txt\n';
@@ -288,6 +300,22 @@ describe('packageDocumentation', () => {
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/llms.txt'), 'utf-8')).toBe(
       '[Install](./guides/installation.md)'
     );
+  });
+
+  it('bundles section indexes but not section-level complete files', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs\n\n> Header\n');
+    writeDoc(fixture.siteDist, 'html', 'llms-full.txt', '# Docs\n\n> Header\n');
+    writeDoc(fixture.siteDist, 'html', 'guides/llms.txt', '# Guides\n\n> Header\n');
+    writeDoc(fixture.siteDist, 'html', 'guides/llms-full.txt', '# Guides\n\n> Header\n');
+
+    packageDocumentation({ target: 'html', siteDist: fixture.siteDist, packagesDirectory: fixture.packagesDirectory });
+
+    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/guides/llms.txt'))).toBe(true);
+    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'))).toBe(true);
+    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/guides/llms-full.txt'))).toBe(false);
   });
 
   it('rewrites the bundled index headers for the package', () => {

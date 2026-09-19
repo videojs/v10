@@ -106,16 +106,18 @@ export default defineConfig({
       : []),
     mdx({ extendMarkdownConfig: true }),
     sitemap({
-      // llms-markdown.ts auto-generates sub-indexes, but sitemap entries are
-      // hardcoded here. Add a new line when adding an index.
+      // llms-markdown.ts auto-generates these indexes, but sitemap entries are
+      // listed here. Add an entry when adding an index.
       customPages: [
         `${SITE_URL}/llms.txt`,
         `${SITE_URL}/blog/llms.txt`,
         `${SITE_URL}/changelog/llms.txt`,
-        `${SITE_URL}/docs/framework/html/llms.txt`,
-        `${SITE_URL}/docs/framework/html/llms-full.txt`,
-        `${SITE_URL}/docs/framework/react/llms.txt`,
-        `${SITE_URL}/docs/framework/react/llms-full.txt`,
+        ...['html', 'react'].flatMap((framework) =>
+          ['', '/guides', '/reference/components', '/reference/api'].flatMap((section) => [
+            `${SITE_URL}/docs/framework/${framework}${section}/llms.txt`,
+            `${SITE_URL}/docs/framework/${framework}${section}/llms-full.txt`,
+          ])
+        ),
       ],
     }),
     llmsMarkdown(),

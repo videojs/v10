@@ -144,6 +144,7 @@ export default function llmsMarkdown(): AstroIntegration {
         // Write per-framework docs sub-indexes
         const frameworks: string[] = [];
         const fullTokens = new Map<string, number>();
+        const sectionsByFramework = new Map<string, SectionFile[]>();
 
         for (const [fw, fwPages] of docsByFramework) {
           frameworks.push(fw);
@@ -157,9 +158,22 @@ export default function llmsMarkdown(): AstroIntegration {
           await mkdir(dirname(fullPath), { recursive: true });
           await writeFile(fullPath, full, 'utf-8');
 
+          // The whole framework outgrows a context window, so each sidebar tab also gets an index and a complete file.
+          const sections = buildSectionFiles(fw, fwPages, siteUrl);
+
+          sectionsByFramework.set(fw, sections);
+
+          for (const section of sections) {
+            const sectionDir = join(siteDir, 'docs', 'framework', fw, section.directory);
+
+            await mkdir(sectionDir, { recursive: true });
+            await writeFile(join(sectionDir, 'llms.txt'), section.index, 'utf-8');
+            await writeFile(join(sectionDir, 'llms-full.txt'), section.full, 'utf-8');
+          }
+
           const subIndexPath = join(siteDir, 'docs', 'framework', fw, 'llms.txt');
 
-          await writeFile(subIndexPath, generateDocsIndex(fw, fwPages, siteUrl, fullTokens.get(fw)), 'utf-8');
+          await writeFile(subIndexPath, generateDocsIndex(fw, fwPages, siteUrl, fullTokens.get(fw), sections), 'utf-8');
         }
 
         // Write blog sub-index
@@ -184,6 +198,7 @@ export default function llmsMarkdown(): AstroIntegration {
         const rootIndex = generateRootIndex({
           frameworks,
           fullTokens,
+          sections: sectionsByFramework,
           hasBlog: blogPages.length > 0,
           hasChangelog: changelogPages.length > 0,
           otherPages,
@@ -193,7 +208,9 @@ export default function llmsMarkdown(): AstroIntegration {
 
         await writeFile(rootIndexPath, rootIndex, 'utf-8');
 
-        const subIndexCount = frameworks.length + (blogPages.length > 0 ? 1 : 0) + (changelogPages.length > 0 ? 1 : 0);
+        const sectionCount = [...sectionsByFramework.values()].reduce((count, list) => count + list.length, 0);
+        const subIndexCount =
+          frameworks.length + sectionCount + (blogPages.length > 0 ? 1 : 0) + (changelogPages.length > 0 ? 1 : 0);
 
         logger.info(
           `Generated ${docsPages.length + blogPages.length + changelogPages.length + otherPages.length} markdown files, llms.txt root index, and ${subIndexCount} sub-indexes`
@@ -738,6 +755,8 @@ export interface RootIndexOptions {
   frameworks: string[];
   /** Estimated size of each framework's `llms-full.txt`, keyed by framework. */
   fullTokens?: Map<string, number>;
+  /** Section-level files per framework, listed after the framework-level complete files. */
+  sections?: Map<string, SectionFile[]>;
   hasBlog: boolean;
   hasChangelog: boolean;
   otherPages: PageEntry[];
@@ -747,6 +766,7 @@ export interface RootIndexOptions {
 export function generateRootIndex({
   frameworks,
   fullTokens,
+  sections,
   hasBlog,
   hasChangelog,
   otherPages,
@@ -803,12 +823,25 @@ export function generateRootIndex({
     content += `Every ${label} page in one file${size}, for tools that ingest a corpus rather than follow links.\n`;
   }
 
+  for (const fw of sortedFrameworks) {
+    for (const section of sections?.get(fw) ?? []) {
+      content += `- [${frameworkLabel(fw)} ${section.label}, complete](${section.fullUrl}): `;
+      content += `Every ${frameworkLabel(fw)} ${sectionNoun(section.label)} page in one file (${formatTokens(section.tokens)}).\n`;
+    }
+  }
+
   content += `\n`;
 
   return content;
 }
 
-export function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: string, fullTokens?: number): string {
+export function generateDocsIndex(
+  framework: string,
+  pages: PageEntry[],
+  siteUrl: string,
+  fullTokens?: number,
+  sections: SectionFile[] = []
+): string {
   const size = fullTokens ? ` (${formatTokens(fullTokens)})` : '';
   let content = `# Video.js v10 — ${frameworkLabel(framework)} Documentation\n\n`;
 
@@ -819,11 +852,106 @@ export function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl
   if (!isValidFramework(framework)) return content;
 
   const filtered = filterSidebarForLlms(sidebar, framework);
+  const sectionByLabel = new Map(sections.map((section) => [section.label, section]));
 
-  content += renderSidebarToMarkdown(filtered, pagesBySlug(framework, pages), siteUrl);
+  content += renderSidebarToMarkdown(filtered, pagesBySlug(framework, pages), siteUrl, 0, sectionByLabel);
   content += generateIndexFooter(siteUrl);
 
   return content;
+}
+
+export interface SectionFile {
+  /** Sidebar label of the top-level section, such as "Guides". */
+  label: string;
+  /** Directory under the framework's docs that holds the section's pages, such as `reference/api`. */
+  directory: string;
+  indexUrl: string;
+  fullUrl: string;
+  /** Estimated size of the complete file. */
+  tokens: number;
+  index: string;
+  full: string;
+}
+
+/**
+ * An index and a complete file for each top-level sidebar section, written into the directory its pages share. The
+ * framework-wide complete file is several times larger than a context window; a section usually fits.
+ */
+export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl: string): SectionFile[] {
+  if (!isValidFramework(framework)) return [];
+
+  const label = frameworkLabel(framework);
+  const bySlug = pagesBySlug(framework, pages);
+  const sections = filterSidebarForLlms(sidebar, framework).filter(isSection);
+  const sectionLabels = sectionLabelsBySlug(sections);
+
+  return sections.flatMap((section) => {
+    const slugs = sidebarSlugs(section.contents);
+    const directory = commonDirectory(slugs);
+    if (!directory) return [];
+
+    const base = `${siteUrl}/docs/framework/${framework}/${directory}`;
+    const indexUrl = `${base}/llms.txt`;
+    const fullUrl = `${base}/llms-full.txt`;
+    const title = `Video.js v10 — ${label} ${section.sidebarLabel}`;
+    const body = renderCorpus(slugs, bySlug, siteUrl, sectionLabels);
+    const tokens = estimateTokens(body);
+
+    let full = `# ${title} (complete)\n\n`;
+
+    full += `> Every ${label} ${sectionNoun(section.sidebarLabel)} page in one file (${formatTokens(tokens)}). `;
+    full += `Index with descriptions: ${indexUrl}\n${body}`;
+
+    let index = `# ${title}\n\n> `;
+
+    if (section.llmsDescription) index += `${section.llmsDescription} `;
+
+    index += `Every page below is also available as Markdown at its \`.md\` URL. `;
+    index += `This section in one file (${formatTokens(tokens)}): ${fullUrl}\n\n`;
+    index += renderSidebarToMarkdown(section.contents, bySlug, siteUrl);
+    index += `\n---\n\n${label} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt\n`;
+    index += `All documentation: ${siteUrl}/llms.txt\n`;
+
+    return [{ label: section.sidebarLabel, directory, indexUrl, fullUrl, tokens, index, full }];
+  });
+}
+
+/** A section label used mid-sentence: lower-case unless it is an acronym such as "API". */
+function sectionNoun(label: string): string {
+  return /^[A-Z0-9]+$/.test(label) ? label : label.toLowerCase();
+}
+
+/** The directory every slug shares, or `undefined` when the pages have no common parent. */
+function commonDirectory(slugs: string[]): string | undefined {
+  const directories = slugs.map((slug) => slug.split('/').slice(0, -1));
+  const [first] = directories;
+  if (!first) return undefined;
+
+  let length = Math.min(...directories.map((directory) => directory.length));
+
+  for (let index = 0; index < length; index += 1) {
+    if (!directories.every((directory) => directory[index] === first[index])) {
+      length = index;
+      break;
+    }
+  }
+
+  const shared = first.slice(0, length);
+
+  return shared.length > 0 ? shared.join('/') : undefined;
+}
+
+/** The nearest enclosing section label for every page slug. */
+function sectionLabelsBySlug(items: Sidebar, label?: string, labels = new Map<string, string>()): Map<string, string> {
+  for (const item of items) {
+    if (isSection(item)) {
+      sectionLabelsBySlug(item.contents, item.sidebarLabel, labels);
+    } else if (!isLink(item) && label) {
+      labels.set(item.slug, label);
+    }
+  }
+
+  return labels;
 }
 
 /** Every docs page for a framework in sidebar order, concatenated into one Markdown document. */
@@ -831,17 +959,9 @@ export function generateDocsFull(framework: string, pages: PageEntry[], siteUrl:
   let body = '';
 
   if (isValidFramework(framework)) {
-    const bySlug = pagesBySlug(framework, pages);
+    const filtered = filterSidebarForLlms(sidebar, framework);
 
-    for (const slug of sidebarSlugs(filterSidebarForLlms(sidebar, framework))) {
-      const page = bySlug.get(slug);
-      if (!page?.markdown) continue;
-
-      // Same-page anchors collide once every page shares one file, so point them back at the page they came from.
-      const markdown = page.markdown.trim().replace(/\]\(#/g, `](${siteUrl}${page.pathname}#`);
-
-      body += `\n---\n\n<!-- Source: ${siteUrl}${page.pathname} -->\n\n${markdown}\n`;
-    }
+    body = renderCorpus(sidebarSlugs(filtered), pagesBySlug(framework, pages), siteUrl, sectionLabelsBySlug(filtered));
   }
 
   const size = body ? ` (${formatTokens(estimateTokens(body))})` : '';
@@ -851,6 +971,51 @@ export function generateDocsFull(framework: string, pages: PageEntry[], siteUrl:
   content += `Index with descriptions: ${siteUrl}/docs/framework/${framework}/llms.txt\n`;
 
   return content + body;
+}
+
+/**
+ * Pages in sidebar order, each introduced by a source comment. Same-page anchors collide once every page shares one
+ * file, so they point back at the page they came from, and a title two pages share gains its section label so a
+ * heading-based chunker can still tell them apart.
+ */
+function renderCorpus(
+  slugs: string[],
+  bySlug: Map<string, PageEntry>,
+  siteUrl: string,
+  sectionLabels: Map<string, string>
+): string {
+  const entries = slugs.flatMap((slug) => {
+    const page = bySlug.get(slug);
+
+    return page?.markdown ? [{ slug, page, markdown: page.markdown }] : [];
+  });
+  const titleCounts = new Map<string, number>();
+
+  for (const { markdown } of entries) {
+    const title = firstHeading(markdown);
+
+    if (title) titleCounts.set(title, (titleCounts.get(title) ?? 0) + 1);
+  }
+
+  let body = '';
+
+  for (const { slug, page, markdown } of entries) {
+    let content = markdown.trim().replace(/\]\(#/g, `](${siteUrl}${page.pathname}#`);
+    const title = firstHeading(content);
+    const label = sectionLabels.get(slug);
+
+    if (title && label && (titleCounts.get(title) ?? 0) > 1) {
+      content = content.replace(/^# .*$/m, `# ${title} (${label})`);
+    }
+
+    body += `\n---\n\n<!-- Source: ${siteUrl}${page.pathname} -->\n\n${content}\n`;
+  }
+
+  return body;
+}
+
+function firstHeading(markdown: string): string | undefined {
+  return /^# (.+)$/m.exec(markdown)?.[1]?.trim();
 }
 
 function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEntry> {
@@ -894,7 +1059,8 @@ function renderSidebarToMarkdown(
   items: Sidebar,
   pageBySlug: Map<string, PageEntry>,
   siteUrl: string,
-  depth: number = 0
+  depth: number = 0,
+  sectionFiles?: Map<string, SectionFile>
 ): string {
   let content = '';
 
@@ -906,6 +1072,13 @@ function renderSidebarToMarkdown(
 
       if (item.llmsDescription) {
         content += `${item.llmsDescription}\n\n`;
+      }
+
+      const files = depth === 0 ? sectionFiles?.get(item.sidebarLabel) : undefined;
+
+      if (files) {
+        content += `Section index: [${files.directory}/llms.txt](${files.indexUrl}). `;
+        content += `This section in one file (${formatTokens(files.tokens)}): ${files.fullUrl}\n\n`;
       }
 
       content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);

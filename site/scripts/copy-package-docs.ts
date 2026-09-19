@@ -128,8 +128,12 @@ export function rewriteIndexHeader(
   const packageName = PACKAGE_NAMES[framework];
   const versionSuffix = version ? ` v${version}` : '';
   const context = `Bundled with \`${packageName}\`${versionSuffix}. Links are relative paths to files in this directory.`;
+  // Section indexes sit in a subdirectory; only the framework-level complete file is bundled, so point them up to it.
+  const toRoot = '../'.repeat(fileName.split('/').length - 1) || './';
   const companion =
-    fileName === 'llms-full.txt' ? 'Index with descriptions: ./llms.txt' : 'The whole set in one file: ./llms-full.txt';
+    fileName === 'llms-full.txt'
+      ? 'Index with descriptions: ./llms.txt'
+      : `The whole set in one file: ${toRoot}llms-full.txt`;
 
   // The first blockquote line is the header; everything after the title keeps its size hint in parentheses.
   return content.replace(/^> .*$/m, (line) => {
@@ -217,7 +221,10 @@ function copyFrameworkDocumentation({
   rewriteLocalLinks: boolean;
   version: string | undefined;
 }): number {
-  const files = walkDocumentation(sourceDirectory);
+  // Section-level complete files repeat what the framework-level one already carries; bundle only the latter.
+  const files = walkDocumentation(sourceDirectory).filter(
+    (sourcePath) => basename(sourcePath) !== 'llms-full.txt' || dirname(sourcePath) === sourceDirectory
+  );
 
   for (const sourcePath of files) {
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));

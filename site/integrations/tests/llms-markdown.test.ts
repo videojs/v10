@@ -5,12 +5,15 @@ import { SITE_DESCRIPTION } from '../../src/consts';
 import { sidebar } from '../../src/docs.config';
 import { isLink, isSection, type Sidebar } from '../../src/types/docs';
 import {
+  buildSectionFiles,
   convertPage,
   createTurndown,
   generateChronologicalIndex,
   generateDocsFull,
+  generateDocsIndex,
   generatePageFooter,
   generateRootIndex,
+  type SectionFile,
 } from '../llms-markdown';
 
 const SITE_URL = 'https://videojs.org';
@@ -41,6 +44,28 @@ function firstSidebarSlug(items: Sidebar): string {
 
   throw new Error('sidebar has no pages');
 }
+
+/** The first page of each of the first two top-level sections (Guides and Components, neither framework-limited). */
+function firstSlugOfTwoSections(): string[] {
+  return sidebar
+    .filter(isSection)
+    .slice(0, 2)
+    .map((section) => firstSidebarSlug(section.contents));
+}
+
+function htmlPage(slug: string, markdown: string, description?: string) {
+  return { pathname: `/docs/framework/html/${slug}`, title: 'Page', description, framework: 'html', markdown };
+}
+
+const guidesSection: SectionFile = {
+  label: 'Guides',
+  directory: 'guides',
+  indexUrl: `${SITE_URL}/docs/framework/html/guides/llms.txt`,
+  fullUrl: `${SITE_URL}/docs/framework/html/guides/llms-full.txt`,
+  tokens: 90_000,
+  index: '',
+  full: '',
+};
 
 describe('convertPage', () => {
   it('emits an authored table as a GFM pipe table with escaped pipes and padded colspans', () => {
@@ -278,6 +303,63 @@ describe('generateRootIndex', () => {
     );
     expect(index).not.toContain('Html');
   });
+
+  it('lists section-level complete files after the framework ones', () => {
+    const index = generateRootIndex({
+      frameworks: ['html'],
+      sections: new Map([['html', [guidesSection]]]),
+      hasBlog: false,
+      hasChangelog: false,
+      otherPages: [],
+      siteUrl: SITE_URL,
+    });
+
+    expect(index).toContain(
+      '- [HTML documentation, complete](https://videojs.org/docs/framework/html/llms-full.txt): Every HTML page in one file, for tools that ingest a corpus rather than follow links.\n' +
+        '- [HTML Guides, complete](https://videojs.org/docs/framework/html/guides/llms-full.txt): Every HTML guides page in one file (about 90k tokens).\n'
+    );
+  });
+});
+
+describe('generateDocsIndex', () => {
+  it('links each top-level section to its own index', () => {
+    const index = generateDocsIndex('html', [], SITE_URL, 250_000, [guidesSection]);
+
+    expect(index).toContain(
+      'The whole set in one file (about 250k tokens): https://videojs.org/docs/framework/html/llms-full.txt'
+    );
+    expect(index).toContain(
+      '## Guides\n\n' +
+        'Installation, migration, concepts, playback guides, customization, and tooling for Video.js.\n\n' +
+        'Section index: [guides/llms.txt](https://videojs.org/docs/framework/html/guides/llms.txt). This section in one file (about 90k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n\n'
+    );
+  });
+});
+
+describe('buildSectionFiles', () => {
+  it('writes an index and a complete file into the directory a section shares', () => {
+    const slug = firstSidebarSlug(sidebar);
+    const files = buildSectionFiles('html', [htmlPage(slug, '# Page\n\nBody', 'Desc.')], SITE_URL);
+
+    expect(files.map((file) => file.directory)).toEqual(
+      expect.arrayContaining(['guides', 'reference/components', 'reference/api'])
+    );
+
+    const guides = files.find((file) => file.directory === 'guides');
+    if (!guides) throw new Error('no guides section');
+
+    expect(guides.indexUrl).toBe(`${SITE_URL}/docs/framework/html/guides/llms.txt`);
+    expect(guides.index).toMatch(/^# Video\.js v10 — HTML Guides\n\n> Installation, migration/);
+    expect(guides.index).toContain(`This section in one file (about 1k tokens): ${guides.fullUrl}\n\n`);
+    expect(guides.index).toContain(`- [Page](${SITE_URL}/docs/framework/html/${slug}.md): Desc.`);
+    expect(guides.index).toMatch(
+      /\n---\n\nHTML documentation: https:\/\/videojs\.org\/docs\/framework\/html\/llms\.txt\nAll documentation: https:\/\/videojs\.org\/llms\.txt\n$/
+    );
+    expect(guides.full).toMatch(
+      /^# Video\.js v10 — HTML Guides \(complete\)\n\n> Every HTML guides page in one file \(about 1k tokens\)\. Index with descriptions: /
+    );
+    expect(guides.full).toContain(`<!-- Source: ${SITE_URL}/docs/framework/html/${slug} -->\n\n# Page\n\nBody\n`);
+  });
 });
 
 describe('generateChronologicalIndex', () => {
@@ -322,5 +404,19 @@ describe('generateDocsFull', () => {
       /^# Video\.js v10 — HTML Documentation \(complete\)\n\n> Every HTML docs page in one file \(about \d+k tokens\)\./
     );
     expect(full).toContain(`<!-- Source: ${SITE_URL}${pathname} -->`);
+  });
+
+  it('adds the section label to titles two pages share', () => {
+    const slugs = firstSlugOfTwoSections();
+    const full = generateDocsFull(
+      'html',
+      slugs.map((slug) => htmlPage(slug, '# Same\n\nBody')),
+      SITE_URL
+    );
+    const headings = full.match(/^# Same.*$/gm) ?? [];
+
+    expect(headings).toHaveLength(2);
+    expect(headings[0]).toMatch(/^# Same \(.+\)$/);
+    expect(headings[0]).not.toBe(headings[1]);
   });
 });
