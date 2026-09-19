@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { AstroIntegration } from 'astro';
+import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
 
@@ -26,7 +27,7 @@ export interface PageEntry {
   markdown?: string;
 }
 
-/** The first Video.js 10 post; everything before it documents Video.js 4 through 8. */
+/** The first Video.js 10 post; everything before it documents Video.js 1 through 8. */
 const FIRST_V10_BLOG_POST = '2026-03';
 
 export default function llmsMarkdown(): AstroIntegration {
@@ -151,12 +152,12 @@ export default function llmsMarkdown(): AstroIntegration {
 
           // One file with every page, for tools that ingest a corpus rather than follow an index. Its size is quoted
           // wherever it is linked so a reader can tell whether it fits their context window.
-          const full = generateDocsFull(fw, fwPages, siteUrl);
+          const corpus = generateDocsCorpus(fw, fwPages, siteUrl);
           const fullPath = join(siteDir, 'docs', 'framework', fw, 'llms-full.txt');
 
-          fullTokens.set(fw, estimateTokens(full));
+          fullTokens.set(fw, corpus.tokens);
           await mkdir(dirname(fullPath), { recursive: true });
-          await writeFile(fullPath, full, 'utf-8');
+          await writeFile(fullPath, corpus.content, 'utf-8');
 
           // The whole framework outgrows a context window, so each sidebar tab also gets an index and a complete file.
           const sections = buildSectionFiles(fw, fwPages, siteUrl);
@@ -226,6 +227,41 @@ export function createTurndown(): TurndownService {
     codeBlockStyle: 'fenced',
     emDelimiter: '*',
     bulletListMarker: '-',
+    hr: '---',
+  });
+
+  // Turndown leaves `<` alone, so prose such as "the <audio> tag" would become an HTML tag and vanish when rendered.
+  const escapeText = turndown.escape.bind(turndown);
+
+  turndown.escape = (text: string) => escapeText(text).replace(/<(?=[A-Za-z/])/g, '\\<');
+
+  // Turndown prefixes blank lines inside a quote with `> ` (trailing space); emit a bare `>` instead.
+  turndown.addRule('blockquote', {
+    filter: 'blockquote',
+    replacement: (content) => {
+      const body = content
+        .replace(/^\n+|\n+$/g, '')
+        .replace(/^/gm, '> ')
+        .replace(/^> $/gm, '>');
+
+      return `\n\n${body}\n\n`;
+    },
+  });
+
+  // Definition lists become bold-term list items; inside a table cell the items join with semicolons.
+  turndown.addRule('definition-term', {
+    filter: 'dt',
+    replacement: (content) => `\n- **${collapseWhitespace(content)}:** `,
+  });
+
+  turndown.addRule('definition-detail', {
+    filter: 'dd',
+    replacement: (content) => collapseWhitespace(content),
+  });
+
+  turndown.addRule('definition-list', {
+    filter: 'dl',
+    replacement: (content) => `\n\n${content.replace(/^\n+|\n+$/g, '')}\n\n`,
   });
 
   // Turndown pads every list marker to four columns (`*   item`). Match the marker width instead so nested content
@@ -308,10 +344,10 @@ export function createTurndown(): TurndownService {
       const blocks = body ? Array.from(body.children) : [];
       const hasDescription = blocks.length > 1;
 
-      const title = collapseWhitespace((hasDescription ? blocks[0] : body)?.textContent);
+      const title = inlineMarkdown((hasDescription ? blocks[0] : body) ?? null, escapeText);
       if (!title) return '';
 
-      const description = hasDescription ? collapseWhitespace(blocks[1]?.textContent) : '';
+      const description = hasDescription ? inlineMarkdown(blocks[1] ?? null, escapeText) : '';
       const href = link.getAttribute('href') ?? '';
 
       return description ? `\n- [${title}](${href}): ${description}\n` : `\n- [${title}](${href})\n`;
@@ -324,7 +360,12 @@ export function createTurndown(): TurndownService {
   turndown.addRule('table-cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
-      const text = collapseWhitespace(content).replace(/\|/g, '\\|');
+      // A list inside a cell has no line structure left, so mark the item boundaries with semicolons instead.
+      const inline = content
+        .replace(/^\s*-\s+/, '')
+        .replace(/:\s*\n+-\s+/g, ': ')
+        .replace(/\n+-\s+/g, '; ');
+      const text = collapseWhitespace(inline).replace(/\|/g, '\\|');
       const span = Math.max(1, Number((node as Element).getAttribute('colspan')) || 1);
 
       return `| ${text ? `${text} ` : ''}${'| '.repeat(span - 1)}`;
@@ -416,6 +457,7 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
 
   // For each content element, strip non-content elements before conversion
   const contentParts: string[] = [];
+  const slugger = new GithubSlugger();
 
   contentElements.forEach((contentEl) => {
     const clone = contentEl.cloneNode(true) as Element;
@@ -428,9 +470,12 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
     resolveStreamedContent(clone);
     unwrapTransparentWrappers(clone);
     flattenApiTables(clone);
+    flattenHiddenDetailRows(clone);
     flattenAsides(clone);
+    demoteStepTitles(clone);
     joinCodeChips(clone);
     flattenTabs(clone);
+    rewriteInPageAnchors(clone, slugger);
     absolutizeUrls(clone, siteUrl);
 
     contentParts.push(clone.innerHTML);
@@ -438,7 +483,11 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
 
   // Combine all content parts
   const combinedHtml = contentParts.join('\n\n');
-  const markdown = turndown.turndown(combinedHtml);
+  const markdown = turndown
+    .turndown(combinedHtml)
+    // Turndown escapes every `_` and any `-` that opens a text node; neither can start emphasis or a list mid-word.
+    .replace(/(?<=\w)\\_(?=\w)/g, '_')
+    .replace(/(?<=\S)\\-/g, '-');
 
   // Extract title and description for llms.txt index
   const titleElement = document.querySelector('h1');
@@ -563,6 +612,78 @@ function flattenApiTables(root: Element): void {
       alias.replaceWith(inline);
     }
   }
+}
+
+/**
+ * Disclosure tables (presets, skins) hide each entry's detail in a following `<tr hidden>` whose single cell spans the
+ * row, toggled from the last cell of the summary row. Move the detail into that toggle cell so the "Details" column
+ * holds the content it names.
+ */
+function flattenHiddenDetailRows(root: Element): void {
+  for (const detail of root.querySelectorAll('tr[hidden]')) {
+    const summary = detail.previousElementSibling;
+    const cells = detail.querySelectorAll('td');
+    if (!summary || summary.nodeName !== 'TR' || cells.length !== 1) continue;
+
+    const target = Array.from(summary.children)
+      .filter((cell) => cell.nodeName === 'TD')
+      .at(-1);
+    if (!target) continue;
+
+    target.textContent = '';
+    moveChildrenBefore(cells[0]!, null, target);
+    detail.remove();
+  }
+}
+
+/** A heading inside a numbered step reads as `1. ### Title` in Markdown; a bold line keeps the list intact. */
+function demoteStepTitles(root: Element): void {
+  const document = root.ownerDocument;
+
+  for (const title of root.querySelectorAll('[data-step-title]')) {
+    const paragraph = document.createElement('p');
+    const strong = document.createElement('strong');
+
+    strong.textContent = collapseWhitespace(title.textContent);
+    paragraph.appendChild(strong);
+    title.replaceWith(paragraph);
+  }
+}
+
+/**
+ * Markdown headings carry no ids, so a same-page link to `#root-css-custom-properties` has nothing to land on. Point it
+ * at the slug a GFM renderer derives from the heading text instead, numbering repeats the way GitHub does.
+ */
+function rewriteInPageAnchors(root: Element, slugger: GithubSlugger): void {
+  const slugById = new Map<string, string>();
+
+  for (const heading of root.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+    const slug = slugger.slug(collapseWhitespace(heading.textContent));
+    const id = heading.getAttribute('id');
+
+    if (id) slugById.set(id, slug);
+  }
+
+  for (const link of root.querySelectorAll('a[href^="#"]')) {
+    const slug = slugById.get((link.getAttribute('href') ?? '').slice(1));
+
+    if (slug) link.setAttribute('href', `#${slug}`);
+  }
+}
+
+/** Inline Markdown for an element's text and code spans, for places Turndown only sees as text. */
+function inlineMarkdown(element: Element | null, escape: (text: string) => string): string {
+  if (!element) return '';
+
+  const parts = Array.from(element.childNodes).map((child) => {
+    if (child.nodeType === 3) return escape(child.textContent ?? '');
+
+    if (child.nodeName === 'CODE') return `\`${child.textContent ?? ''}\``;
+
+    return inlineMarkdown(child as Element, escape);
+  });
+
+  return collapseWhitespace(parts.join(''));
 }
 
 const ASIDE_LABELS: Record<string, string> = {
@@ -746,9 +867,11 @@ export function generatePageFooter(
   return `${lines.join('\n')}\n`;
 }
 
-/** Breadcrumb footer linking a sub-index back to root llms.txt. */
-function generateIndexFooter(siteUrl: string): string {
-  return `\n---\n\nAll documentation: ${siteUrl}/llms.txt\n`;
+/** Breadcrumb footer linking an index back to root llms.txt, separated from the list by one blank line. */
+function appendIndexFooter(content: string, siteUrl: string, lines: string[] = []): string {
+  const footer = [...lines, `All documentation: ${siteUrl}/llms.txt`].join('\n');
+
+  return `${content.replace(/\n+$/, '')}\n\n---\n\n${footer}\n`;
 }
 
 export interface RootIndexOptions {
@@ -830,9 +953,7 @@ export function generateRootIndex({
     }
   }
 
-  content += `\n`;
-
-  return content;
+  return content.replace(/\n+$/, '\n');
 }
 
 export function generateDocsIndex(
@@ -855,9 +976,8 @@ export function generateDocsIndex(
   const sectionByLabel = new Map(sections.map((section) => [section.label, section]));
 
   content += renderSidebarToMarkdown(filtered, pagesBySlug(framework, pages), siteUrl, 0, sectionByLabel);
-  content += generateIndexFooter(siteUrl);
 
-  return content;
+  return appendIndexFooter(content, siteUrl);
 }
 
 export interface SectionFile {
@@ -909,8 +1029,9 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
     index += `Every page below is also available as Markdown at its \`.md\` URL. `;
     index += `This section in one file (${formatTokens(tokens)}): ${fullUrl}\n\n`;
     index += renderSidebarToMarkdown(section.contents, bySlug, siteUrl);
-    index += `\n---\n\n${label} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt\n`;
-    index += `All documentation: ${siteUrl}/llms.txt\n`;
+    index = appendIndexFooter(index, siteUrl, [
+      `${label} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`,
+    ]);
 
     return [{ label: section.sidebarLabel, directory, indexUrl, fullUrl, tokens, index, full }];
   });
@@ -956,6 +1077,15 @@ function sectionLabelsBySlug(items: Sidebar, label?: string, labels = new Map<st
 
 /** Every docs page for a framework in sidebar order, concatenated into one Markdown document. */
 export function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string): string {
+  return generateDocsCorpus(framework, pages, siteUrl).content;
+}
+
+/** The complete file plus the size quoted in its header, so every index that links it states the same number. */
+export function generateDocsCorpus(
+  framework: string,
+  pages: PageEntry[],
+  siteUrl: string
+): { content: string; tokens: number } {
   let body = '';
 
   if (isValidFramework(framework)) {
@@ -964,13 +1094,14 @@ export function generateDocsFull(framework: string, pages: PageEntry[], siteUrl:
     body = renderCorpus(sidebarSlugs(filtered), pagesBySlug(framework, pages), siteUrl, sectionLabelsBySlug(filtered));
   }
 
-  const size = body ? ` (${formatTokens(estimateTokens(body))})` : '';
+  const tokens = estimateTokens(body);
+  const size = body ? ` (${formatTokens(tokens)})` : '';
   let content = `# Video.js v10 — ${frameworkLabel(framework)} Documentation (complete)\n\n`;
 
   content += `> Every ${frameworkLabel(framework)} docs page in one file${size}. `;
   content += `Index with descriptions: ${siteUrl}/docs/framework/${framework}/llms.txt\n`;
 
-  return content + body;
+  return { content: content + body, tokens };
 }
 
 /**
@@ -1123,7 +1254,7 @@ function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Si
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
   const note =
-    `Posts published before ${FIRST_V10_BLOG_POST} describe Video.js 4 through 8; ` +
+    `Posts published before ${FIRST_V10_BLOG_POST} describe earlier Video.js versions (1 through 8); ` +
     `their APIs do not apply to Video.js 10.`;
 
   return generateChronologicalIndex('Blog', pages, siteUrl, note);
@@ -1152,6 +1283,5 @@ export function generateChronologicalIndex(title: string, pages: PageEntry[], si
       : `- [${post.title}](${siteUrl}${post.pathname}.md)${date}\n`;
   }
 
-  content += generateIndexFooter(siteUrl);
-  return content;
+  return appendIndexFooter(content, siteUrl);
 }

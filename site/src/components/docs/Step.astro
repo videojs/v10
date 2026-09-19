@@ -19,7 +19,7 @@ const { number, title } = Astro.props;
     {number}
   </span>
   <div class="min-w-0 pt-1">
-    <h3 class="m-0 font-sans text-p2 font-semibold normal-case">{title}</h3>
+    <h3 class="m-0 font-sans text-p2 font-semibold normal-case" data-step-title>{title}</h3>
     <div class="[&>*:last-child]:mb-0!">
       <slot />
     </div>

@@ -128,18 +128,24 @@ export function rewriteIndexHeader(
   const packageName = PACKAGE_NAMES[framework];
   const versionSuffix = version ? ` v${version}` : '';
   const context = `Bundled with \`${packageName}\`${versionSuffix}. Links are relative paths to files in this directory.`;
-  // Section indexes sit in a subdirectory; only the framework-level complete file is bundled, so point them up to it.
-  const toRoot = '../'.repeat(fileName.split('/').length - 1) || './';
-  const companion =
-    fileName === 'llms-full.txt'
-      ? 'Index with descriptions: ./llms.txt'
-      : `The whole set in one file: ${toRoot}llms-full.txt`;
+  const depth = fileName.split('/').length - 1;
+  const isComplete = basename(fileName) === 'llms-full.txt';
 
-  // The first blockquote line is the header; everything after the title keeps its size hint in parentheses.
+  // The first blockquote line is the header. A section index opens with the section's own description, which stays.
   return content.replace(/^> .*$/m, (line) => {
-    const size = /\((about [^)]+)\)/.exec(line);
+    const original = line.slice(2);
+    const size = /\((about [^)]+)\)/.exec(original)?.[1];
+    const description =
+      !isComplete && !original.startsWith('Every page below') ? original.split(/ ?Every page below/)[0]?.trim() : '';
+    const lead = description ? `${description} ` : '';
 
-    return `> ${context} ${companion}${size ? ` (${size[1]})` : ''}`;
+    if (isComplete)
+      return `> ${lead}${context} Every page in one file${size ? ` (${size})` : ''}. Index with descriptions: ./llms.txt`;
+
+    // Only the framework-level complete file is bundled, so a section index points up to it without quoting a size.
+    if (depth > 0) return `> ${lead}${context} The whole set in one file: ${'../'.repeat(depth)}llms-full.txt`;
+
+    return `> ${lead}${context} The whole set in one file: ./llms-full.txt${size ? ` (${size})` : ''}`;
   });
 }
 
@@ -230,7 +236,7 @@ function copyFrameworkDocumentation({
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
     const raw = readFileSync(sourcePath, 'utf-8');
     const withoutFooter = stripFooter(raw);
-    const isIndex = /^llms(?:-full)?\.txt$/.test(relativePath);
+    const isIndex = /^llms(?:-full)?\.txt$/.test(basename(relativePath));
     const transformed = rewriteLocalLinks
       ? rewriteLinks(
           isIndex ? rewriteIndexHeader(withoutFooter, { framework, fileName: relativePath, version }) : withoutFooter,
