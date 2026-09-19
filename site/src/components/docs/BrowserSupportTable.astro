@@ -133,9 +133,10 @@ const floorSentence = `${floorList.slice(0, -1).join(', ')}, and ${floorList[flo
               <A href={caniuseUrl}>
                 <MarkdownCode>{requirement.label}</MarkdownCode>
               </A>
-              <span class="mt-1 block text-p4 font-normal">
+              {/* A block element, so the note separates from the link when the table is exported as Markdown. */}
+              <div class="mt-1 text-p4 font-normal">
                 {KIND_LABEL[requirement.kind]}. {requirement.effect}.
-              </span>
+              </div>
             </Td>
             {COLUMN_GROUPS.map((group) => <Td class="tabular-nums">{groupCell(firstVersion, group.ids)}</Td>)}
             <Td class="tabular-nums">{percent(globalSupport)}</Td>

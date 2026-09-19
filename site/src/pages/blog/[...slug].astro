@@ -70,6 +70,7 @@ const jsonLdSchema = createBlogPostingSchema({
     >
       <div
         class="mb-4 flex flex-col gap-2 font-display text-h3 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+        data-llms-ignore
       >
         <FormattedDate date={post.data.pubDate} />
         <span class="hidden sm:inline">&bull;</span>
@@ -82,6 +83,9 @@ const jsonLdSchema = createBlogPostingSchema({
       >
         {post.data.title}
       </h1>
+      <div hidden data-llms-only>
+        <p>Published {post.data.pubDate.toISOString().slice(0, 10)}.</p>
+      </div>
       <div class="">
         By {
           new Intl.ListFormat("en", { style: "long", type: "conjunction" })

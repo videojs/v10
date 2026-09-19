@@ -38,7 +38,7 @@ const cells = colspan + (toggleColumn ? 1 : 0);
     <slot />
     {
       toggleColumn && (
-        <td class="w-0 pr-1.5 pl-0!">
+        <td class="w-0 pr-1.5 pl-0!" data-llms-ignore>
           {hasDetail && (
             <button
               type="button"
@@ -57,7 +57,7 @@ const cells = colspan + (toggleColumn ? 1 : 0);
   </tr>
   {
     hasDetail && (
-      <tr id={`${id}-detail`} aria-hidden="true" inert>
+      <tr id={`${id}-detail`} aria-hidden="true" inert data-apiref-detail-row>
         <td colspan={cells} class="px-3 py-0 sm:px-4">
           {/* Rows cannot animate height, so the panel collapses through a 0fr → 1fr grid track instead of `hidden`. */}
           <div data-apiref-detail>
@@ -65,8 +65,10 @@ const cells = colspan + (toggleColumn ? 1 : 0);
               <div class="mb-4 grid gap-4 rounded-md border border-line bg-surface-raised p-4 corner-squircle">
                 {
                   description && (
-                    <div>
-                      <div class="mb-1 text-p4 font-bold uppercase tracking-wide text-muted">Description</div>
+                    <div data-apiref-description>
+                      <div class="mb-1 text-p4 font-bold uppercase tracking-wide text-muted" data-llms-ignore>
+                        Description
+                      </div>
                       <div class="text-p3">
                         <InlineMarkdown content={description} />
                       </div>
@@ -75,8 +77,10 @@ const cells = colspan + (toggleColumn ? 1 : 0);
                 }
                 {
                   detailedType && (
-                    <div>
-                      <div class="mb-1.5 text-p4 font-bold uppercase tracking-wide text-muted">Type</div>
+                    <div data-apiref-type>
+                      <div class="mb-1.5 text-p4 font-bold uppercase tracking-wide text-muted" data-llms-ignore>
+                        Type
+                      </div>
                       <div class="overflow-x-auto rounded-md bg-faded-black px-4 py-3 scrollbar-thin corner-squircle dark:bg-soot">
                         <ServerCode code={detailedType} lang="ts" />
                       </div>
