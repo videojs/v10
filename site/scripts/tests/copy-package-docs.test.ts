@@ -12,6 +12,7 @@ import {
 import {
   type Framework,
   packageDocumentation,
+  rewriteIndexHeader,
   rewriteLinks,
   stripFooter,
   synthesizeReadme,
@@ -178,6 +179,30 @@ describe('rewriteLinks', () => {
   });
 });
 
+describe('rewriteIndexHeader', () => {
+  const webIndex =
+    '# Video.js v10 — HTML Documentation\n\n' +
+    '> Every page below is also available as Markdown at its `.md` URL. The whole set in one file (about 240k tokens): https://videojs.org/docs/framework/html/llms-full.txt\n\n' +
+    '## Guides\n';
+
+  it('names the package and version and points at the bundled companion file', () => {
+    expect(rewriteIndexHeader(webIndex, { framework: 'html', fileName: 'llms.txt', version: '10.0.0-test' })).toBe(
+      '# Video.js v10 — HTML Documentation\n\n' +
+        '> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. The whole set in one file: ./llms-full.txt (about 240k tokens)\n\n' +
+        '## Guides\n'
+    );
+  });
+
+  it('points the complete file back at the index and omits an unknown version', () => {
+    const full =
+      '# Title\n\n> Every React docs page in one file. Index with descriptions: https://videojs.org/docs/framework/react/llms.txt\n';
+
+    expect(rewriteIndexHeader(full, { framework: 'react', fileName: 'llms-full.txt', version: undefined })).toBe(
+      '# Title\n\n> Bundled with `@videojs/react`. Links are relative paths to files in this directory. Index with descriptions: ./llms.txt\n'
+    );
+  });
+});
+
 describe('synthesizeReadme', () => {
   it('renders the react cold-start file with a version', () => {
     const out = synthesizeReadme({ framework: 'react', version: '10.0.0-beta.23' });
@@ -262,6 +287,38 @@ describe('packageDocumentation', () => {
     );
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/llms.txt'), 'utf-8')).toBe(
       '[Install](./guides/installation.md)'
+    );
+  });
+
+  it('rewrites the bundled index headers for the package', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(
+      fixture.siteDist,
+      'html',
+      'llms.txt',
+      '# Docs\n\n> Every page below is also available as Markdown at its `.md` URL. The whole set in one file: https://videojs.org/docs/framework/html/llms-full.txt\n'
+    );
+    writeDoc(
+      fixture.siteDist,
+      'html',
+      'llms-full.txt',
+      '# Docs\n\n> All pages. Index: https://videojs.org/docs/framework/html/llms.txt\n'
+    );
+
+    packageDocumentation({
+      target: 'html',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+      version: '10.0.0-test',
+    });
+
+    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/llms.txt'), 'utf-8')).toBe(
+      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. The whole set in one file: ./llms-full.txt\n'
+    );
+    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'), 'utf-8')).toBe(
+      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. Index with descriptions: ./llms.txt\n'
     );
   });
 
