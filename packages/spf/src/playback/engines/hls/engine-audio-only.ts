@@ -114,6 +114,12 @@ export interface HlsAudioEngineState {
    * stays programmatically managed (ManagedMediaSource / AirPlay).
    */
   disableRemotePlayback?: boolean;
+  /**
+   * The `credentials` mode every engine request is made with. Written by the media adapter from the element's
+   * `crossorigin` attribute (`use-credentials` → `'include'`); unset leaves the platform default. See the video
+   * engine's `HlsVideoEngineState['requestCredentials']`.
+   */
+  requestCredentials?: RequestCredentials;
 }
 
 /**
@@ -181,13 +187,15 @@ export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineS
 // ============================================================================
 
 // Materializes input slots no composed behavior produces — `userAudioTrackSelection`
-// (switchAudioTrack only reads it) and `disableRemotePlayback` (setupAirPlay only
-// reads it) — in addition to forwarding refs. `failedCdns` is owned by
+// (switchAudioTrack only reads it), `disableRemotePlayback` (setupAirPlay only
+// reads it), and `requestCredentials` (the fetching behaviors only read it) — in
+// addition to forwarding refs. `failedCdns` is owned by
 // `setupFailoverMonitor`, so it's already materialized and reachable on the
 // `onSignalsReady` refs without being listed here.
 const shareSignals = makeShareSignals<HlsAudioEngineState, HlsAudioEngineContext>([
   'userAudioTrackSelection',
   'disableRemotePlayback',
+  'requestCredentials',
 ]);
 
 /**

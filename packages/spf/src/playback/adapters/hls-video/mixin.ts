@@ -18,6 +18,7 @@ import {
   type MaybeResolvedPresentation,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
+import { crossOriginToRequestCredentials } from '../../../network/request-credentials';
 import {
   createHlsVideoEngine,
   type HlsVideoEngineConfig,
@@ -50,6 +51,12 @@ export type { HlsVideoMediaError } from './error-surface';
 export interface HlsVideoAdapterProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
+  /**
+   * The element's CORS-settings attribute. `use-credentials` also sends cookies with every manifest, playlist, and
+   * segment request the engine makes, the way the browser does under native playback; any other value leaves those
+   * requests at the platform default.
+   */
+  crossOrigin: string | null;
   disableRemotePlayback: boolean;
   streamType: HlsVideoMediaStreamType;
 }
@@ -125,10 +132,17 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  */
 export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  // Whether the base reflects `crossOrigin` onto the media element (the
+  // `HTMLMediaAdapter` family does; the standalone core has no base). Guards
+  // the `super` write: without a setter up the chain it would create a data
+  // property on the instance and shadow the accessor below.
+  const baseReflectsCrossOrigin = 'crossOrigin' in BaseClass.prototype;
+
   class HlsVideoImpl extends BaseClass {
     static readonly defaultProps: HlsVideoAdapterProps = {
       src: '',
       preload: '',
+      crossOrigin: null,
       disableRemotePlayback: false,
       streamType: MediaStreamTypes.UNKNOWN,
     };
@@ -151,6 +165,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #config: HlsVideoEngineConfig;
     #signals!: HlsVideoEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsVideoImpl.defaultProps.preload;
+    #crossOrigin: string | null = HlsVideoImpl.defaultProps.crossOrigin;
     #disableRemotePlayback: boolean = HlsVideoImpl.defaultProps.disableRemotePlayback;
     #streamType: HlsVideoMediaStreamType = HlsVideoImpl.defaultProps.streamType;
     #isUserStreamType = false;
@@ -335,6 +350,18 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
+
+      // Author intent set before attach reaches the element now (the base only
+      // reflects onto an attached target); otherwise an element that already
+      // carries `crossorigin` (a React-rendered `<video>`, a standalone attach)
+      // is the intent, and the engine adopts it.
+      if (this.#crossOrigin !== null) {
+        if (baseReflectsCrossOrigin) super.crossOrigin = this.#crossOrigin;
+      } else {
+        this.#crossOrigin = mediaElement.crossOrigin;
+      }
+
+      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(this.#crossOrigin));
     }
 
     detach(): void {
@@ -368,6 +395,28 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // value = '' resets the IDL mirror (so `get preload` reflects '') but does
       // not patch state — the engine keeps its current preload until an explicit
       // W3C value replaces it.
+    }
+
+    // -------------------------------------------------------------------------
+    // crossOrigin — synchronous IDL attribute (WHATWG §4.8.11.2)
+    // The element's CORS-settings attribute, reflected onto the media element
+    // as usual, and additionally the author's request-credentials intent for
+    // the engine's own fetches: `use-credentials` makes every manifest,
+    // playlist, and segment request carry cookies (`credentials: 'include'`),
+    // the same way the browser fetches under native playback. Anything else
+    // leaves the platform default. See `crossOriginToRequestCredentials`.
+    // -------------------------------------------------------------------------
+
+    get crossOrigin(): string | null {
+      return this.#crossOrigin;
+    }
+
+    set crossOrigin(value: string | null) {
+      this.#crossOrigin = value;
+
+      if (baseReflectsCrossOrigin) super.crossOrigin = value;
+
+      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(value));
     }
 
     // -------------------------------------------------------------------------

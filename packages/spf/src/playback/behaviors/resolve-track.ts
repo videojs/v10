@@ -9,6 +9,7 @@ import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isR
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
+import { credentialsFetch } from '../primitives/credentials-fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
 import type { GateFirstParse } from '../primitives/gate-first-parse';
 import type { ReportUnsupportedTrackConditions } from '../primitives/report-track-conditions';
@@ -43,6 +44,18 @@ type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selec
 type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
+
+/**
+ * The playlist fetch each `resolve*` behavior installs: the default text fetch carrying the adapter's request
+ * credentials (the optional `requestCredentials` slot, read per request and not declared here, same as `failedCdns`),
+ * failover-decorated over that so a failed credentialed request still trips the selected track's CDN.
+ */
+function playlistFetch<K extends SelectedTrackKey>(
+  state: ResolveTrackStateMap<K>,
+  config: { selectedKey: K; getCdnId?: GetCdnId }
+): FetchText {
+  return failoverFetch(credentialsFetch(defaultFetchResolvableText, state), state, config);
+}
 
 /**
  * Sibling-owned A/V selection signals, present at runtime iff a sibling behavior owns them. Deliberately not in the
@@ -315,7 +328,7 @@ export const resolveVideoTrack = defineBehavior({
 
     return setupTrackResolution({
       state,
-      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+      config: { ...trackConfig, fetchResolvableText: playlistFetch(state, trackConfig) },
     });
   },
 });
@@ -336,7 +349,7 @@ export const resolveAudioTrack = defineBehavior({
 
     return setupTrackResolution({
       state,
-      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+      config: { ...trackConfig, fetchResolvableText: playlistFetch(state, trackConfig) },
     });
   },
 });
@@ -357,7 +370,7 @@ export const resolveTextTrack = defineBehavior({
 
     return setupTrackResolution({
       state,
-      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+      config: { ...trackConfig, fetchResolvableText: playlistFetch(state, trackConfig) },
     });
   },
 });

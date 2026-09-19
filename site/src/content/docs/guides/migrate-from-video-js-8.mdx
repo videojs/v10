@@ -337,6 +337,22 @@ Start with the default HLS component, and move to hls.js if you hit something it
 
 Your VHS tuning options don't have direct equivalents. Rendition capping, bandwidth hints, and the rest are engine-specific, so they belong to whichever engine you chose rather than to a shared options object.
 
+The exception is `html5.vhs.withCredentials`. Cookie-gated streams on another origin (CloudFront signed cookies and the like) need the standard `crossorigin="use-credentials"` on the media element, which both HLS components honor for every manifest and segment request, the same way the browser does under native playback:
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<hls-video src="https://cdn.example.com/stream.m3u8" crossorigin="use-credentials"></hls-video>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<HlsVideo src="https://cdn.example.com/stream.m3u8" crossOrigin="use-credentials" />
+```
+</FrameworkCase>
+
+As with a plain `<video>`, the CDN has to answer with `Access-Control-Allow-Credentials: true` and a specific `Access-Control-Allow-Origin`, not `*`.
+
 ## Customize your player
 
 In v8, customizing meant three different techniques depending on what you wanted: options for some things, `addChild` and component subclassing for others, and CSS overrides on `.vjs-*` selectors for the look. v10 has one path with three levels of commitment. Try them in order.

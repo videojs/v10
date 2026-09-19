@@ -370,6 +370,40 @@ describe('HlsAudioAdapterCore', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // crossOrigin — synchronous IDL attribute doubling as request-credentials intent
+  // (full contract pinned on the video adapter; this checks the audio wiring)
+  // ---------------------------------------------------------------------------
+  describe('crossOrigin', () => {
+    it('is null by default, leaving request credentials at the platform default', () => {
+      const media = new HlsAudioAdapterCore();
+
+      expect(media.crossOrigin).toBeNull();
+      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+    });
+
+    it('maps use-credentials to credentialed engine requests, and anything else back to the default', () => {
+      const media = new HlsAudioAdapterCore();
+
+      media.crossOrigin = 'use-credentials';
+      expect(media.crossOrigin).toBe('use-credentials');
+      expect(media.engine.state.requestCredentials.get()).toBe('include');
+
+      media.crossOrigin = 'anonymous';
+      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+    });
+
+    it('adopts the crossorigin attribute of an attached element when none was set', () => {
+      const media = new HlsAudioAdapterCore();
+      const el = document.createElement('audio');
+
+      el.setAttribute('crossorigin', 'use-credentials');
+      media.attach(el);
+
+      expect(media.engine.state.requestCredentials.get()).toBe('include');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // destroy()
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {
