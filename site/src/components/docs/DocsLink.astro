@@ -11,6 +11,11 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   anchor?: string;
   /** Pin a link rendered inside a multi-framework page to one framework. */
   framework?: SupportedFramework;
+  /**
+   * Comma-separated frameworks a "Related …" list item applies to. Read by `satteriRelatedLinks`, which drops the
+   * item on other frameworks; it has no effect on a link rendered elsewhere.
+   */
+  frameworks?: string;
 }
 const { slug, anchor, framework: explicitFramework, class: className } = Astro.props;
 

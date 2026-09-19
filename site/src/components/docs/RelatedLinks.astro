@@ -22,7 +22,9 @@ const paramFramework = resolveDocsFramework(routeFramework);
 if (!paramFramework) throw new Error(`Invalid or missing framework param "${routeFramework ?? 'undefined'}".`);
 
 // SAFETY: the plugin is the only producer of this attribute and always serialises `RelatedLink[]`.
-const items = JSON.parse(Astro.props.items) as RelatedLink[];
+const items = (JSON.parse(Astro.props.items) as RelatedLink[]).filter(
+  (item) => !item.frameworks || item.frameworks.includes(paramFramework)
+);
 const { label } = Astro.props;
 const docs = await getCollection('docs');
 const descriptions = new Map(docs.map((doc) => [doc.id, doc.data.description]));
@@ -38,6 +40,7 @@ const cards = items.map((item) => {
 });
 ---
 
+{cards.length > 0 && (
 <section class="mx-auto my-6 w-full max-w-3xl">
   {label && <h3 class="mb-3 font-display text-h4 uppercase text-muted select-none">{label}</h3>}
   <Grid as="ul" class="sm:grid-cols-2">
@@ -59,3 +62,4 @@ const cards = items.map((item) => {
   }
   </Grid>
 </section>
+)}
