@@ -30,7 +30,7 @@ snippet may follow when it shows the shape being explained, not a task.
 ## What it is made of
 
 Noun-phrase headings that name the thing explained ("Feature bundles",
-"Packaged and ejected skins"), never the task ("Create a bundle").
+"Packaged skins and editable files"), never the task ("Create a bundle").
 
 ## How the pieces relate
 

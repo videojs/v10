@@ -43,7 +43,7 @@ Skins are stylesheets you import, such as `@videojs/react/video/skin.css`, so yo
 
 <FrameworkCase frameworks={["html"]}>
 
-Packaged HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject the skin</DocsLink> first; the ejected `skin.css` is a file in your project. CDN bundles inline their CSS too, so a CDN player needs <DocsLink slug="guides/self-hosting">self-hosting</DocsLink> plus an eject.
+Packaged HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the skin source to your project</DocsLink> first. The added `skin.css` can pass through your CSS pipeline. CDN bundles inline their CSS too; to recompile it, move to a <DocsLink slug="guides/self-hosting">self-hosted build</DocsLink> and use the skin source instead of the prebuilt CDN skin.
 
 </FrameworkCase>
 
