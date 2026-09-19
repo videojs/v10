@@ -4,13 +4,14 @@ import { ClientRouter } from 'astro:transitions';
 import { type CollectionEntry, getCollection } from 'astro:content';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
+import InstallationFrameworkInit from '@/components/installation/InstallationFrameworkInit.astro';
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
 import Footer from '@/components/FooterDocs.astro';
 import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
-import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
+import { FRAMEWORK_LABELS, SUPPORTED_FRAMEWORKS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
 import Base from './Base.astro';
 
@@ -18,6 +19,7 @@ type Props = {
   doc: CollectionEntry<'docs'>;
   description?: string;
   framework: SupportedFramework;
+  frameworks?: readonly SupportedFramework[];
   slug: string;
   registryFrameworkSelection?: boolean;
   conciseMetadata?: boolean;
@@ -27,6 +29,7 @@ const {
   doc,
   description = doc.data.description,
   framework,
+  frameworks = [framework],
   slug,
   registryFrameworkSelection = false,
   conciseMetadata = false,
@@ -34,8 +37,14 @@ const {
 
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
-const docTitles = new Map(allDocs.map((d) => [d.id, getDocTitle(d, framework)]));
+const docTitlesByFramework = new Map(
+  SUPPORTED_FRAMEWORKS.map((candidate) => [
+    candidate,
+    new Map(allDocs.map((doc) => [doc.id, getDocTitle(doc, candidate)])),
+  ])
+);
 const docStabilities = new Map(allDocs.map((d) => [d.id, d.data.stability]));
+const sidebarFrameworks = registryFrameworkSelection ? frameworks : [framework];
 
 const seoCategory = `${FRAMEWORK_LABELS[framework]} Video Player`;
 const docsSidebarId = 'docs-sidebar';
@@ -50,6 +59,7 @@ const docsSidebarId = 'docs-sidebar';
 >
   <Fragment slot="priority-head">
     <StyleInit />
+    <InstallationFrameworkInit />
     <ClientRouter />
   </Fragment>
   <Fragment slot="head">
@@ -72,39 +82,59 @@ const docsSidebarId = 'docs-sidebar';
     }}
   >
     <NavBarDocs class="col-span-full">
-      <DocsSidebar
-        slot="mobile-nav"
-        framework={framework}
-        docTitles={docTitles}
-        docStabilities={docStabilities}
-      >
-        <Selectors
-          client:idle
-          currentFramework={framework}
-          currentSlug={slug}
-          registryFrameworkSelection={registryFrameworkSelection}
-        />
-      </DocsSidebar>
+      {
+        sidebarFrameworks.map((sidebarFramework) => (
+          <div
+            slot="mobile-nav"
+            class="contents"
+            data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
+            hidden={registryFrameworkSelection && sidebarFramework !== framework}
+          >
+            <DocsSidebar
+              framework={sidebarFramework}
+              docTitles={docTitlesByFramework.get(sidebarFramework)!}
+              docStabilities={docStabilities}
+            >
+              <Selectors
+                client:idle
+                currentFramework={sidebarFramework}
+                currentSlug={slug}
+                registryFrameworkSelection={registryFrameworkSelection}
+              />
+            </DocsSidebar>
+          </div>
+        ))
+      }
     </NavBarDocs>
     <aside
       id={docsSidebarId}
       class="scrollbar-thin sticky z-10 hidden flex-col overflow-y-scroll border-line md:flex md:border-r"
       style="top: calc(var(--banner-height) + var(--nav-h)); max-height: calc(100vh - var(--banner-height) - var(--nav-h));"
     >
-      <DocsSidebar
-        framework={framework}
-        docTitles={docTitles}
-        docStabilities={docStabilities}
-        class="flex-1"
-        animateIndicator
-      >
-        <Selectors
-          client:idle
-          currentFramework={framework}
-          currentSlug={slug}
-          registryFrameworkSelection={registryFrameworkSelection}
-        />
-      </DocsSidebar>
+      {
+        sidebarFrameworks.map((sidebarFramework) => (
+          <div
+            class="contents"
+            data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
+            hidden={registryFrameworkSelection && sidebarFramework !== framework}
+          >
+            <DocsSidebar
+              framework={sidebarFramework}
+              docTitles={docTitlesByFramework.get(sidebarFramework)!}
+              docStabilities={docStabilities}
+              class="flex-1"
+              animateIndicator
+            >
+              <Selectors
+                client:idle
+                currentFramework={sidebarFramework}
+                currentSlug={slug}
+                registryFrameworkSelection={registryFrameworkSelection}
+              />
+            </DocsSidebar>
+          </div>
+        ))
+      }
     </aside>
     <div>
       <div

@@ -48,6 +48,9 @@ export const REGISTRY_TEMPLATES = [
 
 const HTML_REGISTRY_TEMPLATES = ['vite', 'astro', 'laravel'] as const satisfies readonly RegistryTemplate[];
 
+export const REGISTRY_STYLINGS = ['tailwind', 'css'] as const satisfies readonly RegistryStyling[];
+const HTML_REGISTRY_STYLINGS = ['css'] as const satisfies readonly RegistryStyling[];
+
 export const REGISTRY_THEMES = ['default', 'minimal'] as const satisfies readonly RegistryTheme[];
 
 export const REGISTRY_THEME_LABELS = {
@@ -104,7 +107,7 @@ export const REGISTRY_SKINS: readonly RegistrySkin[] = REGISTRY_PRESETS.flatMap(
 
 /** The stylings a framework's registry catalog publishes. HTML skins are vanilla CSS only. */
 export function registryStylings(framework: RegistryFramework): readonly RegistryStyling[] {
-  return framework === 'react' ? ['tailwind', 'css'] : ['css'];
+  return framework === 'react' ? REGISTRY_STYLINGS : HTML_REGISTRY_STYLINGS;
 }
 
 export function defaultRegistryStyling(framework: RegistryFramework): RegistryStyling {

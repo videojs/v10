@@ -1,11 +1,13 @@
 ---
 import JSPickerClient from './JSPickerClient';
+import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 
 const { framework } = Astro.params;
-const routeFramework = framework === 'react' || framework === 'html' || framework === 'vue' || framework === 'svelte'
-  ? framework
-  : null;
-const currentFramework = routeFramework ?? 'react';
+if (!isInstallationRouteSegment(framework)) throw new Error(`Unsupported installation route: ${framework}`);
+
+const routeFramework = INSTALLATION_ROUTES[framework].pickerFramework;
 ---
 
-<JSPickerClient client:idle currentFramework={currentFramework} />
+<div data-installation-framework-picker>
+  <JSPickerClient client:load currentFramework={routeFramework} route={framework} />
+</div>

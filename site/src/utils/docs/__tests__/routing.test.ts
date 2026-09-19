@@ -449,9 +449,15 @@ describe('routing utilities', () => {
         '/docs/guides/installation/react'
       );
       expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'react' })).toBe(
-        '/docs/guides/installation/shadcn'
+        '/docs/guides/installation/shadcn?framework=react'
       );
-      expect(resolveDocsHref({ slug: 'guides/cdn', framework: 'html' })).toBe('/docs/guides/installation/cdn');
+      expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'html' })).toBe(
+        '/docs/guides/installation/shadcn?framework=html'
+      );
+      expect(resolveDocsHref({ slug: 'guides/installation-cdn', framework: 'html' })).toBe(
+        '/docs/guides/installation/cdn'
+      );
+      expect(resolveDocsHref({ slug: 'guides/cdn', framework: 'html' })).toBe('/docs/framework/html/guides/cdn');
     });
 
     it('rejects unknown guide slugs', () => {

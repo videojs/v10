@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { currentFramework } from '@/stores/preferences';
+import { registryFramework } from '@/stores/registry';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
+  findVisibleActiveSidebarLink,
   initializeDocsNavigation,
   savePageScrollForNavigation,
   syncFrameworkPreferenceFromUrl,
@@ -15,6 +17,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     window.__videojsDocsNavigationController?.abort();
     delete window.__videojsDocsNavigationController;
     currentFramework.set(null);
+    registryFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
@@ -43,11 +46,13 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
   it('synchronizes the query-controlled Shadcn framework', () => {
     currentFramework.set('react');
+    registryFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
 
     expect(currentFramework.get()).toBe('html');
+    expect(registryFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
@@ -72,6 +77,7 @@ describe('framework navigation scroll', () => {
     window.history.replaceState(null, '', '/');
     document.documentElement.removeAttribute('data-base-ui-scroll-locked');
     document.body.scrollTop = 0;
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 
@@ -84,6 +90,27 @@ describe('framework navigation scroll', () => {
       url: '/docs/framework/react/guides/installation',
       scrollY: 275,
     });
+  });
+
+  it('restores against the visible active link when another framework sidebar is hidden', () => {
+    document.body.innerHTML = `
+      <aside id="docs-sidebar">
+        <div hidden><a aria-current="page">React installation</a></div>
+        <div><a aria-current="page">HTML installation</a></div>
+      </aside>
+    `;
+    const aside = document.getElementById('docs-sidebar')!;
+    const [hiddenLink, visibleLink] = aside.querySelectorAll<HTMLElement>('a');
+    const visibleRect = visibleLink!.getBoundingClientRect();
+    const hiddenRects = Object.assign([] as DOMRect[], { item: () => null }) satisfies DOMRectList;
+    const visibleRects = Object.assign([visibleRect], {
+      item: (index: number) => (index === 0 ? visibleRect : null),
+    }) satisfies DOMRectList;
+
+    vi.spyOn(hiddenLink!, 'getClientRects').mockReturnValue(hiddenRects);
+    vi.spyOn(visibleLink!, 'getClientRects').mockReturnValue(visibleRects);
+
+    expect(findVisibleActiveSidebarLink(aside)).toBe(visibleLink);
   });
 
   it('saves the locked body position while a Base UI popup is open', () => {

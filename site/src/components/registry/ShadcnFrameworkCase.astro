@@ -3,19 +3,23 @@ import type { RegistryFramework } from '@/utils/installation/shadcn';
 
 interface Props {
   framework: RegistryFramework;
+  /** Heading level used to label this branch in generated Markdown. */
+  llmsHeadingLevel?: 2 | 3;
 }
 
-const { framework } = Astro.props;
+const { framework, llmsHeadingLevel = 3 } = Astro.props;
 const active = framework === 'react';
+const LLMHeading = llmsHeadingLevel === 2 ? 'h2' : 'h3';
 ---
 
 <div
   class="contents"
+  data-cli-framework={framework}
   data-shadcn-framework={framework}
   hidden={!active}
 >
   <div hidden data-llms-only>
-    <h3>{framework === 'react' ? 'React' : 'HTML'}</h3>
+    <LLMHeading>{framework === 'react' ? 'React' : 'HTML'}</LLMHeading>
   </div>
   <slot />
 </div>

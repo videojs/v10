@@ -8,7 +8,7 @@ import TurndownService from 'turndown';
 
 import { sidebar } from '../src/docs.config';
 import type { Sidebar, SupportedFramework } from '../src/types/docs';
-import { isLink, isSection, isValidFramework } from '../src/types/docs';
+import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework } from '../src/types/docs';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
@@ -52,7 +52,7 @@ export default function llmsMarkdown(): AstroIntegration {
             if (!page) return next();
 
             res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-            res.end(page.markdown + generatePageFooter(pagePath.slice(1), page.framework, siteUrl));
+            res.end(page.markdown + generatePageFooter(pagePath.slice(1), page.framework, page.frameworks, siteUrl));
           } catch (error) {
             next(error);
           }
@@ -87,7 +87,7 @@ export default function llmsMarkdown(): AstroIntegration {
             // Write markdown file as sibling to the directory
             // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
             const mdPath = join(siteDir, `${pathname}.md`);
-            const footer = generatePageFooter(pathname, framework, siteUrl);
+            const footer = generatePageFooter(pathname, framework, frameworks, siteUrl);
 
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown + footer, 'utf-8');
@@ -224,6 +224,16 @@ function createTurndown(): TurndownService {
       const id = (node as Element).getAttribute('data-cli-omit');
 
       return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
+    },
+  });
+
+  // Preserve query-controlled framework branches so the docs CLI can keep only the requested Shadcn output.
+  turndown.addRule('cli-framework', {
+    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-framework') !== null,
+    replacement: (content, node) => {
+      const framework = (node as Element).getAttribute('data-cli-framework');
+
+      return `\n<!-- cli:framework ${framework} -->\n${content}\n<!-- /cli:framework ${framework} -->\n`;
     },
   });
 
@@ -394,12 +404,23 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function frameworkLabel(framework: string): string {
+  return isValidFramework(framework) ? FRAMEWORK_LABELS[framework] : capitalize(framework);
+}
+
 /** Breadcrumb footer linking a per-page .md back to its parent index and root llms.txt. */
-function generatePageFooter(pathname: string, framework: string | undefined, siteUrl: string): string {
+function generatePageFooter(
+  pathname: string,
+  framework: string | undefined,
+  frameworks: string[] | undefined,
+  siteUrl: string
+): string {
   const lines = ['\n\n---\n'];
 
-  if (pathname.startsWith('docs/') && framework) {
-    lines.push(`${capitalize(framework)} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`);
+  if (pathname.startsWith('docs/')) {
+    for (const candidate of frameworks ?? (framework ? [framework] : [])) {
+      lines.push(`${frameworkLabel(candidate)} documentation: ${siteUrl}/docs/framework/${candidate}/llms.txt`);
+    }
   } else if (pathname.startsWith('blog/')) {
     lines.push(`All blog posts: ${siteUrl}/blog/llms.txt`);
   } else if (pathname.startsWith('changelog/')) {
@@ -429,7 +450,7 @@ function generateRootIndex(
   content += `## Documentation\n\n`;
 
   for (const fw of [...frameworks].sort()) {
-    content += `- [${capitalize(fw)} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)`;
+    content += `- [${frameworkLabel(fw)} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)`;
     content += ` ([complete in one file](${siteUrl}/docs/framework/${fw}/llms-full.txt))\n`;
   }
 
@@ -462,7 +483,7 @@ function generateRootIndex(
 }
 
 function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: string): string {
-  let content = `# Video.js v10 — ${capitalize(framework)} Documentation\n\n`;
+  let content = `# Video.js v10 — ${frameworkLabel(framework)} Documentation\n\n`;
 
   content += `> Every page below is also available as Markdown at its \`.md\` URL. `;
   content += `The whole set in one file: ${siteUrl}/docs/framework/${framework}/llms-full.txt\n\n`;
@@ -480,9 +501,9 @@ function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: strin
 
 /** Every docs page for a framework in sidebar order, concatenated into one Markdown document. */
 function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string): string {
-  let content = `# Video.js v10 — ${capitalize(framework)} Documentation (complete)\n\n`;
+  let content = `# Video.js v10 — ${frameworkLabel(framework)} Documentation (complete)\n\n`;
 
-  content += `> Every ${capitalize(framework)} docs page in one file. `;
+  content += `> Every ${frameworkLabel(framework)} docs page in one file. `;
   content += `Index with descriptions: ${siteUrl}/docs/framework/${framework}/llms.txt\n`;
 
   // Get sidebar filtered for this framework (production only)

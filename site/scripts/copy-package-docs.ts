@@ -55,7 +55,7 @@ function isPackageDocsTarget(value: string): value is PackageDocsTarget {
 }
 
 export function stripFooter(content: string): string {
-  return content.replace(/\n+---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
+  return content.replace(/\n+---\n\n(?:\w+ documentation: https:\/\/.*\n)*All documentation: https:\/\/.*\n*$/, '');
 }
 
 export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
@@ -102,7 +102,7 @@ function copyInstallationDocumentation({
 
   for (const [source, destination] of INSTALLATION_DOCUMENTS[framework]) {
     const sourcePath = join(siteDist, source);
-    if (!existsSync(sourcePath)) continue;
+    if (!existsSync(sourcePath)) throw new Error(`Missing installation documentation source: ${sourcePath}`);
 
     const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
     const transformed = rewriteLocalLinks ? rewriteLinks(raw, sourceSlug(destination), framework) : raw;

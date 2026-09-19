@@ -1,6 +1,6 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
-import { resolveDocsFramework } from '@/types/docs';
+import { resolveDocsFramework, type SupportedFramework } from '@/types/docs';
 import { resolveDocsHref } from '@/utils/docs/routing';
 import { findGuideBySlug } from '@/utils/docs/sidebar';
 import A from '../typography/A.astro';
@@ -9,8 +9,10 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
   slug: string;
   /** Heading ID within the target guide. */
   anchor?: string;
+  /** Pin a link rendered inside a multi-framework page to one framework. */
+  framework?: SupportedFramework;
 }
-const { slug, anchor, class: className } = Astro.props;
+const { slug, anchor, framework: explicitFramework, class: className } = Astro.props;
 
 const routeFramework = Astro.params.framework;
 const registryFrameworkSelection = routeFramework === 'shadcn';
@@ -24,12 +26,12 @@ if (!findGuideBySlug(slug)) {
   throw new Error(`No guide found with slug "${slug}"`);
 }
 
-// The query-controlled Shadcn route uses React as a valid server fallback. `data-docs-slug` lets ResolveDocsLinks
-// follow the live React or HTML preference on the client; outside docs it upgrades the agnostic fallback the same way.
-const contextFramework = paramFramework ?? (registryFrameworkSelection ? 'react' : null);
+// An explicit framework pins multi-framework output. Otherwise the Shadcn route stays agnostic until ResolveDocsLinks
+// upgrades it to the live React or HTML preference in the browser.
+const contextFramework = explicitFramework ?? paramFramework;
 const url = resolveDocsHref({ slug, framework: contextFramework });
 const href = anchor ? `${url}#${anchor}` : url;
-const docsSlug = paramFramework ? undefined : slug;
+const docsSlug = explicitFramework || paramFramework ? undefined : slug;
 ---
 
 <A href={href} class={className ?? undefined} data-docs-slug={docsSlug}><slot /></A>

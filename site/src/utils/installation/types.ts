@@ -24,6 +24,9 @@ export type Renderer = (typeof RENDERERS)[number];
 
 export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
 
+/** Public skin values accepted by installation URLs and the docs CLI. */
+export const INSTALLATION_SKIN_FLAGS = ['default', 'minimal', 'none'] as const;
+
 export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export interface InstallationPreset {

@@ -5,6 +5,11 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import {
+  getInstallationRoutePath,
+  INSTALLATION_ROUTES,
+  INSTALLATION_ROUTE_SEGMENTS,
+} from '../../src/utils/installation/routes.ts';
+import {
   type Framework,
   packageDocumentation,
   rewriteLinks,
@@ -30,6 +35,21 @@ function writeDoc(siteDist: string, framework: Framework, relativePath: string, 
 
   mkdirSync(join(path, '..'), { recursive: true });
   writeFileSync(path, content);
+}
+
+function writeInstallationDocs(siteDist: string, framework: Framework): number {
+  const routes = INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
+    INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
+  );
+
+  for (const route of routes) {
+    const path = join(siteDist, `${getInstallationRoutePath(route).slice(1)}.md`);
+
+    mkdirSync(join(path, '..'), { recursive: true });
+    writeFileSync(path, `# ${route} installation`);
+  }
+
+  return routes.length;
 }
 
 afterEach(() => {
@@ -59,6 +79,23 @@ describe('stripFooter', () => {
     );
 
     expect(stripFooter(input)).toBe(['# Index', '- entry'].join('\n'));
+  });
+
+  it('removes every framework line from a multi-framework page footer', () => {
+    const input = [
+      '# Shadcn Installation Guide',
+      '',
+      'Body content.',
+      '',
+      '---',
+      '',
+      'React documentation: https://videojs.org/docs/framework/react/llms.txt',
+      'HTML documentation: https://videojs.org/docs/framework/html/llms.txt',
+      'All documentation: https://videojs.org/llms.txt',
+      '',
+    ].join('\n');
+
+    expect(stripFooter(input)).toBe(['# Shadcn Installation Guide', '', 'Body content.'].join('\n'));
   });
 
   it('leaves content without a footer unchanged', () => {
@@ -181,6 +218,7 @@ describe('packageDocumentation', () => {
 
   it('packages framework docs with local links and a README', () => {
     const fixture = createFixture();
+    const installationCount = writeInstallationDocs(fixture.siteDist, 'react');
 
     writeDoc(
       fixture.siteDist,
@@ -196,7 +234,7 @@ describe('packageDocumentation', () => {
         packagesDirectory: fixture.packagesDirectory,
         version: '10.0.0-test',
       })
-    ).toBe(1);
+    ).toBe(1 + installationCount);
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/concepts/overview.md'), 'utf-8')).toBe(
       '[Install](../guides/installation.md)'
     );
@@ -205,11 +243,11 @@ describe('packageDocumentation', () => {
 
   it('places canonical installation Markdown at the package guide paths', () => {
     const fixture = createFixture();
+    const installationCount = writeInstallationDocs(fixture.siteDist, 'react');
 
     writeDoc(fixture.siteDist, 'react', 'llms.txt', '[Install](/docs/guides/installation/react.md)');
     const installation = join(fixture.siteDist, 'docs/guides/installation/react.md');
 
-    mkdirSync(join(installation, '..'), { recursive: true });
     writeFileSync(installation, '# React Installation Guide');
 
     expect(
@@ -218,7 +256,7 @@ describe('packageDocumentation', () => {
         siteDist: fixture.siteDist,
         packagesDirectory: fixture.packagesDirectory,
       })
-    ).toBe(2);
+    ).toBe(1 + installationCount);
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/guides/installation.md'), 'utf-8')).toBe(
       '# React Installation Guide'
     );
@@ -230,6 +268,8 @@ describe('packageDocumentation', () => {
   it('packages both CLI frameworks while preserving online links', () => {
     const fixture = createFixture();
     const link = '[Install](https://videojs.org/docs/framework/react/guides/installation.md)';
+    const installationCount =
+      writeInstallationDocs(fixture.siteDist, 'react') + writeInstallationDocs(fixture.siteDist, 'html');
 
     writeDoc(
       fixture.siteDist,
@@ -245,9 +285,25 @@ describe('packageDocumentation', () => {
         siteDist: fixture.siteDist,
         packagesDirectory: fixture.packagesDirectory,
       })
-    ).toBe(2);
+    ).toBe(2 + installationCount);
     expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/react/concepts/overview.md'), 'utf-8')).toBe(link);
     expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/html/llms.txt'), 'utf-8')).toBe('# HTML');
+  });
+
+  it('throws when a canonical installation document is missing', () => {
+    const fixture = createFixture();
+
+    writeDoc(fixture.siteDist, 'react', 'llms.txt', '# React');
+    writeInstallationDocs(fixture.siteDist, 'react');
+    rmSync(join(fixture.siteDist, 'docs/guides/installation/shadcn.md'));
+
+    expect(() =>
+      packageDocumentation({
+        target: 'react',
+        siteDist: fixture.siteDist,
+        packagesDirectory: fixture.packagesDirectory,
+      })
+    ).toThrow(/installation\/shadcn\.md/);
   });
 
   it('validates every source before replacing existing output', () => {

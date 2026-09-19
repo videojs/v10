@@ -14,9 +14,11 @@ export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): 
 
   if (guideSlug === 'guides/installation-svelte') return '/docs/guides/installation/svelte';
 
-  if (guideSlug === 'guides/installation-shadcn') return '/docs/guides/installation/shadcn';
+  if (guideSlug === 'guides/installation-shadcn') {
+    return `/docs/guides/installation/shadcn?framework=${framework}`;
+  }
 
-  if (guideSlug === 'guides/cdn') return '/docs/guides/installation/cdn';
+  if (guideSlug === 'guides/installation-cdn') return '/docs/guides/installation/cdn';
 
   return `/docs/framework/${framework}/${guideSlug}`;
 }
@@ -41,7 +43,7 @@ export function buildAgnosticDocsUrl(guideSlug?: string | null): string {
 
   if (guideSlug === 'guides/installation-shadcn') return '/docs/guides/installation/shadcn';
 
-  if (guideSlug === 'guides/cdn') return '/docs/guides/installation/cdn';
+  if (guideSlug === 'guides/installation-cdn') return '/docs/guides/installation/cdn';
 
   return guideSlug ? `/docs/${guideSlug}` : '/docs';
 }

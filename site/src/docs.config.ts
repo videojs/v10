@@ -24,7 +24,7 @@ export const sidebar: Sidebar = [
             hidden: true,
           },
           { slug: 'guides/installation-shadcn', sidebarLabel: 'Install with Shadcn', hidden: true },
-          { slug: 'guides/cdn', sidebarLabel: 'Install from CDN', frameworks: ['html'], hidden: true },
+          { slug: 'guides/installation-cdn', sidebarLabel: 'Install from CDN', frameworks: ['html'], hidden: true },
           {
             slug: 'guides/build-your-own-component',
             sidebarLabel: 'Build a component',
@@ -52,6 +52,7 @@ export const sidebar: Sidebar = [
         contents: [
           { slug: 'guides/typescript' },
           { slug: 'guides/bundlers' },
+          { slug: 'guides/cdn', frameworks: ['html'] },
           {
             slug: 'guides/self-hosting',
             sidebarLabel: 'Self-hosting',

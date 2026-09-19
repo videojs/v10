@@ -37,7 +37,7 @@ describe('useCase', () => {
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
     expect(renderer.get()).toBe('html5-video');
-    expect(installMethod.get()).toBe('cdn');
+    expect(installMethod.get()).toBe('npm');
     expect(sourceUrl.get()).toBe('');
   });
 });

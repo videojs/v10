@@ -1,0 +1,64 @@
+---
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
+import type { RegistryFramework } from '@/utils/installation/shadcn';
+
+interface Props {
+  framework: RegistryFramework;
+}
+
+const { framework } = Astro.props;
+---
+
+<DocsLinkCards label="Customize" llmsHeadingLevel={4}>
+  <DocsLinkCard
+    slug="guides/customize-skins"
+    anchor="style-skin-source"
+    description="Change the installed layout, controls, styles, and interactions"
+    framework={framework}
+  >
+    Customize skin source
+  </DocsLinkCard>
+  <DocsLinkCard
+    slug="guides/architecture"
+    anchor="ui-components"
+    description="Explore the building blocks used by skins and custom controls"
+    framework={framework}
+  >
+    UI components
+  </DocsLinkCard>
+  <DocsLinkCard
+    slug="guides/build-your-own-component"
+    description="Connect custom UI to player state and actions"
+    framework={framework}
+  >
+    Build your own component
+  </DocsLinkCard>
+</DocsLinkCards>
+
+<DocsLinkCards label="Deploy" llmsHeadingLevel={4}>
+  <DocsLinkCard
+    slug="guides/browser-support"
+    description="Check supported browsers and rendering environments"
+    framework={framework}
+  >
+    Browser support
+  </DocsLinkCard>
+  <DocsLinkCard
+    slug="guides/typescript"
+    description="Configure TypeScript for Video.js packages"
+    framework={framework}
+  >
+    TypeScript
+  </DocsLinkCard>
+  <DocsLinkCard slug="guides/bundlers" description="Check bundler compatibility" framework={framework}>
+    Bundlers
+  </DocsLinkCard>
+  <DocsLinkCard
+    slug="guides/content-security-policy"
+    description="Configure Content Security Policy for your player"
+    framework={framework}
+  >
+    Content Security Policy
+  </DocsLinkCard>
+</DocsLinkCards>

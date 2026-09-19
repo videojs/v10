@@ -198,11 +198,12 @@
 }
 
 /*
- * Semantic surface tokens. Light values keep the existing manila palette; dark
+ * Semantic color and surface tokens. Light values keep the existing manila palette; dark
  * values derive from manila-light at low opacity so borders and raised surfaces
  * read as the same hue as the text, the way most dark UIs do.
  */
 @theme inline {
+  --color-info: var(--info);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-surface: var(--surface);
@@ -214,6 +215,7 @@
 :root {
   --banner-height: 0px;
   --nav-h: 0px;
+  --info: #26769b;
   --line: var(--color-manila-75);
   --line-strong: var(--color-manila-dark);
   /* Light surfaces sit above the page color rather than below it, so cards and inputs read as paper, not mud. */
@@ -238,6 +240,7 @@ html:has([data-docs-layout]) {
 }
 
 .dark {
+  --info: #6bb9dc;
   --line: color-mix(in srgb, var(--color-manila-light) 10%, transparent);
   --line-strong: color-mix(in srgb, var(--color-manila-light) 18%, transparent);
   --surface: var(--color-soot);

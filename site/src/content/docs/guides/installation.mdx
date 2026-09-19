@@ -6,6 +6,7 @@ description: Install Video.js packages and build an accessible, customizable vid
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
+import InstallationCLIForLLMs from '@/components/installation/InstallationCLIForLLMs.astro';
 import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
@@ -16,7 +17,6 @@ import SkinPickerSection from '@/components/installation/SkinPickerSection.astro
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
-import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
@@ -33,35 +33,9 @@ import LLMCase from '@/components/docs/LLMCase.astro';
 
 <InstallationChoicesForLLMs />
 
+<InstallationCLIForLLMs />
+
 <LLMCase>
-<div data-cli-omit="installation">
-
-This guide has code examples tailored to your use case. To generate this guide with tailored code examples, run `npx @videojs/cli docs guides/installation`.
-If you run it without flags, it will allow you to interactively configure your player. Or, you can run it with flags:
-
-```bash
-npx @videojs/cli docs guides/installation \
-  --framework <html|react> \
-  --preset <video|audio|live-video|live-audio|background-video> \
-  --skin <default|minimal|none> \
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video> \
-  --source-url <url> \
-  --install-method <cdn|npm|pnpm|yarn|bun>
-```
-
-The CLI does not currently detect non-interactive stdin. In automation, agents, and CI, include `--framework` and all five installation flags so no prompt starts. Pass `--source-url ''` to use the built-in demo without prompting.
-
-Here's what the flags mean:
-- *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
-- *Preset*: Pick a pre-built player. The default presets work well for general website playback; the live presets add a Live button and drop the on-demand time displays.
-- *Skin*: Pick what your player looks like
-- *Media*: Pick what kind of media you have. The `live-video` preset supports HLS and Mux video; `live-audio` supports Mux audio.
-- *Source URL*: Define where your media comes from. In an interactive terminal, omit it to choose a sample URL. In automation, pass an empty value to choose the sample without prompting.
-- *Install method*: How do you want to install your package? (CDN is HTML-only<NoCdnMediaNote />.)
-
-If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
-</div>
-
 <FrameworkCase frameworks={["react"]}>
 If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) to add the files for the closest skin to the project. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
@@ -72,19 +46,19 @@ If a preset and skin do not meet your user's requirements, follow [Customize ski
 
 <HumanCase>
 
-## Choose your installation method
-
-Start with packages, add editable source, or load the browser-ready player from a CDN.
-
-<InstallationMethodNav />
-
 ## Choose your JS framework
 
-Video.js provides idiomatic React components and framework-free HTML custom elements. Vue and Svelte apps use the custom elements today and have their own installation pages.
+Choose the JavaScript framework for your project.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose how to install
+
+Choose from the installation options available for your framework.
+
+<InstallationMethodNav />
 
 ## Choose your use case
 
