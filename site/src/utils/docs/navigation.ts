@@ -1,6 +1,7 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
 import { currentFramework } from '@/stores/preferences';
+import { selectRegistryFramework } from '@/stores/registry';
 
 import { setFrameworkPreferenceClient } from './preferences';
 import { getFrameworkFromDocsUrl } from './routing';
@@ -83,6 +84,12 @@ function savePageScrollToHistory(): void {
 export function syncFrameworkPreferenceFromUrl(url: URL): void {
   const framework = getFrameworkFromDocsUrl(url);
   if (!framework) return;
+
+  if (url.pathname.replace(/\/$/, '') === '/docs/guides/installation/shadcn') {
+    selectRegistryFramework(framework);
+
+    return;
+  }
 
   currentFramework.set(framework);
   setFrameworkPreferenceClient(framework);

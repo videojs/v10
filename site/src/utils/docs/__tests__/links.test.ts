@@ -34,6 +34,15 @@ describe('initializeDocsLinks', () => {
     expect(link.pathname).toBe('/docs/framework/react/guides/architecture');
   });
 
+  it('adds the selected framework to Shadcn links', () => {
+    currentFramework.set('html');
+    const link = renderLink('guides/installation-shadcn');
+
+    initializeDocsLinks();
+
+    expect(`${link.pathname}${link.search}`).toBe('/docs/guides/installation/shadcn?framework=html');
+  });
+
   it('updates links swapped into the document by Astro', () => {
     currentFramework.set('react');
     initializeDocsLinks();

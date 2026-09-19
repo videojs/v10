@@ -1,5 +1,7 @@
 ---
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
+
+/** Match Shadcn's prerendered framework card to its query before the React picker hydrates. */
 ---
 
 <style is:global>
@@ -13,24 +15,6 @@ import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 
   html[data-registry-framework="html"] [data-shadcn-framework="html"] {
     display: contents;
-  }
-
-  [data-shadcn-method-card]:not([data-installation-frameworks~="react"]) {
-    display: none;
-    pointer-events: none;
-  }
-
-  html[data-registry-framework="html"] [data-shadcn-method-card] {
-    display: flex;
-    visibility: visible;
-    pointer-events: auto;
-  }
-
-  @media (min-width: 40rem) {
-    [data-shadcn-method-card]:not([data-installation-frameworks~="react"]) {
-      display: flex;
-      visibility: hidden;
-    }
   }
 
   html[data-registry-framework="html"]
@@ -88,13 +72,12 @@ import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
       .split(";")
       .map((cookie) => cookie.trim().split("="))
       .find(([key]) => key === frameworkCookie)?.[1];
-    const framework = requested === "html" || requested === "react"
+
+    root.dataset.registryFramework = requested === "html" || requested === "react"
       ? requested
       : saved === "html" || saved === "react"
         ? saved
         : "react";
-
-    root.dataset.registryFramework = framework;
   }
 
   applyInstallationFramework(window.location, document.documentElement);

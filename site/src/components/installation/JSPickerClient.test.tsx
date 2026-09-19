@@ -23,11 +23,11 @@ describe('JSPickerClient', () => {
     expect(markup).toContain('data-testid="framework">html</span>');
   });
 
-  it('uses the route default for Shadcn server markup when the client store differs', () => {
+  it('uses the query-initialized registry selection on Shadcn', () => {
     registryFramework.set('html');
 
     expect(renderToString(<JSPickerClient currentFramework="react" route="shadcn" />)).toContain(
-      'data-testid="framework">react</span>'
+      'data-testid="framework">html</span>'
     );
   });
 });

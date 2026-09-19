@@ -14,7 +14,9 @@ export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): 
 
   if (guideSlug === 'guides/installation-svelte') return '/docs/guides/installation/svelte';
 
-  if (guideSlug === 'guides/installation-shadcn') return '/docs/guides/installation/shadcn';
+  if (guideSlug === 'guides/installation-shadcn') {
+    return `/docs/guides/installation/shadcn?framework=${framework}`;
+  }
 
   if (guideSlug === 'guides/installation-cdn') return '/docs/guides/installation/cdn';
 

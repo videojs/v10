@@ -43,13 +43,3 @@ export function getInstallationMethodsForFramework(
 ): readonly InstallationMethod[] {
   return INSTALLATION_METHODS_BY_FRAMEWORK[framework];
 }
-
-/** Frameworks that can use an installation path. */
-export function getFrameworksForInstallationMethod(method: InstallationMethod): readonly InstallationPickerFramework[] {
-  // SAFETY: the map has every InstallationPickerFramework key and only readonly InstallationMethod values.
-  return (
-    Object.entries(INSTALLATION_METHODS_BY_FRAMEWORK) as [InstallationPickerFramework, readonly InstallationMethod[]][]
-  )
-    .filter(([, methods]) => methods.includes(method))
-    .map(([framework]) => framework);
-}
