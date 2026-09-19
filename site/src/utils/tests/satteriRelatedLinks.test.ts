@@ -45,6 +45,15 @@ describe('satteriRelatedLinks', () => {
     expect(code).not.toContain('DocsLink');
   });
 
+  it('records the frameworks an item is limited to', () => {
+    const code = compile(
+      '## Related API\n\n- <DocsLink slug="reference/api/use-player" frameworks="react">usePlayer</DocsLink>\n- <DocsLink slug="reference/api/player-controller" frameworks="html">PlayerController</DocsLink>\n'
+    );
+
+    expect(code).toContain('\\"frameworks\\":[\\"react\\"]');
+    expect(code).toContain('\\"frameworks\\":[\\"html\\"]');
+  });
+
   it('gives a bare Related heading no group label', () => {
     const code = compile('## Related\n\n- <DocsLink slug="guides/features">Features</DocsLink>\n');
 

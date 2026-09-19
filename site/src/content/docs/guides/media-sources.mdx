@@ -345,6 +345,21 @@ For Widevine on hls.js, Video.js asks for a hardware-backed CDM first, falling b
 
 An engine's own `drmSystems` **replaces** `source.drm`, for that engine alone. Reach for it when one path licenses differently, or when you need more of [hls.js's DRM configuration](https://github.com/video-dev/hls.js/blob/master/docs/API.md#drmsystems) than `drm` covers:
 
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<HlsJsVideo
+  source={{
+    src: 'https://example.com/protected.m3u8',
+    drm: { 'com.apple.fps': { licenseUrl, serverCertificateUrl } },
+    engine: {
+      // hls.js licenses from here instead, and the native path still from `drm`.
+      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: widevineLicenseUrl } } },
+    },
+  }}
+/>
+```
+</FrameworkCase>
+
 <FrameworkCase frameworks={["html"]}>
 ```ts
 video.source = {
@@ -441,6 +456,20 @@ video.source = {
 DRM playback is always signed, so a `playback.token` belongs alongside it — and `poster.token` / `storyboard.token` for the images. Each is scoped to a different audience, so they are four separate tokens rather than one reused four times. Sign them on your server; see [Mux's DRM guide](https://www.mux.com/docs/guides/protect-videos-with-drm) for how.
 
 A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. License servers named alongside the token win, key by key, for the systems Mux doesn't license:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo
+  source={{
+    playbackId,
+    playback: { token: playbackToken },
+    // FairPlay and PlayReady from Mux, Widevine from your own server.
+    drm: { token: drmToken, 'com.widevine.alpha': { licenseUrl: widevineLicenseUrl } },
+  }}
+  playsInline
+/>
+```
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
