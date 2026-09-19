@@ -35,7 +35,7 @@ function ControlsOverlay({ children }: { children: React.ReactNode }) {
   if (!controls) return null;
 
   return (
-    <div style={{ opacity: controls.visible ? 1 : 0 }}>
+    <div style={{ opacity: controls.controlsVisible ? 1 : 0 }}>
       {children}
     </div>
   );

@@ -32,11 +32,11 @@ import { selectPiP, usePlayer } from '@videojs/react';
 
 function PiPButton() {
   const pip = usePlayer(selectPiP);
-  if (!pip || pip.availability !== 'available') return null;
+  if (!pip || pip.pipAvailability !== 'available') return null;
 
   return (
-    <button onClick={pip.toggle}>
-      {pip.active ? 'Exit PiP' : 'Picture-in-Picture'}
+    <button onClick={pip.togglePictureInPicture}>
+      {pip.pip ? 'Exit PiP' : 'Picture-in-Picture'}
     </button>
   );
 }
