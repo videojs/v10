@@ -36,6 +36,7 @@ import {
   resolveRegistryStyling,
   resolveRegistryTemplate,
 } from '@/utils/installation/shadcn';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 const TEMPLATE_ICONS = {
   next: <img alt="" src={NextLogoUrl} className="size-4 dark:invert" />,
@@ -71,6 +72,10 @@ interface Props {
   kind: 'template' | 'catalog' | 'styling';
 }
 
+interface HydrationProps {
+  hydrated: boolean;
+}
+
 function templateOptions(framework: RegistryFramework): SelectOption<RegistryTemplate>[] {
   return registryTemplates(framework).map((value) => ({
     value,
@@ -79,9 +84,9 @@ function templateOptions(framework: RegistryFramework): SelectOption<RegistryTem
   }));
 }
 
-function RegistryTemplateSelect({ framework }: Pick<Props, 'framework'>) {
+function RegistryTemplateSelect({ framework, hydrated }: Pick<Props, 'framework'> & HydrationProps) {
   const $template = useStore(registryTemplate);
-  const template = resolveRegistryTemplate(framework, $template);
+  const template = resolveRegistryTemplate(framework, hydrated ? $template : null);
 
   return (
     <div className="grid gap-1.5">
@@ -97,9 +102,9 @@ function RegistryTemplateSelect({ framework }: Pick<Props, 'framework'>) {
   );
 }
 
-function RegistryStylingSelect({ framework }: Pick<Props, 'framework'>) {
+function RegistryStylingSelect({ framework, hydrated }: Pick<Props, 'framework'> & HydrationProps) {
   const $styling = useStore(registryStyling);
-  const styling = resolveRegistryStyling(framework, $styling);
+  const styling = resolveRegistryStyling(framework, hydrated ? $styling : null);
 
   return (
     <div className="grid shrink-0 gap-1.5">
@@ -119,16 +124,24 @@ function RegistryStylingSelect({ framework }: Pick<Props, 'framework'>) {
   );
 }
 
-function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installation }: Omit<Props, 'kind'>) {
+function RegistryCatalogSelects({
+  defaultSkin,
+  defaultTheme,
+  framework,
+  hydrated,
+  installation,
+}: Omit<Props, 'kind'> & HydrationProps) {
   const $registrySkin = useStore(registrySkin);
   const $theme = useStore(registryTheme);
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const installationSelection = registrySkinSelection({ useCase: $useCase, skin: $skin });
   const selectedSkin =
-    $registrySkin ?? (installation ? installationSelection?.item : defaultSkin) ?? DEFAULT_REGISTRY_PRESET;
+    (hydrated ? $registrySkin : null) ??
+    (installation ? installationSelection?.item : defaultSkin) ??
+    DEFAULT_REGISTRY_PRESET;
   const installationTheme = installationSelection?.theme ?? 'default';
-  const theme = $theme ?? (installation ? installationTheme : defaultTheme) ?? 'default';
+  const theme = (hydrated ? $theme : null) ?? (installation ? installationTheme : defaultTheme) ?? 'default';
 
   const updateInstallationSelection = (preset: RegistryPreset, nextTheme: RegistryTheme) => {
     if (!installation) return;
@@ -169,7 +182,7 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
         />
       </div>
 
-      <RegistryStylingSelect framework={framework} />
+      <RegistryStylingSelect framework={framework} hydrated={hydrated} />
 
       <div className="grid shrink-0 gap-1.5">
         <p className="text-p4 font-medium">Theme</p>
@@ -196,18 +209,21 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
 
 /** Chooses the Shadcn project template or the skin, styling, and theme used to add editable skin files. */
 export default function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
-  if (kind === 'template') return <RegistryTemplateSelect framework={framework} />;
+  const hydrated = useIsHydrated();
+
+  if (kind === 'template') return <RegistryTemplateSelect framework={framework} hydrated={hydrated} />;
 
   return kind === 'catalog' ? (
     <RegistryCatalogSelects
       defaultSkin={defaultSkin}
       defaultTheme={defaultTheme}
       framework={framework}
+      hydrated={hydrated}
       installation={installation}
     />
   ) : (
     <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-      <RegistryStylingSelect framework={framework} />
+      <RegistryStylingSelect framework={framework} hydrated={hydrated} />
     </div>
   );
 }
