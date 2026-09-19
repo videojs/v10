@@ -2,7 +2,15 @@ import { uniq } from 'es-toolkit/array';
 import type { BindingPattern, ParamPattern, TSSignature, TSType } from 'oxc-parser';
 
 import type { OxcProject, ResolvedMember, ResolvedType, SourceFile } from './oxc-project.js';
-import { getJSDoc, sourceText, staticName, typeNameText, unwrapType } from './oxc-project.js';
+import {
+  getJSDoc,
+  isOptionalParameter,
+  parameterTypeAnnotation,
+  sourceText,
+  staticName,
+  typeNameText,
+  unwrapType,
+} from './oxc-project.js';
 import type { PropDef } from './types.js';
 
 /**
@@ -515,7 +523,8 @@ function formatSignature(
     return `${name}${member.optional ? '?' : ''}(${params}): ${returnType}`;
   }
 
-  return normalizeTypeText(sourceText(file, member));
+  // Call and construct signatures fall back to source text, which ends in the member's own semicolon.
+  return normalizeTypeText(sourceText(file, member)).replace(/;$/, '');
 }
 
 function formatParameter(
@@ -527,9 +536,10 @@ function formatParameter(
   if (!pattern) return '...: unknown';
 
   const name = bindingName(pattern);
-  const annotation = pattern.typeAnnotation?.typeAnnotation;
-  const optional = 'optional' in pattern && pattern.optional;
-  const type = annotation ? formatType({ file, type: annotation, substitutions }, !!optional) : 'unknown';
+  const annotation = parameterTypeAnnotation(parameter, pattern);
+  // A rest parameter is optional by nature but reads `...name`, not `...name?`.
+  const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter, pattern);
+  const type = annotation ? formatType({ file, type: annotation, substitutions }, optional) : 'unknown';
 
   return `${parameter.type === 'RestElement' ? '...' : ''}${name}${optional ? '?' : ''}: ${type}`;
 }
@@ -544,6 +554,8 @@ function parameterPattern(parameter: ParamPattern): BindingPattern | undefined {
 
 function bindingName(pattern: BindingPattern): string {
   if (pattern.type === 'Identifier') return pattern.name;
+
+  if (pattern.type === 'AssignmentPattern') return bindingName(pattern.left);
 
   return '...';
 }
