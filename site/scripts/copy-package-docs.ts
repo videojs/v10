@@ -116,6 +116,29 @@ function copyInstallationDocumentation({
   return copied;
 }
 
+/**
+ * The web indexes introduce themselves in terms of `.md` URLs and point at each other by absolute address. Inside a
+ * package they are files on disk, so restate the header for that setting: which package and version the copy belongs
+ * to, that links are relative paths, and where the companion index lives.
+ */
+export function rewriteIndexHeader(
+  content: string,
+  { framework, fileName, version }: { framework: Framework; fileName: string; version: string | undefined }
+): string {
+  const packageName = PACKAGE_NAMES[framework];
+  const versionSuffix = version ? ` v${version}` : '';
+  const context = `Bundled with \`${packageName}\`${versionSuffix}. Links are relative paths to files in this directory.`;
+  const companion =
+    fileName === 'llms-full.txt' ? 'Index with descriptions: ./llms.txt' : 'The whole set in one file: ./llms-full.txt';
+
+  // The first blockquote line is the header; everything after the title keeps its size hint in parentheses.
+  return content.replace(/^> .*$/m, (line) => {
+    const size = /\((about [^)]+)\)/.exec(line);
+
+    return `> ${context} ${companion}${size ? ` (${size[1]})` : ''}`;
+  });
+}
+
 export function synthesizeReadme({
   framework,
   version,
@@ -186,11 +209,13 @@ function copyFrameworkDocumentation({
   targetDirectory,
   framework,
   rewriteLocalLinks,
+  version,
 }: {
   sourceDirectory: string;
   targetDirectory: string;
   framework: Framework;
   rewriteLocalLinks: boolean;
+  version: string | undefined;
 }): number {
   const files = walkDocumentation(sourceDirectory);
 
@@ -198,8 +223,13 @@ function copyFrameworkDocumentation({
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
     const raw = readFileSync(sourcePath, 'utf-8');
     const withoutFooter = stripFooter(raw);
+    const isIndex = /^llms(?:-full)?\.txt$/.test(relativePath);
     const transformed = rewriteLocalLinks
-      ? rewriteLinks(withoutFooter, sourceSlug(relativePath), framework)
+      ? rewriteLinks(
+          isIndex ? rewriteIndexHeader(withoutFooter, { framework, fileName: relativePath, version }) : withoutFooter,
+          sourceSlug(relativePath),
+          framework
+        )
       : withoutFooter;
 
     const destinationPath = join(targetDirectory, relativePath);
@@ -242,6 +272,7 @@ export function packageDocumentation({
         targetDirectory: frameworkTarget,
         framework,
         rewriteLocalLinks: target !== 'cli',
+        version,
       });
       copiedFiles += copyInstallationDocumentation({
         siteDist,
