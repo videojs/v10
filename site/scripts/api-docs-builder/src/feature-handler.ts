@@ -8,8 +8,10 @@ import type { OxcProject, ResolvedDeclaration, ResolvedMember, SourceFile } from
 import {
   expressionText,
   getJSDocDescription,
+  isOptionalParameter,
   literalValue,
   OxcProject as Project,
+  parameterTypeAnnotation,
   staticName,
   typeNameText,
   unwrapExpression,
@@ -474,13 +476,15 @@ function formatMethod(
         : parameter.type === 'TSParameterProperty'
           ? parameter.parameter
           : parameter;
-    const name = pattern.type === 'Identifier' ? pattern.name.replace(/^_/, '') : '...';
-    const annotation = pattern.typeAnnotation?.typeAnnotation;
+    const binding = pattern.type === 'AssignmentPattern' ? pattern.left : pattern;
+    const name = binding.type === 'Identifier' ? binding.name.replace(/^_/, '') : '...';
+    const annotation = parameterTypeAnnotation(parameter, pattern);
+    const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter, pattern);
     const type = annotation
-      ? formatDetailedType(project, { file, type: annotation, substitutions }, false)
+      ? formatDetailedType(project, { file, type: annotation, substitutions }, optional)
       : UNRESOLVED_TYPE;
 
-    return `${name}: ${type}`;
+    return `${parameter.type === 'RestElement' ? '...' : ''}${name}${optional ? '?' : ''}: ${type}`;
   });
   const returnType = member.returnType
     ? formatDetailedType(project, { file, type: member.returnType.typeAnnotation, substitutions }, false)

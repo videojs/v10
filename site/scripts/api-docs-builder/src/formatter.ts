@@ -270,6 +270,10 @@ export function formatDetailedType(
           return formatType(type, removeUndefined);
         }
 
+        // An interface with no members of its own (`interface X extends Y {}`) expands to nothing; keep its name.
+        const body = unwrapType(resolved.type);
+        if (body.type === 'TSTypeLiteral' && body.members.length === 0) return formatType(type, removeUndefined);
+
         visited.add(key);
         return formatDetailedType(project, resolved, removeUndefined, visited);
       }
@@ -398,7 +402,8 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
   }
 
   if (node.type === 'TSTypeLiteral') {
-    if (node.members.length === 0) return 'object';
+    // `{}` is a type of its own (`string & {}` keeps literals out of a union); `object` would misstate it.
+    if (node.members.length === 0) return '{}';
 
     return `{ ${node.members
       .map((member) => formatSignature(type.file, member, type.substitutions))
@@ -422,7 +427,7 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
     const params = node.params.map((parameter) => formatParameter(type.file, parameter, type.substitutions)).join(', ');
     const returnType = formatType({ ...type, type: node.returnType.typeAnnotation }, false);
 
-    return `((${params}) => ${returnType})`;
+    return `(${node.type === 'TSConstructorType' ? 'new ' : ''}(${params}) => ${returnType})`;
   }
 
   if (node.type === 'TSTupleType') {
