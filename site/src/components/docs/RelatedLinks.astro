@@ -4,6 +4,7 @@ import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import Grid from '@/components/Grid.astro';
 import { resolveDocsFramework } from '@/types/docs';
 import { resolveDocsLinkUrl } from '@/utils/docs/routing';
+import { getDocTitle } from '@/utils/docs/title';
 import type { RelatedLink } from '@/utils/satteriRelatedLinks';
 
 /**
@@ -27,15 +28,18 @@ const items = (JSON.parse(Astro.props.items) as RelatedLink[]).filter(
 );
 const { label } = Astro.props;
 const docs = await getCollection('docs');
-const descriptions = new Map(docs.map((doc) => [doc.id, doc.data.description]));
+const docsById = new Map(docs.map((doc) => [doc.id, doc]));
 
 const cards = items.map((item) => {
   const { url } = resolveDocsLinkUrl({ targetSlug: item.slug, contextFramework: paramFramework });
+  const doc = docsById.get(item.slug);
+  // Reference pages are titled per framework (`PlayButton` vs `media-play-button`); match the page the card opens.
+  const label = doc && item.slug.startsWith('reference/') ? getDocTitle(doc, paramFramework) : item.label;
 
   return {
     href: item.anchor ? `${url}#${item.anchor}` : url,
-    label: item.label,
-    description: descriptions.get(item.slug),
+    label,
+    description: doc?.data.description,
   };
 });
 ---
