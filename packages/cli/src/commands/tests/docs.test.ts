@@ -80,6 +80,7 @@ import * as p from '@clack/prompts';
 import cdnPackage from '../../../../cdn/package.json' with { type: 'json' };
 import { getConfigValue } from '../../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../../utils/docs.js';
+import { supportsCdnInstall } from '../../utils/prompts.js';
 import { handleDocs } from '../docs.js';
 
 // --- Helpers ---
@@ -824,6 +825,32 @@ describe('handleDocs', () => {
 
       expect(p.intro).toHaveBeenCalled();
       expect(p.select).toHaveBeenCalled();
+    });
+
+    it('offers only media sources supported by the CDN route', async () => {
+      vi.mocked(p.select).mockResolvedValueOnce('html5-video');
+
+      await handleDocs(
+        {
+          preset: 'video',
+          skin: 'default',
+          'source-url': '',
+        },
+        ['guides/installation/cdn'],
+        { interactive: true }
+      );
+
+      const mediaPrompt = vi
+        .mocked(p.select)
+        .mock.calls.map(([options]) => options)
+        .find(({ message }) => message === 'Media source type');
+
+      expect(mediaPrompt).toBeDefined();
+      expect(
+        mediaPrompt.options.every(({ value }: { value: Parameters<typeof supportsCdnInstall>[0] }) =>
+          supportsCdnInstall(value)
+        )
+      ).toBe(true);
     });
   });
 });

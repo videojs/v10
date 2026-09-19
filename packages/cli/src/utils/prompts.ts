@@ -89,11 +89,12 @@ const PRESET_OPTIONS = USE_CASES.map((value) => ({ value, label: getInstallation
 
 // Reuse the installation page's option builder so labels and ordering stay in
 // lockstep with the UI.
-function mediaOptionsForUseCase(useCase: UseCase): Array<{ value: Renderer; label: string }> {
-  return buildOptions(useCase).map((option) => ({
-    value: option.value as Renderer,
-    label: option.label,
-  }));
+function mediaOptionsForUseCase(useCase: UseCase, cdnOnly: boolean): Array<{ value: Renderer; label: string }> {
+  return buildOptions(useCase).flatMap((option) => {
+    if (option.value === null || (cdnOnly && !supportsCdnInstall(option.value))) return [];
+
+    return [{ value: option.value, label: option.label }];
+  });
 }
 
 function skinOptionsForUseCase(useCase: UseCase, allowNoSkin: boolean): Array<{ value: Skin; label: string }> {
@@ -145,6 +146,7 @@ export interface PromptInstallOptionsConfig {
   allowBackground?: boolean;
   allowCdn?: boolean;
   allowNoSkin?: boolean;
+  cdnMediaOnly?: boolean;
   skinLabel?: string;
 }
 
@@ -170,7 +172,13 @@ export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
 export async function promptInstallOptions(
   framework: Framework,
   flags: PartialInstallFlags,
-  { allowBackground = true, allowCdn = true, allowNoSkin = true, skinLabel = 'Skin' }: PromptInstallOptionsConfig = {}
+  {
+    allowBackground = true,
+    allowCdn = true,
+    allowNoSkin = true,
+    cdnMediaOnly = false,
+    skinLabel = 'Skin',
+  }: PromptInstallOptionsConfig = {}
 ): Promise<InstallationOptions> {
   const presetOptions = allowBackground
     ? PRESET_OPTIONS
@@ -223,16 +231,20 @@ export async function promptInstallOptions(
   const media =
     flags.media ??
     (await (async () => {
-      const options = mediaOptionsForUseCase(useCase);
+      const options = mediaOptionsForUseCase(useCase, cdnMediaOnly);
       // Skip prompt if there's only one valid option
       if (options.length === 1) return options[0]!.value;
 
-      const message = detected ? `Media source type (detected ${detected.label} from URL)` : 'Media source type';
+      const supportedDetection =
+        detected && options.some((option) => option.value === detected.renderer) ? detected : null;
+      const message = supportedDetection
+        ? `Media source type (detected ${supportedDetection.label} from URL)`
+        : 'Media source type';
 
       const value = await p.select({
         message,
         options,
-        initialValue: detected?.renderer,
+        initialValue: supportedDetection?.renderer,
       });
 
       if (p.isCancel(value)) process.exit(0);

@@ -1,4 +1,7 @@
 ---
+import { getCollection } from 'astro:content';
+
+import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import { isInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   REGISTRY_STYLINGS,
@@ -16,7 +19,14 @@ const isCdn = route === 'cdn';
 const useCases = USE_CASES.filter((useCase) => !isShadcn || useCase !== 'background-video');
 const presets = useCases.map((useCase) => getInstallationPreset(useCase).flag).join('|');
 const skins = INSTALLATION_SKIN_FLAGS.join('|');
-const media = [...new Set(useCases.flatMap((useCase) => getInstallationPreset(useCase).renderers))].join('|');
+const cdnMediaSubpaths = isCdn ? (await getCollection('cdnMedia')).map((entry) => entry.id) : [];
+const media = [
+  ...new Set(
+    useCases
+      .flatMap((useCase) => getInstallationPreset(useCase).renderers)
+      .filter((renderer) => !isCdn || rendererSupportsCdn(renderer, cdnMediaSubpaths)),
+  ),
+].join('|');
 const command = [
   `npx @videojs/cli docs guides/installation/${route} \\`,
   ...(isShadcn ? ['  --framework <react|html> \\'] : []),

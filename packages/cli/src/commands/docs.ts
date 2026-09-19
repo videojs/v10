@@ -466,6 +466,7 @@ async function handleInstallationDocs(
     allowBackground: target.method !== 'shadcn',
     allowCdn: false,
     allowNoSkin: target.method !== 'shadcn',
+    cdnMediaOnly: target.method === 'cdn',
     skinLabel: target.method === 'shadcn' ? 'Theme' : 'Skin',
   });
 
