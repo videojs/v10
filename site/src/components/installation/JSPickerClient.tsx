@@ -17,7 +17,6 @@ import {
 } from '@/utils/installation/framework-navigation';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import type { RegistryFramework } from '@/utils/installation/shadcn';
-import useIsHydrated from '@/utils/useIsHydrated';
 
 /** Framework entry points. The selected framework determines which installation methods the next section offers. */
 const OPTIONS: CardRadioOption<InstallationPickerFramework>[] = [
@@ -52,15 +51,18 @@ interface Props {
   route: InstallationRouteSegment;
 }
 
-function updateShadcnFramework(framework: RegistryFramework) {
+function updateShadcnPanels(framework: RegistryFramework) {
   document.documentElement.dataset.registryFramework = framework;
+
+  for (const panel of document.querySelectorAll<HTMLElement>('[data-shadcn-framework]')) {
+    panel.hidden = panel.dataset.shadcnFramework !== framework;
+  }
 }
 
 export default function JSPickerClient({ currentFramework, route }: Props) {
   const registrySelection = useStore(registryFramework);
-  const isHydrated = useIsHydrated();
   const shadcnUrlReady = useRef(false);
-  const displayedFramework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
+  const displayedFramework = route === 'shadcn' ? registrySelection : currentFramework;
 
   useEffect(() => {
     if (route !== 'shadcn') return;
@@ -74,12 +76,12 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
       selectRegistryFramework(initialFramework);
 
       if (initialFramework !== registrySelection) {
-        updateShadcnFramework(initialFramework);
+        updateShadcnPanels(initialFramework);
         return;
       }
     }
 
-    updateShadcnFramework(registrySelection);
+    updateShadcnPanels(registrySelection);
 
     const params = new URLSearchParams(location.search);
 

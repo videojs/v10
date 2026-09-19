@@ -8,6 +8,7 @@ interface Props {
 }
 
 const { framework, llmsHeadingLevel = 3 } = Astro.props;
+const active = framework === 'react';
 const LLMHeading = llmsHeadingLevel === 2 ? 'h2' : 'h3';
 ---
 
@@ -15,6 +16,7 @@ const LLMHeading = llmsHeadingLevel === 2 ? 'h2' : 'h3';
   class="contents"
   data-cli-framework={framework}
   data-shadcn-framework={framework}
+  hidden={!active}
 >
   <div hidden data-llms-only>
     <LLMHeading>{framework === 'react' ? 'React' : 'HTML'}</LLMHeading>

@@ -88,6 +88,7 @@ const docsSidebarId = 'docs-sidebar';
             slot="mobile-nav"
             class="contents"
             data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
+            hidden={registryFrameworkSelection && sidebarFramework !== framework}
           >
             <DocsSidebar
               framework={sidebarFramework}
@@ -115,6 +116,7 @@ const docsSidebarId = 'docs-sidebar';
           <div
             class="contents"
             data-shadcn-framework={registryFrameworkSelection ? sidebarFramework : undefined}
+            hidden={registryFrameworkSelection && sidebarFramework !== framework}
           >
             <DocsSidebar
               framework={sidebarFramework}

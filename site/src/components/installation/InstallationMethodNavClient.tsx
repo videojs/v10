@@ -11,7 +11,6 @@ import { registryFramework } from '@/stores/registry';
 import type { InstallationPickerFramework } from '@/utils/installation/framework-navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
 import {
-  getFrameworksForInstallationMethod,
   getInstallationMethodsForFramework,
   INSTALLATION_METHOD_OPTIONS,
   type InstallationMethod,
@@ -55,12 +54,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const framework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = getInstallationMethodsForFramework(framework);
-  // The Shadcn route reserves all three slots so applying its query-controlled framework before hydration cannot move
-  // the card grid. CSS hides unsupported cards without removing their grid tracks.
-  const items =
-    route === 'shadcn'
-      ? INSTALLATION_METHOD_OPTIONS
-      : INSTALLATION_METHOD_OPTIONS.filter(({ id }) => availableMethods.includes(id));
+  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => availableMethods.includes(id));
 
   const getMethodHref = (method: InstallationMethod) => {
     const baseHref = getMethodBaseHref(method, framework);
@@ -96,8 +90,6 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
             key={id}
             href={getMethodHref(id)}
             data-installation-method={id}
-            data-installation-frameworks={getFrameworksForInstallationMethod(id).join(' ')}
-            data-shadcn-method-card={route === 'shadcn' ? '' : undefined}
             aria-current={active === id ? 'page' : undefined}
             className={clsx(
               'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',

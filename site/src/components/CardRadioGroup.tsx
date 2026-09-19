@@ -74,7 +74,6 @@ export default function CardRadioGroup<T extends string = string>({
             <Radio.Indicator className="sr-only" />
             <span
               aria-hidden="true"
-              data-card-radio-check
               className={clsx(
                 'flex shrink-0 items-center justify-center rounded-lg corner-squircle border border-line',
                 'bg-surface-raised text-faded-black dark:bg-faded-black dark:text-manila-light',
@@ -92,6 +91,7 @@ export default function CardRadioGroup<T extends string = string>({
             </span>
             <span
               aria-hidden="true"
+              data-card-radio-check
               className={clsx(
                 'absolute flex size-5 items-center justify-center rounded-full border transition',
                 layout === 'tile' ? 'top-3 right-3' : 'top-1/2 right-3 -translate-y-1/2',
