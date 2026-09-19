@@ -37,6 +37,7 @@ const renderTitle = title ?? defaultTitles[type];
 ---
 
 <aside
+  data-aside={type}
   class={twMerge(
     clsx(
       // The inset ring shares the band's hue so the band's edge stays crisp instead of being wrapped in a grey border.
@@ -75,8 +76,8 @@ const renderTitle = title ?? defaultTitles[type];
       />
     </div>
     <div class="min-w-0 flex-1">
-      <p class="mb-2 font-semibold">{renderTitle}</p>
-      <div class="[&>*:last-child]:mb-0! [&>.my-4]:my-2 [&>.my-8]:my-4">
+      <p class="mb-2 font-semibold" data-aside-title>{renderTitle}</p>
+      <div class="[&>*:last-child]:mb-0! [&>.my-4]:my-2 [&>.my-8]:my-4" data-aside-body>
         <slot />
       </div>
     </div>

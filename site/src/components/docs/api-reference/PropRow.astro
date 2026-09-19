@@ -50,19 +50,19 @@ const showAttribute = Boolean(attributeName && attributeName !== propertyName);
     <span class="inline-flex items-center whitespace-nowrap">
       <MarkdownCode>
         {propertyName}
-        {required && <span class="text-accent">*</span>}
+        {required && <span class="text-accent" data-apiref-required>*</span>}
       </MarkdownCode>
       <AnchorLink id={id} name={propertyName} />
     </span>
     {
       showAttribute && (
-        <div class="mt-1.5 text-p4 text-muted">
+        <div class="mt-1.5 text-p4 text-muted" data-apiref-attribute>
           attribute <MarkdownCode class="text-p4">{attributeName}</MarkdownCode>
         </div>
       )
     }
   </td>
-  <td class="w-full">
+  <td class="w-full" data-apiref-cell="type">
     <MarkdownCode code={type} />
   </td>
   <td>

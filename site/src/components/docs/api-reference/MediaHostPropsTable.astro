@@ -43,7 +43,7 @@ const toggleColumn = entries.some(([, def]) => Boolean(def.readonly || def.descr
           <td>
             <MarkdownCode>{name}</MarkdownCode>
           </td>
-          <td class="w-full">
+          <td class="w-full" data-apiref-cell="type">
             <MarkdownCode code={def.type} />
           </td>
           <td>
