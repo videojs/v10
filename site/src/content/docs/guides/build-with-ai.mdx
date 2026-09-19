@@ -6,6 +6,7 @@ description: 'How to give AI tools the context they need to build Video.js playe
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
+import HumanCase from '@/components/docs/HumanCase.astro';
 
 Video.js publishes all of its documentation in AI-friendly formats. This page covers how to feed that documentation to your tools.
 
@@ -18,9 +19,13 @@ AI tools might not know the Video.js API out of the box. You need to give them d
 Every doc page is available as markdown, so you can provide your model with focused content instead of HTML. Three ways to get it:
 
 <FrameworkCase frameworks={["react"]}>
-1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
+1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude.
+
+   <HumanCase>
+   The button looks something like this...
 
    <CopyMarkdownButton client:idle />
+   </HumanCase>
 
 2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 230 KB as HTML and about 4 KB as Markdown.
 
@@ -44,9 +49,13 @@ Every doc page is available as markdown, so you can provide your model with focu
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
+1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude.
+
+   <HumanCase>
+   The button looks something like this...
 
    <CopyMarkdownButton client:idle />
+   </HumanCase>
 
 2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 230 KB as HTML and about 4 KB as Markdown.
 

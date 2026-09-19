@@ -21,9 +21,11 @@ import { renderElement } from "@videojs/react";
 `renderElement` renders a UI component element, handling default tag rendering, render props (element or function), props merging, ref composition, and state-driven `className`/`style`.
 
 ```tsx title="PlayButton.tsx"
+import { useRef } from "react";
 import { renderElement } from "@videojs/react";
 
 function PlayButton({ className, style, render, ...props }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const state = { paused: true };
 
   return renderElement(
