@@ -33,19 +33,4 @@ describe('cdn entries', () => {
       }
     });
   }
-
-  it('registers the application dialogs in every skin bundle', () => {
-    // Background has no UI, so its skin bundle is the one that ships no dialogs.
-    const skinImport = /^import '@videojs\/html\/(?!background\/)[a-z-]+\/(?:minimal-)?skin';$/m;
-    const skinEntries = globSync('*.ts', { cwd: cdnSrc })
-      .map((file) => readFileSync(resolve(cdnSrc, file), 'utf8'))
-      .filter((source) => skinImport.test(source));
-
-    expect(skinEntries).toHaveLength(8);
-
-    for (const source of skinEntries) {
-      expect(source).toContain("import '@videojs/html/ui/dialog';");
-      expect(source).toContain("import '@videojs/html/ui/alert-dialog';");
-    }
-  });
 });

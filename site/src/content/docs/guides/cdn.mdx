@@ -42,11 +42,11 @@ Each installation <DocsLink slug="guides/presets">preset</DocsLink> ships its bu
 
 The other presets follow the same pattern. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
 
-A skin bundle registers every UI element its skin is built from, plus <DocsLink slug="reference/components/dialog">`<media-dialog>`</DocsLink> and <DocsLink slug="reference/components/alert-dialog">`<media-alert-dialog>`</DocsLink>, so a dialog your page opens beside the player works without another script. Any other element the skin does not compose is its own bundle under `ui/`.
+A skin bundle registers every UI element its skin is built from. Any element the skin does not compose is its own bundle under `ui/`.
 
 ## UI element bundles
 
-Each <DocsLink slug="guides/ui-components">UI element</DocsLink> is its own bundle under `ui/`, for markup that a skin bundle does not already cover: a player-only bundle, or an <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">ejected skin</DocsLink> that adds a component the packaged skin lacks.
+Each <DocsLink slug="guides/ui-components">UI element</DocsLink> is its own bundle under `ui/`, for markup that a skin bundle does not already cover: a player-only bundle, an <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">ejected skin</DocsLink> that adds a component the packaged skin lacks, or a <DocsLink slug="reference/components/dialog">dialog</DocsLink> your page opens beside a packaged skin.
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video-player.js"></script>
