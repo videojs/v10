@@ -7,7 +7,11 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   type SvtaError,
 } from '../../../media/errors';
-import { crossOriginToRequestCredentials, type MediaCrossOrigin } from '../../../network/request-credentials';
+import {
+  crossOriginToRequestCredentials,
+  type MediaCrossOrigin,
+  normalizeCrossOrigin,
+} from '../../../network/request-credentials';
 import {
   createHlsAudioEngine,
   type HlsAudioEngineConfig,
@@ -180,8 +184,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#signals.context.mediaElement.set(mediaElement);
 
       // Most-recent-wins on attach — see the video mixin.
-      // SAFETY: the IDL attribute is limited to known values.
-      const authored = mediaElement.crossOrigin as MediaCrossOrigin | null;
+      const authored = normalizeCrossOrigin(mediaElement.crossOrigin);
 
       if (authored !== null) {
         this.#crossOrigin = authored;
@@ -215,7 +218,8 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     set crossOrigin(value: MediaCrossOrigin | null) {
-      this.#crossOrigin = value;
+      // Limited to known values, as the element reflects it — see the video mixin.
+      this.#crossOrigin = normalizeCrossOrigin(value);
 
       const mediaElement = this.#signals.context.mediaElement.get();
 

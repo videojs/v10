@@ -18,7 +18,11 @@ import {
   type MaybeResolvedPresentation,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
-import { crossOriginToRequestCredentials, type MediaCrossOrigin } from '../../../network/request-credentials';
+import {
+  crossOriginToRequestCredentials,
+  type MediaCrossOrigin,
+  normalizeCrossOrigin,
+} from '../../../network/request-credentials';
 import {
   createHlsVideoEngine,
   type HlsVideoEngineConfig,
@@ -348,9 +352,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // Most-recent-wins on attach, as with `preload`: an element authored with
       // `crossorigin` (a React-rendered `<video>`, a standalone attach) is the
       // intent; otherwise what was set before attach reaches the element now.
-      // SAFETY: the IDL attribute is limited to known values, so a real element
-      // reflects only these keywords or `null`.
-      const authored = mediaElement.crossOrigin as MediaCrossOrigin | null;
+      const authored = normalizeCrossOrigin(mediaElement.crossOrigin);
 
       if (authored !== null) {
         this.#crossOrigin = authored;
@@ -409,7 +411,10 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     set crossOrigin(value: MediaCrossOrigin | null) {
-      this.#crossOrigin = value;
+      // Reflect "limited to only known values", as the element does: the
+      // attribute keeps the author's spelling, the getter and the engine see the
+      // canonical keyword. A custom element hands the raw attribute string here.
+      this.#crossOrigin = normalizeCrossOrigin(value);
 
       const mediaElement = this.#signals.context.mediaElement.get();
 

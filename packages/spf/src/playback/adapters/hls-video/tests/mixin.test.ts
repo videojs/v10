@@ -24,6 +24,7 @@ import {
   type SvtaError,
 } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
+import type { MediaCrossOrigin } from '../../../../network/request-credentials';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
 import { HlsVideoAdapter } from '../adapter';
 import { HlsVideoAdapterCore, HlsVideoMixin } from '../mixin';
@@ -522,6 +523,30 @@ describe('HlsVideoAdapterCore', () => {
 
       media.crossOrigin = 'use-credentials';
       expect(await manifestCredentials(media)).toBe('include');
+    });
+
+    it('honors any ASCII case of use-credentials, as the attribute is case-insensitive', async () => {
+      const media = new HlsVideoAdapterCore();
+      const el = document.createElement('video');
+
+      media.attach(el);
+      // A custom element delivers the raw attribute string; the type is the
+      // canonical spelling, so this is what markup can do that TypeScript can't.
+      media.crossOrigin = 'USE-CREDENTIALS' as MediaCrossOrigin;
+
+      // The getter reflects the canonical keyword; the attribute keeps the author's spelling.
+      expect(media.crossOrigin).toBe('use-credentials');
+      expect(el.getAttribute('crossorigin')).toBe('USE-CREDENTIALS');
+      expect(await manifestCredentials(media)).toBe('include');
+    });
+
+    it('reads an unknown keyword as anonymous, as the element does', async () => {
+      const media = new HlsVideoAdapterCore();
+
+      media.crossOrigin = 'bogus' as MediaCrossOrigin;
+
+      expect(media.crossOrigin).toBe('anonymous');
+      expect(await manifestCredentials(media)).toBe('same-origin');
     });
 
     it('follows the attribute as it changes, on the same engine, without rebuilding it', async () => {
