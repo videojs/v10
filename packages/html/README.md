@@ -4,6 +4,11 @@
 
 > **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
+## Agentstart
+
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
+the docs that match this package version before writing code.
+
 ## Overview
 
 `@videojs/html` is a comprehensive library for building media players with vanilla JavaScript and
@@ -25,9 +30,6 @@ import '@videojs/html/media/hlsjs-video';
 Read the docs at [videojs.org](https://videojs.org/docs/framework/html), or after installing,
 browse the bundled markdown at `node_modules/@videojs/html/docs/` (start with `llms.txt` for the
 structured index).
-
-Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
-the docs that match this package version before writing code.
 
 ## Community
 
