@@ -284,7 +284,7 @@ export function formatDetailedType(
 
           visited.add(key);
 
-          const members = project.interfaceMembers(type);
+          const members = withoutOverriddenProperties(project.interfaceMembers(type));
           if (members.length === 0) return formatType(type, removeUndefined);
 
           return `{ ${members
@@ -424,6 +424,27 @@ function formatDetailedSignature(project: OxcProject, resolved: ResolvedMember, 
   }
 
   return normalizeTypeText(sourceText(file, member)).replace(/;$/, '');
+}
+
+function withoutOverriddenProperties(members: readonly ResolvedMember[]): ResolvedMember[] {
+  const names = new Set<string>();
+  const result: ResolvedMember[] = [];
+
+  for (let index = members.length - 1; index >= 0; index--) {
+    const resolved = members[index]!;
+    const member = resolved.member;
+
+    if (member.type === 'TSPropertySignature') {
+      const name = staticName(member.key);
+      if (name && names.has(name)) continue;
+
+      if (name) names.add(name);
+    }
+
+    result.push(resolved);
+  }
+
+  return result.reverse();
 }
 
 function formatDeepPartialType(

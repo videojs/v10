@@ -19,6 +19,17 @@ export interface TapGestureOptions extends Pick<GestureProps, 'pointer' | 'disab
   target?: HTMLElement | null;
 }
 
+export interface BaseOverrideOptions {
+  inherited: boolean;
+  value?: string | null;
+}
+
+export interface OverrideOptions extends BaseOverrideOptions {
+  value?: string;
+  addListener(type: 'ready', listener: () => void): void;
+  addListener(type: 'change', listener: (value: string) => void): void;
+}
+
 export interface FixtureStore {
   readonly state: { ready: boolean };
 }

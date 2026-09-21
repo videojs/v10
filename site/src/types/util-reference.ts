@@ -8,7 +8,9 @@ import { z } from 'astro/zod';
 
 import { PropDefSchema, StateDefSchema } from './component-reference';
 
-export const ParamDefSchema = PropDefSchema;
+export const ParamDefSchema = PropDefSchema.extend({
+  rest: z.boolean().optional(),
+});
 
 export const ReturnFieldDefSchema = StateDefSchema;
 

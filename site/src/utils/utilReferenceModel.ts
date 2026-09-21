@@ -144,7 +144,11 @@ function formatSignature(name: string, overload: UtilOverload): string | undefin
     })
     .join(', ');
   const parameters = Object.entries(overload.parameters)
-    .map(([parameter, definition]) => `${parameter}${definition.required ? '' : '?'}`)
+    .map(([parameter, definition]) => {
+      if (definition.rest) return `...${parameter}`;
+
+      return `${parameter}${definition.required ? '' : '?'}`;
+    })
     .join(', ');
 
   return `${name}${typeParameters ? `<${typeParameters}>` : ''}(${parameters}): ${overload.returnType ?? overload.returnValue.type}`;

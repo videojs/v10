@@ -109,6 +109,26 @@ describe('createUtilReferenceModel', () => {
     );
   });
 
+  it('preserves rest parameters in callable signatures', () => {
+    const ref: UtilReference = {
+      name: 'useComposedRefs',
+      overloads: [
+        {
+          typeParameters: [{ name: 'T' }],
+          parameters: { refs: { type: 'OptionalRef<T>[]', rest: true } },
+          returnType: 'RefCallback<T>',
+          returnValue: { type: 'RefCallback<T>' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('useComposedRefs', ref);
+
+    expect(model && !model.isMultiOverload ? model.signature : undefined).toBe(
+      'useComposedRefs<T>(...refs): RefCallback<T>'
+    );
+  });
+
   it('builds a multi-overload model with overload H3s and H4 subsections', () => {
     const ref = {
       name: 'usePlayer',

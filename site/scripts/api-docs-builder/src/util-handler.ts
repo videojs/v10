@@ -259,6 +259,8 @@ function buildParameter(
 
   if (abbreviated && abbreviated !== type) value.detailedType = type;
 
+  if (parameter.type === 'RestElement') value.rest = true;
+
   if (!optional) value.required = true;
 
   const description = descriptions?.get(name)?.replace(/^-\s*/, '');

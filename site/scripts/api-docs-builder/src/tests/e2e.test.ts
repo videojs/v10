@@ -945,6 +945,7 @@ describe('Util pipeline (end-to-end)', () => {
       expect(parameters.isEqual!.required).toBeUndefined();
       expect(parameters.tags).toMatchObject({ type: 'string[]' });
       expect(parameters.tags!.required).toBeUndefined();
+      expect(parameters.tags!.rest).toBe(true);
     });
 
     it('controller param descriptions have "- " prefix stripped', () => {

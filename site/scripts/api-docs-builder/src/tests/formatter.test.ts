@@ -154,6 +154,14 @@ describe('formatDetailedType', () => {
     );
   });
 
+  it('keeps derived properties and method overloads when expanding heritage', () => {
+    const file = project.source(gaugeFile)!;
+
+    expect(formatDetailedType(project, parseType('OverrideOptions', file), false)).toBe(
+      "{ inherited: boolean; value?: string; addListener(type: 'ready', listener: (() => void)): void; addListener(type: 'change', listener: ((value: string) => void)): void }"
+    );
+  });
+
   it('uses display type hints with generic substitutions', () => {
     const file = project.source(gaugeFile)!;
 
