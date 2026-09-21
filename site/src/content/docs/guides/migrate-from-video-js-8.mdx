@@ -263,7 +263,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 | `spatialNavigation` | no equivalent; see [Known gaps](#known-gaps) |
 | `inactivityTimeout` | delay not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)); `inactivityTimeout: 0` maps to `visibility="always"` on the controls component |
 | `errorDisplay`, `notSupportedMessage` | the skins include an error dialog |
-| `ModalDialog` | compose a <DocsLink slug="reference/components/dialog">Dialog</DocsLink>; your application controls media playback when it opens and closes |
+| `ModalDialog` | [Modal dialogs](#modal-dialogs) |
 
 ## Techs become media components
 
@@ -462,6 +462,45 @@ export function MyPlayer() {
 Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
 
 Ejecting is also where you take on the skin's CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, so the copied source includes the skin's stylesheet next to its markup.
+
+## Modal dialogs
+
+v8's `ModalDialog` belonged to the player: the player created it, filled it, and paused playback while it was open. v10's <DocsLink slug="reference/components/dialog">Dialog</DocsLink> belongs to your application. It traps focus, isolates the page behind it, and closes on <kbd>Escape</kbd>; what it contains, and what playback does when it opens and closes, is up to you. The reference page's player modal example opens a player from a thumbnail, starts playback on open, and pauses on close.
+
+The skins register only their own error dialog, so the generic dialog is a separate import.
+
+<FrameworkCase frameworks={["html"]}>
+From the CDN, load the dialog and its parts beside the player bundle. Each part is its own bundle; drop the ones your markup does not use:
+
+```html
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/dialog.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/dialog-backdrop.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/dialog-popup.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/dialog-title.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/dialog-description.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/dialog-close.js"></script>
+```
+
+With a package manager, import the same registrations:
+
+```js
+import '@videojs/html/ui/dialog';
+import '@videojs/html/ui/dialog-backdrop';
+import '@videojs/html/ui/dialog-popup';
+import '@videojs/html/ui/dialog-title';
+import '@videojs/html/ui/dialog-description';
+import '@videojs/html/ui/dialog-close';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Import `Dialog` from `@videojs/react` and compose its parts; there is nothing else to register:
+
+```tsx
+import { Dialog } from '@videojs/react';
+```
+</FrameworkCase>
 
 ## Plugins
 
