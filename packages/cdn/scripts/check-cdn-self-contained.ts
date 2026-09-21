@@ -29,9 +29,10 @@ function main() {
     process.exit(1);
   }
 
-  const files = globSync(['*.js', 'chunks/**/*.js', 'extensions/**/*.js', 'locales/**/*.js', 'media/**/*.js'], {
-    cwd: CDN_DIR,
-  }).sort();
+  const files = globSync(
+    ['*.js', 'chunks/**/*.js', 'extensions/**/*.js', 'locales/**/*.js', 'media/**/*.js', 'ui/**/*.js'],
+    { cwd: CDN_DIR }
+  ).sort();
 
   if (files.length === 0) {
     log.error(`No JavaScript bundles found in ${CDN_DIR}.`);

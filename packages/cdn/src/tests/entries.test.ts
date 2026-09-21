@@ -17,7 +17,7 @@ function entryNames(dir: string): string[] {
 }
 
 describe('cdn entries', () => {
-  for (const subpath of ['media', 'extensions'] as const) {
+  for (const subpath of ['media', 'extensions', 'ui'] as const) {
     it(`ships one ${subpath} bundle per @videojs/html definition`, () => {
       expect(entryNames(resolve(cdnSrc, subpath))).toEqual(entryNames(resolve(htmlDefine, subpath)));
     });

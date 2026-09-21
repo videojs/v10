@@ -24,7 +24,8 @@
     "chunks",
     "extensions",
     "locales",
-    "media"
+    "media",
+    "ui"
   ],
   "type": "module",
   "sideEffects": [
@@ -57,6 +58,11 @@
       "development": "./locales/*.dev.js",
       "default": "./locales/*.js"
     },
+    "./ui/*": {
+      "types": "./ui/*.dev.d.ts",
+      "development": "./ui/*.dev.js",
+      "default": "./ui/*.js"
+    },
     "./*.css": "./*.css",
     "./*": {
       "types": "./*.dev.d.ts",
@@ -71,7 +77,7 @@
     "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts && node --import tsx ./scripts/check-cdn-skins.ts",
     "test": "vp test run",
-    "clean": "rimraf --glob '*.css' '*.d.ts' '*.js' '*.js.map' archive chunks extensions locales media 'src/locales/*.ts'"
+    "clean": "rimraf --glob '*.css' '*.d.ts' '*.js' '*.js.map' archive chunks extensions locales media ui 'src/locales/*.ts'"
   },
   "devDependencies": {
     "@videojs/cloudflare-video": "workspace:*",

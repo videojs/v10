@@ -43,11 +43,11 @@ const cdnPresets = [
 ];
 
 /**
- * One CDN bundle per media or extension entry under `src/`, or per flavor for an entry that is a directory. Each file
- * is a one-line import of the matching `@videojs/html` module; `src/tests/entries.test.ts` keeps them in step with the
- * definitions html ships so the npm and CDN delivery surfaces cannot drift.
+ * One CDN bundle per media, extension, or UI entry under `src/`, or per flavor for an entry that is a directory. Each
+ * file is a one-line import of the matching `@videojs/html` module; `src/tests/entries.test.ts` keeps them in step with
+ * the definitions html ships so the npm and CDN delivery surfaces cannot drift.
  */
-function getCdnEntries(subpath: 'media' | 'extensions') {
+function getCdnEntries(subpath: 'media' | 'extensions' | 'ui') {
   return globSync(`src/${subpath}/**/*.ts`, { cwd: packageDir })
     .map((src) => ({
       src,
@@ -61,6 +61,7 @@ function getCdnEntries(subpath: 'media' | 'extensions') {
 
 const cdnMediaEntries = getCdnEntries('media');
 const cdnExtensionEntries = getCdnEntries('extensions');
+const cdnUiEntries = getCdnEntries('ui');
 
 const cdnLocaleEntries = localeTags.map((tag) => ({
   src: `src/locales/${tag}.ts`,
@@ -73,6 +74,7 @@ export const entries = [
   ...cdnPresets.map((name) => ({ src: `src/${name}.ts`, name })),
   ...cdnMediaEntries,
   ...cdnExtensionEntries,
+  ...cdnUiEntries,
 ];
 
 function cdnStylesheetName(file: string): string | null {
@@ -94,7 +96,7 @@ function cleanCdnOutputPlugin(): BuildPlugin {
   return {
     name: 'clean-cdn-output',
     buildStart() {
-      for (const dir of ['chunks', 'extensions', 'locales', 'media']) {
+      for (const dir of ['chunks', 'extensions', 'locales', 'media', 'ui']) {
         rmSync(resolve(packageDir, dir), { recursive: true, force: true });
       }
 
@@ -231,6 +233,8 @@ export default defineConfig({
           '!locales/**',
           '!media/',
           '!media/**',
+          '!ui/',
+          '!ui/**',
         ],
         output: [
           'src/locales/**',
@@ -242,6 +246,7 @@ export default defineConfig({
           'extensions/**',
           'locales/**',
           'media/**',
+          'ui/**',
         ],
       },
       'test:ci': {
