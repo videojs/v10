@@ -7,7 +7,7 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   type SvtaError,
 } from '../../../media/errors';
-import { crossOriginToRequestCredentials } from '../../../network/request-credentials';
+import { crossOriginToRequestCredentials, type MediaCrossOrigin } from '../../../network/request-credentials';
 import {
   createHlsAudioEngine,
   type HlsAudioEngineConfig,
@@ -30,7 +30,7 @@ export interface HlsAudioAdapterProps {
    * The element's CORS-settings attribute. `use-credentials` also sends cookies with every manifest, playlist, and
    * segment request the engine makes; any other value leaves those requests at the platform default.
    */
-  crossOrigin: string | null;
+  crossOrigin: MediaCrossOrigin | null;
   disableRemotePlayback: boolean;
 }
 
@@ -70,10 +70,6 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  *   audio-only delivery even when the source is a mixed-AV HLS manifest.
  */
 export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  // See the video mixin: guards the `super` write so a base without the
-  // accessor doesn't end up with a shadowing data property.
-  const baseReflectsCrossOrigin = 'crossOrigin' in BaseClass.prototype;
-
   class HlsAudioImpl extends BaseClass {
     static readonly defaultProps: HlsAudioAdapterProps = {
       src: '',
@@ -98,7 +94,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #config: HlsAudioEngineConfig;
     #signals!: HlsAudioEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsAudioImpl.defaultProps.preload;
-    #crossOrigin: string | null = HlsAudioImpl.defaultProps.crossOrigin;
+    #crossOrigin: MediaCrossOrigin | null = HlsAudioImpl.defaultProps.crossOrigin;
     #disableRemotePlayback: boolean = HlsAudioImpl.defaultProps.disableRemotePlayback;
     #error: HlsVideoMediaError | null = null;
     /** Reported condition currently surfaced — see the video adapter's note. */
@@ -183,12 +179,14 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
 
-      // Pre-attach author intent reaches the element now; otherwise an element
-      // already carrying `crossorigin` is the intent. See the video mixin.
-      if (this.#crossOrigin !== null) {
-        if (baseReflectsCrossOrigin) super.crossOrigin = this.#crossOrigin;
-      } else {
-        this.#crossOrigin = mediaElement.crossOrigin;
+      // Most-recent-wins on attach — see the video mixin.
+      // SAFETY: the IDL attribute is limited to known values.
+      const authored = mediaElement.crossOrigin as MediaCrossOrigin | null;
+
+      if (authored !== null) {
+        this.#crossOrigin = authored;
+      } else if (this.#crossOrigin !== null) {
+        mediaElement.crossOrigin = this.#crossOrigin;
       }
     }
 
@@ -206,19 +204,22 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     // -------------------------------------------------------------------------
     // crossOrigin — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // Reflected onto the media element as usual, and the author's
-    // request-credentials intent for the engine's own fetches, read per request
-    // through the policy `#createEngine` installs. See the video mixin.
+    // Reflected onto the attached media element (`null` removes it), and the
+    // author's request-credentials intent for the engine's own fetches, read
+    // per request through the policy `#createEngine` installs. See the video
+    // mixin.
     // -------------------------------------------------------------------------
 
-    get crossOrigin(): string | null {
+    get crossOrigin(): MediaCrossOrigin | null {
       return this.#crossOrigin;
     }
 
-    set crossOrigin(value: string | null) {
+    set crossOrigin(value: MediaCrossOrigin | null) {
       this.#crossOrigin = value;
 
-      if (baseReflectsCrossOrigin) super.crossOrigin = value;
+      const mediaElement = this.#signals.context.mediaElement.get();
+
+      if (mediaElement) mediaElement.crossOrigin = value;
     }
 
     // -------------------------------------------------------------------------

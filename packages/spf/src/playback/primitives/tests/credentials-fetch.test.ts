@@ -25,12 +25,17 @@ describe('credentialsFetch', () => {
     expect(credentialsFetch(base as FetchText, undefined)).toBe(base);
   });
 
-  it('leaves the options untouched when the policy yields nothing', async () => {
+  it('leaves the request at the platform default when the policy yields nothing', async () => {
     const base = makeBase();
     const fetch = credentialsFetch(base as FetchText, () => undefined);
 
     await fetch(playlist);
-    expect(base).toHaveBeenCalledWith(playlist, undefined);
+
+    // `Request` reads an `undefined` init member as absent, so this is the default.
+    const [, options] = base.mock.calls[0]!;
+
+    expect(options?.credentials).toBeUndefined();
+    expect(new Request(playlist.url, options).credentials).toBe('same-origin');
   });
 
   it('consults the policy per request so a later change applies to the next fetch', async () => {
@@ -42,8 +47,8 @@ describe('credentialsFetch', () => {
     mode = 'include';
     await fetch(playlist);
 
-    expect(base.mock.calls[0]![1]).toBeUndefined();
-    expect(base.mock.calls[1]![1]).toEqual({ credentials: 'include' });
+    expect(base.mock.calls[0]![1]?.credentials).toBeUndefined();
+    expect(base.mock.calls[1]![1]?.credentials).toBe('include');
   });
 
   it('hands the policy the resource so it can decide per host', async () => {
@@ -56,8 +61,8 @@ describe('credentialsFetch', () => {
     await fetch(playlist);
     await fetch(gated);
 
-    expect(base.mock.calls[0]![1]).toBeUndefined();
-    expect(base.mock.calls[1]![1]).toEqual({ credentials: 'include' });
+    expect(base.mock.calls[0]![1]?.credentials).toBeUndefined();
+    expect(base.mock.calls[1]![1]?.credentials).toBe('include');
   });
 
   it('lets an explicit per-call credentials mode win over the policy', async () => {

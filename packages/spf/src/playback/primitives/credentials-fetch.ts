@@ -14,21 +14,23 @@ type CredentialableFetch = (addressable: Resource, options?: FetchOptions) => Pr
 
 /**
  * Decorate a fetch so every request carries the mode the policy resolves to. The decorated fetch's type is preserved,
- * so this wraps the manifest, playlist, and segment fetches alike; with no policy the fetch is returned as is.
+ * so this wraps the manifest, playlist, and segment fetches alike.
  *
  * The policy runs per request rather than once at decoration: it mirrors the media element's `crossorigin` attribute,
- * which an author can change after the fetch was built. An explicit per-call `credentials` still wins.
+ * which an author can change after the fetch was built. An explicit per-call `credentials` still wins, and a policy
+ * yielding `undefined` leaves the request at the platform default — `Request` treats an `undefined` init member as
+ * absent.
  */
 export function credentialsFetch<Fetch extends CredentialableFetch>(
   baseFetch: Fetch,
   policy: RequestCredentialsPolicy | undefined
 ): Fetch {
+  // No policy at all (as opposed to a policy that yields no mode): nothing to
+  // decorate, so the fetch is returned as is.
   if (policy === undefined) return baseFetch;
 
-  return ((addressable: Resource, options?: FetchOptions) => {
-    const credentials = isFunction(policy) ? policy(addressable) : policy;
-    if (credentials === undefined) return baseFetch(addressable, options);
+  const resolve = isFunction(policy) ? policy : () => policy;
 
-    return baseFetch(addressable, { credentials, ...options });
-  }) as Fetch;
+  return ((addressable: Resource, options?: FetchOptions) =>
+    baseFetch(addressable, { credentials: resolve(addressable), ...options })) as Fetch;
 }

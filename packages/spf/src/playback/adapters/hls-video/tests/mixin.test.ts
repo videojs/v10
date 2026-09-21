@@ -25,6 +25,7 @@ import {
 } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
+import { HlsVideoAdapter } from '../adapter';
 import { HlsVideoAdapterCore, HlsVideoMixin } from '../mixin';
 
 describe('HlsVideoAdapterCore', () => {
@@ -550,7 +551,7 @@ describe('HlsVideoAdapterCore', () => {
       expect(await manifestCredentials(media)).toBe('include');
     });
 
-    it("keeps an explicit crossOrigin over the attached element's attribute", async () => {
+    it('adopts an authored crossorigin attribute over an earlier set (most-recent-wins on attach, as preload)', async () => {
       const media = new HlsVideoAdapterCore();
       const el = document.createElement('video');
 
@@ -558,8 +559,9 @@ describe('HlsVideoAdapterCore', () => {
       media.crossOrigin = 'use-credentials';
       media.attach(el);
 
-      expect(media.crossOrigin).toBe('use-credentials');
-      expect(await manifestCredentials(media)).toBe('include');
+      expect(media.crossOrigin).toBe('anonymous');
+      expect(el.crossOrigin).toBe('anonymous');
+      expect(await manifestCredentials(media)).toBe('same-origin');
     });
 
     it('defers to a consumer-supplied requestCredentials policy', async () => {
@@ -569,44 +571,36 @@ describe('HlsVideoAdapterCore', () => {
       expect(await manifestCredentials(media)).toBe('omit');
     });
 
-    it('does not shadow the accessor on a base without one', () => {
+    it('reflects onto the attached media element, before and after attach, and null removes it', () => {
       const media = new HlsVideoAdapterCore();
-
-      media.crossOrigin = 'use-credentials';
-      media.crossOrigin = 'anonymous';
-
-      expect(Object.hasOwn(media, 'crossOrigin')).toBe(false);
-      expect(media.crossOrigin).toBe('anonymous');
-    });
-
-    it('reflects onto the media element through a base that owns the attribute', () => {
-      class Base {
-        target: HTMLMediaElement | null = null;
-        attach(target: HTMLMediaElement) {
-          this.target = target;
-        }
-        detach() {}
-        get crossOrigin(): string | null {
-          return this.target?.crossOrigin ?? null;
-        }
-        set crossOrigin(value: string | null) {
-          if (this.target) this.target.crossOrigin = value;
-        }
-      }
-
-      class TestAdapter extends HlsVideoMixin(Base) {}
-
-      const media = new TestAdapter();
       const el = document.createElement('video');
 
-      // Set before attach: the base cannot reflect yet, so attach applies it.
+      // Set before attach: nothing to reflect onto yet, so attach applies it.
       media.crossOrigin = 'use-credentials';
       media.attach(el);
-      expect(el.crossOrigin).toBe('use-credentials');
+      expect(el.getAttribute('crossorigin')).toBe('use-credentials');
 
       // Set after attach: reflected immediately.
       media.crossOrigin = 'anonymous';
-      expect(el.crossOrigin).toBe('anonymous');
+      expect(el.getAttribute('crossorigin')).toBe('anonymous');
+
+      // Unset: the attribute goes with it, as on the element's own IDL attribute.
+      media.crossOrigin = null;
+      expect(media.crossOrigin).toBeNull();
+      expect(el.hasAttribute('crossorigin')).toBe(false);
+    });
+
+    it('reflects onto the element the same way through the HTMLMediaAdapter base', () => {
+      const media = new HlsVideoAdapter();
+      const el = document.createElement('video');
+
+      media.attach(el);
+      media.crossOrigin = 'use-credentials';
+      expect(el.getAttribute('crossorigin')).toBe('use-credentials');
+      expect(media.crossOrigin).toBe('use-credentials');
+
+      media.crossOrigin = null;
+      expect(el.hasAttribute('crossorigin')).toBe(false);
     });
   });
 
