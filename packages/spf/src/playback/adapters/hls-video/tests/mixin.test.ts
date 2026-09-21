@@ -12,6 +12,7 @@
  *
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
+import type { MediaCrossOriginType } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
@@ -25,7 +26,6 @@ import {
   type SvtaError,
 } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
-import type { MediaCrossOrigin } from '../../../../network/request-credentials';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
 import { HlsAudioAdapterCore } from '../../hls-audio/mixin';
 import { HlsBackgroundVideoAdapterCore } from '../../hls-background-video/mixin';
@@ -586,7 +586,7 @@ describe('HlsVideoAdapterCore', () => {
       media.attach(el);
       // A custom element delivers the raw attribute string; the type is the
       // canonical spelling, so this is what markup can do that TypeScript can't.
-      media.crossOrigin = 'USE-CREDENTIALS' as MediaCrossOrigin;
+      media.crossOrigin = 'USE-CREDENTIALS' as MediaCrossOriginType;
 
       // The getter reflects the canonical keyword; the attribute keeps the author's spelling.
       expect(media.crossOrigin).toBe('use-credentials');
@@ -597,7 +597,7 @@ describe('HlsVideoAdapterCore', () => {
     it('reads an unknown keyword as anonymous, as the element does', async () => {
       const media = new HlsVideoAdapterCore();
 
-      media.crossOrigin = 'bogus' as MediaCrossOrigin;
+      media.crossOrigin = 'bogus' as MediaCrossOriginType;
 
       expect(media.crossOrigin).toBe('anonymous');
       expect(await manifestCredentials(media)).toBe('same-origin');
