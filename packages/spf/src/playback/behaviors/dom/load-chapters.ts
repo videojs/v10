@@ -38,12 +38,16 @@ import {
 } from '../../../media/hls/parse-json-chapters';
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
 import { getSessionData, isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
-import { fetchResolvableText } from '../../../network/fetch';
+import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../../network/fetch';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 
 type LoadChaptersFsmState = 'preconditions-unmet' | 'loading';
 
 /** The chapters track for `preferredSubtitleLanguage` leads, when the document titles chapters in it. */
-export type LoadChaptersConfig = Pick<TextSelectionConfig, 'preferredSubtitleLanguage'>;
+export type LoadChaptersConfig = Pick<TextSelectionConfig, 'preferredSubtitleLanguage'> & {
+  /** The `credentials` mode the chapters-document request is made with; absent → the platform default. */
+  requestCredentials?: RequestCredentialsPolicy;
+};
 
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
@@ -60,7 +64,11 @@ function findChaptersDocument(presentation: MaybeResolvedPresentation): string |
 }
 
 /** Fetch and parse one chapters document; a failure other than our own abort is warned about and yields nothing. */
-async function loadChaptersDocument(uri: string, signal: AbortSignal): Promise<Chapter[]> {
+async function loadChaptersDocument(
+  fetchResolvableText: FetchText,
+  uri: string,
+  signal: AbortSignal
+): Promise<Chapter[]> {
   try {
     const text = await fetchResolvableText({ url: uri }, { signal });
     // The tag's contract is an Apple JSON chapters document; the parser is
@@ -85,6 +93,7 @@ function loadChaptersSetup({
   config: LoadChaptersConfig;
 }): Reactor<LoadChaptersFsmState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(state.presentation.get(), context.mediaElement.get()));
+  const fetchResolvableText = credentialsFetch(defaultFetchResolvableText, config.requestCredentials);
 
   return createMachineReactor<LoadChaptersFsmState>({
     initial: 'preconditions-unmet',
@@ -102,7 +111,7 @@ function loadChaptersSetup({
           const uri = findChaptersDocument(presentation)!;
           const controller = new AbortController();
 
-          void loadChaptersDocument(uri, controller.signal).then((chapters) => {
+          void loadChaptersDocument(fetchResolvableText, uri, controller.signal).then((chapters) => {
             // A document that settled before the abort still must not project
             // onto a media element the state has since left.
             if (controller.signal.aborted) return;

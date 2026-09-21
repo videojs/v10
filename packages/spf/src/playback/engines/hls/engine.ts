@@ -74,6 +74,7 @@ import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../be
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import type { RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
@@ -324,6 +325,14 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    * complete playlist stops it after the first resolve). Override to tune live reload timing.
    */
   reschedule?: Reschedule<ResolvedTrack>;
+  /**
+   * The `credentials` mode every engine request (manifest, media playlists, segments, chapters) is made with: a fixed
+   * mode, or a policy consulted per request. The media adapters supply a policy that reads the element's `crossorigin`
+   * attribute — `use-credentials` maps to `'include'`, so cookie-gated cross-origin streams work the way they do under
+   * native playback — which is why this is a policy rather than a value: the engine is built once and outlives
+   * attribute changes. Absent, or `undefined` from the policy, leaves the platform default (`same-origin`).
+   */
+  requestCredentials?: RequestCredentialsPolicy;
 }
 
 // ============================================================================

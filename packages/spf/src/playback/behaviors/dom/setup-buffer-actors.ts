@@ -58,6 +58,7 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { failoverFetch } from '../../primitives/failover-fetch';
 import type { MessagePipelines } from '../../primitives/segment-load-pipeline';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';
@@ -223,6 +224,8 @@ export const setupVideoBufferActors = defineBehavior({
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & {
       getCdnId?: GetCdnId;
+      /** The `credentials` mode segment requests are made with; absent → the platform default. */
+      requestCredentials?: RequestCredentialsPolicy;
       /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
       videoMessagePipelines?: MessagePipelines;
     };
@@ -243,7 +246,8 @@ export const setupVideoBufferActors = defineBehavior({
       (next) => state.bandwidthState.set(next)
     );
     // Engine `config` layers over the per-type defaults; `failoverFetch` reads
-    // its `selectedKey` + `getCdnId` from the merged result.
+    // its `selectedKey` + `getCdnId` from the merged result. Credentials wrap
+    // innermost so a failed credentialed request still trips the CDN.
     const typeConfig = { ...VIDEO_TYPE_CONFIG, ...config };
 
     return setupBufferActors({
@@ -252,7 +256,7 @@ export const setupVideoBufferActors = defineBehavior({
       config: {
         ...typeConfig,
         messagePipelines: config.videoMessagePipelines,
-        fetch: failoverFetch(trackedFetch, state, typeConfig),
+        fetch: failoverFetch(credentialsFetch(trackedFetch, config.requestCredentials), state, typeConfig),
       },
     });
   },
@@ -282,6 +286,8 @@ export const setupAudioBufferActors = defineBehavior({
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & {
       getCdnId?: GetCdnId;
+      /** The `credentials` mode segment requests are made with; absent → the platform default. */
+      requestCredentials?: RequestCredentialsPolicy;
       /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
       audioMessagePipelines?: MessagePipelines;
     };
@@ -295,7 +301,7 @@ export const setupAudioBufferActors = defineBehavior({
       config: {
         ...typeConfig,
         messagePipelines: config.audioMessagePipelines,
-        fetch: failoverFetch(fetchStream, state, typeConfig),
+        fetch: failoverFetch(credentialsFetch(fetchStream, config.requestCredentials), state, typeConfig),
       },
     });
   },

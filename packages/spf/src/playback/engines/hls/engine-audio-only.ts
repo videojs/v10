@@ -46,6 +46,7 @@ import { resolveAudioTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
+import type { RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
@@ -174,6 +175,12 @@ export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineS
   getCdnId?: GetCdnId;
   /** Non-zero-PTS relocation (spike): the reduce seam (tier knob); defaults to per-track own. */
   deriveStartMediaTime?: DeriveStartMediaTime;
+  /**
+   * The `credentials` mode every engine request is made with: a fixed mode, or a policy consulted per request. The
+   * media adapter supplies a policy reading the element's `crossorigin` (`use-credentials` → `'include'`). See the
+   * video engine's `HlsVideoEngineConfig['requestCredentials']`.
+   */
+  requestCredentials?: RequestCredentialsPolicy;
 }
 
 // ============================================================================

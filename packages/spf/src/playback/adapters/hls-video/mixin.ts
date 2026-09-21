@@ -1,4 +1,4 @@
-import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
+import { type MediaCrossOriginType, type MediaStreamType, MediaStreamTypes, toMediaCrossOrigin } from '@videojs/media';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
@@ -18,6 +18,7 @@ import {
   type MaybeResolvedPresentation,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
+import { crossOriginToRequestCredentials } from '../../../network/request-credentials';
 import {
   createHlsVideoEngine,
   type HlsVideoEngineConfig,
@@ -50,6 +51,12 @@ export type { HlsVideoMediaError } from './error-surface';
 export interface HlsVideoAdapterProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
+  /**
+   * The element's CORS-settings attribute: a mode, the bare attribute (`''`, read as `anonymous`), or `null` for none.
+   * `use-credentials` also sends cookies with every manifest, playlist, and segment request the engine makes, the way
+   * the browser does under native playback; any other value leaves those requests at the platform default.
+   */
+  crossOrigin: MediaCrossOriginType | '' | null;
   disableRemotePlayback: boolean;
   streamType: HlsVideoMediaStreamType;
 }
@@ -129,6 +136,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     static readonly defaultProps: HlsVideoAdapterProps = {
       src: '',
       preload: '',
+      crossOrigin: null,
       disableRemotePlayback: false,
       streamType: MediaStreamTypes.UNKNOWN,
     };
@@ -151,6 +159,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #config: HlsVideoEngineConfig;
     #signals!: HlsVideoEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsVideoImpl.defaultProps.preload;
+    #crossOrigin: MediaCrossOriginType | null = toMediaCrossOrigin(HlsVideoImpl.defaultProps.crossOrigin);
     #disableRemotePlayback: boolean = HlsVideoImpl.defaultProps.disableRemotePlayback;
     #streamType: HlsVideoMediaStreamType = HlsVideoImpl.defaultProps.streamType;
     #isUserStreamType = false;
@@ -335,6 +344,17 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
+
+      // Most-recent-wins on attach, as with `preload`: an element authored with
+      // `crossorigin` (a React-rendered `<video>`, a standalone attach) is the
+      // intent; otherwise what was set before attach reaches the element now.
+      const authored = toMediaCrossOrigin(mediaElement.crossOrigin);
+
+      if (authored !== null) {
+        this.#crossOrigin = authored;
+      } else if (this.#crossOrigin !== null) {
+        mediaElement.crossOrigin = this.#crossOrigin;
+      }
     }
 
     detach(): void {
@@ -368,6 +388,33 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // value = '' resets the IDL mirror (so `get preload` reflects '') but does
       // not patch state — the engine keeps its current preload until an explicit
       // W3C value replaces it.
+    }
+
+    // -------------------------------------------------------------------------
+    // crossOrigin — synchronous IDL attribute (WHATWG §4.8.11.2)
+    // The element's CORS-settings attribute, reflected onto the attached media
+    // element (`null` removes it), and additionally the author's
+    // request-credentials intent for the engine's own fetches:
+    // `use-credentials` makes every manifest, playlist, and segment request
+    // carry cookies (`credentials: 'include'`), the same way the browser fetches
+    // under native playback. Anything else leaves the platform default. The
+    // engine reads the mirror through the `requestCredentials` policy
+    // `#createEngine` installs, per request, so no engine state is touched.
+    // -------------------------------------------------------------------------
+
+    get crossOrigin(): MediaCrossOriginType | null {
+      return this.#crossOrigin;
+    }
+
+    set crossOrigin(value: MediaCrossOriginType | '' | null) {
+      // Reflect "limited to only known values", as the element does: the
+      // attribute keeps the author's spelling, the getter and the engine see the
+      // canonical keyword. A custom element hands the raw attribute string here.
+      this.#crossOrigin = toMediaCrossOrigin(value);
+
+      const mediaElement = this.#signals.context.mediaElement.get();
+
+      if (mediaElement) mediaElement.crossOrigin = value;
     }
 
     // -------------------------------------------------------------------------
@@ -492,6 +539,10 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #createEngine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
       return createHlsVideoEngine({
         ...this.#config,
+        // A policy, not a value: the engine outlives `crossOrigin` changes and
+        // consults this on every request. A consumer-supplied policy wins.
+        requestCredentials:
+          this.#config?.requestCredentials ?? (() => crossOriginToRequestCredentials(this.#crossOrigin)),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
