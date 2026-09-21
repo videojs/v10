@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import { VJS10_DEMO_AUDIO } from '@/consts';
+
 import {
   generateHTMLInstallCode,
   generateHTMLUsageCode,
@@ -202,7 +204,7 @@ describe('generateHTMLUsageCode', () => {
 
     expect(result.html).toContain('<audio-player>');
     expect(result.html).toContain('<audio-skin>');
-    expect(result.html).toContain('<audio src=');
+    expect(result.html).toContain(`<audio src="${VJS10_DEMO_AUDIO}"`);
     expect(result.html).not.toContain('playsinline');
   });
 
@@ -554,7 +556,7 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { AudioPlayer, AudioSkin, Audio } from '@videojs/react/audio'");
     expect(code).toContain('<AudioPlayer>');
     expect(code).toContain('<AudioSkin>');
-    expect(code).toContain('<Audio src="');
+    expect(code).toContain(`<Audio src="${VJS10_DEMO_AUDIO}"`);
     expect(code).not.toContain('playsInline');
   });
 

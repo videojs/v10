@@ -1,4 +1,5 @@
 import {
+  VJS10_DEMO_AUDIO,
   VJS10_DEMO_CLOUDFLARE,
   VJS10_DEMO_DASH,
   VJS10_DEMO_LIVE,
@@ -66,9 +67,7 @@ function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
 
   const map: Record<Renderer, string> = {
     'html5-video': VJS10_DEMO_VIDEO.mp4,
-    // Pre-existing quirk: the audio default points at a video .mp4. Fixing it
-    // needs a real audio asset we don't have — tracked as a follow-up.
-    'html5-audio': VJS10_DEMO_VIDEO.mp4,
+    'html5-audio': VJS10_DEMO_AUDIO,
     hls: VJS10_DEMO_VIDEO.hls,
     'background-video': VJS10_DEMO_VIDEO.mp4,
     dash: VJS10_DEMO_DASH,

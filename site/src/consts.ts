@@ -68,6 +68,7 @@ export const VJS10_DEMO_VIDEO: VideoSource = {
   mp4: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4',
   poster: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp',
 };
+export const VJS10_DEMO_AUDIO = `https://stream.mux.com/${VJS10_DEMO_VIDEO.id}/audio.m4a`;
 
 export const VJS10_MULTI_AUDIO_DEMO_VIDEO: StreamingVideoSource = {
   id: 's41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ',

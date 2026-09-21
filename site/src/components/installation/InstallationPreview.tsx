@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
 import {
+  VJS10_DEMO_AUDIO,
   VJS10_DEMO_BACKGROUND_VIDEO_MP4,
   VJS10_DEMO_BACKGROUND_VIDEO_POSTER,
   VJS10_DEMO_LIVE,
@@ -76,6 +77,8 @@ function resolveSource($useCase: UseCase, $renderer: Renderer, $sourceUrl: strin
   if (preset.live) return { url: VJS10_DEMO_LIVE.hls, kind: 'hls', demo: true };
 
   if ($useCase === 'background-video') return { url: VJS10_DEMO_BACKGROUND_VIDEO_MP4, kind: 'file', demo: true };
+
+  if (preset.mediaType === 'audio') return { url: VJS10_DEMO_AUDIO, kind: 'file', demo: true };
 
   return { url: VJS10_DEMO_VIDEO.mp4, kind: 'file', demo: true };
 }

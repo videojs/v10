@@ -8,7 +8,7 @@ export default function BasicUsage() {
     <AudioPlayer>
       <Container className="react-audio-basic">
         <Audio className="react-audio-basic__media" controls preload="metadata">
-          <source src="{{VJS10_DEMO_VIDEO_MP4}}" />
+          <source src="{{VJS10_DEMO_AUDIO_M4A}}" />
         </Audio>
       </Container>
     </AudioPlayer>
