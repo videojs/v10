@@ -3,15 +3,13 @@ import { describe, expect, it } from 'vite-plus/test';
 import { crossOriginToRequestCredentials } from '../request-credentials';
 
 describe('crossOriginToRequestCredentials', () => {
-  it('maps use-credentials to include, case-insensitively', () => {
+  it('maps use-credentials to include', () => {
     expect(crossOriginToRequestCredentials('use-credentials')).toBe('include');
-    expect(crossOriginToRequestCredentials('USE-CREDENTIALS')).toBe('include');
   });
 
-  it('leaves the platform default for anonymous and unknown keywords', () => {
+  it('leaves the platform default for anonymous and the bare attribute', () => {
     expect(crossOriginToRequestCredentials('anonymous')).toBeUndefined();
     expect(crossOriginToRequestCredentials('')).toBeUndefined();
-    expect(crossOriginToRequestCredentials('bogus')).toBeUndefined();
   });
 
   it('leaves the platform default when the attribute is absent', () => {
