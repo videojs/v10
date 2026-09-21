@@ -94,9 +94,12 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   refuses `generateRequest` during the session — measured, not
   hypothetical — the behavior hands over to `media/dom/fairplay-legacy.ts`
   on that refusal alone, awaiting the EME detach first because
-  `webkitSetMediaKeys` is synchronous, and resuming from the cached
-  `webkitneedkey` payload rather than an `element.load()`, which under a
-  live receiver would destroy the session being established.
+  `webkitSetMediaKeys` is synchronous, then reloading the resource once
+  the revoked MediaSource blob has left the `<source>` children. Serving
+  the cached `webkitneedkey` payload instead was tried and the legacy CDM
+  refused the session outright (`MEDIA_KEYERR_UNKNOWN`, no license ever
+  requested), so the `load()` is required and the payload from before it
+  is not reused; position and playing state are restored across it.
 - **Per-key-system composability:** each system is one
   `KeySystemModule` value (`media/drm.ts` for the DOM-free contract,
   `media/dom/key-systems.ts` for `widevineKeySystem`,
