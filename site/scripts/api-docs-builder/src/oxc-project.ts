@@ -1045,7 +1045,9 @@ function declarationNames(declaration: Declaration): string[] {
   return name ? [name] : [];
 }
 
-function declarationName(declaration: Declaration): string | undefined {
+function declarationName(declaration: NamedDeclaration): string | undefined {
+  if (declaration.type === 'VariableDeclarator') return staticName(declaration.id);
+
   if (
     declaration.type === 'FunctionDeclaration' ||
     declaration.type === 'TSDeclareFunction' ||

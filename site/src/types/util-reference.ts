@@ -29,6 +29,7 @@ export const UtilOverloadSchema = z.object({
   label: z.string().optional(),
   description: z.string().optional(),
   typeParameters: z.array(UtilTypeParameterSchema).optional(),
+  returnType: z.string().optional(),
   parameters: z.record(z.string(), ParamDefSchema),
   returnValue: ReturnValueSchema,
 });

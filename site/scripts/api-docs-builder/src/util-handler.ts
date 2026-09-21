@@ -226,6 +226,7 @@ function buildFunctionOverload(
 
         return typeParameter;
       }) ?? [],
+    returnType: returnType ? formatType({ file, type: returnType }, false) : 'unknown',
     parameters,
     returnValue: returnType ? buildReturnValue(project, { file, type: returnType }) : { type: 'unknown' },
   };

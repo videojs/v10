@@ -864,6 +864,7 @@ describe('Util pipeline (end-to-end)', () => {
       const useStore = findByName('useStore', 'react');
 
       expect(useStore!.data.overloads[0]!.typeParameters).toEqual([{ name: 'S' }]);
+      expect(useStore!.data.overloads[0]!.returnType).toBe('S');
       expect(useStore!.data.overloads[1]!.typeParameters).toEqual([
         { name: 'S', constraint: 'AnyStore' },
         { name: 'R' },

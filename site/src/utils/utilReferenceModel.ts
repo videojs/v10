@@ -147,7 +147,7 @@ function formatSignature(name: string, overload: UtilOverload): string | undefin
     .map(([parameter, definition]) => `${parameter}${definition.required ? '' : '?'}`)
     .join(', ');
 
-  return `${name}${typeParameters ? `<${typeParameters}>` : ''}(${parameters}): ${overload.returnValue.type}`;
+  return `${name}${typeParameters ? `<${typeParameters}>` : ''}(${parameters}): ${overload.returnType ?? overload.returnValue.type}`;
 }
 
 export function buildUtilReferenceTocHeadings(

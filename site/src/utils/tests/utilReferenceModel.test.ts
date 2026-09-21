@@ -95,8 +95,9 @@ describe('createUtilReferenceModel', () => {
       overloads: [
         {
           typeParameters: [{ name: 'Features', constraint: 'AnyPlayerFeature[]', const: true }],
+          returnType: 'CreatePlayerResult<PlayerStore<Features>>',
           parameters: { config: { type: 'CreatePlayerConfig<Features>', required: true } },
-          returnValue: { type: 'CreatePlayerResult<PlayerStore<Features>>' },
+          returnValue: { type: 'object' },
         },
       ],
     };
