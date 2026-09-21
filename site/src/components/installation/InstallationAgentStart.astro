@@ -1,18 +1,28 @@
 ---
-import A from '@/components/typography/A.astro';
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import CopyButton from '@/components/CopyButton';
 import P from '@/components/typography/P.astro';
+
+const prompt = 'Install the Video.js skill using one method. In Codex, run `codex plugin marketplace add videojs/skills`, then `codex plugin add videojs@videojs`, and start a new session. In Claude Code, run `claude plugin marketplace add videojs/skills`, then `claude plugin install videojs@videojs`, and start a new session or run `/reload-plugins`. In VS Code or Cursor, install `https://github.com/videojs/skills` as a plugin from source. For another agent, run `npx skills add https://github.com/videojs/skills --skill videojs` and select the agent. Then use the Video.js skill when working on this project.';
 ---
 
-<P>
-  Install the <A href="https://github.com/videojs/skills">Video.js skill</A> using one method. In Codex, run{' '}<MarkdownCode
-    >codex plugin marketplace add videojs/skills</MarkdownCode
-  >, then <MarkdownCode>codex plugin add videojs@videojs</MarkdownCode>, and start a new session. In Claude Code, run{' '}<MarkdownCode
-    >claude plugin marketplace add videojs/skills</MarkdownCode
-  >, then <MarkdownCode>claude plugin install videojs@videojs</MarkdownCode>, and start a new session or run{' '}<MarkdownCode
-    >/reload-plugins</MarkdownCode
-  >. In VS Code or Cursor, install <MarkdownCode>https://github.com/videojs/skills</MarkdownCode> as a plugin from source.
-  For another agent, run <MarkdownCode
-    >npx skills add https://github.com/videojs/skills --skill videojs</MarkdownCode
-  >{' '}and select the agent. Then use the Video.js skill when working on this project.
-</P>
+<P>Paste this prompt into your coding agent:</P>
+
+<div
+  class="mx-auto my-6 max-w-3xl overflow-hidden rounded-xl corner-squircle border border-line bg-surface shadow-xs"
+  data-agent-prompt-card
+>
+  <pre class="m-0 overflow-x-auto whitespace-pre-wrap bg-soot p-5"><code
+      class="font-mono text-code leading-relaxed text-manila-light"
+      data-agent-prompt>{prompt}</code
+    ></pre>
+  <div class="flex justify-end border-t border-line bg-surface-raised p-3" data-llms-ignore>
+    <CopyButton
+      client:idle
+      copyFrom={{ container: '[data-agent-prompt-card]', target: '[data-agent-prompt]' }}
+      className="inline-flex h-9 cursor-pointer items-center rounded-lg corner-squircle border border-line bg-surface px-3 text-p3 font-semibold shadow-xs select-none intent:border-line-strong intent:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold disabled:cursor-wait"
+      copied="Copied"
+    >
+      Copy prompt
+    </CopyButton>
+  </div>
+</div>

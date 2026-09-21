@@ -7,16 +7,22 @@ import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
 
 The [Video.js skill](https://github.com/videojs/skills) gives coding agents the context they need to build, customize, debug, and migrate Video.js players. It teaches the agent how Video.js 10 is composed, then points it to documentation that matches the version installed in your project.
 
+## AI Quickstart
+
+<InstallationAgentStart />
+
+## Video.js Skill
+
 The skill contains guidance and Markdown references. It does not install Video.js, run background services, or connect to an account.
 
-## Install the Video.js skill
+### Install the skill
 
-Choose one method for your coding agent.
-
-### Codex
+#### Codex
 
 Add the Video.js plugin marketplace, then install the plugin:
 
@@ -27,7 +33,7 @@ codex plugin add videojs@videojs
 
 Start a new Codex session after installation.
 
-### Claude Code
+#### Claude Code
 
 Add the Video.js plugin marketplace, then install the plugin:
 
@@ -38,7 +44,7 @@ claude plugin install videojs@videojs
 
 Start a new Claude Code session, or run `/reload-plugins` in the current session. You can invoke the skill directly with `/videojs:videojs`.
 
-### VS Code
+#### VS Code
 
 Enable `chat.plugins.enabled`, run **Chat: Install Plugin From Source** from the Command Palette, and enter:
 
@@ -46,7 +52,7 @@ Enable `chat.plugins.enabled`, run **Chat: Install Plugin From Source** from the
 https://github.com/videojs/skills
 ```
 
-### Cursor
+#### Cursor
 
 Open **Customize**, select **Plugins**, choose **From GitHub Repository**, and enter:
 
@@ -54,7 +60,7 @@ Open **Customize**, select **Plugins**, choose **From GitHub Repository**, and e
 https://github.com/videojs/skills
 ```
 
-### Other coding agents
+#### Other coding agents
 
 Use the open `skills` installer and select your agent when prompted:
 
@@ -64,15 +70,7 @@ npx skills add https://github.com/videojs/skills --skill videojs
 
 Project-local installation is the default. Add `-g` if you want the skill available in every project.
 
-## Let your agent install it
-
-Paste this prompt into your coding agent:
-
-```text
-Install the Video.js skill using one method. In Codex, run `codex plugin marketplace add videojs/skills`, then `codex plugin add videojs@videojs`, and start a new session. In Claude Code, run `claude plugin marketplace add videojs/skills`, then `claude plugin install videojs@videojs`, and start a new session or run `/reload-plugins`. In VS Code or Cursor, install `https://github.com/videojs/skills` as a plugin from source. For another agent, run `npx skills add https://github.com/videojs/skills --skill videojs` and select the agent. Then use the Video.js skill when working on this project.
-```
-
-## Use the skill
+### Use the skill
 
 Ask for the player you want to build or the problem you want to solve. For example:
 
@@ -84,7 +82,7 @@ Ask for the player you want to build or the problem you want to solve. For examp
 
 The skill checks your framework and installation method before choosing player, skin, and media code. It also checks imports and playback setup against current documentation before handing the work back.
 
-## How the skill finds current docs
+### How the skill finds current docs
 
 The skill uses documentation in this order:
 
@@ -94,7 +92,13 @@ The skill uses documentation in this order:
 
 This order matters because most model training data describes Video.js 8. Video.js 10 has a different component model, package structure, and installation flow.
 
-## Use the docs without the skill
+### Troubleshoot
+
+If your agent does not use the skill, start a new session or reload plugins, then ask it to use the Video.js skill explicitly. If it writes `videojs()`, `data-setup`, `registerPlugin`, or other Video.js 8 APIs, ask it to read the installed `llms.txt` before changing code.
+
+Report problems with the skill in the [videojs/skills repository](https://github.com/videojs/skills/issues). Report package and documentation problems in [videojs/v10](https://github.com/videojs/v10/issues).
+
+## Use the docs
 
 You can still provide documentation directly when a tool cannot install skills.
 
@@ -103,24 +107,44 @@ You can still provide documentation directly when a tool cannot install skills.
 Each docs page has a **Copy page** menu. Copy the Markdown, open the `.md` version, or send the page to ChatGPT or Claude.
 
 <HumanCase>
-<CopyMarkdownButton client:idle />
+<ContentWidth>
+  <CopyMarkdownButton client:idle />
+</ContentWidth>
 </HumanCase>
 
-### Fetch Markdown
+### Open a Markdown URL
 
-Add `.md` to any docs URL, or request the normal URL with an `Accept: text/markdown` header:
+Add `.md` to any docs URL. For this page, use:
+
+<FrameworkCase frameworks={["react"]}>
+```text
+https://videojs.org/docs/framework/react/guides/build-with-ai.md
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```text
+https://videojs.org/docs/framework/html/guides/build-with-ai.md
+```
+</FrameworkCase>
+
+Each docs page also advertises its Markdown URL as an alternate format so compatible tools can discover it.
+
+### Request Markdown
+
+Request the normal docs URL with an `Accept: text/markdown` header:
 
 <FrameworkCase frameworks={["react"]}>
 ```sh title="Terminal"
 curl -H "Accept: text/markdown" \
-  https://videojs.org/docs/framework/react/reference/components/play-button
+  https://videojs.org/docs/framework/react/guides/build-with-ai
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```sh title="Terminal"
 curl -H "Accept: text/markdown" \
-  https://videojs.org/docs/framework/html/reference/components/play-button
+  https://videojs.org/docs/framework/html/guides/build-with-ai
 ```
 </FrameworkCase>
 
@@ -135,12 +159,6 @@ curl -H "Accept: text/markdown" \
 </FrameworkCase>
 
 The `llms-full.txt` files contain the complete documentation corpus. Use them only when your tool requires one file because they are larger than most useful task contexts.
-
-## Troubleshoot the skill
-
-If your agent does not use the skill, start a new session or reload plugins, then ask it to use the Video.js skill explicitly. If it writes `videojs()`, `data-setup`, `registerPlugin`, or other Video.js 8 APIs, ask it to read the installed `llms.txt` before changing code.
-
-Report problems with the skill in the [videojs/skills repository](https://github.com/videojs/skills/issues). Report package and documentation problems in [videojs/v10](https://github.com/videojs/v10/issues).
 
 ## Related guides
 
