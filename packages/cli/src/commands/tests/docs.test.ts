@@ -844,12 +844,10 @@ describe('handleDocs', () => {
         .mocked(p.select)
         .mock.calls.map(([options]) => options)
         .find(({ message }) => message === 'Media source type');
+      if (!mediaPrompt) throw new Error('Expected the media source prompt');
 
-      expect(mediaPrompt).toBeDefined();
       expect(
-        mediaPrompt.options.every(({ value }: { value: Parameters<typeof supportsCdnInstall>[0] }) =>
-          supportsCdnInstall(value)
-        )
+        mediaPrompt.options.every(({ value }) => supportsCdnInstall(value as Parameters<typeof supportsCdnInstall>[0]))
       ).toBe(true);
     });
   });
