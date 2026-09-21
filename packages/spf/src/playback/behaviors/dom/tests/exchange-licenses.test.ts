@@ -631,8 +631,9 @@ describe('exchangeLicenses', () => {
 
   it('reports 4004 and opens nothing when the license server resolves to nothing after negotiation', async () => {
     // The resolver answered a URL when negotiation offered the system, then
-    // the source mutated underneath it — the re-read at entry answers
-    // nothing, and the failure must be a report, not a POST to "undefined".
+    // the source mutated underneath it — the re-read when the session opens
+    // answers nothing, and the failure must be a report, not a POST to
+    // "undefined".
     const { state, sessions, reactor } = setupExchangeLicenses({
       drm: { 'com.widevine.alpha': { licenseUrl: () => undefined } },
     });
@@ -641,6 +642,34 @@ describe('exchangeLicenses', () => {
     expect(state.errors.get()?.[0]?.data).toMatchObject({ keySystem: 'com.widevine.alpha' });
     expect(sessions).toHaveLength(0);
     expect(fetchDrm).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('resolves the license server per session, so a source swap that drops it is reported on the next request', async () => {
+    // Event-driven path: each `encrypted` event is its own session, and a
+    // same-URL source swap that changes only `drm` never resets the
+    // presentation, so the behavior stays in `licensing` while the resolver
+    // starts answering nothing.
+    let licenseUrl: string | undefined = 'https://license.example.com/fairplay';
+    const { state, sessions, mediaElement, reactor } = setupExchangeLicenses({
+      keys: [FAIRPLAY_KEY],
+      keySystem: 'com.apple.fps',
+      drm: { 'com.apple.fps': { licenseUrl: () => licenseUrl } },
+    });
+
+    mediaElement.dispatchEvent(
+      Object.assign(new Event('encrypted'), { initDataType: 'sinf', initData: new Uint8Array([1]).buffer })
+    );
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+
+    licenseUrl = undefined;
+    mediaElement.dispatchEvent(
+      Object.assign(new Event('encrypted'), { initDataType: 'sinf', initData: new Uint8Array([2]).buffer })
+    );
+
+    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_BAD_LICENSE_REQUEST]));
+    expect(sessions).toHaveLength(1);
 
     reactor.destroy();
   });

@@ -128,23 +128,26 @@ function setupExchangeLicenses({
           const presentation = state.presentation.get()!;
           const controller = new AbortController();
 
-          // Resolved once per negotiation. `keySystemCandidates` only offered
-          // this system because its license server resolved — but the resolver
-          // re-runs here, and a source mutated between the two reads can answer
-          // nothing. Report that instead of POSTing to a literal "undefined".
           const entry = config.drm[keySystem]!;
-          const licenseUrl = resolveDrmUrl(entry.licenseUrl);
           const module_ = config.keySystems.find((candidate) => candidate.keySystem === keySystem);
 
-          if (licenseUrl === undefined) {
-            report({
-              code: SVTA_BAD_LICENSE_REQUEST,
-              data: { keySystem, reason: 'license server resolved to nothing after negotiation' },
-            });
-            return;
-          }
+          // The license server is resolved per session, like the headers and
+          // transforms the session reads. `keySystemCandidates` only offered
+          // this system because its server resolved, but the resolver re-runs
+          // here, and a source mutated since — a same-URL swap that changes
+          // only `drm` never resets the presentation — can answer nothing.
+          // Report that instead of POSTing to a literal "undefined".
+          const open = (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
+            const licenseUrl = resolveDrmUrl(entry.licenseUrl);
 
-          const open = (initDataType: string, initData: Uint8Array<ArrayBuffer>) =>
+            if (licenseUrl === undefined) {
+              report({
+                code: SVTA_BAD_LICENSE_REQUEST,
+                data: { keySystem, reason: 'license server resolved to nothing after negotiation' },
+              });
+              return;
+            }
+
             openLicenseSession({
               mediaKeys,
               keySystem,
@@ -156,6 +159,7 @@ function setupExchangeLicenses({
               signal: controller.signal,
               report,
             });
+          };
 
           // One session per manifest-carried init data of the negotiated
           // system, projected by its own module. Empty when the module's keys

@@ -220,6 +220,35 @@ describe('setupAirPlayFairPlay', () => {
     reactor.destroy();
   });
 
+  it('resolves the license server per request, so a source swap that drops it is reported, not POSTed', async () => {
+    const eme = makeFakeEme();
+
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+
+    // Resolver-backed, as the Media installs it: each field reads whatever
+    // source is current. A same-URL swap that changes only `drm` does not
+    // reset the presentation, so this state is never exited — the resolver
+    // simply starts answering `undefined`.
+    let licenseUrl: string | undefined = LICENSE_URL;
+    const { state, context, reactor } = setup({
+      drm: { 'com.apple.fps': { licenseUrl: () => licenseUrl, serverCertificateUrl: CERT_URL } },
+    });
+    const video = context.mediaElement.get()!;
+
+    receiverRequest(video, [1, 2, 3]);
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+
+    licenseUrl = undefined;
+    receiverRequest(video, [1, 2, 3]);
+
+    await vi.waitFor(() => expect(state.errors.get()?.[0]?.code).toBe(SVTA_UNSUPPORTED_DRM_SYSTEM));
+    expect(state.errors.get()?.[0]?.data).toMatchObject({ reason: 'no license server for the receiver' });
+    // The disconnect-time request opens nothing rather than posting to "undefined".
+    expect(eme.sessions).toHaveLength(1);
+
+    reactor.destroy();
+  });
+
   it('ignores sinf requests, which belong to the MSE pipeline', async () => {
     const eme = makeFakeEme();
 
@@ -463,11 +492,11 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
   });
 
   /** EME reaches `generateRequest` and is refused, with the legacy API available and its payload already delivered. */
-  async function refuseEme() {
+  async function refuseEme(overrides: Parameters<typeof setup>[0] = {}) {
     const eme = makeFakeEme();
 
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const harness = setup();
+    const harness = setup(overrides);
     const video = harness.context.mediaElement.get()!;
 
     goWireless(video, true);
@@ -526,6 +555,27 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
 
     // The refusal it recovered from is not reported: it no longer decides anything.
     expect(state.errors.get() ?? []).toEqual([]);
+
+    reactor.destroy();
+  });
+
+  it('reports a license server that drops out mid-session instead of opening a legacy session', async () => {
+    let licenseUrl: string | undefined = LICENSE_URL;
+    const { webkit, state, reactor, video } = await refuseEme({
+      drm: { 'com.apple.fps': { licenseUrl: () => licenseUrl, serverCertificateUrl: CERT_URL } },
+    });
+
+    await vi.waitFor(() => expect(webkit.created).toHaveLength(1));
+
+    // The same-URL swap that drops the entry: the state is never exited, the
+    // resolver just starts answering nothing. The receiver's next key request
+    // must be reported, as the EME path reports it, not silently dropped.
+    licenseUrl = undefined;
+    needKey(video);
+
+    await vi.waitFor(() => expect(state.errors.get()?.[0]?.code).toBe(SVTA_UNSUPPORTED_DRM_SYSTEM));
+    expect(state.errors.get()?.[0]?.data).toMatchObject({ reason: 'no license server for the receiver' });
+    expect(webkit.created).toHaveLength(1);
 
     reactor.destroy();
   });

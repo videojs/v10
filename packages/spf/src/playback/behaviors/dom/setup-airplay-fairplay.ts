@@ -205,23 +205,27 @@ function setupAirPlayFairPlaySetup({
               return fetchServerCertificate(fairPlayAirPlayKeySystem, entry, url, signal);
             })());
 
-          const negotiate = async (): Promise<MediaKeys | undefined> => {
+          /**
+           * The current source's license server, or a report and `undefined`. Resolved per request, like the headers
+           * and transforms the session reads: the gate proved a server once, but the receiver asks again on disconnect,
+           * and a same-URL source swap that drops the entry never exits this state. Saying so beats POSTing to a
+           * literal "undefined".
+           */
+          const receiverLicenseUrl = (): string | undefined => {
             const licenseUrl = resolveDrmUrl(entry.licenseUrl);
+            if (licenseUrl !== undefined) return licenseUrl;
 
-            // The gate resolved this once already; a source mutated since can
-            // answer nothing, and POSTing to a literal "undefined" is worse
-            // than saying so.
-            if (licenseUrl === undefined) {
-              report({
-                code: SVTA_UNSUPPORTED_DRM_SYSTEM,
-                data: {
-                  keySystems: [fairPlayAirPlayKeySystem.keySystem],
-                  reason: 'no license server for the receiver',
-                },
-              });
-              return undefined;
-            }
+            report({
+              code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+              data: {
+                keySystems: [fairPlayAirPlayKeySystem.keySystem],
+                reason: 'no license server for the receiver',
+              },
+            });
+            return undefined;
+          };
 
+          const negotiate = async (): Promise<MediaKeys | undefined> => {
             const negotiated = await requestKeySystemAccess(
               [fairPlayAirPlayKeySystem],
               { video: [AIRPLAY_CONTENT_TYPE], audio: [] },
@@ -244,23 +248,20 @@ function setupAirPlayFairPlaySetup({
 
             // FairPlay needs its application certificate before the CDM will
             // generate an SPC, so this precedes the attach and every caller
-            // awaits it.
-            const certificateUrl = resolveDrmUrl(entry.serverCertificateUrl);
+            // awaits it. `serverCertificate` answers `undefined` when none is
+            // configured; EME, unlike the legacy API, can proceed without one.
+            try {
+              const certificate = await serverCertificate();
 
-            if (certificateUrl !== undefined) {
-              try {
-                const certificate = await serverCertificate();
+              if (certificate) await mediaKeys.setServerCertificate(certificate);
+            } catch (error) {
+              if (signal.aborted) return undefined;
 
-                if (certificate) await mediaKeys.setServerCertificate(certificate);
-              } catch (error) {
-                if (signal.aborted) return undefined;
-
-                report({
-                  code: SVTA_DRM_CERTIFICATE_ERROR,
-                  data: { keySystem: fairPlayAirPlayKeySystem.keySystem, reason: String(error) },
-                });
-                return undefined;
-              }
+              report({
+                code: SVTA_DRM_CERTIFICATE_ERROR,
+                data: { keySystem: fairPlayAirPlayKeySystem.keySystem, reason: String(error) },
+              });
+              return undefined;
             }
 
             if (signal.aborted) return undefined;
@@ -314,8 +315,10 @@ function setupAirPlayFairPlaySetup({
            * that refusal, so an unaffected WebKit never installs the old key system at all.
            */
           const serveLegacy = async (initData: ArrayBuffer) => {
-            const licenseUrl = resolveDrmUrl(entry.licenseUrl);
-            if (licenseUrl === undefined || signal.aborted) return;
+            if (signal.aborted) return;
+
+            const licenseUrl = receiverLicenseUrl();
+            if (licenseUrl === undefined) return;
 
             // Mandatory here, unlike EME: it is packed into the session's init
             // data, so there is nothing to open a session with.
@@ -466,12 +469,15 @@ function setupAirPlayFairPlaySetup({
             const mediaKeys = await (negotiation ??= negotiate());
             if (!mediaKeys || signal.aborted || useLegacy) return;
 
+            const licenseUrl = receiverLicenseUrl();
+            if (licenseUrl === undefined) return;
+
             openLicenseSession({
               mediaKeys,
               keySystem: fairPlayAirPlayKeySystem.keySystem,
               module: fairPlayAirPlayKeySystem,
               entry,
-              licenseUrl: resolveDrmUrl(entry.licenseUrl)!,
+              licenseUrl,
               initDataType,
               initData,
               signal,
