@@ -15,6 +15,9 @@ const HTML_DIST_DIR = resolve(
 );
 const PREFIX = '\x1b[35m[check-cdn-skins]\x1b[0m';
 const forbiddenRuntime = /(?:virtual:vjsc|vjsc\/components|vjsc\/target|@videojs\/core\/vjsc)/;
+// Application dialogs are not part of any skin template, so the preset entries register them explicitly. Match the
+// element's `tagName` definition rather than the bare tag, which the shared `media-dialog-*` parts also contain.
+const applicationDialogs = ['media-dialog', 'media-alert-dialog'];
 const skins = [
   {
     entry: 'video',
@@ -93,6 +96,11 @@ function main(): void {
 
       assert(source.includes(skin.skinTag), `${entry} does not register ${skin.skinTag}`);
       assert(source.includes(skin.playerTag), `${entry} does not register ${skin.playerTag}`);
+
+      for (const tag of applicationDialogs) {
+        assert(definesElement(source, tag), `${entry} does not register ${tag}`);
+      }
+
       assert(source.includes('<media-container'), `${entry} does not contain its static skin template`);
       assert(!forbiddenRuntime.test(source), `${entry} retains a VJSC compiler runtime reference`);
       assert(existsSync(resolve(CDN_DIR, `${entry}.map`)), `${entry} is missing its source map`);
@@ -116,6 +124,10 @@ function main(): void {
   }
 
   console.log(PREFIX, `✅ ${skins.length} skins have dev/prod bundles, complete CSS, and source maps`);
+}
+
+function definesElement(source: string, tag: string): boolean {
+  return new RegExp(`tagName\\s*=\\s*[\`'"]${tag}[\`'"]`).test(source);
 }
 
 function readCdn(file: string): string {

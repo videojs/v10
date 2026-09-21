@@ -36,13 +36,13 @@ Each installation <DocsLink slug="guides/presets">preset</DocsLink> ships its bu
 
 | File | Registers |
 | --- | --- |
-| `video.js` | `<video-player>`, `<video-skin>`, and the UI elements the skin composes |
-| `video-minimal.js` | `<video-player>`, `<video-minimal-skin>`, and the UI elements the minimal skin composes |
+| `video.js` | `<video-player>`, `<video-skin>`, the UI elements the skin composes, and the application dialogs |
+| `video-minimal.js` | `<video-player>`, `<video-minimal-skin>`, the UI elements the minimal skin composes, and the application dialogs |
 | `video-player.js` | `<video-player>` alone, for markup without a packaged skin |
 
 The other presets follow the same pattern. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
 
-A skin bundle registers every UI element its skin is built from. Any element the skin does not compose is its own bundle under `ui/`.
+A skin bundle registers every UI element its skin is built from, plus <DocsLink slug="reference/components/dialog">`<media-dialog>`</DocsLink> and <DocsLink slug="reference/components/alert-dialog">`<media-alert-dialog>`</DocsLink>, so a dialog your page opens beside the player works without another script. Any other element the skin does not compose is its own bundle under `ui/`.
 
 ## UI element bundles
 
