@@ -26,6 +26,9 @@ Read the docs at [videojs.org](https://videojs.org/docs/framework/html), or afte
 browse the bundled markdown at `node_modules/@videojs/html/docs/` (start with `llms.txt` for the
 structured index).
 
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
+the docs that match this package version before writing code.
+
 ## Community
 
 If you need help with anything related to Video.js 10, or if you'd like to casually chat with other

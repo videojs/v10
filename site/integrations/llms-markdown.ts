@@ -915,6 +915,8 @@ export function generateRootIndex({
 
   content += `> ${SITE_DESCRIPTION}\n\n`;
 
+  content += `> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n\n`;
+
   content += `## Documentation\n\n`;
 
   for (const fw of sortedFrameworks) {
@@ -981,6 +983,8 @@ export function generateDocsIndex(
 
   content += `> Every page below is also available as Markdown at its \`.md\` URL. `;
   content += `The whole set in one file${size}: ${siteUrl}/docs/framework/${framework}/llms-full.txt\n\n`;
+
+  content += `> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.\n\n`;
 
   // Get sidebar filtered for this framework (production only)
   if (!isValidFramework(framework)) return content;

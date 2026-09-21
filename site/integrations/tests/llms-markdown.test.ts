@@ -378,6 +378,9 @@ describe('generateRootIndex', () => {
 
     expect(index).toContain(`> ${SITE_DESCRIPTION}\n`);
     expect(index).toContain(
+      '> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n'
+    );
+    expect(index).toContain(
       '- [HTML documentation](https://videojs.org/docs/framework/html/llms.txt): Every HTML guide and reference page, each with a one-line description.\n' +
         '- [React documentation](https://videojs.org/docs/framework/react/llms.txt): Every React guide'
     );
@@ -411,6 +414,9 @@ describe('generateDocsIndex', () => {
 
     expect(index).toContain(
       'The whole set in one file (about 250k tokens): https://videojs.org/docs/framework/html/llms-full.txt'
+    );
+    expect(index).toContain(
+      '> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.'
     );
     expect(index).toContain(
       '## Guides\n\n' +

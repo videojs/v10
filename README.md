@@ -31,6 +31,9 @@ If you'd like to get started and learn more, you can find our documentation on o
 - [Website][site]
 - [Documentation][docs]
 
+Using an AI coding agent? Install the [Video.js skill][videojs-skill] for current guidance on building,
+customizing, debugging, and migrating Video.js players.
+
 ## Community
 
 If you need help with anything related to Video.js 10, or if you'd like to casually chat with other
@@ -61,6 +64,7 @@ participating in this project you agree to abide by its terms.
 [coc]: https://github.com/videojs/video.js/blob/main/CODE_OF_CONDUCT.md
 [site]: http://videojs.org
 [docs]: http://videojs.org/docs
+[videojs-skill]: https://github.com/videojs/skills
 [package]: https://www.npmjs.com/package/@videojs/core
 [package-badge]: https://img.shields.io/npm/v/@videojs/core?label=@videojs/core
 [discord]: https://discord.gg/JBqHh485uF

@@ -1,0 +1,18 @@
+---
+import A from '@/components/typography/A.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+---
+
+<P>
+  Install the <A href="https://github.com/videojs/skills">Video.js skill</A> using one method. In Codex, run{' '}<MarkdownCode
+    >codex plugin marketplace add videojs/skills</MarkdownCode
+  >, then <MarkdownCode>codex plugin add videojs@videojs</MarkdownCode>, and start a new session. In Claude Code, run{' '}<MarkdownCode
+    >claude plugin marketplace add videojs/skills</MarkdownCode
+  >, then <MarkdownCode>claude plugin install videojs@videojs</MarkdownCode>, and start a new session or run{' '}<MarkdownCode
+    >/reload-plugins</MarkdownCode
+  >. In VS Code or Cursor, install <MarkdownCode>https://github.com/videojs/skills</MarkdownCode> as a plugin from source.
+  For another agent, run <MarkdownCode
+    >npx skills add https://github.com/videojs/skills --skill videojs</MarkdownCode
+  >{' '}and select the agent. Then use the Video.js skill when working on this project.
+</P>
