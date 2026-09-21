@@ -17,6 +17,7 @@ import { collectDispatchedEvents, collectFires } from './event-handler.js';
 import { abbreviateType, formatDetailedType } from './formatter.js';
 import {
   expressionText,
+  getJSDoc,
   getJSDocDescription,
   type NamedDeclaration,
   type OxcProject,
@@ -1140,7 +1141,9 @@ function extractPublicMethodNames(filePath: string, className: string, project: 
       member.kind !== 'method' ||
       member.static ||
       member.accessibility === 'private' ||
-      member.accessibility === 'protected'
+      member.accessibility === 'protected' ||
+      member.key.type === 'PrivateIdentifier' ||
+      getJSDoc(resolved.file, member)?.tags.has('internal')
     ) {
       return [];
     }

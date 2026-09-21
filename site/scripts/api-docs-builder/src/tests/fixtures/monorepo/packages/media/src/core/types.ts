@@ -15,6 +15,9 @@ export const MediaStreamTypes = {
   UNKNOWN: 'unknown',
 } as const;
 
+export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
+export type MediaStreamTypeKey = keyof typeof MediaStreamTypes;
+
 export interface EventLike<Detail = void> {
   readonly type: string;
   readonly timeStamp: number;

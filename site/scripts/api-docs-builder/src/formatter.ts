@@ -5,10 +5,12 @@ import type { OxcProject, ResolvedMember, ResolvedType, SourceFile } from './oxc
 import {
   getJSDoc,
   isOptionalParameter,
+  literalValue,
   parameterTypeAnnotation,
   sourceText,
   staticName,
   typeNameText,
+  unwrapObjectExpression,
   unwrapType,
 } from './oxc-project.js';
 import type { PropDef } from './types.js';
@@ -298,6 +300,23 @@ export function formatDetailedType(
       .join(' & ');
   }
 
+  if (node.type === 'TSIndexedAccessType') {
+    const objectName = typeQueryName(node.objectType);
+    const indexName = keyofTypeQueryName(node.indexType);
+
+    if (objectName && objectName === indexName) {
+      const values = formatConstObjectUnion(project, type.file, objectName, 'values');
+      if (values) return values;
+    }
+  }
+
+  const keyofName = keyofTypeQueryName(node);
+
+  if (keyofName) {
+    const keys = formatConstObjectUnion(project, type.file, keyofName, 'keys');
+    if (keys) return keys;
+  }
+
   return formatType(type, removeUndefined);
 }
 
@@ -528,8 +547,68 @@ function formatSignature(
     return `${name}${member.optional ? '?' : ''}(${params}): ${returnType}`;
   }
 
-  // Call and construct signatures fall back to source text, which ends in the member's own semicolon.
+  if (member.type === 'TSCallSignatureDeclaration' || member.type === 'TSConstructSignatureDeclaration') {
+    const typeParameters = member.typeParameters ? normalizeTypeText(sourceText(file, member.typeParameters)) : '';
+    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions)).join(', ');
+    const returnType = member.returnType
+      ? formatType({ file, type: member.returnType.typeAnnotation, substitutions }, false)
+      : 'void';
+    const prefix = member.type === 'TSConstructSignatureDeclaration' ? 'new ' : '';
+
+    return `${prefix}${typeParameters}(${params}): ${returnType}`;
+  }
+
   return normalizeTypeText(sourceText(file, member)).replace(/;$/, '');
+}
+
+function typeQueryName(type: TSType): string | undefined {
+  const node = unwrapType(type);
+
+  return node.type === 'TSTypeQuery' && node.exprName.type === 'Identifier' ? node.exprName.name : undefined;
+}
+
+function keyofTypeQueryName(type: TSType): string | undefined {
+  const node = unwrapType(type);
+
+  return node.type === 'TSTypeOperator' && node.operator === 'keyof' ? typeQueryName(node.typeAnnotation) : undefined;
+}
+
+function formatConstObjectUnion(
+  project: OxcProject,
+  file: SourceFile,
+  name: string,
+  members: 'keys' | 'values'
+): string | undefined {
+  const resolved = project.resolveName(file.filePath, name);
+  if (resolved?.declaration.type !== 'VariableDeclarator') return undefined;
+
+  const object = unwrapObjectExpression(resolved.declaration.init);
+  if (!object) return undefined;
+
+  const literals: string[] = [];
+
+  for (const property of object.properties) {
+    if (property.type !== 'Property') return undefined;
+
+    if (members === 'keys') {
+      const key = staticName(property.key);
+      if (key === undefined) return undefined;
+
+      literals.push(formatLiteralValue(key));
+      continue;
+    }
+
+    const value = literalValue(property.value);
+    if (value === undefined) return undefined;
+
+    literals.push(formatLiteralValue(value));
+  }
+
+  return literals.length > 0 ? uniq(literals).join(' | ') : 'never';
+}
+
+function formatLiteralValue(value: string | number | boolean | null): string {
+  return normalizeQuotes(String(JSON.stringify(value)));
 }
 
 function formatParameter(

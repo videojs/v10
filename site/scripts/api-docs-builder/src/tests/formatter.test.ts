@@ -97,11 +97,25 @@ describe('formatType', () => {
       'string | number | null | undefined'
     );
   });
+
+  it('formats call and construct signatures with type substitutions', () => {
+    const type = parseType('{ (state: State): Result; new <Value>(store: Store): PlayerController<Store> }');
+    const substitutions = new Map<string, ResolvedType>([
+      ['State', parseType("'ready'")],
+      ['Result', parseType('boolean')],
+      ['Store', parseType('VideoPlayerStore')],
+    ]);
+
+    expect(formatType({ ...type, substitutions }, false)).toBe(
+      "{ (state: 'ready'): boolean; new <Value>(store: VideoPlayerStore): PlayerController<VideoPlayerStore> }"
+    );
+  });
 });
 
 describe('formatDetailedType', () => {
   const project = new OxcProject(FIXTURE_ROOT);
   const gaugeFile = path.join(FIXTURE_ROOT, 'packages/core/src/core/ui/gauge/core.ts');
+  const mediaTypesFile = path.join(FIXTURE_ROOT, 'packages/media/src/core/types.ts');
 
   it('expands a local alias through the Oxc project resolver', () => {
     const file = project.source(gaugeFile)!;
@@ -114,6 +128,22 @@ describe('formatDetailedType', () => {
     const file = project.source(gaugeFile)!;
 
     expect(formatDetailedType(project, parseType('UnknownType', file), false)).toBe('UnknownType');
+  });
+
+  it('expands indexed access over a const object to its literal values', () => {
+    const file = project.source(mediaTypesFile)!;
+
+    expect(formatDetailedType(project, parseType('MediaStreamType', file), false)).toBe(
+      "'on-demand' | 'live' | 'unknown'"
+    );
+  });
+
+  it('expands keyof over a const object to its literal keys', () => {
+    const file = project.source(mediaTypesFile)!;
+
+    expect(formatDetailedType(project, parseType('MediaStreamTypeKey', file), false)).toBe(
+      "'ON_DEMAND' | 'LIVE' | 'UNKNOWN'"
+    );
   });
 });
 

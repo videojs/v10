@@ -848,6 +848,27 @@ describe('Util pipeline (end-to-end)', () => {
 
       expect(useStore!.data.overloads[0]!.label).toBeUndefined();
     });
+
+    it('applies type substitutions inside call signatures', () => {
+      const useStore = findByName('useStore', 'react');
+      const selector = useStore!.data.overloads[1]!.parameters.selector;
+
+      expect(selector).toEqual({
+        type: '{ (state: S): R; displayName?: string }',
+        required: true,
+      });
+    });
+
+    it('applies type substitutions inside construct signatures', () => {
+      const createPlayer = findByName('createPlayer', 'html');
+      const controller = createPlayer!.data.overloads[0]!.returnValue.fields!.PlayerController;
+
+      expect(controller).toMatchObject({
+        type: 'object',
+        detailedType:
+          '{ new (): PlayerController<VideoPlayerStore>; new <Result>(selector: Selector<VideoPlayerStore, Result>): PlayerController<VideoPlayerStore> }',
+      });
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -1740,6 +1761,13 @@ describe('Media element pipeline (end-to-end)', () => {
       // Video methods = html-media-adapter methods + html-video-adapter methods, deduped + sorted.
       // Lifecycle methods (attach/detach/destroy) and accessors are excluded.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play', 'requestFullscreen']);
+    });
+
+    it('excludes ECMAScript-private and @internal methods', () => {
+      const methods = findElement('SimpleVideo')!.reference.platforms.html.methods;
+
+      expect(methods).not.toContain('privateMethod');
+      expect(methods).not.toContain('internalMethod');
     });
 
     it('extracts native passthrough properties from the shared base host classes', () => {
