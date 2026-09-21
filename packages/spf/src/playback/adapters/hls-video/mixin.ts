@@ -360,8 +360,6 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       } else {
         this.#crossOrigin = mediaElement.crossOrigin;
       }
-
-      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(this.#crossOrigin));
     }
 
     detach(): void {
@@ -404,7 +402,9 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // the engine's own fetches: `use-credentials` makes every manifest,
     // playlist, and segment request carry cookies (`credentials: 'include'`),
     // the same way the browser fetches under native playback. Anything else
-    // leaves the platform default. See `crossOriginToRequestCredentials`.
+    // leaves the platform default. The engine reads it through the
+    // `requestCredentials` policy `#createEngine` installs, per request, so
+    // no engine state needs updating here.
     // -------------------------------------------------------------------------
 
     get crossOrigin(): string | null {
@@ -415,8 +415,6 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#crossOrigin = value;
 
       if (baseReflectsCrossOrigin) super.crossOrigin = value;
-
-      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(value));
     }
 
     // -------------------------------------------------------------------------
@@ -541,6 +539,10 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #createEngine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
       return createHlsVideoEngine({
         ...this.#config,
+        // A policy, not a value: the engine outlives `crossOrigin` changes and
+        // consults this on every request. A consumer-supplied policy wins.
+        requestCredentials:
+          this.#config?.requestCredentials ?? (() => crossOriginToRequestCredentials(this.#crossOrigin)),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },

@@ -190,8 +190,6 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       } else {
         this.#crossOrigin = mediaElement.crossOrigin;
       }
-
-      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(this.#crossOrigin));
     }
 
     detach(): void {
@@ -209,8 +207,8 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
     // crossOrigin — synchronous IDL attribute (WHATWG §4.8.11.2)
     // Reflected onto the media element as usual, and the author's
-    // request-credentials intent for the engine's own fetches. See the video
-    // mixin and `crossOriginToRequestCredentials`.
+    // request-credentials intent for the engine's own fetches, read per request
+    // through the policy `#createEngine` installs. See the video mixin.
     // -------------------------------------------------------------------------
 
     get crossOrigin(): string | null {
@@ -221,8 +219,6 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#crossOrigin = value;
 
       if (baseReflectsCrossOrigin) super.crossOrigin = value;
-
-      this.#signals.state.requestCredentials.set(crossOriginToRequestCredentials(value));
     }
 
     // -------------------------------------------------------------------------
@@ -322,6 +318,9 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #createEngine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
       return createHlsAudioEngine({
         ...this.#config,
+        // A policy, not a value — see the video mixin. A consumer-supplied one wins.
+        requestCredentials:
+          this.#config?.requestCredentials ?? (() => crossOriginToRequestCredentials(this.#crossOrigin)),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },

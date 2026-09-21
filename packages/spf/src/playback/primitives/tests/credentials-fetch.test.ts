@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { effect } from '../../../core/signals/effect';
-import { signal } from '../../../core/signals/primitives';
-import type { MaybeResolvedPresentation } from '../../../media/types';
 import type { FetchOptions, FetchText, Resource } from '../../../network/fetch';
 import { credentialsFetch } from '../credentials-fetch';
 
@@ -12,78 +9,62 @@ function makeBase() {
   return vi.fn<(addressable: Resource, options?: FetchOptions) => Promise<string>>(async () => 'body');
 }
 
-/** A behavior's narrow state: `presentation` is always declared; the credentials slot only when materialized. */
-function makeState(requestCredentials?: RequestCredentials) {
-  return {
-    presentation: signal<MaybeResolvedPresentation | undefined>({ url: 'https://cdn.example.com/master.m3u8' }),
-    requestCredentials: signal<RequestCredentials | undefined>(requestCredentials),
-  };
-}
-
 describe('credentialsFetch', () => {
-  it('forwards the slot value as the request credentials mode', async () => {
+  it('forwards a fixed mode as the request credentials', async () => {
     const base = makeBase();
-    const fetch = credentialsFetch(base as FetchText, makeState('include'));
+    const fetch = credentialsFetch(base as FetchText, 'include');
 
     await expect(fetch(playlist, { signal: new AbortController().signal })).resolves.toBe('body');
     expect(base).toHaveBeenCalledWith(playlist, expect.objectContaining({ credentials: 'include' }));
     expect(base.mock.calls[0]![1]!.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('leaves the options untouched when the slot is unset', async () => {
+  it('returns the fetch untouched when there is no policy', () => {
     const base = makeBase();
-    const fetch = credentialsFetch(base as FetchText, makeState());
+
+    expect(credentialsFetch(base as FetchText, undefined)).toBe(base);
+  });
+
+  it('leaves the options untouched when the policy yields nothing', async () => {
+    const base = makeBase();
+    const fetch = credentialsFetch(base as FetchText, () => undefined);
 
     await fetch(playlist);
     expect(base).toHaveBeenCalledWith(playlist, undefined);
   });
 
-  it('no-ops when the slot is not materialized', async () => {
+  it('consults the policy per request so a later change applies to the next fetch', async () => {
     const base = makeBase();
-    const { presentation } = makeState();
-    const fetch = credentialsFetch(base as FetchText, { presentation });
-    const options = { signal: new AbortController().signal };
-
-    await fetch(playlist, options);
-    expect(base).toHaveBeenCalledWith(playlist, options);
-  });
-
-  it('reads the slot per request so a later change applies to the next fetch', async () => {
-    const base = makeBase();
-    const state = makeState();
-    const fetch = credentialsFetch(base as FetchText, state);
+    let mode: RequestCredentials | undefined;
+    const fetch = credentialsFetch(base as FetchText, () => mode);
 
     await fetch(playlist);
-    state.requestCredentials.set('include');
+    mode = 'include';
     await fetch(playlist);
 
     expect(base.mock.calls[0]![1]).toBeUndefined();
     expect(base.mock.calls[1]![1]).toEqual({ credentials: 'include' });
   });
 
-  it('lets an explicit per-call credentials mode win over the slot', async () => {
+  it('hands the policy the resource so it can decide per host', async () => {
     const base = makeBase();
-    const fetch = credentialsFetch(base as FetchText, makeState('include'));
+    const gated = { url: 'https://gated.example.com/0.m4s' };
+    const fetch = credentialsFetch(base as FetchText, (resource) =>
+      new URL(resource.url).host === 'gated.example.com' ? 'include' : undefined
+    );
+
+    await fetch(playlist);
+    await fetch(gated);
+
+    expect(base.mock.calls[0]![1]).toBeUndefined();
+    expect(base.mock.calls[1]![1]).toEqual({ credentials: 'include' });
+  });
+
+  it('lets an explicit per-call credentials mode win over the policy', async () => {
+    const base = makeBase();
+    const fetch = credentialsFetch(base as FetchText, 'include');
 
     await fetch(playlist, { credentials: 'omit' });
     expect(base).toHaveBeenCalledWith(playlist, { credentials: 'omit' });
-  });
-
-  it('does not subscribe the calling effect to the slot', async () => {
-    const base = makeBase();
-    const state = makeState();
-    const fetch = credentialsFetch(base as FetchText, state);
-    const runs = vi.fn();
-
-    const stop = effect(() => {
-      runs();
-      void fetch(playlist);
-    });
-
-    state.requestCredentials.set('include');
-    await Promise.resolve();
-
-    expect(runs).toHaveBeenCalledTimes(1);
-    stop();
   });
 });

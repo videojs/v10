@@ -39,12 +39,15 @@ import {
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
 import { getSessionData, isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../../network/fetch';
-import { credentialsFetch } from '../../primitives/credentials-fetch';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 
 type LoadChaptersFsmState = 'preconditions-unmet' | 'loading';
 
 /** The chapters track for `preferredSubtitleLanguage` leads, when the document titles chapters in it. */
-export type LoadChaptersConfig = Pick<TextSelectionConfig, 'preferredSubtitleLanguage'>;
+export type LoadChaptersConfig = Pick<TextSelectionConfig, 'preferredSubtitleLanguage'> & {
+  /** The `credentials` mode the chapters-document request is made with; absent → the platform default. */
+  requestCredentials?: RequestCredentialsPolicy;
+};
 
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
@@ -90,9 +93,7 @@ function loadChaptersSetup({
   config: LoadChaptersConfig;
 }): Reactor<LoadChaptersFsmState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() => deriveState(state.presentation.get(), context.mediaElement.get()));
-  // The document fetch carries the adapter's request credentials when that
-  // optional slot is materialized; not declared here, same as `failedCdns`.
-  const fetchResolvableText = credentialsFetch(defaultFetchResolvableText, state);
+  const fetchResolvableText = credentialsFetch(defaultFetchResolvableText, config.requestCredentials);
 
   return createMachineReactor<LoadChaptersFsmState>({
     initial: 'preconditions-unmet',

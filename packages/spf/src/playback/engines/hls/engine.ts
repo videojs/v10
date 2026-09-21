@@ -74,6 +74,7 @@ import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../be
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import type { RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
@@ -166,13 +167,6 @@ export interface HlsVideoEngineState {
    * programmatically managed (ManagedMediaSource / AirPlay).
    */
   disableRemotePlayback?: boolean;
-  /**
-   * The `credentials` mode every engine request (manifest, media playlists, segments, chapters) is made with. Written
-   * by the media adapter from the element's `crossorigin` attribute — `use-credentials` maps to `'include'`, so
-   * cookie-gated cross-origin streams work the way they do under native playback; anything else leaves this unset and
-   * the platform default (`same-origin`) applies. Read per request by `credentialsFetch`.
-   */
-  requestCredentials?: RequestCredentials;
 }
 
 /**
@@ -331,6 +325,14 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    * complete playlist stops it after the first resolve). Override to tune live reload timing.
    */
   reschedule?: Reschedule<ResolvedTrack>;
+  /**
+   * The `credentials` mode every engine request (manifest, media playlists, segments, chapters) is made with: a fixed
+   * mode, or a policy consulted per request. The media adapters supply a policy that reads the element's `crossorigin`
+   * attribute — `use-credentials` maps to `'include'`, so cookie-gated cross-origin streams work the way they do under
+   * native playback — which is why this is a policy rather than a value: the engine is built once and outlives
+   * attribute changes. Absent, or `undefined` from the policy, leaves the platform default (`same-origin`).
+   */
+  requestCredentials?: RequestCredentialsPolicy;
 }
 
 // ============================================================================
@@ -340,16 +342,15 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
 /**
  * Generic `shareSignals` instantiated against the HLS engine's full state and context — captures composition signal
  * refs into the consumer's `onSignalsReady` callback at setup time, and materializes input slots that no composed
- * behavior produces: `user*TrackSelection` (track-switching only reads them), `disableRemotePlayback`, and
- * `requestCredentials` (the fetching behaviors only read it). `failedCdns` is owned by `setupFailoverMonitor`, so it's
- * already materialized and reachable on the `onSignalsReady` refs without being listed here.
+ * behavior produces: `user*TrackSelection` (track-switching only reads them). `failedCdns` is owned by
+ * `setupFailoverMonitor`, so it's already materialized and reachable on the `onSignalsReady` refs without being listed
+ * here.
  */
 const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext>([
   'userVideoTrackSelection',
   'userAudioTrackSelection',
   'userTextTrackSelection',
   'disableRemotePlayback',
-  'requestCredentials',
 ]);
 
 /**

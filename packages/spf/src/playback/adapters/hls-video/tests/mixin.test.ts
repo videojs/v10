@@ -476,11 +476,37 @@ describe('HlsVideoAdapterCore', () => {
   // engine's request-credentials intent
   // ---------------------------------------------------------------------------
   describe('crossOrigin', () => {
-    it('is null before any crossOrigin is set, leaving request credentials at the platform default', () => {
+    /**
+     * The `credentials` mode the engine's next manifest request carries. The engine reads `crossOrigin` through a
+     * per-request policy rather than state, so the request itself is the observable.
+     */
+    async function manifestCredentials(media: HlsVideoAdapterCore, url = 'https://cdn.example.com/master.m3u8') {
+      const fetchMock = vi.mocked(globalThis.fetch);
+
+      // Unload first and let the reactor observe it: a pending resolve is not
+      // restarted by another URL, and two synchronous writes coalesce.
+      fetchMock.mockClear();
+      media.src = '';
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      media.preload = 'auto';
+      media.src = url;
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      // SAFETY: `fetchResolvable` always calls `fetch` with a `Request`.
+      const request = fetchMock.mock.calls[0]![0] as Request;
+
+      expect(request.url).toBe(url);
+
+      return request.credentials;
+    }
+
+    it('is null before any crossOrigin is set, leaving requests at the platform default', async () => {
       const media = new HlsVideoAdapterCore();
 
       expect(media.crossOrigin).toBeNull();
-      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+      expect(await manifestCredentials(media)).toBe('same-origin');
     });
 
     it('reflects the set value synchronously', () => {
@@ -490,26 +516,30 @@ describe('HlsVideoAdapterCore', () => {
       expect(media.crossOrigin).toBe('use-credentials');
     });
 
-    it('maps use-credentials to credentialed engine requests', () => {
+    it('sends the manifest request with credentials for use-credentials', async () => {
       const media = new HlsVideoAdapterCore();
 
       media.crossOrigin = 'use-credentials';
-      expect(media.engine.state.requestCredentials.get()).toBe('include');
+      expect(await manifestCredentials(media)).toBe('include');
     });
 
-    it('leaves anonymous at the platform default and clears a previous include', () => {
+    it('follows the attribute as it changes, on the same engine, without rebuilding it', async () => {
       const media = new HlsVideoAdapterCore();
+      const engine = media.engine;
 
       media.crossOrigin = 'use-credentials';
+      expect(await manifestCredentials(media, 'https://cdn.example.com/a.m3u8')).toBe('include');
+
       media.crossOrigin = 'anonymous';
-      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+      expect(await manifestCredentials(media, 'https://cdn.example.com/b.m3u8')).toBe('same-origin');
 
       media.crossOrigin = 'use-credentials';
       media.crossOrigin = null;
-      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
+      expect(await manifestCredentials(media, 'https://cdn.example.com/c.m3u8')).toBe('same-origin');
+      expect(media.engine).toBe(engine);
     });
 
-    it('adopts the crossorigin attribute of an attached element when none was set', () => {
+    it('adopts the crossorigin attribute of an attached element when none was set', async () => {
       const media = new HlsVideoAdapterCore();
       const el = document.createElement('video');
 
@@ -517,10 +547,10 @@ describe('HlsVideoAdapterCore', () => {
       media.attach(el);
 
       expect(media.crossOrigin).toBe('use-credentials');
-      expect(media.engine.state.requestCredentials.get()).toBe('include');
+      expect(await manifestCredentials(media)).toBe('include');
     });
 
-    it("keeps an explicit crossOrigin over the attached element's attribute", () => {
+    it("keeps an explicit crossOrigin over the attached element's attribute", async () => {
       const media = new HlsVideoAdapterCore();
       const el = document.createElement('video');
 
@@ -529,7 +559,14 @@ describe('HlsVideoAdapterCore', () => {
       media.attach(el);
 
       expect(media.crossOrigin).toBe('use-credentials');
-      expect(media.engine.state.requestCredentials.get()).toBe('include');
+      expect(await manifestCredentials(media)).toBe('include');
+    });
+
+    it('defers to a consumer-supplied requestCredentials policy', async () => {
+      const media = new HlsVideoAdapterCore({ config: { requestCredentials: 'omit' } });
+
+      media.crossOrigin = 'use-credentials';
+      expect(await manifestCredentials(media)).toBe('omit');
     });
 
     it('does not shadow the accessor on a base without one', () => {
@@ -570,28 +607,6 @@ describe('HlsVideoAdapterCore', () => {
       // Set after attach: reflected immediately.
       media.crossOrigin = 'anonymous';
       expect(el.crossOrigin).toBe('anonymous');
-      expect(media.engine.state.requestCredentials.get()).toBeUndefined();
-    });
-
-    it('sends the manifest request with the mapped credentials mode', async () => {
-      const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(() => new Promise(() => {}));
-
-      vi.stubGlobal('fetch', fetchMock);
-
-      const media = new HlsVideoAdapterCore();
-
-      media.crossOrigin = 'use-credentials';
-      media.preload = 'auto';
-      media.src = 'https://cdn.example.com/master.m3u8';
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-      expect(fetchMock).toHaveBeenCalledOnce();
-
-      // SAFETY: `fetchResolvable` always calls `fetch` with a `Request`.
-      const request = fetchMock.mock.calls[0]![0] as Request;
-
-      expect(request.url).toBe('https://cdn.example.com/master.m3u8');
-      expect(request.credentials).toBe('include');
     });
   });
 
