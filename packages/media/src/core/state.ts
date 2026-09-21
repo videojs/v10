@@ -1,4 +1,10 @@
-import type { ErrorLike, MediaFeatureAvailability, MediaStreamType, TextTrackKind } from './types';
+import type {
+  ErrorLike,
+  MediaCrossOriginType,
+  MediaFeatureAvailability,
+  MediaStreamType,
+  TextTrackKind,
+} from './types';
 
 export type { TextTrackKind };
 
@@ -330,7 +336,7 @@ export interface MediaTextTrackState {
    * mode. Thumbnail UI fetches the sprite sheets the cues point at with this mode, since a cross-origin `<track>` only
    * loads at all when the media element is CORS-enabled.
    */
-  thumbnailTrackCrossOrigin: 'anonymous' | 'use-credentials' | null;
+  thumbnailTrackCrossOrigin: MediaCrossOriginType | null;
   /** All text tracks available on the media element. */
   textTrackList: MediaTextTrack[];
   /** Whether captions/subtitles are currently enabled. */

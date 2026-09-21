@@ -1,3 +1,4 @@
+import { type MediaCrossOriginType, toMediaCrossOrigin } from '@videojs/media';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
@@ -7,11 +8,7 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   type SvtaError,
 } from '../../../media/errors';
-import {
-  crossOriginToRequestCredentials,
-  type MediaCrossOrigin,
-  normalizeCrossOrigin,
-} from '../../../network/request-credentials';
+import { crossOriginToRequestCredentials } from '../../../network/request-credentials';
 import {
   createHlsAudioEngine,
   type HlsAudioEngineConfig,
@@ -31,10 +28,11 @@ export interface HlsAudioAdapterProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   /**
-   * The element's CORS-settings attribute. `use-credentials` also sends cookies with every manifest, playlist, and
-   * segment request the engine makes; any other value leaves those requests at the platform default.
+   * The element's CORS-settings attribute: a mode, the bare attribute (`''`, read as `anonymous`), or `null` for none.
+   * `use-credentials` also sends cookies with every manifest, playlist, and segment request the engine makes; any other
+   * value leaves those requests at the platform default.
    */
-  crossOrigin: MediaCrossOrigin | null;
+  crossOrigin: MediaCrossOriginType | '' | null;
   disableRemotePlayback: boolean;
 }
 
@@ -98,7 +96,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #config: HlsAudioEngineConfig;
     #signals!: HlsAudioEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsAudioImpl.defaultProps.preload;
-    #crossOrigin: MediaCrossOrigin | null = HlsAudioImpl.defaultProps.crossOrigin;
+    #crossOrigin: MediaCrossOriginType | null = toMediaCrossOrigin(HlsAudioImpl.defaultProps.crossOrigin);
     #disableRemotePlayback: boolean = HlsAudioImpl.defaultProps.disableRemotePlayback;
     #error: HlsVideoMediaError | null = null;
     /** Reported condition currently surfaced — see the video adapter's note. */
@@ -184,7 +182,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#signals.context.mediaElement.set(mediaElement);
 
       // Most-recent-wins on attach — see the video mixin.
-      const authored = normalizeCrossOrigin(mediaElement.crossOrigin);
+      const authored = toMediaCrossOrigin(mediaElement.crossOrigin);
 
       if (authored !== null) {
         this.#crossOrigin = authored;
@@ -213,13 +211,13 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // mixin.
     // -------------------------------------------------------------------------
 
-    get crossOrigin(): MediaCrossOrigin | null {
+    get crossOrigin(): MediaCrossOriginType | null {
       return this.#crossOrigin;
     }
 
-    set crossOrigin(value: MediaCrossOrigin | null) {
+    set crossOrigin(value: MediaCrossOriginType | '' | null) {
       // Limited to known values, as the element reflects it — see the video mixin.
-      this.#crossOrigin = normalizeCrossOrigin(value);
+      this.#crossOrigin = toMediaCrossOrigin(value);
 
       const mediaElement = this.#signals.context.mediaElement.get();
 
