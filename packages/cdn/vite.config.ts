@@ -11,13 +11,15 @@ import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import type { BuildPlugin } from '../../build/plugins/types.ts';
 import { cachedTaskInputs, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
+import { cdnHtmlEntries } from './scripts/cdn-html-entries.ts';
 import { cdnI18nExternalPlugin } from './scripts/cdn-i18n-external-plugin.ts';
 
 type CdnBuildMode = 'dev' | 'prod';
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
 // The bundles are built from `@videojs/html`'s published output, resolved the same way a consumer would, so the CDN
-// never reaches into another package's sources. Its stylesheets are copied from that output too.
+// never reaches into another package's sources. Its stylesheets are copied from that output, and its media, extension,
+// and UI bundles are listed from it.
 const htmlDistDir = resolve(
   dirname(createRequire(import.meta.url).resolve('@videojs/html/package.json')),
   'dist/default'
@@ -42,26 +44,9 @@ const cdnPresets = [
   'background',
 ];
 
-/**
- * One CDN bundle per media, extension, or UI entry under `src/`, or per flavor for an entry that is a directory. Each
- * file is a one-line import of the matching `@videojs/html` module; `src/tests/entries.test.ts` keeps them in step with
- * the definitions html ships so the npm and CDN delivery surfaces cannot drift.
- */
-function getCdnEntries(subpath: 'media' | 'extensions' | 'ui') {
-  return globSync(`src/${subpath}/**/*.ts`, { cwd: packageDir })
-    .map((src) => ({
-      src,
-      name: src
-        .replace(/^src\//, '')
-        .replace(/\/index\.ts$/, '')
-        .replace(/\.ts$/, ''),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-const cdnMediaEntries = getCdnEntries('media');
-const cdnExtensionEntries = getCdnEntries('extensions');
-const cdnUiEntries = getCdnEntries('ui');
+// Bare `@videojs/html/...` specifiers as entries: rolldown resolves them like any import, so the dev build follows the
+// `development` condition to html's dev output and the prod build follows `default`.
+const cdnHtmlDefinitionEntries = cdnHtmlEntries(resolve(htmlDistDir, 'define'));
 
 const cdnLocaleEntries = localeTags.map((tag) => ({
   src: `src/locales/${tag}.ts`,
@@ -72,9 +57,7 @@ export const entries = [
   { src: 'src/i18n.ts', name: 'i18n' },
   ...cdnLocaleEntries,
   ...cdnPresets.map((name) => ({ src: `src/${name}.ts`, name })),
-  ...cdnMediaEntries,
-  ...cdnExtensionEntries,
-  ...cdnUiEntries,
+  ...cdnHtmlDefinitionEntries,
 ];
 
 function cdnStylesheetName(file: string): string | null {
@@ -96,6 +79,11 @@ function cleanCdnOutputPlugin(): BuildPlugin {
   return {
     name: 'clean-cdn-output',
     buildStart() {
+      // The entry list is read from html's output when this config loads; an empty list means that output was missing.
+      if (cdnHtmlDefinitionEntries.length === 0) {
+        throw new Error(`No @videojs/html definitions found under ${htmlDistDir}. Build @videojs/html first.`);
+      }
+
       for (const dir of ['chunks', 'extensions', 'locales', 'media', 'ui']) {
         rmSync(resolve(packageDir, dir), { recursive: true, force: true });
       }

@@ -373,8 +373,9 @@ After Step 1's report:
     `class HlsVideoAdapter extends HlsVideoMixin(HTMLVideoAdapter) {}`.
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
     (~5 LOC; wraps the media host in `CustomMediaElement` +
-    `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
-    + `packages/cdn/src/media/<key>-video.ts` for the CDN entry.
+    `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`.
+    The CDN lists its `media/` bundles from html's published `define/`
+    output, so no cdn-side entry is needed.
     Worked example: `hls-video/adapter.ts` →
     `class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoAdapter)) {}`.
   - **React component** — `packages/react/src/media/<key>-video/`
@@ -441,10 +442,10 @@ typical for use-case implementations:
 - **Media wrapper** — `packages/spf/src/playback/adapters/<key>/adapter.ts`
   applying the SPF mixin to `HTMLVideoAdapter` (or audio host for
   audio-only variants), exported through the adjacent `index.ts`; ~5 LOC.
-- **HTML custom element + define entry + CDN entry** —
+- **HTML custom element + define entry** —
   `packages/html/src/media/<key>-video/adapter.ts`,
-  `packages/html/src/define/media/<key>-video.ts`,
-  `packages/cdn/src/media/<key>-video.ts`. Inline implementation;
+  `packages/html/src/define/media/<key>-video.ts`. The CDN bundle
+  follows from the define entry automatically. Inline implementation;
   ~5 LOC + boilerplate.
 - **React component** — `packages/react/src/media/<key>-video/adapter.tsx`
   exposing the props surface; ~37 LOC. Inline implementation.
