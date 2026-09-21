@@ -854,8 +854,28 @@ describe('Util pipeline (end-to-end)', () => {
       const selector = useStore!.data.overloads[1]!.parameters.selector;
 
       expect(selector).toEqual({
-        type: '{ (state: S): R; displayName?: string }',
+        type: 'object',
+        detailedType: "{ (state: S['state']): R; displayName?: string }",
         required: true,
+      });
+    });
+
+    it('records function type parameters and their constraints', () => {
+      const useStore = findByName('useStore', 'react');
+
+      expect(useStore!.data.overloads[0]!.typeParameters).toEqual([{ name: 'S' }]);
+      expect(useStore!.data.overloads[1]!.typeParameters).toEqual([
+        { name: 'S', constraint: 'AnyStore' },
+        { name: 'R' },
+      ]);
+    });
+
+    it('includes inherited interface members in parameter types', () => {
+      const useStore = findByName('useStore', 'react');
+
+      expect(useStore!.data.overloads[1]!.parameters.options).toEqual({
+        type: 'object',
+        detailedType: "{ mode?: 'active' | 'passive'; disabled?: boolean; label?: string }",
       });
     });
 

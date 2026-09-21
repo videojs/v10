@@ -251,7 +251,8 @@ export function formatDetailedType(
   project: OxcProject,
   type: ResolvedType,
   removeUndefined: boolean,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
+  expandInterfaces = true
 ): string {
   if (type.deepPartial) return formatDeepPartialType(project, type, removeUndefined, visited);
 
@@ -260,34 +261,50 @@ export function formatDetailedType(
   if (node.type === 'TSTypeReference') {
     const name = typeNameText(node.typeName);
     const substituted = node.typeName.type === 'Identifier' ? type.substitutions?.get(name) : undefined;
-    if (substituted) return formatDetailedType(project, substituted, removeUndefined, visited);
+    if (substituted) return formatDetailedType(project, substituted, removeUndefined, visited, expandInterfaces);
 
-    const key = `${type.file.filePath}#${name}`;
+    const declaration = project.resolveTypeDeclaration(type.file.filePath, node.typeName);
+    const key = `${declaration?.file.filePath ?? type.file.filePath}#${name}`;
 
     if (!visited.has(key)) {
       const resolved = project.resolveType(type);
 
       if (resolved) {
         if (resolved.file.filePath.includes(`${pathSeparator}node_modules${pathSeparator}`)) {
-          return formatType(type, removeUndefined);
+          return formatTypeReference(project, type, node);
         }
 
-        // An interface with no members of its own (`interface X extends Y {}`) expands to nothing; keep its name.
-        const body = unwrapType(resolved.type);
-        if (body.type === 'TSTypeLiteral' && body.members.length === 0) return formatType(type, removeUndefined);
+        const displayType = declaration
+          ? getJSDoc(declaration.file, declaration.declaration)?.tags.get('displayType')?.at(-1)
+          : undefined;
+        if (displayType) return formatDisplayType(displayType, resolved.substitutions);
+
+        if (declaration?.declaration.type === 'TSInterfaceDeclaration') {
+          if (!expandInterfaces) return formatTypeReference(project, type, node);
+
+          visited.add(key);
+
+          const members = project.interfaceMembers(type);
+          if (members.length === 0) return formatType(type, removeUndefined);
+
+          return `{ ${members
+            .map((member) => formatDetailedSignature(project, member, visited))
+            .filter(Boolean)
+            .join('; ')} }`;
+        }
 
         visited.add(key);
-        return formatDetailedType(project, resolved, removeUndefined, visited);
+        return formatDetailedType(project, resolved, removeUndefined, visited, expandInterfaces);
       }
     }
 
-    return formatType(type, removeUndefined);
+    return formatTypeReference(project, type, node);
   }
 
   if (node.type === 'TSUnionType') {
     const formattedMemberTypes = uniq(
       orderMembers(flattenUnionMembers(node.types, removeUndefined)).map((member) =>
-        formatDetailedType(project, { ...type, type: member }, removeUndefined, visited)
+        formatDetailedType(project, { ...type, type: member }, removeUndefined, visited, expandInterfaces)
       )
     );
 
@@ -296,7 +313,7 @@ export function formatDetailedType(
 
   if (node.type === 'TSIntersectionType') {
     return orderMembers(node.types)
-      .map((member) => formatDetailedType(project, { ...type, type: member }, false, visited))
+      .map((member) => formatDetailedType(project, { ...type, type: member }, false, visited, expandInterfaces))
       .join(' & ');
   }
 
@@ -321,6 +338,93 @@ export function formatDetailedType(
 }
 
 const pathSeparator = process.platform === 'win32' ? '\\' : '/';
+
+function formatDisplayType(template: string, substitutions?: ReadonlyMap<string, ResolvedType>): string {
+  return template
+    .replace(/\{([A-Za-z_$][\w$]*)\}/g, (placeholder, name: string) => {
+      const substitution = substitutions?.get(name);
+
+      return substitution ? formatType(substitution, false) : placeholder;
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatTypeReference(
+  project: OxcProject,
+  type: ResolvedType,
+  reference: import('oxc-parser').TSTypeReference
+): string {
+  const name = typeNameText(reference.typeName);
+  if (name === 'ReactElement' || name === 'React.ReactElement') return 'ReactElement';
+
+  const displayName = name.startsWith('React.') ? name.slice('React.'.length) : name;
+  const args = reference.typeArguments?.params ?? [];
+
+  return args.length > 0
+    ? `${displayName}<${args.map((argument) => formatReferenceArgument(project, { ...type, type: argument })).join(', ')}>`
+    : displayName;
+}
+
+function formatReferenceArgument(project: OxcProject, type: ResolvedType): string {
+  const node = unwrapType(type.type);
+  if (node.type !== 'TSTypeReference') return formatType(type, false);
+
+  const name = typeNameText(node.typeName);
+  const substituted = node.typeName.type === 'Identifier' ? type.substitutions?.get(name) : undefined;
+  if (substituted) return formatReferenceArgument(project, substituted);
+
+  const declaration = project.resolveTypeDeclaration(type.file.filePath, node.typeName);
+  const displayType = declaration
+    ? getJSDoc(declaration.file, declaration.declaration)?.tags.get('displayType')?.at(-1)
+    : undefined;
+  const resolved = displayType ? project.resolveType(type) : undefined;
+
+  return displayType && resolved ? formatDisplayType(displayType, resolved.substitutions) : formatType(type, false);
+}
+
+function formatDetailedSignature(project: OxcProject, resolved: ResolvedMember, visited: Set<string>): string {
+  const { file, member, substitutions, deepPartial } = resolved;
+  const format = (memberType: TSType, removeUndefined: boolean) => {
+    let type: ResolvedType = { file, type: memberType };
+
+    if (substitutions) type = { ...type, substitutions };
+
+    if (deepPartial) type = { ...type, deepPartial };
+
+    return formatDetailedType(project, type, removeUndefined, new Set(visited), false);
+  };
+
+  if (member.type === 'TSPropertySignature') {
+    const name = staticName(member.key);
+    if (!name || !member.typeAnnotation) return '';
+
+    const optional = member.optional || !!deepPartial;
+
+    return `${name}${optional ? '?' : ''}: ${format(member.typeAnnotation.typeAnnotation, optional)}`;
+  }
+
+  if (member.type === 'TSMethodSignature') {
+    const name = staticName(member.key);
+    if (!name) return '';
+
+    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions, format)).join(', ');
+    const returnType = member.returnType ? format(member.returnType.typeAnnotation, false) : 'void';
+
+    return `${name}${member.optional ? '?' : ''}(${params}): ${returnType}`;
+  }
+
+  if (member.type === 'TSCallSignatureDeclaration' || member.type === 'TSConstructSignatureDeclaration') {
+    const typeParameters = member.typeParameters ? normalizeTypeText(sourceText(file, member.typeParameters)) : '';
+    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions, format)).join(', ');
+    const returnType = member.returnType ? format(member.returnType.typeAnnotation, false) : 'void';
+    const prefix = member.type === 'TSConstructSignatureDeclaration' ? 'new ' : '';
+
+    return `${prefix}${typeParameters}(${params}): ${returnType}`;
+  }
+
+  return normalizeTypeText(sourceText(file, member)).replace(/;$/, '');
+}
 
 function formatDeepPartialType(
   project: OxcProject,
@@ -614,7 +718,9 @@ function formatLiteralValue(value: string | number | boolean | null): string {
 function formatParameter(
   file: SourceFile,
   parameter: ParamPattern,
-  substitutions?: ReadonlyMap<string, ResolvedType>
+  substitutions?: ReadonlyMap<string, ResolvedType>,
+  formatter: (type: TSType, removeUndefined: boolean) => string = (type, removeUndefined) =>
+    formatType({ file, type, substitutions }, removeUndefined)
 ): string {
   const pattern = parameterPattern(parameter);
   if (!pattern) return '...: unknown';
@@ -623,7 +729,7 @@ function formatParameter(
   const annotation = parameterTypeAnnotation(parameter, pattern);
   // A rest parameter is optional by nature but reads `...name`, not `...name?`.
   const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter, pattern);
-  const type = annotation ? formatType({ file, type: annotation, substitutions }, optional) : 'unknown';
+  const type = annotation ? formatter(annotation, optional) : 'unknown';
 
   return `${parameter.type === 'RestElement' ? '...' : ''}${name}${optional ? '?' : ''}: ${type}`;
 }

@@ -1,4 +1,4 @@
-interface PlayerController<Store> {
+declare class PlayerController<Store> {
   play(): void;
   destroy(): void;
   readonly store: Store;

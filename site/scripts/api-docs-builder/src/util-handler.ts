@@ -12,9 +12,15 @@ import type {
   TSType,
 } from 'oxc-parser';
 
-import type { ParamDef, ReturnValue, UtilOverload, UtilReference } from '../../../src/types/util-reference.js';
+import type {
+  ParamDef,
+  ReturnValue,
+  UtilOverload,
+  UtilReference,
+  UtilTypeParameter,
+} from '../../../src/types/util-reference.js';
 import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
-import { abbreviateType, formatDetailedType } from './formatter.js';
+import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
 import type { NamedDeclaration, ResolvedType, SourceFile } from './oxc-project.js';
 import {
   getJSDoc,
@@ -208,6 +214,18 @@ function buildFunctionOverload(
 
   const returnType = fn.returnType?.typeAnnotation;
   const overload: UtilOverload = {
+    typeParameters:
+      fn.typeParameters?.params.map((parameter) => {
+        const typeParameter: UtilTypeParameter = { name: parameter.name.name };
+
+        if (parameter.constraint) {
+          typeParameter.constraint = formatType({ file, type: parameter.constraint }, false);
+        }
+
+        if (parameter.const) typeParameter.const = true;
+
+        return typeParameter;
+      }) ?? [],
     parameters,
     returnValue: returnType ? buildReturnValue(project, { file, type: returnType }) : { type: 'unknown' },
   };

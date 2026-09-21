@@ -11,6 +11,7 @@ export const PLAYER_CONTEXT_KEY = Symbol.for('@videojs/player');
 
 export type PlayerContextValue<Store extends PlayerStore = AnyPlayerStore> = Store;
 
+/** @displayType Context<symbol, {Store}> */
 export type PlayerContext<Store extends PlayerStore = AnyPlayerStore> = Context<
   typeof PLAYER_CONTEXT_KEY,
   PlayerContextValue<Store>

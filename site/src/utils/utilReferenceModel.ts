@@ -14,6 +14,7 @@ export interface OverloadModel {
   label: string | undefined;
   index: number;
   description: string | undefined;
+  signature: string | undefined;
   sections: UtilReferenceSection[];
   data: UtilOverload;
 }
@@ -30,6 +31,7 @@ export interface SingleOverloadModel {
   isMultiOverload: false;
   heading: Heading;
   sections: UtilReferenceSection[];
+  signature: string | undefined;
   overload: UtilOverload;
 }
 
@@ -77,6 +79,7 @@ export function createUtilReferenceModel(name: string, ref: UtilReference | null
         label,
         index: index + 1,
         description: overload.description,
+        signature: formatSignature(name, overload),
         sections,
         data: overload,
       };
@@ -124,8 +127,27 @@ export function createUtilReferenceModel(name: string, ref: UtilReference | null
       text: 'API Reference',
     },
     sections,
+    signature: formatSignature(name, overload),
     overload,
   };
+}
+
+function formatSignature(name: string, overload: UtilOverload): string | undefined {
+  if (!overload.typeParameters) return undefined;
+
+  const typeParameters = overload.typeParameters
+    .map((parameter) => {
+      const prefix = parameter.const ? 'const ' : '';
+      const constraint = parameter.constraint ? ` extends ${parameter.constraint}` : '';
+
+      return `${prefix}${parameter.name}${constraint}`;
+    })
+    .join(', ');
+  const parameters = Object.entries(overload.parameters)
+    .map(([parameter, definition]) => `${parameter}${definition.required ? '' : '?'}`)
+    .join(', ');
+
+  return `${name}${typeParameters ? `<${typeParameters}>` : ''}(${parameters}): ${overload.returnValue.type}`;
 }
 
 export function buildUtilReferenceTocHeadings(

@@ -114,6 +114,19 @@ Every collection is generated and schema-validated before output changes begin. 
 serialized files, rejects unsafe or duplicate filenames, and removes obsolete JSON after writing the
 current set. An unexpectedly empty collection fails generation instead of erasing existing output.
 
+## Display type hints
+
+When a conditional or runtime-derived type cannot be represented by the syntax-only formatter, add a `@displayType`
+tag to its alias. Braced type-parameter names are replaced with the reference's resolved arguments:
+
+```ts
+/** @displayType {Store}['state'] */
+export type InferStoreState<Store extends AnyStore> = Store extends { readonly state: infer State } ? State : never;
+```
+
+Keep the hint equivalent to the public meaning of the alias. It only controls API-reference display output and does not
+change the published TypeScript type.
+
 ## Acknowledgements
 
 This builder's architecture and approach were inspired by [Base UI](https://github.com/mui/base-ui)'s

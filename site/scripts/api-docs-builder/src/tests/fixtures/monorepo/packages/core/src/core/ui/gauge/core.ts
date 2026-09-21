@@ -7,6 +7,29 @@
 
 export type FillLevel = 'empty' | 'partial' | 'full';
 
+export type GesturePointer = 'mouse' | 'touch';
+
+export interface GestureProps {
+  pointer?: GesturePointer | undefined;
+  disabled?: boolean | undefined;
+  ignored: string;
+}
+
+export interface TapGestureOptions extends Pick<GestureProps, 'pointer' | 'disabled'> {
+  target?: HTMLElement | null;
+}
+
+export interface FixtureStore {
+  readonly state: { ready: boolean };
+}
+
+/** @displayType {Store}['state'] */
+export type InferFixtureState<Store extends FixtureStore> = Store extends {
+  readonly state: infer State;
+}
+  ? State
+  : never;
+
 export interface GaugeProps {
   /** Minimum value. */
   min: number;

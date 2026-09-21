@@ -124,7 +124,7 @@ export class OxcProject {
           path.join(packageRoot, 'src', 'playback', 'adapters', subpath),
           path.join(packageRoot, 'src', 'playback', 'engines', subpath),
         ]
-      : [path.join(packageRoot, 'src', 'index')];
+      : [path.join(packageRoot, 'src', 'index'), path.join(packageRoot, 'src', 'core', 'index')];
 
     for (const candidate of sourceCandidates) {
       const resolved = resolveFile(candidate);
@@ -242,7 +242,7 @@ export class OxcProject {
       unwrapped.typeName.type === 'Identifier' ? type.substitutions?.get(unwrapped.typeName.name) : undefined;
     if (substituted) return substituted;
 
-    const declaration = this.#resolveTypeDeclaration(type.file.filePath, unwrapped.typeName);
+    const declaration = this.resolveTypeDeclaration(type.file.filePath, unwrapped.typeName);
     if (!declaration) return undefined;
 
     const declarationType = typeFromDeclaration(declaration.declaration);
@@ -292,8 +292,9 @@ export class OxcProject {
 
     const declaration =
       reference.type === 'TSTypeReference'
-        ? this.#resolveTypeDeclaration(type.file.filePath, reference.typeName)
+        ? this.resolveTypeDeclaration(type.file.filePath, reference.typeName)
         : undefined;
+    if (declaration?.file.filePath.includes(`${path.sep}node_modules${path.sep}`)) return [];
 
     if (!declaration || declaration.declaration.type !== 'TSInterfaceDeclaration') {
       if (declaration?.declaration.type === 'ClassDeclaration') {
@@ -360,7 +361,7 @@ export class OxcProject {
     return members;
   }
 
-  #resolveTypeDeclaration(filePath: string, name: import('oxc-parser').TSTypeName): ResolvedDeclaration | undefined {
+  resolveTypeDeclaration(filePath: string, name: import('oxc-parser').TSTypeName): ResolvedDeclaration | undefined {
     if (name.type === 'Identifier') return this.resolveName(filePath, name.name);
 
     const parts = typeNameText(name).split('.');
@@ -369,12 +370,27 @@ export class OxcProject {
     if (!file) return undefined;
 
     const index = this.#index(file);
-    const source = index.namespaceImports.get(root) ?? index.imports.get(root)?.source;
+    const namespaceSource = index.namespaceImports.get(root);
+    const imported = index.imports.get(root);
+    const source = namespaceSource ?? imported?.source;
 
     if (source) {
       const target = this.resolveModule(filePath, source);
 
       if (target) {
+        if (imported) {
+          const importedDeclaration = this.resolveExport(target, imported.imported);
+
+          if (importedDeclaration) {
+            const importedName = declarationName(importedDeclaration.declaration) ?? imported.imported;
+            const nested = this.resolveName(
+              importedDeclaration.file.filePath,
+              [importedName, ...parts.slice(1)].join('.')
+            );
+            if (nested) return nested;
+          }
+        }
+
         return this.resolveName(target, parts.join('.')) ?? this.resolveExport(target, parts.slice(1).join('.'));
       }
     }

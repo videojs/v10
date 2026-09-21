@@ -19,9 +19,16 @@ export const ReturnValueSchema = z.object({
   fields: z.record(z.string(), ReturnFieldDefSchema).optional(),
 });
 
+export const UtilTypeParameterSchema = z.object({
+  name: z.string(),
+  constraint: z.string().optional(),
+  const: z.boolean().optional(),
+});
+
 export const UtilOverloadSchema = z.object({
   label: z.string().optional(),
   description: z.string().optional(),
+  typeParameters: z.array(UtilTypeParameterSchema).optional(),
   parameters: z.record(z.string(), ParamDefSchema),
   returnValue: ReturnValueSchema,
 });
@@ -36,5 +43,6 @@ export const UtilReferenceSchema = z.object({
 export type ParamDef = z.infer<typeof ParamDefSchema>;
 export type ReturnFieldDef = z.infer<typeof ReturnFieldDefSchema>;
 export type ReturnValue = z.infer<typeof ReturnValueSchema>;
+export type UtilTypeParameter = z.infer<typeof UtilTypeParameterSchema>;
 export type UtilOverload = z.infer<typeof UtilOverloadSchema>;
 export type UtilReference = z.infer<typeof UtilReferenceSchema>;

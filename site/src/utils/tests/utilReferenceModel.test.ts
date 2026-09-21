@@ -65,6 +65,49 @@ describe('createUtilReferenceModel', () => {
     ]);
   });
 
+  it('builds a callable signature for function overloads', () => {
+    const ref: UtilReference = {
+      name: 'useSelector',
+      overloads: [
+        {
+          typeParameters: [{ name: 'S' }, { name: 'R' }],
+          parameters: {
+            subscribe: { type: 'function', required: true },
+            getSnapshot: { type: 'function', required: true },
+            selector: { type: 'function', required: true },
+            isEqual: { type: 'function' },
+          },
+          returnValue: { type: 'R' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('useSelector', ref);
+
+    expect(model && !model.isMultiOverload ? model.signature : undefined).toBe(
+      'useSelector<S, R>(subscribe, getSnapshot, selector, isEqual?): R'
+    );
+  });
+
+  it('preserves const type parameters and constraints in callable signatures', () => {
+    const ref: UtilReference = {
+      name: 'createPlayer',
+      overloads: [
+        {
+          typeParameters: [{ name: 'Features', constraint: 'AnyPlayerFeature[]', const: true }],
+          parameters: { config: { type: 'CreatePlayerConfig<Features>', required: true } },
+          returnValue: { type: 'CreatePlayerResult<PlayerStore<Features>>' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('createPlayer', ref);
+
+    expect(model && !model.isMultiOverload ? model.signature : undefined).toBe(
+      'createPlayer<const Features extends AnyPlayerFeature[]>(config): CreatePlayerResult<PlayerStore<Features>>'
+    );
+  });
+
   it('builds a multi-overload model with overload H3s and H4 subsections', () => {
     const ref = {
       name: 'usePlayer',

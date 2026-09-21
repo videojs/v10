@@ -145,6 +145,22 @@ describe('formatDetailedType', () => {
       "'ON_DEMAND' | 'LIVE' | 'UNKNOWN'"
     );
   });
+
+  it('expands inherited interface members and their aliased types', () => {
+    const file = project.source(gaugeFile)!;
+
+    expect(formatDetailedType(project, parseType('TapGestureOptions', file), false)).toBe(
+      "{ pointer?: 'mouse' | 'touch'; disabled?: boolean; target?: HTMLElement | null }"
+    );
+  });
+
+  it('uses display type hints with generic substitutions', () => {
+    const file = project.source(gaugeFile)!;
+
+    expect(formatDetailedType(project, parseType('InferFixtureState<FixtureStore>', file), false)).toBe(
+      "FixtureStore['state']"
+    );
+  });
 });
 
 describe('formatProperties', () => {

@@ -290,4 +290,5 @@ export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: 
   ? Target
   : never;
 
+/** @displayType {S}['state'] */
 export type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;
