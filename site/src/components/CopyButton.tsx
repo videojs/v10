@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
 
+import Check from '@/assets/icons/check.svg?react';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyButtonProps {
   children: React.ReactNode;
   copied?: React.ReactNode; // Optional, passed via slot="copied" in Astro
+  copiedCheck?: boolean;
   copyFrom: {
     container: string; // CSS selector for parent container (e.g., 'starlight-tabs')
     target: string; // CSS selector for content element (e.g., '[role="tabpanel"]:not([hidden])')
@@ -24,12 +26,28 @@ function getCopyText(target: Element): string {
   return clone.textContent || '';
 }
 
-export default function CopyButton({ children, copied, copyFrom, className, style, timeout = 2000 }: CopyButtonProps) {
+export default function CopyButton({
+  children,
+  copied,
+  copiedCheck = false,
+  copyFrom,
+  className,
+  style,
+  timeout = 2000,
+}: CopyButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isCopied, setIsCopied] = useState(false);
   const isHydrated = useIsHydrated();
 
   const disabled = !isHydrated;
+  const copiedContent = copiedCheck ? (
+    <span className="inline-flex items-center gap-1.5">
+      <Check className="size-4" aria-hidden="true" />
+      {copied || children}
+    </span>
+  ) : (
+    copied || children
+  );
 
   const handleCopy = async () => {
     try {
@@ -80,7 +98,7 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
         style={style}
         aria-label={isCopied ? 'Copied' : 'Copy to clipboard'}
       >
-        {isCopied ? copied || children : children}
+        {isCopied ? copiedContent : children}
       </button>
       <span aria-live="polite" className="sr-only">
         {isCopied ? 'Copied' : ''}
