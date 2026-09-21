@@ -10,7 +10,7 @@ import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isR
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
-import { credentialsFetch } from '../primitives/credentials-fetch';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../primitives/credentials-fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
 import type { GateFirstParse } from '../primitives/gate-first-parse';
 import type { ReportUnsupportedTrackConditions } from '../primitives/report-track-conditions';
@@ -47,15 +47,14 @@ type ResolveTrackStateMap<K extends SelectedTrackKey> = {
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
 /**
- * The playlist fetch each `resolve*` behavior installs: the default text fetch carrying the adapter's request
- * credentials (the optional `requestCredentials` slot, read per request and not declared here, same as `failedCdns`),
- * failover-decorated over that so a failed credentialed request still trips the selected track's CDN.
+ * The playlist fetch each `resolve*` behavior installs: the default text fetch carrying the engine's request
+ * credentials, failover-decorated over that so a failed credentialed request still trips the selected track's CDN.
  */
 function playlistFetch<K extends SelectedTrackKey>(
   state: ResolveTrackStateMap<K>,
-  config: { selectedKey: K; getCdnId?: GetCdnId }
+  config: { selectedKey: K; getCdnId?: GetCdnId; requestCredentials?: RequestCredentialsPolicy }
 ): FetchText {
-  return failoverFetch(credentialsFetch(defaultFetchResolvableText, state), state, config);
+  return failoverFetch(credentialsFetch(defaultFetchResolvableText, config.requestCredentials), state, config);
 }
 
 /**
@@ -98,6 +97,8 @@ interface ResolveTrackConfig {
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   /** `EXT-X-KEY` URI handling; absent → `parseMediaPlaylist`'s default. */
   resolveKeyUri?: ResolveKeyUri;
+  /** The `credentials` mode media-playlist requests are made with; absent → the platform default. */
+  requestCredentials?: RequestCredentialsPolicy;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({

@@ -59,7 +59,7 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
-import { credentialsFetch } from '../../primitives/credentials-fetch';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { failoverFetch } from '../../primitives/failover-fetch';
 import type { MessagePipelines } from '../../primitives/segment-load-pipeline';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';
@@ -225,6 +225,8 @@ export const setupVideoBufferActors = defineBehavior({
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & {
       getCdnId?: GetCdnId;
+      /** The `credentials` mode segment requests are made with; absent → the platform default. */
+      requestCredentials?: RequestCredentialsPolicy;
       /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
       videoMessagePipelines?: MessagePipelines;
     };
@@ -255,7 +257,7 @@ export const setupVideoBufferActors = defineBehavior({
       config: {
         ...typeConfig,
         messagePipelines: config[VIDEO_TYPE_CONFIG.messagePipelinesKey],
-        fetch: failoverFetch(credentialsFetch(trackedFetch, state), state, typeConfig),
+        fetch: failoverFetch(credentialsFetch(trackedFetch, config.requestCredentials), state, typeConfig),
       },
     });
   },
@@ -285,6 +287,8 @@ export const setupAudioBufferActors = defineBehavior({
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & {
       getCdnId?: GetCdnId;
+      /** The `credentials` mode segment requests are made with; absent → the platform default. */
+      requestCredentials?: RequestCredentialsPolicy;
       /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
       audioMessagePipelines?: MessagePipelines;
     };
@@ -298,7 +302,7 @@ export const setupAudioBufferActors = defineBehavior({
       config: {
         ...typeConfig,
         messagePipelines: config[AUDIO_TYPE_CONFIG.messagePipelinesKey],
-        fetch: failoverFetch(credentialsFetch(fetchStream, state), state, typeConfig),
+        fetch: failoverFetch(credentialsFetch(fetchStream, config.requestCredentials), state, typeConfig),
       },
     });
   },
