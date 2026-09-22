@@ -1,6 +1,6 @@
 ---
 status: partial
-date: 2026-09-10
+date: 2026-09-22
 definition: coarse
 ---
 
@@ -149,8 +149,10 @@ and `adapters/mux-video/src/drm.ts` token-derived license URLs),
   per-key-system phases below are implemented and tested, and the
   `keystatuschange` report-only baseline landed (see Open questions).
   Still coarse: the key-status *policy* layer (re-request, exclusion)
-  and security-level probing. The AirPlay handoff is built and unit-
-  tested against stubs; only its device pass is outstanding.
+  and security-level probing. The AirPlay handoff is built, unit-tested
+  against stubs, and verified on a receiver from a macOS sender; an
+  iPhone sender is unverified and has reported failures (see Open
+  questions and § AirPlay session recovery below).
 - **Hard prerequisite:** [capability-probing](./capability-probing.md)'s
   "Key-system capability probing" phase. The probe must resolve
   before this feature commits to a key system, sets up MediaKeys,
@@ -446,9 +448,68 @@ module changes:
 4. Watch the errors sequence at every transition — SVTA 4004 / 4013 / 4016 / 4021 are the handoff's
    failure surface, and a silent stall means the receiver never got a key.
 
+5. Repeat 2 and 3 with an **iPhone** as the sender. Unverified as of 2026-09-22, with failures reported —
+   see § AirPlay session recovery. Attach Safari Web Inspector to the phone first: the `[spf-drm]`
+   transition log and any `[setupMediaSource]` warning are the evidence to capture.
+
 If a request never reaches `setupAirPlayFairPlay`, check `generateRequest` for `NotSupportedError`: that
 is the Apple sender bug the deferred legacy fallback exists for (see Open questions), not a fault in this
 path.
+
+### AirPlay session recovery: after a failed source, and after an iPhone session
+
+Two measured facts and one reported one, recorded together because the next person will otherwise
+re-derive them.
+
+**A failed source leaves the session engaged, and nothing on the page can end it** (macOS/Safari 26.6.2,
+2026-09-16). With a source that fails mid-session, removing the element and reloading the page both leave
+the AirPlay session live, and the native picker will not offer "turn off" without a playable resource. The
+only recovery found is to give the element something playable again — detach it from the engine, drop its
+`<source>` children, set a clear `src`, `load()` — after which the picker becomes usable and the *user*
+disconnects. That is a recovery affordance, not a disconnect, and the engine does not perform it. It
+supersedes an earlier note that a page reload disconnects, which held only with a playable source. The
+programmatic disconnect the Remote Playback API specifies (`disableRemotePlayback = true`, §5.3.2) is not
+honored by WebKit for AirPlay, measured 2026-07-31. There is no known way to force a disconnect from code,
+which is also why no automated coverage reaches this path.
+
+**Reported 2026-09-21 by Santi Puppo, iPhone sender, not yet reproduced with instrumentation:** after an
+AirPlay session ends — whether it failed, was paused and resumed before disconnecting, or was engaged
+before first play — the engine is left with the sandbox readout showing one `blob(mse)` source, every
+media value at zero, and `negotiatedKeySystem` reading `com.apple.fps`. Also reported: casting sometimes
+starts audio-only, and does not start at all while muted, both recovering on pause then play.
+
+**What that readout is consistent with, from the code (a hypothesis until the phone is instrumented):**
+the post-session MediaSource rebuild never reaching `sourceopen`. On the falling edge `setupMediaKeys`
+re-enters and negotiates, which sets `negotiatedKeySystem`; `setupMediaSource` rebuilds, prepends the blob
+`<source>`, calls `load()`, and publishes `context.mediaSource` only once the MediaSource opens, so nothing
+downstream starts until then; with no published MediaSource and no live session, `setupAirPlay`'s source
+effect removes the native fallback, leaving `sources=[blob(mse)]`. `setupMediaSource` warns when the
+MediaSource lands non-open before its first `sourceopen` and calls the state "recoverable on next source
+reset", but nothing triggers a reset, so it is a dead end; the case where `sourceopen` never fires at all
+warns nothing. Why an iPhone's MediaSource would not open after a session is not known — candidates are the
+element having been through native HLS with legacy WebKit keys released on the same edge the rebuild loads
+on, and the wireless flag flapping differently on iOS than the macOS sequence the settle window was tuned
+against. A device pass with the Web Inspector attached decides it.
+
+**Is this iPhone-specific? There is no evidence either way.** The macOS receiver pass covered one
+transition — engage mid-playback, receiver plays — and this record's open question lists disengage as
+unexercised. The disengage round trip that *was* verified on a receiver (2026-07-31, both playing and
+paused branches) predates every DRM behavior. So the post-session rebuild with DRM composed — `setupMediaKeys`
+re-entering, the legacy path having already reloaded the element and released its keys — has never been
+device-tested from any sender. The one measured macOS-only fact is the unkillable session after a failed
+source, and Santi could disconnect on the iPhone, which may be receiver rather than OS. Reproduce his
+sequences from macOS first: it is the cheaper rig, and if the deadlock reproduces there it is the DRM
+falling edge, not iOS.
+
+**Scope — decided 2026-09-22:** the failed-connection cases were placed out of scope for this push because
+they cannot be forced programmatically, and that decision applies to these reports as well. They are the
+same class — the engine's state after an AirPlay session ends badly — and there is no evidence of a new
+one. They are recorded here and deferred, not gates on #2291, even though the post-session disconnect is
+inside this record's own manual checklist (step 2), which has never run with DRM composed. The candidate
+fix is a self-healing rebuild in `setupMediaSource` (re-derive a fresh attach when the open-wait lands
+non-open, bounded per presentation), preceded by the instrumented device pass above; it is a change to the
+MediaSource lifecycle, not to the DRM behaviors, and is tracked as
+[#2944](https://github.com/videojs/v10/issues/2944).
 
 ## Open questions
 
@@ -472,9 +533,14 @@ path.
   over to the legacy key system, and the receiver plays decrypted.
 
   Verified on one sender, one receiver, one provider, one transition.
-  Still unexercised: disengage and resume, engaging before first play, a
-  source change during a session, EZDRM, and Apple TV — the last matters
-  least now, since the sender bug reproduces independently of receiver.
+  Still unexercised from a macOS sender: engaging before first play, a
+  source change during a session (its license-URL re-resolve is now
+  guarded per request, `59dfff448`, but not device-exercised), EZDRM,
+  and Apple TV — the last matters least now, since the sender bug
+  reproduces independently of receiver. **An iPhone sender was exercised
+  by Santi Puppo on 2026-09-21 and fails after the session ends** — see
+  § AirPlay session recovery for the report, the code-level hypothesis,
+  and the scope call.
 
   **The legacy `WebKitMediaKeys` / `com.apple.fps.1_0` fallback is no
   longer deferred — it is required.** Its deferral was conditioned on a
