@@ -70,7 +70,7 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
   <div data-cli-omit="installation">
     <h2>Choose your JS framework</h2>
 
-    <p>Your framework filters the installation methods shown next.</p>
+    <p>Your framework determines which installation methods are available below.</p>
 
     <ul>
       {
@@ -167,9 +167,9 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
     </ul>
 
     <p>
-      A source URL is optional. An empty value uses working demo media. The generated installation includes a playback
-      adapter when the selected media source needs one; native HTML5 media and background video need no separate
-      adapter.
+      A source URL is optional in the browser. For the noninteractive docs CLI, pass <code>--source-url ''</code> to use
+      demo media, or pass your media URL. The generated installation includes a playback adapter when the selected
+      media source needs one; native HTML5 media and background video need no separate adapter.
     </p>
 
     <h2>Choose how to install</h2>
