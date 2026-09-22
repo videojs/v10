@@ -16,7 +16,7 @@ function textOrUndefined(bytes: Uint8Array<ArrayBuffer>): string | undefined {
 }
 
 /** BufferSource → its bytes, without copying. */
-function bufferSourceBytes(source: BufferSource): Uint8Array {
+export function bufferSourceBytes(source: BufferSource): Uint8Array {
   return source instanceof ArrayBuffer
     ? new Uint8Array(source)
     : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);

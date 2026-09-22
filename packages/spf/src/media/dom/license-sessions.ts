@@ -22,6 +22,7 @@ import {
   type SvtaError,
 } from '../errors';
 import { applyLicenseRequest, applyLicenseResponse, fetchDrm } from './eme';
+import { bufferSourceBytes } from './license-transforms';
 
 /** Where a session reports the conditions it meets; the behavior routes these onto the errors sequence. */
 export type ReportDrmCondition = (error: SvtaError) => void;
@@ -39,12 +40,7 @@ const REPORTABLE_KEY_STATUS_CODES: Partial<Record<MediaKeyStatus, number>> = {
 
 /** A key id as lowercase hex, so the reported `data` names which key failed. */
 function keyIdHex(keyId: BufferSource): string {
-  const bytes =
-    keyId instanceof ArrayBuffer
-      ? new Uint8Array(keyId)
-      : new Uint8Array(keyId.buffer, keyId.byteOffset, keyId.byteLength);
-
-  return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return [...bufferSourceBytes(keyId)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
