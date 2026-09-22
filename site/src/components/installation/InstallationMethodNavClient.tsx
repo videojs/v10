@@ -7,7 +7,6 @@ import Check from '@/assets/icons/check.svg?react';
 import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
 import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
-import cdnMedia from '@/content/cdn-media.json';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { registryFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
@@ -29,11 +28,11 @@ const ICONS = {
   shadcn: ShadcnLogo,
   cdn: JsdelivrLogo,
 } satisfies Record<InstallationMethod, ComponentType<SVGProps<SVGSVGElement>>>;
-const CDN_MEDIA_SUBPATHS = cdnMedia.map(({ id }) => id);
 
 interface Props {
   currentFramework: InstallationPickerFramework;
   route: InstallationRouteSegment;
+  cdnMediaSubpaths: readonly string[];
 }
 
 function getActiveMethod(route: InstallationRouteSegment): InstallationMethod {
@@ -54,7 +53,7 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationPi
   return getInstallationRoutePath('cdn');
 }
 
-export default function InstallationMethodNavClient({ currentFramework, route }: Props) {
+export default function InstallationMethodNavClient({ currentFramework, route, cdnMediaSubpaths }: Props) {
   const selectedInstallMethod = useStore(installMethod);
   const selectedRenderer = useStore(renderer);
   const selectedSkin = useStore(skin);
@@ -72,7 +71,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
     }
 
-    if (id === 'cdn') return rendererSupportsCdn(selectedRenderer, CDN_MEDIA_SUBPATHS);
+    if (id === 'cdn') return rendererSupportsCdn(selectedRenderer, cdnMediaSubpaths);
 
     return true;
   });

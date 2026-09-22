@@ -1,4 +1,6 @@
 ---
+import { getCollection } from 'astro:content';
+
 import InstallationMethodNavClient from './InstallationMethodNavClient';
 import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 
@@ -6,6 +8,7 @@ const { framework } = Astro.params;
 if (!isInstallationRouteSegment(framework)) throw new Error(`Unsupported installation route: ${framework}`);
 
 const routeFramework = INSTALLATION_ROUTES[framework].pickerFramework;
+const cdnMediaSubpaths = (await getCollection('cdnMedia')).map((entry) => entry.id);
 ---
 
-<InstallationMethodNavClient client:load currentFramework={routeFramework} route={framework} />
+<InstallationMethodNavClient client:load currentFramework={routeFramework} route={framework} cdnMediaSubpaths={cdnMediaSubpaths} />
