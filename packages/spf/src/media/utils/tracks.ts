@@ -4,6 +4,7 @@ import type {
   PartiallyResolvedTrack,
   Presentation,
   ResolvedTrack,
+  SelectionSet,
   TextTrack,
   TrackType,
   VideoTrack,
@@ -25,6 +26,24 @@ export function getTracksByType(
   type: TrackType
 ): readonly (PartiallyResolvedTrack | ResolvedTrack)[] {
   return presentation.selectionSets?.find(({ type: t }) => t === type)?.switchingSets[0]?.tracks ?? [];
+}
+
+/**
+ * Every track across the given selection sets, every switching set included — unlike {@link getTracksByType}, which
+ * reads only the first switching set of one type. Takes the selection-set list rather than the presentation so a caller
+ * that orders the sets first (`getOrderedCdnIds`) walks them the same way. Tracks may be partially or fully resolved;
+ * callers narrow as needed.
+ */
+export function getAllTracks(selectionSets: readonly SelectionSet[]): (PartiallyResolvedTrack | ResolvedTrack)[] {
+  const tracks: (PartiallyResolvedTrack | ResolvedTrack)[] = [];
+
+  for (const selectionSet of selectionSets) {
+    for (const switchingSet of selectionSet.switchingSets) {
+      for (const track of switchingSet.tracks) tracks.push(track);
+    }
+  }
+
+  return tracks;
 }
 
 /**

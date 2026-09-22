@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { Presentation } from '../../types';
-import { applyContainerMimeType } from '../tracks';
+import { applyContainerMimeType, getAllTracks } from '../tracks';
 
 const presentation = (): Presentation =>
   ({
@@ -51,5 +51,24 @@ describe('applyContainerMimeType', () => {
     const twice = applyContainerMimeType(once, 'video', 'video/mp2t');
 
     expect(twice).toEqual(once);
+  });
+});
+
+describe('getAllTracks', () => {
+  it('walks every switching set of every selection set, in order', () => {
+    const p = presentation() as unknown as Presentation;
+
+    // A second video switching set, which `getTracksByType` would never see.
+    p.selectionSets[0]!.switchingSets.push({
+      id: 'vs2',
+      type: 'video',
+      tracks: [{ id: 'v3', mimeType: 'video/mp4' }],
+    } as never);
+
+    expect(getAllTracks(p.selectionSets).map(({ id }) => id)).toEqual(['v1', 'v2', 'v3', 'a1']);
+  });
+
+  it('returns an empty list for no selection sets', () => {
+    expect(getAllTracks([])).toEqual([]);
   });
 });

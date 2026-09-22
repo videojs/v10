@@ -20,6 +20,7 @@ import {
   resolveDrmHeaders,
 } from '../drm';
 import type { MaybeResolvedPresentation } from '../types';
+import { getAllTracks } from '../utils/tracks';
 import { buildMimeCodec } from './mse/mediasource-setup';
 
 export {
@@ -56,18 +57,14 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
   const video = new Set<string>();
   const audio = new Set<string>();
 
-  for (const selectionSet of presentation?.selectionSets ?? []) {
-    for (const switchingSet of selectionSet.switchingSets) {
-      for (const track of switchingSet.tracks) {
-        if (track.type !== 'video' && track.type !== 'audio') continue;
+  for (const track of getAllTracks(presentation?.selectionSets ?? [])) {
+    if (track.type !== 'video' && track.type !== 'audio') continue;
 
-        if (!track.mimeType || !track.codecs?.length) continue;
+    if (!track.mimeType || !track.codecs?.length) continue;
 
-        const bucket = track.type === 'video' ? video : audio;
+    const bucket = track.type === 'video' ? video : audio;
 
-        bucket.add(buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs }));
-      }
-    }
+    bucket.add(buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs }));
   }
 
   return { video: [...video], audio: [...audio] };

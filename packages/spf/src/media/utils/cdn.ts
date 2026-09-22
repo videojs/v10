@@ -1,4 +1,5 @@
 import type { MaybeResolvedPresentation, TrackType } from '../types';
+import { getAllTracks } from './tracks';
 
 /**
  * Derive a stable grouping key for the CDN a URL is served from. Synchronous and pure (deliberately not a `resolve*` —
@@ -45,16 +46,12 @@ export function getOrderedCdnIds(presentation: MaybeResolvedPresentation, getId:
     (a, b) => CDN_TYPE_PRIORITY[a.type] - CDN_TYPE_PRIORITY[b.type]
   );
 
-  for (const selectionSet of selectionSets) {
-    for (const switchingSet of selectionSet.switchingSets) {
-      for (const track of switchingSet.tracks) {
-        const id = getId(track.url);
-        if (seen.has(id)) continue;
+  for (const track of getAllTracks(selectionSets)) {
+    const id = getId(track.url);
+    if (seen.has(id)) continue;
 
-        seen.add(id);
-        ids.push(id);
-      }
-    }
+    seen.add(id);
+    ids.push(id);
   }
 
   return ids;

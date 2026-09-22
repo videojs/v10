@@ -12,6 +12,7 @@ import {
   type MaybeResolvedPresentation,
   type MediaPlaylistKey,
 } from './types';
+import { getAllTracks } from './utils/tracks';
 
 /**
  * A configured DRM URL: the value itself, or a resolver asked for it.
@@ -319,19 +320,15 @@ export function declaredDrmKeys(presentation: MaybeResolvedPresentation | undefi
   const keys: MediaPlaylistKey[] = [];
   const seen = new Set<string>();
 
-  for (const selectionSet of presentation?.selectionSets ?? []) {
-    for (const switchingSet of selectionSet.switchingSets) {
-      for (const track of switchingSet.tracks) {
-        if (!isResolvedTrack(track)) continue;
+  for (const track of getAllTracks(presentation?.selectionSets ?? [])) {
+    if (!isResolvedTrack(track)) continue;
 
-        for (const key of getMediaPlaylistMetadata(track)?.keys ?? []) {
-          const identity = [key.method, key.uri, key.keyFormat, key.keyId, key.iv].join(' ');
-          if (seen.has(identity)) continue;
+    for (const key of getMediaPlaylistMetadata(track)?.keys ?? []) {
+      const identity = [key.method, key.uri, key.keyFormat, key.keyId, key.iv].join(' ');
+      if (seen.has(identity)) continue;
 
-          seen.add(identity);
-          keys.push(key);
-        }
-      }
+      seen.add(identity);
+      keys.push(key);
     }
   }
 
