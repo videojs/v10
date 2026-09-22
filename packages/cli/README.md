@@ -66,6 +66,8 @@ videojs docs guides/installation/shadcn \
   --styling tailwind
 ```
 
+Vue and Svelte projects can use the HTML custom-element skin source with `--framework html`, `--template vite`, and `--styling css`. The Shadcn guide shows the HTML source steps; use the Vue or Svelte installation guide for framework-specific component setup.
+
 The generic `guides/installation` slug also accepts `--method packaged`, `--method shadcn`, or `--method cdn`. The older `--install-method` flag remains compatible.
 
 For full usage, run `videojs --help`, `videojs docs --help`, or `videojs config --help`.

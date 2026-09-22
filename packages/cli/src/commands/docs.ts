@@ -381,6 +381,7 @@ const INSTALLATION_DECISION_HELP = `Choose an installation route:
             or --method packaged --framework <framework>
   Shadcn    guides/installation/shadcn --framework <react|html>
             or --method shadcn --framework <react|html>
+            Vue and Svelte projects use --framework html for HTML custom-element source.
   CDN       guides/installation/cdn
             or --method cdn
 
@@ -408,6 +409,8 @@ Shadcn flags:
   --template <${REGISTRY_TEMPLATES.join('|')}>
   --styling <${REGISTRY_STYLINGS.join('|')}>
   --theme <${REGISTRY_THEMES.join('|')}>
+
+Vue and Svelte projects use Shadcn's HTML custom-element source with --framework html.
 
 Compatibility:
   --install-method <cdn|npm|pnpm|yarn|bun>

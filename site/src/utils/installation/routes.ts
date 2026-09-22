@@ -44,7 +44,8 @@ export const INSTALLATION_ROUTES = {
     slug: 'guides/installation-svelte',
   },
   shadcn: {
-    description: 'Use the Video.js Shadcn registry to add editable skin source and build a React or HTML video player',
+    description:
+      'Use the Video.js Shadcn registry to add editable React or HTML custom-element skin source to your project',
     framework: 'react',
     frameworks: ['react', 'html'],
     pickerFramework: 'react',

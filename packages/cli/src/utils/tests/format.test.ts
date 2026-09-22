@@ -147,5 +147,6 @@ describe('framework installation formats', () => {
     expect(result).toContain('yarn add @videojs/hlsjs-video');
     expect(result).toContain('components/videojs/video/skin.html');
     expect(result).toContain("import '@videojs/html/media/hlsjs-video'");
+    expect(result).toContain('For Vue or Svelte, use this HTML custom-element source');
   });
 });

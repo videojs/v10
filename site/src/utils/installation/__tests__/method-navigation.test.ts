@@ -14,6 +14,17 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.get('skin')).toBe('minimal');
   });
 
+  it('uses HTML Shadcn source for Vue and Svelte while keeping shared choices', () => {
+    for (const framework of ['vue', 'svelte']) {
+      const current = new URL(`https://videojs.org/docs/guides/installation/${framework}?preset=audio&skin=minimal`);
+      const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn?framework=html', 'shadcn');
+
+      expect(result.searchParams.get('framework')).toBe('html');
+      expect(result.searchParams.get('preset')).toBe('audio');
+      expect(result.searchParams.get('skin')).toBe('minimal');
+    }
+  });
+
   it('returns from Shadcn to the selected packaged framework', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html&preset=audio');
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation', 'packaged');

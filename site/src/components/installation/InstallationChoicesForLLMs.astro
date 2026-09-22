@@ -37,10 +37,20 @@ const mediaChoices = useCases.map((useCase) => {
 
 const methodHrefs = {
   packaged: packagedHref,
-  shadcn: '/docs/guides/installation/shadcn',
+  shadcn:
+    route === 'vue' || route === 'svelte'
+      ? '/docs/guides/installation/shadcn?framework=html'
+      : '/docs/guides/installation/shadcn',
   cdn: '/docs/guides/installation/cdn',
 } satisfies Record<InstallationMethod, string>;
-const methodLinks = INSTALLATION_METHOD_OPTIONS.map((option) => ({ ...option, href: methodHrefs[option.id] }));
+const methodLinks = INSTALLATION_METHOD_OPTIONS.map((option) => ({
+  ...option,
+  href: methodHrefs[option.id],
+  details:
+    option.id === 'shadcn' && (route === 'vue' || route === 'svelte')
+      ? 'Add editable HTML custom-element skin source to your project.'
+      : option.details,
+}));
 
 const frameworks = [
   ['react', 'React', 'Components and hooks for React 19.', '/docs/guides/installation/react'],
@@ -76,7 +86,10 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
     {
       isShadcn && (
         <>
-          <p>The Shadcn registry generates React or HTML source. Vue and Svelte use Packaged.</p>
+          <p>
+            The Shadcn registry generates React or HTML source. Vue and Svelte can use the HTML custom-element source;
+            select <code>--framework html</code> in the docs CLI.
+          </p>
           <ul>
             {(['react', 'html'] as const).map((framework) => (
               <li>
@@ -101,20 +114,6 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
         </>
       )
     }
-
-    <h2>Choose how to install</h2>
-
-    <p>Pick one starting path. These are alternatives, not steps to run in sequence.</p>
-
-    <ul>
-      {
-        availableMethodLinks.map(({ label, href, details }) => (
-          <li>
-            <a href={href}>{label}</a>: {details}
-          </li>
-        ))
-      }
-    </ul>
 
     <h2>Choose your use case</h2>
 
@@ -172,6 +171,23 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
       adapter when the selected media source needs one; native HTML5 media and background video need no separate
       adapter.
     </p>
+
+    <h2>Choose how to install</h2>
+
+    <p>
+      Pick one starting path. These are alternatives, not steps to run in sequence. Shadcn does not provide source for
+      background video or a no-skin player. CDN availability also depends on the selected media source.
+    </p>
+
+    <ul>
+      {
+        availableMethodLinks.map(({ label, href, details }) => (
+          <li>
+            <a href={href}>{label}</a>: {details}
+          </li>
+        ))
+      }
+    </ul>
 
     <p>
       The code below is a complete example for the default Video, Default skin, and HTML5 Video choices. Generate

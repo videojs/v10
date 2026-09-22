@@ -7,9 +7,11 @@ import Check from '@/assets/icons/check.svg?react';
 import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
 import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
+import cdnMedia from '@/content/cdn-media.json';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { registryFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
+import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import { isRegistryFramework, type InstallationPickerFramework } from '@/utils/installation/framework-navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
 import {
@@ -19,6 +21,7 @@ import {
 } from '@/utils/installation/method-options';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
+import { registrySkinSelection } from '@/utils/installation/shadcn';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 const ICONS = {
@@ -26,6 +29,7 @@ const ICONS = {
   shadcn: ShadcnLogo,
   cdn: JsdelivrLogo,
 } satisfies Record<InstallationMethod, ComponentType<SVGProps<SVGSVGElement>>>;
+const CDN_MEDIA_SUBPATHS = cdnMedia.map(({ id }) => id);
 
 interface Props {
   currentFramework: InstallationPickerFramework;
@@ -42,9 +46,9 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationPi
   if (method === 'packaged') return getInstallationRoutePath(framework);
 
   if (method === 'shadcn') {
-    if (!isRegistryFramework(framework)) throw new Error(`Shadcn does not support ${framework}.`);
+    const sourceFramework = isRegistryFramework(framework) ? framework : 'html';
 
-    return `${getInstallationRoutePath('shadcn')}?framework=${framework}`;
+    return `${getInstallationRoutePath('shadcn')}?framework=${sourceFramework}`;
   }
 
   return getInstallationRoutePath('cdn');
@@ -61,7 +65,17 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const framework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = getInstallationMethodsForFramework(framework);
-  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => route === 'shadcn' || availableMethods.includes(id));
+  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => {
+    if (route !== 'shadcn' && !availableMethods.includes(id)) return false;
+
+    if (id === 'shadcn' && route !== 'shadcn') {
+      return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
+    }
+
+    if (id === 'cdn') return rendererSupportsCdn(selectedRenderer, CDN_MEDIA_SUBPATHS);
+
+    return true;
+  });
 
   const getMethodHref = (method: InstallationMethod) => {
     const baseHref = getMethodBaseHref(method, framework);
@@ -122,6 +136,10 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
       {items.map(({ id, label, description }) => {
         const Icon = ICONS[id];
         const href = getMethodHref(id);
+        const cardDescription =
+          id === 'shadcn' && (framework === 'vue' || framework === 'svelte')
+            ? 'Add editable HTML skin source to your project.'
+            : description;
 
         return (
           <a
@@ -148,7 +166,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
             </span>
             <span className="min-w-0 flex-1 pr-8">
               <span className="block font-semibold">{label}</span>
-              <span className="text-p4 dark:text-muted mt-0.5 block">{description}</span>
+              <span className="text-p4 dark:text-muted mt-0.5 block">{cardDescription}</span>
             </span>
             <span
               aria-hidden="true"

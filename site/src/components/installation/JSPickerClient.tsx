@@ -69,11 +69,20 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
   };
 
   return (
-    <CardRadioGroup
-      value={displayedFramework}
-      onChange={handleChange}
-      options={OPTIONS}
-      aria-label="Select JS framework"
-    />
+    <>
+      <CardRadioGroup
+        value={displayedFramework}
+        onChange={handleChange}
+        options={OPTIONS}
+        aria-label="Select JS framework"
+      />
+      <div className="text-p4 mt-3 min-h-6">
+        {displayedFramework === 'html' && route !== 'cdn' && (
+          <p>
+            Want to load Video.js from a CDN? See <a href="#choose-how-to-install">Choose how to install</a> below.
+          </p>
+        )}
+      </div>
+    </>
   );
 }

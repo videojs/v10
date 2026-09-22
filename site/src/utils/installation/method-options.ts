@@ -33,11 +33,11 @@ export const INSTALLATION_METHOD_OPTIONS = [
 const INSTALLATION_METHODS_BY_FRAMEWORK = {
   react: ['packaged', 'shadcn'],
   html: ['packaged', 'shadcn', 'cdn'],
-  vue: ['packaged'],
-  svelte: ['packaged'],
+  vue: ['packaged', 'shadcn'],
+  svelte: ['packaged', 'shadcn'],
 } as const satisfies Record<InstallationPickerFramework, readonly InstallationMethod[]>;
 
-/** Installation paths that can generate a player for the selected framework. */
+/** Installation paths available to the selected project's framework. */
 export function getInstallationMethodsForFramework(
   framework: InstallationPickerFramework
 ): readonly InstallationMethod[] {

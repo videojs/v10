@@ -132,6 +132,7 @@ export function formatShadcnInstallation(opts: InstallationOptions, setup: Shadc
     const create = generateSourceHTMLUsageCode(opts);
 
     sections.push(
+      'For Vue or Svelte, use this HTML custom-element source in your framework component. Follow the [Vue](https://videojs.org/docs/guides/installation/vue) or [Svelte](https://videojs.org/docs/guides/installation/svelte) guide for component setup, import the local `skin.ts` instead of the packaged skin, and place the updated `skin.html` markup inside the player. In Vue, include the copied skin tags in `isCustomElement`. The steps below show a plain HTML entry point.\n',
       `### 1. Add the media element to \`${create.skinFile}\`\n`,
       `\`\`\`html\n${create.media}\n\`\`\``,
       '\n### 2. Register the custom elements in `src/player.ts`\n',
