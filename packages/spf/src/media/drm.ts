@@ -3,6 +3,8 @@
  * mapping, manifest-declared key collection, and key-system candidate selection. The browser-touching EME half (access
  * negotiation, MediaKeys attachment, init-data decoding, license POST) lives in `dom/eme.ts`, which re-exports these.
  */
+import { toValue, type ValueOrFunction } from '@videojs/utils/function';
+
 import { SVTA_UNSUPPORTED_ENCRYPTION_METHOD, type SvtaError } from './errors';
 import {
   getMediaPlaylistMetadata,
@@ -27,8 +29,8 @@ import {
  */
 export type DrmUrl = DrmValue<string>;
 
-/** A configured DRM value: the value itself, or a resolver asked for it. */
-export type DrmValue<T> = T | undefined | (() => T | undefined);
+/** A configured DRM value: the value itself, or a resolver asked for it. See {@link ValueOrFunction}. */
+export type DrmValue<T> = ValueOrFunction<T>;
 
 /** Extra license-request headers, or a resolver asked for them. */
 export type DrmHeaders = DrmValue<Record<string, string>>;
@@ -146,31 +148,21 @@ export interface DrmConfig {
 }
 
 /**
- * Resolve a {@link DrmUrl}. A resolver that throws answers `undefined`: this is called from a selection constraint,
- * where an exception would fail the whole pruning pass, and a system whose URL can't be produced is unusable anyway.
+ * Resolve a {@link DrmUrl}. Called from a selection constraint, so a resolver that throws answers `undefined` rather
+ * than failing the pruning pass — see {@link toValue}.
  */
 export function resolveDrmUrl(url: DrmUrl): string | undefined {
-  return resolveDrmValue(url);
+  return toValue(url);
 }
 
 /** Resolve configured license-request headers. See {@link resolveDrmUrl}. */
 export function resolveDrmHeaders(headers: DrmHeaders): Record<string, string> | undefined {
-  return resolveDrmValue(headers);
+  return toValue(headers);
 }
 
 /** Resolve a configured fetch credentials mode. See {@link resolveDrmUrl}. */
 export function resolveDrmCredentials(credentials: DrmCredentials): RequestCredentials | undefined {
-  return resolveDrmValue(credentials);
-}
-
-function resolveDrmValue<T>(value: DrmValue<T>): T | undefined {
-  if (typeof value !== 'function') return value;
-
-  try {
-    return (value as () => T | undefined)();
-  } catch {
-    return undefined;
-  }
+  return toValue(credentials);
 }
 
 /**
@@ -462,7 +454,7 @@ export function unsupportedEncryptionMethodCause(
  *
  * URL and header fields resolve to a plain value the engine re-resolves harmlessly. The four transform fields are
  * stable functions that apply the current source's transform, or pass the value through when it names none. Transforms
- * cannot ride {@link DrmUrl}'s resolver union: {@link resolveDrmValue} tells a resolver from a value by `typeof ===
+ * cannot ride {@link DrmUrl}'s resolver union: {@link toValue} tells a function from a value by `typeof ===
  * 'function'`, which a transform — itself a function — collides with. Wrapping here is what lets a source carry
  * transforms without the engine ever holding, or structurally comparing, the source's own function objects.
  */

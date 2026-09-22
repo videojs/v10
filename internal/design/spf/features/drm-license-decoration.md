@@ -66,7 +66,7 @@ source is current without a rebuild. The transforms thread the same way, with on
 twist that makes the adapter-wrap **necessary, not just consistent**:
 
 `licenseUrl`/`headers` are `DrmValue<T>` = `T | (() => T)`, and the engine calls
-`resolveDrmValue`, which reads `typeof value === 'function'` as "this is a
+`toValue` (`@videojs/utils/function`), which reads `typeof value === 'function'` as "this is a
 resolver, call it." That only works because those `T`s are *data*. A transform is
 itself a function, so `typeof === 'function'` can no longer tell "a resolver
 returning a transform" from "the transform." The `DrmValue` mechanism collides on
