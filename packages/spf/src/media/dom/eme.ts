@@ -19,9 +19,6 @@ import {
   resolveDrmCredentials,
   resolveDrmHeaders,
 } from '../drm';
-import type { MaybeResolvedPresentation } from '../types';
-import { getAllTracks } from '../utils/tracks';
-import { buildMimeCodec } from './mse/mediasource-setup';
 
 export {
   type DrmCredentials,
@@ -44,31 +41,6 @@ export {
   resolveDrmUrl,
   unsupportedEncryptionMethodCause,
 } from '../drm';
-
-/**
- * The unique audio/video content types across every track that declares codecs — the capability surface a
- * `MediaKeySystemConfiguration` negotiates over. Includes unresolved tracks: the multivariant already carries
- * `CODECS`.
- */
-export function contentTypesFromPresentation(presentation: MaybeResolvedPresentation | undefined): {
-  video: string[];
-  audio: string[];
-} {
-  const video = new Set<string>();
-  const audio = new Set<string>();
-
-  for (const track of getAllTracks(presentation?.selectionSets ?? [])) {
-    if (track.type !== 'video' && track.type !== 'audio') continue;
-
-    if (!track.mimeType || !track.codecs?.length) continue;
-
-    const bucket = track.type === 'video' ? video : audio;
-
-    bucket.add(buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs }));
-  }
-
-  return { video: [...video], audio: [...audio] };
-}
 
 /**
  * MediaKeySystemConfigurations for one key-system module over the given content types, most-preferred first.

@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import type { Presentation } from '../../types';
 import {
   buildKeySystemConfigurations,
-  contentTypesFromPresentation,
   fetchDrm,
   fetchServerCertificate,
   type KeySystemModule,
@@ -17,64 +15,6 @@ import { fairPlayKeySystem, playReadyKeySystem, widevineKeySystem } from '../key
 
 const VIDEO_TYPE = 'video/mp4; codecs="avc1.4d401f"';
 const AUDIO_TYPE = 'audio/mp4; codecs="mp4a.40.2"';
-
-function makeTrack(type: 'video' | 'audio', overrides: object = {}) {
-  return {
-    type,
-    id: `${type}-1`,
-    url: `https://example.com/${type}.m3u8`,
-    bandwidth: 1000,
-    mimeType: `${type}/mp4`,
-    codecs: [type === 'video' ? 'avc1.4d401f' : 'mp4a.40.2'],
-    segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
-    startTime: 0,
-    duration: 4,
-    ...overrides,
-  };
-}
-
-function makePresentation(tracks: object[]): Presentation {
-  return {
-    id: 'p1',
-    url: 'https://example.com/multivariant.m3u8',
-    selectionSets: [
-      {
-        id: 'ss1',
-        type: 'video' as const,
-        switchingSets: [{ id: 'sw1', type: 'video' as const, tracks }],
-      },
-    ],
-  } as Presentation;
-}
-
-describe('contentTypesFromPresentation', () => {
-  it('collects the unique audio and video content types', () => {
-    const presentation = makePresentation([makeTrack('video'), makeTrack('audio')]);
-
-    expect(contentTypesFromPresentation(presentation)).toEqual({ video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
-  });
-
-  it('dedupes renditions sharing a content type — one ladder is one capability', () => {
-    const presentation = makePresentation([makeTrack('video'), makeTrack('video', { id: 'v-2', bandwidth: 2000 })]);
-
-    expect(contentTypesFromPresentation(presentation).video).toEqual([VIDEO_TYPE]);
-  });
-
-  it('skips tracks with nothing to build a content type from, and non-a/v types', () => {
-    const presentation = makePresentation([
-      makeTrack('video', { codecs: undefined }),
-      makeTrack('audio', { mimeType: undefined }),
-      makeTrack('video', { id: 'text-1', type: 'text' }),
-    ]);
-
-    expect(contentTypesFromPresentation(presentation)).toEqual({ video: [], audio: [] });
-  });
-
-  it('is empty for an absent or unresolved presentation', () => {
-    expect(contentTypesFromPresentation(undefined)).toEqual({ video: [], audio: [] });
-    expect(contentTypesFromPresentation({ url: 'https://example.com/m.m3u8' })).toEqual({ video: [], audio: [] });
-  });
-});
 
 describe('requestKeySystemAccess', () => {
   it("walks a module's request variants in order and reports the module", async () => {

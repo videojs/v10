@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
@@ -14,8 +13,7 @@ import {
   setupVideoBufferActors,
 } from '../setup-buffer-actors';
 
-// Mock `createSourceBuffer`; keep the real `buildMimeCodec` so its tests
-// exercise the actual implementation.
+// Mock `createSourceBuffer`; everything else in the module stays real.
 vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../media/dom/mse/mediasource-setup')>();
 
@@ -141,35 +139,6 @@ function createPresentationWithTracks(tracks: { video?: VideoTrack; audio?: Audi
     startTime: 0,
   };
 }
-
-describe('buildMimeCodec', () => {
-  it('constructs MIME codec string with single codec', () => {
-    const track = createResolvedVideoTrack();
-    const result = buildMimeCodec(track);
-
-    expect(result).toBe('video/mp4; codecs="avc1.42E01E"');
-  });
-
-  it('constructs MIME codec string with multiple codecs', () => {
-    const track: VideoTrack = {
-      ...createResolvedVideoTrack(),
-      codecs: ['avc1.42E01E', 'mp4a.40.2'],
-    };
-    const result = buildMimeCodec(track);
-
-    expect(result).toBe('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
-  });
-
-  it('handles empty codecs array', () => {
-    const track: VideoTrack = {
-      ...createResolvedVideoTrack(),
-      codecs: [],
-    };
-    const result = buildMimeCodec(track);
-
-    expect(result).toBe('video/mp4; codecs=""');
-  });
-});
 
 function makeState(initial: BufferActorsState = {}): StateSignals<BufferActorsState> {
   return {

@@ -48,7 +48,6 @@ import { computed, type ReadonlySignal, type Signal } from '../../../core/signal
 import { RecurringRunner, runOnce, Task } from '../../../core/tasks/task';
 import {
   attachMediaKeys,
-  contentTypesFromPresentation,
   type DrmSystemsConfig,
   declaredDrmKeys,
   declaredEncryptionScheme,
@@ -66,6 +65,7 @@ import {
   SVTA_UNSUPPORTED_DRM_SYSTEM,
 } from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
+import { mimeCodecsByType } from '../../../media/utils/tracks';
 import { type ErrorEmitterState, emitError } from '../collect-errors';
 
 /** State shape for MediaKeys setup. */
@@ -158,7 +158,7 @@ async function negotiateMediaKeys({
   const candidates = keySystemCandidates(keys, config.drm, config.keySystems);
   const negotiated = await requestKeySystemAccess(
     candidates,
-    contentTypesFromPresentation(presentation),
+    mimeCodecsByType(presentation),
     declaredEncryptionScheme(keys)
   );
 

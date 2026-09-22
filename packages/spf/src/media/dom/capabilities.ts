@@ -18,7 +18,8 @@
 import { type DrmConfig, keySystemCandidates } from '../drm';
 import { NON_FMP4_CONTAINER_MIMES } from '../hls/parse-media-playlist';
 import { type CanPlayTrack, getMediaPlaylistMetadata } from '../types';
-import { buildMimeCodec, isCodecSupported } from './mse/mediasource-setup';
+import { buildMimeCodec } from '../utils/tracks';
+import { isCodecSupported } from './mse/mediasource-setup';
 
 const codecSupportCache = new Map<string, boolean>();
 
