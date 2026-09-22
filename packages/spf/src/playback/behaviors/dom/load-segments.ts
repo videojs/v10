@@ -166,6 +166,12 @@ function setupSegmentLoading<
   const { selectedKey, loaderKey, findResolvedTrack } = config;
   const bufferDuration = config.forwardBuffer?.bufferDuration ?? DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration;
 
+  // The `'dormant'` policy, read in three places: the derived state, and both
+  // dispatching handlers, which re-read it against the concurrent-rise window
+  // described on `'metadata-only'`. Either gate holding forbids a dispatch;
+  // an absent slot never gates.
+  const isLoadingDormant = () => !!(state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get());
+
   const selectedTrack = computed<Track | undefined>(() =>
     findResolvedTrack(state.presentation.get(), state[selectedKey].get())
   );
@@ -183,7 +189,7 @@ function setupSegmentLoading<
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
     // Policy-off wins even over preconditions: a loader arriving while
     // either gate holds must not dispatch.
-    if (state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get()) return 'dormant';
+    if (isLoadingDormant()) return 'dormant';
 
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
 
@@ -226,7 +232,7 @@ function setupSegmentLoading<
           // gate is still down and arrive here after it is up. Composition order
           // alone does not close that window — it only decides whether the gate
           // write lands before or after this body runs.
-          if (state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get()) return;
+          if (isLoadingDormant()) return;
 
           loader.send({ type: 'load', track });
         },
@@ -247,7 +253,7 @@ function setupSegmentLoading<
           if (!track || !loader) return;
 
           // Same concurrent-rise window as `'metadata-only'`'s entry; see there.
-          if (state.loadingSuspended?.get() || state.segmentLoadingBlocked?.get()) return;
+          if (isLoadingDormant()) return;
 
           const currentTime = peek(state.currentTime) ?? 0;
 
