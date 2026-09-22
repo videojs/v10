@@ -38,6 +38,7 @@ function createContextValue(overrides?: Partial<PlayerContextValue>): PlayerCont
     setMedia: vi.fn(),
     container: null,
     setContainer: vi.fn(),
+    registerExtension: vi.fn(() => vi.fn()),
     ...overrides,
   };
 }
