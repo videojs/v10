@@ -299,9 +299,10 @@ v10 replaces the whole mechanism with a choice you make in markup. You pick the 
 
 Each needs its own import.
 
-Package-manager installations also need the matching adapter. The default HLS component shown below uses
-`@videojs/spf`; HlsJsVideo and the default Mux components use `@videojs/hls.js`; DASH uses `@videojs/dash.js`; Vimeo
-uses `@videojs/vimeo`; and Shaka and Wistia use `@videojs/shaka` and `@videojs/wistia`.
+Package-manager installations also need the matching media package. The default HLS component shown below uses
+`@videojs/spf`; the hls.js component uses `@videojs/hlsjs-video`; Mux video and audio use `@videojs/mux-video` and
+`@videojs/mux-audio`; DASH uses `@videojs/dash-video`; Vimeo uses `@videojs/vimeo-video`; and Shaka and Wistia use
+`@videojs/shaka-video` and `@videojs/wistia-video`.
 
 <FrameworkCase frameworks={["html"]}>
 For HLS from the CDN:
