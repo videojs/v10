@@ -201,7 +201,7 @@ export function generateReactInstallCode(
 // HTML Usage
 // ---------------------------------------------------------------------------
 
-function getRendererTag(renderer: Renderer): string {
+export function getRendererTag(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'background-video',
     dash: 'dash-video',
@@ -225,7 +225,7 @@ function getPlayerTag(useCase: UseCase): string {
   return `${getInstallationPreset(useCase).tagPrefix}-player`;
 }
 
-function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
+export function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const prefix = getInstallationPreset(useCase).tagPrefix;
 
   if (useCase === 'background-video') return `${prefix}-skin`;
@@ -519,7 +519,7 @@ export function generateSvelteUsageCode(
 // React Create
 // ---------------------------------------------------------------------------
 
-function getRendererComponent(renderer: Renderer): string {
+export function getRendererComponent(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'BackgroundVideo',
     dash: 'DashVideo',
@@ -539,7 +539,7 @@ function getRendererComponent(renderer: Renderer): string {
   return map[renderer];
 }
 
-function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
+export function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const name = `${getInstallationPreset(useCase).componentPrefix}Skin`;
 
   return getSkinFile(skin) === 'minimal-skin' ? `Minimal${name}` : name;

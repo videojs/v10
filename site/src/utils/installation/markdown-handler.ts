@@ -8,6 +8,26 @@ import {
 } from './markdown.ts';
 
 const VJS10_VERSION = htmlPackage.version;
+// RFC 9110 qvalue: 0 to 1 with at most three decimals.
+const QVALUE = /^(?:0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/;
+
+/** Whether an Accept header explicitly prefers Markdown to HTML. */
+export function prefersMarkdown(accept: string): boolean {
+  const qualities = new Map<string, number>();
+
+  for (const entry of accept.split(',')) {
+    const [range = '', ...params] = entry.split(';').map((part) => part.trim().toLowerCase());
+    const weight = params.find((param) => param.startsWith('q='))?.slice(2) ?? '1';
+    if (!QVALUE.test(weight)) continue;
+
+    qualities.set(range, Math.max(Number(weight), qualities.get(range) ?? 0));
+  }
+
+  const markdown = qualities.get('text/markdown') ?? 0;
+  const html = qualities.get('text/html') ?? qualities.get('text/*') ?? qualities.get('*/*') ?? 0;
+
+  return markdown > 0 && markdown >= html;
+}
 
 function markdownResponse(body: string, status = 200, privateResponse = false): Response {
   const headers = new Headers();
@@ -22,13 +42,13 @@ function markdownResponse(body: string, status = 200, privateResponse = false): 
 }
 
 export interface MarkdownContext {
-  next(request: Request): Promise<Response>;
+  next(request?: Request): Promise<Response>;
 }
 
 export async function handleMarkdown(request: Request, context: MarkdownContext): Promise<Response | undefined> {
   const url = new URL(request.url);
   const directMarkdown = url.pathname.endsWith('.md');
-  const acceptsMarkdown = request.headers.get('accept')?.includes('text/markdown') ?? false;
+  const acceptsMarkdown = prefersMarkdown(request.headers.get('accept') ?? '');
   if (!directMarkdown && !acceptsMarkdown) return;
 
   const path = (directMarkdown ? url.pathname.slice(0, -3) : url.pathname).replace(/\/$/, '');
@@ -40,7 +60,7 @@ export async function handleMarkdown(request: Request, context: MarkdownContext)
   // same-origin request that would run this edge function again.
   const assetRequest = directMarkdown ? request : new Request(assetUrl, request);
   const mdResponse = await context.next(assetRequest);
-  if (!mdResponse.ok) return;
+  if (!mdResponse.ok) return directMarkdown ? mdResponse : undefined;
 
   let body = await mdResponse.text();
   const hasInstallationSelection = [...url.searchParams].some(([key]) => INSTALLATION_MARKDOWN_PARAMS.has(key));

@@ -1,8 +1,31 @@
 import type { Config } from '@netlify/edge-functions';
 
-import { handleMarkdown } from '../../src/utils/installation/markdown-handler.ts';
+import {
+  handleMarkdown,
+  type MarkdownContext,
+  prefersMarkdown,
+} from '../../src/utils/installation/markdown-handler.ts';
 
-export default handleMarkdown;
+export { prefersMarkdown };
+
+export default async function markdownNegotiation(request: Request, context: MarkdownContext) {
+  // trailing-slash.ts redirects slash URLs to the canonical page URL, which is where negotiation happens.
+  if (new URL(request.url).pathname.endsWith('/')) return;
+
+  if (!prefersMarkdown(request.headers.get('accept') ?? '')) return varyOnAccept(await context.next());
+
+  return (await handleMarkdown(request, context)) ?? varyOnAccept(await context.next());
+}
+
+// Whichever representation wins, this function chose it from Accept, so caches must key on it.
+function varyOnAccept(response: Response): Response {
+  const vary = response.headers.get('vary') ?? '';
+  const fields = vary.split(',').map((field) => field.trim().toLowerCase());
+
+  if (!fields.includes('accept') && !fields.includes('*')) response.headers.append('vary', 'Accept');
+
+  return response;
+}
 
 export const config: Config = {
   cache: 'manual',

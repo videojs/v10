@@ -1,6 +1,6 @@
 // @vitest-environment node
 import type { Context } from '@netlify/edge-functions';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import markdownNegotiation, { prefersMarkdown } from '../markdown-negotiation';
 
@@ -62,19 +62,15 @@ describe('prefersMarkdown', () => {
 });
 
 describe('markdownNegotiation', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   function negotiate(path: string, accept: string, twin: Response, next: Response) {
-    const fetchTwin = vi.fn<typeof fetch>(async () => twin);
-
-    vi.stubGlobal('fetch', fetchTwin);
-
-    const context = { next: vi.fn(async () => next) } satisfies Pick<Context, 'next'>;
+    const context = {
+      next: vi.fn(async (request?: Request) =>
+        request && new URL(request.url).pathname.endsWith('.md') ? twin : next
+      ),
+    } satisfies Pick<Context, 'next'>;
     const request = new Request(`https://videojs.org${path}`, { headers: { accept } });
 
-    return { fetchTwin, context, response: markdownNegotiation(request, context) };
+    return { context, response: markdownNegotiation(request, context) };
   }
 
   function page(init?: ResponseInit) {
@@ -82,14 +78,11 @@ describe('markdownNegotiation', () => {
   }
 
   it('serves the Markdown twin to requests that prefer it', async () => {
-    const { fetchTwin, context, response } = negotiate('/docs/page', 'text/markdown', new Response('# Page'), page());
+    const { context, response } = negotiate('/docs/page', 'text/markdown', new Response('# Page'), page());
     const markdown = await response;
 
-    const [input, init] = fetchTwin.mock.lastCall ?? [];
-
-    expect(String(input)).toBe('https://videojs.org/docs/page.md');
-    expect(init).toEqual({ redirect: 'manual' });
-    expect(context.next).not.toHaveBeenCalled();
+    expect(context.next).toHaveBeenCalledOnce();
+    expect(context.next.mock.calls[0]![0]?.url).toBe('https://videojs.org/docs/page.md');
 
     expect(markdown?.status).toBe(200);
     expect(markdown?.headers.get('content-type')).toBe('text/markdown; charset=utf-8');
@@ -99,11 +92,11 @@ describe('markdownNegotiation', () => {
 
   it('passes the HTML through, varying on Accept, when HTML is preferred', async () => {
     const html = page();
-    const { fetchTwin, response } = negotiate('/docs/page', 'text/html, text/markdown;q=0', new Response(), html);
+    const { context, response } = negotiate('/docs/page', 'text/html, text/markdown;q=0', new Response(), html);
 
     expect(await response).toBe(html);
     expect(html.headers.get('vary')).toBe('Accept-Encoding, Accept');
-    expect(fetchTwin).not.toHaveBeenCalled();
+    expect(context.next).toHaveBeenCalledWith();
   });
 
   it("answers with the page's own redirect when the twin has moved", async () => {
@@ -132,10 +125,9 @@ describe('markdownNegotiation', () => {
   });
 
   it('leaves slash URLs to the trailing-slash redirect', async () => {
-    const { fetchTwin, context, response } = negotiate('/docs/page/', 'text/markdown', new Response(), page());
+    const { context, response } = negotiate('/docs/page/', 'text/markdown', new Response(), page());
 
     expect(await response).toBeUndefined();
-    expect(fetchTwin).not.toHaveBeenCalled();
     expect(context.next).not.toHaveBeenCalled();
   });
 });

@@ -83,20 +83,19 @@ describe('markdown negotiation', () => {
     expect(assetRequest.url).toBe('https://videojs.org/docs/guides/installation/react.md');
   });
 
-  it('leaves normal HTML requests alone', async () => {
+  it('passes normal HTML requests through with an Accept variance', async () => {
     const { context, next } = createContext();
+    const response = await negotiateMarkdown(
+      new Request('https://videojs.org/docs/guides/installation/react', { headers: { accept: 'text/html' } }),
+      context
+    );
 
-    expect(
-      await negotiateMarkdown(
-        new Request('https://videojs.org/docs/guides/installation/react', { headers: { accept: 'text/html' } }),
-        context
-      )
-    ).toBeUndefined();
-    expect(next).not.toHaveBeenCalled();
+    expect(response?.headers.get('vary')).toBe('Accept');
+    expect(next).toHaveBeenCalledWith();
   });
 
   it('declares separate direct Markdown and Accept-negotiation routes', () => {
-    expect(negotiationConfig.header).toEqual({ accept: 'text/markdown' });
+    expect(negotiationConfig.header).toEqual({ accept: '[Tt][Ee][Xx][Tt]/[Mm][Aa][Rr][Kk][Dd][Oo][Ww][Nn]' });
     expect(negotiationConfig.excludedPath).toContain('/docs/*.md');
     expect(negotiationConfig.method).toBe('GET');
     expect(directConfig.path).toContain('/docs/*.md');
