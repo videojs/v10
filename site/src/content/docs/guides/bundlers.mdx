@@ -22,12 +22,12 @@ If an older bundler reports that one of these paths is missing or not exported, 
 ## Vite compatibility
 
 <FrameworkCase frameworks={["react"]}>
-Use a current Vite release. Testing confirmed that Vite 5.4.19 can load Video.js JavaScript and CSS package exports. Vite 3.2.8 can load the JavaScript, but it cannot load an exported stylesheet such as `@videojs/react/video/skin.css`.
+Use Vite 4.1 or later; Video.js has been tested through Vite 8. Earlier versions can't resolve exported stylesheets such as `@videojs/react/video/skin.css`.
 
 React skins ship their stylesheet as a separate export: an application that renders `VideoSkin` from `@videojs/react/video` also imports `@videojs/react/video/skin.css`, so this limitation applies to every React application that uses a packaged skin.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Use a current Vite release. Testing confirmed that Vite 5.4.19 can load Video.js JavaScript and CSS package exports. Vite 3.2.8 can load the JavaScript, but it cannot load an exported stylesheet such as `@videojs/html/video/skin.css`.
+Use Vite 4.1 or later; Video.js has been tested through Vite 8. Earlier versions can't resolve exported stylesheets such as `@videojs/html/video/skin.css`.
 
 Packaged HTML skins import their own styles, so an HTML application using `@videojs/html/video/skin` doesn't need to import `skin.css` separately. The CSS limitation matters only when your application imports that stylesheet directly.
 </FrameworkCase>
