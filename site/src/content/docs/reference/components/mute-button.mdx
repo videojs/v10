@@ -55,7 +55,15 @@ import volumeLevelsHtmlTs from "@/components/docs/demos/mute-button/html/css/Vol
 
 Toggles mute on and off, and exposes a derived `volumeLevel` based on the current volume and mute state.
 
-Mute availability is separate from volume-level availability because some media can accept a mute command without supporting volume changes. When mute is unavailable or unsupported, the HTML custom element receives the native `hidden` attribute and the React component returns `null`. Toggling is also ignored while mute is unavailable.
+Mute availability is separate from volume-level availability because some media can accept a mute command without supporting volume changes.
+
+<FrameworkCase frameworks={["html"]}>
+When mute is unavailable or unsupported, the element receives the native `hidden` attribute. Toggling is also ignored while mute is unavailable.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+When mute is unavailable or unsupported, the component returns `null`. Toggling is also ignored while mute is unavailable.
+</FrameworkCase>
 
 ## Styling
 

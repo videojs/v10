@@ -51,11 +51,17 @@ import basicUsageHtmlTs from "@/components/docs/demos/volume-indicator/html/css/
 
 ## Behavior
 
+<FrameworkCase frameworks={["react"]}>
 `VolumeIndicator` displays feedback for `toggleMuted` and `volumeStep` actions emitted by a <DocsLink slug="reference/components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/components/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to mute buttons, volume sliders, direct player-store changes, or volume changes on their own.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-volume-indicator>` displays feedback for `toggleMuted` and `volumeStep` actions emitted by a <DocsLink slug="reference/components/hotkey">`<media-hotkey>`</DocsLink> or <DocsLink slug="reference/components/gesture">`<media-gesture>`</DocsLink> in the same player `<media-container>`. It does not react to mute buttons, volume sliders, direct player-store changes, or volume changes on their own.
+</FrameworkCase>
 
 The input event arrives before its action is resolved. The indicator uses the media snapshot from that moment to predict the next mute state and volume. `toggleMuted` predicts the opposite mute state. `volumeStep` adds its `value` to the snapshot volume and clamps the result from 0 to 1. A step whose clamped result is above 0 also predicts that mute will clear.
 
-The Root exposes the predicted level:
+The root exposes the predicted level:
 
 | `data-level` | Predicted state |
 | --- | --- |
@@ -63,9 +69,23 @@ The Root exposes the predicted level:
 | `"low"` | Unmuted volume is greater than 0 and at most 0.5 |
 | `"high"` | Unmuted volume is greater than 0.5 |
 
+<FrameworkCase frameworks={["react"]}>
 `Value` displays the rounded percentage from 0% through 100%. `Fill` receives the same percentage through `--media-volume-fill`. Nest `Value` inside `Fill` so the progress treatment and text form one visual unit.
+</FrameworkCase>
 
-The indicator closes after `closeDelay`, which defaults to 800 milliseconds. Repeated handled actions update the current value and restart that close timer without replaying the entry transition. Each update uses the latest media snapshot; the component does not independently accumulate volume steps. React stops rendering the Root after its close transition. The HTML custom element remains in the document with `hidden` until the next handled action.
+<FrameworkCase frameworks={["html"]}>
+`<media-volume-indicator-value>` displays the rounded percentage from 0% through 100%. `<media-volume-indicator-fill>` receives the same percentage through `--media-volume-fill`. Nest the value inside the fill so the progress treatment and text form one visual unit.
+</FrameworkCase>
+
+The indicator closes after `closeDelay`, which defaults to 800 milliseconds. Repeated handled actions update the current value and restart that close timer without replaying the entry transition. Each update uses the latest media snapshot; the component does not independently accumulate volume steps.
+
+<FrameworkCase frameworks={["react"]}>
+`VolumeIndicator.Root` stops rendering after its close transition.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element remains in the document with `hidden` until the next handled action.
+</FrameworkCase>
 
 When a nonzero `volumeStep` cannot move past an already-clamped edge, `data-min` or `data-max` is present for 300 milliseconds. Hitting the same edge again briefly clears the attribute, then restores it on the next task so a CSS boundary animation can restart. Merely reaching 0% or 100% does not trigger the boundary attribute until another step tries to move farther.
 
@@ -80,7 +100,13 @@ When a nonzero `volumeStep` cannot move past an already-clamped edge, `data-min`
 | `data-starting-style` | Present / absent | Present during the open transition |
 | `data-ending-style` | Present / absent | Present during the close transition |
 
+<FrameworkCase frameworks={["react"]}>
 `--media-volume-fill` is set on the Fill part, not the Root. Read it from a Fill selector when sizing a progress treatment.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`--media-volume-fill` is set on `<media-volume-indicator-fill>`, not `<media-volume-indicator>`. Read it from a fill selector when sizing a progress treatment.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```css
@@ -112,7 +138,13 @@ React renders standard DOM elements. Add separate `className` values to the Root
 
 ## Accessibility
 
+<FrameworkCase frameworks={["react"]}>
 `VolumeIndicator` is visual feedback and does not create a live region. Keep volume and mute available through keyboard-operable controls, and pair the player with <DocsLink slug="reference/components/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `VolumeIndicator.Value` a live region.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-volume-indicator>` is visual feedback and does not create a live region. Keep volume and mute available through keyboard-operable controls, and pair the player with <DocsLink slug="reference/components/status-announcer">`<media-status-announcer>`</DocsLink> when state changes should be announced to screen readers. Do not make `<media-volume-indicator-value>` a live region.
+</FrameworkCase>
 
 ## Examples
 

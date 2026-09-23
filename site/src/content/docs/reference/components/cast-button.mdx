@@ -47,9 +47,17 @@ Toggles a Google Cast session. Clicking the button while `disconnected` opens th
 
 The button derives its presentation from `availability`:
 
-- **`"unsupported"`** — the HTML custom element receives the native `hidden` attribute; the React component returns `null`.
+<FrameworkCase frameworks={["html"]}>
+- **`"unsupported"`** — the element receives the native `hidden` attribute.
 - **`"unavailable"`** — the button remains visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not open the picker. This lets a tooltip explain that no Cast device is reachable.
 - **`"available"`** — the button is fully interactive unless the `disabled` prop is set.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+- **`"unsupported"`** — the component returns `null`.
+- **`"unavailable"`** — the button remains visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not open the picker. This lets a tooltip explain that no Cast device is reachable.
+- **`"available"`** — the button is fully interactive unless the `disabled` prop is set.
+</FrameworkCase>
 
 Configurable Cast sessions come from the <DocsLink slug="reference/components/google-cast">GoogleCast extension</DocsLink>. Add it to the player next to your media element; without it the button drives the browser's native Remote Playback API instead, which offers no receiver or load-request configuration. See <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink> for the complete setup.
 

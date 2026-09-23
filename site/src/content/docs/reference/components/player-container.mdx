@@ -88,7 +88,13 @@ Import `@videojs/html/ui/container` when you only need to register the standard 
 
 ### Layout and fullscreen
 
+<FrameworkCase frameworks={["react"]}>
 The container is the visual box around your media and controls. Put sizing, aspect ratio, positioning, and visual boundaries here — on `Container`, not `Player`. Place overlays inside it, use it as their positioning context, and measure it when your app needs the rendered player size.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The container is the visual box around your media and controls. Put sizing, aspect ratio, positioning, and visual boundaries here — on `<media-container>`, not `<video-player>`. Place overlays inside it, use it as their positioning context, and measure it when your app needs the rendered player size.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -140,9 +146,17 @@ Media discovery is handled by the player provider, not the container. Custom med
 
 The container is where user intent enters the player. It listens for physical interaction on its surface and translates that into player behavior:
 
+<FrameworkCase frameworks={["react"]}>
 - **User activity** — Mouse movement, touch, and keyboard activity within the container drive idle detection. This is how controls know when to show and hide.
 - **Gestures** — Tap and double-tap actions, optionally limited by pointer type and left, center, or right region. Configured via the <DocsLink slug="reference/components/gesture">`Gesture`</DocsLink> component.
 - **Keyboard controls** — Spacebar to play/pause, arrow keys to seek, and other keyboard shortcuts scoped to the container. Configured via the `Hotkey` component.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- **User activity** — Mouse movement, touch, and keyboard activity within the container drive idle detection. This is how controls know when to show and hide.
+- **Gestures** — Tap and double-tap actions, optionally limited by pointer type and left, center, or right region. Configured via the <DocsLink slug="reference/components/gesture">`<media-gesture>`</DocsLink> element.
+- **Keyboard controls** — Spacebar to play/pause, arrow keys to seek, and other keyboard shortcuts scoped to the container. Configured via the `<media-hotkey>` element.
+</FrameworkCase>
 
 ### Popup coordination
 
@@ -165,7 +179,13 @@ If you omit `<video-skin>` to build custom UI, render and style `<media-containe
 
 ## Inside vs. outside the container
 
+<FrameworkCase frameworks={["react"]}>
 <DocsLink slug="reference/components/player">`Player`</DocsLink> gives components access to state and actions. `Container` layers on physical behaviors — fullscreen, activity detection, and gesture handling. Components work in both places; the container just adds those extras.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+<DocsLink slug="reference/components/player">`<video-player>`</DocsLink> gives components access to state and actions. `<media-container>` layers on physical behaviors — fullscreen, activity detection, and gesture handling. Components work in both places; the container just adds those extras.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

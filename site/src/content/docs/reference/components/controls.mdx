@@ -78,9 +78,17 @@ User activity is tracked via pointer movement, keyboard input, and focus events 
 
 ## Styling
 
-`Controls.Root` is a state and context provider. `Controls.Content` / `<media-controls-content>` renders the interactive controls surface and receives its DOM props, ref, and controls state data attributes.
+<FrameworkCase frameworks={["html"]}>
+`<media-controls>` is a state and context provider that also reflects the controls state data attributes. `<media-controls-content>` is the interactive controls surface and receives the same controls state data attributes.
 
-`Controls.Backdrop` / `<media-controls-backdrop>` is an optional presentational sibling of Content. It receives the same controls state data attributes, allowing its styling and transitions to be authored independently from the controls surface.
+`<media-controls-backdrop>` is an optional presentational sibling of `<media-controls-content>`. It receives the same controls state data attributes, allowing its styling and transitions to be authored independently from the controls surface.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+`Controls.Root` is a state and context provider. `Controls.Content` renders the interactive controls surface and receives its DOM props, ref, and controls state data attributes.
+
+`Controls.Backdrop` is an optional presentational sibling of `Controls.Content`. It receives the same controls state data attributes, allowing its styling and transitions to be authored independently from the controls surface.
+</FrameworkCase>
 
 By default, controls have the following styles:
 

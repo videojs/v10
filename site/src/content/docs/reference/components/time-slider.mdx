@@ -67,9 +67,9 @@ import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/Wit
   ```
 </FrameworkCase>
 
-Add `Chapters` to divide the slider track into sections. Each cue in the default `kind="chapters"` text track marks a chapter. Without chapter cues, one section covers the full slider.
-
 <FrameworkCase frameworks={["react"]}>
+  Add `Chapters` to divide the slider track into sections. Each cue in the default `kind="chapters"` text track marks a chapter. Without chapter cues, one section covers the full slider.
+
   ```tsx
   <TimeSlider.Chapters
     renderChapter={(props, state) => (
@@ -87,6 +87,8 @@ Add `Chapters` to divide the slider track into sections. Each cue in the default
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
+  Add `<media-time-slider-chapters>` to divide the slider track into sections. Each cue in the default `kind="chapters"` text track marks a chapter. Without chapter cues, one section covers the full slider.
+
   ```html
   <media-time-slider-chapters>
     <template>
@@ -170,7 +172,13 @@ Renders with `role="slider"` and an automatic `aria-label` that resolves to "See
 - <kbd>Home</kbd>: seek to start
 - <kbd>End</kbd>: seek to end
 
+<FrameworkCase frameworks={["react"]}>
 `ChapterTitle` follows the pointer during pointer interaction. While the slider has keyboard focus, it follows the current playback position and announces chapter changes.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-time-slider-chapter-title>` follows the pointer during pointer interaction. While the slider has keyboard focus, it follows the current playback position and announces chapter changes.
+</FrameworkCase>
 
 ## Examples
 

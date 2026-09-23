@@ -43,7 +43,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/live-button/html/css/Basic
 
 ## Behavior
 
-LiveButton indicates whether playback is at the live edge and acts as a "go to live" control. While playback is behind the edge, clicking seeks to the live edge — the end of the last `seekable` range. At the edge the button goes inactive (`aria-disabled`) and clicking is a no-op.
+The live button indicates whether playback is at the live edge and acts as a "go to live" control. While playback is behind the edge, clicking seeks to the live edge — the end of the last `seekable` range. At the edge the button goes inactive (`aria-disabled`) and clicking is a no-op.
 
 The button is also disabled whenever it has no live edge to seek to: the media is not live, the `seekable` ranges are still empty (before metadata loads, for example), or the last range ends at `Infinity`. It reports `disabled` in its state, sets `data-disabled`, and ignores activation until a seek target exists. Passing `disabled` forces the same state.
 

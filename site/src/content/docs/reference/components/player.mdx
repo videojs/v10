@@ -99,7 +99,13 @@ customElements.define('my-container', MyContainer);
 
 ## What lives inside it
 
+<FrameworkCase frameworks={["react"]}>
 Everything that needs player state goes inside `Player`: skins, containers, UI components, and your own custom components. Anything inside can access the store.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Everything that needs player state goes inside `<video-player>`: skins, containers, UI components, and your own custom components. Anything inside can access the store.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -188,7 +194,13 @@ customElements.define('play-pause-button', PlayPauseButton);
 
 ## Extended player layouts
 
+<FrameworkCase frameworks={["react"]}>
 The player's scope can extend beyond the fullscreen target. Playlists, transcripts, sidebars, and other supplementary UI can live inside `Player` but outside `Container`. They still have full access to the store, but they won't go fullscreen with the video.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The player's scope can extend beyond the fullscreen target. Playlists, transcripts, sidebars, and other supplementary UI can live inside `<video-player>` but outside `<media-container>`. They still have full access to the store, but they won't go fullscreen with the video.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

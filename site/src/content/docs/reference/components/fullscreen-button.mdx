@@ -44,8 +44,15 @@ import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css
 
 Toggles fullscreen mode. The button derives two state hooks from `availability`:
 
+<FrameworkCase frameworks={["html"]}>
 - **`disabled`** (`true` until fullscreen is available, or when the `disabled` prop is set) — sets `aria-disabled="true"` and `data-disabled`. A prop-disabled, available button stays focusable but does not activate.
-- **`hidden`** (`true` while fullscreen is `"unavailable"` or `"unsupported"`) — applies the native HTML `hidden` attribute on the custom element; the React component returns `null`.
+- **`hidden`** (`true` while fullscreen is `"unavailable"` or `"unsupported"`) — applies the native HTML `hidden` attribute on the custom element.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+- **`disabled`** (`true` until fullscreen is available, or when the `disabled` prop is set) — sets `aria-disabled="true"` and `data-disabled`. A prop-disabled, available button stays focusable but does not activate.
+- **`hidden`** (`true` while fullscreen is `"unavailable"` or `"unsupported"`) — the component returns `null`.
+</FrameworkCase>
 
 ## Styling
 
@@ -83,7 +90,15 @@ React renders a `<button>` element. Add a `className` to style it:
 ```
 </FrameworkCase>
 
-The button remains hidden until fullscreen is available. The HTML element receives the native `hidden` attribute, and the React component returns `null`. No extra CSS is required.
+The button remains hidden until fullscreen is available.
+
+<FrameworkCase frameworks={["html"]}>
+The element receives the native `hidden` attribute. No extra CSS is required.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+The component returns `null`. No extra CSS is required.
+</FrameworkCase>
 
 ## Accessibility
 

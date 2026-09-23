@@ -34,7 +34,13 @@ import jsonSpriteHtmlTs from "@/components/docs/demos/thumbnail/html/css/JsonSpr
 
 ## Quick Start: Video Track
 
+<FrameworkCase frameworks={["react"]}>
 `Thumbnail` can read thumbnail cues directly from your video track. Add a `<track>` with `kind="metadata"` and `label="thumbnails"` to your media element.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-thumbnail>` can read thumbnail cues directly from your video track. Add a `<track>` with `kind="metadata"` and `label="thumbnails"` to your media element.
+</FrameworkCase>
 
 [Mux](https://www.mux.com?utm_source=videojs&utm_campaign=vjs10) provides this as `storyboard.vtt`:
 
@@ -98,7 +104,15 @@ A same-origin track needs none of this.
 
 ## Behavior
 
-The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle. In React, render that image with `Thumbnail.Image`. In HTML, the `<img>` child is optional: leave it out and `<media-thumbnail>` draws an image of its own in its shadow DOM; supply one to replace it and compose overlays or loading indicators beside it. Any `crossorigin`, `loading`, or `fetchpriority` the supplied image already carries is yours and wins over the element's own attributes; the rest are filled in.
+The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle.
+
+<FrameworkCase frameworks={["react"]}>
+Render that image with `Thumbnail.Image`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The `<img>` child is optional: leave it out and `<media-thumbnail>` draws an image of its own in its shadow DOM; supply one to replace it and compose overlays or loading indicators beside it. Any `crossorigin`, `loading`, or `fetchpriority` the supplied image already carries is yours and wins over the element's own attributes; the rest are filled in.
+</FrameworkCase>
 
 Supported source formats:
 
@@ -106,7 +120,13 @@ Supported source formats:
 - JSON array: `{ url, startTime, endTime? }[]`
 - JSON sprite array: `{ url, startTime, endTime?, width, height, coords }[]`
 
-In React, text-track mode needs `Player` because it reads track state from the player store. JSON modes (`thumbnails` prop) work without a player.
+<FrameworkCase frameworks={["react"]}>
+Text-track mode needs `Player` because it reads track state from the player store. JSON modes (`thumbnails` prop) work without a player.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Text-track mode needs an enclosing player element because it reads track state from the player store. JSON modes (`thumbnails` property) work without a player.
+</FrameworkCase>
 
 The component picks the latest thumbnail whose `startTime` is less than or equal to the current `time`, then scales/clips sprite tiles to fill CSS min/max constraints while preserving aspect ratio. Tiles scale up as well as down, so a preview whose `max-width` grows — a container query widening it in fullscreen, say — grows with it.
 
@@ -217,7 +237,13 @@ The root clips to the selected tile while the image inside spans the whole sprit
 
 ## Accessibility
 
+<FrameworkCase frameworks={["react"]}>
 `Thumbnail.Root` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-thumbnail>` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
+</FrameworkCase>
 
 ## Examples
 

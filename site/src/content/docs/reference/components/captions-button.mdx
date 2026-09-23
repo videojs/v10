@@ -42,29 +42,65 @@ import basicUsageHtmlTs from "@/components/docs/demos/captions-button/html/css/B
 
 ## Behavior
 
-Toggles captions and subtitles on and off. The button checks the media's text track list for tracks with `kind="captions"` or `kind="subtitles"`. When none are present, the HTML custom element receives the native `hidden` attribute and the React component returns `null`. The raw state remains available as `data-availability`.
+Toggles captions and subtitles on and off. The button checks the media's text track list for tracks with `kind="captions"` or `kind="subtitles"`.
+
+<FrameworkCase frameworks={["html"]}>
+When none are present, the element receives the native `hidden` attribute. The raw state remains available as `data-availability`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+When none are present, the component returns `null`.
+</FrameworkCase>
 
 An explicitly disabled button with caption tracks stays visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not toggle captions.
 
-When `menuTrigger` is enabled and multiple caption or subtitle tracks are available, activation opens the linked captions menu instead of toggling captions directly. React enables `menuTrigger` automatically when a `CaptionsButton` is rendered inside `Menu.Trigger`.
+<FrameworkCase frameworks={["html"]}>
+When `menu-for` is set to a menu's `id` and multiple caption or subtitle tracks are available, activation opens the linked captions menu instead of toggling captions directly.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+When `menuTrigger` is enabled and multiple caption or subtitle tracks are available, activation opens the linked captions menu instead of toggling captions directly. `menuTrigger` is enabled automatically when a `CaptionsButton` is rendered inside `Menu.Trigger`.
+</FrameworkCase>
 
 ## Styling
 
 Style the button based on active state:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-captions-button[data-active] .icon-on { display: inline; }
 media-captions-button:not([data-active]) .icon-off { display: inline; }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` element. Add a `className` to style it:
+
+```css
+.captions-button[data-active] .icon-on { display: inline; }
+.captions-button:not([data-active]) .icon-off { display: inline; }
+```
+</FrameworkCase>
 
 Style an explicitly disabled, available button:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-captions-button[data-disabled] {
   cursor: not-allowed;
   opacity: 0.5;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.captions-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+```
+</FrameworkCase>
 
 The button hides automatically when no caption tracks are available. No availability selector or extra hiding CSS is required.
 

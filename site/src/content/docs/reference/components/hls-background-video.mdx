@@ -9,7 +9,13 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import MediaImports from '@/components/docs/api-reference/MediaImports.astro';
 
+<FrameworkCase frameworks={["react"]}>
 HlsBackgroundVideo plays an HLS source through the SPF background engine. It is fixed to muted, autoplaying, inline, looped playback and omits controls, audio, text, DRM, and adaptive rendition switching.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<hls-background-video>` plays an HLS source through the SPF background engine. It is fixed to muted, autoplaying, inline, looped playback and omits controls, audio, text, DRM, and adaptive rendition switching.
+</FrameworkCase>
 
 See <DocsLink slug="guides/background-video">Add a background video</DocsLink> for layout, poster, accessibility, and source-choice guidance.
 
@@ -44,15 +50,25 @@ There is no `source` object, `preload` mode, or opt-out for muted, autoplay, and
 
 ## API
 
-| Member | Platform | Description |
-| --- | --- | --- |
-| `src` | HTML and React | HLS manifest URL |
-| `error` | HTML | Fatal SPF media error for the current source, or `null` |
-| `video` | HTML | Inner native `<video>` element |
-| `onError` | React | Fires on the rendered `<video>` when SPF reports a fatal source error |
-| `ref` | React | Ref to the rendered native `<video>` element |
+<FrameworkCase frameworks={["html"]}>
+| Member | Description |
+| --- | --- |
+| `src` | HLS manifest URL |
+| `error` | Fatal SPF media error for the current source, or `null` |
+| `video` | Inner native `<video>` element |
 
-The HTML element also fires an `error` event when `error` becomes fatal. The inner video's own `error` can remain `null` because SPF, rather than the browser, rejected the source.
+The element also fires an `error` event when `error` becomes fatal. The inner video's own `error` can remain `null` because SPF, rather than the browser, rejected the source.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+| Member | Description |
+| --- | --- |
+| `src` | HLS manifest URL |
+| `onError` | Fires on the rendered `<video>` when SPF reports a fatal source error |
+| `ref` | Ref to the rendered native `<video>` element |
+
+`onError` receives an `error` event dispatched on the rendered `<video>`. The video's own `error` can remain `null` because SPF, rather than the browser, rejected the source.
+</FrameworkCase>
 
 ## Styling
 

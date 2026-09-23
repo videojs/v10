@@ -57,7 +57,13 @@ import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/Basi
 
 ## Behavior
 
+<FrameworkCase frameworks={["react"]}>
 `ErrorDialog` is a specialized root driven by the player's <DocsLink slug="reference/api/feature-error">error feature</DocsLink>. It uses alert semantics and reuses the backdrop, popup, title, description, and close parts from <DocsLink slug="reference/components/dialog">`Dialog`</DocsLink>; it is not nested inside `AlertDialog`. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-error-dialog>` is a specialized root driven by the player's <DocsLink slug="reference/api/feature-error">error feature</DocsLink>. It uses alert semantics and reuses the backdrop, popup, title, description, and close parts from <DocsLink slug="reference/components/dialog">`<media-dialog>`</DocsLink>; it is not nested inside `<media-alert-dialog>`. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
+</FrameworkCase>
 
 The title, description, and close label use localized default text. Provide children to any of those parts to replace its default content. Known media error codes use the matching translated message, while custom error messages are shown as written.
 
