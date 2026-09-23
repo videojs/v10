@@ -809,6 +809,17 @@
   to = "/docs/framework/:framework/writing-style/write-references.md"
   status = 301
 
+# The I18nController page took its generated kebab-case slug until it gained an override.
+[[redirects]]
+  from = "/docs/framework/:framework/reference/api/i-18-n-controller"
+  to = "/docs/framework/:framework/reference/api/i18n-controller"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/reference/api/i-18-n-controller.md"
+  to = "/docs/framework/:framework/reference/api/i18n-controller.md"
+  status = 301
+
 [[redirects]]
   from = "/docs/framework/:framework/how-to/*"
   to = "/docs/framework/:framework/guides/:splat"
@@ -1099,12 +1110,12 @@
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-controller"
-  to = "/docs/framework/:framework/reference/api/i-18-n-controller"
+  to = "/docs/framework/:framework/reference/api/i18n-controller"
   status = 301
 
 [[redirects]]
   from = "/docs/framework/:framework/components/i-18-n-controller.md"
-  to = "/docs/framework/:framework/reference/api/i-18-n-controller.md"
+  to = "/docs/framework/:framework/reference/api/i18n-controller.md"
   status = 301
 
 [[redirects]]
