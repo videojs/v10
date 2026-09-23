@@ -32,7 +32,7 @@ export interface LegacyErrorRecord extends LegacyErrorEntry {
   stayOnV8: string;
 }
 
-export const LEGACY_V8_DOCS_URL = 'https://v8.videojs.org';
+export const LEGACY_V8_DOCS_URL = 'https://legacy.videojs.org';
 
 export const LEGACY_V8_INSTALL = 'npm install video.js@8';
 

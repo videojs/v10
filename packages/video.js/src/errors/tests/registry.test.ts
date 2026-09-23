@@ -51,7 +51,7 @@ describe('LEGACY_V8_LINE', () => {
     expect(LEGACY_V8_LINE).toContain(LEGACY_V8_INSTALL);
     expect(LEGACY_V8_LINE).toContain(LEGACY_V8_DOCS_URL);
     expect(LEGACY_V8_INSTALL).toBe('npm install video.js@8');
-    expect(LEGACY_V8_DOCS_URL).toBe('https://v8.videojs.org');
+    expect(LEGACY_V8_DOCS_URL).toBe('https://legacy.videojs.org');
   });
 });
 
