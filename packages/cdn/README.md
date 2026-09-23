@@ -1,5 +1,15 @@
 # @videojs/cdn
 
+## AI Quickstart
+
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
+match this package version before writing code. Then print a complete CDN installation without downloading this full
+browser distribution just for its instructions:
+
+```sh
+npx @videojs/html agents init --method cdn
+```
+
 Browser-ready Video.js bundles for script-tag and self-hosted installations. This package assembles the HTML player,
 selected playback adapters, shared chunks, source maps, and standalone stylesheets in one build graph.
 

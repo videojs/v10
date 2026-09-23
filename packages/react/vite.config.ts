@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
+
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
-import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import { baseConfig, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { reactCompilerPlugin } from '../../build/react-compiler.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
@@ -10,6 +12,7 @@ import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
+const packageVersion = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
 
 const i18nLocaleEntries = Object.fromEntries([
   ['i18n/locales/all', 'src/i18n/locales/all.ts'],
@@ -58,5 +61,20 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'tests/**/*.test.ts'],
   },
-  pack: packageBuildModes.map(createPackConfig),
+  pack: [
+    ...packageBuildModes.map(createPackConfig),
+    {
+      ...baseConfig,
+      name: 'agents',
+      entry: { agents: './src/agents.ts' },
+      platform: 'node',
+      format: 'es',
+      outDir: 'dist/bin',
+      clean: false,
+      hash: false,
+      banner: { js: '#!/usr/bin/env node' },
+      deps: { alwaysBundle: ['@videojs/installation'] },
+      define: { __VIDEOJS_PACKAGE_VERSION__: JSON.stringify(packageVersion) },
+    },
+  ],
 });

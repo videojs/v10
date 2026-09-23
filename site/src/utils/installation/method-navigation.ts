@@ -17,18 +17,21 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
 
   if (method === 'packaged') {
     if (isShadcnInstallationUrl(current)) {
-      const framework = current.searchParams.get('framework') === 'html' ? 'html' : 'react';
+      const requested = current.searchParams.get('framework');
+      const framework = requested === 'html' || requested === 'vue' || requested === 'svelte' ? requested : 'react';
 
       target.pathname = getInstallationRoutePath(framework);
     }
 
     target.searchParams.delete('framework');
   } else if (method === 'shadcn') {
-    const framework = current.pathname.endsWith('/react')
-      ? 'react'
-      : isShadcnInstallationUrl(current) && current.searchParams.get('framework') !== 'html'
-        ? 'react'
-        : 'html';
+    const requested = target.searchParams.get('framework');
+    const framework =
+      requested === 'react' || requested === 'html' || requested === 'vue' || requested === 'svelte'
+        ? requested
+        : current.pathname.endsWith('/react')
+          ? 'react'
+          : 'html';
 
     target.searchParams.set('framework', framework);
   } else {

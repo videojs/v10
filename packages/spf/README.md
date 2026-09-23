@@ -1,5 +1,15 @@
 # @videojs/spf
 
+## AI Quickstart
+
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
+match this package version before writing code. Then list the version-matched installation choices for your player:
+
+```sh
+npx @videojs/react agents init
+npx @videojs/html agents init
+```
+
 [![package-badge]][package]
 
 > **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.

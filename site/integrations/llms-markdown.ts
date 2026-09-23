@@ -2,21 +2,24 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { createInstallationDiscovery, renderInstallationPlanSections } from '@videojs/installation';
 import type { AstroIntegration } from 'astro';
 import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
 
-import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION } from '../src/consts';
+import htmlPackage from '../../packages/html/package.json';
+import reactPackage from '../../packages/react/package.json';
+import { SITE_DESCRIPTION, VJS10_VERSION } from '../src/consts';
 import { sidebar } from '../src/docs.config';
-import type { Section, Sidebar, SupportedFramework } from '../src/types/docs';
-import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework, SUPPORTED_FRAMEWORKS } from '../src/types/docs';
+import type { Sidebar, SupportedFramework } from '../src/types/docs';
+import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework } from '../src/types/docs';
+import { replaceInstallationMarkdownPlan, resolveInstallationMarkdownPlan } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../src/utils/installation/routes';
-import { outsideCodeFences, selectFrameworkBranches } from './markdown-text';
 
 export interface PageEntry {
   pathname: string;
@@ -26,8 +29,10 @@ export interface PageEntry {
   framework?: string;
   frameworks?: string[];
   markdown?: string;
-  headingIds?: Map<string, string>;
 }
+
+/** The first Video.js 10 post; everything before it documents Video.js 1 through 8. */
+const FIRST_V10_BLOG_POST = '2026-03';
 
 export default function llmsMarkdown(): AstroIntegration {
   let siteUrl = '';
@@ -43,8 +48,15 @@ export default function llmsMarkdown(): AstroIntegration {
       // page on request instead; this keeps "Copy page" and "View as Markdown" working locally.
       'astro:server:setup': ({ server }) => {
         server.middlewares.use(async (req, res, next) => {
-          const pathname = (req.url ?? '').split('?')[0] ?? '';
+          const requestUrl = new URL(req.url ?? '/', `http://${req.headers.host}`);
+          const pathname = requestUrl.pathname;
           if (!pathname.endsWith('.md')) return next();
+
+          if (pathname === '/docs/guides/installation.md') {
+            res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+            res.end(generateInstallationIndex(siteUrl));
+            return;
+          }
 
           const pagePath = pathname.slice(0, -'.md'.length) || '/';
 
@@ -55,8 +67,24 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(await response.text(), turndown, siteUrl);
             if (!page) return next();
 
+            const installation = resolveInstallationMarkdownPlan(pagePath, requestUrl.searchParams, VJS10_VERSION);
+            let markdown = page.markdown;
+
+            if (installation) {
+              if (!installation.ok) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+                res.end(installation.errors.map((error) => `- ${error.field}: ${error.message}`).join('\n'));
+                return;
+              }
+
+              markdown =
+                replaceInstallationMarkdownPlan(markdown, renderInstallationPlanSections(installation.plan)) ??
+                markdown;
+            }
+
             res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-            res.end(page.markdown + generatePageFooter(pagePath.slice(1), page.framework, page.frameworks, siteUrl));
+            res.end(markdown + generatePageFooter(pagePath.slice(1), page.framework, page.frameworks, siteUrl));
           } catch (error) {
             next(error);
           }
@@ -86,7 +114,19 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(html, turndown, siteUrl);
             if (!page) return;
 
-            const { markdown, title, description, sort, framework, frameworks } = page;
+            let { markdown } = page;
+            const { title, description, sort, framework, frameworks } = page;
+            const installation = resolveInstallationMarkdownPlan(pathname, new URLSearchParams(), VJS10_VERSION);
+
+            if (installation?.ok) {
+              const replacement = replaceInstallationMarkdownPlan(
+                markdown,
+                renderInstallationPlanSections(installation.plan)
+              );
+              if (!replacement) throw new Error(`${pathname} is missing its generated installation section`);
+
+              markdown = replacement;
+            }
 
             // Write markdown file as sibling to the directory
             // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
@@ -98,7 +138,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
-              docsPages.push({ ...page, pathname: `/${pathname}` });
+              docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework, frameworks, markdown });
             } else if (pathname.startsWith('blog/')) {
               blogPages.push({ pathname: `/${pathname}`, title, description, sort });
             } else if (pathname.startsWith('changelog/')) {
@@ -127,6 +167,11 @@ export default function llmsMarkdown(): AstroIntegration {
         });
 
         await Promise.all(workers);
+
+        const installationIndexPath = join(siteDir, 'docs', 'guides', 'installation.md');
+
+        await mkdir(dirname(installationIndexPath), { recursive: true });
+        await writeFile(installationIndexPath, generateInstallationIndex(siteUrl), 'utf-8');
 
         // Group docs by framework
         const docsByFramework = new Map<string, PageEntry[]>();
@@ -220,6 +265,76 @@ export default function llmsMarkdown(): AstroIntegration {
   };
 }
 
+export function generateInstallationIndex(siteUrl = 'https://videojs.org'): string {
+  const origin = siteUrl || 'https://videojs.org';
+  const html = createInstallationDiscovery('html', htmlPackage.version);
+  const react = createInstallationDiscovery('react', reactPackage.version);
+  const optionLines = html.options
+    .filter(({ flag }) =>
+      ['--preset', '--skin', '--media', '--source-url', '--package-manager', '--template', '--styling'].includes(flag)
+    )
+    .map((option) => {
+      const key = option.flag.replace(/^--/, '');
+      const queryKey = key === 'package-manager' ? 'install-method' : key;
+      const values = option.values ? ` Values: ${option.values.map((value) => `\`${value}\``).join(', ')}.` : '';
+      const applies =
+        option.flag === '--package-manager'
+          ? ' Applies to Packaged and Shadcn pages.'
+          : option.flag === '--template' || option.flag === '--styling'
+            ? ' Applies to the Shadcn page.'
+            : '';
+
+      return `- \`${queryKey}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
+    })
+    .join('\n');
+
+  return `# Video.js installation guides
+
+Choose the guide for the framework and installation path you intend to use. Each page includes a complete default installation. Add the listed query parameters to its \`.md\` URL for another validated combination.
+
+## AI Quickstart
+
+Install the [Video.js skill](https://github.com/videojs/skills), then ask for version-matched installation choices from the player package. These commands only print instructions and never modify a project.
+
+\`\`\`sh
+${react.command}
+${html.command}
+\`\`\`
+
+## Packaged modules
+
+- [React](${origin}/docs/guides/installation/react.md)
+- [HTML](${origin}/docs/guides/installation/html.md)
+- [Vue](${origin}/docs/guides/installation/vue.md)
+- [Svelte](${origin}/docs/guides/installation/svelte.md)
+
+## Editable Shadcn source
+
+- [React source](${origin}/docs/guides/installation/shadcn.md?framework=react)
+- [HTML source](${origin}/docs/guides/installation/shadcn.md?framework=html)
+- [HTML source in Vue](${origin}/docs/guides/installation/shadcn.md?framework=vue)
+- [HTML source in Svelte](${origin}/docs/guides/installation/shadcn.md?framework=svelte)
+
+## CDN
+
+- [HTML from jsDelivr](${origin}/docs/guides/installation/cdn.md)
+
+## Query parameters
+
+The page route selects Packaged, Shadcn, or CDN and fixes the framework except on the Shadcn page. Query parameters select the remaining options:
+
+- \`framework\`: On the Shadcn page, choose \`react\`, \`html\`, \`vue\`, or \`svelte\`. Default: \`react\`.
+${optionLines}
+
+Compatibility rules:
+
+- CDN is plain HTML only.
+- Shadcn provides React or HTML source. Vue and Svelte use the HTML source catalog.
+- Background Video and a skinless player are not available from the Shadcn registry.
+- A preset determines its compatible media choices.
+`;
+}
+
 export function createTurndown(): TurndownService {
   const turndown = new TurndownService({
     headingStyle: 'atx',
@@ -247,15 +362,10 @@ export function createTurndown(): TurndownService {
     },
   });
 
-  // Definition lists become bold-term list items. A table cell has no line structure, so there the entries run on,
-  // separated by semicolons; each bold term marks where an entry starts, so the plain separator stays unambiguous.
+  // Definition lists become bold-term list items; inside a table cell the items join with semicolons.
   turndown.addRule('definition-term', {
     filter: 'dt',
-    replacement: (content, node) => {
-      const term = `**${collapseWhitespace(content)}:** `;
-
-      return node.closest('td, th') ? `; ${term}` : `\n- ${term}`;
-    },
+    replacement: (content) => `\n- **${collapseWhitespace(content)}:** `,
   });
 
   turndown.addRule('definition-detail', {
@@ -273,7 +383,7 @@ export function createTurndown(): TurndownService {
   turndown.addRule('list-item', {
     filter: 'li',
     replacement: (content, node, options) => {
-      const parent = node.parentElement;
+      const parent = node.parentNode as Element | null;
       let prefix = `${options.bulletListMarker} `;
 
       if (parent?.nodeName === 'OL') {
@@ -293,34 +403,33 @@ export function createTurndown(): TurndownService {
     },
   });
 
+  const hasAttribute = (node: Node, attribute: string): boolean => {
+    if (node.nodeType !== 1) return false;
+
+    // SAFETY: nodeType 1 is an Element in the DOM model used by Turndown.
+    return (node as Element).getAttribute(attribute) !== null;
+  };
+
   // Ensure [data-llms-only] content passes through despite hidden attribute
   turndown.addRule('llms-only', {
-    filter: (node) => node.hasAttribute('data-llms-only'),
+    filter: (node) => hasAttribute(node, 'data-llms-only'),
     replacement: (content) => content,
   });
 
-  // Wrap [data-cli-replace] content with text markers the CLI can find and replace
-  turndown.addRule('cli-replace', {
-    filter: (node) => node.hasAttribute('data-cli-replace'),
-    replacement: (content, node) => markerBlock('replace', node.getAttribute('data-cli-replace'), content),
-  });
-
-  // Wrap [data-cli-omit] content with text markers the CLI strips from its output
-  turndown.addRule('cli-omit', {
-    filter: (node) => node.hasAttribute('data-cli-omit'),
-    replacement: (content, node) => markerBlock('omit', node.getAttribute('data-cli-omit'), content),
-  });
-
-  // Preserve query-controlled framework branches so the docs CLI can keep only the requested Shadcn output.
-  turndown.addRule('cli-framework', {
-    filter: (node) => node.hasAttribute('data-cli-framework'),
-    replacement: (content, node) => markerBlock('framework', node.getAttribute('data-cli-framework'), content),
+  // Keep a stable boundary around the generated installation steps. The edge function replaces only this block when
+  // a Markdown request supplies installation query parameters.
+  turndown.addRule('installation-plan', {
+    filter: (node) => hasAttribute(node, 'data-installation-plan'),
+    replacement: (content) =>
+      `\n\n<!-- installation-plan:start -->\n\n${content.trim()}\n\n<!-- installation-plan:end -->\n\n`,
   });
 
   // Shiki renders `<pre data-language>`; keep the language on the fence so agents know what they are reading.
   turndown.addRule('highlighted-code', {
-    filter: (node) => node.nodeName === 'PRE' && node.hasAttribute('data-language'),
-    replacement: (_content, pre) => {
+    filter: (node) => node.nodeName === 'PRE' && node.getAttribute('data-language') !== null,
+    replacement: (_content, node) => {
+      // SAFETY: the filter only matches `<pre>` elements.
+      const pre = node as Element;
       const code = (pre.textContent ?? '').replace(/\n$/, '');
 
       // A fence must be longer than any backtick run inside the code, or a nested ``` would close it early.
@@ -334,9 +443,9 @@ export function createTurndown(): TurndownService {
   // Flatten docs link cards, whose block markup nests inside the <a>, into list items.
   // Emitting a single leading/trailing newline keeps a run of adjacent cards as one tight list.
   turndown.addRule('docs-link-card', {
-    filter: (node) => hasClass(node, 'docs-link-card'),
+    filter: (node) => node.nodeType === 1 && hasClass(node as Element, 'docs-link-card'),
     replacement: (_content, node) => {
-      const link = node.querySelector('a[href]');
+      const link = (node as Element).querySelector('a[href]');
       if (!link) return '';
 
       // Card body is either <span>title</span> or <div><div>title</div><div>description</div></div>,
@@ -369,7 +478,7 @@ export function createTurndown(): TurndownService {
         .replace(/\n+\s*(?=(?:-|\d+\.)\s)/g, '<br>')
         .replace(/^<br>/, '');
       const text = collapseWhitespace(inline).replace(/\|/g, '\\|');
-      const span = Math.max(1, Number(node.getAttribute('colspan')) || 1);
+      const span = Math.max(1, Number((node as Element).getAttribute('colspan')) || 1);
 
       return `| ${text ? `${text} ` : ''}${'| '.repeat(span - 1)}`;
     },
@@ -377,7 +486,8 @@ export function createTurndown(): TurndownService {
 
   turndown.addRule('table-row', {
     filter: 'tr',
-    replacement: (content, row) => {
+    replacement: (content, node) => {
+      const row = node as Element;
       const line = `\n${content}|`;
 
       if (!isHeaderRow(row)) return line;
@@ -404,7 +514,8 @@ export function createTurndown(): TurndownService {
   // An embed has no text, so it would vanish without a trace. Keep its address so a reader can follow it.
   turndown.addRule('iframe', {
     filter: 'iframe',
-    replacement: (_content, frame) => {
+    replacement: (_content, node) => {
+      const frame = node as Element;
       const src = frame.getAttribute('src');
       if (!src) return '';
 
@@ -415,14 +526,6 @@ export function createTurndown(): TurndownService {
   });
 
   return turndown;
-}
-
-/**
- * HTML-comment markers the docs CLI searches for. The CLI matches a newline directly after the opening marker and
- * directly before the closing one, so keep exactly one blank line on each side of the trimmed content.
- */
-function markerBlock(kind: string, id: string | null, content: string): string {
-  return `\n\n<!-- cli:${kind} ${id} -->\n\n${content.trim()}\n\n<!-- /cli:${kind} ${id} -->\n\n`;
 }
 
 /** The header row of a pipe table is the first row of the table; the site never renders header-less tables. */
@@ -444,8 +547,6 @@ export interface ConvertedPage {
   sort?: string;
   framework?: string;
   frameworks?: string[];
-  /** HTML id of each heading, keyed by the slug its same-page links use in the Markdown. */
-  headingIds: Map<string, string>;
 }
 
 /** Convert a rendered page's `[data-llms-content]` regions to Markdown, or `null` when the page has none. */
@@ -461,10 +562,8 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
   // For each content element, strip non-content elements before conversion
   const contentParts: string[] = [];
   const slugger = new GithubSlugger();
-  const headingIds = new Map<string, string>();
 
   contentElements.forEach((contentEl) => {
-    // SAFETY: a deep clone of an element is an element.
     const clone = contentEl.cloneNode(true) as Element;
 
     // Drop opted-out markup along with scripts and styles (which include Astro island hydration scripts).
@@ -480,7 +579,7 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
     demoteStepTitles(clone);
     joinCodeChips(clone);
     flattenTabs(clone);
-    rewriteInPageAnchors(clone, slugger, headingIds);
+    rewriteInPageAnchors(clone, slugger);
     absolutizeUrls(clone, siteUrl);
 
     contentParts.push(clone.innerHTML);
@@ -488,10 +587,11 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
 
   // Combine all content parts
   const combinedHtml = contentParts.join('\n\n');
-  // Turndown escapes every `_` and any `-` that opens a text node; neither can start emphasis or a list mid-word.
-  const markdown = outsideCodeFences(turndown.turndown(combinedHtml), (text) =>
-    text.replace(/(?<=\w)\\_(?=\w)/g, '_').replace(/(?<=\S)\\-/g, '-')
-  );
+  const markdown = turndown
+    .turndown(combinedHtml)
+    // Turndown escapes every `_` and any `-` that opens a text node; neither can start emphasis or a list mid-word.
+    .replace(/(?<=\w)\\_(?=\w)/g, '_')
+    .replace(/(?<=\S)\\-/g, '-');
 
   // Extract title and description for llms.txt index
   const titleElement = document.querySelector('h1');
@@ -508,7 +608,7 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
   const frameworksAttr = contentElements[0]?.getAttribute('data-frameworks');
   const frameworks = frameworksAttr ? frameworksAttr.split(',').filter(Boolean) : undefined;
 
-  return { markdown, title, description, sort, framework, frameworks, headingIds };
+  return { markdown, title, description, sort, framework, frameworks };
 }
 
 /**
@@ -542,7 +642,7 @@ function unwrapTransparentWrappers(root: Element): void {
   }
 
   for (const wrapper of root.querySelectorAll('div.contents')) {
-    // A wrapper that also carries data attributes is a marker for another rule (e.g. `data-cli-replace`).
+    // A wrapper that also carries data attributes is a marker for another rule (e.g. `data-installation-plan`).
     if (wrapper.attributes.length === 1) unwrap(wrapper);
   }
 
@@ -656,19 +756,16 @@ function demoteStepTitles(root: Element): void {
 
 /**
  * Markdown headings carry no ids, so a same-page link to `#root-css-custom-properties` has nothing to land on. Point it
- * at the slug a GFM renderer derives from the heading text instead, numbering repeats the way GitHub does. Each
- * heading's HTML id is recorded by slug in `headingIds` so a link that later leaves the page can target the HTML page.
+ * at the slug a GFM renderer derives from the heading text instead, numbering repeats the way GitHub does.
  */
-function rewriteInPageAnchors(root: Element, slugger: GithubSlugger, headingIds: Map<string, string>): void {
+function rewriteInPageAnchors(root: Element, slugger: GithubSlugger): void {
   const slugById = new Map<string, string>();
 
   for (const heading of root.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
     const slug = slugger.slug(collapseWhitespace(heading.textContent));
     const id = heading.getAttribute('id');
-    if (!id) continue;
 
-    slugById.set(id, slug);
-    headingIds.set(slug, id);
+    if (id) slugById.set(id, slug);
   }
 
   for (const link of root.querySelectorAll('a[href^="#"]')) {
@@ -687,12 +784,18 @@ function inlineMarkdown(element: Element | null, escape: (text: string) => strin
 
     if (child.nodeName === 'CODE') return `\`${child.textContent ?? ''}\``;
 
-    // SAFETY: text nodes returned above; any other child without element children contributes no text.
     return inlineMarkdown(child as Element, escape);
   });
 
   return collapseWhitespace(parts.join(''));
 }
+
+const ASIDE_LABELS: Record<string, string> = {
+  note: 'Note',
+  tip: 'Tip',
+  caution: 'Caution',
+  danger: 'Danger',
+};
 
 /**
  * Callouts convey their type through an icon and a colour band, neither of which survives conversion. Rewrite each as a
@@ -702,7 +805,8 @@ function flattenAsides(root: Element): void {
   const document = root.ownerDocument;
 
   for (const aside of root.querySelectorAll('aside[data-aside]')) {
-    const label = capitalize(aside.getAttribute('data-aside') ?? '');
+    const type = aside.getAttribute('data-aside') ?? '';
+    const label = ASIDE_LABELS[type] ?? capitalize(type);
     const title = collapseWhitespace(aside.querySelector('[data-aside-title]')?.textContent);
     const heading = !title || title === label ? label : `${label}: ${title}`;
     const body = aside.querySelector('[data-aside-body]') ?? aside;
@@ -732,22 +836,22 @@ function joinCodeChips(root: Element): void {
 }
 
 /** Shiki keeps the fence alias an author typed, while frame labels may spell the language differently. */
-const LANGUAGE_ALIASES = new Map([
-  ['js', 'javascript'],
-  ['ts', 'typescript'],
-  ['sh', 'bash'],
-  ['shell', 'bash'],
-  ['zsh', 'bash'],
-  ['yml', 'yaml'],
-  ['md', 'markdown'],
-  ['txt', 'plaintext'],
-  ['text', 'plaintext'],
-]);
+const LANGUAGE_ALIASES: Record<string, string> = {
+  js: 'javascript',
+  ts: 'typescript',
+  sh: 'bash',
+  shell: 'bash',
+  zsh: 'bash',
+  yml: 'yaml',
+  md: 'markdown',
+  txt: 'plaintext',
+  text: 'plaintext',
+};
 
 function normalizeLanguage(value: string | null | undefined): string {
   const key = collapseWhitespace(value).toLowerCase();
 
-  return LANGUAGE_ALIASES.get(key) ?? key;
+  return LANGUAGE_ALIASES[key] ?? key;
 }
 
 /**
@@ -867,21 +971,6 @@ export function generatePageFooter(
   return `${lines.join('\n')}\n`;
 }
 
-/**
- * One index list item linking a page's Markdown twin. Titles and descriptions are page text, so a tag name such as
- * `<audio>` is escaped the way the page body escapes it, and brackets cannot close the link text early.
- */
-function indexEntry(page: PageEntry, siteUrl: string, suffix = ''): string {
-  const title = escapeIndexText(page.title).replace(/[[\]]/g, '\\$&');
-  const link = `- [${title}](${siteUrl}${page.pathname}.md)`;
-
-  return page.description ? `${link}: ${escapeIndexText(page.description)}${suffix}\n` : `${link}${suffix}\n`;
-}
-
-function escapeIndexText(text: string): string {
-  return text.replace(/<(?=[A-Za-z/])/g, '\\<');
-}
-
 /** Breadcrumb footer linking an index back to root llms.txt, separated from the list by one blank line. */
 function appendIndexFooter(content: string, siteUrl: string, lines: string[] = []): string {
   const footer = [...lines, `All documentation: ${siteUrl}/llms.txt`].join('\n');
@@ -917,6 +1006,8 @@ export function generateRootIndex({
 
   content += `> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n\n`;
 
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/react@latest agents init\` or \`npx @videojs/html@latest agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+
   content += `## Documentation\n\n`;
 
   for (const fw of sortedFrameworks) {
@@ -943,7 +1034,9 @@ export function generateRootIndex({
     const sorted = [...otherPages].sort((a, b) => a.pathname.localeCompare(b.pathname));
 
     for (const page of sorted) {
-      content += indexEntry(page, siteUrl);
+      content += page.description
+        ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
+        : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
     }
 
     content += `\n`;
@@ -986,13 +1079,15 @@ export function generateDocsIndex(
 
   content += `> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.\n\n`;
 
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/${framework}@latest agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+
   // Get sidebar filtered for this framework (production only)
   if (!isValidFramework(framework)) return content;
 
   const filtered = filterSidebarForLlms(sidebar, framework);
   const sectionByLabel = new Map(sections.map((section) => [section.label, section]));
 
-  content += renderSidebarToMarkdown(framework, filtered, pagesBySlug(framework, pages), siteUrl, 0, sectionByLabel);
+  content += renderSidebarToMarkdown(filtered, pagesBySlug(framework, pages), siteUrl, 0, sectionByLabel);
 
   return appendIndexFooter(content, siteUrl);
 }
@@ -1019,15 +1114,19 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
 
   const label = frameworkLabel(framework);
   const bySlug = pagesBySlug(framework, pages);
-  const sections = llmsSections(framework);
-  const sectionLabels = sectionLabelsBySlug(sections.map(({ section }) => section));
+  const sections = filterSidebarForLlms(sidebar, framework).filter(isSection);
+  const sectionLabels = sectionLabelsBySlug(sections);
 
-  return sections.map(({ section, slugs, directory }) => {
+  return sections.flatMap((section) => {
+    const slugs = sidebarSlugs(section.contents);
+    const directory = commonDirectory(slugs);
+    if (!directory) return [];
+
     const base = `${siteUrl}/docs/framework/${framework}/${directory}`;
     const indexUrl = `${base}/llms.txt`;
     const fullUrl = `${base}/llms-full.txt`;
     const title = `Video.js v10 — ${label} ${section.sidebarLabel}`;
-    const body = renderCorpus(framework, slugs, bySlug, siteUrl, sectionLabels);
+    const body = renderCorpus(slugs, bySlug, siteUrl, sectionLabels);
     const tokens = estimateTokens(body);
 
     let full = `# ${title} (complete)\n\n`;
@@ -1037,43 +1136,17 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
 
     let index = `# ${title}\n\n> `;
 
-    const description = sectionDescription(section, framework);
-
-    if (description) index += `${description} `;
+    if (section.llmsDescription) index += `${section.llmsDescription} `;
 
     index += `Every page below is also available as Markdown at its \`.md\` URL. `;
     index += `This section in one file (${formatTokens(tokens)}): ${fullUrl}\n\n`;
-    index += renderSidebarToMarkdown(framework, section.contents, bySlug, siteUrl);
+    index += renderSidebarToMarkdown(section.contents, bySlug, siteUrl);
     index = appendIndexFooter(index, siteUrl, [
       `${label} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`,
     ]);
 
-    return { label: section.sidebarLabel, directory, indexUrl, fullUrl, tokens, index, full };
+    return [{ label: section.sidebarLabel, directory, indexUrl, fullUrl, tokens, index, full }];
   });
-}
-
-/** Top-level sidebar sections whose pages share a directory; each section's llms files are written there. */
-function llmsSections(framework: SupportedFramework) {
-  return filterSidebarForLlms(sidebar, framework)
-    .filter(isSection)
-    .flatMap((section) => {
-      const slugs = sidebarSlugs(section.contents);
-      const directory = commonDirectory(slugs);
-
-      return directory ? [{ section, slugs, directory }] : [];
-    });
-}
-
-/** Root-relative paths of every index and complete file the build writes, for the sitemap. */
-export function llmsIndexPaths(): string[] {
-  const docs = SUPPORTED_FRAMEWORKS.flatMap((framework) =>
-    [
-      `/docs/framework/${framework}`,
-      ...llmsSections(framework).map(({ directory }) => `/docs/framework/${framework}/${directory}`),
-    ].flatMap((base) => [`${base}/llms.txt`, `${base}/llms-full.txt`])
-  );
-
-  return ['/llms.txt', '/blog/llms.txt', '/changelog/llms.txt', ...docs];
 }
 
 /** A section label used mid-sentence: lower-case unless it is an acronym such as "API". */
@@ -1114,23 +1187,23 @@ function sectionLabelsBySlug(items: Sidebar, label?: string, labels = new Map<st
   return labels;
 }
 
-/**
- * Every docs page for a framework in sidebar order, concatenated into one Markdown document, plus the size quoted in
- * its header so every index that links it states the same number.
- */
-export function generateDocsCorpus(framework: string, pages: PageEntry[], siteUrl: string) {
+/** Every docs page for a framework in sidebar order, concatenated into one Markdown document. */
+export function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string): string {
+  return generateDocsCorpus(framework, pages, siteUrl).content;
+}
+
+/** The complete file plus the size quoted in its header, so every index that links it states the same number. */
+export function generateDocsCorpus(
+  framework: string,
+  pages: PageEntry[],
+  siteUrl: string
+): { content: string; tokens: number } {
   let body = '';
 
   if (isValidFramework(framework)) {
     const filtered = filterSidebarForLlms(sidebar, framework);
 
-    body = renderCorpus(
-      framework,
-      sidebarSlugs(filtered),
-      pagesBySlug(framework, pages),
-      siteUrl,
-      sectionLabelsBySlug(filtered)
-    );
+    body = renderCorpus(sidebarSlugs(filtered), pagesBySlug(framework, pages), siteUrl, sectionLabelsBySlug(filtered));
   }
 
   const tokens = estimateTokens(body);
@@ -1145,11 +1218,10 @@ export function generateDocsCorpus(framework: string, pages: PageEntry[], siteUr
 
 /**
  * Pages in sidebar order, each introduced by a source comment. Same-page anchors collide once every page shares one
- * file, so they point back at the heading id on the page they came from, and a title two pages share gains its section
- * label so a heading-based chunker can still tell them apart.
+ * file, so they point back at the page they came from, and a title two pages share gains its section label so a
+ * heading-based chunker can still tell them apart.
  */
 function renderCorpus(
-  framework: string,
   slugs: string[],
   bySlug: Map<string, PageEntry>,
   siteUrl: string,
@@ -1171,12 +1243,7 @@ function renderCorpus(
   let body = '';
 
   for (const { slug, page, markdown } of entries) {
-    let content = outsideCodeFences(selectFrameworkBranches(markdown, framework).trim(), (text) =>
-      text.replace(
-        /\]\(#([^)\s]*)/g,
-        (_match, anchor: string) => `](${siteUrl}${page.pathname}#${page.headingIds?.get(anchor) ?? anchor}`
-      )
-    );
+    let content = markdown.trim().replace(/\]\(#/g, `](${siteUrl}${page.pathname}#`);
     const title = firstHeading(content);
     const label = sectionLabels.get(slug);
 
@@ -1232,7 +1299,6 @@ function sidebarSlugs(items: Sidebar): string[] {
 }
 
 function renderSidebarToMarkdown(
-  framework: SupportedFramework,
   items: Sidebar,
   pageBySlug: Map<string, PageEntry>,
   siteUrl: string,
@@ -1247,9 +1313,9 @@ function renderSidebarToMarkdown(
 
       content += `${heading} ${item.sidebarLabel}\n\n`;
 
-      const description = sectionDescription(item, framework);
-
-      if (description) content += `${description}\n\n`;
+      if (item.llmsDescription) {
+        content += `${item.llmsDescription}\n\n`;
+      }
 
       const files = depth === 0 ? sectionFiles?.get(item.sidebarLabel) : undefined;
 
@@ -1258,16 +1324,14 @@ function renderSidebarToMarkdown(
         content += `This section in one file (${formatTokens(files.tokens)}): ${files.fullUrl}\n\n`;
       }
 
-      content += renderSidebarToMarkdown(framework, item.contents, pageBySlug, siteUrl, depth + 1);
-    } else if (isLink(item)) {
-      const href = item.href.startsWith('/') ? `${siteUrl}${item.href}` : item.href;
-
-      content += `- [${item.sidebarLabel}](${href})\n`;
-    } else {
+      content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);
+    } else if (!isLink(item)) {
       const page = pageBySlug.get(item.slug);
       if (!page) continue;
 
-      content += indexEntry(page, siteUrl);
+      content += page.description
+        ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
+        : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
     }
   }
 
@@ -1276,12 +1340,6 @@ function renderSidebarToMarkdown(
   }
 
   return content;
-}
-
-function sectionDescription(section: Section, framework: SupportedFramework): string | undefined {
-  const { llmsDescription } = section;
-
-  return typeof llmsDescription === 'string' ? llmsDescription : llmsDescription?.[framework];
 }
 
 /**
@@ -1308,7 +1366,7 @@ function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Si
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
   const note =
-    `Posts published before ${FIRST_V10_BLOG_MONTH} describe earlier Video.js versions (1 through 8); ` +
+    `Posts published before ${FIRST_V10_BLOG_POST} describe earlier Video.js versions (1 through 8); ` +
     `their APIs do not apply to Video.js 10.`;
 
   return generateChronologicalIndex('Blog', pages, siteUrl, note);
@@ -1330,7 +1388,11 @@ export function generateChronologicalIndex(title: string, pages: PageEntry[], si
   );
 
   for (const post of sorted) {
-    content += indexEntry(post, siteUrl, post.sort ? ` (${post.sort.slice(0, 10)})` : '');
+    const date = post.sort ? ` (${post.sort.slice(0, 10)})` : '';
+
+    content += post.description
+      ? `- [${post.title}](${siteUrl}${post.pathname}.md): ${post.description}${date}\n`
+      : `- [${post.title}](${siteUrl}${post.pathname}.md)${date}\n`;
   }
 
   return appendIndexFooter(content, siteUrl);

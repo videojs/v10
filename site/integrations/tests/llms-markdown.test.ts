@@ -11,6 +11,7 @@ import {
   generateChronologicalIndex,
   generateDocsCorpus,
   generateDocsIndex,
+  generateInstallationIndex,
   generatePageFooter,
   generateRootIndex,
   llmsIndexPaths,
@@ -228,9 +229,9 @@ describe('convertPage', () => {
   });
 
   it('leaves marker wrappers in place for their own rules', () => {
-    const markdown = convert('<div data-cli-replace="installation" class="contents"><p>Steps</p></div>');
+    const markdown = convert('<div data-installation-plan class="contents"><p>Steps</p></div>');
 
-    expect(markdown).toBe('<!-- cli:replace installation -->\n\nSteps\n\n<!-- /cli:replace installation -->');
+    expect(markdown).toBe('<!-- installation-plan:start -->\n\nSteps\n\n<!-- installation-plan:end -->');
   });
 
   it('restores the separators between code chips', () => {
@@ -342,6 +343,18 @@ describe('convertPage', () => {
     );
 
     expect(markdown).toBe('# Title\n\nPublished 2026-09-08.');
+  });
+});
+
+describe('generateInstallationIndex', () => {
+  it('lists canonical routes and only supported Markdown query parameters', () => {
+    const markdown = generateInstallationIndex(SITE_URL);
+
+    expect(markdown).toContain('/docs/guides/installation/shadcn.md?framework=vue');
+    expect(markdown).toContain('`framework`: On the Shadcn page');
+    expect(markdown).toContain('`install-method`');
+    expect(markdown).not.toContain('`method`:');
+    expect(markdown).not.toContain('`package-manager`:');
   });
 });
 

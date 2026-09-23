@@ -8,10 +8,10 @@ import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
 import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
-import { registryFramework } from '@/stores/registry';
+import { registryProjectFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
-import { isRegistryFramework, type InstallationPickerFramework } from '@/utils/installation/framework-navigation';
+import type { InstallationPickerFramework } from '@/utils/installation/framework-navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
 import {
   getInstallationMethodsForFramework,
@@ -45,9 +45,7 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationPi
   if (method === 'packaged') return getInstallationRoutePath(framework);
 
   if (method === 'shadcn') {
-    const sourceFramework = isRegistryFramework(framework) ? framework : 'html';
-
-    return `${getInstallationRoutePath('shadcn')}?framework=${sourceFramework}`;
+    return `${getInstallationRoutePath('shadcn')}?framework=${framework}`;
   }
 
   return getInstallationRoutePath('cdn');
@@ -59,7 +57,7 @@ export default function InstallationMethodNavClient({ currentFramework, route, c
   const selectedSkin = useStore(skin);
   const selectedSourceUrl = useStore(sourceUrl);
   const selectedUseCase = useStore(useCase);
-  const registrySelection = useStore(registryFramework);
+  const registrySelection = useStore(registryProjectFramework);
   const isHydrated = useIsHydrated();
   const framework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
   const active = getActiveMethod(route);

@@ -3,9 +3,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { currentFramework } from '@/stores/preferences';
 import {
   registryFramework,
+  registryProjectFramework,
   registryStyling,
   registryTemplate,
   selectRegistryFramework,
+  selectRegistryProjectFramework,
   syncRegistryFramework,
 } from '@/stores/registry';
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
@@ -14,6 +16,7 @@ describe('selectRegistryFramework', () => {
   afterEach(() => {
     currentFramework.set(null);
     registryFramework.set('react');
+    registryProjectFramework.set('react');
     registryStyling.set(null);
     registryTemplate.set(null);
     document.documentElement.removeAttribute('data-registry-framework');
@@ -36,6 +39,7 @@ describe('selectRegistryFramework', () => {
 
   it('keeps registry options when only the site-wide preference is stale', () => {
     registryFramework.set('html');
+    registryProjectFramework.set('html');
     registryStyling.set('css');
     registryTemplate.set('astro');
     currentFramework.set('react');
@@ -54,6 +58,18 @@ describe('selectRegistryFramework', () => {
 
     expect(window.location.href).toContain('/docs/guides/installation/shadcn?framework=html');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 320 });
+    expect(document.documentElement.dataset.registryFramework).toBe('html');
+  });
+
+  it('keeps the Vue project selection while using HTML registry source and site preferences', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=react');
+
+    selectRegistryProjectFramework('vue');
+
+    expect(registryProjectFramework.get()).toBe('vue');
+    expect(registryFramework.get()).toBe('html');
+    expect(currentFramework.get()).toBe('html');
+    expect(window.location.search).toBe('?framework=vue');
     expect(document.documentElement.dataset.registryFramework).toBe('html');
   });
 

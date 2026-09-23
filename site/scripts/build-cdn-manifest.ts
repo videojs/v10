@@ -18,6 +18,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { CDN_MEDIA_SUBPATHS } from '@videojs/installation';
 import { z } from 'astro/zod';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -62,6 +63,15 @@ function main() {
 
   if (subpaths.length === 0) {
     log.error(`No CDN media bundles found in ${CDN_MEDIA_DIR}.`);
+    process.exit(1);
+  }
+
+  const expectedSubpaths = [...CDN_MEDIA_SUBPATHS].sort();
+
+  if (JSON.stringify(subpaths) !== JSON.stringify(expectedSubpaths)) {
+    log.error('The @videojs/installation CDN catalog is out of sync with the bundles that @videojs/cdn built.');
+    log.error(`Built: ${subpaths.join(', ')}`);
+    log.error(`Catalog: ${expectedSubpaths.join(', ')}`);
     process.exit(1);
   }
 

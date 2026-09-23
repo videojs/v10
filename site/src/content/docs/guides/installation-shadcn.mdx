@@ -10,7 +10,7 @@ import Step from '@/components/docs/Step.astro';
 import Steps from '@/components/docs/Steps.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
@@ -33,7 +33,7 @@ import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <HumanCase>
 
@@ -77,7 +77,7 @@ Choose from the installation options available for your selections.
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
 
 ## Initialize Shadcn
 

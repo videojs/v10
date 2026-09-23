@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { currentFramework } from '@/stores/preferences';
-import { registryFramework } from '@/stores/registry';
+import { registryFramework, registryProjectFramework } from '@/stores/registry';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
@@ -18,6 +18,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     delete window.__videojsDocsNavigationController;
     currentFramework.set(null);
     registryFramework.set('react');
+    registryProjectFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
@@ -53,6 +54,15 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
     expect(currentFramework.get()).toBe('html');
     expect(registryFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('keeps a Vue Shadcn project while deriving HTML source and preferences', () => {
+    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'));
+
+    expect(registryProjectFramework.get()).toBe('vue');
+    expect(registryFramework.get()).toBe('html');
+    expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 

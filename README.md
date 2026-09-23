@@ -5,10 +5,18 @@
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
 [![preview-badge]][preview]
 
-## Agentstart
+## AI Quickstart
 
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
 the docs that match this package version before writing code.
+
+Then print the version-matched installation choices for the player you are using. These commands return instructions
+without modifying your project:
+
+```sh
+npx @videojs/react@latest agents init
+npx @videojs/html@latest agents init
+```
 
 Modern, modular, and composable media player framework for Web and React.
 

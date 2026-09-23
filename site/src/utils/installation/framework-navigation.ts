@@ -14,17 +14,31 @@ export function isRegistryFramework(framework: string | null): framework is Regi
   return framework === 'react' || framework === 'html';
 }
 
+export function isInstallationPickerFramework(framework: string | null): framework is InstallationPickerFramework {
+  return framework === 'react' || framework === 'html' || framework === 'vue' || framework === 'svelte';
+}
+
 export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
   return url.pathname.replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
 }
 
 /** Resolve the source framework for the query-controlled Shadcn guide. */
-export function resolveShadcnFramework(url: URL, fallback: RegistryFramework): RegistryFramework | null {
+export function resolveShadcnProjectFramework(
+  url: URL,
+  fallback: InstallationPickerFramework
+): InstallationPickerFramework | null {
   if (!isShadcnInstallationUrl(url)) return null;
 
   const requested = url.searchParams.get('framework');
 
-  return isRegistryFramework(requested) ? requested : fallback;
+  return isInstallationPickerFramework(requested) ? requested : fallback;
+}
+
+/** Resolve React or HTML registry source for a Shadcn project framework. */
+export function resolveShadcnFramework(url: URL, fallback: RegistryFramework): RegistryFramework | null {
+  const project = resolveShadcnProjectFramework(url, fallback);
+
+  return project === null ? null : project === 'react' ? 'react' : 'html';
 }
 
 /** Build a JS-framework switch, falling back to Packaged when the current method does not support the selection. */
@@ -35,7 +49,7 @@ export function resolveInstallationFrameworkNavigation(
   const target = new URL(current);
   const route = current.pathname.match(/\/docs\/guides\/installation\/([^/]+)/)?.[1];
 
-  if (isShadcnInstallationUrl(current) && isRegistryFramework(next)) {
+  if (isShadcnInstallationUrl(current)) {
     target.searchParams.set('framework', next);
 
     return {

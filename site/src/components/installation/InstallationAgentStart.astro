@@ -2,7 +2,15 @@
 import CopyButton from '@/components/CopyButton';
 import P from '@/components/typography/P.astro';
 
-const prompt = 'Install the Video.js skill using one method. In Codex, run `codex plugin marketplace add videojs/skills`, then `codex plugin add videojs@videojs`, and start a new session. In Claude Code, run `claude plugin marketplace add videojs/skills`, then `claude plugin install videojs@videojs`, and start a new session or run `/reload-plugins`. In VS Code or Cursor, install `https://github.com/videojs/skills` as a plugin from source. For another agent, run `npx skills add https://github.com/videojs/skills --skill videojs` and select the agent. Then use the Video.js skill when working on this project.';
+const route = Astro.params.framework;
+const owner = route === 'react' || route === 'shadcn' ? 'react' : 'html';
+const method = route === 'cdn' ? ' --method cdn' : route === 'shadcn' ? ' --method shadcn' : '';
+const framework = route === 'vue' || route === 'svelte' ? ` --framework ${route}` : '';
+const init = `npx @videojs/${owner}@latest agents init${method}${framework}`;
+const installationPrompt = route === 'shadcn'
+  ? 'When installation details are needed, run `npx @videojs/react@latest agents init --method shadcn` for React, or `npx @videojs/html@latest agents init --method shadcn --framework vue` for Vue, replacing `vue` with `html` or `svelte` when appropriate. The command prints version-matched choices and instructions without changing files.'
+  : `When installation details are needed, run \`${init}\` to print the version-matched choices and instructions without changing files.`;
+const prompt = `Install the Video.js skill using one method. In Codex, run \`codex plugin marketplace add videojs/skills\`, then \`codex plugin add videojs@videojs\`, and start a new session. In Claude Code, run \`claude plugin marketplace add videojs/skills\`, then \`claude plugin install videojs@videojs\`, and start a new session or run \`/reload-plugins\`. In VS Code or Cursor, install \`https://github.com/videojs/skills\` as a plugin from source. For another agent, run \`npx skills add https://github.com/videojs/skills --skill videojs\` and select the agent. Then use the Video.js skill when working on this project. ${installationPrompt}`;
 ---
 
 <P>Paste this prompt into your coding agent:</P>

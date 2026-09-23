@@ -41,13 +41,13 @@ describe('resolveInstallationFrameworkNavigation', () => {
     });
   });
 
-  it('moves unsupported Shadcn and CDN frameworks to Packaged', () => {
+  it('keeps every supported project framework on Shadcn and moves CDN changes to Packaged', () => {
     const shadcn = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react&skin=minimal');
     const cdn = new URL('https://videojs.org/docs/guides/installation/cdn?preset=audio');
 
     expect(resolveInstallationFrameworkNavigation(shadcn, 'vue')).toEqual({
-      target: '/docs/guides/installation/vue?skin=minimal',
-      history: 'push',
+      target: '/docs/guides/installation/shadcn?framework=vue&skin=minimal',
+      history: 'replace',
     });
     expect(resolveInstallationFrameworkNavigation(cdn, 'react')).toEqual({
       target: '/docs/guides/installation/react?preset=audio',
@@ -63,11 +63,11 @@ describe('resolveShadcnFramework', () => {
     expect(resolveShadcnFramework(url, 'react')).toBe('html');
   });
 
-  it('uses the saved fallback for a missing or invalid query', () => {
+  it('uses the saved fallback for a missing query and derives HTML source for Vue', () => {
     expect(resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')).toBe('html');
     expect(
       resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
-    ).toBe('react');
+    ).toBe('html');
   });
 
   it('does not resolve non-Shadcn routes', () => {

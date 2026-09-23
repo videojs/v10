@@ -14,12 +14,16 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.get('skin')).toBe('minimal');
   });
 
-  it('uses HTML Shadcn source for Vue and Svelte while keeping shared choices', () => {
+  it('keeps the Vue or Svelte project framework while using Shadcn HTML source', () => {
     for (const framework of ['vue', 'svelte']) {
       const current = new URL(`https://videojs.org/docs/guides/installation/${framework}?preset=audio&skin=minimal`);
-      const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn?framework=html', 'shadcn');
+      const result = resolveInstallationMethodUrl(
+        current,
+        `/docs/guides/installation/shadcn?framework=${framework}`,
+        'shadcn'
+      );
 
-      expect(result.searchParams.get('framework')).toBe('html');
+      expect(result.searchParams.get('framework')).toBe(framework);
       expect(result.searchParams.get('preset')).toBe('audio');
       expect(result.searchParams.get('skin')).toBe('minimal');
     }
@@ -32,6 +36,14 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.pathname).toBe('/docs/guides/installation/html');
     expect(result.searchParams.has('framework')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('audio');
+  });
+
+  it('returns from Shadcn to the selected Vue packaged guide', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue&preset=audio');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/vue', 'packaged');
+
+    expect(result.pathname).toBe('/docs/guides/installation/vue');
+    expect(result.searchParams.has('framework')).toBe(false);
   });
 
   it('returns from CDN to packaged HTML with the shared choices', () => {

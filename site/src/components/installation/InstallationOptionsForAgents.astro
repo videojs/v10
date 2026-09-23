@@ -1,0 +1,104 @@
+---
+import { createInstallationDiscovery, installationCommand } from '@videojs/installation';
+
+import htmlPackage from '../../../../packages/html/package.json';
+import reactPackage from '../../../../packages/react/package.json';
+import { isInstallationRouteSegment } from '@/utils/installation/routes';
+
+const route = Astro.params.framework;
+if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
+
+const owner = route === 'react' || route === 'shadcn' ? 'react' : 'html';
+const version = owner === 'react' ? reactPackage.version : htmlPackage.version;
+const discovery = createInstallationDiscovery(owner, version);
+const commands = route === 'shadcn'
+  ? [installationCommand('react'), installationCommand('html')]
+  : [installationCommand(owner)];
+const fixedMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
+const fixedFramework = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
+const queryOptions = discovery.options
+  .filter((option) => {
+    if (['--json', '--method'].includes(option.flag)) return false;
+
+    if (option.flag === '--framework') return route === 'shadcn';
+
+    if (option.flag === '--package-manager') return route !== 'cdn';
+
+    if (['--template', '--styling'].includes(option.flag)) return route === 'shadcn';
+
+    return true;
+  })
+  .map((option) => {
+    if (option.flag === '--framework') {
+      return { ...option, values: ['react', 'html', 'vue', 'svelte'], default: 'react' };
+    }
+
+    if (route === 'shadcn' && option.flag === '--preset') {
+      return { ...option, values: option.values?.filter((value) => value !== 'background-video') };
+    }
+
+    if (route === 'shadcn' && option.flag === '--skin') {
+      return { ...option, values: option.values?.filter((value) => value !== 'none') };
+    }
+
+    if (option.flag === '--package-manager') return { ...option, flag: '--install-method' };
+
+    return option;
+  });
+const routeExamples = [
+  ['/docs/guides/installation/react.md', 'React with packaged modules'],
+  ['/docs/guides/installation/html.md', 'HTML with packaged modules'],
+  ['/docs/guides/installation/vue.md', 'Vue with packaged HTML custom elements'],
+  ['/docs/guides/installation/svelte.md', 'Svelte with packaged HTML custom elements'],
+  ['/docs/guides/installation/shadcn.md?framework=react', 'Shadcn with React source'],
+  ['/docs/guides/installation/shadcn.md?framework=html', 'Shadcn with plain HTML source'],
+  ['/docs/guides/installation/shadcn.md?framework=vue', 'Shadcn HTML source in Vue'],
+  ['/docs/guides/installation/shadcn.md?framework=svelte', 'Shadcn HTML source in Svelte'],
+  ['/docs/guides/installation/cdn.md', 'HTML from the CDN'],
+] as const;
+---
+
+<div hidden data-llms-only>
+  <h2>Installation options for coding agents</h2>
+
+  <p>
+    This Markdown page contains the default installation. Add the query parameters below to this <code>.md</code> URL
+    for a complete, validated variation, or print version-matched instructions from the installed player package. Both
+    paths use the same installation renderer and only return instructions; they do not modify a project.
+  </p>
+
+  <p>
+    This page fixes the installation method to <code>{fixedMethod}</code>{fixedFramework
+      ? <> and the framework to <code>{fixedFramework}</code></>
+      : <>. The <code>framework</code> query parameter selects React, HTML, Vue, or Svelte</>}.
+  </p>
+
+  <pre><code class="language-sh">{commands.join('\n')}</code></pre>
+
+  <h3>Query parameters</h3>
+
+  <ul>
+    {queryOptions.map((option) => (
+      <li>
+        <code>{option.flag.replace(/^--/, '')}</code>: {option.description}{' '}
+        {option.values && (
+          <>
+            Values: {option.values.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}.{' '}
+          </>
+        )}
+        Default: {option.default}.
+      </li>
+    ))}
+  </ul>
+
+  <p>
+    Query names match the flags above without leading dashes. Run a bare package command above to see every CLI flag,
+    compatibility rule, and default.
+  </p>
+
+  <h3>Installation pages</h3>
+
+  <ul>
+    {routeExamples.map(([href, label]) => <li><a href={href}>{label}</a></li>)}
+  </ul>
+</div>

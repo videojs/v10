@@ -4,10 +4,16 @@
 
 > **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
-## Agentstart
+## AI Quickstart
 
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
 the docs that match this package version before writing code.
+
+Then list the version-matched installation choices. This command returns instructions without modifying your project:
+
+```sh
+npx @videojs/html agents init
+```
 
 ## Overview
 

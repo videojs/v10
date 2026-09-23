@@ -360,31 +360,6 @@ describe('packageDocumentation', () => {
     );
   });
 
-  it('packages both CLI frameworks while preserving online links', () => {
-    const fixture = createFixture();
-    const link = '[Install](https://videojs.org/docs/framework/react/guides/installation.md)';
-    const installationCount =
-      writeInstallationDocs(fixture.siteDist, 'react') + writeInstallationDocs(fixture.siteDist, 'html');
-
-    writeDoc(
-      fixture.siteDist,
-      'html',
-      'llms.txt',
-      '# HTML\n\n---\n\nAll documentation: https://videojs.org/llms.txt\n'
-    );
-    writeDoc(fixture.siteDist, 'react', 'concepts/overview.md', link + footer);
-
-    expect(
-      packageDocumentation({
-        target: 'cli',
-        siteDist: fixture.siteDist,
-        packagesDirectory: fixture.packagesDirectory,
-      })
-    ).toBe(2 + installationCount);
-    expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/react/concepts/overview.md'), 'utf-8')).toBe(link);
-    expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/html/llms.txt'), 'utf-8')).toBe('# HTML');
-  });
-
   it('throws when a canonical installation document is missing', () => {
     const fixture = createFixture();
 
@@ -405,18 +380,18 @@ describe('packageDocumentation', () => {
     const fixture = createFixture();
 
     writeDoc(fixture.siteDist, 'html', 'llms.txt', '# HTML');
-    const sentinel = join(fixture.packagesDirectory, 'cli/docs/sentinel.txt');
+    const sentinel = join(fixture.packagesDirectory, 'html/docs/sentinel.txt');
 
     mkdirSync(join(sentinel, '..'), { recursive: true });
     writeFileSync(sentinel, 'keep');
 
     expect(() =>
       packageDocumentation({
-        target: 'cli',
+        target: 'html',
         siteDist: fixture.siteDist,
         packagesDirectory: fixture.packagesDirectory,
       })
-    ).toThrow(/react/);
+    ).toThrow(/installation/);
     expect(existsSync(sentinel)).toBe(true);
   });
 });

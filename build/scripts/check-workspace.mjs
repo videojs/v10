@@ -200,9 +200,6 @@ const REQUIRED_FIELDS = ['sideEffects', 'files', 'exports'];
 /** Required only when the package has a root "." export. */
 const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 
-/** Packages excluded from metadata checks. CLI is bin-only — sideEffects/exports don't apply. */
-const METADATA_EXCLUDE = new Set(['cli']);
-
 function checkPackageMetadata() {
   const warnings = [];
 
@@ -210,9 +207,6 @@ function checkPackageMetadata() {
     const pkg = readPackageJson(dir);
     // Skip private packages — they're internal.
     if (pkg.private) continue;
-
-    // Skip packages that don't need library metadata.
-    if (METADATA_EXCLUDE.has(packageDirName(dir))) continue;
 
     // publishConfig.access is required for scoped public packages.
     if (pkg.publishConfig?.access !== 'public') {
@@ -294,11 +288,28 @@ function checkBundledDocs() {
     }
   }
 
-  const cli = readPackageJson('cli');
-  const expectedCliCopy = 'node --import tsx ../../site/scripts/copy-package-docs.ts cli';
+  for (const dir of getPackageDirs()) {
+    const pkg = readPackageJson(dir);
+    if (pkg.private || pkg.publishConfig?.access !== 'public') continue;
 
-  if (cli.scripts?.['copy-docs'] !== expectedCliCopy) {
-    warnings.push(`${cli.name}: copy-docs script should be \`${expectedCliCopy}\``);
+    const readmePath = join(PACKAGES_DIR, dir, 'README.md');
+
+    if (!existsSync(readmePath)) {
+      warnings.push(`${pkg.name}: missing README.md`);
+      continue;
+    }
+
+    const readme = readText(readmePath);
+
+    if (!readme.includes('## AI Quickstart')) warnings.push(`${pkg.name}: README is missing an AI Quickstart`);
+
+    if (!readme.includes('https://github.com/videojs/skills')) {
+      warnings.push(`${pkg.name}: AI Quickstart is missing the Video.js skill link`);
+    }
+
+    if (!readme.includes('agents init')) {
+      warnings.push(`${pkg.name}: AI Quickstart is missing a version-matched agents init command`);
+    }
   }
 
   return { ok: warnings.length === 0, warnings };

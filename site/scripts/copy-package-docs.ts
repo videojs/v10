@@ -1,4 +1,4 @@
-/** Package site-generated markdown for @videojs/html, @videojs/react, or @videojs/cli. */
+/** Package site-generated markdown for @videojs/html or @videojs/react. */
 import {
   existsSync,
   mkdirSync,
@@ -29,7 +29,7 @@ const PACKAGE_NAMES = {
 } as const;
 
 export type Framework = keyof typeof PACKAGE_NAMES;
-export type PackageDocsTarget = Framework | 'cli';
+export type PackageDocsTarget = Framework;
 
 export interface PackageDocumentationOptions {
   target: PackageDocsTarget;
@@ -52,7 +52,7 @@ const INSTALLATION_DOCUMENTS = {
 } satisfies Record<Framework, readonly (readonly [source: string, destination: string])[]>;
 
 function isPackageDocsTarget(value: string): value is PackageDocsTarget {
-  return value === 'cli' || value in PACKAGE_NAMES;
+  return value in PACKAGE_NAMES;
 }
 
 export function stripFooter(content: string): string {
@@ -259,7 +259,7 @@ export function packageDocumentation({
   packagesDirectory = resolve(workspaceRoot, 'packages'),
   version,
 }: PackageDocumentationOptions): number {
-  const frameworks: Framework[] = target === 'cli' ? ['html', 'react'] : [target];
+  const frameworks: Framework[] = [target];
   const sources = new Map(
     frameworks.map((framework) => [framework, join(siteDist, 'docs', 'framework', framework)] as const)
   );
@@ -275,7 +275,7 @@ export function packageDocumentation({
 
   replaceDirectory(targetDirectory, (stagingDirectory) => {
     for (const framework of frameworks) {
-      const frameworkTarget = target === 'cli' ? join(stagingDirectory, framework) : stagingDirectory;
+      const frameworkTarget = stagingDirectory;
       const sourceDirectory = sources.get(framework);
       if (!sourceDirectory) throw new Error(`Missing documentation source for ${framework}`);
 
@@ -283,20 +283,18 @@ export function packageDocumentation({
         sourceDirectory,
         targetDirectory: frameworkTarget,
         framework,
-        rewriteLocalLinks: target !== 'cli',
+        rewriteLocalLinks: true,
         version,
       });
       copiedFiles += copyInstallationDocumentation({
         siteDist,
         targetDirectory: frameworkTarget,
         framework,
-        rewriteLocalLinks: target !== 'cli',
+        rewriteLocalLinks: true,
       });
     }
 
-    if (target !== 'cli') {
-      writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
-    }
+    writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
   });
 
   return copiedFiles;
@@ -306,7 +304,7 @@ function main(): void {
   const target = process.argv[2];
 
   if (!target || !isPackageDocsTarget(target)) {
-    console.error('Usage: node --import tsx copy-package-docs.ts <html|react|cli>');
+    console.error('Usage: node --import tsx copy-package-docs.ts <html|react>');
     process.exit(1);
   }
 

@@ -6,7 +6,7 @@ description: 'Install Video.js in Svelte or SvelteKit and build a video player w
 import JSPicker from '@/components/installation/JSPicker.astro';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
@@ -29,7 +29,7 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <HumanCase>
 
@@ -73,7 +73,7 @@ Choose from the installation options available for your selections. Shadcn adds 
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
 
 ## Install the packages
 

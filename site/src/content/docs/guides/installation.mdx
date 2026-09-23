@@ -7,7 +7,7 @@ description: Install Video.js packages and build an accessible, customizable vid
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
@@ -35,7 +35,7 @@ import LLMCase from '@/components/docs/LLMCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <LLMCase>
 <FrameworkCase frameworks={["react"]}>
@@ -94,7 +94,7 @@ Choose from the installation options available for your selections.
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
 
 ## Install the packages
 

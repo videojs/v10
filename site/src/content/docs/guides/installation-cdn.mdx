@@ -10,7 +10,7 @@ import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
 import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
@@ -26,7 +26,7 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <HumanCase>
 
@@ -70,7 +70,7 @@ Choose from the installation options available for your selections.
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
 
 ## Load Video.js
 

@@ -1,8 +1,8 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
 import { currentFramework } from '@/stores/preferences';
-import { syncRegistryFramework } from '@/stores/registry';
-import { isShadcnInstallationUrl, resolveShadcnFramework } from '@/utils/installation/framework-navigation';
+import { syncRegistryProjectFramework } from '@/stores/registry';
+import { isShadcnInstallationUrl, resolveShadcnProjectFramework } from '@/utils/installation/framework-navigation';
 
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
 import { getFrameworkFromDocsUrl } from './routing';
@@ -85,9 +85,9 @@ function savePageScrollToHistory(): void {
 export function syncFrameworkPreferenceFromUrl(url: URL): void {
   if (isShadcnInstallationUrl(url)) {
     const fallback = getFrameworkPreferenceClient() ?? 'react';
-    const framework = resolveShadcnFramework(url, fallback);
+    const framework = resolveShadcnProjectFramework(url, fallback);
 
-    if (framework) syncRegistryFramework(framework);
+    if (framework) syncRegistryProjectFramework(framework);
 
     return;
   }
@@ -102,7 +102,7 @@ export function syncFrameworkPreferenceFromUrl(url: URL): void {
 function normalizeCurrentShadcnUrl(url: URL): void {
   if (!isShadcnInstallationUrl(url) || getFrameworkFromDocsUrl(url)) return;
 
-  const framework = resolveShadcnFramework(url, getFrameworkPreferenceClient() ?? 'react');
+  const framework = resolveShadcnProjectFramework(url, getFrameworkPreferenceClient() ?? 'react');
   if (!framework) return;
 
   url.searchParams.set('framework', framework);

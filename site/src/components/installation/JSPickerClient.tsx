@@ -6,10 +6,9 @@ import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import { registryFramework, selectRegistryFramework } from '@/stores/registry';
+import { registryProjectFramework, selectRegistryProjectFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import {
-  isRegistryFramework,
   type InstallationPickerFramework,
   resolveInstallationFrameworkNavigation,
 } from '@/utils/installation/framework-navigation';
@@ -50,15 +49,15 @@ interface Props {
 }
 
 export default function JSPickerClient({ currentFramework, route }: Props) {
-  const selectedRegistryFramework = useStore(registryFramework);
+  const selectedRegistryFramework = useStore(registryProjectFramework);
   const isHydrated = useIsHydrated();
   const displayedFramework = route === 'shadcn' && isHydrated ? selectedRegistryFramework : currentFramework;
 
   const handleChange = (next: InstallationPickerFramework) => {
     if (next === displayedFramework) return;
 
-    if (route === 'shadcn' && isRegistryFramework(next)) {
-      selectRegistryFramework(next);
+    if (route === 'shadcn') {
+      selectRegistryProjectFramework(next);
       return;
     }
 

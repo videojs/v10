@@ -42,7 +42,6 @@ site/src/content/generated-media-reference/
 site/src/content/generated-preset-reference/
 site/src/content/cdn-media.json
 site/src/content/ejected-skins.json
-packages/cli/docs/
 packages/html/docs/
 packages/react/docs/
 

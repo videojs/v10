@@ -83,14 +83,14 @@ describe('InstallationMethodNavClient', () => {
 
     expect(vue).toContain('data-installation-method="packaged"');
     expect(vue).toContain('data-installation-method="shadcn"');
-    expect(vue).toContain('href="/docs/guides/installation/shadcn?framework=html"');
+    expect(vue).toContain('href="/docs/guides/installation/shadcn?framework=vue"');
     expect(vue).toContain('Add editable HTML skin source');
     expect(vue).toContain('max-w-3xl');
     expect(vue).toContain('sm:grid-cols-3');
     expect(vue).toContain('mx-auto');
     expect(svelte).toContain('data-installation-method="packaged"');
     expect(svelte).toContain('data-installation-method="shadcn"');
-    expect(svelte).toContain('href="/docs/guides/installation/shadcn?framework=html"');
+    expect(svelte).toContain('href="/docs/guides/installation/shadcn?framework=svelte"');
     expect(svelte).not.toContain('data-installation-method="cdn"');
   });
 
@@ -130,7 +130,7 @@ describe('InstallationMethodNavClient', () => {
     fireEvent.click(link);
     await Promise.resolve();
 
-    const target = '/docs/guides/installation/shadcn?preset=audio&skin=minimal&framework=html';
+    const target = '/docs/guides/installation/shadcn?preset=audio&skin=minimal&framework=vue';
 
     expect(mocks.savePageScrollForNavigation).toHaveBeenCalledWith(target);
     expect(mocks.navigate).toHaveBeenCalledWith(target, {

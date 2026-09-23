@@ -41,6 +41,8 @@
 
     { "path": "packages/icons" },
 
+    { "path": "packages/installation" },
+
     { "path": "packages/skins" },
 
     { "path": "packages/spf" },
@@ -59,9 +61,7 @@
     { "path": "packages/html" },
     { "path": "packages/react" },
 
-    { "path": "packages/video.js" },
-
-    { "path": "packages/cli" }
+    { "path": "packages/video.js" }
   ],
   "files": []
 }

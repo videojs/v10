@@ -94,8 +94,6 @@ jobs:
         run: pnpm build:cdn
 
       # Keep this list in sync with the public packages built by `build:packages`.
-      # @videojs/cli is excluded because it is built separately and depends on a
-      # full site build, which is too slow for a per-commit preview.
       #
       # VIDEOJS_SKIP_PACKAGE_DOCS lets the @videojs/html and @videojs/react
       # prepack scripts pack without site-generated markdown; previews don't need
