@@ -27,12 +27,9 @@ export function isLegacyErrorCode(value: unknown): value is LegacyErrorCode {
   return (LEGACY_ERROR_CODES as readonly unknown[]).includes(value);
 }
 
-/** The docs slug for a code: `VJS8_LEGACY_INIT` → `v8-legacy-init`. */
+/** The docs slug for a code: `VJS8_LEGACY_INIT` → `vjs8-legacy-init`. */
 export function getLegacyErrorSlug(code: LegacyErrorCode): string {
-  return code
-    .replace(/^VJS8_/, 'V8_')
-    .toLowerCase()
-    .replaceAll('_', '-');
+  return code.toLowerCase().replaceAll('_', '-');
 }
 
 export function getLegacyErrorUrl(code: LegacyErrorCode): string {

@@ -59,8 +59,8 @@ describe('getLegacyErrorRecord', () => {
   it('resolves the entry with its code, slug, URL, and stay-on-v8 line', () => {
     expect(getLegacyErrorRecord('VJS8_LEGACY_PLUGIN')).toEqual({
       code: 'VJS8_LEGACY_PLUGIN',
-      slug: 'v8-legacy-plugin',
-      url: 'https://videojs.org/docs/reference/api/v8-legacy-plugin',
+      slug: 'vjs8-legacy-plugin',
+      url: 'https://videojs.org/docs/reference/api/vjs8-legacy-plugin',
       stayOnV8: LEGACY_V8_LINE,
       ...LEGACY_ERRORS.VJS8_LEGACY_PLUGIN,
     });

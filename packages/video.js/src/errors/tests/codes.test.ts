@@ -26,8 +26,8 @@ describe('isLegacyErrorCode', () => {
 
 describe('getLegacyErrorSlug', () => {
   it('derives the docs slug from the code', () => {
-    expect(getLegacyErrorSlug('VJS8_LEGACY_INIT')).toBe('v8-legacy-init');
-    expect(getLegacyErrorSlug('VJS8_LEGACY_GET_PLAYER')).toBe('v8-legacy-get-player');
+    expect(getLegacyErrorSlug('VJS8_LEGACY_INIT')).toBe('vjs8-legacy-init');
+    expect(getLegacyErrorSlug('VJS8_LEGACY_GET_PLAYER')).toBe('vjs8-legacy-get-player');
   });
 
   it('produces a unique slug for every code', () => {
@@ -39,6 +39,6 @@ describe('getLegacyErrorSlug', () => {
 
 describe('getLegacyErrorUrl', () => {
   it('points at the legacy error API reference', () => {
-    expect(getLegacyErrorUrl('VJS8_LEGACY_INIT')).toBe('https://videojs.org/docs/reference/api/v8-legacy-init');
+    expect(getLegacyErrorUrl('VJS8_LEGACY_INIT')).toBe('https://videojs.org/docs/reference/api/vjs8-legacy-init');
   });
 });
