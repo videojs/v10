@@ -1,7 +1,7 @@
-import { INSTALLATION_DEMO_SOURCES } from '@videojs/installation';
-
 import cdnPackage from '../../packages/cdn/package.json' with { type: 'json' };
 import htmlPackage from '../../packages/html/package.json' with { type: 'json' };
+// The Vite config reaches this module while discovering the workspace task graph, before package builds run.
+import { INSTALLATION_DEMO_SOURCES } from '../../packages/installation/src/defaults.ts';
 import utilsPackage from '../../packages/utils/package.json' with { type: 'json' };
 
 // Always https://videojs.org. Unlike Astro.site, which varies per deploy
