@@ -1,7 +1,7 @@
 // @vitest-environment node
-import type { Context } from '@netlify/edge-functions';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import type { MarkdownContext } from '../../../src/utils/installation/markdown-handler';
 import markdownNegotiation, { prefersMarkdown } from '../markdown-negotiation';
 
 const CHROME_NAVIGATION =
@@ -67,7 +67,7 @@ describe('markdownNegotiation', () => {
       next: vi.fn(async (request?: Request) =>
         request && new URL(request.url).pathname.endsWith('.md') ? twin : next
       ),
-    } satisfies Pick<Context, 'next'>;
+    } satisfies MarkdownContext;
     const request = new Request(`https://videojs.org${path}`, { headers: { accept } });
 
     return { context, response: markdownNegotiation(request, context) };
