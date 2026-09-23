@@ -11,10 +11,12 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
       "default": "./dist/index.js"
     },
     "./node": {
       "types": "./dist/node.d.ts",
+      "development": "./src/node.ts",
       "default": "./dist/node.js"
     }
   },
