@@ -55,6 +55,13 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
 /**
  * Mixin that adds SPF audio-only HLS playback to any base class.
  *
+ * Parallel to `HlsVideoMixin` with one substantive difference: the underlying engine is the audio-only variant
+ * (`createHlsAudioEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback /
+ * play() contract per the WHATWG HTML spec is identical to the default adapter.
+ *
+ * Selecting this adapter is the variant decision: instantiating `HlsAudioAdapterCore` opts the consumer into audio-only
+ * delivery even when the source is a mixed-AV HLS manifest.
+ *
  * @example
  *   class HlsAudioAdapter extends HlsAudioMixin(HTMLVideoAdapter) {}
  *
@@ -63,13 +70,6 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  *   media.src = 'https://stream.mux.com/abc123.m3u8';
  *
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
- *
- *   Parallel to `HlsVideoMixin` with one substantive difference: the underlying engine is the audio-only variant
- *   (`createHlsAudioEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback /
- *   play() contract per the WHATWG HTML spec is identical to the default adapter.
- *
- *   Selecting this adapter is the variant decision: instantiating `HlsAudioAdapterCore` opts the consumer into
- *   audio-only delivery even when the source is a mixed-AV HLS manifest.
  */
 export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsAudioImpl extends BaseClass {
