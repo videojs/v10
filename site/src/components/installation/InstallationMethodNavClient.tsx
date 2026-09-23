@@ -71,7 +71,7 @@ export default function InstallationMethodNavClient({ currentFramework, route, c
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
     }
 
-    if (id === 'cdn') return rendererSupportsCdn(selectedRenderer, cdnMediaSubpaths);
+    if (id === 'cdn') return route === 'cdn' || rendererSupportsCdn(selectedRenderer, cdnMediaSubpaths);
 
     return true;
   });

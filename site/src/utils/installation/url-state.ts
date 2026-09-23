@@ -8,8 +8,8 @@ import {
 } from './types';
 
 /**
- * The installation picks that live in the page URL. `install-method` is retained for URL compatibility; the CLI exposes
- * the installation route and package manager separately as `--method` and `--package-manager`.
+ * The installation choices encoded in the page URL. `install-method` stores the package manager on package-based routes
+ * and stays at its default on the CDN route.
  */
 export interface InstallationSelection {
   useCase: UseCase;

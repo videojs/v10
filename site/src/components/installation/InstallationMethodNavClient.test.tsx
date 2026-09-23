@@ -63,6 +63,16 @@ describe('InstallationMethodNavClient', () => {
     expect(available).toContain('data-installation-method="cdn"');
   });
 
+  it('keeps the active CDN method visible while route state is normalized', () => {
+    renderer.set('vimeo');
+
+    const markup = renderToString(
+      <InstallationMethodNavClient currentFramework="html" route="cdn" cdnMediaSubpaths={[]} />
+    );
+
+    expect(markup).toContain('data-installation-method="cdn"');
+  });
+
   it('offers Vue and Svelte the HTML Shadcn source', () => {
     const vue = renderToString(
       <InstallationMethodNavClient currentFramework="vue" route="vue" cdnMediaSubpaths={[]} />
