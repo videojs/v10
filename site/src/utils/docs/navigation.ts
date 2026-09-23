@@ -2,7 +2,11 @@ import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from
 
 import { currentFramework } from '@/stores/preferences';
 import { syncRegistryProjectFramework } from '@/stores/registry';
-import { isShadcnInstallationUrl, resolveShadcnProjectFramework } from '@/utils/installation/framework-navigation';
+import {
+  isShadcnInstallationUrl,
+  resolveShadcnProjectFramework,
+  resolveShadcnUrlSelection,
+} from '@/utils/installation/framework-navigation';
 
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
 import { getFrameworkFromDocsUrl } from './routing';
@@ -87,7 +91,7 @@ export function syncFrameworkPreferenceFromUrl(url: URL): void {
     const fallback = getFrameworkPreferenceClient() ?? 'react';
     const framework = resolveShadcnProjectFramework(url, fallback);
 
-    if (framework) syncRegistryProjectFramework(framework);
+    if (framework) syncRegistryProjectFramework(framework, url);
 
     return;
   }
@@ -102,10 +106,15 @@ export function syncFrameworkPreferenceFromUrl(url: URL): void {
 function normalizeCurrentShadcnUrl(url: URL): void {
   if (!isShadcnInstallationUrl(url) || getFrameworkFromDocsUrl(url)) return;
 
-  const framework = resolveShadcnProjectFramework(url, getFrameworkPreferenceClient() ?? 'react');
-  if (!framework) return;
+  const selection = resolveShadcnUrlSelection(url, getFrameworkPreferenceClient() ?? 'react');
+  if (!selection) return;
 
-  url.searchParams.set('framework', framework);
+  url.searchParams.set('framework', selection.projectFramework);
+
+  if (url.searchParams.has('template') && !selection.template) url.searchParams.delete('template');
+
+  if (url.searchParams.has('styling') && !selection.styling) url.searchParams.delete('styling');
+
   window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
 }
 

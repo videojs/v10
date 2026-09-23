@@ -6,6 +6,7 @@ import {
   coerceToPreset,
   DEFAULT_SELECTION,
   type InstallationSelection,
+  normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
   serializeInstallationSearch,
 } from '@/utils/installation/url-state';
@@ -47,17 +48,36 @@ function currentSelection(): InstallationSelection {
   };
 }
 
+function normalizeCurrentUrl(target: URL, selection: InstallationSelection): void {
+  if (!globalThis.location || !globalThis.history || target.href !== location.href) return;
+
+  const search = serializeInstallationSearch(selection, target.search);
+  const url = `${target.pathname}${search}${target.hash}`;
+
+  if (url !== `${target.pathname}${target.search}${target.hash}`) {
+    history.replaceState(history.state, '', url);
+  }
+
+  hydratedUrl = `${target.pathname}${search}`;
+}
+
 /** Replace every installation pick from a destination URL before its islands render. */
 export function syncInstallationSelectionFromUrl(url?: URL): void {
   const target = url ?? (globalThis.location ? new URL(globalThis.location.href) : null);
   if (!target) return;
 
   const urlKey = `${target.pathname}${target.search}`;
-  if (hydratedUrl === urlKey) return;
+  const route = target.pathname.match(/\/docs\/guides\/installation\/([^/]+)/)?.[1] ?? '';
+  const selection = normalizeInstallationSelectionForRoute(route, parseInstallationSearch(target.search));
+
+  if (hydratedUrl === urlKey) {
+    normalizeCurrentUrl(target, selection);
+
+    return;
+  }
 
   hydratedUrl = urlKey;
   syncingFromUrl = true;
-  const selection = parseInstallationSearch(target.search);
 
   try {
     // Use case first: the skin and media pickers validate against it when they react to a change.
@@ -69,6 +89,8 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
   } finally {
     syncingFromUrl = false;
   }
+
+  normalizeCurrentUrl(target, selection);
 }
 
 function writeUrl(): void {
@@ -95,6 +117,11 @@ if (globalThis.document) {
   document.addEventListener('astro:before-swap', (event: TransitionBeforeSwapEvent) => {
     if (event.to.pathname.startsWith('/docs/guides/installation/')) {
       syncInstallationSelectionFromUrl(event.to);
+    }
+  });
+  document.addEventListener('astro:after-swap', () => {
+    if (location.pathname.startsWith('/docs/guides/installation/')) {
+      syncInstallationSelectionFromUrl();
     }
   });
 }

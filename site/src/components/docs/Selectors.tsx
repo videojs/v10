@@ -8,7 +8,7 @@ import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import { Select, type SelectOption } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
-import { registryFramework, selectRegistryFramework } from '@/stores/registry';
+import { registryFramework, selectRegistryProjectFramework } from '@/stores/registry';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
@@ -72,7 +72,7 @@ export function Selectors({
     if (!isValidFramework(newFramework) || newFramework === displayedFramework) return;
 
     if (registryFrameworkSelection) {
-      selectRegistryFramework(newFramework);
+      selectRegistryProjectFramework(newFramework);
       focusVisibleFrameworkSelector();
       return;
     }

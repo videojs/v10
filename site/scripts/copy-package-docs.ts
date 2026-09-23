@@ -12,7 +12,8 @@ import {
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { selectFrameworkBranches } from '../integrations/markdown-text';
+import { VJS10_VERSION } from '../src/consts';
+import { renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
@@ -59,6 +60,11 @@ export function stripFooter(content: string): string {
   return content.replace(/\n+---\n\n(?:\w+ documentation: https:\/\/.*\n)*All documentation: https:\/\/.*\n*$/, '');
 }
 
+/** Package-local instructions should resolve the renderer bundled with the installed player, not the registry tag. */
+export function useInstalledAgentCommands(content: string): string {
+  return content.replace(/(@videojs\/(?:html|react))@latest(?= agents init)/g, '$1');
+}
+
 export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
   const sourceDir = posix.dirname(sourceSlug);
   let rewritten = content;
@@ -94,11 +100,13 @@ function copyInstallationDocumentation({
   targetDirectory,
   framework,
   rewriteLocalLinks,
+  version,
 }: {
   siteDist: string;
   targetDirectory: string;
   framework: Framework;
   rewriteLocalLinks: boolean;
+  version: string | undefined;
 }): number {
   let copied = 0;
 
@@ -106,11 +114,22 @@ function copyInstallationDocumentation({
     const sourcePath = join(siteDist, source);
     if (!existsSync(sourcePath)) throw new Error(`Missing installation documentation source: ${sourcePath}`);
 
-    const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
-    // The docs CLI reads the markers in its own copy; a framework package keeps only its branch of a shared guide.
+    const raw = useInstalledAgentCommands(stripFooter(readFileSync(sourcePath, 'utf-8')));
+    const params = source.endsWith('/shadcn.md') ? new URLSearchParams({ framework }) : new URLSearchParams();
+    const rendered = renderInstallationMarkdownSelection(
+      raw,
+      `/${source.replace(/\.md$/, '')}`,
+      params,
+      version ?? VJS10_VERSION
+    );
+
+    if (!rendered || rendered.status !== 200) {
+      throw new Error(`Could not render ${source} for ${framework}: ${rendered?.body.trim() ?? 'unknown route'}`);
+    }
+
     const transformed = rewriteLocalLinks
-      ? rewriteLinks(selectFrameworkBranches(raw, framework), sourceSlug(destination), framework)
-      : raw;
+      ? rewriteLinks(rendered.body, sourceSlug(destination), framework)
+      : rendered.body;
     const destinationPath = join(targetDirectory, destination);
 
     mkdirSync(dirname(destinationPath), { recursive: true });
@@ -234,7 +253,7 @@ function copyFrameworkDocumentation({
   for (const sourcePath of files) {
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
     const raw = readFileSync(sourcePath, 'utf-8');
-    const withoutFooter = stripFooter(raw);
+    const withoutFooter = useInstalledAgentCommands(stripFooter(raw));
     const isIndex = basename(relativePath) === 'llms.txt';
     const transformed = rewriteLocalLinks
       ? rewriteLinks(
@@ -291,6 +310,7 @@ export function packageDocumentation({
         targetDirectory: frameworkTarget,
         framework,
         rewriteLocalLinks: true,
+        version,
       });
     }
 

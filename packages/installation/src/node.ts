@@ -48,7 +48,7 @@ function parseArguments(args: readonly string[]): ParseResult {
       json,
       errors: [
         {
-          field: 'method',
+          field: 'arguments',
           message: 'Expected `agents init`. Run `agents init` without selection flags to list every option.',
         },
       ],
@@ -75,7 +75,7 @@ function parseArguments(args: readonly string[]): ParseResult {
       return {
         ok: false,
         json,
-        errors: [{ field: 'method', value: argument, message: `Unknown flag: ${argument}` }],
+        errors: [{ field: 'arguments', value: argument, message: `Unknown flag: ${argument}` }],
       };
     }
 

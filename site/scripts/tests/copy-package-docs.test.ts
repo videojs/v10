@@ -16,6 +16,7 @@ import {
   rewriteLinks,
   stripFooter,
   synthesizeReadme,
+  useInstalledAgentCommands,
 } from '../copy-package-docs.ts';
 
 const temporaryDirectories: string[] = [];
@@ -47,7 +48,10 @@ function writeInstallationDocs(siteDist: string, framework: Framework): number {
     const path = join(siteDist, `${getInstallationRoutePath(route).slice(1)}.md`);
 
     mkdirSync(join(path, '..'), { recursive: true });
-    writeFileSync(path, `# ${route} installation`);
+    writeFileSync(
+      path,
+      `# ${route} installation\n\n<!-- installation-plan:start -->\n\nDefault steps.\n\n<!-- installation-plan:end -->`
+    );
   }
 
   return routes.length;
@@ -103,6 +107,17 @@ describe('stripFooter', () => {
     const input = '# Heading\n\nBody.';
 
     expect(stripFooter(input)).toBe(input);
+  });
+});
+
+describe('useInstalledAgentCommands', () => {
+  it('uses the package-local renderer while leaving unrelated latest tags alone', () => {
+    const input =
+      'Run `npx @videojs/react@latest agents init` or `npx @videojs/html@latest agents init`. Then run `npx shadcn@latest`.\n';
+
+    expect(useInstalledAgentCommands(input)).toBe(
+      'Run `npx @videojs/react agents init` or `npx @videojs/html agents init`. Then run `npx shadcn@latest`.\n'
+    );
   });
 });
 
@@ -275,7 +290,10 @@ describe('packageDocumentation', () => {
     writeDoc(fixture.siteDist, 'react', 'llms.txt', '[Install](/docs/guides/installation/react.md)');
     const installation = join(fixture.siteDist, 'docs/guides/installation/react.md');
 
-    writeFileSync(installation, '# React Installation Guide');
+    writeFileSync(
+      installation,
+      '# React Installation Guide\n\n<!-- installation-plan:start -->\nDefault steps.\n<!-- installation-plan:end -->'
+    );
 
     expect(
       packageDocumentation({
@@ -284,12 +302,39 @@ describe('packageDocumentation', () => {
         packagesDirectory: fixture.packagesDirectory,
       })
     ).toBe(1 + installationCount);
-    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/guides/installation.md'), 'utf-8')).toBe(
-      '# React Installation Guide'
+    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/guides/installation.md'), 'utf-8')).toContain(
+      '- `framework`: `react`'
     );
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/llms.txt'), 'utf-8')).toBe(
       '[Install](./guides/installation.md)'
     );
+  });
+
+  it('uses installed agent commands throughout the package documentation', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'react');
+    writeDoc(fixture.siteDist, 'react', 'llms.txt', 'Run `npx @videojs/react@latest agents init`.');
+    writeDoc(
+      fixture.siteDist,
+      'react',
+      'guides/build-with-ai.md',
+      'Use `npx @videojs/react@latest agents init --method shadcn` for version-matched instructions.'
+    );
+
+    packageDocumentation({
+      target: 'react',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+    });
+
+    const packageDocs = join(fixture.packagesDirectory, 'react/docs');
+
+    expect(readFileSync(join(packageDocs, 'llms.txt'), 'utf-8')).toContain('npx @videojs/react agents init');
+    expect(readFileSync(join(packageDocs, 'guides/build-with-ai.md'), 'utf-8')).toContain(
+      'npx @videojs/react agents init --method shadcn'
+    );
+    expect(readFileSync(join(packageDocs, 'guides/build-with-ai.md'), 'utf-8')).not.toContain('@latest agents init');
   });
 
   it('bundles pages and indexes but no complete files', () => {
@@ -337,25 +382,35 @@ describe('packageDocumentation', () => {
       join(fixture.siteDist, 'docs/guides/installation/shadcn.md'),
       [
         '# Shadcn',
-        '<!-- cli:framework react -->',
+        '<!-- installation-plan:start -->',
+        'Default React plan',
+        '<!-- installation-plan:end -->',
+        '<!-- installation:framework react -->',
         'React steps',
-        '<!-- /cli:framework react -->',
-        '<!-- cli:framework html -->',
+        '<!-- /installation:framework react -->',
+        '<!-- installation:framework html -->',
         'HTML steps',
-        '<!-- /cli:framework html -->',
+        '<!-- /installation:framework html -->',
       ].join('\n\n')
     );
     writeFileSync(
       join(fixture.siteDist, 'docs/guides/installation/vue.md'),
-      '[Shadcn](https://videojs.org/docs/guides/installation/shadcn?framework=html) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
+      '# Vue\n\n<!-- installation-plan:start -->\nDefault steps.\n<!-- installation-plan:end -->\n\n[Shadcn](https://videojs.org/docs/guides/installation/shadcn?framework=html) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
     );
 
     packageDocumentation({ target: 'html', siteDist: fixture.siteDist, packagesDirectory: fixture.packagesDirectory });
 
     const guides = join(fixture.packagesDirectory, 'html/docs/guides');
 
-    expect(readFileSync(join(guides, 'installation-shadcn.md'), 'utf-8')).toBe('# Shadcn\n\nHTML steps\n');
-    expect(readFileSync(join(guides, 'installation-vue.md'), 'utf-8')).toBe(
+    const shadcn = readFileSync(join(guides, 'installation-shadcn.md'), 'utf-8');
+
+    expect(shadcn).toContain('- `framework`: `html`');
+    expect(shadcn).toContain('HTML steps');
+    expect(shadcn).not.toContain('React steps');
+    expect(shadcn).not.toContain('installation:framework');
+    const vue = readFileSync(join(guides, 'installation-vue.md'), 'utf-8');
+
+    expect(vue).toContain(
       '[Shadcn](./installation-shadcn.md) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
     );
   });

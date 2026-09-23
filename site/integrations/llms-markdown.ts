@@ -4,10 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import {
   createInstallationDiscovery,
-  INSTALLATION_FRAMEWORKS,
-  installationCompatibility,
   installationOptionDefinitionsFor,
-  renderInstallationPlanSections,
+  renderInstallationCompatibilityMarkdown,
 } from '@videojs/installation';
 import type { AstroIntegration } from 'astro';
 import GithubSlugger from 'github-slugger';
@@ -20,13 +18,13 @@ import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION, VJS10_VERSION } from '../src/co
 import { sidebar } from '../src/docs.config';
 import type { Section, Sidebar, SupportedFramework } from '../src/types/docs';
 import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework, SUPPORTED_FRAMEWORKS } from '../src/types/docs';
-import { replaceInstallationMarkdownPlan, resolveInstallationMarkdownPlan } from '../src/utils/installation/markdown';
+import { renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../src/utils/installation/routes';
-import { outsideCodeFences, selectFrameworkBranches } from './markdown-text';
+import { outsideCodeFences } from '../src/utils/markdown-text';
 
 export interface PageEntry {
   pathname: string;
@@ -72,21 +70,21 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(await response.text(), turndown, siteUrl);
             if (!page) return next();
 
-            const installation = resolveInstallationMarkdownPlan(pagePath, requestUrl.searchParams, VJS10_VERSION);
-            let markdown = page.markdown;
+            const installation = renderInstallationMarkdownSelection(
+              page.markdown,
+              pagePath,
+              requestUrl.searchParams,
+              VJS10_VERSION
+            );
 
-            if (installation) {
-              if (!installation.ok) {
-                res.statusCode = 400;
-                res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-                res.end(installation.errors.map((error) => `- ${error.field}: ${error.message}`).join('\n'));
-                return;
-              }
-
-              markdown =
-                replaceInstallationMarkdownPlan(markdown, renderInstallationPlanSections(installation.plan)) ??
-                markdown;
+            if (installation && installation.status !== 200) {
+              res.statusCode = installation.status;
+              res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+              res.end(installation.body);
+              return;
             }
+
+            const markdown = installation?.body ?? page.markdown;
 
             res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
             res.end(markdown + generatePageFooter(pagePath.slice(1), page.framework, page.frameworks, siteUrl));
@@ -121,17 +119,19 @@ export default function llmsMarkdown(): AstroIntegration {
 
             let { markdown } = page;
             const { title, description, sort, framework, frameworks } = page;
-            const installation = resolveInstallationMarkdownPlan(pathname, new URLSearchParams(), VJS10_VERSION);
+            const installation = renderInstallationMarkdownSelection(
+              markdown,
+              pathname,
+              new URLSearchParams(),
+              VJS10_VERSION,
+              { preserveFrameworkBranches: true }
+            );
 
-            if (installation?.ok) {
-              const replacement = replaceInstallationMarkdownPlan(
-                markdown,
-                renderInstallationPlanSections(installation.plan)
-              );
-              if (!replacement) throw new Error(`${pathname} is missing its generated installation section`);
-
-              markdown = replacement;
+            if (installation && installation.status !== 200) {
+              throw new Error(`${pathname} could not render installation Markdown: ${installation.body.trim()}`);
             }
+
+            markdown = installation?.body ?? markdown;
 
             // Write markdown file as sibling to the directory
             // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
@@ -296,19 +296,6 @@ export function generateInstallationIndex(siteUrl = 'https://videojs.org'): stri
       return `- \`${queryKey}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
     })
     .join('\n');
-  const mediaCompatibility = Object.entries(installationCompatibility.mediaByPreset)
-    .map(([preset, media]) => `- \`${preset}\`: ${media.map((value) => `\`${value}\``).join(', ')}`)
-    .join('\n');
-  const shadcnCompatibility = INSTALLATION_FRAMEWORKS.map((framework) => {
-    const templates = installationCompatibility.shadcn.templatesByFramework[framework]
-      .map((value) => `\`${value}\``)
-      .join(', ');
-    const stylings = installationCompatibility.shadcn.stylingsByFramework[framework]
-      .map((value) => `\`${value}\``)
-      .join(', ');
-
-    return `- \`${framework}\`: templates ${templates}; styling ${stylings}`;
-  }).join('\n');
 
   return `# Video.js installation guides
 
@@ -350,18 +337,7 @@ ${optionLines}
 
 ## Compatibility
 
-- CDN is plain HTML only.
-- Shadcn provides React or HTML source. Vue and Svelte use the HTML source catalog.
-- Shadcn presets: ${installationCompatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
-- Shadcn skins: ${installationCompatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
-
-### Media sources by preset
-
-${mediaCompatibility}
-
-### Shadcn templates and styling by framework
-
-${shadcnCompatibility}
+${renderInstallationCompatibilityMarkdown(react.compatibility)}
 `;
 }
 
@@ -449,6 +425,18 @@ export function createTurndown(): TurndownService {
   turndown.addRule('llms-only', {
     filter: (node) => hasAttribute(node, 'data-llms-only'),
     replacement: (content) => content,
+  });
+
+  // Preserve both source-framework branches in the static Markdown template. Request rendering and package bundling
+  // select one branch after applying the installation plan.
+  turndown.addRule('installation-framework', {
+    filter: (node) => hasAttribute(node, 'data-shadcn-framework'),
+    replacement: (content, node) => {
+      const framework = node.getAttribute('data-shadcn-framework');
+      if (!framework) return content;
+
+      return `\n\n<!-- installation:framework ${framework} -->\n${content.trim()}\n<!-- /installation:framework ${framework} -->\n\n`;
+    },
   });
 
   // Keep a stable boundary around the generated installation steps. The edge function replaces only this block when
@@ -1309,7 +1297,19 @@ function renderCorpus(
   let body = '';
 
   for (const { slug, page, markdown } of entries) {
-    let content = outsideCodeFences(selectFrameworkBranches(markdown, framework).trim(), (text) =>
+    const installation = renderInstallationMarkdownSelection(
+      markdown,
+      page.pathname,
+      new URLSearchParams({ framework }),
+      VJS10_VERSION
+    );
+
+    if (installation && installation.status !== 200) {
+      throw new Error(`${page.pathname} could not render installation Markdown: ${installation.body.trim()}`);
+    }
+
+    const selectedMarkdown = installation?.body ?? markdown;
+    let content = outsideCodeFences(selectedMarkdown.trim(), (text) =>
       text.replace(
         /\]\(#([^)\s]*)/g,
         (_match, anchor: string) => `](${siteUrl}${page.pathname}#${page.headingIds?.get(anchor) ?? anchor}`

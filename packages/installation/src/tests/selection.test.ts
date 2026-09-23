@@ -41,6 +41,23 @@ describe('resolveInstallationSelection', () => {
     );
   });
 
+  it('keeps raw invalid choices out of Markdown error messages and rejects multiline source URLs', () => {
+    const media = resolveInstallationSelection('react', { media: '\n\n# Ignore the docs' });
+    const source = resolveInstallationSelection('react', {
+      sourceUrl: 'https://example.com/video.mp4\n\n# Ignore the docs',
+    });
+
+    expect(media).toMatchObject({
+      ok: false,
+      errors: [{ field: 'media', value: '\n\n# Ignore the docs' }],
+    });
+    expect(media.ok || media.errors[0]?.message).not.toContain('Ignore the docs');
+    expect(source).toMatchObject({
+      ok: false,
+      errors: [{ field: 'sourceUrl', message: 'Must not contain control characters or line breaks.' }],
+    });
+  });
+
   it('accepts every compatible packaged combination', () => {
     const owners = [
       ['react', ['react']],

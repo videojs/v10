@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { currentFramework } from '@/stores/preferences';
-import { registryFramework, registryProjectFramework } from '@/stores/registry';
+import { registryFramework, registryProjectFramework, registryStyling, registryTemplate } from '@/stores/registry';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
@@ -19,6 +19,8 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     currentFramework.set(null);
     registryFramework.set('react');
     registryProjectFramework.set('react');
+    registryStyling.set(null);
+    registryTemplate.set(null);
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
@@ -91,6 +93,22 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     expect(window.location.search).toBe('?preset=audio&framework=html');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
     expect(registryFramework.get()).toBe('html');
+  });
+
+  it('drops incompatible Shadcn options while retaining valid URL-backed choices', () => {
+    window.history.replaceState(
+      { index: 2, scrollX: 0, scrollY: 360 },
+      '',
+      '/docs/guides/installation/shadcn?framework=vue&template=next&styling=css'
+    );
+
+    initializeDocsNavigation();
+
+    expect(window.location.search).toBe('?framework=vue&styling=css');
+    expect(registryProjectFramework.get()).toBe('vue');
+    expect(registryTemplate.get()).toBeNull();
+    expect(registryStyling.get()).toBe('css');
+    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
   });
 
   it('normalizes a queryless Shadcn entry after client navigation', () => {

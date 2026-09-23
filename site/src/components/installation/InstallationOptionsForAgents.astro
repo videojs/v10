@@ -14,8 +14,8 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
 
 const owner = route === 'react' || route === 'shadcn' ? 'react' : 'html';
 const commands = route === 'shadcn'
-  ? [installationCommand('react'), installationCommand('html')]
-  : [installationCommand(owner)];
+  ? [installationCommand('react', undefined, null), installationCommand('html', undefined, null)]
+  : [installationCommand(owner, undefined, null)];
 const fixedMethod: InstallationMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
 const fixedFramework: InstallationFramework | null = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
 const frameworks: readonly InstallationFramework[] = fixedFramework
@@ -57,9 +57,10 @@ const routeExamples = [
   <h2>Installation options for coding agents</h2>
 
   <p>
-    This Markdown page contains the default installation. Add the query parameters below to this <code>.md</code> URL
-    for a complete, validated variation, or print version-matched instructions from the installed player package. Both
-    paths use the same installation renderer and only return instructions; they do not modify a project.
+    The web Markdown page contains the default installation. Add the query parameters below to its <code>.md</code> URL
+    for a complete, validated variation. From an installed package or an offline docs bundle, run the package command
+    below instead. Both paths use the same installation renderer and only return instructions; they do not modify a
+    project.
   </p>
 
   <p>

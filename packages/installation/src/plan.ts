@@ -73,8 +73,13 @@ function shellQuote(value: string): string {
   return /^[a-z0-9_./:@-]+$/i.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
 }
 
-export function installationCommand(owner: PlayerOwner, input?: InstallationInput, packageVersion = 'latest'): string {
-  const parts = [`npx ${OWNER_PACKAGES[owner]}@${packageVersion} agents init`];
+export function installationCommand(
+  owner: PlayerOwner,
+  input?: InstallationInput,
+  packageVersion: string | null = 'latest'
+): string {
+  const packageSpecifier = packageVersion ? `${OWNER_PACKAGES[owner]}@${packageVersion}` : OWNER_PACKAGES[owner];
+  const parts = [`npx ${packageSpecifier} agents init`];
 
   if (!input) return parts[0]!;
 

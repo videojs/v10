@@ -14,6 +14,14 @@ Intro.
 Default steps.
 
 <!-- installation-plan:end -->
+
+<!-- installation:framework react -->
+React follow-up.
+<!-- /installation:framework react -->
+
+<!-- installation:framework html -->
+HTML follow-up.
+<!-- /installation:framework html -->
 `;
 
 function createContext(markdown = staticMarkdown) {
@@ -37,8 +45,23 @@ describe('markdown negotiation', () => {
     expect(body).toContain('- `framework`: `vue`');
     expect(body).toContain('- `media`: `spotify`');
     expect(body).toContain('components/videojs/audio/skin.html');
+    expect(body).toContain('HTML follow-up.');
+    expect(body).not.toContain('React follow-up.');
     expect(next).toHaveBeenCalledOnce();
     expect(new URL(next.mock.calls[0]![0].url).pathname).toBe('/docs/guides/installation/shadcn.md');
+  });
+
+  it('renders and filters the default installation even without query parameters', async () => {
+    const { context } = createContext();
+    const response = await directMarkdown(
+      new Request('https://videojs.org/docs/guides/installation/shadcn.md'),
+      context
+    );
+    const body = await response!.text();
+
+    expect(body).toContain('- `framework`: `react`');
+    expect(body).toContain('React follow-up.');
+    expect(body).not.toContain('HTML follow-up.');
   });
 
   it('rejects invalid option combinations as Markdown', async () => {
@@ -61,6 +84,18 @@ describe('markdown negotiation', () => {
     expect(await response!.text()).toContain('framework: Expected one of: react, html, vue, svelte');
   });
 
+  it('does not reflect invalid query content into Markdown errors', async () => {
+    const { context } = createContext();
+    const request = new Request(
+      `https://videojs.org/docs/guides/installation/shadcn.md?media=${encodeURIComponent('\n\n# Injected')}`
+    );
+    const response = await directMarkdown(request, context);
+    const body = await response!.text();
+
+    expect(response?.status).toBe(400);
+    expect(body).not.toContain('Injected');
+  });
+
   it('does not publicly cache a source URL', async () => {
     const { context } = createContext();
     const request = new Request(
@@ -72,7 +107,11 @@ describe('markdown negotiation', () => {
   });
 
   it('rewrites Accept negotiation through the current request chain', async () => {
-    const { context, next } = createContext('# React Installation Guide');
+    const { context, next } = createContext(`# React Installation Guide
+
+<!-- installation-plan:start -->
+Default steps.
+<!-- installation-plan:end -->`);
     const request = new Request('https://videojs.org/docs/guides/installation/react?ignored=value', {
       headers: { accept: 'text/markdown' },
     });

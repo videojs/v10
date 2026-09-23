@@ -1,11 +1,5 @@
-import { renderInstallationPlanSections, renderSelectionErrors } from '@videojs/installation';
-
 import htmlPackage from '../../../../packages/html/package.json' with { type: 'json' };
-import {
-  INSTALLATION_MARKDOWN_PARAMS,
-  replaceInstallationMarkdownPlan,
-  resolveInstallationMarkdownPlan,
-} from './markdown.ts';
+import { INSTALLATION_MARKDOWN_PARAMS, renderInstallationMarkdownSelection } from './markdown.ts';
 
 const VJS10_VERSION = htmlPackage.version;
 // RFC 9110 qvalue: 0 to 1 with at most three decimals.
@@ -62,23 +56,9 @@ export async function handleMarkdown(request: Request, context: MarkdownContext)
   const mdResponse = await context.next(assetRequest);
   if (!mdResponse.ok) return directMarkdown ? mdResponse : undefined;
 
-  let body = await mdResponse.text();
-  const hasInstallationSelection = [...url.searchParams].some(([key]) => INSTALLATION_MARKDOWN_PARAMS.has(key));
-  const result = hasInstallationSelection
-    ? resolveInstallationMarkdownPlan(path, url.searchParams, VJS10_VERSION)
-    : null;
-
-  if (result) {
-    if (!result.ok) return markdownResponse(`${renderSelectionErrors(result.errors)}\n`, 400, true);
-
-    const replaced = replaceInstallationMarkdownPlan(body, renderInstallationPlanSections(result.plan));
-
-    if (!replaced) {
-      return markdownResponse('The installation guide is missing its generated installation section.\n', 500, true);
-    }
-
-    body = replaced;
-  }
+  const body = await mdResponse.text();
+  const installation = renderInstallationMarkdownSelection(body, path, url.searchParams, VJS10_VERSION);
+  if (installation) return markdownResponse(installation.body, installation.status, installation.privateResponse);
 
   return markdownResponse(body, 200, url.searchParams.has('source-url'));
 }

@@ -1,3 +1,4 @@
+import type { InstallationCompatibility } from './options';
 import type { InstallationDiscovery, InstallationPlan } from './plan';
 import { INSTALLATION_FRAMEWORKS, type SelectionError } from './selection';
 
@@ -16,6 +17,32 @@ function inlineCode(value: string): string {
   return `${marker}${padding}${value}${padding}${marker}`;
 }
 
+export function renderInstallationCompatibilityMarkdown(compatibility: InstallationCompatibility): string {
+  const mediaCompatibility = Object.entries(compatibility.mediaByPreset)
+    .map(([preset, media]) => `- \`${preset}\`: ${media.map((value) => `\`${value}\``).join(', ')}`)
+    .join('\n');
+  const shadcnCompatibility = INSTALLATION_FRAMEWORKS.map((framework) => {
+    const templates = compatibility.shadcn.templatesByFramework[framework].map((value) => `\`${value}\``).join(', ');
+    const stylings = compatibility.shadcn.stylingsByFramework[framework].map((value) => `\`${value}\``).join(', ');
+
+    return `- \`${framework}\`: templates ${templates}; styling ${stylings}`;
+  }).join('\n');
+
+  return `- \`@videojs/react\` generates React instructions. \`@videojs/html\` generates HTML, Vue, or Svelte instructions.
+- CDN is plain HTML only.
+- Shadcn installs editable React or HTML skin source. Vue and Svelte use the HTML source catalog.
+- Shadcn presets: ${compatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
+- Shadcn skins: ${compatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
+
+### Media sources by preset
+
+${mediaCompatibility}
+
+### Shadcn templates and styling by framework
+
+${shadcnCompatibility}`;
+}
+
 export function renderDiscoveryMarkdown(discovery: InstallationDiscovery): string {
   const options = discovery.options
     .map((option) => {
@@ -25,19 +52,6 @@ export function renderDiscoveryMarkdown(discovery: InstallationDiscovery): strin
       return `- \`${option.flag}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
     })
     .join('\n');
-  const mediaCompatibility = Object.entries(discovery.compatibility.mediaByPreset)
-    .map(([preset, media]) => `- \`${preset}\`: ${media.map((value) => `\`${value}\``).join(', ')}`)
-    .join('\n');
-  const shadcnCompatibility = INSTALLATION_FRAMEWORKS.map((framework) => {
-    const templates = discovery.compatibility.shadcn.templatesByFramework[framework]
-      .map((value) => `\`${value}\``)
-      .join(', ');
-    const stylings = discovery.compatibility.shadcn.stylingsByFramework[framework]
-      .map((value) => `\`${value}\``)
-      .join(', ');
-
-    return `- \`${framework}\`: templates ${templates}; styling ${stylings}`;
-  }).join('\n');
 
   return `# Video.js installation instruction options
 
@@ -57,19 +71,7 @@ ${options}
 
 ## Compatibility
 
-- \`@videojs/react\` generates React instructions. \`@videojs/html\` generates HTML, Vue, or Svelte instructions.
-- CDN is plain HTML only.
-- Shadcn installs editable React or HTML skin source. Vue and Svelte use the HTML source catalog.
-- Shadcn presets: ${discovery.compatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
-- Shadcn skins: ${discovery.compatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
-
-### Media sources by preset
-
-${mediaCompatibility}
-
-### Shadcn templates and styling by framework
-
-${shadcnCompatibility}
+${renderInstallationCompatibilityMarkdown(discovery.compatibility)}
 
 ## Examples
 

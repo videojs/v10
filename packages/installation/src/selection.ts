@@ -64,9 +64,10 @@ export interface InstallationSelection {
 }
 
 export type InstallationInputKey = keyof InstallationInput;
+export type SelectionErrorField = InstallationInputKey | 'arguments';
 
 export interface SelectionError {
-  field: InstallationInputKey;
+  field: SelectionErrorField;
   message: string;
   value?: string;
 }
@@ -77,6 +78,17 @@ export type SelectionResult =
 
 function includes<const Values extends readonly string[]>(values: Values, value: string): value is Values[number] {
   return values.includes(value);
+}
+
+function containsControlCharacter(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0);
+
+    return (
+      codePoint !== undefined &&
+      (codePoint <= 0x1f || codePoint === 0x7f || codePoint === 0x85 || codePoint === 0x2028 || codePoint === 0x2029)
+    );
+  });
 }
 
 export function useCaseFromPreset(preset: string): UseCase | undefined {
@@ -174,12 +186,12 @@ export function resolveInstallationSelection(
   const media = includes(RENDERERS, mediaValue) ? mediaValue : availableMedia[0]!;
 
   if (!includes(RENDERERS, mediaValue)) {
-    errors.push({ field: 'media', value: mediaValue, message: `Unknown media source: ${mediaValue}` });
+    errors.push({ field: 'media', value: mediaValue, message: `Expected one of: ${RENDERERS.join(', ')}` });
   } else if (!availableMedia.includes(mediaValue)) {
     errors.push({
       field: 'media',
       value: mediaValue,
-      message: `${mediaValue} is not available for the ${preset} preset. Expected one of: ${availableMedia.join(', ')}`,
+      message: `Not available for the ${preset} preset. Expected one of: ${availableMedia.join(', ')}`,
     });
   }
 
@@ -197,6 +209,13 @@ export function resolveInstallationSelection(
   const sourceUrl = input.sourceUrl?.trim() ?? '';
 
   if (!sourceUrl) defaulted.push('sourceUrl');
+  else if (containsControlCharacter(sourceUrl)) {
+    errors.push({
+      field: 'sourceUrl',
+      value: sourceUrl,
+      message: 'Must not contain control characters or line breaks.',
+    });
+  }
 
   const sourceFramework = sourceFrameworkFor(framework);
   let template: RegistryTemplate | null = null;
@@ -229,7 +248,7 @@ export function resolveInstallationSelection(
       errors.push({
         field: 'skin',
         value: skinFlag,
-        message: 'Shadcn installs editable skin source, so --skin none is not available.',
+        message: 'Shadcn installs editable skin source, so the `none` skin is not available.',
       });
     }
 

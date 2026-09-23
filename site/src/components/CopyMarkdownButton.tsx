@@ -8,6 +8,16 @@ import Copy from '@/assets/icons/copy.svg?react';
 import Markdown from '@/assets/icons/markdown.svg?react';
 import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
+import {
+  isInstallationPickerFramework,
+  resolveShadcnUrlSelection,
+  SHADCN_INSTALLATION_PATH,
+} from '@/utils/installation/framework-navigation';
+import {
+  normalizeInstallationSelectionForRoute,
+  parseInstallationSearch,
+  serializeInstallationSearch,
+} from '@/utils/installation/url-state';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -23,12 +33,39 @@ type CopyState =
   | { status: 'error'; message: string };
 
 /** The page's Markdown twin from the llms-markdown integration: written at build time, converted on request in dev. */
-function markdownUrl(): string {
+export function markdownUrl(
+  location: Pick<Location, 'origin' | 'pathname' | 'search'> = window.location,
+  registryFramework = globalThis.document?.documentElement.dataset.registryFramework
+): string {
   // Strip trailing slashes so `/guide/` becomes `/guide.md`, not `/guide/.md`. Astro forbids trailing slashes but
   // infrastructure may add them back.
-  const pathname = window.location.pathname.replace(/\/+$/, '');
+  const pathname = location.pathname.replace(/\/+$/, '');
+  const url = new URL(`${location.origin}${pathname}.md${location.search}`);
+  const installationRoute = pathname.match(/^\/docs\/guides\/installation\/([^/]+)$/)?.[1];
 
-  return `${window.location.origin}${pathname}.md`;
+  if (installationRoute) {
+    const selection = normalizeInstallationSelectionForRoute(installationRoute, parseInstallationSearch(url.search));
+
+    url.search = serializeInstallationSearch(selection, url.search);
+  }
+
+  if (
+    pathname === SHADCN_INSTALLATION_PATH &&
+    !isInstallationPickerFramework(url.searchParams.get('framework')) &&
+    (registryFramework === 'react' || registryFramework === 'html')
+  ) {
+    url.searchParams.set('framework', registryFramework);
+  }
+
+  if (pathname === SHADCN_INSTALLATION_PATH) {
+    const shadcn = resolveShadcnUrlSelection(url, registryFramework === 'html' ? 'html' : 'react');
+
+    if (!shadcn?.template) url.searchParams.delete('template');
+
+    if (!shadcn?.styling) url.searchParams.delete('styling');
+  }
+
+  return url.toString();
 }
 
 function assistantPrompt(url: string): string {
@@ -52,6 +89,7 @@ const itemClass = clsx(
  */
 export default function CopyMarkdownButton({ className, style }: CopyMarkdownButtonProps) {
   const [state, setState] = useState<CopyState>({ status: 'idle' });
+  const [menuMarkdownUrl, setMenuMarkdownUrl] = useState('#');
   const isHydrated = useIsHydrated();
   const disabled = !isHydrated || state.status === 'loading';
 
@@ -104,7 +142,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
   };
 
   // Links are built on the client since they embed the page's own URL; the server renders the menu closed.
-  const mdUrl = isHydrated ? markdownUrl() : '#';
+  const mdUrl = isHydrated ? menuMarkdownUrl : '#';
   const prompt = isHydrated ? encodeURIComponent(assistantPrompt(mdUrl)) : '';
 
   const ariaLabel = state.status === 'success' ? 'Copied' : 'Copy page as Markdown';
@@ -137,7 +175,12 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
           <span className="col-start-1 row-start-1">{label}</span>
         </span>
       </button>
-      <Menu.Root modal={false}>
+      <Menu.Root
+        modal={false}
+        onOpenChange={(open) => {
+          if (open) setMenuMarkdownUrl(markdownUrl());
+        }}
+      >
         <Menu.Trigger
           disabled={!isHydrated}
           aria-label="More ways to use this page"

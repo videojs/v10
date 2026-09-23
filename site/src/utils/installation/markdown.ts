@@ -1,5 +1,6 @@
 import {
   createInstallationPlan,
+  renderInstallationPlanSections,
   resolveInstallationSelection,
   type InstallationInput,
   type InstallationMethod,
@@ -8,8 +9,14 @@ import {
   type SelectionError,
 } from '@videojs/installation';
 
+import { outsideCodeFences } from '../markdown-text.ts';
+
 const INSTALLATION_PATH = '/docs/guides/installation/';
 const PLAN_PATTERN = /<!-- installation-plan:start -->[\s\S]*?<!-- installation-plan:end -->/;
+const FRAMEWORK_BRANCH_OPEN = /^[ \t]*<!-- installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
+const FRAMEWORK_BRANCH_CLOSE = /^[ \t]*<!-- \/installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
+const CODE_FENCE_OPEN = /^[ \t]*(`{3,}|~{3,})/;
+const CODE_FENCE_CLOSE = /^[ \t]*(`{3,}|~{3,})[ \t]*(?:\r?\n)?$/;
 
 export const INSTALLATION_MARKDOWN_PARAMS = new Set([
   'preset',
@@ -79,6 +86,35 @@ export type InstallationMarkdownPlanResult =
   | { ok: false; errors: readonly SelectionError[] }
   | null;
 
+function queryField(error: SelectionError, params: URLSearchParams): string {
+  if (error.field === 'packageManager') {
+    return params.has('package-manager') ? 'package-manager' : 'install-method';
+  }
+
+  if (error.field === 'sourceUrl') return 'source-url';
+
+  return error.field;
+}
+
+function renderInstallationQueryErrors(errors: readonly SelectionError[], params: URLSearchParams): string {
+  const items = errors.map((error) => {
+    const field = queryField(error, params);
+    const cliFlag =
+      error.field === 'arguments'
+        ? null
+        : error.field === 'packageManager'
+          ? '--package-manager'
+          : error.field === 'sourceUrl'
+            ? '--source-url'
+            : `--${error.field}`;
+    const message = cliFlag ? error.message.replaceAll(cliFlag, `\`${field}\``) : error.message;
+
+    return `- ${field}: ${message}`;
+  });
+
+  return `Invalid installation options:\n${items.join('\n')}`;
+}
+
 /** Resolve one canonical installation route and its query parameters through the shared installation schema. */
 export function resolveInstallationMarkdownPlan(
   path: string,
@@ -100,4 +136,106 @@ export function replaceInstallationMarkdownPlan(markdown: string, replacement: s
   return markdown.replace(PLAN_PATTERN, () => {
     return `<!-- installation-plan:start -->\n\n${replacement.trim()}\n\n<!-- installation-plan:end -->`;
   });
+}
+
+/** Keep the React or HTML source branches for one rendered installation selection. */
+export function selectInstallationFramework(markdown: string, framework: string): string {
+  let branch: string | null = null;
+  let fence: string | null = null;
+  let selected = '';
+
+  for (const line of markdown.match(/[^\r\n]*(?:\r\n|\n|$)/g)?.filter(Boolean) ?? []) {
+    if (fence) {
+      if (branch === null || branch === framework) selected += line;
+
+      const closing = line.match(CODE_FENCE_CLOSE)?.[1];
+
+      if (closing?.[0] === fence[0] && closing.length >= fence.length) fence = null;
+
+      continue;
+    }
+
+    const openingBranch = line.match(FRAMEWORK_BRANCH_OPEN)?.[1];
+
+    if (openingBranch) {
+      if (branch) throw new Error(`Nested installation framework branch: ${openingBranch}`);
+
+      branch = openingBranch;
+      continue;
+    }
+
+    const closingBranch = line.match(FRAMEWORK_BRANCH_CLOSE)?.[1];
+
+    if (closingBranch) {
+      if (branch !== closingBranch) throw new Error(`Unmatched installation framework branch: ${closingBranch}`);
+
+      branch = null;
+      continue;
+    }
+
+    const openingFence = line.match(CODE_FENCE_OPEN)?.[1];
+
+    if (openingFence) fence = openingFence;
+
+    if (branch === null || branch === framework) selected += line;
+  }
+
+  if (branch) throw new Error(`Unclosed installation framework branch: ${branch}`);
+
+  return outsideCodeFences(selected, (text) => {
+    if (text.includes('installation:framework')) {
+      throw new Error('Installation framework markers remained after selection.');
+    }
+
+    return text.replace(/\n{3,}/g, '\n\n');
+  });
+}
+
+export interface RenderedInstallationMarkdown {
+  body: string;
+  privateResponse: boolean;
+  status: 200 | 400 | 500;
+}
+
+export interface RenderInstallationMarkdownOptions {
+  /** Keep both marked source-framework branches in the build artifact used as the edge renderer's template. */
+  preserveFrameworkBranches?: boolean;
+}
+
+/** Resolve, validate, and render one installation Markdown page for its route and query parameters. */
+export function renderInstallationMarkdownSelection(
+  markdown: string,
+  path: string,
+  params: URLSearchParams,
+  packageVersion: string,
+  options: RenderInstallationMarkdownOptions = {}
+): RenderedInstallationMarkdown | null {
+  const result = resolveInstallationMarkdownPlan(path, params, packageVersion);
+  if (!result) return null;
+
+  if (!result.ok) {
+    return {
+      body: `${renderInstallationQueryErrors(result.errors, params)}\n`,
+      privateResponse: true,
+      status: 400,
+    };
+  }
+
+  const replaced = replaceInstallationMarkdownPlan(markdown, renderInstallationPlanSections(result.plan));
+
+  if (!replaced) {
+    return {
+      body: 'The installation guide is missing its generated installation section.\n',
+      privateResponse: true,
+      status: 500,
+    };
+  }
+
+  return {
+    body: options.preserveFrameworkBranches
+      ? replaced
+      : selectInstallationFramework(replaced, result.plan.selection.sourceFramework),
+    privateResponse: params.has('source-url'),
+    status: 200,
+  };
 }

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { replaceInstallationMarkdownPlan, resolveInstallationMarkdownPlan } from '../markdown';
+import {
+  renderInstallationMarkdownSelection,
+  replaceInstallationMarkdownPlan,
+  resolveInstallationMarkdownPlan,
+  selectInstallationFramework,
+} from '../markdown';
 
 describe('resolveInstallationMarkdownPlan', () => {
   it.each([
@@ -93,5 +98,169 @@ describe('replaceInstallationMarkdownPlan', () => {
     expect(replaceInstallationMarkdownPlan(markdown, replacement)).toBe(
       `# Guide\n\n<!-- installation-plan:start -->\n\n${replacement}\n\n<!-- installation-plan:end -->\n\nAfter`
     );
+  });
+});
+
+describe('selectInstallationFramework', () => {
+  const markdown = `Before
+
+<!-- installation:framework react -->
+React only
+<!-- /installation:framework react -->
+
+<!-- installation:framework html -->
+HTML only
+<!-- /installation:framework html -->
+
+\`\`\`md
+<!-- installation:framework react -->
+Code example
+<!-- /installation:framework react -->
+\`\`\`
+
+After`;
+
+  it('keeps the selected source branch without changing fenced examples', () => {
+    const selected = selectInstallationFramework(markdown, 'html');
+
+    expect(selected).toContain('HTML only');
+    expect(selected).not.toContain('\nReact only\n');
+    expect(selected).toContain('<!-- installation:framework react -->\nCode example');
+  });
+
+  it('selects a branch that contains fenced code', () => {
+    const withCode = `Before
+
+<!-- installation:framework react -->
+React only
+
+\`\`\`tsx
+<Video />
+\`\`\`
+<!-- /installation:framework react -->
+
+<!-- installation:framework html -->
+HTML only
+
+\`\`\`html
+<video-js></video-js>
+\`\`\`
+<!-- /installation:framework html -->
+
+After`;
+    const selected = selectInstallationFramework(withCode, 'html');
+
+    expect(selected).toContain('<video-js></video-js>');
+    expect(selected).not.toContain('<Video />');
+    expect(selected).not.toContain('installation:framework');
+  });
+
+  it('fails when framework markers are unbalanced', () => {
+    expect(() => selectInstallationFramework('<!-- installation:framework react -->\nReact only', 'react')).toThrow(
+      'Unclosed installation framework branch: react'
+    );
+  });
+});
+
+describe('renderInstallationMarkdownSelection', () => {
+  const markdown = `# Shadcn
+
+<!-- installation-plan:start -->
+Old plan
+<!-- installation-plan:end -->
+
+<!-- installation:framework react -->
+React next step
+<!-- /installation:framework react -->
+
+<!-- installation:framework html -->
+HTML next step
+<!-- /installation:framework html -->`;
+
+  it('renders the selected plan and matching source-framework content', () => {
+    const rendered = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/shadcn',
+      new URLSearchParams({ framework: 'vue' }),
+      '10.0.0-test'
+    );
+
+    expect(rendered).toMatchObject({ status: 200, privateResponse: false });
+    expect(rendered?.body).toContain('- `framework`: `vue`');
+    expect(rendered?.body).toContain('HTML next step');
+    expect(rendered?.body).not.toContain('React next step');
+  });
+
+  it('can preserve both source branches in the static edge template', () => {
+    const rendered = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/shadcn',
+      new URLSearchParams(),
+      '10.0.0-test',
+      { preserveFrameworkBranches: true }
+    );
+
+    expect(rendered?.body).toContain('- `framework`: `react`');
+    expect(rendered?.body).toContain('React next step');
+    expect(rendered?.body).toContain('HTML next step');
+  });
+
+  it('uses the shared error and missing-section responses', () => {
+    const invalid = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/shadcn',
+      new URLSearchParams({ media: '\n\n# Injected' }),
+      '10.0.0-test'
+    );
+    const missing = renderInstallationMarkdownSelection(
+      '# Shadcn',
+      '/docs/guides/installation/shadcn',
+      new URLSearchParams(),
+      '10.0.0-test'
+    );
+
+    expect(invalid).toMatchObject({ status: 400, privateResponse: true });
+    expect(invalid?.body).not.toContain('Injected');
+    expect(missing).toEqual({
+      body: 'The installation guide is missing its generated installation section.\n',
+      privateResponse: true,
+      status: 500,
+    });
+  });
+
+  it('reports web query names in validation errors', () => {
+    const packageManager = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/react',
+      new URLSearchParams({ 'install-method': 'deno' }),
+      '10.0.0-test'
+    );
+    const sourceUrl = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/react',
+      new URLSearchParams({ 'source-url': 'line one\nline two' }),
+      '10.0.0-test'
+    );
+    const skin = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/shadcn',
+      new URLSearchParams({ skin: 'none' }),
+      '10.0.0-test'
+    );
+    const cdnInstallMethod = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/cdn',
+      new URLSearchParams({ 'install-method': 'pnpm' }),
+      '10.0.0-test'
+    );
+
+    expect(packageManager?.body).toContain('- install-method: Expected one of: npm, pnpm, yarn, bun');
+    expect(packageManager?.body).not.toContain('packageManager');
+    expect(sourceUrl?.body).toContain('- source-url: Must not contain control characters or line breaks.');
+    expect(sourceUrl?.body).not.toContain('sourceUrl');
+    expect(skin?.body).toContain('the `none` skin is not available');
+    expect(skin?.body).not.toContain('--skin');
+    expect(cdnInstallMethod?.body).toContain('`install-method` does not apply to CDN installation');
+    expect(cdnInstallMethod?.body).not.toContain('package-manager');
   });
 });

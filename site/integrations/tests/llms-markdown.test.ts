@@ -234,6 +234,19 @@ describe('convertPage', () => {
     expect(markdown).toBe('<!-- installation-plan:start -->\n\nSteps\n\n<!-- installation-plan:end -->');
   });
 
+  it('marks source-framework branches for request-time and package selection', () => {
+    const markdown = convert(
+      '<div data-shadcn-framework="react"><p>React only</p></div><div data-shadcn-framework="html"><p>HTML only</p></div>'
+    );
+
+    expect(markdown).toContain(
+      '<!-- installation:framework react -->\nReact only\n<!-- /installation:framework react -->'
+    );
+    expect(markdown).toContain(
+      '<!-- installation:framework html -->\nHTML only\n<!-- /installation:framework html -->'
+    );
+  });
+
   it('restores the separators between code chips', () => {
     const markdown = convert(
       '<p>Supports <span class="code-list__item"><code>autoplay</code></span><span class="code-list__item"><code>muted</code></span></p>'
@@ -546,26 +559,37 @@ describe('generateDocsCorpus', () => {
     expect(full).toContain(`<!-- Source: ${SITE_URL}${pathname} -->`);
   });
 
-  it("keeps only the framework's branches of a shared page and drops the CLI markers", () => {
-    const slug = firstSidebarSlug(sidebar);
+  it("renders the framework's installation plan and keeps only its source branches", () => {
     const markdown = [
-      '# Page',
-      '<!-- cli:replace installation -->',
-      'Steps',
-      '<!-- cli:framework react -->',
+      '# Shadcn Installation Guide',
+      '<!-- installation-plan:start -->',
+      'Default steps',
+      '<!-- installation-plan:end -->',
+      '<!-- installation:framework react -->',
       'React only',
-      '<!-- /cli:framework react -->',
-      '<!-- cli:framework html -->',
+      '<!-- /installation:framework react -->',
+      '<!-- installation:framework html -->',
       'HTML only',
-      '<!-- /cli:framework html -->',
-      '<!-- /cli:replace installation -->',
+      '<!-- /installation:framework html -->',
       'After',
     ].join('\n\n');
-    const { content } = generateDocsCorpus('html', [htmlPage(slug, markdown)], SITE_URL);
+    const { content } = generateDocsCorpus(
+      'html',
+      [
+        {
+          pathname: '/docs/guides/installation/shadcn',
+          title: 'Shadcn Installation Guide',
+          frameworks: ['react', 'html'],
+          markdown,
+        },
+      ],
+      SITE_URL
+    );
 
-    expect(content).toContain('# Page\n\nSteps\n\nHTML only\n\nAfter\n');
+    expect(content).toContain('- `framework`: `html`');
+    expect(content).toContain('HTML only');
     expect(content).not.toContain('React only');
-    expect(content).not.toContain('cli:');
+    expect(content).not.toContain('installation:framework');
   });
 
   it('adds the section label to titles two pages share', () => {

@@ -1,5 +1,11 @@
 import type { SupportedFramework } from '@/types/docs';
-import type { RegistryFramework } from '@/utils/installation/shadcn';
+import {
+  registryStylings,
+  registryTemplates,
+  type RegistryFramework,
+  type RegistryStyling,
+  type RegistryTemplate,
+} from '@/utils/installation/shadcn';
 
 export type InstallationPickerFramework = SupportedFramework | 'vue' | 'svelte';
 
@@ -8,6 +14,13 @@ export const SHADCN_INSTALLATION_PATH = '/docs/guides/installation/shadcn';
 export interface InstallationFrameworkNavigation {
   history: 'push' | 'replace';
   target: string;
+}
+
+export interface ShadcnUrlSelection {
+  projectFramework: InstallationPickerFramework;
+  sourceFramework: RegistryFramework;
+  styling: RegistryStyling | null;
+  template: RegistryTemplate | null;
 }
 
 export function isRegistryFramework(framework: string | null): framework is RegistryFramework {
@@ -19,7 +32,7 @@ export function isInstallationPickerFramework(framework: string | null): framewo
 }
 
 export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
-  return url.pathname.replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
+  return url.pathname.replace(/\.md$/, '').replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
 }
 
 /** Resolve the source framework for the query-controlled Shadcn guide. */
@@ -34,11 +47,18 @@ export function resolveShadcnProjectFramework(
   return isInstallationPickerFramework(requested) ? requested : fallback;
 }
 
-/** Resolve React or HTML registry source for a Shadcn project framework. */
-export function resolveShadcnFramework(url: URL, fallback: RegistryFramework): RegistryFramework | null {
-  const project = resolveShadcnProjectFramework(url, fallback);
+/** Resolve the URL-backed Shadcn choices, dropping options the selected source framework cannot use. */
+export function resolveShadcnUrlSelection(url: URL, fallback: InstallationPickerFramework): ShadcnUrlSelection | null {
+  const projectFramework = resolveShadcnProjectFramework(url, fallback);
+  if (!projectFramework) return null;
 
-  return project === null ? null : project === 'react' ? 'react' : 'html';
+  const sourceFramework = projectFramework === 'react' ? 'react' : 'html';
+  const requestedTemplate = url.searchParams.get('template');
+  const requestedStyling = url.searchParams.get('styling');
+  const template = registryTemplates(sourceFramework).find((candidate) => candidate === requestedTemplate) ?? null;
+  const styling = registryStylings(sourceFramework).find((candidate) => candidate === requestedStyling) ?? null;
+
+  return { projectFramework, sourceFramework, styling, template };
 }
 
 /** Build a JS-framework switch, falling back to Packaged when the current method does not support the selection. */

@@ -41,6 +41,17 @@ function isInstallMethod(value: string): value is InstallMethod {
   return INSTALL_METHODS.some((method) => method === value);
 }
 
+function containsControlCharacter(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0);
+
+    return (
+      codePoint !== undefined &&
+      (codePoint <= 0x1f || codePoint === 0x7f || codePoint === 0x85 || codePoint === 0x2028 || codePoint === 0x2029)
+    );
+  });
+}
+
 /** Mirror of the CLI's skin mapping: the flag names a tier, the preset decides whether that is the video or audio skin. */
 export function skinFromFlag(flag: string, useCase: UseCase): Skin | undefined {
   if (!isSkinFlag(flag)) return undefined;
@@ -78,6 +89,25 @@ export function coerceToPreset(
   };
 }
 
+/** Fit URL-backed picks to constraints imposed by a dedicated installation route. */
+export function normalizeInstallationSelectionForRoute(
+  route: string,
+  selection: InstallationSelection
+): InstallationSelection {
+  let normalized =
+    route === 'cdn' || selection.installMethod === 'cdn' ? { ...selection, installMethod: 'npm' as const } : selection;
+
+  if (route !== 'shadcn') return normalized;
+
+  const useCase = normalized.useCase === 'background-video' ? 'default-video' : normalized.useCase;
+  const selectedSkin = normalized.skin === 'none' ? skinFromFlag('default', useCase)! : normalized.skin;
+  const fitted = coerceToPreset(useCase, selectedSkin, normalized.renderer);
+
+  normalized = { ...normalized, useCase, ...fitted };
+
+  return normalized;
+}
+
 /**
  * Read the selection encoded in a query string. Unknown or invalid values fall back to the default, and a media pick
  * that the chosen preset cannot play is dropped, matching what the pickers would do on screen.
@@ -104,7 +134,9 @@ export function parseInstallationSearch(search: string): InstallationSelection {
 
   if (isInstallMethod(installMethod)) selection.installMethod = installMethod;
 
-  selection.sourceUrl = params.get('source-url') ?? '';
+  const sourceUrl = params.get('source-url') ?? '';
+
+  selection.sourceUrl = containsControlCharacter(sourceUrl) ? '' : sourceUrl;
 
   return selection;
 }
@@ -122,6 +154,9 @@ export function serializeInstallationSearch(selection: InstallationSelection, se
     if (value === fallback) params.delete(key);
     else params.set(key, value);
   };
+
+  // The interactive pages use `install-method`; `package-manager` is accepted only by the Markdown renderer.
+  params.delete('package-manager');
 
   write('preset', preset.flag, INSTALLATION_PRESETS[DEFAULT_SELECTION.useCase].flag);
   write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));

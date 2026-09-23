@@ -17,7 +17,14 @@ import SkinPreview from '@/components/installation/SkinPreview';
 import { useSelection } from '@/components/installation/useSelection';
 import { Select, type SelectOption } from '@/components/Select';
 import { skin as installationSkin, useCase as installationUseCase } from '@/stores/installation';
-import { registrySkin, registryStyling, registryTemplate, registryTheme } from '@/stores/registry';
+import {
+  registrySkin,
+  registryStyling,
+  registryTemplate,
+  registryTheme,
+  selectRegistryStyling,
+  selectRegistryTemplate,
+} from '@/stores/registry';
 import {
   DEFAULT_REGISTRY_PRESET,
   type RegistryFramework,
@@ -93,7 +100,7 @@ function RegistryTemplateSelect({ framework, hydrated }: Pick<Props, 'framework'
       <p className="text-p4 font-medium">Project template</p>
       <Select
         value={template}
-        onChange={(value) => value && registryTemplate.set(value)}
+        onChange={(value) => value && selectRegistryTemplate(value)}
         options={templateOptions(framework)}
         aria-label="Select project template"
         className="justify-self-start"
@@ -111,7 +118,7 @@ function RegistryStylingSelect({ framework, hydrated }: Pick<Props, 'framework'>
       <p className="text-p4 font-medium">Styling</p>
       <Select
         value={styling}
-        onChange={(value) => value && registryStyling.set(value)}
+        onChange={(value) => value && selectRegistryStyling(value)}
         options={registryStylings(framework).map((value) => ({
           value,
           label: REGISTRY_STYLING_LABELS[value],

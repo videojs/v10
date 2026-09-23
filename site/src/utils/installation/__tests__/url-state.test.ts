@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { coerceToPreset, DEFAULT_SELECTION, parseInstallationSearch, serializeInstallationSearch } from '../url-state';
+import {
+  coerceToPreset,
+  DEFAULT_SELECTION,
+  normalizeInstallationSelectionForRoute,
+  parseInstallationSearch,
+  serializeInstallationSearch,
+} from '../url-state';
 
 describe('parseInstallationSearch', () => {
   it('returns the defaults for an empty query', () => {
@@ -36,6 +42,11 @@ describe('parseInstallationSearch', () => {
     expect(parseInstallationSearch('?source-url=https%3A%2F%2Fexample.com%2Fa.m3u8').sourceUrl).toBe(
       'https://example.com/a.m3u8'
     );
+  });
+
+  it('drops source URLs containing control characters', () => {
+    expect(parseInstallationSearch('?source-url=line%0Abreak').sourceUrl).toBe('');
+    expect(parseInstallationSearch('?source-url=line%E2%80%A8break').sourceUrl).toBe('');
   });
 });
 
@@ -73,6 +84,10 @@ describe('serializeInstallationSearch', () => {
       '?utm_source=x&install-method=bun'
     );
   });
+
+  it('drops the Markdown-only package-manager alias', () => {
+    expect(serializeInstallationSearch(DEFAULT_SELECTION, '?package-manager=pnpm&utm_source=x')).toBe('?utm_source=x');
+  });
 });
 
 describe('coerceToPreset', () => {
@@ -82,5 +97,23 @@ describe('coerceToPreset', () => {
       renderer: 'html5-audio',
     });
     expect(coerceToPreset('live-video', 'none', 'mux-video')).toEqual({ skin: 'none', renderer: 'mux-video' });
+  });
+});
+
+describe('normalizeInstallationSelectionForRoute', () => {
+  it('fits unsupported Shadcn choices to the player shown by the page', () => {
+    const background = parseInstallationSearch('?preset=background-video&skin=minimal&media=background-video');
+    const noSkin = parseInstallationSearch('?preset=audio&skin=none&media=spotify');
+
+    expect(normalizeInstallationSelectionForRoute('shadcn', background)).toMatchObject({
+      useCase: 'default-video',
+      skin: 'minimal-video',
+      renderer: 'html5-video',
+    });
+    expect(normalizeInstallationSelectionForRoute('shadcn', noSkin)).toMatchObject({
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'spotify',
+    });
   });
 });

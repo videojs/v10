@@ -507,7 +507,7 @@ export function generateSvelteUsageCode(
 </script>
 
 <h1>Welcome to My App</h1>
-<VideoPlayer src="${escapeHTMLAttribute(source)}" />`;
+<VideoPlayer src={${JSON.stringify(source)}} />`;
 
   return {
     '+page.svelte': component('$lib/VideoPlayer.svelte'),
@@ -578,8 +578,8 @@ export function generateReactCreateCode(
   const group = getInstallationPreset(useCase).group;
 
   const rendererProps = isVideoLikeRenderer(renderer)
-    ? `src=${JSON.stringify(source)} playsInline`
-    : `src=${JSON.stringify(source)}`;
+    ? `src={${JSON.stringify(source)}} playsInline`
+    : `src={${JSON.stringify(source)}}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
 
   let presetImport: string;
@@ -657,8 +657,8 @@ export function generateSourceReactCreateCode(
   // same local component (`VideoSkin`, `AudioSkin`, and so on).
   const skinComponent = `${preset.componentPrefix}Skin`;
   const rendererProps = isVideoLikeRenderer(renderer)
-    ? `src=${JSON.stringify(source)} playsInline`
-    : `src=${JSON.stringify(source)}`;
+    ? `src={${JSON.stringify(source)}} playsInline`
+    : `src={${JSON.stringify(source)}}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
   const presetImports = [playerComponent];
   let mediaImport: string | null = null;

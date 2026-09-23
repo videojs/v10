@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { runAgentsInit } from '../node';
+import { installationCommand } from '../plan';
 
 describe('runAgentsInit', () => {
+  it('can target the locally installed package without forcing an npm tag', () => {
+    expect(installationCommand('react', undefined, null)).toBe('npx @videojs/react agents init');
+  });
+
   it('returns discovery without modifying a project', () => {
     const result = runAgentsInit('react', '10.0.0', ['agents', 'init']);
 
@@ -86,5 +91,13 @@ describe('runAgentsInit', () => {
 
     expect(result.exitCode).toBe(2);
     expect(value.kind).toBe('error');
+  });
+
+  it('attributes CLI syntax errors to arguments rather than an installation option', () => {
+    const command = JSON.parse(runAgentsInit('react', '10.0.0', ['install', '--json']).stdout);
+    const flag = JSON.parse(runAgentsInit('react', '10.0.0', ['agents', 'init', '--wat', '--json']).stdout);
+
+    expect(command.errors[0].field).toBe('arguments');
+    expect(flag.errors[0].field).toBe('arguments');
   });
 });

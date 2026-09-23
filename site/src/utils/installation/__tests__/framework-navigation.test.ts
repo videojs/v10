@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
   isShadcnInstallationUrl,
   resolveInstallationFrameworkNavigation,
-  resolveShadcnFramework,
+  resolveShadcnUrlSelection,
 } from '../framework-navigation';
 
 describe('resolveInstallationFrameworkNavigation', () => {
@@ -56,24 +56,41 @@ describe('resolveInstallationFrameworkNavigation', () => {
   });
 });
 
-describe('resolveShadcnFramework', () => {
+describe('resolveShadcnUrlSelection', () => {
   it('uses a valid query before the saved fallback', () => {
     const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html');
 
-    expect(resolveShadcnFramework(url, 'react')).toBe('html');
+    expect(resolveShadcnUrlSelection(url, 'react')).toMatchObject({
+      projectFramework: 'html',
+      sourceFramework: 'html',
+    });
   });
 
   it('uses the saved fallback for a missing query and derives HTML source for Vue', () => {
-    expect(resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')).toBe('html');
     expect(
-      resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
-    ).toBe('html');
+      resolveShadcnUrlSelection(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')
+    ).toMatchObject({ projectFramework: 'html', sourceFramework: 'html' });
+    expect(
+      resolveShadcnUrlSelection(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
+    ).toMatchObject({ projectFramework: 'vue', sourceFramework: 'html' });
   });
 
   it('does not resolve non-Shadcn routes', () => {
     const url = new URL('https://videojs.org/docs/guides/installation/react?framework=html');
 
     expect(isShadcnInstallationUrl(url)).toBe(false);
-    expect(resolveShadcnFramework(url, 'react')).toBeNull();
+    expect(resolveShadcnUrlSelection(url, 'react')).toBeNull();
+  });
+
+  it('keeps only template and styling values compatible with the selected source', () => {
+    const html = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=next&styling=tailwind'
+    );
+    const react = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=vite&styling=css'
+    );
+
+    expect(resolveShadcnUrlSelection(html, 'react')).toMatchObject({ template: null, styling: null });
+    expect(resolveShadcnUrlSelection(react, 'html')).toMatchObject({ template: 'vite', styling: 'css' });
   });
 });
