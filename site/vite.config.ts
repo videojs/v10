@@ -41,15 +41,8 @@ const config: ViteUserConfig = {
           { pattern: 'package.json', base: 'workspace' },
           { pattern: 'pnpm-lock.yaml', base: 'workspace' },
           { pattern: 'tsconfig.base.json', base: 'workspace' },
-          {
-            pattern:
-              'packages/{cdn,core,dash.js,hls.js,html,media,mux-data,react,shaka,spf,utils,vimeo,wistia}/package.json',
-            base: 'workspace',
-          },
-          {
-            pattern: 'packages/{cdn,core,dash.js,hls.js,html,media,mux-data,react,shaka,spf,utils,vimeo,wistia}/src/**',
-            base: 'workspace',
-          },
+          { pattern: 'packages/**/package.json', base: 'workspace' },
+          { pattern: 'packages/**/src/**', base: 'workspace' },
           { pattern: '!packages/**/*.tsbuildinfo', base: 'workspace' },
           { pattern: '!packages/cdn/src/locales', base: 'workspace' },
           { pattern: '!packages/cdn/src/locales/**', base: 'workspace' },
