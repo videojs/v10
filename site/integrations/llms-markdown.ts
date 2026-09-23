@@ -1032,6 +1032,8 @@ export function generateRootIndex({
 
   content += `> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n\n`;
 
+  content += `> The \`video.js\` package on npm is still Video.js 8. Video.js 10 ships as \`@videojs/react\` and \`@videojs/html\`.\n\n`;
+
   content += `> Print version-matched installation options without changing files: \`npx @videojs/cli agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
 
   content += `## Documentation\n\n`;
@@ -1102,6 +1104,8 @@ export function generateDocsIndex(
   content += `The whole set in one file${size}: ${siteUrl}/docs/framework/${framework}/llms-full.txt\n\n`;
 
   content += `> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.\n\n`;
+
+  content += `> The \`video.js\` package on npm is still Video.js 8. Video.js 10 ships as \`@videojs/${framework}\`; to move existing Video.js 8 code, read ${siteUrl}/docs/framework/${framework}/guides/migrate-from-video-js-8.md\n\n`;
 
   content += `> Print version-matched installation options without changing files: \`npx @videojs/cli agents init\`, then pass \`--framework ${framework}\` with the other choices. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
 

@@ -417,6 +417,9 @@ describe('generateRootIndex', () => {
       '> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n'
     );
     expect(index).toContain(
+      '> The `video.js` package on npm is still Video.js 8. Video.js 10 ships as `@videojs/react` and `@videojs/html`.\n'
+    );
+    expect(index).toContain(
       '- [HTML documentation](https://videojs.org/docs/framework/html/llms.txt): Every HTML guide and reference page, each with a one-line description.\n' +
         '- [React documentation](https://videojs.org/docs/framework/react/llms.txt): Every React guide'
     );
@@ -453,6 +456,9 @@ describe('generateDocsIndex', () => {
     );
     expect(index).toContain(
       '> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.'
+    );
+    expect(index).toContain(
+      '> The `video.js` package on npm is still Video.js 8. Video.js 10 ships as `@videojs/html`; to move existing Video.js 8 code, read https://videojs.org/docs/framework/html/guides/migrate-from-video-js-8.md\n'
     );
     expect(index).toContain(
       '## Guides\n\n' +
