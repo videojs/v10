@@ -216,11 +216,10 @@ async function runPage(browser: import('playwright-core-1-31').Browser, engine: 
         'menu',
         '[aria-haspopup="menu"]',
         'click',
-        '[role="menu"][data-open], [popover][data-open] [role="menu"]'
+        '[role="menu"][data-open], [popover][data-open] [role="menu"]',
+        resolve(outputDir, `${engine.type}-${name}-menu.png`)
       ))
     );
-
-    await page.screenshot({ path: resolve(outputDir, `${engine.type}-${name}-menu.png`) });
   } catch (error) {
     failures.push(error instanceof Error ? error.message.split('\n')[0]! : String(error));
   } finally {
@@ -362,7 +361,9 @@ async function checkPopup(
   label: string,
   trigger: string,
   action: 'hover' | 'click',
-  popup: string
+  popup: string,
+  /** Where to save a screenshot of the page with the popup open. */
+  screenshot?: string
 ): Promise<string[]> {
   const target = page.locator(trigger).first();
 
@@ -381,6 +382,8 @@ async function checkPopup(
   if (!probe.reachable) failures.push(`the open ${label} is clipped or covered`);
 
   if (probe.gap > 48) failures.push(`the open ${label} is ${Math.round(probe.gap)}px from its trigger`);
+
+  if (screenshot) await page.screenshot({ path: screenshot });
 
   await page.keyboard.press('Escape');
   await page.mouse.move(0, 0);
