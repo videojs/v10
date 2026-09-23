@@ -10,13 +10,16 @@ import { findGuideBySlug } from '@/utils/docs/sidebar';
 // reader's preferred framework, so pages outside the docs can link to a guide
 // without pinning one. Clients with JavaScript never get here: the links are
 // upgraded in place by ResolveDocsLinks before anyone clicks them.
-const slug = Astro.params.slug ?? '';
+const path = Astro.params.slug ?? '';
+// A Markdown twin request resolves the same way and keeps its `.md` suffix.
+const isMarkdown = path.endsWith('.md');
+const slug = isMarkdown ? path.slice(0, -'.md'.length) : path;
 
 if (findGuideBySlug(slug)) {
   const { framework } = getPreferencesServer(Astro.cookies);
   const url = resolveDocsHref({ slug, framework: framework ?? DEFAULT_FRAMEWORK });
 
-  return Astro.redirect(url, 307);
+  return Astro.redirect(isMarkdown ? `${url}.md` : url, 307);
 }
 
 // Every other path under /docs lands here too and must produce the styled 404 page.
