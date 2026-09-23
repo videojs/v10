@@ -611,64 +611,6 @@ It survives a `src` change, so swapping the source keeps the frame you asked for
 <DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink> and <DocsLink slug="reference/components/hls-audio">`<hls-audio>`</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
 </FrameworkCase>
 
-## Migrate from `config`
-
-Media elements used to take a `config` object: one untyped bag holding engine options, source overrides, and component settings at once. It's gone, and each of its keys now has a specific home:
-
-<FrameworkCase frameworks={["react"]}>
-| Before | After |
-|---|---|
-| `config.preferPlayback` | `source.preferPlayback` |
-| `config.contentType` | `source.type` |
-| `config.hlsJs` | `source.engine.hlsJs` |
-| `config.dashJs` | `source.engine.dashJs` |
-| `config.muxData` | the <DocsLink slug="guides/mux-data">Mux Data</DocsLink> extension's own props |
-| `config.googleCast` | the <DocsLink slug="reference/components/google-cast">GoogleCast</DocsLink> extension's own props |
-| `config` on VimeoVideo | `source.engine.vimeo` |
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-| Before | After |
-|---|---|
-| `config.preferPlayback` | `source.preferPlayback` |
-| `config.contentType` | `source.type` |
-| `config.hlsJs` | `source.engine.hlsJs` |
-| `config.dashJs` | `source.engine.dashJs` |
-| `config.muxData` | the <DocsLink slug="guides/mux-data">Mux Data</DocsLink> extension's own attributes and properties |
-| `config.googleCast` | the <DocsLink slug="reference/components/google-cast">`<google-cast>`</DocsLink> extension's own attributes and properties |
-| `config` on `<vimeo-video>` | `source.engine.vimeo` |
-</FrameworkCase>
-
-The engine keys keep their names, so their contents move across unchanged — what moves is the object they sit in.
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-// Before
-<HlsJsVideo src={src} config={{ preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } }} />
-
-// After
-<HlsJsVideo source={{ src, preferPlayback: 'native', engine: { hlsJs: { maxBufferLength: 60 } } }} />
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-// Before
-video.config = { preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } };
-
-// After
-video.source = { src, preferPlayback: 'native', engine: { hlsJs: { maxBufferLength: 60 } } };
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["react"]}>
-`HlsVideo` and `HlsAudio` accepted a `config` that nothing read. Remove it — those components never applied it.
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-`<hls-video>` and `<hls-audio>` accepted a `config` that nothing read. Remove it — those elements never applied it.
-</FrameworkCase>
-
 ## See also
 
 <FrameworkCase frameworks={["react"]}>

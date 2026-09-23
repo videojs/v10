@@ -19,7 +19,7 @@ Did you use Mux Player without controls as a hero, ambient loop, or decorative v
 
 A few minutes of auditing tells you which sections of this guide apply to you:
 
-- **List the Mux Player attributes and props you set.** Each one appears in a mapping table below; the list is your migration checklist.
+- **List the Mux Player attributes or React props you set.** Compare them with the mapping tables below to make your migration checklist.
 - **Grep your codebase for `mux-player` selectors.** CSS rules and `querySelector` calls that reach into the element — `mux-player::part(…)`, `mux-player [role="slider"]`, `player.shadowRoot` — will silently stop matching after the swap. Plan to restyle with the skin's custom properties or rebuild against Video.js components.
 - **Find your event listeners and imperative calls** (`play()`, `currentTime`, `addChapters`). Media APIs move to the media element; the rest is mapped under [Drive playback](#drive-playback).
 - **Note your theme and CSS variables.** Two skins replace Mux Player's five themes, and `--accent-color` and friends have new names.
@@ -29,7 +29,13 @@ A few minutes of auditing tells you which sections of this guide apply to you:
 
 Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
 
-**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
+<FrameworkCase frameworks={["html"]}>
+**The player** is the outer custom element. It holds state, hands that state to everything inside it, and draws no UI itself. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+**The player** is the outer React component. It holds state, hands that state to everything inside it, and renders no DOM of its own. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
+</FrameworkCase>
 
 **The media** is the thing that plays the video. The Mux media is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for another <DocsLink slug="guides/media-sources">media component</DocsLink> and the rest of your player keeps working.
 
@@ -57,7 +63,7 @@ So a Mux Player embed becomes a player wrapped around a skin wrapped around a me
 ```
 </FrameworkCase>
 
-Everything else in this guide is about which of those three a given Mux Player attribute now belongs to.
+Everything else in this guide is about which of those three a Mux Player setting now belongs to.
 
 ## Your first player
 
@@ -190,7 +196,7 @@ Mux Player monitors playback by default. Video.js sends no Mux Data beacons unle
 A few things worth calling out:
 
 - **The skin has no size of its own**, so the examples give it one with an inline `aspect-ratio`. Any styling that sizes the skin works the same way, whether that's a class of yours or a Tailwind utility like `aspect-video`. See [Move your layout styles](#move-your-layout-styles).
-- **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
+- **The Mux media supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring the Mux media. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="guides/mux-data">Mux Data</DocsLink>.
 - **Chromecast is opt-in.** Follow <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink> when you want it; leave the extension out when you don't.
@@ -250,7 +256,15 @@ Put standard media handlers such as `onPlay`, `onTimeUpdate`, `onEnded`, and `on
 
 ## Mux settings live in a source object
 
-Mux Player has an attribute for every Mux stream parameter: `max-resolution`, `asset-start-time`, `custom-domain`, and a dozen more. Video.js collects them into a single **source** object that describes what to play and how.
+<FrameworkCase frameworks={["html"]}>
+Mux Player exposes Mux stream parameters as attributes such as `max-resolution`, `asset-start-time`, and `custom-domain`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Mux Player exposes Mux stream parameters as props such as `maxResolution`, `assetStartTime`, and `customDomain`.
+</FrameworkCase>
+
+Video.js collects them into a single **source** object that describes what to play and how.
 
 ```js
 {
@@ -294,7 +308,8 @@ You can also skip the object and pass `src` a full Mux URL. The component parses
 There's no `playbackId` prop of its own; it lives on `source`.
 </FrameworkCase>
 
-Here's where each Mux Player attribute lands:
+<FrameworkCase frameworks={["html"]}>
+Here's where the Mux Player attributes land:
 
 | Mux Player | Video.js v10 |
 |---|---|
@@ -310,10 +325,30 @@ Here's where each Mux Player attribute lands:
 | `drm-token` | `source.drm.token` |
 | `thumbnail-time` | `source.poster.time` |
 | poster size, crop, rotation, format | `source.poster.width`, `.height`, `.fitMode`, `.rotate`, `.ext` |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Here's where the Mux Player React props land. Mux Player groups signing tokens in `tokens`; Video.js puts each one beside the URL it signs:
+
+| Mux Player React | Video.js v10 |
+|---|---|
+| `playbackId` | `source.playbackId` |
+| `customDomain` | `source.customDomain` |
+| `maxResolution`, `minResolution` | `source.playback.maxResolution`, `.minResolution` |
+| `renditionOrder` | `source.playback.renditionOrder` |
+| `assetStartTime`, `assetEndTime` | `source.playback.assetStartTime`, `.assetEndTime` |
+| `programStartTime`, `programEndTime` | `source.playback.programStartTime`, `.programEndTime` |
+| the `default_subtitles_lang` playback parameter | `source.playback.defaultSubtitlesLang` |
+| `tokens.playback` | `source.playback.token` |
+| `tokens.thumbnail`, `tokens.storyboard` | `source.poster.token`, `source.storyboard.token` |
+| `tokens.drm` | `source.drm.token` |
+| `thumbnailTime` | `source.poster.time` |
+| poster URL size, crop, rotation, format | `source.poster.width`, `.height`, `.fitMode`, `.rotate`, `.ext` |
+</FrameworkCase>
 
 Signed playback behaves the way it does in Mux Player: a token replaces every other parameter in its group, so caps and clipping have to be baked into the token itself.
 
-## Analytics moves to its own element
+## Analytics moves to its own extension
 
 <FrameworkCase frameworks={["react"]}>
 Mux Player's analytics settings become props on the <DocsLink slug="reference/components/mux-data">Mux Data extension</DocsLink>, placed inside the player.
@@ -375,7 +410,7 @@ The packaged video and live-video skins show the resolved title at the top of th
 The packaged video and live-video skins show the resolved title at the top of the player and fade it with the controls, so the embeds above already display it. The <DocsLink slug="reference/components/title" anchor="styling">`<media-title>`</DocsLink> element sets `data-visible` while the controls are visible, so your skin overrides can move it differently. The audio skins have no title display.
 </FrameworkCase>
 
-A skin layout you added to your project, or a custom layout, shows the title only where you place the component. Keep it inside the sized container from [Move your layout styles](#move-your-layout-styles) so it overlays the media:
+A skin layout you added to your project, or a custom layout, shows the title only where you place it. Keep it inside the sized container from [Move your layout styles](#move-your-layout-styles) so it overlays the media:
 
 <FrameworkCase frameworks={["html"]}>
 ```js
@@ -609,7 +644,13 @@ SPF is Video.js's own playback engine, and it's the reason v10 can be as small a
 - **TS-packaged media.** Some Mux assets are packaged as TS rather than CMAF. If any of your catalog is, stay on the default.
 - **DRM.** SPF doesn't license protected content.
 
-Both flavors register the same element and take the same source, so moving between them is an import change and nothing else. Don't import both into one build; only one registration wins.
+<FrameworkCase frameworks={["html"]}>
+All three imports register the same `<mux-video>` tag and accept the same source, so changing the engine is an import change. Load only one registration for that tag on a page.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+All three imports provide a `MuxVideo` component with the same source API, so changing the engine is an import change. React components do not register a custom element, and different imports can coexist if separate players need different engines.
+</FrameworkCase>
 
 The default doesn't promise which engine it uses, which is what leaves it free to change. Import `/hls-js` if your app depends on hls.js being the one. Otherwise take the default: it plays everything.
 
@@ -780,7 +821,7 @@ The time slider marks the segment containing the current playback time with `dat
 }
 ```
 
-Signed playback needs its own poster token even when MuxVideo would otherwise derive the poster from the playback ID. Put Mux's thumbnail token at `source.poster.token`. If it is missing or has the wrong audience, MuxVideo cannot build a poster URL.
+Signed playback needs its own poster token even when the Mux media would otherwise derive the poster from the playback ID. Put Mux's thumbnail token at `source.poster.token`. If it is missing or has the wrong audience, the media cannot build a poster URL.
 
 Neither player refreshes tokens. Mux Player at least notices an expired one and shows a friendly message; Video.js doesn't surface that yet ([#1432](https://github.com/videojs/v10/issues/1432)).
 

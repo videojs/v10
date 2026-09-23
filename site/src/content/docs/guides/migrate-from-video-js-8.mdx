@@ -241,11 +241,11 @@ The poster belongs to player state rather than the media, which lets the skin co
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">Title</DocsLink> component as a child of the skin, or place it in the skin layout you added to your project or in a custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference.
+The packaged video and live-video skins already include the <DocsLink slug="reference/components/title">Title</DocsLink> component, so setting `title` on the player displays it. Audio skins do not include a title. Add `Title` where you want it in a custom layout or skin source you added to your project. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">`<media-title>`</DocsLink> element as a child of the skin, or place it in the skin layout you added to your project or in a custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink> reference.
+The packaged video and live-video skins already include the <DocsLink slug="reference/components/title">`<media-title>`</DocsLink> element, so setting `content-title` on the player displays it. Audio skins do not include a title. Add `<media-title>` where you want it in a custom layout or skin source you added to your project. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink> reference.
 </FrameworkCase>
 
 ### Your CSS
