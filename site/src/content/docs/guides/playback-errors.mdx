@@ -1,11 +1,13 @@
 ---
 title: 'Handle playback errors'
-description: 'Surface terminal playback errors and give users a useful next step.'
+description: 'Display playback failures, report them, and choose a useful recovery action.'
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 import CustomUiNote from '@/components/docs/CustomUiNote.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Display playback failures instead of leaving a dead player, report the failure when you need diagnostics, and give users a useful next step.
 
 <CustomUiNote />
 
@@ -79,7 +81,7 @@ The dialog renders its text into the child parts — a title, the error descript
 
 The <DocsLink slug="reference/api/feature-error">error feature</DocsLink> mirrors the media element's error into player state:
 
-- `error` holds the media's `MediaError` — `code`, `message` — or `null` when there is none.
+- `error` holds the media's error — `code`, `message` — or `null` when there is none.
 - `dismissError()` clears the error from player state (the media element keeps its own error until a new load).
 - Loading a new source resets `error` to `null` automatically.
 
@@ -87,8 +89,8 @@ The dialog owns presentation, not recovery. Decide the next step in your applica
 
 ## Availability and constraints
 
-- A media error is terminal for the current load: playback won't resume without loading a source again.
-- `MediaError.code` distinguishes broad classes — aborted, network, decode, and source-not-supported — not root causes. Check the network panel for the real story (404, CORS, codec).
+- For a terminal failure, load a new or refreshed source to recover. An aborted load or an adapter-specific error may have different behavior.
+- Standard media error codes distinguish broad classes — aborted, network, decode, and source-not-supported — rather than root causes. A media adapter can report its own numeric code too.
 - Streaming engines handle recoverable segment and network failures before surfacing a terminal error. Do not layer a generic same-source retry loop on top of the engine.
 - Once the player attaches to the media element, errors land in state even before any UI renders (bad URL at mount); make sure your error surface renders regardless of playback state.
 
@@ -106,13 +108,78 @@ Use the error code and your product context to choose the action. A live event c
 
 ### Report errors to monitoring
 
-Subscribe to error state and forward it to your error tracker with the source URL and `error.code`; media errors are invisible in JavaScript error monitoring unless you send them.
+Subscribe to error state and forward new errors to your monitoring service with the source URL and `error.code`. A media error does not automatically appear in JavaScript exception monitoring.
+
+<FrameworkCase frameworks={["react"]}>
+
+Place a reporter inside `VideoPlayer`, alongside the skin or your custom controls:
+
+```tsx
+import { useEffect } from 'react';
+import { selectError } from '@videojs/react';
+import { usePlayer } from '@videojs/react/video';
+
+function PlaybackErrorReporter({
+  onError,
+}: {
+  onError: (error: { code: number; message: string }) => void;
+}) {
+  const error = usePlayer(selectError)?.error;
+
+  useEffect(() => {
+    if (error) onError(error);
+  }, [error, onError]);
+
+  return null;
+}
+```
+
+Pass a stable `onError` function that sends the error and current source URL to your monitoring service. The effect runs when the error value changes, not on every player state update.
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Subscribe after the player element has registered. Compare the current error with the previous one because the store also notifies for unrelated state changes:
+
+```ts
+import '@videojs/html/video/player';
+import { selectError } from '@videojs/html';
+
+const player = document.querySelector('video-player');
+if (!player) throw new Error('Missing video-player');
+
+let previousError: { code: number; message: string } | null = null;
+
+function reportNewError() {
+  const error = selectError(player.store.state)?.error ?? null;
+  if (error === previousError) return;
+
+  previousError = error;
+  if (error) console.error('Playback failed', error.code, error.message);
+}
+
+const unsubscribe = player.store.subscribe(reportNewError);
+reportNewError();
+// Call unsubscribe() when this player is removed.
+```
+
+Replace the `console.error` call with your monitoring service and include the current source URL.
+
+</FrameworkCase>
+
+### Diagnose a reported failure
+
+Start with `error.code` and the affected source URL. Check the browser's network panel for failed media requests, response status, redirects, CORS headers, and expired credentials. If requests succeed, check the file's container and codecs against the chosen media component. For HLS or DASH, inspect the streaming engine's diagnostics for segment and manifest failures; the player error often names only the final outcome.
 
 ## Troubleshooting
 
 ### The player is black and silent with no error
 
-Not every dead player is a media error — autoplay blocking and an unset source produce no error. Check `error`, `source`, and `paused` in player state to tell them apart.
+Not every dead player is a media error — autoplay blocking and an unset source produce no error. Check `error`, `source`, and `paused` in player state to tell them apart. If `play()` rejects with `NotAllowedError`, see <DocsLink slug="guides/autoplay">Autoplay</DocsLink>.
+
+### A `VJS8_LEGACY_*` exception appears
+
+These codes identify Video.js 8 APIs used with the Video.js 10 `video.js` package. Look up the code in the <DocsLink slug="reference/api/legacy-errors">legacy error reference</DocsLink> for its trigger and v10 equivalent. The player `error` state covered in this guide receives media playback errors after setup.
 
 ### Error code says the source isn't supported
 
