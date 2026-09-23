@@ -24,11 +24,14 @@ export const ReturnValueSchema = z.object({
 export const UtilTypeParameterSchema = z.object({
   name: z.string(),
   constraint: z.string().optional(),
+  default: z.string().optional(),
   const: z.boolean().optional(),
 });
 
 export const UtilOverloadSchema = z.object({
   label: z.string().optional(),
+  /** A class constructor signature, called with `new`. */
+  construct: z.boolean().optional(),
   description: z.string().optional(),
   typeParameters: z.array(UtilTypeParameterSchema).optional(),
   returnType: z.string().optional(),

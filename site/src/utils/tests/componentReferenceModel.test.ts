@@ -83,7 +83,7 @@ describe('createComponentReferenceModel', () => {
     });
   });
 
-  it('builds a multi-part model with framework-specific labels and H4 section ids', () => {
+  it('builds a multi-part model with framework-specific labels, descriptions, and H4 section ids', () => {
     const apiReference = {
       name: 'Controls',
       props: {},
@@ -110,12 +110,14 @@ describe('createComponentReferenceModel', () => {
           platforms: {
             html: {
               tagName: 'media-controls',
+              description: 'Root element',
             },
             react: {},
           },
         },
         group: {
           name: 'Group',
+          description: 'Group part',
           props: {},
           state: {},
           dataAttributes: {},
@@ -139,6 +141,7 @@ describe('createComponentReferenceModel', () => {
       parts: [
         {
           id: 'root',
+          descriptionByFramework: { react: 'Root part', html: 'Root element' },
           labelByFramework: {
             react: 'Root',
             html: 'media-controls',
@@ -164,6 +167,7 @@ describe('createComponentReferenceModel', () => {
         },
         {
           id: 'group',
+          descriptionByFramework: { react: 'Group part', html: 'Group part' },
           labelByFramework: {
             react: 'Group',
             html: 'Group',

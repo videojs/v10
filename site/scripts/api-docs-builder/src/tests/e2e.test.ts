@@ -334,7 +334,11 @@ describe('Component pipeline (end-to-end)', () => {
       expect(track.cssCustomProperties).toEqual({});
 
       // Has both HTML and React platforms
-      expect(track.platforms.html).toEqual({ tagName: 'media-gauge-track' });
+      // The HTML element's own JSDoc replaces the React wording on HTML pages.
+      expect(track.platforms.html).toEqual({
+        tagName: 'media-gauge-track',
+        description: 'The track area of the gauge, as the `<media-gauge-track>` element.',
+      });
       expect(track.platforms.react).toEqual({});
     });
 
@@ -933,6 +937,9 @@ describe('Util pipeline (end-to-end)', () => {
         type: 'function',
         detailedType: '(() => void)',
       });
+      expect(overload.returnValue.fields!.untrack).toMatchObject({
+        detailedType: '((delay?: number, ...reasons: string[]) => void)',
+      });
     });
 
     it('types defaulted and rest parameters from their own annotations', () => {
@@ -948,12 +955,83 @@ describe('Util pipeline (end-to-end)', () => {
       expect(parameters.tags!.rest).toBe(true);
     });
 
+    it('prints what a module-private alias names and keeps type parameter defaults', () => {
+      const [overload] = findByName('useEntries', 'react')!.data.overloads;
+
+      expect(overload!.typeParameters).toEqual([{ name: 'T', constraint: 'string', default: 'string' }]);
+      expect(overload!.parameters._entries?.type ?? overload!.parameters.entries?.type).toBe(
+        '({ kind: T } | undefined)[]'
+      );
+      expect(overload!.returnType).toBe('{ kind: T }[]');
+    });
+
+    it('groups a conditional member of a union', () => {
+      const [overload] = findByName('useKindOf', 'react')!.data.overloads;
+
+      expect(overload!.returnType).toBe("(S extends string ? 'text' : 'other') | undefined");
+    });
+
+    it('keeps the type parameters of a generic function type', () => {
+      expect(findByName('useIdentity', 'react')!.data.overloads[0]!.returnType).toBe('(<T>(value: T) => T)');
+    });
+
+    it('records a parameter default value', () => {
+      expect(findByName('useStep', 'react')!.data.overloads[0]!.parameters.step).toMatchObject({ default: '5' });
+    });
+
+    it('shows optional return fields as possibly undefined', () => {
+      const { fields } = findByName('useShortcut', 'react')!.data.overloads[0]!.returnValue;
+
+      expect(fields!.aria).toMatchObject({ type: 'string | undefined' });
+      expect(fields!.keys).toMatchObject({ type: 'string' });
+    });
+
+    it('applies @displayType inside a type literal', () => {
+      const { returnValue } = findByName('useBagHooks', 'react')!.data.overloads[0]!;
+
+      expect(returnValue.detailedType ?? returnValue.type).toContain("Bag['state']");
+      expect(returnValue.detailedType ?? returnValue.type).not.toContain('StateOf');
+    });
+
+    it("resolves a looked-up member in its own declaration's scope", () => {
+      const { fields } = findByName('useEngineInput', 'react')!.data.overloads[0]!.returnValue;
+
+      expect(fields!.input).toMatchObject({ type: 'Handle<string>' });
+      expect(fields!.count).toMatchObject({ type: 'Handle' });
+    });
+
+    it('documents a function-typed member export as a function', () => {
+      const [overload] = findByName('ToolkitProvider', 'react')!.data.overloads;
+
+      expect(overload!.parameters.props).toMatchObject({ required: true });
+      expect(overload!.parameters.props!.detailedType ?? overload!.parameters.props!.type).toContain('locale?: string');
+      expect(overload!.returnValue.type).toBe('unknown');
+    });
+
+    it('marks controller overloads as constructors and omits host callbacks', () => {
+      const snapshot = findByName('SnapshotController', 'html')!.data;
+
+      expect(snapshot.overloads[0]).toMatchObject({
+        construct: true,
+        typeParameters: [{ name: 'S' }, { name: 'R', default: 'S' }],
+      });
+      expect(snapshot.overloads[0]!.returnValue.fields).not.toHaveProperty('hostConnected');
+      expect(snapshot.overloads[0]!.returnValue.fields).not.toHaveProperty('hostDisconnected');
+    });
+
     it('controller param descriptions have "- " prefix stripped', () => {
       const snapshot = findByName('SnapshotController', 'html');
       const hostParam = snapshot!.data.overloads[0]!.parameters.host;
 
       expect(hostParam!.description).toBe('The host element.');
       expect(hostParam!.description).not.toMatch(/^-\s/);
+    });
+
+    it('controller constructor overloads keep their @label', () => {
+      const [withSelector, withoutSelector] = findByName('SnapshotController', 'html')!.data.overloads;
+
+      expect(withSelector!.label).toBe('With Selector');
+      expect(withoutSelector!.label).toBeUndefined();
     });
 
     it('contexts (@public non-function) have empty parameters and type as returnValue', () => {

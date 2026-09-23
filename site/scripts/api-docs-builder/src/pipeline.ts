@@ -123,8 +123,13 @@ export function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSS
   return cssCustomProperties;
 }
 
-function buildHtmlPlatform(htmlData: HtmlExtraction): NonNullable<PartReference['platforms']['html']> {
+function buildHtmlPlatform(
+  htmlData: HtmlExtraction,
+  description?: string
+): NonNullable<PartReference['platforms']['html']> {
   const platform: NonNullable<PartReference['platforms']['html']> = { tagName: htmlData.tagName };
+
+  if (description) platform.description = description;
 
   if (htmlData.events.length > 0) platform.events = htmlData.events;
 
@@ -552,6 +557,7 @@ function buildMultiPartReference(
 
       const elementName = `${source.name}Element`;
       const htmlData = part.htmlPath ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
+      const htmlDescription = part.htmlPath ? extractPartDescription(part.htmlPath, program, elementName) : undefined;
 
       const partRef: PartReference = {
         name: part.name,
@@ -566,7 +572,7 @@ function buildMultiPartReference(
       if (!partRef.description) delete partRef.description;
 
       if (htmlData) {
-        partRef.platforms.html = buildHtmlPlatform(htmlData);
+        partRef.platforms.html = buildHtmlPlatform(htmlData, htmlDescription);
       }
 
       partsRecord[part.kebab] = partRef;
@@ -575,6 +581,10 @@ function buildMultiPartReference(
         part.htmlPath && part.htmlElementName
           ? extractHtml(part.htmlPath, program, source.name, part.htmlElementName)
           : null;
+      const htmlDescription =
+        part.htmlPath && part.htmlElementName
+          ? extractPartDescription(part.htmlPath, program, part.htmlElementName)
+          : undefined;
 
       const dataAttrsData =
         part.dataAttrsPath && part.dataAttrsComponentName
@@ -602,7 +612,7 @@ function buildMultiPartReference(
       if (!partRef.description) delete partRef.description;
 
       if (htmlData) {
-        partRef.platforms.html = buildHtmlPlatform(htmlData);
+        partRef.platforms.html = buildHtmlPlatform(htmlData, htmlDescription);
       }
 
       partsRecord[part.kebab] = partRef;

@@ -11,6 +11,7 @@ import type {
   ImportDeclaration,
   Node,
   ObjectExpression,
+  ParamPattern,
   Program,
   PropertyKey,
   TSSignature,
@@ -322,7 +323,8 @@ export class OxcProject {
 
     const iface = declaration.declaration;
     const parameters = iface.typeParameters?.params ?? [];
-    const substitutions = new Map<string, ResolvedType>(type.substitutions);
+    // Only the interface's own type parameters are in scope inside it; the caller's names mean nothing there.
+    const substitutions = new Map<string, ResolvedType>();
     const referenceArgs = reference.type === 'TSTypeReference' ? (reference.typeArguments?.params ?? []) : [];
 
     parameters.forEach((parameter, index) => {
@@ -359,6 +361,15 @@ export class OxcProject {
       }))
     );
     return members;
+  }
+
+  /** Whether a file exports its local declaration `name`, under any name. */
+  isExported(file: SourceFile, name: string): boolean {
+    for (const entry of this.#index(file).namedExports.values()) {
+      if (entry.local === name && !entry.source) return true;
+    }
+
+    return false;
   }
 
   resolveTypeDeclaration(filePath: string, name: import('oxc-parser').TSTypeName): ResolvedDeclaration | undefined {
@@ -617,24 +628,32 @@ export function unwrapObjectExpression(expression: Expression | null | undefined
   return unwrapped.type === 'ObjectExpression' ? unwrapped : undefined;
 }
 
+/** The binding a parameter declares, looking through a rest element or a constructor parameter property. */
+export function parameterPattern(parameter: ParamPattern): BindingPattern {
+  if (parameter.type === 'RestElement') return parameter.argument;
+
+  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
+
+  return parameter;
+}
+
 /**
  * The type a parameter declares, wherever the parser hangs it. A default value (`name = value`) wraps the pattern in an
  * `AssignmentPattern` whose `left` carries the annotation, and a rest parameter (`...name: T[]`) keeps it on the rest
  * element rather than on its argument.
  */
-export function parameterTypeAnnotation(
-  parameter: import('oxc-parser').ParamPattern,
-  pattern: BindingPattern
-): TSType | undefined {
+export function parameterTypeAnnotation(parameter: ParamPattern): TSType | undefined {
   if (parameter.type === 'RestElement' && parameter.typeAnnotation) return parameter.typeAnnotation.typeAnnotation;
 
+  const pattern = parameterPattern(parameter);
   const target = pattern.type === 'AssignmentPattern' ? pattern.left : pattern;
 
   return target.typeAnnotation?.typeAnnotation ?? undefined;
 }
 
 /** A parameter is optional when marked `?`, given a default value, or declared as a rest parameter. */
-export function isOptionalParameter(parameter: import('oxc-parser').ParamPattern, pattern: BindingPattern): boolean {
+export function isOptionalParameter(parameter: ParamPattern): boolean {
+  const pattern = parameterPattern(parameter);
   if (parameter.type === 'RestElement' || pattern.type === 'AssignmentPattern') return true;
 
   return 'optional' in pattern && !!pattern.optional;

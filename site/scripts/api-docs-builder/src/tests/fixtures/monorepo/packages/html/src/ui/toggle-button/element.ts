@@ -1,8 +1,6 @@
-/**
- * HTML element fixture for single-part component.
- *
- * Exercises: static tagName extraction for platforms.html.
- */
+// HTML element fixture for single-part component.
+//
+// Exercises: static tagName extraction for platforms.html.
 
 export class ToggleButtonElement extends EventTarget {
   static readonly tagName = 'media-toggle-button';

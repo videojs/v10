@@ -1,8 +1,6 @@
-/**
- * HTML element fixture for the shared-source multi-part component.
- *
- * Exercises: the `Root` part falls back to the component's `element.ts` when no React part constructs the core.
- */
+// HTML element fixture for the shared-source multi-part component.
+//
+// Exercises: the `Root` part falls back to the component's `element.ts` when no React part constructs the core.
 
 export class OptionGroupElement extends EventTarget {
   static readonly tagName = 'media-option-group';

@@ -80,9 +80,9 @@ const singleEventsSection = !apiReferenceModel.hasParts
             {/* A wrapper element inside the heading would split its text out of the Markdown export. */}
             <H3 id={part.id}>{part.labelByFramework[framework]}</H3>
 
-            {part.description && (
+            {part.descriptionByFramework[framework] && (
               <P>
-                <InlineMarkdown content={part.description} />
+                <InlineMarkdown content={part.descriptionByFramework[framework]} />
               </P>
             )}
 

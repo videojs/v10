@@ -1,6 +1,4 @@
-/**
- * HTML element fixture for multi-part sub-part.
- */
+// HTML element fixture for multi-part sub-part.
 
 class GaugePartElement {
   static readonly properties = {

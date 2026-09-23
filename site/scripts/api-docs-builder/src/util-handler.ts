@@ -9,7 +9,9 @@ import type {
   Function as OxcFunction,
   MethodDefinition,
   ParamPattern,
+  TSFunctionType,
   TSType,
+  TSTypeParameterDeclaration,
 } from 'oxc-parser';
 
 import type {
@@ -26,6 +28,7 @@ import {
   getJSDoc,
   isOptionalParameter,
   OxcProject,
+  parameterPattern,
   parameterTypeAnnotation,
   sourceText,
   staticName,
@@ -195,15 +198,60 @@ function extractOverloads(
     ];
   }
 
+  const memberFunction = memberFunctionType(project, file, declaration);
+
+  if (memberFunction) {
+    return [buildFunctionOverload(project, memberFunction.file, memberFunction.type, getJSDoc(file, declaration))];
+  }
+
   return [{ parameters: {}, returnValue: inferContextReturn(project, file, declaration) }];
+}
+
+/**
+ * The function type behind an export such as `export const I18nProvider = defaultI18n.I18nProvider`, where
+ * `defaultI18n` holds the result of a factory call whose declared return type lists the member.
+ */
+function memberFunctionType(
+  project: OxcProject,
+  file: SourceFile,
+  declaration: NamedDeclaration
+): { file: SourceFile; type: TSFunctionType } | undefined {
+  if (declaration.type !== 'VariableDeclarator' || !declaration.init) return undefined;
+
+  const initializer = unwrapExpression(declaration.init);
+  if (initializer.type !== 'MemberExpression' || initializer.computed) return undefined;
+
+  const { object, property } = initializer;
+  if (object.type !== 'Identifier' || property.type !== 'Identifier') return undefined;
+
+  const owner = project.resolveName(file.filePath, object.name);
+  if (owner?.declaration.type !== 'VariableDeclarator' || !owner.declaration.init) return undefined;
+
+  const call = unwrapExpression(owner.declaration.init);
+  if (call.type !== 'CallExpression' || call.callee.type !== 'Identifier') return undefined;
+
+  const factory = project.resolveName(owner.file.filePath, call.callee.name);
+  const fn =
+    factory &&
+    (isFunctionDeclaration(factory.declaration) ? factory.declaration : variableFunction(factory.declaration));
+  const returnType = fn?.returnType?.typeAnnotation;
+  if (!factory || !returnType) return undefined;
+
+  const resolved = project
+    .interfaceMembers({ file: factory.file, type: returnType })
+    .find(({ member }) => member.type === 'TSPropertySignature' && staticName(member.key) === property.name);
+  const annotation =
+    resolved?.member.type === 'TSPropertySignature' ? resolved.member.typeAnnotation?.typeAnnotation : undefined;
+
+  return resolved && annotation?.type === 'TSFunctionType' ? { file: resolved.file, type: annotation } : undefined;
 }
 
 function buildFunctionOverload(
   project: OxcProject,
   file: SourceFile,
-  fn: OxcFunction | ArrowFunctionExpression
+  fn: OxcFunction | ArrowFunctionExpression | TSFunctionType,
+  documentation = getJSDoc(file, fn)
 ): UtilOverload {
-  const documentation = getJSDoc(file, fn);
   const parameters: Record<string, ParamDef> = {};
 
   for (const parameter of fn.params) {
@@ -214,19 +262,8 @@ function buildFunctionOverload(
 
   const returnType = fn.returnType?.typeAnnotation;
   const overload: UtilOverload = {
-    typeParameters:
-      fn.typeParameters?.params.map((parameter) => {
-        const typeParameter: UtilTypeParameter = { name: parameter.name.name };
-
-        if (parameter.constraint) {
-          typeParameter.constraint = formatType({ file, type: parameter.constraint }, false);
-        }
-
-        if (parameter.const) typeParameter.const = true;
-
-        return typeParameter;
-      }) ?? [],
-    returnType: returnType ? formatType({ file, type: returnType }, false) : 'unknown',
+    typeParameters: buildTypeParameters(project, file, fn.typeParameters),
+    returnType: returnType ? formatType({ file, type: returnType }, false, project) : 'unknown',
     parameters,
     returnValue: returnType ? buildReturnValue(project, { file, type: returnType }) : { type: 'unknown' },
   };
@@ -239,6 +276,27 @@ function buildFunctionOverload(
   return overload;
 }
 
+function buildTypeParameters(
+  project: OxcProject,
+  file: SourceFile,
+  declaration: TSTypeParameterDeclaration | null | undefined
+): UtilTypeParameter[] {
+  return (
+    declaration?.params.map((parameter) => {
+      const typeParameter: UtilTypeParameter = { name: parameter.name.name };
+
+      if (parameter.constraint)
+        typeParameter.constraint = formatType({ file, type: parameter.constraint }, false, project);
+
+      if (parameter.default) typeParameter.default = formatType({ file, type: parameter.default }, false, project);
+
+      if (parameter.const) typeParameter.const = true;
+
+      return typeParameter;
+    }) ?? []
+  );
+}
+
 function buildParameter(
   project: OxcProject,
   file: SourceFile,
@@ -246,18 +304,18 @@ function buildParameter(
   descriptions?: ReadonlyMap<string, string>
 ): { name: string; value: ParamDef } | undefined {
   const pattern = parameterPattern(parameter);
-  if (!pattern) return undefined;
-
   const name = bindingName(pattern);
   if (!name) return undefined;
 
-  const annotation = parameterTypeAnnotation(parameter, pattern);
-  const optional = isOptionalParameter(parameter, pattern);
+  const annotation = parameterTypeAnnotation(parameter);
+  const optional = isOptionalParameter(parameter);
   const type = annotation ? formatDetailedType(project, { file, type: annotation }, optional) : 'unknown';
   const abbreviated = abbreviateType(name, type);
   const value: ParamDef = { type: abbreviated ?? type };
 
   if (abbreviated && abbreviated !== type) value.detailedType = type;
+
+  if (pattern.type === 'AssignmentPattern') value.default = sourceText(file, pattern.right).replace(/\s+/g, ' ').trim();
 
   if (parameter.type === 'RestElement') value.rest = true;
 
@@ -317,15 +375,16 @@ function buildTypeFields(project: OxcProject, type: ResolvedType): NonNullable<R
 
     if (!memberType) continue;
 
-    const formatted = formatDetailedType(
+    const detailed = formatDetailedType(
       project,
       {
         file: resolved.file,
         type: memberType,
         ...(resolved.substitutions ? { substitutions: resolved.substitutions } : {}),
       },
-      'optional' in member && member.optional
+      false
     );
+    const formatted = 'optional' in member && member.optional ? withUndefined(detailed) : detailed;
     const abbreviated = abbreviateType(name, formatted);
     const field: NonNullable<ReturnValue['fields']>[string] = { type: abbreviated ?? formatted };
 
@@ -348,8 +407,9 @@ function extractController(project: OxcProject, file: SourceFile, declaration: C
   const signatures = constructors.filter((member) => !member.value.body);
   const selected = signatures.length > 0 ? signatures : constructors.slice(0, 1);
   const returnValue = buildControllerReturn(project, file, declaration);
+  const typeParameters = buildTypeParameters(project, file, declaration.typeParameters);
 
-  if (selected.length === 0) return [{ parameters: {}, returnValue }];
+  if (selected.length === 0) return [{ construct: true, typeParameters, parameters: {}, returnValue }];
 
   return selected.map((constructor) => {
     const documentation = getJSDoc(file, constructor);
@@ -361,8 +421,22 @@ function extractController(project: OxcProject, file: SourceFile, declaration: C
       if (definition) parameters[definition.name] = definition.value;
     }
 
-    return { parameters, returnValue };
+    const overload: UtilOverload = { construct: true, typeParameters, parameters, returnValue };
+    const label = documentation?.tags.get('label')?.at(-1);
+
+    if (label) overload.label = label;
+
+    if (documentation?.description) overload.description = documentation.description;
+
+    return overload;
   });
+}
+
+const REACTIVE_CONTROLLER_CALLBACKS = new Set(['hostConnected', 'hostDisconnected', 'hostUpdate', 'hostUpdated']);
+
+/** An optional field may be absent, which a reader of the value sees as `undefined`. */
+function withUndefined(type: string): string {
+  return /(?:^|\| )undefined$/.test(type) ? type : `${type} | undefined`;
 }
 
 function buildControllerReturn(project: OxcProject, file: SourceFile, declaration: Class): ReturnValue {
@@ -382,17 +456,25 @@ function buildControllerReturn(project: OxcProject, file: SourceFile, declaratio
     const name = staticName(member.key);
     if (!name || name === 'constructor' || member.key.type === 'PrivateIdentifier') continue;
 
+    // The host calls these; they are not part of the controller's API.
+    if (REACTIVE_CONTROLLER_CALLBACKS.has(name)) continue;
+
     let type = 'unknown';
 
     if (member.type === 'PropertyDefinition' && member.typeAnnotation) {
-      type = formatDetailedType(project, { file, type: member.typeAnnotation.typeAnnotation }, !!member.optional);
+      const detailed = formatDetailedType(project, { file, type: member.typeAnnotation.typeAnnotation }, false);
+
+      type = member.optional ? withUndefined(detailed) : detailed;
     } else if (member.type === 'MethodDefinition') {
+      const typeParameters = member.value.typeParameters
+        ? sourceText(file, member.value.typeParameters).replace(/\s+/g, ' ').trim()
+        : '';
       const params = member.value.params.map((parameter) => parameterText(project, file, parameter)).join(', ');
       const returns = member.value.returnType
         ? formatDetailedType(project, { file, type: member.value.returnType.typeAnnotation }, false)
         : 'void';
 
-      type = member.kind === 'get' ? returns : `((${params}) => ${returns})`;
+      type = member.kind === 'get' ? returns : `(${typeParameters}(${params}) => ${returns})`;
     }
 
     const abbreviated = abbreviateType(name, type);
@@ -413,13 +495,13 @@ function buildControllerReturn(project: OxcProject, file: SourceFile, declaratio
 }
 
 function parameterText(project: OxcProject, file: SourceFile, parameter: ParamPattern): string {
-  const pattern = parameterPattern(parameter);
-  if (!pattern) return '...: unknown';
+  const name = bindingName(parameterPattern(parameter)) ?? '...';
+  const annotation = parameterTypeAnnotation(parameter);
+  // A rest parameter is optional by nature but reads `...name`, not `...name?`.
+  const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter);
+  const type = annotation ? formatDetailedType(project, { file, type: annotation }, optional) : 'unknown';
 
-  const name = bindingName(pattern) ?? '...';
-  const annotation = parameterTypeAnnotation(parameter, pattern);
-
-  return `${parameter.type === 'RestElement' ? '...' : ''}${name}: ${annotation ? formatDetailedType(project, { file, type: annotation }, false) : 'unknown'}`;
+  return `${parameter.type === 'RestElement' ? '...' : ''}${name}${optional ? '?' : ''}: ${type}`;
 }
 
 function inferContextReturn(project: OxcProject, file: SourceFile, declaration: NamedDeclaration): ReturnValue {
@@ -464,14 +546,6 @@ function variableCall(declaration: NamedDeclaration): CallExpression | undefined
 
 function isFunctionDeclaration(declaration: NamedDeclaration): declaration is OxcFunction {
   return declaration.type === 'FunctionDeclaration' || declaration.type === 'TSDeclareFunction';
-}
-
-function parameterPattern(parameter: ParamPattern): BindingPattern | undefined {
-  if (parameter.type === 'RestElement') return parameter.argument;
-
-  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
-
-  return parameter;
 }
 
 function bindingName(pattern: BindingPattern): string | undefined {

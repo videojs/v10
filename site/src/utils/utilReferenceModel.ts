@@ -139,8 +139,9 @@ function formatSignature(name: string, overload: UtilOverload): string | undefin
     .map((parameter) => {
       const prefix = parameter.const ? 'const ' : '';
       const constraint = parameter.constraint ? ` extends ${parameter.constraint}` : '';
+      const fallback = parameter.default ? ` = ${parameter.default}` : '';
 
-      return `${prefix}${parameter.name}${constraint}`;
+      return `${prefix}${parameter.name}${constraint}${fallback}`;
     })
     .join(', ');
   const parameters = Object.entries(overload.parameters)
@@ -151,7 +152,12 @@ function formatSignature(name: string, overload: UtilOverload): string | undefin
     })
     .join(', ');
 
-  return `${name}${typeParameters ? `<${typeParameters}>` : ''}(${parameters}): ${overload.returnType ?? overload.returnValue.type}`;
+  const generics = typeParameters ? `<${typeParameters}>` : '';
+
+  // A constructor call yields the instance, so its type follows from the class name.
+  if (overload.construct) return `new ${name}${generics}(${parameters})`;
+
+  return `${name}${generics}(${parameters}): ${overload.returnType ?? overload.returnValue.type}`;
 }
 
 export function buildUtilReferenceTocHeadings(

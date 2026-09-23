@@ -22,6 +22,7 @@ import {
   type NamedDeclaration,
   type OxcProject,
   OxcProject as Project,
+  parameterPattern,
   type ResolvedMember,
   type ResolvedType,
   type SourceFile,
@@ -1241,15 +1242,7 @@ function functionFromDeclaration(
 function parameterName(parameter: ParamPattern): string | undefined {
   const pattern = parameterPattern(parameter);
 
-  return pattern?.type === 'Identifier' ? pattern.name : undefined;
-}
-
-function parameterPattern(parameter: ParamPattern): import('oxc-parser').BindingPattern | undefined {
-  if (parameter.type === 'RestElement') return parameter.argument;
-
-  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
-
-  return parameter;
+  return pattern.type === 'Identifier' ? pattern.name : undefined;
 }
 
 function staticStringClassProperty(declaration: Class, name: string): string | undefined {

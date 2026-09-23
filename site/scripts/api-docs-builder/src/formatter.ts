@@ -1,11 +1,12 @@
 import { uniq } from 'es-toolkit/array';
 import type { BindingPattern, ParamPattern, TSSignature, TSType } from 'oxc-parser';
 
-import type { OxcProject, ResolvedMember, ResolvedType, SourceFile } from './oxc-project.js';
+import type { OxcProject, ResolvedDeclaration, ResolvedMember, ResolvedType, SourceFile } from './oxc-project.js';
 import {
   getJSDoc,
   isOptionalParameter,
   literalValue,
+  parameterPattern,
   parameterTypeAnnotation,
   sourceText,
   staticName,
@@ -274,10 +275,8 @@ export function formatDetailedType(
           return formatTypeReference(project, type, node);
         }
 
-        const displayType = declaration
-          ? getJSDoc(declaration.file, declaration.declaration)?.tags.get('displayType')?.at(-1)
-          : undefined;
-        if (displayType) return formatDisplayType(displayType, resolved.substitutions);
+        const displayType = displayTypeHint(declaration);
+        if (displayType) return formatDisplayType(displayType, resolved.substitutions, rootContext(project));
 
         if (declaration?.declaration.type === 'TSInterfaceDeclaration') {
           if (!expandInterfaces) return formatTypeReference(project, type, node);
@@ -285,7 +284,7 @@ export function formatDetailedType(
           visited.add(key);
 
           const members = withoutOverriddenProperties(project.interfaceMembers(type));
-          if (members.length === 0) return formatType(type, removeUndefined);
+          if (members.length === 0) return formatType(type, removeUndefined, project);
 
           return `{ ${members
             .map((member) => formatDetailedSignature(project, member, visited))
@@ -308,13 +307,15 @@ export function formatDetailedType(
       )
     );
 
-    return formattedMemberTypes.join(' | ');
+    return joinMembers(formattedMemberTypes, ' | ');
   }
 
   if (node.type === 'TSIntersectionType') {
-    return orderMembers(node.types)
-      .map((member) => formatDetailedType(project, { ...type, type: member }, false, visited, expandInterfaces))
-      .join(' & ');
+    const formattedMemberTypes = orderMembers(node.types).map((member) =>
+      formatDetailedType(project, { ...type, type: member }, false, visited, expandInterfaces)
+    );
+
+    return joinMembers(formattedMemberTypes, ' & ');
   }
 
   if (node.type === 'TSIndexedAccessType') {
@@ -334,20 +335,118 @@ export function formatDetailedType(
     if (keys) return keys;
   }
 
-  return formatType(type, removeUndefined);
+  return formatType(type, removeUndefined, project);
 }
 
 const pathSeparator = process.platform === 'win32' ? '\\' : '/';
 
-function formatDisplayType(template: string, substitutions?: ReadonlyMap<string, ResolvedType>): string {
+/** The `@displayType` template on an alias, which stands in for a type the syntax-only formatter cannot print. */
+function displayTypeHint(declaration: ResolvedDeclaration | undefined): string | undefined {
+  return declaration ? getJSDoc(declaration.file, declaration.declaration)?.tags.get('displayType')?.at(-1) : undefined;
+}
+
+function formatDisplayType(
+  template: string,
+  substitutions: ReadonlyMap<string, ResolvedType> | undefined,
+  context: FormatContext
+): string {
   return template
     .replace(/\{([A-Za-z_$][\w$]*)\}/g, (placeholder, name: string) => {
       const substitution = substitutions?.get(name);
 
-      return substitution ? formatType(substitution, false) : placeholder;
+      return substitution ? formatTypeWith(substitution, false, context) : placeholder;
     })
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * A reference the syntax formatter should not print by name: one whose alias carries a `@displayType` hint, or a
+ * module-private alias that a reader cannot import.
+ */
+function formatResolvableReference(
+  type: ResolvedType,
+  reference: import('oxc-parser').TSTypeReference,
+  removeUndefined: boolean,
+  { project, resolving }: FormatContext
+): string | undefined {
+  const declaration = project.resolveTypeDeclaration(type.file.filePath, reference.typeName);
+  if (!declaration) return undefined;
+
+  const key = `${declaration.file.filePath}#${typeNameText(reference.typeName)}`;
+  const displayType = displayTypeHint(declaration);
+  if (resolving.has(key) || (!displayType && !isModulePrivateAlias(project, declaration))) return undefined;
+
+  const resolved = project.resolveType(type);
+  if (!resolved) return undefined;
+
+  const context = { project, resolving: new Set([...resolving, key]) };
+
+  return displayType
+    ? formatDisplayType(displayType, resolved.substitutions, context)
+    : formatTypeWith(resolved, removeUndefined, context);
+}
+
+function isModulePrivateAlias(project: OxcProject, { file, declaration }: ResolvedDeclaration): boolean {
+  return (
+    declaration.type === 'TSTypeAliasDeclaration' &&
+    !file.filePath.includes(`${pathSeparator}node_modules${pathSeparator}`) &&
+    !project.isExported(file, declaration.id.name)
+  );
+}
+
+/** `Api['input']` names one member of an interface; print that member's type instead of the lookup. */
+function indexedMemberType(
+  project: OxcProject,
+  type: ResolvedType,
+  access: import('oxc-parser').TSIndexedAccessType
+): ResolvedType | undefined {
+  const index = unwrapType(access.indexType);
+  const key = index.type === 'TSLiteralType' && 'value' in index.literal ? index.literal.value : undefined;
+  if (typeof key !== 'string') return undefined;
+
+  const resolved = project
+    .interfaceMembers({ ...type, type: access.objectType })
+    .find(({ member }) => member.type === 'TSPropertySignature' && staticName(member.key) === key);
+  const annotation = resolved?.member.type === 'TSPropertySignature' ? resolved.member.typeAnnotation : undefined;
+  if (!resolved || !annotation) return undefined;
+
+  return resolved.substitutions
+    ? { file: resolved.file, type: annotation.typeAnnotation, substitutions: resolved.substitutions }
+    : { file: resolved.file, type: annotation.typeAnnotation };
+}
+
+/**
+ * Join union or intersection members. A member that is itself a conditional (or, inside an intersection, a union) must
+ * be grouped, or `A extends B ? C : D | undefined` reads as a union inside the false branch.
+ */
+function joinMembers(members: readonly string[], separator: ' | ' | ' & '): string {
+  if (members.length < 2) return members.join(separator);
+
+  const grouped: readonly TopLevelOperator[] = separator === ' & ' ? ['?', '|'] : ['?'];
+
+  return members.map((member) => (hasTopLevelOperator(member, grouped) ? `(${member})` : member)).join(separator);
+}
+
+/**
+ * Whether a formatted type has one of `operators` outside every bracket. `?` counts only when a space follows, which is
+ * a conditional type's true branch rather than an optional member.
+ */
+type TopLevelOperator = '?' | '|' | '&';
+
+function hasTopLevelOperator(text: string, operators: readonly TopLevelOperator[]): boolean {
+  let depth = 0;
+
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index]!;
+
+    if ('([{<'.includes(char)) depth++;
+    else if (')]}'.includes(char) || (char === '>' && text[index - 1] !== '=')) depth--;
+    else if (depth === 0 && (char === '|' || char === '&') && operators.includes(char)) return true;
+    else if (depth === 0 && char === '?' && text[index + 1] === ' ' && operators.includes('?')) return true;
+  }
+
+  return false;
 }
 
 function formatTypeReference(
@@ -362,30 +461,14 @@ function formatTypeReference(
   const args = reference.typeArguments?.params ?? [];
 
   return args.length > 0
-    ? `${displayName}<${args.map((argument) => formatReferenceArgument(project, { ...type, type: argument })).join(', ')}>`
+    ? `${displayName}<${args.map((argument) => formatType({ ...type, type: argument }, false, project)).join(', ')}>`
     : displayName;
 }
 
-function formatReferenceArgument(project: OxcProject, type: ResolvedType): string {
-  const node = unwrapType(type.type);
-  if (node.type !== 'TSTypeReference') return formatType(type, false);
-
-  const name = typeNameText(node.typeName);
-  const substituted = node.typeName.type === 'Identifier' ? type.substitutions?.get(name) : undefined;
-  if (substituted) return formatReferenceArgument(project, substituted);
-
-  const declaration = project.resolveTypeDeclaration(type.file.filePath, node.typeName);
-  const displayType = declaration
-    ? getJSDoc(declaration.file, declaration.declaration)?.tags.get('displayType')?.at(-1)
-    : undefined;
-  const resolved = displayType ? project.resolveType(type) : undefined;
-
-  return displayType && resolved ? formatDisplayType(displayType, resolved.substitutions) : formatType(type, false);
-}
-
+/** An expanded interface member: its types expand in turn, but nested interfaces keep their names. */
 function formatDetailedSignature(project: OxcProject, resolved: ResolvedMember, visited: Set<string>): string {
   const { file, member, substitutions, deepPartial } = resolved;
-  const format = (memberType: TSType, removeUndefined: boolean) => {
+  const format: TypeFormatter = (memberType, removeUndefined) => {
     let type: ResolvedType = { file, type: memberType };
 
     if (substitutions) type = { ...type, substitutions };
@@ -395,35 +478,7 @@ function formatDetailedSignature(project: OxcProject, resolved: ResolvedMember, 
     return formatDetailedType(project, type, removeUndefined, new Set(visited), false);
   };
 
-  if (member.type === 'TSPropertySignature') {
-    const name = staticName(member.key);
-    if (!name || !member.typeAnnotation) return '';
-
-    const optional = member.optional || !!deepPartial;
-
-    return `${name}${optional ? '?' : ''}: ${format(member.typeAnnotation.typeAnnotation, optional)}`;
-  }
-
-  if (member.type === 'TSMethodSignature') {
-    const name = staticName(member.key);
-    if (!name) return '';
-
-    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions, format)).join(', ');
-    const returnType = member.returnType ? format(member.returnType.typeAnnotation, false) : 'void';
-
-    return `${name}${member.optional ? '?' : ''}(${params}): ${returnType}`;
-  }
-
-  if (member.type === 'TSCallSignatureDeclaration' || member.type === 'TSConstructSignatureDeclaration') {
-    const typeParameters = member.typeParameters ? normalizeTypeText(sourceText(file, member.typeParameters)) : '';
-    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions, format)).join(', ');
-    const returnType = member.returnType ? format(member.returnType.typeAnnotation, false) : 'void';
-    const prefix = member.type === 'TSConstructSignatureDeclaration' ? 'new ' : '';
-
-    return `${prefix}${typeParameters}(${params}): ${returnType}`;
-  }
-
-  return normalizeTypeText(sourceText(file, member)).replace(/;$/, '');
+  return formatSignature(file, member, substitutions, format, !!deepPartial);
 }
 
 function withoutOverriddenProperties(members: readonly ResolvedMember[]): ResolvedMember[] {
@@ -509,15 +564,40 @@ function formatDeepPartialType(
 }
 
 /** Format a type into a human-readable string. */
-export function formatType(type: ResolvedType, removeUndefined: boolean): string {
+/** Project access for the syntax formatter, used to honour `@displayType` and see through module-private aliases. */
+interface FormatContext {
+  readonly project: OxcProject;
+  /** Aliases being expanded, so a recursive alias prints its name instead of looping. */
+  readonly resolving: ReadonlySet<string>;
+}
+
+/**
+ * Format a type as written. With a project, references that carry a `@displayType` hint or name a module-private alias
+ * are resolved; everything else keeps its declared spelling.
+ */
+export function formatType(type: ResolvedType, removeUndefined: boolean, project?: OxcProject): string {
+  return formatTypeWith(type, removeUndefined, project ? rootContext(project) : undefined);
+}
+
+function rootContext(project: OxcProject): FormatContext {
+  return { project, resolving: new Set() };
+}
+
+function formatTypeWith(type: ResolvedType, removeUndefined: boolean, context?: FormatContext): string {
   const node = unwrapType(type.type);
   const keyword = keywordName(node);
   if (keyword) return keyword;
 
+  const format: TypeFormatter = (memberType, removeMemberUndefined) =>
+    formatTypeWith({ ...type, type: memberType }, removeMemberUndefined, context);
+
   if (node.type === 'TSTypeReference') {
     const name = typeNameText(node.typeName);
     const substituted = node.typeName.type === 'Identifier' ? type.substitutions?.get(node.typeName.name) : undefined;
-    if (substituted) return formatType(substituted, removeUndefined);
+    if (substituted) return formatTypeWith(substituted, removeUndefined, context);
+
+    const resolved = context ? formatResolvableReference(type, node, removeUndefined, context) : undefined;
+    if (resolved !== undefined) return resolved;
 
     if (name === 'ReactElement' || name === 'React.ReactElement') return 'ReactElement';
 
@@ -525,24 +605,23 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
     const args = node.typeArguments?.params ?? [];
 
     return args.length > 0
-      ? `${displayName}<${args.map((argument) => formatType({ ...type, type: argument }, false)).join(', ')}>`
+      ? `${displayName}<${args.map((argument) => format(argument, false)).join(', ')}>`
       : displayName;
   }
 
   if (node.type === 'TSUnionType') {
     const formattedMemberTypes = uniq(
-      orderMembers(flattenUnionMembers(node.types, removeUndefined)).map((member) =>
-        formatType({ ...type, type: member }, removeUndefined)
-      )
+      orderMembers(flattenUnionMembers(node.types, removeUndefined)).map((member) => format(member, removeUndefined))
     );
 
-    return formattedMemberTypes.join(' | ');
+    return joinMembers(formattedMemberTypes, ' | ');
   }
 
   if (node.type === 'TSIntersectionType') {
-    return orderMembers(node.types)
-      .map((member) => formatType({ ...type, type: member }, false))
-      .join(' & ');
+    return joinMembers(
+      orderMembers(node.types).map((member) => format(member, false)),
+      ' & '
+    );
   }
 
   if (node.type === 'TSTypeLiteral') {
@@ -550,7 +629,7 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
     if (node.members.length === 0) return '{}';
 
     return `{ ${node.members
-      .map((member) => formatSignature(type.file, member, type.substitutions))
+      .map((member) => formatSignature(type.file, member, type.substitutions, format))
       .filter(Boolean)
       .join('; ')} }`;
   }
@@ -560,22 +639,31 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
   }
 
   if (node.type === 'TSArrayType') {
-    const formattedMemberType = formatType({ ...type, type: node.elementType }, false);
-    const element = unwrapType(node.elementType);
-    if (element.type === 'TSUnionType' || element.type === 'TSIntersectionType') return `(${formattedMemberType})[]`;
+    const formattedMemberType = format(node.elementType, false);
 
-    return `${formattedMemberType}[]`;
+    // An element that resolved to a union, intersection, or conditional binds looser than `[]`.
+    return hasTopLevelOperator(formattedMemberType, ['?', '|', '&'])
+      ? `(${formattedMemberType})[]`
+      : `${formattedMemberType}[]`;
   }
 
   if (node.type === 'TSFunctionType' || node.type === 'TSConstructorType') {
-    const params = node.params.map((parameter) => formatParameter(type.file, parameter, type.substitutions)).join(', ');
-    const returnType = formatType({ ...type, type: node.returnType.typeAnnotation }, false);
+    const typeParameters = node.typeParameters ? normalizeTypeText(sourceText(type.file, node.typeParameters)) : '';
+    const params = node.params
+      .map((parameter) => formatParameter(type.file, parameter, type.substitutions, format))
+      .join(', ');
+    const returnType = format(node.returnType.typeAnnotation, false);
 
-    return `(${node.type === 'TSConstructorType' ? 'new ' : ''}(${params}) => ${returnType})`;
+    return `(${node.type === 'TSConstructorType' ? 'new ' : ''}${typeParameters}(${params}) => ${returnType})`;
   }
 
   if (node.type === 'TSTupleType') {
-    return `[${node.elementTypes.map((member) => formatType({ ...type, type: tupleElementType(member) }, false)).join(', ')}]`;
+    return `[${node.elementTypes.map((member) => format(tupleElementType(member), false)).join(', ')}]`;
+  }
+
+  if (context && node.type === 'TSIndexedAccessType') {
+    const member = indexedMemberType(context.project, type, node);
+    if (member) return formatTypeWith(member, removeUndefined, context);
   }
 
   if (node.type === 'TSConditionalType' || node.type === 'TSMappedType' || node.type === 'TSInferType') {
@@ -648,36 +736,38 @@ function keywordName(type: TSType): string | undefined {
   return names[type.type];
 }
 
+type TypeFormatter = (type: TSType, removeUndefined: boolean) => string;
+
 function formatSignature(
   file: SourceFile,
   member: TSSignature,
-  substitutions?: ReadonlyMap<string, ResolvedType>
+  substitutions?: ReadonlyMap<string, ResolvedType>,
+  format: TypeFormatter = (type, removeUndefined) => formatType({ file, type, substitutions }, removeUndefined),
+  optionalProperties = false
 ): string {
   if (member.type === 'TSPropertySignature') {
     const name = staticName(member.key);
     if (!name || !member.typeAnnotation) return '';
 
-    return `${name}${member.optional ? '?' : ''}: ${formatType({ file, type: member.typeAnnotation.typeAnnotation, substitutions }, member.optional)}`;
+    const optional = !!member.optional || optionalProperties;
+
+    return `${name}${optional ? '?' : ''}: ${format(member.typeAnnotation.typeAnnotation, optional)}`;
   }
 
   if (member.type === 'TSMethodSignature') {
     const name = staticName(member.key);
     if (!name) return '';
 
-    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions)).join(', ');
-    const returnType = member.returnType
-      ? formatType({ file, type: member.returnType.typeAnnotation, substitutions }, false)
-      : 'void';
+    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions, format)).join(', ');
+    const returnType = member.returnType ? format(member.returnType.typeAnnotation, false) : 'void';
 
     return `${name}${member.optional ? '?' : ''}(${params}): ${returnType}`;
   }
 
   if (member.type === 'TSCallSignatureDeclaration' || member.type === 'TSConstructSignatureDeclaration') {
     const typeParameters = member.typeParameters ? normalizeTypeText(sourceText(file, member.typeParameters)) : '';
-    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions)).join(', ');
-    const returnType = member.returnType
-      ? formatType({ file, type: member.returnType.typeAnnotation, substitutions }, false)
-      : 'void';
+    const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions, format)).join(', ');
+    const returnType = member.returnType ? format(member.returnType.typeAnnotation, false) : 'void';
     const prefix = member.type === 'TSConstructSignatureDeclaration' ? 'new ' : '';
 
     return `${prefix}${typeParameters}(${params}): ${returnType}`;
@@ -740,27 +830,15 @@ function formatParameter(
   file: SourceFile,
   parameter: ParamPattern,
   substitutions?: ReadonlyMap<string, ResolvedType>,
-  formatter: (type: TSType, removeUndefined: boolean) => string = (type, removeUndefined) =>
-    formatType({ file, type, substitutions }, removeUndefined)
+  formatter: TypeFormatter = (type, removeUndefined) => formatType({ file, type, substitutions }, removeUndefined)
 ): string {
-  const pattern = parameterPattern(parameter);
-  if (!pattern) return '...: unknown';
-
-  const name = bindingName(pattern);
-  const annotation = parameterTypeAnnotation(parameter, pattern);
+  const name = bindingName(parameterPattern(parameter));
+  const annotation = parameterTypeAnnotation(parameter);
   // A rest parameter is optional by nature but reads `...name`, not `...name?`.
-  const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter, pattern);
+  const optional = parameter.type !== 'RestElement' && isOptionalParameter(parameter);
   const type = annotation ? formatter(annotation, optional) : 'unknown';
 
   return `${parameter.type === 'RestElement' ? '...' : ''}${name}${optional ? '?' : ''}: ${type}`;
-}
-
-function parameterPattern(parameter: ParamPattern): BindingPattern | undefined {
-  if (parameter.type === 'RestElement') return parameter.argument;
-
-  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
-
-  return parameter;
 }
 
 function bindingName(pattern: BindingPattern): string {

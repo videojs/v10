@@ -3,7 +3,7 @@ interface Store<State> {
   getState(): State;
 }
 
-type AnyStore = Store<object>;
+export type AnyStore = Store<object>;
 
 /** @displayType {S}['state'] */
 type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;

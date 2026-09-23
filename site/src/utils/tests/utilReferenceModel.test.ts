@@ -129,6 +129,46 @@ describe('createUtilReferenceModel', () => {
     );
   });
 
+  it('prints type parameter defaults in callable signatures', () => {
+    const ref: UtilReference = {
+      name: 'useSlider',
+      overloads: [
+        {
+          typeParameters: [{ name: 'State', constraint: 'SliderState', default: 'SliderState' }],
+          parameters: { options: { type: 'object', required: true } },
+          returnType: 'UseSliderReturnValue<State>',
+          returnValue: { type: 'UseSliderReturnValue<State>' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('useSlider', ref);
+
+    expect(model && !model.isMultiOverload ? model.signature : undefined).toBe(
+      'useSlider<State extends SliderState = SliderState>(options): UseSliderReturnValue<State>'
+    );
+  });
+
+  it('builds a constructor signature for controllers', () => {
+    const ref: UtilReference = {
+      name: 'PlayerController',
+      overloads: [
+        {
+          construct: true,
+          typeParameters: [{ name: 'Store', constraint: 'PlayerStore' }],
+          parameters: { host: { type: 'object', required: true }, context: { type: 'object', required: true } },
+          returnValue: { type: 'PlayerController<Store>' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('PlayerController', ref);
+
+    expect(model && !model.isMultiOverload ? model.signature : undefined).toBe(
+      'new PlayerController<Store extends PlayerStore>(host, context)'
+    );
+  });
+
   it('builds a multi-overload model with overload H3s and H4 subsections', () => {
     const ref = {
       name: 'usePlayer',
