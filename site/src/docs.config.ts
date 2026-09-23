@@ -383,7 +383,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/api/use-locale', frameworks: ['react'] },
           { slug: 'reference/api/media-i18n', sidebarLabel: 'media-i18n', frameworks: ['html'] },
           { slug: 'reference/api/media-text', sidebarLabel: 'media-text', frameworks: ['html'] },
-          { slug: 'reference/api/translation-phrases', sidebarLabel: 'Translation keys' },
+          { slug: 'reference/api/translation-phrases' },
           { slug: 'reference/api/register-i18n', sidebarLabel: 'registerI18n' },
           { slug: 'reference/api/get-i18n-translations', sidebarLabel: 'getI18nTranslations' },
           { slug: 'reference/api/has-registered-locale', sidebarLabel: 'hasRegisteredLocale' },

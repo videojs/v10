@@ -4,10 +4,17 @@ description: Semantic i18n keys, their English defaults, and the player UI that 
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 Video.js uses opaque semantic keys so English copy can change without breaking translation packs. English defaults are defined in `packages/core/src/core/i18n/locales/en.ts`. Both HTML and React controls use the same keys.
 
-Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. The dotted form is used by translators and the HTML `<media-text token>` attribute.
+<FrameworkCase frameworks={["react"]}>
+Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. Translators use the dotted form.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. Translators and the `<media-text token>` attribute use the dotted form.
+</FrameworkCase>
 
 ## Playback controls
 

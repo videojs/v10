@@ -12,7 +12,13 @@ Resolves what is playing into two values your UI can render: `title` and `poster
 
 `title` and `poster` each resolve independently through the same two tiers: the value you set, then the value the media reports. The first tier that holds a value wins; when neither does, the resolved value is an empty string. Because the tiers stay separate, clearing the value you set reveals the media's, and a source that reports a poster but no title contributes to one while leaving the other empty.
 
+<FrameworkCase frameworks={["react"]}>
 An empty string counts as a value and stops the chain: set `title` to `''` and the resolved title is `''`. Pass `null` to clear your value.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+An empty string counts as a value and stops the chain: `content-title=""` resolves the title to `''`. Remove the attribute to clear your value.
+</FrameworkCase>
 
 The metadata feature is included by the `videoFeatures`, `audioFeatures`, `liveVideoFeatures`, and `liveAudioFeatures` <DocsLink slug="guides/presets">presets</DocsLink>; apps that build a custom preset can compose it in directly.
 
