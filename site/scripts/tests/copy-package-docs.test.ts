@@ -183,43 +183,24 @@ describe('rewriteIndexHeader', () => {
   const webIndex =
     '# Video.js v10 — HTML Documentation\n\n' +
     '> Every page below is also available as Markdown at its `.md` URL. The whole set in one file (about 240k tokens): https://videojs.org/docs/framework/html/llms-full.txt\n\n' +
-    '## Guides\n';
+    '## Guides\n\n' +
+    'Section index: [guides/llms.txt](https://videojs.org/docs/framework/html/guides/llms.txt). This section in one file (about 90k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n';
 
-  it('names the package and version and points at the bundled companion file', () => {
-    expect(rewriteIndexHeader(webIndex, { framework: 'html', fileName: 'llms.txt', version: '10.0.0-test' })).toBe(
+  it('names the package and version and drops the unbundled complete files', () => {
+    expect(rewriteIndexHeader(webIndex, { framework: 'html', version: '10.0.0-test' })).toBe(
       '# Video.js v10 — HTML Documentation\n\n' +
-        '> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. The whole set in one file: ./llms-full.txt (about 240k tokens)\n\n' +
-        '## Guides\n'
+        '> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory.\n\n' +
+        '## Guides\n\n' +
+        'Section index: [guides/llms.txt](https://videojs.org/docs/framework/html/guides/llms.txt).\n'
     );
   });
 
-  it('points a section index up at the bundled framework-level complete file', () => {
-    const section =
-      '# Guides\n\n> Every page below is also available as Markdown. This section in one file: https://videojs.org/docs/framework/html/guides/llms-full.txt\n';
-
-    expect(rewriteIndexHeader(section, { framework: 'html', fileName: 'guides/llms.txt', version: '1.0.0' })).toBe(
-      '# Guides\n\n> Bundled with `@videojs/html` v1.0.0. Links are relative paths to files in this directory. The whole set in one file: ../llms-full.txt\n'
-    );
-    expect(
-      rewriteIndexHeader(section, { framework: 'html', fileName: 'reference/api/llms.txt', version: undefined })
-    ).toContain('The whole set in one file: ../../llms-full.txt');
-  });
-
-  it('keeps a section description ahead of the package context and drops the section size', () => {
+  it('keeps a section description ahead of the package context and omits an unknown version', () => {
     const section =
       '# Guides\n\n> Guides for Video.js. Every page below is also available as Markdown at its `.md` URL. This section in one file (about 98k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n';
 
-    expect(rewriteIndexHeader(section, { framework: 'html', fileName: 'guides/llms.txt', version: '1.0.0' })).toBe(
-      '# Guides\n\n> Guides for Video.js. Bundled with `@videojs/html` v1.0.0. Links are relative paths to files in this directory. The whole set in one file: ../llms-full.txt\n'
-    );
-  });
-
-  it('points the complete file back at the index and omits an unknown version', () => {
-    const full =
-      '# Title\n\n> Every React docs page in one file. Index with descriptions: https://videojs.org/docs/framework/react/llms.txt\n';
-
-    expect(rewriteIndexHeader(full, { framework: 'react', fileName: 'llms-full.txt', version: undefined })).toBe(
-      '# Title\n\n> Bundled with `@videojs/react`. Links are relative paths to files in this directory. Every page in one file. Index with descriptions: ./llms.txt\n'
+    expect(rewriteIndexHeader(section, { framework: 'html', version: undefined })).toBe(
+      '# Guides\n\n> Guides for Video.js. Bundled with `@videojs/html`. Links are relative paths to files in this directory.\n'
     );
   });
 });
@@ -311,30 +292,7 @@ describe('packageDocumentation', () => {
     );
   });
 
-  it('bundles section indexes but not section-level complete files', () => {
-    const fixture = createFixture();
-
-    writeInstallationDocs(fixture.siteDist, 'html');
-    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs\n\n> Header\n');
-    writeDoc(fixture.siteDist, 'html', 'llms-full.txt', '# Docs\n\n> Header\n');
-    writeDoc(
-      fixture.siteDist,
-      'html',
-      'guides/llms.txt',
-      '# Guides\n\n> Every page below is also available as Markdown at its `.md` URL. This section in one file (about 9k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n'
-    );
-    writeDoc(fixture.siteDist, 'html', 'guides/llms-full.txt', '# Guides\n\n> Header\n');
-
-    packageDocumentation({ target: 'html', siteDist: fixture.siteDist, packagesDirectory: fixture.packagesDirectory });
-
-    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/llms.txt'), 'utf-8')).toBe(
-      '# Guides\n\n> Bundled with `@videojs/html`. Links are relative paths to files in this directory. The whole set in one file: ../llms-full.txt\n'
-    );
-    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'))).toBe(true);
-    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/guides/llms-full.txt'))).toBe(false);
-  });
-
-  it('rewrites the bundled index headers for the package', () => {
+  it('bundles pages and indexes but no complete files', () => {
     const fixture = createFixture();
 
     writeInstallationDocs(fixture.siteDist, 'html');
@@ -344,12 +302,14 @@ describe('packageDocumentation', () => {
       'llms.txt',
       '# Docs\n\n> Every page below is also available as Markdown at its `.md` URL. The whole set in one file: https://videojs.org/docs/framework/html/llms-full.txt\n'
     );
+    writeDoc(fixture.siteDist, 'html', 'llms-full.txt', '# Docs\n\n> Header\n');
     writeDoc(
       fixture.siteDist,
       'html',
-      'llms-full.txt',
-      '# Docs\n\n> All pages. Index: https://videojs.org/docs/framework/html/llms.txt\n'
+      'guides/llms.txt',
+      '# Guides\n\n> Every page below is also available as Markdown at its `.md` URL. This section in one file (about 9k tokens): https://videojs.org/docs/framework/html/guides/llms-full.txt\n'
     );
+    writeDoc(fixture.siteDist, 'html', 'guides/llms-full.txt', '# Guides\n\n> Header\n');
 
     packageDocumentation({
       target: 'html',
@@ -359,10 +319,44 @@ describe('packageDocumentation', () => {
     });
 
     expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/llms.txt'), 'utf-8')).toBe(
-      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. The whole set in one file: ./llms-full.txt\n'
+      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory.\n'
     );
-    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'), 'utf-8')).toBe(
-      '# Docs\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory. Every page in one file. Index with descriptions: ./llms.txt\n'
+    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/llms.txt'), 'utf-8')).toBe(
+      '# Guides\n\n> Bundled with `@videojs/html` v10.0.0-test. Links are relative paths to files in this directory.\n'
+    );
+    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/llms-full.txt'))).toBe(false);
+    expect(existsSync(join(fixture.packagesDirectory, 'html/docs/guides/llms-full.txt'))).toBe(false);
+  });
+
+  it("keeps only the package's branch of the Shadcn guide and links it locally", () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs');
+    writeFileSync(
+      join(fixture.siteDist, 'docs/guides/installation/shadcn.md'),
+      [
+        '# Shadcn',
+        '<!-- cli:framework react -->',
+        'React steps',
+        '<!-- /cli:framework react -->',
+        '<!-- cli:framework html -->',
+        'HTML steps',
+        '<!-- /cli:framework html -->',
+      ].join('\n\n')
+    );
+    writeFileSync(
+      join(fixture.siteDist, 'docs/guides/installation/vue.md'),
+      '[Shadcn](https://videojs.org/docs/guides/installation/shadcn?framework=html) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
+    );
+
+    packageDocumentation({ target: 'html', siteDist: fixture.siteDist, packagesDirectory: fixture.packagesDirectory });
+
+    const guides = join(fixture.packagesDirectory, 'html/docs/guides');
+
+    expect(readFileSync(join(guides, 'installation-shadcn.md'), 'utf-8')).toBe('# Shadcn\n\nHTML steps\n');
+    expect(readFileSync(join(guides, 'installation-vue.md'), 'utf-8')).toBe(
+      '[Shadcn](./installation-shadcn.md) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
     );
   });
 
