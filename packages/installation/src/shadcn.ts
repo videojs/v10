@@ -1,12 +1,13 @@
-import { getInstallationPreset, type Skin, type UseCase } from './types';
+import { PACKAGE_MANAGERS, type PackageManager } from './parameters';
+import { getInstallationPreset, type Skin, type UseCase } from './presets';
+import type { InstallationFramework } from './selection';
 
 export type RegistryFramework = 'html' | 'react';
-export type RegistryProjectFramework = RegistryFramework | 'svelte' | 'vue';
 export type RegistryTemplate = 'next' | 'vite' | 'start' | 'laravel' | 'react-router' | 'astro';
 export type RegistryStyling = 'css' | 'tailwind';
 export type RegistryTheme = 'default' | 'minimal';
 export type RegistryPreset = 'audio' | 'live-audio' | 'live-video' | 'video';
-export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
+export type ShadcnRunner = PackageManager;
 
 /** Where `packages/skins` publishes its hosted registry; see its `netlify.toml`. */
 export const REGISTRY_ORIGIN = 'https://shadcn.videojs.org';
@@ -14,7 +15,7 @@ export const REGISTRY_NAMESPACE = '@videojs';
 /** Where the CLI places added skin source, relative to the project's components alias. */
 export const REGISTRY_INSTALL_DIRECTORY = 'components/videojs';
 
-export const SHADCN_RUNNER_NAMES = ['npm', 'pnpm', 'yarn', 'bun'] as const satisfies readonly ShadcnRunner[];
+export const SHADCN_RUNNER_NAMES = PACKAGE_MANAGERS;
 
 export const SHADCN_RUNNERS = {
   npm: 'npx shadcn@latest',
@@ -114,7 +115,7 @@ export function defaultRegistryStyling(framework: RegistryFramework): RegistrySt
   return registryStylings(framework)[0]!;
 }
 
-export function defaultRegistryTemplate(framework: RegistryProjectFramework): RegistryTemplate {
+export function defaultRegistryTemplate(framework: InstallationFramework): RegistryTemplate {
   return framework === 'react' ? 'next' : 'vite';
 }
 

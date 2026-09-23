@@ -23,9 +23,7 @@ function populate(root: string): void {
     writeFileSync(join(directory, 'entry.json'), '{}');
   }
 
-  writeFileSync(join(root, 'src/content/cdn-media.json'), '[]');
-
-  for (const name of ['@videojs/html', '@videojs/react']) {
+  for (const name of ['@videojs/html', '@videojs/installation', '@videojs/react']) {
     mkdirSync(join(root, 'node_modules', name, 'dist'), { recursive: true });
   }
 }
@@ -44,8 +42,8 @@ describe('missingPrerequisites', () => {
       'src/content/generated-feature-reference',
       'src/content/generated-media-reference',
       'src/content/generated-preset-reference',
-      'src/content/cdn-media.json',
       '@videojs/html build',
+      '@videojs/installation build',
       '@videojs/react build',
     ]);
   });

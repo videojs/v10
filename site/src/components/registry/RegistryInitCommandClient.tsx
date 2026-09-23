@@ -1,8 +1,7 @@
-import { useStore } from '@nanostores/react';
 import { type RegistryFramework, resolveRegistryTemplate, shadcnInitCommand } from '@videojs/installation';
 
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
-import { registryTemplate } from '@/stores/registry';
+import { useRegistryTemplate } from '@/components/installation/useRegistryProjectFramework';
 
 interface Props {
   framework: RegistryFramework;
@@ -10,7 +9,7 @@ interface Props {
 }
 
 export default function RegistryInitCommandClient({ framework, installation }: Props) {
-  const $template = useStore(registryTemplate);
+  const $template = useRegistryTemplate();
   const template = resolveRegistryTemplate(framework, $template);
   const commands = {
     npm: shadcnInitCommand('npm', template),

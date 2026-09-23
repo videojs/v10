@@ -8,6 +8,8 @@ import {
   type RegistryTemplate,
 } from '@videojs/installation';
 
+import { getInstallationRouteSegment } from '@/utils/installation/routes';
+
 export const SHADCN_INSTALLATION_PATH = '/docs/guides/installation/shadcn';
 
 export interface InstallationFrameworkNavigation {
@@ -20,10 +22,6 @@ export interface ShadcnUrlSelection {
   sourceFramework: RegistryFramework;
   styling: RegistryStyling | null;
   template: RegistryTemplate | null;
-}
-
-export function isRegistryFramework(framework: string | null): framework is RegistryFramework {
-  return framework === 'react' || framework === 'html';
 }
 
 export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
@@ -53,22 +51,13 @@ export function resolveShadcnUrlSelection(url: URL, fallback: InstallationFramew
   return { projectFramework, sourceFramework, styling, template };
 }
 
-/** Build a JS-framework switch, falling back to Packaged when the current method does not support the selection. */
+/** Build a JS-framework switch between packaged installation guides. Shadcn switches its query-backed store in place. */
 export function resolveInstallationFrameworkNavigation(
   current: URL,
   next: InstallationFramework
 ): InstallationFrameworkNavigation {
   const target = new URL(current);
-  const route = current.pathname.match(/\/docs\/guides\/installation\/([^/]+)/)?.[1];
-
-  if (isShadcnInstallationUrl(current)) {
-    target.searchParams.set('framework', next);
-
-    return {
-      target: `${target.pathname}${target.search}${target.hash}`,
-      history: 'replace',
-    };
-  }
+  const route = getInstallationRouteSegment(current.pathname);
 
   target.pathname = `/docs/guides/installation/${next}`;
   target.searchParams.delete('framework');

@@ -25,9 +25,9 @@ if (!framework) throw new Error(`RegistryOptions needs a framework route, receiv
 ---
 
 <ContentWidth>
-  <div data-llms-ignore>
+  <div data-installation-query-state data-llms-ignore>
     <RegistryOptionsClient
-      client:idle
+      client:load
       defaultSkin={defaultSkin}
       defaultTheme={defaultTheme}
       framework={framework}

@@ -26,7 +26,7 @@ describe('useCase', () => {
   it('replaces stale picks when a client navigation has a different URL', () => {
     syncInstallationSelectionFromUrl(
       new URL(
-        'https://videojs.org/docs/guides/installation/react?preset=audio&skin=minimal&media=spotify&install-method=pnpm&source-url=track'
+        'https://videojs.org/docs/guides/installation/react?preset=audio&skin=minimal&media=spotify&package-manager=pnpm&source-url=track'
       )
     );
 
@@ -49,7 +49,7 @@ describe('useCase', () => {
     window.history.replaceState(
       { index: 2, scrollX: 0, scrollY: 300 },
       '',
-      '/docs/guides/installation/react?preset=audio&skin=fancy&media=youtube&install-method=deno&source-url=line%0Abreak&utm_source=test'
+      '/docs/guides/installation/react?preset=audio&skin=fancy&media=youtube&package-manager=deno&source-url=line%0Abreak&utm_source=test'
     );
 
     syncInstallationSelectionFromUrl();
@@ -72,11 +72,11 @@ describe('useCase', () => {
 
     syncInstallationSelectionFromUrl();
 
-    expect(window.location.search).toBe('?framework=react');
+    expect(window.location.search).toBe('?framework=react&package-manager=pnpm');
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
     expect(renderer.get()).toBe('html5-video');
-    expect(installMethod.get()).toBe('npm');
+    expect(installMethod.get()).toBe('pnpm');
   });
 
   it('normalizes the address bar after an Astro client transition', () => {
@@ -89,7 +89,7 @@ describe('useCase', () => {
     window.history.replaceState({ index: 3 }, '', `${destination.pathname}${destination.search}`);
     document.dispatchEvent(new Event('astro:after-swap'));
 
-    expect(window.location.search).toBe('?framework=react');
+    expect(window.location.search).toBe('?framework=react&package-manager=pnpm');
     expect(window.history.state).toEqual({ index: 3 });
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');

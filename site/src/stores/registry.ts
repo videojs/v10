@@ -7,7 +7,7 @@ import type {
   RegistryTheme,
 } from '@videojs/installation';
 import { defaultRegistryTemplate } from '@videojs/installation';
-import { atom } from 'nanostores';
+import { atom, computed } from 'nanostores';
 
 import { currentFramework } from '@/stores/preferences';
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from '@/utils/docs/preferences';
@@ -33,7 +33,10 @@ const initialUrlSelection = initialUrl ? resolveShadcnUrlSelection(initialUrl, i
 export const registryProjectFramework = atom<InstallationFramework>(initialProjectFramework);
 
 /** React or HTML source shown on the standalone Shadcn installation page. */
-export const registryFramework = atom<RegistryFramework>(registryProjectFramework.get() === 'react' ? 'react' : 'html');
+export const registryFramework = computed(
+  registryProjectFramework,
+  (framework): RegistryFramework => (framework === 'react' ? 'react' : 'html')
+);
 
 /**
  * The styling catalog the registry commands point at. `null` means the framework's default: Tailwind for React, vanilla
@@ -59,7 +62,6 @@ function applyRegistryProjectFramework(framework: InstallationFramework): void {
     registryStyling.set(null);
   }
 
-  registryFramework.set(sourceFramework);
   currentFramework.set(sourceFramework);
   setFrameworkPreferenceClient(sourceFramework);
 }

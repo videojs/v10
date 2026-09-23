@@ -1,11 +1,18 @@
 ---
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
+import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 
 /** Match Shadcn's prerendered framework content to its query before the React islands hydrate. */
 ---
 
 <style is:global>
+  html[data-installation-query-pending] [data-installation-query-state],
+  html[data-installation-query-pending] [data-installation-method-nav],
+  html[data-installation-query-pending] [data-installation-plan] {
+    visibility: hidden;
+  }
+
   [data-shadcn-framework="html"] {
     display: none;
   }
@@ -27,7 +34,25 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
   }
 </style>
 
-<script is:inline define:vars={{ frameworkCookie: FRAMEWORK_COOKIE, shadcnPath: SHADCN_INSTALLATION_PATH }}>
+<script
+  is:inline
+  define:vars={{
+    frameworkCookie: FRAMEWORK_COOKIE,
+    installationParams: INSTALLATION_QUERY_PARAMETERS,
+    shadcnPath: SHADCN_INSTALLATION_PATH,
+  }}
+>
+  function applyInstallationQueryState(url, root) {
+    if (!root) return;
+
+    const isInstallation = url.pathname.replace(/\/$/, "").startsWith("/docs/guides/installation/");
+    const params = new URLSearchParams(url.search);
+    const hasSelection = isInstallation && installationParams.some((parameter) => params.has(parameter));
+
+    if (hasSelection) root.dataset.installationQueryPending = "";
+    else delete root.dataset.installationQueryPending;
+  }
+
   function applyInstallationFramework(url, root) {
     if (!root) return;
 
@@ -54,8 +79,10 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
   }
 
   applyInstallationFramework(window.location, document.documentElement);
+  applyInstallationQueryState(window.location, document.documentElement);
 
   document.addEventListener("astro:before-swap", function (event) {
     applyInstallationFramework(event.to, event.newDocument.documentElement);
+    applyInstallationQueryState(event.to, event.newDocument.documentElement);
   });
 </script>

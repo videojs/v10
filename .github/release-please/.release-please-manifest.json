@@ -8,6 +8,7 @@
   "packages/adapters/hlsjs-video": "10.0.0-rc.2",
   "packages/html": "10.0.0-rc.2",
   "packages/icons": "10.0.0-rc.2",
+  "packages/installation": "10.0.0-rc.2",
   "packages/media": "10.0.0-rc.2",
   "packages/adapters/mux-audio": "10.0.0-rc.2",
   "packages/extensions/mux-data": "10.0.0-rc.2",

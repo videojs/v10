@@ -49,7 +49,7 @@ Choose from the installation options available for your selections.
 Choose the ready-made player that is closest to what you are building. Live presets add live-edge controls; background video is muted and loops behind your content.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:idle />
+  <UseCasePicker client:load />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -57,7 +57,7 @@ Choose the ready-made player that is closest to what you are building. Live pres
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:load />
 </ContentWidth>
 
 ## Choose your media source
@@ -85,7 +85,7 @@ Add these generated module scripts to your page. They register the player, selec
 Place this generated markup where the player should appear. It uses the media source you selected above.
 
 <ContentWidth>
-  <HTMLUsageCodeBlock client:idle installMethod="cdn" />
+  <HTMLUsageCodeBlock client:load installMethod="cdn" />
 </ContentWidth>
 
 </div>

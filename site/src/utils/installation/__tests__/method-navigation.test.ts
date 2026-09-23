@@ -26,11 +26,15 @@ describe('resolveInstallationMethodUrl', () => {
   });
 
   it('returns from Shadcn to the selected packaged framework', () => {
-    const current = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html&preset=audio');
+    const current = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=html&preset=audio&template=astro&styling=css'
+    );
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation', 'packaged');
 
     expect(result.pathname).toBe('/docs/guides/installation/html');
     expect(result.searchParams.has('framework')).toBe(false);
+    expect(result.searchParams.has('template')).toBe(false);
+    expect(result.searchParams.has('styling')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('audio');
   });
 
@@ -65,13 +69,15 @@ describe('resolveInstallationMethodUrl', () => {
 
   it('removes the source framework when switching to CDN', () => {
     const current = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?framework=react&preset=video&install-method=pnpm'
+      'https://videojs.org/docs/guides/installation/shadcn?framework=react&preset=video&package-manager=pnpm&template=vite&styling=css'
     );
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
 
     expect(result.pathname).toBe('/docs/guides/installation/cdn');
     expect(result.searchParams.has('framework')).toBe(false);
-    expect(result.searchParams.has('install-method')).toBe(false);
+    expect(result.searchParams.has('package-manager')).toBe(false);
+    expect(result.searchParams.has('template')).toBe(false);
+    expect(result.searchParams.has('styling')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('video');
   });
 });

@@ -1,4 +1,3 @@
-import { useStore } from '@nanostores/react';
 import {
   type RegistryFramework,
   type RegistryPreset,
@@ -8,7 +7,11 @@ import {
 } from '@videojs/installation';
 
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
-import { registrySkin, registryStyling, registryTheme } from '@/stores/registry';
+import {
+  useRegistrySkin,
+  useRegistryStyling,
+  useRegistryTheme,
+} from '@/components/installation/useRegistryProjectFramework';
 
 interface Props {
   /** Skin to add until the page's skin selector changes it. Omit for commands with fixed items. */
@@ -34,9 +37,9 @@ export default function RegistryCommandClient({
   items,
   theme = 'default',
 }: Props) {
-  const $skin = useStore(registrySkin);
-  const $styling = useStore(registryStyling);
-  const $theme = useStore(registryTheme);
+  const $skin = useRegistrySkin();
+  const $styling = useRegistryStyling();
+  const $theme = useRegistryTheme();
   const selectedItems = defaultSkin ? [fixedSelection ? defaultSkin : ($skin ?? defaultSkin)] : items;
   const selectedTheme = fixedSelection ? theme : ($theme ?? theme);
   const styling = resolveRegistryStyling(framework, $styling);

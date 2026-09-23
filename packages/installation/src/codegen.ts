@@ -1,5 +1,7 @@
 import { generateCdnCode } from './cdn-code';
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
+import type { PackageManager } from './parameters';
+import { getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
   getAdapterPackage,
   getInstallationRenderer,
@@ -7,16 +9,11 @@ import {
   isMuxRenderer,
   isPresetRenderer,
   isVideoLikeRenderer,
-  type Renderer,
-} from './renderers';
-import {
-  getInstallationPreset,
-  type InstallMethod,
   MUX_DATA_EXTENSION_SUBPATH,
   MUX_DATA_PACKAGE,
-  type Skin,
-  type UseCase,
-} from './types';
+  type Renderer,
+} from './renderers';
+import type { InstallMethod } from './selection';
 
 export interface InstallationOptions {
   framework: 'html' | 'react';
@@ -78,8 +75,9 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
 
 /** Packages a source install still needs after the registry item installs the core React or HTML package. */
 export function generateSourceMediaInstallCode(
-  renderer: Renderer
-): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> | null {
+  renderer: Renderer,
+  packageVersion?: string
+): Record<PackageManager, string> | null {
   const packages: string[] = [];
   const adapter = getAdapterPackage(renderer);
 
@@ -89,17 +87,29 @@ export function generateSourceMediaInstallCode(
 
   if (packages.length === 0) return null;
 
-  const value = packages.join(' ');
+  const value = versionPackages(packages, packageVersion);
 
+  return packageManagerInstallCommands(value);
+}
+
+function versionPackages(packages: readonly string[], packageVersion?: string): string {
+  return packages.map((packageName) => (packageVersion ? `${packageName}@${packageVersion}` : packageName)).join(' ');
+}
+
+function packageManagerInstallCommands(packages: string): Record<PackageManager, string> {
   return {
-    npm: `npm install ${value}`,
-    pnpm: `pnpm add ${value}`,
-    yarn: `yarn add ${value}`,
-    bun: `bun add ${value}`,
+    npm: `npm install ${packages}`,
+    pnpm: `pnpm add ${packages}`,
+    yarn: `yarn add ${packages}`,
+    bun: `bun add ${packages}`,
   };
 }
 
-function installPackages(framework: '@videojs/html' | '@videojs/react', renderer: Renderer): string {
+function installPackages(
+  framework: '@videojs/html' | '@videojs/react',
+  renderer: Renderer,
+  packageVersion?: string
+): string {
   const adapter = getAdapterPackage(renderer);
   const packages: string[] = [framework];
 
@@ -109,7 +119,7 @@ function installPackages(framework: '@videojs/html' | '@videojs/react', renderer
   // install command pulls in its package as well.
   if (isMuxRenderer(renderer)) packages.push(MUX_DATA_PACKAGE);
 
-  return packages.join(' ');
+  return versionPackages(packages, packageVersion);
 }
 
 // ---------------------------------------------------------------------------
@@ -119,16 +129,14 @@ function installPackages(framework: '@videojs/html' | '@videojs/react', renderer
 export function generateHTMLInstallCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
   cdnMediaSubpaths: readonly string[],
-  cdnBase?: string
-): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string> {
-  const packages = installPackages('@videojs/html', opts.renderer);
+  cdnBase?: string,
+  packageVersion?: string
+): Record<'cdn' | PackageManager, string> {
+  const packages = installPackages('@videojs/html', opts.renderer, packageVersion);
 
   return {
     cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths, cdnBase),
-    npm: `npm install ${packages}`,
-    pnpm: `pnpm add ${packages}`,
-    yarn: `yarn add ${packages}`,
-    bun: `bun add ${packages}`,
+    ...packageManagerInstallCommands(packages),
   };
 }
 
@@ -137,16 +145,12 @@ export function generateHTMLInstallCode(
 // ---------------------------------------------------------------------------
 
 export function generateReactInstallCode(
-  opts: Pick<InstallationOptions, 'renderer'> = { renderer: 'html5-video' }
-): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
-  const packages = installPackages('@videojs/react', opts.renderer);
+  opts: Pick<InstallationOptions, 'renderer'> = { renderer: 'html5-video' },
+  packageVersion?: string
+): Record<PackageManager, string> {
+  const packages = installPackages('@videojs/react', opts.renderer, packageVersion);
 
-  return {
-    npm: `npm install ${packages}`,
-    pnpm: `pnpm add ${packages}`,
-    yarn: `yarn add ${packages}`,
-    bun: `bun add ${packages}`,
-  };
+  return packageManagerInstallCommands(packages);
 }
 
 // ---------------------------------------------------------------------------

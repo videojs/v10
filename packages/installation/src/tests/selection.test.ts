@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import type { InstallationInput } from '../parameters';
+import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from '../presets';
 import {
   fitSelectionToPreset,
   INSTALLATION_FRAMEWORKS,
@@ -8,7 +10,6 @@ import {
   type InstallationFramework,
   type PlayerOwner,
 } from '../selection';
-import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from '../types';
 
 describe('resolveInstallationSelection', () => {
   it('resolves defaults for each owner', () => {
@@ -40,6 +41,12 @@ describe('resolveInstallationSelection', () => {
     expect(resolveInstallationSelection('html', { method: 'shadcn', preset: 'background-video' }, '10.0.0').ok).toBe(
       false
     );
+    expect(
+      resolveInstallationSelection('html', { preset: 'background-video', skin: 'default' }, '10.0.0')
+    ).toMatchObject({
+      ok: false,
+      errors: [{ field: 'skin', message: expect.stringContaining('does not apply') }],
+    });
   });
 
   it('keeps raw invalid choices out of Markdown error messages and rejects multiline source URLs', () => {
@@ -69,16 +76,21 @@ describe('resolveInstallationSelection', () => {
       for (const framework of frameworks) {
         for (const preset of Object.values(INSTALLATION_PRESETS)) {
           for (const media of preset.renderers) {
-            for (const skin of INSTALLATION_SKIN_FLAGS) {
+            const skins = preset.flag === 'background-video' ? [undefined] : INSTALLATION_SKIN_FLAGS;
+
+            for (const skin of skins) {
               for (const packageManager of PACKAGE_MANAGERS) {
-                const result = resolveInstallationSelection(owner, {
+                const input: InstallationInput = {
                   method: 'packaged',
                   framework,
                   preset: preset.flag,
                   media,
-                  skin,
                   packageManager,
-                });
+                };
+
+                if (skin) input.skin = skin;
+
+                const result = resolveInstallationSelection(owner, input);
 
                 expect(result, `${owner}/${framework}/${preset.flag}/${media}/${skin}/${packageManager}`).toMatchObject(
                   {
@@ -121,14 +133,19 @@ describe('resolveInstallationSelection', () => {
   it('accepts every compatible CDN preset, skin, and media combination for plain HTML', () => {
     for (const preset of Object.values(INSTALLATION_PRESETS)) {
       for (const media of preset.renderers) {
-        for (const skin of INSTALLATION_SKIN_FLAGS) {
-          const result = resolveInstallationSelection('html', {
+        const skins = preset.flag === 'background-video' ? [undefined] : INSTALLATION_SKIN_FLAGS;
+
+        for (const skin of skins) {
+          const input: InstallationInput = {
             method: 'cdn',
             framework: 'html',
             preset: preset.flag,
             media,
-            skin,
-          });
+          };
+
+          if (skin) input.skin = skin;
+
+          const result = resolveInstallationSelection('html', input);
 
           expect(result, `${preset.flag}/${media}/${skin}`).toMatchObject({ ok: true });
         }

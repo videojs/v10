@@ -18,12 +18,13 @@ import {
 } from './codegen';
 import { CDN_MEDIA_SUBPATHS } from './defaults';
 import {
-  installationCompatibility,
+  installationCompatibilityFor,
   installationOptionDefinitions,
-  type InstallationCompatibility,
+  type InstallationDiscoveryCompatibility,
   type InstallationOptionDefinition,
 } from './options';
-import { type InstallationInput, type InstallationSelection, type PlayerOwner, selectionToInput } from './selection';
+import { INSTALLATION_PARAMETERS, type InstallationInput } from './parameters';
+import { type InstallationSelection, type PlayerOwner, selectionToInput } from './selection';
 import { registryInstallCommands, registrySkinSelection, shadcnInitCommand } from './shadcn';
 
 export interface InstallationCodeBlock {
@@ -59,7 +60,7 @@ export interface InstallationDiscovery {
   packageVersion: string;
   command: string;
   options: readonly InstallationOptionDefinition[];
-  compatibility: InstallationCompatibility;
+  compatibility: InstallationDiscoveryCompatibility;
   examples: readonly string[];
   notice: string;
 }
@@ -76,26 +77,14 @@ function shellQuote(value: string): string {
 export function installationCommand(
   owner: PlayerOwner,
   input?: InstallationInput,
-  packageVersion: string | null = 'latest'
+  packageVersion: string | null = null
 ): string {
   const packageSpecifier = packageVersion ? `${OWNER_PACKAGES[owner]}@${packageVersion}` : OWNER_PACKAGES[owner];
   const parts = [`npx ${packageSpecifier} agents init`];
 
   if (!input) return parts[0]!;
 
-  const flags: Array<[keyof InstallationInput, string]> = [
-    ['method', '--method'],
-    ['framework', '--framework'],
-    ['preset', '--preset'],
-    ['skin', '--skin'],
-    ['media', '--media'],
-    ['sourceUrl', '--source-url'],
-    ['packageManager', '--package-manager'],
-    ['template', '--template'],
-    ['styling', '--styling'],
-  ];
-
-  for (const [key, flag] of flags) {
+  for (const { key, flag } of INSTALLATION_PARAMETERS) {
     const value = input[key];
 
     if (value) parts.push(`${flag} ${shellQuote(value)}`);
@@ -106,6 +95,7 @@ export function installationCommand(
 
 export function createInstallationDiscovery(owner: PlayerOwner, packageVersion: string): InstallationDiscovery {
   const command = installationCommand(owner, undefined, packageVersion);
+  const frameworks = owner === 'react' ? (['react'] as const) : (['html', 'vue', 'svelte'] as const);
 
   return {
     schemaVersion: 1,
@@ -114,7 +104,7 @@ export function createInstallationDiscovery(owner: PlayerOwner, packageVersion: 
     packageVersion,
     command,
     options: installationOptionDefinitions(owner),
-    compatibility: installationCompatibility,
+    compatibility: installationCompatibilityFor(frameworks),
     examples: [
       `${command} --method packaged --preset video --media hls --package-manager pnpm`,
       owner === 'react'
@@ -146,15 +136,19 @@ function installationOptions(selection: InstallationSelection): InstallationOpti
   };
 }
 
-function createPackagedSteps(selection: InstallationSelection): InstallationStep[] {
+function packageInstallStep(command: string): InstallationStep {
+  return { id: 'install', title: 'Install the packages', blocks: [code('bash', command)] };
+}
+
+function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
   const opts = installationOptions(selection);
 
   if (selection.framework === 'react') {
-    const install = generateReactInstallCode(opts);
+    const install = generateReactInstallCode(opts, packageVersion);
     const player = generateReactCreateCode(opts);
 
     return [
-      { id: 'install', title: 'Install the packages', blocks: [code('bash', install[selection.packageManager])] },
+      packageInstallStep(install[selection.packageManager]),
       {
         id: 'player',
         title: 'Add your player',
@@ -164,7 +158,7 @@ function createPackagedSteps(selection: InstallationSelection): InstallationStep
     ];
   }
 
-  const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase);
+  const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase, packageVersion);
 
   if (selection.framework === 'vue') {
     const config = generateVueCustomElementConfigCode(opts);
@@ -172,7 +166,7 @@ function createPackagedSteps(selection: InstallationSelection): InstallationStep
     const usage = generateVueUsageCode(opts);
 
     return [
-      { id: 'install', title: 'Install the packages', blocks: [code('bash', install[selection.packageManager])] },
+      packageInstallStep(install[selection.packageManager]),
       {
         id: 'configure',
         title: 'Register the custom elements',
@@ -198,7 +192,7 @@ function createPackagedSteps(selection: InstallationSelection): InstallationStep
     const usage = generateSvelteUsageCode(opts);
 
     return [
-      { id: 'install', title: 'Install the packages', blocks: [code('bash', install[selection.packageManager])] },
+      packageInstallStep(install[selection.packageManager]),
       {
         id: 'player',
         title: 'Add your player',
@@ -217,10 +211,7 @@ function createPackagedSteps(selection: InstallationSelection): InstallationStep
     code('html', usage.html, 'index.html'),
   ];
 
-  return [
-    { id: 'install', title: 'Install the packages', blocks: [code('bash', install[selection.packageManager])] },
-    { id: 'player', title: 'Add your player', blocks },
-  ];
+  return [packageInstallStep(install[selection.packageManager]), { id: 'player', title: 'Add your player', blocks }];
 }
 
 function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
@@ -234,7 +225,7 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
   ];
 }
 
-function createShadcnSteps(selection: InstallationSelection): InstallationStep[] {
+function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
   const opts = installationOptions(selection);
   const registry = registrySkinSelection({ useCase: selection.useCase, skin: selection.skin });
   if (!registry || !selection.template || !selection.styling) throw new Error('Invalid Shadcn selection');
@@ -265,7 +256,7 @@ function createShadcnSteps(selection: InstallationSelection): InstallationStep[]
     },
   ];
 
-  const adapter = generateSourceMediaInstallCode(selection.media);
+  const adapter = generateSourceMediaInstallCode(selection.media, packageVersion);
 
   if (adapter) {
     steps.push({
@@ -348,10 +339,11 @@ export function createInstallationPlan(selection: InstallationSelection, package
     method: explicit.method,
     framework: explicit.framework,
     preset: explicit.preset,
-    skin: explicit.skin,
     media: explicit.media,
     sourceUrl: explicit.sourceUrl,
   };
+
+  if (selection.useCase !== 'background-video') relevantInput.skin = explicit.skin;
 
   if (selection.method !== 'cdn') relevantInput.packageManager = explicit.packageManager;
 
@@ -364,8 +356,8 @@ export function createInstallationPlan(selection: InstallationSelection, package
     selection.method === 'cdn'
       ? createCdnSteps(selection)
       : selection.method === 'shadcn'
-        ? createShadcnSteps(selection)
-        : createPackagedSteps(selection);
+        ? createShadcnSteps(selection, packageVersion)
+        : createPackagedSteps(selection, packageVersion);
   const docsFramework = selection.framework === 'react' ? 'react' : 'html';
 
   return {

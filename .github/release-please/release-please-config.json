@@ -22,6 +22,7 @@
         "@videojs/hlsjs-video",
         "@videojs/html",
         "@videojs/icons",
+        "@videojs/installation",
         "@videojs/media",
         "@videojs/mux-audio",
         "@videojs/mux-data",
@@ -94,6 +95,12 @@
     },
     "packages/icons": {
       "component": "@videojs/icons",
+      "prerelease": true,
+      "prerelease-type": "rc",
+      "versioning": "prerelease"
+    },
+    "packages/installation": {
+      "component": "@videojs/installation",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"

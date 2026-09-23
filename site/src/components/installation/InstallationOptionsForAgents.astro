@@ -29,13 +29,7 @@ const queryOptions = definitions
     if (option.flag === '--framework') return route === 'shadcn';
 
     return true;
-  })
-  .map((option) => {
-    if (option.flag === '--package-manager') return { ...option, flag: '--install-method' };
-
-    return option;
   });
-const hasInstallMethod = queryOptions.some(({ flag }) => flag === '--install-method');
 const availablePresets = queryOptions.find(({ flag }) => flag === '--preset')?.values ?? [];
 const mediaByPreset = Object.entries(installationCompatibility.mediaByPreset).filter(([preset]) =>
   availablePresets.includes(preset)
@@ -76,21 +70,19 @@ const routeExamples = [
   <ul>
     {queryOptions.map((option) => (
       <li>
-        <code>{option.flag.replace(/^--/, '')}</code>: {option.description}{' '}
+        <code>{option.query}</code>: {option.description}{' '}
         {option.values && (
           <>
             Values: {option.values.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}.{' '}
           </>
         )}
-        Default: {option.default}.
+        Default: {option.default}.{option.appliesWhen && <> Applies when {option.appliesWhen.replaceAll('--', '')}.</>}
       </li>
     ))}
   </ul>
 
   <p>
-    Query names match the flags above without leading dashes{hasInstallMethod && (
-      <>, except <code>install-method</code> corresponds to the <code>--package-manager</code> flag</>
-    )}. Run a bare package command above to see the same options for the installed package version.
+    Run a bare package command above to see the corresponding CLI flags for the installed package version.
   </p>
 
   <h3>Compatible media sources by preset</h3>

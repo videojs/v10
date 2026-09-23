@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   createInstallationDiscovery,
+  installationCompatibility,
   installationOptionDefinitionsFor,
   renderInstallationCompatibilityMarkdown,
 } from '@videojs/installation';
@@ -283,17 +284,11 @@ export function generateInstallationIndex(siteUrl = 'https://videojs.org'): stri
       ['--preset', '--skin', '--media', '--source-url', '--package-manager', '--template', '--styling'].includes(flag)
     )
     .map((option) => {
-      const key = option.flag.replace(/^--/, '');
-      const queryKey = key === 'package-manager' ? 'install-method' : key;
+      const key = option.query;
       const values = option.values ? ` Values: ${option.values.map((value) => `\`${value}\``).join(', ')}.` : '';
-      const applies =
-        option.flag === '--package-manager'
-          ? ' Applies to Packaged and Shadcn pages.'
-          : option.flag === '--template' || option.flag === '--styling'
-            ? ' Applies to the Shadcn page.'
-            : '';
+      const applies = option.appliesWhen ? ` Applies when ${option.appliesWhen.replaceAll('--', '')}.` : '';
 
-      return `- \`${queryKey}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
+      return `- \`${key}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
     })
     .join('\n');
 
@@ -337,7 +332,7 @@ ${optionLines}
 
 ## Compatibility
 
-${renderInstallationCompatibilityMarkdown(react.compatibility)}
+${renderInstallationCompatibilityMarkdown(installationCompatibility)}
 `;
 }
 
@@ -1039,7 +1034,7 @@ export function generateRootIndex({
 
   content += `> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n\n`;
 
-  content += `> Print version-matched installation options without changing files: \`npx @videojs/react@latest agents init\` or \`npx @videojs/html@latest agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/react agents init\` or \`npx @videojs/html agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
 
   content += `## Documentation\n\n`;
 
@@ -1110,7 +1105,7 @@ export function generateDocsIndex(
 
   content += `> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.\n\n`;
 
-  content += `> Print version-matched installation options without changing files: \`npx @videojs/${framework}@latest agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/${framework} agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
 
   // Get sidebar filtered for this framework (production only)
   if (!isValidFramework(framework)) return content;

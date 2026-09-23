@@ -45,8 +45,7 @@ export const INSTALLATION_ROUTES = {
     slug: 'guides/installation-svelte',
   },
   shadcn: {
-    description:
-      'Use the Video.js Shadcn registry to add editable React or HTML custom-element skin source to your project',
+    description: 'Add editable React or HTML skin source with the Shadcn registry',
     framework: 'react',
     frameworks: ['react', 'html'],
     pickerFramework: 'react',
@@ -71,4 +70,15 @@ export function isInstallationRouteSegment(value: string | undefined): value is 
 
 export function getInstallationRoutePath(route: InstallationRouteSegment): string {
   return `/docs/guides/installation/${route}`;
+}
+
+/** Resolve a canonical installation route from its HTML or Markdown pathname. */
+export function getInstallationRouteSegment(pathname: string): InstallationRouteSegment | null {
+  const normalized = pathname.replace(/\.md$/, '').replace(/\/$/, '');
+  const prefix = '/docs/guides/installation/';
+  if (!normalized.startsWith(prefix)) return null;
+
+  const route = normalized.slice(prefix.length);
+
+  return isInstallationRouteSegment(route) ? route : null;
 }

@@ -17,7 +17,6 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     window.__videojsDocsNavigationController?.abort();
     delete window.__videojsDocsNavigationController;
     currentFramework.set(null);
-    registryFramework.set('react');
     registryProjectFramework.set('react');
     registryStyling.set(null);
     registryTemplate.set(null);
@@ -49,7 +48,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
   it('synchronizes the query-controlled Shadcn framework', () => {
     currentFramework.set('react');
-    registryFramework.set('react');
+    registryProjectFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
@@ -70,7 +69,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
   it('uses the saved preference when the Shadcn query is missing', () => {
     currentFramework.set('react');
-    registryFramework.set('react');
+    registryProjectFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'));

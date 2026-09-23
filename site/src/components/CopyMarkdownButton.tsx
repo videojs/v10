@@ -1,5 +1,5 @@
 import { Menu } from '@base-ui/react/menu';
-import { isInstallationFramework } from '@videojs/installation';
+import { isInstallationFramework, PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 import clsx from 'clsx';
 import { useState } from 'react';
 
@@ -10,10 +10,11 @@ import Markdown from '@/assets/icons/markdown.svg?react';
 import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
 import { resolveShadcnUrlSelection, SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
+import { getInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
-  serializeInstallationSearch,
+  serializeInstallationSearchForRoute,
 } from '@/utils/installation/url-state';
 import useIsHydrated from '@/utils/useIsHydrated';
 
@@ -38,12 +39,12 @@ export function markdownUrl(
   // infrastructure may add them back.
   const pathname = location.pathname.replace(/\/+$/, '');
   const url = new URL(`${location.origin}${pathname}.md${location.search}`);
-  const installationRoute = pathname.match(/^\/docs\/guides\/installation\/([^/]+)$/)?.[1];
+  const installationRoute = getInstallationRouteSegment(pathname);
 
   if (installationRoute) {
     const selection = normalizeInstallationSelectionForRoute(installationRoute, parseInstallationSearch(url.search));
 
-    url.search = serializeInstallationSearch(selection, url.search);
+    url.search = serializeInstallationSearchForRoute(installationRoute, selection, url.search);
   }
 
   if (
@@ -63,6 +64,17 @@ export function markdownUrl(
   }
 
   return url.toString();
+}
+
+/** Remove private installation input before embedding a documentation URL in a third-party assistant link. */
+export function publicMarkdownUrl(url: string): string {
+  if (url === '#') return url;
+
+  const publicUrl = new URL(url);
+
+  for (const parameter of PRIVATE_INSTALLATION_QUERY_PARAMETERS) publicUrl.searchParams.delete(parameter);
+
+  return publicUrl.toString();
 }
 
 function assistantPrompt(url: string): string {
@@ -140,7 +152,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
 
   // Links are built on the client since they embed the page's own URL; the server renders the menu closed.
   const mdUrl = isHydrated ? menuMarkdownUrl : '#';
-  const prompt = isHydrated ? encodeURIComponent(assistantPrompt(mdUrl)) : '';
+  const prompt = isHydrated ? encodeURIComponent(assistantPrompt(publicMarkdownUrl(mdUrl))) : '';
 
   const ariaLabel = state.status === 'success' ? 'Copied' : 'Copy page as Markdown';
   const label = state.status === 'success' ? 'Copied' : state.status === 'error' ? 'Error' : 'Copy page';

@@ -1,6 +1,6 @@
 ---
 title: Shadcn Installation Guide
-description: Use the Video.js Shadcn registry to add editable React or HTML custom-element skin source to your project
+description: Add editable React or HTML skin source with the Shadcn registry
 ---
 
 import Aside from '@/components/Aside.astro';
@@ -56,7 +56,7 @@ Choose from the installation options available for your selections.
 Choose the ready-made player that is closest to what you are building. The Shadcn registry does not currently provide the background video skin as source.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:idle includeBackground={false} />
+  <UseCasePicker client:load includeBackground={false} />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -64,7 +64,7 @@ Choose the ready-made player that is closest to what you are building. The Shadc
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:load />
 </ContentWidth>
 
 ## Choose your media source
@@ -72,7 +72,7 @@ Choose the ready-made player that is closest to what you are building. The Shadc
 Choose what the player will play. If that source needs a playback adapter, the installation steps include it.
 
 <ContentWidth margins="lg">
-  <MediaSourcePicker client:idle />
+  <MediaSourcePicker client:load />
 </ContentWidth>
 
 </HumanCase>
@@ -121,7 +121,7 @@ The files are added under `components/videojs/<preset>`. The registry item also 
 The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/html`.
 </ShadcnFrameworkCase>
 
-<SourceMediaInstall client:idle />
+<SourceMediaInstall client:load />
 
 ## Add your player
 
@@ -129,7 +129,7 @@ The files are added under `components/videojs/<preset>`. The registry item also 
 Add the player directly to `app/page.tsx`. It imports the player and media from the package, then imports the selected skin from your project.
 
 <ContentWidth>
-  <SourceReactPlayer client:idle />
+  <SourceReactPlayer client:load />
 </ContentWidth>
 </ShadcnFrameworkCase>
 
@@ -138,13 +138,13 @@ The HTML source also works in Vue and Svelte. Follow the custom-element setup in
 
 <Steps>
   <Step number={1} title="Add the media element">
-    <SourceHTMLPlayer client:idle part="media" />
+    <SourceHTMLPlayer client:load part="media" />
   </Step>
   <Step number={2} title="Register the custom elements">
-    <SourceHTMLPlayer client:idle part="imports" />
+    <SourceHTMLPlayer client:load part="imports" />
   </Step>
   <Step number={3} title="Add the player to your page">
-    <SourceHTMLPlayer client:idle part="player" />
+    <SourceHTMLPlayer client:load part="player" />
   </Step>
 </Steps>
 </ShadcnFrameworkCase>

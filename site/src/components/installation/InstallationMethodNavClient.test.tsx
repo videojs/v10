@@ -28,9 +28,7 @@ describe('InstallationMethodNavClient', () => {
   });
 
   it('shows the methods supported by React', () => {
-    const markup = renderToString(
-      <InstallationMethodNavClient currentFramework="react" route="react" cdnMediaSubpaths={[]} />
-    );
+    const markup = renderToString(<InstallationMethodNavClient currentFramework="react" route="react" />);
 
     expect(markup).toContain('data-installation-method="packaged"');
     expect(markup).toContain('data-installation-method="shadcn"');
@@ -39,9 +37,7 @@ describe('InstallationMethodNavClient', () => {
   });
 
   it('shows every method supported by HTML', () => {
-    const markup = renderToString(
-      <InstallationMethodNavClient currentFramework="html" route="cdn" cdnMediaSubpaths={[]} />
-    );
+    const markup = renderToString(<InstallationMethodNavClient currentFramework="html" route="cdn" />);
 
     expect(markup).toContain('data-installation-method="packaged"');
     expect(markup).toContain('data-installation-method="shadcn"');
@@ -49,37 +45,17 @@ describe('InstallationMethodNavClient', () => {
     expect(markup).toContain('data-installation-method="cdn"');
   });
 
-  it('only offers CDN when the selected media has a published CDN bundle', () => {
-    renderer.set('hls');
-
-    const unavailable = renderToString(
-      <InstallationMethodNavClient currentFramework="html" route="html" cdnMediaSubpaths={[]} />
-    );
-    const available = renderToString(
-      <InstallationMethodNavClient currentFramework="html" route="html" cdnMediaSubpaths={['hlsjs-video']} />
-    );
-
-    expect(unavailable).not.toContain('data-installation-method="cdn"');
-    expect(available).toContain('data-installation-method="cdn"');
-  });
-
   it('keeps the active CDN method visible while route state is normalized', () => {
     renderer.set('vimeo');
 
-    const markup = renderToString(
-      <InstallationMethodNavClient currentFramework="html" route="cdn" cdnMediaSubpaths={[]} />
-    );
+    const markup = renderToString(<InstallationMethodNavClient currentFramework="html" route="cdn" />);
 
     expect(markup).toContain('data-installation-method="cdn"');
   });
 
   it('offers Vue and Svelte the HTML Shadcn source', () => {
-    const vue = renderToString(
-      <InstallationMethodNavClient currentFramework="vue" route="vue" cdnMediaSubpaths={[]} />
-    );
-    const svelte = renderToString(
-      <InstallationMethodNavClient currentFramework="svelte" route="svelte" cdnMediaSubpaths={[]} />
-    );
+    const vue = renderToString(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
+    const svelte = renderToString(<InstallationMethodNavClient currentFramework="svelte" route="svelte" />);
 
     expect(vue).toContain('data-installation-method="packaged"');
     expect(vue).toContain('data-installation-method="shadcn"');
@@ -98,9 +74,7 @@ describe('InstallationMethodNavClient', () => {
     useCase.set('background-video');
     renderer.set('background-video');
 
-    const background = renderToString(
-      <InstallationMethodNavClient currentFramework="vue" route="vue" cdnMediaSubpaths={[]} />
-    );
+    const background = renderToString(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
 
     expect(background).not.toContain('data-installation-method="shadcn"');
 
@@ -108,9 +82,7 @@ describe('InstallationMethodNavClient', () => {
     renderer.set('html5-video');
     skin.set('none');
 
-    const noSkin = renderToString(
-      <InstallationMethodNavClient currentFramework="svelte" route="svelte" cdnMediaSubpaths={[]} />
-    );
+    const noSkin = renderToString(<InstallationMethodNavClient currentFramework="svelte" route="svelte" />);
 
     expect(noSkin).not.toContain('data-installation-method="shadcn"');
   });
@@ -121,9 +93,7 @@ describe('InstallationMethodNavClient', () => {
     skin.set('minimal-audio');
     renderer.set('html5-audio');
 
-    const { getByRole } = render(
-      <InstallationMethodNavClient currentFramework="vue" route="vue" cdnMediaSubpaths={[]} />
-    );
+    const { getByRole } = render(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
     const link = getByRole('link', { name: /Shadcn/ });
 
     await waitFor(() => expect(link.getAttribute('href')).toContain('preset=audio'));
@@ -140,9 +110,7 @@ describe('InstallationMethodNavClient', () => {
   });
 
   it('prerenders a stable Shadcn card set and lets CSS reveal the HTML-only method', () => {
-    const markup = renderToString(
-      <InstallationMethodNavClient currentFramework="react" route="shadcn" cdnMediaSubpaths={[]} />
-    );
+    const markup = renderToString(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
 
     expect(markup).toContain('data-installation-method="packaged"');
     expect(markup).toContain('data-installation-method="shadcn"');
@@ -155,9 +123,7 @@ describe('InstallationMethodNavClient', () => {
     useCase.set('default-audio');
     skin.set('minimal-audio');
     renderer.set('html5-audio');
-    const { getByRole } = render(
-      <InstallationMethodNavClient currentFramework="react" route="react" cdnMediaSubpaths={[]} />
-    );
+    const { getByRole } = render(<InstallationMethodNavClient currentFramework="react" route="react" />);
     const link = getByRole('link', { name: /Shadcn/ });
 
     await waitFor(() => expect(link.getAttribute('href')).toContain('preset=audio'));
@@ -175,9 +141,7 @@ describe('InstallationMethodNavClient', () => {
 
   it('leaves modified clicks to the native link behavior', () => {
     window.history.replaceState(null, '', '/docs/guides/installation/react');
-    const { getByRole } = render(
-      <InstallationMethodNavClient currentFramework="react" route="react" cdnMediaSubpaths={[]} />
-    );
+    const { getByRole } = render(<InstallationMethodNavClient currentFramework="react" route="react" />);
     const link = getByRole('link', { name: /Shadcn/ });
 
     link.setAttribute('target', '_blank');

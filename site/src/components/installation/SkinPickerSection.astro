@@ -11,7 +11,7 @@ interface Props {
 const { includeNoSkin = true, source = false } = Astro.props;
 ---
 
-<SkinPickerSectionClient client:idle includeNoSkin={includeNoSkin}>
+<SkinPickerSectionClient client:load includeNoSkin={includeNoSkin}>
   <H2Markdown id="choose-your-skin">Choose your skin</H2Markdown>
   <P>
     {

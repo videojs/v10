@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import CopyMarkdownButton, { markdownUrl } from './CopyMarkdownButton';
+import CopyMarkdownButton, { markdownUrl, publicMarkdownUrl } from '../CopyMarkdownButton';
 
 afterEach(() => {
   cleanup();
@@ -41,7 +41,7 @@ describe('markdownUrl', () => {
           origin: 'https://videojs.org',
           pathname: '/docs/guides/installation/shadcn',
           search:
-            '?framework=html&preset=audio&skin=fancy&media=youtube&install-method=deno&template=next&styling=tailwind',
+            '?framework=html&preset=audio&skin=fancy&media=youtube&package-manager=deno&template=next&styling=tailwind',
         },
         'html'
       )
@@ -87,9 +87,44 @@ describe('markdownUrl', () => {
       markdownUrl({
         origin: 'https://videojs.org',
         pathname: '/docs/guides/installation/shadcn',
-        search:
-          '?framework=react&preset=background-video&skin=none&media=background-video&install-method=yarn&package-manager=pnpm',
+        search: '?framework=react&preset=background-video&skin=none&media=background-video&package-manager=pnpm',
       })
-    ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=react&install-method=yarn');
+    ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=react&package-manager=pnpm');
+  });
+
+  it('keeps a private source URL for copying but removes it from assistant links', () => {
+    const url = markdownUrl({
+      origin: 'https://videojs.org',
+      pathname: '/docs/guides/installation/react',
+      search: '?source-url=https%3A%2F%2Fexample.com%2Fsigned.m3u8&preset=audio&template=next&styling=tailwind',
+    });
+
+    expect(url).toContain('source-url=');
+    expect(publicMarkdownUrl(url)).toBe('https://videojs.org/docs/guides/installation/react.md?preset=audio');
+  });
+
+  it('never sends a private source URL to an assistant', async () => {
+    const user = userEvent.setup();
+
+    window.history.replaceState(
+      null,
+      '',
+      '/docs/guides/installation/react?preset=audio&source-url=https%3A%2F%2Fexample.com%2Fsigned.m3u8'
+    );
+    render(createElement(CopyMarkdownButton));
+
+    await user.click(await screen.findByRole('button', { name: 'More ways to use this page' }));
+
+    expect(await screen.findByRole('menuitem', { name: 'View as Markdown' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('source-url=')
+    );
+
+    for (const name of ['Open in ChatGPT', 'Open in Claude']) {
+      const href = (await screen.findByRole('menuitem', { name })).getAttribute('href') ?? '';
+
+      expect(decodeURIComponent(href)).not.toContain('source-url');
+      expect(decodeURIComponent(href)).not.toContain('signed.m3u8');
+    }
   });
 });

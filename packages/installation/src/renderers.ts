@@ -1,5 +1,11 @@
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
 
+/** Mux Data extension subpath shared by package and CDN instructions. */
+export const MUX_DATA_EXTENSION_SUBPATH = 'mux-data';
+
+/** Package that ships the Mux Data extension. */
+export const MUX_DATA_PACKAGE = '@videojs/mux-data';
+
 export interface InstallationRendererDefinition {
   readonly label: string;
   readonly article: 'a' | 'an';
@@ -181,7 +187,7 @@ export const INSTALLATION_RENDERERS = {
 export type Renderer = keyof typeof INSTALLATION_RENDERERS;
 
 /** Renderer ids in picker-independent catalog order. Presets own their display order. */
-export const RENDERERS = Object.keys(INSTALLATION_RENDERERS).filter(isRenderer);
+export const RENDERERS: readonly Renderer[] = Object.freeze(Object.keys(INSTALLATION_RENDERERS).filter(isRenderer));
 
 export function getInstallationRenderer(renderer: Renderer): InstallationRendererDefinition {
   return INSTALLATION_RENDERERS[renderer];

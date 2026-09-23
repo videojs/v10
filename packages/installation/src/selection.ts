@@ -1,5 +1,15 @@
 import { rendererSupportsCdn } from './cdn-code';
 import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion } from './defaults';
+import { PACKAGE_MANAGERS, type InstallationInput, type InstallationInputKey, type PackageManager } from './parameters';
+export { PACKAGE_MANAGERS, type PackageManager } from './parameters';
+import {
+  getInstallationPreset,
+  INSTALLATION_PRESETS,
+  INSTALLATION_SKIN_FLAGS,
+  USE_CASES,
+  type Skin,
+  type UseCase,
+} from './presets';
 import { RENDERERS, type Renderer } from './renderers';
 import {
   defaultRegistryStyling,
@@ -10,14 +20,6 @@ import {
   type RegistryStyling,
   type RegistryTemplate,
 } from './shadcn';
-import {
-  getInstallationPreset,
-  INSTALLATION_PRESETS,
-  INSTALLATION_SKIN_FLAGS,
-  USE_CASES,
-  type Skin,
-  type UseCase,
-} from './types';
 
 export const INSTALLATION_METHODS = ['packaged', 'shadcn', 'cdn'] as const;
 export type InstallationMethod = (typeof INSTALLATION_METHODS)[number];
@@ -25,8 +27,7 @@ export type InstallationMethod = (typeof INSTALLATION_METHODS)[number];
 export const INSTALLATION_FRAMEWORKS = ['react', 'html', 'vue', 'svelte'] as const;
 export type InstallationFramework = (typeof INSTALLATION_FRAMEWORKS)[number];
 
-export const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const;
-export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
+export type InstallMethod = 'cdn' | PackageManager;
 
 const INSTALLATION_METHODS_BY_FRAMEWORK = {
   react: ['packaged', 'shadcn'],
@@ -38,18 +39,6 @@ const INSTALLATION_METHODS_BY_FRAMEWORK = {
 export type PlayerOwner = 'html' | 'react';
 export type PresetFlag = (typeof INSTALLATION_PRESETS)[UseCase]['flag'];
 export type SkinFlag = (typeof INSTALLATION_SKIN_FLAGS)[number];
-
-export interface InstallationInput {
-  method?: string;
-  framework?: string;
-  preset?: string;
-  skin?: string;
-  media?: string;
-  sourceUrl?: string;
-  packageManager?: string;
-  template?: string;
-  styling?: string;
-}
 
 export interface InstallationSelection {
   owner: PlayerOwner;
@@ -69,7 +58,6 @@ export interface InstallationSelection {
   defaulted: readonly InstallationInputKey[];
 }
 
-export type InstallationInputKey = keyof InstallationInput;
 export type SelectionErrorField = InstallationInputKey | 'arguments';
 
 export interface SelectionError {
@@ -84,6 +72,20 @@ export type SelectionResult =
 
 function includes<const Values extends readonly string[]>(values: Values, value: string): value is Values[number] {
   return values.includes(value);
+}
+
+function resolveChoice<const Values extends readonly string[]>(
+  field: InstallationInputKey,
+  requested: string,
+  values: Values,
+  fallback: Values[number],
+  errors: SelectionError[]
+): Values[number] {
+  if (includes(values, requested)) return requested;
+
+  errors.push({ field, value: requested, message: `Expected one of: ${values.join(', ')}` });
+
+  return fallback;
 }
 
 export function containsControlCharacter(value: string): boolean {
@@ -159,27 +161,11 @@ export function resolveInstallationSelection(
   };
 
   const methodValue = defaultValue('method', 'packaged');
-  const method = includes(INSTALLATION_METHODS, methodValue) ? methodValue : 'packaged';
-
-  if (method !== methodValue) {
-    errors.push({
-      field: 'method',
-      value: methodValue,
-      message: `Expected one of: ${INSTALLATION_METHODS.join(', ')}`,
-    });
-  }
+  const method = resolveChoice('method', methodValue, INSTALLATION_METHODS, 'packaged', errors);
 
   const defaultFramework = owner === 'react' ? 'react' : 'html';
   const frameworkValue = defaultValue('framework', defaultFramework);
-  const framework = isInstallationFramework(frameworkValue) ? frameworkValue : defaultFramework;
-
-  if (framework !== frameworkValue) {
-    errors.push({
-      field: 'framework',
-      value: frameworkValue,
-      message: `Expected one of: ${INSTALLATION_FRAMEWORKS.join(', ')}`,
-    });
-  }
+  const framework = resolveChoice('framework', frameworkValue, INSTALLATION_FRAMEWORKS, defaultFramework, errors);
 
   if (owner === 'react' && framework !== 'react') {
     errors.push({
@@ -196,24 +182,19 @@ export function resolveInstallationSelection(
   }
 
   const presetValue = defaultValue('preset', 'video');
-  const useCase = useCaseFromPreset(presetValue) ?? 'default-video';
+  const presetFlags = Object.values(INSTALLATION_PRESETS).map(({ flag }) => flag);
+  const preset = resolveChoice('preset', presetValue, presetFlags, 'video', errors);
+  const requestedUseCase = useCaseFromPreset(preset);
+  const useCase = requestedUseCase ?? 'default-video';
 
-  if (!useCaseFromPreset(presetValue)) {
-    const presets = Object.values(INSTALLATION_PRESETS).map(({ flag }) => flag);
+  const skinValue = useCase === 'background-video' ? 'default' : defaultValue('skin', 'default');
+  const skinFlag = resolveChoice('skin', skinValue, INSTALLATION_SKIN_FLAGS, 'default', errors);
 
-    errors.push({ field: 'preset', value: presetValue, message: `Expected one of: ${presets.join(', ')}` });
-  }
-
-  const preset = INSTALLATION_PRESETS[useCase].flag;
-
-  const skinValue = defaultValue('skin', 'default');
-  const skinFlag = isSkinFlag(skinValue) ? skinValue : 'default';
-
-  if (skinFlag !== skinValue) {
+  if (useCase === 'background-video' && input.skin !== undefined) {
     errors.push({
       field: 'skin',
-      value: skinValue,
-      message: `Expected one of: ${INSTALLATION_SKIN_FLAGS.join(', ')}`,
+      value: input.skin,
+      message: 'does not apply to the background-video preset, which has one purpose-built skin.',
     });
   }
 
@@ -221,11 +202,9 @@ export function resolveInstallationSelection(
 
   const availableMedia = getInstallationPreset(useCase).renderers;
   const mediaValue = defaultValue('media', availableMedia[0]!);
-  const media = includes(RENDERERS, mediaValue) ? mediaValue : availableMedia[0]!;
+  const media = resolveChoice('media', mediaValue, RENDERERS, availableMedia[0]!, errors);
 
-  if (!includes(RENDERERS, mediaValue)) {
-    errors.push({ field: 'media', value: mediaValue, message: `Expected one of: ${RENDERERS.join(', ')}` });
-  } else if (!availableMedia.includes(mediaValue)) {
+  if (includes(RENDERERS, mediaValue) && !availableMedia.includes(mediaValue)) {
     errors.push({
       field: 'media',
       value: mediaValue,
@@ -234,15 +213,7 @@ export function resolveInstallationSelection(
   }
 
   const packageManagerValue = defaultValue('packageManager', 'npm');
-  const packageManager = isPackageManager(packageManagerValue) ? packageManagerValue : 'npm';
-
-  if (packageManager !== packageManagerValue) {
-    errors.push({
-      field: 'packageManager',
-      value: packageManagerValue,
-      message: `Expected one of: ${PACKAGE_MANAGERS.join(', ')}`,
-    });
-  }
+  const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'npm', errors);
 
   const sourceUrl = input.sourceUrl?.trim() ?? '';
 
@@ -265,7 +236,7 @@ export function resolveInstallationSelection(
     }
 
     if (input.packageManager !== undefined) {
-      errors.push({ field: 'packageManager', message: '--package-manager does not apply to CDN installation.' });
+      errors.push({ field: 'packageManager', message: 'does not apply to CDN installation.' });
     }
 
     if (!rendererSupportsCdn(media, CDN_MEDIA_SUBPATHS)) {
@@ -291,35 +262,21 @@ export function resolveInstallationSelection(
     }
 
     const templateValue = defaultValue('template', defaultRegistryTemplate(framework));
+    const templates = registryTemplates(sourceFramework);
 
-    if (includes(registryTemplates(sourceFramework), templateValue)) template = templateValue;
-    else {
-      errors.push({
-        field: 'template',
-        value: templateValue,
-        message: `Expected one of: ${registryTemplates(sourceFramework).join(', ')}`,
-      });
-      template = defaultRegistryTemplate(framework);
-    }
+    template = resolveChoice('template', templateValue, templates, defaultRegistryTemplate(framework), errors);
 
     const stylingValue = defaultValue('styling', defaultRegistryStyling(sourceFramework));
+    const stylings = registryStylings(sourceFramework);
 
-    if (includes(registryStylings(sourceFramework), stylingValue)) styling = stylingValue;
-    else {
-      errors.push({
-        field: 'styling',
-        value: stylingValue,
-        message: `Expected one of: ${registryStylings(sourceFramework).join(', ')}`,
-      });
-      styling = defaultRegistryStyling(sourceFramework);
-    }
+    styling = resolveChoice('styling', stylingValue, stylings, defaultRegistryStyling(sourceFramework), errors);
   } else {
     if (input.template !== undefined) {
-      errors.push({ field: 'template', message: '--template only applies to Shadcn installation.' });
+      errors.push({ field: 'template', message: 'only applies to Shadcn installation.' });
     }
 
     if (input.styling !== undefined) {
-      errors.push({ field: 'styling', message: '--styling only applies to Shadcn installation.' });
+      errors.push({ field: 'styling', message: 'only applies to Shadcn installation.' });
     }
   }
 

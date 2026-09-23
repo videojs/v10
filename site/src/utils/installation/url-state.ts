@@ -14,9 +14,11 @@ import {
   type UseCase,
 } from '@videojs/installation';
 
+import type { InstallationRouteSegment } from './routes';
+
 /**
- * The installation choices encoded in the page URL. `install-method` stores the package manager on package-based routes
- * and stays at its default on the CDN route.
+ * The installation choices encoded in the page URL. `package-manager` stores the package manager on package-based
+ * routes and stays at its default on the CDN route.
  */
 export interface InstallationUiSelection {
   useCase: UseCase;
@@ -81,7 +83,7 @@ export function parseInstallationSearch(search: string): InstallationUiSelection
 
   selection.renderer = renderers.find((candidate) => candidate === media) ?? renderers[0]!;
 
-  const installMethod = params.get('install-method') ?? '';
+  const installMethod = params.get('package-manager') ?? '';
 
   if (isInstallMethod(installMethod)) selection.installMethod = installMethod;
 
@@ -106,14 +108,37 @@ export function serializeInstallationSearch(selection: InstallationUiSelection, 
     else params.set(key, value);
   };
 
-  // The interactive pages use `install-method`; `package-manager` is accepted only by the Markdown renderer.
-  params.delete('package-manager');
-
   write('preset', preset.flag, INSTALLATION_PRESETS[DEFAULT_SELECTION.useCase].flag);
-  write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
+
+  if (selection.useCase === 'background-video') params.delete('skin');
+  else write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
+
   write('media', selection.renderer, defaults.renderer);
-  write('install-method', selection.installMethod, DEFAULT_SELECTION.installMethod);
+  write('package-manager', selection.installMethod, DEFAULT_SELECTION.installMethod);
   write('source-url', selection.sourceUrl, '');
+
+  const string = params.toString();
+
+  return string ? `?${string}` : '';
+}
+
+/** Remove installation parameters that the current guide cannot apply while retaining unrelated campaign params. */
+export function serializeInstallationSearchForRoute(
+  route: InstallationRouteSegment | '',
+  selection: InstallationUiSelection,
+  search = ''
+): string {
+  const params = new URLSearchParams(serializeInstallationSearch(selection, search));
+
+  params.delete('method');
+
+  if (route !== 'shadcn') {
+    params.delete('framework');
+    params.delete('template');
+    params.delete('styling');
+  }
+
+  if (route === 'cdn') params.delete('package-manager');
 
   const string = params.toString();
 

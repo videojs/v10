@@ -30,7 +30,7 @@ const templateLabels = new Map<string, string>(
 const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
 ---
 
-<RegistryInitCommandClient client:idle framework={framework} installation={installation} />
+<RegistryInitCommandClient client:load framework={framework} installation={installation} />
 
 <div hidden data-llms-only>
   <p>

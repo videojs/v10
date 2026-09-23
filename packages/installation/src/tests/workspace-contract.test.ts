@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { INSTALLATION_RENDERERS } from '../renderers';
-import { MUX_DATA_PACKAGE } from '../types';
+import { MUX_DATA_PACKAGE } from '../renderers';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../../..');
 

@@ -1,7 +1,8 @@
+import { installationParameterForKey, PACKAGE_MANAGERS, type InstallationInputKey } from './parameters';
+import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from './presets';
 import { RENDERERS, type Renderer } from './renderers';
 import {
   INSTALLATION_FRAMEWORKS,
-  PACKAGE_MANAGERS,
   installationMethodsForFramework,
   sourceFrameworkFor,
   type InstallationFramework,
@@ -10,15 +11,31 @@ import {
   type PresetFlag,
   type SkinFlag,
 } from './selection';
-import { registryStylings, registryTemplates, type RegistryStyling, type RegistryTemplate } from './shadcn';
-import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from './types';
+import {
+  defaultRegistryStyling,
+  defaultRegistryTemplate,
+  registryStylings,
+  registryTemplates,
+  type RegistryStyling,
+  type RegistryTemplate,
+} from './shadcn';
 
 export interface InstallationOptionDefinition {
   flag: string;
+  query?: string;
   values?: readonly string[];
   default: string;
   description: string;
   appliesWhen?: string;
+}
+
+function optionDefinition(
+  key: InstallationInputKey,
+  definition: Omit<InstallationOptionDefinition, 'flag' | 'query'>
+): InstallationOptionDefinition {
+  const parameter = installationParameterForKey(key);
+
+  return { ...definition, flag: parameter.flag, query: parameter.query };
 }
 
 export interface InstallationOptionContext {
@@ -34,6 +51,17 @@ export interface InstallationCompatibility {
     skins: readonly SkinFlag[];
     templatesByFramework: Readonly<Record<InstallationFramework, readonly RegistryTemplate[]>>;
     stylingsByFramework: Readonly<Record<InstallationFramework, readonly RegistryStyling[]>>;
+  };
+}
+
+export interface InstallationDiscoveryCompatibility {
+  methodsByFramework: Readonly<Partial<InstallationCompatibility['methodsByFramework']>>;
+  mediaByPreset: InstallationCompatibility['mediaByPreset'];
+  shadcn: {
+    presets: InstallationCompatibility['shadcn']['presets'];
+    skins: InstallationCompatibility['shadcn']['skins'];
+    templatesByFramework: Readonly<Partial<InstallationCompatibility['shadcn']['templatesByFramework']>>;
+    stylingsByFramework: Readonly<Partial<InstallationCompatibility['shadcn']['stylingsByFramework']>>;
   };
 }
 
@@ -73,6 +101,35 @@ export const installationCompatibility: InstallationCompatibility = {
   },
 };
 
+export function installationCompatibilityFor(
+  frameworks: readonly InstallationFramework[]
+): InstallationDiscoveryCompatibility {
+  return {
+    methodsByFramework: Object.fromEntries(
+      frameworks.map((framework) => [framework, installationCompatibility.methodsByFramework[framework]])
+    ),
+    mediaByPreset: installationCompatibility.mediaByPreset,
+    shadcn: {
+      presets: installationCompatibility.shadcn.presets,
+      skins: installationCompatibility.shadcn.skins,
+      templatesByFramework: Object.fromEntries(
+        frameworks.map((framework) => [framework, installationCompatibility.shadcn.templatesByFramework[framework]])
+      ),
+      stylingsByFramework: Object.fromEntries(
+        frameworks.map((framework) => [framework, installationCompatibility.shadcn.stylingsByFramework[framework]])
+      ),
+    },
+  };
+}
+
+function formatChoices(values: readonly string[]): string {
+  if (values.length < 2) return values[0] ?? '';
+
+  if (values.length === 2) return `${values[0]} or ${values[1]}`;
+
+  return `${values.slice(0, -1).join(', ')}, or ${values.at(-1)}`;
+}
+
 function unique<Choice extends string>(values: readonly Choice[]): Choice[] {
   return [...new Set(values)];
 }
@@ -88,81 +145,73 @@ export function installationOptionDefinitionsFor(
   const templates = unique(sourceFrameworks.flatMap((framework) => registryTemplates(framework)));
   const stylings = unique(sourceFrameworks.flatMap((framework) => registryStylings(framework)));
   const definitions: InstallationOptionDefinition[] = [
-    {
-      flag: '--method',
+    optionDefinition('method', {
       values: methods,
       default: methods[0]!,
-      description: 'Choose packaged modules, editable Shadcn source, or CDN scripts.',
-    },
-    {
-      flag: '--framework',
+      description: `Choose ${formatChoices(
+        methods.map((method) =>
+          method === 'packaged' ? 'packaged modules' : method === 'shadcn' ? 'editable Shadcn source' : 'CDN scripts'
+        )
+      )}.`,
+    }),
+    optionDefinition('framework', {
       values: frameworks,
       default: frameworks[0]!,
       description: 'The application framework that will host the player.',
-    },
-    {
-      flag: '--preset',
+    }),
+    optionDefinition('preset', {
       values: shadcnOnly
         ? installationCompatibility.shadcn.presets
         : Object.values(INSTALLATION_PRESETS).map(({ flag }) => flag),
       default: 'video',
       description: 'The player configuration and control set.',
-    },
-    {
-      flag: '--skin',
+    }),
+    optionDefinition('skin', {
       values: shadcnOnly ? installationCompatibility.shadcn.skins : INSTALLATION_SKIN_FLAGS,
       default: 'default',
       description: 'The visual skin. Minimal has cleaner surfaces and the same controls as Default.',
-    },
-    {
-      flag: '--media',
+      appliesWhen: '--preset is not background-video',
+    }),
+    optionDefinition('media', {
       values: RENDERERS,
       default: "the selected preset's first compatible media source",
       description: 'The media source or playback adapter. See the preset compatibility map below.',
-    },
-    {
-      flag: '--source-url',
+    }),
+    optionDefinition('sourceUrl', {
       default: 'a working Video.js demo source',
       description: 'The media URL placed in the generated player example.',
-    },
+    }),
   ];
 
   if (supportsPackages) {
-    definitions.push({
-      flag: '--package-manager',
-      values: PACKAGE_MANAGERS,
-      default: 'npm',
-      description: 'The command runner used for package and Shadcn commands.',
-      appliesWhen: '--method packaged or --method shadcn',
-    });
+    definitions.push(
+      optionDefinition('packageManager', {
+        values: PACKAGE_MANAGERS,
+        default: 'npm',
+        description: 'The command runner used for package and Shadcn commands.',
+        appliesWhen: '--method packaged or --method shadcn',
+      })
+    );
   }
 
   if (supportsShadcn) {
     definitions.push(
-      {
-        flag: '--template',
+      optionDefinition('template', {
         values: templates,
         default:
-          sourceFrameworks.length === 1
-            ? sourceFrameworks[0] === 'react'
-              ? 'next'
-              : 'vite'
-            : 'next for React; vite otherwise',
+          sourceFrameworks.length === 1 ? defaultRegistryTemplate(frameworks[0]!) : 'next for React; vite otherwise',
         description: 'The Shadcn project template. Compatible values depend on the framework.',
         appliesWhen: '--method shadcn',
-      },
-      {
-        flag: '--styling',
+      }),
+      optionDefinition('styling', {
         values: stylings,
         default:
           sourceFrameworks.length === 1
-            ? sourceFrameworks[0] === 'react'
-              ? 'tailwind'
-              : 'css'
+            ? defaultRegistryStyling(sourceFrameworks[0]!)
             : 'tailwind for React; css otherwise',
         description: 'The Shadcn source styling. Compatible values depend on the framework.',
         appliesWhen: '--method shadcn',
-      }
+      })
     );
   }
 

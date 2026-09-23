@@ -5,6 +5,7 @@ import {
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
   serializeInstallationSearch,
+  serializeInstallationSearchForRoute,
 } from '../url-state';
 
 describe('parseInstallationSearch', () => {
@@ -13,7 +14,7 @@ describe('parseInstallationSearch', () => {
   });
 
   it('reads the CLI vocabulary', () => {
-    expect(parseInstallationSearch('?preset=live-video&skin=minimal&media=hls&install-method=npm')).toEqual({
+    expect(parseInstallationSearch('?preset=live-video&skin=minimal&media=hls&package-manager=npm')).toEqual({
       useCase: 'live-video',
       skin: 'minimal-video',
       renderer: 'hls',
@@ -29,7 +30,7 @@ describe('parseInstallationSearch', () => {
   });
 
   it('drops media the preset cannot play and ignores unknown values', () => {
-    const selection = parseInstallationSearch('?preset=live-audio&media=youtube&skin=fancy&install-method=curl');
+    const selection = parseInstallationSearch('?preset=live-audio&media=youtube&skin=fancy&package-manager=curl');
 
     expect(selection.useCase).toBe('live-audio');
     expect(selection.renderer).toBe('mux-audio');
@@ -80,12 +81,26 @@ describe('serializeInstallationSearch', () => {
 
   it('preserves unrelated params', () => {
     expect(serializeInstallationSearch({ ...DEFAULT_SELECTION, installMethod: 'bun' }, '?utm_source=x')).toBe(
-      '?utm_source=x&install-method=bun'
+      '?utm_source=x&package-manager=bun'
     );
   });
 
-  it('drops the Markdown-only package-manager alias', () => {
-    expect(serializeInstallationSearch(DEFAULT_SELECTION, '?package-manager=pnpm&utm_source=x')).toBe('?utm_source=x');
+  it('omits the hidden skin choice for background video', () => {
+    const background = parseInstallationSearch('?preset=background-video&skin=minimal&media=background-video');
+
+    expect(serializeInstallationSearch(background)).toBe('?preset=background-video');
+  });
+});
+
+describe('serializeInstallationSearchForRoute', () => {
+  it('keeps only parameters supported by the current installation route', () => {
+    const search = '?method=shadcn&framework=vue&template=astro&styling=css&package-manager=pnpm&utm_source=docs';
+
+    expect(serializeInstallationSearchForRoute('vue', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
+    expect(serializeInstallationSearchForRoute('cdn', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
+    expect(serializeInstallationSearchForRoute('shadcn', DEFAULT_SELECTION, search)).toBe(
+      '?framework=vue&template=astro&styling=css&utm_source=docs'
+    );
   });
 });
 

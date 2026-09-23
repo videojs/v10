@@ -1,30 +1,13 @@
 import { renderDiscoveryMarkdown, renderInstallationMarkdown, renderSelectionErrors } from './markdown';
+import { installationInputKeyFromFlag, type InstallationInput } from './parameters';
 import { createInstallationDiscovery, createInstallationPlan } from './plan';
-import {
-  resolveInstallationSelection,
-  type InstallationInput,
-  type InstallationInputKey,
-  type PlayerOwner,
-  type SelectionError,
-} from './selection';
+import { resolveInstallationSelection, type PlayerOwner, type SelectionError } from './selection';
 
 export interface AgentsInitResult {
   exitCode: 0 | 1 | 2;
   stdout: string;
   stderr: string;
 }
-
-const FLAGS = {
-  '--method': 'method',
-  '--framework': 'framework',
-  '--preset': 'preset',
-  '--skin': 'skin',
-  '--media': 'media',
-  '--source-url': 'sourceUrl',
-  '--package-manager': 'packageManager',
-  '--template': 'template',
-  '--styling': 'styling',
-} as const satisfies Record<string, InstallationInputKey>;
 
 interface ParsedArguments {
   json: boolean;
@@ -34,10 +17,6 @@ interface ParsedArguments {
 }
 
 type ParseResult = { ok: true; value: ParsedArguments } | { ok: false; json: boolean; errors: SelectionError[] };
-
-function isInstallationFlag(value: string): value is keyof typeof FLAGS {
-  return value in FLAGS;
-}
 
 function parseArguments(args: readonly string[]): ParseResult {
   const json = args.includes('--json');
@@ -71,15 +50,15 @@ function parseArguments(args: readonly string[]): ParseResult {
     const equals = argument.indexOf('=');
     const flag = equals === -1 ? argument : argument.slice(0, equals);
 
-    if (!isInstallationFlag(flag)) {
+    const key = installationInputKeyFromFlag(flag);
+
+    if (!key) {
       return {
         ok: false,
         json,
         errors: [{ field: 'arguments', value: argument, message: `Unknown flag: ${argument}` }],
       };
     }
-
-    const key = FLAGS[flag];
 
     const value = equals === -1 ? args[++index] : argument.slice(equals + 1);
 
@@ -157,4 +136,15 @@ export function runAgentsInit(owner: PlayerOwner, packageVersion: string, args: 
       stderr: json ? '' : `Unable to create installation instructions: ${message}\n`,
     };
   }
+}
+
+/** Run the package's instruction-only agent CLI and publish its process result. */
+export function runAgentsCli(owner: PlayerOwner, packageVersion: string, args = process.argv.slice(2)): void {
+  const result = runAgentsInit(owner, packageVersion, args);
+
+  if (result.stdout) process.stdout.write(result.stdout);
+
+  if (result.stderr) process.stderr.write(result.stderr);
+
+  process.exitCode = result.exitCode;
 }

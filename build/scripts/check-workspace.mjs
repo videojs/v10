@@ -288,6 +288,14 @@ function checkBundledDocs() {
     }
   }
 
+  return { ok: warnings.length === 0, warnings };
+}
+
+// ── Check 7: Package AI quickstarts ─────────────────────────────────────────
+
+function checkPackageAiQuickstarts() {
+  const warnings = [];
+
   for (const dir of getPackageDirs()) {
     const pkg = readPackageJson(dir);
     if (pkg.private || pkg.publishConfig?.access !== 'public') continue;
@@ -314,7 +322,7 @@ function checkBundledDocs() {
   return { ok: warnings.length === 0, warnings };
 }
 
-// ── Check 7: Define imports ──────────────────────────────────────────────────
+// ── Check 8: Define imports ──────────────────────────────────────────────────
 
 /**
  * Preset and UI define modules are side-effect-only registration entrypoints. Media and extension define modules retain
@@ -991,6 +999,7 @@ const checks = [
   { name: 'Package metadata', fn: checkPackageMetadata },
   { name: 'Release-please config', fn: checkReleasePleaseConfig },
   { name: 'Bundled docs publishing', fn: checkBundledDocs },
+  { name: 'Package AI quickstarts', fn: checkPackageAiQuickstarts },
   { name: 'Define imports', fn: checkDefineImports },
   { name: 'i18n locales', fn: checkI18nLocales },
   { name: 'Agent context', fn: checkAgentContext },

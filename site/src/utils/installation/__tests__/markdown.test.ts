@@ -34,7 +34,7 @@ describe('resolveInstallationMarkdownPlan', () => {
       skin: 'minimal',
       media: 'spotify',
       'source-url': 'https://open.spotify.com/episode/example',
-      'install-method': 'pnpm',
+      'package-manager': 'pnpm',
       template: 'vite',
       styling: 'css',
     });
@@ -63,22 +63,6 @@ describe('resolveInstallationMarkdownPlan', () => {
     expect(result && !result.ok && result.errors).toContainEqual(
       expect.objectContaining({ field: 'framework', value: 'angular' })
     );
-  });
-
-  it('normalizes the legacy CDN install method like the page UI', () => {
-    const packaged = resolveInstallationMarkdownPlan(
-      '/docs/guides/installation/react.md',
-      new URLSearchParams({ 'install-method': 'cdn' }),
-      '10.0.0-test'
-    );
-    const cdn = resolveInstallationMarkdownPlan(
-      '/docs/guides/installation/cdn.md',
-      new URLSearchParams({ 'install-method': 'cdn' }),
-      '10.0.0-test'
-    );
-
-    expect(packaged?.ok && packaged.plan.selection.packageManager).toBe('npm');
-    expect(cdn?.ok && cdn.plan.selection.method).toBe('cdn');
   });
 });
 
@@ -232,7 +216,7 @@ HTML next step
     const packageManager = renderInstallationMarkdownSelection(
       markdown,
       '/docs/guides/installation/react',
-      new URLSearchParams({ 'install-method': 'deno' }),
+      new URLSearchParams({ 'package-manager': 'deno' }),
       '10.0.0-test'
     );
     const sourceUrl = renderInstallationMarkdownSelection(
@@ -250,17 +234,16 @@ HTML next step
     const cdnInstallMethod = renderInstallationMarkdownSelection(
       markdown,
       '/docs/guides/installation/cdn',
-      new URLSearchParams({ 'install-method': 'pnpm' }),
+      new URLSearchParams({ 'package-manager': 'pnpm' }),
       '10.0.0-test'
     );
 
-    expect(packageManager?.body).toContain('- install-method: Expected one of: npm, pnpm, yarn, bun');
+    expect(packageManager?.body).toContain('- package-manager: Expected one of: npm, pnpm, yarn, bun');
     expect(packageManager?.body).not.toContain('packageManager');
     expect(sourceUrl?.body).toContain('- source-url: Must not contain control characters or line breaks.');
     expect(sourceUrl?.body).not.toContain('sourceUrl');
     expect(skin?.body).toContain('the `none` skin is not available');
     expect(skin?.body).not.toContain('--skin');
-    expect(cdnInstallMethod?.body).toContain('`install-method` does not apply to CDN installation');
-    expect(cdnInstallMethod?.body).not.toContain('package-manager');
+    expect(cdnInstallMethod?.body).toContain('- package-manager: does not apply to CDN installation');
   });
 });

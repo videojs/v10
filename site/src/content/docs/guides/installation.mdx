@@ -67,7 +67,7 @@ Choose from the installation options available for your selections.
 The default presets work well for general website playback. The live presets suit streams: they add a Live button and drop the duration and current-time displays that on-demand playback relies on. More pre-built players to come.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:idle />
+  <UseCasePicker client:load />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -75,7 +75,7 @@ The default presets work well for general website playback. The live presets sui
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:load />
 </ContentWidth>
 
 ## Choose your media source
@@ -83,12 +83,12 @@ The default presets work well for general website playback. The live presets sui
 Video.js plays plain files, adaptive streams, and embeds from hosting services, and switching between them is a one-line change. Paste a URL to detect the type, pick one directly, or upload a video to Mux.
 
 <ContentWidth margins="lg">
-  <MediaSourcePicker client:idle />
+  <MediaSourcePicker client:load />
 </ContentWidth>
 
-<MediaSourceCase client:idle renderers={["hls"]}>
+<MediaSourceCase client:load renderers={["hls"]}>
 <Aside type="tip" title="Want a smaller HLS bundle?">
-This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. To experiment with our lightweight HLS engine and reduce your bundle size, try <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink>.
+This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. For a smaller bundle, use <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> when its supported feature set fits your stream.
 </Aside>
 </MediaSourceCase>
 
@@ -102,7 +102,7 @@ This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</Do
   <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-  <ReactInstallTabs client:idle />
+  <ReactInstallTabs client:load />
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -110,7 +110,7 @@ This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</Do
 ## Add your player
 
 <ContentWidth>
-  <HTMLUsageCodeBlock client:idle />
+  <HTMLUsageCodeBlock client:load />
 </ContentWidth>
 
 <Aside type="caution" title="Load your script as a module">
@@ -131,7 +131,7 @@ Some bundlers default to an IIFE output format. Loading that bundle without `typ
 Add the player directly to `app/page.tsx`. It imports the selected player, skin, media, and extensions from the packages you installed.
 
 <ContentWidth>
-  <ReactCreateCodeBlock client:idle />
+  <ReactCreateCodeBlock client:load />
 </ContentWidth>
 </FrameworkCase>
 

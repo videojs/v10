@@ -1,5 +1,8 @@
 import {
   createInstallationPlan,
+  INSTALLATION_QUERY_PARAMETERS,
+  installationParameterForKey,
+  PRIVATE_INSTALLATION_QUERY_PARAMETERS,
   renderInstallationPlanSections,
   resolveInstallationSelection,
   type InstallationInput,
@@ -9,26 +12,16 @@ import {
   type SelectionError,
 } from '@videojs/installation';
 
-import { outsideCodeFences } from '../markdown-text.ts';
+import { closesCodeFence, codeFenceOpening, outsideCodeFences } from '../markdown-text.ts';
+import { getInstallationRouteSegment } from './routes';
 
-const INSTALLATION_PATH = '/docs/guides/installation/';
 const PLAN_PATTERN = /<!-- installation-plan:start -->[\s\S]*?<!-- installation-plan:end -->/;
 const FRAMEWORK_BRANCH_OPEN = /^[ \t]*<!-- installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
 const FRAMEWORK_BRANCH_CLOSE = /^[ \t]*<!-- \/installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
-const CODE_FENCE_OPEN = /^[ \t]*(`{3,}|~{3,})/;
-const CODE_FENCE_CLOSE = /^[ \t]*(`{3,}|~{3,})[ \t]*(?:\r?\n)?$/;
 
-export const INSTALLATION_MARKDOWN_PARAMS = new Set([
-  'preset',
-  'skin',
-  'media',
-  'source-url',
-  'install-method',
-  'package-manager',
-  'template',
-  'styling',
-  'framework',
-]);
+export const INSTALLATION_MARKDOWN_PARAMS = new Set(
+  INSTALLATION_QUERY_PARAMETERS.filter((parameter) => parameter !== 'method')
+);
 
 interface InstallationRouteDefaults {
   owner: PlayerOwner;
@@ -38,9 +31,9 @@ interface InstallationRouteDefaults {
 
 function installationRouteDefaults(path: string, params: URLSearchParams): InstallationRouteDefaults | null {
   const normalized = `/${path.replace(/^\//, '').replace(/\.md$/, '').replace(/\/$/, '')}`;
-  if (!normalized.startsWith(INSTALLATION_PATH)) return null;
+  const route = getInstallationRouteSegment(normalized);
+  if (!route) return null;
 
-  const route = normalized.slice(INSTALLATION_PATH.length);
   if (route === 'react') return { owner: 'react', method: 'packaged', framework: 'react' };
 
   if (route === 'html') return { owner: 'html', method: 'packaged', framework: 'html' };
@@ -60,9 +53,11 @@ function installationRouteDefaults(path: string, params: URLSearchParams): Insta
 }
 
 function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchParams): InstallationInput {
-  const value = (key: string) => params.get(key) ?? undefined;
-  const packageManager = value('package-manager');
-  const legacyInstallMethod = value('install-method');
+  const value = (key: keyof InstallationInput) => {
+    const query = installationParameterForKey(key).query;
+
+    return params.get(query) ?? undefined;
+  };
 
   return {
     method: defaults.method,
@@ -70,12 +65,8 @@ function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchPa
     preset: value('preset'),
     skin: value('skin'),
     media: value('media'),
-    sourceUrl: value('source-url'),
-    // `install-method=cdn` selected the old CDN mode before each method had its own route. The page UI canonicalizes
-    // that stale value to npm on package-based routes, while the CDN route does not have a package manager at all.
-    packageManager:
-      packageManager ??
-      (legacyInstallMethod === 'cdn' ? (defaults.method === 'cdn' ? undefined : 'npm') : legacyInstallMethod),
+    sourceUrl: value('sourceUrl'),
+    packageManager: value('packageManager'),
     template: value('template'),
     styling: value('styling'),
   };
@@ -86,30 +77,15 @@ export type InstallationMarkdownPlanResult =
   | { ok: false; errors: readonly SelectionError[] }
   | null;
 
-function queryField(error: SelectionError, params: URLSearchParams): string {
-  if (error.field === 'packageManager') {
-    return params.has('package-manager') ? 'package-manager' : 'install-method';
-  }
-
-  if (error.field === 'sourceUrl') return 'source-url';
-
-  return error.field;
+function queryField(error: SelectionError): string {
+  return error.field === 'arguments' ? 'arguments' : installationParameterForKey(error.field).query;
 }
 
-function renderInstallationQueryErrors(errors: readonly SelectionError[], params: URLSearchParams): string {
+function renderInstallationQueryErrors(errors: readonly SelectionError[]): string {
   const items = errors.map((error) => {
-    const field = queryField(error, params);
-    const cliFlag =
-      error.field === 'arguments'
-        ? null
-        : error.field === 'packageManager'
-          ? '--package-manager'
-          : error.field === 'sourceUrl'
-            ? '--source-url'
-            : `--${error.field}`;
-    const message = cliFlag ? error.message.replaceAll(cliFlag, `\`${field}\``) : error.message;
+    const field = queryField(error);
 
-    return `- ${field}: ${message}`;
+    return `- ${field}: ${error.message}`;
   });
 
   return `Invalid installation options:\n${items.join('\n')}`;
@@ -148,9 +124,7 @@ export function selectInstallationFramework(markdown: string, framework: string)
     if (fence) {
       if (branch === null || branch === framework) selected += line;
 
-      const closing = line.match(CODE_FENCE_CLOSE)?.[1];
-
-      if (closing?.[0] === fence[0] && closing.length >= fence.length) fence = null;
+      if (closesCodeFence(line, fence)) fence = null;
 
       continue;
     }
@@ -173,7 +147,7 @@ export function selectInstallationFramework(markdown: string, framework: string)
       continue;
     }
 
-    const openingFence = line.match(CODE_FENCE_OPEN)?.[1];
+    const openingFence = codeFenceOpening(line);
 
     if (openingFence) fence = openingFence;
 
@@ -215,7 +189,7 @@ export function renderInstallationMarkdownSelection(
 
   if (!result.ok) {
     return {
-      body: `${renderInstallationQueryErrors(result.errors, params)}\n`,
+      body: `${renderInstallationQueryErrors(result.errors)}\n`,
       privateResponse: true,
       status: 400,
     };
@@ -235,7 +209,7 @@ export function renderInstallationMarkdownSelection(
     body: options.preserveFrameworkBranches
       ? replaced
       : selectInstallationFramework(replaced, result.plan.selection.sourceFramework),
-    privateResponse: params.has('source-url'),
+    privateResponse: PRIVATE_INSTALLATION_QUERY_PARAMETERS.some((parameter) => params.has(parameter)),
     status: 200,
   };
 }

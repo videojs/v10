@@ -52,7 +52,7 @@ Choose from the installation options available for your selections. Shadcn adds 
 Choose the ready-made player that is closest to what you are building.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:idle />
+  <UseCasePicker client:load />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -60,7 +60,7 @@ Choose the ready-made player that is closest to what you are building.
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:load />
 </ContentWidth>
 
 ## Choose your media source
@@ -68,7 +68,7 @@ Choose the ready-made player that is closest to what you are building.
 Paste a media URL to detect its source type, pick one directly, or upload a video to Mux. The generated packages and component update with your choice.
 
 <ContentWidth margins="lg">
-  <MediaSourcePicker client:idle />
+  <MediaSourcePicker client:load />
 </ContentWidth>
 
 </HumanCase>
@@ -86,13 +86,13 @@ Install the HTML elements and any playback adapter your selected media source ne
 Add a component that imports the elements it renders. Svelte passes hyphenated tags through to the browser, so no compiler configuration is needed. The imports register the selected player, skin, media, and extensions; the markup composes them.
 
 <ContentWidth>
-  <SvelteCreateCodeBlock client:idle />
+  <SvelteCreateCodeBlock client:load />
 </ContentWidth>
 
 Then render the component in a page and pass it the media source you selected above.
 
 <ContentWidth>
-  <SvelteUsageCodeBlock client:idle />
+  <SvelteUsageCodeBlock client:load />
 </ContentWidth>
 
 </div>

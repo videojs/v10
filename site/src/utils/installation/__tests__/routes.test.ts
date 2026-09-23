@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import {
   getInstallationRoutePath,
+  getInstallationRouteSegment,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
   isInstallationRouteSegment,
@@ -34,5 +35,13 @@ describe('installation routes', () => {
     expect(isInstallationRouteSegment('shadcn')).toBe(true);
     expect(isInstallationRouteSegment('angular')).toBe(false);
     expect(isInstallationRouteSegment(undefined)).toBe(false);
+  });
+
+  it('parses HTML and Markdown installation paths through the same route table', () => {
+    expect(getInstallationRouteSegment('/docs/guides/installation/shadcn')).toBe('shadcn');
+    expect(getInstallationRouteSegment('/docs/guides/installation/shadcn.md')).toBe('shadcn');
+    expect(getInstallationRouteSegment('/docs/guides/installation/shadcn/')).toBe('shadcn');
+    expect(getInstallationRouteSegment('/docs/guides/installation')).toBeNull();
+    expect(getInstallationRouteSegment('/docs/guides/cdn')).toBeNull();
   });
 });

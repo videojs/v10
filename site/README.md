@@ -48,7 +48,7 @@ If you're in the monorepo's root...
 
 | Command                   | Action                                                                                                                                  |
 | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev:site`           | Starts local dev server at `localhost:4321`; generates API references, the CDN manifest, and package builds only when they are missing |
+| `pnpm dev:site`           | Starts local dev server at `localhost:4321`; generates API references and package builds only when they are missing |
 | `pnpm dev:site --prepare` | Same, but regenerates API references and rebuilds packages first (after changing package source or JSDoc)                            |
 | `pnpm build:site`         | Build the production site to `site/dist/`                                                                                            |
 
@@ -200,3 +200,14 @@ One custom Astro integration in `integrations/`:
 - **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` indexes from `[data-llms-content]` elements
 
 Read [`integrations/llms-markdown.ts`](integrations/llms-markdown.ts) for implementation details.
+
+### Markdown delivery
+
+Every generated page has a static `.md` twin. The Netlify edge functions in
+[`netlify/edge-functions/`](netlify/edge-functions/) set the Markdown response headers and negotiate
+`Accept: text/markdown`. Installation twins are the exception to the otherwise static response: the shared renderer in
+`@videojs/installation` validates their query parameters and replaces the generated installation section at the edge.
+The same renderer powers each package's `agents init` command and bundled docs.
+
+Edge functions resolve workspace packages through [`netlify/edge-functions/import_map.json`](netlify/edge-functions/import_map.json).
+Keep that map in sync when an edge handler adds or moves a workspace import.

@@ -11,7 +11,12 @@ function valuesFor(
 
 describe('installationOptionDefinitions', () => {
   it('only advertises methods supported by each package', () => {
-    expect(valuesFor(installationOptionDefinitions('react'), '--method')).toEqual(['packaged', 'shadcn']);
+    const react = installationOptionDefinitions('react');
+
+    expect(valuesFor(react, '--method')).toEqual(['packaged', 'shadcn']);
+    expect(react.find(({ flag }) => flag === '--method')?.description).toBe(
+      'Choose packaged modules or editable Shadcn source.'
+    );
     expect(valuesFor(installationOptionDefinitions('html'), '--method')).toEqual(['packaged', 'shadcn', 'cdn']);
   });
 

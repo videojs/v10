@@ -1,14 +1,14 @@
 import { isInstallationFramework, type InstallationFramework, type InstallationMethod } from '@videojs/installation';
 
 import { isShadcnInstallationUrl } from '@/utils/installation/framework-navigation';
-import { getInstallationRoutePath } from '@/utils/installation/routes';
+import { getInstallationRoutePath, getInstallationRouteSegment } from '@/utils/installation/routes';
 import type { InstallationUiSelection } from '@/utils/installation/url-state';
 import { serializeInstallationSearch } from '@/utils/installation/url-state';
 
 export type { InstallationMethod } from '@videojs/installation';
 
 function frameworkFromInstallationPath(pathname: string): InstallationFramework | null {
-  const route = pathname.match(/\/docs\/guides\/installation\/([^/]+)\/?$/)?.[1] ?? null;
+  const route = getInstallationRouteSegment(pathname);
 
   return isInstallationFramework(route) ? route : null;
 }
@@ -31,6 +31,8 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     }
 
     target.searchParams.delete('framework');
+    target.searchParams.delete('template');
+    target.searchParams.delete('styling');
   } else if (method === 'shadcn') {
     const requested = target.searchParams.get('framework');
     const framework = isInstallationFramework(requested)
@@ -40,7 +42,9 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     target.searchParams.set('framework', framework);
   } else {
     target.searchParams.delete('framework');
-    target.searchParams.delete('install-method');
+    target.searchParams.delete('package-manager');
+    target.searchParams.delete('template');
+    target.searchParams.delete('styling');
   }
 
   return target;

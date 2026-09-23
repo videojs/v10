@@ -30,25 +30,9 @@ describe('resolveInstallationFrameworkNavigation', () => {
     });
   });
 
-  it('keeps supported Shadcn frameworks on the same guide', () => {
-    const current = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?preset=audio&framework=react#choose-how-to-install'
-    );
-
-    expect(resolveInstallationFrameworkNavigation(current, 'html')).toEqual({
-      target: '/docs/guides/installation/shadcn?preset=audio&framework=html#choose-how-to-install',
-      history: 'replace',
-    });
-  });
-
-  it('keeps every supported project framework on Shadcn and moves CDN changes to Packaged', () => {
-    const shadcn = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react&skin=minimal');
+  it('moves framework changes from CDN to Packaged', () => {
     const cdn = new URL('https://videojs.org/docs/guides/installation/cdn?preset=audio');
 
-    expect(resolveInstallationFrameworkNavigation(shadcn, 'vue')).toEqual({
-      target: '/docs/guides/installation/shadcn?framework=vue&skin=minimal',
-      history: 'replace',
-    });
     expect(resolveInstallationFrameworkNavigation(cdn, 'react')).toEqual({
       target: '/docs/guides/installation/react?preset=audio',
       history: 'push',

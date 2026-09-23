@@ -6,9 +6,10 @@ import Css3Logo from '@/assets/logos/brands/css3.svg?react';
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
+import { useRegistryFramework } from '@/components/installation/useRegistryProjectFramework';
 import { Select, type SelectOption } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
-import { registryFramework, selectRegistryProjectFramework } from '@/stores/registry';
+import { selectRegistryProjectFramework } from '@/stores/registry';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
@@ -56,10 +57,10 @@ export function Selectors({
   registryFrameworkSelection = false,
   className,
 }: SelectorProps) {
-  const selectedRegistryFramework = useStore(registryFramework);
+  const selectedRegistryFramework = useRegistryFramework(currentFramework);
   const currentStyle = useStore(styleStore);
   const isHydrated = useIsHydrated();
-  const displayedFramework = registryFrameworkSelection && isHydrated ? selectedRegistryFramework : currentFramework;
+  const displayedFramework = registryFrameworkSelection ? selectedRegistryFramework : currentFramework;
 
   // The store is empty on the server and on the client's first render alike, so both fall back to the framework's
   // default style. That keeps the markup identical through hydration and stops the trigger flashing empty on every

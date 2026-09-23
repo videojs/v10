@@ -21,7 +21,9 @@ describe('documented agents init commands', () => {
     for (const readme of readmes) {
       const source = readFileSync(readme, 'utf8');
 
-      for (const match of source.matchAll(/^npx @videojs\/(react|html)(?:@latest)? agents init([^\n]*)$/gm)) {
+      expect(source, readme).not.toMatch(/@videojs\/(?:react|html)@latest agents init/);
+
+      for (const match of source.matchAll(/^npx @videojs\/(react|html) agents init([^\n]*)$/gm)) {
         commandCount += 1;
         const owner = match[1] as 'html' | 'react';
         const flags = match[2]!.trim().split(/\s+/).filter(Boolean);

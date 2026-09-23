@@ -365,9 +365,9 @@ describe('generateInstallationIndex', () => {
 
     expect(markdown).toContain('/docs/guides/installation/shadcn.md?framework=vue');
     expect(markdown).toContain('`framework`: On the Shadcn page');
-    expect(markdown).toContain('`install-method`');
+    expect(markdown).toContain('`package-manager`');
     expect(markdown).not.toContain('`method`:');
-    expect(markdown).not.toContain('`package-manager`:');
+    expect(markdown).not.toContain('`install-method`:');
   });
 });
 

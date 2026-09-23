@@ -86,14 +86,14 @@ The skill checks your framework and installation method before choosing player, 
 
 The skill uses documentation in this order:
 
-1. **Version-matched installation instructions.** `npx @videojs/react agents init` and `npx @videojs/html agents init` use the installed player package to list valid choices. Adding flags prints one complete installation plan. The command only returns instructions; it does not prompt, install packages, or write files. Add `@latest` before `agents init` when the package is not installed yet. For a CDN page, use the version in its script URL instead of `@latest`.
+1. **Version-matched installation instructions.** `npx @videojs/react agents init` and `npx @videojs/html agents init` use the installed player package to list valid choices. Adding flags prints one complete installation plan. The command only returns instructions; it does not prompt, install packages, or write files.
 2. **Installed package docs.** `node_modules/@videojs/react/docs/llms.txt` and `node_modules/@videojs/html/docs/llms.txt` index the docs shipped with each package version. These files work offline and match the code in your project.
-3. **Live docs.** When the agent cannot run commands, the skill starts at [`videojs.org/docs/guides/installation.md`](https://videojs.org/docs/guides/installation.md) and requests the selected installation page with query parameters as Markdown. For docs beyond installation, it reads the framework index on videojs.org and opens only the pages the task needs.
+3. **Live docs.** If commands cannot run, the skill reads the relevant [React](https://videojs.org/docs/framework/react/llms.txt) or [HTML](https://videojs.org/docs/framework/html/llms.txt) documentation index, then follows it to the matching installation guide.
 4. **Installed types.** If the docs are unavailable, the skill checks package exports and TypeScript declarations instead of guessing version-specific APIs.
 
 This order matters because most model training data describes Video.js 8. Video.js 10 has a different component model, package structure, and installation flow.
 
-The old `npx @videojs/cli docs` workflow is deprecated. Use the `agents init` command from the React or HTML package so the instruction renderer ships with the player version.
+The old `npx @videojs/cli docs` workflow was removed. Use the `agents init` command from the React or HTML package so the instruction renderer ships with the player version.
 
 ### Troubleshoot
 

@@ -8,28 +8,39 @@ import {
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { atom, onMount, type WritableAtom } from 'nanostores';
 
+import { getInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   DEFAULT_SELECTION,
   type InstallationUiSelection,
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
-  serializeInstallationSearch,
+  serializeInstallationSearchForRoute,
 } from '@/utils/installation/url-state';
 
-export const renderer = atom<Renderer>(DEFAULT_SELECTION.renderer);
-export const skin = atom<Skin>(DEFAULT_SELECTION.skin);
-export const useCase = atom<UseCase>(DEFAULT_SELECTION.useCase);
-export const sourceUrl = atom<string>(DEFAULT_SELECTION.sourceUrl);
+function selectionFromCurrentUrl(): InstallationUiSelection {
+  if (!globalThis.location) return DEFAULT_SELECTION;
 
-export const installMethod = atom<InstallMethod>(DEFAULT_SELECTION.installMethod);
+  const route = getInstallationRouteSegment(location.pathname) ?? '';
+
+  return normalizeInstallationSelectionForRoute(route, parseInstallationSearch(location.search));
+}
+
+const initialSelection = selectionFromCurrentUrl();
+
+export const renderer = atom<Renderer>(initialSelection.renderer);
+export const skin = atom<Skin>(initialSelection.skin);
+export const useCase = atom<UseCase>(initialSelection.useCase);
+export const sourceUrl = atom<string>(initialSelection.sourceUrl);
+
+export const installMethod = atom<InstallMethod>(initialSelection.installMethod);
 
 /** Mux playback ID from successful upload (used by code generation) */
 export const muxPlaybackId = atom<string | null>(null);
 
 /**
  * The picks live in the page URL so a reload, a shared link, or coming back from another page lands on the same player.
- * The URL is read once, when the first picker mounts, and rewritten in place on every change so the history stack stays
- * one entry per page.
+ * At module initialization the atoms start from the URL, and every change rewrites it in place so the history stack
+ * stays one entry per page.
  */
 type SelectionAtoms = { [K in keyof InstallationUiSelection]: WritableAtom<InstallationUiSelection[K]> };
 
@@ -40,8 +51,20 @@ export const selectionAtoms: SelectionAtoms = {
   sourceUrl,
   installMethod,
 };
-let hydratedUrl: string | null = null;
+let hydratedUrl = globalThis.location ? `${location.pathname}${location.search}` : null;
 let syncingFromUrl = false;
+let revealFrame: number | null = null;
+
+function revealInstallationQueryState(): void {
+  if (!globalThis.document || !document.documentElement.hasAttribute('data-installation-query-pending')) return;
+
+  if (revealFrame !== null) cancelAnimationFrame(revealFrame);
+
+  revealFrame = requestAnimationFrame(() => {
+    delete document.documentElement.dataset.installationQueryPending;
+    revealFrame = null;
+  });
+}
 
 function currentSelection(): InstallationUiSelection {
   return {
@@ -56,7 +79,8 @@ function currentSelection(): InstallationUiSelection {
 function normalizeCurrentUrl(target: URL, selection: InstallationUiSelection): void {
   if (!globalThis.location || !globalThis.history || target.href !== location.href) return;
 
-  const search = serializeInstallationSearch(selection, target.search);
+  const route = getInstallationRouteSegment(target.pathname) ?? '';
+  const search = serializeInstallationSearchForRoute(route, selection, target.search);
   const url = `${target.pathname}${search}${target.hash}`;
 
   if (url !== `${target.pathname}${target.search}${target.hash}`) {
@@ -72,11 +96,12 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
   if (!target) return;
 
   const urlKey = `${target.pathname}${target.search}`;
-  const route = target.pathname.match(/\/docs\/guides\/installation\/([^/]+)/)?.[1] ?? '';
+  const route = getInstallationRouteSegment(target.pathname) ?? '';
   const selection = normalizeInstallationSelectionForRoute(route, parseInstallationSearch(target.search));
 
   if (hydratedUrl === urlKey) {
     normalizeCurrentUrl(target, selection);
+    revealInstallationQueryState();
 
     return;
   }
@@ -96,12 +121,14 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
   }
 
   normalizeCurrentUrl(target, selection);
+  revealInstallationQueryState();
 }
 
 function writeUrl(): void {
   if (!hydratedUrl || syncingFromUrl || !globalThis.history) return;
 
-  const search = serializeInstallationSearch(currentSelection(), location.search);
+  const route = getInstallationRouteSegment(location.pathname) ?? '';
+  const search = serializeInstallationSearchForRoute(route, currentSelection(), location.search);
   const url = `${location.pathname}${search}${location.hash}`;
 
   if (url !== `${location.pathname}${location.search}${location.hash}`) {
@@ -119,6 +146,8 @@ for (const store of Object.values(selectionAtoms)) {
 }
 
 if (globalThis.document) {
+  revealInstallationQueryState();
+
   document.addEventListener('astro:before-swap', (event: TransitionBeforeSwapEvent) => {
     if (event.to.pathname.startsWith('/docs/guides/installation/')) {
       syncInstallationSelectionFromUrl(event.to);
@@ -127,6 +156,7 @@ if (globalThis.document) {
   document.addEventListener('astro:after-swap', () => {
     if (location.pathname.startsWith('/docs/guides/installation/')) {
       syncInstallationSelectionFromUrl();
+      revealInstallationQueryState();
     }
   });
 }

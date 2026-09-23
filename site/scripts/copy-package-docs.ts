@@ -61,11 +61,6 @@ export function stripFooter(content: string): string {
   return content.replace(/\n+---\n\n(?:\w+ documentation: https:\/\/.*\n)*All documentation: https:\/\/.*\n*$/, '');
 }
 
-/** Package-local instructions should resolve the renderer bundled with the installed player, not the registry tag. */
-export function useInstalledAgentCommands(content: string): string {
-  return content.replace(/(@videojs\/(?:html|react))@latest(?= agents init)/g, '$1');
-}
-
 export function rewriteLinks(content: string, sourceSlug: string, framework: PackageDocsTarget): string {
   const sourceDir = posix.dirname(sourceSlug);
   let rewritten = content;
@@ -115,7 +110,7 @@ function copyInstallationDocumentation({
     const sourcePath = join(siteDist, source);
     if (!existsSync(sourcePath)) throw new Error(`Missing installation documentation source: ${sourcePath}`);
 
-    const raw = useInstalledAgentCommands(stripFooter(readFileSync(sourcePath, 'utf-8')));
+    const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
     const params = source.endsWith('/shadcn.md') ? new URLSearchParams({ framework }) : new URLSearchParams();
     const rendered = renderInstallationMarkdownSelection(
       raw,
@@ -254,7 +249,7 @@ function copyFrameworkDocumentation({
   for (const sourcePath of files) {
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
     const raw = readFileSync(sourcePath, 'utf-8');
-    const withoutFooter = useInstalledAgentCommands(stripFooter(raw));
+    const withoutFooter = stripFooter(raw);
     const isIndex = basename(relativePath) === 'llms.txt';
     const transformed = rewriteLocalLinks
       ? rewriteLinks(
@@ -279,41 +274,27 @@ export function packageDocumentation({
   packagesDirectory = resolve(workspaceRoot, 'packages'),
   version,
 }: PackageDocumentationOptions): number {
-  const frameworks: PackageDocsTarget[] = [target];
-  const sources = new Map(
-    frameworks.map((framework) => [framework, join(siteDist, 'docs', 'framework', framework)] as const)
-  );
-
-  for (const sourceDirectory of sources.values()) {
-    if (!existsSync(sourceDirectory)) {
-      throw new Error(`${sourceDirectory} not found — run \`pnpm build:site\` first.`);
-    }
-  }
+  const sourceDirectory = join(siteDist, 'docs', 'framework', target);
+  if (!existsSync(sourceDirectory)) throw new Error(`${sourceDirectory} not found — run \`pnpm build:site\` first.`);
 
   const targetDirectory = join(packagesDirectory, target, 'docs');
   let copiedFiles = 0;
 
   replaceDirectory(targetDirectory, (stagingDirectory) => {
-    for (const framework of frameworks) {
-      const frameworkTarget = stagingDirectory;
-      const sourceDirectory = sources.get(framework);
-      if (!sourceDirectory) throw new Error(`Missing documentation source for ${framework}`);
-
-      copiedFiles += copyFrameworkDocumentation({
-        sourceDirectory,
-        targetDirectory: frameworkTarget,
-        framework,
-        rewriteLocalLinks: true,
-        version,
-      });
-      copiedFiles += copyInstallationDocumentation({
-        siteDist,
-        targetDirectory: frameworkTarget,
-        framework,
-        rewriteLocalLinks: true,
-        version,
-      });
-    }
+    copiedFiles += copyFrameworkDocumentation({
+      sourceDirectory,
+      targetDirectory: stagingDirectory,
+      framework: target,
+      rewriteLocalLinks: true,
+      version,
+    });
+    copiedFiles += copyInstallationDocumentation({
+      siteDist,
+      targetDirectory: stagingDirectory,
+      framework: target,
+      rewriteLocalLinks: true,
+      version,
+    });
 
     writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
   });

@@ -1,5 +1,6 @@
 import { useStore } from '@nanostores/react';
 import {
+  CDN_MEDIA_SUBPATHS,
   installationMethodsForFramework,
   registrySkinSelection,
   rendererSupportsCdn,
@@ -15,13 +16,14 @@ import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
 import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
-import { registryProjectFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
 import { INSTALLATION_METHOD_OPTIONS } from '@/utils/installation/method-options';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
 import useIsHydrated from '@/utils/useIsHydrated';
+
+import { useRegistryProjectFramework } from './useRegistryProjectFramework';
 
 const ICONS = {
   packaged: NpmLogo,
@@ -32,7 +34,6 @@ const ICONS = {
 interface Props {
   currentFramework: InstallationFramework;
   route: InstallationRouteSegment;
-  cdnMediaSubpaths: readonly string[];
 }
 
 function getActiveMethod(route: InstallationRouteSegment): InstallationMethod {
@@ -51,15 +52,15 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationFr
   return getInstallationRoutePath('cdn');
 }
 
-export default function InstallationMethodNavClient({ currentFramework, route, cdnMediaSubpaths }: Props) {
+export default function InstallationMethodNavClient({ currentFramework, route }: Props) {
   const selectedInstallMethod = useStore(installMethod);
   const selectedRenderer = useStore(renderer);
   const selectedSkin = useStore(skin);
   const selectedSourceUrl = useStore(sourceUrl);
   const selectedUseCase = useStore(useCase);
-  const registrySelection = useStore(registryProjectFramework);
+  const registrySelection = useRegistryProjectFramework(currentFramework);
   const isHydrated = useIsHydrated();
-  const framework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
+  const framework = route === 'shadcn' ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = installationMethodsForFramework(framework);
   const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => {
@@ -69,7 +70,7 @@ export default function InstallationMethodNavClient({ currentFramework, route, c
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
     }
 
-    if (id === 'cdn') return route === 'cdn' || rendererSupportsCdn(selectedRenderer, cdnMediaSubpaths);
+    if (id === 'cdn') return route === 'cdn' || rendererSupportsCdn(selectedRenderer, CDN_MEDIA_SUBPATHS);
 
     return true;
   });

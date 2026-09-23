@@ -18,7 +18,6 @@ import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 describe('selectRegistryProjectFramework', () => {
   afterEach(() => {
     currentFramework.set(null);
-    registryFramework.set('react');
     registryProjectFramework.set('react');
     registrySkin.set(null);
     registryStyling.set(null);
@@ -43,7 +42,6 @@ describe('selectRegistryProjectFramework', () => {
   });
 
   it('keeps registry options when only the site-wide preference is stale', () => {
-    registryFramework.set('html');
     registryProjectFramework.set('html');
     registryStyling.set('css');
     registryTemplate.set('astro');
@@ -67,14 +65,20 @@ describe('selectRegistryProjectFramework', () => {
   });
 
   it('keeps the Vue project selection while using HTML registry source and site preferences', () => {
-    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=react');
+    window.history.replaceState(
+      null,
+      '',
+      '/docs/guides/installation/shadcn?framework=react&preset=audio&media=spotify&package-manager=pnpm&source-url=track'
+    );
 
     selectRegistryProjectFramework('vue');
 
     expect(registryProjectFramework.get()).toBe('vue');
     expect(registryFramework.get()).toBe('html');
     expect(currentFramework.get()).toBe('html');
-    expect(window.location.search).toBe('?framework=vue');
+    expect(window.location.search).toBe(
+      '?framework=vue&preset=audio&media=spotify&package-manager=pnpm&source-url=track'
+    );
     expect(document.documentElement.dataset.registryFramework).toBe('html');
   });
 

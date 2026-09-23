@@ -7,6 +7,7 @@ import { installationCommand } from '../plan';
 describe('runAgentsInit', () => {
   it('can target the locally installed package without forcing an npm tag', () => {
     expect(installationCommand('react', undefined, null)).toBe('npx @videojs/react agents init');
+    expect(installationCommand('react')).toBe('npx @videojs/react agents init');
   });
 
   it('returns discovery without modifying a project', () => {
@@ -32,6 +33,7 @@ describe('runAgentsInit', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('## Initialize Shadcn');
     expect(result.stdout).toContain('## Install the media adapter');
+    expect(result.stdout).toContain('npm install @videojs/hlsjs-video@10.0.0');
     expect(result.stdout).toContain('vite.config.ts');
     expect(result.stdout).toContain("tag.startsWith('media-')");
     expect(result.stdout).toContain('components/VideoPlayer.vue');
@@ -86,7 +88,7 @@ describe('runAgentsInit', () => {
     expect(missingMethod.exitCode).toBe(2);
   });
 
-  it('returns valid framework-specific next links in JSON without duplicating them in Markdown', () => {
+  it('returns valid framework-specific next links in JSON and Markdown', () => {
     const json = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue', '--json']);
     const markdown = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue']);
     const value = JSON.parse(json.stdout);
@@ -95,7 +97,42 @@ describe('runAgentsInit', () => {
       { label: 'Customize skins', url: 'https://videojs.org/docs/framework/html/guides/customize-skins' },
       { label: 'Browser support', url: 'https://videojs.org/docs/framework/html/guides/browser-support' },
     ]);
-    expect(markdown.stdout).not.toContain('## What to do next');
+    expect(markdown.stdout).toContain('## Next steps');
+    expect(markdown.stdout).toContain(
+      '[Customize skins](https://videojs.org/docs/framework/html/guides/customize-skins)'
+    );
+  });
+
+  it('pins every generated package install to the package version', () => {
+    const packaged = runAgentsInit('react', '10.0.0-rc.2', ['agents', 'init', '--media', 'mux-video']);
+    const shadcn = runAgentsInit('react', '10.0.0-rc.2', ['agents', 'init', '--method', 'shadcn', '--media', 'hls']);
+
+    expect(packaged.stdout).toContain(
+      'npm install @videojs/react@10.0.0-rc.2 @videojs/mux-video@10.0.0-rc.2 @videojs/mux-data@10.0.0-rc.2'
+    );
+    expect(shadcn.stdout).toContain('npm install @videojs/hlsjs-video@10.0.0-rc.2');
+  });
+
+  it('omits skin from background-video instructions and reproduction commands', () => {
+    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--preset', 'background-video']);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain('- `skin`:');
+    expect(result.stdout).not.toContain('--skin');
+  });
+
+  it('scopes discovery choices to the package that owns the command', () => {
+    const markdown = runAgentsInit('react', '10.0.0', ['agents', 'init']);
+    const json = JSON.parse(runAgentsInit('react', '10.0.0', ['agents', 'init', '--json']).stdout);
+    const method = json.options.find(({ flag }: { flag: string }) => flag === '--method');
+
+    expect(method.description).not.toContain('CDN');
+    expect(json.compatibility.methodsByFramework).toEqual({ react: ['packaged', 'shadcn'] });
+    expect(json.compatibility.shadcn.templatesByFramework).toEqual({
+      react: ['next', 'vite', 'start', 'laravel', 'react-router', 'astro'],
+    });
+    expect(markdown.stdout).not.toContain('- `html`: templates');
+    expect(markdown.stdout).not.toContain('CDN is plain HTML only');
   });
 
   it('returns usage errors with exit code 2', () => {
@@ -104,6 +141,14 @@ describe('runAgentsInit', () => {
 
     expect(result.exitCode).toBe(2);
     expect(value.kind).toBe('error');
+  });
+
+  it('uses public flags in text validation errors', () => {
+    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn', '--package-manager', 'pnpm']);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('- --package-manager: does not apply to CDN installation.');
+    expect(result.stderr).not.toContain('packageManager');
   });
 
   it('attributes CLI syntax errors to arguments rather than an installation option', () => {

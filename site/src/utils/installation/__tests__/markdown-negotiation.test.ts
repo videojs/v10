@@ -40,7 +40,8 @@ describe('markdown negotiation', () => {
     const body = await response!.text();
 
     expect(response?.status).toBe(200);
-    expect(response?.headers.get('netlify-vary')).toContain('query=preset|skin|media');
+    expect(response?.headers.get('netlify-vary')).toContain('package-manager');
+    expect(response?.headers.get('netlify-vary')).not.toContain('install-method');
     expect(body).toContain('# Shadcn Installation Guide');
     expect(body).toContain('- `framework`: `vue`');
     expect(body).toContain('- `media`: `spotify`');
@@ -104,6 +105,15 @@ describe('markdown negotiation', () => {
     const response = await directMarkdown(request, context);
 
     expect(response?.headers.get('cache-control')).toBe('private, no-store');
+  });
+
+  it('streams non-installation Markdown without installation cache variance', async () => {
+    const { context } = createContext('# Build with AI');
+    const response = await directMarkdown(new Request('https://videojs.org/docs/guides/build-with-ai.md'), context);
+
+    expect(response?.headers.get('netlify-vary')).toBeNull();
+    expect(response?.headers.get('cache-control')).toBe('public, s-maxage=31536000');
+    expect(await response?.text()).toBe('# Build with AI');
   });
 
   it('rewrites Accept negotiation through the current request chain', async () => {

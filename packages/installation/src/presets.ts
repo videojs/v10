@@ -5,8 +5,6 @@ export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none
 /** Public skin values accepted by installation requests. */
 export const INSTALLATION_SKIN_FLAGS = ['default', 'minimal', 'none'] as const;
 
-export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
-
 export interface InstallationPreset {
   label: string;
   flag: string;
@@ -84,13 +82,3 @@ export const USE_CASES = Object.keys(INSTALLATION_PRESETS) as UseCase[];
 export function getInstallationPreset(useCase: UseCase): InstallationPreset {
   return INSTALLATION_PRESETS[useCase];
 }
-
-// The Mux Data extension subpath (`extensions/<subpath>` in `@videojs/html`,
-// `@videojs/react`, and the CDN). Mux Data is a separate extension the
-// installation examples pair with Mux media by default, so it is imported and
-// registered alongside the Mux media rather than merged into it.
-export const MUX_DATA_EXTENSION_SUBPATH = 'mux-data';
-
-// The package that ships the Mux Data extension; installed alongside the Mux
-// media adapter package.
-export const MUX_DATA_PACKAGE = '@videojs/mux-data';

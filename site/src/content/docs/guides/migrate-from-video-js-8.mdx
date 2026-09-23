@@ -299,7 +299,7 @@ v10 replaces the whole mechanism with a choice you make in markup. You pick the 
 
 Each needs its own import.
 
-Package-manager installations also need the matching media package. The default HLS component shown below uses
+Package-manager installations also need the matching media package. The lightweight HLS component shown below uses
 `@videojs/spf`; the hls.js component uses `@videojs/hlsjs-video`; Mux video and audio use `@videojs/mux-video` and
 `@videojs/mux-audio`; DASH uses `@videojs/dash-video`; Vimeo uses `@videojs/vimeo-video`; and Shaka and Wistia use
 `@videojs/shaka-video` and `@videojs/wistia-video`.
@@ -350,7 +350,7 @@ import { HlsVideo } from '@videojs/react/media/hls-video';
 ```
 </FrameworkCase>
 
-Start with the default HLS component, and move to hls.js if you hit something it doesn't handle. The default runs on SPF, Video.js's own playback engine, and it's the reason v10 can be as small as it is. The hls.js one is a much larger download but more compatible, supporting TS-packaged media and DRM.
+The lightweight HLS component runs on SPF, Video.js's own playback engine, and helps keep v10 small. The hls.js component is a much larger download but more compatible, supporting TS-packaged media and DRM. Choose the one whose supported feature set fits your stream.
 
 Your VHS tuning options don't have direct equivalents. Rendition capping, bandwidth hints, and the rest are engine-specific, so they belong to whichever engine you chose rather than to a shared options object.
 
@@ -727,7 +727,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - No text-track settings dialog. v8's `textTrackSettings` let viewers restyle captions; v10 exposes only the positioning custom properties its skins define.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
-- No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the default HLS component deliberately exposes few of them.
+- No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the lightweight HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom layout or a skin layout in your project.
 - No full-window fullscreen fallback. v8 had one for browsers without the Fullscreen API; [support is around 96%](https://caniuse.com/fullscreen) now.

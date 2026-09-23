@@ -16,7 +16,6 @@ import {
   rewriteLinks,
   stripFooter,
   synthesizeReadme,
-  useInstalledAgentCommands,
 } from '../copy-package-docs.ts';
 
 const temporaryDirectories: string[] = [];
@@ -107,17 +106,6 @@ describe('stripFooter', () => {
     const input = '# Heading\n\nBody.';
 
     expect(stripFooter(input)).toBe(input);
-  });
-});
-
-describe('useInstalledAgentCommands', () => {
-  it('uses the package-local renderer while leaving unrelated latest tags alone', () => {
-    const input =
-      'Run `npx @videojs/react@latest agents init` or `npx @videojs/html@latest agents init`. Then run `npx shadcn@latest`.\n';
-
-    expect(useInstalledAgentCommands(input)).toBe(
-      'Run `npx @videojs/react agents init` or `npx @videojs/html agents init`. Then run `npx shadcn@latest`.\n'
-    );
   });
 });
 
@@ -311,16 +299,16 @@ describe('packageDocumentation', () => {
     );
   });
 
-  it('uses installed agent commands throughout the package documentation', () => {
+  it('preserves installed agent commands throughout the package documentation', () => {
     const fixture = createFixture();
 
     writeInstallationDocs(fixture.siteDist, 'react');
-    writeDoc(fixture.siteDist, 'react', 'llms.txt', 'Run `npx @videojs/react@latest agents init`.');
+    writeDoc(fixture.siteDist, 'react', 'llms.txt', 'Run `npx @videojs/react agents init`.');
     writeDoc(
       fixture.siteDist,
       'react',
       'guides/build-with-ai.md',
-      'Use `npx @videojs/react@latest agents init --method shadcn` for version-matched instructions.'
+      'Use `npx @videojs/react agents init --method shadcn` for version-matched instructions.'
     );
 
     packageDocumentation({
@@ -335,7 +323,6 @@ describe('packageDocumentation', () => {
     expect(readFileSync(join(packageDocs, 'guides/build-with-ai.md'), 'utf-8')).toContain(
       'npx @videojs/react agents init --method shadcn'
     );
-    expect(readFileSync(join(packageDocs, 'guides/build-with-ai.md'), 'utf-8')).not.toContain('@latest agents init');
   });
 
   it('bundles pages and indexes but no complete files', () => {

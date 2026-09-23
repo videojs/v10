@@ -35,7 +35,7 @@ const skin = REGISTRY_SKINS.find(({ item, theme }) => item === selection.item &&
 const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
 ---
 
-<InstallationRegistryCommandClient client:idle framework={framework} />
+<InstallationRegistryCommandClient client:load framework={framework} />
 
 <div hidden data-llms-only>
   <p>

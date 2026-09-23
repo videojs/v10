@@ -1,5 +1,4 @@
 ---
-import Aside from '@/components/Aside.astro';
 import JSPickerClient from './JSPickerClient';
 import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 
@@ -10,13 +9,5 @@ const routeFramework = INSTALLATION_ROUTES[framework].pickerFramework;
 ---
 
 <div>
-  <JSPickerClient client:load currentFramework={routeFramework} route={framework}>
-    {
-      framework !== 'cdn' && (
-        <Aside type="note" title="CDN is available for HTML">
-          To load Video.js without a package manager, choose CDN in <a href="#choose-how-to-install">Choose how to install</a> below.
-        </Aside>
-      )
-    }
-  </JSPickerClient>
+  <JSPickerClient client:load currentFramework={routeFramework} route={framework} />
 </div>

@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { currentFramework, currentStyle } from '@/stores/preferences';
-import { registryFramework } from '@/stores/registry';
+import { registryFramework, registryProjectFramework } from '@/stores/registry';
 
 vi.mock('@/components/Select', () => ({
   Select: ({
@@ -32,7 +32,7 @@ describe('Selectors', () => {
     cleanup();
     currentFramework.set(null);
     currentStyle.set(null);
-    registryFramework.set('react');
+    registryProjectFramework.set('react');
     vi.restoreAllMocks();
   });
 

@@ -1,6 +1,6 @@
 import { cdnBaseForVersion } from './defaults';
-import { getMediaSubpath, isMuxRenderer, RENDERERS, type Renderer } from './renderers';
-import { getInstallationPreset, MUX_DATA_EXTENSION_SUBPATH, type Skin, type UseCase } from './types';
+import { getInstallationPreset, type Skin, type UseCase } from './presets';
+import { getMediaSubpath, isMuxRenderer, MUX_DATA_EXTENSION_SUBPATH, RENDERERS, type Renderer } from './renderers';
 
 // Every installation preset ships default, minimal, and skinless CDN bundles.
 // The skinless bundle is named for the element it defines (e.g. `video-player`).

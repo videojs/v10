@@ -1,11 +1,15 @@
-import htmlPackage from '../../../../packages/html/package.json' with { type: 'json' };
-import { INSTALLATION_MARKDOWN_PARAMS, renderInstallationMarkdownSelection } from './markdown.ts';
+import htmlPackage from '../../../packages/html/package.json' with { type: 'json' };
+import { INSTALLATION_MARKDOWN_PARAMS, renderInstallationMarkdownSelection } from './installation/markdown.ts';
 
 const VJS10_VERSION = htmlPackage.version;
+const INSTALLATION_PATH = '/docs/guides/installation/';
 // RFC 9110 qvalue: 0 to 1 with at most three decimals.
 const QVALUE = /^(?:0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/;
 
-/** Whether an Accept header explicitly prefers Markdown to HTML. */
+/**
+ * Whether an Accept header explicitly permits Markdown and gives it at least HTML's quality. Markdown wins an exact
+ * tie; wildcards can supply HTML's quality but never opt a request into Markdown on their own.
+ */
 export function prefersMarkdown(accept: string): boolean {
   const qualities = new Map<string, number>();
 
@@ -23,16 +27,30 @@ export function prefersMarkdown(accept: string): boolean {
   return markdown > 0 && markdown >= html;
 }
 
-function markdownResponse(body: string, status = 200, privateResponse = false): Response {
-  const headers = new Headers();
+function markMarkdownResponse(response: Response): Response {
+  const headers = new Headers(response.headers);
 
   headers.set('content-type', 'text/markdown; charset=utf-8');
-  headers.set('cache-control', privateResponse ? 'private, no-store' : 'public, s-maxage=31536000');
-  headers.set('netlify-vary', `query=${[...INSTALLATION_MARKDOWN_PARAMS].join('|')}`);
+  headers.set('cache-control', 'public, s-maxage=31536000');
   headers.set('vary', 'Accept');
-  headers.set('x-markdown-tokens', String(Math.ceil(body.length / 4)));
 
-  return new Response(body, { status, headers });
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function installationMarkdownResponse(body: string, status: 200 | 400 | 500, privateResponse: boolean): Response {
+  const response = new Response(body, { status });
+
+  response.headers.set('content-type', 'text/markdown; charset=utf-8');
+  response.headers.set('cache-control', privateResponse ? 'private, no-store' : 'public, s-maxage=31536000');
+  response.headers.set('netlify-vary', `query=${[...INSTALLATION_MARKDOWN_PARAMS].join('|')}`);
+  response.headers.set('vary', 'Accept');
+  response.headers.set('x-markdown-tokens', String(Math.ceil(body.length / 4)));
+
+  return response;
 }
 
 export interface MarkdownContext {
@@ -56,9 +74,22 @@ export async function handleMarkdown(request: Request, context: MarkdownContext)
   const mdResponse = await context.next(assetRequest);
   if (!mdResponse.ok) return directMarkdown ? mdResponse : undefined;
 
+  // Only installation twins vary their generated body by query parameters. Return every other static twin as a
+  // stream so the edge function does not buffer every documentation page or attach installation cache metadata.
+  if (!path.startsWith(INSTALLATION_PATH)) return markMarkdownResponse(mdResponse);
+
   const body = await mdResponse.text();
   const installation = renderInstallationMarkdownSelection(body, path, url.searchParams, VJS10_VERSION);
-  if (installation) return markdownResponse(installation.body, installation.status, installation.privateResponse);
 
-  return markdownResponse(body, 200, url.searchParams.has('source-url'));
+  if (!installation) {
+    return markMarkdownResponse(
+      new Response(body, {
+        status: mdResponse.status,
+        statusText: mdResponse.statusText,
+        headers: mdResponse.headers,
+      })
+    );
+  }
+
+  return installationMarkdownResponse(installation.body, installation.status, installation.privateResponse);
 }

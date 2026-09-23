@@ -1,6 +1,6 @@
+import type { UseCase } from './presets';
+import { getInstallationPreset } from './presets';
 import { getInstallationRenderer, type Renderer } from './renderers';
-import type { UseCase } from './types';
-import { getInstallationPreset } from './types';
 
 export interface RendererOption {
   value: Renderer;

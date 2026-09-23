@@ -1,4 +1,3 @@
-import { useStore } from '@nanostores/react';
 import {
   DEFAULT_REGISTRY_PRESET,
   type RegistryFramework,
@@ -32,18 +31,16 @@ import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import TanStackLogo from '@/assets/logos/brands/tanstack.svg?react';
 import ViteLogoUrl from '@/assets/logos/brands/vite.svg?url';
 import SkinPreview from '@/components/installation/SkinPreview';
+import {
+  useRegistrySkin,
+  useRegistryStyling,
+  useRegistryTemplate,
+  useRegistryTheme,
+} from '@/components/installation/useRegistryProjectFramework';
 import { useSelection } from '@/components/installation/useSelection';
 import { Select, type SelectOption } from '@/components/Select';
 import { skin as installationSkin, useCase as installationUseCase } from '@/stores/installation';
-import {
-  registrySkin,
-  registryStyling,
-  registryTemplate,
-  registryTheme,
-  selectRegistryStyling,
-  selectRegistryTemplate,
-} from '@/stores/registry';
-import useIsHydrated from '@/utils/useIsHydrated';
+import { registrySkin, registryTheme, selectRegistryStyling, selectRegistryTemplate } from '@/stores/registry';
 
 const TEMPLATE_ICONS = {
   next: <img alt="" src={NextLogoUrl} className="size-4 dark:invert" />,
@@ -79,10 +76,6 @@ interface Props {
   kind: 'template' | 'catalog' | 'styling';
 }
 
-interface HydrationProps {
-  hydrated: boolean;
-}
-
 function templateOptions(framework: RegistryFramework): SelectOption<RegistryTemplate>[] {
   return registryTemplates(framework).map((value) => ({
     value,
@@ -91,9 +84,9 @@ function templateOptions(framework: RegistryFramework): SelectOption<RegistryTem
   }));
 }
 
-function RegistryTemplateSelect({ framework, hydrated }: Pick<Props, 'framework'> & HydrationProps) {
-  const $template = useStore(registryTemplate);
-  const template = resolveRegistryTemplate(framework, hydrated ? $template : null);
+function RegistryTemplateSelect({ framework }: Pick<Props, 'framework'>) {
+  const $template = useRegistryTemplate();
+  const template = resolveRegistryTemplate(framework, $template);
 
   return (
     <div className="grid gap-1.5">
@@ -109,9 +102,9 @@ function RegistryTemplateSelect({ framework, hydrated }: Pick<Props, 'framework'
   );
 }
 
-function RegistryStylingSelect({ framework, hydrated }: Pick<Props, 'framework'> & HydrationProps) {
-  const $styling = useStore(registryStyling);
-  const styling = resolveRegistryStyling(framework, hydrated ? $styling : null);
+function RegistryStylingSelect({ framework }: Pick<Props, 'framework'>) {
+  const $styling = useRegistryStyling();
+  const styling = resolveRegistryStyling(framework, $styling);
 
   return (
     <div className="grid shrink-0 gap-1.5">
@@ -131,24 +124,16 @@ function RegistryStylingSelect({ framework, hydrated }: Pick<Props, 'framework'>
   );
 }
 
-function RegistryCatalogSelects({
-  defaultSkin,
-  defaultTheme,
-  framework,
-  hydrated,
-  installation,
-}: Omit<Props, 'kind'> & HydrationProps) {
-  const $registrySkin = useStore(registrySkin);
-  const $theme = useStore(registryTheme);
+function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installation }: Omit<Props, 'kind'>) {
+  const $registrySkin = useRegistrySkin();
+  const $theme = useRegistryTheme();
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const installationSelection = registrySkinSelection({ useCase: $useCase, skin: $skin });
   const selectedSkin =
-    (hydrated ? $registrySkin : null) ??
-    (installation ? installationSelection?.item : defaultSkin) ??
-    DEFAULT_REGISTRY_PRESET;
+    $registrySkin ?? (installation ? installationSelection?.item : defaultSkin) ?? DEFAULT_REGISTRY_PRESET;
   const installationTheme = installationSelection?.theme ?? 'default';
-  const theme = (hydrated ? $theme : null) ?? (installation ? installationTheme : defaultTheme) ?? 'default';
+  const theme = $theme ?? (installation ? installationTheme : defaultTheme) ?? 'default';
 
   const updateInstallationSelection = (preset: RegistryPreset, nextTheme: RegistryTheme) => {
     if (!installation) return;
@@ -189,7 +174,7 @@ function RegistryCatalogSelects({
         />
       </div>
 
-      <RegistryStylingSelect framework={framework} hydrated={hydrated} />
+      <RegistryStylingSelect framework={framework} />
 
       <div className="grid shrink-0 gap-1.5">
         <p className="text-p4 font-medium">Theme</p>
@@ -216,21 +201,18 @@ function RegistryCatalogSelects({
 
 /** Chooses the Shadcn project template or the skin, styling, and theme used to add skin source. */
 export default function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
-  const hydrated = useIsHydrated();
-
-  if (kind === 'template') return <RegistryTemplateSelect framework={framework} hydrated={hydrated} />;
+  if (kind === 'template') return <RegistryTemplateSelect framework={framework} />;
 
   return kind === 'catalog' ? (
     <RegistryCatalogSelects
       defaultSkin={defaultSkin}
       defaultTheme={defaultTheme}
       framework={framework}
-      hydrated={hydrated}
       installation={installation}
     />
   ) : (
     <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-      <RegistryStylingSelect framework={framework} hydrated={hydrated} />
+      <RegistryStylingSelect framework={framework} />
     </div>
   );
 }

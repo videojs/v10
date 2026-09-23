@@ -24,8 +24,8 @@ Then print the version-matched installation choices for the player you are using
 without modifying your project:
 
 ```sh
-npx @videojs/react@latest agents init
-npx @videojs/html@latest agents init
+npx @videojs/react agents init
+npx @videojs/html agents init
 ```
 
 ## Timeline
