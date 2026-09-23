@@ -1,9 +1,10 @@
 ---
+import { getLegacyErrorRecords } from 'video.js/errors';
+
 import DocsLink from '@/components/docs/DocsLink.astro';
 import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
-import { getLegacyErrorPages } from '@/utils/errors/legacy-errors';
 
-const pages = getLegacyErrorPages();
+const pages = getLegacyErrorRecords();
 ---
 
 <ul class="mx-auto max-w-3xl space-y-6">
