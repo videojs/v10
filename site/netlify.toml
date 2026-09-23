@@ -55,7 +55,7 @@
 # Previous Video.js 10 builds linked directly to these legacy diagnostic URLs.
 [[redirects]]
   from = "/errors"
-  to = "/docs/reference/api/legacy-errors"
+  to = "/docs/reference/api/error-codes"
   status = 301
 
 [[redirects]]

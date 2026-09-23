@@ -410,10 +410,10 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Legacy errors',
+        sidebarLabel: 'Error codes',
         llmsDescription: 'Reference for codes thrown when Video.js 8 APIs are used with the Video.js 10 package.',
         contents: [
-          { slug: 'reference/api/legacy-errors', sidebarLabel: 'Error codes' },
+          { slug: 'reference/api/error-codes', sidebarLabel: 'Overview' },
           { slug: 'reference/api/v8-legacy-init', sidebarLabel: 'VJS8_LEGACY_INIT' },
           { slug: 'reference/api/v8-legacy-plugin', sidebarLabel: 'VJS8_LEGACY_PLUGIN' },
           { slug: 'reference/api/v8-legacy-component', sidebarLabel: 'VJS8_LEGACY_COMPONENT' },
