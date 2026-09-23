@@ -13,7 +13,7 @@ import {
 } from '@videojs/installation';
 
 import { closesCodeFence, codeFenceOpening, outsideCodeFences } from '../markdown-text.ts';
-import { getInstallationRouteSegment } from './routes';
+import { getInstallationRouteSegment } from './routes.ts';
 
 const PLAN_PATTERN = /<!-- installation-plan:start -->[\s\S]*?<!-- installation-plan:end -->/;
 const FRAMEWORK_BRANCH_OPEN = /^[ \t]*<!-- installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
