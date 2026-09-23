@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { INSTALLATION_DEMO_SOURCES } from '../defaults';
 import { runAgentsInit } from '../node';
 import { installationCommand } from '../plan';
 
@@ -71,6 +72,18 @@ describe('runAgentsInit', () => {
     expect(result.stdout).toContain('`````html');
     expect(result.stdout).toContain(`- \`source-url\`: \`\`\`\`\`${source}\`\`\`\`\``);
     expect(result.stdout).not.toContain(`src="${source}"`);
+  });
+
+  it('uses the demo source when source-url is explicitly empty', () => {
+    const separate = runAgentsInit('html', '10.0.0', ['agents', 'init', '--source-url', '']);
+    const equals = runAgentsInit('html', '10.0.0', ['agents', 'init', '--source-url=']);
+    const missingMethod = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', '']);
+
+    expect(separate.exitCode).toBe(0);
+    expect(separate.stdout).toContain(INSTALLATION_DEMO_SOURCES.videoMp4);
+    expect(equals.exitCode).toBe(0);
+    expect(equals.stdout).toContain(INSTALLATION_DEMO_SOURCES.videoMp4);
+    expect(missingMethod.exitCode).toBe(2);
   });
 
   it('returns valid framework-specific next links in JSON without duplicating them in Markdown', () => {

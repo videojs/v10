@@ -83,7 +83,7 @@ function parseArguments(args: readonly string[]): ParseResult {
 
     const value = equals === -1 ? args[++index] : argument.slice(equals + 1);
 
-    if (!value || value.startsWith('--')) {
+    if (value === undefined || value.startsWith('--') || (value.length === 0 && key !== 'sourceUrl')) {
       return {
         ok: false,
         json,
