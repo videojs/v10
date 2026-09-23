@@ -48,7 +48,10 @@ export const sidebar: Sidebar = [
       },
       {
         sidebarLabel: 'Environment',
-        llmsDescription: 'TypeScript, bundlers, the CDN, self-hosting, and Content Security Policy.',
+        llmsDescription: {
+          react: 'TypeScript, bundlers, and Content Security Policy.',
+          html: 'TypeScript, bundlers, the CDN, self-hosting, and Content Security Policy.',
+        },
         contents: [
           { slug: 'guides/typescript' },
           { slug: 'guides/bundlers' },
@@ -283,8 +286,11 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'API',
-    llmsDescription:
-      'API reference for the player factory, store, features, menus, gestures, translation tools, and utilities.',
+    llmsDescription: {
+      react:
+        'API reference for the player factory, store, features, menus, gestures, translation tools, and utilities.',
+      html: 'API reference for the player factory, store controllers, features, translation tools, and utilities.',
+    },
     contents: [
       {
         sidebarLabel: 'Player',
@@ -302,8 +308,11 @@ export const sidebar: Sidebar = [
       },
       {
         sidebarLabel: 'Store',
-        llmsDescription:
-          'API reference for reading and subscribing to player state: selectors, snapshots, and the store controllers.',
+        llmsDescription: {
+          react:
+            'API reference for reading and subscribing to player state: selectors, the store hooks, and snapshots.',
+          html: 'API reference for reading and subscribing to player state: selectors and the store controllers.',
+        },
         contents: [
           { slug: 'reference/api/create-selector' },
           { slug: 'reference/api/use-store', frameworks: ['react'] },
@@ -363,8 +372,10 @@ export const sidebar: Sidebar = [
       },
       {
         sidebarLabel: 'i18n',
-        llmsDescription:
-          'API reference for translating the player: providers, hooks, elements, and the phrase registry.',
+        llmsDescription: {
+          react: 'API reference for translating the player: the provider, hooks, and the phrase registry.',
+          html: 'API reference for translating the player: the i18n elements, controller, and the phrase registry.',
+        },
         contents: [
           { slug: 'reference/api/i18n-provider', frameworks: ['react'] },
           { slug: 'reference/api/create-i18n' },
@@ -383,8 +394,10 @@ export const sidebar: Sidebar = [
       },
       {
         sidebarLabel: 'Utils',
-        llmsDescription:
-          'Lower-level building blocks for custom components: refs, buttons, sliders, rendering, and keyboard shortcut controllers.',
+        llmsDescription: {
+          react: 'Lower-level building blocks for custom components: refs, buttons, sliders, and rendering.',
+          html: 'Lower-level building blocks for custom components: the keyboard shortcut controller.',
+        },
         contents: [
           { slug: 'reference/api/use-button', frameworks: ['react'] },
           { slug: 'reference/api/use-slider', frameworks: ['react'] },

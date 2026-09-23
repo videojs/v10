@@ -9,10 +9,11 @@ import {
   convertPage,
   createTurndown,
   generateChronologicalIndex,
-  generateDocsFull,
+  generateDocsCorpus,
   generateDocsIndex,
   generatePageFooter,
   generateRootIndex,
+  llmsIndexPaths,
   type SectionFile,
 } from '../llms-markdown';
 
@@ -161,13 +162,13 @@ describe('convertPage', () => {
     );
   });
 
-  it('joins a list inside a table cell with semicolons', () => {
+  it('keeps list items inside a table cell on their own lines', () => {
     const markdown = convert(
-      '<table><tr><th>Name</th><th>Description</th></tr><tr><td><code>level</code></td><td>Derived level:<ul><li><code>off</code>: muted</li><li><code>low</code>: quiet</li></ul></td></tr></table>'
+      '<table><tr><th>Name</th><th>Description</th></tr><tr><td><code>modal</code></td><td>Modality:<ul><li><code>false</code>: non-modal; content stays interactive.</li><li><code>true</code>: modal.</li></ul></td></tr></table>'
     );
 
     expect(markdown).toBe(
-      '| Name | Description |\n| --- | --- |\n| `level` | Derived level: `off`: muted; `low`: quiet |'
+      '| Name | Description |\n| --- | --- |\n| `modal` | Modality:<br>- `false`: non-modal; content stays interactive.<br>- `true`: modal. |'
     );
   });
 
@@ -181,12 +182,26 @@ describe('convertPage', () => {
     expect(card).toBe('- [Read more about `<media-container>`](https://videojs.org/x)');
   });
 
-  it('points same-page links at the heading slugs a renderer derives', () => {
-    const markdown = convert(
-      '<p><a href="#root-css">Root vars</a> and <a href="#thumb-css">thumb vars</a>.</p><h4 id="root-css">CSS custom properties</h4><h4 id="thumb-css">CSS custom properties</h4>'
+  it('points same-page links at the heading slugs a renderer derives and records each heading id', () => {
+    const page = convertPage(
+      '<article data-llms-content><p><a href="#root-css">Root vars</a> and <a href="#thumb-css">thumb vars</a>.</p><h4 id="root-css">CSS custom properties</h4><h4 id="thumb-css">CSS custom properties</h4></article>',
+      turndown,
+      SITE_URL
     );
 
-    expect(markdown).toContain('[Root vars](#css-custom-properties) and [thumb vars](#css-custom-properties-1).');
+    expect(page?.markdown).toContain('[Root vars](#css-custom-properties) and [thumb vars](#css-custom-properties-1).');
+    expect(page?.headingIds).toEqual(
+      new Map([
+        ['css-custom-properties', 'root-css'],
+        ['css-custom-properties-1', 'thumb-css'],
+      ])
+    );
+  });
+
+  it('keeps authored escapes inside fenced code', () => {
+    const markdown = convert('<p>snake_case</p><pre data-language="bash">grep -E "a\\_b|c\\-d"</pre>');
+
+    expect(markdown).toBe('snake_case\n\n```bash\ngrep -E "a\\_b|c\\-d"\n```');
   });
 
   it('demotes step titles to bold text and keeps identifiers unescaped', () => {
@@ -398,6 +413,14 @@ describe('generateDocsIndex', () => {
 });
 
 describe('buildSectionFiles', () => {
+  it("describes a section with the framework's own summary", () => {
+    const api = (framework: 'html' | 'react') =>
+      buildSectionFiles(framework, [], SITE_URL).find((file) => file.directory === 'reference/api')?.index ?? '';
+
+    expect(api('react')).toContain('menus, gestures');
+    expect(api('html')).not.toContain('menus, gestures');
+  });
+
   it('writes an index and a complete file into the directory a section shares', () => {
     const slug = firstSidebarSlug(sidebar);
     const files = buildSectionFiles('html', [htmlPage(slug, '# Page\n\nBody', 'Desc.')], SITE_URL);
@@ -420,6 +443,23 @@ describe('buildSectionFiles', () => {
       /^# Video\.js v10 — HTML Guides \(complete\)\n\n> Every HTML guides page in one file \(about 1k tokens\)\. Index with descriptions: /
     );
     expect(guides.full).toContain(`<!-- Source: ${SITE_URL}/docs/framework/html/${slug} -->\n\n# Page\n\nBody\n`);
+  });
+});
+
+describe('llmsIndexPaths', () => {
+  it('lists the root, blog, changelog, framework, and section files the build writes', () => {
+    const paths = llmsIndexPaths();
+
+    expect(paths).toEqual(expect.arrayContaining(['/llms.txt', '/blog/llms.txt', '/changelog/llms.txt']));
+
+    for (const framework of ['html', 'react']) {
+      const directories = buildSectionFiles(framework, [], SITE_URL).map((file) => file.directory);
+
+      for (const directory of ['', ...directories.map((name) => `/${name}`)]) {
+        expect(paths).toContain(`/docs/framework/${framework}${directory}/llms.txt`);
+        expect(paths).toContain(`/docs/framework/${framework}${directory}/llms-full.txt`);
+      }
+    }
   });
 });
 
@@ -457,26 +497,53 @@ describe('generateChronologicalIndex', () => {
   });
 });
 
-describe('generateDocsFull', () => {
-  it('points same-page anchors back at their page and quotes the corpus size', () => {
+describe('generateDocsCorpus', () => {
+  it('points same-page anchors back at the heading id on their page and quotes the corpus size', () => {
     const slug = firstSidebarSlug(sidebar);
     const pathname = `/docs/framework/html/${slug}`;
-    const full = generateDocsFull(
+    const markdown =
+      '# Page\n\nSee [below](#details) and [aside](#aside).\n\n```md\n[kept](#details)\n```\n\n## Details';
+    const { content: full } = generateDocsCorpus(
       'html',
-      [{ pathname, title: 'Page', framework: 'html', markdown: '# Page\n\nSee [below](#details).\n\n## Details' }],
+      [{ pathname, title: 'Page', framework: 'html', markdown, headingIds: new Map([['details', 'root-details']]) }],
       SITE_URL
     );
 
-    expect(full).toContain(`See [below](${SITE_URL}${pathname}#details).`);
+    expect(full).toContain(
+      `See [below](${SITE_URL}${pathname}#root-details) and [aside](${SITE_URL}${pathname}#aside).`
+    );
+    expect(full).toContain('```md\n[kept](#details)\n```');
     expect(full).toMatch(
       /^# Video\.js v10 — HTML Documentation \(complete\)\n\n> Every HTML docs page in one file \(about \d+k tokens\)\./
     );
     expect(full).toContain(`<!-- Source: ${SITE_URL}${pathname} -->`);
   });
 
+  it("keeps only the framework's branches of a shared page and drops the CLI markers", () => {
+    const slug = firstSidebarSlug(sidebar);
+    const markdown = [
+      '# Page',
+      '<!-- cli:replace installation -->',
+      'Steps',
+      '<!-- cli:framework react -->',
+      'React only',
+      '<!-- /cli:framework react -->',
+      '<!-- cli:framework html -->',
+      'HTML only',
+      '<!-- /cli:framework html -->',
+      '<!-- /cli:replace installation -->',
+      'After',
+    ].join('\n\n');
+    const { content } = generateDocsCorpus('html', [htmlPage(slug, markdown)], SITE_URL);
+
+    expect(content).toContain('# Page\n\nSteps\n\nHTML only\n\nAfter\n');
+    expect(content).not.toContain('React only');
+    expect(content).not.toContain('cli:');
+  });
+
   it('adds the section label to titles two pages share', () => {
     const slugs = firstSlugOfTwoSections();
-    const full = generateDocsFull(
+    const { content: full } = generateDocsCorpus(
       'html',
       slugs.map((slug) => htmlPage(slug, '# Same\n\nBody')),
       SITE_URL

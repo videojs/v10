@@ -7,15 +7,16 @@ import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
 
-import { SITE_DESCRIPTION } from '../src/consts';
+import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION } from '../src/consts';
 import { sidebar } from '../src/docs.config';
-import type { Sidebar, SupportedFramework } from '../src/types/docs';
-import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework } from '../src/types/docs';
+import type { Section, Sidebar, SupportedFramework } from '../src/types/docs';
+import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework, SUPPORTED_FRAMEWORKS } from '../src/types/docs';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../src/utils/installation/routes';
+import { outsideCodeFences, selectFrameworkBranches } from './markdown-text';
 
 export interface PageEntry {
   pathname: string;
@@ -25,10 +26,8 @@ export interface PageEntry {
   framework?: string;
   frameworks?: string[];
   markdown?: string;
+  headingIds?: Map<string, string>;
 }
-
-/** The first Video.js 10 post; everything before it documents Video.js 1 through 8. */
-const FIRST_V10_BLOG_POST = '2026-03';
 
 export default function llmsMarkdown(): AstroIntegration {
   let siteUrl = '';
@@ -99,7 +98,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
-              docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework, frameworks, markdown });
+              docsPages.push({ ...page, pathname: `/${pathname}` });
             } else if (pathname.startsWith('blog/')) {
               blogPages.push({ pathname: `/${pathname}`, title, description, sort });
             } else if (pathname.startsWith('changelog/')) {
@@ -248,10 +247,15 @@ export function createTurndown(): TurndownService {
     },
   });
 
-  // Definition lists become bold-term list items; inside a table cell the items join with semicolons.
+  // Definition lists become bold-term list items. A table cell has no line structure, so there the entries run on,
+  // separated by semicolons.
   turndown.addRule('definition-term', {
     filter: 'dt',
-    replacement: (content) => `\n- **${collapseWhitespace(content)}:** `,
+    replacement: (content, node) => {
+      const term = `**${collapseWhitespace(content)}:** `;
+
+      return node.closest('td, th') ? `; ${term}` : `\n- ${term}`;
+    },
   });
 
   turndown.addRule('definition-detail', {
@@ -269,7 +273,7 @@ export function createTurndown(): TurndownService {
   turndown.addRule('list-item', {
     filter: 'li',
     replacement: (content, node, options) => {
-      const parent = node.parentNode as Element | null;
+      const parent = node.parentElement;
       let prefix = `${options.bulletListMarker} `;
 
       if (parent?.nodeName === 'OL') {
@@ -291,35 +295,32 @@ export function createTurndown(): TurndownService {
 
   // Ensure [data-llms-only] content passes through despite hidden attribute
   turndown.addRule('llms-only', {
-    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-llms-only') !== null,
+    filter: (node) => node.hasAttribute('data-llms-only'),
     replacement: (content) => content,
   });
 
   // Wrap [data-cli-replace] content with text markers the CLI can find and replace
   turndown.addRule('cli-replace', {
-    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
-    replacement: (content, node) => markerBlock('replace', (node as Element).getAttribute('data-cli-replace'), content),
+    filter: (node) => node.hasAttribute('data-cli-replace'),
+    replacement: (content, node) => markerBlock('replace', node.getAttribute('data-cli-replace'), content),
   });
 
   // Wrap [data-cli-omit] content with text markers the CLI strips from its output
   turndown.addRule('cli-omit', {
-    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
-    replacement: (content, node) => markerBlock('omit', (node as Element).getAttribute('data-cli-omit'), content),
+    filter: (node) => node.hasAttribute('data-cli-omit'),
+    replacement: (content, node) => markerBlock('omit', node.getAttribute('data-cli-omit'), content),
   });
 
   // Preserve query-controlled framework branches so the docs CLI can keep only the requested Shadcn output.
   turndown.addRule('cli-framework', {
-    filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-framework') !== null,
-    replacement: (content, node) =>
-      markerBlock('framework', (node as Element).getAttribute('data-cli-framework'), content),
+    filter: (node) => node.hasAttribute('data-cli-framework'),
+    replacement: (content, node) => markerBlock('framework', node.getAttribute('data-cli-framework'), content),
   });
 
   // Shiki renders `<pre data-language>`; keep the language on the fence so agents know what they are reading.
   turndown.addRule('highlighted-code', {
-    filter: (node) => node.nodeName === 'PRE' && node.getAttribute('data-language') !== null,
-    replacement: (_content, node) => {
-      // SAFETY: the filter only matches `<pre>` elements.
-      const pre = node as Element;
+    filter: (node) => node.nodeName === 'PRE' && node.hasAttribute('data-language'),
+    replacement: (_content, pre) => {
       const code = (pre.textContent ?? '').replace(/\n$/, '');
 
       // A fence must be longer than any backtick run inside the code, or a nested ``` would close it early.
@@ -333,9 +334,9 @@ export function createTurndown(): TurndownService {
   // Flatten docs link cards, whose block markup nests inside the <a>, into list items.
   // Emitting a single leading/trailing newline keeps a run of adjacent cards as one tight list.
   turndown.addRule('docs-link-card', {
-    filter: (node) => node.nodeType === 1 && hasClass(node as Element, 'docs-link-card'),
+    filter: (node) => hasClass(node, 'docs-link-card'),
     replacement: (_content, node) => {
-      const link = (node as Element).querySelector('a[href]');
+      const link = node.querySelector('a[href]');
       if (!link) return '';
 
       // Card body is either <span>title</span> or <div><div>title</div><div>description</div></div>,
@@ -360,13 +361,13 @@ export function createTurndown(): TurndownService {
   turndown.addRule('table-cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
-      // A list inside a cell has no line structure left, so mark the item boundaries with semicolons instead.
+      // A cell must stay on one line, so a list inside it keeps its items apart with GFM's `<br>` line breaks.
       const inline = content
-        .replace(/^\s*-\s+/, '')
-        .replace(/:\s*\n+-\s+/g, ': ')
-        .replace(/\n+-\s+/g, '; ');
+        .replace(/^\s*;\s*/, '')
+        .replace(/\n+\s*(?=- )/g, '<br>')
+        .replace(/^<br>/, '');
       const text = collapseWhitespace(inline).replace(/\|/g, '\\|');
-      const span = Math.max(1, Number((node as Element).getAttribute('colspan')) || 1);
+      const span = Math.max(1, Number(node.getAttribute('colspan')) || 1);
 
       return `| ${text ? `${text} ` : ''}${'| '.repeat(span - 1)}`;
     },
@@ -374,8 +375,7 @@ export function createTurndown(): TurndownService {
 
   turndown.addRule('table-row', {
     filter: 'tr',
-    replacement: (content, node) => {
-      const row = node as Element;
+    replacement: (content, row) => {
       const line = `\n${content}|`;
 
       if (!isHeaderRow(row)) return line;
@@ -402,8 +402,7 @@ export function createTurndown(): TurndownService {
   // An embed has no text, so it would vanish without a trace. Keep its address so a reader can follow it.
   turndown.addRule('iframe', {
     filter: 'iframe',
-    replacement: (_content, node) => {
-      const frame = node as Element;
+    replacement: (_content, frame) => {
       const src = frame.getAttribute('src');
       if (!src) return '';
 
@@ -443,6 +442,8 @@ export interface ConvertedPage {
   sort?: string;
   framework?: string;
   frameworks?: string[];
+  /** HTML id of each heading, keyed by the slug its same-page links use in the Markdown. */
+  headingIds: Map<string, string>;
 }
 
 /** Convert a rendered page's `[data-llms-content]` regions to Markdown, or `null` when the page has none. */
@@ -458,8 +459,10 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
   // For each content element, strip non-content elements before conversion
   const contentParts: string[] = [];
   const slugger = new GithubSlugger();
+  const headingIds = new Map<string, string>();
 
   contentElements.forEach((contentEl) => {
+    // SAFETY: a deep clone of an element is an element.
     const clone = contentEl.cloneNode(true) as Element;
 
     // Drop opted-out markup along with scripts and styles (which include Astro island hydration scripts).
@@ -475,7 +478,7 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
     demoteStepTitles(clone);
     joinCodeChips(clone);
     flattenTabs(clone);
-    rewriteInPageAnchors(clone, slugger);
+    rewriteInPageAnchors(clone, slugger, headingIds);
     absolutizeUrls(clone, siteUrl);
 
     contentParts.push(clone.innerHTML);
@@ -483,11 +486,10 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
 
   // Combine all content parts
   const combinedHtml = contentParts.join('\n\n');
-  const markdown = turndown
-    .turndown(combinedHtml)
-    // Turndown escapes every `_` and any `-` that opens a text node; neither can start emphasis or a list mid-word.
-    .replace(/(?<=\w)\\_(?=\w)/g, '_')
-    .replace(/(?<=\S)\\-/g, '-');
+  // Turndown escapes every `_` and any `-` that opens a text node; neither can start emphasis or a list mid-word.
+  const markdown = outsideCodeFences(turndown.turndown(combinedHtml), (text) =>
+    text.replace(/(?<=\w)\\_(?=\w)/g, '_').replace(/(?<=\S)\\-/g, '-')
+  );
 
   // Extract title and description for llms.txt index
   const titleElement = document.querySelector('h1');
@@ -504,7 +506,7 @@ export function convertPage(html: string, turndown: TurndownService, siteUrl: st
   const frameworksAttr = contentElements[0]?.getAttribute('data-frameworks');
   const frameworks = frameworksAttr ? frameworksAttr.split(',').filter(Boolean) : undefined;
 
-  return { markdown, title, description, sort, framework, frameworks };
+  return { markdown, title, description, sort, framework, frameworks, headingIds };
 }
 
 /**
@@ -652,16 +654,19 @@ function demoteStepTitles(root: Element): void {
 
 /**
  * Markdown headings carry no ids, so a same-page link to `#root-css-custom-properties` has nothing to land on. Point it
- * at the slug a GFM renderer derives from the heading text instead, numbering repeats the way GitHub does.
+ * at the slug a GFM renderer derives from the heading text instead, numbering repeats the way GitHub does. Each
+ * heading's HTML id is recorded by slug in `headingIds` so a link that later leaves the page can target the HTML page.
  */
-function rewriteInPageAnchors(root: Element, slugger: GithubSlugger): void {
+function rewriteInPageAnchors(root: Element, slugger: GithubSlugger, headingIds: Map<string, string>): void {
   const slugById = new Map<string, string>();
 
   for (const heading of root.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
     const slug = slugger.slug(collapseWhitespace(heading.textContent));
     const id = heading.getAttribute('id');
+    if (!id) continue;
 
-    if (id) slugById.set(id, slug);
+    slugById.set(id, slug);
+    headingIds.set(slug, id);
   }
 
   for (const link of root.querySelectorAll('a[href^="#"]')) {
@@ -680,18 +685,12 @@ function inlineMarkdown(element: Element | null, escape: (text: string) => strin
 
     if (child.nodeName === 'CODE') return `\`${child.textContent ?? ''}\``;
 
+    // SAFETY: text nodes returned above; any other child without element children contributes no text.
     return inlineMarkdown(child as Element, escape);
   });
 
   return collapseWhitespace(parts.join(''));
 }
-
-const ASIDE_LABELS: Record<string, string> = {
-  note: 'Note',
-  tip: 'Tip',
-  caution: 'Caution',
-  danger: 'Danger',
-};
 
 /**
  * Callouts convey their type through an icon and a colour band, neither of which survives conversion. Rewrite each as a
@@ -701,8 +700,7 @@ function flattenAsides(root: Element): void {
   const document = root.ownerDocument;
 
   for (const aside of root.querySelectorAll('aside[data-aside]')) {
-    const type = aside.getAttribute('data-aside') ?? '';
-    const label = ASIDE_LABELS[type] ?? capitalize(type);
+    const label = capitalize(aside.getAttribute('data-aside') ?? '');
     const title = collapseWhitespace(aside.querySelector('[data-aside-title]')?.textContent);
     const heading = !title || title === label ? label : `${label}: ${title}`;
     const body = aside.querySelector('[data-aside-body]') ?? aside;
@@ -732,22 +730,22 @@ function joinCodeChips(root: Element): void {
 }
 
 /** Shiki keeps the fence alias an author typed, while frame labels may spell the language differently. */
-const LANGUAGE_ALIASES: Record<string, string> = {
-  js: 'javascript',
-  ts: 'typescript',
-  sh: 'bash',
-  shell: 'bash',
-  zsh: 'bash',
-  yml: 'yaml',
-  md: 'markdown',
-  txt: 'plaintext',
-  text: 'plaintext',
-};
+const LANGUAGE_ALIASES = new Map([
+  ['js', 'javascript'],
+  ['ts', 'typescript'],
+  ['sh', 'bash'],
+  ['shell', 'bash'],
+  ['zsh', 'bash'],
+  ['yml', 'yaml'],
+  ['md', 'markdown'],
+  ['txt', 'plaintext'],
+  ['text', 'plaintext'],
+]);
 
 function normalizeLanguage(value: string | null | undefined): string {
   const key = collapseWhitespace(value).toLowerCase();
 
-  return LANGUAGE_ALIASES[key] ?? key;
+  return LANGUAGE_ALIASES.get(key) ?? key;
 }
 
 /**
@@ -867,6 +865,21 @@ export function generatePageFooter(
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * One index list item linking a page's Markdown twin. Titles and descriptions are page text, so a tag name such as
+ * `<audio>` is escaped the way the page body escapes it, and brackets cannot close the link text early.
+ */
+function indexEntry(page: PageEntry, siteUrl: string, suffix = ''): string {
+  const title = escapeIndexText(page.title).replace(/[[\]]/g, '\\$&');
+  const link = `- [${title}](${siteUrl}${page.pathname}.md)`;
+
+  return page.description ? `${link}: ${escapeIndexText(page.description)}${suffix}\n` : `${link}${suffix}\n`;
+}
+
+function escapeIndexText(text: string): string {
+  return text.replace(/<(?=[A-Za-z/])/g, '\\<');
+}
+
 /** Breadcrumb footer linking an index back to root llms.txt, separated from the list by one blank line. */
 function appendIndexFooter(content: string, siteUrl: string, lines: string[] = []): string {
   const footer = [...lines, `All documentation: ${siteUrl}/llms.txt`].join('\n');
@@ -926,9 +939,7 @@ export function generateRootIndex({
     const sorted = [...otherPages].sort((a, b) => a.pathname.localeCompare(b.pathname));
 
     for (const page of sorted) {
-      content += page.description
-        ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
-        : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
+      content += indexEntry(page, siteUrl);
     }
 
     content += `\n`;
@@ -975,7 +986,7 @@ export function generateDocsIndex(
   const filtered = filterSidebarForLlms(sidebar, framework);
   const sectionByLabel = new Map(sections.map((section) => [section.label, section]));
 
-  content += renderSidebarToMarkdown(filtered, pagesBySlug(framework, pages), siteUrl, 0, sectionByLabel);
+  content += renderSidebarToMarkdown(framework, filtered, pagesBySlug(framework, pages), siteUrl, 0, sectionByLabel);
 
   return appendIndexFooter(content, siteUrl);
 }
@@ -1002,19 +1013,15 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
 
   const label = frameworkLabel(framework);
   const bySlug = pagesBySlug(framework, pages);
-  const sections = filterSidebarForLlms(sidebar, framework).filter(isSection);
-  const sectionLabels = sectionLabelsBySlug(sections);
+  const sections = llmsSections(framework);
+  const sectionLabels = sectionLabelsBySlug(sections.map(({ section }) => section));
 
-  return sections.flatMap((section) => {
-    const slugs = sidebarSlugs(section.contents);
-    const directory = commonDirectory(slugs);
-    if (!directory) return [];
-
+  return sections.map(({ section, slugs, directory }) => {
     const base = `${siteUrl}/docs/framework/${framework}/${directory}`;
     const indexUrl = `${base}/llms.txt`;
     const fullUrl = `${base}/llms-full.txt`;
     const title = `Video.js v10 — ${label} ${section.sidebarLabel}`;
-    const body = renderCorpus(slugs, bySlug, siteUrl, sectionLabels);
+    const body = renderCorpus(framework, slugs, bySlug, siteUrl, sectionLabels);
     const tokens = estimateTokens(body);
 
     let full = `# ${title} (complete)\n\n`;
@@ -1024,17 +1031,43 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
 
     let index = `# ${title}\n\n> `;
 
-    if (section.llmsDescription) index += `${section.llmsDescription} `;
+    const description = sectionDescription(section, framework);
+
+    if (description) index += `${description} `;
 
     index += `Every page below is also available as Markdown at its \`.md\` URL. `;
     index += `This section in one file (${formatTokens(tokens)}): ${fullUrl}\n\n`;
-    index += renderSidebarToMarkdown(section.contents, bySlug, siteUrl);
+    index += renderSidebarToMarkdown(framework, section.contents, bySlug, siteUrl);
     index = appendIndexFooter(index, siteUrl, [
       `${label} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`,
     ]);
 
-    return [{ label: section.sidebarLabel, directory, indexUrl, fullUrl, tokens, index, full }];
+    return { label: section.sidebarLabel, directory, indexUrl, fullUrl, tokens, index, full };
   });
+}
+
+/** Top-level sidebar sections whose pages share a directory; each section's llms files are written there. */
+function llmsSections(framework: SupportedFramework) {
+  return filterSidebarForLlms(sidebar, framework)
+    .filter(isSection)
+    .flatMap((section) => {
+      const slugs = sidebarSlugs(section.contents);
+      const directory = commonDirectory(slugs);
+
+      return directory ? [{ section, slugs, directory }] : [];
+    });
+}
+
+/** Root-relative paths of every index and complete file the build writes, for the sitemap. */
+export function llmsIndexPaths(): string[] {
+  const docs = SUPPORTED_FRAMEWORKS.flatMap((framework) =>
+    [
+      `/docs/framework/${framework}`,
+      ...llmsSections(framework).map(({ directory }) => `/docs/framework/${framework}/${directory}`),
+    ].flatMap((base) => [`${base}/llms.txt`, `${base}/llms-full.txt`])
+  );
+
+  return ['/llms.txt', '/blog/llms.txt', '/changelog/llms.txt', ...docs];
 }
 
 /** A section label used mid-sentence: lower-case unless it is an acronym such as "API". */
@@ -1075,23 +1108,23 @@ function sectionLabelsBySlug(items: Sidebar, label?: string, labels = new Map<st
   return labels;
 }
 
-/** Every docs page for a framework in sidebar order, concatenated into one Markdown document. */
-export function generateDocsFull(framework: string, pages: PageEntry[], siteUrl: string): string {
-  return generateDocsCorpus(framework, pages, siteUrl).content;
-}
-
-/** The complete file plus the size quoted in its header, so every index that links it states the same number. */
-export function generateDocsCorpus(
-  framework: string,
-  pages: PageEntry[],
-  siteUrl: string
-): { content: string; tokens: number } {
+/**
+ * Every docs page for a framework in sidebar order, concatenated into one Markdown document, plus the size quoted in
+ * its header so every index that links it states the same number.
+ */
+export function generateDocsCorpus(framework: string, pages: PageEntry[], siteUrl: string) {
   let body = '';
 
   if (isValidFramework(framework)) {
     const filtered = filterSidebarForLlms(sidebar, framework);
 
-    body = renderCorpus(sidebarSlugs(filtered), pagesBySlug(framework, pages), siteUrl, sectionLabelsBySlug(filtered));
+    body = renderCorpus(
+      framework,
+      sidebarSlugs(filtered),
+      pagesBySlug(framework, pages),
+      siteUrl,
+      sectionLabelsBySlug(filtered)
+    );
   }
 
   const tokens = estimateTokens(body);
@@ -1106,10 +1139,11 @@ export function generateDocsCorpus(
 
 /**
  * Pages in sidebar order, each introduced by a source comment. Same-page anchors collide once every page shares one
- * file, so they point back at the page they came from, and a title two pages share gains its section label so a
- * heading-based chunker can still tell them apart.
+ * file, so they point back at the heading id on the page they came from, and a title two pages share gains its section
+ * label so a heading-based chunker can still tell them apart.
  */
 function renderCorpus(
+  framework: string,
   slugs: string[],
   bySlug: Map<string, PageEntry>,
   siteUrl: string,
@@ -1131,7 +1165,12 @@ function renderCorpus(
   let body = '';
 
   for (const { slug, page, markdown } of entries) {
-    let content = markdown.trim().replace(/\]\(#/g, `](${siteUrl}${page.pathname}#`);
+    let content = outsideCodeFences(selectFrameworkBranches(markdown, framework).trim(), (text) =>
+      text.replace(
+        /\]\(#([^)\s]*)/g,
+        (_match, anchor: string) => `](${siteUrl}${page.pathname}#${page.headingIds?.get(anchor) ?? anchor}`
+      )
+    );
     const title = firstHeading(content);
     const label = sectionLabels.get(slug);
 
@@ -1187,6 +1226,7 @@ function sidebarSlugs(items: Sidebar): string[] {
 }
 
 function renderSidebarToMarkdown(
+  framework: SupportedFramework,
   items: Sidebar,
   pageBySlug: Map<string, PageEntry>,
   siteUrl: string,
@@ -1201,9 +1241,9 @@ function renderSidebarToMarkdown(
 
       content += `${heading} ${item.sidebarLabel}\n\n`;
 
-      if (item.llmsDescription) {
-        content += `${item.llmsDescription}\n\n`;
-      }
+      const description = sectionDescription(item, framework);
+
+      if (description) content += `${description}\n\n`;
 
       const files = depth === 0 ? sectionFiles?.get(item.sidebarLabel) : undefined;
 
@@ -1212,14 +1252,16 @@ function renderSidebarToMarkdown(
         content += `This section in one file (${formatTokens(files.tokens)}): ${files.fullUrl}\n\n`;
       }
 
-      content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);
-    } else if (!isLink(item)) {
+      content += renderSidebarToMarkdown(framework, item.contents, pageBySlug, siteUrl, depth + 1);
+    } else if (isLink(item)) {
+      const href = item.href.startsWith('/') ? `${siteUrl}${item.href}` : item.href;
+
+      content += `- [${item.sidebarLabel}](${href})\n`;
+    } else {
       const page = pageBySlug.get(item.slug);
       if (!page) continue;
 
-      content += page.description
-        ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
-        : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
+      content += indexEntry(page, siteUrl);
     }
   }
 
@@ -1228,6 +1270,12 @@ function renderSidebarToMarkdown(
   }
 
   return content;
+}
+
+function sectionDescription(section: Section, framework: SupportedFramework): string | undefined {
+  const { llmsDescription } = section;
+
+  return typeof llmsDescription === 'string' ? llmsDescription : llmsDescription?.[framework];
 }
 
 /**
@@ -1254,7 +1302,7 @@ function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Si
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
   const note =
-    `Posts published before ${FIRST_V10_BLOG_POST} describe earlier Video.js versions (1 through 8); ` +
+    `Posts published before ${FIRST_V10_BLOG_MONTH} describe earlier Video.js versions (1 through 8); ` +
     `their APIs do not apply to Video.js 10.`;
 
   return generateChronologicalIndex('Blog', pages, siteUrl, note);
@@ -1276,11 +1324,7 @@ export function generateChronologicalIndex(title: string, pages: PageEntry[], si
   );
 
   for (const post of sorted) {
-    const date = post.sort ? ` (${post.sort.slice(0, 10)})` : '';
-
-    content += post.description
-      ? `- [${post.title}](${siteUrl}${post.pathname}.md): ${post.description}${date}\n`
-      : `- [${post.title}](${siteUrl}${post.pathname}.md)${date}\n`;
+    content += indexEntry(post, siteUrl, post.sort ? ` (${post.sort.slice(0, 10)})` : '');
   }
 
   return appendIndexFooter(content, siteUrl);

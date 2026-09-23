@@ -122,7 +122,8 @@ export interface SidebarLink {
 
 export interface Section {
   sidebarLabel: string;
-  llmsDescription?: string;
+  /** One-line summary for the llms.txt indexes; give each framework its own when the section's pages differ. */
+  llmsDescription?: string | Partial<Record<SupportedFramework, string>>;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
   contents: Array<Guide | Section | SidebarLink>;

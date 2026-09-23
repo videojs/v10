@@ -11,6 +11,8 @@ export const PRODUCTION_URL = new URL('https://videojs.org');
 export const PRERELEASE_URL = new URL('https://main.videojs.org');
 export const SITE_TITLE = 'Video.js';
 export const SEO_SUFFIX = 'Open Source Video Player';
+/** Month (`YYYY-MM`) of the first Video.js 10 blog post; earlier posts document Video.js 1 through 8. */
+export const FIRST_V10_BLOG_MONTH = '2026-03';
 export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;
 export const GITHUB_REPO_URL = 'https://github.com/videojs/v10/';
 export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';

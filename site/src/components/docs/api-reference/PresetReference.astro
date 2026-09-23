@@ -13,6 +13,8 @@ import { isValidFramework } from '@/types/docs';
 import type { PresetReference as PresetReferenceType } from '@/types/preset-reference';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
+import HumanCase from '../HumanCase.astro';
+import LLMCase from '../LLMCase.astro';
 import InlineMarkdown from './InlineMarkdown.astro';
 
 const entries = await getCollection('presetReference');
@@ -122,18 +124,39 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                       <dt class="font-semibold">Skins</dt>
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
-                          {preset.react.skins.length > 0
-                            ? preset.react.skins.map((skin) => (
-                                <div class="mb-2 last:mb-0">
-                                  <MarkdownCode class="inline-block whitespace-nowrap">{`<${skin.name}>`}</MarkdownCode>
-                                  {skin.cssImport && (
-                                    <div class="mt-0.5">
-                                      <MarkdownCode class="inline-block text-code whitespace-nowrap">{`import '${skin.cssImport}';`}</MarkdownCode>
-                                    </div>
-                                  )}
-                                </div>
-                              ))
-                            : "–"}
+                          {preset.react.skins.length > 0 ? (
+                            <>
+                              <HumanCase>
+                                {preset.react.skins.map((skin) => (
+                                  <div class="mb-2 last:mb-0">
+                                    <MarkdownCode class="inline-block whitespace-nowrap">{`<${skin.name}>`}</MarkdownCode>
+                                    {skin.cssImport && (
+                                      <div class="mt-0.5">
+                                        <MarkdownCode class="inline-block text-code whitespace-nowrap">{`import '${skin.cssImport}';`}</MarkdownCode>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </HumanCase>
+                              {/* The stacked layout pairs each skin with its stylesheet; Markdown has to say so in words. */}
+                              <LLMCase>
+                                {preset.react.skins.map((skin, index) => (
+                                  <>
+                                    {index > 0 && ", "}
+                                    <code>{`<${skin.name}>`}</code>
+                                    {skin.cssImport && (
+                                      <>
+                                        {" with "}
+                                        <code>{`import '${skin.cssImport}';`}</code>
+                                      </>
+                                    )}
+                                  </>
+                                ))}
+                              </LLMCase>
+                            </>
+                          ) : (
+                            "–"
+                          )}
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>
                           {preset.html.skins.length > 0
