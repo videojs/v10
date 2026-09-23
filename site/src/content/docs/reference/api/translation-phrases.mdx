@@ -34,6 +34,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `cast.connecting` | Connecting | Cast button |
 | `airplay.start` | Start AirPlay | AirPlay button |
 | `airplay.stop` | Stop AirPlay | AirPlay button |
+| `container.label` | Media player | Player container aria label |
 
 ## Time and volume
 
@@ -52,6 +53,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `time.toggleElapsed` | `Toggle between elapsed and remaining time.` | Elapsed-time toggle aria description |
 | `time.toggleDuration` | `Toggle between duration and remaining time.` | Duration toggle aria description |
 | `time.position` | `{current} of {duration}` | Time slider value text |
+| `time.unknown` | Media not loaded, unknown time. | Time display aria label and time slider value text before a duration is known |
 | `playback.rate` | Playback rate `{rate}` | Playback-rate button and radio group |
 | `volume.mutedValue` | `{percent}, muted` | Muted volume slider value text |
 | `volume.muted` | Muted | Volume input feedback |
@@ -69,6 +71,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `status.fullscreen` | Fullscreen | Input feedback after entering fullscreen |
 | `status.pip` | Picture in picture | Input feedback after entering picture-in-picture |
 | `status.exitPip` | Exit picture in picture | Input feedback after exiting picture-in-picture |
+| `status.seekedTo` | Seeked to `{time}` | Status announcer after a seek |
 
 ## Errors
 
@@ -79,6 +82,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `errors.decode` | This media could not be played. It may be corrupted, or your browser may not support its format. | Media error dialog for `MEDIA_ERR_DECODE` |
 | `errors.source` | This media could not be loaded. It may be unavailable, or your browser may not support its format. | Media error dialog for `MEDIA_ERR_SRC_NOT_SUPPORTED` |
 | `errors.encrypted` | This media could not be played because it could not be decrypted. | Media error dialog for `MEDIA_ERR_ENCRYPTED` |
+| `errors.unplayable` | This media is unsupported by the player. | Media error dialog when the player cannot play a source the browser supports |
 | `errors.title` | Something went wrong. | Generic media error dialog title |
 | `errors.unexpected` | An unexpected error occurred. | Generic media error dialog fallback description |
 | `common.empty` | `''` | Empty description for a custom media error |

@@ -316,7 +316,7 @@ store.seek(30);
 
 <FrameworkCase frameworks={["html"]}>
 
-Extend `MediaElement` from `@videojs/html` so <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
+Extend `UIElement` from `@videojs/html` so <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
 
 ```ts
 import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -387,7 +387,7 @@ You're using the standalone `usePlayer` export or the shared `playerContext`, wh
 
 ### The component renders but never updates
 
-In React, the component sits outside the player (such as `<VideoPlayer>`), so `usePlayer` has no store to subscribe to. In HTML, the element sits outside `<video-player>`, or the class doesn't extend `MediaElement`, so `PlayerController` has nothing to schedule updates on.
+In React, the component sits outside the player (such as `<VideoPlayer>`), so `usePlayer` has no store to subscribe to. In HTML, the element sits outside `<video-player>`, or the class doesn't extend `UIElement`, so `PlayerController` has nothing to schedule updates on.
 
 ## Related API
 
