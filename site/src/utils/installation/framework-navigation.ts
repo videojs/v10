@@ -1,13 +1,12 @@
-import type { SupportedFramework } from '@/types/docs';
 import {
+  isInstallationFramework,
   registryStylings,
   registryTemplates,
+  type InstallationFramework,
   type RegistryFramework,
   type RegistryStyling,
   type RegistryTemplate,
-} from '@/utils/installation/shadcn';
-
-export type InstallationPickerFramework = SupportedFramework | 'vue' | 'svelte';
+} from '@videojs/installation';
 
 export const SHADCN_INSTALLATION_PATH = '/docs/guides/installation/shadcn';
 
@@ -17,7 +16,7 @@ export interface InstallationFrameworkNavigation {
 }
 
 export interface ShadcnUrlSelection {
-  projectFramework: InstallationPickerFramework;
+  projectFramework: InstallationFramework;
   sourceFramework: RegistryFramework;
   styling: RegistryStyling | null;
   template: RegistryTemplate | null;
@@ -27,28 +26,21 @@ export function isRegistryFramework(framework: string | null): framework is Regi
   return framework === 'react' || framework === 'html';
 }
 
-export function isInstallationPickerFramework(framework: string | null): framework is InstallationPickerFramework {
-  return framework === 'react' || framework === 'html' || framework === 'vue' || framework === 'svelte';
-}
-
 export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
   return url.pathname.replace(/\.md$/, '').replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
 }
 
 /** Resolve the source framework for the query-controlled Shadcn guide. */
-export function resolveShadcnProjectFramework(
-  url: URL,
-  fallback: InstallationPickerFramework
-): InstallationPickerFramework | null {
+export function resolveShadcnProjectFramework(url: URL, fallback: InstallationFramework): InstallationFramework | null {
   if (!isShadcnInstallationUrl(url)) return null;
 
   const requested = url.searchParams.get('framework');
 
-  return isInstallationPickerFramework(requested) ? requested : fallback;
+  return isInstallationFramework(requested) ? requested : fallback;
 }
 
 /** Resolve the URL-backed Shadcn choices, dropping options the selected source framework cannot use. */
-export function resolveShadcnUrlSelection(url: URL, fallback: InstallationPickerFramework): ShadcnUrlSelection | null {
+export function resolveShadcnUrlSelection(url: URL, fallback: InstallationFramework): ShadcnUrlSelection | null {
   const projectFramework = resolveShadcnProjectFramework(url, fallback);
   if (!projectFramework) return null;
 
@@ -64,7 +56,7 @@ export function resolveShadcnUrlSelection(url: URL, fallback: InstallationPicker
 /** Build a JS-framework switch, falling back to Packaged when the current method does not support the selection. */
 export function resolveInstallationFrameworkNavigation(
   current: URL,
-  next: InstallationPickerFramework
+  next: InstallationFramework
 ): InstallationFrameworkNavigation {
   const target = new URL(current);
   const route = current.pathname.match(/\/docs\/guides\/installation\/([^/]+)/)?.[1];

@@ -1228,6 +1228,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/installation':
+        specifier: workspace:*
+        version: link:../installation
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

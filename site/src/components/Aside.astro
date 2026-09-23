@@ -40,12 +40,12 @@ const renderTitle = title ?? defaultTitles[type];
   data-aside={type}
   class={twMerge(
     clsx(
-      // The inset ring shares the band's hue so the band's edge stays crisp instead of being wrapped in a grey border.
-      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-lg corner-squircle ring-1 ring-inset",
-      type === "note" && "ring-info/40",
-      type === "tip" && "ring-magenta/40",
-      type === "caution" && "ring-orange/40",
-      type === "danger" && "ring-red/40",
+      // A neutral inset ring sharpens light surfaces; dark mode picks up the callout's semantic colour.
+      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-lg corner-squircle ring-1 ring-inset ring-black/10",
+      type === "note" && "dark:ring-info/40",
+      type === "tip" && "dark:ring-magenta/40",
+      type === "caution" && "dark:ring-orange/40",
+      type === "danger" && "dark:ring-red/40",
     ),
     className,
   )}

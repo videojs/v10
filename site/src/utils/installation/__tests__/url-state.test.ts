@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  coerceToPreset,
   DEFAULT_SELECTION,
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
@@ -87,16 +86,6 @@ describe('serializeInstallationSearch', () => {
 
   it('drops the Markdown-only package-manager alias', () => {
     expect(serializeInstallationSearch(DEFAULT_SELECTION, '?package-manager=pnpm&utm_source=x')).toBe('?utm_source=x');
-  });
-});
-
-describe('coerceToPreset', () => {
-  it('keeps the skin tier across media types and drops media the preset cannot play', () => {
-    expect(coerceToPreset('default-audio', 'minimal-video', 'youtube')).toEqual({
-      skin: 'minimal-audio',
-      renderer: 'html5-audio',
-    });
-    expect(coerceToPreset('live-video', 'none', 'mux-video')).toEqual({ skin: 'none', renderer: 'mux-video' });
   });
 });
 

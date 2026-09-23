@@ -1,7 +1,8 @@
+import { generateSourceHTMLUsageCode } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
-import { generateSourceHTMLUsageCode } from '@/utils/installation/codegen';
 
 import { useSelection } from '../installation/useSelection';
 

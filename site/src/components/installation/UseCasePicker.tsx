@@ -1,3 +1,4 @@
+import { getInstallationPreset, USE_CASES, type UseCase } from '@videojs/installation';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
@@ -8,7 +9,6 @@ import MusicNote from '@/assets/icons/music-note.svg?react';
 import Radio from '@/assets/icons/radio.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
 import { useCase } from '@/stores/installation';
-import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installation/types';
 
 import { useSelection } from './useSelection';
 

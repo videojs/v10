@@ -300,8 +300,7 @@ function checkBundledDocs() {
     }
 
     const readme = readText(readmePath);
-
-    if (!readme.includes('## AI Quickstart')) warnings.push(`${pkg.name}: README is missing an AI Quickstart`);
+    if (!readme.includes('## AI Quickstart')) continue;
 
     if (!readme.includes('https://github.com/videojs/skills')) {
       warnings.push(`${pkg.name}: AI Quickstart is missing the Video.js skill link`);

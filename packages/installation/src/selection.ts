@@ -1,5 +1,6 @@
 import { rendererSupportsCdn } from './cdn-code';
 import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion } from './defaults';
+import { RENDERERS, type Renderer } from './renderers';
 import {
   defaultRegistryStyling,
   defaultRegistryTemplate,
@@ -13,9 +14,7 @@ import {
   getInstallationPreset,
   INSTALLATION_PRESETS,
   INSTALLATION_SKIN_FLAGS,
-  RENDERERS,
   USE_CASES,
-  type Renderer,
   type Skin,
   type UseCase,
 } from './types';
@@ -28,6 +27,13 @@ export type InstallationFramework = (typeof INSTALLATION_FRAMEWORKS)[number];
 
 export const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const;
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
+
+const INSTALLATION_METHODS_BY_FRAMEWORK = {
+  react: ['packaged', 'shadcn'],
+  html: ['packaged', 'shadcn', 'cdn'],
+  vue: ['packaged', 'shadcn'],
+  svelte: ['packaged', 'shadcn'],
+} as const satisfies Record<InstallationFramework, readonly InstallationMethod[]>;
 
 export type PlayerOwner = 'html' | 'react';
 export type PresetFlag = (typeof INSTALLATION_PRESETS)[UseCase]['flag'];
@@ -80,7 +86,7 @@ function includes<const Values extends readonly string[]>(values: Values, value:
   return values.includes(value);
 }
 
-function containsControlCharacter(value: string): boolean {
+export function containsControlCharacter(value: string): boolean {
   return Array.from(value).some((character) => {
     const codePoint = character.codePointAt(0);
 
@@ -95,12 +101,44 @@ export function useCaseFromPreset(preset: string): UseCase | undefined {
   return USE_CASES.find((useCase) => INSTALLATION_PRESETS[useCase].flag === preset);
 }
 
+export function installationMethodsForFramework(framework: InstallationFramework): readonly InstallationMethod[] {
+  return INSTALLATION_METHODS_BY_FRAMEWORK[framework];
+}
+
+export function isInstallationFramework(value: string | null | undefined): value is InstallationFramework {
+  return value != null && includes(INSTALLATION_FRAMEWORKS, value);
+}
+
+export function isPackageManager(value: string): value is PackageManager {
+  return includes(PACKAGE_MANAGERS, value);
+}
+
+export function isSkinFlag(value: string): value is SkinFlag {
+  return includes(INSTALLATION_SKIN_FLAGS, value);
+}
+
 export function skinFromFlag(flag: SkinFlag, useCase: UseCase): Skin {
   if (flag === 'none') return 'none';
 
   const suffix = getInstallationPreset(useCase).mediaType;
 
   return flag === 'minimal' ? `minimal-${suffix}` : suffix;
+}
+
+export function skinToFlag(skin: Skin): SkinFlag {
+  if (skin === 'none') return 'none';
+
+  return skin.startsWith('minimal-') ? 'minimal' : 'default';
+}
+
+/** Keep a skin tier and media choice valid when the selected preset changes. */
+export function fitSelectionToPreset(useCase: UseCase, skin: Skin, media: Renderer) {
+  const renderers = getInstallationPreset(useCase).renderers;
+
+  return {
+    skin: skinFromFlag(skinToFlag(skin), useCase),
+    media: renderers.includes(media) ? media : renderers[0]!,
+  };
 }
 
 export function sourceFrameworkFor(framework: InstallationFramework): RegistryFramework {
@@ -133,7 +171,7 @@ export function resolveInstallationSelection(
 
   const defaultFramework = owner === 'react' ? 'react' : 'html';
   const frameworkValue = defaultValue('framework', defaultFramework);
-  const framework = includes(INSTALLATION_FRAMEWORKS, frameworkValue) ? frameworkValue : defaultFramework;
+  const framework = isInstallationFramework(frameworkValue) ? frameworkValue : defaultFramework;
 
   if (framework !== frameworkValue) {
     errors.push({
@@ -169,7 +207,7 @@ export function resolveInstallationSelection(
   const preset = INSTALLATION_PRESETS[useCase].flag;
 
   const skinValue = defaultValue('skin', 'default');
-  const skinFlag = includes(INSTALLATION_SKIN_FLAGS, skinValue) ? skinValue : 'default';
+  const skinFlag = isSkinFlag(skinValue) ? skinValue : 'default';
 
   if (skinFlag !== skinValue) {
     errors.push({
@@ -196,7 +234,7 @@ export function resolveInstallationSelection(
   }
 
   const packageManagerValue = defaultValue('packageManager', 'npm');
-  const packageManager = includes(PACKAGE_MANAGERS, packageManagerValue) ? packageManagerValue : 'npm';
+  const packageManager = isPackageManager(packageManagerValue) ? packageManagerValue : 'npm';
 
   if (packageManager !== packageManagerValue) {
     errors.push({

@@ -1,4 +1,4 @@
-import { generateHTMLInstallCode } from '@/utils/installation/codegen';
+import { generateHTMLInstallCode } from '@videojs/installation';
 
 import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';

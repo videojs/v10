@@ -1,15 +1,5 @@
 # @videojs/shaka-video
 
-## AI Quickstart
-
-Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
-match this package version before writing code. Then list the version-matched installation choices for your player:
-
-```sh
-npx @videojs/react agents init
-npx @videojs/html agents init
-```
-
 The Video.js playback adapter for [Shaka Player](https://github.com/shaka-project/shaka-player). Install it with the
 HTML or React package when your player uses Shaka.
 

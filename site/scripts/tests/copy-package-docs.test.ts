@@ -10,7 +10,7 @@ import {
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../../src/utils/installation/routes.ts';
 import {
-  type Framework,
+  type PackageDocsTarget,
   packageDocumentation,
   rewriteIndexHeader,
   rewriteLinks,
@@ -32,14 +32,14 @@ function createFixture() {
   };
 }
 
-function writeDoc(siteDist: string, framework: Framework, relativePath: string, content: string): void {
+function writeDoc(siteDist: string, framework: PackageDocsTarget, relativePath: string, content: string): void {
   const path = join(siteDist, 'docs', 'framework', framework, relativePath);
 
   mkdirSync(join(path, '..'), { recursive: true });
   writeFileSync(path, content);
 }
 
-function writeInstallationDocs(siteDist: string, framework: Framework): number {
+function writeInstallationDocs(siteDist: string, framework: PackageDocsTarget): number {
   const routes = INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
     INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
   );
@@ -247,7 +247,8 @@ describe('synthesizeReadme', () => {
   it('throws on an unsupported framework', () => {
     expect(() =>
       synthesizeReadme({
-        framework: 'svelte' as unknown as Framework,
+        // @ts-expect-error Verify the runtime guard for untyped callers.
+        framework: 'svelte',
         version: '1.0.0',
       })
     ).toThrow();

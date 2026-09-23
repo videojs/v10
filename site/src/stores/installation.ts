@@ -1,11 +1,16 @@
+import {
+  fitSelectionToPreset,
+  type InstallMethod,
+  type Renderer,
+  type Skin,
+  type UseCase,
+} from '@videojs/installation';
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { atom, onMount, type WritableAtom } from 'nanostores';
 
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import {
-  coerceToPreset,
   DEFAULT_SELECTION,
-  type InstallationSelection,
+  type InstallationUiSelection,
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
   serializeInstallationSearch,
@@ -26,7 +31,7 @@ export const muxPlaybackId = atom<string | null>(null);
  * The URL is read once, when the first picker mounts, and rewritten in place on every change so the history stack stays
  * one entry per page.
  */
-type SelectionAtoms = { [K in keyof InstallationSelection]: WritableAtom<InstallationSelection[K]> };
+type SelectionAtoms = { [K in keyof InstallationUiSelection]: WritableAtom<InstallationUiSelection[K]> };
 
 export const selectionAtoms: SelectionAtoms = {
   useCase,
@@ -38,7 +43,7 @@ export const selectionAtoms: SelectionAtoms = {
 let hydratedUrl: string | null = null;
 let syncingFromUrl = false;
 
-function currentSelection(): InstallationSelection {
+function currentSelection(): InstallationUiSelection {
   return {
     useCase: useCase.get(),
     skin: skin.get(),
@@ -48,7 +53,7 @@ function currentSelection(): InstallationSelection {
   };
 }
 
-function normalizeCurrentUrl(target: URL, selection: InstallationSelection): void {
+function normalizeCurrentUrl(target: URL, selection: InstallationUiSelection): void {
   if (!globalThis.location || !globalThis.history || target.href !== location.href) return;
 
   const search = serializeInstallationSearch(selection, target.search);
@@ -131,9 +136,9 @@ if (globalThis.document) {
 // rendered use case was still the server default while the store already held the URL's picks. Registered after the
 // mount hooks above so this permanent listener does not mount the store before those hooks exist.
 useCase.listen((next) => {
-  const fitted = coerceToPreset(next, skin.get(), renderer.get());
+  const fitted = fitSelectionToPreset(next, skin.get(), renderer.get());
 
   if (fitted.skin !== skin.get()) skin.set(fitted.skin);
 
-  if (fitted.renderer !== renderer.get()) renderer.set(fitted.renderer);
+  if (fitted.media !== renderer.get()) renderer.set(fitted.media);
 });

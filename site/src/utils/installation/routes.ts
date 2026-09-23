@@ -1,5 +1,6 @@
+import type { InstallationFramework } from '@videojs/installation';
+
 import type { SupportedFramework } from '../../types/docs';
-import type { InstallationPickerFramework } from './framework-navigation';
 
 export const INSTALLATION_ROUTE_SEGMENTS = ['react', 'html', 'vue', 'svelte', 'shadcn', 'cdn'] as const;
 export type InstallationRouteSegment = (typeof INSTALLATION_ROUTE_SEGMENTS)[number];
@@ -8,7 +9,7 @@ export interface InstallationRouteConfig {
   description: string;
   framework: SupportedFramework;
   frameworks: readonly SupportedFramework[];
-  pickerFramework: InstallationPickerFramework;
+  pickerFramework: InstallationFramework;
   slug: string;
 }
 

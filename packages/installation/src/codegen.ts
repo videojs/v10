@@ -1,13 +1,19 @@
 import { generateCdnCode } from './cdn-code';
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
 import {
-  getInstallationPreset,
+  getAdapterPackage,
+  getInstallationRenderer,
   getMediaSubpath,
-  type InstallMethod,
   isMuxRenderer,
+  isPresetRenderer,
+  isVideoLikeRenderer,
+  type Renderer,
+} from './renderers';
+import {
+  getInstallationPreset,
+  type InstallMethod,
   MUX_DATA_EXTENSION_SUBPATH,
   MUX_DATA_PACKAGE,
-  type Renderer,
   type Skin,
   type UseCase,
 } from './types';
@@ -54,41 +60,11 @@ function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
     return INSTALLATION_DEMO_SOURCES.live;
   }
 
-  const map: Record<Renderer, string> = {
-    'html5-video': INSTALLATION_DEMO_SOURCES.videoMp4,
-    'html5-audio': INSTALLATION_DEMO_SOURCES.audio,
-    hls: INSTALLATION_DEMO_SOURCES.videoHls,
-    'background-video': INSTALLATION_DEMO_SOURCES.videoMp4,
-    dash: INSTALLATION_DEMO_SOURCES.dash,
-    // Mux media take a stream.mux.com source; the demo HLS URL is already one.
-    'mux-video': INSTALLATION_DEMO_SOURCES.videoHls,
-    'mux-audio': INSTALLATION_DEMO_SOURCES.videoHls,
-    vimeo: INSTALLATION_DEMO_SOURCES.vimeo,
-    youtube: INSTALLATION_DEMO_SOURCES.youtube,
-    cloudflare: INSTALLATION_DEMO_SOURCES.cloudflare,
-    spotify: INSTALLATION_DEMO_SOURCES.spotify,
-    tiktok: INSTALLATION_DEMO_SOURCES.tiktok,
-    twitch: INSTALLATION_DEMO_SOURCES.twitch,
-  };
-
-  return map[renderer];
+  return getInstallationRenderer(renderer).defaultSource;
 }
 
 export function resolveInstallationSourceUrl(sourceUrl: string, renderer: Renderer, useCase: UseCase): string {
   return sourceUrl.trim() || getDefaultSourceUrl(renderer, useCase);
-}
-
-// Whether the rendered media element takes the `playsinline` attribute. The
-// embed providers render an <iframe> and play inline on their own, and the
-// audio renderers render audio, so none of them get it.
-function isVideoLikeRenderer(renderer: Renderer): boolean {
-  return (
-    renderer === 'html5-video' ||
-    renderer === 'hls' ||
-    renderer === 'background-video' ||
-    renderer === 'dash' ||
-    renderer === 'mux-video'
-  );
 }
 
 function escapeHTMLAttribute(value: string): string {
@@ -98,30 +74,6 @@ function escapeHTMLAttribute(value: string): string {
 /** Skin module basename within a preset group: `skin` or `minimal-skin`. */
 function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
   return skin === 'minimal-video' || skin === 'minimal-audio' ? 'minimal-skin' : 'skin';
-}
-
-/**
- * The optional peer that ships a renderer's adapter, or `null` for the renderers `@videojs/html` and `@videojs/react`
- * play on their own. Every renderer is listed so a new one cannot be added without deciding what it installs.
- */
-export function getAdapterPackage(renderer: Renderer): string | null {
-  const packages: Record<Renderer, string | null> = {
-    'background-video': null,
-    cloudflare: '@videojs/cloudflare-video',
-    dash: '@videojs/dash-video',
-    hls: '@videojs/hlsjs-video',
-    'html5-audio': null,
-    'html5-video': null,
-    'mux-audio': '@videojs/mux-audio',
-    'mux-video': '@videojs/mux-video',
-    spotify: '@videojs/spotify-audio',
-    tiktok: '@videojs/tiktok-video',
-    twitch: '@videojs/twitch-video',
-    vimeo: '@videojs/vimeo-video',
-    youtube: '@videojs/youtube-video',
-  };
-
-  return packages[renderer];
 }
 
 /** Packages a source install still needs after the registry item installs the core React or HTML package. */
@@ -202,23 +154,7 @@ export function generateReactInstallCode(
 // ---------------------------------------------------------------------------
 
 export function getRendererTag(renderer: Renderer): string {
-  const map: Record<Renderer, string> = {
-    'background-video': 'background-video',
-    dash: 'dash-video',
-    hls: 'hlsjs-video',
-    'html5-audio': 'audio',
-    'html5-video': 'video',
-    'mux-audio': 'mux-audio',
-    'mux-video': 'mux-video',
-    vimeo: 'vimeo-video',
-    youtube: 'youtube-video',
-    cloudflare: 'cloudflare-video',
-    spotify: 'spotify-audio',
-    tiktok: 'tiktok-video',
-    twitch: 'twitch-video',
-  };
-
-  return map[renderer];
+  return getInstallationRenderer(renderer).htmlTag;
 }
 
 function getPlayerTag(useCase: UseCase): string {
@@ -520,23 +456,7 @@ export function generateSvelteUsageCode(
 // ---------------------------------------------------------------------------
 
 export function getRendererComponent(renderer: Renderer): string {
-  const map: Record<Renderer, string> = {
-    'background-video': 'BackgroundVideo',
-    dash: 'DashVideo',
-    hls: 'HlsJsVideo',
-    'html5-audio': 'Audio',
-    'html5-video': 'Video',
-    'mux-audio': 'MuxAudio',
-    'mux-video': 'MuxVideo',
-    vimeo: 'VimeoVideo',
-    youtube: 'YouTubeVideo',
-    cloudflare: 'CloudflareVideo',
-    spotify: 'SpotifyAudio',
-    tiktok: 'TikTokVideo',
-    twitch: 'TwitchVideo',
-  };
-
-  return map[renderer];
+  return getInstallationRenderer(renderer).reactComponent;
 }
 
 export function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
@@ -547,10 +467,6 @@ export function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>):
 
 function getPresetPlayer(useCase: UseCase): string {
   return `${getInstallationPreset(useCase).componentPrefix}Player`;
-}
-
-function isPresetRenderer(renderer: Renderer): boolean {
-  return renderer === 'html5-video' || renderer === 'html5-audio' || renderer === 'background-video';
 }
 
 // The media JSX, plus the Mux Data extension for Mux media. Mux Data is a

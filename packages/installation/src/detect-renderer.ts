@@ -1,4 +1,5 @@
-import type { Renderer, UseCase } from './types';
+import { getInstallationRenderer, type Renderer } from './renderers';
+import type { UseCase } from './types';
 import { getInstallationPreset } from './types';
 
 export interface DetectionResult {
@@ -6,7 +7,7 @@ export interface DetectionResult {
   label: string;
 }
 
-const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Renderer; label: string }> = [
+const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Renderer }> = [
   // Mux is matched by hostname before the `.m3u8` extension rule below, so a
   // `stream.mux.com` URL resolves to a Mux renderer (with Mux Data) rather than
   // generic HLS. The two Mux rules are ordered video-then-audio; the loop's
@@ -14,17 +15,14 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
   {
     match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
     renderer: 'mux-video',
-    label: 'Mux',
   },
   {
     match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
     renderer: 'mux-audio',
-    label: 'Mux',
   },
   {
     match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
     renderer: 'vimeo',
-    label: 'Vimeo',
   },
   {
     match: (h) =>
@@ -35,12 +33,10 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
       h === 'youtube-nocookie.com' ||
       h === 'www.youtube-nocookie.com',
     renderer: 'youtube',
-    label: 'YouTube',
   },
   {
     match: (h) => h === 'open.spotify.com',
     renderer: 'spotify',
-    label: 'Spotify',
   },
   {
     // Suffix matches, unlike the other rules: Cloudflare serves signed and
@@ -53,7 +49,6 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
       h === 'cloudflarestream.com' ||
       h.endsWith('.cloudflarestream.com'),
     renderer: 'cloudflare',
-    label: 'Cloudflare Stream',
   },
   {
     // `vm.tiktok.com` is deliberately absent: those short links carry an opaque
@@ -61,14 +56,12 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
     // takes an HTTP redirect the picker can't follow.
     match: (h) => h === 'tiktok.com' || h === 'www.tiktok.com',
     renderer: 'tiktok',
-    label: 'TikTok',
   },
   {
     // `clips.twitch.tv` is deliberately absent: clips are a different embed
     // the Twitch media element cannot play.
     match: (h) => h === 'twitch.tv' || h === 'www.twitch.tv' || h === 'go.twitch.tv',
     renderer: 'twitch',
-    label: 'Twitch',
   },
   // {
   //   match: (h) => h === 'cdn.jwplayer.com' || h === 'content.jwplatform.com',
@@ -117,7 +110,7 @@ export function detectRenderer(url: string, useCase: UseCase): DetectionResult |
   // case falls through from the mux-video rule to the mux-audio rule).
   for (const rule of DOMAIN_RULES) {
     if (rule.match(parsed.hostname) && isRendererValidForUseCase(rule.renderer, useCase)) {
-      return { renderer: rule.renderer, label: rule.label };
+      return { renderer: rule.renderer, label: getInstallationRenderer(rule.renderer).label };
     }
   }
 
@@ -127,25 +120,25 @@ export function detectRenderer(url: string, useCase: UseCase): DetectionResult |
   if (ext === '.m3u8') {
     if (!isRendererValidForUseCase('hls', useCase)) return null;
 
-    return { renderer: 'hls', label: 'HLS' };
+    return { renderer: 'hls', label: getInstallationRenderer('hls').label };
   }
 
   if (ext === '.mpd') {
     if (!isRendererValidForUseCase('dash', useCase)) return null;
 
-    return { renderer: 'dash', label: 'DASH' };
+    return { renderer: 'dash', label: getInstallationRenderer('dash').label };
   }
 
   if (VIDEO_EXTENSIONS.has(ext)) {
     if (!isRendererValidForUseCase('html5-video', useCase)) return null;
 
-    return { renderer: 'html5-video', label: 'HTML5 Video' };
+    return { renderer: 'html5-video', label: getInstallationRenderer('html5-video').label };
   }
 
   if (AUDIO_EXTENSIONS.has(ext)) {
     if (!isRendererValidForUseCase('html5-audio', useCase)) return null;
 
-    return { renderer: 'html5-audio', label: 'HTML5 Audio' };
+    return { renderer: 'html5-audio', label: getInstallationRenderer('html5-audio').label };
   }
 
   return null;
@@ -155,22 +148,6 @@ export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase):
   return getInstallationPreset(useCase).renderers.includes(renderer);
 }
 
-const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {
-  'background-video': 'a',
-  cloudflare: 'a',
-  dash: 'a',
-  hls: 'an',
-  'html5-audio': 'an',
-  'html5-video': 'an',
-  'mux-audio': 'a',
-  'mux-video': 'a',
-  spotify: 'a',
-  tiktok: 'a',
-  twitch: 'a',
-  vimeo: 'a',
-  youtube: 'a',
-};
-
 export function articleFor(renderer: Renderer): 'a' | 'an' {
-  return RENDERER_ARTICLES[renderer];
+  return getInstallationRenderer(renderer).article;
 }

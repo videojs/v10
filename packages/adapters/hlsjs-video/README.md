@@ -1,5 +1,16 @@
 # @videojs/hlsjs-video
 
+The Video.js playback adapter for [hls.js](https://github.com/video-dev/hls.js). It owns the supported hls.js runtime,
+browser playback implementation, and compatibility tests. `@videojs/mux-video` builds on it.
+
+Install the adapter with the framework façade your player uses:
+
+```bash
+pnpm add @videojs/html @videojs/hlsjs-video
+# or
+pnpm add @videojs/react @videojs/hlsjs-video
+```
+
 ## AI Quickstart
 
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
@@ -8,19 +19,6 @@ match this package version before writing code. Then print installation instruct
 ```sh
 npx @videojs/react agents init --media hls
 npx @videojs/html agents init --media hls
-```
-
-The Video.js playback adapter for [hls.js](https://github.com/video-dev/hls.js). It owns the supported hls.js runtime,
-browser playback implementation, and compatibility tests. `@videojs/mux-video` builds on it.
-
-## Installation
-
-Install the adapter with the framework façade your player uses:
-
-```bash
-pnpm add @videojs/html @videojs/hlsjs-video
-# or
-pnpm add @videojs/react @videojs/hlsjs-video
 ```
 
 ## Usage

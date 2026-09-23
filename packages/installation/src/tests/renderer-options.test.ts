@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { buildOptions } from '../renderer-options';
+import { buildOptions } from '../index';
 
 describe('buildOptions', () => {
   it('returns flat options in the configured order for default-video', () => {

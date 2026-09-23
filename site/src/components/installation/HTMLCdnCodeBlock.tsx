@@ -1,6 +1,8 @@
+import { generateCdnCode } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateCdnCode } from '@/utils/installation/cdn-code';
+import { VJS10_CDN_BASE } from '@/consts';
 
 import { useSelection } from './useSelection';
 
@@ -22,7 +24,7 @@ export default function HTMLCdnCodeBlock({ cdnMedia }: HTMLCdnCodeBlockProps) {
         </Tab>
       </TabsList>
       <TabsPanel value="html" initial>
-        <ClientCode code={generateCdnCode($useCase, $skin, $renderer, cdnMedia)} lang="html" />
+        <ClientCode code={generateCdnCode($useCase, $skin, $renderer, cdnMedia, VJS10_CDN_BASE)} lang="html" />
       </TabsPanel>
     </TabsRoot>
   );

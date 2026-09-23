@@ -1,6 +1,8 @@
+import { RENDERERS, type Renderer } from './renderers';
 import {
   INSTALLATION_FRAMEWORKS,
   PACKAGE_MANAGERS,
+  installationMethodsForFramework,
   sourceFrameworkFor,
   type InstallationFramework,
   type InstallationMethod,
@@ -9,7 +11,7 @@ import {
   type SkinFlag,
 } from './selection';
 import { registryStylings, registryTemplates, type RegistryStyling, type RegistryTemplate } from './shadcn';
-import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS, RENDERERS, type Renderer } from './types';
+import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from './types';
 
 export interface InstallationOptionDefinition {
   flag: string;
@@ -25,6 +27,7 @@ export interface InstallationOptionContext {
 }
 
 export interface InstallationCompatibility {
+  methodsByFramework: Readonly<Record<InstallationFramework, readonly InstallationMethod[]>>;
   mediaByPreset: Readonly<Record<PresetFlag, readonly Renderer[]>>;
   shadcn: {
     presets: readonly PresetFlag[];
@@ -39,6 +42,12 @@ const SHADCN_PRESETS = Object.values(INSTALLATION_PRESETS)
   .filter((flag) => flag !== 'background-video');
 
 export const installationCompatibility: InstallationCompatibility = {
+  methodsByFramework: {
+    react: installationMethodsForFramework('react'),
+    html: installationMethodsForFramework('html'),
+    vue: installationMethodsForFramework('vue'),
+    svelte: installationMethodsForFramework('svelte'),
+  },
   mediaByPreset: {
     video: INSTALLATION_PRESETS['default-video'].renderers,
     audio: INSTALLATION_PRESETS['default-audio'].renderers,

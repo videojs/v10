@@ -1,4 +1,11 @@
 import { Input } from '@base-ui/react/input';
+import {
+  articleFor,
+  detectRenderer,
+  getInstallationPreset,
+  getInstallationRenderer,
+  type Renderer,
+} from '@videojs/installation';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -14,9 +21,6 @@ import YoutubeLogo from '@/assets/logos/brands/youtube.svg?react';
 import MuxLogo from '@/assets/logos/mux-small.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
 import { renderer, sourceUrl } from '@/stores/installation';
-import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
-import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import { getInstallationPreset, type Renderer } from '@/utils/installation/types';
 
 import MuxUploaderPanel from './MuxUploaderPanel';
 import { useSelection } from './useSelection';
@@ -193,7 +197,7 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
         onChange={(value) => renderer.set(value)}
         options={renderers.map((value) => ({
           value,
-          label: RENDERER_LABELS[value],
+          label: getInstallationRenderer(value).label,
           description: RENDERER_DESCRIPTIONS[value],
           media: RENDERER_MEDIA[value],
         }))}

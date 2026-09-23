@@ -1,3 +1,12 @@
+import type {
+  InstallationFramework,
+  RegistryFramework,
+  RegistryPreset,
+  RegistryStyling,
+  RegistryTemplate,
+  RegistryTheme,
+} from '@videojs/installation';
+import { defaultRegistryTemplate } from '@videojs/installation';
 import { atom } from 'nanostores';
 
 import { currentFramework } from '@/stores/preferences';
@@ -6,18 +15,9 @@ import {
   isShadcnInstallationUrl,
   resolveShadcnProjectFramework,
   resolveShadcnUrlSelection,
-  type InstallationPickerFramework,
 } from '@/utils/installation/framework-navigation';
-import type {
-  RegistryFramework,
-  RegistryPreset,
-  RegistryStyling,
-  RegistryTemplate,
-  RegistryTheme,
-} from '@/utils/installation/shadcn';
-import { defaultRegistryTemplate } from '@/utils/installation/shadcn';
 
-function getInitialRegistryProjectFramework(): InstallationPickerFramework {
+function getInitialRegistryProjectFramework(): InstallationFramework {
   if (!globalThis.window) return 'react';
 
   const fallback = getFrameworkPreferenceClient() ?? 'react';
@@ -30,7 +30,7 @@ const initialUrl = globalThis.window ? new URL(window.location.href) : null;
 const initialUrlSelection = initialUrl ? resolveShadcnUrlSelection(initialUrl, initialProjectFramework) : null;
 
 /** The application framework selected on the Shadcn installation guide. */
-export const registryProjectFramework = atom<InstallationPickerFramework>(initialProjectFramework);
+export const registryProjectFramework = atom<InstallationFramework>(initialProjectFramework);
 
 /** React or HTML source shown on the standalone Shadcn installation page. */
 export const registryFramework = atom<RegistryFramework>(registryProjectFramework.get() === 'react' ? 'react' : 'html');
@@ -50,7 +50,7 @@ export const registryTemplate = atom<RegistryTemplate | null>(initialUrlSelectio
 /** The skin theme catalog selected on the page; `null` lets an installation skin supply the initial choice. */
 export const registryTheme = atom<RegistryTheme | null>(null);
 
-function applyRegistryProjectFramework(framework: InstallationPickerFramework): void {
+function applyRegistryProjectFramework(framework: InstallationFramework): void {
   const sourceFramework: RegistryFramework = framework === 'react' ? 'react' : 'html';
 
   if (registryProjectFramework.get() !== framework) {
@@ -65,7 +65,7 @@ function applyRegistryProjectFramework(framework: InstallationPickerFramework): 
 }
 
 /** Synchronize the project framework from an authoritative Shadcn URL without rewriting history. */
-export function syncRegistryProjectFramework(framework: InstallationPickerFramework, url?: URL): void {
+export function syncRegistryProjectFramework(framework: InstallationFramework, url?: URL): void {
   applyRegistryProjectFramework(framework);
 
   const selection = url ? resolveShadcnUrlSelection(url, framework) : null;
@@ -79,7 +79,7 @@ export function syncRegistryProjectFramework(framework: InstallationPickerFramew
 }
 
 /** Select the app framework while deriving the React or HTML registry catalog from it. */
-export function selectRegistryProjectFramework(framework: InstallationPickerFramework): void {
+export function selectRegistryProjectFramework(framework: InstallationFramework): void {
   if (globalThis.window) {
     const url = new URL(window.location.href);
 

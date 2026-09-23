@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { articleFor, detectRenderer, isRendererValidForUseCase } from '../detect-renderer';
+import { articleFor, detectRenderer, isRendererValidForUseCase } from '../index';
 
 describe('detectRenderer', () => {
   describe('domain rules', () => {

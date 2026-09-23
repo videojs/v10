@@ -4,19 +4,6 @@
 
 > **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
-## AI Quickstart
-
-Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
-the docs that match this package version before writing code.
-
-Then list the version-matched installation choices. This command returns instructions without modifying your project:
-
-```sh
-npx @videojs/react agents init
-```
-
-## Overview
-
 `@videojs/react` is a comprehensive library for building media players in React applications. It
 provides a complete set of components, hooks, and utilities for creating feature-rich, accessible
 video and audio players with React.
@@ -30,6 +17,17 @@ pnpm add @videojs/react @videojs/dash-video
 
 ```tsx
 import { DashVideo } from '@videojs/react/media/dash-video';
+```
+
+## AI Quickstart
+
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
+the docs that match this package version before writing code.
+
+Then list the version-matched installation choices. This command returns instructions without modifying your project:
+
+```sh
+npx @videojs/react agents init
 ```
 
 ## Documentation

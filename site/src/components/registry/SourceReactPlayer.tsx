@@ -1,6 +1,7 @@
+import { generateSourceReactCreateCode } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateSourceReactCreateCode } from '@/utils/installation/codegen';
 
 import { useSelection } from '../installation/useSelection';
 

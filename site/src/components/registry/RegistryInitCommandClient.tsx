@@ -1,8 +1,8 @@
 import { useStore } from '@nanostores/react';
+import { type RegistryFramework, resolveRegistryTemplate, shadcnInitCommand } from '@videojs/installation';
 
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import { registryTemplate } from '@/stores/registry';
-import { type RegistryFramework, resolveRegistryTemplate, shadcnInitCommand } from '@/utils/installation/shadcn';
 
 interface Props {
   framework: RegistryFramework;

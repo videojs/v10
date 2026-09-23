@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+import { getInstallationPreset, type Renderer, type Skin, type UseCase } from '@videojs/installation';
 import { Container } from '@videojs/react';
 import { Audio, AudioPlayer, AudioSkin, MinimalAudioSkin } from '@videojs/react/audio';
 import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background';
@@ -18,7 +19,6 @@ import {
   VJS10_DEMO_VIDEO,
 } from '@/consts';
 import { currentFramework } from '@/stores/preferences';
-import { getInstallationPreset, type Renderer, type Skin, type UseCase } from '@/utils/installation/types';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 import { useSelection } from './useSelection';

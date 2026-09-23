@@ -1,5 +1,6 @@
+import { DEFAULT_REGISTRY_PRESET, type RegistryFramework, registrySkinSelection } from '@videojs/installation';
+
 import { useSelection } from '@/components/installation/useSelection';
-import { DEFAULT_REGISTRY_PRESET, type RegistryFramework, registrySkinSelection } from '@/utils/installation/shadcn';
 
 import RegistryCommandClient from './RegistryCommandClient';
 

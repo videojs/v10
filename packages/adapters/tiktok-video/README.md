@@ -1,5 +1,14 @@
 # @videojs/tiktok-video
 
+TikTok embed playback adapter for Video.js. It exposes the adapter, its props, and defaults; the HTML and React façades live in `@videojs/html` and
+`@videojs/react`.
+
+```bash
+pnpm add @videojs/html @videojs/tiktok-video
+# or
+pnpm add @videojs/react @videojs/tiktok-video
+```
+
 ## AI Quickstart
 
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
@@ -8,17 +17,6 @@ match this package version before writing code. Then print installation instruct
 ```sh
 npx @videojs/react agents init --media tiktok
 npx @videojs/html agents init --media tiktok
-```
-
-TikTok embed playback adapter for Video.js. It exposes the adapter, its props, and defaults; the HTML and React façades live in `@videojs/html` and
-`@videojs/react`.
-
-## Installation
-
-```bash
-pnpm add @videojs/html @videojs/tiktok-video
-# or
-pnpm add @videojs/react @videojs/tiktok-video
 ```
 
 ## Usage

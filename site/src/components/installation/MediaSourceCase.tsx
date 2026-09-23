@@ -1,4 +1,4 @@
-import type { Renderer } from '@/utils/installation/types';
+import type { Renderer } from '@videojs/installation';
 
 import { useSelection } from './useSelection';
 

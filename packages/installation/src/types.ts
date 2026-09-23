@@ -1,26 +1,4 @@
-/**
- * Every media renderer the installation flow can offer.
- *
- * Listed alphabetically; the order a picker shows comes from each preset's `renderers`, not from here. Exported so
- * callers can walk the full set — see `renderersWithoutCdn` in `./cdn-code`.
- */
-export const RENDERERS = [
-  'background-video',
-  'cloudflare',
-  'dash',
-  'hls',
-  'html5-audio',
-  'html5-video',
-  'mux-audio',
-  'mux-video',
-  'spotify',
-  'tiktok',
-  'twitch',
-  'vimeo',
-  'youtube',
-] as const;
-
-export type Renderer = (typeof RENDERERS)[number];
+import type { Renderer } from './renderers';
 
 export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
 
@@ -116,29 +94,3 @@ export const MUX_DATA_EXTENSION_SUBPATH = 'mux-data';
 // The package that ships the Mux Data extension; installed alongside the Mux
 // media adapter package.
 export const MUX_DATA_PACKAGE = '@videojs/mux-data';
-
-// Whether a renderer plays Mux-hosted media. The installation examples add the
-// Mux Data extension by default for these, as a sibling of the media.
-export function isMuxRenderer(renderer: Renderer): boolean {
-  return renderer === 'mux-video' || renderer === 'mux-audio';
-}
-
-// Renderer → media subpath name, independent of whether a CDN build exists.
-// Preset renderers (html5-video/audio, background-video) are covered by their
-// preset bundle and have no separate media script, so they map to null.
-export function getMediaSubpath(renderer: Renderer): string | null {
-  const map: Partial<Record<Renderer, string>> = {
-    hls: 'hlsjs-video',
-    dash: 'dash-video',
-    'mux-video': 'mux-video',
-    'mux-audio': 'mux-audio',
-    vimeo: 'vimeo-video',
-    youtube: 'youtube-video',
-    cloudflare: 'cloudflare-video',
-    spotify: 'spotify-audio',
-    tiktok: 'tiktok-video',
-    twitch: 'twitch-video',
-  };
-
-  return map[renderer] ?? null;
-}

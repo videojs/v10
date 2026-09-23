@@ -1,14 +1,14 @@
 import { useStore } from '@nanostores/react';
-
-import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
-import { registrySkin, registryStyling, registryTheme } from '@/stores/registry';
 import {
   type RegistryFramework,
   type RegistryPreset,
   type RegistryTheme,
   registryInstallCommands,
   resolveRegistryStyling,
-} from '@/utils/installation/shadcn';
+} from '@videojs/installation';
+
+import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
+import { registrySkin, registryStyling, registryTheme } from '@/stores/registry';
 
 interface Props {
   /** Skin to add until the page's skin selector changes it. Omit for commands with fixed items. */

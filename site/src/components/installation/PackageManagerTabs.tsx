@@ -1,9 +1,9 @@
+import { SHADCN_RUNNER_NAMES, type ShadcnRunner } from '@videojs/installation';
 import { useEffect } from 'react';
 
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { installMethod } from '@/stores/installation';
-import { SHADCN_RUNNER_NAMES, type ShadcnRunner } from '@/utils/installation/shadcn';
 
 import { useSelection } from './useSelection';
 

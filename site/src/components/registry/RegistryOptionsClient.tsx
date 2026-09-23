@@ -1,4 +1,22 @@
 import { useStore } from '@nanostores/react';
+import {
+  DEFAULT_REGISTRY_PRESET,
+  type RegistryFramework,
+  type RegistryPreset,
+  type RegistryStyling,
+  REGISTRY_PRESETS,
+  REGISTRY_STYLING_LABELS,
+  type RegistryTemplate,
+  REGISTRY_TEMPLATE_LABELS,
+  type RegistryTheme,
+  REGISTRY_THEME_LABELS,
+  REGISTRY_THEMES,
+  registrySkinSelection,
+  registryStylings,
+  registryTemplates,
+  resolveRegistryStyling,
+  resolveRegistryTemplate,
+} from '@videojs/installation';
 import type { ReactNode } from 'react';
 
 import FilmIcon from '@/assets/icons/film.svg?react';
@@ -25,24 +43,6 @@ import {
   selectRegistryStyling,
   selectRegistryTemplate,
 } from '@/stores/registry';
-import {
-  DEFAULT_REGISTRY_PRESET,
-  type RegistryFramework,
-  type RegistryPreset,
-  type RegistryStyling,
-  REGISTRY_PRESETS,
-  REGISTRY_STYLING_LABELS,
-  type RegistryTemplate,
-  REGISTRY_TEMPLATE_LABELS,
-  type RegistryTheme,
-  REGISTRY_THEME_LABELS,
-  REGISTRY_THEMES,
-  registrySkinSelection,
-  registryStylings,
-  registryTemplates,
-  resolveRegistryStyling,
-  resolveRegistryTemplate,
-} from '@/utils/installation/shadcn';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 const TEMPLATE_ICONS = {

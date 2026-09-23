@@ -1,4 +1,11 @@
 import { useStore } from '@nanostores/react';
+import {
+  installationMethodsForFramework,
+  registrySkinSelection,
+  rendererSupportsCdn,
+  type InstallationFramework,
+  type InstallationMethod,
+} from '@videojs/installation';
 import { navigate } from 'astro:transitions/client';
 import clsx from 'clsx';
 import type { ComponentType, MouseEvent, SVGProps } from 'react';
@@ -10,17 +17,10 @@ import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { registryProjectFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
-import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
-import type { InstallationPickerFramework } from '@/utils/installation/framework-navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
-import {
-  getInstallationMethodsForFramework,
-  INSTALLATION_METHOD_OPTIONS,
-  type InstallationMethod,
-} from '@/utils/installation/method-options';
+import { INSTALLATION_METHOD_OPTIONS } from '@/utils/installation/method-options';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
-import { registrySkinSelection } from '@/utils/installation/shadcn';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 const ICONS = {
@@ -30,7 +30,7 @@ const ICONS = {
 } satisfies Record<InstallationMethod, ComponentType<SVGProps<SVGSVGElement>>>;
 
 interface Props {
-  currentFramework: InstallationPickerFramework;
+  currentFramework: InstallationFramework;
   route: InstallationRouteSegment;
   cdnMediaSubpaths: readonly string[];
 }
@@ -41,7 +41,7 @@ function getActiveMethod(route: InstallationRouteSegment): InstallationMethod {
   return 'packaged';
 }
 
-function getMethodBaseHref(method: InstallationMethod, framework: InstallationPickerFramework): string {
+function getMethodBaseHref(method: InstallationMethod, framework: InstallationFramework): string {
   if (method === 'packaged') return getInstallationRoutePath(framework);
 
   if (method === 'shadcn') {
@@ -61,7 +61,7 @@ export default function InstallationMethodNavClient({ currentFramework, route, c
   const isHydrated = useIsHydrated();
   const framework = route === 'shadcn' && isHydrated ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
-  const availableMethods = getInstallationMethodsForFramework(framework);
+  const availableMethods = installationMethodsForFramework(framework);
   const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => {
     if (route !== 'shadcn' && !availableMethods.includes(id)) return false;
 

@@ -42,6 +42,15 @@ describe('installationOptionDefinitionsFor', () => {
 });
 
 describe('installationCompatibility', () => {
+  it('exposes installation methods by project framework', () => {
+    expect(installationCompatibility.methodsByFramework).toEqual({
+      react: ['packaged', 'shadcn'],
+      html: ['packaged', 'shadcn', 'cdn'],
+      vue: ['packaged', 'shadcn'],
+      svelte: ['packaged', 'shadcn'],
+    });
+  });
+
   it('exposes the exact media choices for every preset', () => {
     expect(installationCompatibility.mediaByPreset.audio).toEqual(['html5-audio', 'mux-audio', 'spotify']);
     expect(installationCompatibility.mediaByPreset['live-video']).toEqual(['hls', 'mux-video']);

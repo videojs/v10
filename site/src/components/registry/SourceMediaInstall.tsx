@@ -1,6 +1,7 @@
+import { generateSourceMediaInstallCode } from '@videojs/installation';
+
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import { shared } from '@/components/typography/styles';
-import { generateSourceMediaInstallCode } from '@/utils/installation/codegen';
 
 import { useSelection } from '../installation/useSelection';
 

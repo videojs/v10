@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  fitSelectionToPreset,
   INSTALLATION_FRAMEWORKS,
   PACKAGE_MANAGERS,
   resolveInstallationSelection,
@@ -133,5 +134,18 @@ describe('resolveInstallationSelection', () => {
         }
       }
     }
+  });
+});
+
+describe('fitSelectionToPreset', () => {
+  it('keeps the skin tier across media types and drops incompatible media', () => {
+    expect(fitSelectionToPreset('default-audio', 'minimal-video', 'youtube')).toEqual({
+      skin: 'minimal-audio',
+      media: 'html5-audio',
+    });
+    expect(fitSelectionToPreset('live-video', 'none', 'mux-video')).toEqual({
+      skin: 'none',
+      media: 'mux-video',
+    });
   });
 });

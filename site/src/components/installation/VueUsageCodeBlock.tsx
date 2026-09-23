@@ -1,6 +1,7 @@
+import { generateVueUsageCode } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateVueUsageCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
 

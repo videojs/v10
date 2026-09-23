@@ -5,6 +5,16 @@
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
 [![preview-badge]][preview]
 
+Modern, modular, and composable media player framework for Web and React.
+
+🚧 Release candidate - close to stable. Adoption in real projects encouraged. 🚧
+
+Video.js v10 is close to stable. Try it out in real projects and share your feedback 🙏.
+
+- Read our [design documents][rfcs].
+- Read the [v10 discussion topic][v10-discussion].
+- Watch [Heff's recent presentation][heff-presentation].
+
 ## AI Quickstart
 
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
@@ -17,16 +27,6 @@ without modifying your project:
 npx @videojs/react@latest agents init
 npx @videojs/html@latest agents init
 ```
-
-Modern, modular, and composable media player framework for Web and React.
-
-🚧 Release candidate - close to stable. Adoption in real projects encouraged. 🚧
-
-Video.js v10 is close to stable. Try it out in real projects and share your feedback 🙏.
-
-- Read our [design documents][rfcs].
-- Read the [v10 discussion topic][v10-discussion].
-- Watch [Heff's recent presentation][heff-presentation].
 
 ## Timeline
 

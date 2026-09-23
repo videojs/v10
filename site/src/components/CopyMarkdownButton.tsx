@@ -1,4 +1,5 @@
 import { Menu } from '@base-ui/react/menu';
+import { isInstallationFramework } from '@videojs/installation';
 import clsx from 'clsx';
 import { useState } from 'react';
 
@@ -8,11 +9,7 @@ import Copy from '@/assets/icons/copy.svg?react';
 import Markdown from '@/assets/icons/markdown.svg?react';
 import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
-import {
-  isInstallationPickerFramework,
-  resolveShadcnUrlSelection,
-  SHADCN_INSTALLATION_PATH,
-} from '@/utils/installation/framework-navigation';
+import { resolveShadcnUrlSelection, SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
 import {
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
@@ -51,7 +48,7 @@ export function markdownUrl(
 
   if (
     pathname === SHADCN_INSTALLATION_PATH &&
-    !isInstallationPickerFramework(url.searchParams.get('framework')) &&
+    !isInstallationFramework(url.searchParams.get('framework')) &&
     (registryFramework === 'react' || registryFramework === 'html')
   ) {
     url.searchParams.set('framework', registryFramework);

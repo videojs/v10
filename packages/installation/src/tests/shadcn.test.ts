@@ -17,7 +17,7 @@ import {
   shadcnCommand,
   shadcnInitCommand,
   shadcnRegistryAddCommand,
-} from '../shadcn';
+} from '../index';
 
 describe('registryNamespaceUrl', () => {
   it('selects the catalog through the URL, not the item name', () => {

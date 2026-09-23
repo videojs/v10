@@ -1,4 +1,4 @@
-import { generateReactInstallCode } from '@/utils/installation/codegen';
+import { generateReactInstallCode } from '@videojs/installation';
 
 import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';

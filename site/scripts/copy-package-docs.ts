@@ -29,8 +29,7 @@ const PACKAGE_NAMES = {
   react: '@videojs/react',
 } as const;
 
-export type Framework = keyof typeof PACKAGE_NAMES;
-export type PackageDocsTarget = Framework;
+export type PackageDocsTarget = keyof typeof PACKAGE_NAMES;
 
 export interface PackageDocumentationOptions {
   target: PackageDocsTarget;
@@ -41,7 +40,9 @@ export interface PackageDocumentationOptions {
 
 const DOCS_SITE_BASE = 'https://videojs.org';
 
-function installationDocuments(framework: Framework): ReadonlyArray<readonly [source: string, destination: string]> {
+function installationDocuments(
+  framework: PackageDocsTarget
+): ReadonlyArray<readonly [source: string, destination: string]> {
   return INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
     INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
   ).map((route) => [`${getInstallationRoutePath(route).slice(1)}.md`, `${INSTALLATION_ROUTES[route].slug}.md`]);
@@ -50,7 +51,7 @@ function installationDocuments(framework: Framework): ReadonlyArray<readonly [so
 const INSTALLATION_DOCUMENTS = {
   html: installationDocuments('html'),
   react: installationDocuments('react'),
-} satisfies Record<Framework, readonly (readonly [source: string, destination: string])[]>;
+} satisfies Record<PackageDocsTarget, readonly (readonly [source: string, destination: string])[]>;
 
 function isPackageDocsTarget(value: string): value is PackageDocsTarget {
   return value in PACKAGE_NAMES;
@@ -65,7 +66,7 @@ export function useInstalledAgentCommands(content: string): string {
   return content.replace(/(@videojs\/(?:html|react))@latest(?= agents init)/g, '$1');
 }
 
-export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
+export function rewriteLinks(content: string, sourceSlug: string, framework: PackageDocsTarget): string {
   const sourceDir = posix.dirname(sourceSlug);
   let rewritten = content;
 
@@ -104,7 +105,7 @@ function copyInstallationDocumentation({
 }: {
   siteDist: string;
   targetDirectory: string;
-  framework: Framework;
+  framework: PackageDocsTarget;
   rewriteLocalLinks: boolean;
   version: string | undefined;
 }): number {
@@ -147,7 +148,7 @@ function copyInstallationDocumentation({
  */
 export function rewriteIndexHeader(
   content: string,
-  { framework, version }: { framework: Framework; version: string | undefined }
+  { framework, version }: { framework: PackageDocsTarget; version: string | undefined }
 ): string {
   const packageName = PACKAGE_NAMES[framework];
   const versionSuffix = version ? ` v${version}` : '';
@@ -173,7 +174,7 @@ export function synthesizeReadme({
   framework,
   version,
 }: {
-  framework: Framework;
+  framework: PackageDocsTarget;
   version: string | undefined;
 }): string {
   const packageName = PACKAGE_NAMES[framework];
@@ -243,7 +244,7 @@ function copyFrameworkDocumentation({
 }: {
   sourceDirectory: string;
   targetDirectory: string;
-  framework: Framework;
+  framework: PackageDocsTarget;
   rewriteLocalLinks: boolean;
   version: string | undefined;
 }): number {
@@ -278,7 +279,7 @@ export function packageDocumentation({
   packagesDirectory = resolve(workspaceRoot, 'packages'),
   version,
 }: PackageDocumentationOptions): number {
-  const frameworks: Framework[] = [target];
+  const frameworks: PackageDocsTarget[] = [target];
   const sources = new Map(
     frameworks.map((framework) => [framework, join(siteDist, 'docs', 'framework', framework)] as const)
   );

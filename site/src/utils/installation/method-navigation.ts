@@ -1,19 +1,16 @@
-import {
-  isInstallationPickerFramework,
-  isShadcnInstallationUrl,
-  type InstallationPickerFramework,
-} from '@/utils/installation/framework-navigation';
-import type { InstallationMethod } from '@/utils/installation/method-options';
+import { isInstallationFramework, type InstallationFramework, type InstallationMethod } from '@videojs/installation';
+
+import { isShadcnInstallationUrl } from '@/utils/installation/framework-navigation';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
-import type { InstallationSelection } from '@/utils/installation/url-state';
+import type { InstallationUiSelection } from '@/utils/installation/url-state';
 import { serializeInstallationSearch } from '@/utils/installation/url-state';
 
-export type { InstallationMethod } from '@/utils/installation/method-options';
+export type { InstallationMethod } from '@videojs/installation';
 
-function frameworkFromInstallationPath(pathname: string): InstallationPickerFramework | null {
+function frameworkFromInstallationPath(pathname: string): InstallationFramework | null {
   const route = pathname.match(/\/docs\/guides\/installation\/([^/]+)\/?$/)?.[1] ?? null;
 
-  return isInstallationPickerFramework(route) ? route : null;
+  return isInstallationFramework(route) ? route : null;
 }
 
 /** Carry compatible installation choices to another method's guide. */
@@ -36,7 +33,7 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     target.searchParams.delete('framework');
   } else if (method === 'shadcn') {
     const requested = target.searchParams.get('framework');
-    const framework = isInstallationPickerFramework(requested)
+    const framework = isInstallationFramework(requested)
       ? requested
       : (frameworkFromInstallationPath(current.pathname) ?? 'html');
 
@@ -54,8 +51,8 @@ export function resolveInstallationMethodHref(
   current: URL,
   href: string,
   method: InstallationMethod,
-  selection: InstallationSelection,
-  framework?: InstallationPickerFramework
+  selection: InstallationUiSelection,
+  framework?: InstallationFramework
 ): string {
   const source = new URL(current);
 
