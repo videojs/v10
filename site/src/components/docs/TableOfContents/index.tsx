@@ -1,4 +1,5 @@
 import type { MarkdownHeading } from 'astro';
+import { useMemo } from 'react';
 
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { TableOfContentsMobile } from './TableOfContents.mobile';
@@ -9,7 +10,7 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ headings }: TableOfContentsProps) {
-  const filteredHeadings = filterHeadingsForToc(headings);
+  const filteredHeadings = useMemo(() => filterHeadingsForToc(headings), [headings]);
   const renderedHeadings = useRenderedHeadings(filteredHeadings);
   const activeId = useActiveHeading(renderedHeadings);
 
