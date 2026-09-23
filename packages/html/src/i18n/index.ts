@@ -11,6 +11,7 @@ export {
   LOCALES,
   onI18nRegistryChange,
   registerI18n,
+  translateText,
 } from '@videojs/core/i18n';
 export { I18nTextMixin, MediaTextElement } from '../ui/text/element';
 export type { I18nContext, I18nContext as I18nLitContext, I18nContextValue } from './context';

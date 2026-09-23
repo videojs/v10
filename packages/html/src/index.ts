@@ -61,6 +61,7 @@ export {
   registerI18n,
   resolvePlayerLocale,
   resolveProviderLocale,
+  translateText,
 } from './i18n';
 export type { I18nContext as I18nLitContext } from './i18n/context';
 // i18n — `@videojs/html/i18n` registers `<media-i18n>` / `<media-text>`.
