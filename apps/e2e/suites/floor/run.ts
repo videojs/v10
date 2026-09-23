@@ -116,13 +116,18 @@ async function main(): Promise<void> {
 }
 
 async function runEngine(engine: Engine): Promise<Result[]> {
-  const playwright = require(engine.module) as typeof import('playwright-core');
-  let browser: import('playwright-core').Browser;
+  const playwright = require(engine.module) as typeof import('playwright-core-1-31');
+  let browser: import('playwright-core-1-31').Browser;
 
   const endpoint = process.env[`FLOOR_WS_${engine.type.toUpperCase()}`];
+  // Tunnel loopback pages back to this process, which serves them, whatever network the engine's container is on.
+  // Playwright 1.31 only reads the underscored name; `exposeNetwork` became public later.
+  const connectOptions = { exposeNetwork: '<loopback>', _exposeNetwork: '<loopback>' };
 
   try {
-    browser = endpoint ? await playwright[engine.type].connect(endpoint) : await playwright[engine.type].launch();
+    browser = endpoint
+      ? await playwright[engine.type].connect(endpoint, connectOptions)
+      : await playwright[engine.type].launch();
   } catch (error) {
     // Old engine builds can crash on a host OS newer than they were built for; CI runs them on Ubuntu 22.04.
     const reason = error instanceof Error ? error.message.split('\n')[0]! : String(error);
@@ -146,7 +151,7 @@ async function runEngine(engine: Engine): Promise<Result[]> {
   return results;
 }
 
-async function runPage(browser: import('playwright-core').Browser, engine: Engine, target: Page): Promise<Result> {
+async function runPage(browser: import('playwright-core-1-31').Browser, engine: Engine, target: Page): Promise<Result> {
   const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
   const failures: string[] = [];
 
@@ -226,7 +231,7 @@ async function runPage(browser: import('playwright-core').Browser, engine: Engin
 }
 
 /** Skins can re-render their root while upgrading, so retry until the root holds still. */
-async function readProbeWhenStable(page: import('playwright-core').Page): Promise<Probe> {
+async function readProbeWhenStable(page: import('playwright-core-1-31').Page): Promise<Probe> {
   for (let attempt = 0; ; attempt++) {
     const probe = (await page.evaluate(`(${readProbe.toString()})(${deepQuery.toString()})`)) as Probe | null;
     if (probe) return probe;
@@ -320,7 +325,7 @@ function readProbe(query: typeof deepQuery): Probe | null {
 }
 
 /** Seeking while playing must not hide the controls, and leaving the player still must. */
-async function checkSeekKeepsControls(page: import('playwright-core').Page): Promise<string[]> {
+async function checkSeekKeepsControls(page: import('playwright-core-1-31').Page): Promise<string[]> {
   const played = await page.evaluate(
     `(async () => { const video = (${deepQuery.toString()})(document, 'video'); video.muted = true; try { await video.play(); } catch { return false; } return !video.paused; })()`
   );
@@ -353,7 +358,7 @@ async function checkSeekKeepsControls(page: import('playwright-core').Page): Pro
 }
 
 async function checkPopup(
-  page: import('playwright-core').Page,
+  page: import('playwright-core-1-31').Page,
   label: string,
   trigger: string,
   action: 'hover' | 'click',
