@@ -10,8 +10,8 @@
  * Playwright's WebKit is close to Safari 16.4 but not identical; treat a WebKit pass as strong evidence, not proof.
  *
  * The old engine builds crash on recent macOS. To run them in Playwright's Linux images instead, start a `playwright
- * run-server` per image and set `FLOOR_WS_CHROMIUM`, `FLOOR_WS_FIREFOX`, or `FLOOR_WS_WEBKIT` to its endpoint, and
- * `FLOOR_APP_HOST` to the host name the containers reach this machine by, such as `host.docker.internal`.
+ * run-server` per image and set `FLOOR_WS_CHROMIUM`, `FLOOR_WS_FIREFOX`, or `FLOOR_WS_WEBKIT` to its endpoint. The
+ * engines reach the app through a tunnel back to this process; set `FLOOR_APP_HOST` only to load it by another name.
  */
 import { type ChildProcess, spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
