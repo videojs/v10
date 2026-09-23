@@ -91,6 +91,10 @@ function isVideoLikeRenderer(renderer: Renderer): boolean {
   );
 }
 
+function escapeHTMLAttribute(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
 /** Skin module basename within a preset group: `skin` or `minimal-skin`. */
 function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
   return skin === 'minimal-video' || skin === 'minimal-audio' ? 'minimal-skin' : 'skin';
@@ -239,7 +243,7 @@ function generateMediaMarkup(
   renderer: Renderer,
   indent: string
 ): string {
-  const mediaEl = `${indent}<${tag} src="${src}"${playsInline}></${tag}>`;
+  const mediaEl = `${indent}<${tag} src="${escapeHTMLAttribute(src)}"${playsInline}></${tag}>`;
 
   if (!isMuxRenderer(renderer)) return mediaEl;
 
@@ -469,7 +473,7 @@ import VideoPlayer from './components/VideoPlayer.vue';
 
 <template>
   <h1>Welcome to My App</h1>
-  <VideoPlayer src="${source}" />
+  <VideoPlayer src="${escapeHTMLAttribute(source)}" />
 </template>`,
   };
 }
@@ -503,7 +507,7 @@ export function generateSvelteUsageCode(
 </script>
 
 <h1>Welcome to My App</h1>
-<VideoPlayer src="${source}" />`;
+<VideoPlayer src="${escapeHTMLAttribute(source)}" />`;
 
   return {
     '+page.svelte': component('$lib/VideoPlayer.svelte'),

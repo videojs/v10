@@ -17,7 +17,12 @@ import {
   type InstallationOptions,
 } from './codegen';
 import { CDN_MEDIA_SUBPATHS } from './defaults';
-import { installationOptionDefinitions, type InstallationOptionDefinition } from './options';
+import {
+  installationCompatibility,
+  installationOptionDefinitions,
+  type InstallationCompatibility,
+  type InstallationOptionDefinition,
+} from './options';
 import { type InstallationInput, type InstallationSelection, type PlayerOwner, selectionToInput } from './selection';
 import { registryInstallCommands, registrySkinSelection, shadcnInitCommand } from './shadcn';
 
@@ -54,6 +59,7 @@ export interface InstallationDiscovery {
   packageVersion: string;
   command: string;
   options: readonly InstallationOptionDefinition[];
+  compatibility: InstallationCompatibility;
   examples: readonly string[];
   notice: string;
 }
@@ -103,6 +109,7 @@ export function createInstallationDiscovery(owner: PlayerOwner, packageVersion: 
     packageVersion,
     command,
     options: installationOptionDefinitions(owner),
+    compatibility: installationCompatibility,
     examples: [
       `${command} --method packaged --preset video --media hls --package-manager pnpm`,
       owner === 'react'
@@ -354,6 +361,7 @@ export function createInstallationPlan(selection: InstallationSelection, package
       : selection.method === 'shadcn'
         ? createShadcnSteps(selection)
         : createPackagedSteps(selection);
+  const docsFramework = selection.framework === 'react' ? 'react' : 'html';
 
   return {
     schemaVersion: 1,
@@ -365,8 +373,14 @@ export function createInstallationPlan(selection: InstallationSelection, package
     reproduceCommand: installationCommand(selection.owner, relevantInput, packageVersion),
     steps,
     next: [
-      { label: 'Customize', url: 'https://videojs.org/docs/guides/customize-skins' },
-      { label: 'Deploy', url: 'https://videojs.org/docs/guides/deployment' },
+      {
+        label: 'Customize skins',
+        url: `https://videojs.org/docs/framework/${docsFramework}/guides/customize-skins`,
+      },
+      {
+        label: 'Browser support',
+        url: `https://videojs.org/docs/framework/${docsFramework}/guides/browser-support`,
+      },
     ],
     notice: 'These are instructions only. Review and run the commands in your project; no files were modified.',
   };

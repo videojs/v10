@@ -1,10 +1,19 @@
 import type { InstallationDiscovery, InstallationPlan } from './plan';
-import type { SelectionError } from './selection';
+import { INSTALLATION_FRAMEWORKS, type SelectionError } from './selection';
 
 function fenced(language: string, value: string): string {
-  const marker = value.includes('```') ? '````' : '```';
+  const longestRun = Math.max(2, ...[...value.matchAll(/`+/g)].map((match) => match[0].length));
+  const marker = '`'.repeat(longestRun + 1);
 
   return `${marker}${language}\n${value}\n${marker}`;
+}
+
+function inlineCode(value: string): string {
+  const longestRun = Math.max(0, ...[...value.matchAll(/`+/g)].map((match) => match[0].length));
+  const marker = '`'.repeat(longestRun + 1);
+  const padding = /^[` ]|[` ]$/.test(value) ? ' ' : '';
+
+  return `${marker}${padding}${value}${padding}${marker}`;
 }
 
 export function renderDiscoveryMarkdown(discovery: InstallationDiscovery): string {
@@ -16,6 +25,19 @@ export function renderDiscoveryMarkdown(discovery: InstallationDiscovery): strin
       return `- \`${option.flag}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
     })
     .join('\n');
+  const mediaCompatibility = Object.entries(discovery.compatibility.mediaByPreset)
+    .map(([preset, media]) => `- \`${preset}\`: ${media.map((value) => `\`${value}\``).join(', ')}`)
+    .join('\n');
+  const shadcnCompatibility = INSTALLATION_FRAMEWORKS.map((framework) => {
+    const templates = discovery.compatibility.shadcn.templatesByFramework[framework]
+      .map((value) => `\`${value}\``)
+      .join(', ');
+    const stylings = discovery.compatibility.shadcn.stylingsByFramework[framework]
+      .map((value) => `\`${value}\``)
+      .join(', ');
+
+    return `- \`${framework}\`: templates ${templates}; styling ${stylings}`;
+  }).join('\n');
 
   return `# Video.js installation instruction options
 
@@ -33,13 +55,21 @@ Running the command above without selection flags shows this option reference an
 
 ${options}
 
-Compatibility rules:
+## Compatibility
 
 - \`@videojs/react\` generates React instructions. \`@videojs/html\` generates HTML, Vue, or Svelte instructions.
 - CDN is plain HTML only.
 - Shadcn installs editable React or HTML skin source. Vue and Svelte use the HTML source catalog.
-- Background Video and a skinless player are not available from the Shadcn registry.
-- A preset limits the compatible skin and media choices.
+- Shadcn presets: ${discovery.compatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
+- Shadcn skins: ${discovery.compatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
+
+### Media sources by preset
+
+${mediaCompatibility}
+
+### Shadcn templates and styling by framework
+
+${shadcnCompatibility}
 
 ## Examples
 
@@ -75,18 +105,22 @@ export function renderInstallationPlanSections(plan: InstallationPlan): string {
           .map((key) => (key === 'sourceUrl' ? 'source-url' : key === 'packageManager' ? 'package-manager' : key))
           .join(', ')
       : 'none';
-  const selected = [
+  const selected: Array<[string, string]> = [
     ['method', plan.selection.method],
     ['framework', plan.selection.framework],
     ['preset', plan.selection.preset],
     ['skin', plan.selection.skinFlag],
     ['media', plan.selection.media],
     ['source-url', plan.resolvedSourceUrl],
-    ...(plan.selection.method !== 'cdn' ? [['package-manager', plan.selection.packageManager]] : []),
-    ...(plan.selection.template ? [['template', plan.selection.template]] : []),
-    ...(plan.selection.styling ? [['styling', plan.selection.styling]] : []),
-  ] as Array<[string, string]>;
-  const selection = selected.map(([key, value]) => `- \`${key}\`: \`${value}\``).join('\n');
+  ];
+
+  if (plan.selection.method !== 'cdn') selected.push(['package-manager', plan.selection.packageManager]);
+
+  if (plan.selection.template) selected.push(['template', plan.selection.template]);
+
+  if (plan.selection.styling) selected.push(['styling', plan.selection.styling]);
+
+  const selection = selected.map(([key, value]) => `- \`${key}\`: ${inlineCode(value)}`).join('\n');
   const steps = plan.steps
     .map((step) => {
       const description = step.description ? `\n${step.description}\n` : '';
@@ -109,10 +143,6 @@ Defaulted options: ${defaulted}.
 ${fenced('sh', plan.reproduceCommand)}
 
 ${steps}
-
-## What to do next
-
-${plan.next.map((item) => `- [${item.label}](${item.url})`).join('\n')}
 
 > ${plan.notice}
 `;

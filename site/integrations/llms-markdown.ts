@@ -2,7 +2,13 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createInstallationDiscovery, renderInstallationPlanSections } from '@videojs/installation';
+import {
+  createInstallationDiscovery,
+  INSTALLATION_FRAMEWORKS,
+  installationCompatibility,
+  installationOptionDefinitionsFor,
+  renderInstallationPlanSections,
+} from '@videojs/installation';
 import type { AstroIntegration } from 'astro';
 import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
@@ -269,7 +275,11 @@ export function generateInstallationIndex(siteUrl = 'https://videojs.org'): stri
   const origin = siteUrl || 'https://videojs.org';
   const html = createInstallationDiscovery('html', htmlPackage.version);
   const react = createInstallationDiscovery('react', reactPackage.version);
-  const optionLines = html.options
+  const options = installationOptionDefinitionsFor({
+    methods: ['packaged', 'shadcn', 'cdn'],
+    frameworks: ['react', 'html', 'vue', 'svelte'],
+  });
+  const optionLines = options
     .filter(({ flag }) =>
       ['--preset', '--skin', '--media', '--source-url', '--package-manager', '--template', '--styling'].includes(flag)
     )
@@ -287,6 +297,19 @@ export function generateInstallationIndex(siteUrl = 'https://videojs.org'): stri
       return `- \`${queryKey}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
     })
     .join('\n');
+  const mediaCompatibility = Object.entries(installationCompatibility.mediaByPreset)
+    .map(([preset, media]) => `- \`${preset}\`: ${media.map((value) => `\`${value}\``).join(', ')}`)
+    .join('\n');
+  const shadcnCompatibility = INSTALLATION_FRAMEWORKS.map((framework) => {
+    const templates = installationCompatibility.shadcn.templatesByFramework[framework]
+      .map((value) => `\`${value}\``)
+      .join(', ');
+    const stylings = installationCompatibility.shadcn.stylingsByFramework[framework]
+      .map((value) => `\`${value}\``)
+      .join(', ');
+
+    return `- \`${framework}\`: templates ${templates}; styling ${stylings}`;
+  }).join('\n');
 
   return `# Video.js installation guides
 
@@ -326,12 +349,20 @@ The page route selects Packaged, Shadcn, or CDN and fixes the framework except o
 - \`framework\`: On the Shadcn page, choose \`react\`, \`html\`, \`vue\`, or \`svelte\`. Default: \`react\`.
 ${optionLines}
 
-Compatibility rules:
+## Compatibility
 
 - CDN is plain HTML only.
 - Shadcn provides React or HTML source. Vue and Svelte use the HTML source catalog.
-- Background Video and a skinless player are not available from the Shadcn registry.
-- A preset determines its compatible media choices.
+- Shadcn presets: ${installationCompatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
+- Shadcn skins: ${installationCompatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
+
+### Media sources by preset
+
+${mediaCompatibility}
+
+### Shadcn templates and styling by framework
+
+${shadcnCompatibility}
 `;
 }
 

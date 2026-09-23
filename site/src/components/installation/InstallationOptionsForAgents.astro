@@ -1,50 +1,45 @@
 ---
-import { createInstallationDiscovery, installationCommand } from '@videojs/installation';
+import {
+  installationCommand,
+  installationCompatibility,
+  installationOptionDefinitionsFor,
+  type InstallationFramework,
+  type InstallationMethod,
+} from '@videojs/installation';
 
-import htmlPackage from '../../../../packages/html/package.json';
-import reactPackage from '../../../../packages/react/package.json';
 import { isInstallationRouteSegment } from '@/utils/installation/routes';
 
 const route = Astro.params.framework;
 if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
 
 const owner = route === 'react' || route === 'shadcn' ? 'react' : 'html';
-const version = owner === 'react' ? reactPackage.version : htmlPackage.version;
-const discovery = createInstallationDiscovery(owner, version);
 const commands = route === 'shadcn'
   ? [installationCommand('react'), installationCommand('html')]
   : [installationCommand(owner)];
-const fixedMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
-const fixedFramework = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
-const queryOptions = discovery.options
+const fixedMethod: InstallationMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
+const fixedFramework: InstallationFramework | null = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
+const frameworks: readonly InstallationFramework[] = fixedFramework
+  ? [fixedFramework]
+  : ['react', 'html', 'vue', 'svelte'];
+const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks });
+const queryOptions = definitions
   .filter((option) => {
     if (['--json', '--method'].includes(option.flag)) return false;
 
     if (option.flag === '--framework') return route === 'shadcn';
 
-    if (option.flag === '--package-manager') return route !== 'cdn';
-
-    if (['--template', '--styling'].includes(option.flag)) return route === 'shadcn';
-
     return true;
   })
   .map((option) => {
-    if (option.flag === '--framework') {
-      return { ...option, values: ['react', 'html', 'vue', 'svelte'], default: 'react' };
-    }
-
-    if (route === 'shadcn' && option.flag === '--preset') {
-      return { ...option, values: option.values?.filter((value) => value !== 'background-video') };
-    }
-
-    if (route === 'shadcn' && option.flag === '--skin') {
-      return { ...option, values: option.values?.filter((value) => value !== 'none') };
-    }
-
     if (option.flag === '--package-manager') return { ...option, flag: '--install-method' };
 
     return option;
   });
+const hasInstallMethod = queryOptions.some(({ flag }) => flag === '--install-method');
+const availablePresets = queryOptions.find(({ flag }) => flag === '--preset')?.values ?? [];
+const mediaByPreset = Object.entries(installationCompatibility.mediaByPreset).filter(([preset]) =>
+  availablePresets.includes(preset)
+);
 const routeExamples = [
   ['/docs/guides/installation/react.md', 'React with packaged modules'],
   ['/docs/guides/installation/html.md', 'HTML with packaged modules'],
@@ -92,9 +87,38 @@ const routeExamples = [
   </ul>
 
   <p>
-    Query names match the flags above without leading dashes. Run a bare package command above to see every CLI flag,
-    compatibility rule, and default.
+    Query names match the flags above without leading dashes{hasInstallMethod && (
+      <>, except <code>install-method</code> corresponds to the <code>--package-manager</code> flag</>
+    )}. Run a bare package command above to see the same options for the installed package version.
   </p>
+
+  <h3>Compatible media sources by preset</h3>
+
+  <ul>
+    {mediaByPreset.map(([preset, media]) => (
+      <li><code>{preset}</code>: {media.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}</li>
+    ))}
+  </ul>
+
+  {route === 'shadcn' && (
+    <>
+      <h3>Shadcn templates and styling by framework</h3>
+
+      <ul>
+        {frameworks.map((framework) => (
+          <li>
+            <code>{framework}</code>: templates{' '}
+            {installationCompatibility.shadcn.templatesByFramework[framework].map((value, index) => (
+              <>{index > 0 && ', '}<code>{value}</code></>
+            ))}; styling{' '}
+            {installationCompatibility.shadcn.stylingsByFramework[framework].map((value, index) => (
+              <>{index > 0 && ', '}<code>{value}</code></>
+            ))}
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
 
   <h3>Installation pages</h3>
 

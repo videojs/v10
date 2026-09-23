@@ -1,7 +1,6 @@
 import {
   createInstallationPlan,
   resolveInstallationSelection,
-  type InstallationFramework,
   type InstallationInput,
   type InstallationMethod,
   type InstallationPlan,
@@ -27,7 +26,7 @@ export const INSTALLATION_MARKDOWN_PARAMS = new Set([
 interface InstallationRouteDefaults {
   owner: PlayerOwner;
   method: InstallationMethod;
-  framework: InstallationFramework;
+  framework: string;
 }
 
 function installationRouteDefaults(path: string, params: URLSearchParams): InstallationRouteDefaults | null {
@@ -47,11 +46,10 @@ function installationRouteDefaults(path: string, params: URLSearchParams): Insta
 
   if (route !== 'shadcn') return null;
 
-  const requested = params.get('framework');
-  const framework: InstallationFramework =
-    requested === 'html' || requested === 'vue' || requested === 'svelte' ? requested : 'react';
+  const framework = params.get('framework') ?? 'react';
+  const owner = framework === 'html' || framework === 'vue' || framework === 'svelte' ? 'html' : 'react';
 
-  return { owner: framework === 'react' ? 'react' : 'html', method: 'shadcn', framework };
+  return { owner, method: 'shadcn', framework };
 }
 
 function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchParams): InstallationInput {

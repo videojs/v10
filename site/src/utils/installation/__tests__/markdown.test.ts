@@ -46,6 +46,19 @@ describe('resolveInstallationMarkdownPlan', () => {
       styling: 'css',
     });
   });
+
+  it('rejects an unknown Shadcn framework', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/shadcn.md',
+      new URLSearchParams({ framework: 'angular' }),
+      '10.0.0-test'
+    );
+
+    expect(result?.ok).toBe(false);
+    expect(result && !result.ok && result.errors).toContainEqual(
+      expect.objectContaining({ field: 'framework', value: 'angular' })
+    );
+  });
 });
 
 describe('replaceInstallationMarkdownPlan', () => {
