@@ -24,7 +24,7 @@ export type Renderer = (typeof RENDERERS)[number];
 
 export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
 
-/** Public skin values accepted by installation URLs and the docs CLI. */
+/** Public skin values accepted by installation requests. */
 export const INSTALLATION_SKIN_FLAGS = ['default', 'minimal', 'none'] as const;
 
 export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
@@ -41,7 +41,7 @@ export interface InstallationPreset {
 }
 
 /**
- * Installation presets in the order shown by the site and CLI.
+ * Installation presets in the order shown by the site and `agents init` option summary.
  *
  * Renderer order is also guidance: index 0 is the default when URL detection has no match. Live presets include only
  * media that exposes Video.js live-edge state; DASH playback does not currently provide that capability.
