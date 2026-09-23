@@ -14,6 +14,11 @@ import { PlayerController } from '../../player/controller';
 import { MenuRadioGroupElement } from '../menu/radio-group';
 import { RadioOptionsController } from '../radio-options/controller';
 
+/**
+ * Menu radio group that generates a `<media-menu-radio-item>` per available playback rate and shares the selected label
+ * and availability with an enclosing menu. An optional `<template>` holding one `<media-menu-radio-item>` customizes
+ * each generated item.
+ */
 export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-playback-rate-radio-group';
 

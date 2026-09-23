@@ -5,6 +5,7 @@ import { ContextConsumer } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
+/** Writes the formatted current or pointer slider value into its own text content, replacing any children. */
 export class SliderValueElement extends UIElement {
   static readonly tagName = 'media-slider-value';
 

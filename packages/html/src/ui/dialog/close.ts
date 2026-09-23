@@ -5,6 +5,7 @@ import { ContextConsumer } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { dialogContext } from './context';
 
+/** Button that closes its owning dialog; the element itself takes `role="button"` and keyboard focus. */
 export class DialogCloseElement extends UIElement {
   static readonly tagName: string = 'media-dialog-close';
 

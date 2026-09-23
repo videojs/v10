@@ -9,6 +9,10 @@ import { PlayerController } from '../../player/controller';
 import { UIElement } from '../ui-element';
 import { controlsContext } from './context';
 
+/**
+ * Tracks controls visibility, reflects it as data attributes, and shares it with its descendant controls parts. Hiding
+ * the controls closes any popup open inside it.
+ */
 export class ControlsElement extends UIElement {
   static readonly tagName = 'media-controls';
 

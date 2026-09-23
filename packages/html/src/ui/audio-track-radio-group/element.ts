@@ -14,6 +14,11 @@ import { PlayerController } from '../../player/controller';
 import { MenuRadioGroupElement } from '../menu/radio-group';
 import { RadioOptionsController } from '../radio-options/controller';
 
+/**
+ * Menu radio group that generates a `<media-menu-radio-item>` per available audio track and shares the selected label
+ * and availability with an enclosing menu. An optional `<template>` holding one `<media-menu-radio-item>` customizes
+ * each generated item.
+ */
 export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-audio-track-radio-group';
 

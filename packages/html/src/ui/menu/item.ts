@@ -5,6 +5,10 @@ import { ContextConsumer } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { type MenuContextValue, menuContext } from './context';
 
+/**
+ * Menu action; the element itself takes `role="menuitem"`. Activation fires a cancelable `select` event and then closes
+ * the menu, unless `commandfor` names a nested `<media-menu-content>` page to open instead.
+ */
 export class MenuItemElement extends UIElement {
   static readonly tagName = 'media-menu-item';
 

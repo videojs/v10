@@ -3,6 +3,7 @@ import type { PropertyValues } from '@videojs/element';
 
 import { UIElement } from '../ui-element';
 
+/** Visual divider between groups of menu items; the element itself takes `role="separator"`. */
 export class MenuSeparatorElement extends UIElement {
   static readonly tagName = 'media-menu-separator';
 

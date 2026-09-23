@@ -5,6 +5,7 @@ import { ContextConsumer } from '@videojs/element/context';
 import { ContextPartElement } from '../context-part-element';
 import { dialogContext } from './context';
 
+/** Text that labels its owning dialog. The element takes the `id` that the popup's `aria-labelledby` points to. */
 export class DialogTitleElement extends ContextPartElement<DialogState> {
   static readonly tagName: string = 'media-dialog-title';
 

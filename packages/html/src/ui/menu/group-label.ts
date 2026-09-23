@@ -6,6 +6,7 @@ import { menuGroupContext } from './context';
 
 let idCounter = 0;
 
+/** Non-interactive label that names its enclosing `<media-menu-group>` or `<media-menu-radio-group>`. */
 export class MenuGroupLabelElement extends UIElement {
   static readonly tagName = 'media-menu-group-label';
 

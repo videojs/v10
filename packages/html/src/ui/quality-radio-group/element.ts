@@ -11,6 +11,12 @@ import { MenuRadioGroupElement } from '../menu/radio-group';
 import type { MenuRadioItemElement } from '../menu/radio-item';
 import { RadioOptionsController } from '../radio-options/controller';
 
+/**
+ * Menu radio group that generates an Auto `<media-menu-radio-item>` plus one per video rendition, and shares the
+ * selected label and availability with an enclosing menu. An optional `<template>` holding one
+ * `<media-menu-radio-item>` customizes each generated item; its `data-part` `label`, `tier`, and `badge` descendants
+ * receive the rendition's text.
+ */
 export class QualityRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-quality-radio-group';
 

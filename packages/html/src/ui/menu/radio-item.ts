@@ -5,6 +5,10 @@ import { ContextConsumer } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { menuContext, menuRadioGroupContext } from './context';
 
+/**
+ * Menu item that selects its `value` in the enclosing `<media-menu-radio-group>` and closes the menu. The element
+ * itself takes `role="menuitemradio"`, checked while its value matches the group's.
+ */
 export class MenuRadioItemElement extends UIElement {
   static readonly tagName = 'media-menu-radio-item';
 
