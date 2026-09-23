@@ -23,7 +23,9 @@ const e2eDir = resolve(import.meta.dirname, '../..');
 const outputDir = resolve(e2eDir, 'test-results/floor');
 const PORT = 5181;
 const APP_HOST = process.env.FLOOR_APP_HOST;
-const BASE_URL = `http://${APP_HOST ?? 'localhost'}:${PORT}`;
+// Playwright 1.31 tunnels loopback pages to `127.0.0.1`, which `localhost` may not bind on Linux, where it can resolve
+// to `::1` first.
+const BASE_URL = `http://${APP_HOST ?? '127.0.0.1'}:${PORT}`;
 
 interface Engine {
   readonly name: string;
@@ -115,6 +117,9 @@ async function main(): Promise<void> {
   if (failed > 0) process.exitCode = 1;
 }
 
+/** Neither aliased release types both option names. */
+type ConnectOptions = import('playwright-core-1-31').ConnectOptions;
+
 async function runEngine(engine: Engine): Promise<Result[]> {
   const playwright = require(engine.module) as typeof import('playwright-core-1-31');
   let browser: import('playwright-core-1-31').Browser;
@@ -122,7 +127,7 @@ async function runEngine(engine: Engine): Promise<Result[]> {
   const endpoint = process.env[`FLOOR_WS_${engine.type.toUpperCase()}`];
   // Tunnel loopback pages back to this process, which serves them, whatever network the engine's container is on.
   // Playwright 1.31 only reads the underscored name; `exposeNetwork` became public later.
-  const connectOptions = { exposeNetwork: '<loopback>', _exposeNetwork: '<loopback>' };
+  const connectOptions = { exposeNetwork: '<loopback>', _exposeNetwork: '<loopback>' } as ConnectOptions;
 
   try {
     browser = endpoint
@@ -410,7 +415,7 @@ function readPopup(query: typeof deepQuery, triggerSelector: string, popupSelect
 
 async function startServer(): Promise<ChildProcess> {
   const args = ['exec', 'vp', '-C', 'suites/player/app', 'dev', '--port', String(PORT), '--strictPort'];
-  const server = spawn('pnpm', APP_HOST ? [...args, '--host'] : args, {
+  const server = spawn('pnpm', [...args, '--host', APP_HOST ? '0.0.0.0' : '127.0.0.1'], {
     cwd: e2eDir,
     // Vite rejects requests whose Host header it does not recognize, such as the containers' name for this machine.
     env: APP_HOST ? { ...process.env, __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: APP_HOST } : process.env,
@@ -419,7 +424,7 @@ async function startServer(): Promise<ChildProcess> {
 
   for (let attempt = 0; attempt < 120; attempt++) {
     try {
-      const response = await fetch(`http://localhost:${PORT}/pages/html-video-mp4.html`);
+      const response = await fetch(`http://127.0.0.1:${PORT}/pages/html-video-mp4.html`);
       if (response.ok) return server;
     } catch {
       // Not listening yet.
