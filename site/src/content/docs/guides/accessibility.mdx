@@ -15,20 +15,29 @@ Here are some of the accessibility aspects we consider. You should consider them
 - [**WCAG 2.2**](https://www.w3.org/TR/WCAG22/) provides success criteria for perceivable, operable, understandable, and robust web content.
 - [**CVAA**](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa) is a U.S. federal law requiring closed captioning and accessible controls for video content.
 - [**ADA**](https://www.ada.gov/) is a U.S. civil rights law that prohibits disability discrimination. Courts increasingly apply it to websites, including video players.
+- [**European Accessibility Act**](https://eur-lex.europa.eu/eli/dir/2019/882/oj) applies across the EU from June 28, 2025, and covers services such as e-commerce and audiovisual media. [**EN 301 549**](https://www.etsi.org/human-factors-accessibility/en-301-549-v3-the-harmonized-european-standard-for-ict-accessibility) is the European standard for meeting it, and it incorporates WCAG.
+
+These standards and laws are listed for context, not as legal advice. Check which ones apply to your product.
 
 ## ARIA roles and labels
 
 Components set ARIA roles and attributes automatically. For example, sliders render with `role="slider"` and value attributes, buttons update their `aria-label` based on player state, and decorative elements like time separators are hidden with `aria-hidden="true"`.
 
-Verify that labels are contextually correct for your content and language. Each component's reference page documents the attributes it sets.
+Built-in labels are translated. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink> to add or switch locales, and verify that labels are contextually correct for your content. Each component's reference page documents the attributes it sets.
+
+Tooltips are visual only. They are not linked to their trigger with `aria-describedby`, so a custom trigger needs its own accessible name. Built-in media buttons already have one.
 
 ## Keyboard interaction
 
 All interactive components support keyboard control. For example, buttons activate with <kbd>Enter</kbd> and <kbd>Space</kbd>, sliders respond to <kbd>Arrow</kbd> keys, <kbd>Home</kbd>, <kbd>End</kbd>, and <kbd>Page Up</kbd>/<kbd>Page Down</kbd>, and popovers close with <kbd>Escape</kbd>. Each component's reference page lists its full keyboard support. We follow the patterns in the [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/).
 
+Player-wide shortcuts, such as <kbd>Space</kbd> to play or <kbd>M</kbd> to mute, and tap gestures come from hotkey and gesture components. The skins ship a full set, and custom UI declares its own. See <DocsLink slug="guides/keyboard-shortcuts">Add keyboard shortcuts and gestures</DocsLink>.
+
 ## Focus management
 
-Interactive elements are focusable when enabled and leave the [tab order](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex) when disabled. Popover triggers link to their popups with `aria-controls` and `aria-expanded`.
+Interactive elements are focusable when enabled and leave the [tab order](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex) when disabled. Popover triggers link to their popups with `aria-controls` and `aria-expanded`. Menus and popovers close when focus moves away.
+
+Dialogs move focus inside when they open, keep <kbd>Tab</kbd> within the dialog, and make the content behind them inert. Closing a dialog returns focus to its trigger, or to the element that had focus before it opened.
 
 The player container is focusable and labeled: it takes `role="group"`, `tabindex="0"`, and an `aria-label` you can override. Keyboard users can tab to the player as a whole, and screen readers announce it as a named group.
 
@@ -36,11 +45,17 @@ The player container is focusable and labeled: it takes `role="group"`, `tabinde
 
 The player announces confirmed state changes through a visually hidden live region (`role="status"`), so screen reader users hear when playback starts or pauses, captions turn on or off, fullscreen, picture-in-picture, playback rate, or volume change, and where a seek lands.
 
-Announcements follow confirmed state from the player store rather than requested changes, so routine time updates never reach the live region. Rapid volume and seek changes are grouped into a single announcement, and the player stays quiet while one of its sliders has focus, since the slider already announces its own value. State the store tracks is covered for you; a custom control that tracks its own state needs its own live region.
+Announcements follow confirmed state from the player store rather than requested changes, so routine time updates never reach the live region. Rapid volume and seek changes are grouped into a single announcement, and the player stays quiet while one of its sliders has focus, since the slider already announces its own value. The skins include the <DocsLink slug="reference/components/status-announcer">status announcer</DocsLink>. A custom layout needs to add it. State the store tracks is covered once it's there; a custom control that tracks its own state needs its own live region.
 
 ## Captions and subtitles
 
-The <DocsLink slug="reference/api/feature-text-tracks">text tracks feature</DocsLink> supports captions and subtitles. Closed captions in the U.S. are governed by the [FCC](https://www.fcc.gov/) under the [CVAA](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa), which requires both captioning and viewer control over caption appearance (font, size, color, opacity, and edge style). Non-compliance carries legal risk. The [WebKit Caption Display Settings explainer](https://github.com/WebKit/explainers/tree/main/CaptionDisplaySettings) tracks how browsers are bringing these customization preferences into the web platform natively.
+The <DocsLink slug="reference/api/feature-text-tracks">text tracks feature</DocsLink> supports captions and subtitles. Closed captions in the U.S. are governed by the [FCC](https://www.fcc.gov/) under the [CVAA](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa), which requires both captioning and viewer control over caption appearance (font, size, color, opacity, and edge style). Non-compliance carries legal risk.
+
+Video.js leaves caption rendering to the browser, and you style cues with the `::cue` pseudo-element. It doesn't include a menu for caption appearance, so viewers rely on the caption preferences their browser and operating system provide. The [WebKit Caption Display Settings explainer](https://github.com/WebKit/explainers/tree/main/CaptionDisplaySettings) tracks how browsers are bringing these preferences into the web platform. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink> to add tracks and a captions control.
+
+## Transcripts and audio description
+
+Captions don't cover every viewer. [WCAG 2.2](https://www.w3.org/WAI/WCAG22/Understanding/audio-description-or-media-alternative-prerecorded) also expects audio description or a text alternative for prerecorded video. A transcript can live inside the <DocsLink slug="reference/components/player">player</DocsLink> but outside its container, so it reads player state without going fullscreen with the video. When a stream includes a described audio track, an <DocsLink slug="reference/components/audio-track-radio-group">audio track menu</DocsLink> lets viewers choose it.
 
 ## Color contrast
 
@@ -50,17 +65,27 @@ Video is harder than most UI for contrast because the background is always chang
 
 ## Touch targets
 
-Controls use rem-based sizing so they scale with the user's font size preference. All interactive elements set [`touch-action: manipulation`](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action) to eliminate tap delay on touch devices. Skins use [`pointer: fine` and `pointer: coarse`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer) to adapt transitions for mouse and touch input.
+Skin controls size from `--media-scale-unit`, which defaults to `16px`, so they don't grow with the user's font size preference. Set it to `1rem` to scale with the document root font size. See <DocsLink slug="guides/customize-skins" anchor="scale-from-the-document-font-size">Customize skins</DocsLink>.
+
+Skin buttons set [`touch-action: manipulation`](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action) to remove tap delay on touch devices, and sliders set `touch-action: none` so dragging doesn't scroll the page. Skins use [`pointer: fine` and `pointer: coarse`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer) to adapt transitions for mouse and touch input.
 
 If you build custom controls, target at least 24x24 CSS pixels per [WCAG 2.5.8 (target size minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum). Larger is better on touch-first surfaces.
 
 ## Color scheme
 
-Skins adapt to [`prefers-color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). Borders, backgrounds, and text colors adjust through CSS custom properties. Custom components can use the same design tokens. See <DocsLink slug="guides/skins">Skins</DocsLink> for details.
+The audio skins switch their palette for light and dark mode with [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark), which follows the inherited [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme), not the user's preference directly. Set `color-scheme: light dark` on the page or the player to follow the user's setting. The video skins keep dark controls in both schemes; only their border follows it. See <DocsLink slug="guides/customize-skins" anchor="set-the-color-scheme">Customize skins</DocsLink>.
 
 ## Reduced motion
 
 Skins respect [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) by simplifying or removing animations and transitions. Follow the same pattern in custom components.
+
+That covers the controls, not the video. Video.js doesn't pause or hide autoplaying video for reduced-motion users; your page decides that.
+
+## Autoplay and moving video
+
+[WCAG 2.2.2](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide) requires a way to pause, stop, or hide motion that starts automatically and lasts more than five seconds. A muted, looping hero video counts. Give it a pause control, or keep it short.
+
+A purely decorative video should be hidden from assistive technology with `aria-hidden="true"` on its wrapper. If the video carries information, give it an accessible name and controls, and use a regular player. See <DocsLink slug="guides/background-video">Add a background video</DocsLink> and <DocsLink slug="guides/autoplay">Autoplay</DocsLink>.
 
 ## Test with assistive technology
 
