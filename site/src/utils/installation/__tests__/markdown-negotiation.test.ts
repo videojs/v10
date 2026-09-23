@@ -149,5 +149,11 @@ Default steps.
     expect(negotiationConfig.method).toBe('GET');
     expect(directConfig.path).toContain('/docs/*.md');
     expect(directConfig.method).toBe('GET');
+    expect(negotiationConfig.excludedPath).toEqual(directConfig.path);
+
+    const directPaths = Array.isArray(directConfig.path) ? directConfig.path : [directConfig.path];
+    const nestedGuide = new URL('https://videojs.org/docs/guides/installation/shadcn.md');
+
+    expect(directPaths.some((path) => new URLPattern({ pathname: path }).test(nestedGuide))).toBe(true);
   });
 });
