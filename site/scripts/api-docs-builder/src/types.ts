@@ -119,5 +119,7 @@ export interface CSSVarsExtraction {
 export interface HtmlExtraction {
   tagName: string;
   properties: string[];
+  /** Public instance fields and accessors, including property-only inputs that have no reactive declaration. */
+  members: string[];
   events: ComponentEventDef[];
 }

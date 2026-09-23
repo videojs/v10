@@ -174,6 +174,11 @@ describe('Component pipeline (end-to-end)', () => {
       });
       expect(ref.props.onPressedChange!.detailedType).toBeDefined();
 
+      // The HTML element exposes `disabled` and `label` but has no `onPressedChange`, so only React documents it.
+      expect(ref.props.disabled!.frameworks).toBeUndefined();
+      expect(ref.props.label!.frameworks).toBeUndefined();
+      expect(ref.props.onPressedChange!.frameworks).toEqual(['react']);
+
       // ── State ──
       expect(ref.state.pressed).toEqual({
         type: 'boolean',
