@@ -366,7 +366,11 @@ describe('Component pipeline (end-to-end)', () => {
       expect(fill.dataAttributes['data-percentage']).toBeDefined();
       expect(fill.dataAttributes['data-fill-level']).toBeDefined();
 
-      expect(fill.platforms.html).toEqual({ tagName: 'media-gauge-fill' });
+      // A compiler directive between the element's JSDoc and its class does not detach the JSDoc.
+      expect(fill.platforms.html).toEqual({
+        tagName: 'media-gauge-fill',
+        description: 'The filled portion of the gauge.',
+      });
       expect(fill.platforms.react).toEqual({});
     });
 

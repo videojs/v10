@@ -1149,6 +1149,11 @@ function isDeclarationExported(file: SourceFile, declaration: NamedDeclaration):
   );
 }
 
+/** Compiler and linter directives sit between a declaration and its JSDoc without detaching it. */
+const DIRECTIVE_COMMENT = /\/\/\s*(?:@ts-(?:expect-error|ignore|nocheck)|(?:eslint|oxlint)-disable-next-line)\b[^\n]*/g;
+
 function isJSDocBindingGap(gap: string): boolean {
-  return /^(?:\s|export\b|default\b|declare\b|abstract\b|async\b|const\b|let\b|var\b|readonly\b|static\b)*$/.test(gap);
+  return /^(?:\s|export\b|default\b|declare\b|abstract\b|async\b|const\b|let\b|var\b|readonly\b|static\b)*$/.test(
+    gap.replace(DIRECTIVE_COMMENT, '')
+  );
 }
