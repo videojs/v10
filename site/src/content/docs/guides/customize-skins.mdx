@@ -26,7 +26,7 @@ Packaged skins expose [CSS custom properties](https://developer.mozilla.org/en-U
 <FrameworkCase frameworks={["html"]}>
 
 ```html
-<video-skin style="--media-accent-color: #ff3e00; --media-border-radius: 1rem">
+<video-skin style="--media-accent-color: #f5c518; --media-border-radius: 1rem">
   <video src="video.mp4"></video>
 </video-skin>
 ```
@@ -39,7 +39,7 @@ Packaged skins expose [CSS custom properties](https://developer.mozilla.org/en-U
 <VideoSkin
   style={
     {
-      '--media-accent-color': '#ff3e00',
+      '--media-accent-color': '#f5c518',
       '--media-border-radius': '1rem',
     } as React.CSSProperties
   }
@@ -52,7 +52,7 @@ Packaged skins expose [CSS custom properties](https://developer.mozilla.org/en-U
 
 | Property name | What it changes | Value | Example |
 | ------------- | --------------- | ----- | ------- |
-| `--media-accent-color` | Slider fills, highlighted controls and menu items, and primary actions | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#ff3e00` |
+| `--media-accent-color` | Time and volume slider fills; controls on hover, keyboard focus, or while expanded; highlighted menu items; primary dialog buttons. Most idle controls and the control bar background do not change. [Edit skin source](#style-skin-source) to restyle the bar. | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
 | `--media-accent-text-color` | Text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
 | `--media-border-color` | The hairline around the player | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `transparent` |
 | `--media-border-radius` | The player corner radius | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
@@ -69,13 +69,9 @@ The media element and poster share `--media-object-fit` and `--media-object-posi
 
 ### Verify the accent in a browser
 
-The accent is easiest to see in a filled time or volume slider and on a highlighted control or menu item. A video paused at the start may show no time-slider fill, and idle buttons need not show the accent.
-
-1. Load a playable video and seek away from the start. Check that the filled part of the time slider uses `#ff3e00`.
-2. Move the pointer over a control, such as Play or Settings, or focus it with the keyboard. If the settings menu is available, open it and highlight an item. Check the highlighted background and its contrasting text or icon.
-3. Compare the same playback position and interaction state before and after your change. If you inspect styles in browser developer tools, check the rendered fill or highlight, including its `::before` or `::after` layer when present. Reading the custom property's value alone does not confirm a visible change.
-
-`--media-accent-color` does not set the control bar background. To change that surface, [add the skin source](#style-skin-source) and edit its styles.
+1. Load a playable video and seek past the start. Check that the filled part of the time slider uses your accent color; at 0:00, there may be no fill to see.
+2. Hover over a control, focus it with the keyboard, or highlight an available settings-menu item. Compare the same playback position and interaction state before and after your change.
+3. If you inspect styles in browser developer tools, check the rendered background, including its `::before` layer when present. Reading the custom property's value alone does not confirm a visible change.
 
 ### Set the color scheme
 
