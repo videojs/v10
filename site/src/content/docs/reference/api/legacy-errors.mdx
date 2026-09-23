@@ -1,0 +1,15 @@
+---
+title: Video.js 8 Error Codes
+description: Codes thrown when a Video.js 8 API is used with the Video.js 10 package
+---
+
+import LegacyErrorIndex from '@/components/docs/api-reference/LegacyErrorIndex.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+The `video.js` package throws these `VJS8_LEGACY_*` errors when code calls a Video.js 8 API that does not exist in Video.js 10. Each code identifies the old API and its Video.js 10 equivalent.
+
+Playback failures use the <DocsLink slug="reference/api/feature-error">error feature</DocsLink> instead. See <DocsLink slug="guides/playback-errors">Handle playback errors</DocsLink> for application handling.
+
+## Codes
+
+<LegacyErrorIndex />

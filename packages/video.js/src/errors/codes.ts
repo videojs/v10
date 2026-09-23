@@ -1,8 +1,8 @@
 /**
  * Every Video.js 8 pattern the `video.js` package rejects with a coded error, in the order the docs list them.
  *
- * Each code is a string that exists nowhere else, so a search for it can only land on its `videojs.org/errors/*` page.
- * Adding a code here without a matching `LEGACY_ERRORS` entry is a type error, which keeps the registry complete.
+ * Each code is a string that exists nowhere else, so a search for it can only land on its API reference page. Adding a
+ * code here without a matching `LEGACY_ERRORS` entry is a type error, which keeps the registry complete.
  *
  * This module carries no message text, so the production stubs can import it without shipping the registry.
  */
@@ -21,16 +21,16 @@ export const LEGACY_ERROR_CODES = [
 
 export type LegacyErrorCode = (typeof LEGACY_ERROR_CODES)[number];
 
-export const LEGACY_ERROR_DOCS_URL = 'https://videojs.org/errors/';
+export const LEGACY_ERROR_DOCS_URL = 'https://videojs.org/docs/reference/api/';
 
 export function isLegacyErrorCode(value: unknown): value is LegacyErrorCode {
   return (LEGACY_ERROR_CODES as readonly unknown[]).includes(value);
 }
 
-/** The docs slug for a code: `VJS8_LEGACY_INIT` → `legacy-init`. */
+/** The docs slug for a code: `VJS8_LEGACY_INIT` → `v8-legacy-init`. */
 export function getLegacyErrorSlug(code: LegacyErrorCode): string {
   return code
-    .replace(/^VJS8_/, '')
+    .replace(/^VJS8_/, 'V8_')
     .toLowerCase()
     .replaceAll('_', '-');
 }

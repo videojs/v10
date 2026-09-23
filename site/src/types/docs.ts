@@ -26,8 +26,8 @@ const DOC_TYPE_FOLDERS = new Map<string, DocType>([
 
 /**
  * Resolve the document type from a docs collection id such as `guides/autoplay`. The folder is the single source of
- * truth: guides hold every hand-written page, how-to or explanation alike, and reference holds the builder-backed
- * pages. There is no frontmatter override.
+ * truth: guides hold how-to and explanation pages, and reference holds exact API and error-code descriptions. There is
+ * no frontmatter override.
  */
 export function getDocTypeFromId(id: string): DocType {
   const folder = id.split('/')[0] ?? '';

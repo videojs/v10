@@ -409,6 +409,18 @@ export const sidebar: Sidebar = [
           { slug: 'reference/api/aria-key-shortcuts-controller', frameworks: ['html'] },
         ],
       },
+      {
+        sidebarLabel: 'Legacy errors',
+        llmsDescription: 'Reference for codes thrown when Video.js 8 APIs are used with the Video.js 10 package.',
+        contents: [
+          { slug: 'reference/api/legacy-errors', sidebarLabel: 'Error codes' },
+          { slug: 'reference/api/v8-legacy-init', sidebarLabel: 'VJS8_LEGACY_INIT' },
+          { slug: 'reference/api/v8-legacy-plugin', sidebarLabel: 'VJS8_LEGACY_PLUGIN' },
+          { slug: 'reference/api/v8-legacy-component', sidebarLabel: 'VJS8_LEGACY_COMPONENT' },
+          { slug: 'reference/api/v8-legacy-get-player', sidebarLabel: 'VJS8_LEGACY_GET_PLAYER' },
+          { slug: 'reference/api/v8-legacy-options', sidebarLabel: 'VJS8_LEGACY_OPTIONS' },
+        ],
+      },
     ],
   },
   {

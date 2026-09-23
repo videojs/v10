@@ -67,7 +67,7 @@ export const config: Config = {
   // Plain HTML requests never reach this function, so their responses carry no `Vary: Accept`. Adding it site-wide
   // would make browsers miss prefetched pages, whose `Accept` differs from the navigation's; Netlify's cache already
   // keeps the two representations apart because it routes on this header match before its cache lookup.
-  path: ['/blog/*', '/changelog/*', '/docs/*', '/errors/*', '/html5-video-support', '/about-this-player'],
+  path: ['/blog/*', '/changelog/*', '/docs/*', '/html5-video-support', '/about-this-player'],
   // Netlify tests this regex against the header value without flags, so it spells out both cases. It only narrows
   // which requests reach the function; prefersMarkdown weighs the q-values.
   header: {

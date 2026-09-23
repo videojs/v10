@@ -31,13 +31,13 @@ First, read and understand [Diátaxis](https://diataxis.fr/). We organize docume
 
 1. **Concept pages** (`src/content/docs/guides/`): Explain a reusable mental model — design rationale, trade-offs, and context that helps readers with several tasks. Diátaxis calls this mode "explanation." If the background matters to only one outcome, keep it in that how-to instead.
 2. **How-to guides** (`src/content/docs/guides/`): Help the reader achieve a specific outcome — one page per thing they want to do (Autoplay, Play live streams, Self-host the player). Address a real goal, assume competence, and include only the explanation needed to complete or adapt the task.
-3. **Reference pages** (`src/content/docs/reference/components/` and `src/content/docs/reference/api/`): Describe the exact machinery — components, features, hooks, utilities, options, state, and behavior. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="writing-style/write-references">Write reference pages</DocsLink> for details.
+3. **Reference pages** (`src/content/docs/reference/components/` and `src/content/docs/reference/api/`): Describe exact machinery — components, features, hooks, utilities, options, state, and error codes. Most API surfaces use `write-api-reference` and the api-docs-builder; legacy error-code pages render the `video.js/errors` registry. See <DocsLink slug="writing-style/write-references">Write reference pages</DocsLink> for details.
 
 <Aside type="note">
 Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now.
 </Aside>
 
-Concept pages and how-to guides share one folder and one URL prefix, `guides/`. The difference is the shape of the page, not its address. Reference has its own folder because the api-docs-builder owns its shape. The site derives that split from the path and shows it in the eyebrow above the title (for example "Guide › Playback").
+Concept pages and how-to guides share one folder and one URL prefix, `guides/`. The difference is the shape of the page, not its address. Reference has its own folder for exact API and error-code descriptions. The site derives that split from the path and shows it in the eyebrow above the title (for example "Guide › Playback").
 
 A unit test, `pnpm -F site test diataxis`, guards the line between the two folders: no title starts with "How to", and no reference page carries how-to sections or a `<CustomUiNote />`. Whether a guide reads as a concept or a how-to is a judgement you make while writing and reviewing, with the compass below. The test helps by printing, as warnings only, any heading on a Concepts-section page that opens with a task verb such as "Add" or "Configure".
 

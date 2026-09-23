@@ -3,9 +3,9 @@ import { getLegacyErrorSlug, getLegacyErrorUrl, LEGACY_ERROR_CODES, type LegacyE
 /**
  * What each `VJS8_LEGACY_*` code means and what to do instead.
  *
- * The registry is the single source for the message the stubs throw in dev builds and for the generated
- * `videojs.org/errors/*` pages, so the two never drift. It lives only in the `video.js` package: the `@videojs/*`
- * packages stay free of legacy detection, and production builds of this package import only `./codes`.
+ * The registry is the single source for the message the stubs throw in dev builds and for the generated API reference
+ * pages, so the two never drift. It lives only in the `video.js` package: the `@videojs/*` packages stay free of legacy
+ * detection, and production builds of this package import only `./codes`.
  */
 export interface LegacyErrorEntry {
   /** One sentence naming the v8 API and why it no longer exists. */
