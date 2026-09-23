@@ -11,7 +11,13 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 ## Installation
 
+<FrameworkCase frameworks={["react"]}>
 The examples use HlsJsVideo, so install hls.js with the framework façade:
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The examples use `<hlsjs-video>`, so install hls.js with the framework façade:
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```bash
@@ -27,7 +33,13 @@ pnpm add @videojs/html @videojs/hlsjs-video
 
 ## Recommended approach
 
+<FrameworkCase frameworks={["react"]}>
 Use the live feature bundle with a streaming media element, and give users a `LiveButton`: it shows whether playback is at the live edge and seeks back to it when activated.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use the live feature bundle with a streaming media element, and give users a `<media-live-button>`: it shows whether playback is at the live edge and seeks back to it when activated.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -67,7 +79,13 @@ export default function App() {
 
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 The examples use <DocsLink slug="reference/components/hlsjs-video">`HlsJsVideo`</DocsLink>, but any streaming media component works here, including the smaller default <DocsLink slug="reference/components/hls-video">`HlsVideo`</DocsLink>. Start with the default and switch engines only if your stream needs it.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The examples use <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink>, but any streaming media component works here, including the smaller default <DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink>. Start with the default and switch engines only if your stream needs it.
+</FrameworkCase>
 
 The `liveVideoFeatures` bundle mirrors <DocsLink slug="guides/features">`videoFeatures`</DocsLink> but adds the live feature and drops playback rate (not meaningful for live), quality selection, and audio-track selection. The live presets also ship skins without a time slider, duration display, or current-time display.
 
@@ -105,7 +123,13 @@ Two features describe liveness:
 
 The <DocsLink slug="reference/api/feature-time">time feature</DocsLink> adjusts for live playback: `duration` reports the live edge (the end of the seekable range) and keeps growing as the stream continues.
 
+<FrameworkCase frameworks={["react"]}>
 LiveButton reads this state: it renders as an active "go to live" control while playback is behind the edge, seeks to the edge on activation, and goes inactive at the edge. Until the media reports a `seekable` range — before metadata loads, or for non-live media — the button is disabled (`data-disabled`) because there is no edge to seek to. Custom live UIs should treat "behind the edge" and "actionable" as separate states.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-live-button>` reads this state: it renders as an active "go to live" control while playback is behind the edge, seeks to the edge on activation, and goes inactive at the edge. Until the media reports a `seekable` range — before metadata loads, or for non-live media — the button is disabled (`data-disabled`) because there is no edge to seek to. Custom live UIs should treat "behind the edge" and "actionable" as separate states.
+</FrameworkCase>
 
 ## Availability and constraints
 
@@ -118,7 +142,13 @@ LiveButton reads this state: it renders as an active "go to live" control while 
 
 ### DVR: let users scrub back
 
+<FrameworkCase frameworks={["react"]}>
 For streams with a DVR window, give users a <DocsLink slug="reference/components/time-slider">TimeSlider</DocsLink>. The live preset skins don't include one, so add it to your custom UI or <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the live skin source to your project</DocsLink>. The slider tracks the sliding window automatically because `duration` follows the live edge.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+For streams with a DVR window, give users a <DocsLink slug="reference/components/time-slider">`<media-time-slider>`</DocsLink>. The live preset skins don't include one, so add it to your custom UI or <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the live skin source to your project</DocsLink>. The slider tracks the sliding window automatically because `duration` follows the live edge.
+</FrameworkCase>
 
 ### Switch UI by stream type
 
@@ -165,11 +195,23 @@ export default function App() {
 
 ### The live badge never activates
 
+<FrameworkCase frameworks={["react"]}>
 `streamType` isn't `'live'`. Confirm the player's features include `streamTypeFeature` (`liveVideoFeatures` does not include it, so `streamType` reads as `undefined`), the source is a live manifest, and it plays through a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`streamType` isn't `'live'`. Confirm the player's features include `streamTypeFeature` (`liveVideoFeatures` does not include it, so `streamType` reads as `undefined`), the source is a live manifest, and it plays through a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink>.
+</FrameworkCase>
 
 ### Playback keeps falling behind the edge
 
+<FrameworkCase frameworks={["react"]}>
 Network throughput can't sustain the stream, or the tab was backgrounded. LiveButton returns users to the edge; for lower drift, review the stream's latency configuration on the encoder side.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Network throughput can't sustain the stream, or the tab was backgrounded. `<media-live-button>` returns users to the edge; for lower drift, review the stream's latency configuration on the encoder side.
+</FrameworkCase>
 
 ### The time slider behaves oddly on a live stream
 

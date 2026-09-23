@@ -11,7 +11,13 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 ## Recommended approach
 
+<FrameworkCase frameworks={["react"]}>
 Render an <DocsLink slug="reference/components/error-dialog">ErrorDialog</DocsLink> inside the player container. It reads error state, presents the failure, and dismisses cleanly. The prebuilt skins include one.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Render a <DocsLink slug="reference/components/error-dialog">`<media-error-dialog>`</DocsLink> inside the player container. It reads error state, presents the failure, and dismisses cleanly. The prebuilt skins include one.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -90,7 +96,13 @@ The dialog owns presentation, not recovery. Decide the next step in your applica
 
 ### Offer an application-specific next step
 
+<FrameworkCase frameworks={["react"]}>
 Use the error code and your product context to choose the action. A live event can link to its status page, an authenticated app can refresh an expired playback URL, and a playlist can offer the next item. Keep that action outside `ErrorDialog`; the dialog can close after your application has handled it.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use the error code and your product context to choose the action. A live event can link to its status page, an authenticated app can refresh an expired playback URL, and a playlist can offer the next item. Keep that action outside `<media-error-dialog>`; the dialog can close after your application has handled it.
+</FrameworkCase>
 
 ### Report errors to monitoring
 

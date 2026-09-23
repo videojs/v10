@@ -109,7 +109,13 @@ Packaged video skins also let you replace the poster through the `renderPoster` 
 
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 See <DocsLink slug="reference/components/poster">Poster</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+See <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink>.
+</FrameworkCase>
 
 Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. To make those changes, [add the source for the closest skin to your project](#style-skin-source) and edit it directly.
 
@@ -145,13 +151,25 @@ The skin directory contains `skin.html`, `skin.ts`, and `skin.css`. Keep importi
 
 Start with the file that owns the change you want:
 
+<FrameworkCase frameworks={["react"]}>
 | Goal | Where to start |
 | ---- | -------------- |
-| Add, remove, or rearrange controls | `skin.tsx` in React or `skin.html` in HTML |
+| Add, remove, or rearrange controls | `skin.tsx` |
 | Change default colors, surfaces, shadows, sizes, or motion across skins | `components/videojs/styles/themes/theme.css` |
 | Change only the Minimal theme or one media preset | `components/videojs/styles/themes/minimal.css`, `components/videojs/styles/video/theme.css`, or `components/videojs/styles/audio/theme.css` |
 | Change one control's appearance | That control's classes or stylesheet |
 | Change one control's interaction | That control's module |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+| Goal | Where to start |
+| ---- | -------------- |
+| Add, remove, or rearrange controls | `skin.html` |
+| Change default colors, surfaces, shadows, sizes, or motion across skins | `components/videojs/styles/themes/theme.css` |
+| Change only the Minimal theme or one media preset | `components/videojs/styles/themes/minimal.css`, `components/videojs/styles/video/theme.css`, or `components/videojs/styles/audio/theme.css` |
+| Change one control's appearance | That control's classes or stylesheet |
+| Change one control's interaction | That control's module |
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 The files for the control bar, gestures, keyboard shortcuts, settings menu, and status indicators are composed from `skin.tsx`. The UI components they use are installed as source too, so you can open and change each button or slider.

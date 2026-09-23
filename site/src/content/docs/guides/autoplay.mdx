@@ -67,20 +67,31 @@ Calling `play()` from player state returns the native promise from the media ele
 
 ## Availability and constraints
 
+<FrameworkCase frameworks={["react"]}>
 - Autoplay can fail. Browsers decide per page load based on audio state, whether the user has interacted with your site before, browser settings, and platform policy.
 - Muted autoplay is broadly allowed. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
 - Without inline playback, iPhone Safari opens the video in fullscreen when playback starts.
 - Low-power mode and data-saver settings can block even muted autoplay. This is why the recommended approach keeps a manual play control.
 - Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/api/feature-volume">volume feature</DocsLink> exposes this as `volumeAvailability: 'available' | 'unavailable' | 'unsupported'`; iOS Safari reports `'unsupported'`, and `'unavailable'` means the feature hasn't attached to a media element yet.
 - This guide applies to media components that render a video element (Video, HlsJsVideo, DashVideo, MuxVideo, and the like). Embed components (YouTube, Vimeo, TikTok, Twitch) forward autoplay to the third-party player, which applies its own autoplay rules; muted and inline behavior varies by provider.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- Autoplay can fail. Browsers decide per page load based on audio state, whether the user has interacted with your site before, browser settings, and platform policy.
+- Muted autoplay is broadly allowed. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
+- Without inline playback, iPhone Safari opens the video in fullscreen when playback starts.
+- Low-power mode and data-saver settings can block even muted autoplay. This is why the recommended approach keeps a manual play control.
+- Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/api/feature-volume">volume feature</DocsLink> exposes this as `volumeAvailability: 'available' | 'unavailable' | 'unsupported'`; iOS Safari reports `'unsupported'`, and `'unavailable'` means the feature hasn't attached to a media element yet.
+- This guide applies to media components that render a video element (`<video>`, `<hlsjs-video>`, `<dash-video>`, `<mux-video>`, and the like). Embed components (YouTube, Vimeo, TikTok, Twitch) forward autoplay to the third-party player, which applies its own autoplay rules; muted and inline behavior varies by provider.
+</FrameworkCase>
 
 ## Common variations
 
 ### Background video
 
-Background video autoplays, loops, stays muted, and omits interactive controls. Use `HlsBackgroundVideo` instead of configuring these behaviors yourself: it applies them by default and streams an HLS source, picking one rendition that fits the screen for the whole session.
-
 <FrameworkCase frameworks={["react"]}>
+
+Background video autoplays, loops, stays muted, and omits interactive controls. Use `HlsBackgroundVideo` instead of configuring these behaviors yourself: it applies them by default and streams an HLS source, picking one rendition that fits the screen for the whole session.
 
 Install the SPF adapter with the React façade:
 
@@ -99,6 +110,8 @@ export default function Hero() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
+Background video autoplays, loops, stays muted, and omits interactive controls. Use `<hls-background-video>` instead of configuring these behaviors yourself: it applies them by default and streams an HLS source, picking one rendition that fits the screen for the whole session.
+
 Install the SPF adapter with the HTML façade:
 
 ```bash
@@ -114,7 +127,13 @@ pnpm add @videojs/html @videojs/spf
 
 </FrameworkCase>
 
-If you have a progressive MP4 or WebM file instead of an HLS stream, `BackgroundVideo` is the same component without the streaming engine. See <DocsLink slug="reference/components/background-video">BackgroundVideo</DocsLink> for opt-out attributes and sizing.
+<FrameworkCase frameworks={["react"]}>
+If you have a progressive MP4 or WebM file instead of an HLS stream, `BackgroundVideo` is the same component without the streaming engine. See <DocsLink slug="reference/components/background-video">BackgroundVideo</DocsLink> for opt-out props and sizing.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+If you have a progressive MP4 or WebM file instead of an HLS stream, `<background-video>` is the same component without the streaming engine. See <DocsLink slug="reference/components/background-video">`<background-video>`</DocsLink> for opt-out attributes and sizing.
+</FrameworkCase>
 
 ### Autoplay with sound
 

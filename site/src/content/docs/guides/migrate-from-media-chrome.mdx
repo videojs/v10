@@ -8,7 +8,13 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
+<FrameworkCase frameworks={["react"]}>
+Video.js v10's React components mirror Media Chrome's elements — `media-play-button` becomes `PlayButton` — so most of the work is **renaming and reshaping**, not rewriting.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 Video.js v10's HTML player uses the same `media-*` custom-element convention as Media Chrome, so most of the work is **renaming and reshaping**, not rewriting.
+</FrameworkCase>
 
 <Aside type="note">
 Scoped to apps that compose their own player from Media Chrome elements. If you use `<mux-player>`, follow the Mux Player migration guide instead.
@@ -32,7 +38,13 @@ npm install @videojs/react
 
 ## Map the controller
 
+<FrameworkCase frameworks={["react"]}>
+Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controller>`. Video.js splits that into two components. The player owns state and draws nothing. The container is the box everything lives in, with the media as a plain child.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controller>`. Video.js splits that into two elements. The player owns state and draws nothing. The `<media-container>` is the box everything lives in, with the media as a plain child.
+</FrameworkCase>
 
 ```html
 <!-- Media Chrome -->
@@ -140,6 +152,29 @@ Read player state with <DocsLink slug="reference/api/use-player">`usePlayer`</Do
 
 ## Map controller attributes
 
+<FrameworkCase frameworks={["react"]}>
+Media Chrome configures behavior through `<media-controller>` attributes. Video.js v10 has no single controller component, so these settle into three places:
+
+- **Player features** — playback behavior that comes from the player's feature set. A preset picks one for you; `createPlayer` lets you name your own.
+- **`Container` and `Controls`** — layout, focus, and autohide.
+- **Dedicated components** — `Hotkey`, `Gesture`, and friends, rendered inside the player.
+
+| Media Chrome attribute | Video.js v10 | How |
+|---|---|---|
+| `audio` | the audio preset | Choose an audio player and audio skin rather than toggling at runtime. |
+| `autohide` | `Controls` (built in) | Controls auto-hide after inactivity automatically. `autohide="-1"` becomes `visibility="always"` on `Controls.Root`; the delay is currently fixed, see [Known gaps](#known-gaps). |
+| `fullscreenelement` | `Container` | Fullscreen targets the container element. |
+| `gesturesdisabled` | `Gesture disabled`, or omit | Disable per gesture component, or leave the gestures out. |
+| `nohotkeys` | `Hotkey disabled`, or omit | Disable per hotkey component, or leave them out. |
+| `hotkeys="noarrowleft …"` | individual `Hotkey` | Each shortcut is its own component, so remove the ones you don't want. |
+| `keyboardforwardseekoffset`, `keyboardbackwardseekoffset` | `value` on `Hotkey` | Set the signed seek amount per component. |
+| `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
+| `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
+| `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
+| `lang` | i18n translator | Localization is configured through the <DocsLink slug="guides/internationalization">translator and locale registry</DocsLink>. |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 Media Chrome configures behavior through `<media-controller>` attributes. Video.js v10 has no single controller element, so these settle into three places:
 
 - **Player features** — playback behavior that comes from the player's feature set. A preset picks one for you; `createPlayer` lets you name your own.
@@ -159,9 +194,26 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
 | `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
 | `lang` | i18n translator | Localization is configured through the <DocsLink slug="guides/internationalization">translator and locale registry</DocsLink>. |
+</FrameworkCase>
 
 ### Hotkeys
 
+<FrameworkCase frameworks={["react"]}>
+Media Chrome toggles keyboard shortcuts with `nohotkeys` and `hotkeys`. Video.js declares each shortcut as its own component, so you opt in to exactly the keys you want and set seek offsets inline:
+
+```tsx
+import { Hotkey } from '@videojs/react';
+
+<Hotkey keys="Space" action="togglePaused" />
+<Hotkey keys="m" action="toggleMuted" />
+<Hotkey keys="ArrowRight" action="seekStep" value={5} />
+<Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+```
+
+To drop a shortcut, remove its component or pass `disabled`. There's no global "all hotkeys off" switch; omit the components you don't need.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 Media Chrome toggles keyboard shortcuts with `nohotkeys` and `hotkeys`. Video.js declares each shortcut as its own element, so you opt in to exactly the keys you want and set seek offsets inline:
 
 ```html
@@ -172,9 +224,25 @@ Media Chrome toggles keyboard shortcuts with `nohotkeys` and `hotkeys`. Video.js
 ```
 
 To drop a shortcut, remove its element or add `disabled`. There's no global "all hotkeys off" switch; omit the elements you don't need.
+</FrameworkCase>
 
 ### Gestures
 
+<FrameworkCase frameworks={["react"]}>
+`gesturesdisabled` becomes per-component `Gesture` controls. Tap and double-tap behavior — click to toggle play, double-tap to seek or go fullscreen — is declared explicitly:
+
+```tsx
+import { Gesture } from '@videojs/react';
+
+<Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+<Gesture type="doubletap" action="seekStep" value={-10} region="left" />
+<Gesture type="doubletap" action="seekStep" value={10} region="right" />
+```
+
+Remove a component or pass `disabled` to turn a gesture off.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 `gesturesdisabled` becomes per-element `<media-gesture>` controls. Tap and double-tap behavior — click to toggle play, double-tap to seek or go fullscreen — is declared explicitly:
 
 ```html
@@ -184,9 +252,36 @@ To drop a shortcut, remove its element or add `disabled`. There's no global "all
 ```
 
 Remove an element or set `disabled` to turn a gesture off.
+</FrameworkCase>
 
 ## Map the elements
 
+<FrameworkCase frameworks={["react"]}>
+Most names carry over as PascalCase components without the `media-` prefix. These are the renames that bite:
+
+| Media Chrome | Video.js v10 | Note |
+|---|---|---|
+| `media-controller` | a player plus `Container` | one element becomes two: state and layout |
+| `media-control-bar` | `Controls.Root`, `Controls.Group` | grouping |
+| `media-time-range` | `TimeSlider` | "range" becomes "slider" |
+| `media-volume-range` | `VolumeSlider` | "range" becomes "slider" |
+| `media-time-display`, `media-duration-display` | `Time.Value` | one component, set via `type` |
+| `media-loading-indicator` | `BufferingIndicator` | rename |
+| `media-poster-image` | `Poster` | rename, and the image source moves — see below |
+| `media-seek-backward-button`, `media-seek-forward-button` | `SeekButton` | one component, direction via signed `seconds` |
+| `media-rendition-menu` | `QualityRadioGroup` | inside `Menu` |
+| `media-captions-menu` | `CaptionsRadioGroup` | inside `Menu` |
+| `media-playback-rate-menu` | `PlaybackRateRadioGroup` | inside `Menu` |
+| `media-audio-track-menu` | `AudioTrackRadioGroup` | inside `Menu` |
+
+Unchanged names, in PascalCase: `PlayButton`, `MuteButton`, `FullscreenButton`, `PiPButton`, `AirPlayButton`, `CastButton`, `CaptionsButton`, `PlaybackRateButton`, `Tooltip`, and `Thumbnail`.
+
+<Aside type="caution">
+Matching names do not mean matching appearance. Media Chrome buttons include default icons and styles. Individual Video.js buttons provide behavior, state, and an accessible name, but no visible content or finished styling. Add text or an SVG, plus your own CSS. Without visible content, a button can work while showing nothing. Sliders also need their child parts and CSS. Use a ready-made skin when you want finished controls.
+</Aside>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 Most names match. These are the renames that bite:
 
 | Media Chrome | Video.js v10 | Note |
@@ -211,6 +306,7 @@ Matching tag names do not mean matching appearance. Media Chrome buttons include
 </Aside>
 
 Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="reference/components/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="reference/components/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
@@ -231,7 +327,7 @@ React buttons do not include visible content either. Use a button's `render` pro
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="guides/ui-components">UI components</DocsLink> concept for the full set.
+Compound parts are namespaced under their component, such as `TimeSlider.Track`. See the <DocsLink slug="guides/ui-components">UI components</DocsLink> concept for the full set.
 
 `Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster.Root` owns its state and `Poster.Image` accepts image attributes such as `alt`, `srcSet`, and `sizes`:
 
@@ -340,7 +436,7 @@ Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; the
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated; see [Workarounds](#workarounds).
 
-- No configurable `autohide` delay and no `autohideovercontrols` ([#1728](https://github.com/videojs/v10/issues/1728)). Disabling autohide (`autohide="-1"`) is covered by `visibility="always"` on `media-controls`; see [Workarounds](#workarounds).
+- No configurable `autohide` delay and no `autohideovercontrols` ([#1728](https://github.com/videojs/v10/issues/1728)). Disabling autohide (`autohide="-1"`) is covered by `visibility="always"` on the controls component; see [Workarounds](#workarounds).
 - No `defaultduration` placeholder before the media loads ([#1729](https://github.com/videojs/v10/issues/1729))
 - Volume and muted preferences are not persisted across sessions, so Media Chrome's `novolumepref` and `nomutedpref` opt-outs have nothing to opt out of ([#944](https://github.com/videojs/v10/issues/944)). Video.js can choose an initial subtitle track from the locale, but it does not yet remember the viewer's later language choice ([#1786](https://github.com/videojs/v10/issues/1786)).
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
@@ -348,13 +444,25 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 - Chapters render and each time-slider segment reflects `data-active`, but there's no player-level active chapter value, `chapterchange` event, or menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
 - Cue points are not supported ([#1442](https://github.com/videojs/v10/issues/1442))
 
+<FrameworkCase frameworks={["react"]}>
+Chapters themselves do work. Add a default `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover, via `TimeSlider.Chapters` and `TimeSlider.ChapterTitle`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 Chapters themselves do work. Add a default `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover, via `media-time-slider-chapters` and `media-time-slider-chapter-title`.
+</FrameworkCase>
 
 ## Workarounds
 
 ### Disable autohide (`autohide="-1"`)
 
-Set `visibility="always"` on `media-controls` (or `Controls.Root` in React) and the controls stay visible regardless of activity. Packaged skins don't expose that attribute; to keep a preset skin's look, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the skin source to your project</DocsLink> and set it on the skin's controls element rather than overriding private selectors.
+<FrameworkCase frameworks={["react"]}>
+Set `visibility="always"` on `Controls.Root` and the controls stay visible regardless of activity. Packaged skins don't expose that prop; to keep a preset skin's look, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the skin source to your project</DocsLink> and set it on the skin's controls component rather than overriding private selectors.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Set `visibility="always"` on `media-controls` and the controls stay visible regardless of activity. Packaged skins don't expose that attribute; to keep a preset skin's look, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the skin source to your project</DocsLink> and set it on the skin's controls element rather than overriding private selectors.
+</FrameworkCase>
 
 ### Breakpoints
 

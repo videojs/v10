@@ -20,7 +20,13 @@ Add a decorative video behind your page content. Start with an MP4 or WebM file,
 
 ## Recommended approach
 
+<FrameworkCase frameworks={["react"]}>
 Use <DocsLink slug="reference/components/background-video">BackgroundVideo</DocsLink> with an MP4 or WebM URL. Put the video and poster inside a wrapper with `aria-hidden="true"` because both are decorative. Keep the heading, links, and other page content outside that wrapper.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use <DocsLink slug="reference/components/background-video">`<background-video>`</DocsLink> with an MP4 or WebM URL. Put the video and poster inside a wrapper with `aria-hidden="true"` because both are decorative. Keep the heading, links, and other page content outside that wrapper.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -47,7 +53,13 @@ Use <DocsLink slug="reference/components/background-video">BackgroundVideo</Docs
 
 ## How it works
 
+<FrameworkCase frameworks={["react"]}>
 BackgroundVideo renders the browser's `<video>` element and starts it muted, looped, autoplaying, and inline. The example puts that video and an empty-alt poster in the `.hero-visual` wrapper. The wrapper is hidden from assistive technology and ignores pointer input, so it does not act like a media player.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<background-video>` renders the browser's `<video>` element and starts it muted, looped, autoplaying, and inline. The example puts that video and an empty-alt poster in the `.hero-visual` wrapper. The wrapper is hidden from assistive technology and ignores pointer input, so it does not act like a media player.
+</FrameworkCase>
 
 The page defines the hero's size. The video fills that space with `--media-object-fit: cover`, while the poster remains visible until the video paints a frame. The reduced-motion rule hides the video and leaves the poster in place.
 
@@ -55,24 +67,49 @@ Set the size, position, and transforms on the `.hero-visual` wrapper so the post
 
 ## Availability and constraints
 
+<FrameworkCase frameworks={["react"]}>
 - Use a source the browser can play directly, such as MP4 or WebM.
 - Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
 - BackgroundVideo does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
 - Video.js does not apply a reduced-motion policy for you. The example stops the decoration with `prefers-reduced-motion`.
 - If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- Use a source the browser can play directly, such as MP4 or WebM.
+- Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
+- `<background-video>` does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
+- Video.js does not apply a reduced-motion policy for you. The example stops the decoration with `prefers-reduced-motion`.
+- If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
+</FrameworkCase>
 
 ## Common variations
 
 Choose a variation based on the source you already have:
 
+<FrameworkCase frameworks={["react"]}>
 | Need | Use |
 | --- | --- |
 | Cross-browser HLS with a small background-only player | <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink> |
 | The same background-only player for a Mux HLS URL | <DocsLink slug="reference/components/mux-background-video">MuxBackgroundVideo</DocsLink> |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+| Need | Use |
+| --- | --- |
+| Cross-browser HLS with a small background-only player | <DocsLink slug="reference/components/hls-background-video">`<hls-background-video>`</DocsLink> |
+| The same background-only player for a Mux HLS URL | <DocsLink slug="reference/components/mux-background-video">`<mux-background-video>`</DocsLink> |
+</FrameworkCase>
 
 ### Play an HLS video
 
+<FrameworkCase frameworks={["react"]}>
 HlsBackgroundVideo plays an HLS video without adding controls, audio, or captions. Pass a complete HLS URL through `src`:
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<hls-background-video>` plays an HLS video without adding controls, audio, or captions. Pass a complete HLS URL through `src`:
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```bash
@@ -113,9 +150,17 @@ Your HLS stream must be unencrypted and use fragmented MP4 video segments, also 
 
 ### Play a Mux HLS URL
 
+<FrameworkCase frameworks={["react"]}>
 MuxBackgroundVideo is a Mux-named alias for HlsBackgroundVideo. Pass a complete Mux HLS URL, not a bare playback ID or `source` object:
 
 It uses the same `@videojs/spf` installation shown for HlsBackgroundVideo above.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<mux-background-video>` is a Mux-named alias for `<hls-background-video>`. Pass a complete Mux HLS URL, not a bare playback ID or `source` object:
+
+It uses the same `@videojs/spf` installation shown for `<hls-background-video>` above.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -149,7 +194,13 @@ This component does not create a Mux poster, preview thumbnails, or analytics se
 
 ### An HLS URL works in Safari but not another browser
 
+<FrameworkCase frameworks={["react"]}>
 BackgroundVideo hands its `src` to the browser's `<video>` element. Use HlsBackgroundVideo for a supported fMP4 HLS source, or MuxBackgroundVideo for a Mux HLS URL.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<background-video>` hands its `src` to the browser's `<video>` element. Use `<hls-background-video>` for a supported fMP4 HLS source, or `<mux-background-video>` for a Mux HLS URL.
+</FrameworkCase>
 
 ### The video does not fill or follow transforms
 

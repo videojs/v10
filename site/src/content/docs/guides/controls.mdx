@@ -24,7 +24,13 @@ import basicUsageHtmlTs from '@/components/docs/demos/controls/html/css/BasicUsa
 
 ## Recommended approach
 
+<FrameworkCase frameworks={["react"]}>
 Wrap your control UI in <DocsLink slug="reference/components/controls">Controls</DocsLink>. It reads controls visibility from player state, so the whole control bar shows and hides as one unit.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Wrap your control UI in <DocsLink slug="reference/components/controls">`<media-controls>`</DocsLink>. It reads controls visibility from player state, so the whole control bar shows and hides as one unit.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -72,7 +78,13 @@ The feature needs the player container for activity tracking; without a containe
 
 ### Always-visible controls
 
+<FrameworkCase frameworks={["react"]}>
 Set `visibility="always"` on <DocsLink slug="reference/components/controls">Controls</DocsLink>. The controls stay visible and report the user as active while the feature keeps tracking activity for anything else that needs it. The packaged audio skins use this mode.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Set `visibility="always"` on <DocsLink slug="reference/components/controls">`<media-controls>`</DocsLink>. The controls stay visible and report the user as active while the feature keeps tracking activity for anything else that needs it. The packaged audio skins use this mode.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

@@ -202,11 +202,21 @@ Port these across untouched. They're native attributes and always were.
 
 ### Player metadata
 
+<FrameworkCase frameworks={["react"]}>
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `poster` | `poster` on `<video-player>` or `VideoPlayer` |
+| `poster` | `poster` on `VideoPlayer` |
 | `posterImage: false` | leave the player's poster unset |
-| the title in `TitleBar` | `content-title` on `<video-player>` or `title` on `VideoPlayer`, rendered with the Title component |
+| the title in `TitleBar` | `title` on `VideoPlayer`, rendered with the Title component |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+| Video.js 8 | Video.js v10 |
+|---|---|
+| `poster` | `poster` on `<video-player>` |
+| `posterImage: false` | leave the player's poster unset |
+| the title in `TitleBar` | `content-title` on `<video-player>`, rendered with the `<media-title>` element |
+</FrameworkCase>
 
 The poster belongs to player state rather than the media, which lets the skin control how it appears:
 
@@ -230,7 +240,13 @@ The poster belongs to player state rather than the media, which lets the skin co
 ```
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">Title</DocsLink> component as a child of the skin, or place it in the skin layout you added to your project or in a custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/components/title">`<media-title>`</DocsLink> element as a child of the skin, or place it in the skin layout you added to your project or in a custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink> reference.
+</FrameworkCase>
 
 ### Your CSS
 
@@ -263,7 +279,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 | `spatialNavigation` | no equivalent; see [Known gaps](#known-gaps) |
 | `inactivityTimeout` | delay not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)); `inactivityTimeout: 0` maps to `visibility="always"` on the controls component |
 | `errorDisplay`, `notSupportedMessage` | the skins include an error dialog |
-| `ModalDialog` | compose a <DocsLink slug="reference/components/dialog">Dialog</DocsLink>; your application controls media playback when it opens and closes |
+| `ModalDialog` | compose a <DocsLink slug="reference/components/dialog">dialog</DocsLink>; your application controls media playback when it opens and closes |
 
 ## Techs become media components
 
@@ -537,6 +553,25 @@ v8 used accessor methods for everything: `player.currentTime()` to read, `player
 
 You can also write to the media element directly. That is safe because player state derives from the native media events: set `media.currentTime` and the time slider follows. There is no wrapper to fall out of sync.
 
+<FrameworkCase frameworks={["react"]}>
+| Video.js 8 | Video.js v10 |
+|---|---|
+| `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
+| `player.currentTime()` / `player.currentTime(10)` | `currentTime` in player state, the player's `seek(10)`, or `media.currentTime` |
+| `player.duration()` | `duration` in player state, or `media.duration` |
+| `player.volume()`, `player.muted()` | the player's `setVolume`, `toggleMuted`, or `media.volume`, `media.muted` |
+| `player.playbackRate()` | the player's `setPlaybackRate`, or `media.playbackRate` |
+| `player.src({ src, type })` | set `src` on the media or replace the media component (`Video`, `HlsJsVideo`, `DashVideo`, etc) |
+| `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state, `textTracks` in media |
+| `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
+| `player.error()` | `error` in player state |
+| `player.dispose()` | unmount the component |
+| `player.tech()` | the media component's public `engine` escape hatch, where one exists; reach it through `useMedia()` |
+| `videojs.getPlayer(id)` | call `usePlayer` from a component inside the player |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 | Video.js 8 | Video.js v10 |
 |---|---|
 | `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
@@ -549,9 +584,10 @@ You can also write to the media element directly. That is safe because player st
 | `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state, `textTracks` in media |
 | `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
 | `player.error()` | `error` in player state |
-| `player.dispose()` | remove the element, or unmount the component |
-| `player.tech()` | the media component's public `engine` escape hatch, where one exists; in React, reach it through `useMedia()` |
+| `player.dispose()` | remove the element |
+| `player.tech()` | the media component's public `engine` escape hatch, where one exists |
 | `videojs.getPlayer(id)` | hold a reference to the element |
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 Everything the table describes as "the player's" lives on the player element's store. Hold a reference to `<video-player>` the way you held a v8 player instance, and call actions on its `store.state`:

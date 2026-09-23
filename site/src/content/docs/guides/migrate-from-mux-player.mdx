@@ -175,9 +175,17 @@ The `'use client'` directive is there because the player owns browser state.
 
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 <Aside type="caution" title="Analytics changes from opt-out to opt-in">
 Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `MuxData` extension shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
 </Aside>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+<Aside type="caution" title="Analytics changes from opt-out to opt-in">
+Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `<mux-data>` extension shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
+</Aside>
+</FrameworkCase>
 
 A few things worth calling out:
 
@@ -307,7 +315,13 @@ Signed playback behaves the way it does in Mux Player: a token replaces every ot
 
 ## Analytics moves to its own element
 
-Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/components/mux-data">Mux Data extension</DocsLink>, placed inside the player.
+<FrameworkCase frameworks={["react"]}>
+Mux Player's analytics settings become props on the <DocsLink slug="reference/components/mux-data">Mux Data extension</DocsLink>, placed inside the player.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Mux Player's analytics settings become attributes or properties on the <DocsLink slug="reference/components/mux-data">Mux Data extension</DocsLink>, placed inside the player.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 | Mux Player | Video.js v10 |
@@ -353,7 +367,13 @@ For display, use `title` on the player.
 
 An asset titled in the Mux dashboard supplies its own: the Mux media loads the asset's metadata and the player falls back to that title when none is set on it, so the display title is optional for Mux-hosted video.
 
+<FrameworkCase frameworks={["react"]}>
 The packaged video and live-video skins show the resolved title at the top of the player and fade it with the controls, so the embeds above already display it. The <DocsLink slug="reference/components/title" anchor="styling">Title</DocsLink> component sets `data-visible` while the controls are visible, so your skin overrides can move it differently. The audio skins have no title display.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The packaged video and live-video skins show the resolved title at the top of the player and fade it with the controls, so the embeds above already display it. The <DocsLink slug="reference/components/title" anchor="styling">`<media-title>`</DocsLink> element sets `data-visible` while the controls are visible, so your skin overrides can move it differently. The audio skins have no title display.
+</FrameworkCase>
 
 A skin layout you added to your project, or a custom layout, shows the title only where you place the component. Keep it inside the sized container from [Move your layout styles](#move-your-layout-styles) so it overlays the media:
 
@@ -388,7 +408,13 @@ import { VideoPlayer } from '@videojs/react/video';
 ```
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 `MuxVideo` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL:
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<mux-video>` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL:
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 A generated poster becomes available after `MuxVideo` mounts. Pass `poster` to `VideoPlayer` when the image must appear in server-rendered HTML.
@@ -430,7 +456,13 @@ The player supplies the real poster. The slotted image supplies Mux Player's `pl
 `renderPoster` customizes the poster image, so its background can show Mux Player's `placeholder` while the real poster loads.
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 Mux serves the poster from its `thumbnail` endpoint, and `source.poster` configures that URL: `thumbnail-time` is `source.poster.time`, and the size, crop, rotation, and format options are `width`, `height`, `fitMode`, `rotate`, and `ext` beside it. Video.js converts those camel-case keys to the `snake_case` query parameters Mux expects. See <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> for more examples or the <DocsLink slug="reference/components/poster">Poster</DocsLink> reference for the component itself.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Mux serves the poster from its `thumbnail` endpoint, and `source.poster` configures that URL: `thumbnail-time` is `source.poster.time`, and the size, crop, rotation, and format options are `width`, `height`, `fitMode`, `rotate`, and `ext` beside it. Video.js converts those camel-case keys to the `snake_case` query parameters Mux expects. See <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> for more examples or the <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink> reference for the element itself.
+</FrameworkCase>
 
 ## Customize your player
 
@@ -558,7 +590,13 @@ Control everything through the player: "the player's" entries are store actions,
 
 You can skip this section until you hit one of the two problems in it.
 
+<FrameworkCase frameworks={["react"]}>
 `MuxVideo` comes in two flavors, backed by two different playback engines, and the import path chooses between them. Start with the default. The tradeoff: the `/spf` flavor is smaller and the `/hls-js` flavor is more compatible:
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<mux-video>` comes in two flavors, backed by two different playback engines, and the import path chooses between them. Start with the default. The tradeoff: the `/spf` flavor is smaller and the `/hls-js` flavor is more compatible:
+</FrameworkCase>
 
 | Import | Engine | When |
 |---|---|---|
@@ -664,7 +702,13 @@ Video.js does not replace the preset after reading the HLS playlist. Render the 
 
 The live preset does not include the <DocsLink slug="reference/api/feature-stream-type">stream type feature</DocsLink>. Add `streamTypeFeature` to a custom player when you need `streamType` in player state.
 
-The HLS media object also reads `'live'` or `'on-demand'` from the playlist. In React, get that object with `useMedia`. In HTML, read `streamType` from `<mux-video>`.
+<FrameworkCase frameworks={["react"]}>
+The HLS media object also reads `'live'` or `'on-demand'` from the playlist. Get that object with `useMedia`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The HLS media object also reads `'live'` or `'on-demand'` from the playlist. Read `streamType` from `<mux-video>`.
+</FrameworkCase>
 
 #### A live stream has a finite duration
 

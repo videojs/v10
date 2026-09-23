@@ -4,17 +4,29 @@ description: Allow the media, images, workers, and styles a Video.js player need
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 Content Security Policy (CSP) limits which resources a page can load. Video.js uses the URLs you configure for media, posters, thumbnails, and captions. Some HLS renderers also create blob URLs or web workers, so your policy must allow those resources too.
 
 ## Allow player resources
 
+<FrameworkCase frameworks={["react"]}>
+- `media-src` must allow your media URLs.
+- `img-src` must allow any poster or thumbnail image URLs.
+- `connect-src` must allow HLS manifests, playlists, captions, and segment requests when using HLS playback.
+- `media-src blob:` is required when using the HLS player variants, which use MSE-backed playback.
+- `worker-src blob:` is required when using the `hls.js` player variants.
+- `style-src 'unsafe-inline'` is required for some player UI.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 - `media-src` must allow your media URLs.
 - `img-src` must allow any poster or thumbnail image URLs.
 - `connect-src` must allow HLS manifests, playlists, captions, and segment requests when using HLS playback.
 - `media-src blob:` is required when using the HLS player variants, which use MSE-backed playback.
 - `worker-src blob:` is required when using the `hls.js` player variants.
 - `style-src 'unsafe-inline'` is required for some player UI and HTML player styling behavior.
+</FrameworkCase>
 
 ## Recommended policy
 
@@ -35,4 +47,4 @@ Replace broad sources such as `https:` with the exact origins your player uses. 
 ## Related guides
 
 - <DocsLink slug="guides/installation">Installation</DocsLink>
-- <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink>
+- <DocsLink slug="guides/self-hosting" frameworks="html">Self-host the player</DocsLink>

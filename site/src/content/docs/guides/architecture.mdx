@@ -171,7 +171,13 @@ Extensions add behavior to a player without rendering UI or playing media themse
 ```
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 An extension can provide behavior that a UI component controls: GoogleCast supplies the configurable Cast route, and <DocsLink slug="reference/components/cast-button">CastButton</DocsLink> renders the control that starts and ends a session.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+An extension can provide behavior that a UI component controls: `<google-cast>` supplies the configurable Cast route, and <DocsLink slug="reference/components/cast-button">`<media-cast-button>`</DocsLink> renders the control that starts and ends a session.
+</FrameworkCase>
 
 ## Presets
 

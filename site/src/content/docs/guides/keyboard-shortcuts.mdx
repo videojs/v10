@@ -13,7 +13,13 @@ Add keyboard shortcuts and pointer gestures to the player declaratively, with on
 
 ## Recommended approach
 
+<FrameworkCase frameworks={["react"]}>
 Declare shortcuts with `Hotkey` and gestures with `Gesture` inside the player container. Each maps an input to a player action; the prebuilt skins ship a full set.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Declare shortcuts with `<media-hotkey>` and gestures with `<media-gesture>` inside the player container. Each maps an input to a player action; the prebuilt skins ship a full set.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -77,9 +83,16 @@ export default function App() {
 
 ## How it works
 
+<FrameworkCase frameworks={["react"]}>
 - `Hotkey` binds keys to player actions: `togglePaused`, `toggleMuted`, `toggleFullscreen`, `toggleSubtitles`, `togglePictureInPicture`, `seekStep`, `volumeStep`, `seekToPercent`, `speedUp`, and `speedDown`. Step actions have shared defaults and accept a custom `value`. The actions call the same feature state actions your components use.
 - `Gesture` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`) — regions split the container's width, not the rendered video's — so double-tap-left rewinds while double-tap-right skips forward.
 - `StatusAnnouncer` announces action results to screen readers, and the input indicator components render transient on-screen feedback (volume level, captions on/off) the way native players do. The prebuilt skins wire these up.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+- `<media-hotkey>` binds keys to player actions: `togglePaused`, `toggleMuted`, `toggleFullscreen`, `toggleSubtitles`, `togglePictureInPicture`, `seekStep`, `volumeStep`, `seekToPercent`, `speedUp`, and `speedDown`. Step actions have shared defaults and accept a custom `value`. The actions call the same feature state actions your components use.
+- `<media-gesture>` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`) — regions split the container's width, not the rendered video's — so double-tap-left rewinds while double-tap-right skips forward.
+- `<media-status-announcer>` announces action results to screen readers, and the input indicator components render transient on-screen feedback (volume level, captions on/off) the way native players do. The prebuilt skins wire these up.
+</FrameworkCase>
 
 The prebuilt skins bind the conventional set: Space and `k` toggle playback, `m` mutes, `f` fullscreens, `c` toggles captions, `i` toggles picture-in-picture, arrows seek and change volume, `j`/`l` seek in larger steps, `0`–`9` jump to a percentage, and `<`/`>` change speed.
 
@@ -95,7 +108,13 @@ The prebuilt skins bind the conventional set: Space and `k` toggle playback, `m`
 
 ### Customize a shortcut
 
+<FrameworkCase frameworks={["react"]}>
 Render your own `Hotkey` set instead of a skin's: every binding is just an element, so add, remove, or re-key them freely.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Render your own `<media-hotkey>` set instead of a skin's: every binding is just an element, so add, remove, or re-key them freely.
+</FrameworkCase>
 
 ### Seek step size
 
@@ -113,7 +132,13 @@ Regions overlap: keep single-tap `togglePaused` on `center` only, and double-tap
 
 ### No visual feedback on keyboard actions
 
+<FrameworkCase frameworks={["react"]}>
 The input indicator components render that feedback; use a prebuilt skin or add `StatusAnnouncer` and the indicator components from the skin source to a custom UI.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The input indicator components render that feedback; use a prebuilt skin or add `<media-status-announcer>` and the indicator components from the skin source to a custom UI.
+</FrameworkCase>
 
 ## Related components
 

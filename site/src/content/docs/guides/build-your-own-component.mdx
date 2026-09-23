@@ -350,7 +350,13 @@ this.#store.value?.setVolume(0.5);
 
 </FrameworkCase>
 
-Custom controls also need real button semantics — the examples above set the accessible name, keyboard focus, and (in HTML, where there is no native `<button>`) the ARIA button pattern by hand.
+<FrameworkCase frameworks={["react"]}>
+Custom controls also need real button semantics — the examples above set the accessible name and keyboard focus by hand.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Custom controls also need real button semantics — the examples above set the accessible name, keyboard focus, and (because a custom element is not a native `<button>`) the ARIA button pattern by hand.
+</FrameworkCase>
 
 <DocsLinkCard slug="guides/accessibility">Learn more about accessibility in video players</DocsLinkCard>
 
@@ -383,11 +389,23 @@ Add the skin source to your project and modify it. See <DocsLink slug="guides/cu
 
 ### State and actions are typed as `unknown`
 
-You're using the standalone `usePlayer` export or the shared `playerContext`, which don't know which features your player has. In React, import `usePlayer` from your player's preset (for example `@videojs/react/video`), or use the hook returned by `createPlayer` if you built the player with a custom feature set. In HTML, use the typed `context` returned by `createPlayer`.
+<FrameworkCase frameworks={["react"]}>
+You're using the standalone `usePlayer` export, which doesn't know which features your player has. Import `usePlayer` from your player's preset (for example `@videojs/react/video`), or use the hook returned by `createPlayer` if you built the player with a custom feature set.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+You're using the shared `playerContext`, which doesn't know which features your player has. Use the typed `context` returned by `createPlayer`.
+</FrameworkCase>
 
 ### The component renders but never updates
 
-In React, the component sits outside the player (such as `<VideoPlayer>`), so `usePlayer` has no store to subscribe to. In HTML, the element sits outside `<video-player>`, or the class doesn't extend `UIElement`, so `PlayerController` has nothing to schedule updates on.
+<FrameworkCase frameworks={["react"]}>
+The component sits outside the player (such as `<VideoPlayer>`), so `usePlayer` has no store to subscribe to.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element sits outside `<video-player>`, or the class doesn't extend `UIElement`, so `PlayerController` has nothing to schedule updates on.
+</FrameworkCase>
 
 ## Related API
 

@@ -23,15 +23,29 @@ import basicUsageHtmlTs from '@/components/docs/demos/seek-preview/html/css/Basi
 
 Show preview frames along the timeline while the user scrubs, like YouTube's seek previews.
 
+<FrameworkCase frameworks={["react"]}>
 <Aside type="tip" title="Using Mux?">
 With <DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink>, the storyboard track is wired up for you — skip adding the track and go straight to the slider thumbnail. For other services, generate the storyboard on their platform and add the track yourself.
 </Aside>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+<Aside type="tip" title="Using Mux?">
+With <DocsLink slug="reference/components/mux-video">`<mux-video>`</DocsLink>, the storyboard track is wired up for you — skip adding the track and go straight to the slider thumbnail. For other services, generate the storyboard on their platform and add the track yourself.
+</Aside>
+</FrameworkCase>
 
 <CustomUiNote />
 
 ## Recommended approach
 
+<FrameworkCase frameworks={["react"]}>
 Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/components/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/components/time-slider">`<media-time-slider>`</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same attributes as the standalone <DocsLink slug="reference/components/thumbnail">`<media-thumbnail>`</DocsLink>.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image settings such as `crossOrigin`, `loading`, and `fetchPriority` on the image part. Inside a packaged skin, pass `renderThumbnail` to draw the image yourself; the skin still supplies `src` and sizing:
@@ -81,9 +95,17 @@ Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image s
 
 ## How it works
 
+<FrameworkCase frameworks={["react"]}>
 - Previews come from a storyboard: a `kind="metadata"` text track labeled `thumbnails` whose WebVTT cues map time ranges to image URLs (optionally with sprite coordinates). The <DocsLink slug="reference/api/feature-text-tracks">text track feature</DocsLink> exposes these as `thumbnailCues` and `thumbnailTrackSrc`.
 - The slider thumbnail renders the storyboard frame for the slider's pointer position. While the pointer is over the slider, the slider sets `data-pointing` and the `--media-slider-pointer` CSS variable; the example's CSS uses them to reveal the preview and position it over the pointer.
 - To render a storyboard frame outside the slider — a fixed preview for a chapter list, for example — use the standalone <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink> component with an explicit `time`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- Previews come from a storyboard: a `kind="metadata"` text track labeled `thumbnails` whose WebVTT cues map time ranges to image URLs (optionally with sprite coordinates). The <DocsLink slug="reference/api/feature-text-tracks">text track feature</DocsLink> exposes these as `thumbnailCues` and `thumbnailTrackSrc`.
+- The slider thumbnail renders the storyboard frame for the slider's pointer position. While the pointer is over the slider, the slider sets `data-pointing` and the `--media-slider-pointer` CSS variable; the example's CSS uses them to reveal the preview and position it over the pointer.
+- To render a storyboard frame outside the slider — a fixed preview for a chapter list, for example — use the standalone <DocsLink slug="reference/components/thumbnail">`<media-thumbnail>`</DocsLink> element with an explicit `time`.
+</FrameworkCase>
 
 Each cue's text is an image URL. An optional `#xywh=x,y,w,h` fragment crops one frame out of a sprite sheet:
 
@@ -99,16 +121,31 @@ storyboard.jpg#xywh=256,0,256,160
 
 ## Availability and constraints
 
+<FrameworkCase frameworks={["react"]}>
 - Thumbnails require a storyboard asset generated alongside the media; the player doesn't extract frames from the video itself.
 - Cross-origin storyboards need CORS headers, and `crossOrigin` on the media element for the track to load.
 - Cues load asynchronously. The track appears before its cues are parsed, so previews fill in when the track finishes loading.
 - Storyboard images download on demand; oversized sprite sheets hurt seek-preview responsiveness more than they help quality.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- Thumbnails require a storyboard asset generated alongside the media; the player doesn't extract frames from the video itself.
+- Cross-origin storyboards need CORS headers, and `crossorigin` on the media element for the track to load.
+- Cues load asynchronously. The track appears before its cues are parsed, so previews fill in when the track finishes loading.
+- Storyboard images download on demand; oversized sprite sheets hurt seek-preview responsiveness more than they help quality.
+</FrameworkCase>
 
 ## Troubleshooting
 
 ### Thumbnails don't appear while scrubbing
 
+<FrameworkCase frameworks={["react"]}>
 Confirm the storyboard track is `kind="metadata"` with `label="thumbnails"` and has the `default` attribute — the browser leaves a non-default track disabled and never loads its cues. Then confirm the VTT loads (network panel) and cross-origin assets have CORS headers with `crossOrigin` set on the media element.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Confirm the storyboard track is `kind="metadata"` with `label="thumbnails"` and has the `default` attribute — the browser leaves a non-default track disabled and never loads its cues. Then confirm the VTT loads (network panel) and cross-origin assets have CORS headers with `crossorigin` set on the media element.
+</FrameworkCase>
 
 ### Thumbnails are blurry or slow
 
