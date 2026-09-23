@@ -15,10 +15,7 @@ const DEFAULT_ORIENTATION_LOCK_TYPE: ScreenOrientationLockType = 'landscape';
 export interface OrientationLockState {
   /** Screen orientation type locked while fullscreen is active. */
   orientationLockType: ScreenOrientationLockType;
-  /**
-   * Sets the locked orientation type. Absent input — nullish, or the empty string a valueless HTML attribute produces —
-   * restores the default.
-   */
+  /** Sets the locked orientation type. A missing value, including an empty one, restores the default. */
   setOrientationLockType(value: ScreenOrientationLockType | null | undefined): void;
 }
 
