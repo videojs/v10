@@ -52,37 +52,6 @@
   force = true
 
 
-# Previous Video.js 10 builds linked directly to these legacy diagnostic URLs.
-[[redirects]]
-  from = "/errors"
-  to = "/docs/reference/api/error-codes"
-  status = 301
-
-[[redirects]]
-  from = "/errors/legacy-init"
-  to = "/docs/reference/api/v8-legacy-init"
-  status = 301
-
-[[redirects]]
-  from = "/errors/legacy-plugin"
-  to = "/docs/reference/api/v8-legacy-plugin"
-  status = 301
-
-[[redirects]]
-  from = "/errors/legacy-component"
-  to = "/docs/reference/api/v8-legacy-component"
-  status = 301
-
-[[redirects]]
-  from = "/errors/legacy-get-player"
-  to = "/docs/reference/api/v8-legacy-get-player"
-  status = 301
-
-[[redirects]]
-  from = "/errors/legacy-options"
-  to = "/docs/reference/api/v8-legacy-options"
-  status = 301
-
 # Docs pages that moved or were renamed on the redesign, listed before the section-wide rules below so a page that
 # changed slug as well as section lands on its new address in one hop. Each page has a .md twin.
 [[redirects]]
