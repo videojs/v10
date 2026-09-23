@@ -1,11 +1,13 @@
 import { renderInstallationPlanSections, renderSelectionErrors } from '@videojs/installation';
 
-import { VJS10_VERSION } from '../../src/consts';
+import htmlPackage from '../../../../packages/html/package.json' with { type: 'json' };
 import {
   INSTALLATION_MARKDOWN_PARAMS,
   replaceInstallationMarkdownPlan,
   resolveInstallationMarkdownPlan,
-} from '../../src/utils/installation/markdown';
+} from './markdown.ts';
+
+const VJS10_VERSION = htmlPackage.version;
 
 function markdownResponse(body: string, status = 200, privateResponse = false): Response {
   const headers = new Headers();

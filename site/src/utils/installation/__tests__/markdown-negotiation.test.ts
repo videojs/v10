@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import directMarkdown, { config as directConfig } from './markdown-direct';
-import negotiateMarkdown, { config as negotiationConfig } from './markdown-negotiation';
+import directMarkdown, { config as directConfig } from '../../../../netlify/edge-functions/markdown-direct';
+import negotiateMarkdown, {
+  config as negotiationConfig,
+} from '../../../../netlify/edge-functions/markdown-negotiation';
 
 const staticMarkdown = `# Shadcn Installation Guide
 

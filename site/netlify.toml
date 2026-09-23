@@ -2,6 +2,9 @@
   command = "pnpm exec vp run --no-cache site#build"
   publish = "site/dist"
 
+[functions]
+  deno_import_map = "site/netlify/edge-functions/import_map.json"
+
 # PostHog reverse proxy (ad-blocker bypass)
 [[redirects]]
   from = "/ph/static/*"

@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/edge-functions';
 
-import { handleMarkdown } from './markdown-handler';
+import { handleMarkdown } from '../../src/utils/installation/markdown-handler.ts';
 
 export default handleMarkdown;
 
