@@ -58,6 +58,20 @@ Chrome, Safari, and Firefox each render the default `<video>` controls different
   </figure>
 </ContentWidth>
 
+### Accessibility
+
+The browser's controls bring their own accessibility behavior, and it differs by browser. Once you replace them, accessibility is your job: ARIA roles and labels that follow player state, keyboard controls and shortcuts, focus management, screen reader announcements when playback changes, touch targets that scale with the user's font size, tooltips and menus that stay on screen, and respect for reduced-motion and contrast preferences. Video.js components and skins handle these by default, following the WAI-ARIA Authoring Practices.
+
+<DocsLinkCard slug="guides/accessibility">Learn more about accessibility</DocsLinkCard>
+
+### Player state
+
+Custom controls need to know what the media is doing. Even something as simple as "playing" or "buffering" comes from several events, behaves differently across browsers, streaming engines, and services like YouTube, and has to reset when the source changes. Wiring that by hand is fragile, and in React it quickly leads to tangled effects and extra renders.
+
+Video.js keeps playback state in one player store that every component reads. Components reflect state as data attributes such as `data-paused`, so your CSS follows the player without extra code, and controls a browser can't support, such as picture-in-picture, hide themselves. In React, `usePlayer` with a selector re-renders a component only when the state it selects changes.
+
+<DocsLinkCard slug="guides/architecture">Learn more about the architecture</DocsLinkCard>
+
 ### Video interactions
 
 Video often involves more than an MP4 in `src`. Features like thumbnail previews, adaptive bitrate, quality selection, chapters, audio track switching, localized controls, error UI, live-streaming UI, AirPlay, and DRM are _possible_ with the video element, but require complex wiring and careful work on maintainability and <DocsLink slug="guides/accessibility">accessibility</DocsLink>.
