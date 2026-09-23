@@ -172,6 +172,14 @@ describe('convertPage', () => {
     );
   });
 
+  it('keeps numbered list items inside a table cell on their own lines', () => {
+    const markdown = convert(
+      '<table><tr><th>Name</th><th>Steps</th></tr><tr><td><code>setup</code></td><td>Order:<ol start="3"><li>Install.</li><li>Configure.</li></ol></td></tr></table>'
+    );
+
+    expect(markdown).toBe('| Name | Steps |\n| --- | --- |\n| `setup` | Order:<br>3. Install.<br>4. Configure. |');
+  });
+
   it('escapes angle brackets in prose and keeps code spans in link cards', () => {
     expect(convert('<p>Now &lt;audio&gt; can join, 1 &lt; 2.</p>')).toBe('Now \\<audio> can join, 1 < 2.');
 

@@ -361,11 +361,12 @@ export function createTurndown(): TurndownService {
   turndown.addRule('table-cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
-      // A cell must stay on one line, so a list inside it keeps its items apart with GFM's `<br>` line breaks. Semicolons
-      // would read as part of an item that contains one, such as "non-modal; background content remains interactive".
+      // A cell must stay on one line, so a list inside it keeps bullet and numbered items apart with GFM's `<br>` line
+      // breaks. Semicolons would read as part of an item that contains one, such as "non-modal; background content
+      // remains interactive".
       const inline = content
         .replace(/^\s*;\s*/, '')
-        .replace(/\n+\s*(?=- )/g, '<br>')
+        .replace(/\n+\s*(?=(?:-|\d+\.)\s)/g, '<br>')
         .replace(/^<br>/, '');
       const text = collapseWhitespace(inline).replace(/\|/g, '\\|');
       const span = Math.max(1, Number(node.getAttribute('colspan')) || 1);
