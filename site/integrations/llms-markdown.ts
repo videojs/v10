@@ -248,7 +248,7 @@ export function createTurndown(): TurndownService {
   });
 
   // Definition lists become bold-term list items. A table cell has no line structure, so there the entries run on,
-  // separated by semicolons.
+  // separated by semicolons; each bold term marks where an entry starts, so the plain separator stays unambiguous.
   turndown.addRule('definition-term', {
     filter: 'dt',
     replacement: (content, node) => {
@@ -361,7 +361,8 @@ export function createTurndown(): TurndownService {
   turndown.addRule('table-cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
-      // A cell must stay on one line, so a list inside it keeps its items apart with GFM's `<br>` line breaks.
+      // A cell must stay on one line, so a list inside it keeps its items apart with GFM's `<br>` line breaks. Semicolons
+      // would read as part of an item that contains one, such as "non-modal; background content remains interactive".
       const inline = content
         .replace(/^\s*;\s*/, '')
         .replace(/\n+\s*(?=- )/g, '<br>')
