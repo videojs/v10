@@ -54,6 +54,8 @@ function installationRouteDefaults(path: string, params: URLSearchParams): Insta
 
 function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchParams): InstallationInput {
   const value = (key: string) => params.get(key) ?? undefined;
+  const packageManager = value('package-manager');
+  const legacyInstallMethod = value('install-method');
 
   return {
     method: defaults.method,
@@ -62,7 +64,11 @@ function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchPa
     skin: value('skin'),
     media: value('media'),
     sourceUrl: value('source-url'),
-    packageManager: value('package-manager') ?? value('install-method'),
+    // `install-method=cdn` selected the old CDN mode before each method had its own route. The page UI canonicalizes
+    // that stale value to npm on package-based routes, while the CDN route does not have a package manager at all.
+    packageManager:
+      packageManager ??
+      (legacyInstallMethod === 'cdn' ? (defaults.method === 'cdn' ? undefined : 'npm') : legacyInstallMethod),
     template: value('template'),
     styling: value('styling'),
   };
@@ -91,8 +97,7 @@ export function resolveInstallationMarkdownPlan(
 export function replaceInstallationMarkdownPlan(markdown: string, replacement: string): string | null {
   if (!PLAN_PATTERN.test(markdown)) return null;
 
-  return markdown.replace(
-    PLAN_PATTERN,
-    `<!-- installation-plan:start -->\n\n${replacement.trim()}\n\n<!-- installation-plan:end -->`
-  );
+  return markdown.replace(PLAN_PATTERN, () => {
+    return `<!-- installation-plan:start -->\n\n${replacement.trim()}\n\n<!-- installation-plan:end -->`;
+  });
 }

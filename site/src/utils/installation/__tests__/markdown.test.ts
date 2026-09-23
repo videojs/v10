@@ -59,6 +59,22 @@ describe('resolveInstallationMarkdownPlan', () => {
       expect.objectContaining({ field: 'framework', value: 'angular' })
     );
   });
+
+  it('normalizes the legacy CDN install method like the page UI', () => {
+    const packaged = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/react.md',
+      new URLSearchParams({ 'install-method': 'cdn' }),
+      '10.0.0-test'
+    );
+    const cdn = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/cdn.md',
+      new URLSearchParams({ 'install-method': 'cdn' }),
+      '10.0.0-test'
+    );
+
+    expect(packaged?.ok && packaged.plan.selection.packageManager).toBe('npm');
+    expect(cdn?.ok && cdn.plan.selection.method).toBe('cdn');
+  });
 });
 
 describe('replaceInstallationMarkdownPlan', () => {
@@ -67,6 +83,15 @@ describe('replaceInstallationMarkdownPlan', () => {
 
     expect(replaceInstallationMarkdownPlan(markdown, 'new')).toBe(
       '# Guide\n\n<!-- installation-plan:start -->\n\nnew\n\n<!-- installation-plan:end -->\n\nAfter'
+    );
+  });
+
+  it('preserves dollar replacement tokens verbatim', () => {
+    const markdown = '# Guide\n\n<!-- installation-plan:start -->\nold\n<!-- installation-plan:end -->\n\nAfter';
+    const replacement = "price $& $$ $' $` end";
+
+    expect(replaceInstallationMarkdownPlan(markdown, replacement)).toBe(
+      `# Guide\n\n<!-- installation-plan:start -->\n\n${replacement}\n\n<!-- installation-plan:end -->\n\nAfter`
     );
   });
 });
