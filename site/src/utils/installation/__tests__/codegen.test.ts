@@ -13,6 +13,10 @@ import {
   generateVueCreateCode,
   generateVueCustomElementConfigCode,
   generateVueUsageCode,
+  getRendererComponent,
+  getRendererTag,
+  getSkinComponent,
+  getSkinTag,
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
@@ -711,5 +715,39 @@ describe('source installation code', () => {
     expect(code.imports).toContain("import '@/components/videojs/video/skin'");
     expect(code.player).toContain('<video-player>');
     expect(code.player).toContain('<script type="module" src="/src/player.ts"></script>');
+  });
+});
+
+describe('getRendererTag', () => {
+  it('names the native or custom element each renderer renders', () => {
+    expect(getRendererTag('html5-video')).toBe('video');
+    expect(getRendererTag('hls')).toBe('hlsjs-video');
+    expect(getRendererTag('background-video')).toBe('background-video');
+  });
+});
+
+describe('getRendererComponent', () => {
+  it('names the React component each renderer renders', () => {
+    expect(getRendererComponent('html5-video')).toBe('Video');
+    expect(getRendererComponent('hls')).toBe('HlsJsVideo');
+    expect(getRendererComponent('youtube')).toBe('YouTubeVideo');
+  });
+});
+
+describe('getSkinTag', () => {
+  it('follows the preset and skin tier', () => {
+    expect(getSkinTag('default-video', 'video')).toBe('video-skin');
+    expect(getSkinTag('live-audio', 'minimal-audio')).toBe('live-audio-minimal-skin');
+  });
+
+  it('always uses the background skin for background video', () => {
+    expect(getSkinTag('background-video', 'minimal-video')).toBe('background-video-skin');
+  });
+});
+
+describe('getSkinComponent', () => {
+  it('follows the preset and skin tier', () => {
+    expect(getSkinComponent('default-audio', 'audio')).toBe('AudioSkin');
+    expect(getSkinComponent('live-video', 'minimal-video')).toBe('MinimalLiveVideoSkin');
   });
 });

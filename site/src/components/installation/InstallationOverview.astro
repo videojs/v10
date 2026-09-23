@@ -69,10 +69,10 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
 {
   route === 'shadcn' ? (
     <>
-      <ShadcnFrameworkCase framework="react" llmsHeadingLevel={2}>
+      <ShadcnFrameworkCase framework="react" llmsHeading={false}>
         <InstallationMigrationNotice framework="react" />
       </ShadcnFrameworkCase>
-      <ShadcnFrameworkCase framework="html" llmsHeadingLevel={2}>
+      <ShadcnFrameworkCase framework="html" llmsHeading={false}>
         <InstallationMigrationNotice framework="html" />
       </ShadcnFrameworkCase>
     </>

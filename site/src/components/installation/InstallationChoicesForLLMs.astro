@@ -1,21 +1,42 @@
 ---
 import { getCollection } from 'astro:content';
 
+import DocsLink from '@/components/docs/DocsLink.astro';
+import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
+import {
+  getAdapterPackage,
+  getRendererComponent,
+  getRendererTag,
+  getSkinComponent,
+  getSkinTag,
+} from '@/utils/installation/codegen';
 import {
   getInstallationMethodsForFramework,
   INSTALLATION_METHOD_OPTIONS,
   type InstallationMethod,
 } from '@/utils/installation/method-options';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
+import { getInstallationRoutePath, INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   REGISTRY_STYLING_LABELS,
   REGISTRY_TEMPLATE_LABELS,
   registryStylings,
   registryTemplates,
+  SHADCN_RUNNER_NAMES,
 } from '@/utils/installation/shadcn';
-import { getInstallationPreset, USE_CASES } from '@/utils/installation/types';
+import { getInstallationPreset, INSTALLATION_SKIN_FLAGS, type Renderer, USE_CASES } from '@/utils/installation/types';
+import { DEFAULT_SELECTION, skinFromFlag, skinToFlag } from '@/utils/installation/url-state';
+
+import { USE_CASE_DESCRIPTIONS } from './UseCasePicker';
+
+type SkinFlag = (typeof INSTALLATION_SKIN_FLAGS)[number];
+
+const SKIN_CHOICES = {
+  default: { label: 'Default', description: 'the complete control set with a modern, frosted look.' },
+  minimal: { label: 'Minimal', description: 'the same control set with clean, solid surfaces.' },
+  none: { label: 'No skin', description: 'player and media behavior without a packaged UI.' },
+} satisfies Record<SkinFlag, { label: string; description: string }>;
 
 const route = Astro.params.framework;
 if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
@@ -23,17 +44,59 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
 const isShadcn = route === 'shadcn';
 const isCdn = route === 'cdn';
 const routeConfig = INSTALLATION_ROUTES[route];
-const packagedHref = isCdn ? '/docs/guides/installation/html' : isShadcn ? '/docs/guides/installation/react' : `/docs/guides/installation/${route}`;
+// Shadcn generates React or HTML source from one page, so its media table names both.
+const nameFrameworks: readonly SupportedFramework[] = routeConfig.frameworks;
+const packagedHref = getInstallationRoutePath(isCdn ? 'html' : route);
+const cliCommand = `npx @videojs/cli docs ${getInstallationRoutePath(route).replace(/^\/docs\//, '')}`;
+
 const useCases = USE_CASES.filter((useCase) => !isShadcn || useCase !== 'background-video');
 const cdnMediaSubpaths = isCdn ? (await getCollection('cdnMedia')).map((entry) => entry.id) : [];
-const mediaChoices = useCases.map((useCase) => {
-  const preset = getInstallationPreset(useCase);
-  const renderers = preset.renderers.filter(
-    (renderer) => !isCdn || rendererSupportsCdn(renderer, cdnMediaSubpaths),
-  );
+const mediaChoices = [...new Set(useCases.flatMap((useCase) => getInstallationPreset(useCase).renderers))]
+  .filter((renderer) => !isCdn || rendererSupportsCdn(renderer, cdnMediaSubpaths))
+  .map((renderer) => ({
+    renderer,
+    adapter: getAdapterPackage(renderer),
+    useCases: useCases
+      .map(getInstallationPreset)
+      .filter(({ renderers }) => renderers.includes(renderer))
+      .map(({ label }) => label)
+      .join(', '),
+  }));
+const hasHls = mediaChoices.some(({ renderer }) => renderer === 'hls');
 
-  return { label: preset.label, renderers };
-});
+const mediaName = (framework: SupportedFramework, renderer: Renderer) =>
+  framework === 'react' ? getRendererComponent(renderer) : `<${getRendererTag(renderer)}>`;
+
+const skinFlags = INSTALLATION_SKIN_FLAGS.filter((flag) => !isShadcn || flag !== 'none');
+const skinnedUseCases = useCases.filter((useCase) => useCase !== 'background-video');
+// Shadcn copies skin source into the project, so the packaged skin references only help the packaged and CDN routes.
+const skinReferences = (flag: SkinFlag) =>
+  isShadcn
+    ? []
+    : skinnedUseCases.flatMap((useCase) => {
+        const skin = skinFromFlag(flag, useCase);
+        if (!skin || skin === 'none') return [];
+
+        const tag = getSkinTag(useCase, skin);
+        const name = routeConfig.framework === 'react' ? getSkinComponent(useCase, skin) : `<${tag}>`;
+
+        return [{ name, slug: `reference/components/${tag}` }];
+      });
+const backgroundSkinTag = getSkinTag('background-video', 'video');
+const backgroundSkinName =
+  routeConfig.framework === 'react' ? getSkinComponent('background-video', 'video') : `<${backgroundSkinTag}>`;
+
+const cliFlags = isShadcn
+  ? ['--framework', '--template', '--styling', '--preset', '--theme', '--media']
+  : ['--preset', '--skin', '--media'];
+const andList = new Intl.ListFormat('en', { type: 'conjunction' });
+const orList = new Intl.ListFormat('en', { type: 'disjunction' });
+
+const defaults = {
+  preset: getInstallationPreset(DEFAULT_SELECTION.useCase).label,
+  skin: SKIN_CHOICES[skinToFlag(DEFAULT_SELECTION.skin)].label,
+  media: RENDERER_LABELS[DEFAULT_SELECTION.renderer],
+};
 
 const methodHrefs = {
   packaged: packagedHref,
@@ -87,25 +150,30 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
       isShadcn && (
         <>
           <p>
-            The Shadcn registry generates React or HTML source. Vue and Svelte can use the HTML custom-element source;
-            select <code>--framework html</code> in the docs CLI.
+            The Shadcn registry generates React or HTML source. Vue and Svelte can use the HTML custom-element source.
           </p>
           <ul>
             {(['react', 'html'] as const).map((framework) => (
               <li>
-                <strong>{framework === 'react' ? 'React' : 'HTML'}</strong>
+                <strong>{FRAMEWORK_LABELS[framework]}</strong> (<code>{framework}</code>)
                 <ul>
                   <li>
                     Project templates:{' '}
-                    {registryTemplates(framework)
-                      .map((template) => REGISTRY_TEMPLATE_LABELS[template])
-                      .join(', ')}
+                    {registryTemplates(framework).map((template, index) => (
+                      <>
+                        {index > 0 && ', '}
+                        {REGISTRY_TEMPLATE_LABELS[template]} (<code>{template}</code>)
+                      </>
+                    ))}
                   </li>
                   <li>
                     Styling:{' '}
-                    {registryStylings(framework)
-                      .map((styling) => REGISTRY_STYLING_LABELS[styling])
-                      .join(', ')}
+                    {registryStylings(framework).map((styling, index) => (
+                      <>
+                        {index > 0 && ', '}
+                        {REGISTRY_STYLING_LABELS[styling]} (<code>{styling}</code>)
+                      </>
+                    ))}
                   </li>
                 </ul>
               </li>
@@ -124,30 +192,72 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
 
           return (
             <li>
-              <strong>{preset.label}</strong> (<code>{preset.flag}</code>)
+              {isShadcn ? (
+                <strong>{preset.label}</strong>
+              ) : (
+                <DocsLink slug="guides/presets" anchor={`preset-${preset.group}`}>
+                  {preset.label}
+                </DocsLink>
+              )}{' '}
+              (<code>{preset.flag}</code>): {USE_CASE_DESCRIPTIONS[useCase]}.
             </li>
           );
         })
       }
     </ul>
 
+    <p>
+      The live presets suit streams: they drop the duration and current-time displays that on-demand playback relies
+      on, and they offer only media that exposes live-edge state.
+    </p>
+
     <h2>Choose your skin</h2>
 
     <ul>
-      <li><strong>Default</strong>: the complete control set with a modern, frosted look.</li>
-      <li><strong>Minimal</strong>: the same control set with clean, solid surfaces.</li>
-      {!isShadcn && <li><strong>No skin</strong>: player and media behavior without a packaged UI.</li>}
+      {
+        skinFlags.map((flag) => {
+          const { label, description } = SKIN_CHOICES[flag];
+          const references = skinReferences(flag);
+
+          return (
+            <li>
+              <strong>{label}</strong> (<code>{flag}</code>): {description}
+              {references.length > 0 && (
+                <>
+                  {' '}
+                  Reference pages:{' '}
+                  {andList.formatToParts(references.map(({ name }) => name)).map((part) =>
+                    part.type === 'element' ? (
+                      <DocsLink slug={references.find(({ name }) => name === part.value)!.slug}>
+                        <code>{part.value}</code>
+                      </DocsLink>
+                    ) : (
+                      part.value
+                    )
+                  )}
+                  .
+                </>
+              )}
+            </li>
+          );
+        })
+      }
     </ul>
 
     {
-      isShadcn && (
-        <>
-          <p>
-            Shadcn copies either the Default or Minimal skin source into the project. It does not currently provide the
-            background video skin or a no-skin option.
-          </p>
-          <p>Commit your work first so you can review every file the CLI adds or replaces.</p>
-        </>
+      isShadcn ? (
+        <p>
+          Shadcn copies either the Default or Minimal skin source into the project. It does not currently provide the
+          background video skin or a no-skin option.
+        </p>
+      ) : (
+        <p>
+          Background Video always uses{' '}
+          <DocsLink slug={`reference/components/${backgroundSkinTag}`}>
+            <code>{backgroundSkinName}</code>
+          </DocsLink>
+          , whatever skin you choose.
+        </p>
       )
     }
 
@@ -155,21 +265,79 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
 
     <p>Available media sources depend on the use case:</p>
 
-    <ul>
-      {
-        mediaChoices.map(({ label, renderers }) => (
-          <li>
-            <strong>{label}</strong>:{' '}
-            {renderers.map((renderer) => `${RENDERER_LABELS[renderer]} (${renderer})`).join(', ')}
-          </li>
-        ))
-      }
-    </ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Media source</th>
+          <th>Use cases</th>
+          {nameFrameworks.map((framework) => <th>{framework === 'react' ? 'React component' : 'HTML element'}</th>)}
+          {!isCdn && <th>Adapter package</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {
+          mediaChoices.map(({ renderer, adapter, useCases: supportedUseCases }) => (
+            <tr>
+              <td>
+                {RENDERER_LABELS[renderer]} (<code>{renderer}</code>)
+              </td>
+              <td>{supportedUseCases}</td>
+              {nameFrameworks.map((framework) => (
+                <td>
+                  <DocsLink slug={`reference/components/${getRendererTag(renderer)}`} framework={framework}>
+                    <code>{mediaName(framework, renderer)}</code>
+                  </DocsLink>
+                </td>
+              ))}
+              {!isCdn && <td>{adapter ? <code>{adapter}</code> : 'None'}</td>}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+
+    {
+      hasHls && (
+        <p>
+          HLS uses{' '}
+          {orList
+            .formatToParts(nameFrameworks.map((framework) => mediaName(framework, 'hls')))
+            .map((part) => (part.type === 'element' ? <code>{part.value}</code> : part.value))}{' '}
+          for broad compatibility. To reduce your bundle size, try our lightweight HLS engine,{' '}
+          {nameFrameworks.map((framework, index) => (
+            <>
+              {index > 0 && ' or '}
+              <DocsLink slug="reference/components/hls-video" framework={framework}>
+                <code>{framework === 'react' ? 'HlsVideo' : '<hls-video>'}</code>
+              </DocsLink>
+            </>
+          ))}
+          .
+        </p>
+      )
+    }
 
     <p>
-      A source URL is optional in the browser. For the noninteractive docs CLI, pass <code>--source-url ''</code> to use
-      demo media, or pass your media URL. The generated installation includes a playback adapter when the selected
-      media source needs one; native HTML5 media and background video need no separate adapter.
+      The keys in parentheses are the values the docs CLI (<code>{cliCommand}</code>) accepts for its{' '}
+      {
+        andList
+          .formatToParts(cliFlags)
+          .map((part) => (part.type === 'element' ? <code>{part.value}</code> : part.value))
+      }{' '}
+      flags. Run noninteractively, it also needs <code>--source-url</code> (pass <code>''</code> for demo media)
+      {
+        !isCdn && (
+          <>
+            {' '}
+            and <code>--package-manager</code> (
+            {orList
+              .formatToParts(SHADCN_RUNNER_NAMES)
+              .map((part) => (part.type === 'element' ? <code>{part.value}</code> : part.value))}
+            )
+          </>
+        )
+      }
+      .
     </p>
 
     <h2>Choose how to install</h2>
@@ -181,17 +349,30 @@ const availableMethodLinks = methodLinks.filter(({ id }) => availableMethods.has
 
     <ul>
       {
-        availableMethodLinks.map(({ label, href, details }) => (
+        availableMethodLinks.map(({ id, label, href, details }) => (
           <li>
-            <a href={href}>{label}</a>: {details}
+            {isShadcn && id === 'packaged' ? (
+              <>
+                {label} (<a href={getInstallationRoutePath('react')}>React</a> or{' '}
+                <a href={getInstallationRoutePath('html')}>HTML</a>)
+              </>
+            ) : (
+              <a href={href}>{label}</a>
+            )}
+            : {details}
           </li>
         ))
       }
     </ul>
 
     <p>
-      The code below is a complete example for the default Video, Default skin, and HTML5 Video choices. For another
-      combination, swap in the imports and markup for your choices from their preset, skin, and media reference pages.
+      {isShadcn ? 'The steps below use' : 'The code below is a complete example for'} the default {defaults.preset},{' '}
+      {defaults.skin} skin, and {defaults.media} choices with demo media.{' '}
+      {
+        isShadcn
+          ? 'Each step notes what changes for other choices. Swap in the media component from its reference page linked above, and replace the demo URL with your own.'
+          : 'For another combination, swap in the imports and markup from the preset, skin, and media reference pages linked above, and replace the demo URL with your own.'
+      }
     </p>
   </div>
 </div>

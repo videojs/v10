@@ -1,7 +1,12 @@
 ---
 /** The Shadcn init command for the selected project template. */
 import { isValidFramework } from '@/types/docs';
-import type { RegistryFramework } from '@/utils/installation/shadcn';
+import {
+  defaultRegistryTemplate,
+  type RegistryFramework,
+  REGISTRY_TEMPLATE_LABELS,
+  registryTemplates,
+} from '@/utils/installation/shadcn';
 
 import RegistryInitCommandClient from './RegistryInitCommandClient';
 
@@ -15,6 +20,35 @@ const { installation = false, framework: frameworkProp } = Astro.props;
 const routeFramework = Astro.params.framework;
 const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
 if (!framework) throw new Error(`RegistryInitCommand needs a framework route, received ${routeFramework}.`);
+
+// The template select is hidden from Markdown readers, so name the other values the server-rendered command can take.
+const defaultTemplate = defaultRegistryTemplate(framework);
+const otherTemplates = registryTemplates(framework).filter((template) => template !== defaultTemplate);
+const templateLabels = new Map<string, string>(
+  otherTemplates.map((template) => [template, REGISTRY_TEMPLATE_LABELS[template]])
+);
+const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
 ---
 
 <RegistryInitCommandClient client:idle framework={framework} installation={installation} />
+
+<div hidden data-llms-only>
+  <p>
+    These commands initialize Shadcn with the {REGISTRY_TEMPLATE_LABELS[defaultTemplate]} template. For another project
+    template, replace <code>{defaultTemplate}</code> with{' '}
+    {
+      listFormat
+        .formatToParts(otherTemplates)
+        .map((part) =>
+          part.type === 'element' ? (
+            <>
+              <code>{part.value}</code> ({templateLabels.get(part.value)})
+            </>
+          ) : (
+            part.value
+          )
+        )
+    }
+    .
+  </p>
+</div>

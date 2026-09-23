@@ -3,12 +3,11 @@ import type { RegistryFramework } from '@/utils/installation/shadcn';
 
 interface Props {
   framework: RegistryFramework;
-  /** Heading level used to label this branch in generated Markdown. */
-  llmsHeadingLevel?: 2 | 3;
+  /** Label this branch with a React or HTML heading in generated Markdown. */
+  llmsHeading?: boolean;
 }
 
-const { framework, llmsHeadingLevel = 3 } = Astro.props;
-const LLMHeading = llmsHeadingLevel === 2 ? 'h2' : 'h3';
+const { framework, llmsHeading = true } = Astro.props;
 ---
 
 <div
@@ -16,8 +15,12 @@ const LLMHeading = llmsHeadingLevel === 2 ? 'h2' : 'h3';
   data-cli-framework={framework}
   data-shadcn-framework={framework}
 >
-  <div hidden data-llms-only>
-    <LLMHeading>{framework === 'react' ? 'React' : 'HTML'}</LLMHeading>
-  </div>
+  {
+    llmsHeading && (
+      <div hidden data-llms-only>
+        <h3>{framework === 'react' ? 'React' : 'HTML'}</h3>
+      </div>
+    )
+  }
   <slot />
 </div>

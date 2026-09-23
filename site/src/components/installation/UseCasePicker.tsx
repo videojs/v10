@@ -20,13 +20,13 @@ const USE_CASE_MEDIA: Record<UseCase, ReactNode> = {
   'background-video': <Image className="size-6" />,
 };
 
-const USE_CASE_DESCRIPTIONS: Record<UseCase, string> = {
+export const USE_CASE_DESCRIPTIONS = {
   'default-video': 'On-demand video with full controls',
   'default-audio': 'Podcasts, music, and audio-only playback',
   'live-video': 'Streams with a Live button, no duration',
   'live-audio': 'Live radio and audio streams',
   'background-video': 'Muted, looping video behind your content',
-};
+} satisfies Record<UseCase, string>;
 
 interface Props {
   includeBackground?: boolean;

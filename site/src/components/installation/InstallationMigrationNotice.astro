@@ -1,17 +1,19 @@
 ---
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
-import type { SupportedFramework } from '@/types/docs';
+import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 
 interface Props {
   framework?: SupportedFramework;
 }
 
 const { framework } = Astro.props;
+// Pages that render one notice per framework name it, so each reads as its own branch.
+const guide = framework ? `${FRAMEWORK_LABELS[framework]} migration guide` : 'migration guide';
 ---
 
 <Aside type="tip" title="Coming from another player?">
-  Follow the migration guide for <DocsLink slug="guides/migrate-from-video-js-8" framework={framework}
+  Follow the {guide} for <DocsLink slug="guides/migrate-from-video-js-8" framework={framework}
     >Video.js 8</DocsLink
   >, <DocsLink slug="guides/migrate-from-mux-player" framework={framework}>Mux Player</DocsLink>, <DocsLink
     slug="guides/migrate-from-plyr"

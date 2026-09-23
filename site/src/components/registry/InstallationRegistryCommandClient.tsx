@@ -11,7 +11,6 @@ interface Props {
 export default function InstallationRegistryCommandClient({ framework }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $installMethod = useSelection('installMethod');
   const selection = registrySkinSelection({ useCase: $useCase, skin: $skin });
 
   return (
@@ -19,7 +18,6 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
       defaultSkin={selection?.item ?? DEFAULT_REGISTRY_PRESET}
       framework={framework}
       items={[]}
-      runner={$installMethod === 'cdn' ? 'npm' : $installMethod}
       theme={selection?.theme ?? 'default'}
     />
   );

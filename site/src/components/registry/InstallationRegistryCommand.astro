@@ -1,7 +1,20 @@
 ---
 /** The registry command for whatever skin the installation page's pickers selected. */
 import { isValidFramework } from '@/types/docs';
-import type { RegistryFramework } from '@/utils/installation/shadcn';
+import {
+  defaultRegistryStyling,
+  type RegistryFramework,
+  REGISTRY_NAMESPACE,
+  REGISTRY_PRESETS,
+  REGISTRY_SKINS,
+  REGISTRY_STYLING_LABELS,
+  REGISTRY_THEME_LABELS,
+  REGISTRY_THEMES,
+  registryNamespaceUrl,
+  registrySkinSelection,
+  registryStylings,
+} from '@/utils/installation/shadcn';
+import { DEFAULT_SELECTION } from '@/utils/installation/url-state';
 
 import InstallationRegistryCommandClient from './InstallationRegistryCommandClient';
 
@@ -13,6 +26,61 @@ const { framework: frameworkProp } = Astro.props;
 const routeFramework = Astro.params.framework;
 const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
 if (!framework) throw new Error(`InstallationRegistryCommand needs a framework route, received ${routeFramework}.`);
+
+// The server-rendered command, which is what Markdown readers see, uses the page's default selection.
+const selection = registrySkinSelection(DEFAULT_SELECTION);
+if (!selection) throw new Error('The default installation selection has no Shadcn registry skin.');
+
+const skin = REGISTRY_SKINS.find(({ item, theme }) => item === selection.item && theme === selection.theme)!;
+const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
 ---
 
 <InstallationRegistryCommandClient client:idle framework={framework} />
+
+<div hidden data-llms-only>
+  <p>
+    These commands add the {skin.label} skin with {REGISTRY_STYLING_LABELS[defaultRegistryStyling(framework)]}. For
+    another skin or styling, pass the matching catalog URL to <code>registry add</code>:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Styling</th>
+        {
+          REGISTRY_THEMES.map((theme) => (
+            <th>
+              {REGISTRY_THEME_LABELS[theme]} skin (<code>{theme}</code>)
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+    <tbody>
+      {
+        registryStylings(framework).map((styling) => (
+          <tr>
+            <td>
+              {REGISTRY_STYLING_LABELS[styling]} (<code>{styling}</code>)
+            </td>
+            {REGISTRY_THEMES.map((theme) => (
+              <td>
+                <code>{registryNamespaceUrl(framework, styling, theme)}</code>
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  <p>
+    Then add the item for your use case:{' '}
+    {
+      listFormat
+        .formatToParts(REGISTRY_PRESETS.map(({ item }) => `${REGISTRY_NAMESPACE}/${item}`))
+        .map((part) => (part.type === 'element' ? <code>{part.value}</code> : part.value))
+    }
+    .
+  </p>
+</div>
