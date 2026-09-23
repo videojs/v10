@@ -26,6 +26,15 @@ describe('resolveInstallationSelection', () => {
 
   it('rejects incompatible paths', () => {
     expect(resolveInstallationSelection('react', { method: 'cdn' }, '10.0.0').ok).toBe(false);
+    expect(resolveInstallationSelection('html', { framework: 'react' }, '10.0.0')).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          field: 'framework',
+          message: '`@videojs/html` supports HTML, Vue, or Svelte. Use `@videojs/react` for React.',
+        },
+      ],
+    });
     expect(resolveInstallationSelection('html', { method: 'cdn', framework: 'vue' }, '10.0.0').ok).toBe(false);
     expect(resolveInstallationSelection('html', { method: 'shadcn', preset: 'background-video' }, '10.0.0').ok).toBe(
       false

@@ -17,11 +17,7 @@ describe('resolveInstallationMethodUrl', () => {
   it('keeps the Vue or Svelte project framework while using Shadcn HTML source', () => {
     for (const framework of ['vue', 'svelte']) {
       const current = new URL(`https://videojs.org/docs/guides/installation/${framework}?preset=audio&skin=minimal`);
-      const result = resolveInstallationMethodUrl(
-        current,
-        `/docs/guides/installation/shadcn?framework=${framework}`,
-        'shadcn'
-      );
+      const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn', 'shadcn');
 
       expect(result.searchParams.get('framework')).toBe(framework);
       expect(result.searchParams.get('preset')).toBe('audio');
@@ -81,6 +77,21 @@ describe('resolveInstallationMethodUrl', () => {
 });
 
 describe('resolveInstallationMethodHref', () => {
+  it('writes the selected Vue or Svelte framework when switching to Shadcn', () => {
+    for (const framework of ['vue', 'svelte'] as const) {
+      const current = new URL(`https://videojs.org/docs/guides/installation/${framework}`);
+      const result = resolveInstallationMethodHref(
+        current,
+        '/docs/guides/installation/shadcn',
+        'shadcn',
+        DEFAULT_SELECTION,
+        framework
+      );
+
+      expect(result).toBe(`/docs/guides/installation/shadcn?framework=${framework}`);
+    }
+  });
+
   it('uses the selected Shadcn framework when returning to Packaged', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react');
     const result = resolveInstallationMethodHref(

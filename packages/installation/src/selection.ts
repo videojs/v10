@@ -137,6 +137,12 @@ export function resolveInstallationSelection(
       value: framework,
       message: '`@videojs/react` supports the React framework. Use `@videojs/html` for HTML, Vue, or Svelte.',
     });
+  } else if (owner === 'html' && framework === 'react') {
+    errors.push({
+      field: 'framework',
+      value: framework,
+      message: '`@videojs/html` supports HTML, Vue, or Svelte. Use `@videojs/react` for React.',
+    });
   }
 
   const presetValue = defaultValue('preset', 'video');

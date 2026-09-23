@@ -1,10 +1,20 @@
-import { isShadcnInstallationUrl, type InstallationPickerFramework } from '@/utils/installation/framework-navigation';
+import {
+  isInstallationPickerFramework,
+  isShadcnInstallationUrl,
+  type InstallationPickerFramework,
+} from '@/utils/installation/framework-navigation';
 import type { InstallationMethod } from '@/utils/installation/method-options';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
 import type { InstallationSelection } from '@/utils/installation/url-state';
 import { serializeInstallationSearch } from '@/utils/installation/url-state';
 
 export type { InstallationMethod } from '@/utils/installation/method-options';
+
+function frameworkFromInstallationPath(pathname: string): InstallationPickerFramework | null {
+  const route = pathname.match(/\/docs\/guides\/installation\/([^/]+)\/?$/)?.[1] ?? null;
+
+  return isInstallationPickerFramework(route) ? route : null;
+}
 
 /** Carry compatible installation choices to another method's guide. */
 export function resolveInstallationMethodUrl(current: URL, href: string, method: InstallationMethod): URL {
@@ -26,12 +36,9 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     target.searchParams.delete('framework');
   } else if (method === 'shadcn') {
     const requested = target.searchParams.get('framework');
-    const framework =
-      requested === 'react' || requested === 'html' || requested === 'vue' || requested === 'svelte'
-        ? requested
-        : current.pathname.endsWith('/react')
-          ? 'react'
-          : 'html';
+    const framework = isInstallationPickerFramework(requested)
+      ? requested
+      : (frameworkFromInstallationPath(current.pathname) ?? 'html');
 
     target.searchParams.set('framework', framework);
   } else {
@@ -54,7 +61,9 @@ export function resolveInstallationMethodHref(
 
   source.search = serializeInstallationSearch(selection, source.search);
 
-  if (isShadcnInstallationUrl(source) && framework) source.searchParams.set('framework', framework);
+  if (framework && (isShadcnInstallationUrl(source) || method === 'shadcn')) {
+    source.searchParams.set('framework', framework);
+  }
 
   const target = resolveInstallationMethodUrl(source, href, method);
 
