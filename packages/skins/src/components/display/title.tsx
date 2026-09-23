@@ -2,7 +2,7 @@ import * as $ from '@videojs/core/vjsc';
 import { type Props } from 'vjsc/components';
 
 import type { SkinComponentDescription } from '../../meta';
-import styles from '../../styles/metadata/title.styles';
+import styles from '../../styles/display/title.styles';
 
 export function Title({ className, ...props }: Props = {}) {
   return <$.Title className={[styles.root, className]} {...props} />;

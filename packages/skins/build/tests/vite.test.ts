@@ -245,13 +245,20 @@ describe('Skins Vite workflow', () => {
     'renders a title primitive for %s',
     async (target) => {
       const result = await server.transformRequest(
-        `/../src/components/metadata/title.tsx?style=tailwind&target=${target}&skin=default-video&theme=default`
+        `/../src/components/display/title.tsx?style=tailwind&target=${target}&skin=default-video&theme=default`
       );
 
       expect(result?.code).toContain(target === 'html' ? 'media-title' : 'Title');
     },
     30_000
   );
+
+  it('emits title styles in the display stylesheet', async () => {
+    const result = await server.transformRequest(`/../src/components/display/title.tsx${reactTarget}`);
+
+    expect(result?.code).toContain('/display.css');
+    expect(result?.code).not.toContain('/title.css');
+  }, 30_000);
 
   it('includes Shadow DOM utilities only for HTML targets', async () => {
     const html = await server.transformRequest(htmlPosterUrl);

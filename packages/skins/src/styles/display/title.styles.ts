@@ -1,7 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'title.css',
+  file: 'display.css',
   prefix: 'media-title',
   rules: {
     root: {
