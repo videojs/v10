@@ -282,8 +282,8 @@ export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps 
    * Structured source: what to play (`src`, an optional `type`) plus how to play it (`preferPlayback`, `engine`).
    * Assigning it derives `src`.
    *
-   * Sources are compared structurally, so reassigning an equivalent object — an inline React prop, for instance — is a
-   * no-op. Only a change to the engine options (or to the resolved content type) recreates the playback engine.
+   * Sources are compared structurally, so reassigning an equivalent object is a no-op. Only a change to the engine
+   * options (or to the resolved content type) recreates the playback engine.
    */
   get source(): HlsSource | null {
     return this.#source;

@@ -32,7 +32,7 @@ You get one file (plus a sourcemap), no runtime requests to a CDN, and only the 
 
 ## Availability and constraints
 
-- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling HlsJsVideo, install `@videojs/hlsjs-video` with `@videojs/html`, add `import '@videojs/html/media/hlsjs-video';` to the entry file, and use `<hlsjs-video>` for the `.m3u8` source. The smaller default HlsVideo comes with `@videojs/html`. DASH, Shaka, Vimeo, and Wistia use `@videojs/dash-video`, `@videojs/shaka-video`, `@videojs/vimeo-video`, and `@videojs/wistia-video`. When mirroring the CDN package, adapters are already bundled: serve the matching media file and add its script tag, such as `<script type="module" src="/videojs/media/hlsjs-video.js"></script>`.
+- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling `<hlsjs-video>`, install `@videojs/hlsjs-video` with `@videojs/html`, add `import '@videojs/html/media/hlsjs-video';` to the entry file, and use `<hlsjs-video>` for the `.m3u8` source. The smaller default `<hls-video>` comes with `@videojs/html`. DASH, Shaka, Vimeo, and Wistia use `@videojs/dash-video`, `@videojs/shaka-video`, `@videojs/vimeo-video`, and `@videojs/wistia-video`. When mirroring the CDN package, adapters are already bundled: serve the matching media file and add its script tag, such as `<script type="module" src="/videojs/media/hlsjs-video.js"></script>`.
 
 ## Common variations
 
