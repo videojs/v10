@@ -101,6 +101,10 @@ export const utilities = {
     kind: 'variant',
     description: 'Hovered, focused, expanded, or highlighted control or menu item that is not disabled.',
   },
+  'media-menu-highlighted': {
+    kind: 'variant',
+    description: 'Focused, expanded, or highlighted menu item that is not disabled.',
+  },
   'media-transitioning': {
     kind: 'variant',
     description: 'Element entering or leaving through starting and ending styles.',
