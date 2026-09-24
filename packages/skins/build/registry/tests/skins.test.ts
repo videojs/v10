@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { GraphModule } from 'vjsc/graph';
 
-import type { SkinModuleMeta } from '../../../src/meta.ts';
+import type { SkinGraphModule } from '../../variants.ts';
 import { skinModuleTarget } from '../items/skins.ts';
 
-function graphModule(sourcePath: string): GraphModule<SkinModuleMeta> {
+function graphModule(sourcePath: string): SkinGraphModule {
   return {
     id: sourcePath,
     filename: `/skins/src/${sourcePath}`,
@@ -12,7 +11,9 @@ function graphModule(sourcePath: string): GraphModule<SkinModuleMeta> {
     params: {},
     source: '',
     imports: [],
+    exports: [],
     styles: { files: [], assets: [] },
+    annotations: {},
   };
 }
 

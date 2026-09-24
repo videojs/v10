@@ -1,6 +1,7 @@
 import { escapeHtml } from '@videojs/utils/string';
 
 import { htmlAttributeName } from '../target/attributes';
+import { SCOPED_ID } from './scoped-id';
 
 /** Attributes and children handed to one element or component by compiled HTML target JSX. */
 export type HtmlProps = Record<string, unknown>;
@@ -12,11 +13,28 @@ export type HtmlElementType<Props extends HtmlProps = HtmlProps> = string | type
 
 export const Fragment: unique symbol = Symbol('Fragment');
 
-const RAW = Symbol('raw-html');
-const ELEMENT = Symbol('html-element');
-const FRAGMENT = Symbol('html-fragment');
-const SCOPE = Symbol('html-scope');
-const SCOPED_ID = '__vjsc-id-';
+// Registered symbols, because static rendering evaluates a bundled copy of this runtime whose nodes the compiler's own
+// copy must read back through `renderedElementTypes`.
+const ELEMENT = Symbol.for('vjsc/html-runtime/element');
+const FRAGMENT = Symbol.for('vjsc/html-runtime/fragment');
+const SCOPE = Symbol.for('vjsc/html-runtime/scope');
+
+/** Elements HTML serializes without an end tag or content. */
+const VOID_ELEMENTS: ReadonlySet<string> = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+  'track',
+  'wbr',
+]);
 
 interface HtmlElementValue {
   readonly type: string;
@@ -33,7 +51,6 @@ interface Renderable {
   readonly [ELEMENT]?: HtmlElementValue;
   readonly [FRAGMENT]?: unknown;
   readonly [SCOPE]?: HtmlScopeValue;
-  readonly [RAW]?: string;
   toString(): string;
 }
 
@@ -129,8 +146,15 @@ function renderValue(value: unknown, context: RenderContext): string {
 
   if (value[ELEMENT]) {
     const current = value[ELEMENT];
+    const opening = `<${current.type}${renderAttributes(current.attributes, context)}>`;
 
-    return `<${current.type}${renderAttributes(current.attributes, context)}>${renderChildren(current.children, context)}</${current.type}>`;
+    if (VOID_ELEMENTS.has(current.type)) {
+      if (renderChildren(current.children, context)) throw new Error(`HTML <${current.type}> cannot contain children.`);
+
+      return opening;
+    }
+
+    return `${opening}${renderChildren(current.children, context)}</${current.type}>`;
   }
 
   if (FRAGMENT in value) return renderChildren(value[FRAGMENT], context);
@@ -146,9 +170,29 @@ function renderValue(value: unknown, context: RenderContext): string {
     return renderChildren(current.children, { counts: context.counts, scopes });
   }
 
-  if (value[RAW] !== undefined) return value[RAW];
-
   return escapeHtml(String(value));
+}
+
+/** Every element type a rendered node tree contains, in first-rendered order. */
+export function renderedElementTypes(value: unknown): ReadonlySet<string> {
+  const types = new Set<string>();
+  const visit = (node: unknown): void => {
+    for (const child of [node].flat(Number.POSITIVE_INFINITY)) {
+      if (!isRenderable(child)) continue;
+
+      if (child[ELEMENT]) {
+        types.add(child[ELEMENT].type);
+        visit(child[ELEMENT].children);
+      } else if (FRAGMENT in child) {
+        visit(child[FRAGMENT]);
+      } else if (child[SCOPE]) {
+        visit(child[SCOPE].children);
+      }
+    }
+  };
+
+  visit(value);
+  return types;
 }
 
 function resolveScopedId(value: unknown, context: RenderContext): unknown {

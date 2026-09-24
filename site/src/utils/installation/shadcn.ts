@@ -1,11 +1,13 @@
+import { type SkinPreset, type SkinTheme, skinThemes } from '@videojs/skins/meta';
+
 import { getInstallationPreset, type Skin, type UseCase } from './types';
 
 export type RegistryFramework = 'html' | 'react';
 export type RegistryProjectFramework = RegistryFramework | 'svelte' | 'vue';
 export type RegistryTemplate = 'next' | 'vite' | 'start' | 'laravel' | 'react-router' | 'astro';
 export type RegistryStyling = 'css' | 'tailwind';
-export type RegistryTheme = 'default' | 'minimal';
-export type RegistryPreset = 'audio' | 'live-audio' | 'live-video' | 'video';
+export type RegistryTheme = SkinTheme;
+export type RegistryPreset = SkinPreset;
 export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 /** Where `packages/skins` publishes its hosted registry; see its `netlify.toml`. */
@@ -51,12 +53,19 @@ const HTML_REGISTRY_TEMPLATES = ['vite', 'astro', 'laravel'] as const satisfies 
 export const REGISTRY_STYLINGS = ['tailwind', 'css'] as const satisfies readonly RegistryStyling[];
 const HTML_REGISTRY_STYLINGS = ['css'] as const satisfies readonly RegistryStyling[];
 
-export const REGISTRY_THEMES = ['default', 'minimal'] as const satisfies readonly RegistryTheme[];
+export const REGISTRY_THEMES = skinThemes;
 
 export const REGISTRY_THEME_LABELS = {
   default: 'Default',
   minimal: 'Minimal',
 } as const satisfies Record<RegistryTheme, string>;
+
+const REGISTRY_PRESET_LABELS = {
+  video: 'Video',
+  audio: 'Audio',
+  'live-video': 'Live Video',
+  'live-audio': 'Live Audio',
+} as const satisfies Record<RegistryPreset, string>;
 
 export const DEFAULT_REGISTRY_PRESET = 'video' satisfies RegistryPreset;
 
@@ -70,40 +79,24 @@ export interface RegistrySkin {
   readonly directory: string;
 }
 
-export const REGISTRY_PRESETS = (
-  [
-    ['video', 'Video'],
-    ['audio', 'Audio'],
-    ['live-video', 'Live Video'],
-    ['live-audio', 'Live Audio'],
-  ] as const
-).map(([preset, label]) => ({
+/** Every preset the skins package publishes, in the order of the skin reference pages. */
+export const REGISTRY_PRESETS = (Object.keys(REGISTRY_PRESET_LABELS) as RegistryPreset[]).map((preset) => ({
   item: preset,
-  label,
+  label: REGISTRY_PRESET_LABELS[preset],
   preset,
   directory: `${REGISTRY_INSTALL_DIRECTORY}/${preset}`,
 }));
 
-/**
- * The skins the registry publishes, in the order of the skin reference pages. Background video stays a package skin.
- * Mirrors `skinCatalog` in `packages/skins/build/catalog.ts`.
- */
-export const REGISTRY_SKINS: readonly RegistrySkin[] = REGISTRY_PRESETS.flatMap(({ preset, label, directory }) => [
-  {
+/** The skins the registry publishes: each preset in each theme. Background video stays a package skin. */
+export const REGISTRY_SKINS: readonly RegistrySkin[] = REGISTRY_PRESETS.flatMap(({ preset, label, directory }) =>
+  REGISTRY_THEMES.map((theme) => ({
     item: preset,
-    label: `Default ${label}`,
+    label: `${REGISTRY_THEME_LABELS[theme]} ${label}`,
     preset,
-    theme: 'default',
+    theme,
     directory,
-  },
-  {
-    item: preset,
-    label: `Minimal ${label}`,
-    preset,
-    theme: 'minimal',
-    directory,
-  },
-]);
+  }))
+);
 
 /** The stylings a framework's registry catalog publishes. HTML skins are vanilla CSS only. */
 export function registryStylings(framework: RegistryFramework): readonly RegistryStyling[] {
