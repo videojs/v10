@@ -156,6 +156,23 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(false);
     });
 
+    it('ignores mouseleave reported inside the container, as Safari 16 sends after pointer capture ends', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      vi.spyOn(container!, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 400, 300));
+
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 250 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 320 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
     it('keeps controlsVisible true on mouseleave when paused', () => {
       const video = createMockVideo({ paused: true });
       const { store, container } = createPlayerStore(video);

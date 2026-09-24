@@ -1,6 +1,6 @@
 import type { MediaControlsState } from '@videojs/media';
 import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '@videojs/media';
-import { listen } from '@videojs/utils/dom';
+import { isPointInElement, listen } from '@videojs/utils/dom';
 import { isNull } from '@videojs/utils/predicate';
 
 import { definePlayerFeature } from '../../feature';
@@ -235,9 +235,13 @@ export const controlsFeature = definePlayerFeature({
     listen(
       container,
       'mouseleave',
-      () => {
+      (event: Event) => {
         // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
         if (isRecentTouch()) return;
+
+        // Safari 16 dispatches mouseleave when a control releases pointer capture, such as after a click on the time
+        // slider, though the pointer never left. A real leave reports a position outside the container.
+        if (event instanceof MouseEvent && isPointInElement(container, event)) return;
 
         setInactive();
       },

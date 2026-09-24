@@ -39,6 +39,7 @@ export {
   getElementPadding,
   getElementSize,
   getInlineExtent,
+  isPointInElement,
   type LogicalBoxEdges,
   type MeasureElementChildrenOptions,
   type MeasureElementOptions,
