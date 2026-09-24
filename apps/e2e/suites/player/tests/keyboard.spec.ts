@@ -254,7 +254,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
         await page.keyboard.press('ArrowRight');
         await expect(player.activeMenuPanel).toBeVisible();
-        await expect(player.activeMenuPanel.getByRole('menuitem').first()).toBeFocused();
+        await expect(player.activeMenuPanel.getByRole('menuitemradio', { checked: true })).toBeFocused();
 
         await page.keyboard.press('ArrowLeft');
         await expect(player.activeMenuPanel).not.toBeVisible();
