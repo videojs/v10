@@ -159,7 +159,7 @@ jobs:
 
     steps:
       - name: Start the floor engines
-        # Host networking lets each engine reach the e2e app on localhost. Starting in the background lets the image
+        # Host networking lets the runner reach each engine on 127.0.0.1. Starting in the background lets the image
         # pulls overlap the install and build replay; the wait step below reports a failed start.
         run: |
           nohup sh -c '
@@ -205,9 +205,10 @@ jobs:
 
       - name: Run floor tests
         env:
-          FLOOR_WS_CHROMIUM: ws://localhost:3131/
-          FLOOR_WS_WEBKIT: ws://localhost:3131/
-          FLOOR_WS_FIREFOX: ws://localhost:3141/
+          # IPv4 literals: `localhost` can resolve to ::1 first, where the engines do not listen.
+          FLOOR_WS_CHROMIUM: ws://127.0.0.1:3131/
+          FLOOR_WS_WEBKIT: ws://127.0.0.1:3131/
+          FLOOR_WS_FIREFOX: ws://127.0.0.1:3141/
         run: pnpm -F @videojs/e2e test:floor
 
       - name: Upload floor screenshots
