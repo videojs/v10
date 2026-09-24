@@ -100,7 +100,9 @@
 }
 
 /* Backdrop filters from the theme, for example `backdrop-filter-media-indicator`. */
+/* Tailwind emits authored utilities as written, so each carries the `-webkit-` form Safari needed before 18. */
 @utility backdrop-filter-media-* {
+  -webkit-backdrop-filter: --value(--backdrop-filter-media-*);
   backdrop-filter: --value(--backdrop-filter-media-*);
 }
 
@@ -239,6 +241,7 @@
   box-shadow:
     0 0 0 1px var(--media-surface-border, var(--media-border)),
     var(--media-shadow-surface);
+  -webkit-backdrop-filter: var(--media-backdrop-filter-surface);
   backdrop-filter: var(--media-backdrop-filter-surface);
 }
 
@@ -256,6 +259,7 @@
 @utility surface-media-none {
   background-color: transparent;
   box-shadow: none;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
@@ -267,14 +271,20 @@
 
 /* Fades trailing controls while the horizontal volume popover is open; pair with `mask-media-volume-open`. */
 @utility mask-media-volume {
+  -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
+  -webkit-mask-position: 100% 0;
   mask-position: 100% 0;
-  transition: mask-position var(--media-duration-instant) ease-out;
+  transition:
+    -webkit-mask-position var(--media-duration-instant) ease-out,
+    mask-position var(--media-duration-instant) ease-out;
 }
 
 /* Open state of `mask-media-volume`. */
 @utility mask-media-volume-open {
+  -webkit-mask-image: linear-gradient(to right, transparent 10%, black 25%, black 100%);
   mask-image: linear-gradient(to right, transparent 10%, black 25%, black 100%);
+  -webkit-mask-position: 0 0;
   mask-position: 0 0;
 }
 
@@ -335,8 +345,9 @@
 /* Horizontal slider layer sized to progress and chapter bounds. */
 @utility clip-media-x-* {
   left: calc(var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0));
+  /* The fallback stands in for the `@property` initial value in browsers without `@property`. */
   right: max(
-    calc(100% - var(--value([*]))),
+    calc(100% - var(--value([*]), 0%)),
     calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
   );
   clip-path: inset(-1px 0);
@@ -346,7 +357,7 @@
 @utility clip-media-y-* {
   bottom: calc(var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0));
   top: max(
-    calc(100% - var(--value([*]))),
+    calc(100% - var(--value([*]), 0%)),
     calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
   );
   clip-path: inset(0 -1px);
