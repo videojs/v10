@@ -94,7 +94,12 @@ export {
   snapshotInlineStyles,
   withInlineStyles,
 } from './style';
-export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
+export {
+  supportsAnchorPositioning,
+  supportsAnimationFrame,
+  supportsConstructableStyleSheets,
+  supportsIdleCallback,
+} from './supports';
 export { cloneTemplateRoot, createTemplate, getTemplateElement, getTemplateRoot, renderTemplate } from './template';
 export { type CaptionOrSubtitleKind, findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
