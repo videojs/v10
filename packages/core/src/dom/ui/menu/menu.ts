@@ -100,6 +100,8 @@ export interface MenuApi {
   highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
   /** Programmatically highlight the first registered item. */
   highlightFirstItem: (options?: MenuHighlightOptions) => void;
+  /** Highlight the selected registered item, or the first navigable item. */
+  highlightInitialItem: (options?: MenuHighlightOptions) => void;
   /** Return focus to the trigger when the close reason requires it. */
   restoreFocus: (options?: FocusOptions) => void;
   open: (reason?: MenuOpenChangeReason) => void;
@@ -225,6 +227,10 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function highlightFirstItem(options?: MenuHighlightOptions): void {
     highlight(getNavigableItems()[0] ?? null, options);
+  }
+
+  function highlightInitialItem(options?: MenuHighlightOptions): void {
+    highlight(getInitialHighlightItem(), options);
   }
 
   function restoreFocus(focusOptions?: FocusOptions): void {
@@ -544,6 +550,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     registerSubmenu,
     highlight,
     highlightFirstItem,
+    highlightInitialItem,
     restoreFocus,
     open: popover.open,
     close: popover.close,

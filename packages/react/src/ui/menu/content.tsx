@@ -21,7 +21,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const isSubmenu = parent !== null;
   const isActive = isSubmenu && state.open;
   const wasActiveRef = useRef(false);
-  const contentElementRef = useRef<HTMLDivElement>(null);
   const cleanupRegistrationRef = useRef<(() => void) | null>(null);
 
   useLayoutEffect(() => {
@@ -32,17 +31,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     wasActiveRef.current = isActive;
 
     if (isActive && !wasActive) {
-      const frame = requestAnimationFrame(() => {
-        const content = contentElementRef.current;
-        const selectedItem = Array.from(
-          content?.querySelectorAll<HTMLElement>(
-            '[role="menuitemradio"][aria-checked="true"], [aria-selected="true"]'
-          ) ?? []
-        ).find((item) => item.closest('[role="menu"]') === content);
-
-        if (selectedItem) menu.highlight(selectedItem, { preventScroll: true });
-        else menu.highlightFirstItem({ preventScroll: true });
-      });
+      const frame = requestAnimationFrame(() => menu.highlightInitialItem({ preventScroll: true }));
 
       return () => cancelAnimationFrame(frame);
     }
@@ -71,7 +60,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     },
     [isSubmenu, menu, parent?.menu, popup]
   );
-  const composedRef = useComposedRefs(forwardedRef, contentElementRef, setContentElement);
+  const composedRef = useComposedRefs(forwardedRef, setContentElement);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
