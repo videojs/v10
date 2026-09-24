@@ -23,6 +23,7 @@ import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 
+import { cssExclude, viteCssTarget } from '../build/css-targets.ts';
 import { reactCompilerPlugin } from '../build/react-compiler.ts';
 import llmsMarkdown, { llmsIndexPaths } from './integrations/llms-markdown';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
@@ -174,6 +175,9 @@ export default defineConfig({
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
     plugins: [siteReactCompilerPlugin, demoPlaceholderPlugin(), tailwindcss(), svgr()],
+    // Minify for the root `browserslist` without rewriting the skins' `:dir()` and `light-dark()` for every browser.
+    build: { cssTarget: viteCssTarget },
+    css: { lightningcss: { exclude: cssExclude } },
     optimizeDeps: {
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.

@@ -5,6 +5,7 @@ import type { RegistryCreatedItem, RegistryModuleItem } from 'vjsc/shadcn';
 
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { skinCatalogEntry } from '../../catalog.ts';
+import { cssTargets } from '../../css-targets.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
 import { isSkinPreset, skinBaseStylesheet, skinDirectory, skinPreset, skinStyleItemName } from '../../skin.ts';
 import { registryDocsUrl } from '../docs.ts';
@@ -55,7 +56,7 @@ export async function htmlSkinItem(
       target: `${registryPaths.install}/${directory}/skin.css`,
       type: 'registry:style',
       // Theme tokens, resets, and preset styles ship through the skin's registry dependency closure.
-      content: await bundleStyles(graph, skin.modules, { label: name }),
+      content: await bundleStyles(graph, skin.modules, { label: name, targets: cssTargets }),
     },
   ];
 

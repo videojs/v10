@@ -3,6 +3,7 @@ import { bundleStyles, relativeImport, rewriteImports, stripStyleImports } from 
 
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import { skinCatalogEntry } from '../catalog.ts';
+import { cssTargets } from '../css-targets.ts';
 import { skinClassNameMergeImport } from '../imports.ts';
 import { skinBaseStylesheet, skinPresets, skinSourceDirectory } from '../skin.ts';
 import { type SkinRoot, skinRoots } from '../variants.ts';
@@ -88,6 +89,7 @@ export async function createReactPackageSkins(
       await bundleStyles(graph, skin.modules, {
         label: `${skin.theme}-${skin.preset}`,
         files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
+        targets: cssTargets,
       })
     );
   }
