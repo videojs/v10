@@ -15,10 +15,26 @@ import {
   useRegistryProjectFramework,
   useRegistryStyling,
 } from '@/components/installation/useRegistryProjectFramework';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 interface Props {
   framework: RegistryFramework;
   installation: boolean;
+}
+
+function ConfigurationBlock({ block }: { block: { code: string; filename: string; language: 'js' | 'json' | 'ts' } }) {
+  return (
+    <TabsRoot maxWidth={false}>
+      <TabsList label="App configuration">
+        <Tab value={block.filename} initial>
+          {block.filename}
+        </Tab>
+      </TabsList>
+      <TabsPanel value={block.filename} initial>
+        <ClientCode code={block.code} lang={block.language} />
+      </TabsPanel>
+    </TabsRoot>
+  );
 }
 
 export default function RegistryInitCommandClient({ framework, installation }: Props) {
@@ -29,25 +45,15 @@ export default function RegistryInitCommandClient({ framework, installation }: P
   const styling = resolveRegistryStyling(sourceFramework, useRegistryStyling());
   const project = installationProjectFiles(projectFramework, template);
   const configuration = shadcnProjectConfiguration(projectFramework, template, styling, project.componentsAlias);
-  const aliasSetup = configuration.aliasSetup.map((block) => (
-    <div key={block.filename}>
-      <p className="text-p4 mb-2">
-        Merge into <code>{block.filename}</code>:
-      </p>
-      <ClientCode code={block.code} lang={block.language} />
-    </div>
-  ));
+  const aliasSetup = configuration.aliasSetup.map((block) => <ConfigurationBlock key={block.filename} block={block} />);
 
   if (configuration.mode === 'components-json') {
     return (
-      <div className="grid gap-6">
+      <div>
         {aliasSetup}
-        <div>
-          <p className="text-p4 mb-2">
-            Create <code>components.json</code>:
-          </p>
-          <ClientCode code={configuration.componentsConfig!} lang="json" />
-        </div>
+        <ConfigurationBlock
+          block={{ code: configuration.componentsConfig!, filename: 'components.json', language: 'json' }}
+        />
       </div>
     );
   }
@@ -60,7 +66,7 @@ export default function RegistryInitCommandClient({ framework, installation }: P
   };
 
   return (
-    <div className="grid gap-6">
+    <div>
       {aliasSetup}
       <PackageManagerTabs commands={commands} syncSelection={installation} />
     </div>

@@ -29,12 +29,13 @@ import AstroLogo from '@/assets/logos/brands/astro.svg?react';
 import CssLogo from '@/assets/logos/brands/css3.svg?react';
 import LaravelLogo from '@/assets/logos/brands/laravel.svg?react';
 import NextLogoUrl from '@/assets/logos/brands/nextjs.svg?url';
+import NuxtLogo from '@/assets/logos/brands/nuxt.svg?react';
 import ReactRouterLogo from '@/assets/logos/brands/react-router.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import TanStackLogo from '@/assets/logos/brands/tanstack.svg?react';
 import ViteLogoUrl from '@/assets/logos/brands/vite.svg?url';
-import VueLogo from '@/assets/logos/brands/vue.svg?react';
+import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import SkinPreview from '@/components/installation/SkinPreview';
 import {
   useInstallationTemplate,
@@ -44,7 +45,7 @@ import {
   useRegistryTheme,
 } from '@/components/installation/useRegistryProjectFramework';
 import { useSelection } from '@/components/installation/useSelection';
-import { Select, type SelectOption } from '@/components/Select';
+import { Select } from '@/components/Select';
 import {
   skin as installationSkin,
   selectInstallationTemplate,
@@ -53,14 +54,14 @@ import {
 import { registrySkin, registryTheme, selectRegistryStyling } from '@/stores/registry';
 
 const TEMPLATE_ICONS = {
-  next: <img alt="" src={NextLogoUrl} className="size-4 dark:invert" />,
-  vite: <img alt="" src={ViteLogoUrl} className="size-4" />,
-  start: <TanStackLogo className="size-4" />,
-  laravel: <LaravelLogo className="size-4" />,
-  'react-router': <ReactRouterLogo className="w-4" />,
-  astro: <AstroLogo className="size-4" />,
-  nuxt: <VueLogo className="size-4" />,
-  sveltekit: <SvelteLogo className="size-4" />,
+  next: <img alt="" src={NextLogoUrl} className="size-7 dark:invert" />,
+  vite: <img alt="" src={ViteLogoUrl} className="size-7" />,
+  start: <TanStackLogo className="size-7" />,
+  laravel: <LaravelLogo className="size-7" />,
+  'react-router': <ReactRouterLogo className="w-7" />,
+  astro: <AstroLogo className="size-7" />,
+  nuxt: <NuxtLogo className="size-7" />,
+  sveltekit: <SvelteLogo className="size-7" />,
 } satisfies Record<InstallationTemplate, ReactNode>;
 
 const STYLING_ICONS = {
@@ -89,36 +90,32 @@ interface Props {
   method?: InstallationMethod;
 }
 
-function templateOptions(
+function templateCardOptions(
   framework: Parameters<typeof installationTemplates>[0],
   method?: InstallationMethod
-): SelectOption<InstallationTemplate>[] {
+): CardRadioOption<InstallationTemplate>[] {
   const templates = method === 'cdn' ? (['vite'] as const) : installationTemplates(framework);
 
   return templates.map((value) => ({
     value,
     label: INSTALLATION_TEMPLATE_LABELS[value],
-    icon: TEMPLATE_ICONS[value],
+    media: TEMPLATE_ICONS[value],
   }));
 }
 
-function RegistryTemplateSelect({ framework, method }: Pick<Props, 'framework' | 'method'>) {
+function RegistryTemplateCards({ framework, method }: Pick<Props, 'framework' | 'method'>) {
   const projectFramework = useRegistryProjectFramework(framework);
   const defaultTemplate = defaultInstallationTemplate(projectFramework);
   const $template = useInstallationTemplate(defaultTemplate);
   const template = resolveInstallationTemplate(projectFramework, $template);
 
   return (
-    <div className="grid gap-1.5">
-      <p className="text-p4 font-medium">App setup</p>
-      <Select
-        value={template}
-        onChange={(value) => value && selectInstallationTemplate(value)}
-        options={templateOptions(projectFramework, method)}
-        aria-label="Select app setup"
-        className="justify-self-start"
-      />
-    </div>
+    <CardRadioGroup
+      value={template}
+      onChange={selectInstallationTemplate}
+      options={templateCardOptions(projectFramework, method)}
+      aria-label="Select app setup"
+    />
   );
 }
 
@@ -229,7 +226,7 @@ export default function RegistryOptionsClient({
   kind,
   method,
 }: Props) {
-  if (kind === 'template') return <RegistryTemplateSelect framework={framework} method={method} />;
+  if (kind === 'template') return <RegistryTemplateCards framework={framework} method={method} />;
 
   return kind === 'catalog' ? (
     <RegistryCatalogSelects

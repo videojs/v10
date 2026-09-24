@@ -2,12 +2,12 @@ import {
   type RegistryFramework,
   type RegistryPreset,
   type RegistryTheme,
-  registryNamespaceConfig,
   resolveRegistryStyling,
+  type ShadcnRunner,
   shadcnAddCommand,
+  shadcnRegistryAddCommand,
 } from '@videojs/installation';
 
-import ClientCode from '@/components/Code/ClientCode';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import {
   useRegistrySkin,
@@ -27,10 +27,7 @@ interface Props {
   theme?: RegistryTheme | undefined;
 }
 
-/**
- * The Shadcn configuration and command one install needs. The explicit `components.json` merge also replaces a
- * previously selected Video.js catalog instead of relying on Shadcn's add-only namespace command.
- */
+/** The Shadcn commands that configure the selected Video.js catalog and add its source files. */
 export default function RegistryCommandClient({
   defaultSkin,
   fixedSelection = false,
@@ -44,23 +41,17 @@ export default function RegistryCommandClient({
   const selectedItems = defaultSkin ? [fixedSelection ? defaultSkin : ($skin ?? defaultSkin)] : items;
   const selectedTheme = fixedSelection ? theme : ($theme ?? theme);
   const styling = resolveRegistryStyling(framework, $styling);
-  const config = registryNamespaceConfig(framework, styling, selectedTheme);
+  const command = (runner: ShadcnRunner) =>
+    [
+      shadcnRegistryAddCommand(runner, framework, styling, selectedTheme),
+      ...(selectedItems.length > 0 ? [shadcnAddCommand(runner, selectedItems)] : []),
+    ].join('\n');
   const commands = {
-    npm: shadcnAddCommand('npm', selectedItems),
-    pnpm: shadcnAddCommand('pnpm', selectedItems),
-    yarn: shadcnAddCommand('yarn', selectedItems),
-    bun: shadcnAddCommand('bun', selectedItems),
+    npm: command('npm'),
+    pnpm: command('pnpm'),
+    yarn: command('yarn'),
+    bun: command('bun'),
   };
 
-  return (
-    <div className="grid gap-6">
-      <div>
-        <p className="text-p4 mb-2">
-          Merge into <code>components.json</code>, replacing the existing <code>@videojs</code> value:
-        </p>
-        <ClientCode code={config} lang="json" />
-      </div>
-      <PackageManagerTabs commands={commands} />
-    </div>
-  );
+  return <PackageManagerTabs commands={commands} />;
 }

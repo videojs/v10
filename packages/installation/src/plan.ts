@@ -38,11 +38,11 @@ import {
 } from './projects';
 import { type InstallationSelection, type PlayerOwner, selectionToInput } from './selection';
 import {
-  registryNamespaceConfig,
   registrySkinSelection,
   shadcnAddCommand,
   shadcnInitCommand,
   shadcnProjectConfiguration,
+  shadcnRegistryAddCommand,
 } from './shadcn';
 
 export interface InstallationCodeBlock {
@@ -491,14 +491,20 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     id: 'skin-source',
     title: 'Add the skin source',
     description:
-      'Commit current source first. Merge the selected @videojs catalog into components.json, replacing its existing @videojs value if necessary. The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog. For HTML source, the later media step restores the selected media element after an overwrite.',
+      'Commit current source first. The registry command adds the selected @videojs catalog when the namespace is missing. If components.json already defines @videojs with another URL, replace that value with the URL from this command first because Shadcn skips configured namespaces. The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog. For HTML source, the later media step restores the selected media element after an overwrite.',
     blocks: [
       code(
-        'json',
-        registryNamespaceConfig(selection.sourceFramework, selection.styling, registry.theme),
-        'components.json'
+        'bash',
+        [
+          shadcnRegistryAddCommand(
+            selection.packageManager,
+            selection.sourceFramework,
+            selection.styling,
+            registry.theme
+          ),
+          shadcnAddCommand(selection.packageManager, [registry.item]),
+        ].join('\n')
       ),
-      code('bash', shadcnAddCommand(selection.packageManager, [registry.item])),
     ],
   });
 

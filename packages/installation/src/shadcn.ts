@@ -196,28 +196,21 @@ export function shadcnProjectConfiguration(
   };
 }
 
-/** The `components.json` fragment that selects one Video.js source catalog. */
-export function registryNamespaceConfig(
-  framework: RegistryFramework,
-  styling: RegistryStyling,
-  theme: RegistryTheme = 'default'
-): string {
-  return JSON.stringify(
-    {
-      registries: {
-        [REGISTRY_NAMESPACE]: registryNamespaceUrl(framework, styling, theme),
-      },
-    },
-    null,
-    2
-  );
-}
-
 export function shadcnAddCommand(runner: ShadcnRunner, items: readonly string[]): string {
   return shadcnCommand(
     runner,
     `add ${items.map((item) => `${REGISTRY_NAMESPACE}/${item}`).join(' ')} --overwrite --yes`
   );
+}
+
+/** Add the selected Video.js catalog to `components.json` through the Shadcn CLI. */
+export function shadcnRegistryAddCommand(
+  runner: ShadcnRunner,
+  framework: RegistryFramework,
+  styling: RegistryStyling,
+  theme: RegistryTheme = 'default'
+): string {
+  return shadcnCommand(runner, `registry add ${REGISTRY_NAMESPACE}=${registryNamespaceUrl(framework, styling, theme)}`);
 }
 
 /** The catalog and item for an installation selection, or `null` when its files are unavailable. */

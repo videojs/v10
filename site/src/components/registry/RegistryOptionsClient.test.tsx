@@ -10,6 +10,14 @@ vi.mock('@/components/Select', () => ({
   ),
 }));
 
+vi.mock('@/components/CardRadioGroup', () => ({
+  default: ({ value, options, ...props }: { value: string; options: { label: string }[]; 'aria-label': string }) => (
+    <span data-label={props['aria-label']} data-options={options.map(({ label }) => label).join(',')}>
+      {value}
+    </span>
+  ),
+}));
+
 import RegistryOptionsClient from './RegistryOptionsClient';
 
 describe('RegistryOptionsClient', () => {
@@ -37,9 +45,20 @@ describe('RegistryOptionsClient', () => {
       />
     );
 
-    expect(templateMarkup).toContain('data-label="Select app setup">next</span>');
+    expect(templateMarkup).toContain('data-label="Select app setup"');
+    expect(templateMarkup).toContain('>next</span>');
     expect(catalogMarkup).toContain('data-label="Select skin">video</span>');
     expect(catalogMarkup).toContain('data-label="Select styling">tailwind</span>');
     expect(catalogMarkup).toContain('data-label="Select theme">default</span>');
+  });
+
+  it('renders app setup choices as framework-specific cards', () => {
+    const vueMarkup = renderToString(<RegistryOptionsClient framework="vue" installation={false} kind="template" />);
+    const svelteMarkup = renderToString(
+      <RegistryOptionsClient framework="svelte" installation={false} kind="template" />
+    );
+
+    expect(vueMarkup).toContain('data-options="Vite,Nuxt"');
+    expect(svelteMarkup).toContain('data-options="Vite,SvelteKit"');
   });
 });

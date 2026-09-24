@@ -38,14 +38,6 @@ import ProjectCommands from '@/components/installation/ProjectCommands';
 
 <HumanCase>
 
-## Choose your JS framework
-
-Choose the JavaScript framework for your project.
-
-<ContentWidth margins="lg">
-  <JSPicker />
-</ContentWidth>
-
 ## Choose your app setup
 
 Choose the app environment that controls the setup commands and file locations below.
@@ -57,6 +49,14 @@ Choose the app environment that controls the setup commands and file locations b
 <ShadcnFrameworkCase framework="html">
 <RegistryOptions framework="html" kind="template" />
 </ShadcnFrameworkCase>
+
+## Choose your JS framework
+
+Choose the JavaScript framework for your project.
+
+<ContentWidth margins="lg">
+  <JSPicker />
+</ContentWidth>
 
 ## Choose your use case
 
@@ -92,7 +92,7 @@ Choose from the installation options available for your selections.
 
 <div data-installation-plan class="contents">
 
-## Choose source styling
+## Prepare your app
 
 React skin source is available with Tailwind CSS 4 or Vanilla CSS. HTML source for HTML, Vue, and Svelte uses Vanilla CSS.
 
@@ -100,35 +100,35 @@ React skin source is available with Tailwind CSS 4 or Vanilla CSS. HTML source f
 <RegistryOptions framework="react" kind="styling" />
 </ShadcnFrameworkCase>
 
-## Prepare your app
+<Steps>
+  <Step number={1} title="Create the app">
+    Skip this step when you already have the selected app setup. For a new React and Tailwind app, run the command from the parent directory: Shadcn creates the named app and `components.json` together. The other paths scaffold into the current empty app directory before you add the standard config below.
 
-Skip this section when you already have the selected app setup. For a new React and Tailwind app, run the command from the parent directory: Shadcn creates the named app and `components.json` together. The other paths scaffold into the current empty app directory before you add the standard config below.
+    <ProjectCommands client:load method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
+  </Step>
 
-<ProjectCommands client:load method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
+  <Step number={2} title="Configure Shadcn">
+    For an existing React and Tailwind app without `components.json`, satisfy Shadcn's Tailwind and import-alias checks, then run the command below. The other paths show the aliases and standard config to add to the app. In a monorepo, use the app workspace or pass `--cwd <path>` to Shadcn commands.
 
-## Configure the source registry
+    <Aside type="note">
+    Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
+    </Aside>
 
-For an existing React and Tailwind app without `components.json`, satisfy Shadcn's Tailwind and import-alias checks, then run the command below. The other paths show the aliases and standard config to merge into the app. In a monorepo, use the app workspace or pass `--cwd <path>` to Shadcn commands.
+    <ShadcnFrameworkCase framework="react">
+    <RegistryInitCommand framework="react" installation />
+    </ShadcnFrameworkCase>
 
-<Aside type="note">
-Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
-</Aside>
+    <ShadcnFrameworkCase framework="html">
+    <RegistryInitCommand framework="html" installation />
+    </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="react">
-<RegistryInitCommand framework="react" installation />
-</ShadcnFrameworkCase>
-
-<ShadcnFrameworkCase framework="html">
-<RegistryInitCommand framework="html" installation />
-</ShadcnFrameworkCase>
-
-If the app already has `components.json`, keep its aliases and skip this section. The registry writes source under its `aliases.components` path, so use that existing alias in the imports below. Vanilla CSS, HTML, Vue, and Svelte use the compatible `components.json` shown above without adding React or Tailwind setup.
+    If the app already has `components.json`, keep its aliases and skip this step. The registry writes source under its `aliases.components` path, so use that existing alias in the imports below. Vanilla CSS, HTML, Vue, and Svelte use the compatible `components.json` shown above without adding React or Tailwind setup.
+  </Step>
+</Steps>
 
 ## Add the skin source
 
-Set the Video.js registry catalog in `components.json`, then add the skin selected above.
-
-The add command overwrites an existing Video.js skin so theme or catalog changes apply completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
+The first command adds the selected Video.js catalog when `@videojs` is not already configured. Shadcn skips existing namespaces, so when you change styling or theme, replace the existing `@videojs` URL in `components.json` with the URL shown in the command. The second command adds the skin source and overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
 
 <ShadcnFrameworkCase framework="react">
 <InstallationRegistryCommand framework="react" />

@@ -39,9 +39,7 @@ const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
 
 <div hidden data-llms-only>
   <p>
-    These instructions add the {skin.label} skin with {REGISTRY_STYLING_LABELS[defaultRegistryStyling(framework)]}. For
-    another skin or styling, set the <code>@videojs</code> value under <code>registries</code> in <code>components.json</code>
-    to the matching catalog URL:
+    These instructions use <code>shadcn registry add</code> to select the {skin.label} skin catalog with {REGISTRY_STYLING_LABELS[defaultRegistryStyling(framework)]}, then add its source. Shadcn skips a namespace that is already configured, so replace the existing <code>@videojs</code> URL in <code>components.json</code> before the add command when changing catalogs. Use the matching catalog URL:
   </p>
 
   <table>

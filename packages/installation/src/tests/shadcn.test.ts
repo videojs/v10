@@ -7,7 +7,6 @@ import {
   REGISTRY_SKINS,
   INSTALLATION_TEMPLATES,
   installationTemplates,
-  registryNamespaceConfig,
   registryNamespaceUrl,
   registrySkinSelection,
   registryStylings,
@@ -18,6 +17,7 @@ import {
   shadcnComponentsConfig,
   shadcnInitCommand,
   shadcnProjectConfiguration,
+  shadcnRegistryAddCommand,
 } from '../index';
 
 describe('registryNamespaceUrl', () => {
@@ -59,6 +59,17 @@ describe('shadcnAddCommand', () => {
       'pnpm dlx shadcn@latest add @videojs/video @videojs/play-button --overwrite --yes'
     );
     expect(shadcnCommand('bun', 'init')).toBe('bunx --bun shadcn@latest init');
+  });
+});
+
+describe('shadcnRegistryAddCommand', () => {
+  it('sets the selected catalog through the Shadcn CLI', () => {
+    expect(shadcnRegistryAddCommand('pnpm', 'react', 'css', 'minimal')).toBe(
+      'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/css/minimal/{name}.json'
+    );
+    expect(shadcnRegistryAddCommand('npm', 'html', 'css')).toBe(
+      'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
+    );
   });
 });
 
@@ -142,16 +153,6 @@ describe('shadcnProjectConfiguration', () => {
     expect(shadcnProjectConfiguration('vue', 'vite', 'css', '@/components')).toMatchObject({
       mode: 'components-json',
       componentsConfig: expect.stringContaining('"tsx": true'),
-    });
-  });
-});
-
-describe('registryNamespaceConfig', () => {
-  it('merges the chosen catalog into components.json', () => {
-    expect(JSON.parse(registryNamespaceConfig('react', 'css', 'minimal'))).toEqual({
-      registries: {
-        '@videojs': 'https://shadcn.videojs.org/r/react/css/minimal/{name}.json',
-      },
     });
   });
 });

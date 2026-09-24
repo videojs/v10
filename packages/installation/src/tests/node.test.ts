@@ -54,6 +54,10 @@ describe('runAgentsInit', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('## Configure the source registry');
+    expect(result.stdout).toContain(
+      'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
+    );
+    expect(result.stdout).toContain('Shadcn skips configured namespaces');
     expect(result.stdout).toContain('## Install the media adapter');
     expect(result.stdout).toContain('pnpm add @videojs/hlsjs-video@10.0.0');
     expect(result.stdout).toContain('vite.config.ts');
