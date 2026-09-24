@@ -54,6 +54,12 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.8
   vitest: 4.1.10
   vite-plus: 0.2.8
+  # One Tailwind for the whole workspace: VJSC compiles CSS output with the same engine that consumers use for Tailwind
+  # output, and it relies on unstable design-system APIs, so the version stays exact.
+  '@tailwindcss/node': 4.3.3
+  '@tailwindcss/vite': 4.3.3
+  lightningcss: 1.32.0
+  tailwindcss: 4.3.3
 overrides:
   vite: 'catalog:'
   vitest: 'catalog:'

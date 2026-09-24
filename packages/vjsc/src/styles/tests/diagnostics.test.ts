@@ -116,6 +116,12 @@ describe('style diagnostics', () => {
 
     expect(diagnostics).toMatchObject([{ code: 'VJSC_STYLE_SCOPE_ESCAPE', kind: 'error' }]);
   });
+
+  it('accepts variants Tailwind flattens onto the candidate instead of nesting under it', () => {
+    expect(
+      diagnoseCompiledCandidate(rule('flat', ['flat']), 'flat', '.flat[data-open] { display: block; }', new Set())
+    ).toEqual([]);
+  });
 });
 
 function rule(token: string, utilities: readonly string[]): ResolvedStyleRule {

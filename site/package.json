@@ -28,7 +28,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "@sentry/astro": "^10.59.0",
     "@shikijs/transformers": "^4.3.1",
-    "@tailwindcss/vite": "^4.3.1",
+    "@tailwindcss/vite": "catalog:",
     "@videojs/cdn": "workspace:*",
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
@@ -52,7 +52,7 @@
     "shiki": "^4.3.1",
     "simple-git": "^3.36.0",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "catalog:",
     "video.js": "workspace:*",
     "vite": "^8.2.2"
   },

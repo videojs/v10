@@ -85,16 +85,16 @@
   },
   "dependencies": {
     "@oxc-project/types": "0.146.0",
-    "@tailwindcss/node": "4.2.1",
+    "@tailwindcss/node": "catalog:",
     "@videojs/utils": "workspace:*",
     "cn": "^0.2.5",
-    "lightningcss": "^1.32.0",
+    "lightningcss": "catalog:",
     "magic-string": "^1.2.2",
     "oxc-parser": "0.146.0",
     "oxc-walker": "^1.1.1",
     "rolldown": "~1.2.5",
     "shadcn": "^4.16.2",
-    "tailwindcss": "4.2.1"
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "vite": "^8.2.2",
