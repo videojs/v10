@@ -1,6 +1,6 @@
 import {
   defaultInstallationTemplate,
-  installationTemplates,
+  installationTemplatesForMethod,
   isInstallationFramework,
   isInstallationTemplate,
   registryStylings,
@@ -48,7 +48,9 @@ export function resolveShadcnUrlSelection(url: URL, fallback: InstallationFramew
   const sourceFramework = projectFramework === 'react' ? 'react' : 'html';
   const requestedTemplate = url.searchParams.get('template');
   const requestedStyling = url.searchParams.get('styling');
-  const template = installationTemplates(projectFramework).find((candidate) => candidate === requestedTemplate) ?? null;
+  const template =
+    installationTemplatesForMethod(projectFramework, 'shadcn').find((candidate) => candidate === requestedTemplate) ??
+    null;
   const styling = registryStylings(sourceFramework).find((candidate) => candidate === requestedStyling) ?? null;
 
   return { projectFramework, sourceFramework, styling, template };

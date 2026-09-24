@@ -75,6 +75,15 @@ describe('parseInstallationSearchForRoute', () => {
       template: 'nuxt',
     });
   });
+
+  it('keeps no scaffold on packaged HTML and resets it for Shadcn', () => {
+    expect(parseInstallationSearchForRoute('html', '?template=none')).toMatchObject({ template: 'none' });
+    expect(parseInstallationSearchForRoute('cdn', '?template=none')).toMatchObject({ template: 'none' });
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=html&template=none')).toMatchObject({
+      framework: 'html',
+      template: 'vite',
+    });
+  });
 });
 
 describe('serializeInstallationSearch', () => {

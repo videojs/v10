@@ -14,6 +14,21 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.get('skin')).toBe('minimal');
   });
 
+  it('drops the no-scaffold choice when switching to Shadcn', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/html?template=none');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn', 'shadcn');
+
+    expect(result.searchParams.get('framework')).toBe('html');
+    expect(result.searchParams.has('template')).toBe(false);
+  });
+
+  it('keeps the existing-site choice when switching to CDN', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/html?template=none');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
+
+    expect(result.searchParams.get('template')).toBe('none');
+  });
+
   it('keeps the Vue or Svelte project framework while using Shadcn HTML source', () => {
     for (const framework of ['vue', 'svelte']) {
       const current = new URL(`https://videojs.org/docs/guides/installation/${framework}?preset=audio&skin=minimal`);

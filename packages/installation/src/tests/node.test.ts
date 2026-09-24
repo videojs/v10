@@ -66,6 +66,25 @@ describe('runAgentsInit', () => {
     expect(result.stdout).not.toContain('### `index.html`');
   });
 
+  it('uses an existing HTML setup without inventing scaffold or run commands', () => {
+    const result = runAgentsInit('html', '10.0.0', [
+      'agents',
+      'init',
+      '--method',
+      'packaged',
+      '--framework',
+      'html',
+      '--template',
+      'none',
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('does not scaffold or assume a particular app setup');
+    expect(result.stdout).toContain('Use the existing project’s development or preview command');
+    expect(result.stdout).not.toContain('create vite');
+    expect(result.stdout).not.toContain('pnpm dev');
+  });
+
   it('uses Svelte component files for Shadcn HTML source', () => {
     const result = runAgentsInit('html', '10.0.0', [
       'agents',
@@ -340,7 +359,7 @@ describe('runAgentsInit', () => {
     const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn', '--template', 'astro']);
 
     expect(result.exitCode).toBe(2);
-    expect(result.stderr).toContain('- --template: Expected one of: vite');
+    expect(result.stderr).toContain('- --template: Expected one of: none, vite');
     expect(result.stderr).not.toContain('RegistryTemplate');
   });
 

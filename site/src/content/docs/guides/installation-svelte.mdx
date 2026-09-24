@@ -35,12 +35,6 @@ import ProjectCommands from '@/components/installation/ProjectCommands';
 
 <HumanCase>
 
-## Choose your app setup
-
-Choose whether the instructions target a Vite or SvelteKit app.
-
-<RegistryOptions framework="svelte" kind="template" />
-
 ## Choose your JS framework
 
 Choose the JavaScript framework for your project.
@@ -48,6 +42,12 @@ Choose the JavaScript framework for your project.
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app setup
+
+Choose whether the instructions target a Vite or SvelteKit app.
+
+<RegistryOptions framework="svelte" kind="template" method="packaged" />
 
 ## Choose your use case
 

@@ -10,6 +10,7 @@ import { RENDERERS, type Renderer } from './renderers';
 import {
   INSTALLATION_FRAMEWORKS,
   installationMethodsForFramework,
+  installationTemplatesForMethod,
   sourceFrameworkFor,
   type InstallationMethod,
   type PlayerOwner,
@@ -140,9 +141,9 @@ export function installationOptionDefinitionsFor(
   const supportsShadcn = methods.includes('shadcn');
   const sourceFrameworks = unique(frameworks.map(sourceFrameworkFor));
   const cdnOnly = methods.length === 1 && methods[0] === 'cdn';
-  const templates = cdnOnly
-    ? (['vite'] as const)
-    : unique(frameworks.flatMap((framework) => installationTemplates(framework)));
+  const templates = unique(
+    methods.flatMap((method) => frameworks.flatMap((framework) => installationTemplatesForMethod(framework, method)))
+  );
   const templateDefaults = cdnOnly ? (['vite'] as const) : unique(frameworks.map(defaultInstallationTemplate));
   const stylings = unique(sourceFrameworks.flatMap((framework) => registryStylings(framework)));
   const definitions: InstallationOptionDefinition[] = [
@@ -193,7 +194,8 @@ export function installationOptionDefinitionsFor(
     optionDefinition('template', {
       values: templates,
       default: templateDefaults.length === 1 ? templateDefaults[0]! : 'next for React; vite otherwise',
-      description: 'The app setup and file layout. Compatible values depend on the framework.',
+      description:
+        'The app setup and file layout. `none` keeps an existing plain HTML setup and is unavailable with Shadcn.',
     })
   );
 

@@ -3,7 +3,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { renderer, skin, useCase } from '@/stores/installation';
+import { renderer, skin, template, useCase } from '@/stores/installation';
 import { registryProjectFramework } from '@/stores/registry';
 
 const mocks = vi.hoisted(() => ({
@@ -25,6 +25,7 @@ describe('InstallationMethodNavClient', () => {
     useCase.set('default-video');
     skin.set('video');
     renderer.set('html5-video');
+    template.set('next');
     registryProjectFramework.set('react');
     window.history.replaceState(null, '', '/');
     vi.clearAllMocks();
@@ -92,6 +93,17 @@ describe('InstallationMethodNavClient', () => {
     });
 
     await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
+  });
+
+  it('hides Shadcn when plain HTML keeps its existing app setup', async () => {
+    const { queryByRole } = render(<InstallationMethodNavClient currentFramework="html" route="html" />);
+
+    expect(queryByRole('link', { name: /Shadcn/ })).toBeInTheDocument();
+
+    act(() => template.set('none'));
+
+    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
+    expect(queryByRole('link', { name: /CDN/ })).toBeInTheDocument();
   });
 
   it('hydrates query-backed card filters against the prerendered defaults', async () => {

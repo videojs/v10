@@ -11,8 +11,20 @@ vi.mock('@/components/Select', () => ({
 }));
 
 vi.mock('@/components/CardRadioGroup', () => ({
-  default: ({ value, options, ...props }: { value: string; options: { label: string }[]; 'aria-label': string }) => (
-    <span data-label={props['aria-label']} data-options={options.map(({ label }) => label).join(',')}>
+  default: ({
+    value,
+    options,
+    ...props
+  }: {
+    value: string;
+    options: { description?: string; label: string }[];
+    'aria-label': string;
+  }) => (
+    <span
+      data-label={props['aria-label']}
+      data-options={options.map(({ label }) => label).join(',')}
+      data-descriptions={options.flatMap(({ description }) => (description ? [description] : [])).join(',')}
+    >
       {value}
     </span>
   ),
@@ -60,5 +72,18 @@ describe('RegistryOptionsClient', () => {
 
     expect(vueMarkup).toContain('data-options="Vite,Nuxt"');
     expect(svelteMarkup).toContain('data-options="Vite,SvelteKit"');
+  });
+
+  it('offers no scaffold for packaged HTML but requires a concrete Shadcn setup', () => {
+    const packaged = renderToString(
+      <RegistryOptionsClient framework="html" installation={false} kind="template" method="packaged" />
+    );
+    const shadcn = renderToString(
+      <RegistryOptionsClient framework="html" installation={false} kind="template" method="shadcn" />
+    );
+
+    expect(packaged).toContain('data-options="Existing site,Vite,Astro,Laravel"');
+    expect(packaged).toContain('data-descriptions="Static HTML, WordPress, or another CMS"');
+    expect(shadcn).toContain('data-options="Vite,Astro,Laravel"');
   });
 });

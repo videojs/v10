@@ -8,6 +8,7 @@ import {
   isPackageManager,
   isSkinFlag,
   resolveInstallationTemplate,
+  resolveInstallationTemplateForMethod,
   skinFromFlag,
   skinToFlag,
   useCaseFromPreset,
@@ -58,11 +59,16 @@ export function normalizeInstallationSelectionForRoute(
   let normalized = {
     ...selection,
     framework,
-    template: route === 'cdn' ? ('vite' as const) : resolveInstallationTemplate(framework, selection.template),
+    template:
+      route === 'cdn'
+        ? resolveInstallationTemplateForMethod('html', selection.template, 'cdn')
+        : resolveInstallationTemplate(framework, selection.template),
     installMethod: selection.installMethod === 'cdn' ? ('pnpm' as const) : selection.installMethod,
   };
 
   if (route !== 'shadcn') return normalized;
+
+  normalized.template = resolveInstallationTemplateForMethod(framework, normalized.template, 'shadcn');
 
   const useCase = normalized.useCase === 'background-video' ? 'default-video' : normalized.useCase;
   const selectedSkin = normalized.skin === 'none' ? skinFromFlag('default', useCase) : normalized.skin;

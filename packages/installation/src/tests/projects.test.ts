@@ -27,6 +27,10 @@ describe('installationProjectFiles', () => {
       player: 'src/lib/VideoPlayer.svelte',
       usage: 'src/routes/+page.svelte',
     });
+    expect(installationProjectFiles('html', 'none')).toMatchObject({
+      player: 'index.html',
+      usage: 'player.ts',
+    });
   });
 });
 
@@ -47,6 +51,8 @@ describe('installationProjectCreateCommand', () => {
     );
     expect(installationProjectRunCommand('vite', 'pnpm')).toBe('pnpm dev');
     expect(installationProjectRunCommand('laravel', 'pnpm')).toBe('composer run dev');
+    expect(installationProjectCreateCommand('html', 'none', 'pnpm')).toBeNull();
+    expect(installationProjectRunCommand('none', 'pnpm')).toBeNull();
   });
 });
 

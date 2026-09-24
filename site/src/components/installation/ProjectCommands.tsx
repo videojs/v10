@@ -23,12 +23,20 @@ export default function ProjectCommands({ method, part, serverFramework, serverT
   const framework = useSelection('framework', serverFramework);
   const template = useSelection('template', serverTemplate);
   const styling = resolveRegistryStyling(framework === 'react' ? 'react' : 'html', useRegistryStyling());
-  const command = (packageManager: 'npm' | 'pnpm' | 'yarn' | 'bun') =>
-    part === 'create' && method === 'shadcn' && framework === 'react' && styling === 'tailwind'
-      ? shadcnInitCommand(packageManager, template)
-      : part === 'create'
-        ? installationProjectCreateCommand(framework, template, packageManager)
-        : installationProjectRunCommand(template, packageManager);
+
+  if (template === 'none') return null;
+
+  const command = (packageManager: 'npm' | 'pnpm' | 'yarn' | 'bun') => {
+    const value =
+      part === 'create' && method === 'shadcn' && framework === 'react' && styling === 'tailwind'
+        ? shadcnInitCommand(packageManager, template)
+        : part === 'create'
+          ? installationProjectCreateCommand(framework, template, packageManager)
+          : installationProjectRunCommand(template, packageManager);
+    if (!value) throw new Error(`No ${part} command is available without an app setup.`);
+
+    return value;
+  };
   const commands = {
     npm: command('npm'),
     pnpm: command('pnpm'),

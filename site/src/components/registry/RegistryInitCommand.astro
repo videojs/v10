@@ -4,7 +4,7 @@ import { isValidFramework } from '@/types/docs';
 import {
   defaultInstallationTemplate,
   INSTALLATION_TEMPLATE_LABELS,
-  installationTemplates,
+  installationTemplatesForMethod,
   type RegistryFramework,
 } from '@videojs/installation';
 
@@ -23,7 +23,9 @@ if (!framework) throw new Error(`RegistryInitCommand needs a framework route, re
 
 // The template select is hidden from Markdown readers, so name the other values the server-rendered command can take.
 const defaultTemplate = defaultInstallationTemplate(framework);
-const otherTemplates = installationTemplates(framework).filter((template) => template !== defaultTemplate);
+const otherTemplates = installationTemplatesForMethod(framework, 'shadcn').filter(
+  (template) => template !== defaultTemplate
+);
 const otherTemplateDescription = otherTemplates
   .map((template) => `${template} (${INSTALLATION_TEMPLATE_LABELS[template]})`)
   .join(', ');

@@ -50,17 +50,6 @@ If a preset and skin do not meet your user's requirements, follow [Customize ski
 
 <HumanCase>
 
-## Choose your app setup
-
-Choose the app environment that controls the setup commands and file locations below.
-
-<FrameworkCase frameworks={["react"]}>
-<RegistryOptions framework="react" kind="template" />
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-<RegistryOptions framework="html" kind="template" />
-</FrameworkCase>
-
 ## Choose your JS framework
 
 Choose the JavaScript framework for your project.
@@ -68,6 +57,19 @@ Choose the JavaScript framework for your project.
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app setup
+
+Choose the app environment that controls the setup commands and file locations below.
+
+<FrameworkCase frameworks={["react"]}>
+<RegistryOptions framework="react" kind="template" method="packaged" />
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+<RegistryOptions framework="html" kind="template" method="packaged" />
+
+Using a static site, WordPress, another CMS, or no build step? Choose **Existing site**. Use CDN without a bundler, or Packaged when your site has one.
+</FrameworkCase>
 
 ## Choose your use case
 
@@ -111,7 +113,11 @@ Choose from the installation options available for your selections.
 
 ## Prepare your app
 
-If you do not already have the selected app setup, create it in the intended empty app directory. Laravel is the exception: run its command from the parent directory and replace `<app-directory>` with the new directory name. Otherwise, skip this section.
+<FrameworkCase frameworks={["html"]}>
+With Existing site, continue in your current HTML app or page.
+</FrameworkCase>
+
+For a named setup, create it in the intended empty app directory when it does not already exist. Laravel is the exception: run its command from the parent directory and replace `<app-directory>` with the new directory name.
 
 <FrameworkCase frameworks={["react"]}>
 <ProjectCommands client:load part="create" serverFramework="react" serverTemplate="next" />
@@ -152,7 +158,11 @@ Add the player to the file shown for your selected app setup. It imports the sel
 
 ## Run your app
 
-Start the development server and verify that the selected media plays.
+Start the selected app's development server and verify that the media plays.
+
+<FrameworkCase frameworks={["html"]}>
+With Existing site, use the command your project already provides.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 <ProjectCommands client:load part="run" serverFramework="react" serverTemplate="next" />

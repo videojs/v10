@@ -47,6 +47,18 @@ describe('resolveInstallationSelection', () => {
       ok: false,
       errors: [{ field: 'template' }],
     });
+    expect(resolveInstallationSelection('html', { method: 'packaged', template: 'none' })).toMatchObject({
+      ok: true,
+      selection: { template: 'none' },
+    });
+    expect(resolveInstallationSelection('html', { method: 'cdn', template: 'none' })).toMatchObject({
+      ok: true,
+      selection: { template: 'none' },
+    });
+    expect(resolveInstallationSelection('html', { method: 'shadcn', template: 'none' })).toMatchObject({
+      ok: false,
+      errors: [{ field: 'template' }],
+    });
   });
 
   it('rejects incompatible paths', () => {

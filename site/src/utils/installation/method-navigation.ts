@@ -1,4 +1,11 @@
-import { isInstallationFramework, type InstallationFramework, type InstallationMethod } from '@videojs/installation';
+import {
+  defaultInstallationTemplate,
+  isInstallationFramework,
+  isInstallationTemplate,
+  resolveInstallationTemplateForMethod,
+  type InstallationFramework,
+  type InstallationMethod,
+} from '@videojs/installation';
 
 import { isShadcnInstallationUrl } from '@/utils/installation/framework-navigation';
 import { getInstallationRoutePath, getInstallationRouteSegment } from '@/utils/installation/routes';
@@ -37,12 +44,30 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     const framework = isInstallationFramework(requested)
       ? requested
       : (frameworkFromInstallationPath(current.pathname) ?? 'html');
+    const requestedTemplate = target.searchParams.get('template');
+    const template = resolveInstallationTemplateForMethod(
+      framework,
+      isInstallationTemplate(requestedTemplate) ? requestedTemplate : null,
+      'shadcn'
+    );
 
     target.searchParams.set('framework', framework);
-  } else {
+
+    if (template === defaultInstallationTemplate(framework)) target.searchParams.delete('template');
+    else target.searchParams.set('template', template);
+  } else if (method === 'cdn') {
+    const requestedTemplate = target.searchParams.get('template');
+    const template = resolveInstallationTemplateForMethod(
+      'html',
+      isInstallationTemplate(requestedTemplate) ? requestedTemplate : null,
+      'cdn'
+    );
+
     target.searchParams.delete('framework');
-    target.searchParams.delete('template');
     target.searchParams.delete('styling');
+
+    if (template === defaultInstallationTemplate('html')) target.searchParams.delete('template');
+    else target.searchParams.set('template', template);
   }
 
   return target;

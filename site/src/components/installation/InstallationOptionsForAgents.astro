@@ -3,6 +3,7 @@ import {
   installationCommand,
   installationCompatibility,
   installationOptionDefinitionsFor,
+  installationTemplatesForMethod,
   createInstallationDiscovery,
   type InstallationFramework,
   type InstallationMethod,
@@ -106,7 +107,7 @@ const routeExamples = [
 
   <ul>
     {frameworks.map((framework) => {
-      const templates = route === 'cdn' ? (['vite'] as const) : installationCompatibility.templatesByFramework[framework];
+      const templates = installationTemplatesForMethod(framework, fixedMethod);
 
       return (
         <li>

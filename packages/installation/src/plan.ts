@@ -255,6 +255,18 @@ function packageInstallStep(command: string): InstallationStep {
 }
 
 function prepareAppStep(selection: InstallationSelection): InstallationStep {
+  const command = installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager);
+
+  if (!command) {
+    return {
+      id: 'prepare-app',
+      title: 'Prepare your app',
+      description:
+        'Continue in the existing HTML app or page that will host the player. This selection does not scaffold or assume a particular app setup.',
+      blocks: [],
+    };
+  }
+
   return {
     id: 'prepare-app',
     title: 'Prepare your app',
@@ -265,9 +277,7 @@ function prepareAppStep(selection: InstallationSelection): InstallationStep {
         : selection.template === 'laravel'
           ? 'Skip this step when the workspace already contains a compatible Laravel app. Otherwise, make sure PHP, Composer, and the Laravel installer are available; run this from the parent directory, replace <app-directory> with a new directory name, and continue from the new app.'
           : `Skip this step when the workspace already contains a compatible ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app. Otherwise, scaffold it in an empty intended app directory, then continue from that directory.`,
-    blocks: [
-      code('bash', installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager)),
-    ],
+    blocks: [code('bash', command)],
   };
 }
 
@@ -290,15 +300,31 @@ function existingProjectFrameworkStep(selection: InstallationSelection): Install
 }
 
 function runAppStep(selection: InstallationSelection): InstallationStep {
+  const command = installationProjectRunCommand(selection.template, selection.packageManager);
+
+  if (!command) {
+    return {
+      id: 'run',
+      title: 'Run your app',
+      description:
+        'Use the existing project’s development or preview command and verify that the selected media plays.',
+      blocks: [],
+    };
+  }
+
   return {
     id: 'run',
     title: 'Run your app',
     description: 'Start the development server and verify that the selected media plays.',
-    blocks: [code('bash', installationProjectRunCommand(selection.template, selection.packageManager))],
+    blocks: [code('bash', command)],
   };
 }
 
 function existingAppPlayerDescription(template: InstallationSelection['template']): string {
+  if (template === 'none') {
+    return 'The filenames are generic. Add the imports and markup to the files your existing HTML app or page already loads.';
+  }
+
   return `Create these files when they are missing. In an existing ${INSTALLATION_TEMPLATE_LABELS[template]} app, merge the example into the route or component that should render the player and preserve unrelated content.`;
 }
 

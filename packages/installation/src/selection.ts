@@ -106,6 +106,31 @@ export function installationMethodsForFramework(framework: InstallationFramework
   return INSTALLATION_METHODS_BY_FRAMEWORK[framework];
 }
 
+/** App setups supported by one installation path. Shadcn needs a concrete app layout for aliases and generated files. */
+export function installationTemplatesForMethod(
+  framework: InstallationFramework,
+  method: InstallationMethod
+): readonly InstallationTemplate[] {
+  const templates = installationTemplates(framework);
+
+  if (method === 'shadcn') return templates.filter((template) => template !== 'none');
+
+  if (method === 'cdn') return framework === 'html' ? (['none', 'vite'] as const) : [];
+
+  return templates;
+}
+
+export function resolveInstallationTemplateForMethod(
+  framework: InstallationFramework,
+  template: InstallationTemplate | null,
+  method: InstallationMethod
+): InstallationTemplate {
+  const templates = installationTemplatesForMethod(framework, method);
+  const fallback = method === 'cdn' ? 'vite' : defaultInstallationTemplate(framework);
+
+  return template && includes(templates, template) ? template : fallback;
+}
+
 export function isInstallationFramework(value: string | null | undefined): value is InstallationFramework {
   return value != null && includes(INSTALLATION_FRAMEWORKS, value);
 }
@@ -269,7 +294,7 @@ export function resolveInstallationSelection(
   const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'pnpm', errors);
 
   const sourceFramework = sourceFrameworkFor(framework);
-  const availableTemplates = method === 'cdn' ? (['vite'] as const) : installationTemplates(framework);
+  const availableTemplates = installationTemplatesForMethod(framework, method);
   const templateValue = defaultValue('template', defaultInstallationTemplate(framework));
   const template = resolveChoice(
     'template',

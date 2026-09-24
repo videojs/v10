@@ -42,7 +42,7 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
       : '- `@videojs/react` generates React instructions. `@videojs/html` generates HTML, Vue, or Svelte instructions.'
     : '- `@videojs/html` generates HTML, Vue, or Svelte instructions.';
   const cdnDescription = frameworks.some((framework) => compatibility.methodsByFramework[framework]?.includes('cdn'))
-    ? '\n- CDN is plain HTML only. It uses the `vite` template only when scaffolding a missing app.'
+    ? '\n- CDN is plain HTML only. Use `none` for an existing page or `vite` only when scaffolding a missing app.'
     : '';
   const shadcnDescription = frameworks.includes('react')
     ? frameworks.length === 1
@@ -52,6 +52,7 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
 
   return `${packageDescription}${cdnDescription}
 ${shadcnDescription}
+- The \`none\` app setup is available only for plain HTML with Packaged or CDN. Shadcn requires a named app setup.
 - Shadcn presets: ${compatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
 - Shadcn skins: ${compatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
 

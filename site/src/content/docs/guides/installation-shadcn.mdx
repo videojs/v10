@@ -38,18 +38,6 @@ import ProjectCommands from '@/components/installation/ProjectCommands';
 
 <HumanCase>
 
-## Choose your app setup
-
-Choose the app environment that controls the setup commands and file locations below.
-
-<ShadcnFrameworkCase framework="react">
-<RegistryOptions framework="react" kind="template" />
-</ShadcnFrameworkCase>
-
-<ShadcnFrameworkCase framework="html">
-<RegistryOptions framework="html" kind="template" />
-</ShadcnFrameworkCase>
-
 ## Choose your JS framework
 
 Choose the JavaScript framework for your project.
@@ -57,6 +45,18 @@ Choose the JavaScript framework for your project.
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app setup
+
+Choose the app environment that controls the setup commands and file locations below.
+
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="template" method="shadcn" />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<RegistryOptions framework="html" kind="template" method="shadcn" />
+</ShadcnFrameworkCase>
 
 ## Choose your use case
 

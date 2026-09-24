@@ -15,12 +15,13 @@ import {
   REGISTRY_THEMES,
   registrySkinSelection,
   registryStylings,
-  installationTemplates,
-  resolveInstallationTemplate,
+  installationTemplatesForMethod,
+  resolveInstallationTemplateForMethod,
   resolveRegistryStyling,
 } from '@videojs/installation';
 import type { ReactNode } from 'react';
 
+import CodeIcon from '@/assets/icons/code.svg?react';
 import FilmIcon from '@/assets/icons/film.svg?react';
 import LiveStreamingIcon from '@/assets/icons/live-streaming.svg?react';
 import MusicNoteIcon from '@/assets/icons/music-note.svg?react';
@@ -54,6 +55,7 @@ import {
 import { registrySkin, registryTheme, selectRegistryStyling } from '@/stores/registry';
 
 const TEMPLATE_ICONS = {
+  none: <CodeIcon className="size-7" />,
   next: <img alt="" src={NextLogoUrl} className="size-7 dark:invert" />,
   vite: <img alt="" src={ViteLogoUrl} className="size-7" />,
   start: <TanStackLogo className="size-7" />,
@@ -91,14 +93,15 @@ interface Props {
 }
 
 function templateCardOptions(
-  framework: Parameters<typeof installationTemplates>[0],
+  framework: InstallationFramework,
   method?: InstallationMethod
 ): CardRadioOption<InstallationTemplate>[] {
-  const templates = method === 'cdn' ? (['vite'] as const) : installationTemplates(framework);
+  const templates = installationTemplatesForMethod(framework, method ?? 'packaged');
 
   return templates.map((value) => ({
     value,
     label: INSTALLATION_TEMPLATE_LABELS[value],
+    description: value === 'none' ? 'Static HTML, WordPress, or another CMS' : undefined,
     media: TEMPLATE_ICONS[value],
   }));
 }
@@ -107,7 +110,7 @@ function RegistryTemplateCards({ framework, method }: Pick<Props, 'framework' | 
   const projectFramework = useRegistryProjectFramework(framework);
   const defaultTemplate = defaultInstallationTemplate(projectFramework);
   const $template = useInstallationTemplate(defaultTemplate);
-  const template = resolveInstallationTemplate(projectFramework, $template);
+  const template = resolveInstallationTemplateForMethod(projectFramework, $template, method ?? 'packaged');
 
   return (
     <CardRadioGroup

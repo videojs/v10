@@ -68,6 +68,8 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     if (!availableMethods.includes(id)) return false;
 
     if (id === 'shadcn' && route !== 'shadcn') {
+      if (selectedTemplate === 'none') return false;
+
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
     }
 

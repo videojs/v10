@@ -4,6 +4,7 @@ export const INSTALLATION_FRAMEWORKS = ['react', 'html', 'vue', 'svelte'] as con
 export type InstallationFramework = (typeof INSTALLATION_FRAMEWORKS)[number];
 
 export const INSTALLATION_TEMPLATES = [
+  'none',
   'next',
   'vite',
   'start',
@@ -16,6 +17,7 @@ export const INSTALLATION_TEMPLATES = [
 export type InstallationTemplate = (typeof INSTALLATION_TEMPLATES)[number];
 
 export const INSTALLATION_TEMPLATE_LABELS = {
+  none: 'Existing site',
   next: 'Next.js',
   vite: 'Vite',
   start: 'TanStack Start',
@@ -28,7 +30,7 @@ export const INSTALLATION_TEMPLATE_LABELS = {
 
 const TEMPLATES_BY_FRAMEWORK = {
   react: ['next', 'vite', 'start', 'react-router', 'astro', 'laravel'],
-  html: ['vite', 'astro', 'laravel'],
+  html: ['none', 'vite', 'astro', 'laravel'],
   vue: ['vite', 'nuxt'],
   svelte: ['vite', 'sveltekit'],
 } as const satisfies Record<InstallationFramework, readonly InstallationTemplate[]>;
@@ -164,6 +166,15 @@ export function installationProjectFiles(
           player: 'src/lib/VideoPlayer.svelte',
           usage: 'src/App.svelte',
         };
+  }
+
+  if (template === 'none') {
+    return {
+      componentsAlias: '@/components',
+      componentsDirectory: 'components',
+      player: 'index.html',
+      usage: 'player.ts',
+    };
   }
 
   if (template === 'astro') {
@@ -338,7 +349,9 @@ export function installationProjectCreateCommand(
   framework: InstallationFramework,
   template: InstallationTemplate,
   packageManager: PackageManager
-): string {
+): string | null {
+  if (template === 'none') return null;
+
   if (template === 'vite') return viteCreateCommand(framework, packageManager);
 
   if (template === 'next') {
@@ -423,7 +436,12 @@ export function installationProjectFrameworkSetupCommand(
   return 'npx astro add react --yes';
 }
 
-export function installationProjectRunCommand(template: InstallationTemplate, packageManager: PackageManager): string {
+export function installationProjectRunCommand(
+  template: InstallationTemplate,
+  packageManager: PackageManager
+): string | null {
+  if (template === 'none') return null;
+
   if (template === 'laravel') return 'composer run dev';
 
   if (packageManager === 'npm') return 'npm run dev';
