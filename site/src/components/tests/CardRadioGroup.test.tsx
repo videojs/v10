@@ -10,7 +10,7 @@ import CardRadioGroup from '../CardRadioGroup';
 const framework = atom<'html' | 'react'>('html');
 
 function FrameworkPicker() {
-  const value = useSyncExternalStore(
+  const value = useSyncExternalStore<'html' | 'react'>(
     (onChange) => framework.listen(onChange),
     () => framework.get(),
     () => 'react'
