@@ -1,5 +1,7 @@
 import {
   type AttributeSnapshot,
+  containsComposed,
+  getDeepActiveElement,
   getBlockExtent,
   getElementChildren,
   getElementPadding,
@@ -86,17 +88,22 @@ export function createMenuPopup(): MenuPopupApi {
   }
 
   function restoreFocusBeforeHiding(content: RegisteredContent): void {
-    if (!content.element.contains(document.activeElement)) return;
+    const hasFocus = (): boolean => {
+      const active = getDeepActiveElement(content.element.ownerDocument);
+
+      return active instanceof Element && containsComposed(content.element, active);
+    };
+    if (!hasFocus()) return;
 
     // Preserve the menu's close-reason behavior before falling back to its trigger.
     content.menu.restoreFocus();
 
-    if (!content.element.contains(document.activeElement)) return;
+    if (!hasFocus()) return;
 
     content.menu.triggerElement?.focus();
 
     // A missing or unfocusable trigger must not leave focus inside the hidden page.
-    if (content.element.contains(document.activeElement)) (document.activeElement as HTMLElement).blur();
+    if (hasFocus()) (getDeepActiveElement(content.element.ownerDocument) as HTMLElement).blur();
   }
 
   function getAvailableWidth(popup: HTMLElement): number | null {

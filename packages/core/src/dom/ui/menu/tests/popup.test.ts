@@ -54,6 +54,7 @@ describe('createMenuPopup', () => {
     const parentTrigger = document.createElement('button');
     const childContent = document.createElement('div');
     const childItem = document.createElement('button');
+    const shadowHost = document.createElement('div');
     const parent = createTestMenu();
     const child = createTestMenu();
     const popup = createMenuPopup();
@@ -63,7 +64,8 @@ describe('createMenuPopup', () => {
     child.menu.setTriggerElement(parentTrigger);
     child.menu.registerItem(childItem);
     parentContent.append(parentTrigger, childContent);
-    childContent.append(childItem);
+    shadowHost.attachShadow({ mode: 'open' }).append(childItem);
+    childContent.append(shadowHost);
     popupElement.append(parentContent);
     document.body.append(popupElement);
 
