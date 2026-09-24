@@ -25,7 +25,7 @@ const menuHighlight = [
   '[anchor-scope:--media-menu-item-highlight-anchor]',
   'media-anchored:before:anchor-media-highlight',
   'media-transitioning:before:hidden',
-  'media-transitioning:[&_*]:before:hidden',
+  'media-transitioning:**:before:hidden',
   'media-anchored:has-data-[highlighted=]:before:duration-0',
 ] as const;
 
