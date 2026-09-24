@@ -1,20 +1,23 @@
 import {
   DEFAULT_REGISTRY_PRESET,
+  defaultInstallationTemplate,
+  type InstallationFramework,
+  type InstallationMethod,
+  type InstallationTemplate,
+  INSTALLATION_TEMPLATE_LABELS,
   type RegistryFramework,
   type RegistryPreset,
   type RegistryStyling,
   REGISTRY_PRESETS,
   REGISTRY_STYLING_LABELS,
-  type RegistryTemplate,
-  REGISTRY_TEMPLATE_LABELS,
   type RegistryTheme,
   REGISTRY_THEME_LABELS,
   REGISTRY_THEMES,
   registrySkinSelection,
   registryStylings,
-  registryTemplates,
+  installationTemplates,
+  resolveInstallationTemplate,
   resolveRegistryStyling,
-  resolveRegistryTemplate,
 } from '@videojs/installation';
 import type { ReactNode } from 'react';
 
@@ -27,20 +30,27 @@ import CssLogo from '@/assets/logos/brands/css3.svg?react';
 import LaravelLogo from '@/assets/logos/brands/laravel.svg?react';
 import NextLogoUrl from '@/assets/logos/brands/nextjs.svg?url';
 import ReactRouterLogo from '@/assets/logos/brands/react-router.svg?react';
+import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import TanStackLogo from '@/assets/logos/brands/tanstack.svg?react';
 import ViteLogoUrl from '@/assets/logos/brands/vite.svg?url';
+import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import SkinPreview from '@/components/installation/SkinPreview';
 import {
+  useInstallationTemplate,
+  useRegistryProjectFramework,
   useRegistrySkin,
   useRegistryStyling,
-  useRegistryTemplate,
   useRegistryTheme,
 } from '@/components/installation/useRegistryProjectFramework';
 import { useSelection } from '@/components/installation/useSelection';
 import { Select, type SelectOption } from '@/components/Select';
-import { skin as installationSkin, useCase as installationUseCase } from '@/stores/installation';
-import { registrySkin, registryTheme, selectRegistryStyling, selectRegistryTemplate } from '@/stores/registry';
+import {
+  skin as installationSkin,
+  selectInstallationTemplate,
+  useCase as installationUseCase,
+} from '@/stores/installation';
+import { registrySkin, registryTheme, selectRegistryStyling } from '@/stores/registry';
 
 const TEMPLATE_ICONS = {
   next: <img alt="" src={NextLogoUrl} className="size-4 dark:invert" />,
@@ -49,7 +59,9 @@ const TEMPLATE_ICONS = {
   laravel: <LaravelLogo className="size-4" />,
   'react-router': <ReactRouterLogo className="w-4" />,
   astro: <AstroLogo className="size-4" />,
-} satisfies Record<RegistryTemplate, ReactNode>;
+  nuxt: <VueLogo className="size-4" />,
+  sveltekit: <SvelteLogo className="size-4" />,
+} satisfies Record<InstallationTemplate, ReactNode>;
 
 const STYLING_ICONS = {
   tailwind: <TailwindLogo className="w-4" />,
@@ -71,38 +83,46 @@ const THEME_ICONS = {
 interface Props {
   defaultSkin?: RegistryPreset;
   defaultTheme?: RegistryTheme;
-  framework: RegistryFramework;
+  framework: InstallationFramework;
   installation: boolean;
   kind: 'template' | 'catalog' | 'styling';
+  method?: InstallationMethod;
 }
 
-function templateOptions(framework: RegistryFramework): SelectOption<RegistryTemplate>[] {
-  return registryTemplates(framework).map((value) => ({
+function templateOptions(
+  framework: Parameters<typeof installationTemplates>[0],
+  method?: InstallationMethod
+): SelectOption<InstallationTemplate>[] {
+  const templates = method === 'cdn' ? (['vite'] as const) : installationTemplates(framework);
+
+  return templates.map((value) => ({
     value,
-    label: REGISTRY_TEMPLATE_LABELS[value],
+    label: INSTALLATION_TEMPLATE_LABELS[value],
     icon: TEMPLATE_ICONS[value],
   }));
 }
 
-function RegistryTemplateSelect({ framework }: Pick<Props, 'framework'>) {
-  const $template = useRegistryTemplate();
-  const template = resolveRegistryTemplate(framework, $template);
+function RegistryTemplateSelect({ framework, method }: Pick<Props, 'framework' | 'method'>) {
+  const projectFramework = useRegistryProjectFramework(framework);
+  const defaultTemplate = defaultInstallationTemplate(projectFramework);
+  const $template = useInstallationTemplate(defaultTemplate);
+  const template = resolveInstallationTemplate(projectFramework, $template);
 
   return (
     <div className="grid gap-1.5">
-      <p className="text-p4 font-medium">Project template</p>
+      <p className="text-p4 font-medium">App setup</p>
       <Select
         value={template}
-        onChange={(value) => value && selectRegistryTemplate(value)}
-        options={templateOptions(framework)}
-        aria-label="Select project template"
+        onChange={(value) => value && selectInstallationTemplate(value)}
+        options={templateOptions(projectFramework, method)}
+        aria-label="Select app setup"
         className="justify-self-start"
       />
     </div>
   );
 }
 
-function RegistryStylingSelect({ framework }: Pick<Props, 'framework'>) {
+function RegistryStylingSelect({ framework }: { framework: RegistryFramework }) {
   const $styling = useRegistryStyling();
   const styling = resolveRegistryStyling(framework, $styling);
 
@@ -134,6 +154,7 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
     $registrySkin ?? (installation ? installationSelection?.item : defaultSkin) ?? DEFAULT_REGISTRY_PRESET;
   const installationTheme = installationSelection?.theme ?? 'default';
   const theme = $theme ?? (installation ? installationTheme : defaultTheme) ?? 'default';
+  const sourceFramework: RegistryFramework = framework === 'react' ? 'react' : 'html';
 
   const updateInstallationSelection = (preset: RegistryPreset, nextTheme: RegistryTheme) => {
     if (!installation) return;
@@ -174,7 +195,7 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
         />
       </div>
 
-      <RegistryStylingSelect framework={framework} />
+      <RegistryStylingSelect framework={sourceFramework} />
 
       <div className="grid shrink-0 gap-1.5">
         <p className="text-p4 font-medium">Theme</p>
@@ -200,8 +221,15 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
 }
 
 /** Chooses the Shadcn project template or the skin, styling, and theme used to add skin source. */
-export default function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
-  if (kind === 'template') return <RegistryTemplateSelect framework={framework} />;
+export default function RegistryOptionsClient({
+  defaultSkin,
+  defaultTheme,
+  framework,
+  installation,
+  kind,
+  method,
+}: Props) {
+  if (kind === 'template') return <RegistryTemplateSelect framework={framework} method={method} />;
 
   return kind === 'catalog' ? (
     <RegistryCatalogSelects
@@ -212,7 +240,7 @@ export default function RegistryOptionsClient({ defaultSkin, defaultTheme, frame
     />
   ) : (
     <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-      <RegistryStylingSelect framework={framework} />
+      <RegistryStylingSelect framework={framework === 'react' ? 'react' : 'html'} />
     </div>
   );
 }

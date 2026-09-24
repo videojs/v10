@@ -22,6 +22,7 @@ import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework, SUPPORTED_FRAMEW
 import { renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
+  getInstallationRouteSegment,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../src/utils/installation/routes';
@@ -287,8 +288,9 @@ export function generateInstallationIndex(siteUrl = 'https://videojs.org'): stri
       const key = option.query;
       const values = option.values ? ` Values: ${option.values.map((value) => `\`${value}\``).join(', ')}.` : '';
       const applies = option.appliesWhen ? ` Applies when ${option.appliesWhen.replaceAll('--', '')}.` : '';
+      const defaultValue = option.flag === '--package-manager' ? 'pnpm' : option.default;
 
-      return `- \`${key}\`: ${option.description}${values} Default: ${option.default}.${applies}`;
+      return `- \`${key}\`: ${option.description}${values} Default: ${defaultValue}.${applies}`;
     })
     .join('\n');
 
@@ -1292,10 +1294,14 @@ function renderCorpus(
   let body = '';
 
   for (const { slug, page, markdown } of entries) {
+    const installationParams =
+      getInstallationRouteSegment(page.pathname) === 'shadcn'
+        ? new URLSearchParams({ framework })
+        : new URLSearchParams();
     const installation = renderInstallationMarkdownSelection(
       markdown,
       page.pathname,
-      new URLSearchParams({ framework }),
+      installationParams,
       VJS10_VERSION
     );
 

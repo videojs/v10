@@ -3,6 +3,7 @@ import {
   installationCommand,
   installationCompatibility,
   installationOptionDefinitionsFor,
+  createInstallationDiscovery,
   type InstallationFramework,
   type InstallationMethod,
 } from '@videojs/installation';
@@ -22,6 +23,7 @@ const frameworks: readonly InstallationFramework[] = fixedFramework
   ? [fixedFramework]
   : ['react', 'html', 'vue', 'svelte'];
 const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks });
+const decisionOrder = createInstallationDiscovery(owner, 'installed').decisionOrder;
 const queryOptions = definitions
   .filter((option) => {
     if (['--json', '--method'].includes(option.flag)) return false;
@@ -29,7 +31,8 @@ const queryOptions = definitions
     if (option.flag === '--framework') return route === 'shadcn';
 
     return true;
-  });
+  })
+  .map((option) => option.flag === '--package-manager' ? { ...option, default: 'pnpm' } : option);
 const availablePresets = queryOptions.find(({ flag }) => flag === '--preset')?.values ?? [];
 const mediaByPreset = Object.entries(installationCompatibility.mediaByPreset).filter(([preset]) =>
   availablePresets.includes(preset)
@@ -85,6 +88,12 @@ const routeExamples = [
     Run a bare package command above to see the corresponding CLI flags for the installed package version.
   </p>
 
+  <h3>Decide in this order</h3>
+
+  <ol>
+    {decisionOrder.map(({ title, guidance }) => <li><strong>{title}.</strong> {guidance}</li>)}
+  </ol>
+
   <h3>Compatible media sources by preset</h3>
 
   <ul>
@@ -93,25 +102,26 @@ const routeExamples = [
     ))}
   </ul>
 
-  {route === 'shadcn' && (
-    <>
-      <h3>Shadcn templates and styling by framework</h3>
+  <h3>{route === 'shadcn' ? 'App setup and Shadcn styling by framework' : 'App setup by framework'}</h3>
 
-      <ul>
-        {frameworks.map((framework) => (
-          <li>
-            <code>{framework}</code>: templates{' '}
-            {installationCompatibility.shadcn.templatesByFramework[framework].map((value, index) => (
-              <>{index > 0 && ', '}<code>{value}</code></>
-            ))}; styling{' '}
+  <ul>
+    {frameworks.map((framework) => {
+      const templates = route === 'cdn' ? (['vite'] as const) : installationCompatibility.templatesByFramework[framework];
+
+      return (
+        <li>
+          <code>{framework}</code>: templates{' '}
+          {templates.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}
+          {route === 'shadcn' && (
+            <>; styling{' '}
             {installationCompatibility.shadcn.stylingsByFramework[framework].map((value, index) => (
               <>{index > 0 && ', '}<code>{value}</code></>
-            ))}
-          </li>
-        ))}
-      </ul>
-    </>
-  )}
+            ))}</>
+          )}
+        </li>
+      );
+    })}
+  </ul>
 
   <h3>Installation pages</h3>
 

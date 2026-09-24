@@ -71,7 +71,7 @@ export const INSTALLATION_PRESETS = {
     componentPrefix: 'BackgroundVideo',
     mediaType: 'video',
     live: false,
-    renderers: ['background-video'],
+    renderers: ['background-video', 'hls-background-video', 'mux-background-video'],
   },
 } as const satisfies Record<string, InstallationPreset>;
 

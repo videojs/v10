@@ -2,10 +2,12 @@ import {
   type RegistryFramework,
   type RegistryPreset,
   type RegistryTheme,
-  registryInstallCommands,
+  registryNamespaceConfig,
   resolveRegistryStyling,
+  shadcnAddCommand,
 } from '@videojs/installation';
 
+import ClientCode from '@/components/Code/ClientCode';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import {
   useRegistrySkin,
@@ -26,9 +28,8 @@ interface Props {
 }
 
 /**
- * The Shadcn commands one install needs: `registry add` points the `@videojs` namespace at the styling catalog the
- * page's select box chose, then `add` installs the items. The package-manager tabs follow the installation page's other
- * command steps.
+ * The Shadcn configuration and command one install needs. The explicit `components.json` merge also replaces a
+ * previously selected Video.js catalog instead of relying on Shadcn's add-only namespace command.
  */
 export default function RegistryCommandClient({
   defaultSkin,
@@ -43,12 +44,23 @@ export default function RegistryCommandClient({
   const selectedItems = defaultSkin ? [fixedSelection ? defaultSkin : ($skin ?? defaultSkin)] : items;
   const selectedTheme = fixedSelection ? theme : ($theme ?? theme);
   const styling = resolveRegistryStyling(framework, $styling);
+  const config = registryNamespaceConfig(framework, styling, selectedTheme);
   const commands = {
-    npm: registryInstallCommands('npm', framework, styling, selectedItems, selectedTheme),
-    pnpm: registryInstallCommands('pnpm', framework, styling, selectedItems, selectedTheme),
-    yarn: registryInstallCommands('yarn', framework, styling, selectedItems, selectedTheme),
-    bun: registryInstallCommands('bun', framework, styling, selectedItems, selectedTheme),
+    npm: shadcnAddCommand('npm', selectedItems),
+    pnpm: shadcnAddCommand('pnpm', selectedItems),
+    yarn: shadcnAddCommand('yarn', selectedItems),
+    bun: shadcnAddCommand('bun', selectedItems),
   };
 
-  return <PackageManagerTabs commands={commands} />;
+  return (
+    <div className="grid gap-6">
+      <div>
+        <p className="text-p4 mb-2">
+          Merge into <code>components.json</code>, replacing the existing <code>@videojs</code> value:
+        </p>
+        <ClientCode code={config} lang="json" />
+      </div>
+      <PackageManagerTabs commands={commands} />
+    </div>
+  );
 }

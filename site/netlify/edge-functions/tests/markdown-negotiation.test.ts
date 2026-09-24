@@ -63,12 +63,15 @@ describe('prefersMarkdown', () => {
 
 describe('markdownNegotiation', () => {
   function negotiate(path: string, accept: string, twin: Response, next: Response) {
-    const context = {
-      next: vi.fn(async (request?: Request) =>
-        request && new URL(request.url).pathname.endsWith('.md') ? twin : next
-      ),
-    } satisfies MarkdownContext;
     const request = new Request(`https://videojs.org${path}`, { headers: { accept } });
+    let activeRequest = request;
+    const context = {
+      next: vi.fn(async (request?: Request) => {
+        if (request) activeRequest = request;
+
+        return new URL(activeRequest.url).pathname.endsWith('.md') ? twin : next;
+      }),
+    } satisfies MarkdownContext;
 
     return { context, response: markdownNegotiation(request, context) };
   }
@@ -111,10 +114,11 @@ describe('markdownNegotiation', () => {
 
   it('falls through to the page when the twin is missing', async () => {
     const html = page();
-    const { response } = negotiate('/docs/page', 'text/markdown', new Response(null, { status: 404 }), html);
+    const { context, response } = negotiate('/docs/page', 'text/markdown', new Response(null, { status: 404 }), html);
 
     expect(await response).toBe(html);
     expect(html.headers.get('vary')).toBe('Accept-Encoding, Accept');
+    expect(context.next.mock.calls[1]![0]?.url).toBe('https://videojs.org/docs/page');
   });
 
   it('does not add Accept to Vary twice', async () => {

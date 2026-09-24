@@ -52,7 +52,7 @@ export const INSTALLATION_ROUTES = {
     slug: 'guides/installation-shadcn',
   },
   cdn: {
-    description: 'Load Video.js from jsDelivr and build an HTML video player without a package manager',
+    description: 'Load Video.js from jsDelivr and build an HTML video player without installing Video.js packages',
     framework: 'html',
     frameworks: ['html'],
     pickerFramework: 'html',

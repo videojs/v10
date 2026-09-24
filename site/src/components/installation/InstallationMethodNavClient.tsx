@@ -1,9 +1,9 @@
-import { useStore } from '@nanostores/react';
 import {
   CDN_MEDIA_SUBPATHS,
   installationMethodsForFramework,
   registrySkinSelection,
   rendererSupportsCdn,
+  resolveInstallationTemplate,
   type InstallationFramework,
   type InstallationMethod,
 } from '@videojs/installation';
@@ -15,7 +15,6 @@ import Check from '@/assets/icons/check.svg?react';
 import JsdelivrLogo from '@/assets/logos/brands/jsdelivr.svg?react';
 import NpmLogo from '@/assets/logos/brands/npm.svg?react';
 import ShadcnLogo from '@/assets/logos/brands/shadcn.svg?react';
-import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { resolveInstallationMethodHref } from '@/utils/installation/method-navigation';
 import { INSTALLATION_METHOD_OPTIONS } from '@/utils/installation/method-options';
@@ -24,6 +23,7 @@ import { getInstallationRoutePath } from '@/utils/installation/routes';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 import { useRegistryProjectFramework } from './useRegistryProjectFramework';
+import { useSelection } from './useSelection';
 
 const ICONS = {
   packaged: NpmLogo,
@@ -53,18 +53,19 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationFr
 }
 
 export default function InstallationMethodNavClient({ currentFramework, route }: Props) {
-  const selectedInstallMethod = useStore(installMethod);
-  const selectedRenderer = useStore(renderer);
-  const selectedSkin = useStore(skin);
-  const selectedSourceUrl = useStore(sourceUrl);
-  const selectedUseCase = useStore(useCase);
+  const selectedInstallMethod = useSelection('installMethod');
+  const selectedRenderer = useSelection('renderer');
+  const selectedSkin = useSelection('skin');
+  const selectedSourceUrl = useSelection('sourceUrl');
+  const selectedTemplate = useSelection('template');
+  const selectedUseCase = useSelection('useCase');
   const registrySelection = useRegistryProjectFramework(currentFramework);
   const isHydrated = useIsHydrated();
   const framework = route === 'shadcn' ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = installationMethodsForFramework(framework);
   const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => {
-    if (route !== 'shadcn' && !availableMethods.includes(id)) return false;
+    if (!availableMethods.includes(id)) return false;
 
     if (id === 'shadcn' && route !== 'shadcn') {
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
@@ -85,10 +86,12 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
       baseHref,
       method,
       {
+        framework,
         installMethod: selectedInstallMethod,
         renderer: selectedRenderer,
         skin: selectedSkin,
         sourceUrl: selectedSourceUrl,
+        template: resolveInstallationTemplate(framework, selectedTemplate),
         useCase: selectedUseCase,
       },
       route === 'shadcn' ? framework : undefined
@@ -116,7 +119,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
 
     const targetPath = `${target.pathname}${target.search}${target.hash}`;
 
-    savePageScrollForNavigation(targetPath);
+    savePageScrollForNavigation(targetPath, '[data-installation-method-nav]');
     queueMicrotask(() => {
       void navigate(targetPath, {
         history: 'push',
@@ -145,7 +148,6 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
             href={href}
             onClick={(event) => handleNavigation(event, href)}
             data-installation-method={id}
-            data-shadcn-html-method={route === 'shadcn' && id === 'cdn' ? '' : undefined}
             aria-current={active === id ? 'page' : undefined}
             className={clsx(
               'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',

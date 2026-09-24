@@ -1,4 +1,8 @@
-import { generateVueCustomElementConfigCode } from '@videojs/installation';
+import {
+  generateVueCustomElementConfigCode,
+  installationProjectFiles,
+  installationVueConfigFilename,
+} from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
@@ -6,6 +10,9 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { useSelection } from './useSelection';
 
 export default function VueConfigCodeBlock() {
+  const template = useSelection('template');
+  const project = installationProjectFiles('vue', template);
+  const filename = installationVueConfigFilename(template);
   const code = generateVueCustomElementConfigCode({
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
@@ -15,16 +22,12 @@ export default function VueConfigCodeBlock() {
   return (
     <TabsRoot>
       <TabsList label="Build tool">
-        <Tab value="vite" initial>
-          Vite
+        <Tab value="config" initial>
+          {project.config}
         </Tab>
-        <Tab value="nuxt">Nuxt</Tab>
       </TabsList>
-      <TabsPanel value="vite" initial>
-        <ClientCode code={code['vite.config.ts']} lang="ts" />
-      </TabsPanel>
-      <TabsPanel value="nuxt">
-        <ClientCode code={code['nuxt.config.ts']} lang="ts" />
+      <TabsPanel value="config" initial>
+        <ClientCode code={code[filename]} lang="ts" />
       </TabsPanel>
     </TabsRoot>
   );

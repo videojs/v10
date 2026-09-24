@@ -11,11 +11,7 @@ import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
 import { resolveShadcnUrlSelection, SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
 import { getInstallationRouteSegment } from '@/utils/installation/routes';
-import {
-  normalizeInstallationSelectionForRoute,
-  parseInstallationSearch,
-  serializeInstallationSearchForRoute,
-} from '@/utils/installation/url-state';
+import { parseInstallationSearchForRoute, serializeInstallationSearchForRoute } from '@/utils/installation/url-state';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -41,18 +37,18 @@ export function markdownUrl(
   const url = new URL(`${location.origin}${pathname}.md${location.search}`);
   const installationRoute = getInstallationRouteSegment(pathname);
 
-  if (installationRoute) {
-    const selection = normalizeInstallationSelectionForRoute(installationRoute, parseInstallationSearch(url.search));
-
-    url.search = serializeInstallationSearchForRoute(installationRoute, selection, url.search);
-  }
-
   if (
     pathname === SHADCN_INSTALLATION_PATH &&
     !isInstallationFramework(url.searchParams.get('framework')) &&
     (registryFramework === 'react' || registryFramework === 'html')
   ) {
     url.searchParams.set('framework', registryFramework);
+  }
+
+  if (installationRoute) {
+    const selection = parseInstallationSearchForRoute(installationRoute, url.search);
+
+    url.search = serializeInstallationSearchForRoute(installationRoute, selection, url.search);
   }
 
   if (pathname === SHADCN_INSTALLATION_PATH) {

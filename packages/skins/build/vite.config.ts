@@ -60,7 +60,7 @@ export const skinBuildConfig: PackUserConfig = {
         paths: registryPaths,
         imports: {
           '@videojs/utils/style': '@/lib/resolve-class-name',
-          [skinClassNameMergeImport]: '@/lib/utils',
+          [skinClassNameMergeImport]: '@/lib/resolve-class-name',
         },
         packages: registryPackages,
         meta: {

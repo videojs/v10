@@ -366,6 +366,9 @@ describe('generateInstallationIndex', () => {
     expect(markdown).toContain('/docs/guides/installation/shadcn.md?framework=vue');
     expect(markdown).toContain('`framework`: On the Shadcn page');
     expect(markdown).toContain('`package-manager`');
+    expect(markdown).toContain('`package-manager`: The command runner used for app setup');
+    expect(markdown).toContain('Default: pnpm.');
+    expect(markdown).not.toContain("Default: the project's package manager");
     expect(markdown).not.toContain('`method`:');
     expect(markdown).not.toContain('`install-method`:');
   });
@@ -590,6 +593,30 @@ describe('generateDocsCorpus', () => {
     expect(content).toContain('HTML only');
     expect(content).not.toContain('React only');
     expect(content).not.toContain('installation:framework');
+  });
+
+  it('uses the canonical framework for dedicated installation guides', () => {
+    const markdown = [
+      '# Vue Installation Guide',
+      '<!-- installation-plan:start -->',
+      'Default steps',
+      '<!-- installation-plan:end -->',
+    ].join('\n\n');
+    const { content } = generateDocsCorpus(
+      'html',
+      [
+        {
+          pathname: '/docs/guides/installation/vue',
+          title: 'Vue Installation Guide',
+          frameworks: ['html'],
+          markdown,
+        },
+      ],
+      SITE_URL
+    );
+
+    expect(content).toContain('- `framework`: `vue`');
+    expect(content).not.toContain('Invalid installation options');
   });
 
   it('adds the section label to titles two pages share', () => {

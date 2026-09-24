@@ -4,6 +4,7 @@ import {
   DEFAULT_SELECTION,
   normalizeInstallationSelectionForRoute,
   parseInstallationSearch,
+  parseInstallationSearchForRoute,
   serializeInstallationSearch,
   serializeInstallationSearchForRoute,
 } from '../url-state';
@@ -15,6 +16,8 @@ describe('parseInstallationSearch', () => {
 
   it('reads the CLI vocabulary', () => {
     expect(parseInstallationSearch('?preset=live-video&skin=minimal&media=hls&package-manager=npm')).toEqual({
+      framework: 'react',
+      template: 'next',
       useCase: 'live-video',
       skin: 'minimal-video',
       renderer: 'hls',
@@ -35,7 +38,7 @@ describe('parseInstallationSearch', () => {
     expect(selection.useCase).toBe('live-audio');
     expect(selection.renderer).toBe('mux-audio');
     expect(selection.skin).toBe('audio');
-    expect(selection.installMethod).toBe('npm');
+    expect(selection.installMethod).toBe('pnpm');
   });
 
   it('keeps the source url verbatim', () => {
@@ -50,6 +53,30 @@ describe('parseInstallationSearch', () => {
   });
 });
 
+describe('parseInstallationSearchForRoute', () => {
+  it('validates app setup against the framework fixed by a dedicated route', () => {
+    expect(parseInstallationSearchForRoute('vue', '?template=nuxt')).toMatchObject({
+      framework: 'vue',
+      template: 'nuxt',
+    });
+    expect(parseInstallationSearchForRoute('svelte', '?template=sveltekit')).toMatchObject({
+      framework: 'svelte',
+      template: 'sveltekit',
+    });
+  });
+
+  it('uses the framework query only on the shared Shadcn route', () => {
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=vue&template=nuxt')).toMatchObject({
+      framework: 'vue',
+      template: 'nuxt',
+    });
+    expect(parseInstallationSearchForRoute('vue', '?framework=react&template=nuxt')).toMatchObject({
+      framework: 'vue',
+      template: 'nuxt',
+    });
+  });
+});
+
 describe('serializeInstallationSearch', () => {
   it('writes nothing for the defaults', () => {
     expect(serializeInstallationSearch(DEFAULT_SELECTION)).toBe('');
@@ -58,17 +85,21 @@ describe('serializeInstallationSearch', () => {
   it('writes only what differs from the preset defaults', () => {
     expect(
       serializeInstallationSearch({
+        framework: 'react',
+        template: 'next',
         useCase: 'live-video',
         skin: 'minimal-video',
         renderer: 'hls',
         sourceUrl: '',
-        installMethod: 'npm',
+        installMethod: 'pnpm',
       })
     ).toBe('?preset=live-video&skin=minimal');
   });
 
   it('round-trips through parse', () => {
     const selection = {
+      framework: 'html',
+      template: 'astro',
       useCase: 'default-audio',
       skin: 'none',
       renderer: 'spotify',
@@ -95,11 +126,12 @@ describe('serializeInstallationSearch', () => {
 describe('serializeInstallationSearchForRoute', () => {
   it('keeps only parameters supported by the current installation route', () => {
     const search = '?method=shadcn&framework=vue&template=astro&styling=css&package-manager=pnpm&utm_source=docs';
+    const vue = { ...DEFAULT_SELECTION, framework: 'vue', template: 'vite' } as const;
 
-    expect(serializeInstallationSearchForRoute('vue', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
+    expect(serializeInstallationSearchForRoute('vue', vue, search)).toBe('?utm_source=docs');
     expect(serializeInstallationSearchForRoute('cdn', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
-    expect(serializeInstallationSearchForRoute('shadcn', DEFAULT_SELECTION, search)).toBe(
-      '?framework=vue&template=astro&styling=css&utm_source=docs'
+    expect(serializeInstallationSearchForRoute('shadcn', vue, search)).toBe(
+      '?framework=vue&styling=css&utm_source=docs'
     );
   });
 });

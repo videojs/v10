@@ -91,7 +91,7 @@ describe('React registry output', () => {
 
     expect(helper?.files?.map((file) => file.target)).toEqual(['@lib/resolve-class-name.ts']);
     expect(defaultPlayButton).toContain(`import { resolveClassName } from '@/lib/resolve-class-name';`);
-    expect(defaultPlayButton).toContain(`import { cn } from '@/lib/utils';`);
+    expect(defaultPlayButton).toContain(`import { cn } from '@/lib/resolve-class-name';`);
     expect(defaultPlayButton).not.toContain(`{ cn, resolveClassName }`);
     expect(styleImports(defaultPlayButton)).toEqual([
       '../styles/base.css',
@@ -131,6 +131,26 @@ describe('React registry output', () => {
     expect(styleTargets(minimalItems, 'video')).toEqual(minimalVideoStyleTargets);
     expect(styleTargets(defaultItems, 'audio')).toEqual(defaultStyleTargets);
     expect(styleTargets(minimalItems, 'audio')).toEqual(minimalAudioStyleTargets);
+  });
+
+  it('uses the registry-owned class helper without installing cn', () => {
+    for (const registryDir of [...Object.values(registryDirs), ...Object.values(cssRegistryDirs)]) {
+      const items = readRegistryItems(registryDir);
+      const sourceFiles = readdirSync(registryDir, { recursive: true, withFileTypes: true })
+        .filter((entry) => entry.isFile() && /\.[cm]?[jt]sx?$/.test(entry.name))
+        .map((entry) => resolve(entry.parentPath, entry.name));
+
+      for (const item of items.values()) {
+        expect(
+          (item.dependencies ?? []).some((dependency) => /^cn(?:@|$)/.test(dependency)),
+          item.name
+        ).toBe(false);
+      }
+
+      for (const file of sourceFiles) {
+        expect(readFileSync(file, 'utf8'), file).not.toMatch(/from ['"]cn['"]/);
+      }
+    }
   });
 
   it('publishes the same public names from each theme catalog', () => {

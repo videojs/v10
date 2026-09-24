@@ -2,11 +2,12 @@ import { generateSourceMediaInstallCode } from '@videojs/installation';
 
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import { shared } from '@/components/typography/styles';
+import { VJS10_VERSION } from '@/consts';
 
 import { useSelection } from '../installation/useSelection';
 
 export default function SourceMediaInstall() {
-  const install = generateSourceMediaInstallCode(useSelection('renderer'));
+  const install = generateSourceMediaInstallCode(useSelection('renderer'), VJS10_VERSION);
   if (!install) return <span id="install-the-media-adapter" hidden data-conditional-heading-placeholder />;
 
   return (
@@ -15,7 +16,7 @@ export default function SourceMediaInstall() {
         Install the media adapter
       </h2>
       <p className={`${shared.p} ${shared.prose}`}>
-        This media source needs a separate playback adapter. Install it with your package manager.
+        This media source needs a separate playback adapter. Install the version that matches this Video.js release.
       </p>
       <PackageManagerTabs commands={install} />
     </section>

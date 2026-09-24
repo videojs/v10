@@ -1,5 +1,6 @@
 import { rendererSupportsCdn } from './cdn-code';
 import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion } from './defaults';
+import { detectRenderer, detectRendererCandidates } from './detect-renderer';
 import { PACKAGE_MANAGERS, type InstallationInput, type InstallationInputKey, type PackageManager } from './parameters';
 export { PACKAGE_MANAGERS, type PackageManager } from './parameters';
 import {
@@ -10,22 +11,20 @@ import {
   type Skin,
   type UseCase,
 } from './presets';
-import { RENDERERS, type Renderer } from './renderers';
 import {
-  defaultRegistryStyling,
-  defaultRegistryTemplate,
-  registryStylings,
-  registryTemplates,
-  type RegistryFramework,
-  type RegistryStyling,
-  type RegistryTemplate,
-} from './shadcn';
+  defaultInstallationTemplate,
+  INSTALLATION_FRAMEWORKS,
+  installationTemplates,
+  type InstallationFramework,
+  type InstallationTemplate,
+} from './projects';
+import { RENDERERS, type Renderer } from './renderers';
+import { defaultRegistryStyling, registryStylings, type RegistryFramework, type RegistryStyling } from './shadcn';
+
+export { INSTALLATION_FRAMEWORKS, type InstallationFramework } from './projects';
 
 export const INSTALLATION_METHODS = ['packaged', 'shadcn', 'cdn'] as const;
 export type InstallationMethod = (typeof INSTALLATION_METHODS)[number];
-
-export const INSTALLATION_FRAMEWORKS = ['react', 'html', 'vue', 'svelte'] as const;
-export type InstallationFramework = (typeof INSTALLATION_FRAMEWORKS)[number];
 
 export type InstallMethod = 'cdn' | PackageManager;
 
@@ -52,7 +51,7 @@ export interface InstallationSelection {
   media: Renderer;
   sourceUrl: string;
   packageManager: PackageManager;
-  template: RegistryTemplate | null;
+  template: InstallationTemplate;
   styling: RegistryStyling | null;
   cdnBase: string;
   defaulted: readonly InstallationInputKey[];
@@ -150,7 +149,8 @@ export function sourceFrameworkFor(framework: InstallationFramework): RegistryFr
 export function resolveInstallationSelection(
   owner: PlayerOwner,
   input: InstallationInput,
-  packageVersion = 'latest'
+  packageVersion = 'latest',
+  defaults: { packageManager?: PackageManager } = {}
 ): SelectionResult {
   const errors: SelectionError[] = [];
   const defaulted: InstallationInputKey[] = [];
@@ -161,22 +161,39 @@ export function resolveInstallationSelection(
   };
 
   const methodValue = defaultValue('method', 'packaged');
-  const method = resolveChoice('method', methodValue, INSTALLATION_METHODS, 'packaged', errors);
+  const ownerMethods = owner === 'react' ? (['packaged', 'shadcn'] as const) : INSTALLATION_METHODS;
+  const method =
+    owner === 'react' && methodValue === 'cdn'
+      ? 'packaged'
+      : resolveChoice('method', methodValue, ownerMethods, 'packaged', errors);
+
+  if (owner === 'react' && methodValue === 'cdn') {
+    errors.push({
+      field: 'method',
+      value: methodValue,
+      message: 'CDN installation is available for plain HTML through `@videojs/html`.',
+    });
+  }
 
   const defaultFramework = owner === 'react' ? 'react' : 'html';
   const frameworkValue = defaultValue('framework', defaultFramework);
-  const framework = resolveChoice('framework', frameworkValue, INSTALLATION_FRAMEWORKS, defaultFramework, errors);
+  const ownerFrameworks = owner === 'react' ? (['react'] as const) : (['html', 'vue', 'svelte'] as const);
+  const unsupportedKnownFramework =
+    includes(INSTALLATION_FRAMEWORKS, frameworkValue) && !includes(ownerFrameworks, frameworkValue);
+  const framework = unsupportedKnownFramework
+    ? defaultFramework
+    : resolveChoice('framework', frameworkValue, ownerFrameworks, defaultFramework, errors);
 
-  if (owner === 'react' && framework !== 'react') {
+  if (owner === 'react' && unsupportedKnownFramework) {
     errors.push({
       field: 'framework',
-      value: framework,
+      value: frameworkValue,
       message: '`@videojs/react` supports the React framework. Use `@videojs/html` for HTML, Vue, or Svelte.',
     });
-  } else if (owner === 'html' && framework === 'react') {
+  } else if (owner === 'html' && unsupportedKnownFramework) {
     errors.push({
       field: 'framework',
-      value: framework,
+      value: frameworkValue,
       message: '`@videojs/html` supports HTML, Vue, or Svelte. Use `@videojs/react` for React.',
     });
   }
@@ -200,9 +217,44 @@ export function resolveInstallationSelection(
 
   const skin = skinFromFlag(skinFlag, useCase);
 
+  const sourceUrl = input.sourceUrl?.trim() ?? '';
+  const validSourceUrl = sourceUrl && !containsControlCharacter(sourceUrl);
+
+  if (!sourceUrl) defaulted.push('sourceUrl');
+  else if (!validSourceUrl) {
+    errors.push({
+      field: 'sourceUrl',
+      value: sourceUrl,
+      message: 'Must not contain control characters or line breaks.',
+    });
+  }
+
   const availableMedia = getInstallationPreset(useCase).renderers;
-  const mediaValue = defaultValue('media', availableMedia[0]!);
+  const detectedCandidates = validSourceUrl ? detectRendererCandidates(sourceUrl) : [];
+  const compatibleDetectedCandidates = detectedCandidates.filter((candidate) => availableMedia.includes(candidate));
+  const detectedMedia = validSourceUrl ? detectRenderer(sourceUrl, useCase)?.renderer : undefined;
+  const mediaValue = defaultValue('media', detectedMedia ?? availableMedia[0]!);
   const media = resolveChoice('media', mediaValue, RENDERERS, availableMedia[0]!, errors);
+
+  if (validSourceUrl && detectedCandidates.length > 0) {
+    if (!detectedMedia) {
+      errors.push({
+        field: 'sourceUrl',
+        value: sourceUrl,
+        message: `Does not match a media source available for the ${preset} preset.`,
+      });
+    } else if (
+      input.media !== undefined &&
+      includes(RENDERERS, mediaValue) &&
+      !compatibleDetectedCandidates.includes(mediaValue)
+    ) {
+      errors.push({
+        field: 'media',
+        value: mediaValue,
+        message: `Does not match the supplied source URL. Expected one of: ${compatibleDetectedCandidates.join(', ')}`,
+      });
+    }
+  }
 
   if (includes(RENDERERS, mediaValue) && !availableMedia.includes(mediaValue)) {
     errors.push({
@@ -212,31 +264,29 @@ export function resolveInstallationSelection(
     });
   }
 
-  const packageManagerValue = defaultValue('packageManager', 'npm');
-  const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'npm', errors);
-
-  const sourceUrl = input.sourceUrl?.trim() ?? '';
-
-  if (!sourceUrl) defaulted.push('sourceUrl');
-  else if (containsControlCharacter(sourceUrl)) {
-    errors.push({
-      field: 'sourceUrl',
-      value: sourceUrl,
-      message: 'Must not contain control characters or line breaks.',
-    });
-  }
+  const defaultPackageManager = defaults.packageManager ?? 'pnpm';
+  const packageManagerValue = defaultValue('packageManager', defaultPackageManager);
+  const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'pnpm', errors);
 
   const sourceFramework = sourceFrameworkFor(framework);
-  let template: RegistryTemplate | null = null;
+  const availableTemplates = method === 'cdn' ? (['vite'] as const) : installationTemplates(framework);
+  const templateValue = defaultValue('template', defaultInstallationTemplate(framework));
+  const template = resolveChoice(
+    'template',
+    templateValue,
+    availableTemplates,
+    method === 'cdn' ? 'vite' : defaultInstallationTemplate(framework),
+    errors
+  );
   let styling: RegistryStyling | null = null;
 
   if (method === 'cdn') {
-    if (owner !== 'html' || framework !== 'html') {
-      errors.push({ field: 'method', value: method, message: 'CDN installation is available for plain HTML.' });
-    }
-
-    if (input.packageManager !== undefined) {
-      errors.push({ field: 'packageManager', message: 'does not apply to CDN installation.' });
+    if (framework !== 'html') {
+      errors.push({
+        field: 'method',
+        value: method,
+        message: 'CDN installation is available for plain HTML through `@videojs/html`.',
+      });
     }
 
     if (!rendererSupportsCdn(media, CDN_MEDIA_SUBPATHS)) {
@@ -261,20 +311,11 @@ export function resolveInstallationSelection(
       });
     }
 
-    const templateValue = defaultValue('template', defaultRegistryTemplate(framework));
-    const templates = registryTemplates(sourceFramework);
-
-    template = resolveChoice('template', templateValue, templates, defaultRegistryTemplate(framework), errors);
-
     const stylingValue = defaultValue('styling', defaultRegistryStyling(sourceFramework));
     const stylings = registryStylings(sourceFramework);
 
     styling = resolveChoice('styling', stylingValue, stylings, defaultRegistryStyling(sourceFramework), errors);
   } else {
-    if (input.template !== undefined) {
-      errors.push({ field: 'template', message: 'only applies to Shadcn installation.' });
-    }
-
     if (input.styling !== undefined) {
       errors.push({ field: 'styling', message: 'only applies to Shadcn installation.' });
     }
@@ -313,7 +354,7 @@ export function selectionToInput(selection: InstallationSelection): Required<Ins
     media: selection.media,
     sourceUrl: selection.sourceUrl,
     packageManager: selection.packageManager,
-    template: selection.template ?? '',
+    template: selection.template,
     styling: selection.styling ?? '',
   };
 }

@@ -31,7 +31,7 @@ describe('markdownUrl', () => {
         },
         'html'
       )
-    ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?preset=audio&framework=html');
+    ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=html&preset=audio');
   });
 
   it('copies the normalized choices shown by an installation page', () => {
@@ -89,7 +89,7 @@ describe('markdownUrl', () => {
         pathname: '/docs/guides/installation/shadcn',
         search: '?framework=react&preset=background-video&skin=none&media=background-video&package-manager=pnpm',
       })
-    ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=react&package-manager=pnpm');
+    ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=react');
   });
 
   it('keeps a private source URL for copying but removes it from assistant links', () => {

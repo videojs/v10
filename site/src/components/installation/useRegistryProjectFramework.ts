@@ -1,20 +1,20 @@
 import type {
   InstallationFramework,
+  InstallationTemplate,
   RegistryFramework,
   RegistryPreset,
   RegistryStyling,
-  RegistryTemplate,
   RegistryTheme,
 } from '@videojs/installation';
 import type { ReadableAtom } from 'nanostores';
 import { useSyncExternalStore } from 'react';
 
+import { template } from '@/stores/installation';
 import {
   registryFramework,
   registryProjectFramework,
   registrySkin,
   registryStyling,
-  registryTemplate,
   registryTheme,
 } from '@/stores/registry';
 
@@ -36,8 +36,8 @@ export function useRegistryFramework(serverFramework: RegistryFramework): Regist
   return useRegistryStore(registryFramework, serverFramework);
 }
 
-export function useRegistryTemplate(): RegistryTemplate | null {
-  return useRegistryStore(registryTemplate, null);
+export function useInstallationTemplate(serverTemplate: InstallationTemplate): InstallationTemplate {
+  return useRegistryStore(template, serverTemplate);
 }
 
 export function useRegistryStyling(): RegistryStyling | null {

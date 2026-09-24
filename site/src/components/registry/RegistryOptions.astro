@@ -1,8 +1,13 @@
 ---
 /** A project-template or registry source choice placed beside the command it controls. */
 import ContentWidth from '@/components/frames/ContentWidth.astro';
-import { isValidFramework } from '@/types/docs';
-import type { RegistryFramework, RegistryPreset, RegistryTheme } from '@videojs/installation';
+import {
+  isInstallationFramework,
+  type InstallationFramework,
+  type InstallationMethod,
+  type RegistryPreset,
+  type RegistryTheme,
+} from '@videojs/installation';
 
 import RegistryOptionsClient from './RegistryOptionsClient';
 
@@ -12,15 +17,16 @@ interface Props {
   /** Theme selected before the page's theme selector changes it. */
   defaultTheme?: RegistryTheme;
   kind: 'template' | 'catalog' | 'styling';
+  method?: InstallationMethod;
   /** Start the skin and theme selectors from the choices made earlier on the installation page. */
   installation?: boolean;
   /** Explicit source framework for routes that are not nested under a docs framework. */
-  framework?: RegistryFramework;
+  framework?: InstallationFramework;
 }
 
-const { defaultSkin, defaultTheme, installation = false, kind, framework: frameworkProp } = Astro.props;
+const { defaultSkin, defaultTheme, installation = false, kind, method, framework: frameworkProp } = Astro.props;
 const routeFramework = Astro.params.framework;
-const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
+const framework = frameworkProp ?? (isInstallationFramework(routeFramework) ? routeFramework : null);
 if (!framework) throw new Error(`RegistryOptions needs a framework route, received ${routeFramework}.`);
 ---
 
@@ -33,6 +39,7 @@ if (!framework) throw new Error(`RegistryOptions needs a framework route, receiv
       framework={framework}
       installation={installation}
       kind={kind}
+      method={method}
     />
   </div>
 </ContentWidth>

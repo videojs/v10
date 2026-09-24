@@ -8,12 +8,15 @@ import { DEFAULT_SELECTION, type InstallationUiSelection } from '@/utils/install
  * hold the URL's picks or a choice made before this island hydrated. Handing React the default as the server snapshot
  * lets hydration match, then the real value arrives as an ordinary update instead of a hydration mismatch.
  */
-export function useSelection<K extends keyof InstallationUiSelection>(key: K): InstallationUiSelection[K] {
+export function useSelection<K extends keyof InstallationUiSelection>(
+  key: K,
+  serverValue: InstallationUiSelection[K] = DEFAULT_SELECTION[key]
+): InstallationUiSelection[K] {
   const store = selectionAtoms[key];
 
   return useSyncExternalStore(
     (onChange) => store.listen(onChange),
     () => store.get(),
-    () => DEFAULT_SELECTION[key]
+    () => serverValue
   );
 }

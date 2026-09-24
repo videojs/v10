@@ -24,6 +24,6 @@ export const INSTALLATION_METHOD_OPTIONS = [
     id: 'cdn',
     label: 'CDN',
     description: 'Load the HTML player from jsDelivr.',
-    details: 'Load the HTML player from jsDelivr without a package manager or build step.',
+    details: 'Load browser-ready HTML player files from jsDelivr without installing Video.js packages.',
   },
 ] as const satisfies readonly InstallationMethodOption[];

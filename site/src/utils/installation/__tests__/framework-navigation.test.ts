@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
+  canonicalShadcnInstallationUrl,
   isShadcnInstallationUrl,
   resolveInstallationFrameworkNavigation,
   resolveShadcnUrlSelection,
+  updateShadcnInstallationUrl,
 } from '../framework-navigation';
 
 describe('resolveInstallationFrameworkNavigation', () => {
@@ -76,5 +78,26 @@ describe('resolveShadcnUrlSelection', () => {
 
     expect(resolveShadcnUrlSelection(html, 'react')).toMatchObject({ template: null, styling: null });
     expect(resolveShadcnUrlSelection(react, 'html')).toMatchObject({ template: 'vite', styling: 'css' });
+  });
+});
+
+describe('canonicalShadcnInstallationUrl', () => {
+  it('canonicalizes invalid project options once', () => {
+    const url = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=next&styling=tailwind&preset=audio'
+    );
+
+    expect(canonicalShadcnInstallationUrl(url, 'react')?.search).toBe('?framework=vue&preset=audio');
+  });
+});
+
+describe('updateShadcnInstallationUrl', () => {
+  it('clears framework-owned options when the project framework changes', () => {
+    const url = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=next&styling=tailwind&preset=audio'
+    );
+    const target = updateShadcnInstallationUrl(url, { framework: 'svelte' });
+
+    expect(target.search).toBe('?framework=svelte&preset=audio');
   });
 });

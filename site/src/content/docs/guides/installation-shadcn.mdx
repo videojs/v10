@@ -26,6 +26,7 @@ import ShadcnFrameworkCase from '@/components/registry/ShadcnFrameworkCase.astro
 import SourceMediaInstall from '@/components/registry/SourceMediaInstall';
 import SourceReactPlayer from '@/components/registry/SourceReactPlayer';
 import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
+import ProjectCommands from '@/components/installation/ProjectCommands';
 
 <InstallationOverview />
 
@@ -45,11 +46,17 @@ Choose the JavaScript framework for your project.
   <JSPicker />
 </ContentWidth>
 
-## Choose how to install
+## Choose your app setup
 
-Choose from the installation options available for your selections.
+Choose the app environment that controls the setup commands and file locations below.
 
-<InstallationMethodNav />
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="template" />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<RegistryOptions framework="html" kind="template" />
+</ShadcnFrameworkCase>
 
 ## Choose your use case
 
@@ -75,50 +82,64 @@ Choose what the player will play. If that source needs a playback adapter, the i
   <MediaSourcePicker client:load />
 </ContentWidth>
 
+## Choose how to install
+
+Choose from the installation options available for your selections.
+
+<InstallationMethodNav />
+
 </HumanCase>
 
 <div data-installation-plan class="contents">
 
-## Initialize Shadcn
+## Choose source styling
 
-Run the commands from the app directory that contains `components.json`, or where you want the CLI to create it. In a monorepo, run them from the app workspace or pass `--cwd <path>`.
+React skin source is available with Tailwind CSS 4 or Vanilla CSS. HTML source for HTML, Vue, and Svelte uses Vanilla CSS.
+
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="styling" />
+</ShadcnFrameworkCase>
+
+## Prepare your app
+
+Skip this section when you already have the selected app setup. For a new React and Tailwind app, run the command from the parent directory: Shadcn creates the named app and `components.json` together. The other paths scaffold into the current empty app directory before you add the standard config below.
+
+<ProjectCommands client:load method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
+
+## Configure the source registry
+
+For an existing React and Tailwind app without `components.json`, satisfy Shadcn's Tailwind and import-alias checks, then run the command below. The other paths show the aliases and standard config to merge into the app. In a monorepo, use the app workspace or pass `--cwd <path>` to Shadcn commands.
 
 <Aside type="note">
 Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
 </Aside>
 
 <ShadcnFrameworkCase framework="react">
-<RegistryOptions framework="react" kind="template" />
-
 <RegistryInitCommand framework="react" installation />
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-<RegistryOptions framework="html" kind="template" />
-
 <RegistryInitCommand framework="html" installation />
 </ShadcnFrameworkCase>
 
-If the app already has `components.json`, skip this section.
+If the app already has `components.json`, keep its aliases and skip this section. The registry writes source under its `aliases.components` path, so use that existing alias in the imports below. Vanilla CSS, HTML, Vue, and Svelte use the compatible `components.json` shown above without adding React or Tailwind setup.
 
 ## Add the skin source
 
-React skins can use Tailwind CSS 4 or Vanilla CSS. HTML skins use Vanilla CSS. Choose the styling that matches your app, then connect the Video.js registry and add the skin selected above.
+Set the Video.js registry catalog in `components.json`, then add the skin selected above.
+
+The add command overwrites an existing Video.js skin so theme or catalog changes apply completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
 
 <ShadcnFrameworkCase framework="react">
-<RegistryOptions framework="react" kind="styling" />
-
 <InstallationRegistryCommand framework="react" />
 
-The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/react`.
+The files are added under `<components alias>/videojs/<preset>`. The registry item also installs `@videojs/react`.
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-<RegistryOptions framework="html" kind="styling" />
-
 <InstallationRegistryCommand framework="html" />
 
-The files are added under `components/videojs/<preset>`. The registry item also installs `@videojs/html`.
+The files are added under `<components alias>/videojs/<preset>`. The registry item also installs `@videojs/html`.
 </ShadcnFrameworkCase>
 
 <SourceMediaInstall client:load />
@@ -126,7 +147,7 @@ The files are added under `components/videojs/<preset>`. The registry item also 
 ## Add your player
 
 <ShadcnFrameworkCase framework="react">
-Add the player directly to `app/page.tsx`. It imports the player and media from the package, then imports the selected skin from your project.
+Add the player to the file shown for your selected app setup. It imports the player and media from the package, then imports the selected skin from your project.
 
 <ContentWidth>
   <SourceReactPlayer client:load />
@@ -134,7 +155,7 @@ Add the player directly to `app/page.tsx`. It imports the player and media from 
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-The HTML source also works in Vue and Svelte. Follow the custom-element setup in the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>. In your component, import the installed `skin.ts` instead of a packaged skin, and place the updated `skin.html` markup inside the player. In Vue, include the tags from that markup in `isCustomElement`. The steps below show the plain HTML entry point.
+The HTML source also works in Vue and Svelte. The steps below match the framework you selected above. For more ways to integrate custom elements, see the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>.
 
 <Steps>
   <Step number={1} title="Add the media element">
@@ -149,6 +170,12 @@ The HTML source also works in Vue and Svelte. Follow the custom-element setup in
 </Steps>
 </ShadcnFrameworkCase>
 
+## Run your app
+
+Start the development server and verify that the selected media plays.
+
+<ProjectCommands client:load method="shadcn" part="run" serverFramework="react" serverTemplate="next" />
+
 </div>
 
 That's it! You now have a working Video.js player whose skin source lives in your project.
@@ -156,11 +183,11 @@ That's it! You now have a working Video.js player whose skin source lives in you
 ## Change the skin source
 
 <ShadcnFrameworkCase framework="react">
-Start in `components/videojs/<preset>/skin.tsx`. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+Start in `<components alias>/videojs/<preset>/skin.tsx`. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-Start in `components/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+Start in `<components alias>/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
 </ShadcnFrameworkCase>
 
 ## Choose what to do next

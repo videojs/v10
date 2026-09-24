@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { template } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
-import { registryFramework, registryProjectFramework, registryStyling, registryTemplate } from '@/stores/registry';
+import { registryFramework, registryProjectFramework, registryStyling } from '@/stores/registry';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
@@ -19,7 +20,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     currentFramework.set(null);
     registryProjectFramework.set('react');
     registryStyling.set(null);
-    registryTemplate.set(null);
+    template.set('next');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
@@ -89,7 +90,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
     initializeDocsNavigation();
 
-    expect(window.location.search).toBe('?preset=audio&framework=html');
+    expect(window.location.search).toBe('?framework=html&preset=audio');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
     expect(registryFramework.get()).toBe('html');
   });
@@ -105,8 +106,21 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
     expect(window.location.search).toBe('?framework=vue&styling=css');
     expect(registryProjectFramework.get()).toBe('vue');
-    expect(registryTemplate.get()).toBeNull();
+    expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
+    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
+  });
+
+  it('drops invalid Shadcn options when the framework query is already valid', () => {
+    window.history.replaceState(
+      { index: 2, scrollX: 0, scrollY: 360 },
+      '',
+      '/docs/guides/installation/shadcn?framework=react&template=nuxt&styling=bogus&preset=audio'
+    );
+
+    initializeDocsNavigation();
+
+    expect(window.location.search).toBe('?framework=react&preset=audio');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
   });
 
@@ -122,7 +136,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     );
     document.dispatchEvent(new Event('astro:after-swap'));
 
-    expect(window.location.search).toBe('?preset=audio&framework=html');
+    expect(window.location.search).toBe('?framework=html&preset=audio');
     expect(window.history.state).toEqual({ index: 3, scrollX: 0, scrollY: 360 });
   });
 
@@ -211,6 +225,25 @@ describe('framework navigation scroll', () => {
 
     expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 420 });
     expect(window.sessionStorage.getItem('vjs-page-scroll')).toBeNull();
+  });
+
+  it('preserves an installation method nav position when content above it changes height', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const scrollY = vi.spyOn(window, 'scrollY', 'get').mockReturnValue(900);
+    const nav = document.createElement('nav');
+
+    nav.dataset.installationMethodNav = '';
+    document.body.append(nav);
+    vi.spyOn(nav, 'getBoundingClientRect').mockReturnValue({ top: 240 } as DOMRect);
+
+    savePageScrollForNavigation('/docs/framework/html/guides/installation-shadcn', '[data-installation-method-nav]');
+
+    vi.spyOn(nav, 'getBoundingClientRect').mockReturnValue({ top: 320 } as DOMRect);
+    window.history.replaceState(null, '', '/docs/framework/html/guides/installation-shadcn');
+    initializeDocsNavigation();
+
+    expect(scrollY).toHaveBeenCalled();
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 980 });
   });
 
   it('restores only the latest handoff when a framework navigation is superseded', () => {

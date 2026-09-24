@@ -1,7 +1,9 @@
 import {
   createInstallationPlan,
+  INSTALLATION_FRAMEWORKS,
   INSTALLATION_QUERY_PARAMETERS,
   installationParameterForKey,
+  isInstallationFramework,
   PRIVATE_INSTALLATION_QUERY_PARAMETERS,
   renderInstallationPlanSections,
   resolveInstallationSelection,
@@ -46,7 +48,7 @@ function installationRouteDefaults(path: string, params: URLSearchParams): Insta
 
   if (route !== 'shadcn') return null;
 
-  const framework = params.get('framework') ?? 'react';
+  const framework = params.get('framework') || 'react';
   const owner = framework === 'html' || framework === 'vue' || framework === 'svelte' ? 'html' : 'react';
 
   return { owner, method: 'shadcn', framework };
@@ -97,8 +99,37 @@ export function resolveInstallationMarkdownPlan(
   params: URLSearchParams,
   packageVersion: string
 ): InstallationMarkdownPlanResult {
+  const route = getInstallationRouteSegment(path);
+  const requestedFramework = params.get('framework');
+
+  if (requestedFramework && !isInstallationFramework(requestedFramework)) {
+    return {
+      ok: false,
+      errors: [
+        {
+          field: 'framework',
+          value: requestedFramework,
+          message: `Expected one of: ${INSTALLATION_FRAMEWORKS.join(', ')}`,
+        },
+      ],
+    };
+  }
+
   const defaults = installationRouteDefaults(path, params);
   if (!defaults) return null;
+
+  if (route !== 'shadcn' && requestedFramework && requestedFramework !== defaults.framework) {
+    return {
+      ok: false,
+      errors: [
+        {
+          field: 'framework',
+          value: requestedFramework,
+          message: `This route uses the ${defaults.framework} framework. Choose its canonical installation route instead.`,
+        },
+      ],
+    };
+  }
 
   const resolved = resolveInstallationSelection(defaults.owner, inputFromQuery(defaults, params), packageVersion);
   if (!resolved.ok) return resolved;

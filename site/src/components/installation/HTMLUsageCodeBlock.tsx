@@ -1,4 +1,9 @@
-import { generateHTMLUsageCode } from '@videojs/installation';
+import {
+  generateHTMLUsageCode,
+  installationHtmlEntrySetup,
+  installationHtmlPageCode,
+  installationProjectFiles,
+} from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
@@ -15,22 +20,36 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
   const $renderer = useSelection('renderer');
   const selectedInstallMethod = useSelection('installMethod');
   const $sourceUrl = useSelection('sourceUrl');
+  const $template = useSelection('template');
+  const project = installationProjectFiles('html', $template);
+  const method = installMethod ?? selectedInstallMethod;
 
   const result = generateHTMLUsageCode({
     useCase: $useCase,
     skin: $skin,
     renderer: $renderer,
     sourceUrl: $sourceUrl,
-    installMethod: installMethod ?? selectedInstallMethod,
+    installMethod: method,
   });
+  const entrySetup = method === 'cdn' ? [] : installationHtmlEntrySetup($template, project.usage!);
+  const html = method === 'cdn' ? result.html : installationHtmlPageCode(result.html, $template, project.usage!);
 
   return (
     <>
+      {entrySetup.map((block) => (
+        <div key={block.filename}>
+          <p>
+            Merge this entry into the existing <code>{block.filename}</code> configuration, keeping its other inputs,
+            plugins, and options:
+          </p>
+          <ClientCode code={block.code} lang={block.language} />
+        </div>
+      ))}
       {result.imports && (
         <TabsRoot maxWidth={false}>
           <TabsList label="HTML implementation">
             <Tab value="typescript" initial>
-              TypeScript
+              {project.usage}
             </Tab>
           </TabsList>
           <TabsPanel value="typescript" initial>
@@ -41,11 +60,11 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
       <TabsRoot maxWidth={false}>
         <TabsList label="HTML implementation">
           <Tab value="html" initial>
-            HTML
+            {project.player}
           </Tab>
         </TabsList>
         <TabsPanel value="html" initial>
-          <ClientCode code={result.html} lang="html" />
+          <ClientCode code={html} lang="html" />
         </TabsPanel>
       </TabsRoot>
     </>

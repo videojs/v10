@@ -8,6 +8,8 @@ import {
   generateSourceHTMLUsageCode,
   generateSourceMediaInstallCode,
   generateSourceReactCreateCode,
+  generateSourceSvelteUsageCode,
+  generateSourceVueUsageCode,
   generateSvelteCreateCode,
   generateSvelteUsageCode,
   generateVueCreateCode,
@@ -173,7 +175,7 @@ describe('generateHTMLUsageCode', () => {
     const result = generateHTMLUsageCode(baseHTML);
 
     expect(result.html).toContain('<video-player>');
-    expect(result.html).toContain('<video-skin>');
+    expect(result.html).toContain('<video-skin style=');
     expect(result.html).toContain('<video src=');
     expect(result.html).toContain('playsinline');
   });
@@ -216,7 +218,7 @@ describe('generateHTMLUsageCode', () => {
     const result = generateHTMLUsageCode(opts);
 
     expect(result.html).toContain('<background-video-player>');
-    expect(result.html).toContain('<background-video-skin>');
+    expect(result.html).toContain('<background-video-skin style="display: block; width: 100%; aspect-ratio: 16 / 9;">');
   });
 
   it('includes the HLS media TypeScript import', () => {
@@ -316,7 +318,7 @@ describe('generateHTMLUsageCode', () => {
   it('uses minimal skin tag', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, skin: 'minimal-video' });
 
-    expect(result.html).toContain('<video-minimal-skin>');
+    expect(result.html).toContain('<video-minimal-skin style=');
     expect(result.imports).toContain("import '@videojs/html/video/minimal-skin'");
   });
 
@@ -345,7 +347,7 @@ describe('generateHTMLUsageCode', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
 
     expect(result.html).toContain('<live-video-player>');
-    expect(result.html).toContain('<live-video-skin>');
+    expect(result.html).toContain('<live-video-skin style=');
     expect(result.html).toContain('<hlsjs-video src=');
     expect(result.html).toContain('playsinline');
     expect(result.imports).toContain("import '@videojs/html/live-video/player'");
@@ -361,7 +363,7 @@ describe('generateHTMLUsageCode', () => {
       renderer: 'hls',
     });
 
-    expect(result.html).toContain('<live-video-minimal-skin>');
+    expect(result.html).toContain('<live-video-minimal-skin style=');
     expect(result.imports).toContain("import '@videojs/html/live-video/minimal-skin'");
   });
 
@@ -415,12 +417,19 @@ describe('Vue and Svelte code generation', () => {
   });
 
   it('creates a Vue component and usage example from the selected player', () => {
-    const player = generateVueCreateCode(hlsOptions)['VideoPlayer.vue'];
+    const player = generateVueCreateCode(hlsOptions)['MediaPlayer.vue'];
     const usage = generateVueUsageCode({ ...hlsOptions, sourceUrl: 'https://example.com/live.m3u8' })['App.vue'];
 
     expect(player).toContain("import '@videojs/html/media/hlsjs-video'");
     expect(player).toContain('<hlsjs-video :src="src" playsinline>');
-    expect(usage).toContain('<VideoPlayer src="https://example.com/live.m3u8" />');
+    expect(usage).toContain('<MediaPlayer src="https://example.com/live.m3u8" />');
+  });
+
+  it('imports packaged Nuxt players through its component registry', () => {
+    const usage = generateVueUsageCode({ ...hlsOptions, playerImport: '#components' })['App.vue'];
+
+    expect(usage).toContain("import { MediaPlayer } from '#components'");
+    expect(usage).not.toContain("import MediaPlayer from '#components'");
   });
 
   it('creates Svelte and SvelteKit examples from the selected player', () => {
@@ -439,6 +448,32 @@ describe('Vue and Svelte code generation', () => {
     expect(usage['+page.svelte']).toContain(`src={${JSON.stringify(sourceUrl)}}`);
     expect(usage['App.svelte']).toContain(`src={${JSON.stringify(sourceUrl)}}`);
   });
+
+  it('loads copied HTML skin source without compiling it as a Vue template', () => {
+    const code = generateSourceVueUsageCode({ ...hlsOptions, sourceUrl: '' })['MediaPlayer.vue'];
+
+    expect(code).toContain("import skin from '@/components/videojs/video/skin.html?raw'");
+    expect(code).toContain(
+      '<video-player style="display: block; width: 100%; aspect-ratio: 16 / 9;" v-html="skin"></video-player>'
+    );
+    expect(code).not.toContain('Paste the complete updated');
+  });
+
+  it('imports Nuxt client-only players through its component registry', () => {
+    const code = generateSourceVueUsageCode({ ...hlsOptions, playerImport: '#components' })['App.vue'];
+
+    expect(code).toContain("import { MediaPlayer } from '#components'");
+    expect(code).not.toContain("from './components/MediaPlayer.client.vue'");
+  });
+
+  it('loads copied HTML skin source without compiling it as Svelte markup', () => {
+    const code = generateSourceSvelteUsageCode({ ...hlsOptions, sourceUrl: '' })['VideoPlayer.svelte'];
+
+    expect(code).toContain("import skin from '$lib/components/videojs/video/skin.html?raw'");
+    expect(code).toContain('<video-player style="display: block; width: 100%; aspect-ratio: 16 / 9;">');
+    expect(code).toContain('{@html skin}');
+    expect(code).not.toContain('Paste the complete updated');
+  });
 });
 
 describe('generateReactCreateCode', () => {
@@ -451,7 +486,7 @@ describe('generateReactCreateCode', () => {
     expect(code).not.toContain('videoFeatures');
     expect(code).toContain("import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video'");
     expect(code).toContain('<VideoPlayer>');
-    expect(code).toContain('<VideoSkin>');
+    expect(code).toContain('<VideoSkin style=');
     expect(code).toContain('<Video src={"');
     expect(code).toContain('playsInline />');
     expect(code).toContain('export default function Page()');
@@ -571,7 +606,7 @@ describe('generateReactCreateCode', () => {
     const result = generateReactCreateCode({ ...baseReact, skin: 'minimal-video' });
     const code = result['app/page.tsx'];
 
-    expect(code).toContain('<MinimalVideoSkin>');
+    expect(code).toContain('<MinimalVideoSkin style=');
     expect(code).toContain("import '@videojs/react/video/minimal-skin.css'");
   });
 
@@ -582,7 +617,7 @@ describe('generateReactCreateCode', () => {
     expect(code).not.toContain('VideoSkin');
     expect(code).not.toContain('skin.css');
     expect(code).toContain('<Video src={"');
-    expect(code).toContain('playsInline />');
+    expect(code).toContain("playsInline style={{ width: '100%', aspectRatio: '16 / 9' }} />");
     expect(code).toContain("from '@videojs/react/video'");
   });
 
@@ -591,7 +626,7 @@ describe('generateReactCreateCode', () => {
     const code = result['app/page.tsx'];
 
     expect(code).toContain('<LiveVideoPlayer>');
-    expect(code).toContain('<LiveVideoSkin>');
+    expect(code).toContain('<LiveVideoSkin style=');
     expect(code).toContain("import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video'");
     expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
     expect(code).toContain("import '@videojs/react/live-video/skin.css'");
@@ -608,7 +643,7 @@ describe('generateReactCreateCode', () => {
     });
     const code = result['app/page.tsx'];
 
-    expect(code).toContain('<MinimalLiveVideoSkin>');
+    expect(code).toContain('<MinimalLiveVideoSkin style=');
     expect(code).toContain("import '@videojs/react/live-video/minimal-skin.css'");
   });
 
@@ -666,9 +701,20 @@ describe('generateReactCreateCode', () => {
       "import { BackgroundVideoPlayer, BackgroundVideoSkin, BackgroundVideo } from '@videojs/react/background'"
     );
     expect(code).toContain('<BackgroundVideoPlayer>');
-    expect(code).toContain('<BackgroundVideoSkin>');
+    expect(code).toContain("<BackgroundVideoSkin style={{ width: '100%', aspectRatio: '16 / 9' }}>");
     expect(code).toContain('<BackgroundVideo');
     expect(code).toContain("import '@videojs/react/background/skin.css'");
+  });
+
+  it('imports streaming background media from its media subpath', () => {
+    const code = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'background-video',
+      renderer: 'hls-background-video',
+    })['app/page.tsx'];
+
+    expect(code).toContain("import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video'");
+    expect(code).toContain('<HlsBackgroundVideo');
   });
 });
 
@@ -700,7 +746,7 @@ describe('source installation code', () => {
     })['app/page.tsx'];
 
     expect(code).toContain(`<VideoPlayer>
-      <VideoSkin>
+      <VideoSkin style={{ width: '100%', aspectRatio: '16 / 9' }}>
         <Video src={"https://example.com/video.mp4"} playsInline />
       </VideoSkin>
     </VideoPlayer>`);
@@ -731,8 +777,8 @@ describe('source installation code', () => {
     expect(code.imports).toContain("import '@videojs/html/video/player'");
     expect(code.imports).toContain("import '@videojs/html/media/hlsjs-video'");
     expect(code.imports).toContain("import '@/components/videojs/video/skin'");
-    expect(code.player).toContain('<video-player>');
-    expect(code.player).toContain('<script type="module" src="/src/player.ts"></script>');
+    expect(code.player).toContain('<video-player style=');
+    expect(code.player).not.toContain('<script');
   });
 });
 

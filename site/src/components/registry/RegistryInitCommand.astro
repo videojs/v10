@@ -2,10 +2,10 @@
 /** The Shadcn init command for the selected project template. */
 import { isValidFramework } from '@/types/docs';
 import {
-  defaultRegistryTemplate,
+  defaultInstallationTemplate,
+  INSTALLATION_TEMPLATE_LABELS,
+  installationTemplates,
   type RegistryFramework,
-  REGISTRY_TEMPLATE_LABELS,
-  registryTemplates,
 } from '@videojs/installation';
 
 import RegistryInitCommandClient from './RegistryInitCommandClient';
@@ -22,33 +22,26 @@ const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFram
 if (!framework) throw new Error(`RegistryInitCommand needs a framework route, received ${routeFramework}.`);
 
 // The template select is hidden from Markdown readers, so name the other values the server-rendered command can take.
-const defaultTemplate = defaultRegistryTemplate(framework);
-const otherTemplates = registryTemplates(framework).filter((template) => template !== defaultTemplate);
-const templateLabels = new Map<string, string>(
-  otherTemplates.map((template) => [template, REGISTRY_TEMPLATE_LABELS[template]])
-);
-const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
+const defaultTemplate = defaultInstallationTemplate(framework);
+const otherTemplates = installationTemplates(framework).filter((template) => template !== defaultTemplate);
+const otherTemplateDescription = otherTemplates
+  .map((template) => `${template} (${INSTALLATION_TEMPLATE_LABELS[template]})`)
+  .join(', ');
 ---
 
 <RegistryInitCommandClient client:load framework={framework} installation={installation} />
 
 <div hidden data-llms-only>
+  {
+    framework === 'react' && (
+      <p>
+        For a new React and Tailwind app, the rendered command creates a {INSTALLATION_TEMPLATE_LABELS[defaultTemplate]} app. To use another project
+        template, pass <code>--template</code> with one of {otherTemplateDescription}, and replace the <code>--name</code> value with the intended app directory. For an existing compatible app without <code>components.json</code>, run Shadcn init without the template and name flags after satisfying its Tailwind and import-alias checks.
+      </p>
+    )
+  }
   <p>
-    These commands initialize Shadcn with the {REGISTRY_TEMPLATE_LABELS[defaultTemplate]} template. For another project
-    template, replace <code>{defaultTemplate}</code> with{' '}
-    {
-      listFormat
-        .formatToParts(otherTemplates)
-        .map((part) =>
-          part.type === 'element' ? (
-            <>
-              <code>{part.value}</code> ({templateLabels.get(part.value)})
-            </>
-          ) : (
-            part.value
-          )
-        )
-    }
-    .
+    When using Vanilla CSS, HTML, Vue, or Svelte, create the rendered standard <code>components.json</code> instead of
+    running a React-oriented Shadcn initializer. Preserve existing aliases when that file already exists.
   </p>
 </div>

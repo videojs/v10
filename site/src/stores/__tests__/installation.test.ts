@@ -41,7 +41,7 @@ describe('useCase', () => {
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
     expect(renderer.get()).toBe('html5-video');
-    expect(installMethod.get()).toBe('npm');
+    expect(installMethod.get()).toBe('pnpm');
     expect(sourceUrl.get()).toBe('');
   });
 
@@ -59,8 +59,22 @@ describe('useCase', () => {
     expect(useCase.get()).toBe('default-audio');
     expect(skin.get()).toBe('audio');
     expect(renderer.get()).toBe('html5-audio');
-    expect(installMethod.get()).toBe('npm');
+    expect(installMethod.get()).toBe('pnpm');
     expect(sourceUrl.get()).toBe('');
+  });
+
+  it('leaves installation-shaped parameters alone outside installation guides', () => {
+    window.history.replaceState(
+      { index: 2 },
+      '',
+      '/docs/framework/react/guides/architecture?framework=html&package-manager=npm&styling=css&utm_source=test'
+    );
+
+    syncInstallationSelectionFromUrl();
+    useCase.set('default-audio');
+
+    expect(window.location.search).toBe('?framework=html&package-manager=npm&styling=css&utm_source=test');
+    expect(window.history.state).toEqual({ index: 2 });
   });
 
   it('normalizes choices unavailable from the Shadcn route', () => {
@@ -72,7 +86,7 @@ describe('useCase', () => {
 
     syncInstallationSelectionFromUrl();
 
-    expect(window.location.search).toBe('?framework=react&package-manager=pnpm');
+    expect(window.location.search).toBe('?framework=react');
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
     expect(renderer.get()).toBe('html5-video');
@@ -89,7 +103,7 @@ describe('useCase', () => {
     window.history.replaceState({ index: 3 }, '', `${destination.pathname}${destination.search}`);
     document.dispatchEvent(new Event('astro:after-swap'));
 
-    expect(window.location.search).toBe('?framework=react&package-manager=pnpm');
+    expect(window.location.search).toBe('?framework=react');
     expect(window.history.state).toEqual({ index: 3 });
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');

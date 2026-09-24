@@ -1,8 +1,10 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { renderer, skin, useCase } from '@/stores/installation';
+import { registryProjectFramework } from '@/stores/registry';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -23,6 +25,7 @@ describe('InstallationMethodNavClient', () => {
     useCase.set('default-video');
     skin.set('video');
     renderer.set('html5-video');
+    registryProjectFramework.set('react');
     window.history.replaceState(null, '', '/');
     vi.clearAllMocks();
   });
@@ -70,21 +73,59 @@ describe('InstallationMethodNavClient', () => {
     expect(svelte).not.toContain('data-installation-method="cdn"');
   });
 
-  it('hides Shadcn when the selected player has no registry source', () => {
-    useCase.set('background-video');
-    renderer.set('background-video');
+  it('hides Shadcn when the selected player has no registry source', async () => {
+    const { queryByRole } = render(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
 
-    const background = renderToString(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
+    expect(queryByRole('link', { name: /Shadcn/ })).toBeInTheDocument();
 
-    expect(background).not.toContain('data-installation-method="shadcn"');
+    act(() => {
+      useCase.set('background-video');
+      renderer.set('background-video');
+    });
 
-    useCase.set('default-video');
-    renderer.set('html5-video');
-    skin.set('none');
+    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
 
-    const noSkin = renderToString(<InstallationMethodNavClient currentFramework="svelte" route="svelte" />);
+    act(() => {
+      useCase.set('default-video');
+      renderer.set('html5-video');
+      skin.set('none');
+    });
 
-    expect(noSkin).not.toContain('data-installation-method="shadcn"');
+    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
+  });
+
+  it('hydrates query-backed card filters against the prerendered defaults', async () => {
+    const container = document.createElement('div');
+
+    container.innerHTML = renderToString(<InstallationMethodNavClient currentFramework="react" route="react" />);
+    document.body.append(container);
+
+    act(() => {
+      useCase.set('background-video');
+      renderer.set('background-video');
+    });
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const root = hydrateRoot(container, <InstallationMethodNavClient currentFramework="react" route="react" />);
+
+    await act(async () => {});
+
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-installation-method="shadcn"]')).toBeNull();
+
+    root.unmount();
+    container.remove();
+  });
+
+  it('offers CDN only to the HTML project framework on the Shadcn guide', async () => {
+    registryProjectFramework.set('html');
+    const { queryByRole } = render(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
+
+    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).toBeInTheDocument());
+
+    act(() => registryProjectFramework.set('vue'));
+
+    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).not.toBeInTheDocument());
   });
 
   it('carries Vue selections into the HTML Shadcn route', async () => {
@@ -102,20 +143,19 @@ describe('InstallationMethodNavClient', () => {
 
     const target = '/docs/guides/installation/shadcn?preset=audio&skin=minimal&framework=vue';
 
-    expect(mocks.savePageScrollForNavigation).toHaveBeenCalledWith(target);
+    expect(mocks.savePageScrollForNavigation).toHaveBeenCalledWith(target, '[data-installation-method-nav]');
     expect(mocks.navigate).toHaveBeenCalledWith(target, {
       history: 'push',
       info: { docsNavigation: 'framework' },
     });
   });
 
-  it('prerenders a stable Shadcn card set and lets CSS reveal the HTML-only method', () => {
+  it('prerenders a stable Shadcn card set for the route framework', () => {
     const markup = renderToString(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
 
     expect(markup).toContain('data-installation-method="packaged"');
     expect(markup).toContain('data-installation-method="shadcn"');
-    expect(markup).toContain('data-installation-method="cdn"');
-    expect(markup).toContain('data-shadcn-html-method=""');
+    expect(markup).not.toContain('data-installation-method="cdn"');
   });
 
   it('hands method navigation to Astro with the existing scroll restoration metadata', async () => {
@@ -132,7 +172,7 @@ describe('InstallationMethodNavClient', () => {
 
     const target = '/docs/guides/installation/shadcn?preset=audio&skin=minimal&framework=react';
 
-    expect(mocks.savePageScrollForNavigation).toHaveBeenCalledWith(target);
+    expect(mocks.savePageScrollForNavigation).toHaveBeenCalledWith(target, '[data-installation-method-nav]');
     expect(mocks.navigate).toHaveBeenCalledWith(target, {
       history: 'push',
       info: { docsNavigation: 'framework' },

@@ -33,7 +33,7 @@ describe('resolveInstallationMethodUrl', () => {
 
     expect(result.pathname).toBe('/docs/guides/installation/html');
     expect(result.searchParams.has('framework')).toBe(false);
-    expect(result.searchParams.has('template')).toBe(false);
+    expect(result.searchParams.get('template')).toBe('astro');
     expect(result.searchParams.has('styling')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('audio');
   });
@@ -75,7 +75,7 @@ describe('resolveInstallationMethodUrl', () => {
 
     expect(result.pathname).toBe('/docs/guides/installation/cdn');
     expect(result.searchParams.has('framework')).toBe(false);
-    expect(result.searchParams.has('package-manager')).toBe(false);
+    expect(result.searchParams.get('package-manager')).toBe('pnpm');
     expect(result.searchParams.has('template')).toBe(false);
     expect(result.searchParams.has('styling')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('video');
@@ -111,11 +111,11 @@ describe('resolveInstallationMethodHref', () => {
     expect(result).toBe('/docs/guides/installation/html?preset=audio&skin=minimal');
   });
 
-  it('drops the package manager from CDN while preserving shared choices', () => {
+  it('keeps the package manager needed to run the CDN Vite app', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/html');
     const result = resolveInstallationMethodHref(current, '/docs/guides/installation/cdn', 'cdn', {
       ...DEFAULT_SELECTION,
-      installMethod: 'pnpm',
+      installMethod: 'bun',
       useCase: 'default-audio',
       skin: 'minimal-audio',
       renderer: 'html5-audio',
@@ -123,7 +123,7 @@ describe('resolveInstallationMethodHref', () => {
     });
 
     expect(result).toBe(
-      '/docs/guides/installation/cdn?preset=audio&skin=minimal&source-url=https%3A%2F%2Fexample.com%2Faudio.mp3'
+      '/docs/guides/installation/cdn?preset=audio&skin=minimal&package-manager=bun&source-url=https%3A%2F%2Fexample.com%2Faudio.mp3'
     );
   });
 });

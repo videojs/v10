@@ -7,6 +7,7 @@ export * from './options';
 export * from './parameters';
 export * from './plan';
 export * from './presets';
+export * from './projects';
 export * from './renderer-options';
 export * from './renderers';
 export * from './selection';

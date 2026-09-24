@@ -23,6 +23,8 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
+import RegistryOptions from '@/components/registry/RegistryOptions.astro';
+import ProjectCommands from '@/components/installation/ProjectCommands';
 
 <InstallationOverview />
 
@@ -42,11 +44,11 @@ Choose the JavaScript framework for your project.
   <JSPicker />
 </ContentWidth>
 
-## Choose how to install
+## Choose your app setup
 
-Choose from the installation options available for your selections. Shadcn adds editable HTML custom-element source to your Vue project.
+Choose whether the instructions target a Vite or Nuxt app.
 
-<InstallationMethodNav />
+<RegistryOptions framework="vue" kind="template" />
 
 ## Choose your use case
 
@@ -72,9 +74,21 @@ Paste a media URL to detect its source type, pick one directly, or upload a vide
   <MediaSourcePicker client:load />
 </ContentWidth>
 
+## Choose how to install
+
+Choose from the installation options available for your selections. Shadcn adds editable HTML custom-element source to your Vue project.
+
+<InstallationMethodNav />
+
 </HumanCase>
 
 <div data-installation-plan class="contents">
+
+## Prepare your app
+
+If you do not already have the selected Vue app setup, create it in the intended app directory. Otherwise, skip this section.
+
+<ProjectCommands client:load part="create" serverFramework="vue" serverTemplate="vite" />
 
 ## Install the packages
 
@@ -101,6 +115,12 @@ Then render the component anywhere in your app and pass it the media source you 
 <ContentWidth>
   <VueUsageCodeBlock client:load />
 </ContentWidth>
+
+## Run your app
+
+Start the development server and verify that the selected media plays.
+
+<ProjectCommands client:load part="run" serverFramework="vue" serverTemplate="vite" />
 
 </div>
 

@@ -26,6 +26,29 @@ describe('resolveInstallationSelection', () => {
     expect(vue.ok && vue.selection.template).toBe('vite');
   });
 
+  it('uses app templates for packaged, Shadcn, and CDN instructions', () => {
+    expect(resolveInstallationSelection('react', { template: 'vite' })).toMatchObject({
+      ok: true,
+      selection: { template: 'vite' },
+    });
+    expect(resolveInstallationSelection('html', { framework: 'vue', template: 'nuxt' })).toMatchObject({
+      ok: true,
+      selection: { template: 'nuxt' },
+    });
+    expect(
+      resolveInstallationSelection('html', {
+        method: 'cdn',
+        framework: 'html',
+        template: 'vite',
+        packageManager: 'pnpm',
+      })
+    ).toMatchObject({ ok: true, selection: { packageManager: 'pnpm', template: 'vite' } });
+    expect(resolveInstallationSelection('html', { method: 'cdn', template: 'astro' })).toMatchObject({
+      ok: false,
+      errors: [{ field: 'template' }],
+    });
+  });
+
   it('rejects incompatible paths', () => {
     expect(resolveInstallationSelection('react', { method: 'cdn' }, '10.0.0').ok).toBe(false);
     expect(resolveInstallationSelection('html', { framework: 'react' }, '10.0.0')).toMatchObject({
@@ -64,6 +87,38 @@ describe('resolveInstallationSelection', () => {
       ok: false,
       errors: [{ field: 'sourceUrl', message: 'Must not contain control characters or line breaks.' }],
     });
+  });
+
+  it('rejects media and source combinations that identify different providers or media types', () => {
+    const providerMismatch = resolveInstallationSelection('react', {
+      media: 'html5-video',
+      sourceUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+    });
+    const streamingMismatch = resolveInstallationSelection('html', {
+      media: 'html5-video',
+      sourceUrl: 'https://example.com/video.m3u8',
+    });
+
+    expect(providerMismatch).toMatchObject({ ok: false, errors: [{ field: 'media' }] });
+    expect(streamingMismatch).toMatchObject({
+      ok: false,
+      errors: [{ field: 'media', message: 'Does not match the supplied source URL. Expected one of: hls' }],
+    });
+    expect(
+      resolveInstallationSelection('html', {
+        preset: 'audio',
+        sourceUrl: 'https://example.com/video.mp4',
+      })
+    ).toMatchObject({ ok: false, errors: [{ field: 'sourceUrl' }] });
+  });
+
+  it('infers streaming background-video renderers from the source URL', () => {
+    expect(
+      resolveInstallationSelection('html', {
+        preset: 'background-video',
+        sourceUrl: 'https://example.com/video.m3u8',
+      })
+    ).toMatchObject({ ok: true, selection: { media: 'hls-background-video' } });
   });
 
   it('accepts every compatible packaged combination', () => {

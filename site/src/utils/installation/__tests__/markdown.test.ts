@@ -27,6 +27,17 @@ describe('resolveInstallationMarkdownPlan', () => {
     expect(result?.ok && result.plan.steps.length).toBeGreaterThan(0);
   });
 
+  it('treats an empty Shadcn framework query as the default', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/shadcn.md',
+      new URLSearchParams('framework='),
+      '10.0.0-test'
+    );
+
+    expect(result?.ok).toBe(true);
+    expect(result?.ok && result.plan.selection.framework).toBe('react');
+  });
+
   it('applies every Shadcn query choice through the shared schema', () => {
     const params = new URLSearchParams({
       framework: 'svelte',
@@ -62,6 +73,19 @@ describe('resolveInstallationMarkdownPlan', () => {
     expect(result?.ok).toBe(false);
     expect(result && !result.ok && result.errors).toContainEqual(
       expect.objectContaining({ field: 'framework', value: 'angular' })
+    );
+  });
+
+  it('rejects a framework query that conflicts with a canonical guide route', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/cdn.md',
+      new URLSearchParams({ framework: 'vue' }),
+      '10.0.0-test'
+    );
+
+    expect(result?.ok).toBe(false);
+    expect(result && !result.ok && result.errors).toContainEqual(
+      expect.objectContaining({ field: 'framework', value: 'vue' })
     );
   });
 });
@@ -231,7 +255,7 @@ HTML next step
       new URLSearchParams({ skin: 'none' }),
       '10.0.0-test'
     );
-    const cdnInstallMethod = renderInstallationMarkdownSelection(
+    const cdnPackageManager = renderInstallationMarkdownSelection(
       markdown,
       '/docs/guides/installation/cdn',
       new URLSearchParams({ 'package-manager': 'pnpm' }),
@@ -244,6 +268,8 @@ HTML next step
     expect(sourceUrl?.body).not.toContain('sourceUrl');
     expect(skin?.body).toContain('the `none` skin is not available');
     expect(skin?.body).not.toContain('--skin');
-    expect(cdnInstallMethod?.body).toContain('- package-manager: does not apply to CDN installation');
+    expect(cdnPackageManager).toMatchObject({ status: 200 });
+    expect(cdnPackageManager?.body).toContain('- `package-manager`: `pnpm`');
+    expect(cdnPackageManager?.body).toContain('pnpm create vite');
   });
 });

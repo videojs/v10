@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CDN_MEDIA_SUBPATHS } from '../defaults';
 import { INSTALLATION_RENDERERS } from '../renderers';
 import { MUX_DATA_PACKAGE } from '../renderers';
 
@@ -33,6 +34,19 @@ const adapterPackages = new Set(
 );
 
 describe('installation workspace contract', () => {
+  it('keeps CDN media support aligned with the definitions its build republishes', () => {
+    const definitions = globSync('packages/html/src/define/media/**/*.ts', { cwd: workspaceRoot })
+      .map((path) =>
+        path
+          .replace('packages/html/src/define/media/', '')
+          .replace(/\/index\.ts$/, '')
+          .replace(/\.ts$/, '')
+      )
+      .sort();
+
+    expect([...CDN_MEDIA_SUBPATHS].sort()).toEqual(definitions);
+  });
+
   it('references public adapter packages and facade entry points that exist', () => {
     const html = manifests.get('@videojs/html')!.manifest;
     const react = manifests.get('@videojs/react')!.manifest;

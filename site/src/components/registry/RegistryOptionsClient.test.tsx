@@ -1,7 +1,8 @@
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { registrySkin, registryStyling, registryTemplate, registryTheme } from '@/stores/registry';
+import { template } from '@/stores/installation';
+import { registrySkin, registryStyling, registryTheme } from '@/stores/registry';
 
 vi.mock('@/components/Select', () => ({
   Select: ({ value, ...props }: { value: string; 'aria-label': string }) => (
@@ -15,14 +16,14 @@ describe('RegistryOptionsClient', () => {
   afterEach(() => {
     registrySkin.set(null);
     registryStyling.set(null);
-    registryTemplate.set(null);
+    template.set('next');
     registryTheme.set(null);
   });
 
   it('uses route defaults for server markup when client selections differ', () => {
     registrySkin.set('audio');
     registryStyling.set('css');
-    registryTemplate.set('vite');
+    template.set('vite');
     registryTheme.set('minimal');
 
     const templateMarkup = renderToString(<RegistryOptionsClient framework="react" installation kind="template" />);
@@ -36,7 +37,7 @@ describe('RegistryOptionsClient', () => {
       />
     );
 
-    expect(templateMarkup).toContain('data-label="Select project template">next</span>');
+    expect(templateMarkup).toContain('data-label="Select app setup">next</span>');
     expect(catalogMarkup).toContain('data-label="Select skin">video</span>');
     expect(catalogMarkup).toContain('data-label="Select styling">tailwind</span>');
     expect(catalogMarkup).toContain('data-label="Select theme">default</span>');

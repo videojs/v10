@@ -72,8 +72,7 @@ export function utilsItem(target: RegistryTarget): RegistryModuleItem<SkinModule
     type: 'registry:lib',
     title: 'Video.js Utilities',
     description: 'Resolves state-aware class names used by editable Video.js React components.',
-    docs: 'Installed automatically with React components and composed with the project Shadcn `cn` utility.',
-    registryDependencies: ['utils'],
+    docs: 'Installed automatically with React components and kept separate from app-owned utilities.',
     meta: {
       role: 'support',
       framework: 'react',

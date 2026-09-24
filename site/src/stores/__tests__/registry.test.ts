@@ -1,16 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { selectInstallationTemplate, template } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
 import {
   registryFramework,
   registryProjectFramework,
   registrySkin,
   registryStyling,
-  registryTemplate,
   registryTheme,
   selectRegistryProjectFramework,
   selectRegistryStyling,
-  selectRegistryTemplate,
   syncRegistryProjectFramework,
 } from '@/stores/registry';
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
@@ -21,7 +20,7 @@ describe('selectRegistryProjectFramework', () => {
     registryProjectFramework.set('react');
     registrySkin.set(null);
     registryStyling.set(null);
-    registryTemplate.set(null);
+    template.set('next');
     registryTheme.set(null);
     document.documentElement.removeAttribute('data-registry-framework');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
@@ -30,7 +29,7 @@ describe('selectRegistryProjectFramework', () => {
 
   it('syncs the registry and site-wide framework preferences', () => {
     registryStyling.set('tailwind');
-    registryTemplate.set('next');
+    template.set('next');
 
     selectRegistryProjectFramework('html');
 
@@ -38,20 +37,20 @@ describe('selectRegistryProjectFramework', () => {
     expect(currentFramework.get()).toBe('html');
     expect(document.cookie).toContain('vjs_docs_framework=html');
     expect(registryStyling.get()).toBeNull();
-    expect(registryTemplate.get()).toBe('vite');
+    expect(template.get()).toBe('vite');
   });
 
   it('keeps registry options when only the site-wide preference is stale', () => {
     registryProjectFramework.set('html');
     registryStyling.set('css');
-    registryTemplate.set('astro');
+    template.set('astro');
     currentFramework.set('react');
 
     selectRegistryProjectFramework('html');
 
     expect(currentFramework.get()).toBe('html');
     expect(registryStyling.get()).toBe('css');
-    expect(registryTemplate.get()).toBe('astro');
+    expect(template.get()).toBe('astro');
   });
 
   it('updates the Shadcn URL and root attribute for an in-page selection', () => {
@@ -85,23 +84,23 @@ describe('selectRegistryProjectFramework', () => {
   it('writes template and styling choices into the Shadcn URL', () => {
     window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=react&preset=audio');
 
-    selectRegistryTemplate('vite');
+    selectInstallationTemplate('vite');
     selectRegistryStyling('css');
 
     expect(window.location.search).toBe('?framework=react&preset=audio&template=vite&styling=css');
-    expect(registryTemplate.get()).toBe('vite');
+    expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
   });
 
   it('initializes registry choices from an authoritative Shadcn URL', () => {
     registrySkin.set('video');
     registryTheme.set('minimal');
-    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=astro&styling=css');
+    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=nuxt&styling=css');
 
     syncRegistryProjectFramework('vue', url);
 
     expect(registryProjectFramework.get()).toBe('vue');
-    expect(registryTemplate.get()).toBe('astro');
+    expect(template.get()).toBe('nuxt');
     expect(registryStyling.get()).toBe('css');
     expect(registrySkin.get()).toBeNull();
     expect(registryTheme.get()).toBeNull();

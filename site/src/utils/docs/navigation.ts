@@ -3,9 +3,9 @@ import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from
 import { currentFramework } from '@/stores/preferences';
 import { syncRegistryProjectFramework } from '@/stores/registry';
 import {
+  canonicalShadcnInstallationUrl,
   isShadcnInstallationUrl,
   resolveShadcnProjectFramework,
-  resolveShadcnUrlSelection,
 } from '@/utils/installation/framework-navigation';
 
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
@@ -34,6 +34,8 @@ type SidebarState = {
 };
 
 type SavedPageScroll = {
+  anchorSelector?: string;
+  anchorTop?: number;
   url?: string;
   scrollY?: number;
 };
@@ -104,26 +106,24 @@ export function syncFrameworkPreferenceFromUrl(url: URL): void {
 }
 
 function normalizeCurrentShadcnUrl(url: URL): void {
-  if (!isShadcnInstallationUrl(url) || getFrameworkFromDocsUrl(url)) return;
+  if (!isShadcnInstallationUrl(url)) return;
 
-  const selection = resolveShadcnUrlSelection(url, getFrameworkPreferenceClient() ?? 'react');
-  if (!selection) return;
+  const target = canonicalShadcnInstallationUrl(url, getFrameworkPreferenceClient() ?? 'react');
+  if (!target) return;
 
-  url.searchParams.set('framework', selection.projectFramework);
-
-  if (url.searchParams.has('template') && !selection.template) url.searchParams.delete('template');
-
-  if (url.searchParams.has('styling') && !selection.styling) url.searchParams.delete('styling');
-
-  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  window.history.replaceState(window.history.state, '', `${target.pathname}${target.search}${target.hash}`);
 }
 
 /** Preserve the reading position for a framework switch that replaces the current guide with its equivalent. */
-export function savePageScrollForNavigation(url: string): void {
+export function savePageScrollForNavigation(url: string, anchorSelector?: string): void {
   try {
+    const anchor = anchorSelector ? document.querySelector(anchorSelector) : null;
+    const anchorTop = anchor?.getBoundingClientRect().top;
+
     window.sessionStorage.setItem(
       PAGE_SCROLL_STORAGE_KEY,
       JSON.stringify({
+        ...(anchorSelector && Number.isFinite(anchorTop) ? { anchorSelector, anchorTop } : {}),
         url: new URL(url, window.location.origin).pathname,
         scrollY: getDocumentScrollPosition().scrollY,
       })
@@ -138,7 +138,7 @@ function restoreSavedPageScroll(removeAfterRestore = true): boolean {
     const stored = window.sessionStorage.getItem(PAGE_SCROLL_STORAGE_KEY);
     if (!stored) return false;
 
-    const { url, scrollY }: SavedPageScroll = JSON.parse(stored);
+    const { anchorSelector, anchorTop, url, scrollY }: SavedPageScroll = JSON.parse(stored);
     const matchesCurrentPath = url?.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '');
 
     if (!matchesCurrentPath || !Number.isFinite(scrollY ?? Number.NaN)) {
@@ -147,7 +147,14 @@ function restoreSavedPageScroll(removeAfterRestore = true): boolean {
       return false;
     }
 
-    window.scrollTo({ left: 0, top: scrollY });
+    const anchor = anchorSelector ? document.querySelector(anchorSelector) : null;
+    const destinationAnchorTop = anchor?.getBoundingClientRect().top;
+    const top =
+      Number.isFinite(anchorTop ?? Number.NaN) && Number.isFinite(destinationAnchorTop ?? Number.NaN)
+        ? getDocumentScrollPosition().scrollY + (destinationAnchorTop! - anchorTop!)
+        : scrollY!;
+
+    window.scrollTo({ left: 0, top });
     savePageScrollToHistory();
 
     if (removeAfterRestore) {

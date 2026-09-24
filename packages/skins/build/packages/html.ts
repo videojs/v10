@@ -190,6 +190,8 @@ export function createSourceOwnedHtml(template: string): string {
   if (!mediaSlot.test(template)) throw new Error('Rendered HTML Skin has no default media slot.');
 
   return template
+    .replace('<media-container', '<media-container data-vjs-scope-ids')
+    .replaceAll(/ id="(vjs-[^"]+)"/g, ' data-vjs-source-id id="$1"')
     .replace(mediaSlot, '<!-- Add a compatible media element here. -->')
     .replace(/<slot name="[^"]+">\s*([\s\S]*?)\s*<\/slot>/g, '$1')
     .replaceAll('&amp;', '&')

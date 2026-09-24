@@ -21,6 +21,10 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
     renderer: 'mux-audio',
   },
   {
+    match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
+    renderer: 'mux-background-video',
+  },
+  {
     match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
     renderer: 'vimeo',
   },
@@ -76,7 +80,7 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
 ];
 
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.webm', '.mov', '.ogv']);
-const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.ogg', '.flac', '.aac']);
+const AUDIO_EXTENSIONS = new Set(['.mp3', '.m4a', '.wav', '.ogg', '.flac', '.aac']);
 
 function parseUrl(input: string): URL | null {
   try {
@@ -98,50 +102,35 @@ function getExtension(pathname: string): string {
   return clean.slice(dot).toLowerCase();
 }
 
-export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null {
+/** Renderers whose accepted source shape matches a URL, ordered from provider-specific to generic. */
+export function detectRendererCandidates(url: string): readonly Renderer[] {
   const trimmed = url.trim();
-  if (!trimmed) return null;
+  if (!trimmed) return [];
 
   const parsed = parseUrl(trimmed);
-  if (!parsed) return null;
+  if (!parsed) return [];
 
-  // Check domain rules first. When a host matches but its renderer isn't valid
-  // for the current use case, keep looking (so e.g. a Mux URL in an audio use
-  // case falls through from the mux-video rule to the mux-audio rule).
-  for (const rule of DOMAIN_RULES) {
-    if (rule.match(parsed.hostname) && isRendererValidForUseCase(rule.renderer, useCase)) {
-      return { renderer: rule.renderer, label: getInstallationRenderer(rule.renderer).label };
-    }
-  }
-
-  // Check file extension
+  const renderers = DOMAIN_RULES.filter((rule) => rule.match(parsed.hostname)).map(({ renderer }) => renderer);
   const ext = getExtension(parsed.pathname);
 
   if (ext === '.m3u8') {
-    if (!isRendererValidForUseCase('hls', useCase)) return null;
-
-    return { renderer: 'hls', label: getInstallationRenderer('hls').label };
+    renderers.push('hls', 'hls-background-video');
+  } else if (ext === '.mpd') {
+    renderers.push('dash');
+  } else if (VIDEO_EXTENSIONS.has(ext)) {
+    renderers.push('html5-video', 'background-video');
+  } else if (AUDIO_EXTENSIONS.has(ext)) {
+    renderers.push('html5-audio');
   }
 
-  if (ext === '.mpd') {
-    if (!isRendererValidForUseCase('dash', useCase)) return null;
+  return [...new Set(renderers)];
+}
 
-    return { renderer: 'dash', label: getInstallationRenderer('dash').label };
-  }
+export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null {
+  const renderer = detectRendererCandidates(url).find((candidate) => isRendererValidForUseCase(candidate, useCase));
+  if (!renderer) return null;
 
-  if (VIDEO_EXTENSIONS.has(ext)) {
-    if (!isRendererValidForUseCase('html5-video', useCase)) return null;
-
-    return { renderer: 'html5-video', label: getInstallationRenderer('html5-video').label };
-  }
-
-  if (AUDIO_EXTENSIONS.has(ext)) {
-    if (!isRendererValidForUseCase('html5-audio', useCase)) return null;
-
-    return { renderer: 'html5-audio', label: getInstallationRenderer('html5-audio').label };
-  }
-
-  return null;
+  return { renderer, label: getInstallationRenderer(renderer).label };
 }
 
 export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase): boolean {

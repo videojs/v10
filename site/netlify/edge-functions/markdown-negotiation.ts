@@ -10,7 +10,7 @@ export default async function markdownNegotiation(request: Request, context: Mar
 
   if (!prefersMarkdown(request.headers.get('accept') ?? '')) return varyOnAccept(await context.next());
 
-  return (await handleMarkdown(request, context)) ?? varyOnAccept(await context.next());
+  return (await handleMarkdown(request, context)) ?? varyOnAccept(await context.next(request));
 }
 
 // Whichever representation wins, this function chose it from Accept, so caches must key on it.

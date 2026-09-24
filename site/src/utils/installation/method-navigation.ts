@@ -31,7 +31,6 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     }
 
     target.searchParams.delete('framework');
-    target.searchParams.delete('template');
     target.searchParams.delete('styling');
   } else if (method === 'shadcn') {
     const requested = target.searchParams.get('framework');
@@ -42,7 +41,6 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     target.searchParams.set('framework', framework);
   } else {
     target.searchParams.delete('framework');
-    target.searchParams.delete('package-manager');
     target.searchParams.delete('template');
     target.searchParams.delete('styling');
   }

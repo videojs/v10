@@ -1,6 +1,9 @@
 import {
   fitSelectionToPreset,
+  resolveInstallationTemplate,
   type InstallMethod,
+  type InstallationFramework,
+  type InstallationTemplate,
   type Renderer,
   type Skin,
   type UseCase,
@@ -8,26 +11,33 @@ import {
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { atom, onMount, type WritableAtom } from 'nanostores';
 
+import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import { getInstallationRouteSegment } from '@/utils/installation/routes';
 import {
   DEFAULT_SELECTION,
   type InstallationUiSelection,
-  normalizeInstallationSelectionForRoute,
-  parseInstallationSearch,
+  parseInstallationSearchForRoute,
   serializeInstallationSearchForRoute,
 } from '@/utils/installation/url-state';
 
+function selectionFromUrl(target: Pick<URL, 'pathname' | 'search'>): InstallationUiSelection {
+  const route = getInstallationRouteSegment(target.pathname);
+  if (!route) return DEFAULT_SELECTION;
+
+  const shadcnFramework = getFrameworkPreferenceClient() ?? DEFAULT_SELECTION.framework;
+
+  return parseInstallationSearchForRoute(route, target.search, shadcnFramework);
+}
+
 function selectionFromCurrentUrl(): InstallationUiSelection {
-  if (!globalThis.location) return DEFAULT_SELECTION;
-
-  const route = getInstallationRouteSegment(location.pathname) ?? '';
-
-  return normalizeInstallationSelectionForRoute(route, parseInstallationSearch(location.search));
+  return globalThis.location ? selectionFromUrl(location) : DEFAULT_SELECTION;
 }
 
 const initialSelection = selectionFromCurrentUrl();
 
 export const renderer = atom<Renderer>(initialSelection.renderer);
+export const framework = atom<InstallationFramework>(initialSelection.framework);
+export const template = atom<InstallationTemplate>(initialSelection.template);
 export const skin = atom<Skin>(initialSelection.skin);
 export const useCase = atom<UseCase>(initialSelection.useCase);
 export const sourceUrl = atom<string>(initialSelection.sourceUrl);
@@ -45,6 +55,8 @@ export const muxPlaybackId = atom<string | null>(null);
 type SelectionAtoms = { [K in keyof InstallationUiSelection]: WritableAtom<InstallationUiSelection[K]> };
 
 export const selectionAtoms: SelectionAtoms = {
+  framework,
+  template,
   useCase,
   skin,
   renderer,
@@ -68,6 +80,8 @@ function revealInstallationQueryState(): void {
 
 function currentSelection(): InstallationUiSelection {
   return {
+    framework: framework.get(),
+    template: template.get(),
     useCase: useCase.get(),
     skin: skin.get(),
     renderer: renderer.get(),
@@ -93,11 +107,10 @@ function normalizeCurrentUrl(target: URL, selection: InstallationUiSelection): v
 /** Replace every installation pick from a destination URL before its islands render. */
 export function syncInstallationSelectionFromUrl(url?: URL): void {
   const target = url ?? (globalThis.location ? new URL(globalThis.location.href) : null);
-  if (!target) return;
+  if (!target || !getInstallationRouteSegment(target.pathname)) return;
 
   const urlKey = `${target.pathname}${target.search}`;
-  const route = getInstallationRouteSegment(target.pathname) ?? '';
-  const selection = normalizeInstallationSelectionForRoute(route, parseInstallationSearch(target.search));
+  const selection = selectionFromUrl(target);
 
   if (hydratedUrl === urlKey) {
     normalizeCurrentUrl(target, selection);
@@ -110,6 +123,8 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
   syncingFromUrl = true;
 
   try {
+    framework.set(selection.framework);
+    template.set(selection.template);
     // Use case first: the skin and media pickers validate against it when they react to a change.
     useCase.set(selection.useCase);
     skin.set(selection.skin);
@@ -127,7 +142,9 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
 function writeUrl(): void {
   if (!hydratedUrl || syncingFromUrl || !globalThis.history) return;
 
-  const route = getInstallationRouteSegment(location.pathname) ?? '';
+  const route = getInstallationRouteSegment(location.pathname);
+  if (!route) return;
+
   const search = serializeInstallationSearchForRoute(route, currentSelection(), location.search);
   const url = `${location.pathname}${search}${location.hash}`;
 
@@ -135,6 +152,32 @@ function writeUrl(): void {
     history.replaceState(history.state, '', url);
     hydratedUrl = `${location.pathname}${search}`;
   }
+}
+
+/** Apply the two project-shape fields as one URL-backed selection change. */
+export function selectInstallationProject(
+  nextFramework: InstallationFramework,
+  nextTemplate: InstallationTemplate,
+  write = true
+): void {
+  syncingFromUrl = true;
+
+  try {
+    framework.set(nextFramework);
+    template.set(nextTemplate);
+  } finally {
+    syncingFromUrl = false;
+  }
+
+  if (write) writeUrl();
+}
+
+export function selectInstallationTemplate(nextTemplate: InstallationTemplate): void {
+  if (globalThis.location) syncInstallationSelectionFromUrl(new URL(location.href));
+
+  const selectedFramework = framework.get();
+
+  selectInstallationProject(selectedFramework, resolveInstallationTemplate(selectedFramework, nextTemplate));
 }
 
 for (const store of Object.values(selectionAtoms)) {

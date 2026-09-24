@@ -120,6 +120,17 @@ describe('detectRenderer', () => {
       });
     });
 
+    it('uses the background-video variants for streaming background sources', () => {
+      expect(detectRenderer('https://example.com/video.m3u8', 'background-video')).toEqual({
+        renderer: 'hls-background-video',
+        label: 'HLS Background Video',
+      });
+      expect(detectRenderer('https://stream.mux.com/abc123.m3u8', 'background-video')).toEqual({
+        renderer: 'mux-background-video',
+        label: 'Mux Background Video',
+      });
+    });
+
     it('detects .mpd as DASH', () => {
       expect(detectRenderer('https://example.com/video.mpd', 'default-video')).toEqual({
         renderer: 'dash',
@@ -161,6 +172,17 @@ describe('detectRenderer', () => {
 
     it('detects .mp3 as HTML5 Audio', () => {
       expect(detectRenderer('https://example.com/audio.mp3', 'default-audio')).toEqual({
+        renderer: 'html5-audio',
+        label: 'HTML5 Audio',
+      });
+    });
+
+    it('detects .m4a as HTML5 Audio alongside a provider-specific candidate', () => {
+      expect(detectRenderer('https://stream.mux.com/example/audio.m4a', 'default-audio')).toEqual({
+        renderer: 'mux-audio',
+        label: 'Mux',
+      });
+      expect(detectRenderer('https://example.com/audio.m4a', 'default-audio')).toEqual({
         renderer: 'html5-audio',
         label: 'HTML5 Audio',
       });

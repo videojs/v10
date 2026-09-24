@@ -25,13 +25,6 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
     display: contents;
   }
 
-  [data-shadcn-html-method] {
-    display: none;
-  }
-
-  html[data-registry-framework="html"] [data-shadcn-html-method] {
-    display: flex;
-  }
 </style>
 
 <script
@@ -46,8 +39,14 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
     if (!root) return;
 
     const isInstallation = url.pathname.replace(/\/$/, "").startsWith("/docs/guides/installation/");
+    const isShadcn = url.pathname.replace(/\/$/, "") === shadcnPath;
     const params = new URLSearchParams(url.search);
-    const hasSelection = isInstallation && installationParams.some((parameter) => params.has(parameter));
+    const requestedFramework = params.get("framework");
+    const needsSavedHtmlFramework = isShadcn
+      && !["react", "html", "vue", "svelte"].includes(requestedFramework ?? "")
+      && root.dataset.registryFramework === "html";
+    const hasSelection = isInstallation
+      && (installationParams.some((parameter) => params.has(parameter)) || needsSavedHtmlFramework);
 
     if (hasSelection) root.dataset.installationQueryPending = "";
     else delete root.dataset.installationQueryPending;

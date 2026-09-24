@@ -1,9 +1,13 @@
 import { PACKAGE_MANAGERS, type PackageManager } from './parameters';
 import { getInstallationPreset, type Skin, type UseCase } from './presets';
-import type { InstallationFramework } from './selection';
+import {
+  installationProjectAliasSetup,
+  type InstallationFramework,
+  type InstallationProjectSetupBlock,
+  type InstallationTemplate,
+} from './projects';
 
 export type RegistryFramework = 'html' | 'react';
-export type RegistryTemplate = 'next' | 'vite' | 'start' | 'laravel' | 'react-router' | 'astro';
 export type RegistryStyling = 'css' | 'tailwind';
 export type RegistryTheme = 'default' | 'minimal';
 export type RegistryPreset = 'audio' | 'live-audio' | 'live-video' | 'video';
@@ -20,7 +24,7 @@ export const SHADCN_RUNNER_NAMES = PACKAGE_MANAGERS;
 export const SHADCN_RUNNERS = {
   npm: 'npx shadcn@latest',
   pnpm: 'pnpm dlx shadcn@latest',
-  yarn: 'yarn dlx shadcn@latest',
+  yarn: 'npx shadcn@latest',
   bun: 'bunx --bun shadcn@latest',
 } as const satisfies Record<ShadcnRunner, string>;
 
@@ -28,26 +32,6 @@ export const REGISTRY_STYLING_LABELS = {
   tailwind: 'Tailwind CSS',
   css: 'Vanilla CSS',
 } as const satisfies Record<RegistryStyling, string>;
-
-export const REGISTRY_TEMPLATE_LABELS = {
-  next: 'Next.js',
-  vite: 'Vite',
-  start: 'TanStack Start',
-  laravel: 'Laravel',
-  'react-router': 'React Router',
-  astro: 'Astro',
-} as const satisfies Record<RegistryTemplate, string>;
-
-export const REGISTRY_TEMPLATES = [
-  'next',
-  'vite',
-  'start',
-  'laravel',
-  'react-router',
-  'astro',
-] as const satisfies readonly RegistryTemplate[];
-
-const HTML_REGISTRY_TEMPLATES = ['vite', 'astro', 'laravel'] as const satisfies readonly RegistryTemplate[];
 
 export const REGISTRY_STYLINGS = ['tailwind', 'css'] as const satisfies readonly RegistryStyling[];
 const HTML_REGISTRY_STYLINGS = ['css'] as const satisfies readonly RegistryStyling[];
@@ -115,23 +99,6 @@ export function defaultRegistryStyling(framework: RegistryFramework): RegistrySt
   return registryStylings(framework)[0]!;
 }
 
-export function defaultRegistryTemplate(framework: InstallationFramework): RegistryTemplate {
-  return framework === 'react' ? 'next' : 'vite';
-}
-
-/** The Shadcn project templates that can host each Video.js source framework. */
-export function registryTemplates(framework: RegistryFramework): readonly RegistryTemplate[] {
-  return framework === 'react' ? REGISTRY_TEMPLATES : HTML_REGISTRY_TEMPLATES;
-}
-
-/** Keep a project-template choice valid when the source framework changes. */
-export function resolveRegistryTemplate(
-  framework: RegistryFramework,
-  template: RegistryTemplate | null
-): RegistryTemplate {
-  return template && registryTemplates(framework).includes(template) ? template : defaultRegistryTemplate(framework);
-}
-
 /** Keep a styling choice made for one framework valid for another. */
 export function resolveRegistryStyling(framework: RegistryFramework, styling: RegistryStyling | null): RegistryStyling {
   return styling && registryStylings(framework).includes(styling) ? styling : defaultRegistryStyling(framework);
@@ -153,37 +120,104 @@ export function shadcnCommand(runner: ShadcnRunner, action: string): string {
   return `${SHADCN_RUNNERS[runner]} ${action}`;
 }
 
-export function shadcnInitCommand(runner: ShadcnRunner, template: RegistryTemplate): string {
-  return shadcnCommand(runner, `init --template ${template}`);
+export function shadcnInitCommand(runner: ShadcnRunner, template?: InstallationTemplate): string {
+  if (!template) return shadcnCommand(runner, 'init --base base --preset nova --yes');
+
+  const action = `init --template ${template} --no-monorepo --base base --preset nova --name <app-directory> --yes`;
+  const command =
+    runner === 'yarn'
+      ? `npx --yes --package shadcn@latest --call 'npm_config_user_agent="yarn/1.22.22" shadcn ${action}'`
+      : shadcnCommand(runner, action);
+
+  return `${command}\ncd <app-directory>`;
 }
 
-/** Points the `@videojs` namespace at one catalog; Shadcn writes it into `components.json`. */
-export function shadcnRegistryAddCommand(
-  runner: ShadcnRunner,
+/** A minimal standard Shadcn config for the vanilla-CSS registries, which do not need Tailwind or React setup. */
+export function shadcnComponentsConfig(
+  framework: InstallationFramework,
+  template: InstallationTemplate,
+  componentsAlias: string
+): string {
+  const rootAlias = componentsAlias.split('/')[0] ?? '@';
+  const libAlias = rootAlias === '$lib' || rootAlias === '#lib' ? rootAlias : `${rootAlias}/lib`;
+
+  return JSON.stringify(
+    {
+      $schema: 'https://ui.shadcn.com/schema.json',
+      style: 'new-york',
+      rsc: framework === 'react' && template === 'next',
+      tsx: true,
+      tailwind: {
+        config: '',
+        css: '',
+        baseColor: 'neutral',
+        cssVariables: false,
+        prefix: '',
+      },
+      aliases: {
+        components: componentsAlias,
+        utils: `${libAlias}/utils`,
+        ui: `${componentsAlias}/ui`,
+        lib: libAlias,
+        hooks: `${rootAlias}/hooks`,
+      },
+      registries: {},
+    },
+    null,
+    2
+  );
+}
+
+export interface ShadcnProjectConfiguration {
+  mode: 'components-json' | 'shadcn-init';
+  aliasSetup: readonly InstallationProjectSetupBlock[];
+  componentsConfig: string | null;
+}
+
+/** Resolve the one source-registry setup shared by generated plans and the installation guide. */
+export function shadcnProjectConfiguration(
+  framework: InstallationFramework,
+  template: InstallationTemplate,
+  styling: RegistryStyling,
+  componentsAlias: string
+): ShadcnProjectConfiguration {
+  if (framework === 'react' && styling === 'tailwind') {
+    return {
+      mode: 'shadcn-init',
+      aliasSetup: installationProjectAliasSetup(framework, template),
+      componentsConfig: null,
+    };
+  }
+
+  return {
+    mode: 'components-json',
+    aliasSetup: installationProjectAliasSetup(framework, template),
+    componentsConfig: shadcnComponentsConfig(framework, template, componentsAlias),
+  };
+}
+
+/** The `components.json` fragment that selects one Video.js source catalog. */
+export function registryNamespaceConfig(
   framework: RegistryFramework,
   styling: RegistryStyling,
   theme: RegistryTheme = 'default'
 ): string {
-  return shadcnCommand(runner, `registry add ${REGISTRY_NAMESPACE}=${registryNamespaceUrl(framework, styling, theme)}`);
+  return JSON.stringify(
+    {
+      registries: {
+        [REGISTRY_NAMESPACE]: registryNamespaceUrl(framework, styling, theme),
+      },
+    },
+    null,
+    2
+  );
 }
 
 export function shadcnAddCommand(runner: ShadcnRunner, items: readonly string[]): string {
-  return shadcnCommand(runner, `add ${items.map((item) => `${REGISTRY_NAMESPACE}/${item}`).join(' ')}`);
-}
-
-/** Every command one install needs, in order: register the namespace, then add the items, if any. */
-export function registryInstallCommands(
-  runner: ShadcnRunner,
-  framework: RegistryFramework,
-  styling: RegistryStyling,
-  items: readonly string[],
-  theme: RegistryTheme = 'default'
-): string {
-  const commands = [shadcnRegistryAddCommand(runner, framework, styling, theme)];
-
-  if (items.length > 0) commands.push(shadcnAddCommand(runner, items));
-
-  return commands.join('\n');
+  return shadcnCommand(
+    runner,
+    `add ${items.map((item) => `${REGISTRY_NAMESPACE}/${item}`).join(' ')} --overwrite --yes`
+  );
 }
 
 /** The catalog and item for an installation selection, or `null` when its files are unavailable. */

@@ -1,4 +1,4 @@
-import { generateVueCreateCode } from '@videojs/installation';
+import { generateVueCreateCode, installationProjectFiles } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
@@ -6,6 +6,7 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { useSelection } from './useSelection';
 
 export default function VueCreateCodeBlock() {
+  const project = installationProjectFiles('vue', useSelection('template'));
   const code = generateVueCreateCode({
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
@@ -16,11 +17,11 @@ export default function VueCreateCodeBlock() {
     <TabsRoot maxWidth={false}>
       <TabsList label="Vue implementation">
         <Tab value="player" initial>
-          components/VideoPlayer.vue
+          {project.player}
         </Tab>
       </TabsList>
       <TabsPanel value="player" initial>
-        <ClientCode code={code['VideoPlayer.vue']} lang="html" />
+        <ClientCode code={code['MediaPlayer.vue']} lang="html" />
       </TabsPanel>
     </TabsRoot>
   );

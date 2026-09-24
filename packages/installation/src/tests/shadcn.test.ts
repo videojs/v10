@@ -1,22 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  defaultRegistryTemplate,
+  defaultInstallationTemplate,
   defaultRegistryStyling,
   REGISTRY_PRESETS,
   REGISTRY_SKINS,
-  REGISTRY_TEMPLATES,
-  registryInstallCommands,
+  INSTALLATION_TEMPLATES,
+  installationTemplates,
+  registryNamespaceConfig,
   registryNamespaceUrl,
   registrySkinSelection,
   registryStylings,
-  registryTemplates,
+  resolveInstallationTemplate,
   resolveRegistryStyling,
-  resolveRegistryTemplate,
   shadcnAddCommand,
   shadcnCommand,
+  shadcnComponentsConfig,
   shadcnInitCommand,
-  shadcnRegistryAddCommand,
+  shadcnProjectConfiguration,
 } from '../index';
 
 describe('registryNamespaceUrl', () => {
@@ -53,72 +54,105 @@ describe('registryStylings', () => {
 
 describe('shadcnAddCommand', () => {
   it('namespaces every item and follows the package manager', () => {
-    expect(shadcnAddCommand('npm', ['video'])).toBe('npx shadcn@latest add @videojs/video');
+    expect(shadcnAddCommand('npm', ['video'])).toBe('npx shadcn@latest add @videojs/video --overwrite --yes');
     expect(shadcnAddCommand('pnpm', ['video', 'play-button'])).toBe(
-      'pnpm dlx shadcn@latest add @videojs/video @videojs/play-button'
+      'pnpm dlx shadcn@latest add @videojs/video @videojs/play-button --overwrite --yes'
     );
     expect(shadcnCommand('bun', 'init')).toBe('bunx --bun shadcn@latest init');
   });
 });
 
 describe('shadcnInitCommand', () => {
-  it('offers every supported React project template', () => {
-    expect(REGISTRY_TEMPLATES).toEqual(['next', 'vite', 'start', 'laravel', 'react-router', 'astro']);
+  it('owns the complete app-template vocabulary outside the Shadcn model', () => {
+    expect(INSTALLATION_TEMPLATES).toEqual([
+      'next',
+      'vite',
+      'start',
+      'react-router',
+      'astro',
+      'laravel',
+      'nuxt',
+      'sveltekit',
+    ]);
   });
 
   it('defaults each app framework to a suitable project template', () => {
-    expect(defaultRegistryTemplate('react')).toBe('next');
-    expect(defaultRegistryTemplate('html')).toBe('vite');
-    expect(defaultRegistryTemplate('vue')).toBe('vite');
-    expect(defaultRegistryTemplate('svelte')).toBe('vite');
+    expect(defaultInstallationTemplate('react')).toBe('next');
+    expect(defaultInstallationTemplate('html')).toBe('vite');
+    expect(defaultInstallationTemplate('vue')).toBe('vite');
+    expect(defaultInstallationTemplate('svelte')).toBe('vite');
   });
 
-  it('only offers compatible project templates for HTML source', () => {
-    expect(registryTemplates('react')).toEqual(['next', 'vite', 'start', 'laravel', 'react-router', 'astro']);
-    expect(registryTemplates('html')).toEqual(['vite', 'astro', 'laravel']);
+  it('offers compatible app templates for each project framework', () => {
+    expect(installationTemplates('react')).toEqual(['next', 'vite', 'start', 'react-router', 'astro', 'laravel']);
+    expect(installationTemplates('html')).toEqual(['vite', 'astro', 'laravel']);
+    expect(installationTemplates('vue')).toEqual(['vite', 'nuxt']);
+    expect(installationTemplates('svelte')).toEqual(['vite', 'sveltekit']);
   });
 
   it('falls back when a project template does not support the source framework', () => {
-    expect(resolveRegistryTemplate('html', 'next')).toBe('vite');
-    expect(resolveRegistryTemplate('html', 'astro')).toBe('astro');
-    expect(resolveRegistryTemplate('react', 'next')).toBe('next');
-    expect(resolveRegistryTemplate('react', null)).toBe('next');
+    expect(resolveInstallationTemplate('html', 'next')).toBe('vite');
+    expect(resolveInstallationTemplate('html', 'astro')).toBe('astro');
+    expect(resolveInstallationTemplate('react', 'next')).toBe('next');
+    expect(resolveInstallationTemplate('react', null)).toBe('next');
   });
 
   it('sets the selected project template', () => {
-    expect(shadcnInitCommand('pnpm', 'start')).toBe('pnpm dlx shadcn@latest init --template start');
-    expect(shadcnInitCommand('npm', 'vite')).toBe('npx shadcn@latest init --template vite');
+    expect(shadcnInitCommand('pnpm', 'start')).toBe(
+      'pnpm dlx shadcn@latest init --template start --no-monorepo --base base --preset nova --name <app-directory> --yes\ncd <app-directory>'
+    );
+    expect(shadcnInitCommand('npm', 'vite')).toBe(
+      'npx shadcn@latest init --template vite --no-monorepo --base base --preset nova --name <app-directory> --yes\ncd <app-directory>'
+    );
+    expect(shadcnInitCommand('npm')).toBe('npx shadcn@latest init --base base --preset nova --yes');
+    expect(shadcnInitCommand('yarn', 'vite')).toContain('npm_config_user_agent="yarn/1.22.22"');
   });
 });
 
-describe('shadcnRegistryAddCommand', () => {
-  it('registers the namespace against the chosen catalog', () => {
-    expect(shadcnRegistryAddCommand('npm', 'react', 'tailwind')).toBe(
-      'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/{name}.json'
-    );
-    expect(shadcnRegistryAddCommand('yarn', 'html', 'css')).toBe(
-      'yarn dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
-    );
-    expect(shadcnRegistryAddCommand('pnpm', 'react', 'tailwind', 'minimal')).toBe(
-      'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/minimal/{name}.json'
-    );
+describe('shadcnComponentsConfig', () => {
+  it('uses Svelte built-in aliases without nesting another lib directory', () => {
+    const config = JSON.parse(shadcnComponentsConfig('svelte', 'sveltekit', '$lib/components'));
+
+    expect(config.aliases).toMatchObject({
+      components: '$lib/components',
+      utils: '$lib/utils',
+      lib: '$lib',
+      hooks: '$lib/hooks',
+    });
+    expect(config.tsx).toBe(true);
+  });
+
+  it('preserves React server components for Next.js', () => {
+    expect(JSON.parse(shadcnComponentsConfig('react', 'next', '@/components')).rsc).toBe(true);
+    expect(JSON.parse(shadcnComponentsConfig('react', 'vite', '@/components')).rsc).toBe(false);
   });
 });
 
-describe('registryInstallCommands', () => {
-  it('registers the namespace before adding the items', () => {
-    expect(registryInstallCommands('pnpm', 'react', 'css', ['video'], 'minimal')).toBe(
-      [
-        'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/css/minimal/{name}.json',
-        'pnpm dlx shadcn@latest add @videojs/video',
-      ].join('\n')
-    );
+describe('shadcnProjectConfiguration', () => {
+  it('uses Shadcn initialization only for React with Tailwind', () => {
+    expect(shadcnProjectConfiguration('react', 'vite', 'tailwind', '@/components')).toMatchObject({
+      mode: 'shadcn-init',
+      aliasSetup: expect.arrayContaining([
+        expect.objectContaining({ filename: 'tsconfig.json' }),
+        expect.objectContaining({ filename: 'tsconfig.app.json' }),
+        expect.objectContaining({ filename: 'vite.config.ts' }),
+      ]),
+      componentsConfig: null,
+    });
+    expect(shadcnProjectConfiguration('vue', 'vite', 'css', '@/components')).toMatchObject({
+      mode: 'components-json',
+      componentsConfig: expect.stringContaining('"tsx": true'),
+    });
   });
+});
 
-  it('only registers the namespace when there is nothing to add', () => {
-    expect(registryInstallCommands('npm', 'html', 'css', [])).toBe(
-      'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
-    );
+describe('registryNamespaceConfig', () => {
+  it('merges the chosen catalog into components.json', () => {
+    expect(JSON.parse(registryNamespaceConfig('react', 'css', 'minimal'))).toEqual({
+      registries: {
+        '@videojs': 'https://shadcn.videojs.org/r/react/css/minimal/{name}.json',
+      },
+    });
   });
 });
 

@@ -1,24 +1,22 @@
 import { installationParameterForKey, PACKAGE_MANAGERS, type InstallationInputKey } from './parameters';
 import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from './presets';
+import {
+  defaultInstallationTemplate,
+  installationTemplates,
+  type InstallationFramework,
+  type InstallationTemplate,
+} from './projects';
 import { RENDERERS, type Renderer } from './renderers';
 import {
   INSTALLATION_FRAMEWORKS,
   installationMethodsForFramework,
   sourceFrameworkFor,
-  type InstallationFramework,
   type InstallationMethod,
   type PlayerOwner,
   type PresetFlag,
   type SkinFlag,
 } from './selection';
-import {
-  defaultRegistryStyling,
-  defaultRegistryTemplate,
-  registryStylings,
-  registryTemplates,
-  type RegistryStyling,
-  type RegistryTemplate,
-} from './shadcn';
+import { defaultRegistryStyling, registryStylings, type RegistryStyling } from './shadcn';
 
 export interface InstallationOptionDefinition {
   flag: string;
@@ -45,22 +43,22 @@ export interface InstallationOptionContext {
 
 export interface InstallationCompatibility {
   methodsByFramework: Readonly<Record<InstallationFramework, readonly InstallationMethod[]>>;
+  templatesByFramework: Readonly<Record<InstallationFramework, readonly InstallationTemplate[]>>;
   mediaByPreset: Readonly<Record<PresetFlag, readonly Renderer[]>>;
   shadcn: {
     presets: readonly PresetFlag[];
     skins: readonly SkinFlag[];
-    templatesByFramework: Readonly<Record<InstallationFramework, readonly RegistryTemplate[]>>;
     stylingsByFramework: Readonly<Record<InstallationFramework, readonly RegistryStyling[]>>;
   };
 }
 
 export interface InstallationDiscoveryCompatibility {
   methodsByFramework: Readonly<Partial<InstallationCompatibility['methodsByFramework']>>;
+  templatesByFramework: Readonly<Partial<InstallationCompatibility['templatesByFramework']>>;
   mediaByPreset: InstallationCompatibility['mediaByPreset'];
   shadcn: {
     presets: InstallationCompatibility['shadcn']['presets'];
     skins: InstallationCompatibility['shadcn']['skins'];
-    templatesByFramework: Readonly<Partial<InstallationCompatibility['shadcn']['templatesByFramework']>>;
     stylingsByFramework: Readonly<Partial<InstallationCompatibility['shadcn']['stylingsByFramework']>>;
   };
 }
@@ -76,6 +74,12 @@ export const installationCompatibility: InstallationCompatibility = {
     vue: installationMethodsForFramework('vue'),
     svelte: installationMethodsForFramework('svelte'),
   },
+  templatesByFramework: {
+    react: installationTemplates('react'),
+    html: installationTemplates('html'),
+    vue: installationTemplates('vue'),
+    svelte: installationTemplates('svelte'),
+  },
   mediaByPreset: {
     video: INSTALLATION_PRESETS['default-video'].renderers,
     audio: INSTALLATION_PRESETS['default-audio'].renderers,
@@ -86,12 +90,6 @@ export const installationCompatibility: InstallationCompatibility = {
   shadcn: {
     presets: SHADCN_PRESETS,
     skins: INSTALLATION_SKIN_FLAGS.filter((skin) => skin !== 'none'),
-    templatesByFramework: {
-      react: registryTemplates('react'),
-      html: registryTemplates('html'),
-      vue: registryTemplates('html'),
-      svelte: registryTemplates('html'),
-    },
     stylingsByFramework: {
       react: registryStylings('react'),
       html: registryStylings('html'),
@@ -108,13 +106,13 @@ export function installationCompatibilityFor(
     methodsByFramework: Object.fromEntries(
       frameworks.map((framework) => [framework, installationCompatibility.methodsByFramework[framework]])
     ),
+    templatesByFramework: Object.fromEntries(
+      frameworks.map((framework) => [framework, installationCompatibility.templatesByFramework[framework]])
+    ),
     mediaByPreset: installationCompatibility.mediaByPreset,
     shadcn: {
       presets: installationCompatibility.shadcn.presets,
       skins: installationCompatibility.shadcn.skins,
-      templatesByFramework: Object.fromEntries(
-        frameworks.map((framework) => [framework, installationCompatibility.shadcn.templatesByFramework[framework]])
-      ),
       stylingsByFramework: Object.fromEntries(
         frameworks.map((framework) => [framework, installationCompatibility.shadcn.stylingsByFramework[framework]])
       ),
@@ -140,9 +138,12 @@ export function installationOptionDefinitionsFor(
   const { methods, frameworks } = context;
   const shadcnOnly = methods.length === 1 && methods[0] === 'shadcn';
   const supportsShadcn = methods.includes('shadcn');
-  const supportsPackages = methods.some((method) => method !== 'cdn');
   const sourceFrameworks = unique(frameworks.map(sourceFrameworkFor));
-  const templates = unique(sourceFrameworks.flatMap((framework) => registryTemplates(framework)));
+  const cdnOnly = methods.length === 1 && methods[0] === 'cdn';
+  const templates = cdnOnly
+    ? (['vite'] as const)
+    : unique(frameworks.flatMap((framework) => installationTemplates(framework)));
+  const templateDefaults = cdnOnly ? (['vite'] as const) : unique(frameworks.map(defaultInstallationTemplate));
   const stylings = unique(sourceFrameworks.flatMap((framework) => registryStylings(framework)));
   const definitions: InstallationOptionDefinition[] = [
     optionDefinition('method', {
@@ -183,26 +184,21 @@ export function installationOptionDefinitionsFor(
     }),
   ];
 
-  if (supportsPackages) {
-    definitions.push(
-      optionDefinition('packageManager', {
-        values: PACKAGE_MANAGERS,
-        default: 'npm',
-        description: 'The command runner used for package and Shadcn commands.',
-        appliesWhen: '--method packaged or --method shadcn',
-      })
-    );
-  }
+  definitions.push(
+    optionDefinition('packageManager', {
+      values: PACKAGE_MANAGERS,
+      default: "the project's package manager; otherwise pnpm when available",
+      description: 'The command runner used for app setup, packages, Shadcn, and the development server.',
+    }),
+    optionDefinition('template', {
+      values: templates,
+      default: templateDefaults.length === 1 ? templateDefaults[0]! : 'next for React; vite otherwise',
+      description: 'The app setup and file layout. Compatible values depend on the framework.',
+    })
+  );
 
   if (supportsShadcn) {
     definitions.push(
-      optionDefinition('template', {
-        values: templates,
-        default:
-          sourceFrameworks.length === 1 ? defaultRegistryTemplate(frameworks[0]!) : 'next for React; vite otherwise',
-        description: 'The Shadcn project template. Compatible values depend on the framework.',
-        appliesWhen: '--method shadcn',
-      }),
       optionDefinition('styling', {
         values: stylings,
         default:

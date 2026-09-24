@@ -165,6 +165,13 @@ function getPlayerTag(useCase: UseCase): string {
   return `${getInstallationPreset(useCase).tagPrefix}-player`;
 }
 
+function isSizedVideoPlayer(useCase: UseCase): boolean {
+  return getInstallationPreset(useCase).mediaType === 'video';
+}
+
+const htmlVideoLayout = ' style="display: block; width: 100%; aspect-ratio: 16 / 9;"';
+const reactVideoLayout = ` style={{ width: '100%', aspectRatio: '16 / 9' }}`;
+
 export function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const prefix = getInstallationPreset(useCase).tagPrefix;
 
@@ -219,14 +226,17 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
  -->`;
 
   if (skin === 'none' && useCase !== 'background-video') {
+    const mediaLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
+
     return `${playerComment}
 <${playerTag}>
 ${mediaComment}
-${generateMediaMarkup(tag, src, playsInline, renderer, '  ')}
+${generateMediaMarkup(tag, src, `${playsInline}${mediaLayout}`, renderer, '  ')}
 </${playerTag}>`;
   }
 
   const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
+  const skinLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
 
   return `${playerComment}
 <${playerTag}>
@@ -235,7 +245,7 @@ ${generateMediaMarkup(tag, src, playsInline, renderer, '  ')}
     Add the skin source to your project for full control over its
     UI components.
    -->
-  <${skinTag}>
+  <${skinTag}${skinLayout}>
 ${skinMediaComment}
 ${generateMediaMarkup(tag, src, playsInline, renderer, '    ')}
   </${skinTag}>
@@ -324,11 +334,17 @@ export interface VueCustomElementConfigCode {
 }
 
 export interface VueCreateCode {
-  'VideoPlayer.vue': string;
+  'MediaPlayer.vue': string;
 }
 
 export interface VueUsageCode {
   'App.vue': string;
+}
+
+function vuePlayerImport(playerImport = './components/MediaPlayer.vue'): string {
+  return playerImport === '#components'
+    ? `import { MediaPlayer } from '#components';`
+    : `import MediaPlayer from '${playerImport}';`;
 }
 
 export interface SvelteCreateCode {
@@ -389,7 +405,7 @@ export function generateVueCreateCode(opts: Pick<InstallationOptions, 'useCase' 
   );
 
   return {
-    'VideoPlayer.vue': `<script setup lang="ts">
+    'MediaPlayer.vue': `<script setup lang="ts">
 ${imports}
 
 defineProps<{ src: string }>();
@@ -402,18 +418,18 @@ ${indentBlock(markup, '  ')}
 }
 
 export function generateVueUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & { playerImport?: string | undefined }
 ): VueUsageCode {
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
 
   return {
     'App.vue': `<script setup lang="ts">
-import VideoPlayer from './components/VideoPlayer.vue';
+${vuePlayerImport(opts.playerImport)}
 </script>
 
 <template>
   <h1>Welcome to My App</h1>
-  <VideoPlayer src="${escapeHTMLAttribute(source)}" />
+  <MediaPlayer src="${escapeHTMLAttribute(source)}" />
 </template>`,
   };
 }
@@ -500,7 +516,9 @@ export function generateReactCreateCode(
   const rendererProps = isVideoLikeRenderer(renderer)
     ? `src={${JSON.stringify(source)}} playsInline`
     : `src={${JSON.stringify(source)}}`;
-  const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
+  const rendererLayout = isNoSkin && isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
+  const rendererJsx = `<${rendererComponent} ${rendererProps}${rendererLayout} />`;
+  const skinLayout = isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
 
   let presetImport: string;
   let mediaImport: string | null = null;
@@ -510,7 +528,13 @@ export function generateReactCreateCode(
   if (isBackgroundVideo) {
     skinComponent = getSkinComponent(useCase, 'video');
     skinCssImport = `@videojs/react/${group}/skin.css`;
-    presetImport = `import { ${playerComponent}, ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
+
+    if (isPresetRenderer(renderer)) {
+      presetImport = `import { ${playerComponent}, ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
+    } else {
+      presetImport = `import { ${playerComponent}, ${skinComponent} } from '@videojs/react/${group}';`;
+      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
+    }
   } else if (isNoSkin) {
     if (isPresetRenderer(renderer)) {
       presetImport = `import { ${playerComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
@@ -538,7 +562,7 @@ export function generateReactCreateCode(
 
   const playerJsx = skinComponent
     ? `    <${playerComponent}>
-      <${skinComponent}>
+      <${skinComponent}${skinLayout}>
         ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
       </${skinComponent}>
     </${playerComponent}>`
@@ -566,7 +590,7 @@ ${playerJsx}
 
 /** Build a React player around a skin component copied into the app by Shadcn. */
 export function generateSourceReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> & { componentsAlias?: string }
 ): Record<'app/page.tsx', string> {
   const { useCase, renderer } = opts;
   const preset = getInstallationPreset(useCase);
@@ -580,6 +604,7 @@ export function generateSourceReactCreateCode(
     ? `src={${JSON.stringify(source)}} playsInline`
     : `src={${JSON.stringify(source)}}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
+  const skinLayout = isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
   const presetImports = [playerComponent];
   let mediaImport: string | null = null;
 
@@ -595,7 +620,7 @@ export function generateSourceReactCreateCode(
     ...(isMuxRenderer(renderer)
       ? [`import { MuxData } from '@videojs/react/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`]
       : []),
-    `import { ${skinComponent} } from '@/components/videojs/${preset.flag}/skin';`,
+    `import { ${skinComponent} } from '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`,
   ].join('\n');
 
   return {
@@ -604,7 +629,7 @@ export function generateSourceReactCreateCode(
 export default function Page() {
   return (
     <${playerComponent}>
-      <${skinComponent}>
+      <${skinComponent}${skinLayout}>
         ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
       </${skinComponent}>
     </${playerComponent}>
@@ -621,7 +646,7 @@ export interface SourceHTMLUsageCode {
 }
 
 export interface SourceVueUsageCode extends VueCustomElementConfigCode {
-  'VideoPlayer.vue': string;
+  'MediaPlayer.vue': string;
   'App.vue': string;
   media: string;
   skinFile: string;
@@ -635,7 +660,10 @@ export interface SourceSvelteUsageCode extends SvelteUsageCode {
 
 /** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
 export function generateSourceHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    componentsAlias?: string;
+    componentsDirectory?: string;
+  }
 ): SourceHTMLUsageCode {
   const { useCase, renderer } = opts;
   const preset = getInstallationPreset(useCase);
@@ -643,68 +671,78 @@ export function generateSourceHTMLUsageCode(
   const tag = getRendererTag(renderer);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  const playerLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
   const imports = [
     `import '@videojs/html/${preset.group}/player';`,
     ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
     ...(isMuxRenderer(renderer) ? [`import '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`] : []),
-    `import '@/components/videojs/${preset.flag}/skin';`,
+    `import '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`,
   ].join('\n');
 
   return {
     imports,
     media: generateMediaMarkup(tag, source, playsInline, renderer, ''),
-    player: `<${getPlayerTag(useCase)}>
-  <!-- Paste the contents of components/videojs/${preset.flag}/skin.html here. -->
-</${getPlayerTag(useCase)}>
-
-<script type="module" src="/src/player.ts"></script>`,
-    skinFile: `components/videojs/${preset.flag}/skin.html`,
+    player: `<${getPlayerTag(useCase)}${playerLayout}>
+  <!-- Paste the contents of ${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html here. -->
+</${getPlayerTag(useCase)}>`,
+    skinFile: `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`,
   };
 }
 
 /** Build Vue files around an HTML skin copied into the app by Shadcn. */
 export function generateSourceVueUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    componentsAlias?: string;
+    componentsDirectory?: string;
+    playerImport?: string | undefined;
+  }
 ): SourceVueUsageCode {
   const source = generateSourceHTMLUsageCode(opts);
   const playerTag = getPlayerTag(opts.useCase);
+  const playerLayout = isSizedVideoPlayer(opts.useCase) ? htmlVideoLayout : '';
   const config = generateVueCustomElementConfigCode({ ...opts, skin: defaultSkinForUseCase(opts.useCase) }, true);
+  const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.html?raw`;
 
   return {
     ...config,
     media: source.media,
     skinFile: source.skinFile,
-    'VideoPlayer.vue': `<script setup lang="ts">
+    'MediaPlayer.vue': `<script setup lang="ts">
 ${source.imports}
+import skin from '${skinSource}';
 </script>
 
 <template>
-  <${playerTag}>
-    <!-- Paste the complete updated ${source.skinFile} contents here. -->
-  </${playerTag}>
+  <${playerTag}${playerLayout} v-html="skin"></${playerTag}>
 </template>`,
     'App.vue': `<script setup lang="ts">
-import VideoPlayer from './components/VideoPlayer.vue';
+${vuePlayerImport(opts.playerImport)}
 </script>
 
 <template>
-  <VideoPlayer />
+  <MediaPlayer />
 </template>`,
   };
 }
 
 /** Build Svelte files around an HTML skin copied into the app by Shadcn. */
 export function generateSourceSvelteUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    componentsAlias?: string;
+    componentsDirectory?: string;
+  }
 ): SourceSvelteUsageCode {
   const source = generateSourceHTMLUsageCode(opts);
   const playerTag = getPlayerTag(opts.useCase);
+  const playerLayout = isSizedVideoPlayer(opts.useCase) ? htmlVideoLayout : '';
+  const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.html?raw`;
   const component = `<script lang="ts">
 ${indentBlock(source.imports, '  ')}
+  import skin from '${skinSource}';
 </script>
 
-<${playerTag}>
-  <!-- Paste the complete updated ${source.skinFile} contents here. -->
+<${playerTag}${playerLayout}>
+  {@html skin}
 </${playerTag}>`;
   const usage = (path: string) => `<script lang="ts">
   import VideoPlayer from '${path}';
