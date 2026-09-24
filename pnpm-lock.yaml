@@ -1223,6 +1223,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.3(@voidzero-dev/vite-plus-core@0.2.8(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(yaml@2.9.0))
+      '@types/caniuse-lite':
+        specifier: ^1.0.5
+        version: 1.0.5
       '@types/node':
         specifier: ^22.18.6
         version: 22.20.1
@@ -1247,6 +1250,9 @@ importers:
       browserslist:
         specifier: ^4.29.0
         version: 4.29.0
+      caniuse-lite:
+        specifier: ^1.0.30001810
+        version: 1.0.30001810
       cn:
         specifier: ^0.2.5
         version: 0.2.5
