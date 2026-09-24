@@ -143,13 +143,7 @@ export class MenuContentElement extends UIElement {
       this.#syncOptionState(trigger);
     }
 
-    const hasSelectedItem = Array.from(
-      this.querySelectorAll<HTMLElement>('[role="menuitemradio"][aria-checked="true"], [aria-selected="true"]')
-    ).some((item) => item.closest(MenuContentElement.tagName) === this);
-
-    if (isSubmenu && active && !this.#wasActive && !hasSelectedItem) {
-      menu.highlightFirstItem({ preventScroll: true });
-    }
+    if (isSubmenu && active && !this.#wasActive) menu.highlightFirstItem({ preventScroll: true });
 
     this.#wasActive = active;
 
