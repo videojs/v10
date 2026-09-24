@@ -12,7 +12,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "development": "./src/index.ts",
-      "default": "./dist/index.js"
+      "default": "./src/index.ts"
     },
     "./node": {
       "types": "./dist/node.d.ts",
