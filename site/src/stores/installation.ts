@@ -1,8 +1,10 @@
 import {
   fitSelectionToPreset,
+  getInstallationPreset,
   resolveInstallationTemplate,
   type InstallMethod,
   type InstallationFramework,
+  type InstallationProject,
   type InstallationTemplate,
   type Renderer,
   type Skin,
@@ -38,6 +40,7 @@ const initialSelection = selectionFromCurrentUrl();
 export const renderer = atom<Renderer>(initialSelection.renderer);
 export const framework = atom<InstallationFramework>(initialSelection.framework);
 export const template = atom<InstallationTemplate>(initialSelection.template);
+export const project = atom<InstallationProject>(initialSelection.project);
 export const skin = atom<Skin>(initialSelection.skin);
 export const useCase = atom<UseCase>(initialSelection.useCase);
 export const sourceUrl = atom<string>(initialSelection.sourceUrl);
@@ -57,6 +60,7 @@ type SelectionAtoms = { [K in keyof InstallationUiSelection]: WritableAtom<Insta
 export const selectionAtoms: SelectionAtoms = {
   framework,
   template,
+  project,
   useCase,
   skin,
   renderer,
@@ -65,29 +69,26 @@ export const selectionAtoms: SelectionAtoms = {
 };
 let hydratedUrl = globalThis.location ? `${location.pathname}${location.search}` : null;
 let syncingFromUrl = false;
-let revealFrame: number | null = null;
 
-function revealInstallationQueryState(): void {
-  if (!globalThis.document || !document.documentElement.hasAttribute('data-installation-query-pending')) return;
-
-  if (revealFrame !== null) cancelAnimationFrame(revealFrame);
-
-  revealFrame = requestAnimationFrame(() => {
-    delete document.documentElement.dataset.installationQueryPending;
-    revealFrame = null;
-  });
-}
-
-function currentSelection(): InstallationUiSelection {
+export function currentInstallationSelection(): InstallationUiSelection {
   return {
     framework: framework.get(),
     template: template.get(),
+    project: project.get(),
     useCase: useCase.get(),
     skin: skin.get(),
     renderer: renderer.get(),
     sourceUrl: sourceUrl.get(),
     installMethod: installMethod.get(),
   };
+}
+
+function syncInstallationDocumentState(selection: InstallationUiSelection): void {
+  if (!globalThis.document || !getInstallationRouteSegment(location.pathname)) return;
+
+  document.documentElement.dataset.installationPreset = getInstallationPreset(selection.useCase).flag;
+  document.documentElement.dataset.installationProject = selection.project;
+  document.documentElement.dataset.installationTemplate = selection.template;
 }
 
 function normalizeCurrentUrl(target: URL, selection: InstallationUiSelection): void {
@@ -114,7 +115,7 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
 
   if (hydratedUrl === urlKey) {
     normalizeCurrentUrl(target, selection);
-    revealInstallationQueryState();
+    syncInstallationDocumentState(selection);
 
     return;
   }
@@ -125,6 +126,7 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
   try {
     framework.set(selection.framework);
     template.set(selection.template);
+    project.set(selection.project);
     // Use case first: the skin and media pickers validate against it when they react to a change.
     useCase.set(selection.useCase);
     skin.set(selection.skin);
@@ -136,7 +138,7 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
   }
 
   normalizeCurrentUrl(target, selection);
-  revealInstallationQueryState();
+  syncInstallationDocumentState(selection);
 }
 
 function writeUrl(): void {
@@ -145,7 +147,9 @@ function writeUrl(): void {
   const route = getInstallationRouteSegment(location.pathname);
   if (!route) return;
 
-  const search = serializeInstallationSearchForRoute(route, currentSelection(), location.search);
+  syncInstallationDocumentState(currentInstallationSelection());
+
+  const search = serializeInstallationSearchForRoute(route, currentInstallationSelection(), location.search);
   const url = `${location.pathname}${search}${location.hash}`;
 
   if (url !== `${location.pathname}${location.search}${location.hash}`) {
@@ -154,8 +158,8 @@ function writeUrl(): void {
   }
 }
 
-/** Apply the two project-shape fields as one URL-backed selection change. */
-export function selectInstallationProject(
+/** Apply the framework and app setup as one URL-backed selection change. */
+export function selectInstallationAppSetup(
   nextFramework: InstallationFramework,
   nextTemplate: InstallationTemplate,
   write = true
@@ -165,6 +169,8 @@ export function selectInstallationProject(
   try {
     framework.set(nextFramework);
     template.set(nextTemplate);
+
+    if (nextTemplate === 'none') project.set('existing');
   } finally {
     syncingFromUrl = false;
   }
@@ -177,7 +183,13 @@ export function selectInstallationTemplate(nextTemplate: InstallationTemplate): 
 
   const selectedFramework = framework.get();
 
-  selectInstallationProject(selectedFramework, resolveInstallationTemplate(selectedFramework, nextTemplate));
+  const resolvedTemplate = resolveInstallationTemplate(selectedFramework, nextTemplate);
+
+  selectInstallationAppSetup(selectedFramework, resolvedTemplate);
+}
+
+export function selectInstallationStartingPoint(nextProject: InstallationProject): void {
+  project.set(template.get() === 'none' ? 'existing' : nextProject);
 }
 
 for (const store of Object.values(selectionAtoms)) {
@@ -189,7 +201,7 @@ for (const store of Object.values(selectionAtoms)) {
 }
 
 if (globalThis.document) {
-  revealInstallationQueryState();
+  syncInstallationDocumentState(initialSelection);
 
   document.addEventListener('astro:before-swap', (event: TransitionBeforeSwapEvent) => {
     if (event.to.pathname.startsWith('/docs/guides/installation/')) {
@@ -199,7 +211,6 @@ if (globalThis.document) {
   document.addEventListener('astro:after-swap', () => {
     if (location.pathname.startsWith('/docs/guides/installation/')) {
       syncInstallationSelectionFromUrl();
-      revealInstallationQueryState();
     }
   });
 }

@@ -17,9 +17,15 @@ describe('installationProjectFiles', () => {
     expect(installationProjectFiles('react', 'start').player).toBe('src/routes/index.tsx');
     expect(installationProjectFiles('vue', 'nuxt')).toMatchObject({
       config: 'nuxt.config.ts',
-      player: 'app/components/MediaPlayer.client.vue',
+      player: 'app/components/VideoPlayer.client.vue',
       playerImport: '#components',
       usage: 'app/app.vue',
+    });
+    expect(installationProjectFiles('vue', 'astro')).toMatchObject({
+      config: 'astro.config.mjs',
+      player: 'src/components/VideoPlayer.vue',
+      playerImport: '../components/VideoPlayer.vue',
+      usage: 'src/pages/index.astro',
     });
     expect(installationProjectFiles('svelte', 'sveltekit')).toMatchObject({
       componentsAlias: '#lib/components',
@@ -27,10 +33,20 @@ describe('installationProjectFiles', () => {
       player: 'src/lib/VideoPlayer.svelte',
       usage: 'src/routes/+page.svelte',
     });
+    expect(installationProjectFiles('svelte', 'astro')).toMatchObject({
+      componentsAlias: '@/components',
+      player: 'src/components/VideoPlayer.svelte',
+      playerImport: '../components/VideoPlayer.svelte',
+      usage: 'src/pages/index.astro',
+    });
     expect(installationProjectFiles('html', 'none')).toMatchObject({
       player: 'index.html',
       usage: 'player.ts',
     });
+    expect(installationProjectFiles('vue', 'vite', 'live-audio').player).toBe('src/components/LiveAudioPlayer.vue');
+    expect(installationProjectFiles('svelte', 'sveltekit', 'background-video').player).toBe(
+      'src/lib/BackgroundVideoPlayer.svelte'
+    );
   });
 });
 
@@ -45,9 +61,11 @@ describe('installationProjectCreateCommand', () => {
     expect(installationProjectCreateCommand('svelte', 'sveltekit', 'pnpm')).toBe(
       'pnpm dlx sv create --template minimal --types ts --no-add-ons --install pnpm .'
     );
+    expect(installationProjectCreateCommand('vue', 'astro', 'pnpm')).toContain('--add vue');
+    expect(installationProjectCreateCommand('svelte', 'astro', 'pnpm')).toContain('--add svelte');
     expect(installationProjectCreateCommand('react', 'next', 'pnpm')).toContain('--no-src-dir --import-alias "@/*"');
     expect(installationProjectCreateCommand('react', 'laravel', 'pnpm')).toBe(
-      'laravel new <app-directory> --react --pnpm --no-interaction\ncd <app-directory>'
+      'laravel new videojs-app --react --pnpm --no-interaction\ncd videojs-app'
     );
     expect(installationProjectRunCommand('vite', 'pnpm')).toBe('pnpm dev');
     expect(installationProjectRunCommand('laravel', 'pnpm')).toBe('composer run dev');
@@ -66,6 +84,7 @@ describe('installationProjectAliasSetup', () => {
       ])
     );
     expect(installationProjectAliasSetup('svelte', 'vite')[0]?.code).toContain('"$lib/*"');
+    expect(installationProjectAliasSetup('svelte', 'astro')[0]?.code).toContain('"@/*"');
     expect(installationProjectAliasSetup('html', 'laravel')).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ filename: 'tsconfig.json', code: expect.stringContaining('./resources/js/*') }),

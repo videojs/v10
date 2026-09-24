@@ -282,7 +282,16 @@ export function generateInstallationIndex(siteUrl = 'https://videojs.org'): stri
   });
   const optionLines = options
     .filter(({ flag }) =>
-      ['--preset', '--skin', '--media', '--source-url', '--package-manager', '--template', '--styling'].includes(flag)
+      [
+        '--project',
+        '--preset',
+        '--skin',
+        '--media',
+        '--source-url',
+        '--package-manager',
+        '--template',
+        '--styling',
+      ].includes(flag)
     )
     .map((option) => {
       const key = option.query;

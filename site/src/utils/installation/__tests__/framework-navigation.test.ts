@@ -92,12 +92,32 @@ describe('canonicalShadcnInstallationUrl', () => {
 });
 
 describe('updateShadcnInstallationUrl', () => {
-  it('clears framework-owned options when the project framework changes', () => {
+  it('clears framework-owned options the next framework cannot use', () => {
     const url = new URL(
       'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=next&styling=tailwind&preset=audio'
     );
     const target = updateShadcnInstallationUrl(url, { framework: 'svelte' });
 
     expect(target.search).toBe('?framework=svelte&preset=audio');
+  });
+
+  it('preserves explicit app and styling choices shared by the next framework', () => {
+    const url = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=vite&styling=css&preset=audio'
+    );
+    const target = updateShadcnInstallationUrl(url, { framework: 'vue' });
+
+    expect(target.search).toBe('?framework=vue&template=vite&styling=css&preset=audio');
+  });
+
+  it('serializes compatible choices even when the current route omits its defaults', () => {
+    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue');
+    const target = updateShadcnInstallationUrl(url, {
+      framework: 'react',
+      template: 'vite',
+      styling: 'css',
+    });
+
+    expect(target.search).toBe('?framework=react&template=vite&styling=css');
   });
 });

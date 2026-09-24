@@ -6,13 +6,16 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { useSelection } from './useSelection';
 
 export default function VueUsageCodeBlock() {
-  const project = installationProjectFiles('vue', useSelection('template'));
+  const template = useSelection('template');
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('vue', template, useCase);
   const code = generateVueUsageCode({
-    useCase: useSelection('useCase'),
+    useCase,
     renderer: useSelection('renderer'),
     sourceUrl: useSelection('sourceUrl'),
     playerImport: project.playerImport,
   });
+  const codeValue = template === 'astro' ? 'index.astro' : 'App.vue';
 
   return (
     <TabsRoot maxWidth={false}>
@@ -22,7 +25,7 @@ export default function VueUsageCodeBlock() {
         </Tab>
       </TabsList>
       <TabsPanel value="app" initial>
-        <ClientCode code={code['App.vue']} lang="html" />
+        <ClientCode code={code[codeValue]} lang={template === 'astro' ? 'astro' : 'html'} />
       </TabsPanel>
     </TabsRoot>
   );

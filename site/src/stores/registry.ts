@@ -1,16 +1,17 @@
 import type {
   InstallationFramework,
+  InstallationTemplate,
   RegistryFramework,
   RegistryPreset,
   RegistryStyling,
   RegistryTheme,
 } from '@videojs/installation';
-import { defaultInstallationTemplate } from '@videojs/installation';
+import { registryStylings, resolveInstallationTemplateForMethod, resolveRegistryStyling } from '@videojs/installation';
 import { atom, computed } from 'nanostores';
 
 import {
   framework as installationFramework,
-  selectInstallationProject,
+  selectInstallationAppSetup,
   template as installationTemplate,
 } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
@@ -55,12 +56,26 @@ export const registrySkin = atom<RegistryPreset | null>(null);
 /** The skin theme catalog selected on the page; `null` lets an installation skin supply the initial choice. */
 export const registryTheme = atom<RegistryTheme | null>(null);
 
-function applyRegistryProjectFramework(framework: InstallationFramework): void {
+function applyRegistryProjectFramework(
+  framework: InstallationFramework,
+  requestedTemplate: InstallationTemplate | null = installationTemplate.get(),
+  requestedStyling: RegistryStyling | null = registryStyling.get()
+): void {
   const sourceFramework: RegistryFramework = framework === 'react' ? 'react' : 'html';
+  const nextTemplate = resolveInstallationTemplateForMethod(framework, requestedTemplate, 'shadcn');
+  const nextStyling =
+    requestedStyling && registryStylings(sourceFramework).includes(requestedStyling) ? requestedStyling : null;
 
   if (registryProjectFramework.get() !== framework) {
-    selectInstallationProject(framework, defaultInstallationTemplate(framework), false);
-    registryStyling.set(null);
+    selectInstallationAppSetup(framework, nextTemplate, false);
+  } else if (installationTemplate.get() !== nextTemplate) {
+    installationTemplate.set(nextTemplate);
+  }
+
+  if (registryStyling.get() !== nextStyling) registryStyling.set(nextStyling);
+
+  if (globalThis.document) {
+    document.documentElement.dataset.registryStyling = resolveRegistryStyling(sourceFramework, nextStyling);
   }
 
   currentFramework.set(sourceFramework);
@@ -69,14 +84,12 @@ function applyRegistryProjectFramework(framework: InstallationFramework): void {
 
 /** Synchronize the project framework from an authoritative Shadcn URL without rewriting history. */
 export function syncRegistryProjectFramework(framework: InstallationFramework, url?: URL): void {
-  applyRegistryProjectFramework(framework);
-
   const selection = url ? resolveShadcnUrlSelection(url, framework) : null;
 
-  if (selection) {
-    if (selection.template) installationTemplate.set(selection.template);
+  if (selection) applyRegistryProjectFramework(framework, selection.template, selection.styling);
+  else applyRegistryProjectFramework(framework);
 
-    registryStyling.set(selection.styling);
+  if (selection) {
     registrySkin.set(null);
     registryTheme.set(null);
   }
@@ -88,11 +101,19 @@ export function selectRegistryProjectFramework(framework: InstallationFramework)
     const url = new URL(window.location.href);
 
     if (isShadcnInstallationUrl(url)) {
-      const target = updateShadcnInstallationUrl(url, { framework });
+      const target = updateShadcnInstallationUrl(url, {
+        framework,
+        styling: registryStyling.get(),
+        template: installationTemplate.get(),
+      });
 
+      // Update the shared stores before revealing the prerendered card group for the next framework.
+      applyRegistryProjectFramework(framework);
       history.replaceState(history.state, '', `${target.pathname}${target.search}${target.hash}`);
       document.documentElement.dataset.registryProjectFramework = framework;
       document.documentElement.dataset.registryFramework = framework === 'react' ? 'react' : 'html';
+
+      return;
     }
   }
 
@@ -115,4 +136,6 @@ function writeRegistryStyling(styling: RegistryStyling): void {
 export function selectRegistryStyling(styling: RegistryStyling): void {
   writeRegistryStyling(styling);
   registryStyling.set(styling);
+
+  if (globalThis.document) document.documentElement.dataset.registryStyling = styling;
 }

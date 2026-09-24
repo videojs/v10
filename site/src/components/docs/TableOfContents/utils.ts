@@ -83,6 +83,7 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
   const apiReferenceSubsectionTitles = new Set(API_REFERENCE_SUBSECTION_TITLES);
   const isTocHeadingDepth = (depth: number): boolean => depth === 2 || depth === 3;
   const isApiReferenceSubsectionHeading = (heading: MarkdownHeading): boolean => {
+    // SAFETY: the conditional-heading plugin optionally adds tocKind to Astro's MarkdownHeading shape.
     const tocKind = (heading as MarkdownHeading & { tocKind?: string }).tocKind;
 
     return tocKind === 'api-reference-subsection' && apiReferenceSubsectionTitles.has(heading.text);
@@ -104,16 +105,17 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
 /** Keep client-rendered conditional headings in the TOC only while their target exists on the page. */
 export function filterRenderedHeadings(
   headings: MarkdownHeading[],
-  getElementById: (id: string) => HTMLElement | null = (id) => document.getElementById(id)
+  getElementById: (id: string) => HTMLElement | null = (id) => document.getElementById(id),
+  isVisible: (element: HTMLElement) => boolean = (element) => element.getClientRects().length > 0
 ): MarkdownHeading[] {
   return headings.filter((heading) => {
     const element = getElementById(heading.slug);
 
-    return element !== null && !element.hasAttribute('data-conditional-heading-placeholder');
+    return element !== null && !element.hasAttribute('data-conditional-heading-placeholder') && isVisible(element);
   });
 }
 
-/** Follow headings mounted or removed by hydrated islands, such as a selected media adapter's install step. */
+/** Follow headings mounted, removed, or hidden by the active installation selection. */
 export function useRenderedHeadings(headings: MarkdownHeading[]): MarkdownHeading[] {
   const [renderedHeadings, setRenderedHeadings] = useState(headings);
 
@@ -123,11 +125,25 @@ export function useRenderedHeadings(headings: MarkdownHeading[]): MarkdownHeadin
     update();
 
     const content = document.querySelector('[data-llms-content]') ?? document.body;
-    const observer = new MutationObserver(update);
+    const contentObserver = new MutationObserver(update);
+    const selectionObserver = new MutationObserver(update);
 
-    observer.observe(content, { childList: true, subtree: true });
+    contentObserver.observe(content, { childList: true, subtree: true });
+    selectionObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: [
+        'data-installation-project',
+        'data-installation-template',
+        'data-registry-framework',
+        'data-registry-project-framework',
+        'data-registry-styling',
+      ],
+    });
 
-    return () => observer.disconnect();
+    return () => {
+      contentObserver.disconnect();
+      selectionObserver.disconnect();
+    };
   }, [headings]);
 
   return renderedHeadings;

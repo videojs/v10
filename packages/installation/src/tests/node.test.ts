@@ -7,6 +7,13 @@ import { describe, expect, it } from 'vitest';
 import { INSTALLATION_DEMO_SOURCES } from '../defaults';
 import { detectPackageManager, runAgentsInit } from '../node';
 import { installationCommand } from '../plan';
+import {
+  INSTALLATION_FRAMEWORKS,
+  installationMethodsForFramework,
+  installationTemplatesForMethod,
+  sourceFrameworkFor,
+} from '../selection';
+import { defaultRegistryStyling } from '../shadcn';
 
 describe('runAgentsInit', () => {
   it('can target the locally installed package without forcing an npm tag', () => {
@@ -53,7 +60,7 @@ describe('runAgentsInit', () => {
     ]);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('## Configure the source registry');
+    expect(result.stdout).toContain('## Configure Shadcn');
     expect(result.stdout).toContain(
       'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
     );
@@ -62,7 +69,7 @@ describe('runAgentsInit', () => {
     expect(result.stdout).toContain('pnpm add @videojs/hlsjs-video@10.0.0');
     expect(result.stdout).toContain('vite.config.ts');
     expect(result.stdout).toContain("tag.startsWith('media-')");
-    expect(result.stdout).toContain('components/MediaPlayer.vue');
+    expect(result.stdout).toContain('components/VideoPlayer.vue');
     expect(result.stdout).not.toContain('### `index.html`');
   });
 
@@ -79,10 +86,31 @@ describe('runAgentsInit', () => {
     ]);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('does not scaffold or assume a particular app setup');
-    expect(result.stdout).toContain('Use the existing project’s development or preview command');
+    expect(result.stdout).not.toContain('## Prepare');
+    expect(result.stdout).not.toContain('## Run your app');
     expect(result.stdout).not.toContain('create vite');
     expect(result.stdout).not.toContain('pnpm dev');
+  });
+
+  it('shows the likely development command for an existing named app setup', () => {
+    const result = runAgentsInit('react', '10.0.0', [
+      'agents',
+      'init',
+      '--method',
+      'packaged',
+      '--framework',
+      'react',
+      '--project',
+      'existing',
+      '--template',
+      'start',
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain('## Prepare');
+    expect(result.stdout).toContain('## Run your app');
+    expect(result.stdout).toContain('pnpm dev');
+    expect(result.stdout).not.toContain('Continue in the existing');
   });
 
   it('uses Svelte component files for Shadcn HTML source', () => {
@@ -100,8 +128,12 @@ describe('runAgentsInit', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('src/lib/VideoPlayer.svelte');
     expect(result.stdout).toContain('src/routes/+page.svelte');
-    expect(result.stdout).toContain("import '$lib/components/videojs/video/skin'");
+    expect(result.stdout).toContain("import VideoSkin from '$lib/components/videojs/video/skin.svelte'");
     expect(result.stdout).not.toContain("import '#lib/components/videojs/video/skin'");
+    expect(result.stdout).toContain('<slot />');
+    expect(result.stdout).toContain('<style>');
+    expect(result.stdout).not.toContain('## Register custom elements');
+    expect(result.stdout).toContain('<video src={"https://stream.mux.com/');
     expect(result.stdout).not.toContain('### `index.html`');
   });
 
@@ -111,6 +143,8 @@ describe('runAgentsInit', () => {
       'init',
       '--method',
       'shadcn',
+      '--project',
+      'new',
       '--template',
       'vite',
       '--styling',
@@ -118,9 +152,31 @@ describe('runAgentsInit', () => {
     ]);
 
     expect(result.stdout).toContain('pnpm dlx shadcn@latest init --template vite');
-    expect(result.stdout).toContain('_Only for an existing app without components.json._');
-    expect(result.stdout).toContain('pnpm dlx shadcn@latest init --base base --preset nova --yes');
+    expect(result.stdout).not.toContain('pnpm dlx shadcn@latest init --base base --preset nova --yes');
+    expect(result.stdout).not.toContain('# Optional: run if components.json does not exist.');
     expect(result.stdout).not.toContain('pnpm create vite');
+  });
+
+  it('keeps alias-free Shadcn initialization with the registry commands', () => {
+    const result = runAgentsInit('react', '10.0.0', [
+      'agents',
+      'init',
+      '--method',
+      'shadcn',
+      '--project',
+      'existing',
+      '--template',
+      'next',
+      '--styling',
+      'tailwind',
+    ]);
+
+    expect(result.stdout).not.toContain('## Configure Shadcn');
+    expect(result.stdout).toContain('## Create components.json (optional)');
+    expect(result.stdout).toContain('## Add the Video.js Registry');
+    expect(result.stdout).toContain('## Add the skin source');
+    expect(result.stdout).toContain('# Optional: run if components.json does not exist.');
+    expect(result.stdout).toContain('pnpm dlx shadcn@latest init --base base --preset nova --yes');
   });
 
   it('writes Shadcn aliases where Vite and Shadcn both resolve them', () => {
@@ -143,22 +199,31 @@ describe('runAgentsInit', () => {
 
   it('uses Astro and Laravel entry conventions for HTML apps', () => {
     const astro = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'html', '--template', 'astro']);
-    const laravel = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'html', '--template', 'laravel']);
+    const laravel = runAgentsInit('html', '10.0.0', [
+      'agents',
+      'init',
+      '--framework',
+      'html',
+      '--project',
+      'new',
+      '--template',
+      'laravel',
+    ]);
 
     expect(astro.stdout).toContain('<script src="../scripts/player.ts"></script>');
     expect(astro.stdout).not.toContain('<script type="module" src="../scripts/player.ts"></script>');
-    expect(laravel.stdout).toContain('laravel new <app-directory> --pnpm --no-interaction');
+    expect(laravel.stdout).toContain('laravel new videojs-app --pnpm --no-interaction');
     expect(laravel.stdout).toContain('## Configure your app entry');
     expect(laravel.stdout).toContain("'resources/js/player.ts'");
   });
 
   it('keeps the optional Vite scaffold in CDN agent instructions', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn']);
+    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn', '--project', 'new']);
 
-    expect(result.stdout).toContain('## Prepare your app');
+    expect(result.stdout).toContain('## Create the app');
     expect(result.stdout).toContain('pnpm create vite');
     expect(result.stdout).toContain('## Run your app');
-    expect(result.stdout).toContain('Skip this step when the workspace already has an HTML page or app.');
+    expect(result.stdout).toContain('Scaffold a minimal Vite site');
     expect(result.stdout).toContain('page head or before the closing body tag');
     expect(result.stdout).toContain('inside the page body');
   });
@@ -178,13 +243,13 @@ describe('runAgentsInit', () => {
 
     for (const result of [packaged, shadcn]) {
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('app/components/MediaPlayer.client.vue');
-      expect(result.stdout).toContain("import { MediaPlayer } from '#components'");
-      expect(result.stdout).not.toContain("from './components/MediaPlayer.client.vue'");
+      expect(result.stdout).toContain('app/components/VideoPlayer.client.vue');
+      expect(result.stdout).toContain("import { VideoPlayer } from '#components'");
+      expect(result.stdout).not.toContain("from './components/VideoPlayer.client.vue'");
     }
   });
 
-  it('configures React before initializing Shadcn in an existing Astro app', () => {
+  it('does not add framework setup instructions to an existing Astro app', () => {
     const result = runAgentsInit('react', '10.0.0', [
       'agents',
       'init',
@@ -198,9 +263,7 @@ describe('runAgentsInit', () => {
     const steps = JSON.parse(result.stdout).steps as Array<{ id: string }>;
 
     expect(result.exitCode).toBe(0);
-    expect(steps.findIndex(({ id }) => id === 'configure-framework')).toBeLessThan(
-      steps.findIndex(({ id }) => id === 'configure-source-registry')
-    );
+    expect(steps.some(({ id }) => id === 'configure-framework')).toBe(false);
   });
 
   it('re-runs the generated native-audio command without changing its selection', () => {
@@ -345,6 +408,91 @@ describe('runAgentsInit', () => {
     });
     expect(markdown.stdout).not.toContain('- `html`: templates');
     expect(markdown.stdout).not.toContain('CDN is plain HTML only');
+  });
+
+  it('renders every supported framework, method, app setup, and starting point without hidden defaults', () => {
+    const failures: string[] = [];
+    let scenarioCount = 0;
+
+    for (const framework of INSTALLATION_FRAMEWORKS) {
+      const owner = framework === 'react' ? 'react' : 'html';
+
+      for (const method of installationMethodsForFramework(framework)) {
+        for (const template of installationTemplatesForMethod(framework, method)) {
+          const projects = template === 'none' ? (['existing'] as const) : (['new', 'existing'] as const);
+
+          for (const project of projects) {
+            scenarioCount += 1;
+            const args = [
+              'agents',
+              'init',
+              '--method',
+              method,
+              '--framework',
+              framework,
+              '--project',
+              project,
+              '--preset',
+              'video',
+              '--skin',
+              'default',
+              '--media',
+              'html5-video',
+              '--source-url',
+              INSTALLATION_DEMO_SOURCES.videoMp4,
+              '--package-manager',
+              'pnpm',
+              '--template',
+              template,
+            ];
+
+            if (method === 'shadcn') {
+              args.push('--styling', defaultRegistryStyling(sourceFrameworkFor(framework)));
+            }
+
+            const result = runAgentsInit(owner, '10.0.0-test', args);
+            const jsonResult = runAgentsInit(owner, '10.0.0-test', [...args, '--json']);
+            const label = `${owner}/${framework}/${method}/${template}/${project}`;
+
+            if (result.exitCode !== 0 || !result.stdout.includes('Defaulted options: none.')) {
+              failures.push(`${label}: ${result.stderr || result.stdout}`);
+            }
+
+            if (jsonResult.exitCode !== 0) {
+              failures.push(`${label} JSON: ${jsonResult.stderr || jsonResult.stdout}`);
+              continue;
+            }
+
+            // SAFETY: successful --json output above is produced by installationPlanJson with this stable shape.
+            const document = JSON.parse(jsonResult.stdout) as {
+              defaultedOptions: string[];
+              steps: Array<{ id: string; blocks: Array<{ code: string }> }>;
+            };
+            const stepIds = document.steps.map(({ id }) => id);
+            const code = document.steps.flatMap(({ blocks }) => blocks.map((block) => block.code)).join('\n');
+
+            if (document.defaultedOptions.length > 0) failures.push(`${label}: hidden defaults`);
+
+            if (new Set(stepIds).size !== stepIds.length) failures.push(`${label}: duplicate step IDs`);
+
+            if (document.steps.some(({ blocks }) => blocks.length === 0 || blocks.some((block) => !block.code))) {
+              failures.push(`${label}: empty instruction block`);
+            }
+
+            if (code.includes('undefined') || code.includes('<app-directory>')) {
+              failures.push(`${label}: unresolved generated value`);
+            }
+
+            if ((project === 'new') !== stepIds.includes('prepare-app')) {
+              failures.push(`${label}: incorrect app preparation`);
+            }
+          }
+        }
+      }
+    }
+
+    expect(scenarioCount).toBeGreaterThan(40);
+    expect(failures).toEqual([]);
   });
 
   it('returns usage errors with exit code 2', () => {

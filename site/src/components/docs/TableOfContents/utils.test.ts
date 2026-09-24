@@ -75,10 +75,13 @@ describe('filterRenderedHeadings', () => {
     ];
     const renderedIds = new Set(['choose-your-media-source', 'add-your-player']);
 
-    expect(filterRenderedHeadings(headings, (id) => (renderedIds.has(id) ? document.body : null))).toEqual([
-      headings[0],
-      headings[2],
-    ]);
+    expect(
+      filterRenderedHeadings(
+        headings,
+        (id) => (renderedIds.has(id) ? document.body : null),
+        () => true
+      )
+    ).toEqual([headings[0], headings[2]]);
   });
 
   it('omits static anchor placeholders for conditional headings', () => {
@@ -87,6 +90,24 @@ describe('filterRenderedHeadings', () => {
 
     placeholder.dataset.conditionalHeadingPlaceholder = '';
 
-    expect(filterRenderedHeadings([heading], () => placeholder)).toEqual([]);
+    expect(
+      filterRenderedHeadings(
+        [heading],
+        () => placeholder,
+        () => true
+      )
+    ).toEqual([]);
+  });
+
+  it('omits headings hidden by a selected installation path', () => {
+    const heading = { depth: 2, text: 'Configure Shadcn', slug: 'configure-shadcn' };
+
+    expect(
+      filterRenderedHeadings(
+        [heading],
+        () => document.body,
+        () => false
+      )
+    ).toEqual([]);
   });
 });

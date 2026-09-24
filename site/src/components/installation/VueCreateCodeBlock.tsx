@@ -6,9 +6,11 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { useSelection } from './useSelection';
 
 export default function VueCreateCodeBlock() {
-  const project = installationProjectFiles('vue', useSelection('template'));
+  const template = useSelection('template');
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('vue', template, useCase);
   const code = generateVueCreateCode({
-    useCase: useSelection('useCase'),
+    useCase,
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
   });
@@ -21,7 +23,7 @@ export default function VueCreateCodeBlock() {
         </Tab>
       </TabsList>
       <TabsPanel value="player" initial>
-        <ClientCode code={code['MediaPlayer.vue']} lang="html" />
+        <ClientCode code={code.component} lang="html" />
       </TabsPanel>
     </TabsRoot>
   );

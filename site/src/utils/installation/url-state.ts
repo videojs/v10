@@ -4,6 +4,7 @@ import {
   getInstallationPreset,
   INSTALLATION_PRESETS,
   isInstallationFramework,
+  isInstallationProject,
   isInstallationTemplate,
   isPackageManager,
   isSkinFlag,
@@ -14,6 +15,7 @@ import {
   useCaseFromPreset,
   type InstallMethod,
   type InstallationFramework,
+  type InstallationProject,
   type InstallationTemplate,
   type Renderer,
   type Skin,
@@ -29,6 +31,7 @@ import type { InstallationRouteSegment } from './routes';
 export interface InstallationUiSelection {
   framework: InstallationFramework;
   template: InstallationTemplate;
+  project: InstallationProject;
   useCase: UseCase;
   skin: Skin;
   renderer: Renderer;
@@ -39,6 +42,7 @@ export interface InstallationUiSelection {
 export const DEFAULT_SELECTION: InstallationUiSelection = {
   framework: 'react',
   template: 'next',
+  project: 'existing',
   useCase: 'default-video',
   skin: 'video',
   renderer: 'html5-video',
@@ -65,6 +69,8 @@ export function normalizeInstallationSelectionForRoute(
         : resolveInstallationTemplate(framework, selection.template),
     installMethod: selection.installMethod === 'cdn' ? ('pnpm' as const) : selection.installMethod,
   };
+
+  if (route === 'cdn' || normalized.template === 'none') normalized.project = 'existing';
 
   if (route !== 'shadcn') return normalized;
 
@@ -98,6 +104,12 @@ export function parseInstallationSearch(
 
   if (isInstallationTemplate(template)) selection.template = resolveInstallationTemplate(selection.framework, template);
   else selection.template = resolveInstallationTemplate(selection.framework, null);
+
+  const project = params.get('project');
+
+  if (isInstallationProject(project)) selection.project = project;
+
+  if (selection.template === 'none') selection.project = 'existing';
 
   const preset = params.get('preset');
   const useCase = preset ? useCaseFromPreset(preset) : undefined;
@@ -160,6 +172,7 @@ export function serializeInstallationSearch(selection: InstallationUiSelection, 
 
   write('framework', selection.framework, DEFAULT_SELECTION.framework);
   write('template', selection.template, resolveInstallationTemplate(selection.framework, null));
+  write('project', selection.project, DEFAULT_SELECTION.project);
   write('preset', preset.flag, INSTALLATION_PRESETS[DEFAULT_SELECTION.useCase].flag);
 
   if (selection.useCase === 'background-video') params.delete('skin');
@@ -198,6 +211,8 @@ export function serializeInstallationSearchForRoute(
   }
 
   if (route === 'cdn' && selection.template !== 'none') canonicalParams.delete('template');
+
+  if (route === 'cdn') canonicalParams.delete('project');
 
   const string = canonicalParams.toString();
 

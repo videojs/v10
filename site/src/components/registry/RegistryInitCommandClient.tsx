@@ -1,14 +1,16 @@
 import {
   defaultInstallationTemplate,
+  type InstallationFramework,
   installationProjectFiles,
-  type RegistryFramework,
+  optionalShadcnInitCommand,
   resolveRegistryStyling,
   resolveInstallationTemplate,
-  shadcnInitCommand,
   shadcnProjectConfiguration,
 } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
+import { focusLinesContaining } from '@/components/Code/focusLines';
+import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import {
   useInstallationTemplate,
@@ -16,13 +18,27 @@ import {
   useRegistryStyling,
 } from '@/components/installation/useRegistryProjectFramework';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import { shared } from '@/components/typography/styles';
 
 interface Props {
-  framework: RegistryFramework;
+  framework: InstallationFramework;
   installation: boolean;
 }
 
 function ConfigurationBlock({ block }: { block: { code: string; filename: string; language: 'js' | 'json' | 'ts' } }) {
+  const focusLines = focusLinesContaining(block.code, [
+    '"$schema"',
+    '"paths"',
+    '"@/*"',
+    '"./src/*"',
+    '"imports"',
+    '"#lib/*"',
+    'resolve:',
+    'alias:',
+    "'@':",
+    '"components"',
+  ]);
+
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="App configuration">
@@ -31,7 +47,7 @@ function ConfigurationBlock({ block }: { block: { code: string; filename: string
         </Tab>
       </TabsList>
       <TabsPanel value={block.filename} initial>
-        <ClientCode code={block.code} lang={block.language} />
+        <ClientCode code={block.code} focusLines={focusLines} lang={block.language} />
       </TabsPanel>
     </TabsRoot>
   );
@@ -41,34 +57,85 @@ export default function RegistryInitCommandClient({ framework, installation }: P
   const projectFramework = useRegistryProjectFramework(framework);
   const $template = useInstallationTemplate(defaultInstallationTemplate(projectFramework));
   const template = resolveInstallationTemplate(projectFramework, $template);
-  const sourceFramework: RegistryFramework = projectFramework === 'react' ? 'react' : 'html';
+  const sourceFramework = projectFramework === 'react' ? 'react' : 'html';
   const styling = resolveRegistryStyling(sourceFramework, useRegistryStyling());
   const project = installationProjectFiles(projectFramework, template);
   const configuration = shadcnProjectConfiguration(projectFramework, template, styling, project.componentsAlias);
-  const aliasSetup = configuration.aliasSetup.map((block) => <ConfigurationBlock key={block.filename} block={block} />);
+  const aliasSteps = configuration.aliasSetup.map((block) => ({
+    key: block.filename,
+    title: `Configure ${block.filename}`,
+    content: <ConfigurationBlock block={block} />,
+  }));
 
-  if (configuration.mode === 'components-json') {
+  if (configuration.mode === 'shadcn-init') {
     return (
-      <div>
-        {aliasSetup}
-        <ConfigurationBlock
-          block={{ code: configuration.componentsConfig!, filename: 'components.json', language: 'json' }}
-        />
+      <div data-installation-project-content="existing">
+        <ConfigurationSteps configuration={configuration} installation={installation} steps={aliasSteps} />
       </div>
     );
   }
 
-  const commands = {
-    npm: shadcnInitCommand('npm'),
-    pnpm: shadcnInitCommand('pnpm'),
-    yarn: shadcnInitCommand('yarn'),
-    bun: shadcnInitCommand('bun'),
-  };
+  return <ConfigurationSteps configuration={configuration} installation={installation} steps={aliasSteps} />;
+}
+
+function ConfigurationSteps({
+  configuration,
+  installation,
+  steps: aliasSteps,
+}: {
+  configuration: ReturnType<typeof shadcnProjectConfiguration>;
+  installation: boolean;
+  steps: Array<{ content: React.ReactNode; key: string; title: string }>;
+}) {
+  const finalStep =
+    configuration.mode === 'components-json'
+      ? {
+          key: 'components-json',
+          title: 'Create components.json',
+          content: (
+            <ConfigurationBlock
+              block={{ code: configuration.componentsConfig, filename: 'components.json', language: 'json' }}
+            />
+          ),
+        }
+      : {
+          key: 'shadcn-init',
+          title: 'Initialize Shadcn',
+          content: (
+            <PackageManagerTabs
+              commands={{
+                npm: optionalShadcnInitCommand('npm'),
+                pnpm: optionalShadcnInitCommand('pnpm'),
+                yarn: optionalShadcnInitCommand('yarn'),
+                bun: optionalShadcnInitCommand('bun'),
+              }}
+              syncSelection={installation}
+            />
+          ),
+        };
+  const steps = [...aliasSteps, finalStep];
+  const description = (
+    <p className={`${shared.p} ${shared.prose} mx-auto max-w-3xl`}>
+      If <code>components.json</code> already exists, keep its aliases and skip this section. Otherwise, complete the
+      setup below. The registry uses <code>aliases.components</code> for skin source. In a monorepo, run commands from
+      the app workspace or pass <code>--cwd &lt;path&gt;</code>.
+    </p>
+  );
 
   return (
-    <div>
-      {aliasSetup}
-      <PackageManagerTabs commands={commands} syncSelection={installation} />
-    </div>
+    <>
+      {description}
+      {steps.length === 1 ? (
+        <div className="mx-auto my-8 max-w-3xl">{steps[0]!.content}</div>
+      ) : (
+        <DynamicSteps>
+          {steps.map((step, index) => (
+            <DynamicStep key={step.key} number={index + 1} title={step.title}>
+              {step.content}
+            </DynamicStep>
+          ))}
+        </DynamicSteps>
+      )}
+    </>
   );
 }

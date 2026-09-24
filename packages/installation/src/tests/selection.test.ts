@@ -59,6 +59,14 @@ describe('resolveInstallationSelection', () => {
       ok: false,
       errors: [{ field: 'template' }],
     });
+    expect(resolveInstallationSelection('html', { project: 'new', template: 'none' })).toMatchObject({
+      ok: false,
+      errors: [{ field: 'project' }],
+    });
+    expect(resolveInstallationSelection('html', { project: 'new', template: 'vite' })).toMatchObject({
+      ok: true,
+      selection: { project: 'new' },
+    });
   });
 
   it('rejects incompatible paths', () => {

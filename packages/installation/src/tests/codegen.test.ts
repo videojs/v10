@@ -120,17 +120,17 @@ describe('generateHTMLInstallCode', () => {
   });
 
   it('installs the adapter package for every embed renderer', () => {
-    const expected: Record<string, string> = {
-      cloudflare: '@videojs/cloudflare-video',
-      spotify: '@videojs/spotify-audio',
-      tiktok: '@videojs/tiktok-video',
-      twitch: '@videojs/twitch-video',
-      vimeo: '@videojs/vimeo-video',
-      youtube: '@videojs/youtube-video',
-    };
+    const expected = [
+      ['cloudflare', '@videojs/cloudflare-video'],
+      ['spotify', '@videojs/spotify-audio'],
+      ['tiktok', '@videojs/tiktok-video'],
+      ['twitch', '@videojs/twitch-video'],
+      ['vimeo', '@videojs/vimeo-video'],
+      ['youtube', '@videojs/youtube-video'],
+    ] as const satisfies ReadonlyArray<readonly [Renderer, string]>;
 
-    for (const [renderer, adapter] of Object.entries(expected)) {
-      const result = generateHTMLInstallCode({ ...baseHTML, renderer: renderer as Renderer }, manifest);
+    for (const [renderer, adapter] of expected) {
+      const result = generateHTMLInstallCode({ ...baseHTML, renderer }, manifest);
 
       expect(result.npm).toBe(`npm install @videojs/html ${adapter}`);
     }
@@ -427,31 +427,71 @@ describe('Vue and Svelte code generation', () => {
 
     expect(code['vite.config.ts']).toContain("'video-player', 'video-skin', 'hlsjs-video'");
     expect(code['nuxt.config.ts']).toContain('isCustomElement: (tag) => videoJsElements.has(tag)');
+    expect(code['astro.config.mjs']).toContain("import vue from '@astrojs/vue'");
+    expect(code['astro.config.mjs']).toContain('isCustomElement: (tag) => videoJsElements.has(tag)');
   });
 
   it('creates a Vue component and usage example from the selected player', () => {
-    const player = generateVueCreateCode(hlsOptions)['MediaPlayer.vue'];
+    const player = generateVueCreateCode(hlsOptions).component;
     const usage = generateVueUsageCode({ ...hlsOptions, sourceUrl: 'https://example.com/live.m3u8' })['App.vue'];
 
     expect(player).toContain("import '@videojs/html/media/hlsjs-video'");
-    expect(player).toContain('<hlsjs-video :src="src" playsinline>');
-    expect(usage).toContain('<MediaPlayer src="https://example.com/live.m3u8" />');
+    expect(player).toContain('<slot />');
+    expect(player).toContain(`<style>
+video-skin {
+  display: block;`);
+    expect(player).not.toContain('style="');
+    expect(player).not.toContain('defineProps');
+    expect(usage).toContain('<VideoPlayer>');
+    expect(usage).toContain('    <hlsjs-video src="https://example.com/live.m3u8" playsinline>');
+  });
+
+  it('renders Vue and Svelte players from Astro pages', () => {
+    const vue = generateVueUsageCode({
+      ...hlsOptions,
+      playerImport: '../components/VideoPlayer.vue',
+      sourceUrl: 'https://example.com/live.m3u8',
+    })['index.astro'];
+    const svelte = generateSvelteUsageCode({
+      ...hlsOptions,
+      playerImport: '../components/VideoPlayer.svelte',
+      sourceUrl: 'https://example.com/live.m3u8',
+    })['index.astro'];
+
+    expect(vue).toContain("import VideoPlayer from '../components/VideoPlayer.vue'");
+    expect(vue).toContain('<VideoPlayer client:load>');
+    expect(svelte).toContain("import VideoPlayer from '../components/VideoPlayer.svelte'");
+    expect(svelte).toContain('<VideoPlayer client:load>');
   });
 
   it('imports packaged Nuxt players through its component registry', () => {
     const usage = generateVueUsageCode({ ...hlsOptions, playerImport: '#components' })['App.vue'];
 
-    expect(usage).toContain("import { MediaPlayer } from '#components'");
-    expect(usage).not.toContain("import MediaPlayer from '#components'");
+    expect(usage).toContain("import { VideoPlayer } from '#components'");
+    expect(usage).not.toContain("import VideoPlayer from '#components'");
+  });
+
+  it('emits Vue media URLs as escaped static attributes', () => {
+    const sourceUrl = 'https://example.com/video.m3u8?label="quoted"&autoplay=1';
+    const usage = generateVueUsageCode({ ...hlsOptions, sourceUrl })['App.vue'];
+
+    expect(usage).toContain('src="https://example.com/video.m3u8?label=&quot;quoted&quot;&amp;autoplay=1"');
+    expect(usage).not.toContain(':src=');
   });
 
   it('creates Svelte and SvelteKit examples from the selected player', () => {
-    const player = generateSvelteCreateCode(hlsOptions)['VideoPlayer.svelte'];
+    const player = generateSvelteCreateCode(hlsOptions).component;
     const usage = generateSvelteUsageCode({ ...hlsOptions, sourceUrl: 'https://example.com/live.m3u8' });
 
-    expect(player).toContain('<hlsjs-video src={src} playsinline>');
+    expect(player).toContain('<slot />');
+    expect(player).toContain(`<style>
+video-skin {
+  display: block;`);
+    expect(player).not.toContain('style="');
+    expect(player).not.toContain('$props');
     expect(usage['+page.svelte']).toContain("import VideoPlayer from '$lib/VideoPlayer.svelte'");
-    expect(usage['App.svelte']).toContain('<VideoPlayer src={"https://example.com/live.m3u8"} />');
+    expect(usage['App.svelte']).toContain('<VideoPlayer>');
+    expect(usage['App.svelte']).toContain('<hlsjs-video src={"https://example.com/live.m3u8"} playsinline>');
   });
 
   it('emits custom Svelte sources as JavaScript string expressions', () => {
@@ -463,30 +503,55 @@ describe('Vue and Svelte code generation', () => {
   });
 
   it('imports copied skin source as a Vue component', () => {
-    const code = generateSourceVueUsageCode({ ...hlsOptions, sourceUrl: '' })['MediaPlayer.vue'];
+    const generated = generateSourceVueUsageCode({ ...hlsOptions, sourceUrl: '' });
+    const code = generated.component;
 
     expect(code).toContain("import VideoSkin from '@/components/videojs/video/skin.vue'");
     expect(code).toContain('<video-player>');
-    expect(code).toContain('<VideoSkin />');
+    expect(code).toContain('<VideoSkin>');
+    expect(code).toContain('<slot />');
+    expect(code).not.toContain("import '@/components/videojs/video/skin'");
     expect(code).not.toContain('v-html');
     expect(code).not.toContain('?raw');
+    expect(generated.skinStyle).toContain('<style>');
+    expect(generated.skinStyle).toContain('media-container');
+    expect(generated['App.vue']).toContain(`<hlsjs-video src="${INSTALLATION_DEMO_SOURCES.videoHls}"`);
   });
 
   it('imports Nuxt client-only players through its component registry', () => {
     const code = generateSourceVueUsageCode({ ...hlsOptions, playerImport: '#components' })['App.vue'];
 
-    expect(code).toContain("import { MediaPlayer } from '#components'");
-    expect(code).not.toContain("from './components/MediaPlayer.client.vue'");
+    expect(code).toContain("import { VideoPlayer } from '#components'");
+    expect(code).not.toContain("from './components/VideoPlayer.client.vue'");
   });
 
   it('imports copied skin source as a Svelte component', () => {
-    const code = generateSourceSvelteUsageCode({ ...hlsOptions, sourceUrl: '' })['VideoPlayer.svelte'];
+    const generated = generateSourceSvelteUsageCode({ ...hlsOptions, sourceUrl: '' });
+    const code = generated.component;
 
     expect(code).toContain("import VideoSkin from '$lib/components/videojs/video/skin.svelte'");
     expect(code).toContain('<video-player>');
-    expect(code).toContain('<VideoSkin />');
+    expect(code).toContain('<VideoSkin>');
+    expect(code).toContain('<slot />');
+    expect(code).not.toContain("import '@/components/videojs/video/skin'");
     expect(code).not.toContain('{@html');
     expect(code).not.toContain('?raw');
+    expect(generated.skinStyle).toContain('<style>');
+    expect(generated.skinStyle).toContain('media-container');
+    expect(generated['+page.svelte']).toContain(`<hlsjs-video src={"${INSTALLATION_DEMO_SOURCES.videoHls}"`);
+  });
+
+  it('names reusable components after the selected preset', () => {
+    const audioOptions = {
+      ...baseHTML,
+      useCase: 'default-audio' as const,
+      renderer: 'html5-audio' as const,
+    };
+
+    expect(generateVueUsageCode(audioOptions)['App.vue']).toContain('<AudioPlayer>');
+    expect(generateSvelteUsageCode(audioOptions)['App.svelte']).toContain(
+      "import AudioPlayer from './lib/AudioPlayer.svelte'"
+    );
   });
 });
 
@@ -768,6 +833,16 @@ describe('source installation code', () => {
       </VideoSkin>
     </VideoPlayer>`);
     expect(code).not.toContain('const src');
+  });
+
+  it('uses utility classes for a Tailwind source catalog', () => {
+    const code = generateSourceReactCreateCode({
+      ...baseReact,
+      styling: 'tailwind',
+    })['app/page.tsx'];
+
+    expect(code).toContain('<VideoSkin className="aspect-video w-full">');
+    expect(code).not.toContain("style={{ width: '100%', aspectRatio: '16 / 9' }}");
   });
 
   it('emits custom React sources as JavaScript string expressions', () => {

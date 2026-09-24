@@ -1,11 +1,11 @@
 ---
 /** The Shadcn init command for the selected project template. */
-import { isValidFramework } from '@/types/docs';
 import {
   defaultInstallationTemplate,
   INSTALLATION_TEMPLATE_LABELS,
+  isInstallationFramework,
   installationTemplatesForMethod,
-  type RegistryFramework,
+  type InstallationFramework,
 } from '@videojs/installation';
 
 import RegistryInitCommandClient from './RegistryInitCommandClient';
@@ -13,12 +13,12 @@ import RegistryInitCommandClient from './RegistryInitCommandClient';
 interface Props {
   /** Follow the installation page's package-manager choice instead of showing tabs. */
   installation?: boolean;
-  framework?: RegistryFramework;
+  framework?: InstallationFramework;
 }
 
 const { installation = false, framework: frameworkProp } = Astro.props;
 const routeFramework = Astro.params.framework;
-const framework = frameworkProp ?? (isValidFramework(routeFramework) ? routeFramework : null);
+const framework = frameworkProp ?? (isInstallationFramework(routeFramework) ? routeFramework : null);
 if (!framework) throw new Error(`RegistryInitCommand needs a framework route, received ${routeFramework}.`);
 
 // The template select is hidden from Markdown readers, so name the other values the server-rendered command can take.

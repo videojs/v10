@@ -1,4 +1,9 @@
-import { installationParameterForKey, PACKAGE_MANAGERS, type InstallationInputKey } from './parameters';
+import {
+  INSTALLATION_PROJECTS,
+  installationParameterForKey,
+  PACKAGE_MANAGERS,
+  type InstallationInputKey,
+} from './parameters';
 import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from './presets';
 import {
   defaultInstallationTemplate,
@@ -40,6 +45,11 @@ function optionDefinition(
 export interface InstallationOptionContext {
   methods: readonly InstallationMethod[];
   frameworks: readonly InstallationFramework[];
+}
+
+export interface InstallationDecision {
+  title: string;
+  guidance: string;
 }
 
 export interface InstallationCompatibility {
@@ -133,6 +143,57 @@ function unique<Choice extends string>(values: readonly Choice[]): Choice[] {
   return [...new Set(values)];
 }
 
+/** The ordered choices an agent should resolve before requesting one complete installation plan. */
+export function installationDecisionOrderFor({
+  methods,
+  frameworks,
+}: InstallationOptionContext): readonly InstallationDecision[] {
+  const methodGuidance =
+    methods.length === 1
+      ? methods[0] === 'packaged'
+        ? 'This guide uses packaged modules. Match the package manager to the project lockfile.'
+        : methods[0] === 'shadcn'
+          ? 'This guide uses Shadcn to copy editable skin source. React can use Tailwind CSS or vanilla CSS; HTML, Vue, and Svelte use the HTML source catalog with vanilla CSS.'
+          : 'This guide uses CDN scripts for plain HTML. Use an existing page when one is available, and scaffold a minimal Vite app only when no app exists.'
+      : frameworks.includes('react')
+        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. For Shadcn, use Tailwind styling only when the app already uses Tailwind; otherwise use CSS. Use @videojs/html when the project needs CDN scripts.'
+        : 'Use packaged modules by default, Shadcn when the project should own editable skin source, or CDN for a plain HTML integration. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
+
+  return [
+    {
+      title: 'Inspect the project',
+      guidance:
+        'Read package.json, framework config, and lockfiles to infer the framework, app setup, and package manager. Use @videojs/react for React or @videojs/html for HTML, Vue, and Svelte.',
+    },
+    {
+      title: 'Choose the starting point',
+      guidance:
+        'Use existing when adapting a compatible project. Use new only when the user wants a new app or the intended workspace has no app. Confirm the choice when the workspace and request do not make it clear.',
+    },
+    {
+      title: 'Choose the player',
+      guidance:
+        'Infer the preset from the intended experience when it is clear. Ask when audio, live playback, background video, or the standard video player could all be reasonable.',
+    },
+    {
+      title: 'Choose the skin',
+      guidance:
+        'Default and Minimal contain the same controls. Minimal uses cleaner surfaces. Ask when the visual direction is not clear.',
+    },
+    {
+      title: 'Choose the media source',
+      guidance:
+        'Infer the adapter from the source when possible, such as hls for an .m3u8 URL or mux-video for Mux playback.',
+    },
+    { title: 'Choose how to install', guidance: methodGuidance },
+    {
+      title: 'Return one explicit plan',
+      guidance:
+        'Confirm the choices once, pass every applicable resolved flag, and check that Defaulted options says none. Adapt conditional setup steps and existing paths before changing files.',
+    },
+  ];
+}
+
 export function installationOptionDefinitionsFor(
   context: InstallationOptionContext
 ): readonly InstallationOptionDefinition[] {
@@ -160,6 +221,11 @@ export function installationOptionDefinitionsFor(
       values: frameworks,
       default: frameworks[0]!,
       description: 'The application framework that will host the player.',
+    }),
+    optionDefinition('project', {
+      values: INSTALLATION_PROJECTS,
+      default: 'existing',
+      description: 'Whether to adapt the current project or scaffold a new one. New projects need a named app setup.',
     }),
     optionDefinition('preset', {
       values: shadcnOnly

@@ -64,6 +64,7 @@ function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchPa
   return {
     method: defaults.method,
     framework: defaults.framework,
+    project: value('project'),
     preset: value('preset'),
     skin: value('skin'),
     media: value('media'),

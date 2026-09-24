@@ -1,7 +1,6 @@
 import { generateCdnCode } from './cdn-code';
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
-import type { PackageManager } from './parameters';
-import { getInstallationPreset, type Skin, type UseCase } from './presets';
+import { getInstallationPlayerComponentName, getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
   getAdapterPackage,
   getInstallationRenderer,
@@ -14,6 +13,7 @@ import {
   type Renderer,
 } from './renderers';
 import type { InstallMethod } from './selection';
+import type { RegistryStyling } from './shadcn';
 
 export interface InstallationOptions {
   framework: 'html' | 'react';
@@ -27,6 +27,21 @@ export interface InstallationOptions {
 export interface HTMLUsageCode {
   html: string;
   imports?: string;
+}
+
+export interface PackageManagerInstallCommands {
+  npm: string;
+  pnpm: string;
+  yarn: string;
+  bun: string;
+}
+
+export interface HTMLInstallCode extends PackageManagerInstallCommands {
+  cdn: string;
+}
+
+export interface ReactCreateCode {
+  'app/page.tsx': string;
 }
 
 type ValidationResult = { valid: true } | { valid: false; reason: string };
@@ -77,7 +92,7 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
 export function generateSourceMediaInstallCode(
   renderer: Renderer,
   packageVersion?: string
-): Record<PackageManager, string> | null {
+): PackageManagerInstallCommands | null {
   const packages: string[] = [];
   const adapter = getAdapterPackage(renderer);
 
@@ -96,7 +111,7 @@ function versionPackages(packages: readonly string[], packageVersion?: string): 
   return packages.map((packageName) => (packageVersion ? `${packageName}@${packageVersion}` : packageName)).join(' ');
 }
 
-function packageManagerInstallCommands(packages: string): Record<PackageManager, string> {
+function packageManagerInstallCommands(packages: string): PackageManagerInstallCommands {
   return {
     npm: `npm install ${packages}`,
     pnpm: `pnpm add ${packages}`,
@@ -131,7 +146,7 @@ export function generateHTMLInstallCode(
   cdnMediaSubpaths: readonly string[],
   cdnBase?: string,
   packageVersion?: string
-): Record<'cdn' | PackageManager, string> {
+): HTMLInstallCode {
   const packages = installPackages('@videojs/html', opts.renderer, packageVersion);
 
   return {
@@ -147,7 +162,7 @@ export function generateHTMLInstallCode(
 export function generateReactInstallCode(
   opts: Pick<InstallationOptions, 'renderer'> = { renderer: 'html5-video' },
   packageVersion?: string
-): Record<PackageManager, string> {
+): PackageManagerInstallCommands {
   const packages = installPackages('@videojs/react', opts.renderer, packageVersion);
 
   return packageManagerInstallCommands(packages);
@@ -171,6 +186,7 @@ function isSizedVideoPlayer(useCase: UseCase): boolean {
 
 const htmlVideoLayout = ' style="display: block; width: 100%; aspect-ratio: 16 / 9;"';
 const reactVideoLayout = ` style={{ width: '100%', aspectRatio: '16 / 9' }}`;
+const reactTailwindVideoLayout = ' className="aspect-video w-full"';
 const htmlContainerVideoLayout = ' style="position: relative; display: block; width: 100%; aspect-ratio: 16 / 9;"';
 const reactContainerVideoLayout = ` style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9' }}`;
 
@@ -192,7 +208,17 @@ function generateMediaMarkup(
   renderer: Renderer,
   indent: string
 ): string {
-  const mediaEl = `${indent}<${tag} src="${escapeHTMLAttribute(src)}"${playsInline}></${tag}>`;
+  return generateMediaMarkupWithSource(tag, `src="${escapeHTMLAttribute(src)}"`, playsInline, renderer, indent);
+}
+
+function generateMediaMarkupWithSource(
+  tag: string,
+  sourceAttribute: string,
+  playsInline: string,
+  renderer: Renderer,
+  indent: string
+): string {
+  const mediaEl = `${indent}<${tag} ${sourceAttribute}${playsInline}></${tag}>`;
 
   if (!isMuxRenderer(renderer)) return mediaEl;
 
@@ -204,11 +230,22 @@ ${indent}  -->
 ${indent}<mux-data></mux-data>`;
 }
 
-function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
+function generateHTMLMarkup(
+  useCase: UseCase,
+  skin: Skin,
+  renderer: Renderer,
+  url: string,
+  mediaSlot?: string,
+  layout: 'inline' | 'stylesheet' = 'inline'
+): string {
   const playerTag = getPlayerTag(useCase);
   const tag = getRendererTag(renderer);
   const src = resolveInstallationSourceUrl(url, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  const mediaMarkup = (indent: string) =>
+    mediaSlot === undefined
+      ? generateMediaMarkup(tag, src, playsInline, renderer, indent)
+      : indentBlock(mediaSlot, indent);
 
   const skinMediaComment = `    <!--
         Media are players without UIs, handling networking
@@ -222,19 +259,19 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
  -->`;
 
   if (skin === 'none' && useCase !== 'background-video') {
-    const containerLayout = isSizedVideoPlayer(useCase) ? htmlContainerVideoLayout : '';
+    const containerLayout = isSizedVideoPlayer(useCase) && layout === 'inline' ? htmlContainerVideoLayout : '';
 
     return `${playerComment}
 <${playerTag}>
   <media-container${containerLayout}>
 ${skinMediaComment}
-${generateMediaMarkup(tag, src, playsInline, renderer, '    ')}
+${mediaMarkup('    ')}
   </media-container>
 </${playerTag}>`;
   }
 
-  const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
-  const skinLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
+  const skinTag = getSkinTag(useCase, skin === 'none' ? defaultSkinForUseCase(useCase) : skin);
+  const skinLayout = isSizedVideoPlayer(useCase) && layout === 'inline' ? htmlVideoLayout : '';
 
   return `${playerComment}
 <${playerTag}>
@@ -245,9 +282,39 @@ ${generateMediaMarkup(tag, src, playsInline, renderer, '    ')}
    -->
   <${skinTag}${skinLayout}>
 ${skinMediaComment}
-${generateMediaMarkup(tag, src, playsInline, renderer, '    ')}
+${mediaMarkup('    ')}
   </${skinTag}>
 </${playerTag}>`;
+}
+
+function generateSfcPlayerStyle(useCase: UseCase, skin: Skin): string {
+  if (!isSizedVideoPlayer(useCase)) return '';
+
+  const container = skin === 'none' && useCase !== 'background-video';
+  const selector = container
+    ? 'media-container'
+    : getSkinTag(useCase, skin === 'none' ? defaultSkinForUseCase(useCase) : skin);
+  const position = container ? '  position: relative;\n' : '';
+
+  return `<style>
+${selector} {
+${position}  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+</style>`;
+}
+
+function generateSourceSkinSfcStyle(useCase: UseCase): string {
+  if (!isSizedVideoPlayer(useCase)) return '';
+
+  return `<style>
+media-container {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+</style>`;
 }
 
 function generateHTMLImports(useCase: UseCase, skin: Skin, renderer: Renderer): string {
@@ -285,15 +352,16 @@ export function generateHTMLUsageCode(
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const imports =
     opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer) : undefined;
+  const result: HTMLUsageCode = { html };
 
-  return { html, ...(imports ? { imports } : {}) };
+  if (imports) result.imports = imports;
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
 // Vue and Svelte
 // ---------------------------------------------------------------------------
-
-const FRAMEWORK_SOURCE_PLACEHOLDER = '__VIDEOJS_FRAMEWORK_SOURCE__';
 
 function indentBlock(value: string, indent: string): string {
   return value
@@ -325,36 +393,49 @@ function getHTMLCustomElementTags(
   return [...new Set(tags)];
 }
 
-function defaultSkinForUseCase(useCase: UseCase): Skin {
+function defaultSkinForUseCase(useCase: UseCase): Exclude<Skin, 'none'> {
   return getInstallationPreset(useCase).mediaType;
 }
 
 export interface VueCustomElementConfigCode {
+  'astro.config.mjs': string;
   'vite.config.ts': string;
   'nuxt.config.ts': string;
 }
 
 export interface VueCreateCode {
-  'MediaPlayer.vue': string;
+  component: string;
 }
 
 export interface VueUsageCode {
   'App.vue': string;
+  'index.astro': string;
 }
 
-function vuePlayerImport(playerImport = './components/MediaPlayer.vue'): string {
+function vuePlayerImport(componentName: string, playerImport = `./components/${componentName}.vue`): string {
   return playerImport === '#components'
-    ? `import { MediaPlayer } from '#components';`
-    : `import MediaPlayer from '${playerImport}';`;
+    ? `import { ${componentName} } from '#components';`
+    : `import ${componentName} from '${playerImport}';`;
 }
 
 export interface SvelteCreateCode {
-  'VideoPlayer.svelte': string;
+  component: string;
 }
 
 export interface SvelteUsageCode {
   '+page.svelte': string;
   'App.svelte': string;
+  'index.astro': string;
+}
+
+function generateAstroComponentUsage(component: string, playerImport: string, media: string): string {
+  return `---
+import ${component} from '${playerImport}';
+---
+
+<${component} client:load>
+${indentBlock(media, '  ')}
+</${component}>`;
 }
 
 export function generateVueCustomElementConfigCode(
@@ -370,6 +451,22 @@ export function generateVueCustomElementConfigCode(
     : `(tag) => videoJsElements.has(tag)`;
 
   return {
+    'astro.config.mjs': `import vue from '@astrojs/vue';
+import { defineConfig } from 'astro/config';
+
+${elementSet}
+
+export default defineConfig({
+  integrations: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: ${isCustomElement},
+        },
+      },
+    }),
+  ],
+});`,
     'vite.config.ts': `import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 
@@ -400,38 +497,45 @@ export default defineNuxtConfig({
 
 export function generateVueCreateCode(opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>): VueCreateCode {
   const imports = generateHTMLImports(opts.useCase, opts.skin, opts.renderer);
-  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, FRAMEWORK_SOURCE_PLACEHOLDER).replace(
-    `src="${FRAMEWORK_SOURCE_PLACEHOLDER}"`,
-    ':src="src"'
-  );
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', '<slot />', 'stylesheet');
+  const style = generateSfcPlayerStyle(opts.useCase, opts.skin);
 
   return {
-    'MediaPlayer.vue': `<script setup lang="ts">
+    component: `<script setup lang="ts">
 ${imports}
-
-defineProps<{ src: string }>();
 </script>
 
 <template>
 ${indentBlock(markup, '  ')}
-</template>`,
+</template>${style ? `\n\n${style}` : ''}`,
   };
 }
 
 export function generateVueUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & { playerImport?: string | undefined }
 ): VueUsageCode {
+  const componentName = getInstallationPlayerComponentName(opts.useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+  const tag = getRendererTag(opts.renderer);
+  const playsInline = isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '';
+  const media = generateMediaMarkup(tag, source, playsInline, opts.renderer, '');
 
   return {
     'App.vue': `<script setup lang="ts">
-${vuePlayerImport(opts.playerImport)}
+${vuePlayerImport(componentName, opts.playerImport)}
 </script>
 
 <template>
   <h1>Welcome to My App</h1>
-  <MediaPlayer src="${escapeHTMLAttribute(source)}" />
+  <${componentName}>
+${indentBlock(media, '    ')}
+  </${componentName}>
 </template>`,
+    'index.astro': generateAstroComponentUsage(
+      componentName,
+      opts.playerImport ?? `../components/${componentName}.vue`,
+      media
+    ),
   };
 }
 
@@ -439,36 +543,43 @@ export function generateSvelteCreateCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
 ): SvelteCreateCode {
   const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.renderer), '  ');
-  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, FRAMEWORK_SOURCE_PLACEHOLDER).replace(
-    `src="${FRAMEWORK_SOURCE_PLACEHOLDER}"`,
-    'src={src}'
-  );
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', '<slot />', 'stylesheet');
+  const style = generateSfcPlayerStyle(opts.useCase, opts.skin);
 
   return {
-    'VideoPlayer.svelte': `<script lang="ts">
+    component: `<script lang="ts">
 ${imports}
-
-  let { src }: { src: string } = $props();
 </script>
 
-${markup}`,
+${markup}${style ? `\n\n${style}` : ''}`,
   };
 }
 
 export function generateSvelteUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & { playerImport?: string | undefined }
 ): SvelteUsageCode {
+  const componentName = getInstallationPlayerComponentName(opts.useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+  const tag = getRendererTag(opts.renderer);
+  const playsInline = isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '';
+  const media = generateMediaMarkupWithSource(tag, `src={${JSON.stringify(source)}}`, playsInline, opts.renderer, '');
   const component = (path: string) => `<script lang="ts">
-  import VideoPlayer from '${path}';
+  import ${componentName} from '${path}';
 </script>
 
 <h1>Welcome to My App</h1>
-<VideoPlayer src={${JSON.stringify(source)}} />`;
+<${componentName}>
+${indentBlock(media, '  ')}
+</${componentName}>`;
 
   return {
-    '+page.svelte': component('$lib/VideoPlayer.svelte'),
-    'App.svelte': component('./lib/VideoPlayer.svelte'),
+    '+page.svelte': component(`$lib/${componentName}.svelte`),
+    'App.svelte': component(`./lib/${componentName}.svelte`),
+    'index.astro': generateAstroComponentUsage(
+      componentName,
+      opts.playerImport ?? `../components/${componentName}.svelte`,
+      media
+    ),
   };
 }
 
@@ -487,7 +598,7 @@ export function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>):
 }
 
 function getPresetPlayer(useCase: UseCase): string {
-  return `${getInstallationPreset(useCase).componentPrefix}Player`;
+  return getInstallationPlayerComponentName(useCase);
 }
 
 // The media JSX, plus the Mux Data extension for Mux media. Mux Data is a
@@ -504,7 +615,7 @@ ${indent}<MuxData />`;
 
 export function generateReactCreateCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
-): Record<'app/page.tsx', string> {
+): ReactCreateCode {
   const { useCase, skin, renderer } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const playerComponent = getPresetPlayer(useCase);
@@ -594,8 +705,11 @@ ${playerJsx}
 
 /** Build a React player around a skin component copied into the app by Shadcn. */
 export function generateSourceReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> & { componentsAlias?: string }
-): Record<'app/page.tsx', string> {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> & {
+    componentsAlias?: string;
+    styling?: RegistryStyling;
+  }
+): ReactCreateCode {
   const { useCase, renderer } = opts;
   const preset = getInstallationPreset(useCase);
   const playerComponent = getPresetPlayer(useCase);
@@ -608,7 +722,11 @@ export function generateSourceReactCreateCode(
     ? `src={${JSON.stringify(source)}} playsInline`
     : `src={${JSON.stringify(source)}}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
-  const skinLayout = isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
+  const skinLayout = isSizedVideoPlayer(useCase)
+    ? opts.styling === 'tailwind'
+      ? reactTailwindVideoLayout
+      : reactVideoLayout
+    : '';
   const presetImports = [playerComponent];
   let mediaImport: string | null = null;
 
@@ -650,26 +768,29 @@ export interface SourceHTMLUsageCode {
 }
 
 export interface SourceVueUsageCode extends VueCustomElementConfigCode {
-  'MediaPlayer.vue': string;
+  component: string;
   'App.vue': string;
+  'index.astro': string;
   media: string;
+  skinStyle: string;
   sourceSkinFile: string;
   skinFile: string;
 }
 
 export interface SourceSvelteUsageCode extends SvelteUsageCode {
-  'VideoPlayer.svelte': string;
+  component: string;
   media: string;
+  skinStyle: string;
   sourceSkinFile: string;
   skinFile: string;
 }
 
-/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
-export function generateSourceHTMLUsageCode(
+function generateSourceHTMLUsageCodeWithImports(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
     componentsAlias?: string;
     componentsDirectory?: string;
-  }
+  },
+  includeSkinRegistration = true
 ): SourceHTMLUsageCode {
   const { useCase, renderer } = opts;
   const preset = getInstallationPreset(useCase);
@@ -681,7 +802,9 @@ export function generateSourceHTMLUsageCode(
     `import '@videojs/html/${preset.group}/player';`,
     ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
     ...(isMuxRenderer(renderer) ? [`import '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`] : []),
-    `import '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`,
+    ...(includeSkinRegistration
+      ? [`import '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`]
+      : []),
   ].join('\n');
 
   return {
@@ -694,6 +817,16 @@ export function generateSourceHTMLUsageCode(
   };
 }
 
+/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
+export function generateSourceHTMLUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    componentsAlias?: string;
+    componentsDirectory?: string;
+  }
+): SourceHTMLUsageCode {
+  return generateSourceHTMLUsageCodeWithImports(opts);
+}
+
 /** Build Vue files around an HTML skin copied into the app by Shadcn. */
 export function generateSourceVueUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
@@ -702,34 +835,52 @@ export function generateSourceVueUsageCode(
     playerImport?: string | undefined;
   }
 ): SourceVueUsageCode {
-  const source = generateSourceHTMLUsageCode(opts);
+  const componentName = getInstallationPlayerComponentName(opts.useCase);
+  const source = generateSourceHTMLUsageCodeWithImports(opts, false);
   const playerTag = getPlayerTag(opts.useCase);
   const config = generateVueCustomElementConfigCode({ ...opts, skin: defaultSkinForUseCase(opts.useCase) }, true);
   const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
   const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.vue`;
+  const media = generateMediaMarkup(
+    getRendererTag(opts.renderer),
+    resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase),
+    isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '',
+    opts.renderer,
+    ''
+  );
 
   return {
     ...config,
-    media: source.media,
+    media,
+    skinStyle: generateSourceSkinSfcStyle(opts.useCase),
     sourceSkinFile: source.skinFile,
     skinFile,
-    'MediaPlayer.vue': `<script setup lang="ts">
+    component: `<script setup lang="ts">
 ${source.imports}
 import VideoSkin from '${skinSource}.vue';
 </script>
 
 <template>
   <${playerTag}>
-    <VideoSkin />
+    <VideoSkin>
+      <slot />
+    </VideoSkin>
   </${playerTag}>
 </template>`,
     'App.vue': `<script setup lang="ts">
-${vuePlayerImport(opts.playerImport)}
+${vuePlayerImport(componentName, opts.playerImport)}
 </script>
 
 <template>
-  <MediaPlayer />
+  <${componentName}>
+${indentBlock(media, '    ')}
+  </${componentName}>
 </template>`,
+    'index.astro': generateAstroComponentUsage(
+      componentName,
+      opts.playerImport ?? `../components/${componentName}.vue`,
+      media
+    ),
   };
 }
 
@@ -738,32 +889,51 @@ export function generateSourceSvelteUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
     componentsAlias?: string;
     componentsDirectory?: string;
+    playerImport?: string | undefined;
   }
 ): SourceSvelteUsageCode {
-  const source = generateSourceHTMLUsageCode(opts);
+  const componentName = getInstallationPlayerComponentName(opts.useCase);
+  const source = generateSourceHTMLUsageCodeWithImports(opts, false);
   const playerTag = getPlayerTag(opts.useCase);
   const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
   const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.svelte`;
+  const media = generateMediaMarkupWithSource(
+    getRendererTag(opts.renderer),
+    `src={${JSON.stringify(resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase))}}`,
+    isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '',
+    opts.renderer,
+    ''
+  );
   const component = `<script lang="ts">
 ${indentBlock(source.imports, '  ')}
   import VideoSkin from '${skinSource}.svelte';
 </script>
 
 <${playerTag}>
-  <VideoSkin />
+  <VideoSkin>
+    <slot />
+  </VideoSkin>
 </${playerTag}>`;
   const usage = (path: string) => `<script lang="ts">
-  import VideoPlayer from '${path}';
+  import ${componentName} from '${path}';
 </script>
 
-<VideoPlayer />`;
+<${componentName}>
+${indentBlock(media, '  ')}
+</${componentName}>`;
 
   return {
-    media: source.media,
+    media,
+    skinStyle: generateSourceSkinSfcStyle(opts.useCase),
     sourceSkinFile: source.skinFile,
     skinFile,
-    'VideoPlayer.svelte': component,
-    '+page.svelte': usage('$lib/VideoPlayer.svelte'),
-    'App.svelte': usage('./lib/VideoPlayer.svelte'),
+    component,
+    '+page.svelte': usage(`$lib/${componentName}.svelte`),
+    'App.svelte': usage(`./lib/${componentName}.svelte`),
+    'index.astro': generateAstroComponentUsage(
+      componentName,
+      opts.playerImport ?? `../components/${componentName}.svelte`,
+      media
+    ),
   };
 }

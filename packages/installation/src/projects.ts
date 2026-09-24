@@ -1,4 +1,5 @@
 import type { PackageManager } from './parameters';
+import { getInstallationPlayerComponentName, type UseCase } from './presets';
 
 export const INSTALLATION_FRAMEWORKS = ['react', 'html', 'vue', 'svelte'] as const;
 export type InstallationFramework = (typeof INSTALLATION_FRAMEWORKS)[number];
@@ -31,8 +32,8 @@ export const INSTALLATION_TEMPLATE_LABELS = {
 const TEMPLATES_BY_FRAMEWORK = {
   react: ['next', 'vite', 'start', 'react-router', 'astro', 'laravel'],
   html: ['vite', 'astro', 'laravel', 'none'],
-  vue: ['vite', 'nuxt'],
-  svelte: ['vite', 'sveltekit'],
+  vue: ['vite', 'astro', 'nuxt'],
+  svelte: ['vite', 'astro', 'sveltekit'],
 } as const satisfies Record<InstallationFramework, readonly InstallationTemplate[]>;
 
 export interface InstallationProjectFiles {
@@ -78,8 +79,11 @@ export function resolveInstallationTemplate(
 
 export function installationProjectFiles(
   framework: InstallationFramework,
-  template: InstallationTemplate
+  template: InstallationTemplate,
+  useCase: UseCase = 'default-video'
 ): InstallationProjectFiles {
+  const playerComponent = getInstallationPlayerComponentName(useCase);
+
   if (framework === 'react') {
     if (template === 'next') {
       return {
@@ -134,36 +138,57 @@ export function installationProjectFiles(
       return {
         componentsAlias: '@/components',
         componentsDirectory: 'app/components',
-        player: 'app/components/MediaPlayer.client.vue',
+        player: `app/components/${playerComponent}.client.vue`,
         playerImport: '#components',
         usage: 'app/app.vue',
         config: 'nuxt.config.ts',
       };
     }
 
+    if (template === 'astro') {
+      return {
+        componentsAlias: '@/components',
+        componentsDirectory: 'src/components',
+        player: `src/components/${playerComponent}.vue`,
+        playerImport: `../components/${playerComponent}.vue`,
+        usage: 'src/pages/index.astro',
+        config: 'astro.config.mjs',
+      };
+    }
+
     return {
       componentsAlias: '@/components',
       componentsDirectory: 'src/components',
-      player: 'src/components/MediaPlayer.vue',
-      playerImport: './components/MediaPlayer.vue',
+      player: `src/components/${playerComponent}.vue`,
+      playerImport: `./components/${playerComponent}.vue`,
       usage: 'src/App.vue',
       config: 'vite.config.ts',
     };
   }
 
   if (framework === 'svelte') {
+    if (template === 'astro') {
+      return {
+        componentsAlias: '@/components',
+        componentsDirectory: 'src/components',
+        player: `src/components/${playerComponent}.svelte`,
+        playerImport: `../components/${playerComponent}.svelte`,
+        usage: 'src/pages/index.astro',
+      };
+    }
+
     return template === 'sveltekit'
       ? {
           componentsAlias: '#lib/components',
           componentsImportAlias: '$lib/components',
           componentsDirectory: 'src/lib/components',
-          player: 'src/lib/VideoPlayer.svelte',
+          player: `src/lib/${playerComponent}.svelte`,
           usage: 'src/routes/+page.svelte',
         }
       : {
           componentsAlias: '$lib/components',
           componentsDirectory: 'src/lib/components',
-          player: 'src/lib/VideoPlayer.svelte',
+          player: `src/lib/${playerComponent}.svelte`,
           usage: 'src/App.svelte',
         };
   }
@@ -220,13 +245,13 @@ export function installationProjectAliasSetup(
 
   if (!['vite', 'astro', 'laravel', 'nuxt'].includes(template)) return [];
 
-  const alias = framework === 'svelte' ? '$lib' : '@';
+  const alias = framework === 'svelte' && template !== 'astro' ? '$lib' : '@';
   const sourceRoot =
     template === 'laravel'
       ? './resources/js'
       : template === 'nuxt'
         ? './app'
-        : framework === 'svelte'
+        : framework === 'svelte' && template !== 'astro'
           ? './src/lib'
           : './src';
   const sourceDirectory = `${sourceRoot}/*`;
@@ -376,22 +401,28 @@ export function installationProjectCreateCommand(
   }
 
   if (template === 'astro') {
-    const addReact = framework === 'react' ? ' --add react' : '';
+    const addIntegration = framework === 'html' ? '' : ` --add ${framework}`;
 
-    if (packageManager === 'npm') return `npm create astro@latest . -- --template minimal${addReact} --yes --no-git`;
+    if (packageManager === 'npm') {
+      return `npm create astro@latest . -- --template minimal${addIntegration} --yes --no-git`;
+    }
 
-    if (packageManager === 'pnpm') return `pnpm create astro@latest . --template minimal${addReact} --yes --no-git`;
+    if (packageManager === 'pnpm') {
+      return `pnpm create astro@latest . --template minimal${addIntegration} --yes --no-git`;
+    }
 
-    if (packageManager === 'yarn') return `yarn create astro . --template minimal${addReact} --yes --no-git`;
+    if (packageManager === 'yarn') {
+      return `yarn create astro . --template minimal${addIntegration} --yes --no-git`;
+    }
 
-    return `bun create astro . --template minimal${addReact} --yes --no-git`;
+    return `bun create astro . --template minimal${addIntegration} --yes --no-git`;
   }
 
   if (template === 'laravel') {
     const starter = framework === 'react' ? ' --react' : '';
     const usePackageManager = packageManager === 'npm' ? '' : ` --${packageManager}`;
 
-    return `laravel new <app-directory>${starter}${usePackageManager} --no-interaction\ncd <app-directory>`;
+    return `laravel new videojs-app${starter}${usePackageManager} --no-interaction\ncd videojs-app`;
   }
 
   if (template === 'nuxt') {
@@ -407,33 +438,6 @@ export function installationProjectCreateCommand(
   }
 
   return `${packageRunner(packageManager, 'sv')} create --template minimal --types ts --no-add-ons --install ${packageManager} .`;
-}
-
-/** Extra framework integration needed only when adapting an existing app. */
-export function installationProjectFrameworkSetupCommand(
-  framework: 'react',
-  template: 'astro',
-  packageManager: PackageManager
-): string;
-export function installationProjectFrameworkSetupCommand(
-  framework: InstallationFramework,
-  template: InstallationTemplate,
-  packageManager: PackageManager
-): string | null;
-export function installationProjectFrameworkSetupCommand(
-  framework: InstallationFramework,
-  template: InstallationTemplate,
-  packageManager: PackageManager
-): string | null {
-  if (framework !== 'react' || template !== 'astro') return null;
-
-  if (packageManager === 'pnpm') return 'pnpm exec astro add react --yes';
-
-  if (packageManager === 'yarn') return 'yarn astro add react --yes';
-
-  if (packageManager === 'bun') return 'bunx astro add react --yes';
-
-  return 'npx astro add react --yes';
 }
 
 export function installationProjectRunCommand(
@@ -466,7 +470,11 @@ export function installationHtmlPageCode(markup: string, template: InstallationT
   return `${markup}\n\n<script type="module" src="/${entryFile}"></script>`;
 }
 
-export function installationVueConfigFilename(template: InstallationTemplate): 'nuxt.config.ts' | 'vite.config.ts' {
+export function installationVueConfigFilename(
+  template: InstallationTemplate
+): 'astro.config.mjs' | 'nuxt.config.ts' | 'vite.config.ts' {
+  if (template === 'astro') return 'astro.config.mjs';
+
   return template === 'nuxt' ? 'nuxt.config.ts' : 'vite.config.ts';
 }
 

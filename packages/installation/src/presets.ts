@@ -77,8 +77,13 @@ export const INSTALLATION_PRESETS = {
 
 export type UseCase = keyof typeof INSTALLATION_PRESETS;
 
+// SAFETY: INSTALLATION_PRESETS is the source of the UseCase key union.
 export const USE_CASES = Object.keys(INSTALLATION_PRESETS) as UseCase[];
 
 export function getInstallationPreset(useCase: UseCase): InstallationPreset {
   return INSTALLATION_PRESETS[useCase];
+}
+
+export function getInstallationPlayerComponentName(useCase: UseCase): string {
+  return `${getInstallationPreset(useCase).componentPrefix}Player`;
 }

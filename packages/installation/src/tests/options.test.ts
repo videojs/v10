@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { installationCompatibility, installationOptionDefinitions, installationOptionDefinitionsFor } from '../options';
+import {
+  installationCompatibility,
+  installationDecisionOrderFor,
+  installationOptionDefinitions,
+  installationOptionDefinitionsFor,
+} from '../options';
 
 function valuesFor(
   definitions: ReturnType<typeof installationOptionDefinitionsFor>,
@@ -24,6 +29,7 @@ describe('installationOptionDefinitions', () => {
     const definitions = installationOptionDefinitions('html');
 
     expect(valuesFor(definitions, '--template')).toEqual(['vite', 'astro', 'laravel', 'none', 'nuxt', 'sveltekit']);
+    expect(valuesFor(definitions, '--project')).toEqual(['new', 'existing']);
     expect(valuesFor(definitions, '--styling')).toEqual(['css']);
     expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('vite');
     expect(definitions.find(({ flag }) => flag === '--styling')?.default).toBe('css');
@@ -62,6 +68,22 @@ describe('installationOptionDefinitionsFor', () => {
   });
 });
 
+describe('installationDecisionOrderFor', () => {
+  it('describes the fixed installation path represented by a guide', () => {
+    const shadcn = installationDecisionOrderFor({
+      methods: ['shadcn'],
+      frameworks: ['react', 'html', 'vue', 'svelte'],
+    });
+    const cdn = installationDecisionOrderFor({ methods: ['cdn'], frameworks: ['html'] });
+
+    expect(shadcn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain('This guide uses Shadcn');
+    expect(shadcn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain('Vue');
+    expect(cdn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain(
+      'scaffold a minimal Vite app only when no app exists'
+    );
+  });
+});
+
 describe('installationCompatibility', () => {
   it('exposes installation methods by project framework', () => {
     expect(installationCompatibility.methodsByFramework).toEqual({
@@ -80,7 +102,8 @@ describe('installationCompatibility', () => {
       'hls-background-video',
       'mux-background-video',
     ]);
-    expect(installationCompatibility.templatesByFramework.vue).toEqual(['vite', 'nuxt']);
+    expect(installationCompatibility.templatesByFramework.vue).toEqual(['vite', 'astro', 'nuxt']);
+    expect(installationCompatibility.templatesByFramework.svelte).toEqual(['vite', 'astro', 'sveltekit']);
     expect(installationCompatibility.shadcn.stylingsByFramework.svelte).toEqual(['css']);
   });
 });

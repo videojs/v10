@@ -55,6 +55,7 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationFr
 export default function InstallationMethodNavClient({ currentFramework, route }: Props) {
   const selectedInstallMethod = useSelection('installMethod');
   const selectedRenderer = useSelection('renderer');
+  const selectedProject = useSelection('project');
   const selectedSkin = useSelection('skin');
   const selectedSourceUrl = useSelection('sourceUrl');
   const selectedTemplate = useSelection('template');
@@ -64,7 +65,12 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const framework = route === 'shadcn' ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = installationMethodsForFramework(framework);
-  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => {
+  const items =
+    route === 'shadcn'
+      ? INSTALLATION_METHOD_OPTIONS
+      : INSTALLATION_METHOD_OPTIONS.filter(({ id }) => installationMethodsForFramework(currentFramework).includes(id));
+
+  const isMethodAvailable = (id: InstallationMethod) => {
     if (!availableMethods.includes(id)) return false;
 
     if (id === 'shadcn' && route !== 'shadcn') {
@@ -76,7 +82,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     if (id === 'cdn') return route === 'cdn' || rendererSupportsCdn(selectedRenderer, CDN_MEDIA_SUBPATHS);
 
     return true;
-  });
+  };
 
   const getMethodHref = (method: InstallationMethod) => {
     const baseHref = getMethodBaseHref(method, framework);
@@ -89,6 +95,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
       method,
       {
         framework,
+        project: selectedProject,
         installMethod: selectedInstallMethod,
         renderer: selectedRenderer,
         skin: selectedSkin,
@@ -100,7 +107,12 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     );
   };
 
-  const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, href: string, available: boolean) => {
+    if (!available) {
+      event.preventDefault();
+      return;
+    }
+
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -134,28 +146,29 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     <nav
       aria-label="Installation method"
       data-installation-method-nav
+      data-shadcn-installation-method-nav={route === 'shadcn' ? '' : undefined}
       className="mx-auto mt-5 mb-12 grid w-full max-w-3xl auto-rows-fr gap-3 sm:grid-cols-3"
     >
       {items.map(({ id, label, description }) => {
         const Icon = ICONS[id];
         const href = getMethodHref(id);
+        const available = isMethodAvailable(id);
         const showSelection = isHydrated && active === id;
-        const cardDescription =
-          id === 'shadcn' && (framework === 'vue' || framework === 'svelte')
-            ? 'Add editable HTML skin source to your project.'
-            : description;
 
         return (
           <a
             key={id}
             href={href}
-            onClick={(event) => handleNavigation(event, href)}
+            onClick={(event) => handleNavigation(event, href, available)}
             data-installation-method={id}
             aria-current={active === id ? 'page' : undefined}
+            aria-disabled={available ? undefined : true}
             className={clsx(
               'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
-              'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
+              available
+                ? 'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0'
+                : 'cursor-not-allowed opacity-50',
               showSelection
                 ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
                 : 'border-line ring-1 ring-transparent intent:border-line-strong'
@@ -169,7 +182,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
             </span>
             <span className="min-w-0 flex-1 pr-8">
               <span className="block font-semibold">{label}</span>
-              <span className="text-p4 dark:text-muted mt-0.5 block">{cardDescription}</span>
+              <span className="text-p4 dark:text-muted mt-0.5 block">{description}</span>
             </span>
             <span
               aria-hidden="true"

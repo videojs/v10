@@ -1,6 +1,7 @@
 export interface InstallationInput {
   method?: string;
   framework?: string;
+  project?: string;
   preset?: string;
   skin?: string;
   media?: string;
@@ -15,6 +16,9 @@ export type InstallationInputKey = keyof InstallationInput;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const;
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
 
+export const INSTALLATION_PROJECTS = ['new', 'existing'] as const;
+export type InstallationProject = (typeof INSTALLATION_PROJECTS)[number];
+
 export interface InstallationParameter<Key extends InstallationInputKey = InstallationInputKey> {
   key: Key;
   flag: `--${string}`;
@@ -26,6 +30,7 @@ export interface InstallationParameter<Key extends InstallationInputKey = Instal
 export const INSTALLATION_PARAMETERS = Object.freeze([
   { key: 'method', flag: '--method', query: 'method' },
   { key: 'framework', flag: '--framework', query: 'framework' },
+  { key: 'project', flag: '--project', query: 'project' },
   { key: 'preset', flag: '--preset', query: 'preset' },
   { key: 'skin', flag: '--skin', query: 'skin' },
   { key: 'media', flag: '--media', query: 'media' },

@@ -1,6 +1,6 @@
 ---
 title: 'Svelte Installation Guide'
-description: 'Install Video.js in Svelte or SvelteKit and build a video player with HTML custom elements'
+description: 'Install Video.js with Svelte in Vite, Astro, or SvelteKit and build a player with HTML custom elements'
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
@@ -22,8 +22,11 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
+import Step from '@/components/docs/Step.astro';
+import Steps from '@/components/docs/Steps.astro';
 import RegistryOptions from '@/components/registry/RegistryOptions.astro';
 import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
 <InstallationOverview />
 
@@ -45,7 +48,7 @@ Choose the JavaScript framework for your project.
 
 ## Choose your app setup
 
-Choose whether the instructions target a Vite or SvelteKit app.
+Choose whether the instructions target a Vite, Astro, or SvelteKit app.
 
 <RegistryOptions framework="svelte" kind="template" method="packaged" />
 
@@ -85,7 +88,13 @@ Choose from the installation options available for your selections. Shadcn adds 
 
 ## Prepare your app
 
-If you do not already have the selected Svelte app setup, create it in the intended app directory. Otherwise, skip this section.
+Choose whether to create the selected Svelte app setup or add Video.js to a project you already have.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:load serverTemplate="vite" />
+</ContentWidth>
+</div>
 
 <ProjectCommands client:load part="create" serverFramework="svelte" serverTemplate="vite" />
 
@@ -97,21 +106,22 @@ Install the HTML elements and any playback adapter your selected media source ne
 
 ## Add your player
 
-Add a component that imports the elements it renders. Svelte passes hyphenated tags through to the browser, so no compiler configuration is needed. The imports register the selected player, skin, media, and extensions; the markup composes them.
+<Steps>
+  <Step number={1} title="Add the player component">
+    Add a component that imports the elements it renders. Svelte passes hyphenated tags through to the browser, so no compiler configuration is needed. The imports register the selected player, skin, media, and extensions; the markup composes them.
 
-<ContentWidth>
-  <SvelteCreateCodeBlock client:load />
-</ContentWidth>
+    <SvelteCreateCodeBlock client:load />
+  </Step>
+  <Step number={2} title="Render the player">
+    Render the component in a page and pass it the media source you selected above.
 
-Then render the component in a page and pass it the media source you selected above.
-
-<ContentWidth>
-  <SvelteUsageCodeBlock client:load />
-</ContentWidth>
+    <SvelteUsageCodeBlock client:load />
+  </Step>
+</Steps>
 
 ## Run your app
 
-Start the development server and verify that the selected media plays.
+Start the app and verify that the selected media plays.
 
 <ProjectCommands client:load part="run" serverFramework="svelte" serverTemplate="vite" />
 

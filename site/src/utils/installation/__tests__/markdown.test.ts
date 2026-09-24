@@ -1,3 +1,8 @@
+import {
+  installationTemplatesForMethod,
+  type InstallationFramework,
+  type InstallationMethod,
+} from '@videojs/installation';
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
@@ -24,6 +29,7 @@ describe('resolveInstallationMarkdownPlan', () => {
 
     expect(result?.ok && result.plan.selection.framework).toBe(framework);
     expect(result?.ok && result.plan.selection.method).toBe(method);
+    expect(result?.ok && result.plan.selection.project).toBe('existing');
     expect(result?.ok && result.plan.steps.length).toBeGreaterThan(0);
   });
 
@@ -41,6 +47,7 @@ describe('resolveInstallationMarkdownPlan', () => {
   it('applies every Shadcn query choice through the shared schema', () => {
     const params = new URLSearchParams({
       framework: 'svelte',
+      project: 'new',
       preset: 'audio',
       skin: 'minimal',
       media: 'spotify',
@@ -53,6 +60,7 @@ describe('resolveInstallationMarkdownPlan', () => {
 
     expect(result?.ok && result.plan.selection).toMatchObject({
       framework: 'svelte',
+      project: 'new',
       sourceFramework: 'html',
       preset: 'audio',
       skinFlag: 'minimal',
@@ -62,6 +70,70 @@ describe('resolveInstallationMarkdownPlan', () => {
       styling: 'css',
     });
   });
+
+  it('renders the selected project starting point', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/vue.md',
+      new URLSearchParams({ project: 'new', template: 'nuxt' }),
+      '10.0.0-test'
+    );
+
+    expect(result?.ok && result.plan.selection).toMatchObject({ project: 'new', template: 'nuxt' });
+    expect(result?.ok && result.plan.reproduceCommand).toContain('--project new');
+    expect(result?.ok && result.plan.steps[0]).toMatchObject({ title: 'Create the app' });
+  });
+
+  it('accepts a packaged TanStack Start selection on the React Markdown guide', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/react.md',
+      new URLSearchParams({ template: 'start' }),
+      '10.0.0-test'
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      plan: { selection: { framework: 'react', method: 'packaged', template: 'start' } },
+    });
+  });
+
+  const routeSelections = [
+    { route: 'react', framework: 'react', method: 'packaged' },
+    { route: 'html', framework: 'html', method: 'packaged' },
+    { route: 'vue', framework: 'vue', method: 'packaged' },
+    { route: 'svelte', framework: 'svelte', method: 'packaged' },
+    { route: 'cdn', framework: 'html', method: 'cdn' },
+    { route: 'shadcn', framework: 'react', method: 'shadcn' },
+    { route: 'shadcn', framework: 'html', method: 'shadcn' },
+    { route: 'shadcn', framework: 'vue', method: 'shadcn' },
+    { route: 'shadcn', framework: 'svelte', method: 'shadcn' },
+  ] as const satisfies readonly {
+    route: string;
+    framework: InstallationFramework;
+    method: InstallationMethod;
+  }[];
+
+  for (const { route, framework, method } of routeSelections) {
+    for (const template of installationTemplatesForMethod(framework, method)) {
+      for (const project of template === 'none' ? (['existing'] as const) : (['new', 'existing'] as const)) {
+        it(`accepts ${route}/${framework}/${method}/${template}/${project}`, () => {
+          const params = new URLSearchParams({ project, template });
+
+          if (route === 'shadcn') params.set('framework', framework);
+
+          const result = resolveInstallationMarkdownPlan(
+            `/docs/guides/installation/${route}.md`,
+            params,
+            '10.0.0-test'
+          );
+
+          expect(result).toMatchObject({
+            ok: true,
+            plan: { selection: { framework, method, project, template } },
+          });
+        });
+      }
+    }
+  }
 
   it('rejects an unknown Shadcn framework', () => {
     const result = resolveInstallationMarkdownPlan(
@@ -258,7 +330,7 @@ HTML next step
     const cdnPackageManager = renderInstallationMarkdownSelection(
       markdown,
       '/docs/guides/installation/cdn',
-      new URLSearchParams({ 'package-manager': 'pnpm' }),
+      new URLSearchParams({ 'package-manager': 'pnpm', project: 'new' }),
       '10.0.0-test'
     );
 

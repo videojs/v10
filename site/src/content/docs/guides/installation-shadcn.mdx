@@ -27,6 +27,7 @@ import SourceMediaInstall from '@/components/registry/SourceMediaInstall';
 import SourceReactPlayer from '@/components/registry/SourceReactPlayer';
 import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
 import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
 <InstallationOverview />
 
@@ -54,15 +55,15 @@ Choose the app environment that controls the setup commands and file locations b
 <RegistryOptions framework="react" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="html" match="project" llmsHeading={false}>
+<ShadcnFrameworkCase framework="html" match="project">
 <RegistryOptions framework="html" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="vue" match="project" llmsHeading={false}>
+<ShadcnFrameworkCase framework="vue" match="project">
 <RegistryOptions framework="vue" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="svelte" match="project" llmsHeading={false}>
+<ShadcnFrameworkCase framework="svelte" match="project">
 <RegistryOptions framework="svelte" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
@@ -102,37 +103,47 @@ Choose from the installation options available for your selections.
 
 ## Prepare your app
 
-React skin source is available with Tailwind CSS 4 or Vanilla CSS. HTML source for HTML, Vue, and Svelte uses Vanilla CSS.
+Choose whether to create the selected app setup or add editable skin source to a project you already have.
 
-<Steps>
-  <Step number={1} title="Create the app">
-    Skip this step when you already have the selected app setup. For a new React and Tailwind app, run the command from the parent directory: Shadcn creates the named app and `components.json` together. The other paths scaffold into the current empty app directory before you add the standard config below.
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:load serverTemplate="next" />
+</ContentWidth>
+</div>
 
-    <ProjectCommands client:load method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
-  </Step>
+<ProjectCommands client:load method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
 
-  <Step number={2} title="Configure Shadcn">
-    For an existing React and Tailwind app without `components.json`, satisfy Shadcn's Tailwind and import-alias checks, then run the command below. The other paths show the aliases and standard config to add to the app. In a monorepo, use the app workspace or pass `--cwd <path>` to Shadcn commands.
+<div data-installation-project-content="existing">
+<Aside type="note">
+Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
+</Aside>
+</div>
 
-    <Aside type="note">
-    Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
-    </Aside>
+<div data-shadcn-configuration-section class="contents">
 
-    <ShadcnFrameworkCase framework="react">
-    <RegistryInitCommand framework="react" installation />
-    </ShadcnFrameworkCase>
+## Configure Shadcn
 
-    <ShadcnFrameworkCase framework="html">
-    <RegistryInitCommand framework="html" installation />
-    </ShadcnFrameworkCase>
+<ShadcnFrameworkCase framework="react" match="project">
+<RegistryInitCommand framework="react" installation />
+</ShadcnFrameworkCase>
 
-    If the app already has `components.json`, keep its aliases and skip this step. The registry writes source under its `aliases.components` path, so use that existing alias in the imports below. Vanilla CSS, HTML, Vue, and Svelte use the compatible `components.json` shown above without adding React or Tailwind setup.
-  </Step>
-</Steps>
+<ShadcnFrameworkCase framework="html" match="project">
+<RegistryInitCommand framework="html" installation />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="vue" match="project">
+<RegistryInitCommand framework="vue" installation />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="svelte" match="project">
+<RegistryInitCommand framework="svelte" installation />
+</ShadcnFrameworkCase>
+
+</div>
 
 ## Add the skin source
 
-The first command adds the selected Video.js catalog when `@videojs` is not already configured. Shadcn skips existing namespaces, so when you change styling or theme, replace the existing `@videojs` URL in `components.json` with the URL shown in the command. The second command adds the skin source and overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
+Choose the catalog styling below, then configure `@videojs` and add the selected skin source. Shadcn skips existing namespaces, so when you change styling or theme, replace the existing `@videojs` URL in `components.json` with the URL shown in the first step. Adding the skin overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
 
 <ShadcnFrameworkCase framework="react">
 <RegistryOptions framework="react" kind="styling" />
@@ -165,6 +176,7 @@ Add the player to the file shown for your selected app setup. It imports the pla
 <ShadcnFrameworkCase framework="html">
 The HTML source also works in Vue and Svelte. The steps below match the framework you selected above. For more ways to integrate custom elements, see the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>.
 
+<ShadcnFrameworkCase framework="html" match="project" llmsHeading={false}>
 <Steps>
   <Step number={1} title="Add the media element">
     <SourceHTMLPlayer client:load part="media" />
@@ -178,9 +190,35 @@ The HTML source also works in Vue and Svelte. The steps below match the framewor
 </Steps>
 </ShadcnFrameworkCase>
 
+<ShadcnFrameworkCase framework="vue" match="project" llmsHeading={false}>
+<Steps>
+  <Step number={1} title="Add the media element">
+    <SourceHTMLPlayer client:load part="media" />
+  </Step>
+  <Step number={2} title="Register custom elements">
+    <SourceHTMLPlayer client:load part="imports" />
+  </Step>
+  <Step number={3} title="Add the player to your page">
+    <SourceHTMLPlayer client:load part="player" />
+  </Step>
+</Steps>
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="svelte" match="project" llmsHeading={false}>
+<Steps>
+  <Step number={1} title="Add the media element">
+    <SourceHTMLPlayer client:load part="media" />
+  </Step>
+  <Step number={2} title="Add the player to your page">
+    <SourceHTMLPlayer client:load part="player" />
+  </Step>
+</Steps>
+</ShadcnFrameworkCase>
+</ShadcnFrameworkCase>
+
 ## Run your app
 
-Start the development server and verify that the selected media plays.
+Start the app and verify that the selected media plays.
 
 <ProjectCommands client:load method="shadcn" part="run" serverFramework="react" serverTemplate="next" />
 

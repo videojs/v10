@@ -25,7 +25,6 @@ function FrameworkPicker() {
           value: 'react',
           label: 'React',
           media: <span />,
-          link: { href: 'https://react.dev/', label: 'Official site' },
         },
         { value: 'html', label: 'HTML', media: <span /> },
       ]}
@@ -57,8 +56,6 @@ describe('CardRadioGroup', () => {
     expect(serverSelection).toHaveTextContent('React');
     expect(serverSelection).toHaveClass('ring-transparent');
     expect(container.querySelectorAll('[role="radio"]')).toHaveLength(2);
-    expect(serverSelection?.querySelector('a')).toBeNull();
-    expect(container.querySelector('a[href="https://react.dev/"]')).toHaveTextContent('Official site');
 
     await act(async () => {
       root = hydrateRoot(container, <FrameworkPicker />);

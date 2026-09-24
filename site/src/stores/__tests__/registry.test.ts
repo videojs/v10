@@ -24,6 +24,7 @@ describe('selectRegistryProjectFramework', () => {
     registryTheme.set(null);
     document.documentElement.removeAttribute('data-registry-framework');
     document.documentElement.removeAttribute('data-registry-project-framework');
+    document.documentElement.removeAttribute('data-registry-styling');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.history.replaceState(null, '', '/');
   });
@@ -54,6 +55,30 @@ describe('selectRegistryProjectFramework', () => {
     expect(template.get()).toBe('astro');
   });
 
+  it('preserves an explicitly selected app setup when the next framework supports it', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=react&template=vite&styling=css');
+    template.set('vite');
+    registryStyling.set('css');
+
+    selectRegistryProjectFramework('vue');
+
+    expect(template.get()).toBe('vite');
+    expect(registryStyling.get()).toBe('css');
+    expect(window.location.search).toBe('?framework=vue&template=vite&styling=css');
+  });
+
+  it('writes compatible defaults that the next framework would otherwise reinterpret', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=vue');
+    template.set('vite');
+    registryStyling.set('css');
+
+    selectRegistryProjectFramework('react');
+
+    expect(template.get()).toBe('vite');
+    expect(registryStyling.get()).toBe('css');
+    expect(window.location.search).toBe('?framework=react&template=vite&styling=css');
+  });
+
   it('updates the Shadcn URL and root attribute for an in-page selection', () => {
     window.history.replaceState({ index: 2, scrollX: 0, scrollY: 320 }, '', '/docs/guides/installation/shadcn');
 
@@ -63,6 +88,7 @@ describe('selectRegistryProjectFramework', () => {
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 320 });
     expect(document.documentElement.dataset.registryFramework).toBe('html');
     expect(document.documentElement.dataset.registryProjectFramework).toBe('html');
+    expect(document.documentElement.dataset.registryStyling).toBe('css');
   });
 
   it('keeps the Vue project selection while using HTML registry source and site preferences', () => {
@@ -93,6 +119,7 @@ describe('selectRegistryProjectFramework', () => {
     expect(window.location.search).toBe('?framework=react&preset=audio&template=vite&styling=css');
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
+    expect(document.documentElement.dataset.registryStyling).toBe('css');
   });
 
   it('initializes registry choices from an authoritative Shadcn URL', () => {

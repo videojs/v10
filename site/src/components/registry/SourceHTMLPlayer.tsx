@@ -10,6 +10,7 @@ import {
 } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
+import { focusLinesContaining } from '@/components/Code/focusLines';
 import {
   useInstallationTemplate,
   useRegistryProjectFramework,
@@ -27,8 +28,9 @@ interface Props {
 
 interface CodeTab {
   code: string;
+  focusLines?: readonly number[];
   label: string;
-  lang: 'html' | 'js' | 'json' | 'ts';
+  lang: 'astro' | 'html' | 'js' | 'json' | 'ts';
   value: string;
 }
 
@@ -44,7 +46,7 @@ function CodeTabs({ label, tabs }: { label: string; tabs: readonly CodeTab[] }) 
       </TabsList>
       {tabs.map((tab, index) => (
         <TabsPanel key={tab.value} value={tab.value} initial={index === 0}>
-          <ClientCode code={tab.code} lang={tab.lang} />
+          <ClientCode code={tab.code} focusLines={tab.focusLines} lang={tab.lang} />
         </TabsPanel>
       ))}
     </TabsRoot>
@@ -54,9 +56,10 @@ function CodeTabs({ label, tabs }: { label: string; tabs: readonly CodeTab[] }) 
 export default function SourceHTMLPlayer({ part }: Props) {
   const projectFramework = useRegistryProjectFramework('html');
   const template = useInstallationTemplate(defaultInstallationTemplate(projectFramework));
-  const project = installationProjectFiles(projectFramework, template);
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles(projectFramework, template, useCase);
   const options = {
-    useCase: useSelection('useCase'),
+    useCase,
     renderer: useSelection('renderer'),
     sourceUrl: useSelection('sourceUrl'),
     componentsAlias: project.componentsImportAlias ?? project.componentsAlias,
@@ -73,12 +76,21 @@ export default function SourceHTMLPlayer({ part }: Props) {
         <>
           <p className={`${shared.p} ${shared.prose}`}>
             Move all markup from <code>{vue.sourceSkinFile}</code> into <code>{vue.skinFile}</code> inside a{' '}
-            <code>&lt;template&gt;</code> block. Then replace the “Add a compatible media element here” comment with:
+            <code>&lt;template&gt;</code> block. Then replace the “Add a compatible media element here” comment with the
+            slot below. For video skins, remove the inline <code>style</code> from the root{' '}
+            <code>&lt;media-container&gt;</code> and add the style block outside <code>&lt;template&gt;</code>. The app
+            supplies the media and its <code>src</code> later.
           </p>
           <CodeTabs
             label="Skin source"
-            tabs={[{ code: vue.media, label: vue.skinFile, lang: 'html', value: 'skin' }]}
+            tabs={[{ code: '<slot />', label: vue.skinFile, lang: 'html', value: 'skin' }]}
           />
+          {vue.skinStyle && (
+            <CodeTabs
+              label="Skin styles"
+              tabs={[{ code: vue.skinStyle, label: vue.skinFile, lang: 'html', value: 'styles' }]}
+            />
+          )}
         </>
       );
     }
@@ -90,12 +102,20 @@ export default function SourceHTMLPlayer({ part }: Props) {
         <>
           <p className={`${shared.p} ${shared.prose}`}>
             Move all markup from <code>{svelte.sourceSkinFile}</code> into <code>{svelte.skinFile}</code>. Then replace
-            the “Add a compatible media element here” comment with:
+            the “Add a compatible media element here” comment with the slot below. For video skins, remove the inline{' '}
+            <code>style</code> from the root <code>&lt;media-container&gt;</code> and add the style block below. The app
+            supplies the media and its <code>src</code> later.
           </p>
           <CodeTabs
             label="Skin source"
-            tabs={[{ code: svelte.media, label: svelte.skinFile, lang: 'html', value: 'skin' }]}
+            tabs={[{ code: '<slot />', label: svelte.skinFile, lang: 'html', value: 'skin' }]}
           />
+          {svelte.skinStyle && (
+            <CodeTabs
+              label="Skin styles"
+              tabs={[{ code: svelte.skinStyle, label: svelte.skinFile, lang: 'html', value: 'styles' }]}
+            />
+          )}
         </>
       );
     }
@@ -128,8 +148,14 @@ export default function SourceHTMLPlayer({ part }: Props) {
             tabs={[
               {
                 code: vue[installationVueConfigFilename(template)],
+                focusLines: focusLinesContaining(vue[installationVueConfigFilename(template)], [
+                  'isCustomElement',
+                  'compilerOptions:',
+                  'template:',
+                  'vue({',
+                ]),
                 label: project.config!,
-                lang: 'ts',
+                lang: template === 'astro' ? 'js' : 'ts',
                 value: 'config',
               },
             ]}
@@ -158,7 +184,22 @@ export default function SourceHTMLPlayer({ part }: Props) {
             </p>
             <CodeTabs
               label="App configuration"
-              tabs={[{ code: block.code, label: block.filename, lang: block.language, value: 'entry' }]}
+              tabs={[
+                {
+                  code: block.code,
+                  focusLines: focusLinesContaining(block.code, [
+                    'import ',
+                    'plugins:',
+                    'input:',
+                    'laravel({',
+                    'resolve:',
+                    'alias:',
+                  ]),
+                  label: block.filename,
+                  lang: block.language,
+                  value: 'entry',
+                },
+              ]}
             />
           </div>
         ))}
@@ -186,7 +227,7 @@ export default function SourceHTMLPlayer({ part }: Props) {
           label="Vue component"
           tabs={[
             {
-              code: vue['MediaPlayer.vue'],
+              code: vue.component,
               label: project.player,
               lang: 'html',
               value: 'player',
@@ -195,7 +236,14 @@ export default function SourceHTMLPlayer({ part }: Props) {
         />
         <CodeTabs
           label="Vue usage"
-          tabs={[{ code: vue['App.vue'], label: project.usage!, lang: 'html', value: 'app' }]}
+          tabs={[
+            {
+              code: template === 'astro' ? vue['index.astro'] : vue['App.vue'],
+              label: project.usage!,
+              lang: template === 'astro' ? 'astro' : 'html',
+              value: 'app',
+            },
+          ]}
         />
       </>
     );
@@ -207,14 +255,14 @@ export default function SourceHTMLPlayer({ part }: Props) {
     return (
       <>
         <p className={`${shared.p} ${shared.prose}`}>
-          Import the player, skin registration, and local Svelte skin component, then render the player from SvelteKit
-          or a Vite app.
+          Import the player, skin registration, and local Svelte skin component, then render the player from Astro,
+          SvelteKit, or a Vite app.
         </p>
         <CodeTabs
           label="Svelte component"
           tabs={[
             {
-              code: svelte['VideoPlayer.svelte'],
+              code: svelte.component,
               label: project.player,
               lang: 'html',
               value: 'player',
@@ -225,9 +273,14 @@ export default function SourceHTMLPlayer({ part }: Props) {
           label="Svelte app"
           tabs={[
             {
-              code: template === 'sveltekit' ? svelte['+page.svelte'] : svelte['App.svelte'],
+              code:
+                template === 'astro'
+                  ? svelte['index.astro']
+                  : template === 'sveltekit'
+                    ? svelte['+page.svelte']
+                    : svelte['App.svelte'],
               label: project.usage!,
-              lang: 'html',
+              lang: template === 'astro' ? 'astro' : 'html',
               value: 'usage',
             },
           ]}

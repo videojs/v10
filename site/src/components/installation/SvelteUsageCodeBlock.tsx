@@ -7,12 +7,14 @@ import { useSelection } from './useSelection';
 
 export default function SvelteUsageCodeBlock() {
   const template = useSelection('template');
-  const project = installationProjectFiles('svelte', template);
-  const codeValue = template === 'sveltekit' ? '+page.svelte' : 'App.svelte';
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('svelte', template, useCase);
+  const codeValue = template === 'astro' ? 'index.astro' : template === 'sveltekit' ? '+page.svelte' : 'App.svelte';
   const code = generateSvelteUsageCode({
-    useCase: useSelection('useCase'),
+    useCase,
     renderer: useSelection('renderer'),
     sourceUrl: useSelection('sourceUrl'),
+    playerImport: project.playerImport,
   });
 
   return (
@@ -23,7 +25,7 @@ export default function SvelteUsageCodeBlock() {
         </Tab>
       </TabsList>
       <TabsPanel value="usage" initial>
-        <ClientCode code={code[codeValue]} lang="html" />
+        <ClientCode code={code[codeValue]} lang={template === 'astro' ? 'astro' : 'html'} />
       </TabsPanel>
     </TabsRoot>
   );

@@ -1,6 +1,5 @@
 import {
   installationProjectCreateCommand,
-  installationProjectFrameworkSetupCommand,
   installationProjectRunCommand,
   resolveRegistryStyling,
   shadcnInitCommand,
@@ -24,46 +23,34 @@ export default function ProjectCommands({ method, part, serverFramework, serverT
   const template = useSelection('template', serverTemplate);
   const styling = resolveRegistryStyling(framework === 'react' ? 'react' : 'html', useRegistryStyling());
 
-  if (template === 'none') return null;
-
-  const command = (packageManager: 'npm' | 'pnpm' | 'yarn' | 'bun') => {
+  const commandFor = (packageManager: 'npm' | 'pnpm' | 'yarn' | 'bun') => {
     const value =
       part === 'create' && method === 'shadcn' && framework === 'react' && styling === 'tailwind'
         ? shadcnInitCommand(packageManager, template)
         : part === 'create'
           ? installationProjectCreateCommand(framework, template, packageManager)
           : installationProjectRunCommand(template, packageManager);
-    if (!value) throw new Error(`No ${part} command is available without an app setup.`);
+    if (!value) return '';
 
     return value;
   };
   const commands = {
-    npm: command('npm'),
-    pnpm: command('pnpm'),
-    yarn: command('yarn'),
-    bun: command('bun'),
+    npm: commandFor('npm'),
+    pnpm: commandFor('pnpm'),
+    yarn: commandFor('yarn'),
+    bun: commandFor('bun'),
   };
 
-  if (part === 'create' && framework === 'react' && template === 'astro') {
-    const existingCommands = {
-      npm: installationProjectFrameworkSetupCommand(framework, template, 'npm'),
-      pnpm: installationProjectFrameworkSetupCommand(framework, template, 'pnpm'),
-      yarn: installationProjectFrameworkSetupCommand(framework, template, 'yarn'),
-      bun: installationProjectFrameworkSetupCommand(framework, template, 'bun'),
-    };
+  if (template === 'none') return null;
 
-    return (
-      <div className="grid gap-6">
+  if (part === 'run') return <PackageManagerTabs commands={commands} syncSelection />;
+
+  return (
+    <>
+      <div data-installation-project-content="new">
         <PackageManagerTabs commands={commands} syncSelection />
-        <div>
-          <p className="text-p4 mb-2">
-            Existing Astro app without React configured? Add the React integration instead of creating another app:
-          </p>
-          <PackageManagerTabs commands={existingCommands} syncSelection />
-        </div>
       </div>
-    );
-  }
-
-  return <PackageManagerTabs commands={commands} syncSelection />;
+      <div data-installation-project-content="existing" />
+    </>
+  );
 }

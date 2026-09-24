@@ -45,6 +45,12 @@ describe('SourceHTMLPlayer', () => {
     expect(screen.getByRole('tab', { name: 'nuxt.config.ts' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByText(/defineNuxtConfig/)).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'vite.config.ts' })).not.toBeInTheDocument();
+
+    act(() => template.set('astro'));
+    rerender(<SourceHTMLPlayer part="imports" />);
+
+    expect(screen.getByRole('tab', { name: 'astro.config.mjs' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText(/import vue from '@astrojs\/vue'/)).toBeInTheDocument();
   });
 
   it('switches framework output in place and imports framework skin components', () => {
@@ -52,17 +58,27 @@ describe('SourceHTMLPlayer', () => {
     template.set('vite');
     render(<SourceHTMLPlayer part="player" />);
 
-    expect(screen.getByRole('tab', { name: 'src/components/MediaPlayer.vue' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'src/components/VideoPlayer.vue' })).toBeInTheDocument();
     expect(screen.getByText(/import VideoSkin from.*skin\.vue/)).toBeInTheDocument();
-    expect(screen.getByText(/<VideoSkin \/>/)).toBeInTheDocument();
+    expect(screen.getByText(/<VideoSkin>/)).toBeInTheDocument();
+    expect(screen.getByText(/<slot \/>/)).toBeInTheDocument();
+    expect(screen.getByText(/<video src=/)).toBeInTheDocument();
 
     act(() => registryProjectFramework.set('svelte'));
 
     expect(screen.getByRole('tab', { name: 'src/lib/VideoPlayer.svelte' })).toBeInTheDocument();
     expect(screen.getByText(/import VideoSkin from.*skin\.svelte/)).toBeInTheDocument();
-    expect(screen.getByText(/<VideoSkin \/>/)).toBeInTheDocument();
+    expect(screen.getByText(/<VideoSkin>/)).toBeInTheDocument();
+    expect(screen.getByText(/<slot \/>/)).toBeInTheDocument();
+    expect(screen.getByText(/<video src=/)).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'src/App.svelte' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'src/routes/+page.svelte' })).not.toBeInTheDocument();
+
+    act(() => template.set('astro'));
+
+    expect(screen.getByRole('tab', { name: 'src/components/VideoPlayer.svelte' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'src/pages/index.astro' })).toBeInTheDocument();
+    expect(screen.getByText(/<VideoPlayer client:load>/)).toBeInTheDocument();
 
     act(() => template.set('sveltekit'));
 
@@ -79,6 +95,6 @@ describe('SourceHTMLPlayer', () => {
 
     expect(markup).toContain('index.html');
     expect(markup).toContain('/src/player.ts');
-    expect(markup).not.toContain('MediaPlayer.vue');
+    expect(markup).not.toContain('VideoPlayer.vue');
   });
 });

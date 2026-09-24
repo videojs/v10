@@ -30,6 +30,7 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
 import RegistryOptions from '@/components/registry/RegistryOptions.astro';
 import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
 <InstallationOverview />
 
@@ -109,13 +110,17 @@ Choose from the installation options available for your selections.
 
 <div data-installation-plan class="contents">
 
+<div data-installation-starting-point-section class="contents">
+
 ## Prepare your app
 
-<FrameworkCase frameworks={["html"]}>
-With Existing site, continue in your current HTML app or page.
-</FrameworkCase>
+Choose whether to create the selected app setup or add Video.js to a project you already have.
 
-For a named setup, create it in the intended empty app directory when it does not already exist. Laravel is the exception: run its command from the parent directory and replace `<app-directory>` with the new directory name.
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:load serverTemplate="next" />
+</ContentWidth>
+</div>
 
 <FrameworkCase frameworks={["react"]}>
 <ProjectCommands client:load part="create" serverFramework="react" serverTemplate="next" />
@@ -123,6 +128,8 @@ For a named setup, create it in the intended empty app directory when it does no
 <FrameworkCase frameworks={["html"]}>
 <ProjectCommands client:load part="create" serverFramework="html" serverTemplate="vite" />
 </FrameworkCase>
+
+</div>
 
 ## Install the packages
 
@@ -137,9 +144,7 @@ For a named setup, create it in the intended empty app directory when it does no
 
 ## Add your player
 
-<ContentWidth>
-  <HTMLUsageCodeBlock client:load />
-</ContentWidth>
+<HTMLUsageCodeBlock client:load />
 
 </FrameworkCase>
 
@@ -154,13 +159,11 @@ Add the player to the file shown for your selected app setup. It imports the sel
 </ContentWidth>
 </FrameworkCase>
 
+<div data-installation-named-app class="contents">
+
 ## Run your app
 
-Start the selected app's development server and verify that the media plays.
-
-<FrameworkCase frameworks={["html"]}>
-With Existing site, use the command your project already provides.
-</FrameworkCase>
+Start the app and verify that the media plays.
 
 <FrameworkCase frameworks={["react"]}>
 <ProjectCommands client:load part="run" serverFramework="react" serverTemplate="next" />
@@ -168,6 +171,8 @@ With Existing site, use the command your project already provides.
 <FrameworkCase frameworks={["html"]}>
 <ProjectCommands client:load part="run" serverFramework="html" serverTemplate="vite" />
 </FrameworkCase>
+
+</div>
 
 </div>
 

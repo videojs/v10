@@ -8,10 +8,11 @@ import Shared from './Shared';
 
 interface ClientCodeProps {
   code: string;
+  focusLines?: readonly number[];
   lang: BundledLanguage;
 }
 
-function ClientCodeInner({ code, lang }: ClientCodeProps) {
+function ClientCodeInner({ code, focusLines, lang }: ClientCodeProps) {
   // React 19's `use()` hook can unwrap a Promise directly in render. When the
   // Promise is still pending, `use()` throws it to the nearest <Suspense>
   // boundary, which renders the fallback. Once resolved, React re-renders this
@@ -19,7 +20,7 @@ function ClientCodeInner({ code, lang }: ClientCodeProps) {
   // this is a Promise instead of a top-level await.
   const highlighter = use(getClientHighlighter());
 
-  return <Shared code={code} lang={lang} highlighter={highlighter} />;
+  return <Shared code={code} focusLines={focusLines} lang={lang} highlighter={highlighter} />;
 }
 
 /**
@@ -30,7 +31,7 @@ function ClientCodeInner({ code, lang }: ClientCodeProps) {
  * The unhighlighted fallback is a safety net for the brief client hydration gap — Astro's SSR awaits the full React
  * stream, so the server-rendered output already contains highlighted code.
  */
-export default function ClientCode({ code, lang }: ClientCodeProps) {
+export default function ClientCode({ code, focusLines, lang }: ClientCodeProps) {
   return (
     <Suspense
       fallback={
@@ -39,7 +40,7 @@ export default function ClientCode({ code, lang }: ClientCodeProps) {
         </pre>
       }
     >
-      <ClientCodeInner code={code} lang={lang} />
+      <ClientCodeInner code={code} focusLines={focusLines} lang={lang} />
     </Suspense>
   );
 }

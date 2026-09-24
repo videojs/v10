@@ -61,7 +61,7 @@ const TEMPLATE_ICONS = {
   start: <TanStackLogo className="size-7" />,
   laravel: <LaravelLogo className="size-7" />,
   'react-router': <ReactRouterLogo className="w-7" />,
-  astro: <AstroLogo className="size-7" />,
+  astro: <AstroLogo className="h-9 w-auto" />,
   nuxt: <NuxtLogo className="size-7" />,
   sveltekit: <SvelteLogo className="size-7" />,
 } satisfies Record<InstallationTemplate, ReactNode>;
@@ -95,18 +95,6 @@ const TEMPLATE_DESCRIPTIONS = {
   sveltekit: 'Full-stack Svelte framework',
 } as const satisfies Record<InstallationTemplate, string>;
 
-const TEMPLATE_LINKS = {
-  none: undefined,
-  next: 'https://nextjs.org/',
-  vite: 'https://vite.dev/',
-  start: 'https://tanstack.com/start/latest',
-  laravel: 'https://laravel.com/',
-  'react-router': 'https://reactrouter.com/',
-  astro: 'https://astro.build/',
-  nuxt: 'https://nuxt.com/',
-  sveltekit: 'https://svelte.dev/docs/kit',
-} as const satisfies Record<InstallationTemplate, string | undefined>;
-
 interface Props {
   defaultSkin?: RegistryPreset;
   defaultTheme?: RegistryTheme;
@@ -128,7 +116,6 @@ function templateCardOptions(
     label: INSTALLATION_TEMPLATE_LABELS[value],
     description: TEMPLATE_DESCRIPTIONS[value],
     media: TEMPLATE_ICONS[value],
-    link: TEMPLATE_LINKS[value] ? { href: TEMPLATE_LINKS[value], label: 'Official site' } : undefined,
   }));
 }
 

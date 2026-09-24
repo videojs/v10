@@ -70,8 +70,8 @@ describe('RegistryOptionsClient', () => {
       <RegistryOptionsClient framework="svelte" installation={false} kind="template" />
     );
 
-    expect(vueMarkup).toContain('data-options="Vite,Nuxt"');
-    expect(svelteMarkup).toContain('data-options="Vite,SvelteKit"');
+    expect(vueMarkup).toContain('data-options="Vite,Astro,Nuxt"');
+    expect(svelteMarkup).toContain('data-options="Vite,Astro,SvelteKit"');
   });
 
   it('offers no scaffold for packaged HTML but requires a concrete Shadcn setup', () => {

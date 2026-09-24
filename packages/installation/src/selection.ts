@@ -1,8 +1,15 @@
 import { rendererSupportsCdn } from './cdn-code';
 import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion } from './defaults';
 import { detectRenderer, detectRendererCandidates } from './detect-renderer';
-import { PACKAGE_MANAGERS, type InstallationInput, type InstallationInputKey, type PackageManager } from './parameters';
-export { PACKAGE_MANAGERS, type PackageManager } from './parameters';
+import {
+  INSTALLATION_PROJECTS,
+  PACKAGE_MANAGERS,
+  type InstallationInput,
+  type InstallationInputKey,
+  type InstallationProject,
+  type PackageManager,
+} from './parameters';
+export { INSTALLATION_PROJECTS, PACKAGE_MANAGERS, type InstallationProject, type PackageManager } from './parameters';
 import {
   getInstallationPreset,
   INSTALLATION_PRESETS,
@@ -43,6 +50,7 @@ export interface InstallationSelection {
   owner: PlayerOwner;
   method: InstallationMethod;
   framework: InstallationFramework;
+  project: InstallationProject;
   sourceFramework: RegistryFramework;
   useCase: UseCase;
   preset: PresetFlag;
@@ -135,6 +143,10 @@ export function isInstallationFramework(value: string | null | undefined): value
   return value != null && includes(INSTALLATION_FRAMEWORKS, value);
 }
 
+export function isInstallationProject(value: string | null | undefined): value is InstallationProject {
+  return value != null && includes(INSTALLATION_PROJECTS, value);
+}
+
 export function isPackageManager(value: string): value is PackageManager {
   return includes(PACKAGE_MANAGERS, value);
 }
@@ -223,6 +235,9 @@ export function resolveInstallationSelection(
     });
   }
 
+  const projectValue = defaultValue('project', 'existing');
+  const project = resolveChoice('project', projectValue, INSTALLATION_PROJECTS, 'existing', errors);
+
   const presetValue = defaultValue('preset', 'video');
   const presetFlags = Object.values(INSTALLATION_PRESETS).map(({ flag }) => flag);
   const preset = resolveChoice('preset', presetValue, presetFlags, 'video', errors);
@@ -303,6 +318,16 @@ export function resolveInstallationSelection(
     method === 'cdn' ? 'vite' : defaultInstallationTemplate(framework),
     errors
   );
+
+  if (template === 'none' && project === 'new') {
+    errors.push({
+      field: 'project',
+      value: project,
+      message:
+        'A new project needs a named app setup. Choose a template, or use --project existing with --template none.',
+    });
+  }
+
   let styling: RegistryStyling | null = null;
 
   if (method === 'cdn') {
@@ -354,6 +379,7 @@ export function resolveInstallationSelection(
       owner,
       method,
       framework,
+      project,
       sourceFramework,
       useCase,
       preset,
@@ -374,6 +400,7 @@ export function selectionToInput(selection: InstallationSelection): Required<Ins
   return {
     method: selection.method,
     framework: selection.framework,
+    project: selection.project,
     preset: selection.preset,
     skin: selection.skinFlag,
     media: selection.media,

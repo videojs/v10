@@ -1,4 +1,4 @@
-import { PACKAGE_MANAGERS, type PackageManager } from './parameters';
+import { PACKAGE_MANAGERS, type InstallationProject, type PackageManager } from './parameters';
 import { getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
   installationProjectAliasSetup,
@@ -123,13 +123,18 @@ export function shadcnCommand(runner: ShadcnRunner, action: string): string {
 export function shadcnInitCommand(runner: ShadcnRunner, template?: InstallationTemplate): string {
   if (!template) return shadcnCommand(runner, 'init --base base --preset nova --yes');
 
-  const action = `init --template ${template} --no-monorepo --base base --preset nova --name <app-directory> --yes`;
+  const action = `init --template ${template} --no-monorepo --base base --preset nova --name videojs-app --yes`;
   const command =
     runner === 'yarn'
       ? `npx --yes --package shadcn@latest --call 'npm_config_user_agent="yarn/1.22.22" shadcn ${action}'`
       : shadcnCommand(runner, action);
 
-  return `${command}\ncd <app-directory>`;
+  return `${command}\ncd videojs-app`;
+}
+
+/** Initialize Shadcn only when an existing project has no components config. */
+export function optionalShadcnInitCommand(runner: ShadcnRunner): string {
+  return `# Optional: run if components.json does not exist.\n${shadcnInitCommand(runner)}`;
 }
 
 /** A minimal standard Shadcn config for the vanilla-CSS registries, which do not need Tailwind or React setup. */
@@ -168,11 +173,19 @@ export function shadcnComponentsConfig(
   );
 }
 
-export interface ShadcnProjectConfiguration {
-  mode: 'components-json' | 'shadcn-init';
-  aliasSetup: readonly InstallationProjectSetupBlock[];
-  componentsConfig: string | null;
-}
+export type ShadcnProjectConfiguration =
+  | {
+      mode: 'components-json';
+      aliasSetup: readonly InstallationProjectSetupBlock[];
+      componentsConfig: string;
+    }
+  | {
+      mode: 'shadcn-init';
+      aliasSetup: readonly InstallationProjectSetupBlock[];
+      componentsConfig: null;
+    };
+
+export type ShadcnProjectConfigurationPlacement = 'app' | 'registry' | 'section';
 
 /** Resolve the one source-registry setup shared by generated plans and the installation guide. */
 export function shadcnProjectConfiguration(
@@ -194,6 +207,18 @@ export function shadcnProjectConfiguration(
     aliasSetup: installationProjectAliasSetup(framework, template),
     componentsConfig: shadcnComponentsConfig(framework, template, componentsAlias),
   };
+}
+
+/** Decide where one project surfaces its Shadcn initialization or components config. */
+export function shadcnProjectConfigurationPlacement(
+  configuration: ShadcnProjectConfiguration,
+  project: InstallationProject
+): ShadcnProjectConfigurationPlacement {
+  if (configuration.mode === 'components-json') return 'section';
+
+  if (project === 'new') return 'app';
+
+  return configuration.aliasSetup.length > 0 ? 'section' : 'registry';
 }
 
 export function shadcnAddCommand(runner: ShadcnRunner, items: readonly string[]): string {

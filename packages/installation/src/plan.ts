@@ -19,6 +19,7 @@ import {
 import { CDN_MEDIA_SUBPATHS, INSTALLATION_DEMO_SOURCES } from './defaults';
 import {
   installationCompatibilityFor,
+  installationDecisionOrderFor,
   installationOptionDefinitions,
   type InstallationDiscoveryCompatibility,
   type InstallationOptionDefinition,
@@ -29,7 +30,6 @@ import {
   installationHtmlEntrySetup,
   installationProjectCreateCommand,
   installationProjectFiles,
-  installationProjectFrameworkSetupCommand,
   installationHtmlPageCode,
   installationProjectRunCommand,
   installationReactPlayerCode,
@@ -41,7 +41,9 @@ import {
   registrySkinSelection,
   shadcnAddCommand,
   shadcnInitCommand,
+  optionalShadcnInitCommand,
   shadcnProjectConfiguration,
+  shadcnProjectConfigurationPlacement,
   shadcnRegistryAddCommand,
 } from './shadcn';
 
@@ -57,11 +59,7 @@ export interface InstallationStep {
   id: string;
   title: string;
   description?: string;
-  condition?:
-    | 'when-components-json-missing'
-    | 'when-existing-app'
-    | 'when-existing-app-without-components-json'
-    | 'when-no-compatible-app';
+  condition?: 'when-components-json-missing';
   blocks: readonly InstallationCodeBlock[];
 }
 
@@ -126,6 +124,7 @@ export function createInstallationDiscovery(
 ): InstallationDiscovery {
   const command = installationCommand(owner, undefined, packageVersion);
   const frameworks = owner === 'react' ? (['react'] as const) : (['html', 'vue', 'svelte'] as const);
+  const methods = owner === 'react' ? (['packaged', 'shadcn'] as const) : (['packaged', 'shadcn', 'cdn'] as const);
   const packageManager = defaults.packageManager ?? 'pnpm';
   const options = installationOptionDefinitions(owner).map((option) =>
     option.flag === '--package-manager' ? { ...option, default: packageManager } : option
@@ -133,6 +132,7 @@ export function createInstallationDiscovery(
   const packagedInput: InstallationInput = {
     method: 'packaged',
     framework: owner === 'react' ? 'react' : 'html',
+    project: 'existing',
     template: owner === 'react' ? 'next' : 'vite',
     preset: 'video',
     skin: 'default',
@@ -143,6 +143,7 @@ export function createInstallationDiscovery(
   const shadcnInput: InstallationInput = {
     method: 'shadcn',
     framework: owner === 'react' ? 'react' : 'vue',
+    project: 'new',
     template: owner === 'react' ? 'next' : 'vite',
     preset: 'video',
     skin: 'default',
@@ -160,40 +161,7 @@ export function createInstallationDiscovery(
     command,
     options,
     compatibility: installationCompatibilityFor(frameworks),
-    decisionOrder: [
-      {
-        title: 'Inspect the project',
-        guidance:
-          'Read package.json, framework config, and lockfiles to infer the framework, app template, and package manager. Use the other Video.js package when the selected framework belongs to it.',
-      },
-      {
-        title: 'Choose the player',
-        guidance:
-          'Infer the preset from the intended experience when it is clear. Ask when audio, live playback, background video, or the standard video player could all be reasonable.',
-      },
-      {
-        title: 'Choose the skin',
-        guidance:
-          'Default and Minimal contain the same controls. Minimal uses cleaner surfaces. Ask when the visual direction is not clear.',
-      },
-      {
-        title: 'Choose the media source',
-        guidance:
-          'Infer the adapter from the source when possible, such as hls for an .m3u8 URL or mux-video for Mux playback.',
-      },
-      {
-        title: 'Choose how to install',
-        guidance:
-          owner === 'react'
-            ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. For Shadcn, use Tailwind styling only when the app already uses Tailwind; otherwise use CSS. Use @videojs/html when the project needs CDN scripts.'
-            : 'Use packaged modules by default, Shadcn when the project should own editable skin source, or CDN for a plain HTML integration. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.',
-      },
-      {
-        title: 'Return one explicit plan',
-        guidance:
-          'Confirm the choices once, pass every applicable resolved flag, and check that Defaulted options says none. Adapt conditional setup steps and existing paths before changing files.',
-      },
-    ],
+    decisionOrder: installationDecisionOrderFor({ methods, frameworks }),
     examples: [
       installationCommand(owner, packagedInput, packageVersion),
       installationCommand(owner, shadcnInput, packageVersion),
@@ -204,6 +172,7 @@ export function createInstallationDiscovery(
               {
                 method: 'cdn',
                 framework: 'html',
+                project: 'new',
                 template: 'vite',
                 preset: 'video',
                 skin: 'default',
@@ -254,63 +223,28 @@ function packageInstallStep(command: string): InstallationStep {
   return { id: 'install', title: 'Install the packages', blocks: [code('bash', command)] };
 }
 
-function prepareAppStep(selection: InstallationSelection): InstallationStep {
-  const command = installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager);
+function prepareAppStep(selection: InstallationSelection): InstallationStep | null {
+  if (selection.project === 'existing') return null;
 
-  if (!command) {
-    return {
-      id: 'prepare-app',
-      title: 'Prepare your app',
-      description:
-        'Continue in the existing HTML app or page that will host the player. This selection does not scaffold or assume a particular app setup.',
-      blocks: [],
-    };
-  }
+  const command = installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager);
+  if (!command) throw new Error('A new project needs an app setup command.');
 
   return {
     id: 'prepare-app',
-    title: 'Prepare your app',
-    condition: 'when-no-compatible-app',
+    title: 'Create the app',
     description:
       selection.method === 'cdn'
-        ? 'Skip this step when the workspace already has an HTML page or app. When there is no app, scaffold a minimal Vite site in an empty intended app directory, then continue from that directory.'
+        ? 'Scaffold a minimal Vite site in the intended empty app directory, then continue from that directory.'
         : selection.template === 'laravel'
-          ? 'Skip this step when the workspace already contains a compatible Laravel app. Otherwise, make sure PHP, Composer, and the Laravel installer are available; run this from the parent directory, replace <app-directory> with a new directory name, and continue from the new app.'
-          : `Skip this step when the workspace already contains a compatible ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app. Otherwise, scaffold it in an empty intended app directory, then continue from that directory.`,
+          ? 'Make sure PHP, Composer, and the Laravel installer are available. Run this from the parent directory, change videojs-app to your preferred directory name when needed, and continue from the new app.'
+          : `Scaffold a ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app in the intended empty app directory, then continue from that directory.`,
     blocks: [code('bash', command)],
   };
 }
 
-function existingProjectFrameworkStep(selection: InstallationSelection): InstallationStep | null {
-  const command = installationProjectFrameworkSetupCommand(
-    selection.framework,
-    selection.template,
-    selection.packageManager
-  );
-  if (!command) return null;
-
-  return {
-    id: 'configure-framework',
-    title: 'Configure React in Astro',
-    condition: 'when-existing-app',
-    description:
-      'Run this when adapting an existing Astro app that does not already have the React integration. A newly scaffolded app from the previous step already includes it.',
-    blocks: [code('bash', command)],
-  };
-}
-
-function runAppStep(selection: InstallationSelection): InstallationStep {
+function runAppStep(selection: InstallationSelection): InstallationStep | null {
   const command = installationProjectRunCommand(selection.template, selection.packageManager);
-
-  if (!command) {
-    return {
-      id: 'run',
-      title: 'Run your app',
-      description:
-        'Use the existing project’s development or preview command and verify that the selected media plays.',
-      blocks: [],
-    };
-  }
+  if (!command) return null;
 
   return {
     id: 'run',
@@ -320,21 +254,23 @@ function runAppStep(selection: InstallationSelection): InstallationStep {
   };
 }
 
-function existingAppPlayerDescription(template: InstallationSelection['template']): string {
-  if (template === 'none') {
+function playerFileDescription(selection: InstallationSelection): string {
+  if (selection.template === 'none') {
     return 'The filenames are generic. Add the imports and markup to the files your existing HTML app or page already loads.';
   }
 
-  return `Create these files when they are missing. In an existing ${INSTALLATION_TEMPLATE_LABELS[template]} app, merge the example into the route or component that should render the player and preserve unrelated content.`;
+  return selection.project === 'new'
+    ? 'Add these files to the new app, replacing the starter page where shown.'
+    : `Merge the example into the existing ${INSTALLATION_TEMPLATE_LABELS[selection.template]} route or component that should render the player, and preserve unrelated content.`;
 }
 
 function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
   const opts = installationOptions(selection);
-  const project = installationProjectFiles(selection.framework, selection.template);
-  const steps: InstallationStep[] = [prepareAppStep(selection)];
-  const frameworkSetup = existingProjectFrameworkStep(selection);
+  const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
+  const steps: InstallationStep[] = [];
+  const prepareApp = prepareAppStep(selection);
 
-  if (frameworkSetup) steps.push(frameworkSetup);
+  if (prepareApp) steps.push(prepareApp);
 
   if (selection.framework === 'react') {
     const install = generateReactInstallCode(opts, packageVersion);
@@ -343,7 +279,7 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
     steps.push(packageInstallStep(install[selection.packageManager]), {
       id: 'player',
       title: 'Add your player',
-      description: existingAppPlayerDescription(selection.template),
+      description: playerFileDescription(selection),
       blocks: [code('tsx', installationReactPlayerCode(player['app/page.tsx'], selection.template), project.player)],
     });
 
@@ -354,7 +290,9 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
       ];
     }
 
-    steps.push(runAppStep(selection));
+    const runApp = runAppStep(selection);
+
+    if (runApp) steps.push(runApp);
 
     return steps;
   }
@@ -372,37 +310,59 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
         id: 'configure',
         title: 'Register custom elements',
         description: 'Use the file that matches your Vue toolchain.',
-        blocks: [code('ts', config[installationVueConfigFilename(selection.template)], project.config)],
+        blocks: [
+          code(
+            selection.template === 'astro' ? 'js' : 'ts',
+            config[installationVueConfigFilename(selection.template)],
+            project.config
+          ),
+        ],
       },
       {
         id: 'player',
         title: 'Add your player',
-        description: existingAppPlayerDescription(selection.template),
+        description: playerFileDescription(selection),
         blocks: [
-          code('vue', component['MediaPlayer.vue'], project.player),
-          code('vue', usage['App.vue'], project.usage),
+          code('vue', component.component, project.player),
+          code(
+            selection.template === 'astro' ? 'astro' : 'vue',
+            selection.template === 'astro' ? usage['index.astro'] : usage['App.vue'],
+            project.usage
+          ),
         ],
       }
     );
-    steps.push(runAppStep(selection));
+    const runApp = runAppStep(selection);
+
+    if (runApp) steps.push(runApp);
 
     return steps;
   }
 
   if (selection.framework === 'svelte') {
     const component = generateSvelteCreateCode(opts);
-    const usage = generateSvelteUsageCode(opts);
+    const usage = generateSvelteUsageCode({ ...opts, playerImport: project.playerImport });
 
     steps.push(packageInstallStep(install[selection.packageManager]), {
       id: 'player',
       title: 'Add your player',
-      description: existingAppPlayerDescription(selection.template),
+      description: playerFileDescription(selection),
       blocks: [
-        code('svelte', component['VideoPlayer.svelte'], project.player),
-        code('svelte', selection.template === 'sveltekit' ? usage['+page.svelte'] : usage['App.svelte'], project.usage),
+        code('svelte', component.component, project.player),
+        code(
+          selection.template === 'astro' ? 'astro' : 'svelte',
+          selection.template === 'astro'
+            ? usage['index.astro']
+            : selection.template === 'sveltekit'
+              ? usage['+page.svelte']
+              : usage['App.svelte'],
+          project.usage
+        ),
       ],
     });
-    steps.push(runAppStep(selection));
+    const runApp = runAppStep(selection);
+
+    if (runApp) steps.push(runApp);
 
     return steps;
   }
@@ -428,10 +388,12 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
   steps.push({
     id: 'player',
     title: 'Add your player',
-    description: existingAppPlayerDescription(selection.template),
+    description: playerFileDescription(selection),
     blocks,
   });
-  steps.push(runAppStep(selection));
+  const runApp = runAppStep(selection);
+
+  if (runApp) steps.push(runApp);
 
   return steps;
 }
@@ -441,8 +403,12 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
   const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase);
   const usage = generateHTMLUsageCode(opts);
 
-  return [
-    prepareAppStep(selection),
+  const steps: InstallationStep[] = [];
+  const prepareApp = prepareAppStep(selection);
+
+  if (prepareApp) steps.push(prepareApp);
+
+  steps.push(
     {
       id: 'load',
       title: 'Load Video.js',
@@ -454,9 +420,14 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
       title: 'Add your player',
       description: 'Add this markup inside the page body where the player should appear.',
       blocks: [code('html', usage.html, 'index.html')],
-    },
-    { ...runAppStep(selection), condition: 'when-no-compatible-app' },
-  ];
+    }
+  );
+
+  const runApp = runAppStep(selection);
+
+  if (runApp) steps.push(runApp);
+
+  return steps;
 }
 
 function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
@@ -464,7 +435,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
   const registry = registrySkinSelection({ useCase: selection.useCase, skin: selection.skin });
   if (!registry || !selection.styling) throw new Error('Invalid Shadcn selection');
 
-  const project = installationProjectFiles(selection.framework, selection.template);
+  const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
   const configuration = shadcnProjectConfiguration(
     selection.framework,
     selection.template,
@@ -472,40 +443,42 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     project.componentsAlias
   );
   const steps: InstallationStep[] = [];
-  const frameworkSetup = existingProjectFrameworkStep(selection);
+  const configurationPlacement = shadcnProjectConfigurationPlacement(configuration, selection.project);
+  const inlineOptionalInit = configurationPlacement === 'registry';
 
   if (configuration.mode === 'shadcn-init') {
-    steps.push({
-      id: 'prepare-app',
-      title: 'Prepare your app',
-      condition: 'when-no-compatible-app',
-      description: `Run this from the parent directory when the workspace does not already contain a compatible ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app. Replace <app-directory> with a new directory name. Shadcn creates the app and components.json together, then the command enters the new app.`,
-      blocks: [code('bash', shadcnInitCommand(selection.packageManager, selection.template))],
-    });
+    if (configurationPlacement === 'app') {
+      steps.push({
+        id: 'prepare-app',
+        title: 'Create and configure the app',
+        description: `Run this from the parent directory, change videojs-app to your preferred directory name when needed, and continue from the new app. Shadcn creates the ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app and components.json together.`,
+        blocks: [code('bash', shadcnInitCommand(selection.packageManager, selection.template))],
+      });
+    }
 
-    if (frameworkSetup) steps.push(frameworkSetup);
-
-    steps.push({
-      id: 'configure-source-registry',
-      title: 'Configure the source registry',
-      condition: 'when-existing-app-without-components-json',
-      description:
-        'Run this only for an existing compatible app that already uses Tailwind CSS but does not have components.json. Commit the app first because Shadcn init can update dependencies, global CSS, and utility files. Merge any missing alias configuration below first, keep the app’s existing plugins and compiler options, then initialize Shadcn non-interactively. If the app does not use Tailwind, rerun agents init with --styling css. If components.json already exists, skip this step.',
-      blocks: [
-        ...configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename)),
-        code('bash', shadcnInitCommand(selection.packageManager)),
-      ],
-    });
+    if (configurationPlacement === 'section') {
+      steps.push({
+        id: 'configure-source-registry',
+        title: 'Configure Shadcn',
+        condition: 'when-components-json-missing',
+        description:
+          'Merge any missing alias configuration below first, keep the app’s existing plugins and compiler options, then initialize Shadcn non-interactively. This path assumes the app already uses Tailwind CSS; otherwise, rerun agents init with --styling css.',
+        blocks: [
+          ...configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename)),
+          code('bash', optionalShadcnInitCommand(selection.packageManager)),
+        ],
+      });
+    }
   } else {
-    steps.push(prepareAppStep(selection));
+    const prepareApp = prepareAppStep(selection);
 
-    if (frameworkSetup) steps.push(frameworkSetup);
+    if (prepareApp) steps.push(prepareApp);
 
     steps.push({
       id: 'configure-source-registry',
-      title: 'Configure the source registry',
+      title: 'Configure Shadcn',
       condition: 'when-components-json-missing',
-      description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}. Commit your work first so every added or replaced file is reviewable.`,
+      description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
       blocks: [
         ...configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename)),
         code('json', configuration.componentsConfig!, 'components.json', 'create'),
@@ -513,25 +486,43 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     });
   }
 
+  if (inlineOptionalInit) {
+    steps.push({
+      id: 'create-components-json',
+      title: 'Create components.json (optional)',
+      condition: 'when-components-json-missing',
+      blocks: [code('bash', optionalShadcnInitCommand(selection.packageManager))],
+    });
+  }
+
   steps.push({
-    id: 'skin-source',
-    title: 'Add the skin source',
+    id: 'videojs-registry',
+    title: 'Add the Video.js Registry',
     description:
-      'Commit current source first. The registry command adds the selected @videojs catalog when the namespace is missing. If components.json already defines @videojs with another URL, replace that value with the URL from this command first because Shadcn skips configured namespaces. The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog. For HTML source, the later media step restores the selected media element after an overwrite.',
+      'This adds the selected @videojs catalog when the namespace is missing. If components.json already defines @videojs with another URL, replace that value with the URL from this command first because Shadcn skips configured namespaces.',
     blocks: [
       code(
         'bash',
-        [
-          shadcnRegistryAddCommand(
-            selection.packageManager,
-            selection.sourceFramework,
-            selection.styling,
-            registry.theme
-          ),
-          shadcnAddCommand(selection.packageManager, [registry.item]),
-        ].join('\n')
+        shadcnRegistryAddCommand(selection.packageManager, selection.sourceFramework, selection.styling, registry.theme)
       ),
     ],
+  });
+
+  steps.push({
+    id: 'skin-source',
+    title: 'Add the skin source',
+    description: [
+      selection.project === 'existing'
+        ? 'Commit current source first so every added or replaced file is reviewable.'
+        : null,
+      'The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog.',
+      selection.sourceFramework === 'html'
+        ? 'The later media step restores the selected media element after an overwrite.'
+        : null,
+    ]
+      .filter((sentence) => sentence !== null)
+      .join(' '),
+    blocks: [code('bash', shadcnAddCommand(selection.packageManager, [registry.item]))],
   });
 
   const mediaInstall = generateSourceMediaInstallCode(selection.media, packageVersion);
@@ -560,12 +551,16 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
   }
 
   if (selection.framework === 'react') {
-    const player = generateSourceReactCreateCode({ ...opts, componentsAlias: project.componentsAlias });
+    const player = generateSourceReactCreateCode({
+      ...opts,
+      componentsAlias: project.componentsAlias,
+      styling: selection.styling ?? undefined,
+    });
 
     steps.push({
       id: 'player',
       title: 'Add your player',
-      description: `Use the aliases.components value from components.json in the skin import when it differs from the generated ${project.componentsAlias} path. ${existingAppPlayerDescription(selection.template)}`,
+      description: `Use the aliases.components value from components.json in the skin import when it differs from the generated ${project.componentsAlias} path. ${playerFileDescription(selection)}`,
       blocks: [code('tsx', installationReactPlayerCode(player['app/page.tsx'], selection.template), project.player)],
     });
 
@@ -576,7 +571,9 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       ];
     }
 
-    steps.push(runAppStep(selection));
+    const runApp = runAppStep(selection);
+
+    if (runApp) steps.push(runApp);
 
     return steps;
   }
@@ -592,15 +589,26 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     steps.push({
       id: 'player',
       title: 'Add your player',
-      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile} inside a <template> block, then replace the <!-- Add a compatible media element here. --> placeholder with the media snippet below. Merge the matching isCustomElement option into your existing Vue config, keeping its other plugins and aliases. The player imports the local skin as a Vue component.`,
+      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile} inside a <template> block, then replace the <!-- Add a compatible media element here. --> placeholder with the slot below. For video skins, remove the inline style attribute from the root media-container and add the generated <style> block outside <template>. Merge the matching isCustomElement option into your existing Vue config, keeping its other plugins and aliases. The reusable player wraps that skin, while the app supplies the media and its src.`,
       blocks: [
-        code('ts', player[installationVueConfigFilename(selection.template)], project.config),
-        code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
-        code('vue', player['MediaPlayer.vue'], project.player),
-        code('vue', player['App.vue'], project.usage),
+        code(
+          selection.template === 'astro' ? 'js' : 'ts',
+          player[installationVueConfigFilename(selection.template)],
+          project.config
+        ),
+        code('html', '<slot />', player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
+        ...(player.skinStyle ? [code('vue', player.skinStyle, player.skinFile)] : []),
+        code('vue', player.component, project.player),
+        code(
+          selection.template === 'astro' ? 'astro' : 'vue',
+          selection.template === 'astro' ? player['index.astro'] : player['App.vue'],
+          project.usage
+        ),
       ],
     });
-    steps.push(runAppStep(selection));
+    const runApp = runAppStep(selection);
+
+    if (runApp) steps.push(runApp);
 
     return steps;
   }
@@ -610,23 +618,31 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       ...opts,
       componentsAlias: project.componentsImportAlias ?? project.componentsAlias,
       componentsDirectory: project.componentsDirectory,
+      playerImport: project.playerImport,
     });
 
     steps.push({
       id: 'player',
       title: 'Add your player',
-      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile}, then replace the <!-- Add a compatible media element here. --> placeholder with the media snippet below. The player imports the local skin as a Svelte component. The final file shown matches the selected ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app.`,
+      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile}, then replace the <!-- Add a compatible media element here. --> placeholder with the slot below. For video skins, remove the inline style attribute from the root media-container and add the generated <style> block. The reusable player wraps that skin, while the selected ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app supplies the media and its src.`,
       blocks: [
-        code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
-        code('svelte', player['VideoPlayer.svelte'], project.player),
+        code('html', '<slot />', player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
+        ...(player.skinStyle ? [code('svelte', player.skinStyle, player.skinFile)] : []),
+        code('svelte', player.component, project.player),
         code(
-          'svelte',
-          selection.template === 'sveltekit' ? player['+page.svelte'] : player['App.svelte'],
+          selection.template === 'astro' ? 'astro' : 'svelte',
+          selection.template === 'astro'
+            ? player['index.astro']
+            : selection.template === 'sveltekit'
+              ? player['+page.svelte']
+              : player['App.svelte'],
           project.usage
         ),
       ],
     });
-    steps.push(runAppStep(selection));
+    const runApp = runAppStep(selection);
+
+    if (runApp) steps.push(runApp);
 
     return steps;
   }
@@ -640,14 +656,16 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
   steps.push({
     id: 'player',
     title: 'Add your player',
-    description: `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Then paste the complete updated skin markup into the player where indicated. ${existingAppPlayerDescription(selection.template)}`,
+    description: `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Then paste the complete updated skin markup into the player where indicated. ${playerFileDescription(selection)}`,
     blocks: [
       code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
       code('ts', player.imports, project.usage),
       code('html', installationHtmlPageCode(player.player, selection.template, project.usage!), project.player),
     ],
   });
-  steps.push(runAppStep(selection));
+  const runApp = runAppStep(selection);
+
+  if (runApp) steps.push(runApp);
 
   return steps;
 }
@@ -658,6 +676,7 @@ export function createInstallationPlan(selection: InstallationSelection, package
   const relevantInput: InstallationInput = {
     method: explicit.method,
     framework: explicit.framework,
+    project: explicit.project,
     preset: explicit.preset,
     media: explicit.media,
     sourceUrl: explicit.sourceUrl,

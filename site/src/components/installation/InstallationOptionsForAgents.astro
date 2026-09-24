@@ -2,9 +2,9 @@
 import {
   installationCommand,
   installationCompatibility,
+  installationDecisionOrderFor,
   installationOptionDefinitionsFor,
   installationTemplatesForMethod,
-  createInstallationDiscovery,
   type InstallationFramework,
   type InstallationMethod,
 } from '@videojs/installation';
@@ -24,7 +24,7 @@ const frameworks: readonly InstallationFramework[] = fixedFramework
   ? [fixedFramework]
   : ['react', 'html', 'vue', 'svelte'];
 const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks });
-const decisionOrder = createInstallationDiscovery(owner, 'installed').decisionOrder;
+const decisionOrder = installationDecisionOrderFor({ methods: [fixedMethod], frameworks });
 const queryOptions = definitions
   .filter((option) => {
     if (['--json', '--method'].includes(option.flag)) return false;

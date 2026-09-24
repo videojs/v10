@@ -2,12 +2,13 @@ import {
   type RegistryFramework,
   type RegistryPreset,
   type RegistryTheme,
+  optionalShadcnInitCommand,
   resolveRegistryStyling,
-  type ShadcnRunner,
   shadcnAddCommand,
   shadcnRegistryAddCommand,
 } from '@videojs/installation';
 
+import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import {
   useRegistrySkin,
@@ -23,16 +24,19 @@ interface Props {
   framework: RegistryFramework;
   /** Registry item names, without the `@videojs/` namespace. Empty registers the namespace and installs nothing. */
   items: readonly string[];
+  /** Initialize an existing compatible app first when it has no components config. */
+  optionalInit?: boolean | undefined;
   /** Theme to use until the page's theme selector changes it. */
   theme?: RegistryTheme | undefined;
 }
 
-/** The Shadcn commands that configure the selected Video.js catalog and add its source files. */
+/** The Shadcn steps that configure the selected Video.js catalog and add its source files. */
 export default function RegistryCommandClient({
   defaultSkin,
   fixedSelection = false,
   framework,
   items,
+  optionalInit = false,
   theme = 'default',
 }: Props) {
   const $skin = useRegistrySkin();
@@ -41,17 +45,44 @@ export default function RegistryCommandClient({
   const selectedItems = defaultSkin ? [fixedSelection ? defaultSkin : ($skin ?? defaultSkin)] : items;
   const selectedTheme = fixedSelection ? theme : ($theme ?? theme);
   const styling = resolveRegistryStyling(framework, $styling);
-  const command = (runner: ShadcnRunner) =>
-    [
-      shadcnRegistryAddCommand(runner, framework, styling, selectedTheme),
-      ...(selectedItems.length > 0 ? [shadcnAddCommand(runner, selectedItems)] : []),
-    ].join('\n');
-  const commands = {
-    npm: command('npm'),
-    pnpm: command('pnpm'),
-    yarn: command('yarn'),
-    bun: command('bun'),
+  const initCommands = optionalInit
+    ? {
+        npm: optionalShadcnInitCommand('npm'),
+        pnpm: optionalShadcnInitCommand('pnpm'),
+        yarn: optionalShadcnInitCommand('yarn'),
+        bun: optionalShadcnInitCommand('bun'),
+      }
+    : null;
+  const registryCommands = {
+    npm: shadcnRegistryAddCommand('npm', framework, styling, selectedTheme),
+    pnpm: shadcnRegistryAddCommand('pnpm', framework, styling, selectedTheme),
+    yarn: shadcnRegistryAddCommand('yarn', framework, styling, selectedTheme),
+    bun: shadcnRegistryAddCommand('bun', framework, styling, selectedTheme),
   };
+  const addCommands = selectedItems.length
+    ? {
+        npm: shadcnAddCommand('npm', selectedItems),
+        pnpm: shadcnAddCommand('pnpm', selectedItems),
+        yarn: shadcnAddCommand('yarn', selectedItems),
+        bun: shadcnAddCommand('bun', selectedItems),
+      }
+    : null;
 
-  return <PackageManagerTabs commands={commands} />;
+  return (
+    <DynamicSteps>
+      {initCommands && (
+        <DynamicStep number={1} title="Create components.json (optional)">
+          <PackageManagerTabs commands={initCommands} />
+        </DynamicStep>
+      )}
+      <DynamicStep number={initCommands ? 2 : 1} title="Add the Video.js Registry">
+        <PackageManagerTabs commands={registryCommands} />
+      </DynamicStep>
+      {addCommands && (
+        <DynamicStep number={initCommands ? 3 : 2} title="Add the skin source">
+          <PackageManagerTabs commands={addCommands} />
+        </DynamicStep>
+      )}
+    </DynamicSteps>
+  );
 }

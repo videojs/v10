@@ -6,9 +6,11 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { useSelection } from './useSelection';
 
 export default function SvelteCreateCodeBlock() {
-  const project = installationProjectFiles('svelte', useSelection('template'));
+  const template = useSelection('template');
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('svelte', template, useCase);
   const code = generateSvelteCreateCode({
-    useCase: useSelection('useCase'),
+    useCase,
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
   });
@@ -21,7 +23,7 @@ export default function SvelteCreateCodeBlock() {
         </Tab>
       </TabsList>
       <TabsPanel value="player" initial>
-        <ClientCode code={code['VideoPlayer.svelte']} lang="html" />
+        <ClientCode code={code.component} lang="html" />
       </TabsPanel>
     </TabsRoot>
   );

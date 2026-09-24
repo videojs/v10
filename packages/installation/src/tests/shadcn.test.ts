@@ -17,7 +17,9 @@ import {
   shadcnCommand,
   shadcnComponentsConfig,
   shadcnInitCommand,
+  optionalShadcnInitCommand,
   shadcnProjectConfiguration,
+  shadcnProjectConfigurationPlacement,
   shadcnRegistryAddCommand,
 } from '../index';
 
@@ -99,8 +101,8 @@ describe('shadcnInitCommand', () => {
   it('offers compatible app templates for each project framework', () => {
     expect(installationTemplates('react')).toEqual(['next', 'vite', 'start', 'react-router', 'astro', 'laravel']);
     expect(installationTemplates('html')).toEqual(['vite', 'astro', 'laravel', 'none']);
-    expect(installationTemplates('vue')).toEqual(['vite', 'nuxt']);
-    expect(installationTemplates('svelte')).toEqual(['vite', 'sveltekit']);
+    expect(installationTemplates('vue')).toEqual(['vite', 'astro', 'nuxt']);
+    expect(installationTemplates('svelte')).toEqual(['vite', 'astro', 'sveltekit']);
   });
 
   it('keeps the no-scaffold setup out of Shadcn', () => {
@@ -118,13 +120,19 @@ describe('shadcnInitCommand', () => {
 
   it('sets the selected project template', () => {
     expect(shadcnInitCommand('pnpm', 'start')).toBe(
-      'pnpm dlx shadcn@latest init --template start --no-monorepo --base base --preset nova --name <app-directory> --yes\ncd <app-directory>'
+      'pnpm dlx shadcn@latest init --template start --no-monorepo --base base --preset nova --name videojs-app --yes\ncd videojs-app'
     );
     expect(shadcnInitCommand('npm', 'vite')).toBe(
-      'npx shadcn@latest init --template vite --no-monorepo --base base --preset nova --name <app-directory> --yes\ncd <app-directory>'
+      'npx shadcn@latest init --template vite --no-monorepo --base base --preset nova --name videojs-app --yes\ncd videojs-app'
     );
     expect(shadcnInitCommand('npm')).toBe('npx shadcn@latest init --base base --preset nova --yes');
     expect(shadcnInitCommand('yarn', 'vite')).toContain('npm_config_user_agent="yarn/1.22.22"');
+  });
+
+  it('marks initialization in an existing project as optional', () => {
+    expect(optionalShadcnInitCommand('pnpm')).toBe(
+      '# Optional: run if components.json does not exist.\npnpm dlx shadcn@latest init --base base --preset nova --yes'
+    );
   });
 });
 
@@ -162,6 +170,17 @@ describe('shadcnProjectConfiguration', () => {
       mode: 'components-json',
       componentsConfig: expect.stringContaining('"tsx": true'),
     });
+  });
+
+  it('places setup with app creation, a configuration section, or the registry command', () => {
+    const nextTailwind = shadcnProjectConfiguration('react', 'next', 'tailwind', '@/components');
+    const viteTailwind = shadcnProjectConfiguration('react', 'vite', 'tailwind', '@/components');
+    const nextCss = shadcnProjectConfiguration('react', 'next', 'css', '@/components');
+
+    expect(shadcnProjectConfigurationPlacement(nextTailwind, 'new')).toBe('app');
+    expect(shadcnProjectConfigurationPlacement(nextTailwind, 'existing')).toBe('registry');
+    expect(shadcnProjectConfigurationPlacement(viteTailwind, 'existing')).toBe('section');
+    expect(shadcnProjectConfigurationPlacement(nextCss, 'new')).toBe('section');
   });
 });
 

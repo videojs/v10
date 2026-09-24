@@ -194,7 +194,7 @@ export default function InstallationPreview() {
     isHydrated && framework && skinPage ? `/docs/framework/${framework}/components/${skinPage}` : null;
 
   return (
-    <figure data-installation-query-state className="flex flex-col gap-3">
+    <figure className="flex flex-col gap-3">
       {/* The player sits inside a padded surface so it reads as a preview of a component, not as page content. */}
       <div className="corner-squircle border-line bg-surface overflow-hidden rounded-lg border p-5 sm:p-8">
         {player}

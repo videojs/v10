@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
+import { syncInstallationSelectionFromUrl } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
 
 import { initializeDocsLinks } from '../links';
@@ -17,6 +18,8 @@ describe('initializeDocsLinks', () => {
     delete window.__videojsDocsLinksController;
     currentFramework.set(null);
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
+    syncInstallationSelectionFromUrl(new URL('http://localhost/docs/guides/installation/react'));
+    window.history.replaceState(null, '', '/');
     document.body.replaceChildren();
   });
 
@@ -52,5 +55,35 @@ describe('initializeDocsLinks', () => {
     document.dispatchEvent(new Event('astro:page-load'));
 
     expect(link.pathname).toBe('/docs/framework/react/guides/architecture');
+  });
+
+  it('carries compatible installation choices into Shadcn links', () => {
+    window.history.replaceState(
+      null,
+      '',
+      '/docs/guides/installation/vue?preset=audio&skin=minimal&media=spotify&package-manager=yarn&template=nuxt'
+    );
+    syncInstallationSelectionFromUrl();
+    document.body.innerHTML = `
+      <a
+        href="/docs/guides/installation/shadcn"
+        data-docs-slug="guides/installation-shadcn"
+        data-installation-method-link="shadcn"
+      >Guide</a>
+    `;
+
+    initializeDocsLinks();
+
+    const link = document.querySelector<HTMLAnchorElement>('a')!;
+
+    expect(link.pathname).toBe('/docs/guides/installation/shadcn');
+    expect(Object.fromEntries(new URLSearchParams(link.search))).toEqual({
+      preset: 'audio',
+      skin: 'minimal',
+      media: 'spotify',
+      'package-manager': 'yarn',
+      template: 'nuxt',
+      framework: 'vue',
+    });
   });
 });

@@ -6,12 +6,40 @@ import {
 } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
+import { focusLinesContaining } from '@/components/Code/focusLines';
+import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import { shared } from '@/components/typography/styles';
 
 import { useSelection } from './useSelection';
 
 interface Props {
   installMethod?: 'cdn';
+}
+
+function CodeBlock({
+  code,
+  filename,
+  focusLines,
+  language,
+}: {
+  code: string;
+  filename: string;
+  focusLines?: readonly number[];
+  language: 'html' | 'js' | 'json' | 'ts';
+}) {
+  return (
+    <TabsRoot maxWidth={false}>
+      <TabsList label="HTML implementation">
+        <Tab value={filename} initial>
+          {filename}
+        </Tab>
+      </TabsList>
+      <TabsPanel value={filename} initial>
+        <ClientCode code={code} focusLines={focusLines} lang={language} />
+      </TabsPanel>
+    </TabsRoot>
+  );
 }
 
 export default function HTMLUsageCodeBlock({ installMethod }: Props) {
@@ -34,39 +62,56 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
   const entrySetup = method === 'cdn' ? [] : installationHtmlEntrySetup($template, project.usage!);
   const html = method === 'cdn' ? result.html : installationHtmlPageCode(result.html, $template, project.usage!);
 
-  return (
-    <>
-      {entrySetup.map((block) => (
-        <div key={block.filename}>
-          <p>
-            Merge this entry into the existing <code>{block.filename}</code> configuration, keeping its other inputs,
-            plugins, and options:
+  if (method === 'cdn') return <CodeBlock code={html} filename={project.player} language="html" />;
+
+  const steps = [
+    ...entrySetup.map((block) => ({
+      key: block.filename,
+      title: `Configure ${block.filename}`,
+      content: (
+        <>
+          <p className={`${shared.p} ${shared.prose}`}>
+            Merge this entry into the existing configuration, keeping its other inputs, plugins, and options.
           </p>
-          <ClientCode code={block.code} lang={block.language} />
-        </div>
+          <CodeBlock
+            code={block.code}
+            filename={block.filename}
+            focusLines={focusLinesContaining(block.code, [
+              'import ',
+              'plugins:',
+              'input:',
+              'laravel({',
+              'resolve:',
+              'alias:',
+            ])}
+            language={block.language}
+          />
+        </>
+      ),
+    })),
+    ...(result.imports
+      ? [
+          {
+            key: 'imports',
+            title: 'Add the imports',
+            content: <CodeBlock code={result.imports} filename={project.usage!} language="ts" />,
+          },
+        ]
+      : []),
+    {
+      key: 'player',
+      title: 'Add the player markup',
+      content: <CodeBlock code={html} filename={project.player} language="html" />,
+    },
+  ];
+
+  return (
+    <DynamicSteps>
+      {steps.map((step, index) => (
+        <DynamicStep key={step.key} number={index + 1} title={step.title}>
+          {step.content}
+        </DynamicStep>
       ))}
-      {result.imports && (
-        <TabsRoot maxWidth={false}>
-          <TabsList label="HTML implementation">
-            <Tab value="typescript" initial>
-              {project.usage}
-            </Tab>
-          </TabsList>
-          <TabsPanel value="typescript" initial>
-            <ClientCode code={result.imports} lang="ts" />
-          </TabsPanel>
-        </TabsRoot>
-      )}
-      <TabsRoot maxWidth={false}>
-        <TabsList label="HTML implementation">
-          <Tab value="html" initial>
-            {project.player}
-          </Tab>
-        </TabsList>
-        <TabsPanel value="html" initial>
-          <ClientCode code={html} lang="html" />
-        </TabsPanel>
-      </TabsRoot>
-    </>
+    </DynamicSteps>
   );
 }

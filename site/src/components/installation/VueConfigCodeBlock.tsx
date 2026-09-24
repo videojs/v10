@@ -5,6 +5,7 @@ import {
 } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
+import { focusLinesContaining } from '@/components/Code/focusLines';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 import { useSelection } from './useSelection';
@@ -18,6 +19,7 @@ export default function VueConfigCodeBlock() {
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
   });
+  const config = code[filename];
 
   return (
     <TabsRoot>
@@ -27,7 +29,11 @@ export default function VueConfigCodeBlock() {
         </Tab>
       </TabsList>
       <TabsPanel value="config" initial>
-        <ClientCode code={code[filename]} lang="ts" />
+        <ClientCode
+          code={config}
+          focusLines={focusLinesContaining(config, ['vue({', 'template:', 'compilerOptions:', 'isCustomElement:'])}
+          lang={template === 'astro' ? 'js' : 'ts'}
+        />
       </TabsPanel>
     </TabsRoot>
   );

@@ -79,21 +79,39 @@ export function canonicalShadcnInstallationUrl(url: URL, fallback: InstallationF
   return target;
 }
 
-/** Apply a Shadcn project choice while clearing options owned by the previous framework. */
+/** Apply a Shadcn project choice while preserving explicit options the next framework also supports. */
 export function updateShadcnInstallationUrl(
   url: URL,
-  update: { framework?: InstallationFramework; styling?: RegistryStyling }
+  update: {
+    framework?: InstallationFramework;
+    styling?: RegistryStyling | null;
+    template?: InstallationTemplate | null;
+  }
 ): URL {
   const target = new URL(url);
   if (!isShadcnInstallationUrl(target)) return target;
 
   if (update.framework) {
     target.searchParams.set('framework', update.framework);
-    target.searchParams.delete('template');
-    target.searchParams.delete('styling');
+
+    const template = update.template ?? target.searchParams.get('template');
+    const templates = installationTemplatesForMethod(update.framework, 'shadcn');
+
+    if (templates.some((candidate) => candidate === template)) target.searchParams.set('template', template);
+    else target.searchParams.delete('template');
+
+    const styling = update.styling ?? target.searchParams.get('styling');
+    const sourceFramework = update.framework === 'react' ? 'react' : 'html';
+
+    if (registryStylings(sourceFramework).some((candidate) => candidate === styling))
+      target.searchParams.set('styling', styling);
+    else target.searchParams.delete('styling');
   }
 
-  if (update.styling) target.searchParams.set('styling', update.styling);
+  if (update.styling !== undefined) {
+    if (update.styling) target.searchParams.set('styling', update.styling);
+    else target.searchParams.delete('styling');
+  }
 
   return target;
 }

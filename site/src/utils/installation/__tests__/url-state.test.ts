@@ -18,6 +18,7 @@ describe('parseInstallationSearch', () => {
     expect(parseInstallationSearch('?preset=live-video&skin=minimal&media=hls&package-manager=npm')).toEqual({
       framework: 'react',
       template: 'next',
+      project: 'existing',
       useCase: 'live-video',
       skin: 'minimal-video',
       renderer: 'hls',
@@ -96,6 +97,7 @@ describe('serializeInstallationSearch', () => {
       serializeInstallationSearch({
         framework: 'react',
         template: 'next',
+        project: 'existing',
         useCase: 'live-video',
         skin: 'minimal-video',
         renderer: 'hls',
@@ -109,6 +111,7 @@ describe('serializeInstallationSearch', () => {
     const selection = {
       framework: 'html',
       template: 'astro',
+      project: 'new',
       useCase: 'default-audio',
       skin: 'none',
       renderer: 'spotify',
@@ -123,6 +126,15 @@ describe('serializeInstallationSearch', () => {
     expect(serializeInstallationSearch({ ...DEFAULT_SELECTION, installMethod: 'bun' }, '?utm_source=x')).toBe(
       '?utm_source=x&package-manager=bun'
     );
+  });
+
+  it('round-trips the project starting point and forces Existing site to existing', () => {
+    expect(parseInstallationSearch('?project=new').project).toBe('new');
+    expect(serializeInstallationSearch({ ...DEFAULT_SELECTION, project: 'new' })).toBe('?project=new');
+    expect(parseInstallationSearchForRoute('html', '?template=none&project=new')).toMatchObject({
+      template: 'none',
+      project: 'existing',
+    });
   });
 
   it('omits the hidden skin choice for background video', () => {
@@ -148,6 +160,13 @@ describe('serializeInstallationSearchForRoute', () => {
     expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, template: 'none' })).toBe(
       '?template=none'
     );
+  });
+
+  it('keeps the human CDN route existing-only', () => {
+    expect(
+      normalizeInstallationSelectionForRoute('cdn', { ...DEFAULT_SELECTION, project: 'new', template: 'vite' })
+    ).toMatchObject({ project: 'existing' });
+    expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, project: 'new' })).toBe('');
   });
 });
 

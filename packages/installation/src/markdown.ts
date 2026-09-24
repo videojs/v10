@@ -42,7 +42,7 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
       : '- `@videojs/react` generates React instructions. `@videojs/html` generates HTML, Vue, or Svelte instructions.'
     : '- `@videojs/html` generates HTML, Vue, or Svelte instructions.';
   const cdnDescription = frameworks.some((framework) => compatibility.methodsByFramework[framework]?.includes('cdn'))
-    ? '\n- CDN is plain HTML only. Use `none` for an existing page or `vite` only when scaffolding a missing app.'
+    ? '\n- CDN is plain HTML only. Use `--project existing --template none` for an existing page or `--project new --template vite` to scaffold a minimal app.'
     : '';
   const shadcnDescription = frameworks.includes('react')
     ? frameworks.length === 1
@@ -114,7 +114,7 @@ export function renderInstallationMarkdown(plan: InstallationPlan): string {
 
   return `# ${title} installation instructions
 
-Generated for \`${plan.package}@${plan.packageVersion}\`. The selections below correspond to CLI flags. On the installation site, the page route chooses the method and usually the framework; query parameters choose the remaining options. Change them with the command shown under **Reproduce or change these instructions**, or see the bare command for every valid option.
+Generated for \`${plan.package}@${plan.packageVersion}\`. The selections below correspond to CLI flags. Change them with the command shown under **Reproduce or change these instructions**, or run the bare \`agents init\` command for every valid option.
 
 ${renderInstallationPlanSections(plan)}
 ## Next steps
@@ -134,6 +134,7 @@ export function renderInstallationPlanSections(plan: InstallationPlan): string {
   const selected: Array<[string, string]> = [
     ['method', plan.selection.method],
     ['framework', plan.selection.framework],
+    ['project', plan.selection.project],
     ['preset', plan.selection.preset],
     ['media', plan.selection.media],
     ['source-url', plan.resolvedSourceUrl],
@@ -167,17 +168,9 @@ export function renderInstallationPlanSections(plan: InstallationPlan): string {
         .join('\n\n');
 
       const condition =
-        step.condition === 'when-no-compatible-app'
-          ? '\n_Only when the project needs an app scaffold._\n'
-          : step.condition === 'when-components-json-missing'
-            ? '\n_Only when components.json is missing._\n'
-            : step.condition === 'when-existing-app'
-              ? '\n_Only when adapting an existing app._\n'
-              : step.condition === 'when-existing-app-without-components-json'
-                ? '\n_Only for an existing app without components.json._\n'
-                : '';
+        step.condition === 'when-components-json-missing' ? '\n_Only when components.json is missing._\n' : '';
 
-      return `## ${step.title}\n${condition}${description}\n${blocks}`;
+      return `## ${step.title}\n${condition}${description}${blocks ? `\n${blocks}` : ''}`;
     })
     .join('\n\n');
 

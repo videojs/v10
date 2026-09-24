@@ -3,7 +3,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { renderer, skin, template, useCase } from '@/stores/installation';
+import { project, renderer, skin, template, useCase } from '@/stores/installation';
 import { registryProjectFramework } from '@/stores/registry';
 
 const mocks = vi.hoisted(() => ({
@@ -26,6 +26,7 @@ describe('InstallationMethodNavClient', () => {
     skin.set('video');
     renderer.set('html5-video');
     template.set('next');
+    project.set('existing');
     registryProjectFramework.set('react');
     window.history.replaceState(null, '', '/');
     vi.clearAllMocks();
@@ -64,7 +65,7 @@ describe('InstallationMethodNavClient', () => {
     expect(vue).toContain('data-installation-method="packaged"');
     expect(vue).toContain('data-installation-method="shadcn"');
     expect(vue).toContain('href="/docs/guides/installation/shadcn?framework=vue"');
-    expect(vue).toContain('Add editable HTML skin source');
+    expect(vue).toContain('Add editable skin source');
     expect(vue).toContain('max-w-3xl');
     expect(vue).toContain('sm:grid-cols-3');
     expect(vue).toContain('mx-auto');
@@ -74,17 +75,17 @@ describe('InstallationMethodNavClient', () => {
     expect(svelte).not.toContain('data-installation-method="cdn"');
   });
 
-  it('hides Shadcn when the selected player has no registry source', async () => {
+  it('keeps Shadcn in place but disables it when the selected player has no registry source', async () => {
     const { queryByRole } = render(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
 
-    expect(queryByRole('link', { name: /Shadcn/ })).toBeInTheDocument();
+    expect(queryByRole('link', { name: /Shadcn/ })).not.toHaveAttribute('aria-disabled');
 
     act(() => {
       useCase.set('background-video');
       renderer.set('background-video');
     });
 
-    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).toHaveAttribute('aria-disabled', 'true'));
 
     act(() => {
       useCase.set('default-video');
@@ -92,17 +93,17 @@ describe('InstallationMethodNavClient', () => {
       skin.set('none');
     });
 
-    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).toHaveAttribute('aria-disabled', 'true'));
   });
 
-  it('hides Shadcn when plain HTML keeps its existing app setup', async () => {
+  it('keeps Shadcn in place but disables it when plain HTML keeps its existing app setup', async () => {
     const { queryByRole } = render(<InstallationMethodNavClient currentFramework="html" route="html" />);
 
     expect(queryByRole('link', { name: /Shadcn/ })).toBeInTheDocument();
 
     act(() => template.set('none'));
 
-    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).toHaveAttribute('aria-disabled', 'true'));
     expect(queryByRole('link', { name: /CDN/ })).toBeInTheDocument();
   });
 
@@ -123,21 +124,21 @@ describe('InstallationMethodNavClient', () => {
     await act(async () => {});
 
     expect(consoleError).not.toHaveBeenCalled();
-    expect(container.querySelector('[data-installation-method="shadcn"]')).toBeNull();
+    expect(container.querySelector('[data-installation-method="shadcn"]')).toHaveAttribute('aria-disabled', 'true');
 
     root.unmount();
     container.remove();
   });
 
-  it('offers CDN only to the HTML project framework on the Shadcn guide', async () => {
+  it('keeps the Shadcn method grid stable while CDN availability follows the project framework', async () => {
     registryProjectFramework.set('html');
     const { queryByRole } = render(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
 
-    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).not.toHaveAttribute('aria-disabled'));
 
     act(() => registryProjectFramework.set('vue'));
 
-    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).toHaveAttribute('aria-disabled', 'true'));
   });
 
   it('carries Vue selections into the HTML Shadcn route', async () => {
@@ -162,12 +163,22 @@ describe('InstallationMethodNavClient', () => {
     });
   });
 
-  it('prerenders a stable Shadcn card set for the route framework', () => {
+  it('carries the new-project starting point between installation methods', async () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/react?project=new');
+    project.set('new');
+
+    const { getByRole } = render(<InstallationMethodNavClient currentFramework="react" route="react" />);
+    const link = getByRole('link', { name: /Shadcn/ });
+
+    await waitFor(() => expect(link.getAttribute('href')).toContain('project=new'));
+  });
+
+  it('prerenders every Shadcn method card so early framework CSS can choose the stable set', () => {
     const markup = renderToString(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
 
     expect(markup).toContain('data-installation-method="packaged"');
     expect(markup).toContain('data-installation-method="shadcn"');
-    expect(markup).not.toContain('data-installation-method="cdn"');
+    expect(markup).toContain('data-installation-method="cdn"');
   });
 
   it('hands method navigation to Astro with the existing scroll restoration metadata', async () => {
