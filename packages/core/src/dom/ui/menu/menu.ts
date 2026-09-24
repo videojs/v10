@@ -1,4 +1,5 @@
 import type { State } from '@videojs/store';
+import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
 
 import type { MenuInput, MenuState } from '../../../core/ui/menu/core';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/item';
@@ -328,8 +329,18 @@ export function createMenu(options: MenuOptions): MenuApi {
       options.onOpenChangeComplete?.(open);
 
       // Return focus to the trigger after the close animation completes
-      // so screen readers hear the correct context.
-      if (!open) restoreFocus();
+      // if focus stayed in the closing page, so moved focus is not stolen.
+      if (!open && contentElement) {
+        const active = getDeepActiveElement(contentElement.ownerDocument);
+
+        if (
+          !(active instanceof Element) ||
+          active === contentElement.ownerDocument.body ||
+          containsComposed(contentElement, active)
+        ) {
+          restoreFocus();
+        }
+      }
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,

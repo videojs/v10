@@ -87,4 +87,86 @@ describe('createMenuPopup', () => {
     parent.menu.destroy();
     child.menu.destroy();
   });
+
+  it('does not focus the submenu trigger when its close reason suppresses restoration', () => {
+    const popupElement = document.createElement('div');
+    const parentContent = document.createElement('div');
+    const parentTrigger = document.createElement('button');
+    const childContent = document.createElement('div');
+    const childItem = document.createElement('button');
+    const parent = createTestMenu();
+    const child = createTestMenu();
+    const popup = createMenuPopup();
+    const focus = vi.spyOn(parentTrigger, 'focus');
+
+    parent.menu.registerSubmenu(child.menu);
+    child.menu.setTriggerElement(parentTrigger);
+    child.menu.registerItem(childItem);
+    parentContent.append(parentTrigger, childContent);
+    childContent.append(childItem);
+    popupElement.append(parentContent);
+    document.body.append(popupElement);
+
+    popup.setElement(popupElement);
+    popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
+    popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    child.menu.open();
+    popup.sync();
+    childItem.focus();
+
+    child.menu.close('imperative-action');
+    popup.sync();
+
+    expect(focus).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(childItem);
+    expect(childContent.getAttribute('aria-hidden')).toBe('true');
+
+    popup.destroy();
+    parent.menu.destroy();
+    child.menu.destroy();
+  });
+
+  it('does not restore focus again after the user moves it during submenu closing', async () => {
+    const popupElement = document.createElement('div');
+    const parentContent = document.createElement('div');
+    const parentTrigger = document.createElement('button');
+    const childContent = document.createElement('div');
+    const childItem = document.createElement('button');
+    const outside = document.createElement('button');
+    const parent = createTestMenu();
+    const child = createTestMenu({
+      onOpenChangeComplete(open) {
+        if (!open) outside.focus();
+      },
+    });
+    const popup = createMenuPopup();
+    const focus = vi.spyOn(parentTrigger, 'focus');
+
+    parent.menu.registerSubmenu(child.menu);
+    child.menu.setTriggerElement(parentTrigger);
+    child.menu.setContentElement(childContent);
+    child.menu.registerItem(childItem);
+    parentContent.append(parentTrigger, childContent);
+    childContent.append(childItem);
+    popupElement.append(parentContent);
+    document.body.append(popupElement, outside);
+
+    popup.setElement(popupElement);
+    popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
+    popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    child.menu.open();
+    popup.sync();
+    childItem.focus();
+
+    child.menu.close('escape');
+    popup.sync();
+    expect(document.activeElement).toBe(parentTrigger);
+
+    await vi.waitFor(() => expect(document.activeElement).toBe(outside));
+    expect(focus).toHaveBeenCalledTimes(1);
+
+    popup.destroy();
+    parent.menu.destroy();
+    child.menu.destroy();
+  });
 });

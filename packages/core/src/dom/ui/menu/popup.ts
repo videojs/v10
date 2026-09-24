@@ -95,15 +95,13 @@ export function createMenuPopup(): MenuPopupApi {
     };
     if (!hasFocus()) return;
 
-    // Preserve the menu's close-reason behavior before falling back to its trigger.
+    // Let the menu decide whether this close reason should restore focus.
     content.menu.restoreFocus();
 
-    if (!hasFocus()) return;
+    // Close reasons that do not restore focus still must not leave it in a hidden page.
+    const active = getDeepActiveElement(content.element.ownerDocument);
 
-    content.menu.triggerElement?.focus();
-
-    // A missing or unfocusable trigger must not leave focus inside the hidden page.
-    if (hasFocus()) (getDeepActiveElement(content.element.ownerDocument) as HTMLElement).blur();
+    if (hasFocus() && active instanceof HTMLElement) active.blur();
   }
 
   function getAvailableWidth(popup: HTMLElement): number | null {
