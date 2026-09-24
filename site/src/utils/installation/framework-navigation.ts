@@ -97,13 +97,14 @@ export function updateShadcnInstallationUrl(
     const template = update.template ?? target.searchParams.get('template');
     const templates = installationTemplatesForMethod(update.framework, 'shadcn');
 
-    if (templates.some((candidate) => candidate === template)) target.searchParams.set('template', template);
+    if (template && templates.some((candidate) => candidate === template))
+      target.searchParams.set('template', template);
     else target.searchParams.delete('template');
 
     const styling = update.styling ?? target.searchParams.get('styling');
     const sourceFramework = update.framework === 'react' ? 'react' : 'html';
 
-    if (registryStylings(sourceFramework).some((candidate) => candidate === styling))
+    if (styling && registryStylings(sourceFramework).some((candidate) => candidate === styling))
       target.searchParams.set('styling', styling);
     else target.searchParams.delete('styling');
   }
