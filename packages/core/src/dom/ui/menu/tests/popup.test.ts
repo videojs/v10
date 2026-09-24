@@ -72,6 +72,7 @@ describe('createMenuPopup', () => {
     popup.setElement(popupElement);
     popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
     popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    parent.menu.open();
     child.menu.open();
     popup.sync();
     childItem.focus();
@@ -88,7 +89,7 @@ describe('createMenuPopup', () => {
     child.menu.destroy();
   });
 
-  it('does not focus the submenu trigger when its close reason suppresses restoration', () => {
+  it('does not focus the submenu trigger when the parent page is also closing', () => {
     const popupElement = document.createElement('div');
     const parentContent = document.createElement('div');
     const parentTrigger = document.createElement('button');
@@ -110,6 +111,46 @@ describe('createMenuPopup', () => {
     popup.setElement(popupElement);
     popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
     popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    parent.menu.open();
+    child.menu.open();
+    popup.sync();
+    childItem.focus();
+
+    parent.menu.close('imperative-action');
+    popup.sync();
+
+    expect(focus).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(childItem);
+    expect(childContent.getAttribute('aria-hidden')).toBe('true');
+
+    popup.destroy();
+    parent.menu.destroy();
+    child.menu.destroy();
+  });
+
+  it('keeps focus in the parent menu when only the submenu closes imperatively', () => {
+    const popupElement = document.createElement('div');
+    const parentContent = document.createElement('div');
+    const parentTrigger = document.createElement('button');
+    const childContent = document.createElement('div');
+    const childItem = document.createElement('button');
+    const parent = createTestMenu();
+    const child = createTestMenu();
+    const popup = createMenuPopup();
+    const focus = vi.spyOn(parentTrigger, 'focus');
+
+    parent.menu.registerSubmenu(child.menu);
+    child.menu.setTriggerElement(parentTrigger);
+    child.menu.registerItem(childItem);
+    parentContent.append(parentTrigger, childContent);
+    childContent.append(childItem);
+    popupElement.append(parentContent);
+    document.body.append(popupElement);
+
+    popup.setElement(popupElement);
+    popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
+    popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    parent.menu.open();
     child.menu.open();
     popup.sync();
     childItem.focus();
@@ -117,8 +158,9 @@ describe('createMenuPopup', () => {
     child.menu.close('imperative-action');
     popup.sync();
 
-    expect(focus).not.toHaveBeenCalled();
-    expect(document.activeElement).not.toBe(childItem);
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(parentTrigger);
+    expect(parent.menu.input.current.active).toBe(true);
     expect(childContent.getAttribute('aria-hidden')).toBe('true');
 
     popup.destroy();
@@ -154,6 +196,7 @@ describe('createMenuPopup', () => {
     popup.setElement(popupElement);
     popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
     popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    parent.menu.open();
     child.menu.open();
     popup.sync();
     childItem.focus();

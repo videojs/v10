@@ -98,6 +98,12 @@ export function createMenuPopup(): MenuPopupApi {
     // Let the menu decide whether this close reason should restore focus.
     content.menu.restoreFocus();
 
+    const parentInput = content.parent?.input.current;
+
+    if (hasFocus() && parentInput?.active && parentInput.status !== 'ending') {
+      content.menu.triggerElement?.focus();
+    }
+
     // Close reasons that do not restore focus still must not leave it in a hidden page.
     const active = getDeepActiveElement(content.element.ownerDocument);
 
