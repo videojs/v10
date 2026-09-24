@@ -91,6 +91,7 @@ export function selectRegistryProjectFramework(framework: InstallationFramework)
       const target = updateShadcnInstallationUrl(url, { framework });
 
       history.replaceState(history.state, '', `${target.pathname}${target.search}${target.hash}`);
+      document.documentElement.dataset.registryProjectFramework = framework;
       document.documentElement.dataset.registryFramework = framework === 'react' ? 'react' : 'html';
     }
   }

@@ -653,12 +653,14 @@ export interface SourceVueUsageCode extends VueCustomElementConfigCode {
   'MediaPlayer.vue': string;
   'App.vue': string;
   media: string;
+  sourceSkinFile: string;
   skinFile: string;
 }
 
 export interface SourceSvelteUsageCode extends SvelteUsageCode {
   'VideoPlayer.svelte': string;
   media: string;
+  sourceSkinFile: string;
   skinFile: string;
 }
 
@@ -703,19 +705,23 @@ export function generateSourceVueUsageCode(
   const source = generateSourceHTMLUsageCode(opts);
   const playerTag = getPlayerTag(opts.useCase);
   const config = generateVueCustomElementConfigCode({ ...opts, skin: defaultSkinForUseCase(opts.useCase) }, true);
-  const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.html?raw`;
+  const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
+  const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.vue`;
 
   return {
     ...config,
     media: source.media,
-    skinFile: source.skinFile,
+    sourceSkinFile: source.skinFile,
+    skinFile,
     'MediaPlayer.vue': `<script setup lang="ts">
 ${source.imports}
-import skin from '${skinSource}';
+import VideoSkin from '${skinSource}.vue';
 </script>
 
 <template>
-  <${playerTag} v-html="skin"></${playerTag}>
+  <${playerTag}>
+    <VideoSkin />
+  </${playerTag}>
 </template>`,
     'App.vue': `<script setup lang="ts">
 ${vuePlayerImport(opts.playerImport)}
@@ -736,14 +742,15 @@ export function generateSourceSvelteUsageCode(
 ): SourceSvelteUsageCode {
   const source = generateSourceHTMLUsageCode(opts);
   const playerTag = getPlayerTag(opts.useCase);
-  const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.html?raw`;
+  const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
+  const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.svelte`;
   const component = `<script lang="ts">
 ${indentBlock(source.imports, '  ')}
-  import skin from '${skinSource}';
+  import VideoSkin from '${skinSource}.svelte';
 </script>
 
 <${playerTag}>
-  {@html skin}
+  <VideoSkin />
 </${playerTag}>`;
   const usage = (path: string) => `<script lang="ts">
   import VideoPlayer from '${path}';
@@ -753,7 +760,8 @@ ${indentBlock(source.imports, '  ')}
 
   return {
     media: source.media,
-    skinFile: source.skinFile,
+    sourceSkinFile: source.skinFile,
+    skinFile,
     'VideoPlayer.svelte': component,
     '+page.svelte': usage('$lib/VideoPlayer.svelte'),
     'App.svelte': usage('./lib/VideoPlayer.svelte'),

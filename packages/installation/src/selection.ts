@@ -115,7 +115,7 @@ export function installationTemplatesForMethod(
 
   if (method === 'shadcn') return templates.filter((template) => template !== 'none');
 
-  if (method === 'cdn') return framework === 'html' ? (['none', 'vite'] as const) : [];
+  if (method === 'cdn') return framework === 'html' ? (['vite', 'none'] as const) : [];
 
   return templates;
 }

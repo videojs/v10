@@ -47,19 +47,20 @@ describe('SourceHTMLPlayer', () => {
     expect(screen.queryByRole('tab', { name: 'vite.config.ts' })).not.toBeInTheDocument();
   });
 
-  it('switches framework output in place and preserves raw skin HTML', () => {
+  it('switches framework output in place and imports framework skin components', () => {
     registryProjectFramework.set('vue');
     template.set('vite');
     render(<SourceHTMLPlayer part="player" />);
 
     expect(screen.getByRole('tab', { name: 'src/components/MediaPlayer.vue' })).toBeInTheDocument();
-    expect(screen.getByText(/v-html="skin"/)).toBeInTheDocument();
-    expect(screen.getByText(/skin\.html\?raw/)).toBeInTheDocument();
+    expect(screen.getByText(/import VideoSkin from.*skin\.vue/)).toBeInTheDocument();
+    expect(screen.getByText(/<VideoSkin \/>/)).toBeInTheDocument();
 
     act(() => registryProjectFramework.set('svelte'));
 
     expect(screen.getByRole('tab', { name: 'src/lib/VideoPlayer.svelte' })).toBeInTheDocument();
-    expect(screen.getByText(/\{@html skin\}/)).toBeInTheDocument();
+    expect(screen.getByText(/import VideoSkin from.*skin\.svelte/)).toBeInTheDocument();
+    expect(screen.getByText(/<VideoSkin \/>/)).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'src/App.svelte' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'src/routes/+page.svelte' })).not.toBeInTheDocument();
 

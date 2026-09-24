@@ -370,7 +370,7 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
       packageInstallStep(install[selection.packageManager]),
       {
         id: 'configure',
-        title: 'Register the custom elements',
+        title: 'Register custom elements',
         description: 'Use the file that matches your Vue toolchain.',
         blocks: [code('ts', config[installationVueConfigFilename(selection.template)], project.config)],
       },
@@ -592,7 +592,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     steps.push({
       id: 'player',
       title: 'Add your player',
-      description: `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Merge the matching isCustomElement option into your existing Vue config, keeping its other plugins and aliases. The component imports the updated local skin as raw HTML so Vue leaves its internal templates intact.`,
+      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile} inside a <template> block, then replace the <!-- Add a compatible media element here. --> placeholder with the media snippet below. Merge the matching isCustomElement option into your existing Vue config, keeping its other plugins and aliases. The player imports the local skin as a Vue component.`,
       blocks: [
         code('ts', player[installationVueConfigFilename(selection.template)], project.config),
         code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
@@ -615,7 +615,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     steps.push({
       id: 'player',
       title: 'Add your player',
-      description: `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. The component imports the updated local skin as raw HTML. The final file shown matches the selected ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app.`,
+      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile}, then replace the <!-- Add a compatible media element here. --> placeholder with the media snippet below. The player imports the local skin as a Svelte component. The final file shown matches the selected ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app.`,
       blocks: [
         code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
         code('svelte', player['VideoPlayer.svelte'], project.player),

@@ -66,6 +66,40 @@ export default function SourceHTMLPlayer({ part }: Props) {
   const html = generateSourceHTMLUsageCode(options);
 
   if (part === 'media') {
+    if (projectFramework === 'vue') {
+      const vue = generateSourceVueUsageCode(options);
+
+      return (
+        <>
+          <p className={`${shared.p} ${shared.prose}`}>
+            Move all markup from <code>{vue.sourceSkinFile}</code> into <code>{vue.skinFile}</code> inside a{' '}
+            <code>&lt;template&gt;</code> block. Then replace the “Add a compatible media element here” comment with:
+          </p>
+          <CodeTabs
+            label="Skin source"
+            tabs={[{ code: vue.media, label: vue.skinFile, lang: 'html', value: 'skin' }]}
+          />
+        </>
+      );
+    }
+
+    if (projectFramework === 'svelte') {
+      const svelte = generateSourceSvelteUsageCode(options);
+
+      return (
+        <>
+          <p className={`${shared.p} ${shared.prose}`}>
+            Move all markup from <code>{svelte.sourceSkinFile}</code> into <code>{svelte.skinFile}</code>. Then replace
+            the “Add a compatible media element here” comment with:
+          </p>
+          <CodeTabs
+            label="Skin source"
+            tabs={[{ code: svelte.media, label: svelte.skinFile, lang: 'html', value: 'skin' }]}
+          />
+        </>
+      );
+    }
+
     return (
       <>
         <p className={`${shared.p} ${shared.prose}`}>
@@ -145,9 +179,8 @@ export default function SourceHTMLPlayer({ part }: Props) {
     return (
       <>
         <p className={`${shared.p} ${shared.prose}`}>
-          Import the player, skin registration, and updated local skin HTML in a Vue component, then render it in your
-          app. Loading the HTML as raw text keeps the skin's internal templates intact. Nuxt uses a client-only
-          component so hydration does not replace the player markup.
+          Import the player, skin registration, and local Vue skin component, then render the player in your app. Nuxt
+          uses a client-only player component so hydration does not replace the custom-element markup.
         </p>
         <CodeTabs
           label="Vue component"
@@ -174,8 +207,8 @@ export default function SourceHTMLPlayer({ part }: Props) {
     return (
       <>
         <p className={`${shared.p} ${shared.prose}`}>
-          Import the player, skin registration, and updated local skin HTML in a Svelte component, then render it from
-          SvelteKit or a Vite app. Loading the HTML as raw text keeps the skin's browser-native markup intact.
+          Import the player, skin registration, and local Svelte skin component, then render the player from SvelteKit
+          or a Vite app.
         </p>
         <CodeTabs
           label="Svelte component"

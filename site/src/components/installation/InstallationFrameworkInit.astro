@@ -7,14 +7,12 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 ---
 
 <style is:global>
-  html[data-installation-query] [data-installation-query-state][data-installation-hydrating],
   html[data-installation-query-pending] [data-installation-query-state],
-  html[data-installation-query-pending] [data-installation-method-nav],
   html[data-installation-query-pending] [data-installation-plan] {
     visibility: hidden;
   }
 
-  [data-shadcn-framework="html"] {
+  html [data-shadcn-framework="html"] {
     display: none;
   }
 
@@ -23,6 +21,17 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
   }
 
   html[data-registry-framework="html"] [data-shadcn-framework="html"] {
+    display: contents;
+  }
+
+  html [data-shadcn-project-framework] {
+    display: none;
+  }
+
+  html[data-registry-project-framework="react"] [data-shadcn-project-framework="react"],
+  html[data-registry-project-framework="html"] [data-shadcn-project-framework="html"],
+  html[data-registry-project-framework="vue"] [data-shadcn-project-framework="vue"],
+  html[data-registry-project-framework="svelte"] [data-shadcn-project-framework="svelte"] {
     display: contents;
   }
 
@@ -50,10 +59,8 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
       && (installationParams.some((parameter) => params.has(parameter)) || needsSavedHtmlFramework);
 
     if (hasSelection) {
-      root.dataset.installationQuery = "";
       root.dataset.installationQueryPending = "";
     } else {
-      delete root.dataset.installationQuery;
       delete root.dataset.installationQueryPending;
     }
   }
@@ -65,6 +72,7 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 
     if (!isShadcn) {
       delete root.dataset.registryFramework;
+      delete root.dataset.registryProjectFramework;
       return;
     }
 
@@ -74,13 +82,16 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
       .map((cookie) => cookie.trim().split("="))
       .find(([key]) => key === frameworkCookie)?.[1];
 
-    root.dataset.registryFramework = requested === "react"
+    const projectFramework = requested === "react"
       ? "react"
       : requested === "html" || requested === "vue" || requested === "svelte"
-        ? "html"
+        ? requested
       : saved === "html" || saved === "react"
         ? saved
         : "react";
+
+    root.dataset.registryProjectFramework = projectFramework;
+    root.dataset.registryFramework = projectFramework === "react" ? "react" : "html";
   }
 
   applyInstallationFramework(window.location, document.documentElement);

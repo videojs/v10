@@ -22,20 +22,31 @@ interface Props {
   installation?: boolean;
   /** Explicit source framework for routes that are not nested under a docs framework. */
   framework?: InstallationFramework;
+  /** Keep one prerendered app-card group tied to its framework. */
+  fixedFramework?: boolean;
 }
 
-const { defaultSkin, defaultTheme, installation = false, kind, method, framework: frameworkProp } = Astro.props;
+const {
+  defaultSkin,
+  defaultTheme,
+  fixedFramework = false,
+  installation = false,
+  kind,
+  method,
+  framework: frameworkProp,
+} = Astro.props;
 const routeFramework = Astro.params.framework;
 const framework = frameworkProp ?? (isInstallationFramework(routeFramework) ? routeFramework : null);
 if (!framework) throw new Error(`RegistryOptions needs a framework route, received ${routeFramework}.`);
 ---
 
 <ContentWidth>
-  <div data-installation-query-state data-llms-ignore>
+  <div data-installation-query-state={kind === 'template' ? undefined : ''} data-llms-ignore>
     <RegistryOptionsClient
       client:load
       defaultSkin={defaultSkin}
       defaultTheme={defaultTheme}
+      fixedFramework={fixedFramework}
       framework={framework}
       installation={installation}
       kind={kind}

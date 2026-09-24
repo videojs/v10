@@ -23,6 +23,7 @@ describe('selectRegistryProjectFramework', () => {
     template.set('next');
     registryTheme.set(null);
     document.documentElement.removeAttribute('data-registry-framework');
+    document.documentElement.removeAttribute('data-registry-project-framework');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.history.replaceState(null, '', '/');
   });
@@ -61,6 +62,7 @@ describe('selectRegistryProjectFramework', () => {
     expect(window.location.href).toContain('/docs/guides/installation/shadcn?framework=html');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 320 });
     expect(document.documentElement.dataset.registryFramework).toBe('html');
+    expect(document.documentElement.dataset.registryProjectFramework).toBe('html');
   });
 
   it('keeps the Vue project selection while using HTML registry source and site preferences', () => {
@@ -79,6 +81,7 @@ describe('selectRegistryProjectFramework', () => {
       '?framework=vue&preset=audio&media=spotify&package-manager=pnpm&source-url=track'
     );
     expect(document.documentElement.dataset.registryFramework).toBe('html');
+    expect(document.documentElement.dataset.registryProjectFramework).toBe('vue');
   });
 
   it('writes template and styling choices into the Shadcn URL', () => {

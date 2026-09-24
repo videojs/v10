@@ -23,7 +23,7 @@ describe('installationOptionDefinitions', () => {
   it('advertises every app setup supported by the HTML package frameworks', () => {
     const definitions = installationOptionDefinitions('html');
 
-    expect(valuesFor(definitions, '--template')).toEqual(['none', 'vite', 'astro', 'laravel', 'nuxt', 'sveltekit']);
+    expect(valuesFor(definitions, '--template')).toEqual(['vite', 'astro', 'laravel', 'none', 'nuxt', 'sveltekit']);
     expect(valuesFor(definitions, '--styling')).toEqual(['css']);
     expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('vite');
     expect(definitions.find(({ flag }) => flag === '--styling')?.default).toBe('css');
@@ -57,7 +57,7 @@ describe('installationOptionDefinitionsFor', () => {
   it('offers an existing page or Vite scaffold for CDN instructions', () => {
     const definitions = installationOptionDefinitionsFor({ methods: ['cdn'], frameworks: ['html'] });
 
-    expect(valuesFor(definitions, '--template')).toEqual(['none', 'vite']);
+    expect(valuesFor(definitions, '--template')).toEqual(['vite', 'none']);
     expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('vite');
   });
 });

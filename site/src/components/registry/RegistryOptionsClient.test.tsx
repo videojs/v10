@@ -82,8 +82,10 @@ describe('RegistryOptionsClient', () => {
       <RegistryOptionsClient framework="html" installation={false} kind="template" method="shadcn" />
     );
 
-    expect(packaged).toContain('data-options="Existing site,Vite,Astro,Laravel"');
-    expect(packaged).toContain('data-descriptions="Static HTML, WordPress, or another CMS"');
+    expect(packaged).toContain('data-options="Vite,Astro,Laravel,Existing site"');
+    expect(packaged).toContain(
+      'data-descriptions="Fast app and development server,Content-focused sites with islands,Laravel app with Vite assets,Static HTML, WordPress, or another CMS"'
+    );
     expect(shadcn).toContain('data-options="Vite,Astro,Laravel"');
   });
 });

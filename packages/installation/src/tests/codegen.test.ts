@@ -462,13 +462,14 @@ describe('Vue and Svelte code generation', () => {
     expect(usage['App.svelte']).toContain(`src={${JSON.stringify(sourceUrl)}}`);
   });
 
-  it('loads copied HTML skin source without compiling it as a Vue template', () => {
+  it('imports copied skin source as a Vue component', () => {
     const code = generateSourceVueUsageCode({ ...hlsOptions, sourceUrl: '' })['MediaPlayer.vue'];
 
-    expect(code).toContain("import skin from '@/components/videojs/video/skin.html?raw'");
-    expect(code).toContain('<video-player v-html="skin"></video-player>');
-    expect(code).not.toContain('<video-player style=');
-    expect(code).not.toContain('Paste the complete updated');
+    expect(code).toContain("import VideoSkin from '@/components/videojs/video/skin.vue'");
+    expect(code).toContain('<video-player>');
+    expect(code).toContain('<VideoSkin />');
+    expect(code).not.toContain('v-html');
+    expect(code).not.toContain('?raw');
   });
 
   it('imports Nuxt client-only players through its component registry', () => {
@@ -478,14 +479,14 @@ describe('Vue and Svelte code generation', () => {
     expect(code).not.toContain("from './components/MediaPlayer.client.vue'");
   });
 
-  it('loads copied HTML skin source without compiling it as Svelte markup', () => {
+  it('imports copied skin source as a Svelte component', () => {
     const code = generateSourceSvelteUsageCode({ ...hlsOptions, sourceUrl: '' })['VideoPlayer.svelte'];
 
-    expect(code).toContain("import skin from '$lib/components/videojs/video/skin.html?raw'");
+    expect(code).toContain("import VideoSkin from '$lib/components/videojs/video/skin.svelte'");
     expect(code).toContain('<video-player>');
-    expect(code).not.toContain('<video-player style=');
-    expect(code).toContain('{@html skin}');
-    expect(code).not.toContain('Paste the complete updated');
+    expect(code).toContain('<VideoSkin />');
+    expect(code).not.toContain('{@html');
+    expect(code).not.toContain('?raw');
   });
 });
 

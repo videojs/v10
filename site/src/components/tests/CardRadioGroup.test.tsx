@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
 import { atom } from 'nanostores';
 import { useSyncExternalStore } from 'react';
 import { hydrateRoot, type Root } from 'react-dom/client';
@@ -21,7 +21,12 @@ function FrameworkPicker() {
       value={value}
       onChange={framework.set}
       options={[
-        { value: 'react', label: 'React', media: <span /> },
+        {
+          value: 'react',
+          label: 'React',
+          media: <span />,
+          link: { href: 'https://react.dev/', label: 'Official site' },
+        },
         { value: 'html', label: 'HTML', media: <span /> },
       ]}
       aria-label="Select JS framework"
@@ -39,23 +44,34 @@ describe('CardRadioGroup', () => {
     framework.set('html');
   });
 
-  it('stays marked as hydrating until the client selection replaces the server selection', async () => {
+  it('keeps every card visible while the URL-backed selection hydrates', async () => {
     const container = document.createElement('div');
 
     container.innerHTML = renderToString(<FrameworkPicker />);
 
     const serverGroup = container.querySelector('[role="radiogroup"]');
 
-    expect(serverGroup).toHaveAttribute('data-installation-hydrating');
-    expect(container.querySelector('[role="radio"][aria-checked="true"]')).toHaveTextContent('React');
+    const serverSelection = container.querySelector('[role="radio"][aria-checked="true"]');
+
+    expect(serverGroup).not.toHaveAttribute('data-selection-ready');
+    expect(serverSelection).toHaveTextContent('React');
+    expect(serverSelection).toHaveClass('ring-transparent');
+    expect(container.querySelectorAll('[role="radio"]')).toHaveLength(2);
+    expect(serverSelection?.querySelector('a')).toBeNull();
+    expect(container.querySelector('a[href="https://react.dev/"]')).toHaveTextContent('Official site');
 
     await act(async () => {
       root = hydrateRoot(container, <FrameworkPicker />);
     });
 
-    const clientGroup = container.querySelector('[role="radiogroup"]');
+    expect(container.querySelector('[role="radio"].ring-accent')).toBeNull();
 
-    expect(clientGroup).not.toHaveAttribute('data-installation-hydrating');
-    expect(container.querySelector('[role="radio"][aria-checked="true"]')).toHaveTextContent('HTML');
+    await waitFor(() => expect(container.querySelector('[role="radiogroup"]')).toHaveAttribute('data-selection-ready'));
+
+    const clientSelection = container.querySelector('[role="radio"][aria-checked="true"]');
+
+    expect(clientSelection).toHaveTextContent('HTML');
+    expect(clientSelection).toHaveClass('ring-accent');
+    expect(container.querySelectorAll('[role="radio"]')).toHaveLength(2);
   });
 });

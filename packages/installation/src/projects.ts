@@ -30,7 +30,7 @@ export const INSTALLATION_TEMPLATE_LABELS = {
 
 const TEMPLATES_BY_FRAMEWORK = {
   react: ['next', 'vite', 'start', 'react-router', 'astro', 'laravel'],
-  html: ['none', 'vite', 'astro', 'laravel'],
+  html: ['vite', 'astro', 'laravel', 'none'],
   vue: ['vite', 'nuxt'],
   svelte: ['vite', 'sveltekit'],
 } as const satisfies Record<InstallationFramework, readonly InstallationTemplate[]>;

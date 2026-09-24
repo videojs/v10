@@ -83,9 +83,34 @@ const THEME_ICONS = {
   minimal: <SkinPreview skin="minimal-video" className="size-4" />,
 } satisfies Record<RegistryTheme, ReactNode>;
 
+const TEMPLATE_DESCRIPTIONS = {
+  none: 'Static HTML, WordPress, or another CMS',
+  next: 'Full-stack React with App Router',
+  vite: 'Fast app and development server',
+  start: 'Full-stack React with TanStack Router',
+  laravel: 'Laravel app with Vite assets',
+  'react-router': 'React Router framework mode',
+  astro: 'Content-focused sites with islands',
+  nuxt: 'Full-stack Vue framework',
+  sveltekit: 'Full-stack Svelte framework',
+} as const satisfies Record<InstallationTemplate, string>;
+
+const TEMPLATE_LINKS = {
+  none: undefined,
+  next: 'https://nextjs.org/',
+  vite: 'https://vite.dev/',
+  start: 'https://tanstack.com/start/latest',
+  laravel: 'https://laravel.com/',
+  'react-router': 'https://reactrouter.com/',
+  astro: 'https://astro.build/',
+  nuxt: 'https://nuxt.com/',
+  sveltekit: 'https://svelte.dev/docs/kit',
+} as const satisfies Record<InstallationTemplate, string | undefined>;
+
 interface Props {
   defaultSkin?: RegistryPreset;
   defaultTheme?: RegistryTheme;
+  fixedFramework?: boolean;
   framework: InstallationFramework;
   installation: boolean;
   kind: 'template' | 'catalog' | 'styling';
@@ -101,13 +126,19 @@ function templateCardOptions(
   return templates.map((value) => ({
     value,
     label: INSTALLATION_TEMPLATE_LABELS[value],
-    description: value === 'none' ? 'Static HTML, WordPress, or another CMS' : undefined,
+    description: TEMPLATE_DESCRIPTIONS[value],
     media: TEMPLATE_ICONS[value],
+    link: TEMPLATE_LINKS[value] ? { href: TEMPLATE_LINKS[value], label: 'Official site' } : undefined,
   }));
 }
 
-function RegistryTemplateCards({ framework, method }: Pick<Props, 'framework' | 'method'>) {
-  const projectFramework = useRegistryProjectFramework(framework);
+function RegistryTemplateCards({
+  fixedFramework,
+  framework,
+  method,
+}: Pick<Props, 'fixedFramework' | 'framework' | 'method'>) {
+  const selectedFramework = useRegistryProjectFramework(framework);
+  const projectFramework = fixedFramework ? framework : selectedFramework;
   const defaultTemplate = defaultInstallationTemplate(projectFramework);
   const $template = useInstallationTemplate(defaultTemplate);
   const template = resolveInstallationTemplateForMethod(projectFramework, $template, method ?? 'packaged');
@@ -224,12 +255,15 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
 export default function RegistryOptionsClient({
   defaultSkin,
   defaultTheme,
+  fixedFramework = false,
   framework,
   installation,
   kind,
   method,
 }: Props) {
-  if (kind === 'template') return <RegistryTemplateCards framework={framework} method={method} />;
+  if (kind === 'template') {
+    return <RegistryTemplateCards fixedFramework={fixedFramework} framework={framework} method={method} />;
+  }
 
   return kind === 'catalog' ? (
     <RegistryCatalogSelects

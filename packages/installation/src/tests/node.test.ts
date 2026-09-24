@@ -359,7 +359,7 @@ describe('runAgentsInit', () => {
     const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn', '--template', 'astro']);
 
     expect(result.exitCode).toBe(2);
-    expect(result.stderr).toContain('- --template: Expected one of: none, vite');
+    expect(result.stderr).toContain('- --template: Expected one of: vite, none');
     expect(result.stderr).not.toContain('RegistryTemplate');
   });
 

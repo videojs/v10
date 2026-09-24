@@ -20,7 +20,7 @@ import { resolveInstallationMethodHref } from '@/utils/installation/method-navig
 import { INSTALLATION_METHOD_OPTIONS } from '@/utils/installation/method-options';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
-import useIsHydrated from '@/utils/useIsHydrated';
+import { useIsHydrationSettled } from '@/utils/useIsHydrated';
 
 import { useRegistryProjectFramework } from './useRegistryProjectFramework';
 import { useSelection } from './useSelection';
@@ -60,7 +60,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const selectedTemplate = useSelection('template');
   const selectedUseCase = useSelection('useCase');
   const registrySelection = useRegistryProjectFramework(currentFramework);
-  const isHydrated = useIsHydrated();
+  const isHydrated = useIsHydrationSettled();
   const framework = route === 'shadcn' ? registrySelection : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = installationMethodsForFramework(framework);
@@ -139,6 +139,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
       {items.map(({ id, label, description }) => {
         const Icon = ICONS[id];
         const href = getMethodHref(id);
+        const showSelection = isHydrated && active === id;
         const cardDescription =
           id === 'shadcn' && (framework === 'vue' || framework === 'svelte')
             ? 'Add editable HTML skin source to your project.'
@@ -155,9 +156,9 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
               'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
               'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
-              active === id
+              showSelection
                 ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
-                : 'border-line intent:border-line-strong'
+                : 'border-line ring-1 ring-transparent intent:border-line-strong'
             )}
           >
             <span
@@ -174,7 +175,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
               aria-hidden="true"
               className={clsx(
                 'absolute top-3 right-3 flex size-5 items-center justify-center rounded-full border transition',
-                active === id
+                showSelection
                   ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
                   : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100'
               )}

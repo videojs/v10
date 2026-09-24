@@ -20,24 +20,28 @@ const OPTIONS: CardRadioOption<InstallationFramework>[] = [
     label: 'React',
     description: 'Components and hooks for React 19',
     media: <ReactLogo className="size-7" />,
+    link: { href: 'https://react.dev/', label: 'Official site' },
   },
   {
     value: 'html',
     label: 'HTML',
     description: 'Custom elements for any stack',
     media: <Html5Logo className="size-7" />,
+    link: { href: 'https://html.spec.whatwg.org/', label: 'HTML standard' },
   },
   {
     value: 'vue',
     label: 'Vue',
     description: 'Vue 3 and Nuxt, using the custom elements',
     media: <VueLogo className="size-7" />,
+    link: { href: 'https://vuejs.org/', label: 'Official site' },
   },
   {
     value: 'svelte',
     label: 'Svelte',
     description: 'Svelte 5 and SvelteKit, using the custom elements',
     media: <SvelteLogo className="size-7" />,
+    link: { href: 'https://svelte.dev/', label: 'Official site' },
   },
 ];
 

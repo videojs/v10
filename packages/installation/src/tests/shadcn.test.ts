@@ -98,14 +98,14 @@ describe('shadcnInitCommand', () => {
 
   it('offers compatible app templates for each project framework', () => {
     expect(installationTemplates('react')).toEqual(['next', 'vite', 'start', 'react-router', 'astro', 'laravel']);
-    expect(installationTemplates('html')).toEqual(['none', 'vite', 'astro', 'laravel']);
+    expect(installationTemplates('html')).toEqual(['vite', 'astro', 'laravel', 'none']);
     expect(installationTemplates('vue')).toEqual(['vite', 'nuxt']);
     expect(installationTemplates('svelte')).toEqual(['vite', 'sveltekit']);
   });
 
   it('keeps the no-scaffold setup out of Shadcn', () => {
     expect(installationTemplatesForMethod('html', 'packaged')).toContain('none');
-    expect(installationTemplatesForMethod('html', 'cdn')).toEqual(['none', 'vite']);
+    expect(installationTemplatesForMethod('html', 'cdn')).toEqual(['vite', 'none']);
     expect(installationTemplatesForMethod('html', 'shadcn')).toEqual(['vite', 'astro', 'laravel']);
   });
 

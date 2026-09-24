@@ -50,12 +50,20 @@ Choose the JavaScript framework for your project.
 
 Choose the app environment that controls the setup commands and file locations below.
 
-<ShadcnFrameworkCase framework="react">
-<RegistryOptions framework="react" kind="template" method="shadcn" />
+<ShadcnFrameworkCase framework="react" match="project" llmsHeading={false}>
+<RegistryOptions framework="react" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="html">
-<RegistryOptions framework="html" kind="template" method="shadcn" />
+<ShadcnFrameworkCase framework="html" match="project" llmsHeading={false}>
+<RegistryOptions framework="html" fixedFramework kind="template" method="shadcn" />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="vue" match="project" llmsHeading={false}>
+<RegistryOptions framework="vue" fixedFramework kind="template" method="shadcn" />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="svelte" match="project" llmsHeading={false}>
+<RegistryOptions framework="svelte" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
 ## Choose your use case
@@ -96,10 +104,6 @@ Choose from the installation options available for your selections.
 
 React skin source is available with Tailwind CSS 4 or Vanilla CSS. HTML source for HTML, Vue, and Svelte uses Vanilla CSS.
 
-<ShadcnFrameworkCase framework="react">
-<RegistryOptions framework="react" kind="styling" />
-</ShadcnFrameworkCase>
-
 <Steps>
   <Step number={1} title="Create the app">
     Skip this step when you already have the selected app setup. For a new React and Tailwind app, run the command from the parent directory: Shadcn creates the named app and `components.json` together. The other paths scaffold into the current empty app directory before you add the standard config below.
@@ -129,6 +133,10 @@ React skin source is available with Tailwind CSS 4 or Vanilla CSS. HTML source f
 ## Add the skin source
 
 The first command adds the selected Video.js catalog when `@videojs` is not already configured. Shadcn skips existing namespaces, so when you change styling or theme, replace the existing `@videojs` URL in `components.json` with the URL shown in the command. The second command adds the skin source and overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
+
+<ShadcnFrameworkCase framework="react">
+<RegistryOptions framework="react" kind="styling" />
+</ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="react">
 <InstallationRegistryCommand framework="react" />
@@ -161,7 +169,7 @@ The HTML source also works in Vue and Svelte. The steps below match the framewor
   <Step number={1} title="Add the media element">
     <SourceHTMLPlayer client:load part="media" />
   </Step>
-  <Step number={2} title="Register the custom elements">
+  <Step number={2} title="Register custom elements">
     <SourceHTMLPlayer client:load part="imports" />
   </Step>
   <Step number={3} title="Add the player to your page">
@@ -187,7 +195,7 @@ Start in `<components alias>/videojs/<preset>/skin.tsx`. Follow the [Customize s
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-Start in `<components alias>/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+For HTML, start in `<components alias>/videojs/<preset>/skin.html`. Vue and Svelte move that markup into `skin.vue` or `skin.svelte` during setup, so edit the framework component instead. After updating the registry item, move the refreshed `skin.html` markup into that component again. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
 </ShadcnFrameworkCase>
 
 ## Choose what to do next
