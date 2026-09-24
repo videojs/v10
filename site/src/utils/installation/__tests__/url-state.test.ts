@@ -143,6 +143,12 @@ describe('serializeInstallationSearchForRoute', () => {
       '?framework=vue&styling=css&utm_source=docs'
     );
   });
+
+  it('keeps the existing-site setup on the CDN route', () => {
+    expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, template: 'none' })).toBe(
+      '?template=none'
+    );
+  });
 });
 
 describe('normalizeInstallationSelectionForRoute', () => {

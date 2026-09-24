@@ -197,7 +197,7 @@ export function serializeInstallationSearchForRoute(
     }
   }
 
-  if (route === 'cdn') canonicalParams.delete('template');
+  if (route === 'cdn' && selection.template !== 'none') canonicalParams.delete('template');
 
   const string = canonicalParams.toString();
 
