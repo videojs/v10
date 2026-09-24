@@ -98,12 +98,12 @@ export function selectRegistryProjectFramework(framework: InstallationFramework)
   applyRegistryProjectFramework(framework);
 }
 
-function writeRegistryOption(key: 'styling', value: string): void {
+function writeRegistryStyling(styling: RegistryStyling): void {
   if (globalThis.window) {
     const url = new URL(window.location.href);
 
     if (isShadcnInstallationUrl(url)) {
-      const target = updateShadcnInstallationUrl(url, { [key]: value });
+      const target = updateShadcnInstallationUrl(url, { styling });
 
       history.replaceState(history.state, '', `${target.pathname}${target.search}${target.hash}`);
     }
@@ -112,6 +112,6 @@ function writeRegistryOption(key: 'styling', value: string): void {
 
 /** Select the Shadcn styling catalog and keep the shareable URL in sync. */
 export function selectRegistryStyling(styling: RegistryStyling): void {
-  writeRegistryOption('styling', styling);
+  writeRegistryStyling(styling);
   registryStyling.set(styling);
 }

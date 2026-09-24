@@ -10,8 +10,8 @@ export interface DetectionResult {
 const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Renderer }> = [
   // Mux is matched by hostname before the `.m3u8` extension rule below, so a
   // `stream.mux.com` URL resolves to a Mux renderer (with Mux Data) rather than
-  // generic HLS. The two Mux rules are ordered video-then-audio; the loop's
-  // use-case guard skips the invalid one and `continue`s to the next.
+  // generic HLS. Candidate order lets the selected use case choose video,
+  // audio, or background playback.
   {
     match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
     renderer: 'mux-video',

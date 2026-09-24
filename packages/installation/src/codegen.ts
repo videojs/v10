@@ -171,6 +171,8 @@ function isSizedVideoPlayer(useCase: UseCase): boolean {
 
 const htmlVideoLayout = ' style="display: block; width: 100%; aspect-ratio: 16 / 9;"';
 const reactVideoLayout = ` style={{ width: '100%', aspectRatio: '16 / 9' }}`;
+const htmlContainerVideoLayout = ' style="position: relative; display: block; width: 100%; aspect-ratio: 16 / 9;"';
+const reactContainerVideoLayout = ` style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9' }}`;
 
 export function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const prefix = getInstallationPreset(useCase).tagPrefix;
@@ -208,12 +210,6 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
   const src = resolveInstallationSourceUrl(url, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
 
-  const mediaComment = `  <!--
-      Media are players without UIs, handling networking
-      and display of the media. They are easily swappable
-      to handle different sources.
-    -->`;
-
   const skinMediaComment = `    <!--
         Media are players without UIs, handling networking
         and display of the media. They are easily swappable
@@ -226,12 +222,14 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
  -->`;
 
   if (skin === 'none' && useCase !== 'background-video') {
-    const mediaLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
+    const containerLayout = isSizedVideoPlayer(useCase) ? htmlContainerVideoLayout : '';
 
     return `${playerComment}
 <${playerTag}>
-${mediaComment}
-${generateMediaMarkup(tag, src, `${playsInline}${mediaLayout}`, renderer, '  ')}
+  <media-container${containerLayout}>
+${skinMediaComment}
+${generateMediaMarkup(tag, src, playsInline, renderer, '    ')}
+  </media-container>
 </${playerTag}>`;
   }
 
@@ -273,7 +271,8 @@ import '@videojs/html/background/video';${mediaImport}`;
     : '';
 
   if (skin === 'none') {
-    return `import '@videojs/html/${group}/player';${mediaImport}${muxDataImport}`;
+    return `import '@videojs/html/${group}/player';
+import '@videojs/html/ui/container';${mediaImport}${muxDataImport}`;
   }
 
   return `import '@videojs/html/${group}/player';
@@ -313,6 +312,8 @@ function getHTMLCustomElementTags(
 
   if (includePackagedSkin && (skin !== 'none' || useCase === 'background-video')) {
     tags.push(getSkinTag(useCase, skin === 'none' ? 'video' : skin));
+  } else if (skin === 'none') {
+    tags.push('media-container');
   }
 
   const mediaTag = getRendererTag(renderer);
@@ -516,9 +517,9 @@ export function generateReactCreateCode(
   const rendererProps = isVideoLikeRenderer(renderer)
     ? `src={${JSON.stringify(source)}} playsInline`
     : `src={${JSON.stringify(source)}}`;
-  const rendererLayout = isNoSkin && isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
-  const rendererJsx = `<${rendererComponent} ${rendererProps}${rendererLayout} />`;
+  const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
   const skinLayout = isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
+  const containerLayout = isSizedVideoPlayer(useCase) ? reactContainerVideoLayout : '';
 
   let presetImport: string;
   let mediaImport: string | null = null;
@@ -567,11 +568,14 @@ export function generateReactCreateCode(
       </${skinComponent}>
     </${playerComponent}>`
     : `    <${playerComponent}>
-      ${generateReactMediaJsx(rendererJsx, renderer, '      ')}
+      <Container${containerLayout}>
+        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
+      </Container>
     </${playerComponent}>`;
 
   const imports = [
     ...(skinCssImport ? [`import '${skinCssImport}';`] : []),
+    ...(isNoSkin ? [`import { Container } from '@videojs/react';`] : []),
     presetImport,
     ...(mediaImport ? [mediaImport] : []),
     ...(muxDataImport ? [muxDataImport] : []),
@@ -671,7 +675,6 @@ export function generateSourceHTMLUsageCode(
   const tag = getRendererTag(renderer);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
-  const playerLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
   const imports = [
     `import '@videojs/html/${preset.group}/player';`,
     ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
@@ -682,7 +685,7 @@ export function generateSourceHTMLUsageCode(
   return {
     imports,
     media: generateMediaMarkup(tag, source, playsInline, renderer, ''),
-    player: `<${getPlayerTag(useCase)}${playerLayout}>
+    player: `<${getPlayerTag(useCase)}>
   <!-- Paste the contents of ${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html here. -->
 </${getPlayerTag(useCase)}>`,
     skinFile: `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`,
@@ -699,7 +702,6 @@ export function generateSourceVueUsageCode(
 ): SourceVueUsageCode {
   const source = generateSourceHTMLUsageCode(opts);
   const playerTag = getPlayerTag(opts.useCase);
-  const playerLayout = isSizedVideoPlayer(opts.useCase) ? htmlVideoLayout : '';
   const config = generateVueCustomElementConfigCode({ ...opts, skin: defaultSkinForUseCase(opts.useCase) }, true);
   const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.html?raw`;
 
@@ -713,7 +715,7 @@ import skin from '${skinSource}';
 </script>
 
 <template>
-  <${playerTag}${playerLayout} v-html="skin"></${playerTag}>
+  <${playerTag} v-html="skin"></${playerTag}>
 </template>`,
     'App.vue': `<script setup lang="ts">
 ${vuePlayerImport(opts.playerImport)}
@@ -734,14 +736,13 @@ export function generateSourceSvelteUsageCode(
 ): SourceSvelteUsageCode {
   const source = generateSourceHTMLUsageCode(opts);
   const playerTag = getPlayerTag(opts.useCase);
-  const playerLayout = isSizedVideoPlayer(opts.useCase) ? htmlVideoLayout : '';
   const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.html?raw`;
   const component = `<script lang="ts">
 ${indentBlock(source.imports, '  ')}
   import skin from '${skinSource}';
 </script>
 
-<${playerTag}${playerLayout}>
+<${playerTag}>
   {@html skin}
 </${playerTag}>`;
   const usage = (path: string) => `<script lang="ts">

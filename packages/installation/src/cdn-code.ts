@@ -44,6 +44,10 @@ export function generateCdnCode(
 
   const scriptLines = [`<script type="module" src="${cdnBase}/${name}.js"></script>`];
 
+  if (skin === 'none') {
+    scriptLines.push(`<script type="module" src="${cdnBase}/ui/container.js"></script>`);
+  }
+
   // Emit a media script only when that media ships a CDN build. A media renderer
   // whose subpath is absent gets only the preset script.
   if (mediaSubpath !== null && cdnMediaSubpaths.includes(mediaSubpath)) {

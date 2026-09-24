@@ -21,7 +21,7 @@ export async function htmlSkinItem(
   const meta = skin.root.meta;
 
   const { registryItem: name, directory } = skinCatalogEntry(meta.name);
-  const template = createSourceOwnedHtml(skin.template);
+  const template = createSourceOwnedHtml(skin.template, !skin.preset.endsWith('audio'));
 
   const styleTarget = `${directory}/skin.css`;
   const themeImport = relativeRegistryImport(

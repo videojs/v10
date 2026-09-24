@@ -104,6 +104,13 @@ describe('generateHTMLInstallCode', () => {
     expect(result.cdn).toContain('extensions/mux-data.js');
   });
 
+  it('registers the container for a skinless CDN player', () => {
+    const result = generateHTMLInstallCode({ ...baseHTML, skin: 'none' }, manifest);
+
+    expect(result.cdn).toContain('/video-player.js');
+    expect(result.cdn).toContain('/ui/container.js');
+  });
+
   it('installs the selected playback adapter', () => {
     const hls = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' }, manifest);
     const dash = generateHTMLInstallCode({ ...baseHTML, renderer: 'dash' }, manifest);
@@ -326,8 +333,14 @@ describe('generateHTMLUsageCode', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, skin: 'none' });
 
     expect(result.html).toContain('<video-player>');
+    expect(result.html).toContain(
+      '<media-container style="position: relative; display: block; width: 100%; aspect-ratio: 16 / 9;">'
+    );
+    expect(result.html).toContain('<video src=');
+    expect(result.html).not.toContain('playsinline style=');
     expect(result.html).not.toContain('<video-skin>');
     expect(result.imports).toContain("import '@videojs/html/video/player'");
+    expect(result.imports).toContain("import '@videojs/html/ui/container'");
     expect(result.imports).not.toContain("import '@videojs/html/video/skin'");
   });
 
@@ -453,9 +466,8 @@ describe('Vue and Svelte code generation', () => {
     const code = generateSourceVueUsageCode({ ...hlsOptions, sourceUrl: '' })['MediaPlayer.vue'];
 
     expect(code).toContain("import skin from '@/components/videojs/video/skin.html?raw'");
-    expect(code).toContain(
-      '<video-player style="display: block; width: 100%; aspect-ratio: 16 / 9;" v-html="skin"></video-player>'
-    );
+    expect(code).toContain('<video-player v-html="skin"></video-player>');
+    expect(code).not.toContain('<video-player style=');
     expect(code).not.toContain('Paste the complete updated');
   });
 
@@ -470,7 +482,8 @@ describe('Vue and Svelte code generation', () => {
     const code = generateSourceSvelteUsageCode({ ...hlsOptions, sourceUrl: '' })['VideoPlayer.svelte'];
 
     expect(code).toContain("import skin from '$lib/components/videojs/video/skin.html?raw'");
-    expect(code).toContain('<video-player style="display: block; width: 100%; aspect-ratio: 16 / 9;">');
+    expect(code).toContain('<video-player>');
+    expect(code).not.toContain('<video-player style=');
     expect(code).toContain('{@html skin}');
     expect(code).not.toContain('Paste the complete updated');
   });
@@ -616,8 +629,11 @@ describe('generateReactCreateCode', () => {
 
     expect(code).not.toContain('VideoSkin');
     expect(code).not.toContain('skin.css');
+    expect(code).toContain("import { Container } from '@videojs/react'");
+    expect(code).toContain("<Container style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9' }}>");
     expect(code).toContain('<Video src={"');
-    expect(code).toContain("playsInline style={{ width: '100%', aspectRatio: '16 / 9' }} />");
+    expect(code).toContain('playsInline />');
+    expect(code).not.toContain('playsInline style=');
     expect(code).toContain("from '@videojs/react/video'");
   });
 
@@ -777,7 +793,8 @@ describe('source installation code', () => {
     expect(code.imports).toContain("import '@videojs/html/video/player'");
     expect(code.imports).toContain("import '@videojs/html/media/hlsjs-video'");
     expect(code.imports).toContain("import '@/components/videojs/video/skin'");
-    expect(code.player).toContain('<video-player style=');
+    expect(code.player).toContain('<video-player>');
+    expect(code.player).not.toContain('<video-player style=');
     expect(code.player).not.toContain('<script');
   });
 });

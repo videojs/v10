@@ -32,4 +32,24 @@ describe('HTML registry output', () => {
       );
     }
   });
+
+  it('sizes video skins on their container instead of their player', () => {
+    const files = readdirSync(registryDir, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name === 'skin.html')
+      .map((entry) => resolve(entry.parentPath, entry.name));
+
+    expect(files.length).toBeGreaterThan(0);
+
+    for (const file of files) {
+      const source = readFileSync(file, 'utf8');
+
+      if (/\/files\/(?:live-)?audio\/skin\.html$/u.test(file)) {
+        expect(source, file).not.toContain('aspect-ratio: 16 / 9');
+      } else {
+        expect(source, file).toContain(
+          '<media-container data-vjs-scope-ids style="display: block; width: 100%; aspect-ratio: 16 / 9;"'
+        );
+      }
+    }
+  });
 });

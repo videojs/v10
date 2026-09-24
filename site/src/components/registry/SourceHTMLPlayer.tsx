@@ -28,7 +28,7 @@ interface Props {
 interface CodeTab {
   code: string;
   label: string;
-  lang: 'html' | 'js' | 'ts';
+  lang: 'html' | 'js' | 'json' | 'ts';
   value: string;
 }
 

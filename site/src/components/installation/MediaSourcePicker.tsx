@@ -30,7 +30,7 @@ function Monogram({ children }: { children: string }) {
   return <span className="font-display-compact text-p4 font-bold tracking-tight uppercase">{children}</span>;
 }
 
-const RENDERER_MEDIA: Record<Renderer, ReactNode> = {
+const RENDERER_MEDIA = {
   'html5-video': <Html5Logo className="size-6" />,
   'html5-audio': <Html5Logo className="size-6" />,
   hls: <Monogram>HLS</Monogram>,
@@ -44,9 +44,11 @@ const RENDERER_MEDIA: Record<Renderer, ReactNode> = {
   twitch: <TwitchLogo className="size-6" />,
   spotify: <SpotifyLogo className="size-6" />,
   'background-video': <Image className="size-6" />,
-};
+  'hls-background-video': <Monogram>HLS</Monogram>,
+  'mux-background-video': <MuxLogo className="w-7" />,
+} satisfies Record<Renderer, ReactNode>;
 
-const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
+const RENDERER_DESCRIPTIONS = {
   'html5-video': 'MP4, WebM, and other file URLs',
   'html5-audio': 'MP3, AAC, and other file URLs',
   hls: 'Adaptive .m3u8 streams via hls.js',
@@ -60,7 +62,9 @@ const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
   twitch: 'Twitch channels, videos, and clips',
   spotify: 'Spotify tracks, albums, and episodes',
   'background-video': 'Muted, looping file URLs',
-};
+  'hls-background-video': 'Muted, looping HLS streams',
+  'mux-background-video': 'Muted, looping Mux playback IDs',
+} satisfies Record<Renderer, string>;
 
 /** How long typing may pause before the draft URL reaches the preview. */
 const COMMIT_DELAY_MS = 500;

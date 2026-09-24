@@ -1,6 +1,6 @@
 [build]
-  command = "pnpm exec vp run --no-cache @videojs/skins#build:shadcn"
+  command = "pnpm --dir packages/installation exec vp pack && pnpm exec vp run --no-cache @videojs/skins#build:shadcn"
   publish = "packages/skins/dist/shadcn"
 
 [context.production]
-  command = "pnpm exec vp run --no-cache @videojs/e2e#test:registry:published"
+  command = "pnpm --dir packages/installation exec vp pack && pnpm exec vp run --no-cache @videojs/e2e#test:registry:published"

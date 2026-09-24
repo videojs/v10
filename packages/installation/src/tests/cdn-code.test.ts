@@ -56,13 +56,15 @@ describe('generateCdnCode', () => {
 
   it('generates the skinless video CDN tag when skin is none', () => {
     expect(generateCdnCode('default-video', 'none', 'html5-video', manifest)).toEqual(
-      `<script type="module" src="${CDN_BASE}/video-player.js"></script>`
+      `<script type="module" src="${CDN_BASE}/video-player.js"></script>
+<script type="module" src="${CDN_BASE}/ui/container.js"></script>`
     );
   });
 
   it('generates the skinless audio CDN tag when skin is none', () => {
     expect(generateCdnCode('default-audio', 'none', 'html5-audio', manifest)).toEqual(
-      `<script type="module" src="${CDN_BASE}/audio-player.js"></script>`
+      `<script type="module" src="${CDN_BASE}/audio-player.js"></script>
+<script type="module" src="${CDN_BASE}/ui/container.js"></script>`
     );
   });
 
@@ -84,6 +86,7 @@ describe('generateCdnCode', () => {
   it('generates the skinless live video CDN tag when skin is none', () => {
     expect(generateCdnCode('live-video', 'none', 'hls', manifest)).toEqual(
       `<script type="module" src="${CDN_BASE}/live-video-player.js"></script>
+<script type="module" src="${CDN_BASE}/ui/container.js"></script>
 <script type="module" src="${CDN_BASE}/media/hlsjs-video.js"></script>`
     );
   });
