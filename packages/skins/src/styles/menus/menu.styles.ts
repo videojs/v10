@@ -3,11 +3,11 @@ import { styles } from 'vjsc/styles';
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-menu-item px-2 py-1.5 text-start whitespace-nowrap',
   'focus-ring-media',
-  'media-menu-highlighted:highlight-media',
+  'media-highlighted:highlight-media',
   'focus-visible:outline-media-ring focus-visible:outline-offset-2',
   'text-shadow-media',
   'transition-[background-color,color] duration-media-fast ease-in-out',
-  'media-anchored:duration-media-instant media-anchored:media-menu-highlighted:duration-media-slow',
+  'media-anchored:duration-media-instant media-anchored:media-highlighted:duration-media-slow',
 ] as const;
 
 const menuItemOption = [
@@ -18,7 +18,7 @@ const menuItemOption = [
 
 const menuItemHighlight = [
   'media-anchored:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
-  'media-anchored:media-menu-highlighted:bg-transparent',
+  'media-anchored:media-highlighted:bg-transparent',
 ] as const;
 
 const menuHighlight = [
@@ -99,19 +99,19 @@ export default styles({
       utilities: 'ms-auto -me-1 shrink-0 opacity-0 group-aria-checked/menu-radio-item:opacity-100',
     },
     triggerItemIcon: {
-      utilities: [...menuIcon, 'size-media-icon', 'group-media-menu-highlighted/menu-trigger-item:text-inherit'],
+      utilities: [...menuIcon, 'size-media-icon', 'group-media-highlighted/menu-trigger-item:text-inherit'],
     },
     radioItemIcon: {
-      utilities: [...menuIcon, 'size-media-icon', 'group-media-menu-highlighted/menu-radio-item:text-inherit'],
+      utilities: [...menuIcon, 'size-media-icon', 'group-media-highlighted/menu-radio-item:text-inherit'],
     },
     forwardChevron: {
-      utilities: [...menuChevron, 'rtl:scale-[-1_1]', 'group-media-menu-highlighted/menu-trigger-item:text-inherit'],
+      utilities: [...menuChevron, 'rtl:scale-[-1_1]', 'group-media-highlighted/menu-trigger-item:text-inherit'],
     },
     backChevron: {
       utilities: [
         ...menuChevron,
         'rotate-180 rtl:rotate-0 rtl:scale-[1_1]',
-        'group-media-menu-highlighted/menu-back-item:text-inherit',
+        'group-media-highlighted/menu-back-item:text-inherit',
       ],
     },
     settingsTrigger: {

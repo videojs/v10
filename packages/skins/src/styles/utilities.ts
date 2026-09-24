@@ -99,11 +99,7 @@ export const utilities = {
   'media-max-2xl': { kind: 'variant', description: 'Player below the 2xl breakpoint.' },
   'media-highlighted': {
     kind: 'variant',
-    description: 'Hovered, focused, expanded, or highlighted control or menu item that is not disabled.',
-  },
-  'media-menu-highlighted': {
-    kind: 'variant',
-    description: 'Focused, expanded, or highlighted menu item that is not disabled.',
+    description: 'Focused, expanded, or highlighted control or menu item that is not disabled.',
   },
   'media-transitioning': {
     kind: 'variant',
