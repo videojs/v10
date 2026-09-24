@@ -1,19 +1,11 @@
 import { defineConfig } from 'vite-plus';
 
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
+import { packageOutputGlobs } from './build/packages/outputs.ts';
 import { registryTargets } from './build/registry/targets.ts';
 
 const packageDir = import.meta.dirname;
-const generatedPackageOutputs = [
-  { pattern: 'packages/html/src/presets/background/skin.ts', base: 'workspace' as const },
-  { pattern: 'packages/html/src/define/background/skin.css', base: 'workspace' as const },
-  { pattern: 'packages/html/src/internal/skins/**', base: 'workspace' as const },
-  { pattern: 'packages/react/src/internal/skins/**', base: 'workspace' as const },
-  { pattern: 'packages/react/src/presets/*/skin.tsx', base: 'workspace' as const },
-  { pattern: 'packages/react/src/presets/*/skin.css', base: 'workspace' as const },
-  { pattern: 'packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' as const },
-  { pattern: 'packages/react/src/presets/*/minimal-skin.css', base: 'workspace' as const },
-] as const;
+const generatedPackageOutputs = packageOutputGlobs();
 
 export default defineConfig({
   run: {
