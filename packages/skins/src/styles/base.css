@@ -19,80 +19,78 @@
 }
 
 @layer base {
-  @scope (.media-skin) {
-    :scope {
-      font-style: normal;
-      font-weight: 400;
-      text-align: start;
-      text-transform: none;
-      letter-spacing: normal;
-    }
+  .media-skin {
+    font-style: normal;
+    font-weight: 400;
+    text-align: start;
+    text-transform: none;
+    letter-spacing: normal;
+  }
 
-    :scope,
-    *,
-    ::before,
-    ::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      border: 0 solid;
-    }
+  .media-skin,
+  :where(.media-skin) *,
+  :where(.media-skin) ::before,
+  :where(.media-skin) ::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
 
-    button {
-      font: inherit;
-      color: inherit;
-      text-transform: none;
-      letter-spacing: inherit;
-      appearance: none;
-      background: none;
-    }
+  :where(.media-skin) button {
+    font: inherit;
+    color: inherit;
+    text-transform: none;
+    letter-spacing: inherit;
+    appearance: none;
+    background: none;
+  }
 
-    img,
-    svg,
-    media-icon {
-      display: block;
-      max-width: 100%;
-    }
+  :where(.media-skin) img,
+  :where(.media-skin) svg,
+  :where(.media-skin) media-icon {
+    display: block;
+    max-width: 100%;
+  }
 
-    svg[fill="currentColor"] {
-      fill: currentColor;
-    }
+  :where(.media-skin) svg[fill="currentColor"] {
+    fill: currentColor;
+  }
 
-    svg[fill="none"] {
-      fill: none;
-    }
+  :where(.media-skin) svg[fill="none"] {
+    fill: none;
+  }
 
-    svg[stroke="currentColor"] {
-      stroke: currentColor;
-    }
+  :where(.media-skin) svg[stroke="currentColor"] {
+    stroke: currentColor;
+  }
 
-    video {
-      display: block;
-      width: 100%;
-      height: 100%;
-      max-width: 100%;
-      border-radius: inherit;
-      object-fit: var(--media-object-fit, contain);
-      object-position: var(--media-object-position, center);
-    }
+  :where(.media-skin) video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    border-radius: inherit;
+    object-fit: var(--media-object-fit, contain);
+    object-position: var(--media-object-position, center);
+  }
 
-    media-icon > svg {
-      width: 100%;
-      height: 100%;
-    }
+  :where(.media-skin) media-icon > svg {
+    width: 100%;
+    height: 100%;
+  }
 
-    media-tooltip-group,
-    media-dialog,
-    media-alert-dialog,
-    media-error-dialog,
-    media-controls {
-      display: contents;
-    }
+  :where(.media-skin) media-tooltip-group,
+  :where(.media-skin) media-dialog,
+  :where(.media-skin) media-alert-dialog,
+  :where(.media-skin) media-error-dialog,
+  :where(.media-skin) media-controls {
+    display: contents;
+  }
 
-    [hidden][hidden] {
-      /* Hidden must override component display styles. */
-      display: none !important;
-    }
+  :where(.media-skin) [hidden][hidden] {
+    /* Hidden must override component display styles. */
+    display: none !important;
   }
 
   @media (prefers-reduced-motion: no-preference) {

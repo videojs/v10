@@ -26,7 +26,6 @@ export interface ResolvedStyleRule {
   readonly file: string;
   readonly layer: string;
   readonly scopeRoot: boolean;
-  readonly shadowHost: boolean;
   readonly utilityGroups: readonly string[];
   readonly utilities: readonly string[];
   readonly variantGroups: Readonly<Record<string, readonly string[]>>;
@@ -201,7 +200,6 @@ function resolveModuleRules(definition: StyleDefinition, modulePath: string): Re
         file: definition.file,
         layer,
         scopeRoot: rule.scopeRoot ?? false,
-        shadowHost: rule.shadowHost ?? false,
         utilityGroups: Object.freeze(utilityGroups),
         utilities: Object.freeze(utilityGroups.flatMap(splitClassNames)),
         variantGroups: Object.freeze(variantGroups),
