@@ -6,6 +6,7 @@ import { CustomMediaElement } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.restoreAllMocks();
 });
 
 class TestVideoHost extends HTMLVideoAdapter {
@@ -921,12 +922,14 @@ describe('CustomMediaElement', () => {
 
     it('attribute is set before PlaybackAdapter setter is called', () => {
       const el = create(defineTrackingVideoElement());
-      const spy = vi.spyOn(el, 'setAttribute');
+      const setAttribute = vi.spyOn(el, 'setAttribute');
+      const setAdapterSrc = vi.spyOn(TrackingVideoHost.prototype, 'src', 'set');
 
       el.src = 'video.mp4';
 
-      expect(spy).toHaveBeenCalledWith('src', 'video.mp4');
-      expect(spy.mock.invocationCallOrder[0]).toBeLessThan(Number.POSITIVE_INFINITY);
+      expect(setAttribute).toHaveBeenCalledWith('src', 'video.mp4');
+      expect(setAdapterSrc).toHaveBeenCalledWith('video.mp4');
+      expect(setAttribute.mock.invocationCallOrder[0]).toBeLessThan(setAdapterSrc.mock.invocationCallOrder[0]!);
     });
 
     it('PlaybackAdapter setter receives the coerced value for each type', () => {
