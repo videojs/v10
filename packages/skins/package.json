@@ -17,6 +17,9 @@
     "directory": "packages/skins"
   },
   "type": "module",
+  "exports": {
+    "./meta": "./src/meta.ts"
+  },
   "scripts": {
     "dev": "echo 'Preview skins in the sandbox: pnpm dev:sandbox, then pick Authored source.' && vp run generate:watch",
     "test": "pnpm run test:types && vp test run",

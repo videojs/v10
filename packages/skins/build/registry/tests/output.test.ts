@@ -5,6 +5,8 @@ import { isPlainObject } from '@videojs/utils/predicate';
 import { type RegistryItem, registryItemSchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vitest';
 
+import { skinMedia, skinPresets, skinThemes } from '../../../src/meta.ts';
+
 const packageDir = resolve(import.meta.dirname, '../../..');
 const registryDirs = {
   default: resolve(packageDir, 'dist/registry/source/r/react'),
@@ -27,6 +29,15 @@ describe('React registry output', () => {
 
       expect(docs.length).toBeLessThanOrEqual(3_800);
       expect(docs.split('\n').length).toBeLessThanOrEqual(60);
+    }
+  });
+
+  it('describes each item with one styling field', () => {
+    for (const items of Object.values(registries)) {
+      for (const item of items.values()) {
+        expect(item.meta).not.toHaveProperty('style');
+        expect(item.meta?.styling).toBe('tailwind');
+      }
     }
   });
 
@@ -184,13 +195,12 @@ describe('React registry output', () => {
   });
 
   it('imports the preset theme before each React CSS skin stylesheet', () => {
-    for (const theme of ['default', 'minimal'] as const) {
+    for (const theme of skinThemes) {
       const items = readRegistryItems(cssRegistryDirs[theme]);
 
-      for (const preset of ['audio', 'live-audio', 'live-video', 'video'] as const) {
+      for (const preset of skinPresets) {
         const source = readItemRoot(cssRegistryDirs[theme], items.get(preset)!);
-        const media = preset.endsWith('audio') ? 'audio' : 'video';
-        const base = `../styles/${media}/${theme === 'minimal' ? 'minimal' : 'base'}.css`;
+        const base = `../styles/${skinMedia(preset)}/${theme === 'minimal' ? 'minimal' : 'base'}.css`;
 
         expect(source.indexOf(base), `${theme}/${preset}`).toBeGreaterThanOrEqual(0);
         expect(source.indexOf(base), `${theme}/${preset}`).toBeLessThan(source.indexOf('./skin.css'));

@@ -4,18 +4,11 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { skinCatalog } from '../../catalog.ts';
+
 const workspaceDir = resolve(import.meta.dirname, '../../../../..');
 const outputRoot = resolve(workspaceDir, 'packages/html/src/internal/skins');
-const skins = [
-  'default-video',
-  'minimal-video',
-  'default-audio',
-  'minimal-audio',
-  'default-live-video',
-  'minimal-live-video',
-  'default-live-audio',
-  'minimal-live-audio',
-] as const;
+const skins = skinCatalog.map((skin) => skin.name);
 
 describe('generated HTML package skins', () => {
   it.each(skins)('%s has a complete template, exact registration, and stylesheet', (skin) => {
