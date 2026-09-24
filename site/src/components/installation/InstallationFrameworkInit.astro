@@ -7,6 +7,7 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 ---
 
 <style is:global>
+  html[data-installation-query] [data-installation-query-state][data-installation-hydrating],
   html[data-installation-query-pending] [data-installation-query-state],
   html[data-installation-query-pending] [data-installation-method-nav],
   html[data-installation-query-pending] [data-installation-plan] {
@@ -48,8 +49,13 @@ import { INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
     const hasSelection = isInstallation
       && (installationParams.some((parameter) => params.has(parameter)) || needsSavedHtmlFramework);
 
-    if (hasSelection) root.dataset.installationQueryPending = "";
-    else delete root.dataset.installationQueryPending;
+    if (hasSelection) {
+      root.dataset.installationQuery = "";
+      root.dataset.installationQueryPending = "";
+    } else {
+      delete root.dataset.installationQuery;
+      delete root.dataset.installationQueryPending;
+    }
   }
 
   function applyInstallationFramework(url, root) {

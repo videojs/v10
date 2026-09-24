@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import Check from '@/assets/icons/check.svg?react';
 import { twMerge } from '@/utils/twMerge';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CardRadioOption<T = string> {
   value: T;
@@ -40,6 +41,8 @@ export default function CardRadioGroup<T extends string = string>({
   layout = 'tile',
   minColumnWidth = '11rem',
 }: CardRadioGroupProps<T>) {
+  const isHydrated = useIsHydrated();
+
   return (
     <RadioGroup
       value={value}
@@ -47,6 +50,7 @@ export default function CardRadioGroup<T extends string = string>({
       onValueChange={(newValue) => onChange(newValue as T)}
       aria-label={ariaLabel}
       data-installation-query-state
+      data-installation-hydrating={isHydrated ? undefined : ''}
       className={twMerge(clsx('grid auto-rows-fr gap-3'), className)}
       style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${minColumnWidth}), 1fr))` }}
     >
