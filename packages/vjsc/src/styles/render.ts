@@ -60,9 +60,9 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 }
 
 /**
- * Wrap a file's rules in its layer and scope them under `:where(<scope>)`, which adds no specificity and, unlike
- * `@scope`, reaches every supported browser. Scope proximity is lost, so a component nested inside itself resolves by
- * source order.
+ * Wrap a file's rules in its layer and prefix each with `:where(<scope>)`, so it matches only inside the scope root
+ * without adding specificity. Slotted rules stay unprefixed after the rest. Rules that match both an outer and a nested
+ * scope root resolve by source order.
  */
 function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFile): string {
   const relationshipOwners = new Set(file.groupOwners.values());
