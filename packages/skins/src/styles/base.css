@@ -101,10 +101,7 @@
     }
   }
 
-  /*
-   * Without the Popover API nothing hides a closed popup, so hide it until its component opens it or while it exits.
-   * Browsers without the Popover API lack `@scope` too, so these rules sit outside the scope block.
-   */
+  /* Without the Popover API nothing hides a closed popup, so hide it until its component opens it or while it exits. */
   @supports not selector(:popover-open) {
     :where(.media-skin) [popover]:not([data-open], [data-ending-style]) {
       display: none !important;
