@@ -1,6 +1,6 @@
 import { MenuContentDataAttrs, type MenuState } from '@videojs/core';
 import { isMenuNavigationKey } from '@videojs/core/dom';
-import { forwardRef, useCallback, useLayoutEffect, useRef } from 'react';
+import { forwardRef, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -20,24 +20,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const { popup, element: popupElement } = useMenuPopupContext();
   const isSubmenu = parent !== null;
   const isActive = isSubmenu && state.open;
-  const wasActiveRef = useRef(false);
   const cleanupRegistrationRef = useRef<(() => void) | null>(null);
-
-  useLayoutEffect(() => {
-    if (!isSubmenu) return undefined;
-
-    const wasActive = wasActiveRef.current;
-
-    wasActiveRef.current = isActive;
-
-    if (isActive && !wasActive) {
-      const frame = requestAnimationFrame(() => menu.highlightFirstItem({ preventScroll: true }));
-
-      return () => cancelAnimationFrame(frame);
-    }
-
-    return undefined;
-  }, [isActive, isSubmenu, menu]);
 
   const setContentElement = useCallback(
     (element: HTMLDivElement | null) => {

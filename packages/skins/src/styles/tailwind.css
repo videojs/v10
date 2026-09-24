@@ -214,6 +214,13 @@
   }
 }
 
+/* Menu pointer entry already updates `data-highlighted`; avoid a stale `:hover` overriding keyboard navigation. */
+@custom-variant media-menu-highlighted {
+  &:where(:focus-visible, [aria-expanded="true"], [data-highlighted]):where(:not([aria-disabled="true"])) {
+    @slot;
+  }
+}
+
 /* Element entering or leaving through starting and ending styles. */
 @custom-variant media-transitioning {
   &:is([data-starting-style], [data-ending-style]) {
