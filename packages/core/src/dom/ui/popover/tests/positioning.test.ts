@@ -1,8 +1,10 @@
+import { supportsPopoverAPI } from '@videojs/utils/dom';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { PopoverCSSVars } from '../../../../core/ui/popover/vars';
 import {
   getAnchorPositionStyle,
+  getFixedContainingBlockOrigin,
   getManualPositionStyle,
   getPopupPositionRect,
   getPositioningCSSVars,
@@ -10,13 +12,14 @@ import {
   resolveOffsets,
 } from '../positioning';
 
-// Mock supportsAnchorPositioning for deterministic tests.
+// Mock feature detection for deterministic tests.
 vi.mock('@videojs/utils/dom', async (importOriginal) => {
   const original = (await importOriginal()) as Record<string, unknown>;
 
   return {
     ...original,
     supportsAnchorPositioning: vi.fn(() => false),
+    supportsPopoverAPI: vi.fn(() => false),
   };
 });
 
@@ -536,5 +539,59 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
 
     expect(style.alignSelf).toBe('anchor-center');
     expect(style.marginBlockStart).toBe(ALIGN_VAR);
+  });
+});
+
+describe('getFixedContainingBlockOrigin', () => {
+  it('measures where a fixed box beside the popup lands, then removes the probe', () => {
+    const parent = document.createElement('div');
+    const popup = document.createElement('div');
+    const measure = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const left = this.style.position === 'fixed' ? 120 : 0;
+        const top = this.style.position === 'fixed' ? 80 : 0;
+
+        return {
+          left,
+          top,
+          x: left,
+          y: top,
+          width: 0,
+          height: 0,
+          right: left,
+          bottom: top,
+          toJSON: () => ({}),
+        } as DOMRect;
+      });
+
+    parent.append(popup);
+    document.body.append(parent);
+
+    expect(getFixedContainingBlockOrigin(popup)).toEqual({ x: 120, y: 80 });
+    expect(parent.children).toHaveLength(1);
+
+    measure.mockRestore();
+    parent.remove();
+  });
+
+  it('uses the viewport for a closed `[popover]` popup when the Popover API exists', () => {
+    const popup = document.createElement('div');
+    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
+
+    // The first position runs before `showPopover()` moves the popup to the top layer.
+    vi.mocked(supportsPopoverAPI).mockReturnValueOnce(true);
+    popup.setAttribute('popover', 'manual');
+    document.body.append(popup);
+
+    expect(getFixedContainingBlockOrigin(popup)).toEqual({ x: 0, y: 0 });
+    expect(measure).not.toHaveBeenCalled();
+
+    measure.mockRestore();
+    popup.remove();
+  });
+
+  it('uses the viewport for a popup outside the document tree', () => {
+    expect(getFixedContainingBlockOrigin(document.createElement('div'))).toEqual({ x: 0, y: 0 });
   });
 });
