@@ -47,4 +47,42 @@ describe('createMenuPopup', () => {
     popup.destroy();
     menu.destroy();
   });
+
+  it('restores focus before hiding a closing submenu page', () => {
+    const popupElement = document.createElement('div');
+    const parentContent = document.createElement('div');
+    const parentTrigger = document.createElement('button');
+    const childContent = document.createElement('div');
+    const childItem = document.createElement('button');
+    const parent = createTestMenu();
+    const child = createTestMenu();
+    const popup = createMenuPopup();
+
+    parent.menu.registerSubmenu(child.menu);
+    parent.menu.setTriggerElement(document.createElement('button'));
+    child.menu.setTriggerElement(parentTrigger);
+    child.menu.registerItem(childItem);
+    parentContent.append(parentTrigger, childContent);
+    childContent.append(childItem);
+    popupElement.append(parentContent);
+    document.body.append(popupElement);
+
+    popup.setElement(popupElement);
+    popup.registerContent({ menu: parent.menu, parent: null, element: parentContent });
+    popup.registerContent({ menu: child.menu, parent: parent.menu, element: childContent });
+    child.menu.open();
+    popup.sync();
+    childItem.focus();
+
+    child.menu.close();
+    popup.sync();
+
+    expect(document.activeElement).toBe(parentTrigger);
+    expect(childContent.getAttribute('aria-hidden')).toBe('true');
+    expect(childContent.hasAttribute('inert')).toBe(true);
+
+    popup.destroy();
+    parent.menu.destroy();
+    child.menu.destroy();
+  });
 });

@@ -85,6 +85,20 @@ export function createMenuPopup(): MenuPopupApi {
     }
   }
 
+  function restoreFocusBeforeHiding(content: RegisteredContent): void {
+    if (!content.element.contains(document.activeElement)) return;
+
+    // Preserve the menu's close-reason behavior before falling back to its trigger.
+    content.menu.restoreFocus();
+
+    if (!content.element.contains(document.activeElement)) return;
+
+    content.menu.triggerElement?.focus();
+
+    // A missing or unfocusable trigger must not leave focus inside the hidden page.
+    if (content.element.contains(document.activeElement)) (document.activeElement as HTMLElement).blur();
+  }
+
   function getAvailableWidth(popup: HTMLElement): number | null {
     return (
       walkAncestors(popup, (ancestor) => {
@@ -140,6 +154,9 @@ export function createMenuPopup(): MenuPopupApi {
   function sync(): void {
     if (!element) return;
 
+    const inactiveContents = new Map<RegisteredContent, boolean>();
+
+    // Reactivate parent pages first so a closing submenu can return focus to its trigger.
     for (const content of contents) {
       const activeChild = getActiveChild(content.menu);
 
@@ -153,7 +170,18 @@ export function createMenuPopup(): MenuPopupApi {
       const input = content.menu.input.current;
       const isExitingPage = content.parent !== null && input.active && input.status === 'ending';
 
-      setInactive(content, activeChild !== null || isExitingPage);
+      inactiveContents.set(content, activeChild !== null || isExitingPage);
+      setInactive(content, false);
+    }
+
+    // Move focus out before hiding an exiting page from assistive technology.
+    for (const [content, inactive] of inactiveContents) {
+      const input = content.menu.input.current;
+      const isExitingPage = content.parent !== null && input.active && input.status === 'ending';
+
+      if (isExitingPage) restoreFocusBeforeHiding(content);
+
+      setInactive(content, inactive);
     }
 
     const current = getCurrentContent();
