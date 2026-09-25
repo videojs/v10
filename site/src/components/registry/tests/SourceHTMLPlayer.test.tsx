@@ -44,6 +44,23 @@ describe('SourceHTMLPlayer', () => {
     expect(screen.getByRole('tab', { name: 'resources/js/player.ts' })).toBeInTheDocument();
   });
 
+  it('points readers with another components alias at their own skin path and import', () => {
+    framework.set('html');
+    template.set('vite');
+
+    const { container, rerender } = render(<SourceHTMLPlayer part="media" />);
+
+    expect(container).toHaveTextContent(
+      "The skin path below assumes the @/components components alias. If aliases.components in components.json differs, the skin is under that alias's directory instead."
+    );
+
+    rerender(<SourceHTMLPlayer part="imports" />);
+
+    expect(container).toHaveTextContent(
+      'Use the aliases.components value from components.json in the skin import when it differs from @/components.'
+    );
+  });
+
   it('switches the player file in place when the app setup changes', () => {
     framework.set('html');
     template.set('vite');

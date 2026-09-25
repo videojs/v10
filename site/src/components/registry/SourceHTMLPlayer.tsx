@@ -68,6 +68,11 @@ function SourceHTMLPlayer({ part }: Props) {
     return (
       <>
         <p className={`${shared.p} ${shared.prose}`}>
+          The skin path below assumes the <code>{project.componentsAlias}</code> components alias. If{' '}
+          <code>aliases.components</code> in <code>components.json</code> differs, the skin is under that alias&apos;s
+          directory instead.
+        </p>
+        <p className={`${shared.p} ${shared.prose}`}>
           In <code>{html.skinFile}</code>, replace the “Add a compatible media element here” comment with:
         </p>
         <CodeTabs
@@ -128,6 +133,10 @@ function SourceHTMLPlayer({ part }: Props) {
           label="HTML implementation"
           tabs={[{ code: html.imports, label: project.usage!, lang: 'ts', value: 'imports' }]}
         />
+        <p className={`${shared.p} ${shared.prose}`}>
+          Use the <code>aliases.components</code> value from <code>components.json</code> in the skin import when it
+          differs from <code>{project.componentsAlias}</code>.
+        </p>
       </>
     );
   }
