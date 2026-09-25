@@ -255,8 +255,10 @@ export function createInstallationDiscovery(
         ? defaults.packageManager
         : option.flag === '--framework'
           ? defaults.framework
-          : undefined;
-    if (detected) return { ...option, default: `${detected.value} (from ${detected.source})` };
+          : option.flag === '--template'
+            ? defaults.template
+            : undefined;
+    if (detected?.value) return { ...option, default: `${detected.value} (from ${detected.source})` };
 
     if (option.flag !== '--framework') return option;
 

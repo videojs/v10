@@ -78,6 +78,22 @@ describe('runAgentsInit', () => {
 
     expect(packageManager.default).toBe('yarn (from yarn.lock)');
 
+    const viteProject = { template: { value: 'vite', source: 'package.json devDependencies' } } as const;
+    const detected = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--json'], viteProject).stdout);
+    const undetected = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--json'], {
+        template: { value: null, source: 'no app setup detected' },
+      }).stdout
+    );
+    const template = (discovery: { options: { flag: string; default: string }[] }) =>
+      discovery.options.find(({ flag }) => flag === '--template')!.default;
+
+    expect(template(detected)).toBe('vite (from package.json devDependencies)');
+    expect(runAgentsInit('10.0.0', ['agents', 'init'], viteProject).stdout).toContain(
+      'Default: vite (from package.json devDependencies).'
+    );
+    expect(template(undetected)).toBe('next for React; vite otherwise');
+
     // SAFETY: discovery JSON is produced by createInstallationDiscovery, whose examples field is a string array.
     for (const example of discovery.examples as string[]) {
       const args = example.split(' ').slice(2);
