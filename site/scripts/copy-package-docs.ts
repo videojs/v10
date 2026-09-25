@@ -12,8 +12,7 @@ import {
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { VJS10_VERSION } from '../src/consts';
-import { renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
+import { INSTALLATION_PACKAGE_VERSION, renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
@@ -116,7 +115,7 @@ function copyInstallationDocumentation({
       raw,
       `/${source.replace(/\.md$/, '')}`,
       params,
-      version ?? VJS10_VERSION
+      version ?? INSTALLATION_PACKAGE_VERSION
     );
 
     if (!rendered || rendered.status !== 200) {
