@@ -1,3 +1,4 @@
+import type { Highlighter } from 'shiki';
 import astro from 'shiki/langs/astro.mjs';
 import bash from 'shiki/langs/bash.mjs';
 import css from 'shiki/langs/css.mjs';
@@ -17,10 +18,15 @@ import createHighlighter, { getOrCreateCachedHighlighter } from './createHighlig
 // Storing the unresolved Promise keeps module evaluation synchronous,
 // avoiding the bug. The Promise starts resolving at import time, giving
 // it a head start before `client:idle` hydration kicks in.
-// ClientCode.tsx consumes this via React 19's `use()` hook + Suspense.
-const highlighterPromise = getOrCreateCachedHighlighter('client', () =>
-  createHighlighter({ langs: [astro, bash, html, json, ts, tsx, css] })
-);
+// ClientCode.tsx consumes this via React 19's `use()` hook.
+const highlighterPromise: Promise<Highlighter> & { status?: 'fulfilled'; value?: Highlighter } =
+  getOrCreateCachedHighlighter('client', () => createHighlighter({ langs: [astro, bash, html, json, ts, tsx, css] }));
+
+// Record the settled value where `use()` reads it, so renders after the first load never suspend.
+void highlighterPromise.then((highlighter) => {
+  highlighterPromise.status = 'fulfilled';
+  highlighterPromise.value = highlighter;
+});
 
 export function getClientHighlighter() {
   return highlighterPromise;

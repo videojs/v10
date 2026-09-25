@@ -1,7 +1,5 @@
-import { Suspense, use } from 'react';
+import { use } from 'react';
 import type { BundledLanguage } from 'shiki';
-
-import { shared } from '@/components/typography/styles';
 
 import { getClientHighlighter } from './clientHighlighter';
 import Shared from './Shared';
@@ -12,35 +10,18 @@ interface ClientCodeProps {
   lang: BundledLanguage;
 }
 
-function ClientCodeInner({ code, focusLines, lang }: ClientCodeProps) {
-  // React 19's `use()` hook can unwrap a Promise directly in render. When the
-  // Promise is still pending, `use()` throws it to the nearest <Suspense>
-  // boundary, which renders the fallback. Once resolved, React re-renders this
-  // component with the resolved value. See clientHighlighter.ts for why
-  // this is a Promise instead of a top-level await.
+/**
+ * Uses `use()` instead of top-level `await` because top-level `await` causes Safari hydration errors when multiple
+ * `client:idle` islands on the same Astro page share the module. https://github.com/withastro/astro/issues/10055
+ *
+ * There is deliberately no Suspense boundary here. React streams a completed boundary as a deferred `$RC(...)` script
+ * once an island passes its progressive chunk size, and Astro's router runs each inline script text only once per
+ * session. Revisiting a page then leaves those boundaries pending until React discards the server HTML. The highlighter
+ * is already settled during SSR, and a pending client render suspends the island root, which keeps the server HTML in
+ * place while hydration waits.
+ */
+export default function ClientCode({ code, focusLines, lang }: ClientCodeProps) {
   const highlighter = use(getClientHighlighter());
 
   return <Shared code={code} focusLines={focusLines} lang={lang} highlighter={highlighter} />;
-}
-
-/**
- * Uses `use()` + Suspense instead of top-level `await` because top-level `await` causes Safari hydration errors when
- * multiple `client:idle` islands on the same Astro page share the module.
- * https://github.com/withastro/astro/issues/10055
- *
- * The unhighlighted fallback is a safety net for the brief client hydration gap — Astro's SSR awaits the full React
- * stream, so the server-rendered output already contains highlighted code.
- */
-export default function ClientCode({ code, focusLines, lang }: ClientCodeProps) {
-  return (
-    <Suspense
-      fallback={
-        <pre className={shared.pre} data-llms-ignore="true" data-search-ignore="true">
-          <code className={shared.codeBlock}>{code}</code>
-        </pre>
-      }
-    >
-      <ClientCodeInner code={code} focusLines={focusLines} lang={lang} />
-    </Suspense>
-  );
 }
