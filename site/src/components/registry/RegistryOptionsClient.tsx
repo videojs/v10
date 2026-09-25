@@ -151,7 +151,7 @@ function RegistryTemplateCards({
       value={template}
       onChange={selectInstallationTemplate}
       options={templateCardOptions(activeFramework, method)}
-      aria-label="Select app setup"
+      aria-label="Select app"
     />
   );
 }

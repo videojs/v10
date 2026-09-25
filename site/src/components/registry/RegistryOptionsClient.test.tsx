@@ -57,7 +57,7 @@ describe('RegistryOptionsClient', () => {
       />
     );
 
-    expect(templateMarkup).toContain('data-label="Select app setup"');
+    expect(templateMarkup).toContain('data-label="Select app"');
     expect(templateMarkup).toContain('>next</span>');
     expect(catalogMarkup).toContain('data-label="Select skin">video</span>');
     expect(catalogMarkup).toContain('data-label="Select styling">tailwind</span>');
