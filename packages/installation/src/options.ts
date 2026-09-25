@@ -154,11 +154,21 @@ export function installationDecisionOrderFor({
       ? methods[0] === 'packaged'
         ? 'This guide uses packaged modules. Match the package manager to the project lockfile.'
         : methods[0] === 'shadcn'
-          ? 'This guide uses Shadcn to copy editable skin source. For React, use Tailwind in a new Shadcn app or an existing Tailwind app; otherwise use CSS. HTML, Vue, and Svelte use the HTML source catalog with CSS.'
+          ? 'This guide uses Shadcn to copy editable skin source. React uses the React source catalog; HTML, Vue, and Svelte use the HTML source catalog.'
           : 'This guide uses CDN scripts for plain HTML. Use an existing page when one is available, and scaffold a minimal Vite app only when no app exists.'
       : frameworks.includes('react')
-        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. For Shadcn, use Tailwind in a new Shadcn app or an existing Tailwind app; otherwise use CSS. Use @videojs/html when the project needs CDN scripts.'
+        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. Use @videojs/html when the project needs CDN scripts.'
         : 'Use packaged modules by default, Shadcn when the project should own editable skin source, or CDN for a plain HTML integration. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
+
+  const stylingDecisions: InstallationDecision[] =
+    methods.includes('shadcn') && frameworks.includes('react')
+      ? [
+          {
+            title: 'Choose the CSS framework',
+            guidance: `${methods.length === 1 ? '' : 'Only for Shadcn. '}For React, use tailwind in a new app or an existing Tailwind app; otherwise use css. HTML, Vue, and Svelte source uses css.`,
+          },
+        ]
+      : [];
 
   return [
     {
@@ -182,7 +192,7 @@ export function installationDecisionOrderFor({
         'Default and Minimal contain the same controls. Minimal uses cleaner surfaces. Ask when the visual direction is not clear.',
     },
     {
-      title: 'Choose the media source',
+      title: 'Choose the media',
       guidance:
         'Infer the adapter from the source when possible, such as hls for an .m3u8 URL or mux-video for Mux playback.',
     },
@@ -192,6 +202,7 @@ export function installationDecisionOrderFor({
         'Mux Data is included by default for Mux video and audio sources. Add Google Cast when a standard or live video player with a ready-made skin should cast a compatible source. Use none when no extension is needed.',
     },
     { title: 'Choose how to install', guidance: methodGuidance },
+    ...stylingDecisions,
     {
       title: 'Return one explicit plan',
       guidance:

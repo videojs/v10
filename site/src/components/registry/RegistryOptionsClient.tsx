@@ -71,6 +71,16 @@ const STYLING_ICONS = {
   css: <CssLogo className="h-4" />,
 } satisfies Record<RegistryStyling, ReactNode>;
 
+const STYLING_CARD_ICONS = {
+  tailwind: <TailwindLogo className="size-7" />,
+  css: <CssLogo className="h-7 w-auto" />,
+} satisfies Record<RegistryStyling, ReactNode>;
+
+const STYLING_DESCRIPTIONS = {
+  tailwind: 'Utility classes, included in new Shadcn apps',
+  css: 'Plain stylesheets for apps without Tailwind',
+} as const satisfies Record<RegistryStyling, string>;
+
 const SKIN_ICONS = {
   video: <FilmIcon className="size-4" />,
   audio: <MusicNoteIcon className="size-4" />,
@@ -159,6 +169,25 @@ function RegistryStylingSelect({ framework }: { framework: RegistryFramework }) 
         className="justify-self-start"
       />
     </div>
+  );
+}
+
+function RegistryStylingCards({ framework }: { framework: RegistryFramework }) {
+  const $styling = useRegistryStyling();
+  const styling = resolveRegistryStyling(framework, $styling);
+
+  return (
+    <CardRadioGroup
+      value={styling}
+      onChange={selectRegistryStyling}
+      options={registryStylings(framework).map((value) => ({
+        value,
+        label: REGISTRY_STYLING_LABELS[value],
+        description: STYLING_DESCRIPTIONS[value],
+        media: STYLING_CARD_ICONS[value],
+      }))}
+      aria-label="Select CSS framework"
+    />
   );
 }
 
@@ -260,8 +289,6 @@ export default function RegistryOptionsClient({
       installation={installation}
     />
   ) : (
-    <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-      <RegistryStylingSelect framework={framework === 'react' ? 'react' : 'html'} />
-    </div>
+    <RegistryStylingCards framework={framework === 'react' ? 'react' : 'html'} />
   );
 }

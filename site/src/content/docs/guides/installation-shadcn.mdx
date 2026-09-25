@@ -84,7 +84,7 @@ Choose the ready-made player that is closest to what you are building. The Shadc
   <InstallationPreview client:load />
 </ContentWidth>
 
-## Choose your media source
+## Choose your media
 
 Choose what the player will play. If that source needs a playback adapter, the installation steps include it.
 
@@ -105,6 +105,16 @@ Add optional behavior to the player. Only extensions that work with your player 
 Choose from the installation options available for your selections.
 
 <InstallationMethodNav />
+
+<ShadcnFrameworkCase framework="react" llmsHeading={false}>
+
+## Choose your CSS framework
+
+Choose how the skin source is styled. New Shadcn apps include Tailwind CSS. For an existing app, choose Tailwind CSS only when the app already uses it.
+
+<RegistryOptions framework="react" kind="styling" />
+
+</ShadcnFrameworkCase>
 
 </HumanCase>
 
@@ -152,11 +162,7 @@ Commit your work before installing or updating source so you can review every fi
 
 ## Add the skin source
 
-Choose the catalog styling below, then configure `@videojs` and add the selected skin source. Shadcn skips existing namespaces, so when you change styling or theme, replace the existing `@videojs` URL in `components.json` with the URL shown in the first step. Adding the skin overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
-
-<ShadcnFrameworkCase framework="react">
-<RegistryOptions framework="react" kind="styling" />
-</ShadcnFrameworkCase>
+Configure `@videojs`, then add the selected skin source. Shadcn skips existing namespaces, so when you change styling or theme, replace the existing `@videojs` URL in `components.json` with the URL shown in the first step. Adding the skin overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
 
 <ShadcnFrameworkCase framework="react">
 <InstallationRegistryCommand framework="react" />

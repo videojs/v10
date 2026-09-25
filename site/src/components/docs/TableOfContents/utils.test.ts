@@ -69,11 +69,11 @@ describe('calculateRailGeometry', () => {
 describe('filterRenderedHeadings', () => {
   it('omits conditional headings without a rendered target', () => {
     const headings = [
-      { depth: 2, text: 'Choose your media source', slug: 'choose-your-media-source' },
+      { depth: 2, text: 'Choose your media', slug: 'choose-your-media' },
       { depth: 2, text: 'Install the media adapter', slug: 'install-the-media-adapter' },
       { depth: 2, text: 'Add your player', slug: 'add-your-player' },
     ];
-    const renderedIds = new Set(['choose-your-media-source', 'add-your-player']);
+    const renderedIds = new Set(['choose-your-media', 'add-your-player']);
 
     expect(
       filterRenderedHeadings(
