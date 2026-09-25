@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canonicalInstallationSearch,
   DEFAULT_SELECTION,
-  normalizeInstallationSelectionForRoute,
+  isCustomInstallationSelection,
   parseInstallationSearch,
   parseInstallationSearchForRoute,
   serializeInstallationSearch,
@@ -25,6 +26,7 @@ describe('parseInstallationSearch', () => {
       extensions: [],
       sourceUrl: '',
       installMethod: 'npm',
+      styling: null,
     });
   });
 
@@ -122,6 +124,7 @@ describe('serializeInstallationSearch', () => {
         extensions: [],
         sourceUrl: '',
         installMethod: 'pnpm',
+        styling: null,
       })
     ).toBe('?preset=live-video&skin=minimal');
   });
@@ -137,6 +140,7 @@ describe('serializeInstallationSearch', () => {
       extensions: [],
       sourceUrl: 'https://open.spotify.com/track/1',
       installMethod: 'pnpm',
+      styling: null,
     } as const;
 
     expect(parseInstallationSearch(serializeInstallationSearch(selection))).toEqual(selection);
@@ -185,7 +189,7 @@ describe('serializeInstallationSearchForRoute', () => {
   it('keeps only parameters supported by the current installation route', () => {
     const search = '?method=shadcn&framework=vue&template=astro&styling=css&package-manager=pnpm&utm_source=docs';
     const vue = { ...DEFAULT_SELECTION, framework: 'vue', template: 'vite' } as const;
-    const html = { ...DEFAULT_SELECTION, framework: 'html', template: 'vite' } as const;
+    const html = { ...DEFAULT_SELECTION, framework: 'html', template: 'vite', styling: 'css' } as const;
 
     expect(serializeInstallationSearchForRoute('vue', vue, search)).toBe('?utm_source=docs');
     expect(serializeInstallationSearchForRoute('cdn', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
@@ -199,27 +203,67 @@ describe('serializeInstallationSearchForRoute', () => {
   });
 
   it('keeps the human CDN route existing-only', () => {
-    expect(
-      normalizeInstallationSelectionForRoute('cdn', { ...DEFAULT_SELECTION, project: 'new', template: 'vite' })
-    ).toMatchObject({ project: 'existing' });
+    expect(parseInstallationSearchForRoute('cdn', '?project=new&template=vite&package-manager=npm')).toMatchObject({
+      project: 'existing',
+      template: 'none',
+      installMethod: 'pnpm',
+    });
     expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, project: 'new' })).toBe('');
+  });
+
+  it('writes an explicit Shadcn styling choice and drops it from other routes', () => {
+    const selection = { ...DEFAULT_SELECTION, styling: 'css' } as const;
+
+    expect(serializeInstallationSearchForRoute('shadcn', selection)).toBe('?framework=react&styling=css');
+    expect(serializeInstallationSearchForRoute('react', selection)).toBe('');
   });
 });
 
-describe('normalizeInstallationSelectionForRoute', () => {
-  it('fits unsupported Shadcn choices to the player shown by the page', () => {
-    const background = parseInstallationSearch('?preset=background-video&skin=minimal&media=background-video');
-    const noSkin = parseInstallationSearch('?preset=audio&skin=none&media=spotify');
-
-    expect(normalizeInstallationSelectionForRoute('shadcn', background)).toMatchObject({
+describe('parseInstallationSearchForRoute on the Shadcn guide', () => {
+  it('fits unsupported choices to the player shown by the page', () => {
+    expect(
+      parseInstallationSearchForRoute('shadcn', '?preset=background-video&skin=minimal&media=background-video')
+    ).toMatchObject({
       useCase: 'default-video',
       skin: 'minimal-video',
       renderer: 'html5-video',
     });
-    expect(normalizeInstallationSelectionForRoute('shadcn', noSkin)).toMatchObject({
+    expect(parseInstallationSearchForRoute('shadcn', '?preset=audio&skin=none&media=spotify')).toMatchObject({
       useCase: 'default-audio',
       skin: 'audio',
       renderer: 'spotify',
     });
+  });
+
+  it('keeps a styling choice only when the framework offers it', () => {
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=react&styling=css').styling).toBe('css');
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=html&styling=tailwind').styling).toBeNull();
+    expect(parseInstallationSearchForRoute('react', '?styling=css').styling).toBeNull();
+  });
+
+  it('uses the fallback framework only without a framework query', () => {
+    expect(parseInstallationSearchForRoute('shadcn', '?preset=audio', 'html').framework).toBe('html');
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=react', 'html').framework).toBe('react');
+  });
+});
+
+describe('canonicalInstallationSearch', () => {
+  it('drops invalid picks and keeps unrelated params in place', () => {
+    expect(
+      canonicalInstallationSearch(
+        'shadcn',
+        '?framework=vue&template=next&styling=css&preset=audio&skin=fancy&utm_source=docs'
+      )
+    ).toBe('?framework=html&styling=css&preset=audio&utm_source=docs');
+  });
+});
+
+describe('isCustomInstallationSelection', () => {
+  it('compares a selection with the defaults the guide prerenders', () => {
+    expect(isCustomInstallationSelection('react', parseInstallationSearchForRoute('react', ''))).toBe(false);
+    expect(isCustomInstallationSelection('react', parseInstallationSearchForRoute('react', '?preset=audio'))).toBe(
+      true
+    );
+    expect(isCustomInstallationSelection('shadcn', parseInstallationSearchForRoute('shadcn', '', 'html'))).toBe(true);
   });
 });

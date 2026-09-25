@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { framework, template } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
-import { registryFramework, registryStyling } from '@/stores/registry';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
@@ -18,9 +16,6 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     window.__videojsDocsNavigationController?.abort();
     delete window.__videojsDocsNavigationController;
     currentFramework.set(null);
-    framework.set('react');
-    registryStyling.set(null);
-    template.set('next');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
@@ -31,7 +26,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     currentFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/framework/html/guides/installation'));
+    void syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/framework/html/guides/installation'));
 
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
@@ -41,109 +36,53 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     currentFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/cdn'));
+    void syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/cdn'));
 
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
-  it('synchronizes the query-controlled Shadcn framework', () => {
+  it('synchronizes the query-controlled Shadcn framework', async () => {
     currentFramework.set('react');
-    framework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
+    await syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
 
-    expect(currentFramework.get()).toBe('html');
-    expect(registryFramework.get()).toBe('html');
-    expect(getFrameworkPreferenceClient()).toBe('html');
-  });
-
-  it('falls back from a Vue Shadcn query to HTML and preferences', () => {
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'));
-
-    expect(registryFramework.get()).toBe('html');
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
-  it('uses the saved preference when the Shadcn query is missing', () => {
+  it('falls back from a Vue Shadcn query to HTML', async () => {
+    await syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('uses the saved preference when the Shadcn query is missing', async () => {
     currentFramework.set('react');
-    framework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'));
+    await syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'));
 
     expect(currentFramework.get()).toBe('html');
-    expect(registryFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
-  it('normalizes a queryless Shadcn entry without replacing its history or scroll state', () => {
-    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
-    window.history.replaceState(
-      { index: 2, scrollX: 0, scrollY: 360 },
-      '',
-      '/docs/guides/installation/shadcn?preset=audio'
-    );
+  it('leaves the Shadcn address bar to the installation stores', () => {
+    window.history.replaceState({ index: 2 }, '', '/docs/guides/installation/shadcn?framework=vue&template=next');
 
     initializeDocsNavigation();
 
-    expect(window.location.search).toBe('?framework=html&preset=audio');
-    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
-    expect(registryFramework.get()).toBe('html');
-  });
-
-  it('canonicalizes a Vue Shadcn query to HTML while retaining valid URL-backed choices', () => {
-    window.history.replaceState(
-      { index: 2, scrollX: 0, scrollY: 360 },
-      '',
-      '/docs/guides/installation/shadcn?framework=vue&template=next&styling=css'
-    );
-
-    initializeDocsNavigation();
-
-    expect(window.location.search).toBe('?framework=html&styling=css');
-    expect(registryFramework.get()).toBe('html');
-    expect(template.get()).toBe('vite');
-    expect(registryStyling.get()).toBe('css');
-    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
-  });
-
-  it('drops invalid Shadcn options when the framework query is already valid', () => {
-    window.history.replaceState(
-      { index: 2, scrollX: 0, scrollY: 360 },
-      '',
-      '/docs/guides/installation/shadcn?framework=react&template=nuxt&styling=bogus&preset=audio'
-    );
-
-    initializeDocsNavigation();
-
-    expect(window.location.search).toBe('?framework=react&preset=audio');
-    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
-  });
-
-  it('normalizes a queryless Shadcn entry after client navigation', () => {
-    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
-    window.history.replaceState({ index: 2, scrollX: 0, scrollY: 360 }, '', '/docs');
-
-    initializeDocsNavigation();
-    window.history.replaceState(
-      { index: 3, scrollX: 0, scrollY: 360 },
-      '',
-      '/docs/guides/installation/shadcn?preset=audio'
-    );
-    document.dispatchEvent(new Event('astro:after-swap'));
-
-    expect(window.location.search).toBe('?framework=html&preset=audio');
-    expect(window.history.state).toEqual({ index: 3, scrollX: 0, scrollY: 360 });
+    expect(window.location.search).toBe('?framework=vue&template=next');
+    expect(window.history.state).toEqual({ index: 2 });
   });
 
   it('does not change the preference for a framework-agnostic route', () => {
     currentFramework.set('html');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs'));
+    void syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs'));
 
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');

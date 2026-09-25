@@ -83,14 +83,19 @@ export function isInstallationRouteSegment(value: string | undefined): value is 
   return INSTALLATION_ROUTE_SEGMENTS.some((route) => route === value);
 }
 
+/** Parent path of every installation guide; it redirects to the reader's framework. */
+export const INSTALLATION_ROUTE_PREFIX = '/docs/guides/installation';
+
 export function getInstallationRoutePath(route: InstallationRouteSegment): string {
-  return `/docs/guides/installation/${route}`;
+  return `${INSTALLATION_ROUTE_PREFIX}/${route}`;
 }
+
+export const SHADCN_INSTALLATION_PATH = getInstallationRoutePath('shadcn');
 
 /** Resolve a canonical installation route from its HTML or Markdown pathname. */
 export function getInstallationRouteSegment(pathname: string): InstallationRouteSegment | null {
   const normalized = pathname.replace(/\.md$/, '').replace(/\/$/, '');
-  const prefix = '/docs/guides/installation/';
+  const prefix = `${INSTALLATION_ROUTE_PREFIX}/`;
   if (!normalized.startsWith(prefix)) return null;
 
   const route = normalized.slice(prefix.length);
@@ -148,4 +153,25 @@ export function installationMarkdownGuides(): InstallationMarkdownGuideGroup[] {
       installationMarkdownGuidesFor
     ),
   }));
+}
+
+export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
+  return getInstallationRouteSegment(url.pathname) === 'shadcn';
+}
+
+/**
+ * The installation route that renders a guide slug. React and HTML share one document, so `framework` picks between
+ * them.
+ */
+export function getInstallationRouteForSlug(
+  slug: string | null | undefined,
+  framework: SupportedFramework
+): InstallationRouteSegment | null {
+  if (slug === INSTALLATION_ROUTES[framework].slug) return framework;
+
+  return (
+    INSTALLATION_ROUTE_SEGMENTS.find(
+      (route) => route !== 'react' && route !== 'html' && INSTALLATION_ROUTES[route].slug === slug
+    ) ?? null
+  );
 }

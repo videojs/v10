@@ -62,6 +62,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const selectedSourceUrl = useSelection('sourceUrl');
   const selectedTemplate = useSelection('template');
   const selectedUseCase = useSelection('useCase');
+  const selectedStyling = useSelection('styling');
   const registryFramework = useRegistryFramework(sourceFrameworkFor(currentFramework));
   const isHydrated = useIsHydrationSettled();
   const framework = route === 'shadcn' ? registryFramework : currentFramework;
@@ -105,6 +106,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
         sourceUrl: selectedSourceUrl,
         template: resolveInstallationTemplate(framework, selectedTemplate),
         useCase: selectedUseCase,
+        styling: selectedStyling,
       },
       route === 'shadcn' ? registryFramework : undefined
     );

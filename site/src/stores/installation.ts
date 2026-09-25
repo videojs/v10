@@ -4,23 +4,27 @@ import {
   getInstallationPreset,
   installationExtensionsFor,
   resolveInstallationTemplate,
+  resolveRegistryStyling,
+  sourceFrameworkFor,
   type InstallMethod,
   type InstallationFramework,
   type InstallationExtension,
   type InstallationProject,
   type InstallationTemplate,
+  type RegistryStyling,
   type Renderer,
   type Skin,
   type UseCase,
 } from '@videojs/installation';
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
-import { atom, onMount, type WritableAtom } from 'nanostores';
+import { atom, type WritableAtom } from 'nanostores';
 
 import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
-import { getInstallationRouteSegment } from '@/utils/installation/routes';
+import { getInstallationRouteSegment, type InstallationRouteSegment } from '@/utils/installation/routes';
 import {
   DEFAULT_SELECTION,
   type InstallationUiSelection,
+  isCustomInstallationSelection,
   parseInstallationSearchForRoute,
   serializeInstallationSearchForRoute,
 } from '@/utils/installation/url-state';
@@ -29,16 +33,10 @@ function selectionFromUrl(target: Pick<URL, 'pathname' | 'search'>): Installatio
   const route = getInstallationRouteSegment(target.pathname);
   if (!route) return DEFAULT_SELECTION;
 
-  const shadcnFramework = getFrameworkPreferenceClient() ?? DEFAULT_SELECTION.framework;
-
-  return parseInstallationSearchForRoute(route, target.search, shadcnFramework);
+  return parseInstallationSearchForRoute(route, target.search, getFrameworkPreferenceClient() ?? undefined);
 }
 
-function selectionFromCurrentUrl(): InstallationUiSelection {
-  return globalThis.location ? selectionFromUrl(location) : DEFAULT_SELECTION;
-}
-
-const initialSelection = selectionFromCurrentUrl();
+const initialSelection = globalThis.location ? selectionFromUrl(location) : DEFAULT_SELECTION;
 
 export const renderer = atom<Renderer>(initialSelection.renderer);
 export const extensions = atom<readonly InstallationExtension[]>(initialSelection.extensions);
@@ -48,16 +46,15 @@ export const project = atom<InstallationProject>(initialSelection.project);
 export const skin = atom<Skin>(initialSelection.skin);
 export const useCase = atom<UseCase>(initialSelection.useCase);
 export const sourceUrl = atom<string>(initialSelection.sourceUrl);
-
 export const installMethod = atom<InstallMethod>(initialSelection.installMethod);
+export const styling = atom<RegistryStyling | null>(initialSelection.styling);
 
 /** Mux playback ID from successful upload (used by code generation) */
 export const muxPlaybackId = atom<string | null>(null);
 
 /**
  * The picks live in the page URL so a reload, a shared link, or coming back from another page lands on the same player.
- * At module initialization the atoms start from the URL, and every change rewrites it in place so the history stack
- * stays one entry per page.
+ * The atoms start from the URL, and every change rewrites it in place so the history stack stays one entry per page.
  */
 type SelectionAtoms = { [K in keyof InstallationUiSelection]: WritableAtom<InstallationUiSelection[K]> };
 
@@ -65,15 +62,20 @@ export const selectionAtoms: SelectionAtoms = {
   framework,
   template,
   project,
+  // Use case before skin and media: its listener fits them to the preset before their own values arrive.
   useCase,
   skin,
   renderer,
   extensions,
   sourceUrl,
   installMethod,
+  styling,
 };
-let hydratedUrl = globalThis.location ? `${location.pathname}${location.search}` : null;
-let syncingFromUrl = false;
+
+const SELECTION_KEYS = Object.keys(selectionAtoms) as (keyof InstallationUiSelection)[];
+
+let syncedUrl: string | null = null;
+let applyingSelection = false;
 
 export function currentInstallationSelection(): InstallationUiSelection {
   return {
@@ -86,115 +88,94 @@ export function currentInstallationSelection(): InstallationUiSelection {
     extensions: extensions.get(),
     sourceUrl: sourceUrl.get(),
     installMethod: installMethod.get(),
+    styling: styling.get(),
   };
 }
 
-function syncInstallationDocumentState(selection: InstallationUiSelection): void {
-  if (!globalThis.document || !getInstallationRouteSegment(location.pathname)) return;
+/**
+ * Mirror the selection onto `<html>` for the CSS that picks prerendered branches. The inline script in
+ * `InstallationFrameworkInit.astro` writes the same attributes from the URL before hydration.
+ */
+function syncInstallationDocument(route: InstallationRouteSegment, selection: InstallationUiSelection): void {
+  const root = document.documentElement;
 
-  document.documentElement.dataset.installationPreset = getInstallationPreset(selection.useCase).flag;
-  document.documentElement.dataset.installationMedia = selection.renderer;
-  document.documentElement.dataset.installationProject = selection.project;
-  document.documentElement.dataset.installationSkin = selection.skin === 'none' ? 'none' : 'default';
-  document.documentElement.dataset.installationTemplate = selection.template;
-}
+  root.dataset.installationPreset = getInstallationPreset(selection.useCase).flag;
+  root.dataset.installationProject = selection.project;
+  root.dataset.installationTemplate = selection.template;
 
-function normalizeCurrentUrl(target: URL, selection: InstallationUiSelection): void {
-  if (!globalThis.location || !globalThis.history || target.href !== location.href) return;
+  if (route === 'shadcn') {
+    const registryFramework = sourceFrameworkFor(selection.framework);
 
-  const route = getInstallationRouteSegment(target.pathname) ?? '';
-  const search = serializeInstallationSearchForRoute(route, selection, target.search);
-  const url = `${target.pathname}${search}${target.hash}`;
-
-  if (url !== `${target.pathname}${target.search}${target.hash}`) {
-    history.replaceState(history.state, '', url);
+    root.dataset.registryFramework = registryFramework;
+    root.dataset.registryStyling = resolveRegistryStyling(registryFramework, selection.styling);
   }
 
-  hydratedUrl = `${target.pathname}${search}`;
+  root.toggleAttribute('data-installation-pending', isCustomInstallationSelection(route, selection));
 }
 
-/** Replace every installation pick from a destination URL before its islands render. */
-export function syncInstallationSelectionFromUrl(url?: URL): void {
-  const target = url ?? (globalThis.location ? new URL(globalThis.location.href) : null);
-  if (!target || !getInstallationRouteSegment(target.pathname)) return;
-
-  const urlKey = `${target.pathname}${target.search}`;
-  const selection = selectionFromUrl(target);
-
-  if (hydratedUrl === urlKey) {
-    normalizeCurrentUrl(target, selection);
-    syncInstallationDocumentState(selection);
-
-    return;
-  }
-
-  hydratedUrl = urlKey;
-  syncingFromUrl = true;
-
-  try {
-    framework.set(selection.framework);
-    template.set(selection.template);
-    project.set(selection.project);
-    // Use case first: the skin and media pickers validate against it when they react to a change.
-    useCase.set(selection.useCase);
-    skin.set(selection.skin);
-    renderer.set(selection.renderer);
-    extensions.set(selection.extensions);
-    sourceUrl.set(selection.sourceUrl);
-    installMethod.set(selection.installMethod);
-  } finally {
-    syncingFromUrl = false;
-  }
-
-  normalizeCurrentUrl(target, selection);
-  syncInstallationDocumentState(selection);
-}
-
-function writeUrl(): void {
-  if (!hydratedUrl || syncingFromUrl || !globalThis.history) return;
+/** The one writer for installation URLs: replace the current entry's query with the canonical one for the picks. */
+function writeInstallationUrl(): void {
+  if (!globalThis.location) return;
 
   const route = getInstallationRouteSegment(location.pathname);
   if (!route) return;
 
-  syncInstallationDocumentState(currentInstallationSelection());
+  const selection = currentInstallationSelection();
+  const search = serializeInstallationSearchForRoute(route, selection, location.search);
 
-  const search = serializeInstallationSearchForRoute(route, currentInstallationSelection(), location.search);
-  const url = `${location.pathname}${search}${location.hash}`;
+  if (search !== location.search)
+    history.replaceState(history.state, '', `${location.pathname}${search}${location.hash}`);
 
-  if (url !== `${location.pathname}${location.search}${location.hash}`) {
-    history.replaceState(history.state, '', url);
-    hydratedUrl = `${location.pathname}${search}`;
+  syncedUrl = `${location.pathname}${search}`;
+  syncInstallationDocument(route, selection);
+}
+
+function applySelection(patch: Partial<InstallationUiSelection>): void {
+  applyingSelection = true;
+
+  try {
+    for (const key of SELECTION_KEYS) {
+      if (key in patch) (selectionAtoms[key] as WritableAtom<unknown>).set(patch[key]);
+    }
+  } finally {
+    applyingSelection = false;
   }
 }
 
-/** Apply the framework and app setup as one URL-backed selection change. */
-export function selectInstallationAppSetup(
-  nextFramework: InstallationFramework,
-  nextTemplate: InstallationTemplate,
-  write = true
-): void {
-  syncingFromUrl = true;
+/** Apply several picks as one change, so the URL is written once for the combined selection. */
+export function updateInstallationSelection(patch: Partial<InstallationUiSelection>): void {
+  applySelection(patch);
+  writeInstallationUrl();
+}
 
-  try {
-    framework.set(nextFramework);
-    template.set(nextTemplate);
+/**
+ * Replace every installation pick from a destination URL before its islands render. A destination other than the
+ * current location, such as the one Astro announces before a swap, updates the stores and leaves the address bar
+ * alone.
+ */
+export function syncInstallationSelectionFromUrl(url?: URL): void {
+  const target = url ?? (globalThis.location ? new URL(location.href) : null);
+  if (!target || !getInstallationRouteSegment(target.pathname)) return;
 
-    if (nextTemplate === 'none') project.set('existing');
-  } finally {
-    syncingFromUrl = false;
+  const urlKey = `${target.pathname}${target.search}`;
+
+  if (syncedUrl !== urlKey) {
+    syncedUrl = urlKey;
+    applySelection(selectionFromUrl(target));
   }
 
-  if (write) writeUrl();
+  if (globalThis.location && target.pathname === location.pathname && target.search === location.search) {
+    writeInstallationUrl();
+  }
 }
 
 export function selectInstallationTemplate(nextTemplate: InstallationTemplate): void {
-  if (globalThis.location) syncInstallationSelectionFromUrl(new URL(location.href));
+  const resolvedTemplate = resolveInstallationTemplate(framework.get(), nextTemplate);
 
-  const selectedFramework = framework.get();
-
-  const resolvedTemplate = resolveInstallationTemplate(selectedFramework, nextTemplate);
-
-  selectInstallationAppSetup(selectedFramework, resolvedTemplate);
+  updateInstallationSelection({
+    template: resolvedTemplate,
+    ...(resolvedTemplate === 'none' ? { project: 'existing' } : {}),
+  });
 }
 
 export function selectInstallationStartingPoint(nextProject: InstallationProject): void {
@@ -202,32 +183,14 @@ export function selectInstallationStartingPoint(nextProject: InstallationProject
 }
 
 for (const store of Object.values(selectionAtoms)) {
-  onMount(store, () => {
-    syncInstallationSelectionFromUrl();
-
-    return store.listen(writeUrl);
-  });
-}
-
-if (globalThis.document) {
-  syncInstallationDocumentState(initialSelection);
-
-  document.addEventListener('astro:before-swap', (event: TransitionBeforeSwapEvent) => {
-    if (event.to.pathname.startsWith('/docs/guides/installation/')) {
-      syncInstallationSelectionFromUrl(event.to);
-    }
-  });
-  document.addEventListener('astro:after-swap', () => {
-    if (location.pathname.startsWith('/docs/guides/installation/')) {
-      syncInstallationSelectionFromUrl();
-    }
+  store.listen(() => {
+    if (!applyingSelection) writeInstallationUrl();
   });
 }
 
 // A new use case can leave the skin and media pointing at options its preset does not offer. Fit them here, from the
 // store's own values, so every island agrees. Pickers fixing the store from their rendered props raced hydration: the
-// rendered use case was still the server default while the store already held the URL's picks. Registered after the
-// mount hooks above so this permanent listener does not mount the store before those hooks exist.
+// rendered use case was still the server default while the store already held the URL's picks.
 useCase.listen((next) => {
   const fitted = fitSelectionToPreset(next, skin.get(), renderer.get());
 
@@ -261,3 +224,12 @@ renderer.listen((next) => {
     extensions.set(fitted);
   }
 });
+
+if (globalThis.document) {
+  document.addEventListener('astro:before-swap', (event: TransitionBeforeSwapEvent) => {
+    syncInstallationSelectionFromUrl(event.to);
+  });
+  document.addEventListener('astro:after-swap', () => syncInstallationSelectionFromUrl());
+
+  syncInstallationSelectionFromUrl();
+}

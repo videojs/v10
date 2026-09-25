@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { resolveInstallationMarkdownPlan } from '../markdown';
 import {
+  getInstallationRouteForSlug,
   getInstallationRoutePath,
   getInstallationRouteSegment,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
   installationMarkdownGuides,
   isInstallationRouteSegment,
+  isShadcnInstallationUrl,
 } from '../routes';
 
 describe('installation routes', () => {
@@ -45,6 +47,20 @@ describe('installation routes', () => {
     expect(getInstallationRouteSegment('/docs/guides/installation/shadcn/')).toBe('shadcn');
     expect(getInstallationRouteSegment('/docs/guides/installation')).toBeNull();
     expect(getInstallationRouteSegment('/docs/guides/cdn')).toBeNull();
+  });
+
+  it('recognizes the Shadcn guide in HTML and Markdown URLs', () => {
+    expect(isShadcnInstallationUrl(new URL('https://videojs.org/docs/guides/installation/shadcn.md'))).toBe(true);
+    expect(isShadcnInstallationUrl(new URL('https://videojs.org/docs/guides/installation/react?framework=html'))).toBe(
+      false
+    );
+  });
+
+  it('maps guide slugs to the route that renders them', () => {
+    expect(getInstallationRouteForSlug('guides/installation', 'html')).toBe('html');
+    expect(getInstallationRouteForSlug('guides/installation-shadcn', 'react')).toBe('shadcn');
+    expect(getInstallationRouteForSlug('guides/installation-cdn', 'react')).toBe('cdn');
+    expect(getInstallationRouteForSlug('guides/architecture', 'react')).toBeNull();
   });
 });
 

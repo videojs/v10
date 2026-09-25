@@ -1,12 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
+
 import {
   extensions,
+  framework,
   installMethod,
   renderer,
   skin,
   sourceUrl,
+  styling,
   syncInstallationSelectionFromUrl,
+  template,
   useCase,
 } from '../installation';
 
@@ -132,5 +137,65 @@ describe('useCase', () => {
     expect(window.history.state).toEqual({ index: 3 });
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
+  });
+});
+
+describe('syncInstallationSelectionFromUrl', () => {
+  afterEach(() => {
+    document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
+    document.documentElement.removeAttribute('data-installation-pending');
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('normalizes a queryless Shadcn entry from the saved framework without touching history state', () => {
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+    window.history.replaceState(
+      { index: 2, scrollX: 0, scrollY: 360 },
+      '',
+      '/docs/guides/installation/shadcn?preset=audio'
+    );
+
+    syncInstallationSelectionFromUrl();
+
+    expect(window.location.search).toBe('?framework=html&preset=audio');
+    expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });
+    expect(framework.get()).toBe('html');
+  });
+
+  it('canonicalizes a Vue Shadcn query to HTML while retaining valid choices', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=vue&template=next&styling=css');
+
+    syncInstallationSelectionFromUrl();
+
+    expect(window.location.search).toBe('?framework=html&styling=css');
+    expect(framework.get()).toBe('html');
+    expect(template.get()).toBe('vite');
+    expect(styling.get()).toBe('css');
+    expect(document.documentElement.dataset.registryFramework).toBe('html');
+    expect(document.documentElement.dataset.registryStyling).toBe('css');
+  });
+
+  it('drops invalid Shadcn options when the framework query is already valid', () => {
+    window.history.replaceState(
+      null,
+      '',
+      '/docs/guides/installation/shadcn?framework=react&template=nuxt&styling=bogus&preset=audio'
+    );
+
+    syncInstallationSelectionFromUrl();
+
+    expect(window.location.search).toBe('?framework=react&preset=audio');
+  });
+
+  it('marks picks that differ from the prerendered defaults as pending', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/react?preset=audio');
+    syncInstallationSelectionFromUrl();
+
+    expect(document.documentElement).toHaveAttribute('data-installation-pending');
+
+    useCase.set('default-video');
+
+    expect(window.location.search).toBe('');
+    expect(document.documentElement).not.toHaveAttribute('data-installation-pending');
   });
 });

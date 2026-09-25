@@ -1,12 +1,8 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
 import { currentFramework } from '@/stores/preferences';
-import { syncRegistryFramework } from '@/stores/registry';
-import {
-  canonicalShadcnInstallationUrl,
-  isShadcnInstallationUrl,
-  resolveShadcnFramework,
-} from '@/utils/installation/framework-navigation';
+import type { SupportedFramework } from '@/types/docs';
+import { isShadcnInstallationUrl } from '@/utils/installation/routes';
 
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
 import { getFrameworkFromDocsUrl } from './routing';
@@ -87,31 +83,26 @@ function savePageScrollToHistory(): void {
   }
 }
 
-/** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
-export function syncFrameworkPreferenceFromUrl(url: URL): void {
-  if (isShadcnInstallationUrl(url)) {
-    const fallback = getFrameworkPreferenceClient() ?? 'react';
-    const framework = resolveShadcnFramework(url, fallback);
+function publishFramework(framework: SupportedFramework): void {
+  currentFramework.set(framework);
+  setFrameworkPreferenceClient(framework);
+}
 
-    if (framework) syncRegistryFramework(framework, url);
+/** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
+export async function syncFrameworkPreferenceFromUrl(url: URL): Promise<void> {
+  if (isShadcnInstallationUrl(url)) {
+    // The Shadcn guide reads its framework from the query with rules that only installation pages need to load.
+    const { resolveShadcnFramework } = await import('@/utils/installation/framework-navigation');
+    const framework = resolveShadcnFramework(url, getFrameworkPreferenceClient() ?? 'react');
+
+    if (framework) publishFramework(framework);
 
     return;
   }
 
   const framework = getFrameworkFromDocsUrl(url);
-  if (!framework) return;
 
-  currentFramework.set(framework);
-  setFrameworkPreferenceClient(framework);
-}
-
-function normalizeCurrentShadcnUrl(url: URL): void {
-  if (!isShadcnInstallationUrl(url)) return;
-
-  const target = canonicalShadcnInstallationUrl(url, getFrameworkPreferenceClient() ?? 'react');
-  if (!target) return;
-
-  window.history.replaceState(window.history.state, '', `${target.pathname}${target.search}${target.hash}`);
+  if (framework) publishFramework(framework);
 }
 
 /** Preserve the reading position for a framework switch that replaces the current guide with its equivalent. */
@@ -234,10 +225,7 @@ export function initializeDocsNavigation(): void {
 
   window.__videojsDocsNavigationController = controller;
 
-  const currentUrl = new URL(window.location.href);
-
-  syncFrameworkPreferenceFromUrl(currentUrl);
-  normalizeCurrentShadcnUrl(currentUrl);
+  void syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
     // A client navigation supersedes the post-layout retry captured for the initial document reload.
@@ -252,7 +240,7 @@ export function initializeDocsNavigation(): void {
       savePageScrollToHistory();
     }
 
-    syncFrameworkPreferenceFromUrl(navigationEvent.to);
+    void syncFrameworkPreferenceFromUrl(navigationEvent.to);
     saveSidebarState();
     setFrameworkTransitionSuppressed(navigationEvent.newDocument, isFrameworkNavigation(navigationEvent.info));
   };
@@ -275,7 +263,6 @@ export function initializeDocsNavigation(): void {
   document.addEventListener(
     'astro:after-swap',
     () => {
-      normalizeCurrentShadcnUrl(new URL(window.location.href));
       restoreSidebarState();
       restoreSavedPageScroll(false);
     },

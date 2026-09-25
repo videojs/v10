@@ -1,5 +1,5 @@
 import { Menu } from '@base-ui/react/menu';
-import { isInstallationFramework, PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
+import { PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 import clsx from 'clsx';
 import { useState } from 'react';
 
@@ -9,9 +9,7 @@ import Copy from '@/assets/icons/copy.svg?react';
 import Markdown from '@/assets/icons/markdown.svg?react';
 import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
-import { resolveShadcnUrlSelection, SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
 import { getInstallationRouteSegment } from '@/utils/installation/routes';
-import { parseInstallationSearchForRoute, serializeInstallationSearchForRoute } from '@/utils/installation/url-state';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -26,37 +24,29 @@ type CopyState =
   | { status: 'success' }
   | { status: 'error'; message: string };
 
-/** The page's Markdown twin from the llms-markdown integration: written at build time, converted on request in dev. */
-export function markdownUrl(
+/**
+ * The page's Markdown twin from the llms-markdown integration: written at build time, converted on request in dev. An
+ * installation guide's twin carries the picks the page shows, including the Shadcn framework before its URL is
+ * normalized.
+ */
+export async function markdownUrl(
   location: Pick<Location, 'origin' | 'pathname' | 'search'> = window.location,
   registryFramework = globalThis.document?.documentElement.dataset.registryFramework
-): string {
+): Promise<string> {
   // Strip trailing slashes so `/guide/` becomes `/guide.md`, not `/guide/.md`. Astro forbids trailing slashes but
   // infrastructure may add them back.
   const pathname = location.pathname.replace(/\/+$/, '');
   const url = new URL(`${location.origin}${pathname}.md${location.search}`);
   const installationRoute = getInstallationRouteSegment(pathname);
 
-  if (
-    pathname === SHADCN_INSTALLATION_PATH &&
-    !isInstallationFramework(url.searchParams.get('framework')) &&
-    (registryFramework === 'react' || registryFramework === 'html')
-  ) {
-    url.searchParams.set('framework', registryFramework);
-  }
-
   if (installationRoute) {
-    const selection = parseInstallationSearchForRoute(installationRoute, url.search);
+    const { canonicalInstallationSearch } = await import('@/utils/installation/url-state');
 
-    url.search = serializeInstallationSearchForRoute(installationRoute, selection, url.search);
-  }
-
-  if (pathname === SHADCN_INSTALLATION_PATH) {
-    const shadcn = resolveShadcnUrlSelection(url, registryFramework === 'html' ? 'html' : 'react');
-
-    if (!shadcn?.template) url.searchParams.delete('template');
-
-    if (!shadcn?.styling) url.searchParams.delete('styling');
+    url.search = canonicalInstallationSearch(
+      installationRoute,
+      url.search,
+      registryFramework === 'react' || registryFramework === 'html' ? registryFramework : undefined
+    );
   }
 
   return url.toString();
@@ -102,9 +92,8 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
     try {
       setState({ status: 'loading' });
 
-      const mdUrl = markdownUrl();
-
-      const markdownBlobPromise = fetch(mdUrl)
+      const markdownBlobPromise = markdownUrl()
+        .then((mdUrl) => fetch(mdUrl))
         .then((response) => {
           if (!response.ok) {
             throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
@@ -183,7 +172,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
       <Menu.Root
         modal={false}
         onOpenChange={(open) => {
-          if (open) setMenuMarkdownUrl(markdownUrl());
+          if (open) void markdownUrl().then(setMenuMarkdownUrl);
         }}
       >
         <Menu.Trigger

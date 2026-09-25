@@ -1,40 +1,34 @@
 import {
   containsControlCharacter,
   defaultInstallationExtensions,
-  fitSelectionToPreset,
   getInstallationPreset,
-  INSTALLATION_EXTENSIONS,
-  INSTALLATION_PRESETS,
+  INSTALLATION_PARAMETERS,
+  installationParameterForKey,
   isInstallationFramework,
-  isInstallationProject,
-  isInstallationTemplate,
-  isInstallationExtension,
-  isPackageManager,
-  isSkinFlag,
-  resolveInstallationTemplate,
-  resolveInstallationTemplateForMethod,
-  installationExtensionsFor,
-  parseInstallationExtensions,
+  resolveInstallationSelection,
   serializeInstallationExtensions,
-  skinFromFlag,
   skinToFlag,
   sourceFrameworkFor,
-  useCaseFromPreset,
   type InstallMethod,
-  type InstallationFramework,
-  type InstallationProject,
-  type InstallationTemplate,
   type InstallationExtension,
+  type InstallationFramework,
+  type InstallationInput,
+  type InstallationMethod,
+  type InstallationProject,
+  type InstallationSelection,
+  type InstallationTemplate,
+  type RegistryStyling,
   type Renderer,
   type Skin,
   type UseCase,
 } from '@videojs/installation';
 
-import type { InstallationRouteSegment } from './routes';
+import { INSTALLATION_ROUTES, type InstallationRouteSegment } from './routes';
 
 /**
  * The installation choices encoded in the page URL. `package-manager` controls app setup and development commands
- * whenever the selected path uses them.
+ * whenever the selected path uses them. `styling` is `null` until a reader picks a Shadcn catalog, so the framework's
+ * default applies.
  */
 export interface InstallationUiSelection {
   framework: InstallationFramework;
@@ -46,6 +40,7 @@ export interface InstallationUiSelection {
   extensions: readonly InstallationExtension[];
   sourceUrl: string;
   installMethod: InstallMethod;
+  styling: RegistryStyling | null;
 }
 
 export const DEFAULT_SELECTION: InstallationUiSelection = {
@@ -58,135 +53,111 @@ export const DEFAULT_SELECTION: InstallationUiSelection = {
   extensions: [],
   sourceUrl: '',
   installMethod: 'pnpm',
+  styling: null,
 };
 
-function isInstallMethod(value: string): value is InstallMethod {
-  return value === 'cdn' || isPackageManager(value);
+interface ParseOptions {
+  /** A framework fixed by the page instead of the `framework` query. */
+  framework?: InstallationFramework | undefined;
+  method?: InstallationMethod | undefined;
 }
 
-/** Fit URL-backed picks to constraints imposed by a dedicated installation route. */
-export function normalizeInstallationSelectionForRoute(
-  route: string,
-  selection: InstallationUiSelection
-): InstallationUiSelection {
-  const framework = isInstallationFramework(route)
-    ? route
-    : route === 'cdn'
-      ? 'html'
-      : route === 'shadcn'
-        ? sourceFrameworkFor(selection.framework)
-        : selection.framework;
-  let normalized = {
-    ...selection,
-    framework,
-    template:
-      route === 'cdn'
-        ? resolveInstallationTemplateForMethod('html', selection.template, 'cdn')
-        : resolveInstallationTemplate(framework, selection.template),
-    installMethod: selection.installMethod === 'cdn' ? ('pnpm' as const) : selection.installMethod,
-  };
+const SOURCE_URL_QUERY = installationParameterForKey('sourceUrl').query;
 
-  if (route === 'cdn' || normalized.template === 'none') normalized.project = 'existing';
-
-  if (route === 'shadcn') {
-    normalized.template = resolveInstallationTemplateForMethod(framework, normalized.template, 'shadcn');
-
-    const useCase = normalized.useCase === 'background-video' ? 'default-video' : normalized.useCase;
-    const selectedSkin = normalized.skin === 'none' ? skinFromFlag('default', useCase) : normalized.skin;
-    const fitted = fitSelectionToPreset(useCase, selectedSkin, normalized.renderer);
-
-    normalized = { ...normalized, useCase, skin: fitted.skin, renderer: fitted.media };
-  }
-
-  const availableExtensions = installationExtensionsFor(normalized.useCase, normalized.skin, normalized.renderer);
-
-  normalized.extensions = normalized.extensions.filter((extension) => availableExtensions.includes(extension));
-
-  return normalized;
+function methodForRoute(route: InstallationRouteSegment | ''): InstallationMethod {
+  return route === 'shadcn' || route === 'cdn' ? route : 'packaged';
 }
 
 /**
- * Read the selection encoded in a query string. Unknown or invalid values fall back to the default, and a media pick
- * that the chosen preset cannot play is dropped, matching what the pickers would do on screen.
+ * Resolve URL input with the shared installation rules. A reader can land on any hand-edited link, so each rejected
+ * choice is dropped in parameter order until the rest resolves, and the page shows that choice's default instead.
  */
-export function parseInstallationSearch(
-  search: string,
-  fixedFramework?: InstallationFramework
-): InstallationUiSelection {
-  const params = new URLSearchParams(search);
-  const selection = { ...DEFAULT_SELECTION, framework: fixedFramework ?? DEFAULT_SELECTION.framework };
+function resolveUrlInput(input: InstallationInput): InstallationSelection {
+  const owner = input.framework === 'react' ? 'react' : 'html';
+  let remaining = input;
 
-  const framework = params.get('framework');
+  for (;;) {
+    const result = resolveInstallationSelection(owner, remaining);
+    if (result.ok) return result.selection;
 
-  if (!fixedFramework && isInstallationFramework(framework)) selection.framework = framework;
+    const rejected = INSTALLATION_PARAMETERS.find(
+      ({ key }) =>
+        key !== 'method' &&
+        key !== 'framework' &&
+        remaining[key] !== undefined &&
+        result.errors.some((error) => error.field === key)
+    );
+    if (!rejected) throw new Error(`Cannot resolve installation input: ${JSON.stringify(result.errors)}`);
 
-  const template = params.get('template');
-
-  if (isInstallationTemplate(template)) selection.template = resolveInstallationTemplate(selection.framework, template);
-  else selection.template = resolveInstallationTemplate(selection.framework, null);
-
-  const project = params.get('project');
-
-  if (isInstallationProject(project)) selection.project = project;
-
-  if (selection.template === 'none') selection.project = 'existing';
-
-  const preset = params.get('preset');
-  const useCase = preset ? useCaseFromPreset(preset) : undefined;
-
-  if (useCase) selection.useCase = useCase;
-
-  // The default skin follows the preset's media type, whether the skin flag is missing or unknown.
-  const requestedSkin = params.get('skin') ?? 'default';
-  const skinFlag = isSkinFlag(requestedSkin) ? requestedSkin : 'default';
-
-  selection.skin = skinFromFlag(skinFlag, selection.useCase);
-
-  const renderers = getInstallationPreset(selection.useCase).renderers;
-  const media = params.get('media') ?? '';
-
-  selection.renderer = renderers.find((candidate) => candidate === media) ?? renderers[0]!;
-
-  const requestedExtensions = params.get('extensions');
-  const availableExtensions = installationExtensionsFor(selection.useCase, selection.skin, selection.renderer);
-
-  selection.extensions =
-    requestedExtensions === null
-      ? defaultInstallationExtensions(selection.renderer)
-      : INSTALLATION_EXTENSIONS.filter(
-          (extension) =>
-            parseInstallationExtensions(requestedExtensions).some(
-              (requested) => isInstallationExtension(requested) && requested === extension
-            ) && availableExtensions.includes(extension)
-        );
-
-  const installMethod = params.get('package-manager') ?? '';
-
-  if (isInstallMethod(installMethod)) selection.installMethod = installMethod;
-
-  const sourceUrl = params.get('source-url') ?? '';
-
-  selection.sourceUrl = containsControlCharacter(sourceUrl) ? '' : sourceUrl;
-
-  return selection;
+    remaining = { ...remaining };
+    delete remaining[rejected.key];
+  }
 }
 
-/** Parse and normalize a URL using the framework fixed by a dedicated guide route, when present. */
+/** Read the selection encoded in a query string. Invalid or incompatible values fall back to their defaults. */
+export function parseInstallationSearch(search: string, options: ParseOptions = {}): InstallationUiSelection {
+  const params = new URLSearchParams(search);
+  const method = options.method ?? 'packaged';
+  const requestedFramework = params.get('framework');
+  const framework =
+    options.framework ??
+    (isInstallationFramework(requestedFramework) ? requestedFramework : DEFAULT_SELECTION.framework);
+  const input: InstallationInput = { method, framework };
+
+  // The source URL stays out of resolution: on the page it only suggests media, so it must not replace or reject the
+  // media pick the way detection does for agent commands.
+  for (const { key, query } of INSTALLATION_PARAMETERS) {
+    const value = params.get(query);
+
+    if (value !== null && key !== 'method' && key !== 'framework' && key !== 'sourceUrl') input[key] = value;
+  }
+
+  // The CDN guide adds the player to an existing page, so it has no app setup or package manager to carry.
+  if (method === 'cdn') {
+    delete input.project;
+    delete input.template;
+    delete input.packageManager;
+  }
+
+  const selection = resolveUrlInput(input);
+  const sourceUrl = params.get(SOURCE_URL_QUERY) ?? '';
+
+  return {
+    framework: selection.framework,
+    template: selection.template,
+    project: selection.project,
+    useCase: selection.useCase,
+    skin: selection.skin,
+    renderer: selection.media,
+    extensions: selection.extensions,
+    sourceUrl: containsControlCharacter(sourceUrl) ? '' : sourceUrl,
+    installMethod: selection.packageManager,
+    styling: selection.defaulted.includes('styling') ? null : selection.styling,
+  };
+}
+
+/**
+ * Parse a query for one installation guide. Dedicated routes fix the framework; the Shadcn guide reads it from the
+ * query, falls back to `shadcnFramework`, and shows HTML source for Vue and Svelte.
+ */
 export function parseInstallationSearchForRoute(
   route: InstallationRouteSegment | '',
   search: string,
   shadcnFramework?: InstallationFramework
 ): InstallationUiSelection {
-  const fixedFramework = isInstallationFramework(route) ? route : route === 'cdn' ? 'html' : undefined;
-  const params = new URLSearchParams(search);
-  const parsed = parseInstallationSearch(search, fixedFramework);
+  const requested = new URLSearchParams(search).get('framework');
+  const framework =
+    route === 'shadcn'
+      ? sourceFrameworkFor(
+          isInstallationFramework(requested)
+            ? requested
+            : (shadcnFramework ?? INSTALLATION_ROUTES.shadcn.pickerFramework)
+        )
+      : route
+        ? INSTALLATION_ROUTES[route].pickerFramework
+        : undefined;
 
-  if (route === 'shadcn' && shadcnFramework && !isInstallationFramework(params.get('framework'))) {
-    parsed.framework = shadcnFramework;
-    parsed.template = resolveInstallationTemplate(shadcnFramework, parsed.template);
-  }
-
-  return normalizeInstallationSelectionForRoute(route, parsed);
+  return parseInstallationSearch(search, { framework, method: methodForRoute(route) });
 }
 
 /**
@@ -196,7 +167,8 @@ export function parseInstallationSearchForRoute(
 export function serializeInstallationSearch(selection: InstallationUiSelection, search = ''): string {
   const params = new URLSearchParams(search);
   const preset = getInstallationPreset(selection.useCase);
-  const defaults = parseInstallationSearch(`preset=${preset.flag}`);
+  const defaults = parseInstallationSearch(`?preset=${preset.flag}`, { framework: selection.framework });
+  const defaultPreset = getInstallationPreset(DEFAULT_SELECTION.useCase).flag;
 
   const write = (key: string, value: string, fallback: string) => {
     if (value === fallback) params.delete(key);
@@ -204,22 +176,24 @@ export function serializeInstallationSearch(selection: InstallationUiSelection, 
   };
 
   write('framework', selection.framework, DEFAULT_SELECTION.framework);
-  write('template', selection.template, resolveInstallationTemplate(selection.framework, null));
-  write('project', selection.project, DEFAULT_SELECTION.project);
-  write('preset', preset.flag, INSTALLATION_PRESETS[DEFAULT_SELECTION.useCase].flag);
+  write('template', selection.template, defaults.template);
+  write('project', selection.project, defaults.project);
+  write('preset', preset.flag, defaultPreset);
 
   if (selection.useCase === 'background-video') params.delete('skin');
   else write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
 
   write('media', selection.renderer, defaults.renderer);
-  const extensionValue = serializeInstallationExtensions(
-    selection.extensions ?? defaultInstallationExtensions(selection.renderer)
+  write(
+    'extensions',
+    serializeInstallationExtensions(selection.extensions),
+    serializeInstallationExtensions(defaultInstallationExtensions(selection.renderer))
   );
-  const defaultExtensionValue = serializeInstallationExtensions(defaultInstallationExtensions(selection.renderer));
+  write('package-manager', selection.installMethod, defaults.installMethod);
+  write(SOURCE_URL_QUERY, selection.sourceUrl, '');
 
-  write('extensions', extensionValue, defaultExtensionValue);
-  write('package-manager', selection.installMethod, DEFAULT_SELECTION.installMethod);
-  write('source-url', selection.sourceUrl, '');
+  if (selection.styling) params.set('styling', selection.styling);
+  else params.delete('styling');
 
   const string = params.toString();
 
@@ -242,6 +216,7 @@ export function serializeInstallationSearchForRoute(
     params.delete('framework');
     params.delete('styling');
   } else {
+    // The framework always leads a Shadcn URL so a shared link does not depend on the reader's saved preference.
     canonicalParams = new URLSearchParams([['framework', selection.framework]]);
 
     for (const [key, value] of params) {
@@ -258,4 +233,28 @@ export function serializeInstallationSearchForRoute(
   const string = canonicalParams.toString();
 
   return string ? `?${string}` : '';
+}
+
+/** The one canonical query for a guide: its picks as the page would show them, plus unrelated params. */
+export function canonicalInstallationSearch(
+  route: InstallationRouteSegment,
+  search: string,
+  shadcnFramework?: InstallationFramework
+): string {
+  return serializeInstallationSearchForRoute(
+    route,
+    parseInstallationSearchForRoute(route, search, shadcnFramework),
+    search
+  );
+}
+
+/** Whether a guide's prerendered picks, which use the route defaults, differ from `selection`. */
+export function isCustomInstallationSelection(
+  route: InstallationRouteSegment,
+  selection: InstallationUiSelection
+): boolean {
+  return (
+    serializeInstallationSearchForRoute(route, selection) !==
+    serializeInstallationSearchForRoute(route, parseInstallationSearchForRoute(route, ''))
+  );
 }

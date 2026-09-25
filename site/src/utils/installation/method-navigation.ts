@@ -7,8 +7,11 @@ import {
   type RegistryFramework,
 } from '@videojs/installation';
 
-import { isShadcnInstallationUrl } from '@/utils/installation/framework-navigation';
-import { getInstallationRoutePath, getInstallationRouteSegment } from '@/utils/installation/routes';
+import {
+  getInstallationRoutePath,
+  getInstallationRouteSegment,
+  isShadcnInstallationUrl,
+} from '@/utils/installation/routes';
 import type { InstallationUiSelection } from '@/utils/installation/url-state';
 import { serializeInstallationSearch } from '@/utils/installation/url-state';
 

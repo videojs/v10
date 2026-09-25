@@ -1,7 +1,7 @@
 import { sidebar as defaultSidebar } from '@/docs.config';
 import type { Sidebar, SupportedFramework } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, isValidFramework, resolveDocsFramework } from '@/types/docs';
-import { isShadcnInstallationUrl, SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
+import { isShadcnInstallationUrl, SHADCN_INSTALLATION_PATH } from '@/utils/installation/routes';
 
 import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 

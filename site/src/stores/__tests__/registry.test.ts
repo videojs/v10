@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { framework, selectInstallationTemplate, template } from '@/stores/installation';
+import {
+  framework,
+  selectInstallationTemplate,
+  syncInstallationSelectionFromUrl,
+  template,
+} from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
 import {
   registryFramework,
@@ -9,7 +14,6 @@ import {
   registryTheme,
   selectRegistryFramework,
   selectRegistryStyling,
-  syncRegistryFramework,
 } from '@/stores/registry';
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 
@@ -62,7 +66,8 @@ describe('selectRegistryFramework', () => {
 
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
-    expect(window.location.search).toBe('?framework=html&template=vite&styling=css');
+    // Vite is the HTML default, so the canonical URL leaves it out.
+    expect(window.location.search).toBe('?framework=html&styling=css');
   });
 
   it('writes compatible defaults that the next framework would otherwise reinterpret', () => {
@@ -90,6 +95,7 @@ describe('selectRegistryFramework', () => {
 
   it('writes template and styling choices into the Shadcn URL', () => {
     window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=react&preset=audio');
+    syncInstallationSelectionFromUrl();
 
     selectInstallationTemplate('vite');
     selectRegistryStyling('css');
@@ -100,14 +106,12 @@ describe('selectRegistryFramework', () => {
     expect(document.documentElement.dataset.registryStyling).toBe('css');
   });
 
-  it('initializes registry choices from an authoritative Shadcn URL', () => {
+  it('initializes registry choices from the destination of a client navigation', () => {
     registrySkin.set('video');
     registryTheme.set('minimal');
-    const url = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?framework=html&template=astro&styling=css'
-    );
+    const to = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html&template=astro&styling=css');
 
-    syncRegistryFramework('html', url);
+    document.dispatchEvent(Object.assign(new Event('astro:before-swap'), { to }));
 
     expect(registryFramework.get()).toBe('html');
     expect(template.get()).toBe('astro');
@@ -119,7 +123,7 @@ describe('selectRegistryFramework', () => {
   it('syncs a destination without rewriting the departing URL', () => {
     window.history.replaceState({ index: 2 }, '', '/docs/guides/installation/react?preset=audio');
 
-    syncRegistryFramework('html');
+    syncInstallationSelectionFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
 
     expect(window.location.pathname).toBe('/docs/guides/installation/react');
     expect(window.location.search).toBe('?preset=audio');

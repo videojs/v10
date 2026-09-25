@@ -11,9 +11,9 @@ afterEach(() => {
 });
 
 describe('markdownUrl', () => {
-  it('preserves installation query parameters on the Markdown twin', () => {
+  it('preserves installation query parameters on the Markdown twin', async () => {
     expect(
-      markdownUrl({
+      await markdownUrl({
         origin: 'https://videojs.org',
         pathname: '/docs/guides/installation/shadcn/',
         search: '?framework=html&preset=audio',
@@ -21,9 +21,9 @@ describe('markdownUrl', () => {
     ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=html&preset=audio');
   });
 
-  it('uses the visible saved Shadcn source framework when the URL is not normalized yet', () => {
+  it('uses the visible saved Shadcn source framework when the URL is not normalized yet', async () => {
     expect(
-      markdownUrl(
+      await markdownUrl(
         {
           origin: 'https://videojs.org',
           pathname: '/docs/guides/installation/shadcn',
@@ -34,9 +34,9 @@ describe('markdownUrl', () => {
     ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=html&preset=audio');
   });
 
-  it('copies the normalized choices shown by an installation page', () => {
+  it('copies the normalized choices shown by an installation page', async () => {
     expect(
-      markdownUrl(
+      await markdownUrl(
         {
           origin: 'https://videojs.org',
           pathname: '/docs/guides/installation/shadcn',
@@ -48,9 +48,9 @@ describe('markdownUrl', () => {
     ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=html&preset=audio');
   });
 
-  it('keeps compatible Shadcn template and styling choices', () => {
+  it('keeps compatible Shadcn template and styling choices', async () => {
     expect(
-      markdownUrl({
+      await markdownUrl({
         origin: 'https://videojs.org',
         pathname: '/docs/guides/installation/shadcn',
         search: '?framework=react&template=vite&styling=css',
@@ -82,9 +82,9 @@ describe('markdownUrl', () => {
     );
   });
 
-  it('drops Markdown-only aliases and normalizes unsupported Shadcn combinations', () => {
+  it('drops Markdown-only aliases and normalizes unsupported Shadcn combinations', async () => {
     expect(
-      markdownUrl({
+      await markdownUrl({
         origin: 'https://videojs.org',
         pathname: '/docs/guides/installation/shadcn',
         search: '?framework=react&preset=background-video&skin=none&media=background-video&package-manager=pnpm',
@@ -92,8 +92,8 @@ describe('markdownUrl', () => {
     ).toBe('https://videojs.org/docs/guides/installation/shadcn.md?framework=react');
   });
 
-  it('keeps a private source URL for copying but removes it from assistant links', () => {
-    const url = markdownUrl({
+  it('keeps a private source URL for copying but removes it from assistant links', async () => {
+    const url = await markdownUrl({
       origin: 'https://videojs.org',
       pathname: '/docs/guides/installation/react',
       search: '?source-url=https%3A%2F%2Fexample.com%2Fsigned.m3u8&preset=audio&template=next&styling=tailwind',
