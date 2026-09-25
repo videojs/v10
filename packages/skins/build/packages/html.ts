@@ -185,11 +185,14 @@ export function createHtmlSkinRegistration(
 }
 
 /** Replace runtime slots with the editable light-DOM markers installed by the registry. */
-export function createSourceOwnedHtml(template: string): string {
+export function createSourceOwnedHtml(template: string, sizedVideo: boolean): string {
   const mediaSlot = /<slot>\s*<\/slot>/;
   if (!mediaSlot.test(template)) throw new Error('Rendered HTML Skin has no default media slot.');
 
+  const layout = sizedVideo ? ' style="display: block; width: 100%; aspect-ratio: 16 / 9;"' : '';
+
   return template
+    .replace('<media-container', `<media-container${layout}`)
     .replace(mediaSlot, '<!-- Add a compatible media element here. -->')
     .replace(/<slot name="[^"]+">\s*([\s\S]*?)\s*<\/slot>/g, '$1')
     .replaceAll('&amp;', '&')

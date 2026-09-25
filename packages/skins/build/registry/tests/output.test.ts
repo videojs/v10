@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 
 import { isPlainObject } from '@videojs/utils/predicate';
 import { type RegistryItem, registryItemSchema } from 'shadcn/schema';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../../..');
@@ -234,6 +235,32 @@ describe('React registry output', () => {
         "'not-data-submenu:data-child-open:-translate-x-full',"
       );
     }
+  });
+});
+
+describe('registry source files', () => {
+  it('survives Shadcn trimming string literals when tailwind.cssVariables is false', () => {
+    const sourceDir = resolve(packageDir, 'dist/registry/source/r');
+    const files = readdirSync(sourceDir, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name))
+      .map((entry) => resolve(entry.parentPath, entry.name));
+    const padded: string[] = [];
+
+    for (const file of files) {
+      const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+      const visit = (node: ts.Node): void => {
+        if (ts.isStringLiteral(node) && node.text !== node.text.trim()) {
+          padded.push(`${file.slice(sourceDir.length + 1)}: ${JSON.stringify(node.text)}`);
+        }
+
+        ts.forEachChild(node, visit);
+      };
+
+      visit(source);
+    }
+
+    expect(files.length).toBeGreaterThan(0);
+    expect(padded).toEqual([]);
   });
 });
 
