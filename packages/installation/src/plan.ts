@@ -80,6 +80,8 @@ export const INSTALLATION_STEP_CONDITIONS = {
   'when-components-json-missing': 'Only when components.json is missing.',
   'when-components-json-missing-or-nonstandard':
     'Only when components.json is missing or does not use the standard https://ui.shadcn.com/schema.json schema.',
+  'when-components-json-nonstandard':
+    'Only when components.json exists but does not use the standard https://ui.shadcn.com/schema.json schema.',
 } as const;
 
 export type InstallationStepCondition = keyof typeof INSTALLATION_STEP_CONDITIONS;
@@ -617,16 +619,33 @@ function shadcnConfigurationSteps(
   );
 
   if (configuration.mode === 'components-json') {
-    return presentSteps(prepareAppStep(selection), {
-      id: 'configure-source-registry',
-      title: 'Configure Shadcn',
-      condition: 'when-components-json-missing-or-nonstandard',
-      description: `Merge every app-alias block below, then write the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
-      blocks: [
-        ...aliasBlocks,
-        file('json', configuration.componentsConfig, { filename: 'components.json', operation: 'create' }),
-      ],
-    });
+    return presentSteps(
+      prepareAppStep(selection),
+      aliasBlocks.length > 0
+        ? {
+            id: 'configure-app-aliases',
+            title: 'Configure app aliases',
+            condition: 'when-components-json-missing-or-nonstandard',
+            description: "Merge every app-alias block below, keeping the app's existing plugins and compiler options.",
+            blocks: aliasBlocks,
+          }
+        : null,
+      {
+        id: 'create-components-json',
+        title: 'Create components.json',
+        condition: 'when-components-json-missing',
+        description: `Create the standard config in the app directory. Its components alias maps registry files to ${project.componentsDirectory}.`,
+        blocks: [file('json', configuration.componentsConfig, { filename: 'components.json', operation: 'create' })],
+      },
+      {
+        id: 'convert-components-json',
+        title: 'Convert components.json',
+        condition: 'when-components-json-nonstandard',
+        description:
+          'Replace the framework-specific config with the standard config below, but keep the existing values under aliases in place of the generated ones, so registry files install where the app already expects its components.',
+        blocks: [file('json', configuration.componentsConfig, { filename: 'components.json', operation: 'replace' })],
+      }
+    );
   }
 
   if (setup === 'create-app') {

@@ -92,7 +92,7 @@ describe('runAgentsInit', () => {
     const result = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--media', 'hls']);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('## Configure Shadcn');
+    expect(result.stdout).toContain('## Create components.json');
     expect(result.stdout).toContain(
       'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
     );
@@ -229,19 +229,61 @@ describe('runAgentsInit', () => {
     expect(result.stdout).toContain('```bash\npnpm dlx shadcn@latest init --base base --preset nova --yes\n```');
   });
 
-  it('marks standard-config Shadcn setup as conditional on a missing or nonstandard components.json', () => {
+  it('creates a missing standard components.json and converts a nonstandard one', () => {
     const json = JSON.parse(
       runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'html', '--json']).stdout
     );
     const markdown = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'html']).stdout;
+    const step = (id: string) => json.steps.find((candidate: { id: string }) => candidate.id === id);
 
-    expect(json.steps.find(({ id }: { id: string }) => id === 'configure-source-registry')).toMatchObject({
+    expect(step('configure-app-aliases')).toMatchObject({
       condition: 'when-components-json-missing-or-nonstandard',
+      blocks: [
+        { filename: 'tsconfig.json', operation: 'merge' },
+        { filename: 'vite.config.ts', operation: 'merge' },
+      ],
     });
+    expect(step('create-components-json')).toMatchObject({
+      condition: 'when-components-json-missing',
+      blocks: [{ filename: 'components.json', operation: 'create' }],
+    });
+    expect(step('convert-components-json')).toMatchObject({
+      condition: 'when-components-json-nonstandard',
+      blocks: [{ filename: 'components.json', operation: 'replace' }],
+    });
+    expect(step('convert-components-json').blocks[0].anchor).toBeUndefined();
+    expect(step('convert-components-json').description).toContain('keep the existing values under aliases');
     expect(markdown).toContain(
       '_Only when components.json is missing or does not use the standard https://ui.shadcn.com/schema.json schema._'
     );
+    expect(markdown).toContain(
+      '_Only when components.json exists but does not use the standard https://ui.shadcn.com/schema.json schema._'
+    );
     expect(markdown).not.toContain('Skip this step when components.json');
+  });
+
+  it('omits the app-alias step when the app setup needs no aliases', () => {
+    const json = JSON.parse(
+      runAgentsInit('10.0.0', [
+        'agents',
+        'init',
+        '--method',
+        'shadcn',
+        '--framework',
+        'react',
+        '--project',
+        'existing',
+        '--template',
+        'next',
+        '--styling',
+        'css',
+        '--json',
+      ]).stdout
+    );
+    const stepIds = json.steps.map(({ id }: { id: string }) => id);
+
+    expect(stepIds).not.toContain('configure-app-aliases');
+    expect(stepIds.slice(0, 2)).toEqual(['create-components-json', 'convert-components-json']);
   });
 
   it('writes Shadcn aliases where Vite and Shadcn both resolve them', () => {
@@ -448,6 +490,7 @@ describe('runAgentsInit', () => {
     expect(Object.keys(json.planFormat.conditions)).toEqual([
       'when-components-json-missing',
       'when-components-json-missing-or-nonstandard',
+      'when-components-json-nonstandard',
     ]);
     expect(Object.keys(json.planFormat.fields)).toContain('steps[].blocks[].longRunning');
     expect(markdown).toContain('## Plan format');
