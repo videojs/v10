@@ -326,18 +326,6 @@ ${position}  display: block;
 </style>`;
 }
 
-function generateSourceSkinSfcStyle(useCase: UseCase): string {
-  if (!isSizedVideoPlayer(useCase)) return '';
-
-  return `<style>
-media-container {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-}
-</style>`;
-}
-
 function generateHTMLImports(
   useCase: UseCase,
   skin: Skin,
@@ -400,14 +388,13 @@ function getHTMLCustomElementTags(
   useCase: UseCase,
   skin: Skin,
   renderer: Renderer,
-  extensions: readonly InstallationExtension[],
-  includePackagedSkin = true
+  extensions: readonly InstallationExtension[]
 ): string[] {
   const tags = [getPlayerTag(useCase)];
 
-  if (includePackagedSkin && (skin !== 'none' || useCase === 'background-video')) {
+  if (skin !== 'none' || useCase === 'background-video') {
     tags.push(getSkinTag(useCase, skin === 'none' ? 'video' : skin));
-  } else if (skin === 'none') {
+  } else {
     tags.push('media-container');
   }
 
@@ -466,17 +453,14 @@ ${indentBlock(media, '  ')}
 }
 
 export function generateVueCustomElementConfigCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>,
-  includeSourceSkinElements = false
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>
 ): VueCustomElementConfigCode {
   const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer, extensions, !includeSourceSkinElements)
+  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer, extensions)
     .map((tag) => `'${tag}'`)
     .join(', ');
   const elementSet = `const videoJsElements = new Set([${tags}]);`;
-  const isCustomElement = includeSourceSkinElements
-    ? `(tag) => tag.startsWith('media-') || videoJsElements.has(tag)`
-    : `(tag) => videoJsElements.has(tag)`;
+  const isCustomElement = `(tag) => videoJsElements.has(tag)`;
 
   return {
     'astro.config.mjs': `import vue from '@astrojs/vue';
@@ -815,31 +799,13 @@ export interface SourceHTMLUsageCode {
   skinFile: string;
 }
 
-export interface SourceVueUsageCode extends VueCustomElementConfigCode {
-  component: string;
-  'App.vue': string;
-  'index.astro': string;
-  media: string;
-  skinStyle: string;
-  sourceSkinFile: string;
-  skinFile: string;
-}
-
-export interface SourceSvelteUsageCode extends SvelteUsageCode {
-  component: string;
-  media: string;
-  skinStyle: string;
-  sourceSkinFile: string;
-  skinFile: string;
-}
-
-function generateSourceHTMLUsageCodeWithImports(
+/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
+export function generateSourceHTMLUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
     extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     componentsDirectory?: string;
-  },
-  includeSkinRegistration = true
+  }
 ): SourceHTMLUsageCode {
   const { useCase, renderer } = opts;
   const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
@@ -854,9 +820,7 @@ function generateSourceHTMLUsageCodeWithImports(
     ...extensions.map(
       (extension) => `import '@videojs/html/extensions/${getInstallationExtension(extension).htmlSubpath}';`
     ),
-    ...(includeSkinRegistration
-      ? [`import '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`]
-      : []),
+    `import '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`,
   ].join('\n');
 
   return {
@@ -866,134 +830,5 @@ function generateSourceHTMLUsageCodeWithImports(
   <!-- Paste the contents of ${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html here. -->
 </${getPlayerTag(useCase)}>`,
     skinFile: `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`,
-  };
-}
-
-/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
-export function generateSourceHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
-    extensions?: readonly InstallationExtension[];
-    componentsAlias?: string;
-    componentsDirectory?: string;
-  }
-): SourceHTMLUsageCode {
-  return generateSourceHTMLUsageCodeWithImports(opts);
-}
-
-/** Build Vue files around an HTML skin copied into the app by Shadcn. */
-export function generateSourceVueUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
-    extensions?: readonly InstallationExtension[];
-    componentsAlias?: string;
-    componentsDirectory?: string;
-    playerImport?: string | undefined;
-  }
-): SourceVueUsageCode {
-  const componentName = getInstallationPlayerComponentName(opts.useCase);
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const source = generateSourceHTMLUsageCodeWithImports(opts, false);
-  const playerTag = getPlayerTag(opts.useCase);
-  const config = generateVueCustomElementConfigCode(
-    { ...opts, extensions, skin: defaultSkinForUseCase(opts.useCase) },
-    true
-  );
-  const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
-  const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.vue`;
-  const media = generateMediaMarkup(
-    getRendererTag(opts.renderer),
-    resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase),
-    isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '',
-    extensions,
-    ''
-  );
-
-  return {
-    ...config,
-    media,
-    skinStyle: generateSourceSkinSfcStyle(opts.useCase),
-    sourceSkinFile: source.skinFile,
-    skinFile,
-    component: `<script setup lang="ts">
-${source.imports}
-import VideoSkin from '${skinSource}.vue';
-</script>
-
-<template>
-  <${playerTag}>
-    <VideoSkin>
-      <slot />
-    </VideoSkin>
-  </${playerTag}>
-</template>`,
-    'App.vue': `<script setup lang="ts">
-${vuePlayerImport(componentName, opts.playerImport)}
-</script>
-
-<template>
-  <${componentName}>
-${indentBlock(media, '    ')}
-  </${componentName}>
-</template>`,
-    'index.astro': generateAstroComponentUsage(
-      componentName,
-      opts.playerImport ?? `../components/${componentName}.vue`,
-      media
-    ),
-  };
-}
-
-/** Build Svelte files around an HTML skin copied into the app by Shadcn. */
-export function generateSourceSvelteUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
-    extensions?: readonly InstallationExtension[];
-    componentsAlias?: string;
-    componentsDirectory?: string;
-    playerImport?: string | undefined;
-  }
-): SourceSvelteUsageCode {
-  const componentName = getInstallationPlayerComponentName(opts.useCase);
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const source = generateSourceHTMLUsageCodeWithImports(opts, false);
-  const playerTag = getPlayerTag(opts.useCase);
-  const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
-  const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.svelte`;
-  const media = generateMediaMarkupWithSource(
-    getRendererTag(opts.renderer),
-    `src={${JSON.stringify(resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase))}}`,
-    isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '',
-    extensions,
-    ''
-  );
-  const component = `<script lang="ts">
-${indentBlock(source.imports, '  ')}
-  import VideoSkin from '${skinSource}.svelte';
-</script>
-
-<${playerTag}>
-  <VideoSkin>
-    <slot />
-  </VideoSkin>
-</${playerTag}>`;
-  const usage = (path: string) => `<script lang="ts">
-  import ${componentName} from '${path}';
-</script>
-
-<${componentName}>
-${indentBlock(media, '  ')}
-</${componentName}>`;
-
-  return {
-    media,
-    skinStyle: generateSourceSkinSfcStyle(opts.useCase),
-    sourceSkinFile: source.skinFile,
-    skinFile,
-    component,
-    '+page.svelte': usage(`$lib/${componentName}.svelte`),
-    'App.svelte': usage(`./lib/${componentName}.svelte`),
-    'index.astro': generateAstroComponentUsage(
-      componentName,
-      opts.playerImport ?? `../components/${componentName}.svelte`,
-      media
-    ),
   };
 }

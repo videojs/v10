@@ -20,9 +20,7 @@ const commands = route === 'shadcn'
   : [installationCommand(owner, undefined, null)];
 const fixedMethod: InstallationMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
 const fixedFramework: InstallationFramework | null = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
-const frameworks: readonly InstallationFramework[] = fixedFramework
-  ? [fixedFramework]
-  : ['react', 'html', 'vue', 'svelte'];
+const frameworks: readonly InstallationFramework[] = fixedFramework ? [fixedFramework] : ['react', 'html'];
 const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks });
 const decisionOrder = installationDecisionOrderFor({ methods: [fixedMethod], frameworks });
 const queryOptions = definitions
@@ -45,8 +43,6 @@ const routeExamples = [
   ['/docs/guides/installation/svelte.md', 'Svelte with packaged HTML custom elements'],
   ['/docs/guides/installation/shadcn.md?framework=react', 'Shadcn with React source'],
   ['/docs/guides/installation/shadcn.md?framework=html', 'Shadcn with plain HTML source'],
-  ['/docs/guides/installation/shadcn.md?framework=vue', 'Shadcn HTML source in Vue'],
-  ['/docs/guides/installation/shadcn.md?framework=svelte', 'Shadcn HTML source in Svelte'],
   ['/docs/guides/installation/cdn.md', 'HTML from the CDN'],
 ] as const;
 ---
@@ -64,7 +60,7 @@ const routeExamples = [
   <p>
     This page fixes the installation method to <code>{fixedMethod}</code>{fixedFramework
       ? <> and the framework to <code>{fixedFramework}</code></>
-      : <>. The <code>framework</code> query parameter selects React, HTML, Vue, or Svelte</>}.
+      : <>. The <code>framework</code> query parameter selects React or HTML</>}.
   </p>
 
   <pre><code class="language-sh">{commands.join('\n')}</code></pre>
@@ -115,7 +111,7 @@ const routeExamples = [
           {templates.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}
           {route === 'shadcn' && (
             <>; styling{' '}
-            {installationCompatibility.shadcn.stylingsByFramework[framework].map((value, index) => (
+            {(installationCompatibility.shadcn.stylingsByFramework[framework] ?? []).map((value, index) => (
               <>{index > 0 && ', '}<code>{value}</code></>
             ))}</>
           )}

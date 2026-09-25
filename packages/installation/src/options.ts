@@ -60,7 +60,7 @@ export interface InstallationCompatibility {
   shadcn: {
     presets: readonly PresetFlag[];
     skins: readonly SkinFlag[];
-    stylingsByFramework: Readonly<Record<InstallationFramework, readonly RegistryStyling[]>>;
+    stylingsByFramework: Readonly<Partial<Record<InstallationFramework, readonly RegistryStyling[]>>>;
   };
 }
 
@@ -105,8 +105,6 @@ export const installationCompatibility: InstallationCompatibility = {
     stylingsByFramework: {
       react: registryStylings('react'),
       html: registryStylings('html'),
-      vue: registryStylings('html'),
-      svelte: registryStylings('html'),
     },
   },
 };
@@ -126,7 +124,11 @@ export function installationCompatibilityFor(
       presets: installationCompatibility.shadcn.presets,
       skins: installationCompatibility.shadcn.skins,
       stylingsByFramework: Object.fromEntries(
-        frameworks.map((framework) => [framework, installationCompatibility.shadcn.stylingsByFramework[framework]])
+        frameworks.flatMap((framework) => {
+          const stylings = installationCompatibility.shadcn.stylingsByFramework[framework];
+
+          return stylings ? [[framework, stylings]] : [];
+        })
       ),
     },
   };
@@ -154,18 +156,18 @@ export function installationDecisionOrderFor({
       ? methods[0] === 'packaged'
         ? 'This guide uses packaged modules. Match the package manager to the project lockfile.'
         : methods[0] === 'shadcn'
-          ? 'This guide uses Shadcn to copy editable skin source. React uses the React source catalog; HTML, Vue, and Svelte use the HTML source catalog.'
+          ? 'This guide uses Shadcn to copy editable skin source. React uses the React source catalog; plain HTML uses the HTML source catalog. Vue and Svelte use packaged modules.'
           : 'This guide uses CDN scripts for plain HTML. Use an existing page when one is available, and scaffold a minimal Vite app only when no app exists.'
       : frameworks.includes('react')
         ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. Use @videojs/html when the project needs CDN scripts.'
-        : 'Use packaged modules by default, Shadcn when the project should own editable skin source, or CDN for a plain HTML integration. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
+        : 'Use packaged modules by default, Shadcn when a plain HTML project should own editable skin source, or CDN for a plain HTML integration. Vue and Svelte use packaged modules. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
 
   const stylingDecisions: InstallationDecision[] =
     methods.includes('shadcn') && frameworks.includes('react')
       ? [
           {
             title: 'Choose the CSS framework',
-            guidance: `${methods.length === 1 ? '' : 'Only for Shadcn. '}For React, use tailwind in a new app or an existing Tailwind app; otherwise use css. HTML, Vue, and Svelte source uses css.`,
+            guidance: `${methods.length === 1 ? '' : 'Only for Shadcn. '}For React, use tailwind in a new app or an existing Tailwind app; otherwise use css. HTML source uses css.`,
           },
         ]
       : [];

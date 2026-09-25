@@ -31,10 +31,10 @@ function createContext(markdown = staticMarkdown) {
 }
 
 describe('markdown negotiation', () => {
-  it('renders a query-selected Vue Shadcn plan into the authored page', async () => {
+  it('renders a query-selected HTML Shadcn plan into the authored page', async () => {
     const { context, next } = createContext();
     const request = new Request(
-      'https://videojs.org/docs/guides/installation/shadcn.md?framework=vue&preset=audio&media=spotify'
+      'https://videojs.org/docs/guides/installation/shadcn.md?framework=html&preset=audio&media=spotify'
     );
     const response = await directMarkdown(request, context);
     const body = await response!.text();
@@ -43,7 +43,7 @@ describe('markdown negotiation', () => {
     expect(response?.headers.get('netlify-vary')).toContain('package-manager');
     expect(response?.headers.get('netlify-vary')).not.toContain('install-method');
     expect(body).toContain('# Shadcn Installation Guide');
-    expect(body).toContain('- `framework`: `vue`');
+    expect(body).toContain('- `framework`: `html`');
     expect(body).toContain('- `media`: `spotify`');
     expect(body).toContain('components/videojs/audio/skin.html');
     expect(body).toContain('HTML follow-up.');
@@ -68,12 +68,23 @@ describe('markdown negotiation', () => {
   it('rejects invalid option combinations as Markdown', async () => {
     const { context } = createContext();
     const request = new Request(
-      'https://videojs.org/docs/guides/installation/shadcn.md?framework=vue&preset=background-video'
+      'https://videojs.org/docs/guides/installation/shadcn.md?framework=html&preset=background-video'
     );
     const response = await directMarkdown(request, context);
 
     expect(response?.status).toBe(400);
     expect(await response!.text()).toContain('Background Video is not available');
+  });
+
+  it('rejects a Vue or Svelte Shadcn plan with the packaged alternative', async () => {
+    for (const framework of ['vue', 'svelte']) {
+      const { context } = createContext();
+      const request = new Request(`https://videojs.org/docs/guides/installation/shadcn.md?framework=${framework}`);
+      const response = await directMarkdown(request, context);
+
+      expect(response?.status).toBe(400);
+      expect(await response!.text()).toContain('Use packaged installation for Vue or Svelte.');
+    }
   });
 
   it('rejects an unknown Shadcn framework instead of silently rendering React', async () => {

@@ -12,7 +12,6 @@ import InstallationOverview from '@/components/installation/InstallationOverview
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import ExtensionPicker from '@/components/installation/ExtensionPicker';
-import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import VueConfigCodeBlock from '@/components/installation/VueConfigCodeBlock';
@@ -88,7 +87,7 @@ Add optional behavior to the player. Only extensions that work with your player 
 
 ## Choose how to install
 
-Choose from the installation options available for your selections. Shadcn adds editable HTML custom-element source to your Vue project.
+Choose from the installation options available for your selections.
 
 <InstallationMethodNav />
 
@@ -148,10 +147,6 @@ That's it! You now have a working Video.js player.
 <Aside type="note" title="Server rendering with Nuxt">
 Keep the element imports static. Nuxt renders the custom-element markup on the server, and the browser upgrades it when the page loads. If you need to read player state or call player methods, wait until Vue has mounted the element. See <DocsLink slug="guides/vue" anchor="use-nuxt">Use Nuxt</DocsLink> for client-only registration.
 </Aside>
-
-## Own the UI
-
-<OwnTheUI />
 
 ## Choose what to do next
 

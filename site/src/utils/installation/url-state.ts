@@ -18,6 +18,7 @@ import {
   serializeInstallationExtensions,
   skinFromFlag,
   skinToFlag,
+  sourceFrameworkFor,
   useCaseFromPreset,
   type InstallMethod,
   type InstallationFramework,
@@ -68,7 +69,13 @@ export function normalizeInstallationSelectionForRoute(
   route: string,
   selection: InstallationUiSelection
 ): InstallationUiSelection {
-  const framework = isInstallationFramework(route) ? route : route === 'cdn' ? 'html' : selection.framework;
+  const framework = isInstallationFramework(route)
+    ? route
+    : route === 'cdn'
+      ? 'html'
+      : route === 'shadcn'
+        ? sourceFrameworkFor(selection.framework)
+        : selection.framework;
   let normalized = {
     ...selection,
     framework,

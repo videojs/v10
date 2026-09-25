@@ -6,8 +6,6 @@ import {
   generateSourceHTMLUsageCode,
   generateSourceMediaInstallCode,
   generateSourceReactCreateCode,
-  generateSourceSvelteUsageCode,
-  generateSourceVueUsageCode,
   generateSvelteCreateCode,
   generateSvelteUsageCode,
   generateVueCreateCode,
@@ -144,7 +142,7 @@ export function createInstallationDiscovery(
   };
   const shadcnInput: InstallationInput = {
     method: 'shadcn',
-    framework: owner === 'react' ? 'react' : 'vue',
+    framework: owner === 'react' ? 'react' : 'html',
     project: 'new',
     template: owner === 'react' ? 'next' : 'vite',
     preset: 'video',
@@ -445,7 +443,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
 
   const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
   const configuration = shadcnProjectConfiguration(
-    selection.framework,
+    selection.sourceFramework,
     selection.template,
     selection.styling,
     project.componentsAlias
@@ -585,75 +583,6 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       ];
     }
 
-    const runApp = runAppStep(selection);
-
-    if (runApp) steps.push(runApp);
-
-    return steps;
-  }
-
-  if (selection.framework === 'vue') {
-    const player = generateSourceVueUsageCode({
-      ...opts,
-      componentsAlias: project.componentsAlias,
-      componentsDirectory: project.componentsDirectory,
-      playerImport: project.playerImport,
-    });
-
-    steps.push({
-      id: 'player',
-      title: 'Add your player',
-      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile} inside a <template> block, then replace the <!-- Add a compatible media element here. --> placeholder with the slot below. For video skins, remove the inline style attribute from the root media-container and add the generated <style> block outside <template>. Merge the matching isCustomElement option into your existing Vue config, keeping its other plugins and aliases. The reusable player wraps that skin, while the app supplies the media and its src.`,
-      blocks: [
-        code(
-          selection.template === 'astro' ? 'js' : 'ts',
-          player[installationVueConfigFilename(selection.template)],
-          project.config
-        ),
-        code('html', '<slot />', player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
-        ...(player.skinStyle ? [code('vue', player.skinStyle, player.skinFile)] : []),
-        code('vue', player.component, project.player),
-        code(
-          selection.template === 'astro' ? 'astro' : 'vue',
-          selection.template === 'astro' ? player['index.astro'] : player['App.vue'],
-          project.usage
-        ),
-      ],
-    });
-    const runApp = runAppStep(selection);
-
-    if (runApp) steps.push(runApp);
-
-    return steps;
-  }
-
-  if (selection.framework === 'svelte') {
-    const player = generateSourceSvelteUsageCode({
-      ...opts,
-      componentsAlias: project.componentsImportAlias ?? project.componentsAlias,
-      componentsDirectory: project.componentsDirectory,
-      playerImport: project.playerImport,
-    });
-
-    steps.push({
-      id: 'player',
-      title: 'Add your player',
-      description: `Move the complete contents of ${player.sourceSkinFile} into ${player.skinFile}, then replace the <!-- Add a compatible media element here. --> placeholder with the slot below. For video skins, remove the inline style attribute from the root media-container and add the generated <style> block. The reusable player wraps that skin, while the selected ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app supplies the media and its src.`,
-      blocks: [
-        code('html', '<slot />', player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
-        ...(player.skinStyle ? [code('svelte', player.skinStyle, player.skinFile)] : []),
-        code('svelte', player.component, project.player),
-        code(
-          selection.template === 'astro' ? 'astro' : 'svelte',
-          selection.template === 'astro'
-            ? player['index.astro']
-            : selection.template === 'sveltekit'
-              ? player['+page.svelte']
-              : player['App.svelte'],
-          project.usage
-        ),
-      ],
-    });
     const runApp = runAppStep(selection);
 
     if (runApp) steps.push(runApp);

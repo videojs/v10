@@ -38,23 +38,11 @@ describe('installationOptionDefinitions', () => {
 
 describe('installationOptionDefinitionsFor', () => {
   it('filters choices for a Shadcn-only route', () => {
-    const definitions = installationOptionDefinitionsFor({
-      methods: ['shadcn'],
-      frameworks: ['react', 'html', 'vue', 'svelte'],
-    });
+    const definitions = installationOptionDefinitionsFor({ methods: ['shadcn'], frameworks: ['react', 'html'] });
 
     expect(valuesFor(definitions, '--preset')).not.toContain('background-video');
     expect(valuesFor(definitions, '--skin')).not.toContain('none');
-    expect(valuesFor(definitions, '--template')).toEqual([
-      'next',
-      'vite',
-      'start',
-      'react-router',
-      'astro',
-      'laravel',
-      'nuxt',
-      'sveltekit',
-    ]);
+    expect(valuesFor(definitions, '--template')).toEqual(['next', 'vite', 'start', 'react-router', 'astro', 'laravel']);
     expect(valuesFor(definitions, '--styling')).toEqual(['tailwind', 'css']);
     expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('next for React; vite otherwise');
     expect(definitions.find(({ flag }) => flag === '--styling')?.default).toBe('tailwind for React; css otherwise');
@@ -70,14 +58,13 @@ describe('installationOptionDefinitionsFor', () => {
 
 describe('installationDecisionOrderFor', () => {
   it('describes the fixed installation path represented by a guide', () => {
-    const shadcn = installationDecisionOrderFor({
-      methods: ['shadcn'],
-      frameworks: ['react', 'html', 'vue', 'svelte'],
-    });
+    const shadcn = installationDecisionOrderFor({ methods: ['shadcn'], frameworks: ['react', 'html'] });
     const cdn = installationDecisionOrderFor({ methods: ['cdn'], frameworks: ['html'] });
 
     expect(shadcn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain('This guide uses Shadcn');
-    expect(shadcn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain('Vue');
+    expect(shadcn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain(
+      'Vue and Svelte use packaged modules'
+    );
     expect(cdn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain(
       'scaffold a minimal Vite app only when no app exists'
     );
@@ -101,8 +88,8 @@ describe('installationCompatibility', () => {
     expect(installationCompatibility.methodsByFramework).toEqual({
       react: ['packaged', 'shadcn'],
       html: ['packaged', 'shadcn', 'cdn'],
-      vue: ['packaged', 'shadcn'],
-      svelte: ['packaged', 'shadcn'],
+      vue: ['packaged'],
+      svelte: ['packaged'],
     });
   });
 
@@ -116,6 +103,6 @@ describe('installationCompatibility', () => {
     ]);
     expect(installationCompatibility.templatesByFramework.vue).toEqual(['vite', 'astro', 'nuxt']);
     expect(installationCompatibility.templatesByFramework.svelte).toEqual(['vite', 'astro', 'sveltekit']);
-    expect(installationCompatibility.shadcn.stylingsByFramework.svelte).toEqual(['css']);
+    expect(installationCompatibility.shadcn.stylingsByFramework).toEqual({ react: ['tailwind', 'css'], html: ['css'] });
   });
 });

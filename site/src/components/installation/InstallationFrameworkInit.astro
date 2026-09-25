@@ -23,9 +23,7 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
   }
 
   html[data-registry-project-framework="react"] [data-shadcn-project-framework="react"],
-  html[data-registry-project-framework="html"] [data-shadcn-project-framework="html"],
-  html[data-registry-project-framework="vue"] [data-shadcn-project-framework="vue"],
-  html[data-registry-project-framework="svelte"] [data-shadcn-project-framework="svelte"] {
+  html[data-registry-project-framework="html"] [data-shadcn-project-framework="html"] {
     display: contents;
   }
 
@@ -221,10 +219,11 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
       .map((cookie) => cookie.trim().split("="))
       .find(([key]) => key === frameworkCookie)?.[1];
 
+    // Vue and Svelte install packaged skins, so their Shadcn links show the HTML source.
     const projectFramework = requested === "react"
       ? "react"
       : requested === "html" || requested === "vue" || requested === "svelte"
-        ? requested
+        ? "html"
       : saved === "html" || saved === "react"
         ? saved
         : "react";

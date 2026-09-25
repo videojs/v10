@@ -4,7 +4,6 @@ import type { InstallationInput } from '../parameters';
 import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from '../presets';
 import {
   fitSelectionToPreset,
-  INSTALLATION_FRAMEWORKS,
   PACKAGE_MANAGERS,
   resolveInstallationSelection,
   type InstallationFramework,
@@ -17,13 +16,20 @@ describe('resolveInstallationSelection', () => {
     expect(resolveInstallationSelection('html', {}, '10.0.0').ok).toBe(true);
   });
 
-  it('uses HTML source for Vue and Svelte Shadcn projects', () => {
-    const vue = resolveInstallationSelection('html', { method: 'shadcn', framework: 'vue' }, '10.0.0');
-    const svelte = resolveInstallationSelection('html', { method: 'shadcn', framework: 'svelte' }, '10.0.0');
-
-    expect(vue.ok && vue.selection.sourceFramework).toBe('html');
-    expect(svelte.ok && svelte.selection.sourceFramework).toBe('html');
-    expect(vue.ok && vue.selection.template).toBe('vite');
+  it('rejects Shadcn for Vue and Svelte projects', () => {
+    for (const framework of ['vue', 'svelte'] as const) {
+      expect(resolveInstallationSelection('html', { method: 'shadcn', framework }, '10.0.0')).toEqual({
+        ok: false,
+        errors: [
+          {
+            field: 'method',
+            value: 'shadcn',
+            message:
+              'Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.',
+          },
+        ],
+      });
+    }
   });
 
   it('uses app templates for packaged, Shadcn, and CDN instructions', () => {
@@ -209,9 +215,9 @@ describe('resolveInstallationSelection', () => {
     }
   });
 
-  it('accepts all supported Shadcn project frameworks and maps non-React projects to HTML source', () => {
-    for (const framework of INSTALLATION_FRAMEWORKS) {
-      const owner = framework === 'react' ? 'react' : 'html';
+  it('accepts every compatible Shadcn combination for React and plain HTML', () => {
+    for (const framework of ['react', 'html'] as const) {
+      const owner = framework;
 
       for (const preset of Object.values(INSTALLATION_PRESETS).filter(({ flag }) => flag !== 'background-video')) {
         for (const media of preset.renderers) {
@@ -226,7 +232,7 @@ describe('resolveInstallationSelection', () => {
 
             expect(result, `${framework}/${preset.flag}/${media}/${skin}`).toMatchObject({
               ok: true,
-              selection: { sourceFramework: framework === 'react' ? 'react' : 'html' },
+              selection: { sourceFramework: framework },
             });
           }
         }

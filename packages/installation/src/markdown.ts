@@ -32,8 +32,9 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
       const stylings = (compatibility.shadcn.stylingsByFramework[framework] ?? [])
         .map((value) => `\`${value}\``)
         .join(', ');
+      const shadcnStylings = stylings ? `; Shadcn styling ${stylings}` : '';
 
-      return `- \`${framework}\`: app setups ${templates}; Shadcn styling ${stylings}`;
+      return `- \`${framework}\`: app setups ${templates}${shadcnStylings}`;
     })
     .join('\n');
 
@@ -48,8 +49,8 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
   const shadcnDescription = frameworks.includes('react')
     ? frameworks.length === 1
       ? '- Shadcn installs editable React skin source.'
-      : '- Shadcn installs editable React or HTML skin source. Vue and Svelte use the HTML source catalog.'
-    : '- Shadcn installs editable HTML skin source. Vue and Svelte use the HTML source catalog.';
+      : '- Shadcn installs editable React or plain HTML skin source. Vue and Svelte use packaged installation.'
+    : '- Shadcn installs editable plain HTML skin source. Vue and Svelte use packaged installation.';
 
   return `${packageDescription}${cdnDescription}
 ${shadcnDescription}

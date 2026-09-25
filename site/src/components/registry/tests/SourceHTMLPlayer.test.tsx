@@ -29,72 +29,43 @@ describe('SourceHTMLPlayer', () => {
     vi.unstubAllGlobals();
   });
 
-  it('shows the setup for the selected Vue app', () => {
-    registryProjectFramework.set('vue');
+  it('shows the entry setup for the selected HTML app', () => {
+    registryProjectFramework.set('html');
     template.set('vite');
 
     const { rerender } = render(<SourceHTMLPlayer part="imports" />);
 
-    expect(screen.getByText(/Merge the matching/)).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'vite.config.ts' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.queryByRole('tab', { name: 'nuxt.config.ts' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'src/player.ts' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'vite.config.js' })).not.toBeInTheDocument();
 
-    act(() => template.set('nuxt'));
+    act(() => template.set('laravel'));
     rerender(<SourceHTMLPlayer part="imports" />);
 
-    expect(screen.getByRole('tab', { name: 'nuxt.config.ts' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText(/defineNuxtConfig/)).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'vite.config.ts' })).not.toBeInTheDocument();
-
-    act(() => template.set('astro'));
-    rerender(<SourceHTMLPlayer part="imports" />);
-
-    expect(screen.getByRole('tab', { name: 'astro.config.mjs' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText(/import vue from '@astrojs\/vue'/)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'vite.config.js' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'resources/js/player.ts' })).toBeInTheDocument();
   });
 
-  it('switches framework output in place and imports framework skin components', () => {
-    registryProjectFramework.set('vue');
+  it('switches the player file in place when the app setup changes', () => {
+    registryProjectFramework.set('html');
     template.set('vite');
     render(<SourceHTMLPlayer part="player" />);
 
-    expect(screen.getByRole('tab', { name: 'src/components/VideoPlayer.vue' })).toBeInTheDocument();
-    expect(screen.getByText(/import VideoSkin from.*skin\.vue/)).toBeInTheDocument();
-    expect(screen.getByText(/<VideoSkin>/)).toBeInTheDocument();
-    expect(screen.getByText(/<slot \/>/)).toBeInTheDocument();
-    expect(screen.getByText(/<video src=/)).toBeInTheDocument();
-
-    act(() => registryProjectFramework.set('svelte'));
-
-    expect(screen.getByRole('tab', { name: 'src/lib/VideoPlayer.svelte' })).toBeInTheDocument();
-    expect(screen.getByText(/import VideoSkin from.*skin\.svelte/)).toBeInTheDocument();
-    expect(screen.getByText(/<VideoSkin>/)).toBeInTheDocument();
-    expect(screen.getByText(/<slot \/>/)).toBeInTheDocument();
-    expect(screen.getByText(/<video src=/)).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'src/App.svelte' })).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'src/routes/+page.svelte' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'index.html' })).toBeInTheDocument();
+    expect(screen.getByText(/<script type="module" src="\/src\/player\.ts"><\/script>/)).toBeInTheDocument();
 
     act(() => template.set('astro'));
 
-    expect(screen.getByRole('tab', { name: 'src/components/VideoPlayer.svelte' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'src/pages/index.astro' })).toBeInTheDocument();
-    expect(screen.getByText(/<VideoPlayer client:load>/)).toBeInTheDocument();
-
-    act(() => template.set('sveltekit'));
-
-    expect(screen.getByRole('tab', { name: 'src/routes/+page.svelte' })).toBeInTheDocument();
-    expect(screen.getByText(/\$lib\/components\/videojs\/video\/skin/)).toBeInTheDocument();
-    expect(screen.queryByText(/#lib\/components\/videojs\/video\/skin/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'src/App.svelte' })).not.toBeInTheDocument();
+    expect(screen.getByText(/<script src="\.\.\/scripts\/player\.ts"><\/script>/)).toBeInTheDocument();
   });
 
   it('renders the plain HTML route shape during SSR', () => {
-    registryProjectFramework.set('vue');
+    registryProjectFramework.set('react');
 
     const markup = renderToString(<SourceHTMLPlayer part="player" />);
 
     expect(markup).toContain('index.html');
     expect(markup).toContain('/src/player.ts');
-    expect(markup).not.toContain('VideoPlayer.vue');
+    expect(markup).not.toContain('app/page.tsx');
   });
 });

@@ -8,6 +8,7 @@ import {
   resolveRegistryStyling,
   shadcnProjectConfiguration,
   shadcnProjectConfigurationPlacement,
+  sourceFrameworkFor,
 } from '@videojs/installation';
 
 import {
@@ -32,7 +33,12 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
   const template = resolveInstallationTemplate(projectFramework, $template);
   const styling = resolveRegistryStyling(framework, useRegistryStyling());
   const projectFiles = installationProjectFiles(projectFramework, template);
-  const configuration = shadcnProjectConfiguration(projectFramework, template, styling, projectFiles.componentsAlias);
+  const configuration = shadcnProjectConfiguration(
+    sourceFrameworkFor(projectFramework),
+    template,
+    styling,
+    projectFiles.componentsAlias
+  );
   const selection = registrySkinSelection({ useCase: $useCase, skin: $skin });
   const command = (optionalInit: boolean) => (
     <RegistryCommandClient

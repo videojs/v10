@@ -1,5 +1,6 @@
 import type { PackageManager } from './parameters';
 import { getInstallationPlayerComponentName, type UseCase } from './presets';
+import type { RegistryFramework } from './shadcn';
 
 export const INSTALLATION_FRAMEWORKS = ['react', 'html', 'vue', 'svelte'] as const;
 export type InstallationFramework = (typeof INSTALLATION_FRAMEWORKS)[number];
@@ -38,7 +39,6 @@ const TEMPLATES_BY_FRAMEWORK = {
 
 export interface InstallationProjectFiles {
   componentsAlias: string;
-  componentsImportAlias?: string;
   componentsDirectory: string;
   player: string;
   playerImport?: string;
@@ -180,7 +180,6 @@ export function installationProjectFiles(
     return template === 'sveltekit'
       ? {
           componentsAlias: '#lib/components',
-          componentsImportAlias: '$lib/components',
           componentsDirectory: 'src/lib/components',
           player: `src/lib/${playerComponent}.svelte`,
           usage: 'src/routes/+page.svelte',
@@ -230,35 +229,17 @@ export function installationProjectFiles(
 
 /** Alias configuration needed before a hand-authored Shadcn config can resolve a fresh app's component paths. */
 export function installationProjectAliasSetup(
-  framework: InstallationFramework,
+  framework: RegistryFramework,
   template: InstallationTemplate
 ): readonly InstallationProjectSetupBlock[] {
-  if (template === 'sveltekit') {
-    return [
-      {
-        code: JSON.stringify({ imports: { '#lib/*': './src/lib/*' } }, null, 2),
-        filename: 'package.json',
-        language: 'json',
-      },
-    ];
-  }
+  if (!['vite', 'astro', 'laravel'].includes(template)) return [];
 
-  if (!['vite', 'astro', 'laravel', 'nuxt'].includes(template)) return [];
-
-  const alias = framework === 'svelte' && template !== 'astro' ? '$lib' : '@';
-  const sourceRoot =
-    template === 'laravel'
-      ? './resources/js'
-      : template === 'nuxt'
-        ? './app'
-        : framework === 'svelte' && template !== 'astro'
-          ? './src/lib'
-          : './src';
+  const sourceRoot = template === 'laravel' ? './resources/js' : './src';
   const sourceDirectory = `${sourceRoot}/*`;
   const tsconfigCode = JSON.stringify(
     {
       compilerOptions: {
-        paths: { [`${alias}/*`]: [sourceDirectory] },
+        paths: { '@/*': [sourceDirectory] },
       },
     },
     null,
@@ -291,17 +272,8 @@ export default defineConfig({
 
   if (template !== 'vite') return blocks;
 
-  const pluginImport =
-    framework === 'react'
-      ? "import react from '@vitejs/plugin-react';"
-      : framework === 'vue'
-        ? "import vue from '@vitejs/plugin-vue';"
-        : framework === 'svelte'
-          ? "import { svelte } from '@sveltejs/vite-plugin-svelte';"
-          : '';
-  const plugin =
-    framework === 'react' ? 'react()' : framework === 'vue' ? 'vue()' : framework === 'svelte' ? 'svelte()' : '';
-  const plugins = plugin ? `  plugins: [${plugin}],\n` : '';
+  const pluginImport = framework === 'react' ? "import react from '@vitejs/plugin-react';" : '';
+  const plugins = framework === 'react' ? '  plugins: [react()],\n' : '';
   const aliasDirectory = sourceRoot;
 
   blocks.push({
@@ -311,7 +283,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 ${plugins}  resolve: {
     alias: {
-      '${alias}': path.resolve(import.meta.dirname, '${aliasDirectory}'),
+      '@': path.resolve(import.meta.dirname, '${aliasDirectory}'),
     },
   },
 });`,

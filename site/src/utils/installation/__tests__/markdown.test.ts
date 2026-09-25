@@ -46,7 +46,7 @@ describe('resolveInstallationMarkdownPlan', () => {
 
   it('applies every Shadcn query choice through the shared schema', () => {
     const params = new URLSearchParams({
-      framework: 'svelte',
+      framework: 'html',
       project: 'new',
       preset: 'audio',
       skin: 'minimal',
@@ -60,7 +60,7 @@ describe('resolveInstallationMarkdownPlan', () => {
     const result = resolveInstallationMarkdownPlan('/docs/guides/installation/shadcn.md', params, '10.0.0-test');
 
     expect(result?.ok && result.plan.selection).toMatchObject({
-      framework: 'svelte',
+      framework: 'html',
       project: 'new',
       sourceFramework: 'html',
       preset: 'audio',
@@ -106,8 +106,6 @@ describe('resolveInstallationMarkdownPlan', () => {
     { route: 'cdn', framework: 'html', method: 'cdn' },
     { route: 'shadcn', framework: 'react', method: 'shadcn' },
     { route: 'shadcn', framework: 'html', method: 'shadcn' },
-    { route: 'shadcn', framework: 'vue', method: 'shadcn' },
-    { route: 'shadcn', framework: 'svelte', method: 'shadcn' },
   ] as const satisfies readonly {
     route: string;
     framework: InstallationFramework;
@@ -148,6 +146,21 @@ describe('resolveInstallationMarkdownPlan', () => {
     expect(result && !result.ok && result.errors).toContainEqual(
       expect.objectContaining({ field: 'framework', value: 'angular' })
     );
+  });
+
+  it('rejects a Vue or Svelte Shadcn query with the packaged alternative', () => {
+    for (const framework of ['vue', 'svelte']) {
+      const result = resolveInstallationMarkdownPlan(
+        '/docs/guides/installation/shadcn.md',
+        new URLSearchParams({ framework }),
+        '10.0.0-test'
+      );
+
+      expect(result).toMatchObject({
+        ok: false,
+        errors: [{ field: 'method', value: 'shadcn', message: expect.stringContaining('Use packaged installation') }],
+      });
+    }
   });
 
   it('rejects a framework query that conflicts with a canonical guide route', () => {
@@ -263,12 +276,12 @@ HTML next step
     const rendered = renderInstallationMarkdownSelection(
       markdown,
       '/docs/guides/installation/shadcn',
-      new URLSearchParams({ framework: 'vue' }),
+      new URLSearchParams({ framework: 'html' }),
       '10.0.0-test'
     );
 
     expect(rendered).toMatchObject({ status: 200, privateResponse: false });
-    expect(rendered?.body).toContain('- `framework`: `vue`');
+    expect(rendered?.body).toContain('- `framework`: `html`');
     expect(rendered?.body).toContain('HTML next step');
     expect(rendered?.body).not.toContain('React next step');
   });
@@ -277,7 +290,7 @@ HTML next step
     const rendered = renderInstallationMarkdownSelection(
       markdown,
       '/docs/guides/installation/shadcn',
-      new URLSearchParams({ framework: 'vue', media: 'hls', extensions: 'google-cast' }),
+      new URLSearchParams({ framework: 'html', media: 'hls', extensions: 'google-cast' }),
       '10.0.0-test'
     );
 

@@ -1,4 +1,4 @@
-import type { InstallationFramework } from '@videojs/installation';
+import { installationMethodsForFramework, sourceFrameworkFor, type InstallationFramework } from '@videojs/installation';
 import { navigate } from 'astro:transitions/client';
 
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
@@ -49,12 +49,16 @@ interface Props {
 export default function JSPickerClient({ currentFramework, route }: Props) {
   const selectedRegistryFramework = useRegistryProjectFramework(currentFramework);
   const displayedFramework = route === 'shadcn' ? selectedRegistryFramework : currentFramework;
+  const options =
+    route === 'shadcn'
+      ? OPTIONS.filter(({ value }) => installationMethodsForFramework(value).includes('shadcn'))
+      : OPTIONS;
 
   const handleChange = (next: InstallationFramework) => {
     if (next === displayedFramework) return;
 
     if (route === 'shadcn') {
-      selectRegistryProjectFramework(next);
+      selectRegistryProjectFramework(sourceFrameworkFor(next));
       return;
     }
 
@@ -68,7 +72,7 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
     <CardRadioGroup
       value={displayedFramework}
       onChange={handleChange}
-      options={OPTIONS}
+      options={options}
       aria-label="Select JS framework"
     />
   );

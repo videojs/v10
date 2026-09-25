@@ -52,13 +52,13 @@ describe('resolveShadcnUrlSelection', () => {
     });
   });
 
-  it('uses the saved fallback for a missing query and derives HTML source for Vue', () => {
+  it('uses the saved fallback for a missing query and falls back to HTML source for Vue', () => {
     expect(
       resolveShadcnUrlSelection(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')
     ).toMatchObject({ projectFramework: 'html', sourceFramework: 'html' });
     expect(
       resolveShadcnUrlSelection(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
-    ).toMatchObject({ projectFramework: 'vue', sourceFramework: 'html' });
+    ).toMatchObject({ projectFramework: 'html', sourceFramework: 'html' });
   });
 
   it('does not resolve non-Shadcn routes', () => {
@@ -70,7 +70,7 @@ describe('resolveShadcnUrlSelection', () => {
 
   it('keeps only template and styling values compatible with the selected source', () => {
     const html = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=next&styling=tailwind'
+      'https://videojs.org/docs/guides/installation/shadcn?framework=html&template=next&styling=tailwind'
     );
     const react = new URL(
       'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=vite&styling=css'
@@ -82,12 +82,12 @@ describe('resolveShadcnUrlSelection', () => {
 });
 
 describe('canonicalShadcnInstallationUrl', () => {
-  it('canonicalizes invalid project options once', () => {
+  it('canonicalizes invalid project options and a Vue query once', () => {
     const url = new URL(
       'https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=next&styling=tailwind&preset=audio'
     );
 
-    expect(canonicalShadcnInstallationUrl(url, 'react')?.search).toBe('?framework=vue&preset=audio');
+    expect(canonicalShadcnInstallationUrl(url, 'react')?.search).toBe('?framework=html&preset=audio');
   });
 });
 
@@ -96,22 +96,22 @@ describe('updateShadcnInstallationUrl', () => {
     const url = new URL(
       'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=next&styling=tailwind&preset=audio'
     );
-    const target = updateShadcnInstallationUrl(url, { framework: 'svelte' });
+    const target = updateShadcnInstallationUrl(url, { framework: 'html' });
 
-    expect(target.search).toBe('?framework=svelte&preset=audio');
+    expect(target.search).toBe('?framework=html&preset=audio');
   });
 
   it('preserves explicit app and styling choices shared by the next framework', () => {
     const url = new URL(
       'https://videojs.org/docs/guides/installation/shadcn?framework=react&template=vite&styling=css&preset=audio'
     );
-    const target = updateShadcnInstallationUrl(url, { framework: 'vue' });
+    const target = updateShadcnInstallationUrl(url, { framework: 'html' });
 
-    expect(target.search).toBe('?framework=vue&template=vite&styling=css&preset=audio');
+    expect(target.search).toBe('?framework=html&template=vite&styling=css&preset=audio');
   });
 
   it('serializes compatible choices even when the current route omits its defaults', () => {
-    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue');
+    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html');
     const target = updateShadcnInstallationUrl(url, {
       framework: 'react',
       template: 'vite',

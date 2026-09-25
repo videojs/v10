@@ -64,12 +64,12 @@ describe('RegistryInitCommandClient', () => {
     expect(screen.getByText(/"components": "@\/components"/)).toBeInTheDocument();
   });
 
-  it('shows every Vue alias and components configuration as a step', () => {
-    registryProjectFramework.set('vue');
+  it('shows every HTML alias and components configuration as a step', () => {
+    registryProjectFramework.set('html');
     registryStyling.set('css');
     template.set('vite');
 
-    render(<RegistryInitCommandClient framework="vue" installation />);
+    render(<RegistryInitCommandClient framework="html" installation />);
 
     expect(screen.getByRole('heading', { name: 'Configure tsconfig.json' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Configure vite.config.ts' })).toBeInTheDocument();

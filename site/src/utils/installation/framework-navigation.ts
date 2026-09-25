@@ -9,6 +9,7 @@ import {
   type RegistryFramework,
   type RegistryStyling,
   resolveInstallationTemplate,
+  sourceFrameworkFor,
 } from '@videojs/installation';
 
 import { getInstallationRouteSegment } from '@/utils/installation/routes';
@@ -31,13 +32,13 @@ export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
   return url.pathname.replace(/\.md$/, '').replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
 }
 
-/** Resolve the source framework for the query-controlled Shadcn guide. */
-export function resolveShadcnProjectFramework(url: URL, fallback: InstallationFramework): InstallationFramework | null {
+/** Resolve the source framework for the query-controlled Shadcn guide. Vue and Svelte fall back to the HTML source. */
+export function resolveShadcnProjectFramework(url: URL, fallback: InstallationFramework): RegistryFramework | null {
   if (!isShadcnInstallationUrl(url)) return null;
 
   const requested = url.searchParams.get('framework');
 
-  return isInstallationFramework(requested) ? requested : fallback;
+  return sourceFrameworkFor(isInstallationFramework(requested) ? requested : fallback);
 }
 
 /** Resolve the URL-backed Shadcn choices, dropping options the selected source framework cannot use. */
@@ -83,7 +84,7 @@ export function canonicalShadcnInstallationUrl(url: URL, fallback: InstallationF
 export function updateShadcnInstallationUrl(
   url: URL,
   update: {
-    framework?: InstallationFramework;
+    framework?: RegistryFramework;
     styling?: RegistryStyling | null;
     template?: InstallationTemplate | null;
   }
@@ -102,9 +103,8 @@ export function updateShadcnInstallationUrl(
     else target.searchParams.delete('template');
 
     const styling = update.styling ?? target.searchParams.get('styling');
-    const sourceFramework = update.framework === 'react' ? 'react' : 'html';
 
-    if (styling && registryStylings(sourceFramework).some((candidate) => candidate === styling))
+    if (styling && registryStylings(update.framework).some((candidate) => candidate === styling))
       target.searchParams.set('styling', styling);
     else target.searchParams.delete('styling');
   }

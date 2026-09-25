@@ -137,18 +137,6 @@ describe('shadcnInitCommand', () => {
 });
 
 describe('shadcnComponentsConfig', () => {
-  it('uses Svelte built-in aliases without nesting another lib directory', () => {
-    const config = JSON.parse(shadcnComponentsConfig('svelte', 'sveltekit', '$lib/components'));
-
-    expect(config.aliases).toMatchObject({
-      components: '$lib/components',
-      utils: '$lib/utils',
-      lib: '$lib',
-      hooks: '$lib/hooks',
-    });
-    expect(config.tsx).toBe(true);
-  });
-
   it('preserves React server components for Next.js', () => {
     expect(JSON.parse(shadcnComponentsConfig('react', 'next', '@/components')).rsc).toBe(true);
     expect(JSON.parse(shadcnComponentsConfig('react', 'vite', '@/components')).rsc).toBe(false);
@@ -166,7 +154,7 @@ describe('shadcnProjectConfiguration', () => {
       ]),
       componentsConfig: null,
     });
-    expect(shadcnProjectConfiguration('vue', 'vite', 'css', '@/components')).toMatchObject({
+    expect(shadcnProjectConfiguration('html', 'vite', 'css', '@/components')).toMatchObject({
       mode: 'components-json',
       componentsConfig: expect.stringContaining('"tsx": true'),
     });

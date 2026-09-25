@@ -47,8 +47,8 @@ export type InstallMethod = 'cdn' | PackageManager;
 const INSTALLATION_METHODS_BY_FRAMEWORK = {
   react: ['packaged', 'shadcn'],
   html: ['packaged', 'shadcn', 'cdn'],
-  vue: ['packaged', 'shadcn'],
-  svelte: ['packaged', 'shadcn'],
+  vue: ['packaged'],
+  svelte: ['packaged'],
 } as const satisfies Record<InstallationFramework, readonly InstallationMethod[]>;
 
 export type PlayerOwner = 'html' | 'react';
@@ -383,6 +383,15 @@ export function resolveInstallationSelection(
   }
 
   if (method === 'shadcn') {
+    if (!installationMethodsForFramework(framework).includes('shadcn')) {
+      errors.push({
+        field: 'method',
+        value: method,
+        message:
+          'Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.',
+      });
+    }
+
     if (useCase === 'background-video') {
       errors.push({
         field: 'preset',

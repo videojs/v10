@@ -32,7 +32,7 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
   if (method === 'packaged') {
     if (isShadcnInstallationUrl(current)) {
       const requested = current.searchParams.get('framework');
-      const framework = requested === 'html' || requested === 'vue' || requested === 'svelte' ? requested : 'react';
+      const framework = requested === 'html' ? 'html' : 'react';
 
       target.pathname = getInstallationRoutePath(framework);
     }

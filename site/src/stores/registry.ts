@@ -1,5 +1,4 @@
 import type {
-  InstallationFramework,
   InstallationTemplate,
   RegistryFramework,
   RegistryPreset,
@@ -23,7 +22,7 @@ import {
   updateShadcnInstallationUrl,
 } from '@/utils/installation/framework-navigation';
 
-function getInitialRegistryProjectFramework(): InstallationFramework {
+function getInitialRegistryProjectFramework(): RegistryFramework {
   if (!globalThis.window) return 'react';
 
   const fallback = getFrameworkPreferenceClient() ?? 'react';
@@ -57,14 +56,13 @@ export const registrySkin = atom<RegistryPreset | null>(null);
 export const registryTheme = atom<RegistryTheme | null>(null);
 
 function applyRegistryProjectFramework(
-  framework: InstallationFramework,
+  framework: RegistryFramework,
   requestedTemplate: InstallationTemplate | null = installationTemplate.get(),
   requestedStyling: RegistryStyling | null = registryStyling.get()
 ): void {
-  const sourceFramework: RegistryFramework = framework === 'react' ? 'react' : 'html';
   const nextTemplate = resolveInstallationTemplateForMethod(framework, requestedTemplate, 'shadcn');
   const nextStyling =
-    requestedStyling && registryStylings(sourceFramework).includes(requestedStyling) ? requestedStyling : null;
+    requestedStyling && registryStylings(framework).includes(requestedStyling) ? requestedStyling : null;
 
   if (registryProjectFramework.get() !== framework) {
     selectInstallationAppSetup(framework, nextTemplate, false);
@@ -75,15 +73,15 @@ function applyRegistryProjectFramework(
   if (registryStyling.get() !== nextStyling) registryStyling.set(nextStyling);
 
   if (globalThis.document) {
-    document.documentElement.dataset.registryStyling = resolveRegistryStyling(sourceFramework, nextStyling);
+    document.documentElement.dataset.registryStyling = resolveRegistryStyling(framework, nextStyling);
   }
 
-  currentFramework.set(sourceFramework);
-  setFrameworkPreferenceClient(sourceFramework);
+  currentFramework.set(framework);
+  setFrameworkPreferenceClient(framework);
 }
 
 /** Synchronize the project framework from an authoritative Shadcn URL without rewriting history. */
-export function syncRegistryProjectFramework(framework: InstallationFramework, url?: URL): void {
+export function syncRegistryProjectFramework(framework: RegistryFramework, url?: URL): void {
   const selection = url ? resolveShadcnUrlSelection(url, framework) : null;
 
   if (selection) applyRegistryProjectFramework(framework, selection.template, selection.styling);
@@ -95,8 +93,8 @@ export function syncRegistryProjectFramework(framework: InstallationFramework, u
   }
 }
 
-/** Select the app framework while deriving the React or HTML registry catalog from it. */
-export function selectRegistryProjectFramework(framework: InstallationFramework): void {
+/** Select the React or HTML app framework and its matching registry catalog. */
+export function selectRegistryProjectFramework(framework: RegistryFramework): void {
   if (globalThis.window) {
     const url = new URL(window.location.href);
 
@@ -111,7 +109,7 @@ export function selectRegistryProjectFramework(framework: InstallationFramework)
       applyRegistryProjectFramework(framework);
       history.replaceState(history.state, '', `${target.pathname}${target.search}${target.hash}`);
       document.documentElement.dataset.registryProjectFramework = framework;
-      document.documentElement.dataset.registryFramework = framework === 'react' ? 'react' : 'html';
+      document.documentElement.dataset.registryFramework = framework;
 
       return;
     }

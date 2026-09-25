@@ -8,8 +8,6 @@ import {
   generateSourceHTMLUsageCode,
   generateSourceMediaInstallCode,
   generateSourceReactCreateCode,
-  generateSourceSvelteUsageCode,
-  generateSourceVueUsageCode,
   generateSvelteCreateCode,
   generateSvelteUsageCode,
   generateVueCreateCode,
@@ -519,45 +517,6 @@ video-skin {
 
     expect(usage['+page.svelte']).toContain(`src={${JSON.stringify(sourceUrl)}}`);
     expect(usage['App.svelte']).toContain(`src={${JSON.stringify(sourceUrl)}}`);
-  });
-
-  it('imports copied skin source as a Vue component', () => {
-    const generated = generateSourceVueUsageCode({ ...hlsOptions, sourceUrl: '' });
-    const code = generated.component;
-
-    expect(code).toContain("import VideoSkin from '@/components/videojs/video/skin.vue'");
-    expect(code).toContain('<video-player>');
-    expect(code).toContain('<VideoSkin>');
-    expect(code).toContain('<slot />');
-    expect(code).not.toContain("import '@/components/videojs/video/skin'");
-    expect(code).not.toContain('v-html');
-    expect(code).not.toContain('?raw');
-    expect(generated.skinStyle).toContain('<style>');
-    expect(generated.skinStyle).toContain('media-container');
-    expect(generated['App.vue']).toContain(`<hlsjs-video src="${INSTALLATION_DEMO_SOURCES.videoHls}"`);
-  });
-
-  it('imports Nuxt client-only players through its component registry', () => {
-    const code = generateSourceVueUsageCode({ ...hlsOptions, playerImport: '#components' })['App.vue'];
-
-    expect(code).toContain("import { VideoPlayer } from '#components'");
-    expect(code).not.toContain("from './components/VideoPlayer.client.vue'");
-  });
-
-  it('imports copied skin source as a Svelte component', () => {
-    const generated = generateSourceSvelteUsageCode({ ...hlsOptions, sourceUrl: '' });
-    const code = generated.component;
-
-    expect(code).toContain("import VideoSkin from '$lib/components/videojs/video/skin.svelte'");
-    expect(code).toContain('<video-player>');
-    expect(code).toContain('<VideoSkin>');
-    expect(code).toContain('<slot />');
-    expect(code).not.toContain("import '@/components/videojs/video/skin'");
-    expect(code).not.toContain('{@html');
-    expect(code).not.toContain('?raw');
-    expect(generated.skinStyle).toContain('<style>');
-    expect(generated.skinStyle).toContain('media-container');
-    expect(generated['+page.svelte']).toContain(`<hlsjs-video src={"${INSTALLATION_DEMO_SOURCES.videoHls}"`);
   });
 
   it('names reusable components after the selected preset', () => {

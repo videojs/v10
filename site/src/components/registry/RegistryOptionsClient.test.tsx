@@ -93,7 +93,7 @@ describe('RegistryOptionsClient', () => {
     registryStyling.set('css');
 
     const react = renderToString(<RegistryOptionsClient framework="react" installation kind="styling" />);
-    const html = renderToString(<RegistryOptionsClient framework="vue" installation kind="styling" />);
+    const html = renderToString(<RegistryOptionsClient framework="html" installation kind="styling" />);
 
     expect(react).toContain('data-label="Select CSS framework"');
     expect(react).toContain('data-options="Tailwind CSS,Vanilla CSS"');

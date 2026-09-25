@@ -12,7 +12,6 @@ import InstallationOverview from '@/components/installation/InstallationOverview
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
 import ExtensionPicker from '@/components/installation/ExtensionPicker';
-import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import SvelteCreateCodeBlock from '@/components/installation/SvelteCreateCodeBlock';
 import SvelteUsageCodeBlock from '@/components/installation/SvelteUsageCodeBlock';
@@ -87,7 +86,7 @@ Add optional behavior to the player. Only extensions that work with your player 
 
 ## Choose how to install
 
-Choose from the installation options available for your selections. Shadcn adds editable HTML custom-element source to your Svelte project.
+Choose from the installation options available for your selections.
 
 <InstallationMethodNav />
 
@@ -141,10 +140,6 @@ That's it! You now have a working Video.js player.
 <Aside type="note" title="Server rendering with SvelteKit">
 Keep the element imports static. SvelteKit renders the custom-element markup on the server, and the browser upgrades it when the page loads. Put code that needs the element or browser APIs in `onMount`. See <DocsLink slug="guides/svelte" anchor="use-sveltekit">Use SvelteKit</DocsLink> for the details.
 </Aside>
-
-## Own the UI
-
-<OwnTheUI />
 
 ## Choose what to do next
 

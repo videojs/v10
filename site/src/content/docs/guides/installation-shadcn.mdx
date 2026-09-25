@@ -60,14 +60,6 @@ Choose the app environment that controls the setup commands and file locations b
 <RegistryOptions framework="html" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="vue" match="project">
-<RegistryOptions framework="vue" fixedFramework kind="template" method="shadcn" />
-</ShadcnFrameworkCase>
-
-<ShadcnFrameworkCase framework="svelte" match="project">
-<RegistryOptions framework="svelte" fixedFramework kind="template" method="shadcn" />
-</ShadcnFrameworkCase>
-
 ## Choose your use case
 
 Choose the ready-made player that is closest to what you are building. The Shadcn registry does not currently provide the background video skin as source.
@@ -150,14 +142,6 @@ Commit your work before installing or updating source so you can review every fi
 <RegistryInitCommand framework="html" installation />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="vue" match="project">
-<RegistryInitCommand framework="vue" installation />
-</ShadcnFrameworkCase>
-
-<ShadcnFrameworkCase framework="svelte" match="project">
-<RegistryInitCommand framework="svelte" installation />
-</ShadcnFrameworkCase>
-
 </div>
 
 ## Add the skin source
@@ -189,7 +173,7 @@ Add the player to the file shown for your selected app setup. It imports the pla
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-The HTML source also works in Vue and Svelte. The steps below match the framework you selected above. For more ways to integrate custom elements, see the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>.
+The steps below add HTML skin source to a plain HTML app. For Vue or Svelte, use the packaged skins in the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>.
 
 <ShadcnFrameworkCase framework="html" match="project" llmsHeading={false}>
 <Steps>
@@ -205,30 +189,6 @@ The HTML source also works in Vue and Svelte. The steps below match the framewor
 </Steps>
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="vue" match="project" llmsHeading={false}>
-<Steps>
-  <Step number={1} title="Add the media element">
-    <SourceHTMLPlayer client:load part="media" />
-  </Step>
-  <Step number={2} title="Register custom elements">
-    <SourceHTMLPlayer client:load part="imports" />
-  </Step>
-  <Step number={3} title="Add the player to your page">
-    <SourceHTMLPlayer client:load part="player" />
-  </Step>
-</Steps>
-</ShadcnFrameworkCase>
-
-<ShadcnFrameworkCase framework="svelte" match="project" llmsHeading={false}>
-<Steps>
-  <Step number={1} title="Add the media element">
-    <SourceHTMLPlayer client:load part="media" />
-  </Step>
-  <Step number={2} title="Add the player to your page">
-    <SourceHTMLPlayer client:load part="player" />
-  </Step>
-</Steps>
-</ShadcnFrameworkCase>
 </ShadcnFrameworkCase>
 
 ## Run your app
@@ -248,7 +208,7 @@ Start in `<components alias>/videojs/<preset>/skin.tsx`. Follow the [Customize s
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-For HTML, start in `<components alias>/videojs/<preset>/skin.html`. Vue and Svelte move that markup into `skin.vue` or `skin.svelte` during setup, so edit the framework component instead. After updating the registry item, move the refreshed `skin.html` markup into that component again. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+Start in `<components alias>/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
 </ShadcnFrameworkCase>
 
 ## Choose what to do next

@@ -31,8 +31,6 @@ function ConfigurationBlock({ block }: { block: { code: string; filename: string
     '"paths"',
     '"@/*"',
     '"./src/*"',
-    '"imports"',
-    '"#lib/*"',
     'resolve:',
     'alias:',
     "'@':",
@@ -60,7 +58,7 @@ export default function RegistryInitCommandClient({ framework, installation }: P
   const sourceFramework = projectFramework === 'react' ? 'react' : 'html';
   const styling = resolveRegistryStyling(sourceFramework, useRegistryStyling());
   const project = installationProjectFiles(projectFramework, template);
-  const configuration = shadcnProjectConfiguration(projectFramework, template, styling, project.componentsAlias);
+  const configuration = shadcnProjectConfiguration(sourceFramework, template, styling, project.componentsAlias);
   const aliasSteps = configuration.aliasSetup.map((block) => ({
     key: block.filename,
     title: `Configure ${block.filename}`,

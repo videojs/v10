@@ -48,16 +48,7 @@ describe('runAgentsInit', () => {
   });
 
   it('returns complete selected instructions', () => {
-    const result = runAgentsInit('html', '10.0.0', [
-      'agents',
-      'init',
-      '--framework',
-      'vue',
-      '--method',
-      'shadcn',
-      '--media',
-      'hls',
-    ]);
+    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'shadcn', '--media', 'hls']);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('## Configure Shadcn');
@@ -68,9 +59,7 @@ describe('runAgentsInit', () => {
     expect(result.stdout).toContain('## Install the media adapter');
     expect(result.stdout).toContain('pnpm add @videojs/hlsjs-video@10.0.0');
     expect(result.stdout).toContain('vite.config.ts');
-    expect(result.stdout).toContain("tag.startsWith('media-')");
-    expect(result.stdout).toContain('components/VideoPlayer.vue');
-    expect(result.stdout).not.toContain('### `index.html`');
+    expect(result.stdout).toContain("import '@/components/videojs/video/skin';");
   });
 
   it('adds selected extensions to packages and player code', () => {
@@ -153,28 +142,23 @@ describe('runAgentsInit', () => {
     expect(result.stdout).not.toContain('Continue in the existing');
   });
 
-  it('uses Svelte component files for Shadcn HTML source', () => {
-    const result = runAgentsInit('html', '10.0.0', [
-      'agents',
-      'init',
-      '--framework',
-      'svelte',
-      '--method',
-      'shadcn',
-      '--template',
-      'sveltekit',
-    ]);
+  it('rejects Shadcn for Vue and Svelte projects', () => {
+    for (const framework of ['vue', 'svelte']) {
+      const result = runAgentsInit('html', '10.0.0', [
+        'agents',
+        'init',
+        '--framework',
+        framework,
+        '--method',
+        'shadcn',
+      ]);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('src/lib/VideoPlayer.svelte');
-    expect(result.stdout).toContain('src/routes/+page.svelte');
-    expect(result.stdout).toContain("import VideoSkin from '$lib/components/videojs/video/skin.svelte'");
-    expect(result.stdout).not.toContain("import '#lib/components/videojs/video/skin'");
-    expect(result.stdout).toContain('<slot />');
-    expect(result.stdout).toContain('<style>');
-    expect(result.stdout).not.toContain('## Register custom elements');
-    expect(result.stdout).toContain('<video src={"https://stream.mux.com/');
-    expect(result.stdout).not.toContain('### `index.html`');
+      expect(result.exitCode).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(
+        '- --method: Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.'
+      );
+    }
   });
 
   it('lets Shadcn scaffold a new React Tailwind app without double scaffolding', () => {
@@ -268,25 +252,13 @@ describe('runAgentsInit', () => {
     expect(result.stdout).toContain('inside the page body');
   });
 
-  it('keeps packaged and Shadcn Nuxt player markup on the client', () => {
-    const shadcn = runAgentsInit('html', '10.0.0', [
-      'agents',
-      'init',
-      '--method',
-      'shadcn',
-      '--framework',
-      'vue',
-      '--template',
-      'nuxt',
-    ]);
-    const packaged = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue', '--template', 'nuxt']);
+  it('keeps packaged Nuxt player markup on the client', () => {
+    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue', '--template', 'nuxt']);
 
-    for (const result of [packaged, shadcn]) {
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('app/components/VideoPlayer.client.vue');
-      expect(result.stdout).toContain("import { VideoPlayer } from '#components'");
-      expect(result.stdout).not.toContain("from './components/VideoPlayer.client.vue'");
-    }
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('app/components/VideoPlayer.client.vue');
+    expect(result.stdout).toContain("import { VideoPlayer } from '#components'");
+    expect(result.stdout).not.toContain("from './components/VideoPlayer.client.vue'");
   });
 
   it('does not add framework setup instructions to an existing Astro app', () => {

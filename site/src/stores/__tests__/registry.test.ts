@@ -60,15 +60,15 @@ describe('selectRegistryProjectFramework', () => {
     template.set('vite');
     registryStyling.set('css');
 
-    selectRegistryProjectFramework('vue');
+    selectRegistryProjectFramework('html');
 
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
-    expect(window.location.search).toBe('?framework=vue&template=vite&styling=css');
+    expect(window.location.search).toBe('?framework=html&template=vite&styling=css');
   });
 
   it('writes compatible defaults that the next framework would otherwise reinterpret', () => {
-    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=vue');
+    window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=html');
     template.set('vite');
     registryStyling.set('css');
 
@@ -91,25 +91,6 @@ describe('selectRegistryProjectFramework', () => {
     expect(document.documentElement.dataset.registryStyling).toBe('css');
   });
 
-  it('keeps the Vue project selection while using HTML registry source and site preferences', () => {
-    window.history.replaceState(
-      null,
-      '',
-      '/docs/guides/installation/shadcn?framework=react&preset=audio&media=spotify&package-manager=pnpm&source-url=track'
-    );
-
-    selectRegistryProjectFramework('vue');
-
-    expect(registryProjectFramework.get()).toBe('vue');
-    expect(registryFramework.get()).toBe('html');
-    expect(currentFramework.get()).toBe('html');
-    expect(window.location.search).toBe(
-      '?framework=vue&preset=audio&media=spotify&package-manager=pnpm&source-url=track'
-    );
-    expect(document.documentElement.dataset.registryFramework).toBe('html');
-    expect(document.documentElement.dataset.registryProjectFramework).toBe('vue');
-  });
-
   it('writes template and styling choices into the Shadcn URL', () => {
     window.history.replaceState(null, '', '/docs/guides/installation/shadcn?framework=react&preset=audio');
 
@@ -125,12 +106,14 @@ describe('selectRegistryProjectFramework', () => {
   it('initializes registry choices from an authoritative Shadcn URL', () => {
     registrySkin.set('video');
     registryTheme.set('minimal');
-    const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue&template=nuxt&styling=css');
+    const url = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=html&template=astro&styling=css'
+    );
 
-    syncRegistryProjectFramework('vue', url);
+    syncRegistryProjectFramework('html', url);
 
-    expect(registryProjectFramework.get()).toBe('vue');
-    expect(template.get()).toBe('nuxt');
+    expect(registryProjectFramework.get()).toBe('html');
+    expect(template.get()).toBe('astro');
     expect(registryStyling.get()).toBe('css');
     expect(registrySkin.get()).toBeNull();
     expect(registryTheme.get()).toBeNull();

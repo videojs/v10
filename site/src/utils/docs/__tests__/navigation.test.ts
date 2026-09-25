@@ -59,10 +59,10 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
-  it('keeps a Vue Shadcn project while deriving HTML source and preferences', () => {
+  it('falls back from a Vue Shadcn query to the HTML source and preferences', () => {
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'));
 
-    expect(registryProjectFramework.get()).toBe('vue');
+    expect(registryProjectFramework.get()).toBe('html');
     expect(registryFramework.get()).toBe('html');
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
@@ -95,7 +95,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     expect(registryFramework.get()).toBe('html');
   });
 
-  it('drops incompatible Shadcn options while retaining valid URL-backed choices', () => {
+  it('canonicalizes a Vue Shadcn query to HTML while retaining valid URL-backed choices', () => {
     window.history.replaceState(
       { index: 2, scrollX: 0, scrollY: 360 },
       '',
@@ -104,8 +104,8 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
     initializeDocsNavigation();
 
-    expect(window.location.search).toBe('?framework=vue&styling=css');
-    expect(registryProjectFramework.get()).toBe('vue');
+    expect(window.location.search).toBe('?framework=html&styling=css');
+    expect(registryProjectFramework.get()).toBe('html');
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });

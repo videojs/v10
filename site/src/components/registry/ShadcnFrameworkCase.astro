@@ -1,8 +1,8 @@
 ---
-import type { InstallationFramework } from '@videojs/installation';
+import type { RegistryFramework } from '@videojs/installation';
 
 interface Props {
-  framework: InstallationFramework;
+  framework: RegistryFramework;
   /** Match the React/HTML source catalog by default, or one exact app framework. */
   match?: 'project' | 'source';
   /** Label this branch with its framework in generated Markdown. */
@@ -10,12 +10,7 @@ interface Props {
 }
 
 const { framework, match = 'source', llmsHeading = true } = Astro.props;
-
-if (match === 'source' && framework !== 'react' && framework !== 'html') {
-  throw new Error(`A Shadcn source branch must use React or HTML, received ${framework}.`);
-}
-
-const label = { react: 'React', html: 'HTML', vue: 'Vue', svelte: 'Svelte' }[framework];
+const label = framework === 'react' ? 'React' : 'HTML';
 ---
 
 <div

@@ -29,7 +29,6 @@ describe('installationProjectFiles', () => {
     });
     expect(installationProjectFiles('svelte', 'sveltekit')).toMatchObject({
       componentsAlias: '#lib/components',
-      componentsImportAlias: '$lib/components',
       player: 'src/lib/VideoPlayer.svelte',
       usage: 'src/routes/+page.svelte',
     });
@@ -76,25 +75,21 @@ describe('installationProjectCreateCommand', () => {
 
 describe('installationProjectAliasSetup', () => {
   it('configures aliases for app scaffolds that do not provide them', () => {
-    expect(installationProjectAliasSetup('vue', 'vite')).toEqual(
+    expect(installationProjectAliasSetup('react', 'vite')).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ filename: 'tsconfig.json', code: expect.stringContaining('"@/*"') }),
         expect.objectContaining({ filename: 'tsconfig.app.json', code: expect.stringContaining('"@/*"') }),
         expect.objectContaining({ filename: 'vite.config.ts', code: expect.stringContaining("'@': path.resolve") }),
       ])
     );
-    expect(installationProjectAliasSetup('svelte', 'vite')[0]?.code).toContain('"$lib/*"');
-    expect(installationProjectAliasSetup('svelte', 'astro')[0]?.code).toContain('"@/*"');
+    expect(installationProjectAliasSetup('html', 'astro')[0]?.code).toContain('"@/*"');
     expect(installationProjectAliasSetup('html', 'laravel')).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ filename: 'tsconfig.json', code: expect.stringContaining('./resources/js/*') }),
         expect.objectContaining({ filename: 'vite.config.js', code: expect.stringContaining("'@': path.resolve") }),
       ])
     );
-    expect(installationProjectAliasSetup('vue', 'nuxt')).toEqual([
-      expect.objectContaining({ filename: 'tsconfig.json', code: expect.stringContaining('./app/*') }),
-    ]);
-    expect(installationProjectAliasSetup('vue', 'vite').every(({ code }) => !code.includes('baseUrl'))).toBe(true);
+    expect(installationProjectAliasSetup('react', 'vite').every(({ code }) => !code.includes('baseUrl'))).toBe(true);
     expect(installationProjectAliasSetup('react', 'next')).toEqual([]);
   });
 });

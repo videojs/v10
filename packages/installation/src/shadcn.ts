@@ -2,7 +2,6 @@ import { PACKAGE_MANAGERS, type InstallationProject, type PackageManager } from 
 import { getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
   installationProjectAliasSetup,
-  type InstallationFramework,
   type InstallationProjectSetupBlock,
   type InstallationTemplate,
 } from './projects';
@@ -139,12 +138,12 @@ export function optionalShadcnInitCommand(runner: ShadcnRunner): string {
 
 /** A minimal standard Shadcn config for the vanilla-CSS registries, which do not need Tailwind or React setup. */
 export function shadcnComponentsConfig(
-  framework: InstallationFramework,
+  framework: RegistryFramework,
   template: InstallationTemplate,
   componentsAlias: string
 ): string {
   const rootAlias = componentsAlias.split('/')[0] ?? '@';
-  const libAlias = rootAlias === '$lib' || rootAlias === '#lib' ? rootAlias : `${rootAlias}/lib`;
+  const libAlias = `${rootAlias}/lib`;
 
   return JSON.stringify(
     {
@@ -189,7 +188,7 @@ export type ShadcnProjectConfigurationPlacement = 'app' | 'registry' | 'section'
 
 /** Resolve the one source-registry setup shared by generated plans and the installation guide. */
 export function shadcnProjectConfiguration(
-  framework: InstallationFramework,
+  framework: RegistryFramework,
   template: InstallationTemplate,
   styling: RegistryStyling,
   componentsAlias: string

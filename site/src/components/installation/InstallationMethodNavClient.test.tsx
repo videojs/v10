@@ -58,25 +58,20 @@ describe('InstallationMethodNavClient', () => {
     expect(markup).toContain('data-installation-method="cdn"');
   });
 
-  it('offers Vue and Svelte the HTML Shadcn source', () => {
+  it('offers Vue and Svelte only the packaged method', () => {
     const vue = renderToString(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
     const svelte = renderToString(<InstallationMethodNavClient currentFramework="svelte" route="svelte" />);
 
     expect(vue).toContain('data-installation-method="packaged"');
-    expect(vue).toContain('data-installation-method="shadcn"');
-    expect(vue).toContain('href="/docs/guides/installation/shadcn?framework=vue"');
-    expect(vue).toContain('Add editable skin source');
-    expect(vue).toContain('max-w-3xl');
-    expect(vue).toContain('sm:grid-cols-3');
-    expect(vue).toContain('mx-auto');
+    expect(vue).not.toContain('data-installation-method="shadcn"');
+    expect(vue).not.toContain('data-installation-method="cdn"');
     expect(svelte).toContain('data-installation-method="packaged"');
-    expect(svelte).toContain('data-installation-method="shadcn"');
-    expect(svelte).toContain('href="/docs/guides/installation/shadcn?framework=svelte"');
+    expect(svelte).not.toContain('data-installation-method="shadcn"');
     expect(svelte).not.toContain('data-installation-method="cdn"');
   });
 
   it('keeps Shadcn in place but disables it when the selected player has no registry source', async () => {
-    const { queryByRole } = render(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
+    const { queryByRole } = render(<InstallationMethodNavClient currentFramework="html" route="html" />);
 
     expect(queryByRole('link', { name: /Shadcn/ })).not.toHaveAttribute('aria-disabled');
 
@@ -136,25 +131,26 @@ describe('InstallationMethodNavClient', () => {
 
     await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).not.toHaveAttribute('aria-disabled'));
 
-    act(() => registryProjectFramework.set('vue'));
+    act(() => registryProjectFramework.set('react'));
 
     await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).toHaveAttribute('aria-disabled', 'true'));
   });
 
-  it('carries Vue selections into the HTML Shadcn route', async () => {
-    window.history.replaceState(null, '', '/docs/guides/installation/vue?preset=audio');
+  it('carries HTML selections into the HTML Shadcn route', async () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/html?preset=audio');
     useCase.set('default-audio');
     skin.set('minimal-audio');
     renderer.set('html5-audio');
+    template.set('vite');
 
-    const { getByRole } = render(<InstallationMethodNavClient currentFramework="vue" route="vue" />);
+    const { getByRole } = render(<InstallationMethodNavClient currentFramework="html" route="html" />);
     const link = getByRole('link', { name: /Shadcn/ });
 
     await waitFor(() => expect(link.getAttribute('href')).toContain('preset=audio'));
     fireEvent.click(link);
     await Promise.resolve();
 
-    const target = '/docs/guides/installation/shadcn?preset=audio&skin=minimal&framework=vue';
+    const target = '/docs/guides/installation/shadcn?preset=audio&skin=minimal&framework=html';
 
     expect(mocks.savePageScrollForNavigation).toHaveBeenCalledWith(target, '[data-installation-method-nav]');
     expect(mocks.navigate).toHaveBeenCalledWith(target, {

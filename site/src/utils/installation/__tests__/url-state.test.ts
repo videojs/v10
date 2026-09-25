@@ -74,9 +74,9 @@ describe('parseInstallationSearchForRoute', () => {
   });
 
   it('uses the framework query only on the shared Shadcn route', () => {
-    expect(parseInstallationSearchForRoute('shadcn', '?framework=vue&template=nuxt')).toMatchObject({
-      framework: 'vue',
-      template: 'nuxt',
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=html&template=astro')).toMatchObject({
+      framework: 'html',
+      template: 'astro',
     });
     expect(parseInstallationSearchForRoute('vue', '?framework=react&template=nuxt')).toMatchObject({
       framework: 'vue',
@@ -90,6 +90,17 @@ describe('parseInstallationSearchForRoute', () => {
     expect(parseInstallationSearchForRoute('shadcn', '?framework=html&template=none')).toMatchObject({
       framework: 'html',
       template: 'vite',
+    });
+  });
+
+  it('falls back from a Vue or Svelte Shadcn query to the HTML source', () => {
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=vue&template=nuxt')).toMatchObject({
+      framework: 'html',
+      template: 'vite',
+    });
+    expect(parseInstallationSearchForRoute('shadcn', '?framework=svelte&template=astro')).toMatchObject({
+      framework: 'html',
+      template: 'astro',
     });
   });
 });
@@ -174,11 +185,12 @@ describe('serializeInstallationSearchForRoute', () => {
   it('keeps only parameters supported by the current installation route', () => {
     const search = '?method=shadcn&framework=vue&template=astro&styling=css&package-manager=pnpm&utm_source=docs';
     const vue = { ...DEFAULT_SELECTION, framework: 'vue', template: 'vite' } as const;
+    const html = { ...DEFAULT_SELECTION, framework: 'html', template: 'vite' } as const;
 
     expect(serializeInstallationSearchForRoute('vue', vue, search)).toBe('?utm_source=docs');
     expect(serializeInstallationSearchForRoute('cdn', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
-    expect(serializeInstallationSearchForRoute('shadcn', vue, search)).toBe(
-      '?framework=vue&styling=css&utm_source=docs'
+    expect(serializeInstallationSearchForRoute('shadcn', html, search)).toBe(
+      '?framework=html&styling=css&utm_source=docs'
     );
   });
 
