@@ -443,6 +443,24 @@ describe('runAgentsInit', () => {
     expect(page.code).toContain(page.insertContents[0].anchor);
   });
 
+  it('points copied skin paths at the components alias from components.json', () => {
+    const html = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'html', '--json']).stdout
+    );
+    const react = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'react', '--json']).stdout
+    );
+    const description = (plan: { steps: { id: string; description: string }[] }) =>
+      plan.steps.find(({ id }) => id === 'player')!.description;
+
+    expect(description(html)).toContain(
+      'Use the aliases.components value from components.json when it differs from the generated @/components path: the skin file then lives under the directory that alias maps to instead of src/components, and the skin import uses that alias.'
+    );
+    expect(description(react)).toContain(
+      'Use the aliases.components value from components.json in the skin import when it differs from the generated @/components path.'
+    );
+  });
+
   it('keeps packaged Nuxt player markup on the client', () => {
     const result = runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'vue', '--template', 'nuxt']);
 
