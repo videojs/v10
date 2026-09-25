@@ -18,9 +18,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     environment: production
-    outputs:
-      released: ${{ steps.release.outputs.releases_created }}
-      version: ${{ steps.release.outputs['packages/html--version'] }}
     permissions:
       contents: write
       pull-requests: write
@@ -120,8 +117,6 @@ jobs:
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm --fail-if-no-match -r publish --filter "./packages/**" --access public --provenance --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Attach the archive to the @videojs/cdn release so installers outside npm
       # (Composer, Drupal) have a stable, versioned download. Use the outputs from
@@ -147,14 +142,3 @@ jobs:
       - name: Update site/v10 branch
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: git push origin HEAD:refs/heads/site/v10 --force
-
-  # `pnpm publish` above tags each release `latest`; keep `next` on the same
-  # version so both install channels resolve to the newest release.
-  dist-tag:
-    needs: release
-    if: ${{ needs.release.outputs.released == 'true' }}
-    uses: ./.github/workflows/npm-dist-tag.yml
-    with:
-      version: ${{ needs.release.outputs.version }}
-      tag: next
-    secrets: inherit

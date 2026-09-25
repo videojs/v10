@@ -226,6 +226,22 @@ Use this to try a change in a real project before it is released. Previews are v
 
 Because a preview is an installable artifact carrying the Video.js name, it is only published for code someone with repository access pushed or vouched for. Pull requests from a branch in this repo publish automatically; **pull requests from a fork publish only once a maintainer approves them**. The approval has to be written against the pull request's latest commit, so any new commit needs a fresh approval before it is published.
 
+### 🏷 npm dist-tags
+
+Releases publish to the `latest` dist-tag, which is what the docs, badges, and CDN URLs install. The `next` tag is **not** moved by CI: npm's trusted publishing (OIDC) covers `npm publish` only, not `npm dist-tag` ([npm/cli#8547](https://github.com/npm/cli/issues/8547)), and we don't keep a long-lived npm token for it. So `@next` stays stale during the RC line — install without a tag, or pin an exact version.
+
+At GA, a maintainer with publish rights repoints `next` by hand from a clean checkout of the release tag:
+
+```sh
+VERSION=10.0.0
+for manifest in packages/*/package.json packages/*/*/package.json; do
+  [ "$(jq -r '.private // false' "$manifest")" = "true" ] && continue
+  npm dist-tag add "$(jq -r .name "$manifest")@${VERSION}" next
+done
+```
+
+Then confirm with `npm view @videojs/html dist-tags` (and spot-check another package). Revisit automating this once npm/cli#8547 lands.
+
 ### ✅ Workspace Consistency
 
 Before opening a PR, run the workspace consistency check to catch common mistakes (CI coverage, scope mismatches, broken define imports, etc.):
