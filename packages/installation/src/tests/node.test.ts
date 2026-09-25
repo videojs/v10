@@ -733,6 +733,16 @@ describe('runAgentsInit', () => {
     );
   });
 
+  it('offers CDN on an existing page or in a new Vite app only', () => {
+    const cdn = ['agents', 'init', '--framework', 'html', '--method', 'cdn'];
+    const existingVite = runAgentsInit('10.0.0', [...cdn, '--project', 'existing', '--template', 'vite']);
+    const vite = runAgentsInit('10.0.0', [...cdn, '--template', 'vite', '--json']);
+
+    expect(existingVite.exitCode).toBe(2);
+    expect(existingVite.stderr).toContain('For an existing Vite app, use --method packaged.');
+    expect(JSON.parse(vite.stdout).selectedOptions).toMatchObject({ project: 'new', template: 'vite' });
+  });
+
   it('renders every supported framework, method, app setup, and starting point without hidden defaults', () => {
     const failures: string[] = [];
     let scenarioCount = 0;
@@ -740,7 +750,12 @@ describe('runAgentsInit', () => {
     for (const framework of INSTALLATION_FRAMEWORKS) {
       for (const method of installationMethodsForFramework(framework)) {
         for (const template of installationTemplatesForMethod(framework, method)) {
-          const projects = template === 'none' ? (['existing'] as const) : (['new', 'existing'] as const);
+          const projects =
+            template === 'none'
+              ? (['existing'] as const)
+              : method === 'cdn'
+                ? (['new'] as const)
+                : (['new', 'existing'] as const);
 
           for (const project of projects) {
             scenarioCount += 1;

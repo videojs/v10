@@ -55,6 +55,12 @@ function routeRules(route: InstallationRouteSegment, query: Record<string, strin
     newProjectTemplates: templates.filter(
       (template) => parse(route, { ...query, template, project: 'new' }).project === 'new'
     ),
+    // App setups an existing project can use; CDN only adds its scripts to a plain page.
+    existingProjectTemplates: templates.filter(
+      (template) => parse(route, { ...query, template, project: 'existing' }).template === template
+    ),
+    // The starting point an app setup implies when the query leaves it out, such as CDN's Vite for a new app.
+    impliedProjects: Object.fromEntries(templates.map((template) => [template, parse(route, { ...query, template }).project])),
   };
 }
 
@@ -219,16 +225,23 @@ const generatedCss = [
       return;
     }
 
-    const project = pick(rules.projects, params.get("project"), "existing");
+    const requestedTemplate = params.get("template");
+    const requestedProject = pick(
+      rules.projects,
+      params.get("project"),
+      rules.impliedProjects[requestedTemplate] ?? "existing"
+    );
     const template = pick(
       rules.templates,
-      params.get("template"),
-      project === "new" ? rules.newProjectDefaultTemplate : rules.defaultTemplate
+      requestedTemplate,
+      requestedProject === "new" ? rules.newProjectDefaultTemplate : rules.defaultTemplate
     );
+    const project = rules.newProjectTemplates.includes(template) ? requestedProject : "existing";
 
     root.dataset.installationPreset = pick(rules.presets, params.get("preset"), defaultPreset);
-    root.dataset.installationProject = rules.newProjectTemplates.includes(template) ? project : "existing";
-    root.dataset.installationTemplate = template;
+    root.dataset.installationProject = project;
+    root.dataset.installationTemplate =
+      project === "existing" && !rules.existingProjectTemplates.includes(template) ? rules.defaultTemplate : template;
 
     if (isShadcn) {
       root.dataset.registryFramework = framework;

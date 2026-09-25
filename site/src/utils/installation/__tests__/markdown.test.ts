@@ -117,7 +117,15 @@ describe('resolveInstallationMarkdownPlan', () => {
 
   for (const { route, framework, method } of routeSelections) {
     for (const template of installationTemplatesForMethod(framework, method)) {
-      for (const project of template === 'none' ? (['existing'] as const) : (['new', 'existing'] as const)) {
+      // CDN adds the player to an existing page or scaffolds a new Vite app, never an existing Vite app.
+      const projects =
+        template === 'none'
+          ? (['existing'] as const)
+          : method === 'cdn'
+            ? (['new'] as const)
+            : (['new', 'existing'] as const);
+
+      for (const project of projects) {
         it(`accepts ${route}/${framework}/${method}/${template}/${project}`, () => {
           const params = new URLSearchParams({ project, template });
 

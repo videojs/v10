@@ -286,7 +286,8 @@ export function resolveInstallationSelection(
 
   if (methodValid && frameworkValid && !methodSupported) errors.push(unsupportedMethodError(method));
 
-  const projectValue = defaultValue('project', 'existing');
+  // CDN only scaffolds Vite for a new app, so asking for Vite there implies one.
+  const projectValue = defaultValue('project', method === 'cdn' && input.template === 'vite' ? 'new' : 'existing');
   const projectValid = includes(INSTALLATION_PROJECTS, projectValue);
   const project = resolveChoice('project', projectValue, INSTALLATION_PROJECTS, 'existing', errors);
 
@@ -407,6 +408,22 @@ export function resolveInstallationSelection(
   const templateValue = defaultValue('template', defaultTemplate);
   const templateValid = includes(availableTemplates, templateValue);
   const template = resolveChoice('template', templateValue, availableTemplates, defaultTemplate, templateErrors);
+
+  if (
+    methodSupported &&
+    projectValid &&
+    templateValid &&
+    method === 'cdn' &&
+    template === 'vite' &&
+    project === 'existing'
+  ) {
+    templateErrors.push({
+      field: 'template',
+      value: template,
+      message: 'CDN scripts go on an existing page with --template none, or into a new Vite app with --project new.',
+      hint: 'For an existing Vite app, use --method packaged.',
+    });
+  }
 
   if (methodSupported && projectValid && templateValid && template === 'none' && project === 'new') {
     errors.push({
