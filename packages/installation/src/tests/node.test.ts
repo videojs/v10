@@ -284,6 +284,9 @@ describe('runAgentsInit', () => {
         .stdout
     );
     const args = first.reproduceCommand.split(' ').slice(2);
+
+    expect(first.reproduceCommand).toMatch(/^npx @videojs\/html@10\.0\.0 agents init /);
+
     const reproduced = runAgentsInit('html', '10.0.0', [...args, '--json']);
 
     expect(reproduced.exitCode).toBe(0);

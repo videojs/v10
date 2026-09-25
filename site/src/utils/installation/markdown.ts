@@ -136,7 +136,8 @@ export function resolveInstallationMarkdownPlan(
   const resolved = resolveInstallationSelection(defaults.owner, inputFromQuery(defaults, params), packageVersion);
   if (!resolved.ok) return resolved;
 
-  return { ok: true, plan: createInstallationPlan(resolved.selection, packageVersion) };
+  // The site deploys from main, so a pinned release could reject options added since then.
+  return { ok: true, plan: createInstallationPlan(resolved.selection, packageVersion, null) };
 }
 
 export function replaceInstallationMarkdownPlan(markdown: string, replacement: string): string | null {

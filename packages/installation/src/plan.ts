@@ -613,7 +613,15 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
   return steps;
 }
 
-export function createInstallationPlan(selection: InstallationSelection, packageVersion: string): InstallationPlan {
+/**
+ * @param commandVersion - Version pinned in `reproduceCommand`. Pass `null` when the plan is published ahead of the
+ *   package it describes, such as docs built from main, so the command runs the project's installed version.
+ */
+export function createInstallationPlan(
+  selection: InstallationSelection,
+  packageVersion: string,
+  commandVersion: string | null = packageVersion
+): InstallationPlan {
   const resolvedSourceUrl = resolveInstallationSourceUrl(selection.sourceUrl, selection.media, selection.useCase);
   const explicit = selectionToInput({ ...selection, sourceUrl: resolvedSourceUrl });
   const relevantInput: InstallationInput = {
@@ -653,7 +661,7 @@ export function createInstallationPlan(selection: InstallationSelection, package
     packageVersion,
     selection: { ...selection, sourceUrl: resolvedSourceUrl },
     resolvedSourceUrl,
-    reproduceCommand: installationCommand(selection.owner, relevantInput, packageVersion),
+    reproduceCommand: installationCommand(selection.owner, relevantInput, commandVersion),
     steps,
     next: [
       {

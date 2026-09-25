@@ -82,6 +82,7 @@ describe('resolveInstallationMarkdownPlan', () => {
 
     expect(result?.ok && result.plan.selection).toMatchObject({ project: 'new', template: 'nuxt' });
     expect(result?.ok && result.plan.reproduceCommand).toContain('--project new');
+    expect(result?.ok && result.plan.reproduceCommand).toMatch(/^npx @videojs\/html agents init /);
     expect(result?.ok && result.plan.steps[0]).toMatchObject({ title: 'Create the app' });
   });
 
