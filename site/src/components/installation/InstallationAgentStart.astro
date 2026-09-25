@@ -18,7 +18,7 @@ const init = installationCommand(input, null);
 const installationPrompt = route === 'shadcn'
   ? `When installation details are needed, run \`${installationCommand({ method: 'shadcn', framework: 'react' }, null)}\` for React, or \`${installationCommand({ method: 'shadcn', framework: 'html' }, null)}\` for plain HTML. The command prints version-matched choices and instructions without changing files.`
   : `When installation details are needed, run \`${init}\` to print the version-matched choices and instructions without changing files.`;
-const prompt = `Install the Video.js skill: run \`${skillsCommand()}\` and follow the steps for the agent you are running in. If you can't run commands, follow the install instructions at ${SKILLS_REPOSITORY_URL} instead. Then use the Video.js skill for this project. ${installationPrompt}`;
+const prompt = `Install the Video.js skill: run \`${skillsCommand()}\` and follow the steps for the agent you are running in. If you can't run commands, follow the install instructions at ${SKILLS_REPOSITORY_URL} instead. Then use the Video.js skill when you work on video or audio in this project. ${installationPrompt}`;
 ---
 
 <P>Paste this prompt into your coding agent:</P>
