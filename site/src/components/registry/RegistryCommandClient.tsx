@@ -2,8 +2,8 @@ import {
   type RegistryFramework,
   type RegistryPreset,
   type RegistryTheme,
-  optionalShadcnInitCommand,
   resolveRegistryStyling,
+  shadcnInitCommand,
   shadcnAddCommand,
   shadcnRegistryAddCommand,
 } from '@videojs/installation';
@@ -43,10 +43,10 @@ export default function RegistryCommandClient({
   const styling = resolveRegistryStyling(framework, $styling);
   const initCommands = optionalInit
     ? {
-        npm: optionalShadcnInitCommand('npm'),
-        pnpm: optionalShadcnInitCommand('pnpm'),
-        yarn: optionalShadcnInitCommand('yarn'),
-        bun: optionalShadcnInitCommand('bun'),
+        npm: shadcnInitCommand('npm'),
+        pnpm: shadcnInitCommand('pnpm'),
+        yarn: shadcnInitCommand('yarn'),
+        bun: shadcnInitCommand('bun'),
       }
     : null;
   const registryCommands = {

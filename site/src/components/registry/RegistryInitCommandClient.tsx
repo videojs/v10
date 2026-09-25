@@ -1,8 +1,8 @@
 import {
   defaultInstallationTemplate,
   installationProjectFiles,
-  optionalShadcnInitCommand,
   resolveRegistryStyling,
+  shadcnInitCommand,
   resolveInstallationTemplate,
   shadcnProjectConfiguration,
   type RegistryFramework,
@@ -101,10 +101,10 @@ function ConfigurationSteps({
           content: (
             <PackageManagerTabs
               commands={{
-                npm: optionalShadcnInitCommand('npm'),
-                pnpm: optionalShadcnInitCommand('pnpm'),
-                yarn: optionalShadcnInitCommand('yarn'),
-                bun: optionalShadcnInitCommand('bun'),
+                npm: shadcnInitCommand('npm'),
+                pnpm: shadcnInitCommand('pnpm'),
+                yarn: shadcnInitCommand('yarn'),
+                bun: shadcnInitCommand('bun'),
               }}
               syncSelection={installation}
             />

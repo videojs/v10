@@ -1,7 +1,7 @@
 import {
   generateHTMLUsageCode,
   installationHtmlEntrySetup,
-  installationHtmlPageCode,
+  installationHtmlPlayerPageCode,
   installationProjectFiles,
 } from '@videojs/installation';
 
@@ -50,6 +50,7 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
   const selectedInstallMethod = useSelection('installMethod');
   const $sourceUrl = useSelection('sourceUrl');
   const $template = useSelection('template');
+  const $project = useSelection('project');
   const project = installationProjectFiles('html', $template);
   const method = installMethod ?? selectedInstallMethod;
 
@@ -62,7 +63,8 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
     installMethod: method,
   });
   const entrySetup = method === 'cdn' ? [] : installationHtmlEntrySetup($template, project.usage!);
-  const html = method === 'cdn' ? result.html : installationHtmlPageCode(result.html, $template, project.usage!);
+  const html =
+    method === 'cdn' ? result.html : installationHtmlPlayerPageCode(result.html, $template, project.usage!, $project);
 
   if (method === 'cdn') return <CodeBlock code={html} filename={project.player} language="html" />;
 

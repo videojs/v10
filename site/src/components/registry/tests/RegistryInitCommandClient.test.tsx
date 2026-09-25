@@ -39,7 +39,7 @@ describe('RegistryInitCommandClient', () => {
     const { container } = render(<RegistryInitCommandClient framework="react" installation />);
 
     expect(screen.queryByRole('heading', { name: 'Initialize Shadcn' })).not.toBeInTheDocument();
-    expect(screen.getByText(/# Optional: run if components.json does not exist/)).toBeInTheDocument();
+    expect(screen.getByText(/shadcn@latest init --base base --preset nova --yes/)).toBeInTheDocument();
     expect(container.querySelector('[data-installation-project-content="existing"]')).toBeInTheDocument();
   });
 
@@ -51,7 +51,7 @@ describe('RegistryInitCommandClient', () => {
 
     expect(screen.getByRole('heading', { name: 'Configure tsconfig.json' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Initialize Shadcn' })).toBeInTheDocument();
-    expect(screen.getByText(/# Optional: run if components.json does not exist/)).toBeInTheDocument();
+    expect(screen.getByText(/shadcn@latest init --base base --preset nova --yes/)).toBeInTheDocument();
   });
 
   it('does not number a single configuration block', () => {

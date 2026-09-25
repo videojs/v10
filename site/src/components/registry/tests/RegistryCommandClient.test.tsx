@@ -26,12 +26,12 @@ describe('RegistryCommandClient', () => {
     registryStyling.set(null);
   });
 
-  it('names the registry action and marks initialization as optional in code', () => {
+  it('names the registry action and marks initialization as optional', () => {
     render(<RegistryCommandClient framework="react" items={['video']} optionalInit />);
 
     expect(screen.getByRole('heading', { name: 'Add the Video.js Registry' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Create components.json (optional)' })).toBeInTheDocument();
-    expect(screen.getByText(/# Optional: run if components.json does not exist/)).toBeInTheDocument();
+    expect(screen.getByText('pnpm dlx shadcn@latest init --base base --preset nova --yes')).toBeInTheDocument();
   });
 
   it('pre-renders stable new and existing project commands', () => {
@@ -39,7 +39,7 @@ describe('RegistryCommandClient', () => {
     const newProject = container.querySelector('[data-installation-project-content="new"]');
     const existingProject = container.querySelector('[data-installation-project-content="existing"]');
 
-    expect(newProject).not.toHaveTextContent(/Optional: run if components.json does not exist/);
-    expect(existingProject).toHaveTextContent(/Optional: run if components.json does not exist/);
+    expect(newProject).not.toHaveTextContent('Create components.json (optional)');
+    expect(existingProject).toHaveTextContent('Create components.json (optional)');
   });
 });

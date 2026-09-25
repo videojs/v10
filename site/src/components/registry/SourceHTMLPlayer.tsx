@@ -2,7 +2,7 @@ import {
   defaultInstallationTemplate,
   generateSourceHTMLUsageCode,
   installationHtmlEntrySetup,
-  installationHtmlPageCode,
+  installationHtmlPlayerPageCode,
   installationProjectFiles,
 } from '@videojs/installation';
 
@@ -51,6 +51,7 @@ export default function SourceHTMLPlayer({ part }: Props) {
   const framework = useRegistryFramework('html');
   const template = useInstallationTemplate(defaultInstallationTemplate(framework));
   const useCase = useSelection('useCase');
+  const startingPoint = useSelection('project');
   const project = installationProjectFiles(framework, template, useCase);
   const options = {
     useCase,
@@ -127,7 +128,7 @@ export default function SourceHTMLPlayer({ part }: Props) {
         label="HTML implementation"
         tabs={[
           {
-            code: installationHtmlPageCode(html.player, template, project.usage!),
+            code: installationHtmlPlayerPageCode(html.player, template, project.usage!, startingPoint),
             label: project.player,
             lang: 'html',
             value: 'player',
