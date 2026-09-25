@@ -262,8 +262,13 @@ const generatedCss = [
 
   // A page whose islands never hydrate, for example after a script fails to load, would otherwise stay hidden. Once
   // any island reports the stores' picks, the rest follow when they hydrate, so the prerendered defaults stay hidden.
+  // The timer starts here and on each swap, not on `astro:page-load`, which never fires if the client router fails
+  // to load.
+  let revealTimer;
+
   function revealIfIslandsFail() {
-    setTimeout(function () {
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(function () {
       if (!document.querySelector('[data-installation-selection="ready"]')) {
         document.documentElement.removeAttribute("data-installation-pending");
       }
@@ -271,9 +276,10 @@ const generatedCss = [
   }
 
   applyInstallationState(window.location, document.documentElement);
+  revealIfIslandsFail();
 
   document.addEventListener("astro:before-swap", function (event) {
     applyInstallationState(event.to, event.newDocument.documentElement);
+    revealIfIslandsFail();
   });
-  document.addEventListener("astro:page-load", revealIfIslandsFail);
 </script>
