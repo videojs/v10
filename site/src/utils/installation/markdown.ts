@@ -13,8 +13,12 @@ import {
   type SelectionError,
 } from '@videojs/installation';
 
+import cliPackage from '../../../../packages/cli/package.json' with { type: 'json' };
 import { closesCodeFence, codeFenceOpening, outsideCodeFences } from '../markdown-text.ts';
 import { getInstallationRouteSegment } from './routes.ts';
+
+/** The `@videojs/cli` release the published plans describe; the player packages they install share its version. */
+export const INSTALLATION_PACKAGE_VERSION = cliPackage.version;
 
 const PLAN_PATTERN = /<!-- installation-plan:start -->[\s\S]*?<!-- installation-plan:end -->/;
 const FRAMEWORK_BRANCH_OPEN = /^[ \t]*<!-- installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
@@ -94,7 +98,7 @@ function renderInstallationQueryErrors(errors: readonly SelectionError[]): strin
 export function resolveInstallationMarkdownPlan(
   path: string,
   params: URLSearchParams,
-  packageVersion: string
+  packageVersion = INSTALLATION_PACKAGE_VERSION
 ): InstallationMarkdownPlanResult {
   const route = getInstallationRouteSegment(path);
   const requestedFramework = params.get('framework');
@@ -210,7 +214,7 @@ export function renderInstallationMarkdownSelection(
   markdown: string,
   path: string,
   params: URLSearchParams,
-  packageVersion: string,
+  packageVersion = INSTALLATION_PACKAGE_VERSION,
   options: RenderInstallationMarkdownOptions = {}
 ): RenderedInstallationMarkdown | null {
   const result = resolveInstallationMarkdownPlan(path, params, packageVersion);

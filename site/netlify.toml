@@ -1,7 +1,5 @@
 [build]
-  # The Astro config loads the shared installation renderer while Vite+ is still
-  # discovering the site's task graph, so pack it without loading that graph first.
-  command = "pnpm --dir packages/installation exec vp pack && pnpm exec vp run --no-cache site#build"
+  command = "pnpm exec vp run --no-cache site#build"
   publish = "site/dist"
 
 [functions]

@@ -1,7 +1,5 @@
-import htmlPackage from '../../../packages/html/package.json' with { type: 'json' };
 import { INSTALLATION_MARKDOWN_PARAMS, renderInstallationMarkdownSelection } from './installation/markdown.ts';
 
-const VJS10_VERSION = htmlPackage.version;
 const INSTALLATION_PATH = '/docs/guides/installation/';
 // RFC 9110 qvalue: 0 to 1 with at most three decimals.
 const QVALUE = /^(?:0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/;
@@ -89,7 +87,7 @@ export async function handleMarkdown(request: Request, context: MarkdownContext)
   if (!path.startsWith(INSTALLATION_PATH)) return markMarkdownResponse(mdResponse);
 
   const body = await mdResponse.text();
-  const installation = renderInstallationMarkdownSelection(body, path, url.searchParams, VJS10_VERSION);
+  const installation = renderInstallationMarkdownSelection(body, path, url.searchParams);
 
   if (!installation) {
     return markMarkdownResponse(

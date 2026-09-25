@@ -13,12 +13,11 @@ import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
 
-import cliPackage from '../../packages/cli/package.json';
-import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION, VJS10_VERSION } from '../src/consts';
+import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION } from '../src/consts';
 import { sidebar } from '../src/docs.config';
 import type { Section, Sidebar, SupportedFramework } from '../src/types/docs';
-import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework, SUPPORTED_FRAMEWORKS } from '../src/types/docs';
-import { renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
+import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework } from '../src/types/docs';
+import { INSTALLATION_PACKAGE_VERSION, renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
   getInstallationRouteSegment,
@@ -26,6 +25,9 @@ import {
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../src/utils/installation/routes';
 import { outsideCodeFences } from '../src/utils/markdown-text';
+import { filterSidebarForLlms, llmsSections, sidebarSlugs } from './llms-sections';
+
+export { llmsIndexPaths } from './llms-sections';
 
 export interface PageEntry {
   pathname: string;
@@ -71,12 +73,7 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(await response.text(), turndown, siteUrl);
             if (!page) return next();
 
-            const installation = renderInstallationMarkdownSelection(
-              page.markdown,
-              pagePath,
-              requestUrl.searchParams,
-              VJS10_VERSION
-            );
+            const installation = renderInstallationMarkdownSelection(page.markdown, pagePath, requestUrl.searchParams);
 
             if (installation && installation.status !== 200) {
               res.statusCode = installation.status;
@@ -124,7 +121,7 @@ export default function llmsMarkdown(): AstroIntegration {
               markdown,
               pathname,
               new URLSearchParams(),
-              VJS10_VERSION,
+              INSTALLATION_PACKAGE_VERSION,
               { preserveFrameworkBranches: true }
             );
 
@@ -273,7 +270,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
 export function generateInstallationIndex(siteUrl = 'https://videojs.org'): string {
   const origin = siteUrl || 'https://videojs.org';
-  const discovery = createInstallationDiscovery(cliPackage.version);
+  const discovery = createInstallationDiscovery(INSTALLATION_PACKAGE_VERSION);
   const options = installationOptionDefinitionsFor({
     methods: ['packaged', 'shadcn', 'cdn'],
     frameworks: ['react', 'html', 'vue', 'svelte'],
@@ -1181,53 +1178,9 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
   });
 }
 
-/** Top-level sidebar sections whose pages share a directory; each section's llms files are written there. */
-function llmsSections(framework: SupportedFramework) {
-  return filterSidebarForLlms(sidebar, framework)
-    .filter(isSection)
-    .flatMap((section) => {
-      const slugs = sidebarSlugs(section.contents);
-      const directory = commonDirectory(slugs);
-
-      return directory ? [{ section, slugs, directory }] : [];
-    });
-}
-
-/** Root-relative paths of every index and complete file the build writes, for the sitemap. */
-export function llmsIndexPaths(): string[] {
-  const docs = SUPPORTED_FRAMEWORKS.flatMap((framework) =>
-    [
-      `/docs/framework/${framework}`,
-      ...llmsSections(framework).map(({ directory }) => `/docs/framework/${framework}/${directory}`),
-    ].flatMap((base) => [`${base}/llms.txt`, `${base}/llms-full.txt`])
-  );
-
-  return ['/llms.txt', '/blog/llms.txt', '/changelog/llms.txt', ...docs];
-}
-
 /** A section label used mid-sentence: lower-case unless it is an acronym such as "API". */
 function sectionNoun(label: string): string {
   return /^[A-Z0-9]+$/.test(label) ? label : label.toLowerCase();
-}
-
-/** The directory every slug shares, or `undefined` when the pages have no common parent. */
-function commonDirectory(slugs: string[]): string | undefined {
-  const directories = slugs.map((slug) => slug.split('/').slice(0, -1));
-  const [first] = directories;
-  if (!first) return undefined;
-
-  let length = Math.min(...directories.map((directory) => directory.length));
-
-  for (let index = 0; index < length; index += 1) {
-    if (!directories.every((directory) => directory[index] === first[index])) {
-      length = index;
-      break;
-    }
-  }
-
-  const shared = first.slice(0, length);
-
-  return shared.length > 0 ? shared.join('/') : undefined;
 }
 
 /** The nearest enclosing section label for every page slug. */
@@ -1304,12 +1257,7 @@ function renderCorpus(
       getInstallationRouteSegment(page.pathname) === 'shadcn'
         ? new URLSearchParams({ framework })
         : new URLSearchParams();
-    const installation = renderInstallationMarkdownSelection(
-      markdown,
-      page.pathname,
-      installationParams,
-      VJS10_VERSION
-    );
+    const installation = renderInstallationMarkdownSelection(markdown, page.pathname, installationParams);
 
     if (installation && installation.status !== 200) {
       throw new Error(`${page.pathname} could not render installation Markdown: ${installation.body.trim()}`);
@@ -1368,14 +1316,6 @@ function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEnt
   return pageBySlug;
 }
 
-function sidebarSlugs(items: Sidebar): string[] {
-  return items.flatMap((item) => {
-    if (isSection(item)) return sidebarSlugs(item.contents);
-
-    return isLink(item) ? [] : [item.slug];
-  });
-}
-
 function renderSidebarToMarkdown(
   framework: SupportedFramework,
   items: Sidebar,
@@ -1427,28 +1367,6 @@ function sectionDescription(section: Section, framework: SupportedFramework): st
   const { llmsDescription } = section;
 
   return typeof llmsDescription === 'string' ? llmsDescription : llmsDescription?.[framework];
-}
-
-/**
- * Inline sidebar filter for the integration context where `@/` path aliases aren't available (can't import
- * `filterSidebar` from `src/utils/docs/sidebar`). Filters out `devOnly` items and sections restricted to other
- * frameworks, then removes empty sections.
- */
-function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Sidebar {
-  return items
-    .filter((item) => {
-      if (item.devOnly) return false;
-
-      return !item.frameworks || item.frameworks.includes(framework);
-    })
-    .map((item) => {
-      if (isSection(item)) {
-        return { ...item, contents: filterSidebarForLlms(item.contents, framework) };
-      }
-
-      return item;
-    })
-    .filter((item) => !isSection(item) || item.contents.length > 0);
 }
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
