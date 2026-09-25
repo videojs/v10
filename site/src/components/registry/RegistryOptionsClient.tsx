@@ -9,9 +9,7 @@ import {
   type RegistryPreset,
   type RegistryStyling,
   REGISTRY_PRESETS,
-  REGISTRY_STYLING_LABELS,
   type RegistryTheme,
-  REGISTRY_THEME_LABELS,
   REGISTRY_THEMES,
   registrySkinSelection,
   registryStylings,
@@ -52,6 +50,7 @@ import {
   useCase as installationUseCase,
 } from '@/stores/installation';
 import { registrySkin, registryTheme, selectRegistryStyling } from '@/stores/registry';
+import { REGISTRY_STYLING_LABELS, REGISTRY_THEME_LABELS } from '@/utils/installation/registry-labels';
 
 const TEMPLATE_ICONS = {
   none: <CodeIcon className="size-7" />,

@@ -52,7 +52,7 @@ import {
   shadcnAddCommand,
   shadcnInitCommand,
   shadcnProjectConfiguration,
-  shadcnProjectConfigurationPlacement,
+  shadcnProjectSetup,
   shadcnRegistryAddCommand,
   type RegistryStyling,
 } from './shadcn';
@@ -379,9 +379,7 @@ function installationAppDirectory(selection: InstallationSelection, project: Ins
     project.componentsAlias
   );
 
-  return shadcnProjectConfigurationPlacement(configuration, selection.project) === 'app'
-    ? INSTALLATION_NEW_APP_DIRECTORY
-    : '.';
+  return shadcnProjectSetup(configuration, selection.project) === 'create-app' ? INSTALLATION_NEW_APP_DIRECTORY : '.';
 }
 
 const SUBDIRECTORY_SCAFFOLD_DESCRIPTION = `Run this from the parent directory. It creates \`${INSTALLATION_NEW_APP_DIRECTORY}\`; rename it if needed and use the new name as the working directory of every later step.`;
@@ -614,7 +612,7 @@ function shadcnConfigurationSteps(
     selection.styling,
     project.componentsAlias
   );
-  const placement = shadcnProjectConfigurationPlacement(configuration, selection.project);
+  const setup = shadcnProjectSetup(configuration, selection.project);
   const aliasBlocks = configuration.aliasSetup.map((block) =>
     file(block.language, block.code, { filename: block.filename, operation: 'merge' })
   );
@@ -632,7 +630,7 @@ function shadcnConfigurationSteps(
     });
   }
 
-  if (placement === 'app') {
+  if (setup === 'create-app') {
     return [
       {
         id: 'prepare-app',
@@ -643,7 +641,7 @@ function shadcnConfigurationSteps(
     ];
   }
 
-  if (placement === 'section') {
+  if (setup === 'configure') {
     return [
       {
         id: 'configure-source-registry',

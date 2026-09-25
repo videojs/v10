@@ -17,9 +17,8 @@ import {
   shadcnCommand,
   shadcnComponentsConfig,
   shadcnInitCommand,
-  optionalShadcnInitCommand,
   shadcnProjectConfiguration,
-  shadcnProjectConfigurationPlacement,
+  shadcnProjectSetup,
   shadcnRegistryAddCommand,
 } from '../index';
 
@@ -128,12 +127,6 @@ describe('shadcnInitCommand', () => {
     expect(shadcnInitCommand('npm')).toBe('npx shadcn@latest init --base base --preset nova --yes');
     expect(shadcnInitCommand('yarn', 'vite')).toContain('npm_config_user_agent="yarn/1.22.22"');
   });
-
-  it('marks initialization in an existing project as optional', () => {
-    expect(optionalShadcnInitCommand('pnpm')).toBe(
-      '# Optional: run if components.json does not exist.\npnpm dlx shadcn@latest init --base base --preset nova --yes'
-    );
-  });
 });
 
 describe('shadcnComponentsConfig', () => {
@@ -164,15 +157,15 @@ describe('shadcnProjectConfiguration', () => {
     });
   });
 
-  it('places setup with app creation, a configuration section, or the registry command', () => {
+  it('creates the app, configures the project first, or only initializes Shadcn', () => {
     const nextTailwind = shadcnProjectConfiguration('react', 'next', 'tailwind', '@/components');
     const viteTailwind = shadcnProjectConfiguration('react', 'vite', 'tailwind', '@/components');
     const nextCss = shadcnProjectConfiguration('react', 'next', 'css', '@/components');
 
-    expect(shadcnProjectConfigurationPlacement(nextTailwind, 'new')).toBe('app');
-    expect(shadcnProjectConfigurationPlacement(nextTailwind, 'existing')).toBe('registry');
-    expect(shadcnProjectConfigurationPlacement(viteTailwind, 'existing')).toBe('section');
-    expect(shadcnProjectConfigurationPlacement(nextCss, 'new')).toBe('section');
+    expect(shadcnProjectSetup(nextTailwind, 'new')).toBe('create-app');
+    expect(shadcnProjectSetup(nextTailwind, 'existing')).toBe('init');
+    expect(shadcnProjectSetup(viteTailwind, 'existing')).toBe('configure');
+    expect(shadcnProjectSetup(nextCss, 'new')).toBe('configure');
   });
 });
 

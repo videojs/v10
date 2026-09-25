@@ -7,7 +7,7 @@ import {
   resolveInstallationTemplate,
   resolveRegistryStyling,
   shadcnProjectConfiguration,
-  shadcnProjectConfigurationPlacement,
+  shadcnProjectSetup,
 } from '@videojs/installation';
 
 import {
@@ -44,7 +44,8 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
     />
   );
 
-  if (shadcnProjectConfigurationPlacement(configuration, 'existing') === 'registry') {
+  // Without a separate configuration step, the registry commands carry the optional init for an existing project.
+  if (shadcnProjectSetup(configuration, 'existing') === 'init') {
     return (
       <>
         <div data-installation-project-content="new">{command(false)}</div>

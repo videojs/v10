@@ -28,20 +28,10 @@ export const SHADCN_RUNNERS = {
   bun: 'bunx --bun shadcn@latest',
 } as const satisfies Record<ShadcnRunner, string>;
 
-export const REGISTRY_STYLING_LABELS = {
-  tailwind: 'Tailwind CSS',
-  css: 'Vanilla CSS',
-} as const satisfies Record<RegistryStyling, string>;
-
 export const REGISTRY_STYLINGS = ['tailwind', 'css'] as const satisfies readonly RegistryStyling[];
 const HTML_REGISTRY_STYLINGS = ['css'] as const satisfies readonly RegistryStyling[];
 
 export const REGISTRY_THEMES = ['default', 'minimal'] as const satisfies readonly RegistryTheme[];
-
-export const REGISTRY_THEME_LABELS = {
-  default: 'Default',
-  minimal: 'Minimal',
-} as const satisfies Record<RegistryTheme, string>;
 
 export const DEFAULT_REGISTRY_PRESET = 'video' satisfies RegistryPreset;
 
@@ -133,10 +123,6 @@ export function shadcnInitCommand(runner: ShadcnRunner, template?: InstallationT
 }
 
 /** Initialize Shadcn only when an existing project has no components config. */
-export function optionalShadcnInitCommand(runner: ShadcnRunner): string {
-  return `# Optional: run if components.json does not exist.\n${shadcnInitCommand(runner)}`;
-}
-
 /** A minimal standard Shadcn config for the vanilla-CSS registries, which do not need Tailwind or React setup. */
 export function shadcnComponentsConfig(
   framework: RegistryFramework,
@@ -186,7 +172,11 @@ export type ShadcnProjectConfiguration =
       componentsConfig: null;
     };
 
-export type ShadcnProjectConfigurationPlacement = 'app' | 'registry' | 'section';
+/**
+ * How a project gets its Shadcn setup: Shadcn creates the app with it, the project is configured before Shadcn runs, or
+ * Shadcn only initializes `components.json` when it is missing.
+ */
+export type ShadcnProjectSetup = 'create-app' | 'configure' | 'init';
 
 /** Resolve the one source-registry setup shared by generated plans and the installation guide. */
 export function shadcnProjectConfiguration(
@@ -210,16 +200,15 @@ export function shadcnProjectConfiguration(
   };
 }
 
-/** Decide where one project surfaces its Shadcn initialization or components config. */
-export function shadcnProjectConfigurationPlacement(
+export function shadcnProjectSetup(
   configuration: ShadcnProjectConfiguration,
   project: InstallationProject
-): ShadcnProjectConfigurationPlacement {
-  if (configuration.mode === 'components-json') return 'section';
+): ShadcnProjectSetup {
+  if (configuration.mode === 'components-json') return 'configure';
 
-  if (project === 'new') return 'app';
+  if (project === 'new') return 'create-app';
 
-  return configuration.aliasSetup.length > 0 ? 'section' : 'registry';
+  return configuration.aliasSetup.length > 0 ? 'configure' : 'init';
 }
 
 export function shadcnAddCommand(runner: ShadcnRunner, items: readonly string[]): string {
