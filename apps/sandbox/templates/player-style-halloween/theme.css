@@ -1,0 +1,392 @@
+/*
+ * Halloween, ported from `@player.style/halloween` (media-chrome) to Video.js 10 elements.
+ *
+ * Light DOM through the sandbox's `defineTemplateSkin`, so every rule is scoped under `.ps-halloween` by hand.
+ *
+ * The original reaches into media-chrome's shadow DOM with `::part(track)`, `::part(progress)` and `::part(thumb)`,
+ * and stacks a second range element because a shadow part cannot carry an animation from the theme. v10's slider is
+ * built from real children, so the parts become ordinary selectors and the duplicate element is unnecessary.
+ */
+
+.ps-halloween {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-halloween / inline-size;
+
+  background: #000;
+  color: #000;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.ps-halloween > video,
+.ps-halloween > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+/* --- Pumpkin --- */
+
+.ps-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  pointer-events: none;
+}
+
+.ps-play {
+  display: grid;
+  place-content: center;
+  height: 5em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s;
+}
+
+.ps-play:active {
+  transform: scale(3);
+}
+
+/*
+ * The artwork carries `fill="none"` on its root and relies on the player to paint it: media-chrome sets `fill` from
+ * `--media-icon-color` on every button icon. v10 leaves icon paint to the skin, so without this the pumpkin renders
+ * as a blank silhouette with no carved face.
+ */
+.ps-pumpkin {
+  height: 5em;
+  width: auto;
+  fill: #000;
+  transform: translateY(-0.5em);
+}
+
+.ps-pumpkin .play,
+.ps-pumpkin .pause {
+  opacity: 0;
+}
+
+.ps-play[data-paused] .ps-pumpkin .play {
+  opacity: 1;
+}
+
+.ps-play:not([data-paused]) .ps-pumpkin .pause {
+  opacity: 1;
+}
+
+.ps-pumpkin .face {
+  transition: fill 0.2s;
+}
+
+.ps-play:not([data-paused]) .ps-pumpkin .face {
+  fill: #ffe194;
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  /* Clearance so the spider does not clip against the player edges. */
+  padding: 0 2em 0.5em;
+}
+
+/* --- Time slider: a cobweb with a spider for a thumb --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  flex: 1;
+  height: 50px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-web {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 35px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  background: repeat-x
+    url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 0 185 14"><path fill="rgb(38 38 38 / 0.25)" d="M0 3.5v1h50c12 0 50-.5 50-.5s-27.5-1-52-.5-48 0-48 0Z"/><path fill="rgb(38 38 38 / 0.25)" d="M185 3.5v1h-50c-12 0-50-.5-50-.5s27.5-1 52-.5 48 0 48 0Z"/><path fill="rgb(38 38 38 / 0.25)" d="M85 3.5c-4.8-4.8-14 0-16.5 2 0 0 12.092-8.652 17.5 0 2.5 4 9-5 15.5-4.7 7.763 0 9.5 12.2 18 12.7 13 .765 18-15 27-9.5 2 1.5 2.5 3 2.5 3l.5 4s.25-1.5.25-2.75-.25-1.75-.75-2.75c-1-1.5-1.5-2.5-6-3-7.52-.836-15 12-23.5 10s-10.4-12-18-12C92 .5 91 9.5 85 3.5Z"/></svg>');
+}
+
+.ps-buffered,
+.ps-progress {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  transition: width 0.15s ease-out;
+}
+
+.ps-buffered {
+  width: var(--media-slider-buffer, 0%);
+  background: repeat-x
+    url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 0 185 14"><path fill="rgb(38 38 38 / 0.35)" d="M0 3.5v1h50c12 0 50-.5 50-.5s-27.5-1-52-.5-48 0-48 0Z"/><path fill="rgb(38 38 38 / 0.35)" d="M185 3.5v1h-50c-12 0-50-.5-50-.5s27.5-1 52-.5 48 0 48 0Z"/><path fill="rgb(38 38 38 / 0.35)" d="M85 3.5c-4.8-4.8-14 0-16.5 2 0 0 12.092-8.652 17.5 0 2.5 4 9-5 15.5-4.7 7.763 0 9.5 12.2 18 12.7 13 .765 18-15 27-9.5 2 1.5 2.5 3 2.5 3l.5 4s.25-1.5.25-2.75-.25-1.75-.75-2.75c-1-1.5-1.5-2.5-6-3-7.52-.836-15 12-23.5 10s-10.4-12-18-12C92 .5 91 9.5 85 3.5Z"/></svg>');
+}
+
+.ps-progress {
+  width: var(--media-slider-fill, 0%);
+  background: repeat-x
+    url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 0 185 14"><path fill="rgb(255 255 255 / 0.9)" d="M0 3.5v1h50c12 0 50-.5 50-.5s-27.5-1-52-.5-48 0-48 0Z"/><path fill="rgb(255 255 255 / 0.9)" d="M185 3.5v1h-50c-12 0-50-.5-50-.5s27.5-1 52-.5 48 0 48 0Z"/><path fill="rgb(255 255 255 / 0.9)" d="M85 3.5c-4.8-4.8-14 0-16.5 2 0 0 12.092-8.652 17.5 0 2.5 4 9-5 15.5-4.7 7.763 0 9.5 12.2 18 12.7 13 .765 18-15 27-9.5 2 1.5 2.5 3 2.5 3l.5 4s.25-1.5.25-2.75-.25-1.75-.75-2.75c-1-1.5-1.5-2.5-6-3-7.52-.836-15 12-23.5 10s-10.4-12-18-12C92 .5 91 9.5 85 3.5Z"/></svg>');
+}
+
+.ps-spider {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 35px;
+  height: 35px;
+  background: no-repeat
+    url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 55 48"><path fill="black" fill-rule="evenodd" d="M35.684 26.797c-1.554.75-3.21 1.103-4.939 1.094 1.596.371 3.242.007 4.939-1.094Zm-10.97 1.866c-2.966 2.771-7.28 1.102-12.134-4.329 4.923 4.808 9.375 6.236 12.133 4.329Zm6.198-9.145 2.131-2.131 7.183-.466c2.777.794 5.554 2.798 8.33 4.89-2.498-2.585-5.057-4.994-8.049-6.161l-7.977.41-3.586 3.71 1.864-6.506 6.979-5.36c5.473.835 11.042 4 16.638 7.787-5.374-4.51-10.794-8.572-16.537-9.507L29.696 12.1l-2.05 7.156.153-9.444-5.68-9.8c-4.702-.16-9.51 1.417-14.335 3.29 4.487-1.07 9.004-1.892 13.676-1.484l4.971 8.442.18 8.591L22.55 8.113 10.838 7.094C9.733 7.136 2.82 12.64 0 18.223c1.611-2.556 9.446-8.904 11.442-9.452l10.236.9 3.766 9.04C20.157 13.56 14.426 20.13 11.568 24c2.901 3.913 8.58 10.428 13.862 5.302l-3.752 9.007-10.236.9C9.446 38.661 1.612 32.313 0 29.758c2.821 5.584 9.733 11.086 10.838 11.128l11.712-1.019 4.05-10.706.007-.001.004-.011v.02l-.18 8.571-4.971 8.442c-4.672.408-9.19-.415-13.676-1.484 4.826 1.873 9.633 3.45 14.335 3.29l5.68-9.8-.154-9.444 2.05 7.156 8.193 5.916c5.743-.935 11.163-4.997 16.537-9.507-5.596 3.787-11.165 6.952-16.638 7.788l-6.979-5.36-1.864-6.507 3.586 3.71 7.977.41c2.992-1.167 5.551-3.576 8.05-6.161-2.777 2.092-5.554 4.096-8.331 4.89l-7.183-.466-2.131-2.132.096.014c2.744.325 5.21-.769 5.974-3.582-.723.87-1.756 1.485-2.968 1.081.109-.672.531-1.612 1.118-1.994-.572-.336-1.015-1.361-1.118-1.994 1.212-.404 2.245.212 2.968 1.081-.764-2.813-3.23-3.907-5.974-3.582a2.824 2.824 0 0 0-.096.014Z" clip-rule="evenodd"/><circle cx="30.5" cy="21.5" r=".5" fill="red"/><circle cx="31.75" cy="22.75" r=".75" fill="red"/><circle cx="30.5" cy="26.5" r=".5" fill="red"/><circle cx="31.75" cy="24.75" r=".75" fill="red"/></svg>');
+  transform: translate(-8px, -13px);
+  transition: left 0.15s ease-out;
+}
+
+/* The spider only walks while the video plays. v10 reports paused on the button, so the root reads it with `:has()`. */
+@keyframes ps-spider-walk {
+  0% {
+    transform: translate(-8px, -13px) rotate(0deg);
+  }
+
+  33% {
+    transform: translate(-8px, -13px) rotate(-0.3deg);
+  }
+
+  66% {
+    transform: translate(-8px, -13px) rotate(0.2deg);
+  }
+}
+
+.ps-halloween:has(.ps-play:not([data-paused])) .ps-spider {
+  transform-origin: 100% 50%;
+  animation: ps-spider-walk 0.5s ease infinite;
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin: 0 0 20px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  position: relative;
+  color: #fff;
+  line-height: 2;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+/* --- Volume: a candle whose flame grows with the level --- */
+
+.ps-volume {
+  position: relative;
+  width: 1em;
+  height: 3em;
+}
+
+.ps-volume-state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.ps-volume:has(.ps-vslider[data-hidden]),
+.ps-volume:has(.ps-vslider[data-availability="unavailable"]) {
+  display: none;
+}
+
+.ps-volume-inner {
+  position: absolute;
+  top: 2em;
+  left: -0.3em;
+  transform: rotate(-90deg) translateY(-50%) scale(0.6);
+  transform-origin: 0 0;
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  width: 5em;
+  height: 1.5em;
+  border-radius: 2px;
+  touch-action: none;
+  cursor: pointer;
+  animation: ps-candle 2s ease infinite;
+}
+
+@keyframes ps-candle {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 0.75em;
+  transform: translateY(-50%);
+  overflow: hidden;
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: #eeebdd;
+  transition: width 0.15s ease-out;
+}
+
+.ps-flame {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 30px;
+  height: 30px;
+  border-radius: 0 50% 50%;
+  background: #ffe194;
+  transform: translate(-50%, -50%) scale(0.5) rotate(135deg);
+  transition: left 0.15s ease-out;
+}
+
+.ps-halloween:has(.ps-volume-state[data-volume-level="off"]) .ps-vslider {
+  animation: none;
+}
+
+.ps-halloween:has(.ps-volume-state[data-volume-level="off"]) .ps-flame {
+  border-radius: 50%;
+  background: #000;
+}
+
+.ps-halloween:has(.ps-volume-state[data-volume-level="medium"]) .ps-flame {
+  box-shadow: -6px -6px 0 10px #ffb319;
+}
+
+.ps-halloween:has(.ps-volume-state[data-volume-level="high"]) .ps-flame {
+  box-shadow:
+    -6px -6px 0 10px #ffb319,
+    -14px -14px 0 20px #f88f01;
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+  color: #fff;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: 8px;
+  background: rgb(38 38 38 / 0.9);
+  text-align: center;
+}
+
+.ps-dialog-description {
+  font-weight: normal;
+  font-size: 0.875em;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 4px;
+  background: #ffb319;
+  color: #000;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}
+
+@container ps-halloween (inline-size >= 384px) {
+  .ps-halloween {
+    font-size: 17px;
+  }
+
+  .ps-preview {
+    margin: 0 0 1em;
+  }
+}
