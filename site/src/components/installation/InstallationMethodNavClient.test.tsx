@@ -177,7 +177,7 @@ describe('InstallationMethodNavClient', () => {
     expect(cdn).toMatch(/data-installation-method="cdn" aria-current="page"[^>]*ring-accent/);
   });
 
-  it('keeps Shadcn available from the CDN guide, which has no app setup', () => {
+  it('keeps Shadcn available from an existing CDN page', () => {
     const { queryByRole } = render(<InstallationMethodNavClient currentFramework="html" route="cdn" />);
 
     act(() => template.set('none'));

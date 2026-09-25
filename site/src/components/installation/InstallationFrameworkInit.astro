@@ -49,6 +49,8 @@ function routeRules(route: InstallationRouteSegment, query: Record<string, strin
     projects: INSTALLATION_PROJECTS.filter((project) => parse(route, { ...query, project }).project === project),
     templates,
     defaultTemplate: parse(route, query).template,
+    // The CDN guide defaults a new project to an app setup and an existing one to a plain page.
+    newProjectDefaultTemplate: parse(route, { ...query, project: 'new' }).template,
     // App setups that can start a new project instead of joining an existing one.
     newProjectTemplates: templates.filter(
       (template) => parse(route, { ...query, template, project: 'new' }).project === 'new'
@@ -217,8 +219,12 @@ const generatedCss = [
       return;
     }
 
-    const template = pick(rules.templates, params.get("template"), rules.defaultTemplate);
     const project = pick(rules.projects, params.get("project"), "existing");
+    const template = pick(
+      rules.templates,
+      params.get("template"),
+      project === "new" ? rules.newProjectDefaultTemplate : rules.defaultTemplate
+    );
 
     root.dataset.installationPreset = pick(rules.presets, params.get("preset"), defaultPreset);
     root.dataset.installationProject = rules.newProjectTemplates.includes(template) ? project : "existing";

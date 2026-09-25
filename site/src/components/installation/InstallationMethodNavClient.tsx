@@ -71,7 +71,8 @@ function InstallationMethodNavClient({ currentFramework, route }: Props) {
 
   const isMethodAvailable = (id: InstallationMethod) => {
     if (id === 'shadcn' && route !== 'shadcn') {
-      // A packaged existing site without a bundler cannot build skin source; the CDN guide has no app setup to check.
+      // A packaged existing site without a bundler cannot build skin source; Shadcn gives a plain CDN page its default
+      // app setup instead.
       if (route !== 'cdn' && selectedTemplate === 'none') return false;
 
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;

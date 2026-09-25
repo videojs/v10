@@ -7,6 +7,8 @@ import {
   framework,
   installMethod,
   media,
+  project,
+  selectCdnStartingPoint,
   skin,
   sourceUrl,
   styling,
@@ -197,5 +199,33 @@ describe('syncInstallationSelectionFromUrl', () => {
 
     expect(window.location.search).toBe('');
     expect(document.documentElement).not.toHaveAttribute('data-installation-pending');
+  });
+});
+
+describe('selectCdnStartingPoint', () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-installation-pending');
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('pairs a new app with Vite and an existing page with no app setup', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/cdn?package-manager=yarn');
+    syncInstallationSelectionFromUrl();
+
+    expect(window.location.search).toBe('');
+
+    selectCdnStartingPoint('new');
+
+    expect(project.get()).toBe('new');
+    expect(template.get()).toBe('vite');
+    expect(window.location.search).toBe('?template=vite&project=new&package-manager=yarn');
+    expect(document.documentElement.dataset.installationTemplate).toBe('vite');
+
+    selectCdnStartingPoint('existing');
+
+    expect(project.get()).toBe('existing');
+    expect(template.get()).toBe('none');
+    expect(window.location.search).toBe('');
+    expect(installMethod.get()).toBe('yarn');
   });
 });

@@ -192,23 +192,41 @@ describe('serializeInstallationSearchForRoute', () => {
     const html = { ...DEFAULT_SELECTION, framework: 'html', template: 'vite', styling: 'css' } as const;
 
     expect(serializeInstallationSearchForRoute('vue', vue, search)).toBe('?utm_source=docs');
-    expect(serializeInstallationSearchForRoute('cdn', DEFAULT_SELECTION, search)).toBe('?utm_source=docs');
+    expect(serializeInstallationSearchForRoute('cdn', parseInstallationSearchForRoute('cdn', ''), search)).toBe(
+      '?utm_source=docs'
+    );
     expect(serializeInstallationSearchForRoute('shadcn', html, search)).toBe(
       '?framework=html&styling=css&utm_source=docs'
     );
   });
 
-  it('keeps the existing-site setup on the CDN route', () => {
-    expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, template: 'none' })).toBe('');
+  it('omits the existing-page defaults on the CDN route', () => {
+    expect(serializeInstallationSearchForRoute('cdn', parseInstallationSearchForRoute('cdn', '?template=none'))).toBe(
+      ''
+    );
   });
 
-  it('keeps the human CDN route existing-only', () => {
-    expect(parseInstallationSearchForRoute('cdn', '?project=new&template=vite&package-manager=npm')).toMatchObject({
-      project: 'existing',
-      template: 'none',
-      installMethod: 'pnpm',
-    });
-    expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, project: 'new' })).toBe('');
+  it('keeps a new CDN app with its package manager', () => {
+    const selection = parseInstallationSearchForRoute('cdn', '?project=new&template=vite&package-manager=yarn');
+
+    expect(selection).toMatchObject({ project: 'new', template: 'vite', installMethod: 'yarn' });
+    expect(serializeInstallationSearchForRoute('cdn', selection)).toBe(
+      '?template=vite&project=new&package-manager=yarn'
+    );
+  });
+
+  it('gives a new CDN app the Vite setup', () => {
+    expect(canonicalInstallationSearch('cdn', '?project=new')).toBe('?project=new&template=vite');
+    expect(canonicalInstallationSearch('cdn', '?project=new&template=none')).toBe('');
+    expect(canonicalInstallationSearch('cdn', '?project=new&template=next')).toBe('?project=new&template=vite');
+  });
+
+  it('drops the package manager from an existing CDN page', () => {
+    const selection = parseInstallationSearchForRoute('cdn', '?package-manager=yarn');
+
+    expect(selection).toMatchObject({ project: 'existing', template: 'none' });
+    expect(serializeInstallationSearchForRoute('cdn', selection)).toBe('');
+    expect(isCustomInstallationSelection('cdn', selection)).toBe(false);
   });
 
   it('writes an explicit Shadcn styling choice and drops it from other routes', () => {

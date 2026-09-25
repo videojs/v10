@@ -111,13 +111,6 @@ export function parseInstallationSearch(search: string, options: ParseOptions = 
     if (value !== null && key !== 'method' && key !== 'framework' && key !== 'sourceUrl') input[key] = value;
   }
 
-  // The CDN guide adds the player to an existing page, so it has no app setup or package manager to carry.
-  if (method === 'cdn') {
-    delete input.project;
-    delete input.template;
-    delete input.packageManager;
-  }
-
   const selection = resolveUrlInput(input);
   const sourceUrl = params.get(SOURCE_URL_QUERY) ?? '';
 
@@ -163,10 +156,14 @@ export function parseInstallationSearchForRoute(
  * Write a selection back onto a query string, keeping unrelated params and leaving out anything still at its default so
  * an untouched page keeps a clean URL.
  */
-export function serializeInstallationSearch(selection: InstallationUiSelection, search = ''): string {
+export function serializeInstallationSearch(
+  selection: InstallationUiSelection,
+  search = '',
+  method: InstallationMethod = 'packaged'
+): string {
   const params = new URLSearchParams(search);
   const preset = getInstallationPreset(selection.useCase);
-  const defaults = parseInstallationSearch(`?preset=${preset.flag}`, { framework: selection.framework });
+  const defaults = parseInstallationSearch(`?preset=${preset.flag}`, { framework: selection.framework, method });
   const defaultPreset = getInstallationPreset(DEFAULT_SELECTION.useCase).flag;
 
   const write = (key: string, value: string, fallback: string) => {
@@ -205,7 +202,7 @@ export function serializeInstallationSearchForRoute(
   selection: InstallationUiSelection,
   search = ''
 ): string {
-  const params = new URLSearchParams(serializeInstallationSearch(selection, search));
+  const params = new URLSearchParams(serializeInstallationSearch(selection, search, methodForRoute(route)));
 
   params.delete('method');
 
@@ -223,11 +220,8 @@ export function serializeInstallationSearchForRoute(
     }
   }
 
-  if (route === 'cdn') {
-    canonicalParams.delete('package-manager');
-    canonicalParams.delete('project');
-    canonicalParams.delete('template');
-  }
+  // An existing CDN page runs no package manager commands, so the choice has nothing to change there.
+  if (route === 'cdn' && selection.template === 'none') canonicalParams.delete('package-manager');
 
   const string = canonicalParams.toString();
 

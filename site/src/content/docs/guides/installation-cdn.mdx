@@ -17,7 +17,9 @@ import InstallationMethodNav from '@/components/installation/InstallationMethodN
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
+import ProjectCommands from '@/components/installation/ProjectCommands';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HumanCase from '@/components/docs/HumanCase.astro';
 
@@ -38,6 +40,16 @@ Choose the JavaScript framework for your project.
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app
+
+Add the player to an HTML page you already have, or create a minimal Vite app for it.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:idle method="cdn" serverTemplate="none" />
+</ContentWidth>
+</div>
 
 ## Choose your use case
 
@@ -81,6 +93,18 @@ Choose from the installation options available for your selections.
 
 <div data-installation-plan class="contents">
 
+<div data-installation-project-content="new">
+
+## Prepare your app
+
+Create the app in an empty directory, then run the remaining commands from that directory.
+
+<ProjectCommands client:idle part="create" serverFramework="html" serverTemplate="vite" />
+
+</div>
+
+<div data-installation-project-content="existing">
+
 ## Load Video.js
 
 Add these generated module scripts to your page. They register the player, selected skin, media element, and selected extensions.
@@ -89,13 +113,35 @@ Add these generated module scripts to your page. They register the player, selec
   <CdnCodeBlock />
 </ContentWidth>
 
+</div>
+
 ## Add your player
 
+<div data-installation-project-content="existing">
+
 Place this generated markup where the player should appear. It uses the media source you selected above.
+
+</div>
+
+<div data-installation-project-content="new">
+
+Replace the starter page with this generated page. It loads Video.js and renders the player with the media source you selected above.
+
+</div>
 
 <ContentWidth>
   <HTMLUsageCodeBlock client:visible={{ rootMargin: "200px" }} installMethod="cdn" />
 </ContentWidth>
+
+<div data-installation-named-app class="contents">
+
+## Run your app
+
+Start the app and verify that the media plays.
+
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="html" serverTemplate="vite" />
+
+</div>
 
 </div>
 

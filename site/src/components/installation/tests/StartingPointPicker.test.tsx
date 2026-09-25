@@ -32,4 +32,13 @@ describe('StartingPointPicker', () => {
   it('disables a new project for Existing site', () => {
     expect(renderToString(<StartingPointPicker serverTemplate="none" />)).toContain('data-disabled="New project"');
   });
+
+  it('offers a new Vite app beside an existing page on the CDN guide', () => {
+    const markup = renderToString(<StartingPointPicker method="cdn" serverTemplate="none" />);
+
+    expect(markup).toContain('>existing</span>');
+    expect(markup).toContain('data-disabled=""');
+    expect(markup).toContain('New app: Create a minimal Vite app');
+    expect(markup).toContain('Existing page: Add to an existing HTML page');
+  });
 });

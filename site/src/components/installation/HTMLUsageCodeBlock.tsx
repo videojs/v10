@@ -1,5 +1,8 @@
 import {
+  CDN_MEDIA_SUBPATHS,
+  generateCdnCode,
   generateHTMLUsageCode,
+  installationHtmlDocumentCode,
   installationHtmlEntrySetup,
   installationHtmlPlayerPageCode,
   installationProjectFiles,
@@ -10,6 +13,7 @@ import { focusLinesContaining } from '@/components/Code/focusLines';
 import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
+import { VJS10_CDN_BASE } from '@/consts';
 
 import { useSelection } from './useSelection';
 import { withSelectionMarker } from './withSelectionMarker';
@@ -67,7 +71,19 @@ function HTMLUsageCodeBlock({ installMethod }: Props) {
   const html =
     method === 'cdn' ? result.html : installationHtmlPlayerPageCode(result.html, $template, project.usage!, $project);
 
-  if (method === 'cdn') return <CodeBlock code={html} filename={project.player} language="html" />;
+  if (method === 'cdn') {
+    // A new app's page replaces the starter page whole, so it carries the CDN scripts the existing-page flow loads
+    // separately.
+    const code =
+      $project === 'new'
+        ? installationHtmlDocumentCode(
+            html,
+            generateCdnCode($useCase, $skin, $renderer, CDN_MEDIA_SUBPATHS, VJS10_CDN_BASE, $extensions)
+          )
+        : html;
+
+    return <CodeBlock code={code} filename={project.player} language="html" />;
+  }
 
   const steps = [
     ...entrySetup.map((block) => ({

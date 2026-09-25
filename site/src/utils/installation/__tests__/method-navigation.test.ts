@@ -72,7 +72,7 @@ describe('resolveInstallationMethodUrl', () => {
 
   it('removes the source framework when switching to CDN', () => {
     const current = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?framework=react&preset=video&package-manager=pnpm&template=vite&styling=css'
+      'https://videojs.org/docs/guides/installation/shadcn?framework=react&preset=audio&package-manager=yarn&template=vite&styling=css'
     );
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
 
@@ -81,7 +81,16 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.has('package-manager')).toBe(false);
     expect(result.searchParams.has('template')).toBe(false);
     expect(result.searchParams.has('styling')).toBe(false);
-    expect(result.searchParams.get('preset')).toBe('video');
+    expect(result.searchParams.get('preset')).toBe('audio');
+  });
+
+  it('carries a new project and its package manager into the CDN Vite app', () => {
+    const current = new URL(
+      'https://videojs.org/docs/guides/installation/html?project=new&template=astro&package-manager=yarn'
+    );
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
+
+    expect(result.search).toBe('?project=new&package-manager=yarn&template=vite');
   });
 });
 
@@ -112,7 +121,7 @@ describe('resolveInstallationMethodHref', () => {
     expect(result).toBe('/docs/guides/installation/html?preset=audio&skin=minimal');
   });
 
-  it('drops app setup choices that the human CDN guide does not use', () => {
+  it('drops the package manager for an existing CDN page', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/html');
     const result = resolveInstallationMethodHref(current, '/docs/guides/installation/cdn', 'cdn', {
       ...DEFAULT_SELECTION,

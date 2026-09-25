@@ -185,6 +185,13 @@ export function selectInstallationStartingPoint(nextProject: InstallationProject
   project.set(template.get() === 'none' ? 'existing' : nextProject);
 }
 
+/** The CDN guide pairs each starting point with the app setup the resolver defaults it to: a Vite app or a plain page. */
+export function selectCdnStartingPoint(nextProject: InstallationProject): void {
+  const { template: nextTemplate } = parseInstallationSearchForRoute('cdn', `?project=${nextProject}`);
+
+  updateInstallationSelection({ project: nextProject, template: nextTemplate });
+}
+
 for (const store of Object.values(selectionAtoms)) {
   store.listen(() => {
     if (!applyingSelection) writeInstallationUrl();

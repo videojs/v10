@@ -13,7 +13,7 @@ import {
   isShadcnInstallationUrl,
 } from '@/utils/installation/routes';
 import type { InstallationUiSelection } from '@/utils/installation/url-state';
-import { serializeInstallationSearch } from '@/utils/installation/url-state';
+import { canonicalInstallationSearch, serializeInstallationSearch } from '@/utils/installation/url-state';
 
 export type { InstallationMethod } from '@videojs/installation';
 
@@ -51,10 +51,9 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     if (template === defaultInstallationTemplate(framework)) target.searchParams.delete('template');
     else target.searchParams.set('template', template);
   } else if (method === 'cdn') {
-    target.searchParams.delete('framework');
-    target.searchParams.delete('package-manager');
-    target.searchParams.delete('styling');
+    // Other guides' app setups do not carry over; the CDN guide derives its own from the starting point.
     target.searchParams.delete('template');
+    target.search = canonicalInstallationSearch('cdn', target.search);
   }
 
   return target;
