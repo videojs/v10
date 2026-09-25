@@ -189,6 +189,14 @@ describe('replaceInstallationMarkdownPlan', () => {
     );
   });
 
+  it('drops the boundary for readers', () => {
+    const markdown = '# Guide\n\n<!-- installation-plan:start -->\nold\n<!-- installation-plan:end -->\n\nAfter';
+
+    expect(replaceInstallationMarkdownPlan(markdown, '\nnew\n', { keepBoundary: false })).toBe(
+      '# Guide\n\nnew\n\nAfter'
+    );
+  });
+
   it('preserves dollar replacement tokens verbatim', () => {
     const markdown = '# Guide\n\n<!-- installation-plan:start -->\nold\n<!-- installation-plan:end -->\n\nAfter';
     const replacement = "price $& $$ $' $` end";
@@ -287,6 +295,7 @@ HTML next step
     expect(rendered?.body).toContain('- `framework`: `html`');
     expect(rendered?.body).toContain('HTML next step');
     expect(rendered?.body).not.toContain('React next step');
+    expect(rendered?.body).not.toMatch(/installation-plan|installation:framework/);
   });
 
   it('renders selected extensions through the web Markdown path', () => {
@@ -315,6 +324,7 @@ HTML next step
     expect(rendered?.body).toContain('- `framework`: `react`');
     expect(rendered?.body).toContain('React next step');
     expect(rendered?.body).toContain('HTML next step');
+    expect(rendered?.body).toContain('<!-- installation-plan:start -->');
   });
 
   it('uses the shared error and missing-section responses', () => {

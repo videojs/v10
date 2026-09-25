@@ -139,10 +139,20 @@ export function resolveInstallationMarkdownPlan(
   return { ok: true, plan: createInstallationPlan(resolved.selection, packageVersion, null) };
 }
 
-export function replaceInstallationMarkdownPlan(markdown: string, replacement: string): string | null {
+/**
+ * Replace the generated installation section. Keep its boundary only in a template that is rendered again; readers get
+ * the section without the internal markers.
+ */
+export function replaceInstallationMarkdownPlan(
+  markdown: string,
+  replacement: string,
+  { keepBoundary = true }: { keepBoundary?: boolean } = {}
+): string | null {
   if (!PLAN_PATTERN.test(markdown)) return null;
 
   return markdown.replace(PLAN_PATTERN, () => {
+    if (!keepBoundary) return replacement.trim();
+
     return `<!-- installation-plan:start -->\n\n${replacement.trim()}\n\n<!-- installation-plan:end -->`;
   });
 }
@@ -205,7 +215,10 @@ export interface RenderedInstallationMarkdown {
 }
 
 export interface RenderInstallationMarkdownOptions {
-  /** Keep both marked source-framework branches in the build artifact used as the edge renderer's template. */
+  /**
+   * Keep both marked source-framework branches and the plan boundary in the build artifact used as the edge renderer's
+   * template.
+   */
   preserveFrameworkBranches?: boolean;
 }
 
@@ -228,7 +241,10 @@ export function renderInstallationMarkdownSelection(
     };
   }
 
-  const replaced = replaceInstallationMarkdownPlan(markdown, renderInstallationPlanSections(result.plan));
+  const preserve = options.preserveFrameworkBranches ?? false;
+  const replaced = replaceInstallationMarkdownPlan(markdown, renderInstallationPlanSections(result.plan), {
+    keepBoundary: preserve,
+  });
 
   if (!replaced) {
     return {
@@ -239,9 +255,7 @@ export function renderInstallationMarkdownSelection(
   }
 
   return {
-    body: options.preserveFrameworkBranches
-      ? replaced
-      : selectInstallationFramework(replaced, result.plan.selection.sourceFramework),
+    body: preserve ? replaced : selectInstallationFramework(replaced, result.plan.selection.sourceFramework),
     privateResponse: PRIVATE_INSTALLATION_QUERY_PARAMETERS.some((parameter) => params.has(parameter)),
     status: 200,
   };
