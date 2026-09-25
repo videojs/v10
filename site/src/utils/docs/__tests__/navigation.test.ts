@@ -333,3 +333,49 @@ describe('framework navigation scroll', () => {
     expect(() => savePageScrollForNavigation('/docs/framework/html/guides/installation')).not.toThrow();
   });
 });
+
+describe('initializeDocsNavigation', () => {
+  afterEach(() => {
+    window.__videojsDocsNavigationController?.abort();
+    delete window.__videojsDocsNavigationController;
+    currentFramework.set(null);
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+  });
+
+  function appendMedia(tag: 'audio' | 'video', networkState: number, source?: { src?: string; child?: string }) {
+    const media = document.createElement(tag);
+
+    if (source?.src) media.setAttribute('src', source.src);
+
+    if (source?.child) media.append(Object.assign(document.createElement('source'), { src: source.child }));
+
+    Object.defineProperty(media, 'networkState', { value: networkState });
+    document.body.append(media);
+
+    return media;
+  }
+
+  it('reloads swapped media whose load was rejected in the parsed destination document', () => {
+    const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const video = appendMedia('video', HTMLMediaElement.NETWORK_NO_SOURCE, { src: 'https://example.com/video.mp4' });
+    const audio = appendMedia('audio', HTMLMediaElement.NETWORK_NO_SOURCE, { child: 'https://example.com/audio.mp3' });
+
+    initializeDocsNavigation();
+    document.dispatchEvent(new Event('astro:after-swap'));
+
+    expect(load.mock.contexts).toEqual([video, audio]);
+  });
+
+  it('leaves loading and sourceless media alone after a swap', () => {
+    const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+
+    appendMedia('video', HTMLMediaElement.NETWORK_IDLE, { src: 'https://example.com/video.mp4' });
+    appendMedia('video', HTMLMediaElement.NETWORK_NO_SOURCE);
+
+    initializeDocsNavigation();
+    document.dispatchEvent(new Event('astro:after-swap'));
+
+    expect(load).not.toHaveBeenCalled();
+  });
+});
