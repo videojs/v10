@@ -1,4 +1,4 @@
-import type { MdastContent } from 'satteri';
+import type { MdastParentContent } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
 
 import type { MdastVisitorContext } from './satteriAstroData';
@@ -41,7 +41,7 @@ export function satteriCodeFrame() {
         name: 'CodeFrame',
         attributes,
         children: [],
-      } as MdastContent);
+      } as MdastParentContent);
     },
   });
 }
