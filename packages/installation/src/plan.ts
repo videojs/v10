@@ -29,7 +29,7 @@ import {
   INSTALLATION_TEMPLATE_LABELS,
   installationHtmlDocumentCode,
   installationHtmlEntrySetup,
-  installationHtmlPageCode,
+  installationHtmlPlayerPageCode,
   installationProjectCreateCommand,
   installationProjectFiles,
   installationProjectRunCommand,
@@ -345,10 +345,10 @@ function htmlPageFile(
   project: InstallationProjectFiles,
   options: Pick<CodeBlockOptions, 'insertContents'> = {}
 ): InstallationCodeBlock {
-  const page = installationHtmlPageCode(markup, selection.template, project.usage!);
+  const page = installationHtmlPlayerPageCode(markup, selection.template, project.usage!, selection.project);
 
   return selection.project === 'new'
-    ? file('html', installationHtmlDocumentCode(page), { filename: project.player, operation: 'replace', ...options })
+    ? file('html', page, { filename: project.player, operation: 'replace', ...options })
     : file('html', page, { filename: project.player, operation: 'merge', placement: 'body', ...options });
 }
 

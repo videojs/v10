@@ -4,6 +4,7 @@ import {
   installationHtmlDocumentCode,
   installationHtmlPageCode,
   installationHtmlEntrySetup,
+  installationHtmlPlayerPageCode,
   installationProjectCreateCommand,
   installationProjectFiles,
   installationProjectAliasSetup,
@@ -147,6 +148,19 @@ describe('installationHtmlDocumentCode', () => {
     expect(page).toMatch(/^<!doctype html>\n<html lang="en">/);
     expect(page).toContain('    <title>Video.js</title>\n    <script type="module"></script>\n  </head>');
     expect(page).toContain('  <body>\n    <video-player>\n    </video-player>\n  </body>');
+  });
+});
+
+describe('installationHtmlPlayerPageCode', () => {
+  it('replaces a new app page with a complete document and merges into an existing one', () => {
+    const page = installationHtmlPageCode('<video-player></video-player>', 'vite', 'src/player.ts');
+
+    expect(installationHtmlPlayerPageCode('<video-player></video-player>', 'vite', 'src/player.ts', 'existing')).toBe(
+      page
+    );
+    expect(installationHtmlPlayerPageCode('<video-player></video-player>', 'vite', 'src/player.ts', 'new')).toBe(
+      installationHtmlDocumentCode(page)
+    );
   });
 });
 

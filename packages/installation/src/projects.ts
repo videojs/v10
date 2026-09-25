@@ -1,4 +1,4 @@
-import type { PackageManager } from './parameters';
+import type { InstallationProject, PackageManager } from './parameters';
 import { getInstallationPlayerComponentName, type UseCase } from './presets';
 import type { RegistryFramework } from './shadcn';
 
@@ -471,6 +471,21 @@ export function installationHtmlDocumentCode(body: string, head = ''): string {
 ${indentLines(body, '    ')}
   </body>
 </html>`;
+}
+
+/**
+ * The HTML page that renders the player: a complete document that replaces a new app's starter page, or the markup and
+ * entry script to merge into an existing page.
+ */
+export function installationHtmlPlayerPageCode(
+  markup: string,
+  template: InstallationTemplate,
+  entryFile: string,
+  project: InstallationProject
+): string {
+  const page = installationHtmlPageCode(markup, template, entryFile);
+
+  return project === 'new' ? installationHtmlDocumentCode(page) : page;
 }
 
 /** Scaffold files a new app no longer uses once the generated files replace its starter page. */
