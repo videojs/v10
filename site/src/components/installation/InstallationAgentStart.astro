@@ -3,12 +3,16 @@ import { installationCommand, SKILLS_REPOSITORY_URL, skillsCommand } from '@vide
 
 import CopyButton from '@/components/CopyButton';
 import P from '@/components/typography/P.astro';
+import { INSTALLATION_ROUTES, isInstallationRouteSegment } from '@/utils/installation/routes';
 
 const route = Astro.params.framework;
+const routeConfig = isInstallationRouteSegment(route) ? INSTALLATION_ROUTES[route] : undefined;
+// The CLI detects the framework from the project, so each packaged guide names its own in case the repository holds
+// another one.
 const input = route === 'cdn'
   ? { method: 'cdn', framework: 'html' }
-  : route === 'vue' || route === 'svelte'
-    ? { framework: route }
+  : routeConfig?.method === 'packaged'
+    ? { framework: routeConfig.pickerFramework }
     : undefined;
 const init = installationCommand(input, null);
 const installationPrompt = route === 'shadcn'

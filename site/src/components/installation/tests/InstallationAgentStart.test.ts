@@ -16,10 +16,11 @@ async function renderPrompt(framework: string): Promise<string> {
 
 describe('InstallationAgentStart', () => {
   it.each([
-    ['react', ['`npx @videojs/cli agents init`']],
-    ['html', ['`npx @videojs/cli agents init`']],
+    ['react', ['`npx @videojs/cli agents init --framework react`']],
+    ['html', ['`npx @videojs/cli agents init --framework html`']],
     ['cdn', ['`npx @videojs/cli agents init --method cdn --framework html`']],
     ['vue', ['`npx @videojs/cli agents init --framework vue`']],
+    ['svelte', ['`npx @videojs/cli agents init --framework svelte`']],
     [
       'shadcn',
       [
