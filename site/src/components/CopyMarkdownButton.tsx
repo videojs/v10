@@ -1,5 +1,4 @@
 import { Menu } from '@base-ui/react/menu';
-import { PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 import clsx from 'clsx';
 import { useState } from 'react';
 
@@ -53,9 +52,10 @@ export async function markdownUrl(
 }
 
 /** Remove private installation input before embedding a documentation URL in a third-party assistant link. */
-export function publicMarkdownUrl(url: string): string {
+export async function publicMarkdownUrl(url: string): Promise<string> {
   if (url === '#') return url;
 
+  const { PRIVATE_INSTALLATION_QUERY_PARAMETERS } = await import('@videojs/installation');
   const publicUrl = new URL(url);
 
   for (const parameter of PRIVATE_INSTALLATION_QUERY_PARAMETERS) publicUrl.searchParams.delete(parameter);
@@ -84,7 +84,7 @@ const itemClass = clsx(
  */
 export default function CopyMarkdownButton({ className, style }: CopyMarkdownButtonProps) {
   const [state, setState] = useState<CopyState>({ status: 'idle' });
-  const [menuMarkdownUrl, setMenuMarkdownUrl] = useState('#');
+  const [menuUrls, setMenuUrls] = useState({ markdown: '#', public: '#' });
   const isHydrated = useIsHydrated();
   const disabled = !isHydrated || state.status === 'loading';
 
@@ -136,8 +136,8 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
   };
 
   // Links are built on the client since they embed the page's own URL; the server renders the menu closed.
-  const mdUrl = isHydrated ? menuMarkdownUrl : '#';
-  const prompt = isHydrated ? encodeURIComponent(assistantPrompt(publicMarkdownUrl(mdUrl))) : '';
+  const mdUrl = isHydrated ? menuUrls.markdown : '#';
+  const prompt = isHydrated ? encodeURIComponent(assistantPrompt(menuUrls.public)) : '';
 
   const ariaLabel = state.status === 'success' ? 'Copied' : 'Copy page as Markdown';
   const label = state.status === 'success' ? 'Copied' : state.status === 'error' ? 'Error' : 'Copy page';
@@ -172,7 +172,11 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
       <Menu.Root
         modal={false}
         onOpenChange={(open) => {
-          if (open) void markdownUrl().then(setMenuMarkdownUrl);
+          if (!open) return;
+
+          void markdownUrl().then(async (markdown) =>
+            setMenuUrls({ markdown, public: await publicMarkdownUrl(markdown) })
+          );
         }}
       >
         <Menu.Trigger

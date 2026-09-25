@@ -100,7 +100,7 @@ describe('markdownUrl', () => {
     });
 
     expect(url).toContain('source-url=');
-    expect(publicMarkdownUrl(url)).toBe('https://videojs.org/docs/guides/installation/react.md?preset=audio');
+    expect(await publicMarkdownUrl(url)).toBe('https://videojs.org/docs/guides/installation/react.md?preset=audio');
   });
 
   it('never sends a private source URL to an assistant', async () => {
