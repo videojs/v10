@@ -604,11 +604,19 @@ It survives a `src` change, so swapping the source keeps the frame you asked for
 ## Elements without engine options
 
 <FrameworkCase frameworks={["react"]}>
-<DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> and <DocsLink slug="reference/components/hls-audio">HlsAudio</DocsLink> take `src` and the usual media props but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
+<DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> and <DocsLink slug="reference/components/hls-audio">HlsAudio</DocsLink> take `src` or `source`, and the usual media props.
+
+Their `source` carries only `src`, `type`, and `drm`, with no `engine`, `preferPlayback`, or rendition caps. They run on our own playback engine, which does not accept configuration from the element yet.
+
+On HlsVideo, `drm` licenses FairPlay, Widevine, and PlayReady, taking the same license servers as [DRM protected sources](#drm-protected-sources). HlsAudio accepts `drm` but ignores it, so one source object serves both.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-<DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink> and <DocsLink slug="reference/components/hls-audio">`<hls-audio>`</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
+<DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink> and <DocsLink slug="reference/components/hls-audio">`<hls-audio>`</DocsLink> take `src` or `source`, and the usual media attributes.
+
+Their `source` carries only `src`, `type`, and `drm`, with no `engine`, `preferPlayback`, or rendition caps. They run on our own playback engine, which does not accept configuration from the element yet.
+
+On `<hls-video>`, `drm` licenses FairPlay, Widevine, and PlayReady, taking the same license servers as [DRM protected sources](#drm-protected-sources). `<hls-audio>` accepts `drm` but ignores it, so one source object serves both.
 </FrameworkCase>
 
 ## See also
