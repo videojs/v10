@@ -60,9 +60,14 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
       : '- Shadcn installs editable React or plain HTML skin source. Vue and Svelte use packaged installation.'
     : '- Shadcn installs editable plain HTML skin source. Vue and Svelte use packaged installation.';
 
+  const noneDescription = frameworks.some((framework) =>
+    compatibility.templatesByFramework[framework]?.includes('none')
+  )
+    ? '\n- The `none` app setup is available only for plain HTML with Packaged or CDN. Shadcn requires a named app setup.'
+    : '';
+
   return `${packageDescription}${cdnDescription}
-${shadcnDescription}
-- The \`none\` app setup is available only for plain HTML with Packaged or CDN. Shadcn requires a named app setup.
+${shadcnDescription}${noneDescription}
 - Shadcn presets: ${compatibility.shadcn.presets.map((value) => `\`${value}\``).join(', ')}.
 - Shadcn skins: ${compatibility.shadcn.skins.map((value) => `\`${value}\``).join(', ')}.
 

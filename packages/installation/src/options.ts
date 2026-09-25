@@ -150,6 +150,10 @@ export function installationDecisionOrderFor({
   methods,
   frameworks,
 }: InstallationOptionContext): readonly InstallationDecision[] {
+  const skinlessGuidance =
+    methods.length === 1 && methods[0] === 'shadcn'
+      ? ''
+      : `Use none only when the project builds its own controls${methods.includes('shadcn') ? ', which Shadcn does not support' : ''}. `;
   const methodGuidance =
     methods.length === 1
       ? methods[0] === 'packaged'
@@ -187,12 +191,11 @@ export function installationDecisionOrderFor({
     {
       title: 'Choose the player',
       guidance:
-        'Infer the preset from the intended experience when it is clear. Ask when audio, live playback, background video, or the standard video player could all be reasonable.',
+        'Use video unless the request signals another experience: audio, music, or podcasts use audio; a live stream uses live-video or live-audio; a muted, looping decorative video uses background-video. Ask only when those signals conflict.',
     },
     {
       title: 'Choose the skin',
-      guidance:
-        'Default and Minimal contain the same controls. Minimal uses cleaner surfaces. Ask when the visual direction is not clear.',
+      guidance: `Use default unless the request asks for a minimal, cleaner, or more subtle look, which uses minimal; both contain the same controls. ${skinlessGuidance}Ask only when those signals conflict.`,
     },
     {
       title: 'Choose the media',
@@ -226,6 +229,21 @@ export function installationOptionDefinitionsFor(
   );
   const templateDefaults = cdnOnly ? (['none'] as const) : unique(frameworks.map(defaultInstallationTemplate));
   const stylings = unique(sourceFrameworks.flatMap((framework) => registryStylings(framework)));
+  // Only describe `none` where one of the listed paths offers it; React has no `none` app setup.
+  const templateDescription = [
+    'The app setup and file layout.',
+    ...(templates.includes('none')
+      ? [
+          methods.includes('cdn') ? 'CDN defaults to `none` for an existing page and `vite` for a new app.' : null,
+          methods.includes('packaged')
+            ? 'Packaged `none` needs an existing bundler; use CDN for a site without a build step.'
+            : null,
+          supportsShadcn ? '`none` is unavailable with Shadcn.' : null,
+        ]
+      : []),
+  ]
+    .filter((sentence) => sentence !== null)
+    .join(' ');
   const definitions: InstallationOptionDefinition[] = [
     optionDefinition('method', {
       values: methods,
@@ -288,8 +306,7 @@ export function installationOptionDefinitionsFor(
     optionDefinition('template', {
       values: templates,
       default: templateDefaults.length === 1 ? templateDefaults[0]! : 'next for React; vite otherwise',
-      description:
-        'The app setup and file layout. CDN defaults to `none` for an existing page and `vite` for a new app. Packaged `none` needs an existing bundler; use CDN for a site without a build step. `none` is unavailable with Shadcn.',
+      description: templateDescription,
     })
   );
 

@@ -49,6 +49,17 @@ describe('installationOptionDefinitionsFor', () => {
     expect(definitions.find(({ flag }) => flag === '--styling')?.default).toBe('tailwind for React; css otherwise');
   });
 
+  it('describes the none app setup only where a listed path offers it', () => {
+    const react = installationOptionDefinitionsFor({ methods: ['packaged'], frameworks: ['react'] });
+    const html = installationOptionDefinitionsFor({ methods: ['packaged'], frameworks: ['html'] });
+    const template = (definitions: typeof react) => definitions.find(({ flag }) => flag === '--template')?.description;
+
+    expect(template(react)).toBe('The app setup and file layout.');
+    expect(template(html)).toContain('Packaged `none` needs an existing bundler');
+    expect(template(html)).not.toContain('CDN defaults');
+    expect(template(html)).not.toContain('Shadcn');
+  });
+
   it('offers an existing page or Vite scaffold for CDN instructions', () => {
     const definitions = installationOptionDefinitionsFor({ methods: ['cdn'], frameworks: ['html'] });
 
@@ -58,6 +69,18 @@ describe('installationOptionDefinitionsFor', () => {
 });
 
 describe('installationDecisionOrderFor', () => {
+  it('defaults to the video preset and default skin unless the request signals otherwise', () => {
+    const decisions = installationDecisionOrderFor({ methods: ['packaged', 'shadcn'], frameworks: ['react'] });
+    const guidance = (title: string) => decisions.find((decision) => decision.title === title)?.guidance;
+    const shadcn = installationDecisionOrderFor({ methods: ['shadcn'], frameworks: ['react', 'html'] });
+
+    expect(guidance('Choose the player')).toMatch(/^Use video unless the request signals another experience/);
+    expect(guidance('Choose the player')).toContain('Ask only when those signals conflict.');
+    expect(guidance('Choose the skin')).toMatch(/^Use default unless the request asks for a minimal/);
+    expect(guidance('Choose the skin')).toContain('which Shadcn does not support');
+    expect(shadcn.find(({ title }) => title === 'Choose the skin')?.guidance).not.toContain('none');
+  });
+
   it('explains every installation method when all frameworks are available', () => {
     const decisions = installationDecisionOrderFor({
       methods: ['packaged', 'shadcn', 'cdn'],
