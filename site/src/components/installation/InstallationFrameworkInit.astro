@@ -28,6 +28,9 @@ import { parseInstallationSearchForRoute } from '@/utils/installation/url-state'
  * agree on which picks a query keeps.
  */
 
+/** How long a page with a custom selection waits for any installation island before showing the prerendered picks. */
+const PENDING_REVEAL_DELAY_MS = 5000;
+
 const REGISTRY_FRAMEWORKS = [...new Set(INSTALLATION_FRAMEWORKS.map(sourceFrameworkFor))];
 
 function parse(route: InstallationRouteSegment, query: Record<string, string>) {
@@ -144,6 +147,14 @@ const generatedCss = [
     display: block !important;
   }
 
+  /*
+   * While the URL asks for picks other than the prerendered defaults, hide each installation island until it renders
+   * the stores' picks. Visibility keeps its layout box, so client:visible islands can still intersect and hydrate.
+   */
+  html[data-installation-pending] astro-island:has(> [data-installation-selection="prerendered"]) {
+    visibility: hidden;
+  }
+
   /* An existing site without an app setup has nothing to create or run. */
   html[data-installation-template="none"]
     :is([data-installation-starting-point-section], [data-installation-named-app]) {
@@ -158,6 +169,7 @@ const generatedCss = [
   define:vars={{
     defaultPreset,
     frameworkCookie: FRAMEWORK_COOKIE,
+    revealDelay: PENDING_REVEAL_DELAY_MS,
     routePrefix: `${INSTALLATION_ROUTE_PREFIX}/`,
     routes,
     selectionQueries,
@@ -229,9 +241,20 @@ const generatedCss = [
     );
   }
 
+  // A page whose islands never hydrate, for example after a script fails to load, would otherwise stay hidden. Once
+  // any island reports the stores' picks, the rest follow when they hydrate, so the prerendered defaults stay hidden.
+  function revealIfIslandsFail() {
+    setTimeout(function () {
+      if (!document.querySelector('[data-installation-selection="ready"]')) {
+        document.documentElement.removeAttribute("data-installation-pending");
+      }
+    }, revealDelay);
+  }
+
   applyInstallationState(window.location, document.documentElement);
 
   document.addEventListener("astro:before-swap", function (event) {
     applyInstallationState(event.to, event.newDocument.documentElement);
   });
+  document.addEventListener("astro:page-load", revealIfIslandsFail);
 </script>

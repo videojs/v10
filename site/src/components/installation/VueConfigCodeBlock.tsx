@@ -9,8 +9,9 @@ import { focusLinesContaining } from '@/components/Code/focusLines';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function VueConfigCodeBlock() {
+function VueConfigCodeBlock() {
   const template = useSelection('template');
   const project = installationProjectFiles('vue', template);
   const filename = installationVueConfigFilename(template);
@@ -39,3 +40,5 @@ export default function VueConfigCodeBlock() {
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(VueConfigCodeBlock);

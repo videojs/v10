@@ -17,6 +17,6 @@ const { fixedFramework = false, framework, method } = Astro.props;
 
 <ContentWidth>
   <div data-llms-ignore>
-    <AppSetupPickerClient client:load fixedFramework={fixedFramework} framework={framework} method={method} />
+    <AppSetupPickerClient client:idle fixedFramework={fixedFramework} framework={framework} method={method} />
   </div>
 </ContentWidth>

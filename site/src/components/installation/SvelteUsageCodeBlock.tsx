@@ -4,8 +4,9 @@ import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function SvelteUsageCodeBlock() {
+function SvelteUsageCodeBlock() {
   const template = useSelection('template');
   const useCase = useSelection('useCase');
   const project = installationProjectFiles('svelte', template, useCase);
@@ -31,3 +32,5 @@ export default function SvelteUsageCodeBlock() {
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(SvelteUsageCodeBlock);

@@ -24,6 +24,7 @@ import { renderer, sourceUrl } from '@/stores/installation';
 
 import MuxUploaderPanel from './MuxUploaderPanel';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 /** Protocols without a brand mark get a monogram so every card still has a recognizable badge. */
 function Monogram({ children }: { children: string }) {
@@ -73,7 +74,7 @@ interface Props {
   supportedRenderers?: Renderer[];
 }
 
-export default function MediaSourcePicker({ supportedRenderers }: Props) {
+function MediaSourcePicker({ supportedRenderers }: Props) {
   const $renderer = useSelection('renderer');
   const $useCase = useSelection('useCase');
   const $sourceUrl = useSelection('sourceUrl');
@@ -220,3 +221,5 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
     </div>
   );
 }
+
+export default withSelectionMarker(MediaSourcePicker);

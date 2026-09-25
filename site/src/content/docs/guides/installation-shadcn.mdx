@@ -66,7 +66,7 @@ Choose the app environment that controls the setup commands and file locations b
 Choose the ready-made player that is closest to what you are building. The Shadcn registry does not currently provide the background video skin as source.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:load includeBackground={false} />
+  <UseCasePicker client:idle includeBackground={false} />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -74,7 +74,7 @@ Choose the ready-made player that is closest to what you are building. The Shadc
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:load />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
 ## Choose your media
@@ -82,7 +82,7 @@ Choose the ready-made player that is closest to what you are building. The Shadc
 Choose what the player will play. If that source needs a playback adapter, the installation steps include it.
 
 <ContentWidth margins="lg">
-  <MediaSourcePicker client:load />
+  <MediaSourcePicker client:idle />
 </ContentWidth>
 
 ## Choose your extensions
@@ -90,7 +90,7 @@ Choose what the player will play. If that source needs a playback adapter, the i
 Add optional behavior to the player. Only extensions that work with your player and media source appear below.
 
 <ContentWidth margins="lg">
-  <ExtensionPicker client:load />
+  <ExtensionPicker client:idle />
 </ContentWidth>
 
 ## Choose how to install
@@ -119,11 +119,11 @@ Choose whether to create the selected app setup or add editable skin source to a
 
 <div data-llms-ignore>
 <ContentWidth margins="lg">
-  <StartingPointPicker client:load serverTemplate="next" />
+  <StartingPointPicker client:idle serverTemplate="next" />
 </ContentWidth>
 </div>
 
-<ProjectCommands client:load method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
+<ProjectCommands client:idle method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
 
 <div data-installation-project-content="existing">
 <Aside type="note">
@@ -161,7 +161,7 @@ The files are added under `<components alias>/videojs/<preset>`. The registry it
 The files are added under `<components alias>/videojs/<preset>`. The registry item also installs `@videojs/html`.
 </ShadcnFrameworkCase>
 
-<SourceMediaInstall client:load />
+<SourceMediaInstall client:idle />
 
 ## Add your player
 
@@ -169,7 +169,7 @@ The files are added under `<components alias>/videojs/<preset>`. The registry it
 Add the player to the file shown for your selected app setup. It imports the player and media from the package, then imports the selected skin from your project.
 
 <ContentWidth>
-  <SourceReactPlayer client:load />
+  <SourceReactPlayer client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 </ShadcnFrameworkCase>
 
@@ -178,13 +178,13 @@ The steps below add HTML skin source to a plain HTML app. For Vue or Svelte, use
 
 <Steps>
   <Step number={1} title="Add the media element">
-    <SourceHTMLPlayer client:load part="media" />
+    <SourceHTMLPlayer client:visible={{ rootMargin: "200px" }} part="media" />
   </Step>
   <Step number={2} title="Register custom elements">
-    <SourceHTMLPlayer client:load part="imports" />
+    <SourceHTMLPlayer client:visible={{ rootMargin: "200px" }} part="imports" />
   </Step>
   <Step number={3} title="Add the player to your page">
-    <SourceHTMLPlayer client:load part="player" />
+    <SourceHTMLPlayer client:visible={{ rootMargin: "200px" }} part="player" />
   </Step>
 </Steps>
 
@@ -194,7 +194,7 @@ The steps below add HTML skin source to a plain HTML app. For Vue or Svelte, use
 
 Start the app and verify that the selected media plays.
 
-<ProjectCommands client:load method="shadcn" part="run" serverFramework="react" serverTemplate="next" />
+<ProjectCommands client:visible={{ rootMargin: "200px" }} method="shadcn" part="run" serverFramework="react" serverTemplate="next" />
 
 </div>
 

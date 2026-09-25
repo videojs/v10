@@ -12,6 +12,7 @@ import {
 
 import { useRegistryFramework, useRegistryStyling } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 
 import RegistryCommandClient from './RegistryCommandClient';
 
@@ -20,7 +21,7 @@ interface Props {
 }
 
 /** The registry command for the skin the installation page's pickers chose. */
-export default function InstallationRegistryCommandClient({ framework }: Props) {
+function InstallationRegistryCommandClient({ framework }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const selectedFramework = useRegistryFramework(framework);
@@ -52,3 +53,5 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
 
   return command(false);
 }
+
+export default withSelectionMarker(InstallationRegistryCommandClient);

@@ -22,6 +22,7 @@ import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGrou
 import { selectInstallationTemplate } from '@/stores/installation';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const TEMPLATE_ICONS = {
   none: <CodeIcon className="size-7" />,
@@ -71,7 +72,7 @@ function templateCardOptions(
 }
 
 /** Chooses the app setup that controls the installation guide's setup commands and file locations. */
-export default function AppSetupPickerClient({ fixedFramework = false, framework, method }: Props) {
+function AppSetupPickerClient({ fixedFramework = false, framework, method }: Props) {
   const selectedFramework = useSelection('framework', framework);
   const activeFramework = fixedFramework ? framework : selectedFramework;
   const $template = useSelection('template', defaultInstallationTemplate(activeFramework));
@@ -86,3 +87,5 @@ export default function AppSetupPickerClient({ fixedFramework = false, framework
     />
   );
 }
+
+export default withSelectionMarker(AppSetupPickerClient);

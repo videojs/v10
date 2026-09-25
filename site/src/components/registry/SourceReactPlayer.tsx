@@ -7,12 +7,13 @@ import {
 } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 import { useRegistryStyling } from '../installation/useRegistryFramework';
 import { useSelection } from '../installation/useSelection';
 
-export default function SourceReactPlayer() {
+function SourceReactPlayer() {
   const template = useSelection('template');
   const project = installationProjectFiles('react', template);
   const code = generateSourceReactCreateCode({
@@ -45,3 +46,5 @@ export default function SourceReactPlayer() {
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(SourceReactPlayer);

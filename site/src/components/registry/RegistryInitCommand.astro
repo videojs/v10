@@ -31,7 +31,7 @@ const otherTemplateDescription = otherTemplates
   .join(', ');
 ---
 
-<RegistryInitCommandClient client:load framework={framework} installation={installation} />
+<RegistryInitCommandClient client:visible={{ rootMargin: "200px" }} framework={framework} installation={installation} />
 
 <div hidden data-llms-only>
   {

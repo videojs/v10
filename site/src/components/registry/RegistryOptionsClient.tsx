@@ -23,6 +23,7 @@ import CardRadioGroup from '@/components/CardRadioGroup';
 import SkinPreview from '@/components/installation/SkinPreview';
 import { useRegistrySkin, useRegistryStyling, useRegistryTheme } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 import { Select } from '@/components/Select';
 import { skin as installationSkin, useCase as installationUseCase } from '@/stores/installation';
 import { registrySkin, registryTheme, selectRegistryStyling } from '@/stores/registry';
@@ -184,7 +185,7 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
 }
 
 /** Chooses the skin, styling, and theme used to add skin source. */
-export default function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
+function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
   return kind === 'catalog' ? (
     <RegistryCatalogSelects
       defaultSkin={defaultSkin}
@@ -196,3 +197,5 @@ export default function RegistryOptionsClient({ defaultSkin, defaultTheme, frame
     <RegistryStylingCards framework={framework === 'react' ? 'react' : 'html'} />
   );
 }
+
+export default withSelectionMarker(RegistryOptionsClient);

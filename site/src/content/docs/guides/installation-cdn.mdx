@@ -44,7 +44,7 @@ Choose the JavaScript framework for your project.
 Choose the ready-made player that is closest to what you are building. Live presets add live-edge controls; background video is muted and loops behind your content.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:load />
+  <UseCasePicker client:idle />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -52,7 +52,7 @@ Choose the ready-made player that is closest to what you are building. Live pres
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:load />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
 ## Choose your media
@@ -68,7 +68,7 @@ Choose what the player will play. The CDN page only shows sources with a browser
 Add optional behavior to the player. Only extensions that work with your player and media source appear below.
 
 <ContentWidth margins="lg">
-  <ExtensionPicker client:load />
+  <ExtensionPicker client:idle />
 </ContentWidth>
 
 ## Choose how to install
@@ -94,7 +94,7 @@ Add these generated module scripts to your page. They register the player, selec
 Place this generated markup where the player should appear. It uses the media source you selected above.
 
 <ContentWidth>
-  <HTMLUsageCodeBlock client:load installMethod="cdn" />
+  <HTMLUsageCodeBlock client:visible={{ rootMargin: "200px" }} installMethod="cdn" />
 </ContentWidth>
 
 </div>

@@ -14,6 +14,7 @@ import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import { useRegistryFramework, useRegistryStyling } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 
@@ -48,7 +49,7 @@ function ConfigurationBlock({ block }: { block: { code: string; filename: string
   );
 }
 
-export default function RegistryInitCommandClient({ framework, installation }: Props) {
+function RegistryInitCommandClient({ framework, installation }: Props) {
   const selectedFramework = useRegistryFramework(framework);
   const $template = useSelection('template', defaultInstallationTemplate(selectedFramework));
   const template = resolveInstallationTemplate(selectedFramework, $template);
@@ -133,3 +134,5 @@ function ConfigurationSteps({
     </>
   );
 }
+
+export default withSelectionMarker(RegistryInitCommandClient);

@@ -9,8 +9,9 @@ import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function ReactCreateCodeBlock() {
+function ReactCreateCodeBlock() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
@@ -47,3 +48,5 @@ export default function ReactCreateCodeBlock() {
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(ReactCreateCodeBlock);

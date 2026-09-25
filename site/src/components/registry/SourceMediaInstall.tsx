@@ -1,12 +1,13 @@
 import { generateSourceMediaInstallCode, getAdapterPackage } from '@videojs/installation';
 
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 import { shared } from '@/components/typography/styles';
 import { VJS10_VERSION } from '@/consts';
 
 import { useSelection } from '../installation/useSelection';
 
-export default function SourceMediaInstall() {
+function SourceMediaInstall() {
   const renderer = useSelection('renderer');
   const selectedExtensions = useSelection('extensions');
   const install = generateSourceMediaInstallCode(renderer, VJS10_VERSION, selectedExtensions);
@@ -31,3 +32,5 @@ export default function SourceMediaInstall() {
     </section>
   );
 }
+
+export default withSelectionMarker(SourceMediaInstall);

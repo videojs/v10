@@ -6,6 +6,7 @@ import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGrou
 import { selectInstallationStartingPoint } from '@/stores/installation';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 interface Props {
   serverTemplate: InstallationTemplate;
@@ -26,7 +27,7 @@ const OPTIONS = [
   },
 ] satisfies CardRadioOption<InstallationProject>[];
 
-export default function StartingPointPicker({ serverTemplate }: Props) {
+function StartingPointPicker({ serverTemplate }: Props) {
   const project = useSelection('project', 'existing');
   const template = useSelection('template', serverTemplate);
   const options = OPTIONS.map((option) => ({
@@ -44,3 +45,5 @@ export default function StartingPointPicker({ serverTemplate }: Props) {
     />
   );
 }
+
+export default withSelectionMarker(StartingPointPicker);

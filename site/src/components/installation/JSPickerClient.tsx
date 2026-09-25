@@ -12,6 +12,7 @@ import { resolveInstallationFrameworkNavigation } from '@/utils/installation/fra
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 
 import { useRegistryFramework } from './useRegistryFramework';
+import { withSelectionMarker } from './withSelectionMarker';
 
 /** Framework entry points. The selected framework determines which installation methods the next section offers. */
 const OPTIONS: CardRadioOption<InstallationFramework>[] = [
@@ -46,7 +47,7 @@ interface Props {
   route: InstallationRouteSegment;
 }
 
-export default function JSPickerClient({ currentFramework, route }: Props) {
+function JSPickerClient({ currentFramework, route }: Props) {
   const selectedRegistryFramework = useRegistryFramework(sourceFrameworkFor(currentFramework));
   const displayedFramework = route === 'shadcn' ? selectedRegistryFramework : currentFramework;
   const options =
@@ -77,3 +78,5 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
     />
   );
 }
+
+export default withSelectionMarker(JSPickerClient);

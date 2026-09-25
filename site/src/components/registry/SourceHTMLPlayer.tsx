@@ -9,6 +9,7 @@ import {
 import ClientCode from '@/components/Code/ClientCode';
 import { focusLinesContaining } from '@/components/Code/focusLines';
 import { useRegistryFramework } from '@/components/installation/useRegistryFramework';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 
@@ -47,7 +48,7 @@ function CodeTabs({ label, tabs }: { label: string; tabs: readonly CodeTab[] }) 
   );
 }
 
-export default function SourceHTMLPlayer({ part }: Props) {
+function SourceHTMLPlayer({ part }: Props) {
   const framework = useRegistryFramework('html');
   const template = useSelection('template', defaultInstallationTemplate(framework));
   const useCase = useSelection('useCase');
@@ -138,3 +139,5 @@ export default function SourceHTMLPlayer({ part }: Props) {
     </>
   );
 }
+
+export default withSelectionMarker(SourceHTMLPlayer);

@@ -5,4 +5,4 @@ import { CDN_MEDIA_SUBPATHS, rendererSupportsCdn, RENDERERS } from '@videojs/ins
 const supportedRenderers = RENDERERS.filter((renderer) => rendererSupportsCdn(renderer, CDN_MEDIA_SUBPATHS));
 ---
 
-<MediaSourcePicker client:load supportedRenderers={supportedRenderers} />
+<MediaSourcePicker client:idle supportedRenderers={supportedRenderers} />

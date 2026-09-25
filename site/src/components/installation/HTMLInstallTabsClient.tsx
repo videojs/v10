@@ -4,8 +4,9 @@ import { VJS10_VERSION } from '@/consts';
 
 import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function HTMLInstallTabs() {
+function HTMLInstallTabs() {
   const $renderer = useSelection('renderer');
   const $extensions = useSelection('extensions');
   const $skin = useSelection('skin');
@@ -19,3 +20,5 @@ export default function HTMLInstallTabs() {
 
   return <PackageManagerTabs commands={install} />;
 }
+
+export default withSelectionMarker(HTMLInstallTabs);

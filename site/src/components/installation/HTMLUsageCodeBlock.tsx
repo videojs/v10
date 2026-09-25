@@ -12,6 +12,7 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 interface Props {
   installMethod?: 'cdn';
@@ -42,7 +43,7 @@ function CodeBlock({
   );
 }
 
-export default function HTMLUsageCodeBlock({ installMethod }: Props) {
+function HTMLUsageCodeBlock({ installMethod }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
@@ -119,3 +120,5 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
     </DynamicSteps>
   );
 }
+
+export default withSelectionMarker(HTMLUsageCodeBlock);

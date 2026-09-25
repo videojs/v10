@@ -12,6 +12,7 @@ import CardCheckboxGroup from '@/components/CardCheckboxGroup';
 import { extensions } from '@/stores/installation';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const EXTENSION_MEDIA = {
   'google-cast': <Cast className="size-6" />,
@@ -29,7 +30,7 @@ const EXTENSION_OPTIONS = INSTALLATION_EXTENSIONS.map((extension) => {
   };
 });
 
-export default function ExtensionPicker() {
+function ExtensionPicker() {
   const selected = useSelection('extensions');
   const useCase = useSelection('useCase');
   const skin = useSelection('skin');
@@ -53,3 +54,5 @@ export default function ExtensionPicker() {
     />
   );
 }
+
+export default withSelectionMarker(ExtensionPicker);

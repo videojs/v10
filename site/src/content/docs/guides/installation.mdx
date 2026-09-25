@@ -76,7 +76,7 @@ Choose the app environment that controls the setup commands and file locations b
 The default presets work well for general website playback. The live presets suit streams: they add a Live button and drop the duration and current-time displays that on-demand playback relies on. More pre-built players to come.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:load />
+  <UseCasePicker client:idle />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -84,7 +84,7 @@ The default presets work well for general website playback. The live presets sui
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:load />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
 ## Choose your media
@@ -92,10 +92,10 @@ The default presets work well for general website playback. The live presets sui
 Video.js plays plain files, adaptive streams, and embeds from hosting services, and switching between them is a one-line change. Paste a URL to detect the type, pick one directly, or upload a video to Mux.
 
 <ContentWidth margins="lg">
-  <MediaSourcePicker client:load />
+  <MediaSourcePicker client:idle />
 </ContentWidth>
 
-<MediaSourceCase client:load renderers={["hls"]}>
+<MediaSourceCase client:idle renderers={["hls"]}>
 <Aside type="tip" title="Want a smaller HLS bundle?">
 This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. For a smaller bundle, use <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> when its supported feature set fits your stream.
 </Aside>
@@ -106,7 +106,7 @@ This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</Do
 Add optional behavior to the player. Only extensions that work with your player and media source appear below.
 
 <ContentWidth margins="lg">
-  <ExtensionPicker client:load />
+  <ExtensionPicker client:idle />
 </ContentWidth>
 
 ## Choose how to install
@@ -127,15 +127,15 @@ Choose whether to create the selected app setup or add Video.js to a project you
 
 <div data-llms-ignore>
 <ContentWidth margins="lg">
-  <StartingPointPicker client:load serverTemplate="next" />
+  <StartingPointPicker client:idle serverTemplate="next" />
 </ContentWidth>
 </div>
 
 <FrameworkCase frameworks={["react"]}>
-<ProjectCommands client:load part="create" serverFramework="react" serverTemplate="next" />
+<ProjectCommands client:idle part="create" serverFramework="react" serverTemplate="next" />
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-<ProjectCommands client:load part="create" serverFramework="html" serverTemplate="vite" />
+<ProjectCommands client:idle part="create" serverFramework="html" serverTemplate="vite" />
 </FrameworkCase>
 
 </div>
@@ -146,14 +146,14 @@ Choose whether to create the selected app setup or add Video.js to a project you
   <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-  <ReactInstallTabs client:load />
+  <ReactInstallTabs client:visible={{ rootMargin: "200px" }} />
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
 ## Add your player
 
-<HTMLUsageCodeBlock client:load />
+<HTMLUsageCodeBlock client:visible={{ rootMargin: "200px" }} />
 
 <Aside type="caution" title="Load your script as a module">
 Packaged modules need a bundler (npm, pnpm, yarn, bun). Load the resulting bundle with `type="module"`:
@@ -174,7 +174,7 @@ Some bundlers default to an IIFE output format. Loading that bundle without `typ
 Add the player to the file shown for your selected app setup. It imports the selected player, skin, media, and extensions from the packages you installed.
 
 <ContentWidth>
-  <ReactCreateCodeBlock client:load />
+  <ReactCreateCodeBlock client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 </FrameworkCase>
 
@@ -185,10 +185,10 @@ Add the player to the file shown for your selected app setup. It imports the sel
 Start the app and verify that the media plays.
 
 <FrameworkCase frameworks={["react"]}>
-<ProjectCommands client:load part="run" serverFramework="react" serverTemplate="next" />
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="react" serverTemplate="next" />
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-<ProjectCommands client:load part="run" serverFramework="html" serverTemplate="vite" />
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="html" serverTemplate="vite" />
 </FrameworkCase>
 
 </div>

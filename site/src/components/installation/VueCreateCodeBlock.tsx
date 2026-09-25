@@ -4,8 +4,9 @@ import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function VueCreateCodeBlock() {
+function VueCreateCodeBlock() {
   const template = useSelection('template');
   const useCase = useSelection('useCase');
   const project = installationProjectFiles('vue', template, useCase);
@@ -29,3 +30,5 @@ export default function VueCreateCodeBlock() {
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(VueCreateCodeBlock);

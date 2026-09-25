@@ -4,8 +4,9 @@ import { VJS10_VERSION } from '@/consts';
 
 import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function ReactInstallTabs() {
+function ReactInstallTabs() {
   const install = generateReactInstallCode(
     { renderer: useSelection('renderer'), extensions: useSelection('extensions') },
     VJS10_VERSION
@@ -13,3 +14,5 @@ export default function ReactInstallTabs() {
 
   return <PackageManagerTabs commands={install} />;
 }
+
+export default withSelectionMarker(ReactInstallTabs);

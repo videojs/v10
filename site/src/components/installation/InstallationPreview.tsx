@@ -32,6 +32,7 @@ import '@videojs/react/live-video/minimal-skin.css';
 import '@videojs/react/live-audio/skin.css';
 import '@videojs/react/live-audio/minimal-skin.css';
 import '@videojs/react/background/skin.css';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const FILE_RENDERERS: Renderer[] = ['html5-video', 'html5-audio'];
 const HLS_RENDERERS: Renderer[] = ['hls', 'mux-video', 'mux-audio'];
@@ -162,7 +163,7 @@ function BackgroundPreview({ source }: { source: Source }) {
  * Live preview of the player the guide is about to generate: the chosen preset and skin, playing the chosen source. It
  * answers "what does this skin look like?" without leaving the page.
  */
-export default function InstallationPreview() {
+function InstallationPreview() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
@@ -218,3 +219,5 @@ export default function InstallationPreview() {
     </figure>
   );
 }
+
+export default withSelectionMarker(InstallationPreview);

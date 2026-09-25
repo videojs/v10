@@ -11,6 +11,7 @@ import CardRadioGroup from '@/components/CardRadioGroup';
 import { useCase } from '@/stores/installation';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const USE_CASE_MEDIA: Record<UseCase, ReactNode> = {
   'default-video': <Film className="size-6" />,
@@ -32,7 +33,7 @@ interface Props {
   includeBackground?: boolean;
 }
 
-export default function UseCasePicker({ includeBackground = true }: Props) {
+function UseCasePicker({ includeBackground = true }: Props) {
   const $useCase = useSelection('useCase');
   const options = includeBackground ? USE_CASES : USE_CASES.filter((value) => value !== 'background-video');
 
@@ -55,3 +56,5 @@ export default function UseCasePicker({ includeBackground = true }: Props) {
     />
   );
 }
+
+export default withSelectionMarker(UseCasePicker);

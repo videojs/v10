@@ -5,8 +5,9 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { VJS10_CDN_BASE } from '@/consts';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function HTMLCdnCodeBlock() {
+function HTMLCdnCodeBlock() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
@@ -28,3 +29,5 @@ export default function HTMLCdnCodeBlock() {
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(HTMLCdnCodeBlock);

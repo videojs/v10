@@ -24,6 +24,7 @@ import { getInstallationRoutePath } from '@/utils/installation/routes';
 
 import { useRegistryFramework } from './useRegistryFramework';
 import { useInstallationSelectionReady, useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const ICONS = {
   packaged: NpmLogo,
@@ -52,7 +53,7 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationFr
   return getInstallationRoutePath('cdn');
 }
 
-export default function InstallationMethodNavClient({ currentFramework, route }: Props) {
+function InstallationMethodNavClient({ currentFramework, route }: Props) {
   const selectedInstallMethod = useSelection('installMethod');
   const selectedRenderer = useSelection('renderer');
   const selectedExtensions = useSelection('extensions');
@@ -201,3 +202,5 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
     </nav>
   );
 }
+
+export default withSelectionMarker(InstallationMethodNavClient);

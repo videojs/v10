@@ -57,7 +57,7 @@ Choose whether the instructions target a Vite, Astro, or Nuxt app.
 Choose the ready-made player that is closest to what you are building.
 
 <ContentWidth margins="lg">
-  <UseCasePicker client:load />
+  <UseCasePicker client:idle />
 </ContentWidth>
 
 <ContentWidth margins="lg">
@@ -65,7 +65,7 @@ Choose the ready-made player that is closest to what you are building.
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:load />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
 ## Choose your media
@@ -73,7 +73,7 @@ Choose the ready-made player that is closest to what you are building.
 Paste a media URL to detect its source type, pick one directly, or upload a video to Mux. The generated packages and component update with your choice.
 
 <ContentWidth margins="lg">
-  <MediaSourcePicker client:load />
+  <MediaSourcePicker client:idle />
 </ContentWidth>
 
 ## Choose your extensions
@@ -81,7 +81,7 @@ Paste a media URL to detect its source type, pick one directly, or upload a vide
 Add optional behavior to the player. Only extensions that work with your player and media source appear below.
 
 <ContentWidth margins="lg">
-  <ExtensionPicker client:load />
+  <ExtensionPicker client:idle />
 </ContentWidth>
 
 </HumanCase>
@@ -94,11 +94,11 @@ Choose whether to create the selected Vue app setup or add Video.js to a project
 
 <div data-llms-ignore>
 <ContentWidth margins="lg">
-  <StartingPointPicker client:load serverTemplate="vite" />
+  <StartingPointPicker client:idle serverTemplate="vite" />
 </ContentWidth>
 </div>
 
-<ProjectCommands client:load part="create" serverFramework="vue" serverTemplate="vite" />
+<ProjectCommands client:idle part="create" serverFramework="vue" serverTemplate="vite" />
 
 ## Install the packages
 
@@ -110,7 +110,7 @@ Install the HTML elements and any playback adapter your selected media source ne
 
 Vue's template compiler treats unknown tags as Vue components and warns when it cannot resolve them. Tell it which tags are Video.js custom elements with [`isCustomElement`](https://vuejs.org/guide/extras/web-components.html#skipping-component-resolution). List only the tags your templates use.
 
-<VueConfigCodeBlock client:load />
+<VueConfigCodeBlock client:visible={{ rootMargin: "200px" }} />
 
 ## Add your player
 
@@ -118,12 +118,12 @@ Vue's template compiler treats unknown tags as Vue components and warns when it 
   <Step number={1} title="Add the player component">
     Add a single-file component that imports the elements it renders. The imports register the selected player, skin, media, and extensions with the browser; the template composes them.
 
-    <VueCreateCodeBlock client:load />
+    <VueCreateCodeBlock client:visible={{ rootMargin: "200px" }} />
   </Step>
   <Step number={2} title="Render the player">
     Render the component in your app and pass it the media source you selected above.
 
-    <VueUsageCodeBlock client:load />
+    <VueUsageCodeBlock client:visible={{ rootMargin: "200px" }} />
   </Step>
 </Steps>
 
@@ -131,7 +131,7 @@ Vue's template compiler treats unknown tags as Vue components and warns when it 
 
 Start the app and verify that the selected media plays.
 
-<ProjectCommands client:load part="run" serverFramework="vue" serverTemplate="vite" />
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="vue" serverTemplate="vite" />
 
 </div>
 

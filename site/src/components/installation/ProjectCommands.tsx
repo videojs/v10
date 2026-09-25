@@ -10,6 +10,7 @@ import {
 import PackageManagerTabs from './PackageManagerTabs';
 import { useRegistryStyling } from './useRegistryFramework';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 interface Props {
   method?: 'shadcn';
@@ -18,7 +19,7 @@ interface Props {
   serverTemplate: InstallationTemplate;
 }
 
-export default function ProjectCommands({ method, part, serverFramework, serverTemplate }: Props) {
+function ProjectCommands({ method, part, serverFramework, serverTemplate }: Props) {
   const framework = useSelection('framework', serverFramework);
   const template = useSelection('template', serverTemplate);
   const styling = resolveRegistryStyling(framework === 'react' ? 'react' : 'html', useRegistryStyling());
@@ -54,3 +55,5 @@ export default function ProjectCommands({ method, part, serverFramework, serverT
     </>
   );
 }
+
+export default withSelectionMarker(ProjectCommands);
