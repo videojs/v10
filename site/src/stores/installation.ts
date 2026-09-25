@@ -1,9 +1,12 @@
 import {
+  defaultInstallationExtensions,
   fitSelectionToPreset,
   getInstallationPreset,
+  installationExtensionsFor,
   resolveInstallationTemplate,
   type InstallMethod,
   type InstallationFramework,
+  type InstallationExtension,
   type InstallationProject,
   type InstallationTemplate,
   type Renderer,
@@ -38,6 +41,7 @@ function selectionFromCurrentUrl(): InstallationUiSelection {
 const initialSelection = selectionFromCurrentUrl();
 
 export const renderer = atom<Renderer>(initialSelection.renderer);
+export const extensions = atom<readonly InstallationExtension[]>(initialSelection.extensions);
 export const framework = atom<InstallationFramework>(initialSelection.framework);
 export const template = atom<InstallationTemplate>(initialSelection.template);
 export const project = atom<InstallationProject>(initialSelection.project);
@@ -64,6 +68,7 @@ export const selectionAtoms: SelectionAtoms = {
   useCase,
   skin,
   renderer,
+  extensions,
   sourceUrl,
   installMethod,
 };
@@ -78,6 +83,7 @@ export function currentInstallationSelection(): InstallationUiSelection {
     useCase: useCase.get(),
     skin: skin.get(),
     renderer: renderer.get(),
+    extensions: extensions.get(),
     sourceUrl: sourceUrl.get(),
     installMethod: installMethod.get(),
   };
@@ -87,7 +93,9 @@ function syncInstallationDocumentState(selection: InstallationUiSelection): void
   if (!globalThis.document || !getInstallationRouteSegment(location.pathname)) return;
 
   document.documentElement.dataset.installationPreset = getInstallationPreset(selection.useCase).flag;
+  document.documentElement.dataset.installationMedia = selection.renderer;
   document.documentElement.dataset.installationProject = selection.project;
+  document.documentElement.dataset.installationSkin = selection.skin === 'none' ? 'none' : 'default';
   document.documentElement.dataset.installationTemplate = selection.template;
 }
 
@@ -131,6 +139,7 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
     useCase.set(selection.useCase);
     skin.set(selection.skin);
     renderer.set(selection.renderer);
+    extensions.set(selection.extensions);
     sourceUrl.set(selection.sourceUrl);
     installMethod.set(selection.installMethod);
   } finally {
@@ -225,4 +234,30 @@ useCase.listen((next) => {
   if (fitted.skin !== skin.get()) skin.set(fitted.skin);
 
   if (fitted.media !== renderer.get()) renderer.set(fitted.media);
+
+  const available = installationExtensionsFor(next, skin.get(), renderer.get());
+  const selected = extensions.get().filter((extension) => available.includes(extension));
+
+  if (selected.length !== extensions.get().length) extensions.set(selected);
+});
+
+skin.listen((next) => {
+  const available = installationExtensionsFor(useCase.get(), next, renderer.get());
+  const selected = extensions.get().filter((extension) => available.includes(extension));
+
+  if (selected.length !== extensions.get().length) extensions.set(selected);
+});
+
+renderer.listen((next) => {
+  const available = installationExtensionsFor(useCase.get(), skin.get(), next);
+  const selected = extensions.get().filter((extension) => available.includes(extension));
+  const defaults = defaultInstallationExtensions(next).filter((extension) => available.includes(extension));
+  const fitted = [...new Set([...selected, ...defaults])];
+
+  if (
+    fitted.length !== extensions.get().length ||
+    fitted.some((extension, index) => extensions.get()[index] !== extension)
+  ) {
+    extensions.set(fitted);
+  }
 });

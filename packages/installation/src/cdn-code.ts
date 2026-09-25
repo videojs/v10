@@ -1,6 +1,7 @@
 import { cdnBaseForVersion } from './defaults';
+import { defaultInstallationExtensions, getInstallationExtension, type InstallationExtension } from './extensions';
 import { getInstallationPreset, type Skin, type UseCase } from './presets';
-import { getMediaSubpath, isMuxRenderer, MUX_DATA_EXTENSION_SUBPATH, RENDERERS, type Renderer } from './renderers';
+import { getMediaSubpath, RENDERERS, type Renderer } from './renderers';
 
 // Every installation preset ships default, minimal, and skinless CDN bundles.
 // The skinless bundle is named for the element it defines (e.g. `video-player`).
@@ -37,7 +38,8 @@ export function generateCdnCode(
   skin: Skin,
   renderer: Renderer,
   cdnMediaSubpaths: readonly string[],
-  cdnBase = cdnBaseForVersion()
+  cdnBase = cdnBaseForVersion(),
+  extensions: readonly InstallationExtension[] = defaultInstallationExtensions(renderer)
 ): string {
   const name = getCdnFileName(useCase, skin);
   const mediaSubpath = getMediaSubpath(renderer);
@@ -54,11 +56,12 @@ export function generateCdnCode(
     scriptLines.push(`<script type="module" src="${cdnBase}/media/${mediaSubpath}.js"></script>`);
   }
 
-  // Mux media default to the separate Mux Data extension, so register its script
-  // too. Extensions live outside the media subpath set and `@videojs/cdn`
-  // always ships them, so this is not gated by that set.
-  if (isMuxRenderer(renderer)) {
-    scriptLines.push(`<script type="module" src="${cdnBase}/extensions/${MUX_DATA_EXTENSION_SUBPATH}.js"></script>`);
+  // Extensions live outside the media subpath set and `@videojs/cdn` always
+  // ships them, so they are not gated by that set.
+  for (const extension of extensions) {
+    const { htmlSubpath } = getInstallationExtension(extension);
+
+    scriptLines.push(`<script type="module" src="${cdnBase}/extensions/${htmlSubpath}.js"></script>`);
   }
 
   return scriptLines.join('\n');

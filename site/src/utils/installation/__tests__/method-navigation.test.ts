@@ -22,11 +22,11 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.has('template')).toBe(false);
   });
 
-  it('keeps the existing-site choice when switching to CDN', () => {
+  it('uses the CDN guide implicit existing-site setup', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/html?template=none');
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
 
-    expect(result.searchParams.get('template')).toBe('none');
+    expect(result.searchParams.has('template')).toBe(false);
   });
 
   it('keeps the Vue or Svelte project framework while using Shadcn HTML source', () => {
@@ -90,7 +90,7 @@ describe('resolveInstallationMethodUrl', () => {
 
     expect(result.pathname).toBe('/docs/guides/installation/cdn');
     expect(result.searchParams.has('framework')).toBe(false);
-    expect(result.searchParams.get('package-manager')).toBe('pnpm');
+    expect(result.searchParams.has('package-manager')).toBe(false);
     expect(result.searchParams.has('template')).toBe(false);
     expect(result.searchParams.has('styling')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('video');
@@ -126,7 +126,7 @@ describe('resolveInstallationMethodHref', () => {
     expect(result).toBe('/docs/guides/installation/html?preset=audio&skin=minimal');
   });
 
-  it('keeps the package manager needed to run the CDN Vite app', () => {
+  it('drops app setup choices that the human CDN guide does not use', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/html');
     const result = resolveInstallationMethodHref(current, '/docs/guides/installation/cdn', 'cdn', {
       ...DEFAULT_SELECTION,
@@ -138,7 +138,7 @@ describe('resolveInstallationMethodHref', () => {
     });
 
     expect(result).toBe(
-      '/docs/guides/installation/cdn?preset=audio&skin=minimal&package-manager=bun&source-url=https%3A%2F%2Fexample.com%2Faudio.mp3'
+      '/docs/guides/installation/cdn?preset=audio&skin=minimal&source-url=https%3A%2F%2Fexample.com%2Faudio.mp3'
     );
   });
 });

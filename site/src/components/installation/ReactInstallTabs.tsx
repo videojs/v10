@@ -4,7 +4,10 @@ import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';
 
 export default function ReactInstallTabs() {
-  const install = generateReactInstallCode({ renderer: useSelection('renderer') });
+  const install = generateReactInstallCode({
+    renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
+  });
 
   return <PackageManagerTabs commands={install} />;
 }

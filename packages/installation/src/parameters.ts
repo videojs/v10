@@ -5,6 +5,7 @@ export interface InstallationInput {
   preset?: string;
   skin?: string;
   media?: string;
+  extensions?: string;
   sourceUrl?: string;
   packageManager?: string;
   template?: string;
@@ -34,6 +35,7 @@ export const INSTALLATION_PARAMETERS = Object.freeze([
   { key: 'preset', flag: '--preset', query: 'preset' },
   { key: 'skin', flag: '--skin', query: 'skin' },
   { key: 'media', flag: '--media', query: 'media' },
+  { key: 'extensions', flag: '--extensions', query: 'extensions' },
   { key: 'sourceUrl', flag: '--source-url', query: 'source-url', private: true },
   { key: 'packageManager', flag: '--package-manager', query: 'package-manager' },
   { key: 'template', flag: '--template', query: 'template' },

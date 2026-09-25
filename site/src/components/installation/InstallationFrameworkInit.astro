@@ -100,6 +100,38 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
     ) {
     display: flex;
   }
+
+  html[data-installation-preset] [aria-label="Select extensions"] [data-card-value] {
+    display: none;
+  }
+
+  html:is([data-installation-preset="video"], [data-installation-preset="live-video"]):not(
+      [data-installation-skin="none"]
+    ):is(
+      [data-installation-media="hls"],
+      [data-installation-media="dash"],
+      [data-installation-media="mux-video"]
+    )
+    [aria-label="Select extensions"]
+    [data-card-value="google-cast"],
+  html:is([data-installation-media="mux-video"], [data-installation-media="mux-audio"])
+    [aria-label="Select extensions"]
+    [data-card-value="mux-data"] {
+    display: flex;
+  }
+
+  html:is([data-installation-preset="video"], [data-installation-preset="live-video"]):not(
+      [data-installation-skin="none"]
+    ):is(
+      [data-installation-media="hls"],
+      [data-installation-media="dash"],
+      [data-installation-media="mux-video"]
+    )
+    [data-extension-empty],
+  html:is([data-installation-media="mux-video"], [data-installation-media="mux-audio"])
+    [data-extension-empty] {
+    display: none;
+  }
 </style>
 
 <script
@@ -117,15 +149,36 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
 
     if (!isInstallation) {
       delete root.dataset.installationPreset;
+      delete root.dataset.installationMedia;
+      delete root.dataset.installationSkin;
       return;
     }
 
-    const requested = new URLSearchParams(url.search).get("preset");
+    const params = new URLSearchParams(url.search);
+    const requested = params.get("preset");
     const preset = ["video", "audio", "live-video", "live-audio", "background-video"].includes(requested ?? "")
       ? requested
       : "video";
+    const normalizedPreset = path === shadcnPath && preset === "background-video" ? "video" : preset;
+    const mediaByPreset = {
+      video: ["html5-video", "hls", "dash", "mux-video", "vimeo", "youtube", "cloudflare", "tiktok", "twitch"],
+      audio: ["html5-audio", "mux-audio", "spotify"],
+      "live-video": ["hls", "mux-video"],
+      "live-audio": ["mux-audio"],
+      "background-video": ["background-video", "hls-background-video", "mux-background-video"],
+    };
+    const media = mediaByPreset[normalizedPreset];
+    const requestedMedia = params.get("media");
+    const requestedSkin = params.get("skin");
 
-    root.dataset.installationPreset = path === shadcnPath && preset === "background-video" ? "video" : preset;
+    root.dataset.installationPreset = normalizedPreset;
+    root.dataset.installationMedia = media.includes(requestedMedia) ? requestedMedia : media[0];
+    root.dataset.installationSkin =
+      path === shadcnPath && requestedSkin === "none"
+        ? "default"
+        : ["default", "minimal", "none"].includes(requestedSkin ?? "")
+          ? requestedSkin
+          : "default";
   }
 
   function applyInstallationProject(url, root) {

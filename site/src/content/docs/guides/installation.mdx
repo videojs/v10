@@ -12,6 +12,7 @@ import InstallationMethodNav from '@/components/installation/InstallationMethodN
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
@@ -99,6 +100,14 @@ Video.js plays plain files, adaptive streams, and embeds from hosting services, 
 This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. For a smaller bundle, use <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> when its supported feature set fits your stream.
 </Aside>
 </MediaSourceCase>
+
+## Choose your extensions
+
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
+
+<ContentWidth margins="lg">
+  <ExtensionPicker client:load />
+</ContentWidth>
 
 ## Choose how to install
 

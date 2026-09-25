@@ -36,6 +36,7 @@ import {
   installationReactUsageCode,
   installationVueConfigFilename,
 } from './projects';
+import { getAdapterPackage } from './renderers';
 import { type InstallationSelection, type PlayerOwner, selectionToInput } from './selection';
 import {
   registrySkinSelection,
@@ -137,6 +138,7 @@ export function createInstallationDiscovery(
     preset: 'video',
     skin: 'default',
     media: 'mux-video',
+    extensions: 'mux-data',
     sourceUrl: INSTALLATION_DEMO_SOURCES.videoHls,
     packageManager,
   };
@@ -148,6 +150,7 @@ export function createInstallationDiscovery(
     preset: 'video',
     skin: 'default',
     media: 'html5-video',
+    extensions: 'none',
     sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
     packageManager,
     styling: owner === 'react' ? 'tailwind' : 'css',
@@ -177,6 +180,7 @@ export function createInstallationDiscovery(
                 preset: 'video',
                 skin: 'default',
                 media: 'html5-video',
+                extensions: 'none',
                 sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
                 packageManager,
               },
@@ -214,6 +218,7 @@ function installationOptions(selection: InstallationSelection): InstallationOpti
     useCase: selection.useCase,
     skin: selection.skin,
     renderer: selection.media,
+    extensions: selection.extensions,
     sourceUrl: selection.sourceUrl,
     installMethod: selection.method === 'cdn' ? 'cdn' : selection.packageManager,
   };
@@ -229,6 +234,9 @@ function prepareAppStep(selection: InstallationSelection): InstallationStep | nu
   const command = installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager);
   if (!command) throw new Error('A new project needs an app setup command.');
 
+  const templateLabel = INSTALLATION_TEMPLATE_LABELS[selection.template];
+  const article = selection.template === 'astro' ? 'an' : 'a';
+
   return {
     id: 'prepare-app',
     title: 'Create the app',
@@ -237,7 +245,7 @@ function prepareAppStep(selection: InstallationSelection): InstallationStep | nu
         ? 'Scaffold a minimal Vite site in the intended empty app directory, then continue from that directory.'
         : selection.template === 'laravel'
           ? 'Make sure PHP, Composer, and the Laravel installer are available. Run this from the parent directory, change videojs-app to your preferred directory name when needed, and continue from the new app.'
-          : `Scaffold a ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app in the intended empty app directory, then continue from that directory.`,
+          : `Scaffold ${article} ${templateLabel} app in the intended empty app directory, then continue from that directory.`,
     blocks: [code('bash', command)],
   };
 }
@@ -525,14 +533,20 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     blocks: [code('bash', shadcnAddCommand(selection.packageManager, [registry.item]))],
   });
 
-  const mediaInstall = generateSourceMediaInstallCode(selection.media, packageVersion);
+  const mediaInstall = generateSourceMediaInstallCode(selection.media, packageVersion, selection.extensions);
 
   if (mediaInstall) {
+    const hasAdapter = getAdapterPackage(selection.media) !== null;
+    const title = hasAdapter
+      ? selection.extensions.length > 0
+        ? 'Install the media adapter and extensions'
+        : 'Install the media adapter'
+      : 'Install the extensions';
+
     steps.push({
       id: 'media-adapter',
-      title: 'Install the media adapter',
-      description:
-        'This media source needs a separate playback adapter. Install the package version that matches these instructions.',
+      title,
+      description: 'Install the supporting packages at the version that matches these instructions.',
       blocks: [code('bash', mediaInstall[selection.packageManager])],
     });
   }
@@ -679,12 +693,16 @@ export function createInstallationPlan(selection: InstallationSelection, package
     project: explicit.project,
     preset: explicit.preset,
     media: explicit.media,
+    extensions: explicit.extensions,
     sourceUrl: explicit.sourceUrl,
   };
 
   if (selection.useCase !== 'background-video') relevantInput.skin = explicit.skin;
 
-  relevantInput.packageManager = explicit.packageManager;
+  if (selection.method !== 'cdn' || selection.template !== 'none') {
+    relevantInput.packageManager = explicit.packageManager;
+  }
+
   relevantInput.template = explicit.template;
 
   if (selection.method === 'shadcn') {

@@ -1,11 +1,5 @@
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
 
-/** Mux Data extension subpath shared by package and CDN instructions. */
-export const MUX_DATA_EXTENSION_SUBPATH = 'mux-data';
-
-/** Package that ships the Mux Data extension. */
-export const MUX_DATA_PACKAGE = '@videojs/mux-data';
-
 export interface InstallationRendererDefinition {
   readonly label: string;
   readonly article: 'a' | 'an';

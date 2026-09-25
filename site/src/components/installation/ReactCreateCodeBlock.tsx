@@ -14,6 +14,7 @@ export default function ReactCreateCodeBlock() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
+  const $extensions = useSelection('extensions');
   const $sourceUrl = useSelection('sourceUrl');
   const $template = useSelection('template');
 
@@ -21,6 +22,7 @@ export default function ReactCreateCodeBlock() {
     useCase: $useCase,
     skin: $skin,
     renderer: $renderer,
+    extensions: $extensions,
     sourceUrl: $sourceUrl,
   });
   const files = installationProjectFiles('react', $template);

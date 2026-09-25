@@ -1,3 +1,4 @@
+import { INSTALLATION_EXTENSIONS } from './extensions';
 import {
   INSTALLATION_PROJECTS,
   installationParameterForKey,
@@ -153,10 +154,10 @@ export function installationDecisionOrderFor({
       ? methods[0] === 'packaged'
         ? 'This guide uses packaged modules. Match the package manager to the project lockfile.'
         : methods[0] === 'shadcn'
-          ? 'This guide uses Shadcn to copy editable skin source. React can use Tailwind CSS or vanilla CSS; HTML, Vue, and Svelte use the HTML source catalog with vanilla CSS.'
+          ? 'This guide uses Shadcn to copy editable skin source. For React, use Tailwind in a new Shadcn app or an existing Tailwind app; otherwise use CSS. HTML, Vue, and Svelte use the HTML source catalog with CSS.'
           : 'This guide uses CDN scripts for plain HTML. Use an existing page when one is available, and scaffold a minimal Vite app only when no app exists.'
       : frameworks.includes('react')
-        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. For Shadcn, use Tailwind styling only when the app already uses Tailwind; otherwise use CSS. Use @videojs/html when the project needs CDN scripts.'
+        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. For Shadcn, use Tailwind in a new Shadcn app or an existing Tailwind app; otherwise use CSS. Use @videojs/html when the project needs CDN scripts.'
         : 'Use packaged modules by default, Shadcn when the project should own editable skin source, or CDN for a plain HTML integration. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
 
   return [
@@ -185,6 +186,11 @@ export function installationDecisionOrderFor({
       guidance:
         'Infer the adapter from the source when possible, such as hls for an .m3u8 URL or mux-video for Mux playback.',
     },
+    {
+      title: 'Choose extensions',
+      guidance:
+        'Mux Data is included by default for Mux video and audio sources. Add Google Cast when a standard or live video player with a ready-made skin should cast a compatible source. Use none when no extension is needed.',
+    },
     { title: 'Choose how to install', guidance: methodGuidance },
     {
       title: 'Return one explicit plan',
@@ -205,7 +211,7 @@ export function installationOptionDefinitionsFor(
   const templates = unique(
     methods.flatMap((method) => frameworks.flatMap((framework) => installationTemplatesForMethod(framework, method)))
   );
-  const templateDefaults = cdnOnly ? (['vite'] as const) : unique(frameworks.map(defaultInstallationTemplate));
+  const templateDefaults = cdnOnly ? (['none'] as const) : unique(frameworks.map(defaultInstallationTemplate));
   const stylings = unique(sourceFrameworks.flatMap((framework) => registryStylings(framework)));
   const definitions: InstallationOptionDefinition[] = [
     optionDefinition('method', {
@@ -245,6 +251,11 @@ export function installationOptionDefinitionsFor(
       default: "the selected preset's first compatible media source",
       description: 'The media source or playback adapter. See the preset compatibility map below.',
     }),
+    optionDefinition('extensions', {
+      values: ['none', ...INSTALLATION_EXTENSIONS],
+      default: 'mux-data for Mux media; none otherwise',
+      description: 'A comma-separated list of optional player extensions compatible with the selected player.',
+    }),
     optionDefinition('sourceUrl', {
       default: 'a working Video.js demo source',
       description: 'The media URL placed in the generated player example.',
@@ -256,12 +267,13 @@ export function installationOptionDefinitionsFor(
       values: PACKAGE_MANAGERS,
       default: "the project's package manager; otherwise pnpm when available",
       description: 'The command runner used for app setup, packages, Shadcn, and the development server.',
+      appliesWhen: '--method is not cdn with --template none',
     }),
     optionDefinition('template', {
       values: templates,
       default: templateDefaults.length === 1 ? templateDefaults[0]! : 'next for React; vite otherwise',
       description:
-        'The app setup and file layout. `none` keeps an existing plain HTML setup and is unavailable with Shadcn.',
+        'The app setup and file layout. CDN defaults to `none` for an existing page and `vite` for a new app. `none` is unavailable with Shadcn.',
     })
   );
 

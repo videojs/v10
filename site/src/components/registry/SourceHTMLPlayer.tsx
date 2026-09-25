@@ -61,6 +61,7 @@ export default function SourceHTMLPlayer({ part }: Props) {
   const options = {
     useCase,
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     componentsAlias: project.componentsImportAlias ?? project.componentsAlias,
     componentsDirectory: project.componentsDirectory,

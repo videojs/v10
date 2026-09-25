@@ -30,6 +30,14 @@ describe('generateCdnCode', () => {
     );
   });
 
+  it('includes selected extension bundles', () => {
+    expect(generateCdnCode('default-video', 'video', 'hls', manifest, CDN_BASE, ['google-cast'])).toEqual(
+      `<script type="module" src="${CDN_BASE}/video.js"></script>
+<script type="module" src="${CDN_BASE}/media/hlsjs-video.js"></script>
+<script type="module" src="${CDN_BASE}/extensions/google-cast.js"></script>`
+    );
+  });
+
   it('includes the mux media bundle and the Mux Data extension bundle when renderer is mux-video', () => {
     expect(generateCdnCode('default-video', 'video', 'mux-video', manifest)).toEqual(
       `<script type="module" src="${CDN_BASE}/video.js"></script>

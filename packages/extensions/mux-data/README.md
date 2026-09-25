@@ -16,8 +16,8 @@ Using an AI coding agent? Install the [Video.js skill](https://github.com/videoj
 match this package version before writing code. Then print installation instructions that include Mux Data:
 
 ```sh
-npx @videojs/react agents init --media mux-video
-npx @videojs/html agents init --media mux-video
+npx @videojs/react agents init --media mux-video --extensions mux-data
+npx @videojs/html agents init --media mux-video --extensions mux-data
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ import '@videojs/html/extensions/mux-data';
 ```
 
 ```tsx
-import { MuxDataExtension } from '@videojs/react/extensions/mux-data';
+import { MuxData } from '@videojs/react/extensions/mux-data';
 ```
 
 Low-level consumers can import the framework-neutral `MuxDataExtension` extension from `@videojs/mux-data`.

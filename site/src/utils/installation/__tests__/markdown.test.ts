@@ -50,8 +50,9 @@ describe('resolveInstallationMarkdownPlan', () => {
       project: 'new',
       preset: 'audio',
       skin: 'minimal',
-      media: 'spotify',
-      'source-url': 'https://open.spotify.com/episode/example',
+      media: 'mux-audio',
+      extensions: 'mux-data',
+      'source-url': 'https://stream.mux.com/example.m3u8',
       'package-manager': 'pnpm',
       template: 'vite',
       styling: 'css',
@@ -64,7 +65,8 @@ describe('resolveInstallationMarkdownPlan', () => {
       sourceFramework: 'html',
       preset: 'audio',
       skinFlag: 'minimal',
-      media: 'spotify',
+      media: 'mux-audio',
+      extensions: ['mux-data'],
       packageManager: 'pnpm',
       template: 'vite',
       styling: 'css',
@@ -269,6 +271,20 @@ HTML next step
     expect(rendered?.body).toContain('- `framework`: `vue`');
     expect(rendered?.body).toContain('HTML next step');
     expect(rendered?.body).not.toContain('React next step');
+  });
+
+  it('renders selected extensions through the web Markdown path', () => {
+    const rendered = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/shadcn',
+      new URLSearchParams({ framework: 'vue', media: 'hls', extensions: 'google-cast' }),
+      '10.0.0-test'
+    );
+
+    expect(rendered).toMatchObject({ status: 200, privateResponse: false });
+    expect(rendered?.body).toContain('- `extensions`: `google-cast`');
+    expect(rendered?.body).toContain('@videojs/google-cast@10.0.0-test');
+    expect(rendered?.body).toContain('<google-cast></google-cast>');
   });
 
   it('can preserve both source branches in the static edge template', () => {

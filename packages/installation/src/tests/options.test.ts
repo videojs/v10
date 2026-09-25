@@ -64,7 +64,7 @@ describe('installationOptionDefinitionsFor', () => {
     const definitions = installationOptionDefinitionsFor({ methods: ['cdn'], frameworks: ['html'] });
 
     expect(valuesFor(definitions, '--template')).toEqual(['vite', 'none']);
-    expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('vite');
+    expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('none');
   });
 });
 

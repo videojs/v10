@@ -13,6 +13,7 @@ export default function VueCreateCodeBlock() {
     useCase,
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
   });
 
   return (

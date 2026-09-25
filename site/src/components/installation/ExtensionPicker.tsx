@@ -1,0 +1,56 @@
+import {
+  getInstallationExtension,
+  installationExtensionsFor,
+  INSTALLATION_EXTENSIONS,
+  type InstallationExtension,
+} from '@videojs/installation';
+import type { ReactNode } from 'react';
+
+import Cast from '@/assets/icons/cast.svg?react';
+import MuxLogo from '@/assets/logos/mux-small.svg?react';
+import CardCheckboxGroup from '@/components/CardCheckboxGroup';
+import { extensions } from '@/stores/installation';
+
+import { useSelection } from './useSelection';
+
+const EXTENSION_MEDIA = {
+  'google-cast': <Cast className="size-6" />,
+  'mux-data': <MuxLogo className="w-7" />,
+} satisfies Record<InstallationExtension, ReactNode>;
+
+const EXTENSION_OPTIONS = INSTALLATION_EXTENSIONS.map((extension) => {
+  const definition = getInstallationExtension(extension);
+
+  return {
+    value: extension,
+    label: definition.label,
+    description: definition.description,
+    media: EXTENSION_MEDIA[extension],
+  };
+});
+
+export default function ExtensionPicker() {
+  const selected = useSelection('extensions');
+  const useCase = useSelection('useCase');
+  const skin = useSelection('skin');
+  const renderer = useSelection('renderer');
+  const available = installationExtensionsFor(useCase, skin, renderer);
+
+  return (
+    <>
+      <CardCheckboxGroup
+        value={selected}
+        onChange={(values) =>
+          extensions.set(
+            INSTALLATION_EXTENSIONS.filter((extension) => values.includes(extension) && available.includes(extension))
+          )
+        }
+        options={EXTENSION_OPTIONS}
+        aria-label="Select extensions"
+      />
+      <p data-extension-empty className="text-muted text-p3">
+        No optional extensions apply to these selections.
+      </p>
+    </>
+  );
+}

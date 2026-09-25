@@ -1,15 +1,21 @@
 import {
   containsControlCharacter,
+  defaultInstallationExtensions,
   fitSelectionToPreset,
   getInstallationPreset,
+  INSTALLATION_EXTENSIONS,
   INSTALLATION_PRESETS,
   isInstallationFramework,
   isInstallationProject,
   isInstallationTemplate,
+  isInstallationExtension,
   isPackageManager,
   isSkinFlag,
   resolveInstallationTemplate,
   resolveInstallationTemplateForMethod,
+  installationExtensionsFor,
+  parseInstallationExtensions,
+  serializeInstallationExtensions,
   skinFromFlag,
   skinToFlag,
   useCaseFromPreset,
@@ -17,6 +23,7 @@ import {
   type InstallationFramework,
   type InstallationProject,
   type InstallationTemplate,
+  type InstallationExtension,
   type Renderer,
   type Skin,
   type UseCase,
@@ -25,8 +32,8 @@ import {
 import type { InstallationRouteSegment } from './routes';
 
 /**
- * The installation choices encoded in the page URL. `package-manager` controls app setup and development commands on
- * every route, including CDN.
+ * The installation choices encoded in the page URL. `package-manager` controls app setup and development commands
+ * whenever the selected path uses them.
  */
 export interface InstallationUiSelection {
   framework: InstallationFramework;
@@ -35,6 +42,7 @@ export interface InstallationUiSelection {
   useCase: UseCase;
   skin: Skin;
   renderer: Renderer;
+  extensions: readonly InstallationExtension[];
   sourceUrl: string;
   installMethod: InstallMethod;
 }
@@ -46,6 +54,7 @@ export const DEFAULT_SELECTION: InstallationUiSelection = {
   useCase: 'default-video',
   skin: 'video',
   renderer: 'html5-video',
+  extensions: [],
   sourceUrl: '',
   installMethod: 'pnpm',
 };
@@ -72,15 +81,19 @@ export function normalizeInstallationSelectionForRoute(
 
   if (route === 'cdn' || normalized.template === 'none') normalized.project = 'existing';
 
-  if (route !== 'shadcn') return normalized;
+  if (route === 'shadcn') {
+    normalized.template = resolveInstallationTemplateForMethod(framework, normalized.template, 'shadcn');
 
-  normalized.template = resolveInstallationTemplateForMethod(framework, normalized.template, 'shadcn');
+    const useCase = normalized.useCase === 'background-video' ? 'default-video' : normalized.useCase;
+    const selectedSkin = normalized.skin === 'none' ? skinFromFlag('default', useCase) : normalized.skin;
+    const fitted = fitSelectionToPreset(useCase, selectedSkin, normalized.renderer);
 
-  const useCase = normalized.useCase === 'background-video' ? 'default-video' : normalized.useCase;
-  const selectedSkin = normalized.skin === 'none' ? skinFromFlag('default', useCase) : normalized.skin;
-  const fitted = fitSelectionToPreset(useCase, selectedSkin, normalized.renderer);
+    normalized = { ...normalized, useCase, skin: fitted.skin, renderer: fitted.media };
+  }
 
-  normalized = { ...normalized, useCase, skin: fitted.skin, renderer: fitted.media };
+  const availableExtensions = installationExtensionsFor(normalized.useCase, normalized.skin, normalized.renderer);
+
+  normalized.extensions = normalized.extensions.filter((extension) => availableExtensions.includes(extension));
 
   return normalized;
 }
@@ -126,6 +139,19 @@ export function parseInstallationSearch(
   const media = params.get('media') ?? '';
 
   selection.renderer = renderers.find((candidate) => candidate === media) ?? renderers[0]!;
+
+  const requestedExtensions = params.get('extensions');
+  const availableExtensions = installationExtensionsFor(selection.useCase, selection.skin, selection.renderer);
+
+  selection.extensions =
+    requestedExtensions === null
+      ? defaultInstallationExtensions(selection.renderer)
+      : INSTALLATION_EXTENSIONS.filter(
+          (extension) =>
+            parseInstallationExtensions(requestedExtensions).some(
+              (requested) => isInstallationExtension(requested) && requested === extension
+            ) && availableExtensions.includes(extension)
+        );
 
   const installMethod = params.get('package-manager') ?? '';
 
@@ -179,6 +205,12 @@ export function serializeInstallationSearch(selection: InstallationUiSelection, 
   else write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
 
   write('media', selection.renderer, defaults.renderer);
+  const extensionValue = serializeInstallationExtensions(
+    selection.extensions ?? defaultInstallationExtensions(selection.renderer)
+  );
+  const defaultExtensionValue = serializeInstallationExtensions(defaultInstallationExtensions(selection.renderer));
+
+  write('extensions', extensionValue, defaultExtensionValue);
   write('package-manager', selection.installMethod, DEFAULT_SELECTION.installMethod);
   write('source-url', selection.sourceUrl, '');
 
@@ -210,9 +242,11 @@ export function serializeInstallationSearchForRoute(
     }
   }
 
-  if (route === 'cdn' && selection.template !== 'none') canonicalParams.delete('template');
-
-  if (route === 'cdn') canonicalParams.delete('project');
+  if (route === 'cdn') {
+    canonicalParams.delete('package-manager');
+    canonicalParams.delete('project');
+    canonicalParams.delete('template');
+  }
 
   const string = canonicalParams.toString();
 

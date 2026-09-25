@@ -46,6 +46,7 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const $renderer = useSelection('renderer');
+  const $extensions = useSelection('extensions');
   const selectedInstallMethod = useSelection('installMethod');
   const $sourceUrl = useSelection('sourceUrl');
   const $template = useSelection('template');
@@ -56,6 +57,7 @@ export default function HTMLUsageCodeBlock({ installMethod }: Props) {
     useCase: $useCase,
     skin: $skin,
     renderer: $renderer,
+    extensions: $extensions,
     sourceUrl: $sourceUrl,
     installMethod: method,
   });

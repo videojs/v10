@@ -13,6 +13,7 @@ export default function SvelteCreateCodeBlock() {
     useCase,
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
   });
 
   return (

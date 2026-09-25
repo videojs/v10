@@ -18,6 +18,7 @@ export default function VueConfigCodeBlock() {
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
   });
   const config = code[filename];
 

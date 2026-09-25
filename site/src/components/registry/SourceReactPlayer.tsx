@@ -19,6 +19,7 @@ export default function SourceReactPlayer() {
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     componentsAlias: project.componentsAlias,
     styling: resolveRegistryStyling('react', useRegistryStyling()),

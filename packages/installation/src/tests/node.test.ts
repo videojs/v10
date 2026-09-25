@@ -73,6 +73,46 @@ describe('runAgentsInit', () => {
     expect(result.stdout).not.toContain('### `index.html`');
   });
 
+  it('adds selected extensions to packages and player code', () => {
+    const result = runAgentsInit('react', '10.0.0', [
+      'agents',
+      'init',
+      '--media',
+      'hls',
+      '--extensions',
+      'google-cast',
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('@videojs/google-cast@10.0.0');
+    expect(result.stdout).toContain("import { GoogleCast } from '@videojs/react/extensions/google-cast'");
+    expect(result.stdout).toContain('<GoogleCast />');
+  });
+
+  it('omits the unused package manager for an existing CDN page', () => {
+    const result = runAgentsInit('html', '10.0.0', [
+      'agents',
+      'init',
+      '--method',
+      'cdn',
+      '--project',
+      'existing',
+      '--template',
+      'none',
+      '--json',
+    ]);
+    const value = JSON.parse(result.stdout);
+
+    expect(result.exitCode).toBe(0);
+    expect(value.selectedOptions['package-manager']).toBeUndefined();
+    expect(value.defaultedOptions).not.toContain('package-manager');
+    expect(
+      value.steps
+        .flatMap(({ blocks }: { blocks: Array<{ code: string }> }) => blocks.map(({ code }) => code))
+        .join('\n')
+    ).not.toContain('pnpm');
+  });
+
   it('uses an existing HTML setup without inventing scaffold or run commands', () => {
     const result = runAgentsInit('html', '10.0.0', [
       'agents',
@@ -438,6 +478,8 @@ describe('runAgentsInit', () => {
               'default',
               '--media',
               'html5-video',
+              '--extensions',
+              'none',
               '--source-url',
               INSTALLATION_DEMO_SOURCES.videoMp4,
               '--package-manager',

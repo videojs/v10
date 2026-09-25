@@ -22,6 +22,7 @@ describe('parseInstallationSearch', () => {
       useCase: 'live-video',
       skin: 'minimal-video',
       renderer: 'hls',
+      extensions: [],
       sourceUrl: '',
       installMethod: 'npm',
     });
@@ -31,6 +32,12 @@ describe('parseInstallationSearch', () => {
     expect(parseInstallationSearch('?preset=audio').skin).toBe('audio');
     expect(parseInstallationSearch('?preset=audio&skin=minimal').skin).toBe('minimal-audio');
     expect(parseInstallationSearch('?preset=audio&skin=none').skin).toBe('none');
+  });
+
+  it('defaults Mux Data for Mux media and preserves an explicit opt-out', () => {
+    expect(parseInstallationSearch('?media=mux-video').extensions).toEqual(['mux-data']);
+    expect(parseInstallationSearch('?media=mux-video&extensions=none').extensions).toEqual([]);
+    expect(parseInstallationSearch('?media=hls&extensions=google-cast').extensions).toEqual(['google-cast']);
   });
 
   it('drops media the preset cannot play and ignores unknown values', () => {
@@ -101,6 +108,7 @@ describe('serializeInstallationSearch', () => {
         useCase: 'live-video',
         skin: 'minimal-video',
         renderer: 'hls',
+        extensions: [],
         sourceUrl: '',
         installMethod: 'pnpm',
       })
@@ -115,6 +123,7 @@ describe('serializeInstallationSearch', () => {
       useCase: 'default-audio',
       skin: 'none',
       renderer: 'spotify',
+      extensions: [],
       sourceUrl: 'https://open.spotify.com/track/1',
       installMethod: 'pnpm',
     } as const;
@@ -137,6 +146,23 @@ describe('serializeInstallationSearch', () => {
     });
   });
 
+  it('writes non-default extension choices', () => {
+    expect(
+      serializeInstallationSearch({
+        ...DEFAULT_SELECTION,
+        renderer: 'hls',
+        extensions: ['google-cast'],
+      })
+    ).toBe('?media=hls&extensions=google-cast');
+    expect(
+      serializeInstallationSearch({
+        ...DEFAULT_SELECTION,
+        renderer: 'mux-video',
+        extensions: [],
+      })
+    ).toBe('?media=mux-video&extensions=none');
+  });
+
   it('omits the hidden skin choice for background video', () => {
     const background = parseInstallationSearch('?preset=background-video&skin=minimal&media=background-video');
 
@@ -157,9 +183,7 @@ describe('serializeInstallationSearchForRoute', () => {
   });
 
   it('keeps the existing-site setup on the CDN route', () => {
-    expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, template: 'none' })).toBe(
-      '?template=none'
-    );
+    expect(serializeInstallationSearchForRoute('cdn', { ...DEFAULT_SELECTION, template: 'none' })).toBe('');
   });
 
   it('keeps the human CDN route existing-only', () => {

@@ -1,10 +1,19 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { installMethod, renderer, skin, sourceUrl, syncInstallationSelectionFromUrl, useCase } from '../installation';
+import {
+  extensions,
+  installMethod,
+  renderer,
+  skin,
+  sourceUrl,
+  syncInstallationSelectionFromUrl,
+  useCase,
+} from '../installation';
 
 describe('useCase', () => {
   afterEach(() => {
     window.history.replaceState(null, '', '/');
+    extensions.set([]);
   });
 
   it('fits the skin and media to the new preset from the store values', () => {
@@ -43,6 +52,22 @@ describe('useCase', () => {
     expect(renderer.get()).toBe('html5-video');
     expect(installMethod.get()).toBe('pnpm');
     expect(sourceUrl.get()).toBe('');
+  });
+
+  it('keeps extensions in sync with media and explicit URL choices', () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/react?media=mux-video&extensions=none');
+    syncInstallationSelectionFromUrl();
+
+    expect(extensions.get()).toEqual([]);
+
+    renderer.set('hls');
+    extensions.set(['google-cast']);
+
+    expect(window.location.search).toContain('extensions=google-cast');
+
+    renderer.set('html5-video');
+
+    expect(extensions.get()).toEqual([]);
   });
 
   it('normalizes invalid URL picks to the selection shown by the page', () => {

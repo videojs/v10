@@ -141,6 +141,35 @@ describe('resolveInstallationSelection', () => {
     ).toMatchObject({ ok: true, selection: { media: 'hls-background-video' } });
   });
 
+  it('resolves extension defaults and validates explicit choices', () => {
+    expect(resolveInstallationSelection('react', { media: 'mux-video' })).toMatchObject({
+      ok: true,
+      selection: { extensions: ['mux-data'] },
+    });
+    expect(resolveInstallationSelection('react', { media: 'mux-video', extensions: 'none' })).toMatchObject({
+      ok: true,
+      selection: { extensions: [] },
+    });
+    expect(resolveInstallationSelection('react', { media: 'hls', extensions: 'google-cast' })).toMatchObject({
+      ok: true,
+      selection: { extensions: ['google-cast'] },
+    });
+    expect(resolveInstallationSelection('react', { media: 'html5-video', extensions: 'google-cast' })).toMatchObject({
+      ok: false,
+      errors: [{ field: 'extensions' }],
+    });
+  });
+
+  it('defaults existing CDN pages to no scaffold without defaulting a package manager', () => {
+    const result = resolveInstallationSelection('html', { method: 'cdn', project: 'existing' });
+
+    expect(result).toMatchObject({
+      ok: true,
+      selection: { template: 'none' },
+    });
+    expect(result.ok && result.selection.defaulted).not.toContain('packageManager');
+  });
+
   it('accepts every compatible packaged combination', () => {
     const owners = [
       ['react', ['react']],

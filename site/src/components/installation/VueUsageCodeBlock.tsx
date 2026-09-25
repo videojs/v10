@@ -12,6 +12,7 @@ export default function VueUsageCodeBlock() {
   const code = generateVueUsageCode({
     useCase,
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     playerImport: project.playerImport,
   });

@@ -119,6 +119,12 @@ describe('generateHTMLInstallCode', () => {
     expect(dash.pnpm).toBe('pnpm add @videojs/html @videojs/dash-video');
   });
 
+  it('installs selected extensions', () => {
+    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls', extensions: ['google-cast'] }, manifest);
+
+    expect(result.pnpm).toBe('pnpm add @videojs/html @videojs/hlsjs-video @videojs/google-cast');
+  });
+
   it('installs the adapter package for every embed renderer', () => {
     const expected = [
       ['cloudflare', '@videojs/cloudflare-video'],
@@ -175,6 +181,12 @@ describe('generateReactInstallCode', () => {
 
     expect(result.npm).toBe('npm install @videojs/react @videojs/mux-video @videojs/mux-data');
   });
+
+  it('installs Google Cast when selected', () => {
+    const result = generateReactInstallCode({ renderer: 'hls', extensions: ['google-cast'] });
+
+    expect(result.pnpm).toBe('pnpm add @videojs/react @videojs/hlsjs-video @videojs/google-cast');
+  });
 });
 
 describe('generateHTMLUsageCode', () => {
@@ -193,6 +205,13 @@ describe('generateHTMLUsageCode', () => {
     expect(result.imports).toBeDefined();
     expect(result.imports).toContain("import '@videojs/html/video/player'");
     expect(result.imports).toContain("import '@videojs/html/video/skin'");
+  });
+
+  it('registers and renders selected extensions', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls', extensions: ['google-cast'] });
+
+    expect(result.imports).toContain("import '@videojs/html/extensions/google-cast'");
+    expect(result.html).toContain('<google-cast></google-cast>');
   });
 
   it('omits TypeScript imports when CDN', () => {

@@ -56,7 +56,7 @@ describe('installationProjectCreateCommand', () => {
       'pnpm create vite . --template react-ts --no-interactive\npnpm install'
     );
     expect(installationProjectCreateCommand('vue', 'nuxt', 'npm')).toBe(
-      'npm create nuxt@latest . -- --template minimal --packageManager npm --no-gitInit --no-modules --force'
+      'npm create nuxt@latest . -- --template minimal --packageManager npm --no-gitInit --no-modules'
     );
     expect(installationProjectCreateCommand('svelte', 'sveltekit', 'pnpm')).toBe(
       'pnpm dlx sv create --template minimal --types ts --no-add-ons --install pnpm .'

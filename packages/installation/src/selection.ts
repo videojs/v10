@@ -2,6 +2,15 @@ import { rendererSupportsCdn } from './cdn-code';
 import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion } from './defaults';
 import { detectRenderer, detectRendererCandidates } from './detect-renderer';
 import {
+  defaultInstallationExtensions,
+  INSTALLATION_EXTENSIONS,
+  installationExtensionsFor,
+  isInstallationExtension,
+  parseInstallationExtensions,
+  serializeInstallationExtensions,
+  type InstallationExtension,
+} from './extensions';
+import {
   INSTALLATION_PROJECTS,
   PACKAGE_MANAGERS,
   type InstallationInput,
@@ -57,6 +66,7 @@ export interface InstallationSelection {
   skin: Skin;
   skinFlag: SkinFlag;
   media: Renderer;
+  extensions: readonly InstallationExtension[];
   sourceUrl: string;
   packageManager: PackageManager;
   template: InstallationTemplate;
@@ -134,7 +144,7 @@ export function resolveInstallationTemplateForMethod(
   method: InstallationMethod
 ): InstallationTemplate {
   const templates = installationTemplatesForMethod(framework, method);
-  const fallback = method === 'cdn' ? 'vite' : defaultInstallationTemplate(framework);
+  const fallback = method === 'cdn' ? 'none' : defaultInstallationTemplate(framework);
 
   return template && includes(templates, template) ? template : fallback;
 }
@@ -304,20 +314,41 @@ export function resolveInstallationSelection(
     });
   }
 
-  const defaultPackageManager = defaults.packageManager ?? 'pnpm';
-  const packageManagerValue = defaultValue('packageManager', defaultPackageManager);
-  const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'pnpm', errors);
+  const availableExtensions = installationExtensionsFor(useCase, skin, media);
+  const extensionValues =
+    input.extensions === undefined
+      ? defaultInstallationExtensions(media)
+      : [...new Set(parseInstallationExtensions(input.extensions))];
+
+  if (input.extensions === undefined) defaulted.push('extensions');
+
+  const requestedExtensions = new Set<InstallationExtension>();
+
+  for (const extension of extensionValues) {
+    if (!isInstallationExtension(extension)) {
+      errors.push({
+        field: 'extensions',
+        value: extension,
+        message: 'Expected a comma-separated list containing google-cast, mux-data, or none.',
+      });
+    } else if (!availableExtensions.includes(extension)) {
+      errors.push({
+        field: 'extensions',
+        value: extension,
+        message: `${extension} does not apply to the selected preset, skin, and media source.`,
+      });
+    } else {
+      requestedExtensions.add(extension);
+    }
+  }
+
+  const extensions = INSTALLATION_EXTENSIONS.filter((extension) => requestedExtensions.has(extension));
 
   const sourceFramework = sourceFrameworkFor(framework);
   const availableTemplates = installationTemplatesForMethod(framework, method);
-  const templateValue = defaultValue('template', defaultInstallationTemplate(framework));
-  const template = resolveChoice(
-    'template',
-    templateValue,
-    availableTemplates,
-    method === 'cdn' ? 'vite' : defaultInstallationTemplate(framework),
-    errors
-  );
+  const defaultTemplate = method === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
+  const templateValue = defaultValue('template', defaultTemplate);
+  const template = resolveChoice('template', templateValue, availableTemplates, defaultTemplate, errors);
 
   if (template === 'none' && project === 'new') {
     errors.push({
@@ -327,6 +358,13 @@ export function resolveInstallationSelection(
         'A new project needs a named app setup. Choose a template, or use --project existing with --template none.',
     });
   }
+
+  const defaultPackageManager = defaults.packageManager ?? 'pnpm';
+  const packageManagerValue =
+    method === 'cdn' && template === 'none'
+      ? (input.packageManager ?? defaultPackageManager)
+      : defaultValue('packageManager', defaultPackageManager);
+  const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'pnpm', errors);
 
   let styling: RegistryStyling | null = null;
 
@@ -386,6 +424,7 @@ export function resolveInstallationSelection(
       skin,
       skinFlag,
       media,
+      extensions,
       sourceUrl,
       packageManager,
       template,
@@ -404,6 +443,7 @@ export function selectionToInput(selection: InstallationSelection): Required<Ins
     preset: selection.preset,
     skin: selection.skinFlag,
     media: selection.media,
+    extensions: serializeInstallationExtensions(selection.extensions),
     sourceUrl: selection.sourceUrl,
     packageManager: selection.packageManager,
     template: selection.template,

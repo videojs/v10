@@ -114,6 +114,8 @@ function installationPlanJson(plan: ReturnType<typeof createInstallationPlan>) {
   for (const parameter of INSTALLATION_PARAMETERS) {
     if (parameter.key === 'skin' && selection.useCase === 'background-video') continue;
 
+    if (parameter.key === 'packageManager' && selection.method === 'cdn' && selection.template === 'none') continue;
+
     if (parameter.key === 'styling' && selection.styling === null) continue;
 
     selectedOptions[parameter.query] = input[parameter.key];

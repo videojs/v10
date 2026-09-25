@@ -1,15 +1,18 @@
 import { generateCdnCode } from './cdn-code';
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
+import {
+  defaultInstallationExtensions,
+  getInstallationExtension,
+  installationExtensionsFor,
+  type InstallationExtension,
+} from './extensions';
 import { getInstallationPlayerComponentName, getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
   getAdapterPackage,
   getInstallationRenderer,
   getMediaSubpath,
-  isMuxRenderer,
   isPresetRenderer,
   isVideoLikeRenderer,
-  MUX_DATA_EXTENSION_SUBPATH,
-  MUX_DATA_PACKAGE,
   type Renderer,
 } from './renderers';
 import type { InstallMethod } from './selection';
@@ -20,6 +23,7 @@ export interface InstallationOptions {
   useCase: UseCase;
   skin: Skin;
   renderer: Renderer;
+  extensions?: readonly InstallationExtension[];
   sourceUrl: string;
   installMethod: InstallMethod;
 }
@@ -60,6 +64,17 @@ export function validateInstallationOptions(opts: InstallationOptions): Validati
     return { valid: false, reason: 'CDN installation is not supported for React. Use npm, pnpm, yarn, or bun.' };
   }
 
+  const availableExtensions = installationExtensionsFor(opts.useCase, opts.skin, opts.renderer);
+  const selectedExtensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const invalidExtension = selectedExtensions.find((extension) => !availableExtensions.includes(extension));
+
+  if (invalidExtension) {
+    return {
+      valid: false,
+      reason: `Invalid extension "${invalidExtension}" for the selected preset, skin, and media source. Valid options: ${availableExtensions.join(', ') || 'none'}`,
+    };
+  }
+
   return { valid: true };
 }
 
@@ -91,14 +106,15 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
 /** Packages a source install still needs after the registry item installs the core React or HTML package. */
 export function generateSourceMediaInstallCode(
   renderer: Renderer,
-  packageVersion?: string
+  packageVersion?: string,
+  extensions: readonly InstallationExtension[] = defaultInstallationExtensions(renderer)
 ): PackageManagerInstallCommands | null {
   const packages: string[] = [];
   const adapter = getAdapterPackage(renderer);
 
   if (adapter !== null) packages.push(adapter);
 
-  if (isMuxRenderer(renderer)) packages.push(MUX_DATA_PACKAGE);
+  packages.push(...extensions.map((extension) => getInstallationExtension(extension).packageName));
 
   if (packages.length === 0) return null;
 
@@ -123,6 +139,7 @@ function packageManagerInstallCommands(packages: string): PackageManagerInstallC
 function installPackages(
   framework: '@videojs/html' | '@videojs/react',
   renderer: Renderer,
+  extensions: readonly InstallationExtension[],
   packageVersion?: string
 ): string {
   const adapter = getAdapterPackage(renderer);
@@ -130,9 +147,7 @@ function installPackages(
 
   if (adapter !== null) packages.push(adapter);
 
-  // Mux media pair with the separate Mux Data extension by default, so the
-  // install command pulls in its package as well.
-  if (isMuxRenderer(renderer)) packages.push(MUX_DATA_PACKAGE);
+  packages.push(...extensions.map((extension) => getInstallationExtension(extension).packageName));
 
   return versionPackages(packages, packageVersion);
 }
@@ -142,15 +157,16 @@ function installPackages(
 // ---------------------------------------------------------------------------
 
 export function generateHTMLInstallCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>,
   cdnMediaSubpaths: readonly string[],
   cdnBase?: string,
   packageVersion?: string
 ): HTMLInstallCode {
-  const packages = installPackages('@videojs/html', opts.renderer, packageVersion);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const packages = installPackages('@videojs/html', opts.renderer, extensions, packageVersion);
 
   return {
-    cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths, cdnBase),
+    cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths, cdnBase, extensions),
     ...packageManagerInstallCommands(packages),
   };
 }
@@ -160,10 +176,13 @@ export function generateHTMLInstallCode(
 // ---------------------------------------------------------------------------
 
 export function generateReactInstallCode(
-  opts: Pick<InstallationOptions, 'renderer'> = { renderer: 'html5-video' },
+  opts: Pick<InstallationOptions, 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>> = {
+    renderer: 'html5-video',
+  },
   packageVersion?: string
 ): PackageManagerInstallCommands {
-  const packages = installPackages('@videojs/react', opts.renderer, packageVersion);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const packages = installPackages('@videojs/react', opts.renderer, extensions, packageVersion);
 
   return packageManagerInstallCommands(packages);
 }
@@ -198,36 +217,37 @@ export function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): strin
   return getSkinFile(skin) === 'minimal-skin' ? `${prefix}-minimal-skin` : `${prefix}-skin`;
 }
 
-// The media element line, plus the Mux Data extension for Mux media. Mux Data is
-// a separate, opt-in extension included here by default for Mux-hosted playback —
-// no environment key required — placed as a sibling of the media element.
 function generateMediaMarkup(
   tag: string,
   src: string,
   playsInline: string,
-  renderer: Renderer,
+  extensions: readonly InstallationExtension[],
   indent: string
 ): string {
-  return generateMediaMarkupWithSource(tag, `src="${escapeHTMLAttribute(src)}"`, playsInline, renderer, indent);
+  return generateMediaMarkupWithSource(tag, `src="${escapeHTMLAttribute(src)}"`, playsInline, extensions, indent);
 }
 
 function generateMediaMarkupWithSource(
   tag: string,
   sourceAttribute: string,
   playsInline: string,
-  renderer: Renderer,
+  extensions: readonly InstallationExtension[],
   indent: string
 ): string {
   const mediaEl = `${indent}<${tag} ${sourceAttribute}${playsInline}></${tag}>`;
+  const extensionMarkup = extensions.map((extension) => {
+    const { htmlTag } = getInstallationExtension(extension);
 
-  if (!isMuxRenderer(renderer)) return mediaEl;
+    if (extension !== 'mux-data') return `${indent}<${htmlTag}></${htmlTag}>`;
 
-  return `${mediaEl}
-${indent}<!--
-${indent}    Mux Data monitors playback quality. It is a separate,
-${indent}    opt-in component, included by default for Mux-hosted playback.
+    return `${indent}<!--
+${indent}    Mux Data monitors playback quality and is selected by default
+${indent}    for Mux video and audio sources.
 ${indent}  -->
-${indent}<mux-data></mux-data>`;
+${indent}<${htmlTag}></${htmlTag}>`;
+  });
+
+  return [mediaEl, ...extensionMarkup].join('\n');
 }
 
 function generateHTMLMarkup(
@@ -235,6 +255,7 @@ function generateHTMLMarkup(
   skin: Skin,
   renderer: Renderer,
   url: string,
+  extensions: readonly InstallationExtension[],
   mediaSlot?: string,
   layout: 'inline' | 'stylesheet' = 'inline'
 ): string {
@@ -244,7 +265,7 @@ function generateHTMLMarkup(
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
   const mediaMarkup = (indent: string) =>
     mediaSlot === undefined
-      ? generateMediaMarkup(tag, src, playsInline, renderer, indent)
+      ? generateMediaMarkup(tag, src, playsInline, extensions, indent)
       : indentBlock(mediaSlot, indent);
 
   const skinMediaComment = `    <!--
@@ -317,7 +338,12 @@ media-container {
 </style>`;
 }
 
-function generateHTMLImports(useCase: UseCase, skin: Skin, renderer: Renderer): string {
+function generateHTMLImports(
+  useCase: UseCase,
+  skin: Skin,
+  renderer: Renderer,
+  extensions: readonly InstallationExtension[]
+): string {
   if (useCase === 'background-video') {
     const mediaSubpath = getMediaSubpath(renderer);
     const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
@@ -331,27 +357,27 @@ import '@videojs/html/background/video';${mediaImport}`;
   const mediaSubpath = getMediaSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
 
-  // Mux media pair with the separate Mux Data extension by default; register it
-  // alongside the Mux media import.
-  const muxDataImport = isMuxRenderer(renderer)
-    ? `\nimport '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`
-    : '';
+  const extensionImports = extensions
+    .map((extension) => `\nimport '@videojs/html/extensions/${getInstallationExtension(extension).htmlSubpath}';`)
+    .join('');
 
   if (skin === 'none') {
     return `import '@videojs/html/${group}/player';
-import '@videojs/html/ui/container';${mediaImport}${muxDataImport}`;
+import '@videojs/html/ui/container';${mediaImport}${extensionImports}`;
   }
 
   return `import '@videojs/html/${group}/player';
-import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}${muxDataImport}`;
+import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}${extensionImports}`;
 }
 
 export function generateHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'> &
+    Partial<Pick<InstallationOptions, 'extensions'>>
 ): HTMLUsageCode {
-  const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl, extensions);
   const imports =
-    opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer) : undefined;
+    opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer, extensions) : undefined;
   const result: HTMLUsageCode = { html };
 
   if (imports) result.imports = imports;
@@ -374,6 +400,7 @@ function getHTMLCustomElementTags(
   useCase: UseCase,
   skin: Skin,
   renderer: Renderer,
+  extensions: readonly InstallationExtension[],
   includePackagedSkin = true
 ): string[] {
   const tags = [getPlayerTag(useCase)];
@@ -388,7 +415,7 @@ function getHTMLCustomElementTags(
 
   if (mediaTag.includes('-')) tags.push(mediaTag);
 
-  if (isMuxRenderer(renderer)) tags.push('mux-data');
+  tags.push(...extensions.map((extension) => getInstallationExtension(extension).htmlTag));
 
   return [...new Set(tags)];
 }
@@ -439,10 +466,11 @@ ${indentBlock(media, '  ')}
 }
 
 export function generateVueCustomElementConfigCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>,
   includeSourceSkinElements = false
 ): VueCustomElementConfigCode {
-  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer, !includeSourceSkinElements)
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer, extensions, !includeSourceSkinElements)
     .map((tag) => `'${tag}'`)
     .join(', ');
   const elementSet = `const videoJsElements = new Set([${tags}]);`;
@@ -495,9 +523,12 @@ export default defineNuxtConfig({
   };
 }
 
-export function generateVueCreateCode(opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>): VueCreateCode {
-  const imports = generateHTMLImports(opts.useCase, opts.skin, opts.renderer);
-  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', '<slot />', 'stylesheet');
+export function generateVueCreateCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>
+): VueCreateCode {
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const imports = generateHTMLImports(opts.useCase, opts.skin, opts.renderer, extensions);
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', extensions, '<slot />', 'stylesheet');
   const style = generateSfcPlayerStyle(opts.useCase, opts.skin);
 
   return {
@@ -512,13 +543,15 @@ ${indentBlock(markup, '  ')}
 }
 
 export function generateVueUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & { playerImport?: string | undefined }
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> &
+    Partial<Pick<InstallationOptions, 'extensions'>> & { playerImport?: string | undefined }
 ): VueUsageCode {
   const componentName = getInstallationPlayerComponentName(opts.useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
   const tag = getRendererTag(opts.renderer);
   const playsInline = isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '';
-  const media = generateMediaMarkup(tag, source, playsInline, opts.renderer, '');
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const media = generateMediaMarkup(tag, source, playsInline, extensions, '');
 
   return {
     'App.vue': `<script setup lang="ts">
@@ -540,10 +573,11 @@ ${indentBlock(media, '    ')}
 }
 
 export function generateSvelteCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>
 ): SvelteCreateCode {
-  const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.renderer), '  ');
-  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', '<slot />', 'stylesheet');
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.renderer, extensions), '  ');
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', extensions, '<slot />', 'stylesheet');
   const style = generateSfcPlayerStyle(opts.useCase, opts.skin);
 
   return {
@@ -556,13 +590,15 @@ ${markup}${style ? `\n\n${style}` : ''}`,
 }
 
 export function generateSvelteUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & { playerImport?: string | undefined }
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> &
+    Partial<Pick<InstallationOptions, 'extensions'>> & { playerImport?: string | undefined }
 ): SvelteUsageCode {
   const componentName = getInstallationPlayerComponentName(opts.useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
   const tag = getRendererTag(opts.renderer);
   const playsInline = isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '';
-  const media = generateMediaMarkupWithSource(tag, `src={${JSON.stringify(source)}}`, playsInline, opts.renderer, '');
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const media = generateMediaMarkupWithSource(tag, `src={${JSON.stringify(source)}}`, playsInline, extensions, '');
   const component = (path: string) => `<script lang="ts">
   import ${componentName} from '${path}';
 </script>
@@ -601,22 +637,30 @@ function getPresetPlayer(useCase: UseCase): string {
   return getInstallationPlayerComponentName(useCase);
 }
 
-// The media JSX, plus the Mux Data extension for Mux media. Mux Data is a
-// separate, opt-in extension rendered here by default for Mux-hosted playback —
-// no environment key required — as a sibling of the media component.
-function generateReactMediaJsx(rendererJsx: string, renderer: Renderer, indent: string): string {
-  if (!isMuxRenderer(renderer)) return rendererJsx;
+function generateReactMediaJsx(
+  rendererJsx: string,
+  extensions: readonly InstallationExtension[],
+  indent: string
+): string {
+  const extensionJsx = extensions.map((extension) => {
+    const { reactComponent } = getInstallationExtension(extension);
 
-  return `${rendererJsx}
-${indent}{/* Mux Data monitors playback quality. It is a separate, opt-in
-${indent}    component, rendered by default for Mux-hosted playback. */}
-${indent}<MuxData />`;
+    if (extension !== 'mux-data') return `${indent}<${reactComponent} />`;
+
+    return `${indent}{/* Mux Data monitors playback quality and is selected by default
+${indent}    for Mux video and audio sources. */}
+${indent}<${reactComponent} />`;
+  });
+
+  return [rendererJsx, ...extensionJsx].join('\n');
 }
 
 export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> &
+    Partial<Pick<InstallationOptions, 'extensions'>>
 ): ReactCreateCode {
   const { useCase, skin, renderer } = opts;
+  const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
   const rendererComponent = getRendererComponent(renderer);
   const playerComponent = getPresetPlayer(useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, renderer, useCase);
@@ -666,21 +710,21 @@ export function generateReactCreateCode(
     }
   }
 
-  // Mux media pair with the separate Mux Data extension by default; render it
-  // alongside the Mux media and import it beside the media import.
-  const muxDataImport = isMuxRenderer(renderer)
-    ? `import { MuxData } from '@videojs/react/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`
-    : null;
+  const extensionImports = extensions.map((extension) => {
+    const { htmlSubpath, reactComponent } = getInstallationExtension(extension);
+
+    return `import { ${reactComponent} } from '@videojs/react/extensions/${htmlSubpath}';`;
+  });
 
   const playerJsx = skinComponent
     ? `    <${playerComponent}>
       <${skinComponent}${skinLayout}>
-        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
+        ${generateReactMediaJsx(rendererJsx, extensions, '        ')}
       </${skinComponent}>
     </${playerComponent}>`
     : `    <${playerComponent}>
       <Container${containerLayout}>
-        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
+        ${generateReactMediaJsx(rendererJsx, extensions, '        ')}
       </Container>
     </${playerComponent}>`;
 
@@ -689,7 +733,7 @@ export function generateReactCreateCode(
     ...(isNoSkin ? [`import { Container } from '@videojs/react';`] : []),
     presetImport,
     ...(mediaImport ? [mediaImport] : []),
-    ...(muxDataImport ? [muxDataImport] : []),
+    ...extensionImports,
   ].join('\n');
 
   return {
@@ -706,11 +750,13 @@ ${playerJsx}
 /** Build a React player around a skin component copied into the app by Shadcn. */
 export function generateSourceReactCreateCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> & {
+    extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     styling?: RegistryStyling;
   }
 ): ReactCreateCode {
   const { useCase, renderer } = opts;
+  const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
   const preset = getInstallationPreset(useCase);
   const playerComponent = getPresetPlayer(useCase);
   const rendererComponent = getRendererComponent(renderer);
@@ -739,9 +785,11 @@ export function generateSourceReactCreateCode(
   const imports = [
     `import { ${presetImports.join(', ')} } from '@videojs/react/${preset.group}';`,
     ...(mediaImport ? [mediaImport] : []),
-    ...(isMuxRenderer(renderer)
-      ? [`import { MuxData } from '@videojs/react/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`]
-      : []),
+    ...extensions.map((extension) => {
+      const { htmlSubpath, reactComponent } = getInstallationExtension(extension);
+
+      return `import { ${reactComponent} } from '@videojs/react/extensions/${htmlSubpath}';`;
+    }),
     `import { ${skinComponent} } from '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`,
   ].join('\n');
 
@@ -752,7 +800,7 @@ export default function Page() {
   return (
     <${playerComponent}>
       <${skinComponent}${skinLayout}>
-        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
+        ${generateReactMediaJsx(rendererJsx, extensions, '        ')}
       </${skinComponent}>
     </${playerComponent}>
   );
@@ -787,12 +835,14 @@ export interface SourceSvelteUsageCode extends SvelteUsageCode {
 
 function generateSourceHTMLUsageCodeWithImports(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     componentsDirectory?: string;
   },
   includeSkinRegistration = true
 ): SourceHTMLUsageCode {
   const { useCase, renderer } = opts;
+  const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
   const preset = getInstallationPreset(useCase);
   const mediaSubpath = getMediaSubpath(renderer);
   const tag = getRendererTag(renderer);
@@ -801,7 +851,9 @@ function generateSourceHTMLUsageCodeWithImports(
   const imports = [
     `import '@videojs/html/${preset.group}/player';`,
     ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
-    ...(isMuxRenderer(renderer) ? [`import '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`] : []),
+    ...extensions.map(
+      (extension) => `import '@videojs/html/extensions/${getInstallationExtension(extension).htmlSubpath}';`
+    ),
     ...(includeSkinRegistration
       ? [`import '${opts.componentsAlias ?? '@/components'}/videojs/${preset.flag}/skin';`]
       : []),
@@ -809,7 +861,7 @@ function generateSourceHTMLUsageCodeWithImports(
 
   return {
     imports,
-    media: generateMediaMarkup(tag, source, playsInline, renderer, ''),
+    media: generateMediaMarkup(tag, source, playsInline, extensions, ''),
     player: `<${getPlayerTag(useCase)}>
   <!-- Paste the contents of ${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html here. -->
 </${getPlayerTag(useCase)}>`,
@@ -820,6 +872,7 @@ function generateSourceHTMLUsageCodeWithImports(
 /** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
 export function generateSourceHTMLUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     componentsDirectory?: string;
   }
@@ -830,22 +883,27 @@ export function generateSourceHTMLUsageCode(
 /** Build Vue files around an HTML skin copied into the app by Shadcn. */
 export function generateSourceVueUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     componentsDirectory?: string;
     playerImport?: string | undefined;
   }
 ): SourceVueUsageCode {
   const componentName = getInstallationPlayerComponentName(opts.useCase);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
   const source = generateSourceHTMLUsageCodeWithImports(opts, false);
   const playerTag = getPlayerTag(opts.useCase);
-  const config = generateVueCustomElementConfigCode({ ...opts, skin: defaultSkinForUseCase(opts.useCase) }, true);
+  const config = generateVueCustomElementConfigCode(
+    { ...opts, extensions, skin: defaultSkinForUseCase(opts.useCase) },
+    true
+  );
   const skinSource = `${opts.componentsAlias ?? '@/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
   const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin.vue`;
   const media = generateMediaMarkup(
     getRendererTag(opts.renderer),
     resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase),
     isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '',
-    opts.renderer,
+    extensions,
     ''
   );
 
@@ -887,12 +945,14 @@ ${indentBlock(media, '    ')}
 /** Build Svelte files around an HTML skin copied into the app by Shadcn. */
 export function generateSourceSvelteUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+    extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     componentsDirectory?: string;
     playerImport?: string | undefined;
   }
 ): SourceSvelteUsageCode {
   const componentName = getInstallationPlayerComponentName(opts.useCase);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
   const source = generateSourceHTMLUsageCodeWithImports(opts, false);
   const playerTag = getPlayerTag(opts.useCase);
   const skinSource = `${opts.componentsAlias ?? '$lib/components'}/videojs/${getInstallationPreset(opts.useCase).flag}/skin`;
@@ -901,7 +961,7 @@ export function generateSourceSvelteUsageCode(
     getRendererTag(opts.renderer),
     `src={${JSON.stringify(resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase))}}`,
     isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '',
-    opts.renderer,
+    extensions,
     ''
   );
   const component = `<script lang="ts">

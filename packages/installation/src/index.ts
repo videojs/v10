@@ -2,6 +2,7 @@ export * from './cdn-code';
 export * from './codegen';
 export * from './defaults';
 export * from './detect-renderer';
+export * from './extensions';
 export * from './markdown';
 export * from './options';
 export * from './parameters';

@@ -4,8 +4,8 @@ import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { CDN_MEDIA_SUBPATHS } from '../defaults';
+import { INSTALLATION_EXTENSION_DEFINITIONS } from '../extensions';
 import { INSTALLATION_RENDERERS } from '../renderers';
-import { MUX_DATA_PACKAGE } from '../renderers';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../../..');
 
@@ -31,6 +31,9 @@ const manifests = new Map(
 
 const adapterPackages = new Set(
   Object.values(INSTALLATION_RENDERERS).flatMap(({ adapterPackage }) => (adapterPackage ? [adapterPackage] : []))
+);
+const extensionPackages = new Set(
+  Object.values(INSTALLATION_EXTENSION_DEFINITIONS).map(({ packageName }) => packageName)
 );
 
 describe('installation workspace contract', () => {
@@ -72,19 +75,31 @@ describe('installation workspace contract', () => {
     }
   });
 
-  it('keeps the generated Mux Data extension available from both facades', () => {
+  it('keeps generated extensions available from both facades', () => {
     const html = manifests.get('@videojs/html')!.manifest;
     const react = manifests.get('@videojs/react')!.manifest;
 
-    expect(manifests.get(MUX_DATA_PACKAGE)?.manifest.publishConfig?.access).toBe('public');
-    expect(html.peerDependencies).toHaveProperty(MUX_DATA_PACKAGE);
-    expect(react.peerDependencies).toHaveProperty(MUX_DATA_PACKAGE);
-    expect(existsSync(resolve(workspaceRoot, 'packages/html/src/extensions/mux-data/index.ts'))).toBe(true);
-    expect(existsSync(resolve(workspaceRoot, 'packages/react/src/extensions/mux-data/index.ts'))).toBe(true);
+    for (const definition of Object.values(INSTALLATION_EXTENSION_DEFINITIONS)) {
+      expect(manifests.get(definition.packageName)?.manifest.publishConfig?.access).toBe('public');
+      expect(html.peerDependencies).toHaveProperty(definition.packageName);
+      expect(react.peerDependencies).toHaveProperty(definition.packageName);
+      expect(
+        existsSync(resolve(workspaceRoot, `packages/html/src/extensions/${definition.htmlSubpath}/index.ts`))
+      ).toBe(true);
+      expect(
+        existsSync(resolve(workspaceRoot, `packages/react/src/extensions/${definition.htmlSubpath}/index.ts`))
+      ).toBe(true);
+    }
   });
 
   it('keeps AI Quickstart scoped to packages represented by installation instructions', () => {
-    const required = new Set(['@videojs/html', '@videojs/react', '@videojs/cdn', MUX_DATA_PACKAGE, ...adapterPackages]);
+    const required = new Set([
+      '@videojs/html',
+      '@videojs/react',
+      '@videojs/cdn',
+      ...adapterPackages,
+      ...extensionPackages,
+    ]);
 
     for (const packageName of required) {
       const entry = manifests.get(packageName);

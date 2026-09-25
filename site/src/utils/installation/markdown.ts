@@ -68,6 +68,7 @@ function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchPa
     preset: value('preset'),
     skin: value('skin'),
     media: value('media'),
+    extensions: value('extensions'),
     sourceUrl: value('sourceUrl'),
     packageManager: value('packageManager'),
     template: value('template'),

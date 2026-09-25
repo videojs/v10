@@ -426,7 +426,7 @@ export function installationProjectCreateCommand(
   }
 
   if (template === 'nuxt') {
-    const options = `--template minimal --packageManager ${packageManager} --no-gitInit --no-modules --force`;
+    const options = `--template minimal --packageManager ${packageManager} --no-gitInit --no-modules`;
 
     if (packageManager === 'npm') return `npm create nuxt@latest . -- ${options}`;
 

@@ -8,6 +8,7 @@ import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
 import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
 import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
@@ -62,6 +63,14 @@ Choose what the player will play. The CDN page only shows sources with a browser
   <CdnMediaSourcePicker />
 </ContentWidth>
 
+## Choose your extensions
+
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
+
+<ContentWidth margins="lg">
+  <ExtensionPicker client:load />
+</ContentWidth>
+
 ## Choose how to install
 
 Choose from the installation options available for your selections.
@@ -74,7 +83,7 @@ Choose from the installation options available for your selections.
 
 ## Load Video.js
 
-Add these generated module scripts to your page. They register the player, selected skin, media element, and any extension the source needs.
+Add these generated module scripts to your page. They register the player, selected skin, media element, and selected extensions.
 
 <ContentWidth>
   <CdnCodeBlock />

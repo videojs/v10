@@ -13,6 +13,7 @@ export default function SvelteUsageCodeBlock() {
   const code = generateSvelteUsageCode({
     useCase,
     renderer: useSelection('renderer'),
+    extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     playerImport: project.playerImport,
   });

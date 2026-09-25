@@ -1,3 +1,4 @@
+import { serializeInstallationExtensions } from './extensions';
 import type { InstallationDiscoveryCompatibility } from './options';
 import { installationParameterForKey } from './parameters';
 import type { InstallationDiscovery, InstallationPlan } from './plan';
@@ -137,12 +138,16 @@ export function renderInstallationPlanSections(plan: InstallationPlan): string {
     ['project', plan.selection.project],
     ['preset', plan.selection.preset],
     ['media', plan.selection.media],
+    ['extensions', serializeInstallationExtensions(plan.selection.extensions)],
     ['source-url', plan.resolvedSourceUrl],
   ];
 
   if (plan.selection.useCase !== 'background-video') selected.splice(3, 0, ['skin', plan.selection.skinFlag]);
 
-  selected.push(['package-manager', plan.selection.packageManager]);
+  if (plan.selection.method !== 'cdn' || plan.selection.template !== 'none') {
+    selected.push(['package-manager', plan.selection.packageManager]);
+  }
+
   selected.push(['template', plan.selection.template]);
 
   if (plan.selection.styling) selected.push(['styling', plan.selection.styling]);
