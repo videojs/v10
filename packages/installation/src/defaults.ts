@@ -13,6 +13,9 @@ export const INSTALLATION_DEMO_SOURCES = {
   youtube: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
 } as const;
 
+/** The `--source-url` value that explicitly selects the demo source for the selected media. */
+export const INSTALLATION_DEMO_SOURCE_URL = 'demo';
+
 /** Media subpaths currently published by `@videojs/cdn`. */
 export const CDN_MEDIA_SUBPATHS = [
   'background-video',

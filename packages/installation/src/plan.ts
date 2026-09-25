@@ -14,7 +14,7 @@ import {
   resolveInstallationSourceUrl,
   type InstallationOptions,
 } from './codegen';
-import { CDN_MEDIA_SUBPATHS, INSTALLATION_DEMO_SOURCES } from './defaults';
+import { CDN_MEDIA_SUBPATHS, INSTALLATION_DEMO_SOURCE_URL, INSTALLATION_DEMO_SOURCES } from './defaults';
 import {
   installationCompatibilityFor,
   installationDecisionOrderFor,
@@ -199,7 +199,7 @@ export function createInstallationDiscovery(
     skin: 'default',
     media: 'html5-video',
     extensions: 'none',
-    sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
+    sourceUrl: INSTALLATION_DEMO_SOURCE_URL,
     packageManager,
     styling: 'css',
   };
@@ -212,7 +212,7 @@ export function createInstallationDiscovery(
     skin: 'default',
     media: 'html5-video',
     extensions: 'none',
-    sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
+    sourceUrl: INSTALLATION_DEMO_SOURCE_URL,
     packageManager,
   };
 

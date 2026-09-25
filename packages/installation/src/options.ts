@@ -1,3 +1,4 @@
+import { INSTALLATION_DEMO_SOURCE_URL } from './defaults';
 import { INSTALLATION_EXTENSIONS } from './extensions';
 import {
   INSTALLATION_PROJECTS,
@@ -207,8 +208,7 @@ export function installationDecisionOrderFor({
     ...stylingDecisions,
     {
       title: 'Return one explicit plan',
-      guidance:
-        'Confirm the choices once, pass every applicable resolved flag, and check that Defaulted options says none. Adapt conditional setup steps and existing paths before changing files.',
+      guidance: `Confirm the choices once, then pass every applicable flag, including \`--extensions none\` when no extension is needed and \`--source-url ${INSTALLATION_DEMO_SOURCE_URL}\` when there is no media URL yet. Check that Defaulted options says none. Adapt conditional setup steps and existing paths before changing files.`,
     },
   ];
 }
@@ -267,12 +267,13 @@ export function installationOptionDefinitionsFor(
     }),
     optionDefinition('extensions', {
       values: ['none', ...INSTALLATION_EXTENSIONS],
-      default: 'mux-data for Mux media; none otherwise',
-      description: 'A comma-separated list of optional player extensions compatible with the selected player.',
+      default: 'mux-data for Mux media; none otherwise (reported as defaulted)',
+      description:
+        'A comma-separated list of optional player extensions compatible with the selected player. Pass `none` when no extension is needed.',
     }),
     optionDefinition('sourceUrl', {
-      default: 'a working Video.js demo source',
-      description: 'The media URL placed in the generated player example.',
+      default: 'the Video.js demo source for the selected media (reported as defaulted)',
+      description: `The http:// or https:// media URL placed in the generated player example. Pass \`${INSTALLATION_DEMO_SOURCE_URL}\` to choose the Video.js demo source for the selected media explicitly.`,
     }),
   ];
 

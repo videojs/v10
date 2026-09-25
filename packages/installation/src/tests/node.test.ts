@@ -12,6 +12,7 @@ import {
   runAgentsInit,
   type AgentsInitDefaults,
 } from '../node';
+import { installationCompatibility } from '../options';
 import { installationCommand } from '../plan';
 import { INSTALLATION_FRAMEWORKS } from '../projects';
 import { installationMethodsForFramework, installationTemplatesForMethod, sourceFrameworkFor } from '../selection';
@@ -20,6 +21,13 @@ import { defaultRegistryStyling } from '../shadcn';
 const reactProject = {
   framework: { value: 'react', source: 'package.json dependencies' },
 } as const satisfies AgentsInitDefaults;
+
+/** Split a printed command whose quoted values never contain an escaped quote. */
+function commandArguments(command: string): string[] {
+  const words = command.match(/'[^']*'|\S+/g) ?? [];
+
+  return words.slice(2).map((word) => (word.startsWith("'") ? word.slice(1, -1) : word));
+}
 
 function withTemporaryDirectory(run: (root: string) => void): void {
   const root = mkdtempSync(join(tmpdir(), 'videojs-installation-'));
@@ -352,6 +360,69 @@ describe('runAgentsInit', () => {
     expect(equals.exitCode).toBe(0);
     expect(equals.stdout).toContain(INSTALLATION_DEMO_SOURCES.videoMp4);
     expect(missingMethod.exitCode).toBe(2);
+  });
+
+  it('treats an explicit demo source as a choice that reruns to the same plan', () => {
+    const failures: string[] = [];
+
+    for (const [preset, media] of Object.entries(installationCompatibility.mediaByPreset)) {
+      for (const renderer of media) {
+        const args = [
+          'agents',
+          'init',
+          '--method',
+          'packaged',
+          '--framework',
+          'html',
+          '--project',
+          'existing',
+          '--preset',
+          preset,
+          ...(preset === 'background-video' ? [] : ['--skin', 'default']),
+          '--media',
+          renderer,
+          '--extensions',
+          'none',
+          '--source-url',
+          'demo',
+          '--package-manager',
+          'pnpm',
+          '--template',
+          'vite',
+        ];
+        const markdown = runAgentsInit('10.0.0', args);
+        const first = JSON.parse(runAgentsInit('10.0.0', [...args, '--json']).stdout);
+        const rerun = JSON.parse(
+          runAgentsInit('10.0.0', [...commandArguments(first.reproduceCommand), '--json']).stdout
+        );
+        const label = `${preset}/${renderer}`;
+
+        if (!markdown.stdout.includes('Defaulted options: none.')) failures.push(`${label}: defaulted options`);
+
+        if (first.resolvedSourceUrl === 'demo') failures.push(`${label}: unresolved demo source`);
+
+        if (JSON.stringify(rerun.selectedOptions) !== JSON.stringify(first.selectedOptions)) {
+          failures.push(`${label}: rerun changed selected options`);
+        }
+
+        if (JSON.stringify(rerun.steps) !== JSON.stringify(first.steps)) failures.push(`${label}: rerun changed steps`);
+      }
+    }
+
+    expect(failures).toEqual([]);
+  });
+
+  it('accepts only http(s) source URLs besides the demo keyword', () => {
+    for (const source of ['not a url', 'javascript:alert(1)', 'ftp://example.com/video.mp4', '//example.com/a.mp4']) {
+      const result = runAgentsInit('10.0.0', ['agents', 'init', '--source-url', source, '--json']);
+
+      expect(result.exitCode, source).toBe(2);
+      expect(JSON.parse(result.stdout).errors, source).toEqual([
+        expect.objectContaining({ field: '--source-url', message: expect.stringContaining('http:// or https://') }),
+      ]);
+    }
+
+    expect(runAgentsInit('10.0.0', ['agents', 'init', '--source-url', 'http://example.com/a.mp4']).exitCode).toBe(0);
   });
 
   it('returns valid framework-specific next links in JSON and Markdown', () => {

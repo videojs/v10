@@ -1,5 +1,5 @@
 import { rendererSupportsCdn } from './cdn-code';
-import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion } from './defaults';
+import { CDN_MEDIA_SUBPATHS, cdnBaseForVersion, INSTALLATION_DEMO_SOURCE_URL } from './defaults';
 import { detectRenderer, detectRendererCandidates } from './detect-renderer';
 import {
   defaultInstallationExtensions,
@@ -113,6 +113,16 @@ export function containsControlCharacter(value: string): boolean {
       (codePoint <= 0x1f || codePoint === 0x7f || codePoint === 0x85 || codePoint === 0x2028 || codePoint === 0x2029)
     );
   });
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname !== '';
+  } catch {
+    return false;
+  }
 }
 
 export function useCaseFromPreset(preset: string): UseCase | undefined {
@@ -247,17 +257,21 @@ export function resolveInstallationSelection(
 
   const skin = skinFromFlag(skinFlag, useCase);
 
-  const sourceUrl = input.sourceUrl?.trim() ?? '';
-  const validSourceUrl = sourceUrl && !containsControlCharacter(sourceUrl);
+  const requestedSourceUrl = input.sourceUrl?.trim() ?? '';
+  // An explicit `demo` resolves like an omitted URL, but it is a choice rather than a default.
+  const sourceUrl = requestedSourceUrl === INSTALLATION_DEMO_SOURCE_URL ? '' : requestedSourceUrl;
+  const sourceUrlError = !sourceUrl
+    ? null
+    : containsControlCharacter(sourceUrl)
+      ? 'Must not contain control characters or line breaks.'
+      : isHttpUrl(sourceUrl)
+        ? null
+        : `Expected an http:// or https:// media URL, or \`${INSTALLATION_DEMO_SOURCE_URL}\` for the Video.js demo source.`;
+  const validSourceUrl = sourceUrl !== '' && !sourceUrlError;
 
-  if (!sourceUrl) defaulted.push('sourceUrl');
-  else if (!validSourceUrl) {
-    errors.push({
-      field: 'sourceUrl',
-      value: sourceUrl,
-      message: 'Must not contain control characters or line breaks.',
-    });
-  }
+  if (!requestedSourceUrl) defaulted.push('sourceUrl');
+
+  if (sourceUrlError) errors.push({ field: 'sourceUrl', value: sourceUrl, message: sourceUrlError });
 
   const availableMedia = getInstallationPreset(useCase).renderers;
   const detectedCandidates = validSourceUrl ? detectRendererCandidates(sourceUrl) : [];
