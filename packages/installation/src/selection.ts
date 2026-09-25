@@ -213,12 +213,17 @@ export function playerOwnerFor(framework: InstallationFramework): PlayerOwner {
 }
 
 /** A value detected from the project, with where it was found for the defaulted-options summary. */
-export interface DetectedInstallationDefault<Value extends string> {
+export interface DetectedInstallationDefault<Value extends string | null> {
   value: Value;
   source: string;
 }
 
 export interface InstallationSelectionDefaults {
+  /**
+   * App setup used when the input omits one and it fits the selected framework and method. A `null` value records that
+   * detection found nothing, so the fallback can say so.
+   */
+  template?: DetectedInstallationDefault<InstallationTemplate | null>;
   /** Package manager used when the input omits one. */
   packageManager?: DetectedInstallationDefault<PackageManager>;
   /** Project framework used when the input omits one. */
@@ -408,8 +413,21 @@ export function resolveInstallationSelection(
   // App setups depend on a supported method and framework, which are reported above when they are not.
   const templateErrors = methodSupported ? errors : derivedErrors;
   const availableTemplates = installationTemplatesForMethod(framework, method);
-  const defaultTemplate = method === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
+  const detectedTemplate = defaults.template?.value;
+  const detectedTemplateFits =
+    detectedTemplate != null &&
+    includes(availableTemplates, detectedTemplate) &&
+    !(method === 'cdn' && project === 'existing' && detectedTemplate !== 'none');
+  const fallbackTemplate = method === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
+  const defaultTemplate = detectedTemplateFits ? detectedTemplate : fallbackTemplate;
   const templateValue = defaultValue('template', defaultTemplate);
+
+  if (input.template === undefined && defaults.template) {
+    defaultSources.template = detectedTemplateFits
+      ? defaults.template.source
+      : 'the default; no matching app setup was detected';
+  }
+
   const templateValid = includes(availableTemplates, templateValue);
   const template = resolveChoice('template', templateValue, availableTemplates, defaultTemplate, templateErrors);
 

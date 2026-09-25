@@ -69,9 +69,13 @@ packages it describes.
 ## Versions
 
 Package versions in the instructions match the CLI version. When the project already has a different `@videojs/react`
-or `@videojs/html` version, the plan says so and shows the pinned command for that release, such as
-`npx @videojs/cli@10.0.0 agents init …`. Releases before `agents init` moved into this package do not include the
-command; upgrade the project's Video.js packages instead.
+or `@videojs/html` version, the plan says so. For a release that includes `agents init`, it shows the pinned command for
+that release, such as `npx @videojs/cli@10.0.0 agents init …`; for an older release it says to upgrade the project's
+Video.js packages instead.
+
+When you omit `--template`, the command also reads the app setup from the nearest `package.json` (Next.js, TanStack
+Start, React Router, Astro, Nuxt, SvelteKit, Laravel, or Vite), or treats a directory with only an `index.html` as a
+plain HTML page.
 
 ## Community
 

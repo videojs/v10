@@ -28,7 +28,7 @@ import {
   type InstallationPlan,
   type PlayerPackage,
 } from './plan';
-import type { InstallationFramework } from './projects';
+import type { InstallationFramework, InstallationTemplate } from './projects';
 import {
   isPackageManager,
   resolveInstallationSelection,
@@ -114,11 +114,50 @@ function jsonDocument<Value>(value: Value): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
+/** The newest release whose `@videojs/cli` has no `agents init`; every later release ships it. */
+export const LAST_RELEASE_WITHOUT_AGENTS_INIT = '10.0.0-rc.2';
+
+/** Compare two `x.y.z[-prerelease]` versions by semver precedence. */
+export function compareVersions(a: string, b: string): number {
+  const parse = (version: string) => {
+    const [core = '', prerelease] = version.split('+')[0]!.split(/-(.*)/s);
+
+    return { core: core.split('.').map(Number), prerelease: prerelease ? prerelease.split('.') : [] };
+  };
+  const left = parse(a);
+  const right = parse(b);
+
+  for (let index = 0; index < 3; index++) {
+    const difference = (left.core[index] ?? 0) - (right.core[index] ?? 0);
+    if (difference !== 0) return Math.sign(difference);
+  }
+
+  // A release outranks its prereleases.
+  if (left.prerelease.length === 0 || right.prerelease.length === 0) {
+    return Math.sign(right.prerelease.length - left.prerelease.length);
+  }
+
+  for (let index = 0; index < Math.max(left.prerelease.length, right.prerelease.length); index++) {
+    const leftPart = left.prerelease[index];
+    const rightPart = right.prerelease[index];
+    if (leftPart === undefined || rightPart === undefined) return leftPart === undefined ? -1 : 1;
+
+    const numeric = /^\d+$/.test(leftPart) && /^\d+$/.test(rightPart);
+    const difference = numeric ? Number(leftPart) - Number(rightPart) : leftPart.localeCompare(rightPart);
+    if (difference !== 0) return Math.sign(difference);
+  }
+
+  return 0;
+}
+
 export interface InstallationVersionNotice {
   package: PlayerPackage;
   installedVersion: string;
-  /** Prints the same selection from the CLI release that matches the installed player. */
-  command: string;
+  /**
+   * Prints the same selection from the CLI release that matches the installed player, or `null` when that release has
+   * no `agents init` and upgrading is the only match.
+   */
+  command: string | null;
   message: string;
 }
 
@@ -129,13 +168,24 @@ function installationVersionNotice(
   const installedVersion = installedVersions?.[plan.selection.owner];
   if (!installedVersion || installedVersion === plan.packageVersion) return null;
 
+  const mismatch = `These instructions target Video.js ${plan.packageVersion}, but this project has \`${plan.playerPackage}@${installedVersion}\`.`;
+
+  if (compareVersions(installedVersion, LAST_RELEASE_WITHOUT_AGENTS_INIT) <= 0) {
+    return {
+      package: plan.playerPackage,
+      installedVersion,
+      command: null,
+      message: `${mismatch} That release predates \`agents init\`, so upgrade the project's Video.js packages to ${plan.packageVersion} and follow these instructions.`,
+    };
+  }
+
   const command = installationCommand(installationReproduceInput(plan.selection), installedVersion);
 
   return {
     package: plan.playerPackage,
     installedVersion,
     command,
-    message: `These instructions target Video.js ${plan.packageVersion}, but this project has \`${plan.playerPackage}@${installedVersion}\`. For instructions that match the installed version, run \`${command}\`. If \`${INSTALLATION_CLI_PACKAGE}@${installedVersion}\` predates \`agents init\`, upgrade the project's Video.js packages to ${plan.packageVersion} and follow these instructions instead.`,
+    message: `${mismatch} For instructions that match the installed version, run \`${command}\`.`,
   };
 }
 
@@ -463,6 +513,8 @@ export function runAgentsCli(packageVersion: string, args = process.argv.slice(2
 
   if (framework) defaults.framework = framework;
 
+  defaults.template = detectTemplate(cwd);
+
   const result = runAgentsCommand(packageVersion, args, defaults);
 
   if (result.stdout) process.stdout.write(result.stdout);
@@ -579,6 +631,44 @@ export function detectFramework(cwd: string): NonNullable<InstallationSelectionD
   }
 
   return null;
+}
+
+// Specific app setups come before Vite because Astro, React Router, and Laravel projects also depend on it.
+const TEMPLATE_DEPENDENCIES = [
+  ['next', ['next']],
+  ['start', ['@tanstack/react-start']],
+  ['react-router', ['@react-router/dev']],
+  ['astro', ['astro']],
+  ['nuxt', ['nuxt']],
+  ['sveltekit', ['@sveltejs/kit']],
+  ['laravel', ['laravel-vite-plugin']],
+  ['vite', ['vite']],
+] as const satisfies ReadonlyArray<readonly [InstallationTemplate, readonly string[]]>;
+
+/**
+ * Infer the app setup from the nearest project manifest, or a plain HTML page when the directory has an `index.html`
+ * but no manifest. The result is `null` with a source when nothing matches, so plans can say the fallback was not
+ * detected.
+ */
+export function detectTemplate(cwd: string): NonNullable<InstallationSelectionDefaults['template']> {
+  const project = readProjectManifests(cwd);
+  const manifest = nearestProjectManifest(project);
+
+  for (const [template, dependencies] of TEMPLATE_DEPENDENCIES) {
+    for (const field of DEPENDENCY_FIELDS) {
+      const declared = manifest?.dependencies[field];
+
+      if (dependencies.some((dependency) => declared?.has(dependency))) {
+        return { value: template, source: `package.json ${field}` };
+      }
+    }
+  }
+
+  if (!manifest && existsSync(join(resolve(cwd), 'index.html'))) {
+    return { value: 'none', source: 'an index.html page with no package.json' };
+  }
+
+  return { value: null, source: 'no app setup detected' };
 }
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[0-9a-z.-]+)?(?:\+[0-9a-z.-]+)?$/i;

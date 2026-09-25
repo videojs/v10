@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -6,9 +6,12 @@ import { describe, expect, it } from 'vitest';
 
 import { INSTALLATION_DEMO_SOURCES } from '../defaults';
 import {
+  compareVersions,
   detectFramework,
   detectInstalledPlayerVersions,
   detectPackageManager,
+  detectTemplate,
+  LAST_RELEASE_WITHOUT_AGENTS_INIT,
   runAgentsCommand,
   runAgentsInit,
   runAgentsSkills,
@@ -700,23 +703,38 @@ describe('runAgentsInit', () => {
   });
 
   it('points at the matching CLI release when the project has another player version', () => {
-    const defaults = { ...reactProject, installedVersions: { react: '10.0.0-rc.1', html: '10.0.0' } };
+    const defaults = { ...reactProject, installedVersions: { react: '10.0.0-rc.3', html: '10.0.0' } };
     const args = ['agents', 'init', '--preset', 'audio', '--media', 'html5-audio'];
     const markdown = runAgentsInit('10.0.0', args, defaults);
     const json = JSON.parse(runAgentsInit('10.0.0', [...args, '--json'], defaults).stdout);
-    const command = json.reproduceCommand.replace('@videojs/cli@10.0.0 ', '@videojs/cli@10.0.0-rc.1 ');
+    const command = json.reproduceCommand.replace('@videojs/cli@10.0.0 ', '@videojs/cli@10.0.0-rc.3 ');
 
     expect(json.versionNotice).toEqual({
       package: '@videojs/react',
-      installedVersion: '10.0.0-rc.1',
+      installedVersion: '10.0.0-rc.3',
       command,
-      message: expect.stringContaining('`@videojs/cli@10.0.0-rc.1` predates `agents init`'),
+      message: expect.stringContaining(`run \`${command}\``),
     });
     expect(command).toContain('--framework react');
     expect(markdown.stdout).toContain(
-      `> **Version mismatch.** These instructions target Video.js 10.0.0, but this project has \`@videojs/react@10.0.0-rc.1\`. For instructions that match the installed version, run \`${command}\`.`
+      `> **Version mismatch.** These instructions target Video.js 10.0.0, but this project has \`@videojs/react@10.0.0-rc.3\`. For instructions that match the installed version, run \`${command}\`.`
     );
     expect(markdown.stdout.indexOf('Version mismatch')).toBeLessThan(markdown.stdout.indexOf('## Selected options'));
+  });
+
+  it('asks to upgrade when the installed player predates agents init', () => {
+    const defaults = { ...reactProject, installedVersions: { react: LAST_RELEASE_WITHOUT_AGENTS_INIT } };
+    const json = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--preset', 'video', '--json'], defaults).stdout
+    );
+
+    expect(json.versionNotice).toEqual({
+      package: '@videojs/react',
+      installedVersion: LAST_RELEASE_WITHOUT_AGENTS_INIT,
+      command: null,
+      message: expect.stringContaining("predates `agents init`, so upgrade the project's Video.js packages to 10.0.0"),
+    });
+    expect(json.versionNotice.message).not.toContain('npx');
   });
 
   it('omits the version notice when the installed player matches or belongs to the other framework', () => {
@@ -1217,6 +1235,78 @@ describe('detectPackageManager', () => {
         source: 'the npm fallback; no lockfile, packageManager field, or pnpm on PATH found',
       });
     });
+  });
+});
+
+describe('detectTemplate', () => {
+  it('prefers a specific app setup over the Vite it is built on', () => {
+    withTemporaryDirectory((root) => {
+      const write = (dependencies: Record<string, string>) =>
+        writeFileSync(join(root, 'package.json'), JSON.stringify({ dependencies }));
+
+      mkdirSync(join(root, '.git'));
+
+      write({ react: '^19.0.0', vite: '^7.0.0' });
+      expect(detectTemplate(root)).toEqual({ value: 'vite', source: 'package.json dependencies' });
+
+      write({ astro: '^5.0.0', vite: '^7.0.0' });
+      expect(detectTemplate(root).value).toBe('astro');
+
+      write({ '@react-router/dev': '^7.0.0', vite: '^7.0.0' });
+      expect(detectTemplate(root).value).toBe('react-router');
+
+      write({ 'laravel-vite-plugin': '^2.0.0', vite: '^7.0.0' });
+      expect(detectTemplate(root).value).toBe('laravel');
+
+      write({ next: '^16.0.0' });
+      expect(detectTemplate(root).value).toBe('next');
+
+      write({ react: '^19.0.0' });
+      expect(detectTemplate(root)).toEqual({ value: null, source: 'no app setup detected' });
+    });
+  });
+
+  it('reads a plain HTML page when there is no package.json', () => {
+    withTemporaryDirectory((root) => {
+      mkdirSync(join(root, '.git'));
+      writeFileSync(join(root, 'index.html'), '<!doctype html>');
+
+      expect(detectTemplate(root)).toEqual({ value: 'none', source: 'an index.html page with no package.json' });
+    });
+  });
+
+  it('uses a detected app setup only where it fits, and says when it fell back', () => {
+    const args = ['agents', 'init', '--framework', 'react', '--json'];
+    const vite = JSON.parse(
+      runAgentsInit('10.0.0', args, { template: { value: 'vite', source: 'package.json dependencies' } }).stdout
+    );
+    const unsupported = JSON.parse(
+      runAgentsInit('10.0.0', args, { template: { value: 'nuxt', source: 'package.json dependencies' } }).stdout
+    );
+    const missing = JSON.parse(
+      runAgentsInit('10.0.0', args, { template: { value: null, source: 'no app setup detected' } }).stdout
+    );
+
+    expect(vite.selectedOptions.template).toBe('vite');
+    expect(vite.defaultedOptionSources.template).toBe('package.json dependencies');
+    expect(unsupported.selectedOptions.template).toBe('next');
+    expect(missing.defaultedOptionSources.template).toBe('the default; no matching app setup was detected');
+  });
+});
+
+describe('compareVersions', () => {
+  it('orders releases and prereleases by semver precedence', () => {
+    expect(compareVersions('10.0.0-rc.2', '10.0.0-rc.10')).toBe(-1);
+    expect(compareVersions('10.0.0-rc.3', LAST_RELEASE_WITHOUT_AGENTS_INIT)).toBe(1);
+    expect(compareVersions('10.0.0', '10.0.0-rc.9')).toBe(1);
+    expect(compareVersions('9.9.9', '10.0.0-rc.1')).toBe(-1);
+    expect(compareVersions('10.0.0-rc.2', '10.0.0-rc.2')).toBe(0);
+  });
+
+  it('keeps the last release without agents init at or before the CLI release', () => {
+    const cliPackage = JSON.parse(readFileSync(join(import.meta.dirname, '../../../cli/package.json'), 'utf8'));
+
+    expect(compareVersions(LAST_RELEASE_WITHOUT_AGENTS_INIT, cliPackage.version)).toBeLessThanOrEqual(0);
   });
 });
 
