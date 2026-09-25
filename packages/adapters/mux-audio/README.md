@@ -32,4 +32,4 @@ import { MuxAudio } from '@videojs/react/media/mux-audio';
 
 ## License
 
-[Apache-2.0](../../LICENSE)
+[Apache-2.0](../../../LICENSE)

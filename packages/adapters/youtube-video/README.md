@@ -27,4 +27,4 @@ import '@videojs/html/media/youtube-video';
 
 ## License
 
-[Apache-2.0](../../LICENSE)
+[Apache-2.0](../../../LICENSE)

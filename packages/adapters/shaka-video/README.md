@@ -25,4 +25,4 @@ Low-level consumers can import `ShakaAdapter` and the supported `shaka` runtime 
 
 ## License
 
-[Apache-2.0](../../LICENSE)
+[Apache-2.0](../../../LICENSE)
