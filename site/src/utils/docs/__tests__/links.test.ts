@@ -104,6 +104,6 @@ describe('initializeDocsLinks', () => {
 
     useCase.set('default-audio');
 
-    expect(link.search).toBe('?preset=audio&framework=html');
+    expect(link.search).toBe('?framework=html&preset=audio');
   });
 });

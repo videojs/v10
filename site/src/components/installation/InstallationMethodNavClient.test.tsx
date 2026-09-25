@@ -141,6 +141,8 @@ describe('InstallationMethodNavClient', () => {
     skin.set('minimal-audio');
     media.set('html5-audio');
     template.set('vite');
+    // Let the store write the picks to the URL, as it does before a reader reaches the method cards.
+    await Promise.resolve();
 
     const { getByRole } = render(<InstallationMethodNavClient currentFramework="html" route="html" />);
     const link = getByRole('link', { name: /Shadcn/ });
