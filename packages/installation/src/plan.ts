@@ -311,6 +311,11 @@ function playerFileDescription(selection: InstallationSelection): string {
     : `Merge the example into the existing ${INSTALLATION_TEMPLATE_LABELS[selection.template]} route or component that should render the player, and preserve unrelated content.`;
 }
 
+/** Drop the steps that do not apply to a selection while keeping the plan order. */
+function presentSteps(...steps: readonly (InstallationStep | null)[]): InstallationStep[] {
+  return steps.filter((step) => step !== null);
+}
+
 function playerStep(description: string, blocks: readonly InstallationCodeBlock[]): InstallationStep {
   return { id: 'player', title: 'Add your player', description, blocks };
 }
@@ -393,13 +398,13 @@ function packagedPlayerSteps(
 
   const usage = generateHTMLUsageCode(opts);
 
-  return [
+  return presentSteps(
     htmlEntrySetupStep(selection.template, project.usage!),
     playerStep(playerFileDescription(selection), [
       ...(usage.imports ? [code('ts', usage.imports, project.usage)] : []),
       code('html', installationHtmlPageCode(usage.html, selection.template, project.usage!), project.player),
-    ]),
-  ].filter((step) => step !== null);
+    ])
+  );
 }
 
 function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
@@ -410,12 +415,12 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
       ? generateReactInstallCode(opts, packageVersion)
       : generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase, packageVersion);
 
-  return [
+  return presentSteps(
     prepareAppStep(selection),
     packageInstallStep(install[selection.packageManager]),
     ...packagedPlayerSteps(selection, opts, project),
-    runAppStep(selection),
-  ].filter((step) => step !== null);
+    runAppStep(selection)
+  );
 }
 
 function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
@@ -423,7 +428,7 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
   const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase);
   const usage = generateHTMLUsageCode(opts);
 
-  return [
+  return presentSteps(
     prepareAppStep(selection),
     {
       id: 'load',
@@ -437,8 +442,8 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
       description: 'Add this markup inside the page body where the player should appear.',
       blocks: [code('html', usage.html, 'index.html')],
     },
-    runAppStep(selection),
-  ].filter((step) => step !== null);
+    runAppStep(selection)
+  );
 }
 
 function shadcnConfigurationSteps(
@@ -455,16 +460,13 @@ function shadcnConfigurationSteps(
   const aliasBlocks = configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename));
 
   if (configuration.mode === 'components-json') {
-    return [
-      prepareAppStep(selection),
-      {
-        id: 'configure-source-registry',
-        title: 'Configure Shadcn',
-        condition: 'when-components-json-missing',
-        description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
-        blocks: [...aliasBlocks, code('json', configuration.componentsConfig, 'components.json', 'create')],
-      },
-    ].filter((step) => step !== null);
+    return presentSteps(prepareAppStep(selection), {
+      id: 'configure-source-registry',
+      title: 'Configure Shadcn',
+      condition: 'when-components-json-missing',
+      description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
+      blocks: [...aliasBlocks, code('json', configuration.componentsConfig, 'components.json', 'create')],
+    });
   }
 
   if (placement === 'app') {
@@ -521,7 +523,7 @@ function shadcnMediaStep(selection: InstallationSelection, packageVersion: strin
 }
 
 function shadcnPlayerSteps(
-  selection: InstallationSelection,
+  selection: InstallationSelection & { styling: RegistryStyling },
   opts: InstallationOptions,
   project: InstallationProjectFiles
 ): InstallationStep[] {
@@ -529,7 +531,7 @@ function shadcnPlayerSteps(
     const player = generateSourceReactCreateCode({
       ...opts,
       componentsAlias: project.componentsAlias,
-      styling: selection.styling ?? undefined,
+      styling: selection.styling,
     });
 
     return [
@@ -546,7 +548,7 @@ function shadcnPlayerSteps(
     componentsDirectory: project.componentsDirectory,
   });
 
-  return [
+  return presentSteps(
     htmlEntrySetupStep(selection.template, project.usage!),
     playerStep(
       `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Then paste the complete updated skin markup into the player where indicated. ${playerFileDescription(selection)}`,
@@ -555,8 +557,8 @@ function shadcnPlayerSteps(
         code('ts', player.imports, project.usage),
         code('html', installationHtmlPageCode(player.player, selection.template, project.usage!), project.player),
       ]
-    ),
-  ].filter((step) => step !== null);
+    )
+  );
 }
 
 function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
@@ -567,7 +569,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
 
   const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
 
-  return [
+  return presentSteps(
     ...shadcnConfigurationSteps({ ...selection, styling }, project),
     {
       id: 'videojs-registry',
@@ -598,9 +600,9 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       blocks: [code('bash', shadcnAddCommand(selection.packageManager, [registry.item]))],
     },
     shadcnMediaStep(selection, packageVersion),
-    ...shadcnPlayerSteps(selection, opts, project),
-    runAppStep(selection),
-  ].filter((step) => step !== null);
+    ...shadcnPlayerSteps({ ...selection, styling }, opts, project),
+    runAppStep(selection)
+  );
 }
 
 /**
