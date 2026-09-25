@@ -1,8 +1,6 @@
-import { currentInstallationSelection, selectionAtoms } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
 
-import { resolveInstallationMethodHref } from '../installation/method-navigation';
-import { getInstallationRoutePath, getInstallationRouteSegment } from '../installation/routes';
+import { getInstallationRouteSegment } from '../installation/routes';
 import { getFrameworkPreferenceClient } from './preferences';
 import { resolveDocsHref } from './routing';
 
@@ -22,20 +20,15 @@ export function resolveAgnosticDocsLinks(): void {
 
     anchor.href = resolveDocsHref({ slug, framework }) + hash;
   }
+}
 
+/** Carry installation picks into method links; the installation stores load only on installation guides. */
+async function resolveInstallationLinks(signal: AbortSignal): Promise<void> {
   if (!getInstallationRouteSegment(location.pathname)) return;
 
-  for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[data-installation-method-link="shadcn"]')) {
-    const selection = currentInstallationSelection();
+  const { watchInstallationMethodLinks } = await import('../installation/method-links');
 
-    anchor.href = resolveInstallationMethodHref(
-      new URL(location.href),
-      getInstallationRoutePath('shadcn'),
-      'shadcn',
-      selection,
-      selection.framework
-    );
-  }
+  if (!signal.aborted) watchInstallationMethodLinks(signal);
 }
 
 /** Keep newly swapped links and in-page framework selections synchronized. */
@@ -44,14 +37,15 @@ export function initializeDocsLinks(): void {
 
   const controller = new AbortController();
   const { signal } = controller;
-  const unsubscribes = [
-    currentFramework.subscribe(resolveAgnosticDocsLinks),
-    ...Object.values(selectionAtoms).map((store) => store.subscribe(resolveAgnosticDocsLinks)),
-  ];
+  const unsubscribe = currentFramework.subscribe(resolveAgnosticDocsLinks);
+  const resolvePageLinks = () => {
+    resolveAgnosticDocsLinks();
+    void resolveInstallationLinks(signal);
+  };
 
   window.__videojsDocsLinksController = controller;
-  signal.addEventListener('abort', () => unsubscribes.forEach((unsubscribe) => unsubscribe()), { once: true });
-  document.addEventListener('astro:page-load', resolveAgnosticDocsLinks, { signal });
+  signal.addEventListener('abort', unsubscribe, { once: true });
+  document.addEventListener('astro:page-load', resolvePageLinks, { signal });
 
-  resolveAgnosticDocsLinks();
+  void resolveInstallationLinks(signal);
 }

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -51,7 +51,7 @@ describe('Selectors', () => {
     expect(markup).toContain('>css</button>');
   });
 
-  it('moves focus to the visible framework selector when the Shadcn framework changes', () => {
+  it('moves focus to the visible framework selector when the Shadcn framework changes', async () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
       callback(0);
       return 0;
@@ -76,7 +76,7 @@ describe('Selectors', () => {
     reactSelector!.focus();
     fireEvent.click(reactSelector!);
 
-    expect(registryFramework.get()).toBe('html');
+    await waitFor(() => expect(registryFramework.get()).toBe('html'));
     expect(htmlSelector).toHaveFocus();
   });
 });
