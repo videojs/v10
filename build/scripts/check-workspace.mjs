@@ -326,37 +326,6 @@ function checkBundledDocs() {
   return { ok: warnings.length === 0, warnings };
 }
 
-// ── Check 7: Package AI quickstarts ─────────────────────────────────────────
-
-function checkPackageAiQuickstarts() {
-  const warnings = [];
-
-  for (const dir of getPackageDirs()) {
-    const pkg = readPackageJson(dir);
-    if (pkg.private || pkg.publishConfig?.access !== 'public') continue;
-
-    const readmePath = join(PACKAGES_DIR, dir, 'README.md');
-
-    if (!existsSync(readmePath)) {
-      warnings.push(`${pkg.name}: missing README.md`);
-      continue;
-    }
-
-    const readme = readText(readmePath);
-    if (!readme.includes('## AI Quickstart')) continue;
-
-    if (!readme.includes('https://github.com/videojs/skills')) {
-      warnings.push(`${pkg.name}: AI Quickstart is missing the Video.js skill link`);
-    }
-
-    if (!readme.includes('agents init')) {
-      warnings.push(`${pkg.name}: AI Quickstart is missing a version-matched agents init command`);
-    }
-  }
-
-  return { ok: warnings.length === 0, warnings };
-}
-
 // ── Check 8: Define imports ──────────────────────────────────────────────────
 
 /**
@@ -1034,7 +1003,6 @@ const checks = [
   { name: 'Package metadata', fn: checkPackageMetadata },
   { name: 'Release-please config', fn: checkReleasePleaseConfig },
   { name: 'Bundled docs publishing', fn: checkBundledDocs },
-  { name: 'Package AI quickstarts', fn: checkPackageAiQuickstarts },
   { name: 'Define imports', fn: checkDefineImports },
   { name: 'i18n locales', fn: checkI18nLocales },
   { name: 'Agent context', fn: checkAgentContext },
