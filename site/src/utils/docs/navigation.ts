@@ -216,19 +216,6 @@ function restoreSidebarState(): void {
   }
 }
 
-/**
- * The client router parses the destination page into a document without a window, where a server-rendered media
- * element's load is rejected before the swap moves it into the live page. Chromium and Firefox keep that failure, so
- * the element stays unplayable until it loads again.
- */
-function reloadSwappedMedia(): void {
-  for (const media of document.querySelectorAll<HTMLMediaElement>('audio, video')) {
-    if (media.networkState !== HTMLMediaElement.NETWORK_NO_SOURCE) continue;
-
-    if (media.hasAttribute('src') || media.querySelector('source')) media.load();
-  }
-}
-
 export function initializeDocsNavigation(): void {
   window.__videojsDocsNavigationController?.abort();
 
@@ -276,7 +263,6 @@ export function initializeDocsNavigation(): void {
   document.addEventListener(
     'astro:after-swap',
     () => {
-      reloadSwappedMedia();
       restoreSidebarState();
       restoreSavedPageScroll(false);
     },
