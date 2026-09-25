@@ -1,6 +1,6 @@
 ---
 title: CDN Installation Guide
-description: Load Video.js from jsDelivr and build an HTML video player without a package manager
+description: Load Video.js from jsDelivr and build an HTML video player without installing Video.js packages
 ---
 
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
@@ -8,15 +8,18 @@ import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import CdnCodeBlock from '@/components/installation/CdnCodeBlock.astro';
 import CdnMediaSourcePicker from '@/components/installation/CdnMediaSourcePicker.astro';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
+import ProjectCommands from '@/components/installation/ProjectCommands';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HumanCase from '@/components/docs/HumanCase.astro';
 
@@ -26,17 +29,27 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <HumanCase>
 
-## Choose your JS framework
+## Choose your framework
 
 Choose the JavaScript framework for your project.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app
+
+Add the player to an HTML page you already have, or create a minimal Vite app for it.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:idle method="cdn" serverTemplate="none" />
+</ContentWidth>
+</div>
 
 ## Choose your use case
 
@@ -51,15 +64,23 @@ Choose the ready-made player that is closest to what you are building. Live pres
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
-## Choose your media source
+## Choose your media
 
 Choose what the player will play. The CDN page only shows sources with a browser-ready bundle.
 
 <ContentWidth margins="lg">
   <CdnMediaSourcePicker />
+</ContentWidth>
+
+## Choose your extensions
+
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
+
+<ContentWidth margins="lg">
+  <ExtensionPicker client:idle />
 </ContentWidth>
 
 ## Choose how to install
@@ -70,27 +91,61 @@ Choose from the installation options available for your selections.
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
+
+<div data-installation-project-content="new">
+
+## Prepare your app
+
+Create the app in an empty directory, then run the remaining commands from that directory.
+
+<ProjectCommands client:idle part="create" serverFramework="html" serverTemplate="vite" />
+
+</div>
+
+<div data-installation-project-content="existing">
 
 ## Load Video.js
 
-Add these generated module scripts to your page. They register the player, selected skin, media element, and any extension the source needs.
+Add these generated module scripts to your page. They register the player, selected skin, media element, and selected extensions.
 
 <ContentWidth>
   <CdnCodeBlock />
 </ContentWidth>
 
+</div>
+
 ## Add your player
+
+<div data-installation-project-content="existing">
 
 Place this generated markup where the player should appear. It uses the media source you selected above.
 
-<ContentWidth>
-  <HTMLUsageCodeBlock client:idle installMethod="cdn" />
-</ContentWidth>
+</div>
+
+<div data-installation-project-content="new">
+
+Replace the starter page with this generated page. It loads Video.js and renders the player with the media source you selected above.
 
 </div>
 
-That's it! You now have a working Video.js player without a package manager or build step.
+<ContentWidth>
+  <HTMLUsageCodeBlock client:visible={{ rootMargin: "200px" }} installMethod="cdn" />
+</ContentWidth>
+
+<div data-installation-named-app class="contents">
+
+## Run your app
+
+Start the app and verify that the media plays.
+
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="html" serverTemplate="vite" />
+
+</div>
+
+</div>
+
+That's it! You now have a working Video.js player without installing Video.js packages.
 
 ## Own the UI
 

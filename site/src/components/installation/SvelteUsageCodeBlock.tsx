@@ -1,30 +1,36 @@
+import { generateSvelteUsageCode, installationProjectFiles } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateSvelteUsageCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function SvelteUsageCodeBlock() {
+function SvelteUsageCodeBlock() {
+  const template = useSelection('template');
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('svelte', template, useCase);
+  const codeValue = template === 'astro' ? 'index.astro' : template === 'sveltekit' ? '+page.svelte' : 'App.svelte';
   const code = generateSvelteUsageCode({
-    useCase: useSelection('useCase'),
-    renderer: useSelection('renderer'),
+    useCase,
+    media: useSelection('media'),
+    extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
+    playerImport: project.playerImport,
   });
 
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="App type">
-        <Tab value="sveltekit" initial>
-          SvelteKit
+        <Tab value="usage" initial>
+          {project.usage}
         </Tab>
-        <Tab value="svelte">Svelte</Tab>
       </TabsList>
-      <TabsPanel value="sveltekit" initial>
-        <ClientCode code={code['+page.svelte']} lang="html" />
-      </TabsPanel>
-      <TabsPanel value="svelte">
-        <ClientCode code={code['App.svelte']} lang="html" />
+      <TabsPanel value="usage" initial>
+        <ClientCode code={code[codeValue]} lang={template === 'astro' ? 'astro' : 'html'} />
       </TabsPanel>
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(SvelteUsageCodeBlock);

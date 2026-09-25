@@ -26,6 +26,7 @@ When prose conflicts with executable sources, follow the executable source and u
 - `packages/core`: runtime-neutral player logic; DOM bindings live under `/dom`.
 - `packages/html`, `packages/react`: platform players.
 - `packages/icons`, `packages/skins`: private shared assets and styling.
+- `packages/installation`: shared installation schema, compatibility, code generation, and agent instruction renderer.
 - `apps/sandbox`: Vite playground. `templates/` is tracked; `src/` is scratch.
 - `apps/e2e`: Playwright coverage.
 - `site`: Astro documentation site; follow `site/AGENTS.md`.

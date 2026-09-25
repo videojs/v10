@@ -1,10 +1,18 @@
-import { generateReactInstallCode } from '@/utils/installation/codegen';
+import { generateReactInstallCode } from '@videojs/installation';
+
+import { VJS10_VERSION } from '@/consts';
 
 import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function ReactInstallTabs() {
-  const install = generateReactInstallCode({ renderer: useSelection('renderer') });
+function ReactInstallTabs() {
+  const install = generateReactInstallCode(
+    { media: useSelection('media'), extensions: useSelection('extensions') },
+    VJS10_VERSION
+  );
 
   return <PackageManagerTabs commands={install} />;
 }
+
+export default withSelectionMarker(ReactInstallTabs);

@@ -58,8 +58,6 @@ export default defineConfig({
         // to Core's locale generators or package build.
         input: [
           ...cachedTaskInputs,
-          { pattern: '!packages/cli/docs', base: 'workspace' },
-          { pattern: '!packages/cli/docs/**', base: 'workspace' },
           { pattern: '!packages/cdn/*.css', base: 'workspace' },
           { pattern: '!packages/cdn/*.d.ts', base: 'workspace' },
           { pattern: '!packages/cdn/*.js', base: 'workspace' },

@@ -1,7 +1,17 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  createInstallationDiscovery,
+  INSTALLATION_FRAMEWORKS,
+  INSTALLATION_METHODS,
+  installationCompatibility,
+  installationMethodsForFramework,
+  installationOptionDefinitionsFor,
+  QUERY_OPTION_SYNTAX,
+  renderInstallationCompatibilityMarkdown,
+} from '@videojs/installation';
 import type { AstroIntegration } from 'astro';
 import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
@@ -10,13 +20,20 @@ import TurndownService from 'turndown';
 import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION } from '../src/consts';
 import { sidebar } from '../src/docs.config';
 import type { Section, Sidebar, SupportedFramework } from '../src/types/docs';
-import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework, SUPPORTED_FRAMEWORKS } from '../src/types/docs';
+import { FRAMEWORK_LABELS, isLink, isSection, isValidFramework } from '../src/types/docs';
+import { INSTALLATION_PACKAGE_VERSION, renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
+  getInstallationRouteSegment,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
+  installationMarkdownGuides,
 } from '../src/utils/installation/routes';
-import { outsideCodeFences, selectFrameworkBranches } from './markdown-text';
+import { staticMarkdownHeaderRules } from '../src/utils/markdown-handler';
+import { outsideCodeFences } from '../src/utils/markdown-text';
+import { filterSidebarForLlms, llmsSections, sidebarSlugs } from './llms-sections';
+
+export { llmsIndexPaths } from './llms-sections';
 
 export interface PageEntry {
   pathname: string;
@@ -43,8 +60,15 @@ export default function llmsMarkdown(): AstroIntegration {
       // page on request instead; this keeps "Copy page" and "View as Markdown" working locally.
       'astro:server:setup': ({ server }) => {
         server.middlewares.use(async (req, res, next) => {
-          const pathname = (req.url ?? '').split('?')[0] ?? '';
+          const requestUrl = new URL(req.url ?? '/', `http://${req.headers.host}`);
+          const pathname = requestUrl.pathname;
           if (!pathname.endsWith('.md')) return next();
+
+          if (pathname === '/docs/guides/installation.md') {
+            res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+            res.end(generateInstallationIndex(siteUrl));
+            return;
+          }
 
           const pagePath = pathname.slice(0, -'.md'.length) || '/';
 
@@ -55,8 +79,19 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(await response.text(), turndown, siteUrl);
             if (!page) return next();
 
+            const installation = renderInstallationMarkdownSelection(page.markdown, pagePath, requestUrl.searchParams);
+
+            if (installation && installation.status !== 200) {
+              res.statusCode = installation.status;
+              res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+              res.end(installation.body);
+              return;
+            }
+
+            const markdown = installation?.body ?? page.markdown;
+
             res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-            res.end(page.markdown + generatePageFooter(pagePath.slice(1), page.framework, page.frameworks, siteUrl));
+            res.end(markdown + generatePageFooter(pagePath.slice(1), page.framework, page.frameworks, siteUrl));
           } catch (error) {
             next(error);
           }
@@ -69,6 +104,7 @@ export default function llmsMarkdown(): AstroIntegration {
         const blogPages: PageEntry[] = [];
         const changelogPages: PageEntry[] = [];
         const otherPages: PageEntry[] = [];
+        const twinPaths: string[] = [];
 
         logger.info('Generating LLM-optimized markdown files...');
 
@@ -86,7 +122,21 @@ export default function llmsMarkdown(): AstroIntegration {
             const page = convertPage(html, turndown, siteUrl);
             if (!page) return;
 
-            const { markdown, title, description, sort, framework, frameworks } = page;
+            let { markdown } = page;
+            const { title, description, sort, framework, frameworks } = page;
+            const installation = renderInstallationMarkdownSelection(
+              markdown,
+              pathname,
+              new URLSearchParams(),
+              INSTALLATION_PACKAGE_VERSION,
+              { preserveFrameworkBranches: true }
+            );
+
+            if (installation && installation.status !== 200) {
+              throw new Error(`${pathname} could not render installation Markdown: ${installation.body.trim()}`);
+            }
+
+            markdown = installation?.body ?? markdown;
 
             // Write markdown file as sibling to the directory
             // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
@@ -95,6 +145,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown + footer, 'utf-8');
+            twinPaths.push(`/${pathname}.md`);
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
@@ -127,6 +178,15 @@ export default function llmsMarkdown(): AstroIntegration {
         });
 
         await Promise.all(workers);
+
+        const installationIndexPath = join(siteDir, 'docs', 'guides', 'installation.md');
+
+        await mkdir(dirname(installationIndexPath), { recursive: true });
+        await writeFile(installationIndexPath, generateInstallationIndex(siteUrl), 'utf-8');
+        twinPaths.push('/docs/guides/installation.md');
+
+        // Append rather than overwrite, so `_headers` rules from `public/` survive.
+        await appendFile(join(siteDir, '_headers'), `\n${staticMarkdownHeaderRules(twinPaths.sort())}\n`, 'utf-8');
 
         // Group docs by framework
         const docsByFramework = new Map<string, PageEntry[]>();
@@ -220,6 +280,60 @@ export default function llmsMarkdown(): AstroIntegration {
   };
 }
 
+export function generateInstallationIndex(siteUrl = 'https://videojs.org'): string {
+  const origin = siteUrl || 'https://videojs.org';
+  const discovery = createInstallationDiscovery(INSTALLATION_PACKAGE_VERSION);
+  const options = installationOptionDefinitionsFor(
+    { methods: INSTALLATION_METHODS, frameworks: INSTALLATION_FRAMEWORKS },
+    QUERY_OPTION_SYNTAX
+  );
+  const optionLines = options
+    .filter(({ query }) => query && !['method', 'framework'].includes(query))
+    .map((option) => {
+      const values = option.values ? ` Values: ${option.values.map((value) => `\`${value}\``).join(', ')}.` : '';
+      const applies = option.appliesWhen ? ` Applies when ${option.appliesWhen}.` : '';
+      const defaultValue = option.query === 'package-manager' ? 'pnpm' : option.default;
+
+      return `- \`${option.query}\`: ${option.description}${values} Default: ${defaultValue}.${applies}`;
+    })
+    .join('\n');
+  const shadcnFrameworks = INSTALLATION_FRAMEWORKS.filter((framework) =>
+    installationMethodsForFramework(framework).includes('shadcn')
+  ).map((framework) => `\`${framework}\``);
+  const guides = installationMarkdownGuides()
+    .map(
+      ({ title, guides }) =>
+        `## ${title}\n\n${guides.map(({ label, path }) => `- [${label}](${origin}${path})`).join('\n')}`
+    )
+    .join('\n\n');
+
+  return `# Video.js installation guides
+
+Choose the guide for the framework and installation path you intend to use. Each page includes a complete default installation. Add the listed query parameters to its \`.md\` URL for another validated combination.
+
+## AI Quickstart
+
+Install the [Video.js skill](https://github.com/videojs/skills), then ask the Video.js CLI for version-matched installation choices for every framework. The command only prints instructions and never modifies a project.
+
+\`\`\`sh
+${discovery.command}
+\`\`\`
+
+${guides}
+
+## Query parameters
+
+The page route selects Packaged, Shadcn, or CDN and fixes the framework except on the Shadcn page. Query parameters select the remaining options:
+
+- \`framework\`: On the Shadcn page, choose ${shadcnFrameworks.join(' or ')}. Default: \`react\`.
+${optionLines}
+
+## Compatibility
+
+${renderInstallationCompatibilityMarkdown(installationCompatibility, QUERY_OPTION_SYNTAX)}
+`;
+}
+
 export function createTurndown(): TurndownService {
   const turndown = new TurndownService({
     headingStyle: 'atx',
@@ -293,28 +407,37 @@ export function createTurndown(): TurndownService {
     },
   });
 
+  const hasAttribute = (node: Node, attribute: string): boolean => {
+    if (node.nodeType !== 1) return false;
+
+    // SAFETY: nodeType 1 is an Element in the DOM model used by Turndown.
+    return (node as Element).getAttribute(attribute) !== null;
+  };
+
   // Ensure [data-llms-only] content passes through despite hidden attribute
   turndown.addRule('llms-only', {
-    filter: (node) => node.hasAttribute('data-llms-only'),
+    filter: (node) => hasAttribute(node, 'data-llms-only'),
     replacement: (content) => content,
   });
 
-  // Wrap [data-cli-replace] content with text markers the CLI can find and replace
-  turndown.addRule('cli-replace', {
-    filter: (node) => node.hasAttribute('data-cli-replace'),
-    replacement: (content, node) => markerBlock('replace', node.getAttribute('data-cli-replace'), content),
+  // Preserve both source-framework branches in the static Markdown template. Request rendering and package bundling
+  // select one branch after applying the installation plan.
+  turndown.addRule('installation-framework', {
+    filter: (node) => hasAttribute(node, 'data-shadcn-framework'),
+    replacement: (content, node) => {
+      const framework = node.getAttribute('data-shadcn-framework');
+      if (!framework) return content;
+
+      return `\n\n<!-- installation:framework ${framework} -->\n${content.trim()}\n<!-- /installation:framework ${framework} -->\n\n`;
+    },
   });
 
-  // Wrap [data-cli-omit] content with text markers the CLI strips from its output
-  turndown.addRule('cli-omit', {
-    filter: (node) => node.hasAttribute('data-cli-omit'),
-    replacement: (content, node) => markerBlock('omit', node.getAttribute('data-cli-omit'), content),
-  });
-
-  // Preserve query-controlled framework branches so the docs CLI can keep only the requested Shadcn output.
-  turndown.addRule('cli-framework', {
-    filter: (node) => node.hasAttribute('data-cli-framework'),
-    replacement: (content, node) => markerBlock('framework', node.getAttribute('data-cli-framework'), content),
+  // Keep a stable boundary around the generated installation steps. The edge function replaces only this block when
+  // a Markdown request supplies installation query parameters.
+  turndown.addRule('installation-plan', {
+    filter: (node) => hasAttribute(node, 'data-installation-plan'),
+    replacement: (content) =>
+      `\n\n<!-- installation-plan:start -->\n\n${content.trim()}\n\n<!-- installation-plan:end -->\n\n`,
   });
 
   // Shiki renders `<pre data-language>`; keep the language on the fence so agents know what they are reading.
@@ -415,14 +538,6 @@ export function createTurndown(): TurndownService {
   });
 
   return turndown;
-}
-
-/**
- * HTML-comment markers the docs CLI searches for. The CLI matches a newline directly after the opening marker and
- * directly before the closing one, so keep exactly one blank line on each side of the trimmed content.
- */
-function markerBlock(kind: string, id: string | null, content: string): string {
-  return `\n\n<!-- cli:${kind} ${id} -->\n\n${content.trim()}\n\n<!-- /cli:${kind} ${id} -->\n\n`;
 }
 
 /** The header row of a pipe table is the first row of the table; the site never renders header-less tables. */
@@ -542,7 +657,7 @@ function unwrapTransparentWrappers(root: Element): void {
   }
 
   for (const wrapper of root.querySelectorAll('div.contents')) {
-    // A wrapper that also carries data attributes is a marker for another rule (e.g. `data-cli-replace`).
+    // A wrapper that also carries data attributes is a marker for another rule (e.g. `data-installation-plan`).
     if (wrapper.attributes.length === 1) unwrap(wrapper);
   }
 
@@ -917,6 +1032,10 @@ export function generateRootIndex({
 
   content += `> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n\n`;
 
+  content += `> The \`video.js\` package on npm is still Video.js 8. Video.js 10 ships as \`@videojs/react\` and \`@videojs/html\`.\n\n`;
+
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/cli agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+
   content += `## Documentation\n\n`;
 
   for (const fw of sortedFrameworks) {
@@ -986,6 +1105,10 @@ export function generateDocsIndex(
 
   content += `> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.\n\n`;
 
+  content += `> The \`video.js\` package on npm is still Video.js 8. Video.js 10 ships as \`@videojs/${framework}\`; to move existing Video.js 8 code, read ${siteUrl}/docs/framework/${framework}/guides/migrate-from-video-js-8.md\n\n`;
+
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/cli agents init\`, then pass \`--framework ${framework}\` with the other choices. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+
   // Get sidebar filtered for this framework (production only)
   if (!isValidFramework(framework)) return content;
 
@@ -1052,53 +1175,9 @@ export function buildSectionFiles(framework: string, pages: PageEntry[], siteUrl
   });
 }
 
-/** Top-level sidebar sections whose pages share a directory; each section's llms files are written there. */
-function llmsSections(framework: SupportedFramework) {
-  return filterSidebarForLlms(sidebar, framework)
-    .filter(isSection)
-    .flatMap((section) => {
-      const slugs = sidebarSlugs(section.contents);
-      const directory = commonDirectory(slugs);
-
-      return directory ? [{ section, slugs, directory }] : [];
-    });
-}
-
-/** Root-relative paths of every index and complete file the build writes, for the sitemap. */
-export function llmsIndexPaths(): string[] {
-  const docs = SUPPORTED_FRAMEWORKS.flatMap((framework) =>
-    [
-      `/docs/framework/${framework}`,
-      ...llmsSections(framework).map(({ directory }) => `/docs/framework/${framework}/${directory}`),
-    ].flatMap((base) => [`${base}/llms.txt`, `${base}/llms-full.txt`])
-  );
-
-  return ['/llms.txt', '/blog/llms.txt', '/changelog/llms.txt', ...docs];
-}
-
 /** A section label used mid-sentence: lower-case unless it is an acronym such as "API". */
 function sectionNoun(label: string): string {
   return /^[A-Z0-9]+$/.test(label) ? label : label.toLowerCase();
-}
-
-/** The directory every slug shares, or `undefined` when the pages have no common parent. */
-function commonDirectory(slugs: string[]): string | undefined {
-  const directories = slugs.map((slug) => slug.split('/').slice(0, -1));
-  const [first] = directories;
-  if (!first) return undefined;
-
-  let length = Math.min(...directories.map((directory) => directory.length));
-
-  for (let index = 0; index < length; index += 1) {
-    if (!directories.every((directory) => directory[index] === first[index])) {
-      length = index;
-      break;
-    }
-  }
-
-  const shared = first.slice(0, length);
-
-  return shared.length > 0 ? shared.join('/') : undefined;
 }
 
 /** The nearest enclosing section label for every page slug. */
@@ -1171,7 +1250,18 @@ function renderCorpus(
   let body = '';
 
   for (const { slug, page, markdown } of entries) {
-    let content = outsideCodeFences(selectFrameworkBranches(markdown, framework).trim(), (text) =>
+    const installationParams =
+      getInstallationRouteSegment(page.pathname) === 'shadcn'
+        ? new URLSearchParams({ framework })
+        : new URLSearchParams();
+    const installation = renderInstallationMarkdownSelection(markdown, page.pathname, installationParams);
+
+    if (installation && installation.status !== 200) {
+      throw new Error(`${page.pathname} could not render installation Markdown: ${installation.body.trim()}`);
+    }
+
+    const selectedMarkdown = installation?.body ?? markdown;
+    let content = outsideCodeFences(selectedMarkdown.trim(), (text) =>
       text.replace(
         /\]\(#([^)\s]*)/g,
         (_match, anchor: string) => `](${siteUrl}${page.pathname}#${page.headingIds?.get(anchor) ?? anchor}`
@@ -1221,14 +1311,6 @@ function pagesBySlug(framework: string, pages: PageEntry[]): Map<string, PageEnt
   }
 
   return pageBySlug;
-}
-
-function sidebarSlugs(items: Sidebar): string[] {
-  return items.flatMap((item) => {
-    if (isSection(item)) return sidebarSlugs(item.contents);
-
-    return isLink(item) ? [] : [item.slug];
-  });
 }
 
 function renderSidebarToMarkdown(
@@ -1282,28 +1364,6 @@ function sectionDescription(section: Section, framework: SupportedFramework): st
   const { llmsDescription } = section;
 
   return typeof llmsDescription === 'string' ? llmsDescription : llmsDescription?.[framework];
-}
-
-/**
- * Inline sidebar filter for the integration context where `@/` path aliases aren't available (can't import
- * `filterSidebar` from `src/utils/docs/sidebar`). Filters out `devOnly` items and sections restricted to other
- * frameworks, then removes empty sections.
- */
-function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Sidebar {
-  return items
-    .filter((item) => {
-      if (item.devOnly) return false;
-
-      return !item.frameworks || item.frameworks.includes(framework);
-    })
-    .map((item) => {
-      if (isSection(item)) {
-        return { ...item, contents: filterSidebarForLlms(item.contents, framework) };
-      }
-
-      return item;
-    })
-    .filter((item) => !isSection(item) || item.contents.length > 0);
 }
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {

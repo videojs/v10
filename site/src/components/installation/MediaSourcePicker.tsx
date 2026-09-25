@@ -1,4 +1,11 @@
 import { Input } from '@base-ui/react/input';
+import {
+  articleFor,
+  detectRenderer,
+  getInstallationPreset,
+  getInstallationRenderer,
+  type Renderer,
+} from '@videojs/installation';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -13,20 +20,18 @@ import VimeoLogo from '@/assets/logos/brands/vimeo.svg?react';
 import YoutubeLogo from '@/assets/logos/brands/youtube.svg?react';
 import MuxLogo from '@/assets/logos/mux-small.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
-import { renderer, sourceUrl } from '@/stores/installation';
-import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
-import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import { getInstallationPreset, type Renderer } from '@/utils/installation/types';
+import { media, sourceUrl } from '@/stores/installation';
 
 import MuxUploaderPanel from './MuxUploaderPanel';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 /** Protocols without a brand mark get a monogram so every card still has a recognizable badge. */
 function Monogram({ children }: { children: string }) {
   return <span className="font-display-compact text-p4 font-bold tracking-tight uppercase">{children}</span>;
 }
 
-const RENDERER_MEDIA: Record<Renderer, ReactNode> = {
+const RENDERER_MEDIA = {
   'html5-video': <Html5Logo className="size-6" />,
   'html5-audio': <Html5Logo className="size-6" />,
   hls: <Monogram>HLS</Monogram>,
@@ -40,15 +45,17 @@ const RENDERER_MEDIA: Record<Renderer, ReactNode> = {
   twitch: <TwitchLogo className="size-6" />,
   spotify: <SpotifyLogo className="size-6" />,
   'background-video': <Image className="size-6" />,
-};
+  'hls-background-video': <Monogram>HLS</Monogram>,
+  'mux-background-video': <MuxLogo className="w-7" />,
+} satisfies Record<Renderer, ReactNode>;
 
-const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
+const RENDERER_DESCRIPTIONS = {
   'html5-video': 'MP4, WebM, and other file URLs',
   'html5-audio': 'MP3, AAC, and other file URLs',
   hls: 'Adaptive .m3u8 streams via hls.js',
   dash: 'Adaptive .mpd streams via dash.js',
-  'mux-video': 'Playback IDs with Mux Data built in',
-  'mux-audio': 'Playback IDs with Mux Data built in',
+  'mux-video': 'Mux playback IDs with Mux Data selected by default',
+  'mux-audio': 'Mux playback IDs with Mux Data selected by default',
   vimeo: 'Vimeo videos and private links',
   youtube: 'YouTube videos and shorts',
   cloudflare: 'Cloudflare Stream videos',
@@ -56,7 +63,9 @@ const RENDERER_DESCRIPTIONS: Record<Renderer, string> = {
   twitch: 'Twitch channels, videos, and clips',
   spotify: 'Spotify tracks, albums, and episodes',
   'background-video': 'Muted, looping file URLs',
-};
+  'hls-background-video': 'Muted, looping HLS streams',
+  'mux-background-video': 'Muted, looping Mux playback IDs',
+} satisfies Record<Renderer, string>;
 
 /** How long typing may pause before the draft URL reaches the preview. */
 const COMMIT_DELAY_MS = 500;
@@ -65,8 +74,8 @@ interface Props {
   supportedRenderers?: Renderer[];
 }
 
-export default function MediaSourcePicker({ supportedRenderers }: Props) {
-  const $renderer = useSelection('renderer');
+function MediaSourcePicker({ supportedRenderers }: Props) {
+  const $renderer = useSelection('media');
   const $useCase = useSelection('useCase');
   const $sourceUrl = useSelection('sourceUrl');
 
@@ -113,14 +122,14 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
   const detectedRenderer = detection && renderers.includes(detection.renderer) ? detection.renderer : null;
 
   useEffect(() => {
-    if (!rendererSupported && firstRenderer) renderer.set(firstRenderer);
+    if (!rendererSupported && firstRenderer) media.set(firstRenderer);
   }, [firstRenderer, rendererSupported]);
 
   // Follow the detected renderer for a pasted URL. Uses the primitive `detectedRenderer` string instead of the
   // `detection` object so the effect does not re-fire on every render and override a manual selection. Fitting the
   // renderer to the use case lives in the store.
   useEffect(() => {
-    if (detectedRenderer) renderer.set(detectedRenderer);
+    if (detectedRenderer) media.set(detectedRenderer);
   }, [detectedRenderer]);
 
   const hasUrl = $sourceUrl.trim().length > 0;
@@ -174,7 +183,7 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
               This looks like {articleFor(detection.renderer)} {detection.label} link.{' '}
               <button
                 type="button"
-                onClick={() => renderer.set(detection.renderer)}
+                onClick={() => media.set(detection.renderer)}
                 className="intent:decoration-gold cursor-pointer underline"
               >
                 Select {detection.label}
@@ -190,10 +199,10 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
 
       <CardRadioGroup
         value={$renderer}
-        onChange={(value) => renderer.set(value)}
+        onChange={(value) => media.set(value)}
         options={renderers.map((value) => ({
           value,
-          label: RENDERER_LABELS[value],
+          label: getInstallationRenderer(value).label,
           description: RENDERER_DESCRIPTIONS[value],
           media: RENDERER_MEDIA[value],
         }))}
@@ -212,3 +221,5 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
     </div>
   );
 }
+
+export default withSelectionMarker(MediaSourcePicker);

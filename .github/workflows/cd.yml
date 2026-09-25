@@ -112,14 +112,10 @@ jobs:
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
       # The @videojs/html and @videojs/react packages' prepack scripts (fired by `pnpm publish`
       # below) copy that subtree into each package's docs/ directory so it ships in the tarball.
-      # The site task and CLI dependency graph let Vite Task reuse the package builds here.
-      - name: Build site (required by html/react prepack and CLI)
+      # The task graph lets Vite Task reuse the package builds here.
+      - name: Build site (required by html/react prepack)
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: .github/scripts/run-logged.sh build-site pnpm build:site
-
-      - name: Build CLI
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: .github/scripts/run-logged.sh build-cli pnpm build:cli
 
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}

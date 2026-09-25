@@ -1,11 +1,31 @@
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { registrySkin, registryStyling, registryTemplate, registryTheme } from '@/stores/registry';
+import { registrySkin, registryStyling, registryTheme } from '@/stores/registry';
 
 vi.mock('@/components/Select', () => ({
   Select: ({ value, ...props }: { value: string; 'aria-label': string }) => (
     <span data-label={props['aria-label']}>{value}</span>
+  ),
+}));
+
+vi.mock('@/components/CardRadioGroup', () => ({
+  default: ({
+    value,
+    options,
+    ...props
+  }: {
+    value: string;
+    options: { description?: string; label: string }[];
+    'aria-label': string;
+  }) => (
+    <span
+      data-label={props['aria-label']}
+      data-options={options.map(({ label }) => label).join(',')}
+      data-descriptions={options.flatMap(({ description }) => (description ? [description] : [])).join(',')}
+    >
+      {value}
+    </span>
   ),
 }));
 
@@ -15,17 +35,14 @@ describe('RegistryOptionsClient', () => {
   afterEach(() => {
     registrySkin.set(null);
     registryStyling.set(null);
-    registryTemplate.set(null);
     registryTheme.set(null);
   });
 
   it('uses route defaults for server markup when client selections differ', () => {
     registrySkin.set('audio');
     registryStyling.set('css');
-    registryTemplate.set('vite');
     registryTheme.set('minimal');
 
-    const templateMarkup = renderToString(<RegistryOptionsClient framework="react" installation kind="template" />);
     const catalogMarkup = renderToString(
       <RegistryOptionsClient
         defaultSkin="video"
@@ -36,9 +53,20 @@ describe('RegistryOptionsClient', () => {
       />
     );
 
-    expect(templateMarkup).toContain('data-label="Select project template">next</span>');
     expect(catalogMarkup).toContain('data-label="Select skin">video</span>');
     expect(catalogMarkup).toContain('data-label="Select styling">tailwind</span>');
     expect(catalogMarkup).toContain('data-label="Select theme">default</span>');
+  });
+
+  it('renders the Shadcn styling choice as cards for the source catalog', () => {
+    registryStyling.set('css');
+
+    const react = renderToString(<RegistryOptionsClient framework="react" installation kind="styling" />);
+    const html = renderToString(<RegistryOptionsClient framework="html" installation kind="styling" />);
+
+    expect(react).toContain('data-label="Select styling"');
+    expect(react).toContain('data-options="Vanilla CSS,Tailwind CSS"');
+    expect(react).toContain('>tailwind</span>');
+    expect(html).toContain('data-options="Vanilla CSS"');
   });
 });

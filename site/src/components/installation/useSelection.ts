@@ -1,19 +1,30 @@
 import { useSyncExternalStore } from 'react';
 
 import { selectionAtoms } from '@/stores/installation';
-import { DEFAULT_SELECTION, type InstallationSelection } from '@/utils/installation/url-state';
+import { DEFAULT_SELECTION, type InstallationUiSelection } from '@/utils/installation/url-state';
+import { useHydratedStore } from '@/utils/useHydratedStore';
+
+/** Read one installation pick, hydrating with `serverValue` and then switching to the URL-backed store value. */
+export function useSelection<K extends keyof InstallationUiSelection>(
+  key: K,
+  serverValue: InstallationUiSelection[K] = DEFAULT_SELECTION[key]
+): InstallationUiSelection[K] {
+  return useHydratedStore(selectionAtoms[key], serverValue);
+}
+
+function subscribeToNothing(): () => void {
+  return () => {};
+}
 
 /**
- * Read one installation pick. Islands hydrate against markup rendered with the defaults, while the store may already
- * hold the URL's picks or a choice made before this island hydrated. Handing React the default as the server snapshot
- * lets hydration match, then the real value arrives as an ordinary update instead of a hydration mismatch.
+ * Whether this render shows the stores' picks instead of the prerendered defaults. The stores read the URL when they
+ * load, before any island renders, so only hydration renders the defaults. The value turns `true` in the same update
+ * that replaces the server snapshots from {@link useSelection}.
  */
-export function useSelection<K extends keyof InstallationSelection>(key: K): InstallationSelection[K] {
-  const store = selectionAtoms[key];
-
+export function useInstallationSelectionReady(): boolean {
   return useSyncExternalStore(
-    (onChange) => store.listen(onChange),
-    () => store.get(),
-    () => DEFAULT_SELECTION[key]
+    subscribeToNothing,
+    () => true,
+    () => false
   );
 }

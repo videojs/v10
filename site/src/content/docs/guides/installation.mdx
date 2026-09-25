@@ -7,11 +7,12 @@ description: Install Video.js packages and build an accessible, customizable vid
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import OwnTheUI from '@/components/installation/OwnTheUI.astro';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
 import MediaSourceCase from '@/components/installation/MediaSourceCase';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
@@ -28,6 +29,9 @@ import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
+import AppSetupPicker from '@/components/installation/AppSetupPicker.astro';
+import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
 <InstallationOverview />
 
@@ -35,7 +39,7 @@ import LLMCase from '@/components/docs/LLMCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <LLMCase>
 <FrameworkCase frameworks={["react"]}>
@@ -48,13 +52,24 @@ If a preset and skin do not meet your user's requirements, follow [Customize ski
 
 <HumanCase>
 
-## Choose your JS framework
+## Choose your framework
 
 Choose the JavaScript framework for your project.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app
+
+Choose the app environment that controls the setup commands and file locations below.
+
+<FrameworkCase frameworks={["react"]}>
+<AppSetupPicker framework="react" method="packaged" />
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+<AppSetupPicker framework="html" method="packaged" />
+</FrameworkCase>
 
 ## Choose your use case
 
@@ -69,10 +84,10 @@ The default presets work well for general website playback. The live presets sui
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
-## Choose your media source
+## Choose your media
 
 Video.js plays plain files, adaptive streams, and embeds from hosting services, and switching between them is a one-line change. Paste a URL to detect the type, pick one directly, or upload a video to Mux.
 
@@ -82,9 +97,17 @@ Video.js plays plain files, adaptive streams, and embeds from hosting services, 
 
 <MediaSourceCase client:idle renderers={["hls"]}>
 <Aside type="tip" title="Want a smaller HLS bundle?">
-This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. To experiment with our lightweight HLS engine and reduce your bundle size, try <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink>.
+This guide uses <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> for broad compatibility. For a smaller bundle, use <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> when its supported feature set fits your stream.
 </Aside>
 </MediaSourceCase>
+
+## Choose your extensions
+
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
+
+<ContentWidth margins="lg">
+  <ExtensionPicker client:idle />
+</ContentWidth>
 
 ## Choose how to install
 
@@ -94,7 +117,28 @@ Choose from the installation options available for your selections.
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
+
+<div data-installation-starting-point-section class="contents">
+
+## Prepare your app
+
+Choose whether to create the selected app setup or add Video.js to a project you already have.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:idle serverTemplate="next" />
+</ContentWidth>
+</div>
+
+<FrameworkCase frameworks={["react"]}>
+<ProjectCommands client:idle part="create" serverFramework="react" serverTemplate="next" />
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+<ProjectCommands client:idle part="create" serverFramework="html" serverTemplate="vite" />
+</FrameworkCase>
+
+</div>
 
 ## Install the packages
 
@@ -102,38 +146,52 @@ Choose from the installation options available for your selections.
   <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-  <ReactInstallTabs client:idle />
+  <ReactInstallTabs client:visible={{ rootMargin: "200px" }} />
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
 ## Add your player
 
-<ContentWidth>
-  <HTMLUsageCodeBlock client:idle />
-</ContentWidth>
+<HTMLUsageCodeBlock client:visible={{ rootMargin: "200px" }} />
 
 <Aside type="caution" title="Load your script as a module">
-When using a bundler (npm, pnpm, yarn, bun), load the resulting bundle with `type="module"`:
+Packaged modules need a bundler (npm, pnpm, yarn, bun). Load the resulting bundle with `type="module"`:
 
 ```html
 <script type="module" src="/dist/player.js"></script>
 ```
 
-Some bundlers default to an IIFE output format. Loading that bundle without `type="module"` will cause a `StoreError: NO_TARGET` error when interacting with the player. The CDN install path already uses `type="module"` — bundled installs need the same.
+Some bundlers default to an IIFE output format. Loading that bundle without `type="module"` will cause a `StoreError: NO_TARGET` error when interacting with the player. If your site has no build step, use the <DocsLink slug="guides/installation-cdn">CDN installation</DocsLink> instead.
 </Aside>
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
 ## Add your player
 
-Add the player directly to `app/page.tsx`. It imports the selected player, skin, media, and extensions from the packages you installed.
+Add the player to the file shown for your selected app setup. It imports the selected player, skin, media, and extensions from the packages you installed.
 
 <ContentWidth>
-  <ReactCreateCodeBlock client:idle />
+  <ReactCreateCodeBlock client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 </FrameworkCase>
+
+<div data-installation-named-app class="contents">
+
+## Run your app
+
+Start the app and verify that the media plays.
+
+<FrameworkCase frameworks={["react"]}>
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="react" serverTemplate="next" />
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="html" serverTemplate="vite" />
+</FrameworkCase>
+
+</div>
 
 </div>
 

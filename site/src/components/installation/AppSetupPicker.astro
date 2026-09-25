@@ -1,0 +1,22 @@
+---
+/** The app setup cards that control an installation guide's setup commands and file locations. */
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import type { InstallationFramework, InstallationMethod } from '@videojs/installation';
+
+import AppSetupPickerClient from './AppSetupPickerClient';
+
+interface Props {
+  framework: InstallationFramework;
+  method: InstallationMethod;
+  /** Keep one prerendered card group tied to its framework. */
+  fixedFramework?: boolean;
+}
+
+const { fixedFramework = false, framework, method } = Astro.props;
+---
+
+<ContentWidth>
+  <div data-llms-ignore>
+    <AppSetupPickerClient client:idle fixedFramework={fixedFramework} framework={framework} method={method} />
+  </div>
+</ContentWidth>

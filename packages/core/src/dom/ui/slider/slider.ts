@@ -1,5 +1,5 @@
 import { createState, type State } from '@videojs/store';
-import { observeResize } from '@videojs/utils/dom';
+import { isPointInElement, observeResize } from '@videojs/utils/dom';
 import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
@@ -265,14 +265,8 @@ export function createSlider(options: SliderOptions): SliderApi {
       if (isNull(capturedPointerId)) return;
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
-      const releaseRect = options.getElement().getBoundingClientRect();
 
-      pointingOnRelease =
-        event.pointerType !== 'touch' &&
-        event.clientX >= releaseRect.left &&
-        event.clientX <= releaseRect.right &&
-        event.clientY >= releaseRect.top &&
-        event.clientY <= releaseRect.bottom;
+      pointingOnRelease = event.pointerType !== 'touch' && isPointInElement(options.getElement(), event);
 
       // Cancel any pending throttled change before the final unthrottled pair.
       throttledChange?.cancel();

@@ -24,7 +24,8 @@ import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 
 import { reactCompilerPlugin } from '../build/react-compiler.ts';
-import llmsMarkdown, { llmsIndexPaths } from './integrations/llms-markdown';
+import llmsMarkdown from './integrations/llms-integration';
+import { llmsIndexPaths } from './integrations/llms-sections';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
 import { satteriCdnVersion } from './src/utils/satteriCdnVersion';

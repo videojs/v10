@@ -1,10 +1,21 @@
-import { isShadcnInstallationUrl, type InstallationPickerFramework } from '@/utils/installation/framework-navigation';
-import type { InstallationMethod } from '@/utils/installation/method-options';
-import { getInstallationRoutePath } from '@/utils/installation/routes';
-import type { InstallationSelection } from '@/utils/installation/url-state';
-import { serializeInstallationSearch } from '@/utils/installation/url-state';
+import {
+  defaultInstallationTemplate,
+  isInstallationTemplate,
+  resolveInstallationTemplateForMethod,
+  type InstallationFramework,
+  type InstallationMethod,
+  type RegistryFramework,
+} from '@videojs/installation';
 
-export type { InstallationMethod } from '@/utils/installation/method-options';
+import {
+  getInstallationRoutePath,
+  getInstallationRouteSegment,
+  isShadcnInstallationUrl,
+} from '@/utils/installation/routes';
+import type { InstallationUiSelection } from '@/utils/installation/url-state';
+import { canonicalInstallationSearch, serializeInstallationSearch } from '@/utils/installation/url-state';
+
+export type { InstallationMethod } from '@videojs/installation';
 
 /** Carry compatible installation choices to another method's guide. */
 export function resolveInstallationMethodUrl(current: URL, href: string, method: InstallationMethod): URL {
@@ -17,23 +28,32 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
 
   if (method === 'packaged') {
     if (isShadcnInstallationUrl(current)) {
-      const framework = current.searchParams.get('framework') === 'html' ? 'html' : 'react';
+      const requested = current.searchParams.get('framework');
+      const framework = requested === 'html' ? 'html' : 'react';
 
       target.pathname = getInstallationRoutePath(framework);
     }
 
     target.searchParams.delete('framework');
+    target.searchParams.delete('styling');
   } else if (method === 'shadcn') {
-    const framework = current.pathname.endsWith('/react')
-      ? 'react'
-      : isShadcnInstallationUrl(current) && current.searchParams.get('framework') !== 'html'
-        ? 'react'
-        : 'html';
+    const requested = target.searchParams.get('framework') ?? getInstallationRouteSegment(current.pathname);
+    const framework: RegistryFramework = requested === 'react' ? 'react' : 'html';
+    const requestedTemplate = target.searchParams.get('template');
+    const template = resolveInstallationTemplateForMethod(
+      framework,
+      isInstallationTemplate(requestedTemplate) ? requestedTemplate : null,
+      'shadcn'
+    );
 
     target.searchParams.set('framework', framework);
-  } else {
-    target.searchParams.delete('framework');
-    target.searchParams.delete('install-method');
+
+    if (template === defaultInstallationTemplate(framework)) target.searchParams.delete('template');
+    else target.searchParams.set('template', template);
+  } else if (method === 'cdn') {
+    // Other guides' app setups do not carry over; the CDN guide derives its own from the starting point.
+    target.searchParams.delete('template');
+    target.search = canonicalInstallationSearch('cdn', target.search);
   }
 
   return target;
@@ -44,14 +64,16 @@ export function resolveInstallationMethodHref(
   current: URL,
   href: string,
   method: InstallationMethod,
-  selection: InstallationSelection,
-  framework?: InstallationPickerFramework
+  selection: InstallationUiSelection,
+  framework?: InstallationFramework
 ): string {
   const source = new URL(current);
 
   source.search = serializeInstallationSearch(selection, source.search);
 
-  if (isShadcnInstallationUrl(source) && framework) source.searchParams.set('framework', framework);
+  if (framework && (isShadcnInstallationUrl(source) || method === 'shadcn')) {
+    source.searchParams.set('framework', framework);
+  }
 
   const target = resolveInstallationMethodUrl(source, href, method);
 

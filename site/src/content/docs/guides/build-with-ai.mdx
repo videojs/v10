@@ -9,6 +9,7 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
+import SkillInstallSteps from '@/components/installation/SkillInstallSteps.astro';
 
 The [Video.js skill](https://github.com/videojs/skills) gives coding agents the context they need to build, customize, debug, and migrate Video.js players. It teaches the agent how Video.js 10 is composed, then points it to documentation that matches the version installed in your project.
 
@@ -22,53 +23,33 @@ The skill contains guidance and Markdown references. It does not install Video.j
 
 ### Install the skill
 
-#### Codex
-
-Add the Video.js plugin marketplace, then install the plugin:
+Follow the steps for your coding agent. To print the same steps in a terminal, run:
 
 ```sh title="Terminal"
-codex plugin marketplace add videojs/skills
-codex plugin add videojs@videojs
+npx @videojs/cli agents skills
 ```
 
-Start a new Codex session after installation.
+Add `--agent claude-code,cursor` to print only those agents. `--scope project` or `--scope local` changes the Claude Code installation scope from its `user` default, and `--global` adds `-g` to the `skills` installer command. Like `agents init`, the command only prints instructions.
+
+#### Codex
+
+<SkillInstallSteps agent="codex" />
 
 #### Claude Code
 
-Add the Video.js plugin marketplace, then install the plugin:
-
-```sh title="Terminal"
-claude plugin marketplace add videojs/skills
-claude plugin install videojs@videojs
-```
-
-Start a new Claude Code session, or run `/reload-plugins` in the current session. You can invoke the skill directly with `/videojs:videojs`.
+<SkillInstallSteps agent="claude-code" />
 
 #### VS Code
 
-Enable `chat.plugins.enabled`, run **Chat: Install Plugin From Source** from the Command Palette, and enter:
-
-```text
-https://github.com/videojs/skills
-```
+<SkillInstallSteps agent="vscode" />
 
 #### Cursor
 
-Open **Customize**, select **Plugins**, choose **From GitHub Repository**, and enter:
-
-```text
-https://github.com/videojs/skills
-```
+<SkillInstallSteps agent="cursor" />
 
 #### Other coding agents
 
-Use the open `skills` installer and select your agent when prompted:
-
-```sh title="Terminal"
-npx skills add https://github.com/videojs/skills --skill videojs
-```
-
-Project-local installation is the default. Add `-g` if you want the skill available in every project.
+<SkillInstallSteps agent="other" />
 
 ### Use the skill
 
@@ -82,15 +63,18 @@ Ask for the player you want to build or the problem you want to solve. For examp
 
 The skill checks your framework and installation method before choosing player, skin, and media code. It also checks imports and playback setup against current documentation before handing the work back.
 
-### How the skill finds current docs
+### How skills find docs
 
 The skill uses documentation in this order:
 
-1. **Installed package docs.** `node_modules/@videojs/react/docs/llms.txt` and `node_modules/@videojs/html/docs/llms.txt` index the docs shipped with each package version. These files work offline and match the code in your project.
-2. **Live docs.** If Video.js is not installed yet, or the project uses the CDN, the skill reads the framework index on videojs.org and opens only the pages needed for the task.
-3. **Installed types.** If the docs are unavailable, the skill checks package exports and TypeScript declarations instead of guessing version-specific APIs.
+1. **Version-matched installation instructions.** `npx @videojs/cli agents init` lists valid choices for every framework. Adding flags prints one complete installation plan. When the project already has a different `@videojs/react` or `@videojs/html` version, the plan names the pinned command for that release. The command only returns instructions; it does not prompt, install packages, or write files.
+2. **Installed package docs.** `node_modules/@videojs/react/docs/llms.txt` and `node_modules/@videojs/html/docs/llms.txt` index the docs shipped with each package version. These files work offline and match the code in your project.
+3. **Live docs.** If commands cannot run, the skill reads the relevant [React](https://videojs.org/docs/framework/react/llms.txt) or [HTML](https://videojs.org/docs/framework/html/llms.txt) documentation index, then follows it to the matching installation guide.
+4. **Installed types.** If the docs are unavailable, the skill checks package exports and TypeScript declarations instead of guessing version-specific APIs.
 
 This order matters because most model training data describes Video.js 8. Video.js 10 has a different component model, package structure, and installation flow.
+
+The old `npx @videojs/cli docs` workflow was removed. `@videojs/cli` now contains only `agents init` and `agents skills`, in a single file with no dependencies, so running it does not download the player packages.
 
 ### Troubleshoot
 

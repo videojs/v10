@@ -1,23 +1,23 @@
+import astro from 'shiki/langs/astro.mjs';
 import bash from 'shiki/langs/bash.mjs';
 import css from 'shiki/langs/css.mjs';
 import html from 'shiki/langs/html.mjs';
+import json from 'shiki/langs/json.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
 import ts from 'shiki/langs/typescript.mjs';
 
 import createHighlighter, { getOrCreateCachedHighlighter } from './createHighlighter';
 
-// Eager module-level Promise — deliberately NOT a top-level `await`.
+// Module-level Promise — deliberately NOT a top-level `await`.
 //
 // Top-level `await` causes Safari hydration errors when multiple React
 // `client:idle` islands on the same Astro page import the same module.
 // https://github.com/withastro/astro/issues/10055
 //
 // Storing the unresolved Promise keeps module evaluation synchronous,
-// avoiding the bug. The Promise starts resolving at import time, giving
-// it a head start before `client:idle` hydration kicks in.
-// ClientCode.tsx consumes this via React 19's `use()` hook + Suspense.
+// avoiding the bug. ClientCode.tsx imports this module on demand.
 const highlighterPromise = getOrCreateCachedHighlighter('client', () =>
-  createHighlighter({ langs: [bash, html, ts, tsx, css] })
+  createHighlighter({ langs: [astro, bash, html, json, ts, tsx, css] })
 );
 
 export function getClientHighlighter() {

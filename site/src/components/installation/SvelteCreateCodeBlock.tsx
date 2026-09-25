@@ -1,26 +1,34 @@
+import { generateSvelteCreateCode, installationProjectFiles } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateSvelteCreateCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function SvelteCreateCodeBlock() {
+function SvelteCreateCodeBlock() {
+  const template = useSelection('template');
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('svelte', template, useCase);
   const code = generateSvelteCreateCode({
-    useCase: useSelection('useCase'),
+    useCase,
     skin: useSelection('skin'),
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
+    extensions: useSelection('extensions'),
   });
 
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="Svelte implementation">
         <Tab value="player" initial>
-          src/lib/VideoPlayer.svelte
+          {project.player}
         </Tab>
       </TabsList>
       <TabsPanel value="player" initial>
-        <ClientCode code={code['VideoPlayer.svelte']} lang="html" />
+        <ClientCode code={code.component} lang="html" />
       </TabsPanel>
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(SvelteCreateCodeBlock);

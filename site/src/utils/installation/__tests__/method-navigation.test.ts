@@ -14,23 +14,38 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.get('skin')).toBe('minimal');
   });
 
-  it('uses HTML Shadcn source for Vue and Svelte while keeping shared choices', () => {
-    for (const framework of ['vue', 'svelte']) {
-      const current = new URL(`https://videojs.org/docs/guides/installation/${framework}?preset=audio&skin=minimal`);
-      const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn?framework=html', 'shadcn');
+  it('carries the React route into Shadcn when the destination names no framework', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/react');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn', 'shadcn');
 
-      expect(result.searchParams.get('framework')).toBe('html');
-      expect(result.searchParams.get('preset')).toBe('audio');
-      expect(result.searchParams.get('skin')).toBe('minimal');
-    }
+    expect(result.searchParams.get('framework')).toBe('react');
+  });
+
+  it('drops the no-scaffold choice when switching to Shadcn', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/html?template=none');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn', 'shadcn');
+
+    expect(result.searchParams.get('framework')).toBe('html');
+    expect(result.searchParams.has('template')).toBe(false);
+  });
+
+  it('uses the CDN guide implicit existing-site setup', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/html?template=none');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
+
+    expect(result.searchParams.has('template')).toBe(false);
   });
 
   it('returns from Shadcn to the selected packaged framework', () => {
-    const current = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html&preset=audio');
+    const current = new URL(
+      'https://videojs.org/docs/guides/installation/shadcn?framework=html&preset=audio&template=astro&styling=css'
+    );
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation', 'packaged');
 
     expect(result.pathname).toBe('/docs/guides/installation/html');
     expect(result.searchParams.has('framework')).toBe(false);
+    expect(result.searchParams.get('template')).toBe('astro');
+    expect(result.searchParams.has('styling')).toBe(false);
     expect(result.searchParams.get('preset')).toBe('audio');
   });
 
@@ -57,39 +72,63 @@ describe('resolveInstallationMethodUrl', () => {
 
   it('removes the source framework when switching to CDN', () => {
     const current = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?framework=react&preset=video&install-method=pnpm'
+      'https://videojs.org/docs/guides/installation/shadcn?framework=react&preset=audio&package-manager=yarn&template=vite&styling=css'
     );
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
 
     expect(result.pathname).toBe('/docs/guides/installation/cdn');
     expect(result.searchParams.has('framework')).toBe(false);
-    expect(result.searchParams.has('install-method')).toBe(false);
-    expect(result.searchParams.get('preset')).toBe('video');
+    expect(result.searchParams.has('package-manager')).toBe(false);
+    expect(result.searchParams.has('template')).toBe(false);
+    expect(result.searchParams.has('styling')).toBe(false);
+    expect(result.searchParams.get('preset')).toBe('audio');
+  });
+
+  it('carries a new project and its package manager into the CDN Vite app', () => {
+    const current = new URL(
+      'https://videojs.org/docs/guides/installation/html?project=new&template=astro&package-manager=yarn'
+    );
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/cdn', 'cdn');
+
+    expect(result.search).toBe('?project=new&package-manager=yarn&template=vite');
   });
 });
 
 describe('resolveInstallationMethodHref', () => {
+  it('writes the selected HTML framework when switching to Shadcn', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/html');
+    const result = resolveInstallationMethodHref(
+      current,
+      '/docs/guides/installation/shadcn',
+      'shadcn',
+      DEFAULT_SELECTION,
+      'html'
+    );
+
+    expect(result).toBe('/docs/guides/installation/shadcn?framework=html');
+  });
+
   it('uses the selected Shadcn framework when returning to Packaged', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react');
     const result = resolveInstallationMethodHref(
       current,
       '/docs/guides/installation/html',
       'packaged',
-      { ...DEFAULT_SELECTION, useCase: 'default-audio', skin: 'minimal-audio', renderer: 'html5-audio' },
+      { ...DEFAULT_SELECTION, useCase: 'default-audio', skin: 'minimal-audio', media: 'html5-audio' },
       'html'
     );
 
     expect(result).toBe('/docs/guides/installation/html?preset=audio&skin=minimal');
   });
 
-  it('drops the package manager from CDN while preserving shared choices', () => {
+  it('drops the package manager for an existing CDN page', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/html');
     const result = resolveInstallationMethodHref(current, '/docs/guides/installation/cdn', 'cdn', {
       ...DEFAULT_SELECTION,
-      installMethod: 'pnpm',
+      installMethod: 'bun',
       useCase: 'default-audio',
       skin: 'minimal-audio',
-      renderer: 'html5-audio',
+      media: 'html5-audio',
       sourceUrl: 'https://example.com/audio.mp3',
     });
 

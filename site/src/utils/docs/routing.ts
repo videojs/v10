@@ -1,7 +1,13 @@
 import { sidebar as defaultSidebar } from '@/docs.config';
 import type { Sidebar, SupportedFramework } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, isValidFramework, resolveDocsFramework } from '@/types/docs';
-import { isShadcnInstallationUrl, SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigation';
+import {
+  getInstallationRouteForSlug,
+  getInstallationRoutePath,
+  getInstallationRouteSegment,
+  INSTALLATION_ROUTE_PREFIX,
+  isShadcnInstallationUrl,
+} from '@/utils/installation/routes';
 
 import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 
@@ -9,24 +15,17 @@ export { CANONICAL_INSTALLATION_SLUGS } from '@/utils/installation/routes';
 
 /** Build the public URL for a guide, including the canonical installation routes. */
 export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): string {
-  if (guideSlug === 'guides/installation') return `/docs/guides/installation/${framework}`;
+  const installationRoute = getInstallationRouteForSlug(guideSlug, framework);
+  if (installationRoute === 'shadcn') return `${getInstallationRoutePath('shadcn')}?framework=${framework}`;
 
-  if (guideSlug === 'guides/installation-vue') return '/docs/guides/installation/vue';
-
-  if (guideSlug === 'guides/installation-svelte') return '/docs/guides/installation/svelte';
-
-  if (guideSlug === 'guides/installation-shadcn') {
-    return `${SHADCN_INSTALLATION_PATH}?framework=${framework}`;
-  }
-
-  if (guideSlug === 'guides/installation-cdn') return '/docs/guides/installation/cdn';
+  if (installationRoute) return getInstallationRoutePath(installationRoute);
 
   return `/docs/framework/${framework}/${guideSlug}`;
 }
 
 /** Match a sidebar guide against the current URL, keeping installation selected across all installation methods. */
 export function isDocsGuideActive(framework: SupportedFramework, guideSlug: string, currentPath: string): boolean {
-  if (guideSlug === 'guides/installation') return currentPath.startsWith('/docs/guides/installation');
+  if (guideSlug === 'guides/installation') return currentPath.startsWith(INSTALLATION_ROUTE_PREFIX);
 
   return buildDocsUrl(framework, guideSlug) === currentPath;
 }
@@ -36,15 +35,10 @@ export function isDocsGuideActive(framework: SupportedFramework, guideSlug: stri
  * preferred framework, and `resolveDocsHref` upgrades them on the client when the preference is known.
  */
 export function buildAgnosticDocsUrl(guideSlug?: string | null): string {
-  if (guideSlug === 'guides/installation') return '/docs/guides/installation';
+  if (guideSlug === 'guides/installation') return INSTALLATION_ROUTE_PREFIX;
 
-  if (guideSlug === 'guides/installation-vue') return '/docs/guides/installation/vue';
-
-  if (guideSlug === 'guides/installation-svelte') return '/docs/guides/installation/svelte';
-
-  if (guideSlug === 'guides/installation-shadcn') return SHADCN_INSTALLATION_PATH;
-
-  if (guideSlug === 'guides/installation-cdn') return '/docs/guides/installation/cdn';
+  const installationRoute = getInstallationRouteForSlug(guideSlug, DEFAULT_FRAMEWORK);
+  if (installationRoute) return getInstallationRoutePath(installationRoute);
 
   return guideSlug ? `/docs/${guideSlug}` : '/docs';
 }
@@ -54,7 +48,7 @@ export function getFrameworkFromDocsPath(pathname: string): SupportedFramework |
   const framework = pathname.match(/^\/docs\/framework\/([^/]+)(?:\/|$)/)?.[1];
   if (isValidFramework(framework)) return framework;
 
-  const installationRoute = pathname.match(/^\/docs\/guides\/installation\/([^/]+)(?:\/|$)/)?.[1];
+  const installationRoute = getInstallationRouteSegment(pathname);
   if (installationRoute === 'shadcn') return null;
 
   return resolveDocsFramework(installationRoute);

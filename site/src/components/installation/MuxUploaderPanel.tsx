@@ -11,7 +11,7 @@ import { useCallback, useRef, useState } from 'react';
 import CloudUpload from '@/assets/icons/cloud-upload.svg?react';
 import MuxLogo from '@/assets/logos/mux-small.svg?react';
 import { MUX_URL } from '@/consts';
-import { muxPlaybackId, renderer, sourceUrl } from '@/stores/installation';
+import { muxPlaybackId, media, sourceUrl } from '@/stores/installation';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
 import { pollForPlaybackId } from '@/utils/mux/polling';
 
@@ -148,7 +148,7 @@ export default function MuxUploaderPanel() {
     // Success! Update local state and nanostores (for cross-island use)
     setPlaybackId(result.playbackId);
     setState('ready');
-    renderer.set('hls');
+    media.set('hls');
     muxPlaybackId.set(result.playbackId);
     sourceUrl.set(`https://stream.mux.com/${result.playbackId}.m3u8`);
   }, [uploadId]);
