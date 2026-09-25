@@ -29,7 +29,7 @@ import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
-import RegistryOptions from '@/components/registry/RegistryOptions.astro';
+import AppSetupPicker from '@/components/installation/AppSetupPicker.astro';
 import ProjectCommands from '@/components/installation/ProjectCommands';
 import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
@@ -65,10 +65,10 @@ Choose the JavaScript framework for your project.
 Choose the app environment that controls the setup commands and file locations below.
 
 <FrameworkCase frameworks={["react"]}>
-<RegistryOptions framework="react" kind="template" method="packaged" />
+<AppSetupPicker framework="react" method="packaged" />
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-<RegistryOptions framework="html" kind="template" method="packaged" />
+<AppSetupPicker framework="html" method="packaged" />
 </FrameworkCase>
 
 ## Choose your use case

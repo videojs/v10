@@ -1,10 +1,9 @@
 ---
-/** A project-template or registry source choice placed beside the command it controls. */
+/** A registry source choice placed beside the command it controls. */
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import {
   isInstallationFramework,
   type InstallationFramework,
-  type InstallationMethod,
   type RegistryPreset,
   type RegistryTheme,
 } from '@videojs/installation';
@@ -16,25 +15,14 @@ interface Props {
   defaultSkin?: RegistryPreset;
   /** Theme selected before the page's theme selector changes it. */
   defaultTheme?: RegistryTheme;
-  kind: 'template' | 'catalog' | 'styling';
-  method?: InstallationMethod;
+  kind: 'catalog' | 'styling';
   /** Start the skin and theme selectors from the choices made earlier on the installation page. */
   installation?: boolean;
   /** Explicit source framework for routes that are not nested under a docs framework. */
   framework?: InstallationFramework;
-  /** Keep one prerendered app-card group tied to its framework. */
-  fixedFramework?: boolean;
 }
 
-const {
-  defaultSkin,
-  defaultTheme,
-  fixedFramework = false,
-  installation = false,
-  kind,
-  method,
-  framework: frameworkProp,
-} = Astro.props;
+const { defaultSkin, defaultTheme, installation = false, kind, framework: frameworkProp } = Astro.props;
 const routeFramework = Astro.params.framework;
 const framework = frameworkProp ?? (isInstallationFramework(routeFramework) ? routeFramework : null);
 if (!framework) throw new Error(`RegistryOptions needs a framework route, received ${routeFramework}.`);
@@ -46,11 +34,9 @@ if (!framework) throw new Error(`RegistryOptions needs a framework route, receiv
       client:load
       defaultSkin={defaultSkin}
       defaultTheme={defaultTheme}
-      fixedFramework={fixedFramework}
       framework={framework}
       installation={installation}
       kind={kind}
-      method={method}
     />
   </div>
 </ContentWidth>

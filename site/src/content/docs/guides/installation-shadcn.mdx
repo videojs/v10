@@ -21,6 +21,7 @@ import ShadcnNextSteps from '@/components/installation/ShadcnNextSteps.astro';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import RegistryOptions from '@/components/registry/RegistryOptions.astro';
+import AppSetupPicker from '@/components/installation/AppSetupPicker.astro';
 import RegistryInitCommand from '@/components/registry/RegistryInitCommand.astro';
 import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
 import ShadcnFrameworkCase from '@/components/registry/ShadcnFrameworkCase.astro';
@@ -53,11 +54,11 @@ Choose the JavaScript framework for your project.
 Choose the app environment that controls the setup commands and file locations below.
 
 <ShadcnFrameworkCase framework="react" llmsHeading={false}>
-<RegistryOptions framework="react" fixedFramework kind="template" method="shadcn" />
+<AppSetupPicker framework="react" fixedFramework method="shadcn" />
 </ShadcnFrameworkCase>
 
 <ShadcnFrameworkCase framework="html">
-<RegistryOptions framework="html" fixedFramework kind="template" method="shadcn" />
+<AppSetupPicker framework="html" fixedFramework method="shadcn" />
 </ShadcnFrameworkCase>
 
 ## Choose your use case

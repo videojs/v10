@@ -1,10 +1,6 @@
 import {
   DEFAULT_REGISTRY_PRESET,
-  defaultInstallationTemplate,
   type InstallationFramework,
-  type InstallationMethod,
-  type InstallationTemplate,
-  INSTALLATION_TEMPLATE_LABELS,
   type RegistryFramework,
   type RegistryPreset,
   type RegistryStyling,
@@ -13,51 +9,24 @@ import {
   REGISTRY_THEMES,
   registrySkinSelection,
   registryStylings,
-  installationTemplatesForMethod,
-  resolveInstallationTemplateForMethod,
   resolveRegistryStyling,
 } from '@videojs/installation';
 import type { ReactNode } from 'react';
 
-import CodeIcon from '@/assets/icons/code.svg?react';
 import FilmIcon from '@/assets/icons/film.svg?react';
 import LiveStreamingIcon from '@/assets/icons/live-streaming.svg?react';
 import MusicNoteIcon from '@/assets/icons/music-note.svg?react';
 import RadioIcon from '@/assets/icons/radio.svg?react';
-import AstroLogo from '@/assets/logos/brands/astro.svg?react';
 import CssLogo from '@/assets/logos/brands/css3.svg?react';
-import LaravelLogo from '@/assets/logos/brands/laravel.svg?react';
-import NextLogoUrl from '@/assets/logos/brands/nextjs.svg?url';
-import NuxtLogo from '@/assets/logos/brands/nuxt.svg?react';
-import ReactRouterLogo from '@/assets/logos/brands/react-router.svg?react';
-import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
-import TanStackLogo from '@/assets/logos/brands/tanstack.svg?react';
-import ViteLogoUrl from '@/assets/logos/brands/vite.svg?url';
-import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
+import CardRadioGroup from '@/components/CardRadioGroup';
 import SkinPreview from '@/components/installation/SkinPreview';
 import { useRegistrySkin, useRegistryStyling, useRegistryTheme } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
 import { Select } from '@/components/Select';
-import {
-  skin as installationSkin,
-  selectInstallationTemplate,
-  useCase as installationUseCase,
-} from '@/stores/installation';
+import { skin as installationSkin, useCase as installationUseCase } from '@/stores/installation';
 import { registrySkin, registryTheme, selectRegistryStyling } from '@/stores/registry';
 import { REGISTRY_STYLING_LABELS, REGISTRY_THEME_LABELS } from '@/utils/installation/registry-labels';
-
-const TEMPLATE_ICONS = {
-  none: <CodeIcon className="size-7" />,
-  next: <img alt="" src={NextLogoUrl} className="size-7 dark:invert" />,
-  vite: <img alt="" src={ViteLogoUrl} className="size-7" />,
-  start: <TanStackLogo className="size-7" />,
-  laravel: <LaravelLogo className="size-7" />,
-  'react-router': <ReactRouterLogo className="w-7" />,
-  astro: <AstroLogo className="h-9 w-auto" />,
-  nuxt: <NuxtLogo className="size-7" />,
-  sveltekit: <SvelteLogo className="size-7" />,
-} satisfies Record<InstallationTemplate, ReactNode>;
 
 const STYLING_ICONS = {
   tailwind: <TailwindLogo className="w-4" />,
@@ -89,65 +58,12 @@ const THEME_ICONS = {
   minimal: <SkinPreview skin="minimal-video" className="size-4" />,
 } satisfies Record<RegistryTheme, ReactNode>;
 
-const TEMPLATE_DESCRIPTIONS = {
-  none: 'Static HTML, WordPress, or another CMS',
-  next: 'Full-stack React with App Router',
-  vite: 'Fast app and development server',
-  start: 'Full-stack React with TanStack Router',
-  laravel: 'Laravel app with Vite assets',
-  'react-router': 'React Router framework mode',
-  astro: 'Content-focused sites with islands',
-  nuxt: 'Full-stack Vue framework',
-  sveltekit: 'Full-stack Svelte framework',
-} as const satisfies Record<InstallationTemplate, string>;
-
-const PACKAGED_EXISTING_SITE_DESCRIPTION = 'Existing site whose build bundles JavaScript';
-
 interface Props {
   defaultSkin?: RegistryPreset;
   defaultTheme?: RegistryTheme;
-  fixedFramework?: boolean;
   framework: InstallationFramework;
   installation: boolean;
-  kind: 'template' | 'catalog' | 'styling';
-  method?: InstallationMethod;
-}
-
-function templateCardOptions(
-  framework: InstallationFramework,
-  method?: InstallationMethod
-): CardRadioOption<InstallationTemplate>[] {
-  const templates = installationTemplatesForMethod(framework, method ?? 'packaged');
-
-  return templates.map((value) => ({
-    value,
-    label: INSTALLATION_TEMPLATE_LABELS[value],
-    // Packaged modules need a bundler, so a static page or CMS without one belongs on the CDN path.
-    description:
-      value === 'none' && method !== 'cdn' ? PACKAGED_EXISTING_SITE_DESCRIPTION : TEMPLATE_DESCRIPTIONS[value],
-    media: TEMPLATE_ICONS[value],
-  }));
-}
-
-function RegistryTemplateCards({
-  fixedFramework,
-  framework,
-  method,
-}: Pick<Props, 'fixedFramework' | 'framework' | 'method'>) {
-  const selectedFramework = useSelection('framework', framework);
-  const activeFramework = fixedFramework ? framework : selectedFramework;
-  const defaultTemplate = defaultInstallationTemplate(activeFramework);
-  const $template = useSelection('template', defaultTemplate);
-  const template = resolveInstallationTemplateForMethod(activeFramework, $template, method ?? 'packaged');
-
-  return (
-    <CardRadioGroup
-      value={template}
-      onChange={selectInstallationTemplate}
-      options={templateCardOptions(activeFramework, method)}
-      aria-label="Select app"
-    />
-  );
+  kind: 'catalog' | 'styling';
 }
 
 function RegistryStylingSelect({ framework }: { framework: RegistryFramework }) {
@@ -267,20 +183,8 @@ function RegistryCatalogSelects({ defaultSkin, defaultTheme, framework, installa
   );
 }
 
-/** Chooses the Shadcn project template or the skin, styling, and theme used to add skin source. */
-export default function RegistryOptionsClient({
-  defaultSkin,
-  defaultTheme,
-  fixedFramework = false,
-  framework,
-  installation,
-  kind,
-  method,
-}: Props) {
-  if (kind === 'template') {
-    return <RegistryTemplateCards fixedFramework={fixedFramework} framework={framework} method={method} />;
-  }
-
+/** Chooses the skin, styling, and theme used to add skin source. */
+export default function RegistryOptionsClient({ defaultSkin, defaultTheme, framework, installation, kind }: Props) {
   return kind === 'catalog' ? (
     <RegistryCatalogSelects
       defaultSkin={defaultSkin}
