@@ -7,8 +7,6 @@ interface RegistryConsumerProjectBase {
   readonly port: number;
   readonly bundler: RegistryConsumerBundler;
   readonly theme: 'default' | 'minimal';
-  /** Shadcn only rewrites copied string literals when this is false, as in many existing Tailwind projects. */
-  readonly cssVariables?: boolean;
 }
 
 export type RegistryConsumerProject = RegistryConsumerProjectBase &
@@ -77,7 +75,6 @@ export const registryConsumerProjects = [
     theme: 'default',
     bundler: 'webpack',
     port: 5313,
-    cssVariables: false,
   },
   {
     name: 'rspack-html-css',

@@ -140,7 +140,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       },
     },
     types: {
-      ClassNameValue: { from: '@videojs/utils/style', name: 'ClassValue' },
+      ClassNameValue: { from: 'cn', name: 'ClassValue' },
       PropsOf: { from: 'react', name: 'ComponentProps' },
       VjscNode: { from: 'react', name: 'ReactNode' },
       VjscElement: { from: 'react', name: 'ReactElement' },

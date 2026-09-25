@@ -218,7 +218,7 @@ async function configureShadcn(
           config: '',
           css,
           baseColor: 'neutral',
-          cssVariables: project.cssVariables ?? true,
+          cssVariables: true,
           prefix: '',
         },
         aliases: {
