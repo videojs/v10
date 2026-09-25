@@ -2,6 +2,7 @@
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, getEntries, render } from 'astro:content';
+import ChevronLeftSquare from '@/assets/icons/chevron-left-square.svg?react';
 import FormattedDate from '@/components/FormattedDate.astro';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
@@ -72,14 +73,23 @@ const jsonLdSchema = createBlogPostingSchema({
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
       <div
-        class="mb-4 flex flex-col gap-2 font-display text-h3 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+        class="mb-2 flex flex-col items-start gap-1 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:items-baseline sm:gap-0"
         data-llms-ignore
       >
-        <FormattedDate date={post.data.pubDate} />
-        <span class="hidden sm:inline">&bull;</span>
-        <span data-search-ignore data-llms-ignore
-          >{remarkPluginFrontmatter.minutesRead}</span
-        >
+        <a href="/blog" class="group relative inline-block whitespace-nowrap pr-5 intent:underline sm:pr-0 sm:pl-5">
+          <ChevronLeftSquare className="absolute top-1/2 right-0 size-3.5 -translate-y-1/2 rotate-180 sm:right-auto sm:left-0 sm:rotate-0" aria-hidden="true" />
+          Blog
+        </a>
+        <span class="flex items-baseline">
+          <span class="whitespace-nowrap">
+            <span class="mx-3 hidden sm:inline" aria-hidden="true">&bull;</span>
+            <FormattedDate date={post.data.pubDate} />
+          </span>
+          <span class="whitespace-nowrap" data-search-ignore data-llms-ignore>
+            <span class="mx-1.5 max-[340px]:mx-1 sm:mx-3" aria-hidden="true">&bull;</span>
+            {remarkPluginFrontmatter.minutesRead}
+          </span>
+        </span>
       </div>
       <h1
         class="mb-3 font-display text-h2 leading-tight uppercase text-balance sm:text-h15"

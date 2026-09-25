@@ -3,6 +3,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
+import ChevronLeftSquare from '@/assets/icons/chevron-left-square.svg?react';
 import FormattedDate from '@/components/FormattedDate.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import Blog from '@/layouts/Blog.astro';
@@ -40,18 +41,27 @@ const description =
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
       <div
-        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+        class="mb-2 flex flex-col items-start gap-1 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:items-baseline sm:gap-0"
         data-llms-ignore
       >
-        <FormattedDate date={entry.data.date} />
-        {
-          entry.data.breaking && (
-            <>
-              <span class="hidden sm:inline">&bull;</span>
-              <span>Breaking changes</span>
-            </>
-          )
-        }
+        <a href="/changelog" class="group relative inline-block whitespace-nowrap pr-5 intent:underline sm:pr-0 sm:pl-5">
+          <ChevronLeftSquare className="absolute top-1/2 right-0 size-3.5 -translate-y-1/2 rotate-180 sm:right-auto sm:left-0 sm:rotate-0" aria-hidden="true" />
+          Changelog
+        </a>
+        <span class="flex items-baseline">
+          <span class="whitespace-nowrap">
+            <span class="mx-3 hidden sm:inline" aria-hidden="true">&bull;</span>
+            <FormattedDate date={entry.data.date} />
+          </span>
+          {
+            entry.data.breaking && (
+              <span class="whitespace-nowrap">
+                <span class="mx-1.5 max-[340px]:mx-1 sm:mx-3" aria-hidden="true">&bull;</span>
+                Breaking
+              </span>
+            )
+          }
+        </span>
       </div>
       <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
         {title}

@@ -13,4 +13,4 @@ Interface glyphs for the docs site, imported as React components through `?react
   24px and 16px respectively. `paintbrush` is Fluent's filled 24px drawing (`fluent:paint-brush-24-filled`) so it
   carries the same weight as the Discord and GitHub marks beside it.
 - Root `width`/`height` attributes are removed so callers size them with CSS; they inherit `currentColor`.
-- `arrow`, `dial-inner`, `dial-outer`, `triangle-arrow` are Video.js originals.
+- `arrow`, `chevron-left-square`, `dial-inner`, `dial-outer`, `triangle-arrow` are Video.js originals.
