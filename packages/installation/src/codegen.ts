@@ -814,6 +814,8 @@ export function generateSourceHTMLUsageCode(
   const tag = getRendererTag(renderer);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  // The copied skin's container fills its player, so the player owns the video layout.
+  const playerLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
   const imports = [
     `import '@videojs/html/${preset.group}/player';`,
     ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
@@ -826,7 +828,7 @@ export function generateSourceHTMLUsageCode(
   return {
     imports,
     media: generateMediaMarkup(tag, source, playsInline, extensions, ''),
-    player: `<${getPlayerTag(useCase)}>
+    player: `<${getPlayerTag(useCase)}${playerLayout}>
   <!-- Paste the contents of ${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html here. -->
 </${getPlayerTag(useCase)}>`,
     skinFile: `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`,

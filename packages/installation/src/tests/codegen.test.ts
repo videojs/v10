@@ -847,9 +847,14 @@ describe('source installation code', () => {
     expect(code.imports).toContain("import '@videojs/html/video/player'");
     expect(code.imports).toContain("import '@videojs/html/media/hlsjs-video'");
     expect(code.imports).toContain("import '@/components/videojs/video/skin'");
-    expect(code.player).toContain('<video-player>');
-    expect(code.player).not.toContain('<video-player style=');
+    expect(code.player).toContain('<video-player style="display: block; width: 100%; aspect-ratio: 16 / 9;">');
     expect(code.player).not.toContain('<script');
+  });
+
+  it('leaves audio players unsized', () => {
+    const code = generateSourceHTMLUsageCode({ ...baseHTML, useCase: 'default-audio', renderer: 'html5-audio' });
+
+    expect(code.player).toMatch(/^<audio-player>/);
   });
 });
 
