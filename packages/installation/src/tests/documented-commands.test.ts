@@ -3,11 +3,11 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { runAgentsInit } from '../node';
+import { runAgentsInit, runAgentsSkills } from '../node';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../../..');
 
-describe('documented agents init commands', () => {
+describe('documented agents commands', () => {
   it('accepts every command in the root and package READMEs', () => {
     const readmes = [
       resolve(workspaceRoot, 'README.md'),
@@ -34,6 +34,20 @@ describe('documented agents init commands', () => {
     }
 
     expect(commandCount).toBeGreaterThan(0);
+    expect(failures).toEqual([]);
+  });
+
+  it('accepts every agents skills command in the CLI README', () => {
+    const readme = resolve(workspaceRoot, 'packages/cli/README.md');
+    const commands = [...readFileSync(readme, 'utf8').matchAll(/^npx @videojs\/cli agents skills([^\n]*)$/gm)];
+    const failures = commands.flatMap((match) => {
+      const flags = match[1]!.trim().split(/\s+/).filter(Boolean);
+      const result = runAgentsSkills('10.0.0-test', ['agents', 'skills', ...flags]);
+
+      return result.exitCode === 0 ? [] : [`${match[0]}\n${result.stderr || result.stdout}`];
+    });
+
+    expect(commands.length).toBeGreaterThan(1);
     expect(failures).toEqual([]);
   });
 });

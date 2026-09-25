@@ -34,11 +34,69 @@ describe('bin', () => {
       expect(result.stdout).toBe('');
       expect(result.stderr).toContain(`\`videojs ${command}\` is deprecated`);
       expect(result.stderr).toContain('npx @videojs/cli agents init');
+      expect(result.stderr).toContain('npx @videojs/cli agents skills');
     }
   });
 
   it('prints version-pinned commands for this release', () => {
     expect(run('agents', 'init')).toContain(`npx @videojs/cli@${packageJson.version} agents init`);
+  });
+
+  it('names both commands in the top-level help', () => {
+    for (const output of [run(), run('--help')]) {
+      expect(output).toContain(`npx @videojs/cli@${packageJson.version} agents init`);
+      expect(output).toContain('npx @videojs/cli agents skills');
+    }
+  });
+
+  it('prints skill install steps for every agent or only the selected ones', () => {
+    const every = run('agents', 'skills');
+    const selected = run('agents', 'skills', '--agent', 'claude-code,cursor');
+
+    for (const heading of [
+      '## Codex (`codex`)',
+      '## Claude Code (`claude-code`)',
+      '## VS Code (`vscode`)',
+      '## Cursor (`cursor`)',
+      '## Other coding agents (`other`)',
+    ]) {
+      expect(every).toContain(heading);
+    }
+
+    expect(selected).toContain('claude plugin install videojs@videojs');
+    expect(selected).toContain('## Cursor');
+    expect(selected).not.toContain('## Codex');
+    expect(selected).not.toContain('npx skills add');
+  });
+
+  it('returns the skill instructions as JSON', () => {
+    const value = JSON.parse(run('agents', 'skills', '--agent', 'other', '--global', '--json'));
+
+    expect(value).toMatchObject({
+      schemaVersion: 1,
+      kind: 'skills',
+      package: '@videojs/cli',
+      packageVersion: packageJson.version,
+      selectedOptions: { agent: ['other'], global: true },
+    });
+    expect(value.agents[0].steps[0].commands).toEqual(['npx skills add https://github.com/videojs/skills -g']);
+  });
+
+  it('exits with a usage error for an unknown agent', () => {
+    const text = runWithStderr('agents', 'skills', '--agent', 'nope');
+    const json = runWithStderr('agents', 'skills', '--agent', 'nope', '--json');
+
+    expect(text.status).toBe(2);
+    expect(text.stderr).toContain('- --agent "nope": Expected a comma-separated list containing codex, claude-code');
+    expect(json.status).toBe(2);
+    expect(JSON.parse(json.stdout)).toMatchObject({ kind: 'error', errors: [{ field: '--agent', value: 'nope' }] });
+  });
+
+  it('names both subcommands for an unknown one', () => {
+    const result = runWithStderr('agents', 'install');
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('Expected `agents init` or `agents skills`.');
   });
 
   it('bundles the installation renderer so only Node built-ins are imported at runtime', () => {

@@ -6,7 +6,8 @@
 
 The Video.js 10 command line. `agents init` prints version-matched installation instructions for a coding agent or
 for you to follow: the packages to install, the files to add, and the commands to run for your framework, installation
-method, player, skin, and media source.
+method, player, skin, and media source. `agents skills` prints how to install the
+[Video.js skill](https://github.com/videojs/skills) in your coding agent.
 
 ## Usage
 
@@ -27,18 +28,43 @@ npx @videojs/cli agents init --framework html --method cdn --project existing --
 
 Add `--json` for a structured document instead of Markdown, or `--version` to print the CLI version.
 
-A global install (`npm install --global @videojs/cli`) adds the same command as `videojs agents init`. The `docs` and
-`config` commands from earlier releases are deprecated: they print where to find installation instructions and docs.
-
 Each plan ends with a command that reproduces it with every choice spelled out. When you omit `--framework`, the command
 reads the nearest `package.json`: React, Next.js, TanStack Start, and React Router projects get React instructions, Vue
 and Nuxt projects get Vue, Svelte and SvelteKit projects get Svelte, and anything else gets plain HTML. React
 instructions install `@videojs/react`; HTML, Vue, and Svelte instructions install `@videojs/html`.
 
+A global install (`npm install --global @videojs/cli`) adds the same commands as `videojs agents init` and
+`videojs agents skills`. The `docs` and `config` commands from earlier releases are deprecated: they print where to
+find installation instructions and docs.
+
+## Install the Video.js skill
+
+```sh
+npx @videojs/cli agents skills
+```
+
+Without flags, the command prints the install steps for Codex, Claude Code, VS Code, Cursor, and other coding agents
+through the open [`skills`](https://www.npmjs.com/package/skills) installer. Each section ends with the follow-up that
+loads the skill, such as starting a new session. Narrow or adjust the steps with:
+
+- `--agent <ids>`: a comma-separated list of `codex`, `claude-code`, `vscode`, `cursor`, and `other`. Pass it once.
+- `--scope <scope>`: `user`, `project`, or `local`. Adds `--scope` to the Claude Code marketplace and plugin
+  commands; without it, Claude Code uses `user`.
+- `--global`: adds `-g` to the `skills` installer command so the skill is available in every project.
+
+```sh
+npx @videojs/cli agents skills --agent claude-code --scope project
+npx @videojs/cli agents skills --agent codex,cursor
+npx @videojs/cli agents skills --agent other --global --json
+```
+
+`--json` and `--help` work the same way as they do for `agents init`.
+
 ## What it does not do
 
-The command only prints instructions. It never installs packages, writes files, prompts, or saves preferences. The
-package is a single bundled file with no dependencies, so `npx` downloads it without the player packages it describes.
+Both commands only print instructions. They never install packages or skills, run other CLIs, write files, prompt, or
+save preferences. The package is a single bundled file with no dependencies, so `npx` downloads it without the player
+packages it describes.
 
 ## Versions
 

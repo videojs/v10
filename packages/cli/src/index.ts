@@ -9,7 +9,7 @@ const [command] = process.argv.slice(2);
 
 if (command && DEPRECATED_COMMANDS.has(command)) {
   process.stderr.write(
-    `\`videojs ${command}\` is deprecated and no longer does anything. Run \`npx @videojs/cli agents init\` for version-matched installation instructions, or read the docs at https://videojs.org/docs.\n`
+    `\`videojs ${command}\` is deprecated and no longer does anything. Run \`npx @videojs/cli agents init\` for version-matched installation instructions, \`npx @videojs/cli agents skills\` to install the Video.js skill in your coding agent, or read the docs at https://videojs.org/docs.\n`
   );
 } else {
   runAgentsCli(packageJson.version);
