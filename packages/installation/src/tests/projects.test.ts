@@ -119,6 +119,13 @@ describe('installationHtmlPageCode', () => {
       "@vite('resources/js/player.ts')"
     );
   });
+
+  it('loads the built module for an existing site instead of TypeScript source', () => {
+    const page = installationHtmlPageCode('<video-player />', 'none', 'player.ts');
+
+    expect(page).toContain('<script type="module" src="/dist/player.js"></script>');
+    expect(page).not.toContain('src="/player.ts"');
+  });
 });
 
 describe('installationReactPlayerCode', () => {

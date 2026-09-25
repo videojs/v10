@@ -439,6 +439,12 @@ export function installationHtmlPageCode(markup: string, template: InstallationT
     return `${markup}\n\n<script src="${source}"></script>`;
   }
 
+  if (template === 'none') {
+    const bundle = `/dist/${entryFile.replace(/\.ts$/, '.js')}`;
+
+    return `${markup}\n\n<!-- Load the module your build outputs for ${entryFile}. -->\n<script type="module" src="${bundle}"></script>`;
+  }
+
   return `${markup}\n\n<script type="module" src="/${entryFile}"></script>`;
 }
 

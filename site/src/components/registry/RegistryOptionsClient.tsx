@@ -105,6 +105,8 @@ const TEMPLATE_DESCRIPTIONS = {
   sveltekit: 'Full-stack Svelte framework',
 } as const satisfies Record<InstallationTemplate, string>;
 
+const PACKAGED_EXISTING_SITE_DESCRIPTION = 'Existing site whose build bundles JavaScript';
+
 interface Props {
   defaultSkin?: RegistryPreset;
   defaultTheme?: RegistryTheme;
@@ -124,7 +126,9 @@ function templateCardOptions(
   return templates.map((value) => ({
     value,
     label: INSTALLATION_TEMPLATE_LABELS[value],
-    description: TEMPLATE_DESCRIPTIONS[value],
+    // Packaged modules need a bundler, so a static page or CMS without one belongs on the CDN path.
+    description:
+      value === 'none' && method !== 'cdn' ? PACKAGED_EXISTING_SITE_DESCRIPTION : TEMPLATE_DESCRIPTIONS[value],
     media: TEMPLATE_ICONS[value],
   }));
 }

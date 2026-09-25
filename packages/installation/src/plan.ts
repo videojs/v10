@@ -262,7 +262,7 @@ function runAppStep(selection: InstallationSelection): InstallationStep | null {
 
 function playerFileDescription(selection: InstallationSelection): string {
   if (selection.template === 'none') {
-    return 'The filenames are generic. Add the imports and markup to the files your existing HTML app or page already loads.';
+    return 'The filenames are generic. Packaged modules need a bundler: add the imports to an entry your existing build already bundles, and load its output with type="module", because an IIFE bundle fails with StoreError: NO_TARGET. If the site has no build step, use --method cdn instead.';
   }
 
   return selection.project === 'new'

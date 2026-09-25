@@ -155,6 +155,16 @@ Choose whether to create the selected app setup or add Video.js to a project you
 
 <HTMLUsageCodeBlock client:load />
 
+<Aside type="caution" title="Load your script as a module">
+Packaged modules need a bundler (npm, pnpm, yarn, bun). Load the resulting bundle with `type="module"`:
+
+```html
+<script type="module" src="/dist/player.js"></script>
+```
+
+Some bundlers default to an IIFE output format. Loading that bundle without `type="module"` will cause a `StoreError: NO_TARGET` error when interacting with the player. If your site has no build step, use the <DocsLink slug="guides/installation-cdn">CDN installation</DocsLink> instead.
+</Aside>
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

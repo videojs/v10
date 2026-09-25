@@ -154,13 +154,13 @@ export function installationDecisionOrderFor({
   const methodGuidance =
     methods.length === 1
       ? methods[0] === 'packaged'
-        ? 'This guide uses packaged modules. Match the package manager to the project lockfile.'
+        ? 'This guide uses packaged modules, which need a bundler. Match the package manager to the project lockfile. For an existing HTML site without a build step, use CDN scripts instead.'
         : methods[0] === 'shadcn'
           ? 'This guide uses Shadcn to copy editable skin source. React uses the React source catalog; plain HTML uses the HTML source catalog. Vue and Svelte use packaged modules.'
           : 'This guide uses CDN scripts for plain HTML. Use an existing page when one is available, and scaffold a minimal Vite app only when no app exists.'
       : frameworks.includes('react')
         ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. Use @videojs/html when the project needs CDN scripts.'
-        : 'Use packaged modules by default, Shadcn when a plain HTML project should own editable skin source, or CDN for a plain HTML integration. Vue and Svelte use packaged modules. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
+        : 'Use packaged modules by default, Shadcn when a plain HTML project should own editable skin source, or CDN for a plain HTML integration. Packaged modules need a bundler, so use CDN for an existing site without a build step. Vue and Svelte use packaged modules. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
 
   const stylingDecisions: InstallationDecision[] =
     methods.includes('shadcn') && frameworks.includes('react')
@@ -286,7 +286,7 @@ export function installationOptionDefinitionsFor(
       values: templates,
       default: templateDefaults.length === 1 ? templateDefaults[0]! : 'next for React; vite otherwise',
       description:
-        'The app setup and file layout. CDN defaults to `none` for an existing page and `vite` for a new app. `none` is unavailable with Shadcn.',
+        'The app setup and file layout. CDN defaults to `none` for an existing page and `vite` for a new app. Packaged `none` needs an existing bundler; use CDN for a site without a build step. `none` is unavailable with Shadcn.',
     })
   );
 
