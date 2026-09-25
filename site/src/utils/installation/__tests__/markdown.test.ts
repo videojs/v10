@@ -358,6 +358,20 @@ HTML next step
     expect(rendered?.body).not.toMatch(/installation-plan|installation:framework/);
   });
 
+  it('pins the reproduce command only when given a command version', () => {
+    const render = (options = {}) =>
+      renderInstallationMarkdownSelection(
+        markdown,
+        '/docs/guides/installation/shadcn',
+        new URLSearchParams({ framework: 'html' }),
+        '10.0.0-test',
+        options
+      )?.body;
+
+    expect(render()).toContain('npx @videojs/cli agents init --method shadcn');
+    expect(render({ commandVersion: '9.9.9' })).toContain('npx @videojs/cli@9.9.9 agents init --method shadcn');
+  });
+
   it('renders selected extensions through the web Markdown path', () => {
     const rendered = renderInstallationMarkdownSelection(
       markdown,

@@ -299,6 +299,42 @@ describe('packageDocumentation', () => {
     );
   });
 
+  it('pins the reproduce command to the documented release', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs');
+
+    packageDocumentation({
+      target: 'html',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+      version: '9.9.9',
+    });
+
+    const installation = readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/installation.md'), 'utf-8');
+
+    expect(installation).toContain('npx @videojs/cli@9.9.9 agents init --method packaged --framework html ');
+    expect(installation).not.toContain('npx @videojs/cli agents init');
+  });
+
+  it('keeps the reproduce command unpinned without a release version', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs');
+
+    packageDocumentation({
+      target: 'html',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+    });
+
+    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/installation.md'), 'utf-8')).toContain(
+      'npx @videojs/cli agents init --method packaged --framework html '
+    );
+  });
+
   it('preserves installed agent commands throughout the package documentation', () => {
     const fixture = createFixture();
 

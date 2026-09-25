@@ -115,7 +115,8 @@ function copyInstallationDocumentation({
       raw,
       `/${source.replace(/\.md$/, '')}`,
       params,
-      version ?? INSTALLATION_PACKAGE_VERSION
+      version ?? INSTALLATION_PACKAGE_VERSION,
+      { commandVersion: version ?? null }
     );
 
     if (!rendered || rendered.status !== 200) {

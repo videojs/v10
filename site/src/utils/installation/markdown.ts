@@ -103,11 +103,17 @@ function renderInstallationQueryErrors(errors: readonly SelectionError[]): strin
   );
 }
 
-/** Resolve one canonical installation route and its query parameters through the shared installation schema. */
+/**
+ * Resolve one canonical installation route and its query parameters through the shared installation schema.
+ *
+ * @param commandVersion - The `@videojs/cli` version pinned in the reproduce command. The site deploys from main, so it
+ *   stays unpinned there: a pinned release could reject options added since then. Docs bundled into a release pin it.
+ */
 export function resolveInstallationMarkdownPlan(
   path: string,
   params: URLSearchParams,
-  packageVersion = INSTALLATION_PACKAGE_VERSION
+  packageVersion = INSTALLATION_PACKAGE_VERSION,
+  commandVersion: string | null = null
 ): InstallationMarkdownPlanResult {
   const route = getInstallationRouteSegment(`/${path.replace(/^\//, '')}`);
   if (!route) return null;
@@ -118,8 +124,7 @@ export function resolveInstallationMarkdownPlan(
   const resolved = resolveInstallationSelection(inputFromQuery(route, params), packageVersion, {}, QUERY_OPTION_SYNTAX);
   if (!resolved.ok) return resolved;
 
-  // The site deploys from main, so a pinned release could reject options added since then.
-  return { ok: true, plan: createInstallationPlan(resolved.selection, packageVersion, null) };
+  return { ok: true, plan: createInstallationPlan(resolved.selection, packageVersion, commandVersion) };
 }
 
 /**
@@ -203,6 +208,8 @@ export interface RenderInstallationMarkdownOptions {
    * template.
    */
   preserveFrameworkBranches?: boolean;
+  /** The `@videojs/cli` version pinned in the reproduce command; see `resolveInstallationMarkdownPlan`. */
+  commandVersion?: string | null;
 }
 
 /** Resolve, validate, and render one installation Markdown page for its route and query parameters. */
@@ -213,7 +220,7 @@ export function renderInstallationMarkdownSelection(
   packageVersion = INSTALLATION_PACKAGE_VERSION,
   options: RenderInstallationMarkdownOptions = {}
 ): RenderedInstallationMarkdown | null {
-  const result = resolveInstallationMarkdownPlan(path, params, packageVersion);
+  const result = resolveInstallationMarkdownPlan(path, params, packageVersion, options.commandVersion);
   if (!result) return null;
 
   if (!result.ok) {
