@@ -21,5 +21,7 @@ export function cn(...classes: ClassValue[]): string {
     }
   }
 
-  return result.join(' ');
+  // Shadcn trims every string literal it copies when `tailwind.cssVariables` is false, which would turn a `' '`
+  // separator into `''`. Template literals pass through untouched.
+  return result.reduce((classNames, className) => (classNames ? `${classNames} ${className}` : className), '');
 }

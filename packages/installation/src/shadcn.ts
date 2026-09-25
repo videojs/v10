@@ -155,7 +155,8 @@ export function shadcnComponentsConfig(
         config: '',
         css: '',
         baseColor: 'neutral',
-        cssVariables: false,
+        // `false` makes Shadcn rewrite copied string literals for inline Tailwind colors, which CSS source never needs.
+        cssVariables: true,
         prefix: '',
       },
       aliases: {

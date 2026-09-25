@@ -141,6 +141,10 @@ describe('shadcnComponentsConfig', () => {
     expect(JSON.parse(shadcnComponentsConfig('react', 'next', '@/components')).rsc).toBe(true);
     expect(JSON.parse(shadcnComponentsConfig('react', 'vite', '@/components')).rsc).toBe(false);
   });
+
+  it('keeps Shadcn from rewriting string literals in copied source', () => {
+    expect(JSON.parse(shadcnComponentsConfig('react', 'vite', '@/components')).tailwind.cssVariables).toBe(true);
+  });
 });
 
 describe('shadcnProjectConfiguration', () => {
