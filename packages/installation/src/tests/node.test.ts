@@ -9,7 +9,9 @@ import {
   detectFramework,
   detectInstalledPlayerVersions,
   detectPackageManager,
+  runAgentsCommand,
   runAgentsInit,
+  runAgentsSkills,
   type AgentsInitDefaults,
 } from '../node';
 import { installationCompatibility } from '../options';
@@ -970,6 +972,150 @@ describe('runAgentsInit', () => {
     expect(
       JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--help', '--preset', 'audio', '--json']).stdout).kind
     ).toBe('discovery');
+  });
+
+  it('points discovery and plans at agents skills', () => {
+    const pointer = 'To install the Video.js skill in your coding agent, run `npx @videojs/cli agents skills`.';
+
+    expect(runAgentsInit('10.0.0', ['agents', 'init']).stdout).toContain(pointer);
+    expect(runAgentsInit('10.0.0', ['--help']).stdout).toContain(pointer);
+    expect(runAgentsInit('10.0.0', ['agents', 'init', '--media', 'hls']).stdout).toContain(pointer);
+
+    for (const args of [
+      ['agents', 'init', '--json'],
+      ['agents', 'init', '--media', 'hls', '--json'],
+    ]) {
+      expect(JSON.parse(runAgentsInit('10.0.0', args).stdout).skillsCommand, args.join(' ')).toBe(
+        'npx @videojs/cli agents skills'
+      );
+    }
+  });
+});
+
+describe('runAgentsSkills', () => {
+  it('prints every agent without flags and never claims to install anything', () => {
+    const result = runAgentsSkills('10.0.0', ['agents', 'skills']);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout.match(/^## .+$/gm)).toEqual([
+      '## Codex (`codex`)',
+      '## Claude Code (`claude-code`)',
+      '## VS Code (`vscode`)',
+      '## Cursor (`cursor`)',
+      '## Other coding agents (`other`)',
+      '## Options',
+      '## Reproduce or change these instructions',
+      '## Next steps',
+    ]);
+    expect(result.stdout).toContain('It never installs the skill, runs other CLIs');
+    expect(result.stdout).toContain(
+      '**Follow-up:** Start a new Claude Code session, or run `/reload-plugins` in the current session.'
+    );
+    expect(result.stdout).toContain('run `npx @videojs/cli@10.0.0 agents init`');
+  });
+
+  it('narrows to a comma-separated agent list', () => {
+    const result = runAgentsSkills('10.0.0', ['agents', 'skills', '--agent', 'cursor,codex']);
+    const equals = runAgentsSkills('10.0.0', ['agents', 'skills', '--agent=codex,cursor']);
+
+    expect(result.stdout.match(/^## .+$/gm)?.slice(0, 2)).toEqual(['## Codex (`codex`)', '## Cursor (`cursor`)']);
+    expect(result.stdout).not.toContain('## Claude Code');
+    expect(result.stdout).toContain('npx @videojs/cli@10.0.0 agents skills --agent codex,cursor\n');
+    expect(equals).toEqual(result);
+  });
+
+  it('changes the printed commands for the Claude Code scope and a global skills install', () => {
+    const result = runAgentsSkills('10.0.0', ['agents', 'skills', '--scope', 'project', '--global']);
+
+    expect(result.stdout).toContain('claude plugin marketplace add videojs/skills --scope project\n');
+    expect(result.stdout).toContain('claude plugin install videojs@videojs --scope project\n');
+    expect(result.stdout).toContain('npx skills add https://github.com/videojs/skills -g\n');
+  });
+
+  it('returns one JSON document', () => {
+    const value = JSON.parse(
+      runAgentsSkills('10.0.0', ['agents', 'skills', '--agent', 'claude-code', '--json']).stdout
+    );
+
+    expect(value).toMatchObject({
+      schemaVersion: 1,
+      kind: 'skills',
+      package: '@videojs/cli',
+      packageVersion: '10.0.0',
+      command: 'npx @videojs/cli@10.0.0 agents skills --agent claude-code',
+      selectedOptions: { agent: ['claude-code'] },
+    });
+    expect(value.agents).toEqual([
+      expect.objectContaining({
+        agent: 'claude-code',
+        label: 'Claude Code',
+        steps: [expect.objectContaining({ commands: expect.any(Array) })],
+      }),
+    ]);
+  });
+
+  it('rejects unknown agents with the valid list', () => {
+    const text = runAgentsSkills('10.0.0', ['agents', 'skills', '--agent', 'codex,nope']);
+    const json = runAgentsSkills('10.0.0', ['agents', 'skills', '--agent', 'nope', '--json']);
+
+    expect(text).toEqual({
+      exitCode: 2,
+      stdout: '',
+      stderr:
+        'Invalid skill options:\n- --agent "nope": Expected a comma-separated list containing codex, claude-code, vscode, cursor, other.\n',
+    });
+    expect(json.exitCode).toBe(2);
+    expect(JSON.parse(json.stdout)).toEqual({
+      schemaVersion: 1,
+      kind: 'error',
+      error: 'invalid_arguments',
+      errors: [
+        {
+          field: '--agent',
+          value: 'nope',
+          message: 'Expected a comma-separated list containing codex, claude-code, vscode, cursor, other.',
+        },
+      ],
+    });
+  });
+
+  it('rejects malformed, repeated, unknown, and inapplicable options', () => {
+    const stderr = (...args: string[]) => runAgentsSkills('10.0.0', ['agents', 'skills', ...args]).stderr;
+
+    expect(stderr('--agent')).toBe('Invalid skill options:\n- --agent: Requires a value.\n');
+    expect(stderr('--agent', 'codex', '--agent', 'cursor')).toContain('- --agent "cursor": May only be provided once.');
+    expect(stderr('--scope', 'team')).toContain('- --scope "team": Expected one of: user, project, local');
+    expect(stderr('--global=yes')).toContain('- --global: Takes no value.');
+    expect(stderr('--wat')).toContain('- arguments "--wat": Unknown flag. Run `agents skills --help`');
+    expect(stderr('--agent', 'codex', '--scope', 'project')).toContain(
+      '- --scope "project": Applies only to Claude Code. Add claude-code to --agent, or omit --scope.'
+    );
+    expect(stderr('--agent', 'cursor', '--global')).toContain('- --global: Applies only to the `skills` installer.');
+  });
+
+  it('lets --help and --version win over every other argument', () => {
+    const listing = runAgentsSkills('10.0.0', ['agents', 'skills']);
+
+    expect(runAgentsSkills('10.0.0', ['agents', 'skills', '--agent', 'nope', '--help'])).toEqual(listing);
+    expect(runAgentsSkills('10.0.0', ['agents', 'skills', '-h'])).toEqual(listing);
+    expect(runAgentsSkills('10.0.0', ['agents', 'skills', '--wat', '--version']).stdout).toBe('10.0.0\n');
+  });
+});
+
+describe('runAgentsCommand', () => {
+  it('routes agents skills and leaves everything else to agents init', () => {
+    expect(runAgentsCommand('10.0.0', ['agents', 'skills'])).toEqual(runAgentsSkills('10.0.0', ['agents', 'skills']));
+    expect(runAgentsCommand('10.0.0', ['agents', 'init'], reactProject)).toEqual(
+      runAgentsInit('10.0.0', ['agents', 'init'], reactProject)
+    );
+    expect(runAgentsCommand('10.0.0', [], reactProject)).toEqual(runAgentsInit('10.0.0', [], reactProject));
+  });
+
+  it('names both subcommands for an unknown one', () => {
+    expect(runAgentsCommand('10.0.0', ['agents', 'install']).stderr).toContain(
+      '- arguments "agents install": Expected `agents init` or `agents skills`.'
+    );
   });
 });
 

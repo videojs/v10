@@ -12,3 +12,4 @@ export * from './projects';
 export * from './renderers';
 export * from './selection';
 export * from './shadcn';
+export * from './skills';

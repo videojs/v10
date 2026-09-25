@@ -3,7 +3,14 @@ import { dirname, join, parse, relative, resolve } from 'node:path';
 
 import { isPlainObject, isString } from '@videojs/utils/predicate';
 
-import { renderDiscoveryMarkdown, renderInstallationMarkdown, renderSelectionErrors } from './markdown';
+import {
+  renderArgumentErrors,
+  renderDiscoveryMarkdown,
+  renderInstallationMarkdown,
+  renderSelectionErrors,
+  renderSkillsMarkdown,
+  type ArgumentError,
+} from './markdown';
 import {
   installationInputKeyFromFlag,
   installationParameterForKey,
@@ -29,6 +36,15 @@ import {
   type PlayerOwner,
   type SelectionError,
 } from './selection';
+import {
+  CLAUDE_CODE_SCOPES,
+  createSkillsInstructions,
+  isClaudeCodeScope,
+  isSkillAgent,
+  SKILL_AGENTS,
+  skillsCommand,
+  type SkillsSelection,
+} from './skills';
 
 export interface AgentsInitResult {
   exitCode: 0 | 1 | 2;
@@ -54,7 +70,7 @@ function parseArguments(args: readonly string[]): ParseResult {
     return failure({
       field: 'arguments',
       value: args.slice(0, 2).join(' '),
-      message: 'Expected `agents init`.',
+      message: 'Expected `agents init` or `agents skills`.',
       hint: USAGE_HINT,
     });
   }
@@ -129,6 +145,8 @@ interface InstallationPlanJson extends Omit<InstallationPlan, 'selection'> {
   defaultedOptions: string[];
   /** Where each detected default came from, keyed by option name. */
   defaultedOptionSources: Record<string, string>;
+  /** Prints how to install the Video.js skill in a coding agent. */
+  skillsCommand: string;
 }
 
 function installationPlanJson(
@@ -149,6 +167,7 @@ function installationPlanJson(
     selectedOptions: installationSelectedOptions(plan),
     defaultedOptions: selection.defaulted.map((key) => installationParameterForKey(key).query),
     defaultedOptionSources,
+    skillsCommand: skillsCommand(),
   };
 
   if (versionNotice) json.versionNotice = versionNotice;
@@ -156,21 +175,40 @@ function installationPlanJson(
   return json;
 }
 
+function versionResult(packageVersion: string, json: boolean): AgentsInitResult {
+  return {
+    exitCode: 0,
+    stdout: json
+      ? jsonDocument({ schemaVersion: 1, kind: 'version', package: INSTALLATION_CLI_PACKAGE, packageVersion })
+      : `${packageVersion}\n`,
+    stderr: '',
+  };
+}
+
+function argumentErrorJson(errors: readonly ArgumentError[]): AgentsInitResult {
+  return {
+    exitCode: 2,
+    stdout: jsonDocument({ schemaVersion: 1, kind: 'error', error: 'invalid_arguments', errors }),
+    stderr: '',
+  };
+}
+
+function internalErrorResult(json: boolean, message: string, subject: string): AgentsInitResult {
+  return {
+    exitCode: 1,
+    stdout: json ? jsonDocument({ schemaVersion: 1, kind: 'error', error: 'internal_error', message }) : '',
+    stderr: json ? '' : `Unable to create ${subject}: ${message}\n`,
+  };
+}
+
 function errorResult(json: boolean, errors: readonly SelectionError[]): AgentsInitResult {
   if (json) {
-    return {
-      exitCode: 2,
-      stdout: jsonDocument({
-        schemaVersion: 1,
-        kind: 'error',
-        error: 'invalid_arguments',
-        errors: errors.map((error) => ({
-          ...error,
-          field: error.field === 'arguments' ? 'arguments' : installationParameterForKey(error.field).flag,
-        })),
-      }),
-      stderr: '',
-    };
+    return argumentErrorJson(
+      errors.map((error) => ({
+        ...error,
+        field: error.field === 'arguments' ? 'arguments' : installationParameterForKey(error.field).flag,
+      }))
+    );
   }
 
   return { exitCode: 2, stdout: '', stderr: `${renderSelectionErrors(errors)}\n` };
@@ -197,15 +235,7 @@ export function runAgentsInit(
     const json = args.includes('--json');
 
     // `--version` and `--help` win over every other argument, including ones that would otherwise be rejected.
-    if (args.includes('--version')) {
-      return {
-        exitCode: 0,
-        stdout: json
-          ? jsonDocument({ schemaVersion: 1, kind: 'version', package: INSTALLATION_CLI_PACKAGE, packageVersion })
-          : `${packageVersion}\n`,
-        stderr: '',
-      };
-    }
+    if (args.includes('--version')) return versionResult(packageVersion, json);
 
     const bare = args.every((argument) => argument === '--json');
     const help = bare || args.includes('--help') || args.includes('-h');
@@ -217,7 +247,9 @@ export function runAgentsInit(
 
       return {
         exitCode: 0,
-        stdout: json ? jsonDocument(discovery) : renderDiscoveryMarkdown(discovery),
+        stdout: json
+          ? jsonDocument({ ...discovery, skillsCommand: skillsCommand() })
+          : renderDiscoveryMarkdown(discovery),
         stderr: '',
       };
     }
@@ -237,17 +269,144 @@ export function runAgentsInit(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const json = args.includes('--json');
 
-    return {
-      exitCode: 1,
-      stdout: json ? jsonDocument({ schemaVersion: 1, kind: 'error', error: 'internal_error', message }) : '',
-      stderr: json ? '' : `Unable to create installation instructions: ${message}\n`,
-    };
+    return internalErrorResult(args.includes('--json'), message, 'installation instructions');
   }
 }
 
-/** Run the instruction-only `agents init` CLI from the current directory and publish its process result. */
+const SKILLS_USAGE_HINT = 'Run `agents skills --help` to list every option.';
+
+type SkillsParseResult = { ok: true; value: SkillsSelection } | { ok: false; errors: ArgumentError[] };
+
+function parseSkillsArguments(args: readonly string[]): SkillsParseResult {
+  const failure = (error: ArgumentError): SkillsParseResult => ({ ok: false, errors: [error] });
+  const selection: SkillsSelection = {};
+
+  for (let index = 2; index < args.length; index++) {
+    const argument = args[index]!;
+    if (argument === '--json') continue;
+
+    const equals = argument.indexOf('=');
+    const flag = equals === -1 ? argument : argument.slice(0, equals);
+
+    if (flag === '--global') {
+      if (equals !== -1) return failure({ field: flag, message: 'Takes no value.' });
+
+      if (selection.global) return failure({ field: flag, message: 'May only be provided once.' });
+
+      selection.global = true;
+      continue;
+    }
+
+    if (flag !== '--agent' && flag !== '--scope') {
+      return failure({
+        field: 'arguments',
+        value: argument,
+        message: argument.startsWith('-') ? 'Unknown flag.' : 'Unexpected argument.',
+        hint: SKILLS_USAGE_HINT,
+      });
+    }
+
+    const value = equals === -1 ? args[++index] : argument.slice(equals + 1);
+
+    if (value === undefined || value.startsWith('--') || value.length === 0) {
+      return failure({ field: flag, message: 'Requires a value.' });
+    }
+
+    if (flag === '--scope') {
+      if (selection.scope) return failure({ field: flag, value, message: 'May only be provided once.' });
+
+      if (!isClaudeCodeScope(value)) {
+        return failure({ field: flag, value, message: `Expected one of: ${CLAUDE_CODE_SCOPES.join(', ')}` });
+      }
+
+      selection.scope = value;
+      continue;
+    }
+
+    if (selection.agents) return failure({ field: flag, value, message: 'May only be provided once.' });
+
+    const requested = [...new Set(value.split(',').map((agent) => agent.trim()))];
+    const unknown = requested.find((agent) => !isSkillAgent(agent));
+
+    if (unknown !== undefined) {
+      return failure({
+        field: flag,
+        value: unknown,
+        message: `Expected a comma-separated list containing ${SKILL_AGENTS.join(', ')}.`,
+      });
+    }
+
+    selection.agents = requested.filter(isSkillAgent);
+  }
+
+  const agents = selection.agents ?? SKILL_AGENTS;
+
+  if (selection.scope && !agents.includes('claude-code')) {
+    return failure({
+      field: '--scope',
+      value: selection.scope,
+      message: 'Applies only to Claude Code.',
+      hint: 'Add claude-code to --agent, or omit --scope.',
+    });
+  }
+
+  if (selection.global && !agents.includes('other')) {
+    return failure({
+      field: '--global',
+      message: 'Applies only to the `skills` installer.',
+      hint: 'Add other to --agent, or omit --global.',
+    });
+  }
+
+  return { ok: true, value: selection };
+}
+
+/**
+ * Resolve one `agents skills` invocation: how to install the Video.js skill in each selected coding agent. Like `agents
+ * init`, it only prints instructions.
+ */
+export function runAgentsSkills(packageVersion: string, args: readonly string[]): AgentsInitResult {
+  const json = args.includes('--json');
+
+  try {
+    if (args.includes('--version')) return versionResult(packageVersion, json);
+
+    const help = args.includes('--help') || args.includes('-h');
+    const parsed: SkillsParseResult = help ? { ok: true, value: {} } : parseSkillsArguments(args);
+
+    if (!parsed.ok) {
+      return json
+        ? argumentErrorJson(parsed.errors)
+        : { exitCode: 2, stdout: '', stderr: `${renderArgumentErrors('Invalid skill options:', parsed.errors)}\n` };
+    }
+
+    const instructions = createSkillsInstructions(packageVersion, parsed.value);
+
+    return {
+      exitCode: 0,
+      stdout: json ? jsonDocument(instructions) : renderSkillsMarkdown(instructions),
+      stderr: '',
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    return internalErrorResult(json, message, 'skill instructions');
+  }
+}
+
+/** Route `agents skills` to its command and everything else, including bare and `--help` runs, to `agents init`. */
+export function runAgentsCommand(
+  packageVersion: string,
+  args: readonly string[],
+  defaults: AgentsInitDefaults = {}
+): AgentsInitResult {
+  return args[0] === 'agents' && args[1] === 'skills'
+    ? runAgentsSkills(packageVersion, args)
+    : runAgentsInit(packageVersion, args, defaults);
+}
+
+/** Run the instruction-only `agents` CLI from the current directory and publish its process result. */
 export function runAgentsCli(packageVersion: string, args = process.argv.slice(2)): void {
   const cwd = process.cwd();
   const defaults: AgentsInitDefaults = {
@@ -258,7 +417,7 @@ export function runAgentsCli(packageVersion: string, args = process.argv.slice(2
 
   if (framework) defaults.framework = framework;
 
-  const result = runAgentsInit(packageVersion, args, defaults);
+  const result = runAgentsCommand(packageVersion, args, defaults);
 
   if (result.stdout) process.stdout.write(result.stdout);
 
