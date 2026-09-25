@@ -77,6 +77,7 @@ const SELECTION_KEYS = Object.keys(selectionAtoms) as (keyof InstallationUiSelec
 
 let syncedUrl: string | null = null;
 let applyingSelection = false;
+let urlWriteScheduled = false;
 
 export function currentInstallationSelection(): InstallationUiSelection {
   return {
@@ -116,6 +117,8 @@ function syncInstallationDocument(route: InstallationRouteSegment, selection: In
 
 /** The one writer for installation URLs: replace the current entry's query with the canonical one for the picks. */
 function writeInstallationUrl(): void {
+  urlWriteScheduled = false;
+
   if (!globalThis.location) return;
 
   const route = getInstallationRouteSegment(location.pathname);
@@ -129,6 +132,19 @@ function writeInstallationUrl(): void {
 
   syncedUrl = `${location.pathname}${search}`;
   syncInstallationDocument(route, selection);
+}
+
+/**
+ * Write once the picks settle. One choice can set several stores, since the listeners below fit the others to it, and
+ * writing after each store would put combinations such as audio with a video renderer into the address bar.
+ */
+function scheduleInstallationUrlWrite(): void {
+  if (urlWriteScheduled) return;
+
+  urlWriteScheduled = true;
+  queueMicrotask(() => {
+    if (urlWriteScheduled) writeInstallationUrl();
+  });
 }
 
 function applySelection(patch: Partial<InstallationUiSelection>): void {
@@ -194,7 +210,7 @@ export function selectCdnStartingPoint(nextProject: InstallationProject): void {
 
 for (const store of Object.values(selectionAtoms)) {
   store.listen(() => {
-    if (!applyingSelection) writeInstallationUrl();
+    if (!applyingSelection) scheduleInstallationUrlWrite();
   });
 }
 

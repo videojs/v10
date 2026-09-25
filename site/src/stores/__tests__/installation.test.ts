@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 
@@ -16,6 +16,11 @@ import {
   template,
   useCase,
 } from '../installation';
+
+/** Let the URL write that store changes schedule for the end of the current task run. */
+async function settleUrl(): Promise<void> {
+  await Promise.resolve();
+}
 
 describe('useCase', () => {
   afterEach(() => {
@@ -37,6 +42,24 @@ describe('useCase', () => {
 
     expect(skin.get()).toBe('minimal-video');
     expect(media.get()).toBe('hls');
+  });
+
+  it('writes the URL once, after the other picks fit the new use case', async () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/react?media=mux-video');
+    syncInstallationSelectionFromUrl();
+
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
+    try {
+      useCase.set('default-audio');
+      await settleUrl();
+
+      expect(replaceState).toHaveBeenCalledOnce();
+      expect(replaceState.mock.calls[0]?.[2]).toBe('/docs/guides/installation/react?preset=audio');
+      expect(window.location.search).toBe('?preset=audio');
+    } finally {
+      replaceState.mockRestore();
+    }
   });
 
   it('replaces stale picks when a client navigation has a different URL', () => {
@@ -61,7 +84,7 @@ describe('useCase', () => {
     expect(sourceUrl.get()).toBe('');
   });
 
-  it('keeps extensions in sync with media and explicit URL choices', () => {
+  it('keeps extensions in sync with media and explicit URL choices', async () => {
     window.history.replaceState(null, '', '/docs/guides/installation/react?media=mux-video&extensions=none');
     syncInstallationSelectionFromUrl();
 
@@ -69,6 +92,7 @@ describe('useCase', () => {
 
     media.set('hls');
     extensions.set(['google-cast']);
+    await settleUrl();
 
     expect(window.location.search).toContain('extensions=google-cast');
 
@@ -95,7 +119,7 @@ describe('useCase', () => {
     expect(sourceUrl.get()).toBe('');
   });
 
-  it('leaves installation-shaped parameters alone outside installation guides', () => {
+  it('leaves installation-shaped parameters alone outside installation guides', async () => {
     window.history.replaceState(
       { index: 2 },
       '',
@@ -104,6 +128,7 @@ describe('useCase', () => {
 
     syncInstallationSelectionFromUrl();
     useCase.set('default-audio');
+    await settleUrl();
 
     expect(window.location.search).toBe('?framework=html&package-manager=npm&styling=css&utm_source=test');
     expect(window.history.state).toEqual({ index: 2 });
@@ -189,13 +214,14 @@ describe('syncInstallationSelectionFromUrl', () => {
     expect(window.location.search).toBe('?framework=react&preset=audio');
   });
 
-  it('marks picks that differ from the prerendered defaults as pending', () => {
+  it('marks picks that differ from the prerendered defaults as pending', async () => {
     window.history.replaceState(null, '', '/docs/guides/installation/react?preset=audio');
     syncInstallationSelectionFromUrl();
 
     expect(document.documentElement).toHaveAttribute('data-installation-pending');
 
     useCase.set('default-video');
+    await settleUrl();
 
     expect(window.location.search).toBe('');
     expect(document.documentElement).not.toHaveAttribute('data-installation-pending');
