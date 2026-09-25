@@ -2,6 +2,7 @@ import {
   Features,
   type Rule,
   type Selector,
+  type SelectorComponent,
   type SelectorList,
   type StyleSheet,
   type TokenOrValue,
@@ -58,13 +59,17 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
   return files;
 }
 
+/**
+ * Wrap a file's rules in its layer and prefix each with `:where(<scope>)`, so it matches only inside the scope root
+ * without adding specificity. Slotted rules stay unprefixed after the rest. Rules that match both an outer and a nested
+ * scope root resolve by source order.
+ */
 function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFile): string {
   const relationshipOwners = new Set(file.groupOwners.values());
   const scopeRootClasses = new Set(file.rules.filter((rule) => rule.scopeRoot).map((rule) => rule.className));
-  const shadowHostClasses = new Set(file.rules.filter((rule) => rule.shadowHost).map((rule) => rule.className));
-  const split = scope ? splitUnscopedRules(css, scope, shadowHostClasses) : { scoped: css, unscoped: '' };
-  const scoped = scope ? `@scope (${scope}) {\n${split.scoped}\n}` : split.scoped;
-  const wrapped = `@layer ${file.layer} {\n${scoped}\n${split.unscoped}\n}`;
+  const root = scope ? where(parseSelectorList(scope)) : undefined;
+  const split = root ? splitSlottedRules(css) : { scoped: css, unscoped: '' };
+  const wrapped = `@layer ${file.layer} {\n${split.scoped}\n${split.unscoped}\n}`;
 
   return optimizeSemanticCss(
     decoder.decode(
@@ -74,13 +79,15 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
         visitor: {
           Rule: {
             style(rule) {
-              const relationship = relationshipScope(rule, relationshipOwners, scopeRootClasses);
-              if (relationship) return relationship;
+              if (!root || isSlottedStyleRule(rule)) return;
 
-              if (!scope) return;
+              if ((rule.value.rules ?? []).length > 0) {
+                throw new Error(`Style output '${file.name}' has a nested rule the scope would prefix twice.`);
+              }
 
-              const selectors = includeScopeRootSelectors(rule.value.selectors, scopeRootClasses);
-              if (selectors === rule.value.selectors) return;
+              const selectors =
+                relationshipSelectors(rule.value.selectors, root, relationshipOwners, scopeRootClasses) ??
+                rule.value.selectors.flatMap((selector) => scopedSelectors(selector, root, scopeRootClasses));
 
               return withoutNullValues({
                 ...cloneCssAst(rule),
@@ -94,75 +101,17 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
   );
 }
 
-/**
- * Keep the rules `@scope` cannot serve outside the scope block. Slotted nodes sit outside a shadow tree's CSS scope, so
- * their rules move out. WebKit never matches a scoped rule whose subject hosts a shadow root or is slotted into one, so
- * a rule on a shadow host class is emitted twice: the scoped rule stays for engines that match it, and a copy with the
- * scope root as a zero-specificity ancestor follows for WebKit. The copy never outranks the original, so the cascade
- * elsewhere is unchanged. Conditional at-rules retain their conditions when their matching rules move or copy.
- */
-function splitUnscopedRules(css: string, scope: string, shadowHostClasses: ReadonlySet<string>) {
+/** Slotted nodes sit outside a shadow tree's CSS scope, so their rules follow the scoped ones, unprefixed. */
+function splitSlottedRules(css: string) {
   let hasSlottedRules = false;
-  let hasShadowHostRules = false;
-  const isShadowHostRule = (rule: Rule) => !isSlottedStyleRule(rule) && isShadowHostStyleRule(rule, shadowHostClasses);
   const scoped = filterCssRules(css, (rule) => {
     const slotted = isSlottedStyleRule(rule);
 
     hasSlottedRules ||= slotted;
-    hasShadowHostRules ||= isShadowHostRule(rule);
-
     return !slotted;
   });
 
-  const slotted = hasSlottedRules ? filterCssRules(css, isSlottedStyleRule) : '';
-  const shadowHosts = hasShadowHostRules ? prefixScope(filterCssRules(css, isShadowHostRule), scope) : '';
-
-  return { scoped, unscoped: `${slotted}\n${shadowHosts}` };
-}
-
-/** Prefix every selector with the scope root as a zero-specificity ancestor, standing in for the `@scope` block. */
-function prefixScope(css: string, scope: string): string {
-  const root = parseSelector(`:where(${scope})`);
-
-  return decoder.decode(
-    transform({
-      filename: 'shadow-hosts.css',
-      code: encoder.encode(css),
-      visitor: {
-        Rule: {
-          style(rule) {
-            const selectors = rule.value.selectors.map((selector) => [
-              ...root.map(cloneCssAst),
-              { type: 'combinator', value: 'descendant' } as const,
-              ...selector.map(cloneCssAst),
-            ]);
-
-            return withoutNullValues({ ...cloneCssAst(rule), value: { ...cloneCssAst(rule.value), selectors } });
-          },
-        },
-      },
-    }).code
-  );
-}
-
-function parseSelector(text: string): Selector {
-  let parsed: Selector | undefined;
-
-  transform({
-    filename: 'selector.css',
-    code: encoder.encode(`${text} { --vjsc: 0; }`),
-    visitor: {
-      Rule: {
-        style(rule) {
-          parsed = cloneCssAst(rule.value.selectors[0]);
-        },
-      },
-    },
-  });
-
-  if (!parsed) throw new Error(`Could not parse the CSS scope selector '${text}'.`);
-
-  return parsed;
+  return { scoped, unscoped: hasSlottedRules ? filterCssRules(css, isSlottedStyleRule) : '' };
 }
 
 function filterCssRules(css: string, include: (rule: Rule) => boolean): string {
@@ -205,30 +154,6 @@ function filterNestedRules(rules: readonly Rule[], include: (rule: Rule) => bool
   return filtered;
 }
 
-/**
- * A rule with a selector whose subject carries a shadow host class. The subject is the last compound, so a relationship
- * selector such as `:where(.owner)[data-x] .subject` counts by its `.subject`, and a pseudo-element on the subject is
- * looked past.
- */
-function isShadowHostStyleRule(rule: Rule, shadowHostClasses: ReadonlySet<string>): boolean {
-  return (
-    rule.type === 'style' &&
-    rule.value.selectors.some((selector) =>
-      subjectCompound(selector).some((component) => component.type === 'class' && shadowHostClasses.has(component.name))
-    )
-  );
-}
-
-function subjectCompound(selector: Selector): Selector {
-  let start = 0;
-
-  for (const [index, component] of selector.entries()) {
-    if (component.type === 'combinator') start = index + 1;
-  }
-
-  return selector.slice(start).filter((component) => component.type !== 'pseudo-element');
-}
-
 function isSlottedStyleRule(rule: Rule): boolean {
   return (
     rule.type === 'style' &&
@@ -238,42 +163,41 @@ function isSlottedStyleRule(rule: Rule): boolean {
   );
 }
 
-/** Include a scoped rule when its semantic class is colocated on the scope root. */
-function includeScopeRootSelectors(selectors: SelectorList, scopeRootClasses: ReadonlySet<string>): SelectorList {
-  return selectors.flatMap((selector) => {
-    if (selector[0]?.type !== 'class' || !scopeRootClasses.has(selector[0].name)) return [selector];
+/** A selector under the scope root, plus one on the root itself when its semantic class is colocated there. */
+function scopedSelectors(selector: Selector, root: WhereComponent, scopeRootClasses: ReadonlySet<string>): Selector[] {
+  const descendant: Selector =
+    selector[0]?.type === 'combinator'
+      ? [cloneCssAst(root), ...selector.map(cloneCssAst)]
+      : [cloneCssAst(root), { type: 'combinator', value: 'descendant' }, ...selector.map(cloneCssAst)];
 
-    return [selector, [{ type: 'pseudo-class', kind: 'scope' } as const, ...selector.map(cloneCssAst)]];
-  });
+  if (selector[0]?.type !== 'class' || !scopeRootClasses.has(selector[0].name)) return [descendant];
+
+  return [descendant, [cloneCssAst(root), ...selector.map(cloneCssAst)]];
 }
 
-function relationshipScope(
-  rule: Extract<Rule, { type: 'style' }>,
+/**
+ * Selectors for a rule whose every selector starts at the same relationship owner, such as a `group/*` parent. The
+ * owner is matched inside the scope root, or on the root itself when it is a scope root class.
+ */
+function relationshipSelectors(
+  selectors: SelectorList,
+  root: WhereComponent,
   relationshipOwners: ReadonlySet<string>,
   scopeRootClasses: ReadonlySet<string>
-): Rule | undefined {
-  const relationships = rule.value.selectors.map((selector) => scopedRelationship(selector, relationshipOwners));
+): SelectorList | undefined {
+  const relationships = selectors.map((selector) => scopedRelationship(selector, relationshipOwners));
   const owner = relationships[0]?.owner;
   if (!owner || relationships.some((relationship) => relationship?.owner !== owner)) return;
 
-  const style = cloneCssAst(rule);
+  const ownerRoot = where(scopedSelectors([{ type: 'class', name: owner }], root, scopeRootClasses));
 
-  style.value.selectors = relationships.map((relationship) => relationship!.selector);
-
-  return withoutNullValues({
-    type: 'scope',
-    value: {
-      loc: cloneCssAst(rule.value.loc),
-      scopeStart: includeScopeRootSelectors([[{ type: 'class', name: owner }]], scopeRootClasses),
-      rules: [style],
-    },
-  });
+  return relationships.map((relationship) => [cloneCssAst(ownerRoot), ...relationship!.rest]);
 }
 
 function scopedRelationship(
   selector: Selector,
   relationshipOwners: ReadonlySet<string>
-): { owner: string; selector: Selector } | undefined {
+): { owner: string; rest: Selector } | undefined {
   const owner = selector[0];
 
   if (
@@ -292,10 +216,33 @@ function scopedRelationship(
   );
   if (descendant < 0) return;
 
-  return {
-    owner: owner.selectors[0][0].name,
-    selector: [{ type: 'nesting' }, ...selector.slice(1).map(cloneCssAst)],
-  };
+  return { owner: owner.selectors[0][0].name, rest: selector.slice(1).map(cloneCssAst) };
+}
+
+type WhereComponent = Extract<SelectorComponent, { type: 'pseudo-class'; kind: 'where' }>;
+
+function where(selectors: SelectorList): WhereComponent {
+  return { type: 'pseudo-class', kind: 'where', selectors };
+}
+
+function parseSelectorList(selector: string): SelectorList {
+  let selectors: SelectorList | undefined;
+
+  transform({
+    filename: 'scope.css',
+    code: encoder.encode(`${selector} {}`),
+    visitor: {
+      Rule: {
+        style(rule) {
+          selectors = cloneCssAst(rule.value.selectors);
+        },
+      },
+    },
+  });
+
+  if (!selectors) throw new Error(`Style scope \`${selector}\` is not a selector list.`);
+
+  return selectors;
 }
 
 interface AnalyzedFile {

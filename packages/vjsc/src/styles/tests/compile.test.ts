@@ -17,8 +17,8 @@ describe('compileStyles', () => {
       scope: '.media-skin-video',
     });
 
-    expect(styles.get('buttons.css')).toContain(':scope.media-container');
-    expect(styles.get('buttons.css')).toContain('.media-container');
+    expect(styles.get('buttons.css')).toContain(':where(.media-skin-video).media-container');
+    expect(styles.get('buttons.css')).toContain(':where(.media-skin-video) .media-container');
   });
 
   it('includes group owners colocated on the scope root', async () => {
@@ -30,7 +30,9 @@ describe('compileStyles', () => {
       scope: '.media-skin',
     });
 
-    expect(styles.get('buttons.css')).toContain('@scope (.media-container, :scope.media-container)');
+    expect(styles.get('buttons.css')).toContain(
+      ':where(:where(.media-skin) .media-container, :where(.media-skin).media-container):not([data-controls-visible]) .media-title'
+    );
   });
 
   it('rewrites named group variants to their semantic owner', async () => {
@@ -61,12 +63,10 @@ describe('compileStyles', () => {
     });
     const css = styles.get('buttons.css') ?? '';
 
-    expect(css).toContain('@scope (.media-skin-video)');
-    expect(css).toContain('@scope (.media-play-button)');
-    expect(css).toContain('&[data-ended]');
+    expect(css).not.toContain('@scope');
+    expect(css).toContain(':where(:where(.media-skin-video) .media-play-button)[data-ended] .media-restart-icon');
     expect(css).toMatch(/\.media-restart-icon \{\s+opacity: 0;\s+display: none;/);
     expect(css).not.toContain('group\\/play');
-    expect(css).not.toContain(':where(');
   });
 
   it('reuses compiled output for identical rules, variants, and scope', async () => {
@@ -137,11 +137,10 @@ describe('compileStyles', () => {
     });
 
     expect(styles.get('buttons.css')).toContain(
-      '&:not([data-muted]):not([data-volume-level="low"]) .media-volume-high-icon'
+      ':where(:where(.media-skin-video) .media-mute-button):not([data-muted]):not([data-volume-level="low"]) .media-volume-high-icon'
     );
     expect(styles.get('buttons.css')).toContain('outline-offset: -2px');
     expect(styles.get('buttons.css')).not.toContain(':is(:where(.media-mute-button)');
-    expect(styles.get('buttons.css')).not.toContain(':where(');
     expect(styles.get('buttons.css')).not.toContain('calc(2px * -1)');
   });
 
@@ -155,12 +154,13 @@ describe('compileStyles', () => {
     });
 
     const css = styles.get('buttons.css') ?? '';
-    const rootBase = css.indexOf('.media-layout-root {\n      display: contents;');
-    const rootResponsive = css.indexOf('.media-layout-root {\n        display: flex;');
+    const rootBase = css.search(/\.media-layout-root \{\s+display: contents;/);
+    const rootResponsive = css.search(/\.media-layout-root \{\s+display: flex;/);
 
     expect(rootBase).toBeGreaterThanOrEqual(0);
     expect(rootResponsive).toBeGreaterThan(rootBase);
   });
+
   it('orders referenced output files by their first composed class', async () => {
     const popup = { ...rule('popup', 'media-popup', ['m-0']), file: 'popups.css' };
     const menu = { ...rule('menu', 'media-menu-popup', ['p-1']), file: 'menus.css' };
@@ -200,7 +200,7 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).toContain('display: grid');
   });
 
-  it('emits slotted shadow selectors outside the incompatible outer scope', async () => {
+  it('emits slotted shadow selectors without the scope root', async () => {
     const poster = rule('root', 'media-poster', ['relative'], {
       'shadow-dom': ['[&>slot::slotted(img:not([src]))]:invisible'],
     });
@@ -212,45 +212,52 @@ describe('compileStyles', () => {
     });
     const css = styles.get('buttons.css') ?? '';
 
-    expect(css).toContain('@scope (.media-skin-video)');
+    expect(css).toContain(':where(.media-skin-video) .media-poster {');
     expect(css).toContain('.media-poster > slot::slotted(img:not([src]))');
     expect(css).toMatch(/}\s*\.media-poster > slot::slotted/);
   });
 
-  it('repeats shadow host rules outside the scope without changing specificity or conditions', async () => {
-    const thumbnail = {
-      ...rule('root', 'media-thumbnail', ['block', 'group/thumbnail', 'data-loading:opacity-0', 'sm:flex']),
-      shadowHost: true,
+  it('keeps slotted rules on a scope root class to the plain selector', async () => {
+    const container = {
+      ...rule('root', 'media-container', ['relative'], { 'shadow-dom': ['[&>slot::slotted(video)]:block'] }),
+      scopeRoot: true,
     };
-    const image = {
-      ...rule('image', 'media-thumbnail-image', ['group-data-loading/thumbnail:opacity-0']),
-      shadowHost: true,
-    };
-    const spinner = rule('spinner', 'media-thumbnail-spinner', ['absolute']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      styles: resolvedStyles([thumbnail, image, spinner]),
+      styles: resolvedStyles([container]),
+      scope: '.media-skin-video',
+      variants: ['shadow-dom'],
+    });
+    const css = styles.get('buttons.css') ?? '';
+
+    expect(css).toContain(':where(.media-skin-video).media-container');
+    expect(css).toContain('.media-container > slot::slotted(video) {');
+    expect(css).not.toContain(':scope');
+  });
+
+  it('scopes rules under a zero-specificity root selector that keeps their conditions', async () => {
+    const thumbnail = rule('root', 'media-thumbnail', [
+      'block',
+      'group/thumbnail',
+      'data-loading:opacity-0',
+      'sm:flex',
+    ]);
+    const image = rule('image', 'media-thumbnail-image', ['group-data-loading/thumbnail:opacity-0']);
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([thumbnail, image]),
       scope: '.media-skin-video',
       variants: [],
     });
     const css = styles.get('buttons.css') ?? '';
-    const scopeEnd = css.indexOf('\n  }\n');
-    const scoped = css.slice(0, scopeEnd);
-    const unscoped = css.slice(scopeEnd);
 
-    expect(scoped).toContain('@scope (.media-skin-video)');
-    expect(scoped).toContain('.media-thumbnail-spinner');
-    expect(scoped).toContain('.media-thumbnail {');
-    expect(scoped).toContain('.media-thumbnail[data-loading] {');
-    // The relationship keeps its nested scope inside the block, and reads as a plain descendant in the copy.
-    expect(scoped).toMatch(/@scope \(\.media-thumbnail\) \{\s*&\[data-loading\] \.media-thumbnail-image \{/);
-    expect(unscoped).not.toContain('.media-thumbnail-spinner');
-    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail {');
-    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail[data-loading] {');
-    expect(unscoped).toContain(
-      ':where(.media-skin-video) :where(.media-thumbnail)[data-loading] .media-thumbnail-image {'
-    );
-    expect(unscoped).toMatch(/@media[^{}]+\{\s*:where\(\.media-skin-video\) \.media-thumbnail \{\s*display: flex;/);
+    expect(css).not.toContain('@scope');
+    expect(css).not.toContain(':scope');
+    expect(css).toContain(':where(.media-skin-video) .media-thumbnail {');
+    expect(css).toContain(':where(.media-skin-video) .media-thumbnail[data-loading] {');
+    expect(css).toContain(':where(:where(.media-skin-video) .media-thumbnail)[data-loading] .media-thumbnail-image {');
+    expect(css).toMatch(/@media[^{}]+\{\s*:where\(\.media-skin-video\) \.media-thumbnail \{\s*display: flex;/);
+    expect(css.match(/:where\(\.media-skin-video\) \.media-thumbnail \{/g)).toHaveLength(2);
   });
 });
 
@@ -267,7 +274,6 @@ function rule(
     file: 'buttons.css',
     layer: 'videojs.components',
     scopeRoot: false,
-    shadowHost: false,
     utilityGroups: utilities,
     utilities,
     variantGroups,

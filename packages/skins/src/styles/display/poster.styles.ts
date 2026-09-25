@@ -4,9 +4,7 @@ export default styles({
   file: 'poster.css',
   prefix: 'media-poster',
   rules: {
-    // `<media-poster>` hosts a shadow root, and the skin's image is slotted through it.
     root: {
-      shadowHost: true,
       utilities: [
         'pointer-events-none layer-media',
         'transition-opacity duration-media-slower not-data-visible:opacity-0',
@@ -22,7 +20,6 @@ export default styles({
       },
     },
     image: {
-      shadowHost: true,
       utilities: ['layer-media object-media', '[&:not([src]):not([srcset])]:invisible'],
     },
   },

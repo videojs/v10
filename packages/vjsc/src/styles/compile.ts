@@ -70,7 +70,6 @@ function compileKey(
       rule.file,
       rule.layer,
       rule.scopeRoot,
-      rule.shadowHost,
       utilitiesForRule(rule, variants, options.design.merge),
     ]),
     options.ruleClassNames ? null : [...new Set(options.styles.rules.map((rule) => rule.file))].sort(),
@@ -164,7 +163,7 @@ function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: re
     );
   }
 
-  return { className: rule.className, candidates, scopeRoot: rule.scopeRoot, shadowHost: rule.shadowHost };
+  return { className: rule.className, candidates, scopeRoot: rule.scopeRoot };
 }
 
 /** Each relationship marker must have exactly one owner before its consumers can be scoped to it. */
