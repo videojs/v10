@@ -13,6 +13,7 @@ import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
 import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
+import { getInstallationRouteSegment } from '@/utils/installation/routes';
 import Base from './Base.astro';
 
 type Props = {
@@ -48,6 +49,9 @@ const docStabilities = new Map(allDocs.map((d) => [d.id, d.data.stability]));
 
 const seoCategory = `${FRAMEWORK_LABELS[framework]} Video Player`;
 const docsSidebarId = 'docs-sidebar';
+// A client navigation from another docs page runs the guide's inline script right after the swap, before the next
+// frame, so only installation guides need to carry it.
+const isInstallationGuide = getInstallationRouteSegment(Astro.url.pathname) !== null;
 ---
 
 <Base
@@ -59,7 +63,7 @@ const docsSidebarId = 'docs-sidebar';
 >
   <Fragment slot="priority-head">
     <StyleInit />
-    <InstallationFrameworkInit />
+    {isInstallationGuide && <InstallationFrameworkInit />}
     <ClientRouter />
   </Fragment>
   <Fragment slot="head">

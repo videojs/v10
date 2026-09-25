@@ -133,7 +133,8 @@ const generatedCss = [
 ].join('\n');
 ---
 
-<style is:global>
+{/* Inline, not bundled, so the rules ship only with the installation guides that render this component. */}
+<style is:inline>
   html [data-shadcn-framework="html"] {
     display: none;
   }
