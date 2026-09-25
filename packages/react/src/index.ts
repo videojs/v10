@@ -185,4 +185,5 @@ export {
 } from './utils/use-media-events';
 export { useMediaExtension } from './utils/use-media-extension';
 export { useMediaInstance } from './utils/use-media-instance';
+export { type MediaRefProps, useMediaRef } from './utils/use-media-ref';
 export { renderElement } from './utils/use-render';
