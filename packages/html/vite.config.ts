@@ -79,6 +79,8 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     alwaysBundle: [/^@videojs\/icons/],
   },
   alias: srcAlias,
+  // Minifies the skins' `.css?inline` imports, which tsdown inlines into the JavaScript.
+  css: { minify: !isDevBuildMode(mode) },
   plugins: [copyCssPlugin({ outDir: `dist/${mode}` }), inlineTemplatePlugin({ minify: !isDevBuildMode(mode) })],
 });
 
