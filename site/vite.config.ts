@@ -55,19 +55,13 @@ const config: ViteUserConfig = {
           'src/content/generated-preset-reference/**',
         ],
       },
-      'cdn-manifest': {
-        command: 'tsx scripts/build-cdn-manifest.ts',
-        dependsOn: workspaceTaskDependencies('build:cdn'),
-        input: cachedTaskInputs,
-        output: ['src/content/cdn-media.json'],
-      },
       build: {
         // Astro observes pnpm's selector-specific lifecycle metadata and host
         // session values even though they do not affect the output, so normalize
         // them for cross-task cache reuse.
         command:
           "SHLVL=0 XPC_SERVICE_NAME=0 npm_lifecycle_event=vite-plus npm_lifecycle_script='astro build' astro build",
-        dependsOn: ['api-docs:generate', 'cdn-manifest'],
+        dependsOn: ['api-docs:generate'],
         // Astro regenerates and consumes collection schemas during one build.
         // They are tool-managed state rather than stable inputs or outputs.
         input: [...cachedTaskInputs, '!.astro/**', '!.netlify/**'],
@@ -93,7 +87,7 @@ const config: ViteUserConfig = {
       'dev:prepare': {
         command: 'node -e ""',
         cache: false,
-        dependsOn: ['api-docs:generate', 'cdn-manifest'],
+        dependsOn: ['api-docs:generate'],
       },
       'test:ci': {
         command: 'pnpm test',

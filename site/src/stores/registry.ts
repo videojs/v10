@@ -1,70 +1,53 @@
-import { atom } from 'nanostores';
+import type { RegistryFramework, RegistryPreset, RegistryStyling, RegistryTheme } from '@videojs/installation';
+import { registryStylings, resolveInstallationTemplateForMethod, sourceFrameworkFor } from '@videojs/installation';
+import { atom, computed } from 'nanostores';
 
+import {
+  framework as installationFramework,
+  styling as installationStyling,
+  template as installationTemplate,
+  updateInstallationSelection,
+} from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
-import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from '@/utils/docs/preferences';
-import { isShadcnInstallationUrl, resolveShadcnFramework } from '@/utils/installation/framework-navigation';
-import type {
-  RegistryFramework,
-  RegistryPreset,
-  RegistryStyling,
-  RegistryTemplate,
-  RegistryTheme,
-} from '@/utils/installation/shadcn';
-import { defaultRegistryTemplate } from '@/utils/installation/shadcn';
+import { setFrameworkPreferenceClient } from '@/utils/docs/preferences';
 
-function getInitialRegistryFramework(): RegistryFramework {
-  if (!globalThis.window) return 'react';
-
-  const fallback = getFrameworkPreferenceClient() ?? 'react';
-
-  return resolveShadcnFramework(new URL(window.location.href), fallback) ?? fallback;
-}
-
-/** React or HTML source shown on the standalone Shadcn installation page. */
-export const registryFramework = atom<RegistryFramework>(getInitialRegistryFramework());
+/** The installation framework narrowed to the React or HTML app selected on the Shadcn installation guide. */
+export const registryFramework = computed(installationFramework, sourceFrameworkFor);
 
 /**
  * The styling catalog the registry commands point at. `null` means the framework's default: Tailwind for React, vanilla
  * CSS for HTML. Shared across islands so one select box drives every command on the page.
  */
-export const registryStyling = atom<RegistryStyling | null>(null);
+export const registryStyling = installationStyling;
 
 /** The skin source added by the registry command; `null` lets the page supply its contextual default. */
 export const registrySkin = atom<RegistryPreset | null>(null);
 
-/** The project template passed to `shadcn init`; `null` lets the selected framework supply its default. */
-export const registryTemplate = atom<RegistryTemplate | null>(null);
-
 /** The skin theme catalog selected on the page; `null` lets an installation skin supply the initial choice. */
 export const registryTheme = atom<RegistryTheme | null>(null);
 
-function applyRegistryFramework(framework: RegistryFramework): void {
-  if (registryFramework.get() !== framework) {
-    registryFramework.set(framework);
-    registryTemplate.set(defaultRegistryTemplate(framework));
-    registryStyling.set(null);
-  }
+/** Select the React or HTML app framework, keeping the app setup and styling the next framework also offers. */
+export function selectRegistryFramework(framework: RegistryFramework): void {
+  const selectedStyling = registryStyling.get();
 
+  updateInstallationSelection({
+    framework,
+    template: resolveInstallationTemplateForMethod(framework, installationTemplate.get(), 'shadcn'),
+    styling: selectedStyling && registryStylings(framework).includes(selectedStyling) ? selectedStyling : null,
+  });
   currentFramework.set(framework);
   setFrameworkPreferenceClient(framework);
 }
 
-/** Synchronize Shadcn state from an authoritative URL without rewriting the active history entry. */
-export function syncRegistryFramework(framework: RegistryFramework): void {
-  applyRegistryFramework(framework);
+/** Select the Shadcn styling catalog. */
+export function selectRegistryStyling(styling: RegistryStyling): void {
+  updateInstallationSelection({ styling });
 }
 
-/** Select the Shadcn source framework and keep its URL, panels, and site-wide preference in sync. */
-export function selectRegistryFramework(framework: RegistryFramework): void {
-  if (globalThis.window) {
-    const url = new URL(window.location.href);
-
-    if (isShadcnInstallationUrl(url)) {
-      url.searchParams.set('framework', framework);
-      history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
-      document.documentElement.dataset.registryFramework = framework;
-    }
-  }
-
-  applyRegistryFramework(framework);
+// Skin and theme choices belong to the page they were made on; the next page starts from its installation picks.
+if (globalThis.document) {
+  document.addEventListener('astro:before-swap', () => {
+    registrySkin.set(null);
+    registryTheme.set(null);
+  });
 }

@@ -1,13 +1,24 @@
-import { generateHTMLInstallCode } from '@/utils/installation/codegen';
+import { generateHTMLInstallCode } from '@videojs/installation';
+
+import { VJS10_VERSION } from '@/consts';
 
 import PackageManagerTabs from './PackageManagerTabs';
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function HTMLInstallTabs() {
-  const $renderer = useSelection('renderer');
+function HTMLInstallTabs() {
+  const $renderer = useSelection('media');
+  const $extensions = useSelection('extensions');
   const $skin = useSelection('skin');
   const $useCase = useSelection('useCase');
-  const install = generateHTMLInstallCode({ renderer: $renderer, skin: $skin, useCase: $useCase }, []);
+  const install = generateHTMLInstallCode(
+    { media: $renderer, extensions: $extensions, skin: $skin, useCase: $useCase },
+    [],
+    undefined,
+    VJS10_VERSION
+  );
 
   return <PackageManagerTabs commands={install} />;
 }
+
+export default withSelectionMarker(HTMLInstallTabs);

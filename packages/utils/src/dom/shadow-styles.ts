@@ -1,3 +1,5 @@
+import { supportsConstructableStyleSheets } from './supports';
+
 export type ShadowStyle = CSSStyleSheet | string;
 
 /** Inject a `<style>` tag into `document.head` once (idempotent by `id`). */
@@ -26,9 +28,8 @@ function getStyleText(style: ShadowStyle): string {
 
 /** Create a constructable stylesheet when available, otherwise return raw CSS. */
 export function createShadowStyle(css: string): ShadowStyle {
-  if (typeof globalThis.CSSStyleSheet === 'undefined') {
-    return css;
-  }
+  // Skins call this while their modules evaluate, so a throw here would break every page that imports them.
+  if (!supportsConstructableStyleSheets()) return css;
 
   const sheet = new globalThis.CSSStyleSheet();
 

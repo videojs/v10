@@ -975,6 +975,39 @@ describe('MenuContent', () => {
     });
   });
 
+  it('highlights the checked submenu item without briefly highlighting Back', async () => {
+    render(
+      <MenuRoot defaultOpen>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuPopup>
+          <MenuContent>
+            <MenuRoot>
+              <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+              <MenuContent data-testid="submenu-content">
+                <MenuItem data-testid="submenu-back">Back</MenuItem>
+                <MenuRadioGroup value="1080p" onValueChange={vi.fn()}>
+                  <MenuRadioItem value="auto" data-testid="auto-item">
+                    Auto
+                  </MenuRadioItem>
+                  <MenuRadioItem value="1080p" data-testid="selected-item">
+                    1080p
+                  </MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuContent>
+            </MenuRoot>
+          </MenuContent>
+        </MenuPopup>
+      </MenuRoot>
+    );
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('selected-item').hasAttribute('data-highlighted')).toBe(true);
+      expect(screen.getByTestId('submenu-back').hasAttribute('data-highlighted')).toBe(false);
+    });
+  });
+
   it('returns to the parent content when selecting an item in a submenu', async () => {
     const onSelect = vi.fn();
 

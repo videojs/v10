@@ -31,18 +31,18 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
   {
     route === 'vue' && (
       <>
-        Vue and Nuxt apps use Video.js HTML custom elements directly in their templates. These lightweight,
-        framework-free components build accessible, customizable players with small bundles, advanced features, and
-        consistent behavior across browsers.
+        Vue apps built with Vite, Astro, or Nuxt use Video.js HTML custom elements directly in their templates. These
+        lightweight, framework-free components build accessible, customizable players with small bundles, advanced
+        features, and consistent behavior across browsers.
       </>
     )
   }
   {
     route === 'svelte' && (
       <>
-        Svelte and SvelteKit apps use Video.js HTML custom elements directly in their markup. These lightweight,
-        framework-free components build accessible, customizable players with small bundles, advanced features, and
-        consistent behavior across browsers.
+        Svelte apps built with Vite, Astro, or SvelteKit use Video.js HTML custom elements directly in their markup.
+        These lightweight, framework-free components build accessible, customizable players with small bundles,
+        advanced features, and consistent behavior across browsers.
       </>
     )
   }
@@ -57,8 +57,8 @@ if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installatio
   {
     route === 'cdn' && (
       <>
-        Video.js can run directly from browser-ready files on jsDelivr. This HTML-only path needs no package manager or
-        build step: choose a player, load its scripts, and add the generated custom-element markup to your page.
+        Video.js can run directly from browser-ready files on jsDelivr. This HTML-only path does not install Video.js
+        packages: choose a player, load its scripts, and add the generated custom-element markup to your page.
       </>
     )
   }

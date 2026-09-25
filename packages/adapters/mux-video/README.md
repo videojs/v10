@@ -4,14 +4,22 @@ The Video.js playback adapter for Mux-hosted video, over [hls.js](https://github
 source model (playback IDs, tokens, DRM, posters, storyboards) and builds on `@videojs/hlsjs-video`, which owns the
 hls.js runtime.
 
-## Installation
-
 Install the adapter with the framework façade your player uses:
 
 ```bash
 pnpm add @videojs/html @videojs/mux-video
 # or
 pnpm add @videojs/react @videojs/mux-video
+```
+
+## AI Quickstart
+
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
+match this package version before writing code. Then print installation instructions with this adapter selected:
+
+```sh
+npx @videojs/cli agents init --framework react --media mux-video
+npx @videojs/cli agents init --framework html --media mux-video
 ```
 
 ## Usage

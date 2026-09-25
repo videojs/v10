@@ -1,6 +1,7 @@
-import type { Renderer } from '@/utils/installation/types';
+import type { Renderer } from '@videojs/installation';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 interface MediaSourceCaseProps {
   /** Show the children only while one of these media sources is selected. */
@@ -9,9 +10,11 @@ interface MediaSourceCaseProps {
 }
 
 /** Client-side gate for installation prose that only applies to some media source picks. */
-export default function MediaSourceCase({ renderers, children }: MediaSourceCaseProps) {
-  const $renderer = useSelection('renderer');
+function MediaSourceCase({ renderers, children }: MediaSourceCaseProps) {
+  const $renderer = useSelection('media');
   if (!renderers.includes($renderer)) return null;
 
   return children;
 }
+
+export default withSelectionMarker(MediaSourceCase);

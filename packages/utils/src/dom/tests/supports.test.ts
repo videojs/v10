@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { supportsAnimationFrame, supportsIdleCallback } from '../supports';
+import { supportsAnimationFrame, supportsConstructableStyleSheets, supportsIdleCallback } from '../supports';
 
 describe('supports', () => {
   describe('supportsAnimationFrame', () => {
@@ -22,6 +22,35 @@ describe('supports', () => {
       // Note: requestIdleCallback may or may not be available in jsdom
       // depending on the version, so we just check it returns a boolean
       expect(typeof result).toBe('boolean');
+    });
+  });
+
+  describe('supportsConstructableStyleSheets', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('returns true when CSSStyleSheet can be constructed', () => {
+      expect(supportsConstructableStyleSheets()).toBe(true);
+    });
+
+    it('returns false when CSSStyleSheet is missing', () => {
+      vi.stubGlobal('CSSStyleSheet', undefined);
+
+      expect(supportsConstructableStyleSheets()).toBe(false);
+    });
+
+    it('returns false when constructing CSSStyleSheet throws', () => {
+      vi.stubGlobal(
+        'CSSStyleSheet',
+        class {
+          constructor() {
+            throw new TypeError('Illegal constructor');
+          }
+        }
+      );
+
+      expect(supportsConstructableStyleSheets()).toBe(false);
     });
   });
 });

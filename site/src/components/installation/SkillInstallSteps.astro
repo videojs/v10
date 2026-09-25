@@ -1,0 +1,35 @@
+---
+import { skillInstallMethods, type SkillAgent } from '@videojs/installation';
+
+import ServerCode from '@/components/Code/ServerCode.astro';
+import CodeFrame from '@/components/typography/CodeFrame.astro';
+import P from '@/components/typography/P.astro';
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+
+interface Props {
+  agent: SkillAgent;
+}
+
+const [method] = skillInstallMethods({ agents: [Astro.props.agent] });
+if (!method) throw new Error(`Unknown skill agent: ${Astro.props.agent}`);
+---
+
+{
+  method.steps.map((step) => (
+    <>
+      <P set:html={renderInlineMarkdown(step.description)} />
+      {step.commands && (
+        <CodeFrame title="Terminal" lang="sh">
+          <ServerCode code={step.commands.join('\n')} lang="sh" />
+        </CodeFrame>
+      )}
+      {step.input && (
+        <CodeFrame lang="text">
+          <ServerCode code={step.input} lang="text" />
+        </CodeFrame>
+      )}
+    </>
+  ))
+}
+<P set:html={renderInlineMarkdown(method.followUp)} />
+{method.notes.map((note) => <P set:html={renderInlineMarkdown(note)} />)}

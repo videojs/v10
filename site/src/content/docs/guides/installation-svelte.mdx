@@ -1,17 +1,16 @@
 ---
 title: 'Svelte Installation Guide'
-description: 'Install Video.js in Svelte or SvelteKit and build a video player with HTML custom elements'
+description: 'Install Video.js with Svelte in Vite, Astro, or SvelteKit and build a player with HTML custom elements'
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
-import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
-import OwnTheUI from '@/components/installation/OwnTheUI.astro';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import SvelteCreateCodeBlock from '@/components/installation/SvelteCreateCodeBlock';
 import SvelteUsageCodeBlock from '@/components/installation/SvelteUsageCodeBlock';
@@ -22,6 +21,11 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
+import Step from '@/components/docs/Step.astro';
+import Steps from '@/components/docs/Steps.astro';
+import AppSetupPicker from '@/components/installation/AppSetupPicker.astro';
+import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
 <InstallationOverview />
 
@@ -29,17 +33,23 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <HumanCase>
 
-## Choose your JS framework
+## Choose your framework
 
 Choose the JavaScript framework for your project.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app
+
+Choose whether the instructions target a Vite, Astro, or SvelteKit app.
+
+<AppSetupPicker framework="svelte" method="packaged" />
 
 ## Choose your use case
 
@@ -54,10 +64,10 @@ Choose the ready-made player that is closest to what you are building.
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
-## Choose your media source
+## Choose your media
 
 Paste a media URL to detect its source type, pick one directly, or upload a video to Mux. The generated packages and component update with your choice.
 
@@ -65,15 +75,29 @@ Paste a media URL to detect its source type, pick one directly, or upload a vide
   <MediaSourcePicker client:idle />
 </ContentWidth>
 
-## Choose how to install
+## Choose your extensions
 
-Choose from the installation options available for your selections. Shadcn adds editable HTML custom-element source to your Svelte project.
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
 
-<InstallationMethodNav />
+<ContentWidth margins="lg">
+  <ExtensionPicker client:idle />
+</ContentWidth>
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
+
+## Prepare your app
+
+Choose whether to create the selected Svelte app setup or add Video.js to a project you already have.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:idle serverTemplate="vite" />
+</ContentWidth>
+</div>
+
+<ProjectCommands client:idle part="create" serverFramework="svelte" serverTemplate="vite" />
 
 ## Install the packages
 
@@ -83,17 +107,24 @@ Install the HTML elements and any playback adapter your selected media source ne
 
 ## Add your player
 
-Add a component that imports the elements it renders. Svelte passes hyphenated tags through to the browser, so no compiler configuration is needed. The imports register the selected player, skin, media, and extensions; the markup composes them.
+<Steps>
+  <Step number={1} title="Add the player component">
+    Add a component that imports the elements it renders. Svelte passes hyphenated tags through to the browser, so no compiler configuration is needed. The imports register the selected player, skin, media, and extensions; the markup composes them.
 
-<ContentWidth>
-  <SvelteCreateCodeBlock client:idle />
-</ContentWidth>
+    <SvelteCreateCodeBlock client:visible={{ rootMargin: "200px" }} />
+  </Step>
+  <Step number={2} title="Render the player">
+    Render the component in a page and pass it the media source you selected above.
 
-Then render the component in a page and pass it the media source you selected above.
+    <SvelteUsageCodeBlock client:visible={{ rootMargin: "200px" }} />
+  </Step>
+</Steps>
 
-<ContentWidth>
-  <SvelteUsageCodeBlock client:idle />
-</ContentWidth>
+## Run your app
+
+Start the app and verify that the selected media plays.
+
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="svelte" serverTemplate="vite" />
 
 </div>
 
@@ -102,10 +133,6 @@ That's it! You now have a working Video.js player.
 <Aside type="note" title="Server rendering with SvelteKit">
 Keep the element imports static. SvelteKit renders the custom-element markup on the server, and the browser upgrades it when the page loads. Put code that needs the element or browser APIs in `onMount`. See <DocsLink slug="guides/svelte" anchor="use-sveltekit">Use SvelteKit</DocsLink> for the details.
 </Aside>
-
-## Own the UI
-
-<OwnTheUI />
 
 ## Choose what to do next
 

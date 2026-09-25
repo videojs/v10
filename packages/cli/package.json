@@ -1,7 +1,7 @@
 {
   "name": "@videojs/cli",
-  "version": "10.0.0-rc.2",
-  "description": "Video.js documentation CLI",
+  "version": "10.0.0-rc.3",
+  "description": "Video.js command line: version-matched installation instructions for coding agents",
   "homepage": "https://videojs.org",
   "license": "Apache-2.0",
   "repository": {
@@ -9,27 +9,26 @@
     "url": "git+https://github.com/videojs/v10.git",
     "directory": "packages/cli"
   },
-  "bin": "./dist/index.mjs",
+  "bin": {
+    "videojs": "./dist/index.mjs"
+  },
   "files": [
-    "dist",
-    "docs"
+    "dist"
   ],
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "copy-docs": "node --import tsx ../../site/scripts/copy-package-docs.ts cli",
     "dev": "vp pack --watch",
-    "test": "vp test run",
-    "clean": "rimraf dist docs"
-  },
-  "dependencies": {
-    "@bomb.sh/args": "^0.3.1",
-    "@clack/prompts": "^0.10.1"
+    "test": "vp run @videojs/cli#build && vp test run",
+    "clean": "rimraf dist types '*.tsbuildinfo'"
   },
   "devDependencies": {
-    "site": "workspace:*",
+    "@types/node": "^22.18.6",
+    "@videojs/installation": "workspace:*",
+    "@videojs/utils": "workspace:*",
+    "typescript": "6.0.2",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
   }

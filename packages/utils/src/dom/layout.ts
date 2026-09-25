@@ -38,6 +38,23 @@ export function getElementSize(
   return { width, height };
 }
 
+/**
+ * Whether a viewport point, such as a mouse event's `clientX` and `clientY`, falls inside an element's border box. The
+ * right and bottom edges are outside, matching how the browser hit-tests. An element with no size contains nothing.
+ */
+export function isPointInElement(element: Element, point: { clientX: number; clientY: number }): boolean {
+  const rect = element.getBoundingClientRect();
+
+  return (
+    rect.width > 0 &&
+    rect.height > 0 &&
+    point.clientX >= rect.left &&
+    point.clientX < rect.right &&
+    point.clientY >= rect.top &&
+    point.clientY < rect.bottom
+  );
+}
+
 export interface MeasureElementOptions extends GetElementSizeOptions {
   /** Inline styles temporarily applied while measuring. */
   styles?: Readonly<Record<string, string | undefined>> | undefined;

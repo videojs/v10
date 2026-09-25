@@ -1,6 +1,4 @@
-import type { InstallationPickerFramework } from '@/utils/installation/framework-navigation';
-
-export type InstallationMethod = 'packaged' | 'shadcn' | 'cdn';
+import type { InstallationMethod } from '@videojs/installation';
 
 export interface InstallationMethodOption {
   id: InstallationMethod;
@@ -26,20 +24,6 @@ export const INSTALLATION_METHOD_OPTIONS = [
     id: 'cdn',
     label: 'CDN',
     description: 'Load the HTML player from jsDelivr.',
-    details: 'Load the HTML player from jsDelivr without a package manager or build step.',
+    details: 'Load browser-ready HTML player files from jsDelivr without installing Video.js packages.',
   },
 ] as const satisfies readonly InstallationMethodOption[];
-
-const INSTALLATION_METHODS_BY_FRAMEWORK = {
-  react: ['packaged', 'shadcn'],
-  html: ['packaged', 'shadcn', 'cdn'],
-  vue: ['packaged', 'shadcn'],
-  svelte: ['packaged', 'shadcn'],
-} as const satisfies Record<InstallationPickerFramework, readonly InstallationMethod[]>;
-
-/** Installation paths available to the selected project's framework. */
-export function getInstallationMethodsForFramework(
-  framework: InstallationPickerFramework
-): readonly InstallationMethod[] {
-  return INSTALLATION_METHODS_BY_FRAMEWORK[framework];
-}

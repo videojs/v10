@@ -1,9 +1,9 @@
+import { SHADCN_RUNNER_NAMES, type ShadcnRunner } from '@videojs/installation';
 import { useEffect } from 'react';
 
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { installMethod } from '@/stores/installation';
-import { SHADCN_RUNNER_NAMES, type ShadcnRunner } from '@/utils/installation/shadcn';
 
 import { useSelection } from './useSelection';
 
@@ -15,11 +15,11 @@ interface Props {
 /** Show install commands and, on installation pages, keep every command island on the same package manager. */
 export default function PackageManagerTabs({ commands, syncSelection = true }: Props) {
   const $installMethod = useSelection('installMethod');
-  const selectedRunner: ShadcnRunner = $installMethod === 'cdn' ? 'npm' : $installMethod;
+  const selectedRunner: ShadcnRunner = $installMethod === 'cdn' ? 'pnpm' : $installMethod;
 
   useEffect(() => {
     // Package-manager tabs cannot select CDN, so normalize the shared selection before synchronizing command islands.
-    if (syncSelection && installMethod.get() === 'cdn') installMethod.set('npm');
+    if (syncSelection && installMethod.get() === 'cdn') installMethod.set('pnpm');
   }, [syncSelection]);
 
   return (

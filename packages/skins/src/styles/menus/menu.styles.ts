@@ -24,6 +24,8 @@ const menuItemHighlight = [
 const menuHighlight = [
   '[anchor-scope:--media-menu-item-highlight-anchor]',
   'media-anchored:before:anchor-media-highlight',
+  'media-transitioning:before:hidden',
+  'media-transitioning:[&_*]:before:hidden',
   'media-anchored:has-data-[highlighted=]:before:duration-0',
 ] as const;
 
@@ -82,13 +84,13 @@ export default styles({
       variants: { default: 'shadow-media-separator' },
     },
     hint: {
-      utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 text-current/65',
+      utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 media-current-mix:text-current/65',
     },
     hintLabel: {
       utilities: 'max-w-24 truncate',
     },
     tier: {
-      utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70',
+      utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none media-current-mix:text-current/70',
     },
     badge: {
       utilities: 'rounded-media-control bg-media-accent px-1.5 text-media-xs font-semibold',

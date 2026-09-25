@@ -1,8 +1,8 @@
+import { getInstallationPreset, type Skin } from '@videojs/installation';
 import { useEffect } from 'react';
 
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import { skin } from '@/stores/installation';
-import { getInstallationPreset, type Skin } from '@/utils/installation/types';
 
 import SkinPreview from './SkinPreview';
 import { useSelection } from './useSelection';

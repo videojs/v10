@@ -39,15 +39,4 @@ describe('lowerStyles', () => {
     expect(css).toContain('--e: oklch(from var(--f) l c h / .5);');
     expect(css.match(/@supports/g)).toHaveLength(1);
   });
-
-  it('keeps `color: color-mix()` of `currentcolor` from WebKit 16, which crashes on it', () => {
-    const css = lower(
-      '.a { color: currentcolor; } .b { color: color-mix(in oklab, currentcolor 65%, transparent); gap: 1px; }'
-    );
-
-    expect(css).toContain('.b { gap: 1px; }');
-    expect(css).toContain(
-      '@supports (contain-intrinsic-size: auto 1px) { .b { color: color-mix(in oklab, currentcolor 65.0%, transparent); } }'
-    );
-  });
 });

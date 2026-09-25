@@ -326,6 +326,44 @@ describe('MenuElement', () => {
     await waitForAssertion(() => expect(second.hasAttribute('data-highlighted')).toBe(true));
   });
 
+  it('highlights a checked radio item without first highlighting Back', async () => {
+    const { root, content } = createMenu();
+    const settingsTrigger = document.createElement('button');
+    const trigger = createItem('Quality');
+    const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
+    const back = createItem('Back');
+    const group = document.createElement(MenuRadioGroupElement.tagName) as MenuRadioGroupElement;
+    const selected = document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
+
+    root.id = 'settings-menu-highlight';
+    settingsTrigger.setAttribute('commandfor', root.id);
+    submenu.id = 'quality-menu-highlight';
+    trigger.commandfor = submenu.id;
+    group.value = '1080p';
+    selected.value = '1080p';
+    selected.textContent = '1080p';
+    group.append(selected);
+    submenu.append(back, group);
+    content.append(trigger, submenu);
+    root.open = true;
+    document.body.append(settingsTrigger, root);
+
+    await Promise.all([
+      root.updateComplete,
+      content.updateComplete,
+      trigger.updateComplete,
+      submenu.updateComplete,
+      group.updateComplete,
+      selected.updateComplete,
+    ]);
+    trigger.click();
+
+    await waitForAssertion(() => {
+      expect(selected.hasAttribute('data-highlighted')).toBe(true);
+      expect(back.hasAttribute('data-highlighted')).toBe(false);
+    });
+  });
+
   it('relays radio-group state to its nested trigger', async () => {
     class TestMenuRadioGroupElement extends MenuRadioGroupElement {
       publish(disabled: boolean, availability: 'available' | 'unavailable', hidden = false): void {

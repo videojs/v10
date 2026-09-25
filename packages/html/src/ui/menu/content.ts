@@ -143,7 +143,7 @@ export class MenuContentElement extends UIElement {
       this.#syncOptionState(trigger);
     }
 
-    if (isSubmenu && active && !this.#wasActive) menu.highlightFirstItem({ preventScroll: true });
+    if (isSubmenu && active && !this.#wasActive) menu.highlightInitialItem({ preventScroll: true });
 
     this.#wasActive = active;
 

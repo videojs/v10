@@ -1,5 +1,7 @@
 import {
   type AttributeSnapshot,
+  containsComposed,
+  getDeepActiveElement,
   getBlockExtent,
   getElementChildren,
   getElementPadding,
@@ -85,6 +87,29 @@ export function createMenuPopup(): MenuPopupApi {
     }
   }
 
+  function restoreFocusBeforeHiding(content: RegisteredContent): void {
+    const hasFocus = (): boolean => {
+      const active = getDeepActiveElement(content.element.ownerDocument);
+
+      return active instanceof Element && containsComposed(content.element, active);
+    };
+    if (!hasFocus()) return;
+
+    // Let the menu decide whether this close reason should restore focus.
+    content.menu.restoreFocus();
+
+    const parentInput = content.parent?.input.current;
+
+    if (hasFocus() && parentInput?.active && parentInput.status !== 'ending') {
+      content.menu.triggerElement?.focus();
+    }
+
+    // Close reasons that do not restore focus still must not leave it in a hidden page.
+    const active = getDeepActiveElement(content.element.ownerDocument);
+
+    if (hasFocus() && active instanceof HTMLElement) active.blur();
+  }
+
   function getAvailableWidth(popup: HTMLElement): number | null {
     return (
       walkAncestors(popup, (ancestor) => {
@@ -140,6 +165,9 @@ export function createMenuPopup(): MenuPopupApi {
   function sync(): void {
     if (!element) return;
 
+    const inactiveContents = new Map<RegisteredContent, boolean>();
+
+    // Reactivate parent pages first so a closing submenu can return focus to its trigger.
     for (const content of contents) {
       const activeChild = getActiveChild(content.menu);
 
@@ -153,7 +181,18 @@ export function createMenuPopup(): MenuPopupApi {
       const input = content.menu.input.current;
       const isExitingPage = content.parent !== null && input.active && input.status === 'ending';
 
-      setInactive(content, activeChild !== null || isExitingPage);
+      inactiveContents.set(content, activeChild !== null || isExitingPage);
+      setInactive(content, false);
+    }
+
+    // Move focus out before hiding an exiting page from assistive technology.
+    for (const [content, inactive] of inactiveContents) {
+      const input = content.menu.input.current;
+      const isExitingPage = content.parent !== null && input.active && input.status === 'ending';
+
+      if (isExitingPage) restoreFocusBeforeHiding(content);
+
+      setInactive(content, inactive);
     }
 
     const current = getCurrentContent();

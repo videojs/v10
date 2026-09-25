@@ -1,5 +1,75 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-rc.2...@videojs/html@10.0.0-rc.3) (2026-09-25)
+
+
+### Features
+
+* about-this-player page and a help link in every player ([#2758](https://github.com/videojs/v10/issues/2758)) ([8a538a5](https://github.com/videojs/v10/commit/8a538a572945c2bb01cb79d38f420ec143a4239c))
+* **html:** export translateText from html entry points ([#2947](https://github.com/videojs/v10/issues/2947)) ([ca3ae5a](https://github.com/videojs/v10/commit/ca3ae5a92a86549a60bf64c24fdc74c2a38cb98e))
+* **installation:** add versioned agent instructions ([#2948](https://github.com/videojs/v10/issues/2948)) ([a602f22](https://github.com/videojs/v10/commit/a602f220aedf9c2800983daade6ca298ada007ab))
+* **skin:** add title display ([#2748](https://github.com/videojs/v10/issues/2748)) ([bc007bd](https://github.com/videojs/v10/commit/bc007bd9c01083507f493883b6eb047992937f79))
+* **skin:** slot the slider thumbnail image ([#2700](https://github.com/videojs/v10/issues/2700)) ([b68563f](https://github.com/videojs/v10/commit/b68563f62595e19c8bfc0d3c88147ea74c4473ef))
+
+
+### Bug Fixes
+
+* **core:** apply popup starting styles before showing ([#2715](https://github.com/videojs/v10/issues/2715)) ([a80aeca](https://github.com/videojs/v10/commit/a80aecadecc1a7dee643c6a7200cc09dfa8c4f9e))
+* **html:** register skin properties in the host document ([#2750](https://github.com/videojs/v10/issues/2750)) ([255e68c](https://github.com/videojs/v10/commit/255e68c8b0d5c6a53b58c38dbfeff43b4710a2e6))
+* **packages:** keep the time slider interactive without the buffer feature ([#2869](https://github.com/videojs/v10/issues/2869)) ([1c629d6](https://github.com/videojs/v10/commit/1c629d612dd976bf84d404178a2cdb728a63d72e))
+* **packages:** prevent menu highlight flicker ([#2969](https://github.com/videojs/v10/issues/2969)) ([461dbcf](https://github.com/videojs/v10/commit/461dbcfdde0c13481f6604cfe5632f9af6232416))
+* **site:** improve markdown for agents ([#2883](https://github.com/videojs/v10/issues/2883)) ([d5c8e3c](https://github.com/videojs/v10/commit/d5c8e3cde77cbbe74ecc6878dbd7862db8628bfa))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-rc.3
+    * @videojs/element bumped to 10.0.0-rc.3
+    * @videojs/media bumped to 10.0.0-rc.3
+    * @videojs/native-hls-video bumped to 10.0.0-rc.3
+    * @videojs/spf bumped to 10.0.0-rc.3
+    * @videojs/store bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+  * devDependencies
+    * @videojs/cloudflare-video bumped to 10.0.0-rc.3
+    * @videojs/dash-video bumped to 10.0.0-rc.3
+    * @videojs/google-cast bumped to 10.0.0-rc.3
+    * @videojs/hlsjs-video bumped to 10.0.0-rc.3
+    * @videojs/icons bumped to 10.0.0-rc.3
+    * @videojs/mux-audio bumped to 10.0.0-rc.3
+    * @videojs/mux-data bumped to 10.0.0-rc.3
+    * @videojs/mux-video bumped to 10.0.0-rc.3
+    * @videojs/shaka-video bumped to 10.0.0-rc.3
+    * @videojs/skins bumped to 10.0.0-rc.3
+    * @videojs/spotify-audio bumped to 10.0.0-rc.3
+    * @videojs/tiktok-video bumped to 10.0.0-rc.3
+    * @videojs/twitch-video bumped to 10.0.0-rc.3
+    * @videojs/vimeo-video bumped to 10.0.0-rc.3
+    * @videojs/wistia-video bumped to 10.0.0-rc.3
+    * @videojs/youtube-video bumped to 10.0.0-rc.3
+  * peerDependencies
+    * @videojs/cloudflare-video bumped to 10.0.0-rc.3
+    * @videojs/dash-video bumped to 10.0.0-rc.3
+    * @videojs/google-cast bumped to 10.0.0-rc.3
+    * @videojs/hlsjs-video bumped to 10.0.0-rc.3
+    * @videojs/mux-audio bumped to 10.0.0-rc.3
+    * @videojs/mux-data bumped to 10.0.0-rc.3
+    * @videojs/mux-video bumped to 10.0.0-rc.3
+    * @videojs/shaka-video bumped to 10.0.0-rc.3
+    * @videojs/spotify-audio bumped to 10.0.0-rc.3
+    * @videojs/tiktok-video bumped to 10.0.0-rc.3
+    * @videojs/twitch-video bumped to 10.0.0-rc.3
+    * @videojs/vimeo-video bumped to 10.0.0-rc.3
+    * @videojs/wistia-video bumped to 10.0.0-rc.3
+    * @videojs/youtube-video bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-rc.1...@videojs/html@10.0.0-rc.2) (2026-09-09)
 
 

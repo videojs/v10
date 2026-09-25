@@ -1,0 +1,122 @@
+---
+import {
+  installationCommand,
+  installationCompatibility,
+  installationDecisionOrderFor,
+  installationOptionDefinitionsFor,
+  installationTemplatesForMethod,
+  QUERY_OPTION_SYNTAX,
+  type InstallationFramework,
+} from '@videojs/installation';
+
+import { INSTALLATION_ROUTES, installationMarkdownGuides, isInstallationRouteSegment } from '@/utils/installation/routes';
+
+const route = Astro.params.framework;
+if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
+
+const command = installationCommand(undefined, null);
+const { method: fixedMethod, pickerFramework } = INSTALLATION_ROUTES[route];
+const fixedFramework: InstallationFramework | null = fixedMethod === 'shadcn' ? null : pickerFramework;
+const frameworks: readonly InstallationFramework[] = fixedFramework ? [fixedFramework] : ['react', 'html'];
+const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks }, QUERY_OPTION_SYNTAX);
+const decisionOrder = installationDecisionOrderFor({ methods: [fixedMethod], frameworks }, QUERY_OPTION_SYNTAX);
+const queryOptions = definitions
+  .filter((option) => {
+    if (!option.query || option.query === 'method') return false;
+
+    if (option.query === 'framework') return route === 'shadcn';
+
+    return true;
+  })
+  .map((option) => option.query === 'package-manager' ? { ...option, default: 'pnpm' } : option);
+const availablePresets = queryOptions.find(({ query }) => query === 'preset')?.values ?? [];
+const mediaByPreset = Object.entries(installationCompatibility.mediaByPreset).filter(([preset]) =>
+  availablePresets.includes(preset)
+);
+// Package text marks code with backticks; render those spans as code so they do not print as literal backticks.
+const codeSpans = (text: string) => text.split('`').map((part, index) => ({ part, code: index % 2 === 1 }));
+const guides = installationMarkdownGuides().flatMap(({ title, guides }) =>
+  guides.map((guide) => ({ ...guide, label: `${title}: ${guide.label}` }))
+);
+---
+
+<div hidden data-llms-only>
+  <h2>Installation options for coding agents</h2>
+
+  <p>
+    The web Markdown page contains the default installation. Add the query parameters below to its <code>.md</code> URL
+    for a complete, validated variation. From a project or an offline docs bundle, run the CLI command below instead.
+    Both paths use the same installation renderer and only return instructions; they do not modify a project.
+  </p>
+
+  <p>
+    This page fixes the installation method to <code>{fixedMethod}</code>{fixedFramework
+      ? <> and the framework to <code>{fixedFramework}</code></>
+      : <>. The <code>framework</code> query parameter selects React or HTML</>}.
+  </p>
+
+  <pre><code class="language-sh">{command}</code></pre>
+
+  <h3>Query parameters</h3>
+
+  <ul>
+    {queryOptions.map((option) => (
+      <li>
+        <code>{option.query}</code>: {codeSpans(option.description).map(({ part, code }) => (code ? <code>{part}</code> : part))}{' '}
+        {option.values && (
+          <>
+            Values: {option.values.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}.{' '}
+          </>
+        )}
+        Default: {codeSpans(option.default).map(({ part, code }) => (code ? <code>{part}</code> : part))}.{option.appliesWhen && <> Applies when {option.appliesWhen}.</>}
+      </li>
+    ))}
+  </ul>
+
+  <p>
+    Run the command above without flags to see the corresponding CLI flags for every framework.
+  </p>
+
+  <h3>Decide in this order</h3>
+
+  <ol>
+    {decisionOrder.map(({ title, guidance }) => (
+      <li><strong>{title}.</strong> {codeSpans(guidance).map(({ part, code }) => (code ? <code>{part}</code> : part))}</li>
+    ))}
+  </ol>
+
+  <h3>Compatible media sources by preset</h3>
+
+  <ul>
+    {mediaByPreset.map(([preset, media]) => (
+      <li><code>{preset}</code>: {media.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}</li>
+    ))}
+  </ul>
+
+  <h3>{route === 'shadcn' ? 'App setup and Shadcn styling by framework' : 'App setup by framework'}</h3>
+
+  <ul>
+    {frameworks.map((framework) => {
+      const templates = installationTemplatesForMethod(framework, fixedMethod);
+
+      return (
+        <li>
+          <code>{framework}</code>: templates{' '}
+          {templates.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}
+          {route === 'shadcn' && (
+            <>; styling{' '}
+            {(installationCompatibility.shadcn.stylingsByFramework[framework] ?? []).map((value, index) => (
+              <>{index > 0 && ', '}<code>{value}</code></>
+            ))}</>
+          )}
+        </li>
+      );
+    })}
+  </ul>
+
+  <h3>Installation pages</h3>
+
+  <ul>
+    {guides.map(({ path, label }) => <li><a href={path}>{label}</a></li>)}
+  </ul>
+</div>

@@ -1,30 +1,44 @@
+import {
+  generateVueCustomElementConfigCode,
+  installationProjectFiles,
+  installationVueConfigFilename,
+} from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
+import { focusLinesContaining } from '@/components/Code/focusLines';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateVueCustomElementConfigCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function VueConfigCodeBlock() {
+function VueConfigCodeBlock() {
+  const template = useSelection('template');
+  const project = installationProjectFiles('vue', template);
+  const filename = installationVueConfigFilename(template);
   const code = generateVueCustomElementConfigCode({
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
+    extensions: useSelection('extensions'),
   });
+  const config = code[filename];
 
   return (
     <TabsRoot>
       <TabsList label="Build tool">
-        <Tab value="vite" initial>
-          Vite
+        <Tab value="config" initial>
+          {project.config}
         </Tab>
-        <Tab value="nuxt">Nuxt</Tab>
       </TabsList>
-      <TabsPanel value="vite" initial>
-        <ClientCode code={code['vite.config.ts']} lang="ts" />
-      </TabsPanel>
-      <TabsPanel value="nuxt">
-        <ClientCode code={code['nuxt.config.ts']} lang="ts" />
+      <TabsPanel value="config" initial>
+        <ClientCode
+          code={config}
+          focusLines={focusLinesContaining(config, ['vue({', 'template:', 'compilerOptions:', 'isCustomElement:'])}
+          lang={template === 'astro' ? 'js' : 'ts'}
+        />
       </TabsPanel>
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(VueConfigCodeBlock);

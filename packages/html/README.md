@@ -4,13 +4,6 @@
 
 > **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
-## Agentstart
-
-Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
-the docs that match this package version before writing code.
-
-## Overview
-
 `@videojs/html` is a comprehensive library for building media players with vanilla JavaScript and
 Web Components. It provides a complete set of Custom Elements, state management, controllers,
 and utilities for creating feature-rich, accessible video and audio players.
@@ -23,6 +16,18 @@ pnpm add @videojs/html @videojs/hlsjs-video
 
 ```ts
 import '@videojs/html/media/hlsjs-video';
+```
+
+## AI Quickstart
+
+Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
+the docs that match this package version before writing code.
+
+Then print version-matched HTML installation instructions. This command returns instructions without modifying your
+project; run it without flags to list every option:
+
+```sh
+npx @videojs/cli agents init --framework html
 ```
 
 ## Documentation

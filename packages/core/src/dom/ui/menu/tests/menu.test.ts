@@ -755,6 +755,23 @@ describe('createMenu', () => {
       expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
+    it('falls back to the first navigable item when the selected item is hidden', () => {
+      const { menu } = createTestMenu();
+      const back = addItem('Back');
+      const hiddenSelected = addItem('Selected');
+
+      hiddenSelected.setAttribute('role', 'menuitemradio');
+      hiddenSelected.setAttribute('aria-checked', 'true');
+      hiddenSelected.setAttribute('aria-hidden', 'true');
+      menu.registerItem(back);
+      menu.registerItem(hiddenSelected);
+
+      menu.highlightInitialItem({ preventScroll: true });
+
+      expect(back.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(true);
+      expect(hiddenSelected.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+    });
+
     it('can highlight the first item without scrolling it into view', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');

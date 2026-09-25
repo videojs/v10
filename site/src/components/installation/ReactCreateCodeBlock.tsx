@@ -1,32 +1,52 @@
+import {
+  generateReactCreateCode,
+  installationProjectFiles,
+  installationReactPlayerCode,
+  installationReactUsageCode,
+} from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateReactCreateCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function ReactCreateCodeBlock() {
+function ReactCreateCodeBlock() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
+  const $extensions = useSelection('extensions');
   const $sourceUrl = useSelection('sourceUrl');
+  const $template = useSelection('template');
 
   const result = generateReactCreateCode({
     useCase: $useCase,
     skin: $skin,
-    renderer: $renderer,
+    media: $renderer,
+    extensions: $extensions,
     sourceUrl: $sourceUrl,
   });
+  const files = installationProjectFiles('react', $template);
+  const usage = installationReactUsageCode($template);
 
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="React implementation">
-        <Tab value="react" initial>
-          app/page.tsx
+        <Tab value="player" initial>
+          {files.player}
         </Tab>
+        {files.usage && <Tab value="usage">{files.usage}</Tab>}
       </TabsList>
-      <TabsPanel value="react" initial>
-        <ClientCode code={result['app/page.tsx']} lang="tsx" />
+      <TabsPanel value="player" initial>
+        <ClientCode code={installationReactPlayerCode(result['app/page.tsx'], $template)} lang="tsx" />
       </TabsPanel>
+      {files.usage && usage && (
+        <TabsPanel value="usage">
+          <ClientCode code={usage} lang="astro" />
+        </TabsPanel>
+      )}
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(ReactCreateCodeBlock);

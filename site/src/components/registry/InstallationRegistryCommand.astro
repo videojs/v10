@@ -7,13 +7,12 @@ import {
   REGISTRY_NAMESPACE,
   REGISTRY_PRESETS,
   REGISTRY_SKINS,
-  REGISTRY_STYLING_LABELS,
-  REGISTRY_THEME_LABELS,
   REGISTRY_THEMES,
   registryNamespaceUrl,
   registrySkinSelection,
   registryStylings,
-} from '@/utils/installation/shadcn';
+} from '@videojs/installation';
+import { REGISTRY_STYLING_LABELS, REGISTRY_THEME_LABELS } from '@/utils/installation/registry-labels';
 import { DEFAULT_SELECTION } from '@/utils/installation/url-state';
 
 import InstallationRegistryCommandClient from './InstallationRegistryCommandClient';
@@ -35,12 +34,11 @@ const skin = REGISTRY_SKINS.find(({ item, theme }) => item === selection.item &&
 const listFormat = new Intl.ListFormat('en', { type: 'disjunction' });
 ---
 
-<InstallationRegistryCommandClient client:idle framework={framework} />
+<InstallationRegistryCommandClient client:visible={{ rootMargin: "200px" }} framework={framework} />
 
 <div hidden data-llms-only>
   <p>
-    These commands add the {skin.label} skin with {REGISTRY_STYLING_LABELS[defaultRegistryStyling(framework)]}. For
-    another skin or styling, pass the matching catalog URL to <code>registry add</code>:
+    These instructions use <code>shadcn registry add</code> to select the {skin.label} skin catalog with {REGISTRY_STYLING_LABELS[defaultRegistryStyling(framework)]}, then add its source. Shadcn skips a namespace that is already configured, so replace the existing <code>@videojs</code> URL in <code>components.json</code> before the add command when changing catalogs. Use the matching catalog URL:
   </p>
 
   <table>

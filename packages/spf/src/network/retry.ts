@@ -1,3 +1,5 @@
+import { anyAbortSignal } from '@videojs/utils/events';
+
 /**
  * Naive retry-with-backoff and a first-byte timeout — the first slice of the network-resilience feature's Tier 1
  * (`internal/design/spf/features/network-resilience.md`). Retries transient failures (network errors, first-byte
@@ -66,7 +68,7 @@ export async function fetchWithRetry(
   for (;;) {
     if (signal.aborted) throw abortError();
 
-    const combined = AbortSignal.any([signal, AbortSignal.timeout(policy.firstByteTimeoutMs)]);
+    const combined = anyAbortSignal([signal, AbortSignal.timeout(policy.firstByteTimeoutMs)]);
 
     try {
       const response = await fetch(url, { ...init, signal: combined });

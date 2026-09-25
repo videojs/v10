@@ -41,6 +41,8 @@
 
     { "path": "packages/icons" },
 
+    { "path": "packages/installation" },
+
     { "path": "packages/skins" },
 
     { "path": "packages/spf" },

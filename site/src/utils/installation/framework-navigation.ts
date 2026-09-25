@@ -1,51 +1,51 @@
-import type { SupportedFramework } from '@/types/docs';
-import type { RegistryFramework } from '@/utils/installation/shadcn';
+import {
+  defaultInstallationTemplate,
+  isInstallationFramework,
+  isInstallationTemplate,
+  type InstallationFramework,
+  type RegistryFramework,
+  resolveInstallationTemplate,
+  sourceFrameworkFor,
+} from '@videojs/installation';
 
-export type InstallationPickerFramework = SupportedFramework | 'vue' | 'svelte';
-
-export const SHADCN_INSTALLATION_PATH = '/docs/guides/installation/shadcn';
+import {
+  getInstallationRoutePath,
+  getInstallationRouteSegment,
+  isShadcnInstallationUrl,
+} from '@/utils/installation/routes';
 
 export interface InstallationFrameworkNavigation {
   history: 'push' | 'replace';
   target: string;
 }
 
-export function isRegistryFramework(framework: string | null): framework is RegistryFramework {
-  return framework === 'react' || framework === 'html';
-}
-
-export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
-  return url.pathname.replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
-}
-
-/** Resolve the source framework for the query-controlled Shadcn guide. */
-export function resolveShadcnFramework(url: URL, fallback: RegistryFramework): RegistryFramework | null {
+/** Resolve the framework for the query-controlled Shadcn guide. Vue and Svelte fall back to HTML. */
+export function resolveShadcnFramework(url: URL, fallback: InstallationFramework): RegistryFramework | null {
   if (!isShadcnInstallationUrl(url)) return null;
 
   const requested = url.searchParams.get('framework');
 
-  return isRegistryFramework(requested) ? requested : fallback;
+  return sourceFrameworkFor(isInstallationFramework(requested) ? requested : fallback);
 }
 
-/** Build a JS-framework switch, falling back to Packaged when the current method does not support the selection. */
+/** Build a JS-framework switch between packaged installation guides. Shadcn switches its query-backed store in place. */
 export function resolveInstallationFrameworkNavigation(
   current: URL,
-  next: InstallationPickerFramework
+  next: InstallationFramework
 ): InstallationFrameworkNavigation {
   const target = new URL(current);
-  const route = current.pathname.match(/\/docs\/guides\/installation\/([^/]+)/)?.[1];
+  const route = getInstallationRouteSegment(current.pathname);
 
-  if (isShadcnInstallationUrl(current) && isRegistryFramework(next)) {
-    target.searchParams.set('framework', next);
-
-    return {
-      target: `${target.pathname}${target.search}${target.hash}`,
-      history: 'replace',
-    };
-  }
-
-  target.pathname = `/docs/guides/installation/${next}`;
+  target.pathname = getInstallationRoutePath(next);
   target.searchParams.delete('framework');
+  const requestedTemplate = target.searchParams.get('template');
+  const template = resolveInstallationTemplate(
+    next,
+    isInstallationTemplate(requestedTemplate) ? requestedTemplate : null
+  );
+
+  if (template === defaultInstallationTemplate(next)) target.searchParams.delete('template');
+  else target.searchParams.set('template', template);
 
   return {
     target: `${target.pathname}${target.search}${target.hash}`,

@@ -11,13 +11,15 @@ interface Props {
 const { includeNoSkin = true, source = false } = Astro.props;
 ---
 
-<SkinPickerSectionClient client:idle includeNoSkin={includeNoSkin}>
-  <H2Markdown id="choose-your-skin">Choose your skin</H2Markdown>
-  <P>
-    {
-      source
-        ? 'Choose the skin source the CLI will add to your project. You can edit its components, layout, styles, and interactions.'
-        : 'Choose how your player looks. You can add the files for any skin to your project and edit them later.'
-    }
-  </P>
-</SkinPickerSectionClient>
+<div class="contents" data-installation-skin-section>
+  <SkinPickerSectionClient client:idle includeNoSkin={includeNoSkin}>
+    <H2Markdown id="choose-your-skin">Choose your skin</H2Markdown>
+    <P>
+      {
+        source
+          ? 'Choose the skin source the CLI will add to your project. You can edit its components, layout, styles, and interactions.'
+          : 'Choose how your player looks. You can add the files for any skin to your project and edit them later.'
+      }
+    </P>
+  </SkinPickerSectionClient>
+</div>

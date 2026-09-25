@@ -99,13 +99,18 @@ export const utilities = {
   'media-max-2xl': { kind: 'variant', description: 'Player below the 2xl breakpoint.' },
   'media-highlighted': {
     kind: 'variant',
-    description: 'Hovered, focused, expanded, or highlighted control or menu item that is not disabled.',
+    description: 'Focused, expanded, or highlighted control or menu item that is not disabled.',
   },
   'media-transitioning': {
     kind: 'variant',
     description: 'Element entering or leaving through starting and ending styles.',
   },
   'media-anchored': { kind: 'variant', description: 'Browsers with CSS anchor positioning.' },
+  'media-current-mix': {
+    kind: 'variant',
+    description:
+      'Browsers where `color: color-mix()` of `currentcolor`, as in `text-current/65`, does not crash WebKit 16.',
+  },
   '--container-media-xs': { kind: 'theme', description: 'Player xs layout breakpoint for `media-xs` variants.' },
   '--container-media-sm': { kind: 'theme', description: 'Player sm layout breakpoint for `media-sm` variants.' },
   '--container-media-md': { kind: 'theme', description: 'Player md layout breakpoint for `media-md` variants.' },

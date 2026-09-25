@@ -113,6 +113,19 @@ describe('formatTimeAsPhrase', () => {
     expect(formatTimeAsPhrase(125, { locale: 'en', style: 'narrow' })).toBe('2m 5s');
   });
 
+  it('joins units without `Intl.ListFormat`', () => {
+    const listFormat = Intl.ListFormat;
+
+    Object.defineProperty(Intl, 'ListFormat', { value: undefined, configurable: true, writable: true });
+
+    try {
+      expect(formatTimeAsPhrase(125, { locale: 'en-GB' })).toBe('2 minutes, 5 seconds');
+      expect(formatTimeAsPhrase(125, { locale: 'en-GB', style: 'narrow' })).toBe('2m 5s');
+    } finally {
+      Object.defineProperty(Intl, 'ListFormat', { value: listFormat, configurable: true, writable: true });
+    }
+  });
+
   it('handles invalid values', () => {
     expect(formatTimeAsPhrase(NaN)).toBe('');
     expect(formatTimeAsPhrase(Infinity)).toBe('');

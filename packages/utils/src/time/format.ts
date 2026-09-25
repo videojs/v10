@@ -41,7 +41,11 @@ function createDurationFormatter(
     ['minutes', new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: style })],
     ['seconds', new Intl.NumberFormat(locale, { style: 'unit', unit: 'second', unitDisplay: style })],
   ];
-  const list = new Intl.ListFormat(locale, { type: 'unit', style });
+  // Some embedded WebKit builds ship without `Intl.ListFormat`; join the units the way English unit lists do.
+  const list: Pick<Intl.ListFormat, 'format'> =
+    typeof Intl.ListFormat === 'function'
+      ? new Intl.ListFormat(locale, { type: 'unit', style })
+      : { format: (parts) => [...parts].join(style === 'narrow' ? ' ' : ', ') };
 
   return {
     format: (duration) =>
