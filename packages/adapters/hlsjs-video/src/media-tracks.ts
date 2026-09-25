@@ -185,7 +185,9 @@ export function HlsJsMediaTracksMixin<Base extends Constructor<MediaTracksHost>>
 
       const level = this.videoRenditions.selectedIndex;
 
-      if (level !== engine.nextLevel) engine.nextLevel = level;
+      // The `nextLevel` getter reports the next buffered fragment's level, not
+      // the requested one, so compare against `manualLevel` (-1 in auto mode).
+      if (level !== engine.manualLevel) engine.nextLevel = level;
     };
 
     #teardown = () => {
