@@ -224,6 +224,17 @@
   }
 }
 
+/*
+ * Browsers where `color: color-mix()` of `currentcolor`, as in `text-current/65`, is safe. WebKit 16 crashes the page on
+ * it, and `contain-intrinsic-size: auto` shipped in Safari 17 and every other supported browser, so Safari 16 keeps
+ * the inherited color at full strength.
+ */
+@custom-variant media-current-mix {
+  @supports (contain-intrinsic-size: auto 1px) {
+    @slot;
+  }
+}
+
 /* Accent background and text for a highlighted control or menu item. */
 @utility highlight-media {
   background-color: var(--media-accent);
