@@ -1,4 +1,4 @@
-import type { Skin } from '@/utils/installation/types';
+import type { Skin } from '@videojs/installation';
 
 interface SkinPreviewProps {
   skin: Skin;

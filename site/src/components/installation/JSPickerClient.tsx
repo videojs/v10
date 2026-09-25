@@ -1,4 +1,4 @@
-import { useStore } from '@nanostores/react';
+import { installationMethodsForFramework, sourceFrameworkFor, type InstallationFramework } from '@videojs/installation';
 import { navigate } from 'astro:transitions/client';
 
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
@@ -6,18 +6,16 @@ import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import { registryFramework, selectRegistryFramework } from '@/stores/registry';
+import { selectRegistryFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
-import {
-  isRegistryFramework,
-  type InstallationPickerFramework,
-  resolveInstallationFrameworkNavigation,
-} from '@/utils/installation/framework-navigation';
+import { resolveInstallationFrameworkNavigation } from '@/utils/installation/framework-navigation';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
-import useIsHydrated from '@/utils/useIsHydrated';
+
+import { useRegistryFramework } from './useRegistryFramework';
+import { withSelectionMarker } from './withSelectionMarker';
 
 /** Framework entry points. The selected framework determines which installation methods the next section offers. */
-const OPTIONS: CardRadioOption<InstallationPickerFramework>[] = [
+const OPTIONS: CardRadioOption<InstallationFramework>[] = [
   {
     value: 'react',
     label: 'React',
@@ -33,32 +31,35 @@ const OPTIONS: CardRadioOption<InstallationPickerFramework>[] = [
   {
     value: 'vue',
     label: 'Vue',
-    description: 'Vue 3 and Nuxt, using the custom elements',
+    description: 'Vue 3 using HTML custom elements',
     media: <VueLogo className="size-7" />,
   },
   {
     value: 'svelte',
     label: 'Svelte',
-    description: 'Svelte 5 and SvelteKit, using the custom elements',
+    description: 'Svelte 5 using HTML custom elements',
     media: <SvelteLogo className="size-7" />,
   },
 ];
 
 interface Props {
-  currentFramework: InstallationPickerFramework;
+  currentFramework: InstallationFramework;
   route: InstallationRouteSegment;
 }
 
-export default function JSPickerClient({ currentFramework, route }: Props) {
-  const selectedRegistryFramework = useStore(registryFramework);
-  const isHydrated = useIsHydrated();
-  const displayedFramework = route === 'shadcn' && isHydrated ? selectedRegistryFramework : currentFramework;
+function JSPickerClient({ currentFramework, route }: Props) {
+  const selectedRegistryFramework = useRegistryFramework(sourceFrameworkFor(currentFramework));
+  const displayedFramework = route === 'shadcn' ? selectedRegistryFramework : currentFramework;
+  const options =
+    route === 'shadcn'
+      ? OPTIONS.filter(({ value }) => installationMethodsForFramework(value).includes('shadcn'))
+      : OPTIONS;
 
-  const handleChange = (next: InstallationPickerFramework) => {
+  const handleChange = (next: InstallationFramework) => {
     if (next === displayedFramework) return;
 
-    if (route === 'shadcn' && isRegistryFramework(next)) {
-      selectRegistryFramework(next);
+    if (route === 'shadcn') {
+      selectRegistryFramework(sourceFrameworkFor(next));
       return;
     }
 
@@ -69,20 +70,13 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
   };
 
   return (
-    <>
-      <CardRadioGroup
-        value={displayedFramework}
-        onChange={handleChange}
-        options={OPTIONS}
-        aria-label="Select JS framework"
-      />
-      <div className="text-p4 mt-3 min-h-6">
-        {displayedFramework === 'html' && route !== 'cdn' && (
-          <p>
-            Want to load Video.js from a CDN? See <a href="#choose-how-to-install">Choose how to install</a> below.
-          </p>
-        )}
-      </div>
-    </>
+    <CardRadioGroup
+      value={displayedFramework}
+      onChange={handleChange}
+      options={options}
+      aria-label="Select framework"
+    />
   );
 }
+
+export default withSelectionMarker(JSPickerClient);

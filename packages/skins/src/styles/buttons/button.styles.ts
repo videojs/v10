@@ -12,6 +12,7 @@ export default styles({
         'cursor-pointer focus-ring-media',
         'will-change-[scale] duration-media-base ease-out [transition-property:background-color,color,outline-offset,scale]',
         'media-highlighted:highlight-media',
+        'not-aria-disabled:hover:highlight-media',
         'focus-visible:outline-media-ring focus-visible:outline-offset-2',
         'not-aria-disabled:active:scale-[0.97]',
         'motion-reduce:scale-100 motion-reduce:will-change-auto motion-reduce:[transition-property:background-color,color]',

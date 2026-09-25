@@ -69,16 +69,19 @@ describe('calculateRailGeometry', () => {
 describe('filterRenderedHeadings', () => {
   it('omits conditional headings without a rendered target', () => {
     const headings = [
-      { depth: 2, text: 'Choose your media source', slug: 'choose-your-media-source' },
+      { depth: 2, text: 'Choose your media', slug: 'choose-your-media' },
       { depth: 2, text: 'Install the media adapter', slug: 'install-the-media-adapter' },
       { depth: 2, text: 'Add your player', slug: 'add-your-player' },
     ];
-    const renderedIds = new Set(['choose-your-media-source', 'add-your-player']);
+    const renderedIds = new Set(['choose-your-media', 'add-your-player']);
 
-    expect(filterRenderedHeadings(headings, (id) => (renderedIds.has(id) ? document.body : null))).toEqual([
-      headings[0],
-      headings[2],
-    ]);
+    expect(
+      filterRenderedHeadings(
+        headings,
+        (id) => (renderedIds.has(id) ? document.body : null),
+        () => true
+      )
+    ).toEqual([headings[0], headings[2]]);
   });
 
   it('omits static anchor placeholders for conditional headings', () => {
@@ -87,6 +90,24 @@ describe('filterRenderedHeadings', () => {
 
     placeholder.dataset.conditionalHeadingPlaceholder = '';
 
-    expect(filterRenderedHeadings([heading], () => placeholder)).toEqual([]);
+    expect(
+      filterRenderedHeadings(
+        [heading],
+        () => placeholder,
+        () => true
+      )
+    ).toEqual([]);
+  });
+
+  it('omits headings hidden by a selected installation path', () => {
+    const heading = { depth: 2, text: 'Configure Shadcn', slug: 'configure-shadcn' };
+
+    expect(
+      filterRenderedHeadings(
+        [heading],
+        () => document.body,
+        () => false
+      )
+    ).toEqual([]);
   });
 });

@@ -1,12 +1,8 @@
 ---
-import { getCollection } from 'astro:content';
-
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
-import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
-import { RENDERERS } from '@/utils/installation/types';
+import { CDN_MEDIA_SUBPATHS, rendererSupportsCdn, RENDERERS } from '@videojs/installation';
 
-const cdnMedia = (await getCollection('cdnMedia')).map((entry) => entry.id);
-const supportedRenderers = RENDERERS.filter((renderer) => rendererSupportsCdn(renderer, cdnMedia));
+const supportedRenderers = RENDERERS.filter((renderer) => rendererSupportsCdn(renderer, CDN_MEDIA_SUBPATHS));
 ---
 
 <MediaSourcePicker client:idle supportedRenderers={supportedRenderers} />

@@ -1,26 +1,36 @@
+import { generateVueUsageCode, installationProjectFiles } from '@videojs/installation';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { generateVueUsageCode } from '@/utils/installation/codegen';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
-export default function VueUsageCodeBlock() {
+function VueUsageCodeBlock() {
+  const template = useSelection('template');
+  const useCase = useSelection('useCase');
+  const project = installationProjectFiles('vue', template, useCase);
   const code = generateVueUsageCode({
-    useCase: useSelection('useCase'),
-    renderer: useSelection('renderer'),
+    useCase,
+    media: useSelection('media'),
+    extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
+    playerImport: project.playerImport,
   });
+  const codeValue = template === 'astro' ? 'index.astro' : 'App.vue';
 
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="Vue usage">
         <Tab value="app" initial>
-          App.vue
+          {project.usage}
         </Tab>
       </TabsList>
       <TabsPanel value="app" initial>
-        <ClientCode code={code['App.vue']} lang="html" />
+        <ClientCode code={code[codeValue]} lang={template === 'astro' ? 'astro' : 'html'} />
       </TabsPanel>
     </TabsRoot>
   );
 }
+
+export default withSelectionMarker(VueUsageCodeBlock);

@@ -17,6 +17,22 @@ const ELEMENT = Symbol('html-element');
 const FRAGMENT = Symbol('html-fragment');
 const SCOPE = Symbol('html-scope');
 const SCOPED_ID = '__vjsc-id-';
+const VOID_ELEMENTS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+]);
 
 interface HtmlElementValue {
   readonly type: string;
@@ -129,8 +145,11 @@ function renderValue(value: unknown, context: RenderContext): string {
 
   if (value[ELEMENT]) {
     const current = value[ELEMENT];
+    const opening = `<${current.type}${renderAttributes(current.attributes, context)}>`;
 
-    return `<${current.type}${renderAttributes(current.attributes, context)}>${renderChildren(current.children, context)}</${current.type}>`;
+    if (VOID_ELEMENTS.has(current.type)) return opening;
+
+    return `${opening}${renderChildren(current.children, context)}</${current.type}>`;
   }
 
   if (FRAGMENT in value) return renderChildren(value[FRAGMENT], context);

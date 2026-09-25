@@ -48,7 +48,7 @@ If you're in the monorepo's root...
 
 | Command                   | Action                                                                                                                                  |
 | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev:site`           | Starts local dev server at `localhost:4321`; generates API references, the CDN manifest, and package builds only when they are missing |
+| `pnpm dev:site`           | Starts local dev server at `localhost:4321`; generates API references and package builds only when they are missing |
 | `pnpm dev:site --prepare` | Same, but regenerates API references and rebuilds packages first (after changing package source or JSDoc)                            |
 | `pnpm build:site`         | Build the production site to `site/dist/`                                                                                            |
 
@@ -200,3 +200,16 @@ One custom Astro integration in `integrations/`:
 - **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` indexes from `[data-llms-content]` elements
 
 Read [`integrations/llms-markdown.ts`](integrations/llms-markdown.ts) for implementation details.
+
+### Markdown delivery
+
+Every generated page has a static `.md` twin. Netlify serves those files directly, with the Markdown headers the
+build writes to `_headers`, and the edge functions in [`netlify/edge-functions/`](netlify/edge-functions/) negotiate
+`Accept: text/markdown` on the HTML routes. Installation twins are the exception to the otherwise static response: the
+shared renderer in `@videojs/installation` validates their query parameters and replaces the generated installation
+section at the edge.
+The same renderer powers the `npx @videojs/cli agents init` command and the docs bundled with `@videojs/react` and
+`@videojs/html`.
+
+Edge functions resolve workspace packages through [`netlify/edge-functions/import_map.json`](netlify/edge-functions/import_map.json).
+Keep that map in sync when an edge handler adds or moves a workspace import.

@@ -156,6 +156,38 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(false);
     });
 
+    it('ignores mouseleave inside the container right after pointer capture ends, as Safari 16 sends', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      vi.spyOn(container!, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 400, 300));
+
+      container!.dispatchEvent(new Event('lostpointercapture'));
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 250 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      container!.dispatchEvent(new Event('lostpointercapture'));
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 320 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('hides on a mouseleave inside the container without a recent pointer capture release', () => {
+      // A pointer leaving the window can report its last position inside the player, such as in fullscreen.
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      vi.spyOn(container!, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 400, 300));
+
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 250 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
     it('keeps controlsVisible true on mouseleave when paused', () => {
       const video = createMockVideo({ paused: true });
       const { store, container } = createPlayerStore(video);

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "api-docs": "vp run site#api-docs:generate",
-    "clean": "rimraf --glob dist .netlify 'src/content/generated-*-reference' src/content/cdn-media.json",
+    "clean": "rimraf --glob dist .netlify 'src/content/generated-*-reference'",
     "astro": "astro",
     "check:anchors": "tsx scripts/check-anchors.ts",
     "test": "vp test run",
@@ -31,6 +31,7 @@
     "@tailwindcss/vite": "catalog:",
     "@videojs/cdn": "workspace:*",
     "@videojs/html": "workspace:*",
+    "@videojs/installation": "workspace:*",
     "@videojs/react": "workspace:*",
     "astro": "^7.1.3",
     "clsx": "^2.1.1",

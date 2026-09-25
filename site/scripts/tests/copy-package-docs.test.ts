@@ -10,7 +10,7 @@ import {
   INSTALLATION_ROUTE_SEGMENTS,
 } from '../../src/utils/installation/routes.ts';
 import {
-  type Framework,
+  type PackageDocsTarget,
   packageDocumentation,
   rewriteIndexHeader,
   rewriteLinks,
@@ -31,14 +31,14 @@ function createFixture() {
   };
 }
 
-function writeDoc(siteDist: string, framework: Framework, relativePath: string, content: string): void {
+function writeDoc(siteDist: string, framework: PackageDocsTarget, relativePath: string, content: string): void {
   const path = join(siteDist, 'docs', 'framework', framework, relativePath);
 
   mkdirSync(join(path, '..'), { recursive: true });
   writeFileSync(path, content);
 }
 
-function writeInstallationDocs(siteDist: string, framework: Framework): number {
+function writeInstallationDocs(siteDist: string, framework: PackageDocsTarget): number {
   const routes = INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
     INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
   );
@@ -47,7 +47,10 @@ function writeInstallationDocs(siteDist: string, framework: Framework): number {
     const path = join(siteDist, `${getInstallationRoutePath(route).slice(1)}.md`);
 
     mkdirSync(join(path, '..'), { recursive: true });
-    writeFileSync(path, `# ${route} installation`);
+    writeFileSync(
+      path,
+      `# ${route} installation\n\n<!-- installation-plan:start -->\n\nDefault steps.\n\n<!-- installation-plan:end -->`
+    );
   }
 
   return routes.length;
@@ -232,7 +235,8 @@ describe('synthesizeReadme', () => {
   it('throws on an unsupported framework', () => {
     expect(() =>
       synthesizeReadme({
-        framework: 'svelte' as unknown as Framework,
+        // @ts-expect-error Verify the runtime guard for untyped callers.
+        framework: 'svelte',
         version: '1.0.0',
       })
     ).toThrow();
@@ -275,7 +279,10 @@ describe('packageDocumentation', () => {
     writeDoc(fixture.siteDist, 'react', 'llms.txt', '[Install](/docs/guides/installation/react.md)');
     const installation = join(fixture.siteDist, 'docs/guides/installation/react.md');
 
-    writeFileSync(installation, '# React Installation Guide');
+    writeFileSync(
+      installation,
+      '# React Installation Guide\n\n<!-- installation-plan:start -->\nDefault steps.\n<!-- installation-plan:end -->'
+    );
 
     expect(
       packageDocumentation({
@@ -284,11 +291,73 @@ describe('packageDocumentation', () => {
         packagesDirectory: fixture.packagesDirectory,
       })
     ).toBe(1 + installationCount);
-    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/guides/installation.md'), 'utf-8')).toBe(
-      '# React Installation Guide'
+    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/guides/installation.md'), 'utf-8')).toContain(
+      '- `framework`: `react`'
     );
     expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/llms.txt'), 'utf-8')).toBe(
       '[Install](./guides/installation.md)'
+    );
+  });
+
+  it('pins the reproduce command to the documented release', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs');
+
+    packageDocumentation({
+      target: 'html',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+      version: '9.9.9',
+    });
+
+    const installation = readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/installation.md'), 'utf-8');
+
+    expect(installation).toContain('npx @videojs/cli@9.9.9 agents init --method packaged --framework html ');
+    expect(installation).not.toContain('npx @videojs/cli agents init');
+  });
+
+  it('keeps the reproduce command unpinned without a release version', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'html');
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# Docs');
+
+    packageDocumentation({
+      target: 'html',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+    });
+
+    expect(readFileSync(join(fixture.packagesDirectory, 'html/docs/guides/installation.md'), 'utf-8')).toContain(
+      'npx @videojs/cli agents init --method packaged --framework html '
+    );
+  });
+
+  it('preserves installed agent commands throughout the package documentation', () => {
+    const fixture = createFixture();
+
+    writeInstallationDocs(fixture.siteDist, 'react');
+    writeDoc(fixture.siteDist, 'react', 'llms.txt', 'Run `npx @videojs/cli agents init`.');
+    writeDoc(
+      fixture.siteDist,
+      'react',
+      'guides/build-with-ai.md',
+      'Use `npx @videojs/cli agents init --framework react --method shadcn` for version-matched instructions.'
+    );
+
+    packageDocumentation({
+      target: 'react',
+      siteDist: fixture.siteDist,
+      packagesDirectory: fixture.packagesDirectory,
+    });
+
+    const packageDocs = join(fixture.packagesDirectory, 'react/docs');
+
+    expect(readFileSync(join(packageDocs, 'llms.txt'), 'utf-8')).toContain('npx @videojs/cli agents init');
+    expect(readFileSync(join(packageDocs, 'guides/build-with-ai.md'), 'utf-8')).toContain(
+      'npx @videojs/cli agents init --framework react --method shadcn'
     );
   });
 
@@ -337,52 +406,37 @@ describe('packageDocumentation', () => {
       join(fixture.siteDist, 'docs/guides/installation/shadcn.md'),
       [
         '# Shadcn',
-        '<!-- cli:framework react -->',
+        '<!-- installation-plan:start -->',
+        'Default React plan',
+        '<!-- installation-plan:end -->',
+        '<!-- installation:framework react -->',
         'React steps',
-        '<!-- /cli:framework react -->',
-        '<!-- cli:framework html -->',
+        '<!-- /installation:framework react -->',
+        '<!-- installation:framework html -->',
         'HTML steps',
-        '<!-- /cli:framework html -->',
+        '<!-- /installation:framework html -->',
       ].join('\n\n')
     );
     writeFileSync(
       join(fixture.siteDist, 'docs/guides/installation/vue.md'),
-      '[Shadcn](https://videojs.org/docs/guides/installation/shadcn?framework=html) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
+      '# Vue\n\n<!-- installation-plan:start -->\nDefault steps.\n<!-- installation-plan:end -->\n\n[Shadcn](https://videojs.org/docs/guides/installation/shadcn?framework=html) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
     );
 
     packageDocumentation({ target: 'html', siteDist: fixture.siteDist, packagesDirectory: fixture.packagesDirectory });
 
     const guides = join(fixture.packagesDirectory, 'html/docs/guides');
 
-    expect(readFileSync(join(guides, 'installation-shadcn.md'), 'utf-8')).toBe('# Shadcn\n\nHTML steps\n');
-    expect(readFileSync(join(guides, 'installation-vue.md'), 'utf-8')).toBe(
+    const shadcn = readFileSync(join(guides, 'installation-shadcn.md'), 'utf-8');
+
+    expect(shadcn).toContain('- `framework`: `html`');
+    expect(shadcn).toContain('HTML steps');
+    expect(shadcn).not.toContain('React steps');
+    expect(shadcn).not.toContain('installation:framework');
+    const vue = readFileSync(join(guides, 'installation-vue.md'), 'utf-8');
+
+    expect(vue).toContain(
       '[Shadcn](./installation-shadcn.md) or [React](https://videojs.org/docs/guides/installation/shadcn?framework=react)'
     );
-  });
-
-  it('packages both CLI frameworks while preserving online links', () => {
-    const fixture = createFixture();
-    const link = '[Install](https://videojs.org/docs/framework/react/guides/installation.md)';
-    const installationCount =
-      writeInstallationDocs(fixture.siteDist, 'react') + writeInstallationDocs(fixture.siteDist, 'html');
-
-    writeDoc(
-      fixture.siteDist,
-      'html',
-      'llms.txt',
-      '# HTML\n\n---\n\nAll documentation: https://videojs.org/llms.txt\n'
-    );
-    writeDoc(fixture.siteDist, 'react', 'concepts/overview.md', link + footer);
-
-    expect(
-      packageDocumentation({
-        target: 'cli',
-        siteDist: fixture.siteDist,
-        packagesDirectory: fixture.packagesDirectory,
-      })
-    ).toBe(2 + installationCount);
-    expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/react/concepts/overview.md'), 'utf-8')).toBe(link);
-    expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/html/llms.txt'), 'utf-8')).toBe('# HTML');
   });
 
   it('throws when a canonical installation document is missing', () => {
@@ -405,18 +459,18 @@ describe('packageDocumentation', () => {
     const fixture = createFixture();
 
     writeDoc(fixture.siteDist, 'html', 'llms.txt', '# HTML');
-    const sentinel = join(fixture.packagesDirectory, 'cli/docs/sentinel.txt');
+    const sentinel = join(fixture.packagesDirectory, 'html/docs/sentinel.txt');
 
     mkdirSync(join(sentinel, '..'), { recursive: true });
     writeFileSync(sentinel, 'keep');
 
     expect(() =>
       packageDocumentation({
-        target: 'cli',
+        target: 'html',
         siteDist: fixture.siteDist,
         packagesDirectory: fixture.packagesDirectory,
       })
-    ).toThrow(/react/);
+    ).toThrow(/installation/);
     expect(existsSync(sentinel)).toBe(true);
   });
 });

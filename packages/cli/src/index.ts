@@ -1,53 +1,16 @@
-import { parse } from '@bomb.sh/args';
+import { runAgentsCli } from '@videojs/installation/node';
 
-import { handleConfig } from './commands/config.js';
-import { handleDocs } from './commands/docs.js';
+import packageJson from '../package.json' with { type: 'json' };
 
-const parsed = parse(process.argv.slice(2), {
-  alias: { f: 'framework', l: 'list', v: 'version', h: 'help' },
-  string: [
-    'framework',
-    'preset',
-    'skin',
-    'media',
-    'source-url',
-    'install-method',
-    'method',
-    'package-manager',
-    'template',
-    'styling',
-    'theme',
-  ],
-  boolean: ['list', 'version', 'help'],
-});
+// Earlier releases of this package read docs and saved preferences. Keep those commands answering so scripts that
+// still call them learn where the replacement lives instead of failing on an unknown command.
+const DEPRECATED_COMMANDS = new Set(['docs', 'config']);
+const [command] = process.argv.slice(2);
 
-const [command, ...rest] = parsed._ as string[];
-
-if (parsed.version) {
-  console.log(`@videojs/cli v${__CLI_VERSION__}`);
-  process.exit(0);
-}
-
-if (!command) {
-  console.log(`@videojs/cli — Video.js 10 CLI
-
-Commands:
-  docs <slug> [options]                Read a doc page
-  docs --list [--framework]            List available docs
-  config <set|get|list> [key] [value]  Manage preferences
-
-Options:
-  -f, --framework <html|react>  JS framework
-  -v, --version                 Show version
-  -h, --help                    Show help`);
-  process.exit(0);
-}
-
-if (command === 'docs') {
-  await handleDocs(parsed, rest);
-} else if (command === 'config') {
-  handleConfig(rest, { help: parsed.help });
+if (command && DEPRECATED_COMMANDS.has(command)) {
+  process.stderr.write(
+    `\`videojs ${command}\` is deprecated and no longer does anything. Run \`npx @videojs/cli agents init\` for version-matched installation instructions, \`npx @videojs/cli agents skills\` to install the Video.js skill in your coding agent, or read the docs at https://videojs.org/docs.\n`
+  );
 } else {
-  console.error(`Unknown command: "${command}". Run with --help for usage.`);
-  process.exit(1);
+  runAgentsCli(packageJson.version);
 }

@@ -1,17 +1,16 @@
 ---
 title: 'Vue Installation Guide'
-description: 'Install Video.js in Vue or Nuxt and build a video player with HTML custom elements'
+description: 'Install Video.js with Vue in Vite, Astro, or Nuxt and build a player with HTML custom elements'
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
-import InstallationChoicesForLLMs from '@/components/installation/InstallationChoicesForLLMs.astro';
-import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
 import InstallationOverview from '@/components/installation/InstallationOverview.astro';
 import InstallationPreview from '@/components/installation/InstallationPreview';
 import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
-import OwnTheUI from '@/components/installation/OwnTheUI.astro';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import VueConfigCodeBlock from '@/components/installation/VueConfigCodeBlock';
@@ -23,6 +22,11 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import DocsLinkCards from '@/components/docs/DocsLinkCards.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
+import Step from '@/components/docs/Step.astro';
+import Steps from '@/components/docs/Steps.astro';
+import AppSetupPicker from '@/components/installation/AppSetupPicker.astro';
+import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
 
 <InstallationOverview />
 
@@ -30,17 +34,23 @@ import HumanCase from '@/components/docs/HumanCase.astro';
 
 <InstallationAgentStart />
 
-<InstallationChoicesForLLMs />
+<InstallationOptionsForAgents />
 
 <HumanCase>
 
-## Choose your JS framework
+## Choose your framework
 
 Choose the JavaScript framework for your project.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
+
+## Choose your app
+
+Choose whether the instructions target a Vite, Astro, or Nuxt app.
+
+<AppSetupPicker framework="vue" method="packaged" />
 
 ## Choose your use case
 
@@ -55,10 +65,10 @@ Choose the ready-made player that is closest to what you are building.
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <InstallationPreview client:visible />
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
 </ContentWidth>
 
-## Choose your media source
+## Choose your media
 
 Paste a media URL to detect its source type, pick one directly, or upload a video to Mux. The generated packages and component update with your choice.
 
@@ -66,15 +76,29 @@ Paste a media URL to detect its source type, pick one directly, or upload a vide
   <MediaSourcePicker client:idle />
 </ContentWidth>
 
-## Choose how to install
+## Choose your extensions
 
-Choose from the installation options available for your selections. Shadcn adds editable HTML custom-element source to your Vue project.
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
 
-<InstallationMethodNav />
+<ContentWidth margins="lg">
+  <ExtensionPicker client:idle />
+</ContentWidth>
 
 </HumanCase>
 
-<div data-cli-replace="installation" class="contents">
+<div data-installation-plan class="contents">
+
+## Prepare your app
+
+Choose whether to create the selected Vue app setup or add Video.js to a project you already have.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:idle serverTemplate="vite" />
+</ContentWidth>
+</div>
+
+<ProjectCommands client:idle part="create" serverFramework="vue" serverTemplate="vite" />
 
 ## Install the packages
 
@@ -82,25 +106,32 @@ Install the HTML elements and any playback adapter your selected media source ne
 
 <HTMLInstallTabs />
 
-## Register the custom elements
+## Register custom elements
 
 Vue's template compiler treats unknown tags as Vue components and warns when it cannot resolve them. Tell it which tags are Video.js custom elements with [`isCustomElement`](https://vuejs.org/guide/extras/web-components.html#skipping-component-resolution). List only the tags your templates use.
 
-<VueConfigCodeBlock client:idle />
+<VueConfigCodeBlock client:visible={{ rootMargin: "200px" }} />
 
 ## Add your player
 
-Add a single-file component that imports the elements it renders. The imports register the selected player, skin, media, and extensions with the browser; the template composes them.
+<Steps>
+  <Step number={1} title="Add the player component">
+    Add a single-file component that imports the elements it renders. The imports register the selected player, skin, media, and extensions with the browser; the template composes them.
 
-<ContentWidth>
-  <VueCreateCodeBlock client:idle />
-</ContentWidth>
+    <VueCreateCodeBlock client:visible={{ rootMargin: "200px" }} />
+  </Step>
+  <Step number={2} title="Render the player">
+    Render the component in your app and pass it the media source you selected above.
 
-Then render the component anywhere in your app and pass it the media source you selected above.
+    <VueUsageCodeBlock client:visible={{ rootMargin: "200px" }} />
+  </Step>
+</Steps>
 
-<ContentWidth>
-  <VueUsageCodeBlock client:idle />
-</ContentWidth>
+## Run your app
+
+Start the app and verify that the selected media plays.
+
+<ProjectCommands client:visible={{ rootMargin: "200px" }} part="run" serverFramework="vue" serverTemplate="vite" />
 
 </div>
 
@@ -109,10 +140,6 @@ That's it! You now have a working Video.js player.
 <Aside type="note" title="Server rendering with Nuxt">
 Keep the element imports static. Nuxt renders the custom-element markup on the server, and the browser upgrades it when the page loads. If you need to read player state or call player methods, wait until Vue has mounted the element. See <DocsLink slug="guides/vue" anchor="use-nuxt">Use Nuxt</DocsLink> for client-only registration.
 </Aside>
-
-## Own the UI
-
-<OwnTheUI />
 
 ## Choose what to do next
 

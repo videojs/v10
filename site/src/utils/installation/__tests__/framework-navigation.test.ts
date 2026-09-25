@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import {
-  isShadcnInstallationUrl,
-  resolveInstallationFrameworkNavigation,
-  resolveShadcnFramework,
-} from '../framework-navigation';
+import { resolveInstallationFrameworkNavigation, resolveShadcnFramework } from '../framework-navigation';
 
 describe('resolveInstallationFrameworkNavigation', () => {
   it('replaces equivalent React and HTML installation pages', () => {
@@ -30,25 +26,9 @@ describe('resolveInstallationFrameworkNavigation', () => {
     });
   });
 
-  it('keeps supported Shadcn frameworks on the same guide', () => {
-    const current = new URL(
-      'https://videojs.org/docs/guides/installation/shadcn?preset=audio&framework=react#choose-how-to-install'
-    );
-
-    expect(resolveInstallationFrameworkNavigation(current, 'html')).toEqual({
-      target: '/docs/guides/installation/shadcn?preset=audio&framework=html#choose-how-to-install',
-      history: 'replace',
-    });
-  });
-
-  it('moves unsupported Shadcn and CDN frameworks to Packaged', () => {
-    const shadcn = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react&skin=minimal');
+  it('moves framework changes from CDN to Packaged', () => {
     const cdn = new URL('https://videojs.org/docs/guides/installation/cdn?preset=audio');
 
-    expect(resolveInstallationFrameworkNavigation(shadcn, 'vue')).toEqual({
-      target: '/docs/guides/installation/vue?skin=minimal',
-      history: 'push',
-    });
     expect(resolveInstallationFrameworkNavigation(cdn, 'react')).toEqual({
       target: '/docs/guides/installation/react?preset=audio',
       history: 'push',
@@ -63,17 +43,16 @@ describe('resolveShadcnFramework', () => {
     expect(resolveShadcnFramework(url, 'react')).toBe('html');
   });
 
-  it('uses the saved fallback for a missing or invalid query', () => {
+  it('uses the saved fallback for a missing query and falls back to HTML for Vue', () => {
     expect(resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')).toBe('html');
     expect(
       resolveShadcnFramework(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
-    ).toBe('react');
+    ).toBe('html');
   });
 
   it('does not resolve non-Shadcn routes', () => {
     const url = new URL('https://videojs.org/docs/guides/installation/react?framework=html');
 
-    expect(isShadcnInstallationUrl(url)).toBe(false);
     expect(resolveShadcnFramework(url, 'react')).toBeNull();
   });
 });

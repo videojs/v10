@@ -4,73 +4,78 @@
 
 > **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
-The Video.js 10 CLI. Read documentation from your terminal and generate installation guides tailored to your method, framework, player, skin, media source, and package manager.
+The Video.js 10 command line. `agents init` prints version-matched installation instructions for a coding agent or
+for you to follow: the packages to install, the files to add, and the commands to run for your framework, installation
+method, player, skin, and media source. `agents skills` prints how to install the
+[Video.js skill](https://github.com/videojs/skills) in your coding agent.
 
-## Install
+## Usage
 
-Run without installing:
+Run it without installing anything:
 
-```bash
-npx @videojs/cli --help
+```sh
+npx @videojs/cli agents init
 ```
 
-Or install globally:
+Without selection flags, the command lists every option, the valid combinations, and the order to decide them in. Add
+flags to print one complete plan:
 
-```bash
-npm install -g @videojs/cli
-videojs --help
+```sh
+npx @videojs/cli agents init --framework react --media hls
+npx @videojs/cli agents init --framework html --method shadcn --styling css
+npx @videojs/cli agents init --framework html --method cdn --project existing --template none
 ```
 
-> Scripts below use `videojs` for brevity — substitute `npx @videojs/cli` if you don't install globally.
+Add `--json` for a structured document instead of Markdown, or `--version` to print the CLI version.
 
-## Examples
+Each plan ends with a command that reproduces it with every choice spelled out. When you omit `--framework`, the command
+reads the nearest `package.json`: React, Next.js, TanStack Start, and React Router projects get React instructions, Vue
+and Nuxt projects get Vue, Svelte and SvelteKit projects get Svelte, and anything else gets plain HTML. React
+instructions install `@videojs/react`; HTML, Vue, and Svelte instructions install `@videojs/html`.
 
-Read a doc page:
+A global install (`npm install --global @videojs/cli`) adds the same commands as `videojs agents init` and
+`videojs agents skills`. The `docs` and `config` commands from earlier releases are deprecated: they print where to
+find installation instructions and docs.
 
-```bash
-videojs docs concepts/overview
+## Install the Video.js skill
+
+```sh
+npx @videojs/cli agents skills
 ```
 
-Generate a framework-specific installation snippet interactively:
+Without flags, the command prints the install steps for Codex, Claude Code, VS Code, Cursor, and other coding agents
+through the open [`skills`](https://www.npmjs.com/package/skills) installer. Each section ends with the follow-up that
+loads the skill, such as starting a new session. Narrow or adjust the steps with:
 
-```bash
-videojs docs guides/installation/react \
-  --preset video \
-  --skin default \
-  --media hls \
-  --package-manager pnpm \
-  --source-url https://example.com/video.m3u8
+- `--agent <ids>`: a comma-separated list of `codex`, `claude-code`, `vscode`, `cursor`, and `other`. Pass it once.
+- `--scope <scope>`: `user`, `project`, or `local`. Adds `--scope` to the Claude Code marketplace and plugin
+  commands; without it, Claude Code uses `user`.
+- `--global`: adds `-g` to the `skills` installer command so the skill is available in every project.
+
+```sh
+npx @videojs/cli agents skills --agent claude-code --scope project
+npx @videojs/cli agents skills --agent codex,cursor
+npx @videojs/cli agents skills --agent other --global --json
 ```
 
-Presets are `video`, `audio`, `live-video`, `live-audio`, and `background-video`. Live video supports HLS and Mux video; live audio supports Mux audio:
+`--json` and `--help` work the same way as they do for `agents init`.
 
-```bash
-videojs docs guides/installation/cdn \
-  --preset live-video \
-  --skin default \
-  --media hls \
-  --source-url https://example.com/live.m3u8
-```
+## What it does not do
 
-Add editable React skin source with Shadcn:
+Both commands only print instructions. They never install packages or skills, run other CLIs, write files, prompt, or
+save preferences. The package is a single bundled file with no dependencies, so `npx` downloads it without the player
+packages it describes.
 
-```bash
-videojs docs guides/installation/shadcn \
-  --framework react \
-  --preset video \
-  --theme default \
-  --media html5-video \
-  --source-url '' \
-  --package-manager pnpm \
-  --template next \
-  --styling tailwind
-```
+## Versions
 
-Vue and Svelte projects can use the HTML custom-element skin source with `--framework html`, `--template vite`, and `--styling css`. The Shadcn guide shows the HTML source steps; use the Vue or Svelte installation guide for framework-specific component setup.
+Package versions in the instructions match the CLI version. When the project already has a different `@videojs/react`
+or `@videojs/html` version, the plan says so. For a release that includes `agents init`, it shows the pinned command for
+that release, such as `npx @videojs/cli@10.0.0 agents init …`; for an older release it says to upgrade the project's
+Video.js packages instead.
 
-The generic `guides/installation` slug also accepts `--method packaged`, `--method shadcn`, or `--method cdn`. The older `--install-method` flag remains compatible.
-
-For full usage, run `videojs --help`, `videojs docs --help`, or `videojs config --help`.
+When you omit `--template`, the command also reads the app setup from the nearest `package.json` (Next.js, TanStack
+Start, React Router, Astro, Nuxt, SvelteKit, Laravel, or Vite), or treats a directory with only an `index.html` as a
+plain HTML page.
 
 ## Community
 

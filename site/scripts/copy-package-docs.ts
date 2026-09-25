@@ -1,4 +1,4 @@
-/** Package site-generated markdown for @videojs/html, @videojs/react, or @videojs/cli. */
+/** Package site-generated markdown for @videojs/html or @videojs/react. */
 import {
   existsSync,
   mkdirSync,
@@ -12,7 +12,7 @@ import {
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { selectFrameworkBranches } from '../integrations/markdown-text';
+import { INSTALLATION_PACKAGE_VERSION, renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
 import {
   getInstallationRoutePath,
   INSTALLATION_ROUTES,
@@ -28,8 +28,7 @@ const PACKAGE_NAMES = {
   react: '@videojs/react',
 } as const;
 
-export type Framework = keyof typeof PACKAGE_NAMES;
-export type PackageDocsTarget = Framework | 'cli';
+export type PackageDocsTarget = keyof typeof PACKAGE_NAMES;
 
 export interface PackageDocumentationOptions {
   target: PackageDocsTarget;
@@ -40,7 +39,9 @@ export interface PackageDocumentationOptions {
 
 const DOCS_SITE_BASE = 'https://videojs.org';
 
-function installationDocuments(framework: Framework): ReadonlyArray<readonly [source: string, destination: string]> {
+function installationDocuments(
+  framework: PackageDocsTarget
+): ReadonlyArray<readonly [source: string, destination: string]> {
   return INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
     INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
   ).map((route) => [`${getInstallationRoutePath(route).slice(1)}.md`, `${INSTALLATION_ROUTES[route].slug}.md`]);
@@ -49,17 +50,17 @@ function installationDocuments(framework: Framework): ReadonlyArray<readonly [so
 const INSTALLATION_DOCUMENTS = {
   html: installationDocuments('html'),
   react: installationDocuments('react'),
-} satisfies Record<Framework, readonly (readonly [source: string, destination: string])[]>;
+} satisfies Record<PackageDocsTarget, readonly (readonly [source: string, destination: string])[]>;
 
 function isPackageDocsTarget(value: string): value is PackageDocsTarget {
-  return value === 'cli' || value in PACKAGE_NAMES;
+  return value in PACKAGE_NAMES;
 }
 
 export function stripFooter(content: string): string {
   return content.replace(/\n+---\n\n(?:\w+ documentation: https:\/\/.*\n)*All documentation: https:\/\/.*\n*$/, '');
 }
 
-export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
+export function rewriteLinks(content: string, sourceSlug: string, framework: PackageDocsTarget): string {
   const sourceDir = posix.dirname(sourceSlug);
   let rewritten = content;
 
@@ -94,11 +95,13 @@ function copyInstallationDocumentation({
   targetDirectory,
   framework,
   rewriteLocalLinks,
+  version,
 }: {
   siteDist: string;
   targetDirectory: string;
-  framework: Framework;
+  framework: PackageDocsTarget;
   rewriteLocalLinks: boolean;
+  version: string | undefined;
 }): number {
   let copied = 0;
 
@@ -107,10 +110,22 @@ function copyInstallationDocumentation({
     if (!existsSync(sourcePath)) throw new Error(`Missing installation documentation source: ${sourcePath}`);
 
     const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
-    // The docs CLI reads the markers in its own copy; a framework package keeps only its branch of a shared guide.
+    const params = source.endsWith('/shadcn.md') ? new URLSearchParams({ framework }) : new URLSearchParams();
+    const rendered = renderInstallationMarkdownSelection(
+      raw,
+      `/${source.replace(/\.md$/, '')}`,
+      params,
+      version ?? INSTALLATION_PACKAGE_VERSION,
+      { commandVersion: version ?? null }
+    );
+
+    if (!rendered || rendered.status !== 200) {
+      throw new Error(`Could not render ${source} for ${framework}: ${rendered?.body.trim() ?? 'unknown route'}`);
+    }
+
     const transformed = rewriteLocalLinks
-      ? rewriteLinks(selectFrameworkBranches(raw, framework), sourceSlug(destination), framework)
-      : raw;
+      ? rewriteLinks(rendered.body, sourceSlug(destination), framework)
+      : rendered.body;
     const destinationPath = join(targetDirectory, destination);
 
     mkdirSync(dirname(destinationPath), { recursive: true });
@@ -128,7 +143,7 @@ function copyInstallationDocumentation({
  */
 export function rewriteIndexHeader(
   content: string,
-  { framework, version }: { framework: Framework; version: string | undefined }
+  { framework, version }: { framework: PackageDocsTarget; version: string | undefined }
 ): string {
   const packageName = PACKAGE_NAMES[framework];
   const versionSuffix = version ? ` v${version}` : '';
@@ -154,7 +169,7 @@ export function synthesizeReadme({
   framework,
   version,
 }: {
-  framework: Framework;
+  framework: PackageDocsTarget;
   version: string | undefined;
 }): string {
   const packageName = PACKAGE_NAMES[framework];
@@ -224,7 +239,7 @@ function copyFrameworkDocumentation({
 }: {
   sourceDirectory: string;
   targetDirectory: string;
-  framework: Framework;
+  framework: PackageDocsTarget;
   rewriteLocalLinks: boolean;
   version: string | undefined;
 }): number {
@@ -259,44 +274,29 @@ export function packageDocumentation({
   packagesDirectory = resolve(workspaceRoot, 'packages'),
   version,
 }: PackageDocumentationOptions): number {
-  const frameworks: Framework[] = target === 'cli' ? ['html', 'react'] : [target];
-  const sources = new Map(
-    frameworks.map((framework) => [framework, join(siteDist, 'docs', 'framework', framework)] as const)
-  );
-
-  for (const sourceDirectory of sources.values()) {
-    if (!existsSync(sourceDirectory)) {
-      throw new Error(`${sourceDirectory} not found — run \`pnpm build:site\` first.`);
-    }
-  }
+  const sourceDirectory = join(siteDist, 'docs', 'framework', target);
+  if (!existsSync(sourceDirectory)) throw new Error(`${sourceDirectory} not found — run \`pnpm build:site\` first.`);
 
   const targetDirectory = join(packagesDirectory, target, 'docs');
   let copiedFiles = 0;
 
   replaceDirectory(targetDirectory, (stagingDirectory) => {
-    for (const framework of frameworks) {
-      const frameworkTarget = target === 'cli' ? join(stagingDirectory, framework) : stagingDirectory;
-      const sourceDirectory = sources.get(framework);
-      if (!sourceDirectory) throw new Error(`Missing documentation source for ${framework}`);
+    copiedFiles += copyFrameworkDocumentation({
+      sourceDirectory,
+      targetDirectory: stagingDirectory,
+      framework: target,
+      rewriteLocalLinks: true,
+      version,
+    });
+    copiedFiles += copyInstallationDocumentation({
+      siteDist,
+      targetDirectory: stagingDirectory,
+      framework: target,
+      rewriteLocalLinks: true,
+      version,
+    });
 
-      copiedFiles += copyFrameworkDocumentation({
-        sourceDirectory,
-        targetDirectory: frameworkTarget,
-        framework,
-        rewriteLocalLinks: target !== 'cli',
-        version,
-      });
-      copiedFiles += copyInstallationDocumentation({
-        siteDist,
-        targetDirectory: frameworkTarget,
-        framework,
-        rewriteLocalLinks: target !== 'cli',
-      });
-    }
-
-    if (target !== 'cli') {
-      writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
-    }
+    writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
   });
 
   return copiedFiles;
@@ -306,7 +306,7 @@ function main(): void {
   const target = process.argv[2];
 
   if (!target || !isPackageDocsTarget(target)) {
-    console.error('Usage: node --import tsx copy-package-docs.ts <html|react|cli>');
+    console.error('Usage: node --import tsx copy-package-docs.ts <html|react>');
     process.exit(1);
   }
 

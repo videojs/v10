@@ -21,6 +21,22 @@ describe('createShadowStyle', () => {
 
     expect(result).toBe(css);
   });
+
+  it('returns raw CSS string when CSSStyleSheet exists but cannot be constructed', () => {
+    // Safari before 16.4 exposes the interface but throws `Illegal constructor`.
+    vi.stubGlobal(
+      'CSSStyleSheet',
+      class {
+        constructor() {
+          throw new TypeError('Illegal constructor');
+        }
+      }
+    );
+
+    const css = 'div { color: red; }';
+
+    expect(createShadowStyle(css)).toBe(css);
+  });
 });
 
 describe('applyShadowStyles', () => {

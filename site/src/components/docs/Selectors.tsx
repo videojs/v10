@@ -7,8 +7,7 @@ import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
 import { Select, type SelectOption } from '@/components/Select';
-import { currentStyle as styleStore } from '@/stores/preferences';
-import { registryFramework, selectRegistryFramework } from '@/stores/registry';
+import { currentFramework as frameworkStore, currentStyle as styleStore } from '@/stores/preferences';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
@@ -22,6 +21,7 @@ import {
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
+import { useHydratedStore } from '@/utils/useHydratedStore';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 const FRAMEWORK_ICONS = {
@@ -56,10 +56,11 @@ export function Selectors({
   registryFrameworkSelection = false,
   className,
 }: SelectorProps) {
-  const selectedRegistryFramework = useStore(registryFramework);
+  // The Shadcn guide publishes its query-backed framework as the site-wide preference.
+  const selectedFramework = useHydratedStore(frameworkStore, currentFramework);
   const currentStyle = useStore(styleStore);
   const isHydrated = useIsHydrated();
-  const displayedFramework = registryFrameworkSelection && isHydrated ? selectedRegistryFramework : currentFramework;
+  const displayedFramework = registryFrameworkSelection ? (selectedFramework ?? currentFramework) : currentFramework;
 
   // The store is empty on the server and on the client's first render alike, so both fall back to the framework's
   // default style. That keeps the markup identical through hydration and stops the trigger flashing empty on every
@@ -72,8 +73,11 @@ export function Selectors({
     if (!isValidFramework(newFramework) || newFramework === displayedFramework) return;
 
     if (registryFrameworkSelection) {
-      selectRegistryFramework(newFramework);
-      focusVisibleFrameworkSelector();
+      // The installation stores are already loaded on the Shadcn guide; importing them here keeps them off other pages.
+      void import('@/stores/registry').then(({ selectRegistryFramework }) => {
+        selectRegistryFramework(newFramework);
+        focusVisibleFrameworkSelector();
+      });
       return;
     }
 

@@ -1,5 +1,87 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.2...@videojs/core@10.0.0-rc.3) (2026-09-25)
+
+
+### Features
+
+* about-this-player page and a help link in every player ([#2758](https://github.com/videojs/v10/issues/2758)) ([8a538a5](https://github.com/videojs/v10/commit/8a538a572945c2bb01cb79d38f420ec143a4239c))
+* **installation:** add versioned agent instructions ([#2948](https://github.com/videojs/v10/issues/2948)) ([a602f22](https://github.com/videojs/v10/commit/a602f220aedf9c2800983daade6ca298ada007ab))
+* **skin:** add title display ([#2748](https://github.com/videojs/v10/issues/2748)) ([bc007bd](https://github.com/videojs/v10/commit/bc007bd9c01083507f493883b6eb047992937f79))
+* **spf:** support apple json chapters from ext-x-session-data ([#2737](https://github.com/videojs/v10/issues/2737)) ([f3c2caf](https://github.com/videojs/v10/commit/f3c2caf5abcbe78e7f2d93f6a2603ef4f20741ab))
+
+
+### Bug Fixes
+
+* **core:** apply popup starting styles before showing ([#2715](https://github.com/videojs/v10/issues/2715)) ([a80aeca](https://github.com/videojs/v10/commit/a80aecadecc1a7dee643c6a7200cc09dfa8c4f9e))
+* **core:** keep controls visible when seeking in Safari 16 ([#2962](https://github.com/videojs/v10/issues/2962)) ([2f5cf27](https://github.com/videojs/v10/commit/2f5cf2765315199e45623f5760b20d9a52acf4db))
+* **core:** move focus before hiding menu pages ([#2968](https://github.com/videojs/v10/issues/2968)) ([3aba794](https://github.com/videojs/v10/commit/3aba794a72fbcc21ecbdf3e9b79ad6f64d717077))
+* **core:** position and hide popups without the Popover API ([#2963](https://github.com/videojs/v10/issues/2963)) ([b0e24df](https://github.com/videojs/v10/commit/b0e24dfcbb2738dfdf0b6250880b42e5f9dd0aeb))
+* **i18n:** correct Arabic control labels and retranslate error strings ([#2803](https://github.com/videojs/v10/issues/2803)) ([cdb8815](https://github.com/videojs/v10/commit/cdb8815be5a7957bf97f132864b4d903ae0ab2e5))
+* **i18n:** correct Azerbaijani mute labels, captions term and error strings ([#2814](https://github.com/videojs/v10/issues/2814)) ([e1c7a25](https://github.com/videojs/v10/commit/e1c7a256309de91f713c1dfb7f7f9d50b12743da))
+* **i18n:** correct Bosnian button labels and retranslate error strings ([#2795](https://github.com/videojs/v10/issues/2795)) ([5342901](https://github.com/videojs/v10/commit/53429010527abba061ab6c76bcb0ae0a7d368ee8))
+* **i18n:** correct Bulgarian control labels and retranslate error strings ([#2782](https://github.com/videojs/v10/issues/2782)) ([99eacbe](https://github.com/videojs/v10/commit/99eacbec0dde1a66815bf52f5324676b8c92c7ea))
+* **i18n:** correct Catalan imperatives and retranslate error strings ([#2798](https://github.com/videojs/v10/issues/2798)) ([ae8628b](https://github.com/videojs/v10/commit/ae8628bd90b9586628cd3de0d593f96f1a727457))
+* **i18n:** correct Croatian button labels and retranslate error strings ([#2790](https://github.com/videojs/v10/issues/2790)) ([9b809bf](https://github.com/videojs/v10/commit/9b809bf81d28ad8c589faf176d5cbd9b26166d59))
+* **i18n:** correct Czech subtitle announcements and error strings ([#2787](https://github.com/videojs/v10/issues/2787)) ([45ed005](https://github.com/videojs/v10/commit/45ed0052a4e8a1d3b682dcb6e1e09c49da8f4ed2))
+* **i18n:** correct Danish button labels and retranslate error strings ([#2802](https://github.com/videojs/v10/issues/2802)) ([1482387](https://github.com/videojs/v10/commit/1482387a0e383a4c9f66d3ca629282a599ac0e50))
+* **i18n:** correct Dutch button labels and retranslate error strings ([#2770](https://github.com/videojs/v10/issues/2770)) ([fb4e1c5](https://github.com/videojs/v10/commit/fb4e1c5a5ac8d1c49ae2ffe8de3accbac55018a9))
+* **i18n:** correct Estonian control labels and retranslate error strings ([#2789](https://github.com/videojs/v10/issues/2789)) ([5cd376e](https://github.com/videojs/v10/commit/5cd376edf9f15b2ce81b3ae18e08449067727922))
+* **i18n:** correct European Portuguese labels and error strings ([#2781](https://github.com/videojs/v10/issues/2781)) ([6e306c6](https://github.com/videojs/v10/commit/6e306c6a0864cd4cbd66ab97b5d9db5146c51eeb))
+* **i18n:** correct Finnish control labels and retranslate error strings ([#2779](https://github.com/videojs/v10/issues/2779)) ([b570a92](https://github.com/videojs/v10/commit/b570a927370257219c6800ebd4e2c829a2a31e44))
+* **i18n:** correct galician unmute label and retranslate error strings ([#2768](https://github.com/videojs/v10/issues/2768)) ([1c19b0a](https://github.com/videojs/v10/commit/1c19b0a8b6a8e5823042e4cd4d00cee6fb4758b2))
+* **i18n:** correct German control labels and retranslate error strings ([#2772](https://github.com/videojs/v10/issues/2772)) ([57ff8af](https://github.com/videojs/v10/commit/57ff8af9237fc46a799cd05b1e0588906f0614ee))
+* **i18n:** correct Greek mixed-script labels and error strings ([#2783](https://github.com/videojs/v10/issues/2783)) ([96be7ec](https://github.com/videojs/v10/commit/96be7ec50a415d357c403b70b330baaf0cbe5e8d))
+* **i18n:** correct Hebrew control labels and retranslate error strings ([#2778](https://github.com/videojs/v10/issues/2778)) ([31fd2a8](https://github.com/videojs/v10/commit/31fd2a87aec2bd185d2ab44d20127e030c931d51))
+* **i18n:** correct Hungarian seek labels and retranslate error strings ([#2800](https://github.com/videojs/v10/issues/2800)) ([f41aa6f](https://github.com/videojs/v10/commit/f41aa6fb42dd7612f64cfbfb8fa9514c2216dbcd))
+* **i18n:** correct Indonesian seek label and time suffix word order ([#2812](https://github.com/videojs/v10/issues/2812)) ([798f818](https://github.com/videojs/v10/commit/798f8183fbb25c845f32c3962d4b75bf71692926))
+* **i18n:** correct italian control labels and retranslate error strings ([#2769](https://github.com/videojs/v10/issues/2769)) ([6cf4a6c](https://github.com/videojs/v10/commit/6cf4a6c37de42be5a0e61048e66ea1d3779fe80a))
+* **i18n:** correct Japanese control labels and retranslate error strings ([#2771](https://github.com/videojs/v10/issues/2771)) ([0b4639f](https://github.com/videojs/v10/commit/0b4639f94442f30b6e68143f26cd31645cc46d38))
+* **i18n:** correct Korean control labels and retranslate error strings ([#2773](https://github.com/videojs/v10/issues/2773)) ([3db4ead](https://github.com/videojs/v10/commit/3db4eadeae400bb16a942369b7feb19de68500ba))
+* **i18n:** correct Latvian caption and cast terms and error strings ([#2793](https://github.com/videojs/v10/issues/2793)) ([a9f5129](https://github.com/videojs/v10/commit/a9f51295d9652201d5ab7f25d8da77be71f00610))
+* **i18n:** correct Marathi captions, verbs and error strings ([#2810](https://github.com/videojs/v10/issues/2810)) ([1b3ba69](https://github.com/videojs/v10/commit/1b3ba69e590fbae71d73c287f06aa412bbe7510e))
+* **i18n:** correct Nepali control labels and error strings ([#2813](https://github.com/videojs/v10/issues/2813)) ([b0f682e](https://github.com/videojs/v10/commit/b0f682ee1501465c0cda7db970a60de4f5e886e7))
+* **i18n:** correct Norwegian Bokmål player labels and error strings ([#2788](https://github.com/videojs/v10/issues/2788)) ([480883c](https://github.com/videojs/v10/commit/480883c41e0c960b92f3a1a632499b1899596f99))
+* **i18n:** correct Occitan control labels and retranslate error strings ([#2796](https://github.com/videojs/v10/issues/2796)) ([d5cd82b](https://github.com/videojs/v10/commit/d5cd82b2112a32ebf0a4b4393c1954b67aa41d59))
+* **i18n:** correct Persian control labels and retranslate error strings ([#2784](https://github.com/videojs/v10/issues/2784)) ([02430b7](https://github.com/videojs/v10/commit/02430b76911846479bb6392080620d393ee30cea))
+* **i18n:** correct Polish announcements and retranslate error strings ([#2785](https://github.com/videojs/v10/issues/2785)) ([9a112dd](https://github.com/videojs/v10/commit/9a112dd952893e552244e05eaecb746b29739f5a))
+* **i18n:** correct Romanian button labels and retranslate error strings ([#2797](https://github.com/videojs/v10/issues/2797)) ([d00e28a](https://github.com/videojs/v10/commit/d00e28a432c70ae3b55c02dc05256c61db696270))
+* **i18n:** correct Russian button labels and retranslate error strings ([#2776](https://github.com/videojs/v10/issues/2776)) ([4d88902](https://github.com/videojs/v10/commit/4d88902a8a241665fbabe75ebc7811238fb1e866))
+* **i18n:** correct Scottish Gaelic captions and pip terms and errors ([#2804](https://github.com/videojs/v10/issues/2804)) ([6ba1c7e](https://github.com/videojs/v10/commit/6ba1c7e02ad3a9f266d0147b6dd16485af6f1768))
+* **i18n:** correct Serbian script mix, cast wording and error strings ([#2801](https://github.com/videojs/v10/issues/2801)) ([8ed5dfa](https://github.com/videojs/v10/commit/8ed5dfafd250b98789d80e1666c345bd14be585f))
+* **i18n:** correct Slovak exit labels and retranslate error strings ([#2792](https://github.com/videojs/v10/issues/2792)) ([5edd0dd](https://github.com/videojs/v10/commit/5edd0dd07f5dcc786efe2ef2483f85e9c8e73cc6))
+* **i18n:** correct Slovenian caption announcements and error strings ([#2806](https://github.com/videojs/v10/issues/2806)) ([ca083bf](https://github.com/videojs/v10/commit/ca083bf22d0c00c10a9a926c424e96b543bf5e21))
+* **i18n:** correct Spanish button labels and retranslate error strings ([#2767](https://github.com/videojs/v10/issues/2767)) ([747fc83](https://github.com/videojs/v10/commit/747fc831f878c68d3196cd1b9917719acda03ee7))
+* **i18n:** correct Swedish player labels and retranslate error strings ([#2775](https://github.com/videojs/v10/issues/2775)) ([c01e708](https://github.com/videojs/v10/commit/c01e708d251255beaa5d28c728370d5fbf27211a))
+* **i18n:** correct Telugu control labels and retranslate error strings ([#2815](https://github.com/videojs/v10/issues/2815)) ([073898b](https://github.com/videojs/v10/commit/073898bbd8c168405e57b486e990661dbd23d59e))
+* **i18n:** correct Thai player terminology and retranslate error strings ([#2808](https://github.com/videojs/v10/issues/2808)) ([94083d1](https://github.com/videojs/v10/commit/94083d14b9ba2303d4a4f3d8f590bab69a4e1997))
+* **i18n:** correct Turkish control labels and retranslate error strings ([#2786](https://github.com/videojs/v10/issues/2786)) ([d27b4a5](https://github.com/videojs/v10/commit/d27b4a5e9ff43923e6acfeb036ce874e6814ce15))
+* **i18n:** correct Ukrainian player terms and retranslate error strings ([#2780](https://github.com/videojs/v10/issues/2780)) ([d2dc0de](https://github.com/videojs/v10/commit/d2dc0dec71ec96402e61d9264fe9b95095a52498))
+* **i18n:** correct Vietnamese captions and pip terms and error strings ([#2811](https://github.com/videojs/v10/issues/2811)) ([4241deb](https://github.com/videojs/v10/commit/4241deb7acfa6a1fe4f702f618d278ec354d5b0d))
+* **i18n:** correct Welsh mute and seek labels and error strings ([#2799](https://github.com/videojs/v10/issues/2799)) ([65b0dcb](https://github.com/videojs/v10/commit/65b0dcb51f96f9f5460768d6465d7862636932fc))
+* **i18n:** correct zh-CN unmute label, punctuation and error strings ([#2774](https://github.com/videojs/v10/issues/2774)) ([54b6c5a](https://github.com/videojs/v10/commit/54b6c5a6cc3393fd0c8de21d3bc208a59acdf352))
+* **i18n:** fix Nynorsk word errors and retranslate error strings ([#2794](https://github.com/videojs/v10/issues/2794)) ([a6ce64d](https://github.com/videojs/v10/commit/a6ce64d3da18e85b8ff1a14fc89b216f16b6cef2))
+* **i18n:** replace mainland terms in zh-TW and fix error strings ([#2777](https://github.com/videojs/v10/issues/2777)) ([67547e4](https://github.com/videojs/v10/commit/67547e49666c4f92d878239468deac667ba9ac1d))
+* **i18n:** retranslate French error strings and fix typography ([#2791](https://github.com/videojs/v10/issues/2791)) ([0f2ec05](https://github.com/videojs/v10/commit/0f2ec05be65a642e38d7660de038de38eb0f1917))
+* **i18n:** retranslate pt-BR error strings and playback-rate label ([#2809](https://github.com/videojs/v10/issues/2809)) ([641ba65](https://github.com/videojs/v10/commit/641ba6514a8faa3ed317fc656407d1805cff6f56))
+* **i18n:** unify Hindi player terms and retranslate error strings ([#2807](https://github.com/videojs/v10/issues/2807)) ([394883b](https://github.com/videojs/v10/commit/394883b18b131162a97a8709bc8415de2d21411e))
+* **packages:** prevent menu highlight flicker ([#2969](https://github.com/videojs/v10/issues/2969)) ([461dbcf](https://github.com/videojs/v10/commit/461dbcfdde0c13481f6604cfe5632f9af6232416))
+* **site:** improve markdown for agents ([#2883](https://github.com/videojs/v10/issues/2883)) ([d5c8e3c](https://github.com/videojs/v10/commit/d5c8e3cde77cbbe74ecc6878dbd7862db8628bfa))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-rc.3
+    * @videojs/store bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.1...@videojs/core@10.0.0-rc.2) (2026-09-09)
 
 

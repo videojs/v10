@@ -7,7 +7,6 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
-import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
@@ -80,11 +79,9 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     alwaysBundle: [/^@videojs\/icons/],
   },
   alias: srcAlias,
-  plugins: [
-    copyCssPlugin({ outDir: `dist/${mode}` }),
-    inlineCssPlugin({ minify: !isDevBuildMode(mode) }),
-    inlineTemplatePlugin({ minify: !isDevBuildMode(mode) }),
-  ],
+  // Minifies the skins' `.css?inline` imports, which tsdown inlines into the JavaScript.
+  css: { minify: !isDevBuildMode(mode) },
+  plugins: [copyCssPlugin({ outDir: `dist/${mode}` }), inlineTemplatePlugin({ minify: !isDevBuildMode(mode) })],
 });
 
 export default defineConfig({

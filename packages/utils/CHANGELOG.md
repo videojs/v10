@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.2...@videojs/utils@10.0.0-rc.3) (2026-09-25)
+
+
+### Features
+
+* **spf:** add EME-based DRM support to the HLS engine ([#2291](https://github.com/videojs/v10/issues/2291)) ([fd6785e](https://github.com/videojs/v10/commit/fd6785e00df4ed705ed4c9479fcfdfbaf221f7e1))
+
+
+### Bug Fixes
+
+* **core:** keep controls visible when seeking in Safari 16 ([#2962](https://github.com/videojs/v10/issues/2962)) ([2f5cf27](https://github.com/videojs/v10/commit/2f5cf2765315199e45623f5760b20d9a52acf4db))
+* **core:** position and hide popups without the Popover API ([#2963](https://github.com/videojs/v10/issues/2963)) ([b0e24df](https://github.com/videojs/v10/commit/b0e24dfcbb2738dfdf0b6250880b42e5f9dd0aeb))
+* **packages:** guard Intl.ListFormat and AbortSignal.any ([#2964](https://github.com/videojs/v10/issues/2964)) ([14aceee](https://github.com/videojs/v10/commit/14aceee2c813b65076bcbcf9613467ae3a8fe5de))
+* **utils:** detect constructable stylesheets before creating one ([#2967](https://github.com/videojs/v10/issues/2967)) ([4c4c5d4](https://github.com/videojs/v10/commit/4c4c5d49a966f940a05c6b4653c5ab2c2f490860))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.1...@videojs/utils@10.0.0-rc.2) (2026-09-09)
 
 

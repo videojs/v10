@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+import { getInstallationPreset, type Renderer, type Skin, type UseCase } from '@videojs/installation';
 import { Container } from '@videojs/react';
 import { Audio, AudioPlayer, AudioSkin, MinimalAudioSkin } from '@videojs/react/audio';
 import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background';
@@ -18,7 +19,6 @@ import {
   VJS10_DEMO_VIDEO,
 } from '@/consts';
 import { currentFramework } from '@/stores/preferences';
-import { getInstallationPreset, type Renderer, type Skin, type UseCase } from '@/utils/installation/types';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 import { useSelection } from './useSelection';
@@ -32,6 +32,7 @@ import '@videojs/react/live-video/minimal-skin.css';
 import '@videojs/react/live-audio/skin.css';
 import '@videojs/react/live-audio/minimal-skin.css';
 import '@videojs/react/background/skin.css';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const FILE_RENDERERS: Renderer[] = ['html5-video', 'html5-audio'];
 const HLS_RENDERERS: Renderer[] = ['hls', 'mux-video', 'mux-audio'];
@@ -162,10 +163,10 @@ function BackgroundPreview({ source }: { source: Source }) {
  * Live preview of the player the guide is about to generate: the chosen preset and skin, playing the chosen source. It
  * answers "what does this skin look like?" without leaving the page.
  */
-export default function InstallationPreview() {
+function InstallationPreview() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $sourceUrl = useSelection('sourceUrl');
   const framework = useStore(currentFramework);
   const isHydrated = useIsHydrated();
@@ -218,3 +219,5 @@ export default function InstallationPreview() {
     </figure>
   );
 }
+
+export default withSelectionMarker(InstallationPreview);

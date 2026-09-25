@@ -1,135 +1,256 @@
 import {
+  containsControlCharacter,
+  defaultInstallationExtensions,
   getInstallationPreset,
-  INSTALLATION_PRESETS,
+  INSTALLATION_DEMO_SOURCE_URL,
+  INSTALLATION_PARAMETERS,
+  installationParameterForKey,
+  isInstallationFramework,
+  resolveInstallationSelection,
+  serializeInstallationExtensions,
+  skinToFlag,
+  sourceFrameworkFor,
   type InstallMethod,
+  type InstallationExtension,
+  type InstallationFramework,
+  type InstallationInput,
+  type InstallationMethod,
+  type InstallationProject,
+  type InstallationSelection,
+  type InstallationTemplate,
+  type RegistryStyling,
   type Renderer,
   type Skin,
   type UseCase,
-} from './types';
+} from '@videojs/installation';
+
+import { INSTALLATION_ROUTES, type InstallationRouteSegment } from './routes';
 
 /**
- * The installation choices encoded in the page URL. `install-method` stores the package manager on package-based routes
- * and stays at its default on the CDN route.
+ * The installation choices encoded in the page URL. `package-manager` controls app setup and development commands
+ * whenever the selected path uses them. `styling` is `null` until a reader picks a Shadcn catalog, so the framework's
+ * default applies.
  */
-export interface InstallationSelection {
+export interface InstallationUiSelection {
+  framework: InstallationFramework;
+  template: InstallationTemplate;
+  project: InstallationProject;
   useCase: UseCase;
   skin: Skin;
-  renderer: Renderer;
+  media: Renderer;
+  extensions: readonly InstallationExtension[];
   sourceUrl: string;
   installMethod: InstallMethod;
+  styling: RegistryStyling | null;
 }
 
-export const DEFAULT_SELECTION: InstallationSelection = {
+export const DEFAULT_SELECTION: InstallationUiSelection = {
+  framework: 'react',
+  template: 'next',
+  project: 'existing',
   useCase: 'default-video',
   skin: 'video',
-  renderer: 'html5-video',
+  media: 'html5-video',
+  extensions: [],
   sourceUrl: '',
-  installMethod: 'npm',
+  installMethod: 'pnpm',
+  styling: null,
 };
 
-const INSTALL_METHODS: readonly InstallMethod[] = ['cdn', 'npm', 'pnpm', 'yarn', 'bun'];
-// SAFETY: INSTALLATION_PRESETS is a const object, so its keys are exactly the UseCase union.
-const USE_CASES = Object.keys(INSTALLATION_PRESETS) as UseCase[];
-
-type SkinFlag = 'default' | 'minimal' | 'none';
-
-function isSkinFlag(value: string): value is SkinFlag {
-  return value === 'default' || value === 'minimal' || value === 'none';
+interface ParseOptions {
+  /** A framework fixed by the page instead of the `framework` query. */
+  framework?: InstallationFramework | undefined;
+  method?: InstallationMethod | undefined;
 }
 
-function isInstallMethod(value: string): value is InstallMethod {
-  return INSTALL_METHODS.some((method) => method === value);
-}
+const SOURCE_URL_QUERY = installationParameterForKey('sourceUrl').query;
 
-/** Mirror of the CLI's skin mapping: the flag names a tier, the preset decides whether that is the video or audio skin. */
-export function skinFromFlag(flag: string, useCase: UseCase): Skin | undefined {
-  if (!isSkinFlag(flag)) return undefined;
-
-  const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
-  const map = {
-    default: isAudio ? 'audio' : 'video',
-    minimal: isAudio ? 'minimal-audio' : 'minimal-video',
-    none: 'none',
-  } satisfies Record<SkinFlag, Skin>;
-
-  return map[flag];
-}
-
-export function skinToFlag(skin: Skin): SkinFlag {
-  if (skin === 'none') return 'none';
-
-  return skin.startsWith('minimal') ? 'minimal' : 'default';
+function methodForRoute(route: InstallationRouteSegment | ''): InstallationMethod {
+  return route === 'shadcn' || route === 'cdn' ? route : 'packaged';
 }
 
 /**
- * Fit a skin and media pick to a preset: the skin keeps its tier but follows the preset's media type, and media the
- * preset cannot play falls back to its first option.
+ * Resolve URL input with the shared installation rules. A reader can land on any hand-edited link, so each rejected
+ * choice is dropped in parameter order until the rest resolves, and the page shows that choice's default instead.
  */
-export function coerceToPreset(
-  useCase: UseCase,
-  skin: Skin,
-  media: Renderer
-): Pick<InstallationSelection, 'skin' | 'renderer'> {
-  const renderers = getInstallationPreset(useCase).renderers;
+function resolveUrlInput(input: InstallationInput): InstallationSelection {
+  let remaining = input;
+
+  for (;;) {
+    const result = resolveInstallationSelection(remaining);
+    if (result.ok) return result.selection;
+
+    const rejected = INSTALLATION_PARAMETERS.find(
+      ({ key }) =>
+        key !== 'method' &&
+        key !== 'framework' &&
+        remaining[key] !== undefined &&
+        result.errors.some((error) => error.field === key)
+    );
+    if (!rejected) throw new Error(`Cannot resolve installation input: ${JSON.stringify(result.errors)}`);
+
+    remaining = { ...remaining };
+    delete remaining[rejected.key];
+  }
+}
+
+/** Read the selection encoded in a query string. Invalid or incompatible values fall back to their defaults. */
+export function parseInstallationSearch(search: string, options: ParseOptions = {}): InstallationUiSelection {
+  const params = new URLSearchParams(search);
+  const method = options.method ?? 'packaged';
+  const requestedFramework = params.get('framework');
+  const framework =
+    options.framework ??
+    (isInstallationFramework(requestedFramework) ? requestedFramework : DEFAULT_SELECTION.framework);
+  const input: InstallationInput = { method, framework };
+
+  // The source URL stays out of resolution: on the page it only suggests media, so it must not replace or reject the
+  // media pick the way detection does for agent commands.
+  for (const { key, query } of INSTALLATION_PARAMETERS) {
+    const value = params.get(query);
+
+    if (value !== null && key !== 'method' && key !== 'framework' && key !== 'sourceUrl') input[key] = value;
+  }
+
+  const selection = resolveUrlInput(input);
+  const requestedSourceUrl = params.get(SOURCE_URL_QUERY) ?? '';
+  // The CLI's explicit demo choice is the page's empty source, so the URL drops it like any other default.
+  const sourceUrl = requestedSourceUrl === INSTALLATION_DEMO_SOURCE_URL ? '' : requestedSourceUrl;
 
   return {
-    skin: skinFromFlag(skinToFlag(skin), useCase)!,
-    renderer: renderers.includes(media) ? media : renderers[0]!,
+    framework: selection.framework,
+    template: selection.template,
+    project: selection.project,
+    useCase: selection.useCase,
+    skin: selection.skin,
+    media: selection.media,
+    extensions: selection.extensions,
+    sourceUrl: containsControlCharacter(sourceUrl) ? '' : sourceUrl,
+    installMethod: selection.packageManager,
+    styling: selection.defaulted.includes('styling') ? null : selection.styling,
   };
 }
 
 /**
- * Read the selection encoded in a query string. Unknown or invalid values fall back to the default, and a media pick
- * that the chosen preset cannot play is dropped, matching what the pickers would do on screen.
+ * Parse a query for one installation guide. Dedicated routes fix the framework; the Shadcn guide reads it from the
+ * query, falls back to `shadcnFramework`, and shows HTML source for Vue and Svelte.
  */
-export function parseInstallationSearch(search: string): InstallationSelection {
-  const params = new URLSearchParams(search);
-  const selection = { ...DEFAULT_SELECTION };
+export function parseInstallationSearchForRoute(
+  route: InstallationRouteSegment | '',
+  search: string,
+  shadcnFramework?: InstallationFramework
+): InstallationUiSelection {
+  const requested = new URLSearchParams(search).get('framework');
+  const framework =
+    route === 'shadcn'
+      ? sourceFrameworkFor(
+          isInstallationFramework(requested)
+            ? requested
+            : (shadcnFramework ?? INSTALLATION_ROUTES.shadcn.pickerFramework)
+        )
+      : route
+        ? INSTALLATION_ROUTES[route].pickerFramework
+        : undefined;
 
-  const preset = params.get('preset');
-  const useCase = USE_CASES.find((key) => INSTALLATION_PRESETS[key].flag === preset);
-
-  if (useCase) selection.useCase = useCase;
-
-  // The default skin follows the preset's media type, whether the skin flag is missing or unknown.
-  selection.skin =
-    skinFromFlag(params.get('skin') ?? 'default', selection.useCase) ?? skinFromFlag('default', selection.useCase)!;
-
-  const renderers = getInstallationPreset(selection.useCase).renderers;
-  const media = params.get('media') ?? '';
-
-  selection.renderer = renderers.find((candidate) => candidate === media) ?? renderers[0]!;
-
-  const installMethod = params.get('install-method') ?? '';
-
-  if (isInstallMethod(installMethod)) selection.installMethod = installMethod;
-
-  selection.sourceUrl = params.get('source-url') ?? '';
-
-  return selection;
+  return parseInstallationSearch(search, { framework, method: methodForRoute(route) });
 }
 
 /**
  * Write a selection back onto a query string, keeping unrelated params and leaving out anything still at its default so
  * an untouched page keeps a clean URL.
  */
-export function serializeInstallationSearch(selection: InstallationSelection, search = ''): string {
+export function serializeInstallationSearch(
+  selection: InstallationUiSelection,
+  search = '',
+  method: InstallationMethod = 'packaged'
+): string {
   const params = new URLSearchParams(search);
   const preset = getInstallationPreset(selection.useCase);
-  const defaults = parseInstallationSearch(`preset=${preset.flag}`);
+  const defaults = parseInstallationSearch(`?preset=${preset.flag}`, { framework: selection.framework, method });
+  const defaultPreset = getInstallationPreset(DEFAULT_SELECTION.useCase).flag;
 
   const write = (key: string, value: string, fallback: string) => {
     if (value === fallback) params.delete(key);
     else params.set(key, value);
   };
 
-  write('preset', preset.flag, INSTALLATION_PRESETS[DEFAULT_SELECTION.useCase].flag);
-  write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
-  write('media', selection.renderer, defaults.renderer);
-  write('install-method', selection.installMethod, DEFAULT_SELECTION.installMethod);
-  write('source-url', selection.sourceUrl, '');
+  write('framework', selection.framework, DEFAULT_SELECTION.framework);
+  write('template', selection.template, defaults.template);
+  write('project', selection.project, defaults.project);
+  write('preset', preset.flag, defaultPreset);
+
+  if (selection.useCase === 'background-video') params.delete('skin');
+  else write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
+
+  write('media', selection.media, defaults.media);
+  write(
+    'extensions',
+    serializeInstallationExtensions(selection.extensions),
+    serializeInstallationExtensions(defaultInstallationExtensions(selection.media))
+  );
+  write('package-manager', selection.installMethod, defaults.installMethod);
+  write(SOURCE_URL_QUERY, selection.sourceUrl, '');
+
+  if (selection.styling) params.set('styling', selection.styling);
+  else params.delete('styling');
 
   const string = params.toString();
 
   return string ? `?${string}` : '';
+}
+
+/** Remove installation parameters that the current guide cannot apply while retaining unrelated campaign params. */
+export function serializeInstallationSearchForRoute(
+  route: InstallationRouteSegment | '',
+  selection: InstallationUiSelection,
+  search = ''
+): string {
+  const params = new URLSearchParams(serializeInstallationSearch(selection, search, methodForRoute(route)));
+
+  params.delete('method');
+
+  let canonicalParams = params;
+
+  if (route !== 'shadcn') {
+    params.delete('framework');
+    params.delete('styling');
+  } else {
+    // The framework always leads a Shadcn URL so a shared link does not depend on the reader's saved preference.
+    canonicalParams = new URLSearchParams([['framework', selection.framework]]);
+
+    for (const [key, value] of params) {
+      if (key !== 'framework') canonicalParams.append(key, value);
+    }
+  }
+
+  // An existing CDN page runs no package manager commands, so the choice has nothing to change there.
+  if (route === 'cdn' && selection.template === 'none') canonicalParams.delete('package-manager');
+
+  const string = canonicalParams.toString();
+
+  return string ? `?${string}` : '';
+}
+
+/** The one canonical query for a guide: its picks as the page would show them, plus unrelated params. */
+export function canonicalInstallationSearch(
+  route: InstallationRouteSegment,
+  search: string,
+  shadcnFramework?: InstallationFramework
+): string {
+  return serializeInstallationSearchForRoute(
+    route,
+    parseInstallationSearchForRoute(route, search, shadcnFramework),
+    search
+  );
+}
+
+/** Whether a guide's prerendered picks, which use the route defaults, differ from `selection`. */
+export function isCustomInstallationSelection(
+  route: InstallationRouteSegment,
+  selection: InstallationUiSelection
+): boolean {
+  return (
+    serializeInstallationSearchForRoute(route, selection) !==
+    serializeInstallationSearchForRoute(route, parseInstallationSearchForRoute(route, ''))
+  );
 }
