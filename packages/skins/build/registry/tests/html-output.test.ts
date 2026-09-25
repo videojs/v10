@@ -6,19 +6,6 @@ import { describe, expect, it } from 'vitest';
 const registryDir = resolve(import.meta.dirname, '../../../dist/registry/source/r/html');
 
 describe('HTML registry output', () => {
-  it('marks copied skins so build-time IDs are scoped per player', () => {
-    const files = readdirSync(registryDir, { recursive: true, withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name === 'skin.html')
-      .map((entry) => resolve(entry.parentPath, entry.name));
-
-    expect(files.length).toBeGreaterThan(0);
-
-    for (const file of files) {
-      expect(readFileSync(file, 'utf8'), file).toContain('<media-container data-vjs-scope-ids');
-      expect(readFileSync(file, 'utf8'), file).toContain('data-vjs-source-id id="vjs-');
-    }
-  });
-
   it('does not close HTML void elements', () => {
     const files = readdirSync(registryDir, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name === 'skin.html')
@@ -46,9 +33,7 @@ describe('HTML registry output', () => {
       if (/\/files\/(?:live-)?audio\/skin\.html$/u.test(file)) {
         expect(source, file).not.toContain('aspect-ratio: 16 / 9');
       } else {
-        expect(source, file).toContain(
-          '<media-container data-vjs-scope-ids style="display: block; width: 100%; aspect-ratio: 16 / 9;"'
-        );
+        expect(source, file).toContain('<media-container style="display: block; width: 100%; aspect-ratio: 16 / 9;"');
       }
     }
   });

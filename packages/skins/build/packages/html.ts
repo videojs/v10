@@ -192,8 +192,7 @@ export function createSourceOwnedHtml(template: string, sizedVideo: boolean): st
   const layout = sizedVideo ? ' style="display: block; width: 100%; aspect-ratio: 16 / 9;"' : '';
 
   return template
-    .replace('<media-container', `<media-container data-vjs-scope-ids${layout}`)
-    .replaceAll(/ id="(vjs-[^"]+)"/g, ' data-vjs-source-id id="$1"')
+    .replace('<media-container', `<media-container${layout}`)
     .replace(mediaSlot, '<!-- Add a compatible media element here. -->')
     .replace(/<slot name="[^"]+">\s*([\s\S]*?)\s*<\/slot>/g, '$1')
     .replaceAll('&amp;', '&')
