@@ -12,7 +12,7 @@ export default defineConfig({
         input: cachedTaskInputs,
         output: ['dist/**'],
       },
-      'test:ci': packageTestTask(),
+      'test:ci': packageTestTask('vp test run'),
     },
   },
   test: {

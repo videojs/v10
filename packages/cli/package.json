@@ -21,7 +21,7 @@
   },
   "scripts": {
     "dev": "vp pack --watch",
-    "test": "vp test run",
+    "test": "vp run @videojs/cli#build && vp test run",
     "clean": "rimraf dist types '*.tsbuildinfo'"
   },
   "devDependencies": {
