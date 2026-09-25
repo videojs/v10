@@ -27,11 +27,18 @@ export function prefersMarkdown(accept: string): boolean {
   return markdown > 0 && markdown >= html;
 }
 
+// Netlify purges its CDN on every deploy, which is when the Markdown and its package version change, so only its cache
+// keeps the long TTL. Browsers and other shared caches revalidate.
+function setPublicMarkdownCache(headers: Headers): void {
+  headers.set('cache-control', 'public, max-age=0, must-revalidate');
+  headers.set('netlify-cdn-cache-control', 'public, s-maxage=31536000');
+}
+
 function markMarkdownResponse(response: Response): Response {
   const headers = new Headers(response.headers);
 
   headers.set('content-type', 'text/markdown; charset=utf-8');
-  headers.set('cache-control', 'public, s-maxage=31536000');
+  setPublicMarkdownCache(headers);
   headers.set('vary', 'Accept');
 
   return new Response(response.body, {
@@ -45,7 +52,10 @@ function installationMarkdownResponse(body: string, status: 200 | 400 | 500, pri
   const response = new Response(body, { status });
 
   response.headers.set('content-type', 'text/markdown; charset=utf-8');
-  response.headers.set('cache-control', privateResponse ? 'private, no-store' : 'public, s-maxage=31536000');
+
+  if (privateResponse) response.headers.set('cache-control', 'private, no-store');
+  else setPublicMarkdownCache(response.headers);
+
   response.headers.set('netlify-vary', `query=${[...INSTALLATION_MARKDOWN_PARAMS].join('|')}`);
   response.headers.set('vary', 'Accept');
   response.headers.set('x-markdown-tokens', String(Math.ceil(body.length / 4)));

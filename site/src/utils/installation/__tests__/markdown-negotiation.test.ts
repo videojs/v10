@@ -123,7 +123,8 @@ describe('markdown negotiation', () => {
     const response = await directMarkdown(new Request('https://videojs.org/docs/guides/build-with-ai.md'), context);
 
     expect(response?.headers.get('netlify-vary')).toBeNull();
-    expect(response?.headers.get('cache-control')).toBe('public, s-maxage=31536000');
+    expect(response?.headers.get('cache-control')).toBe('public, max-age=0, must-revalidate');
+    expect(response?.headers.get('netlify-cdn-cache-control')).toBe('public, s-maxage=31536000');
     expect(await response?.text()).toBe('# Build with AI');
   });
 
