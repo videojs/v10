@@ -1,8 +1,125 @@
 ---
+import {
+  defaultRegistryStyling,
+  INSTALLATION_FRAMEWORKS,
+  INSTALLATION_PRESETS,
+  INSTALLATION_PROJECTS,
+  INSTALLATION_QUERY_PARAMETERS,
+  INSTALLATION_TEMPLATES,
+  installationProjectFiles,
+  REGISTRY_STYLINGS,
+  shadcnProjectConfiguration,
+  shadcnProjectConfigurationPlacement,
+  sourceFrameworkFor,
+  type InstallationTemplate,
+} from '@videojs/installation';
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
-import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/routes';
+import {
+  INSTALLATION_ROUTE_PREFIX,
+  INSTALLATION_ROUTE_SEGMENTS,
+  INSTALLATION_ROUTES,
+  type InstallationRouteSegment,
+} from '@/utils/installation/routes';
+import { parseInstallationSearchForRoute } from '@/utils/installation/url-state';
 
-/** Match Shadcn's prerendered framework content to its query before the React islands hydrate. */
+/**
+ * Match prerendered installation branches to the URL before the React islands hydrate. Every table below comes from
+ * probing the site's URL parser, which applies the rules from `@videojs/installation`, so this script and the islands
+ * agree on which picks a query keeps.
+ */
+
+const REGISTRY_FRAMEWORKS = [...new Set(INSTALLATION_FRAMEWORKS.map(sourceFrameworkFor))];
+
+function parse(route: InstallationRouteSegment, query: Record<string, string>) {
+  return parseInstallationSearchForRoute(route, `?${new URLSearchParams(query)}`);
+}
+
+function routeRules(route: InstallationRouteSegment, query: Record<string, string> = {}) {
+  const templates = INSTALLATION_TEMPLATES.filter(
+    (template) => parse(route, { ...query, template }).template === template
+  );
+
+  return {
+    presets: Object.values(INSTALLATION_PRESETS)
+      .map(({ flag }) => flag)
+      .filter((preset) => INSTALLATION_PRESETS[parse(route, { ...query, preset }).useCase].flag === preset),
+    projects: INSTALLATION_PROJECTS.filter((project) => parse(route, { ...query, project }).project === project),
+    templates,
+    defaultTemplate: parse(route, query).template,
+    // App setups that can start a new project instead of joining an existing one.
+    newProjectTemplates: templates.filter(
+      (template) => parse(route, { ...query, template, project: 'new' }).project === 'new'
+    ),
+  };
+}
+
+const routes = Object.fromEntries(
+  INSTALLATION_ROUTE_SEGMENTS.filter((route) => route !== 'shadcn').map((route) => [route, routeRules(route)])
+);
+const shadcnFrameworks = Object.fromEntries(
+  REGISTRY_FRAMEWORKS.map((framework) => [
+    framework,
+    {
+      ...routeRules('shadcn', { framework }),
+      stylings: REGISTRY_STYLINGS.filter((styling) => parse('shadcn', { framework, styling }).styling === styling),
+      defaultStyling: defaultRegistryStyling(framework),
+    },
+  ])
+);
+const shadcn = {
+  serverFramework: sourceFrameworkFor(INSTALLATION_ROUTES.shadcn.pickerFramework),
+  sourceFrameworks: Object.fromEntries(
+    INSTALLATION_FRAMEWORKS.map((framework) => [framework, sourceFrameworkFor(framework)])
+  ),
+  frameworks: shadcnFrameworks,
+};
+const defaultPreset = INSTALLATION_PRESETS[parse('react', {}).useCase].flag;
+// `method` only names the guide, which the path already decides, so it does not change what the page shows.
+const selectionQueries = INSTALLATION_QUERY_PARAMETERS.filter((query) => query !== 'method');
+
+// Presets whose skin query changes nothing, so the skin section has nothing to offer.
+const presetsWithoutSkinChoice = routes.react!.presets.filter(
+  (preset) => parse('react', { preset, skin: 'minimal' }).skin === parse('react', { preset }).skin
+);
+
+// Combinations whose Shadcn configuration happens during app creation or the registry step instead of its own section.
+const configurationOutsideSection = REGISTRY_FRAMEWORKS.flatMap((framework) => {
+  const rules = shadcnFrameworks[framework]!;
+
+  return rules.stylings.flatMap((styling) =>
+    INSTALLATION_PROJECTS.flatMap((project) =>
+      rules.templates.flatMap((template: InstallationTemplate) => {
+        const configuration = shadcnProjectConfiguration(
+          framework,
+          template,
+          styling,
+          installationProjectFiles(framework, template).componentsAlias
+        );
+
+        return shadcnProjectConfigurationPlacement(configuration, project) === 'section'
+          ? []
+          : [
+              `html[data-registry-framework="${framework}"][data-registry-styling="${styling}"][data-installation-project="${project}"][data-installation-template="${template}"]`,
+            ];
+      })
+    )
+  );
+});
+
+function rule(selectors: readonly string[], declarations: string): string {
+  return selectors.length > 0 ? `${selectors.join(',\n')} { ${declarations} }` : '';
+}
+
+const generatedCss = [
+  rule(
+    presetsWithoutSkinChoice.map((preset) => `html[data-installation-preset="${preset}"] [data-installation-skin-section]`),
+    'display: none;'
+  ),
+  rule(
+    configurationOutsideSection.map((selector) => `${selector} [data-shadcn-configuration-section]`),
+    'display: none !important;'
+  ),
+].join('\n');
 ---
 
 <style is:global>
@@ -18,16 +135,6 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/routes';
     display: contents;
   }
 
-  html:not([data-registry-framework="html"])
-    [data-shadcn-installation-method-nav]
-    [data-installation-method="cdn"] {
-    display: none;
-  }
-
-  html[data-installation-preset="background-video"] [data-installation-skin-section] {
-    display: none;
-  }
-
   html[data-installation-project] [data-installation-project-content] {
     display: none !important;
   }
@@ -37,198 +144,94 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/routes';
     display: block !important;
   }
 
-  html[data-registry-framework="react"][data-registry-styling="tailwind"][data-installation-project="new"]
-    [data-shadcn-configuration-section],
-  html[data-registry-framework="react"][data-registry-styling="tailwind"][data-installation-project="existing"]:is(
-      [data-installation-template="app"],
-      [data-installation-template="next"],
-      [data-installation-template="start"],
-      [data-installation-template="react-router"]
-    )
-    [data-shadcn-configuration-section] {
-    display: none !important;
-  }
-
+  /* An existing site without an app setup has nothing to create or run. */
   html[data-installation-template="none"]
     :is([data-installation-starting-point-section], [data-installation-named-app]) {
     display: none !important;
   }
-
-  html[data-installation-preset] [aria-label="Select media source type"] [data-card-value] {
-    display: none;
-  }
-
-  html[data-installation-preset="video"]
-    [aria-label="Select media source type"]
-    :is(
-      [data-card-value="html5-video"],
-      [data-card-value="hls"],
-      [data-card-value="dash"],
-      [data-card-value="mux-video"],
-      [data-card-value="vimeo"],
-      [data-card-value="youtube"],
-      [data-card-value="cloudflare"],
-      [data-card-value="tiktok"],
-      [data-card-value="twitch"]
-    ),
-  html[data-installation-preset="audio"]
-    [aria-label="Select media source type"]
-    :is([data-card-value="html5-audio"], [data-card-value="mux-audio"], [data-card-value="spotify"]),
-  html[data-installation-preset="live-video"]
-    [aria-label="Select media source type"]
-    :is([data-card-value="hls"], [data-card-value="mux-video"]),
-  html[data-installation-preset="live-audio"]
-    [aria-label="Select media source type"]
-    [data-card-value="mux-audio"],
-  html[data-installation-preset="background-video"]
-    [aria-label="Select media source type"]
-    :is(
-      [data-card-value="background-video"],
-      [data-card-value="hls-background-video"],
-      [data-card-value="mux-background-video"]
-    ) {
-    display: flex;
-  }
-
-  html[data-installation-preset] [aria-label="Select extensions"] [data-card-value] {
-    display: none;
-  }
-
-  html:is([data-installation-preset="video"], [data-installation-preset="live-video"]):not(
-      [data-installation-skin="none"]
-    ):is(
-      [data-installation-media="hls"],
-      [data-installation-media="dash"],
-      [data-installation-media="mux-video"]
-    )
-    [aria-label="Select extensions"]
-    [data-card-value="google-cast"],
-  html:is([data-installation-media="mux-video"], [data-installation-media="mux-audio"])
-    [aria-label="Select extensions"]
-    [data-card-value="mux-data"] {
-    display: flex;
-  }
-
-  html:is([data-installation-preset="video"], [data-installation-preset="live-video"]):not(
-      [data-installation-skin="none"]
-    ):is(
-      [data-installation-media="hls"],
-      [data-installation-media="dash"],
-      [data-installation-media="mux-video"]
-    )
-    [data-extension-empty],
-  html:is([data-installation-media="mux-video"], [data-installation-media="mux-audio"])
-    [data-extension-empty] {
-    display: none;
-  }
 </style>
+
+<style is:inline set:html={generatedCss} />
 
 <script
   is:inline
   define:vars={{
+    defaultPreset,
     frameworkCookie: FRAMEWORK_COOKIE,
-    shadcnPath: SHADCN_INSTALLATION_PATH,
+    routePrefix: `${INSTALLATION_ROUTE_PREFIX}/`,
+    routes,
+    selectionQueries,
+    shadcn,
   }}
 >
-  function applyInstallationPreset(url, root) {
-    if (!root) return;
-
-    const path = url.pathname.replace(/\/$/, "");
-    const isInstallation = path.startsWith("/docs/guides/installation/");
-
-    if (!isInstallation) {
-      delete root.dataset.installationPreset;
-      delete root.dataset.installationMedia;
-      delete root.dataset.installationSkin;
-      return;
-    }
-
-    const params = new URLSearchParams(url.search);
-    const requested = params.get("preset");
-    const preset = ["video", "audio", "live-video", "live-audio", "background-video"].includes(requested ?? "")
-      ? requested
-      : "video";
-    const normalizedPreset = path === shadcnPath && preset === "background-video" ? "video" : preset;
-    const mediaByPreset = {
-      video: ["html5-video", "hls", "dash", "mux-video", "vimeo", "youtube", "cloudflare", "tiktok", "twitch"],
-      audio: ["html5-audio", "mux-audio", "spotify"],
-      "live-video": ["hls", "mux-video"],
-      "live-audio": ["mux-audio"],
-      "background-video": ["background-video", "hls-background-video", "mux-background-video"],
-    };
-    const media = mediaByPreset[normalizedPreset];
-    const requestedMedia = params.get("media");
-    const requestedSkin = params.get("skin");
-
-    root.dataset.installationPreset = normalizedPreset;
-    root.dataset.installationMedia = media.includes(requestedMedia) ? requestedMedia : media[0];
-    root.dataset.installationSkin =
-      path === shadcnPath && requestedSkin === "none"
-        ? "default"
-        : ["default", "minimal", "none"].includes(requestedSkin ?? "")
-          ? requestedSkin
-          : "default";
+  function pick(values, value, fallback) {
+    return values.includes(value) ? value : fallback;
   }
 
-  function applyInstallationProject(url, root) {
-    if (!root) return;
-
-    const path = url.pathname.replace(/\/$/, "");
-    const isInstallation = path.startsWith("/docs/guides/installation/");
-
-    if (!isInstallation) {
-      delete root.dataset.installationProject;
-      delete root.dataset.installationTemplate;
-      return;
-    }
-
-    const params = new URLSearchParams(url.search);
-    const requested = params.get("project");
-    const template = params.get("template");
-    const existingOnly = path.endsWith("/cdn") || template === "none";
-
-    root.dataset.installationProject = !existingOnly && requested === "new" ? "new" : "existing";
-    root.dataset.installationTemplate = template ?? "app";
-  }
-
-  function applyInstallationFramework(url, root) {
-    if (!root) return;
-
-    const isShadcn = url.pathname.replace(/\/$/, "") === shadcnPath;
-
-    if (!isShadcn) {
-      delete root.dataset.registryFramework;
-      delete root.dataset.registryStyling;
-      return;
-    }
-
-    const params = new URLSearchParams(url.search);
-    const requested = params.get("framework");
-    const saved = document.cookie
+  function savedFramework() {
+    return document.cookie
       .split(";")
       .map((cookie) => cookie.trim().split("="))
       .find(([key]) => key === frameworkCookie)?.[1];
-
-    // Vue and Svelte install packaged skins, so their Shadcn links show the HTML source.
-    const framework = requested === "react"
-      ? "react"
-      : requested === "html" || requested === "vue" || requested === "svelte"
-        ? "html"
-      : saved === "html" || saved === "react"
-        ? saved
-        : "react";
-
-    root.dataset.registryFramework = framework;
-    root.dataset.registryStyling = framework === "react" && params.get("styling") !== "css" ? "tailwind" : "css";
   }
 
-  applyInstallationFramework(window.location, document.documentElement);
-  applyInstallationPreset(window.location, document.documentElement);
-  applyInstallationProject(window.location, document.documentElement);
+  function applyInstallationState(url, root) {
+    if (!root) return;
+
+    const path = url.pathname.replace(/\/$/, "");
+    const route = path.startsWith(routePrefix) ? path.slice(routePrefix.length) : "";
+    const isShadcn = route === "shadcn";
+    const params = new URLSearchParams(url.search);
+    const framework = isShadcn
+      ? (shadcn.sourceFrameworks[params.get("framework")] ??
+        shadcn.sourceFrameworks[savedFramework()] ??
+        shadcn.serverFramework)
+      : null;
+    const rules = isShadcn ? shadcn.frameworks[framework] : routes[route];
+
+    if (!rules) {
+      for (const key of [
+        "installationPreset",
+        "installationProject",
+        "installationTemplate",
+        "registryFramework",
+        "registryStyling",
+      ]) {
+        delete root.dataset[key];
+      }
+
+      root.removeAttribute("data-installation-pending");
+
+      return;
+    }
+
+    const template = pick(rules.templates, params.get("template"), rules.defaultTemplate);
+    const project = pick(rules.projects, params.get("project"), "existing");
+
+    root.dataset.installationPreset = pick(rules.presets, params.get("preset"), defaultPreset);
+    root.dataset.installationProject = rules.newProjectTemplates.includes(template) ? project : "existing";
+    root.dataset.installationTemplate = template;
+
+    if (isShadcn) {
+      root.dataset.registryFramework = framework;
+      root.dataset.registryStyling = pick(rules.stylings, params.get("styling"), rules.defaultStyling);
+    } else {
+      delete root.dataset.registryFramework;
+      delete root.dataset.registryStyling;
+    }
+
+    // Any pick in the query, or a Shadcn framework other than the prerendered one, may leave the prerendered picks
+    // out of date. The installation store settles this once it loads.
+    root.toggleAttribute(
+      "data-installation-pending",
+      selectionQueries.some((query) => query !== "framework" && params.has(query)) ||
+        (isShadcn && framework !== shadcn.serverFramework)
+    );
+  }
+
+  applyInstallationState(window.location, document.documentElement);
 
   document.addEventListener("astro:before-swap", function (event) {
-    applyInstallationFramework(event.to, event.newDocument.documentElement);
-    applyInstallationPreset(event.to, event.newDocument.documentElement);
-    applyInstallationProject(event.to, event.newDocument.documentElement);
+    applyInstallationState(event.to, event.newDocument.documentElement);
   });
 </script>

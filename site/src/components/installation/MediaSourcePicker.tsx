@@ -4,7 +4,6 @@ import {
   detectRenderer,
   getInstallationPreset,
   getInstallationRenderer,
-  RENDERERS,
   type Renderer,
 } from '@videojs/installation';
 import type { ReactNode } from 'react';
@@ -116,7 +115,6 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
   const renderers = supportedRenderers
     ? presetRenderers.filter((value) => supportedRenderers.includes(value))
     : presetRenderers;
-  const optionRenderers = supportedRenderers ?? RENDERERS;
   const firstRenderer = renderers[0];
   const rendererSupported = renderers.includes($renderer);
   const detection = detectRenderer($sourceUrl, $useCase);
@@ -201,7 +199,7 @@ export default function MediaSourcePicker({ supportedRenderers }: Props) {
       <CardRadioGroup
         value={$renderer}
         onChange={(value) => renderer.set(value)}
-        options={optionRenderers.map((value) => ({
+        options={renderers.map((value) => ({
           value,
           label: getInstallationRenderer(value).label,
           description: RENDERER_DESCRIPTIONS[value],

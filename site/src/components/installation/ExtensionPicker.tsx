@@ -36,21 +36,20 @@ export default function ExtensionPicker() {
   const renderer = useSelection('renderer');
   const available = installationExtensionsFor(useCase, skin, renderer);
 
+  if (available.length === 0) {
+    return <p className="text-muted text-p3">No optional extensions apply to these selections.</p>;
+  }
+
   return (
-    <>
-      <CardCheckboxGroup
-        value={selected}
-        onChange={(values) =>
-          extensions.set(
-            INSTALLATION_EXTENSIONS.filter((extension) => values.includes(extension) && available.includes(extension))
-          )
-        }
-        options={EXTENSION_OPTIONS}
-        aria-label="Select extensions"
-      />
-      <p data-extension-empty className="text-muted text-p3">
-        No optional extensions apply to these selections.
-      </p>
-    </>
+    <CardCheckboxGroup
+      value={selected}
+      onChange={(values) =>
+        extensions.set(
+          INSTALLATION_EXTENSIONS.filter((extension) => values.includes(extension) && available.includes(extension))
+        )
+      }
+      options={EXTENSION_OPTIONS.filter((option) => available.includes(option.value))}
+      aria-label="Select extensions"
+    />
   );
 }
