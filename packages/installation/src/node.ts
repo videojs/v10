@@ -395,12 +395,58 @@ export function runAgentsSkills(packageVersion: string, args: readonly string[])
   }
 }
 
-/** Route `agents skills` to its command and everything else, including bare and `--help` runs, to `agents init`. */
+const CLI_COMMANDS = [
+  {
+    command: installationCommand(),
+    description: 'List installation options, or add flags to print one complete, version-matched plan.',
+  },
+  { command: skillsCommand(), description: 'Print how to install the Video.js skill in your coding agent.' },
+] as const;
+
+function usageResult(packageVersion: string, json: boolean): AgentsInitResult {
+  if (json) {
+    return {
+      exitCode: 0,
+      stdout: jsonDocument({
+        schemaVersion: 1,
+        kind: 'usage',
+        package: INSTALLATION_CLI_PACKAGE,
+        packageVersion,
+        commands: CLI_COMMANDS,
+      }),
+      stderr: '',
+    };
+  }
+
+  const commands = CLI_COMMANDS.map(({ command, description }) => `- \`${command}\`: ${description}`).join('\n');
+
+  return {
+    exitCode: 0,
+    stdout: `# ${INSTALLATION_CLI_PACKAGE}@${packageVersion}
+
+Video.js instructions for coding agents and the people working with them. Every command only prints; none installs packages or changes files.
+
+${commands}
+
+Add \`--help\` to a command for its options, \`--json\` for a structured document, or \`--version\` to print the CLI version.
+`,
+    stderr: '',
+  };
+}
+
+/** Print the command list for bare and top-level `--help` runs, and route `agents …` to its command. */
 export function runAgentsCommand(
   packageVersion: string,
   args: readonly string[],
   defaults: AgentsInitDefaults = {}
 ): AgentsInitResult {
+  const commandArgs = args.filter((argument) => argument !== '--json');
+  const json = commandArgs.length !== args.length;
+
+  if (commandArgs.length === 0 || (commandArgs.length === 1 && ['--help', '-h'].includes(commandArgs[0]!))) {
+    return usageResult(packageVersion, json);
+  }
+
   return args[0] === 'agents' && args[1] === 'skills'
     ? runAgentsSkills(packageVersion, args)
     : runAgentsInit(packageVersion, args, defaults);

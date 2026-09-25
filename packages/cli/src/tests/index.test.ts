@@ -42,11 +42,13 @@ describe('bin', () => {
     expect(run('agents', 'init')).toContain(`npx @videojs/cli@${packageJson.version} agents init`);
   });
 
-  it('names both commands in the top-level help', () => {
+  it('lists both commands for a bare or top-level help run', () => {
     for (const output of [run(), run('--help')]) {
-      expect(output).toContain(`npx @videojs/cli@${packageJson.version} agents init`);
-      expect(output).toContain('npx @videojs/cli agents skills');
+      expect(output).toContain('`npx @videojs/cli agents init`');
+      expect(output).toContain('`npx @videojs/cli agents skills`');
     }
+
+    expect(run('agents', 'init')).toContain(`npx @videojs/cli@${packageJson.version} agents init`);
   });
 
   it('prints skill install steps for every agent or only the selected ones', () => {

@@ -103,7 +103,7 @@ function createSkillInstallMethod(agent: SkillAgent, selection: SkillsSelection)
       label: agent === 'vscode' ? 'VS Code' : 'Cursor',
       steps: [{ description, input: SKILLS_REPOSITORY_URL }],
       notes: [],
-      followUp: 'Start a new chat after installation.',
+      followUp: `Start a new ${agent === 'vscode' ? 'VS Code' : 'Cursor'} session after installation, or reload the window.`,
     };
   }
 
