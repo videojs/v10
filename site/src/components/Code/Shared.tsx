@@ -1,6 +1,6 @@
 import { transformerCompactLineOptions } from '@shikijs/transformers';
 import clsx from 'clsx';
-import type { BundledLanguage, Highlighter } from 'shiki';
+import type { BundledLanguage, Highlighter, SpecialLanguage } from 'shiki';
 import { hastToHtml } from 'shiki';
 
 import { shared } from '@/components/typography/styles';
@@ -9,7 +9,7 @@ import { shikiNotationTransformers } from '@/utils/shikiNotationTransformers';
 export interface SharedProps {
   code: string;
   focusLines?: readonly number[];
-  lang: BundledLanguage;
+  lang: BundledLanguage | SpecialLanguage;
   highlighter: Highlighter;
 }
 
@@ -29,7 +29,7 @@ const highlightCache = new Map<string, Highlighted>();
 function highlight(
   code: string,
   focusLines: readonly number[],
-  lang: BundledLanguage,
+  lang: BundledLanguage | SpecialLanguage,
   highlighter: Highlighter
 ): Highlighted {
   const cacheKey = `${lang}\0${focusLines.join(',')}\0${code}`;
