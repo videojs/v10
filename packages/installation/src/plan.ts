@@ -714,9 +714,18 @@ function shadcnPlayerSteps(
     htmlEntrySetupStep(selection.template, project.usage!),
     playerStep(
       selection,
-      `Replace the ${mediaPlaceholder} placeholder in ${player.skinFile} with the media snippet below. Then replace the ${player.skinPlaceholder} comment in the page with the complete updated skin markup. ${playerFileDescription(selection)}`,
+      `Replace the ${mediaPlaceholder} placeholder in ${player.skinFile} with the media snippet below.${player.container ? ` Size the video on the skin's root media-container by replacing its opening ${player.container.anchor} with the snippet below.` : ''} Then replace the ${player.skinPlaceholder} comment in the page with the complete updated skin markup. ${playerFileDescription(selection)}`,
       [
         file('html', player.media, { filename: player.skinFile, operation: 'replace', anchor: mediaPlaceholder }),
+        ...(player.container
+          ? [
+              file('html', player.container.code, {
+                filename: player.skinFile,
+                operation: 'replace',
+                anchor: player.container.anchor,
+              }),
+            ]
+          : []),
         addedFile(selection, 'ts', player.imports, project.usage!),
         htmlPageFile(selection, player.player, project, {
           insertContents: [{ anchor: player.skinPlaceholder, from: player.skinFile }],

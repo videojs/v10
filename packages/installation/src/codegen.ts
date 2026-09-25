@@ -757,13 +757,18 @@ export default function Page() {
 export interface SourceHTMLUsageCode {
   imports: string;
   media: string;
+  /**
+   * The video layout for the skin's root `media-container`, which replaces `anchor` in `skinFile`. The container is the
+   * layout box, so audio skins, which size to their content, have none.
+   */
+  container: { anchor: string; code: string } | null;
   player: string;
   skinFile: string;
   /** The comment in `player` to replace with the contents of `skinFile`. */
   skinPlaceholder: string;
 }
 
-/** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
+/** Build the imports and small edits needed to use an HTML skin copied into the app by Shadcn. */
 export function generateSourceHTMLUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'media' | 'sourceUrl'> & {
     extensions?: readonly InstallationExtension[];
@@ -778,8 +783,6 @@ export function generateSourceHTMLUsageCode(
   const tag = getRendererTag(renderer);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
-  // The copied skin's container fills its player, so the player owns the video layout.
-  const playerLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
   const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`;
   const skinPlaceholder = `<!-- Paste the contents of ${skinFile} here. -->`;
   const imports = [
@@ -794,7 +797,10 @@ export function generateSourceHTMLUsageCode(
   return {
     imports,
     media: generateMediaMarkup(tag, source, playsInline, extensions, ''),
-    player: `<${getPlayerTag(useCase)}${playerLayout}>
+    container: isSizedVideoPlayer(useCase)
+      ? { anchor: '<media-container', code: `<media-container${htmlVideoLayout}` }
+      : null,
+    player: `<${getPlayerTag(useCase)}>
   ${skinPlaceholder}
 </${getPlayerTag(useCase)}>`,
     skinFile,

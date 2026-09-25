@@ -815,14 +815,21 @@ describe('source installation code', () => {
     expect(code.imports).toContain("import '@videojs/html/video/player'");
     expect(code.imports).toContain("import '@videojs/html/media/hlsjs-video'");
     expect(code.imports).toContain("import '@/components/videojs/video/skin'");
-    expect(code.player).toContain('<video-player style="display: block; width: 100%; aspect-ratio: 16 / 9;">');
+    expect(code.player).toMatch(/^<video-player>/);
     expect(code.player).not.toContain('<script');
   });
 
-  it('leaves audio players unsized', () => {
-    const code = generateSourceHTMLUsageCode({ ...baseHTML, useCase: 'default-audio', media: 'html5-audio' });
+  it('sizes the video skin on its root container instead of the player', () => {
+    const video = generateSourceHTMLUsageCode({ ...baseHTML, media: 'hls' });
+    const audio = generateSourceHTMLUsageCode({ ...baseHTML, useCase: 'default-audio', media: 'html5-audio' });
 
-    expect(code.player).toMatch(/^<audio-player>/);
+    expect(video.container).toEqual({
+      anchor: '<media-container',
+      code: '<media-container style="display: block; width: 100%; aspect-ratio: 16 / 9;"',
+    });
+    expect(video.player).not.toContain('style=');
+    expect(audio.container).toBeNull();
+    expect(audio.player).toMatch(/^<audio-player>/);
   });
 });
 

@@ -74,6 +74,18 @@ function SourceHTMLPlayer({ part }: Props) {
           label="Skin source"
           tabs={[{ code: html.media, label: html.skinFile, lang: 'html', value: 'skin' }]}
         />
+        {html.container && (
+          <>
+            <p className={`${shared.p} ${shared.prose}`}>
+              Then size the video on the skin&apos;s root container: replace its opening{' '}
+              <code>{html.container.anchor}</code> with:
+            </p>
+            <CodeTabs
+              label="Skin layout"
+              tabs={[{ code: html.container.code, label: html.skinFile, lang: 'html', value: 'layout' }]}
+            />
+          </>
+        )}
       </>
     );
   }
