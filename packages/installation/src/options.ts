@@ -1,10 +1,12 @@
 import { INSTALLATION_DEMO_SOURCE_URL } from './defaults';
 import { INSTALLATION_EXTENSIONS } from './extensions';
 import {
+  CLI_OPTION_SYNTAX,
   INSTALLATION_PROJECTS,
   installationParameterForKey,
   PACKAGE_MANAGERS,
   type InstallationInputKey,
+  type InstallationOptionSyntax,
 } from './parameters';
 import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from './presets';
 import {
@@ -146,10 +148,10 @@ function unique<Choice extends string>(values: readonly Choice[]): Choice[] {
 }
 
 /** The ordered choices an agent should resolve before requesting one complete installation plan. */
-export function installationDecisionOrderFor({
-  methods,
-  frameworks,
-}: InstallationOptionContext): readonly InstallationDecision[] {
+export function installationDecisionOrderFor(
+  { methods, frameworks }: InstallationOptionContext,
+  syntax: InstallationOptionSyntax = CLI_OPTION_SYNTAX
+): readonly InstallationDecision[] {
   const skinlessGuidance =
     methods.length === 1 && methods[0] === 'shadcn'
       ? ''
@@ -211,13 +213,14 @@ export function installationDecisionOrderFor({
     ...stylingDecisions,
     {
       title: 'Return one explicit plan',
-      guidance: `Confirm the choices once, then pass every applicable flag, including \`--extensions none\` when no extension is needed and \`--source-url ${INSTALLATION_DEMO_SOURCE_URL}\` when there is no media URL yet. Check that Defaulted options says none. Adapt conditional setup steps and existing paths before changing files.`,
+      guidance: `Confirm the choices once, then pass every applicable ${syntax.noun}, including \`${syntax.options(['extensions', 'none'])}\` when no extension is needed and \`${syntax.options(['sourceUrl', INSTALLATION_DEMO_SOURCE_URL])}\` when there is no media URL yet. Check that Defaulted options says none. Adapt conditional setup steps and existing paths before changing files.`,
     },
   ];
 }
 
 export function installationOptionDefinitionsFor(
-  context: InstallationOptionContext
+  context: InstallationOptionContext,
+  syntax: InstallationOptionSyntax = CLI_OPTION_SYNTAX
 ): readonly InstallationOptionDefinition[] {
   const { methods, frameworks } = context;
   const shadcnOnly = methods.length === 1 && methods[0] === 'shadcn';
@@ -276,7 +279,7 @@ export function installationOptionDefinitionsFor(
       values: shadcnOnly ? installationCompatibility.shadcn.skins : INSTALLATION_SKIN_FLAGS,
       default: 'default',
       description: 'The visual skin. Minimal has cleaner surfaces and the same controls as Default.',
-      appliesWhen: '--preset is not background-video',
+      appliesWhen: `${syntax.options(['preset'])} is not background-video`,
     }),
     optionDefinition('media', {
       values: RENDERERS,
@@ -301,7 +304,7 @@ export function installationOptionDefinitionsFor(
       default:
         'the packageManager field or lockfile; otherwise the invoking bun, pnpm, or yarn; otherwise pnpm when it is on PATH; otherwise npm',
       description: 'The command runner used for app setup, packages, Shadcn, and the development server.',
-      appliesWhen: '--method is not cdn with --template none',
+      appliesWhen: `${syntax.options(['method'])} is not cdn with ${syntax.options(['template'])} none`,
     }),
     optionDefinition('template', {
       values: templates,
@@ -319,7 +322,7 @@ export function installationOptionDefinitionsFor(
             ? defaultRegistryStyling(sourceFrameworks[0]!)
             : 'tailwind for React; css otherwise',
         description: 'The Shadcn source styling. Compatible values depend on the framework.',
-        appliesWhen: '--method shadcn',
+        appliesWhen: syntax.options(['method', 'shadcn']),
       })
     );
   }

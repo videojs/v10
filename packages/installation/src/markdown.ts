@@ -1,5 +1,5 @@
 import type { InstallationDiscoveryCompatibility } from './options';
-import { installationParameterForKey } from './parameters';
+import { CLI_OPTION_SYNTAX, installationParameterForKey, type InstallationOptionSyntax } from './parameters';
 import {
   INSTALLATION_STEP_CONDITIONS,
   installationSelectedOptions,
@@ -27,7 +27,10 @@ function inlineCode(value: string): string {
   return `${marker}${padding}${value}${padding}${marker}`;
 }
 
-export function renderInstallationCompatibilityMarkdown(compatibility: InstallationDiscoveryCompatibility): string {
+export function renderInstallationCompatibilityMarkdown(
+  compatibility: InstallationDiscoveryCompatibility,
+  syntax: InstallationOptionSyntax = CLI_OPTION_SYNTAX
+): string {
   const mediaCompatibility = Object.entries(compatibility.mediaByPreset)
     .map(([preset, media]) => `- \`${preset}\`: ${media.map((value) => `\`${value}\``).join(', ')}`)
     .join('\n');
@@ -52,7 +55,7 @@ export function renderInstallationCompatibilityMarkdown(compatibility: Installat
       : '- React instructions install `@videojs/react`. HTML, Vue, and Svelte instructions install `@videojs/html`.'
     : '- HTML, Vue, and Svelte instructions install `@videojs/html`.';
   const cdnDescription = frameworks.some((framework) => compatibility.methodsByFramework[framework]?.includes('cdn'))
-    ? '\n- CDN is plain HTML only. Use `--project existing --template none` for an existing page or `--project new --template vite` to scaffold a minimal app.'
+    ? `\n- CDN is plain HTML only. Use \`${syntax.options(['project', 'existing'], ['template', 'none'])}\` for an existing page or \`${syntax.options(['project', 'new'], ['template', 'vite'])}\` to scaffold a minimal app.`
     : '';
   const shadcnDescription = frameworks.includes('react')
     ? frameworks.length === 1

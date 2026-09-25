@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { installationCompatibility, installationDecisionOrderFor, installationOptionDefinitionsFor } from '../options';
+import { QUERY_OPTION_SYNTAX } from '../parameters';
 
 function valuesFor(
   definitions: ReturnType<typeof installationOptionDefinitionsFor>,
@@ -66,6 +67,23 @@ describe('installationOptionDefinitionsFor', () => {
     expect(valuesFor(definitions, '--template')).toEqual(['vite', 'none']);
     expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('none');
   });
+
+  it('names the options it depends on in the reader syntax', () => {
+    const context = { methods: ['packaged', 'shadcn', 'cdn'], frameworks: ['react', 'html'] } as const;
+    const appliesWhen = (definitions: ReturnType<typeof installationOptionDefinitionsFor>) =>
+      definitions.flatMap((option) => (option.appliesWhen ? [option.appliesWhen] : []));
+
+    expect(appliesWhen(installationOptionDefinitionsFor(context))).toEqual([
+      '--preset is not background-video',
+      '--method is not cdn with --template none',
+      '--method shadcn',
+    ]);
+    expect(appliesWhen(installationOptionDefinitionsFor(context, QUERY_OPTION_SYNTAX))).toEqual([
+      'preset is not background-video',
+      'method is not cdn with template none',
+      'method=shadcn',
+    ]);
+  });
 });
 
 describe('installationDecisionOrderFor', () => {
@@ -106,6 +124,17 @@ describe('installationDecisionOrderFor', () => {
     expect(cdn.find(({ title }) => title === 'Choose how to install')?.guidance).toContain(
       'scaffold a minimal Vite app only when no app exists'
     );
+  });
+
+  it('asks for every applicable option in the reader syntax', () => {
+    const context = { methods: ['packaged'], frameworks: ['react'] } as const;
+    const plan = (syntax?: typeof QUERY_OPTION_SYNTAX) =>
+      installationDecisionOrderFor(context, syntax).find(({ title }) => title === 'Return one explicit plan')?.guidance;
+
+    expect(plan()).toContain('pass every applicable flag, including `--extensions none`');
+    expect(plan()).toContain('`--source-url demo`');
+    expect(plan(QUERY_OPTION_SYNTAX)).toContain('pass every applicable query parameter, including `extensions=none`');
+    expect(plan(QUERY_OPTION_SYNTAX)).toContain('`source-url=demo`');
   });
 
   it('asks for the styling after the Shadcn method when React source is possible', () => {

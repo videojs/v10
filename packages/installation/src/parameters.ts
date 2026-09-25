@@ -66,3 +66,35 @@ export const INSTALLATION_QUERY_PARAMETERS = Object.freeze(
 export const PRIVATE_INSTALLATION_QUERY_PARAMETERS = Object.freeze(
   INSTALLATION_PARAMETERS.filter((parameter) => 'private' in parameter && parameter.private).map(({ query }) => query)
 ) as readonly string[];
+
+/** How a reader passes installation options: as CLI flags, or as query parameters on a Markdown guide URL. */
+export interface InstallationOptionSyntax {
+  /** What the reader calls one option, such as `flag`. */
+  noun: string;
+  /** Options, each optionally with a value, written as the reader passes them together. */
+  options(...choices: readonly (readonly [key: InstallationInputKey, value?: string])[]): string;
+}
+
+export const CLI_OPTION_SYNTAX: InstallationOptionSyntax = {
+  noun: 'flag',
+  options: (...choices) =>
+    choices
+      .map(([key, value]) => {
+        const { flag } = installationParameterForKey(key);
+
+        return value === undefined ? flag : `${flag} ${value}`;
+      })
+      .join(' '),
+};
+
+export const QUERY_OPTION_SYNTAX: InstallationOptionSyntax = {
+  noun: 'query parameter',
+  options: (...choices) =>
+    choices
+      .map(([key, value]) => {
+        const { query } = installationParameterForKey(key);
+
+        return value === undefined ? query : `${query}=${value}`;
+      })
+      .join('&'),
+};
