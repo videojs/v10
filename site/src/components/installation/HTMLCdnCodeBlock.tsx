@@ -10,7 +10,7 @@ import { withSelectionMarker } from './withSelectionMarker';
 function HTMLCdnCodeBlock() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $extensions = useSelection('extensions');
 
   return (

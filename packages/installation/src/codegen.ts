@@ -16,7 +16,7 @@ import type { RegistryStyling } from './shadcn';
 export interface InstallationOptions {
   useCase: UseCase;
   skin: Skin;
-  renderer: Renderer;
+  media: Renderer;
   extensions?: readonly InstallationExtension[];
   sourceUrl: string;
   installMethod: InstallMethod;
@@ -121,16 +121,16 @@ function installPackages(
 // ---------------------------------------------------------------------------
 
 export function generateHTMLInstallCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>,
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media'> & Partial<Pick<InstallationOptions, 'extensions'>>,
   cdnMediaSubpaths: readonly string[],
   cdnBase?: string,
   packageVersion?: string
 ): HTMLInstallCode {
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const packages = installPackages('@videojs/html', opts.renderer, extensions, packageVersion);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
+  const packages = installPackages('@videojs/html', opts.media, extensions, packageVersion);
 
   return {
-    cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths, cdnBase, extensions),
+    cdn: generateCdnCode(opts.useCase, opts.skin, opts.media, cdnMediaSubpaths, cdnBase, extensions),
     ...packageManagerInstallCommands(packages),
   };
 }
@@ -140,13 +140,13 @@ export function generateHTMLInstallCode(
 // ---------------------------------------------------------------------------
 
 export function generateReactInstallCode(
-  opts: Pick<InstallationOptions, 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>> = {
-    renderer: 'html5-video',
+  opts: Pick<InstallationOptions, 'media'> & Partial<Pick<InstallationOptions, 'extensions'>> = {
+    media: 'html5-video',
   },
   packageVersion?: string
 ): PackageManagerInstallCommands {
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const packages = installPackages('@videojs/react', opts.renderer, extensions, packageVersion);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
+  const packages = installPackages('@videojs/react', opts.media, extensions, packageVersion);
 
   return packageManagerInstallCommands(packages);
 }
@@ -323,13 +323,13 @@ import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}${extensionIm
 }
 
 export function generateHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'> &
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media' | 'sourceUrl' | 'installMethod'> &
     Partial<Pick<InstallationOptions, 'extensions'>>
 ): HTMLUsageCode {
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl, extensions);
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
+  const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.media, opts.sourceUrl, extensions);
   const imports =
-    opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer, extensions) : undefined;
+    opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.media, extensions) : undefined;
   const result: HTMLUsageCode = { html };
 
   if (imports) result.imports = imports;
@@ -417,10 +417,10 @@ ${indentBlock(media, '  ')}
 }
 
 export function generateVueCustomElementConfigCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media'> & Partial<Pick<InstallationOptions, 'extensions'>>
 ): VueCustomElementConfigCode {
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.renderer, extensions)
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
+  const tags = getHTMLCustomElementTags(opts.useCase, opts.skin, opts.media, extensions)
     .map((tag) => `'${tag}'`)
     .join(', ');
   const elementSet = `const videoJsElements = new Set([${tags}]);`;
@@ -472,11 +472,11 @@ export default defineNuxtConfig({
 }
 
 export function generateVueCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media'> & Partial<Pick<InstallationOptions, 'extensions'>>
 ): VueCreateCode {
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const imports = generateHTMLImports(opts.useCase, opts.skin, opts.renderer, extensions);
-  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', extensions, '<slot />', 'stylesheet');
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
+  const imports = generateHTMLImports(opts.useCase, opts.skin, opts.media, extensions);
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.media, '', extensions, '<slot />', 'stylesheet');
   const style = generateSfcPlayerStyle(opts.useCase, opts.skin);
 
   return {
@@ -491,14 +491,14 @@ ${indentBlock(markup, '  ')}
 }
 
 export function generateVueUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> &
+  opts: Pick<InstallationOptions, 'useCase' | 'media' | 'sourceUrl'> &
     Partial<Pick<InstallationOptions, 'extensions'>> & { playerImport?: string | undefined }
 ): VueUsageCode {
   const componentName = getInstallationPlayerComponentName(opts.useCase);
-  const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
-  const tag = getRendererTag(opts.renderer);
-  const playsInline = isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '';
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.media, opts.useCase);
+  const tag = getRendererTag(opts.media);
+  const playsInline = isVideoLikeRenderer(opts.media) ? ' playsinline' : '';
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
   const media = generateMediaMarkup(tag, source, playsInline, extensions, '');
 
   return {
@@ -520,11 +520,11 @@ ${indentBlock(media, '    ')}
 }
 
 export function generateSvelteCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'> & Partial<Pick<InstallationOptions, 'extensions'>>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media'> & Partial<Pick<InstallationOptions, 'extensions'>>
 ): SvelteCreateCode {
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.renderer, extensions), '  ');
-  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, '', extensions, '<slot />', 'stylesheet');
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
+  const imports = indentBlock(generateHTMLImports(opts.useCase, opts.skin, opts.media, extensions), '  ');
+  const markup = generateHTMLMarkup(opts.useCase, opts.skin, opts.media, '', extensions, '<slot />', 'stylesheet');
   const style = generateSfcPlayerStyle(opts.useCase, opts.skin);
 
   return {
@@ -537,14 +537,14 @@ ${markup}${style ? `\n\n${style}` : ''}`,
 }
 
 export function generateSvelteUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> &
+  opts: Pick<InstallationOptions, 'useCase' | 'media' | 'sourceUrl'> &
     Partial<Pick<InstallationOptions, 'extensions'>> & { playerImport?: string | undefined }
 ): SvelteUsageCode {
   const componentName = getInstallationPlayerComponentName(opts.useCase);
-  const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
-  const tag = getRendererTag(opts.renderer);
-  const playsInline = isVideoLikeRenderer(opts.renderer) ? ' playsinline' : '';
-  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
+  const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.media, opts.useCase);
+  const tag = getRendererTag(opts.media);
+  const playsInline = isVideoLikeRenderer(opts.media) ? ' playsinline' : '';
+  const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
   const media = generateMediaMarkupWithSource(tag, `src={${JSON.stringify(source)}}`, playsInline, extensions, '');
   const component = (path: string) => `<script lang="ts">
   import ${componentName} from '${path}';
@@ -602,10 +602,10 @@ ${indent}<${reactComponent} />`;
 }
 
 export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> &
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media' | 'sourceUrl'> &
     Partial<Pick<InstallationOptions, 'extensions'>>
 ): ReactCreateCode {
-  const { useCase, skin, renderer } = opts;
+  const { useCase, skin, media: renderer } = opts;
   const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
   const rendererComponent = getRendererComponent(renderer);
   const playerComponent = getPresetPlayer(useCase);
@@ -695,13 +695,13 @@ ${playerJsx}
 
 /** Build a React player around a skin component copied into the app by Shadcn. */
 export function generateSourceReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl'> & {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'media' | 'sourceUrl'> & {
     extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     styling?: RegistryStyling;
   }
 ): ReactCreateCode {
-  const { useCase, renderer } = opts;
+  const { useCase, media: renderer } = opts;
   const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
   const preset = getInstallationPreset(useCase);
   const playerComponent = getPresetPlayer(useCase);
@@ -765,13 +765,13 @@ export interface SourceHTMLUsageCode {
 
 /** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
 export function generateSourceHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'> & {
+  opts: Pick<InstallationOptions, 'useCase' | 'media' | 'sourceUrl'> & {
     extensions?: readonly InstallationExtension[];
     componentsAlias?: string;
     componentsDirectory?: string;
   }
 ): SourceHTMLUsageCode {
-  const { useCase, renderer } = opts;
+  const { useCase, media: renderer } = opts;
   const extensions = opts.extensions ?? defaultInstallationExtensions(renderer);
   const preset = getInstallationPreset(useCase);
   const mediaSubpath = getMediaSubpath(renderer);

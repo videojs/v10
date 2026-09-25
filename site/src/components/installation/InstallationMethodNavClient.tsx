@@ -55,7 +55,7 @@ function getMethodBaseHref(method: InstallationMethod, framework: InstallationFr
 
 function InstallationMethodNavClient({ currentFramework, route }: Props) {
   const selectedInstallMethod = useSelection('installMethod');
-  const selectedRenderer = useSelection('renderer');
+  const selectedRenderer = useSelection('media');
   const selectedExtensions = useSelection('extensions');
   const selectedProject = useSelection('project');
   const selectedSkin = useSelection('skin');
@@ -96,7 +96,7 @@ function InstallationMethodNavClient({ currentFramework, route }: Props) {
         framework,
         project: selectedProject,
         installMethod: selectedInstallMethod,
-        renderer: selectedRenderer,
+        media: selectedRenderer,
         extensions: selectedExtensions,
         skin: selectedSkin,
         sourceUrl: selectedSourceUrl,

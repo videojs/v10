@@ -19,7 +19,7 @@ function SourceReactPlayer() {
   const code = generateSourceReactCreateCode({
     useCase: useSelection('useCase'),
     skin: useSelection('skin'),
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
     extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     componentsAlias: project.componentsAlias,

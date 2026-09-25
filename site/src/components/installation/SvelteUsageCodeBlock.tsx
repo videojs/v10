@@ -13,7 +13,7 @@ function SvelteUsageCodeBlock() {
   const codeValue = template === 'astro' ? 'index.astro' : template === 'sveltekit' ? '+page.svelte' : 'App.svelte';
   const code = generateSvelteUsageCode({
     useCase,
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
     extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     playerImport: project.playerImport,

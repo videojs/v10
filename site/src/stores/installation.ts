@@ -38,7 +38,7 @@ function selectionFromUrl(target: Pick<URL, 'pathname' | 'search'>): Installatio
 
 const initialSelection = globalThis.location ? selectionFromUrl(location) : DEFAULT_SELECTION;
 
-export const renderer = atom<Renderer>(initialSelection.renderer);
+export const media = atom<Renderer>(initialSelection.media);
 export const extensions = atom<readonly InstallationExtension[]>(initialSelection.extensions);
 export const framework = atom<InstallationFramework>(initialSelection.framework);
 export const template = atom<InstallationTemplate>(initialSelection.template);
@@ -65,7 +65,7 @@ export const selectionAtoms: SelectionAtoms = {
   // Use case before skin and media: its listener fits them to the preset before their own values arrive.
   useCase,
   skin,
-  renderer,
+  media,
   extensions,
   sourceUrl,
   installMethod,
@@ -85,7 +85,7 @@ export function currentInstallationSelection(): InstallationUiSelection {
     project: project.get(),
     useCase: useCase.get(),
     skin: skin.get(),
-    renderer: renderer.get(),
+    media: media.get(),
     extensions: extensions.get(),
     sourceUrl: sourceUrl.get(),
     installMethod: installMethod.get(),
@@ -195,26 +195,26 @@ for (const store of Object.values(selectionAtoms)) {
 // store's own values, so every island agrees. Pickers fixing the store from their rendered props raced hydration: the
 // rendered use case was still the server default while the store already held the URL's picks.
 useCase.listen((next) => {
-  const fitted = fitSelectionToPreset(next, skin.get(), renderer.get());
+  const fitted = fitSelectionToPreset(next, skin.get(), media.get());
 
   if (fitted.skin !== skin.get()) skin.set(fitted.skin);
 
-  if (fitted.media !== renderer.get()) renderer.set(fitted.media);
+  if (fitted.media !== media.get()) media.set(fitted.media);
 
-  const available = installationExtensionsFor(next, skin.get(), renderer.get());
+  const available = installationExtensionsFor(next, skin.get(), media.get());
   const selected = extensions.get().filter((extension) => available.includes(extension));
 
   if (selected.length !== extensions.get().length) extensions.set(selected);
 });
 
 skin.listen((next) => {
-  const available = installationExtensionsFor(useCase.get(), next, renderer.get());
+  const available = installationExtensionsFor(useCase.get(), next, media.get());
   const selected = extensions.get().filter((extension) => available.includes(extension));
 
   if (selected.length !== extensions.get().length) extensions.set(selected);
 });
 
-renderer.listen((next) => {
+media.listen((next) => {
   const available = installationExtensionsFor(useCase.get(), skin.get(), next);
   const selected = extensions.get().filter((extension) => available.includes(extension));
   const defaults = defaultInstallationExtensions(next).filter((extension) => available.includes(extension));

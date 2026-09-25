@@ -8,7 +8,7 @@ import { withSelectionMarker } from './withSelectionMarker';
 
 function ReactInstallTabs() {
   const install = generateReactInstallCode(
-    { renderer: useSelection('renderer'), extensions: useSelection('extensions') },
+    { media: useSelection('media'), extensions: useSelection('extensions') },
     VJS10_VERSION
   );
 

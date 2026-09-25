@@ -56,7 +56,7 @@ function SourceHTMLPlayer({ part }: Props) {
   const project = installationProjectFiles(framework, template, useCase);
   const options = {
     useCase,
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
     extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     componentsAlias: project.componentsAlias,

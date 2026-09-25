@@ -6,7 +6,7 @@ import {
   extensions,
   framework,
   installMethod,
-  renderer,
+  media,
   skin,
   sourceUrl,
   styling,
@@ -24,17 +24,17 @@ describe('useCase', () => {
   it('fits the skin and media to the new preset from the store values', () => {
     useCase.set('default-video');
     skin.set('minimal-video');
-    renderer.set('youtube');
+    media.set('youtube');
 
     useCase.set('default-audio');
 
     expect(skin.get()).toBe('minimal-audio');
-    expect(renderer.get()).toBe('html5-audio');
+    expect(media.get()).toBe('html5-audio');
 
     useCase.set('live-video');
 
     expect(skin.get()).toBe('minimal-video');
-    expect(renderer.get()).toBe('hls');
+    expect(media.get()).toBe('hls');
   });
 
   it('replaces stale picks when a client navigation has a different URL', () => {
@@ -46,7 +46,7 @@ describe('useCase', () => {
 
     expect(useCase.get()).toBe('default-audio');
     expect(skin.get()).toBe('minimal-audio');
-    expect(renderer.get()).toBe('spotify');
+    expect(media.get()).toBe('spotify');
     expect(installMethod.get()).toBe('pnpm');
     expect(sourceUrl.get()).toBe('track');
 
@@ -54,7 +54,7 @@ describe('useCase', () => {
 
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
-    expect(renderer.get()).toBe('html5-video');
+    expect(media.get()).toBe('html5-video');
     expect(installMethod.get()).toBe('pnpm');
     expect(sourceUrl.get()).toBe('');
   });
@@ -65,12 +65,12 @@ describe('useCase', () => {
 
     expect(extensions.get()).toEqual([]);
 
-    renderer.set('hls');
+    media.set('hls');
     extensions.set(['google-cast']);
 
     expect(window.location.search).toContain('extensions=google-cast');
 
-    renderer.set('html5-video');
+    media.set('html5-video');
 
     expect(extensions.get()).toEqual([]);
   });
@@ -88,7 +88,7 @@ describe('useCase', () => {
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 300 });
     expect(useCase.get()).toBe('default-audio');
     expect(skin.get()).toBe('audio');
-    expect(renderer.get()).toBe('html5-audio');
+    expect(media.get()).toBe('html5-audio');
     expect(installMethod.get()).toBe('pnpm');
     expect(sourceUrl.get()).toBe('');
   });
@@ -119,7 +119,7 @@ describe('useCase', () => {
     expect(window.location.search).toBe('?framework=react');
     expect(useCase.get()).toBe('default-video');
     expect(skin.get()).toBe('video');
-    expect(renderer.get()).toBe('html5-video');
+    expect(media.get()).toBe('html5-video');
     expect(installMethod.get()).toBe('pnpm');
   });
 

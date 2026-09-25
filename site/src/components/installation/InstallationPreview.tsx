@@ -166,7 +166,7 @@ function BackgroundPreview({ source }: { source: Source }) {
 function InstallationPreview() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $sourceUrl = useSelection('sourceUrl');
   const framework = useStore(currentFramework);
   const isHydrated = useIsHydrated();

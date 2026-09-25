@@ -12,7 +12,7 @@ function VueUsageCodeBlock() {
   const project = installationProjectFiles('vue', template, useCase);
   const code = generateVueUsageCode({
     useCase,
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
     extensions: useSelection('extensions'),
     sourceUrl: useSelection('sourceUrl'),
     playerImport: project.playerImport,

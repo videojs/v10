@@ -13,7 +13,7 @@ function SvelteCreateCodeBlock() {
   const code = generateSvelteCreateCode({
     useCase,
     skin: useSelection('skin'),
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
     extensions: useSelection('extensions'),
   });
 

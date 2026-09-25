@@ -8,7 +8,7 @@ import { VJS10_VERSION } from '@/consts';
 import { useSelection } from '../installation/useSelection';
 
 function SourceMediaInstall() {
-  const renderer = useSelection('renderer');
+  const renderer = useSelection('media');
   const selectedExtensions = useSelection('extensions');
   const install = generateSourceMediaInstallCode(renderer, VJS10_VERSION, selectedExtensions);
   if (!install) return <span id="install-the-media-adapter" hidden data-conditional-heading-placeholder />;

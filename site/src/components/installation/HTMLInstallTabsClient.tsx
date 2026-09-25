@@ -7,12 +7,12 @@ import { useSelection } from './useSelection';
 import { withSelectionMarker } from './withSelectionMarker';
 
 function HTMLInstallTabs() {
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $extensions = useSelection('extensions');
   const $skin = useSelection('skin');
   const $useCase = useSelection('useCase');
   const install = generateHTMLInstallCode(
-    { renderer: $renderer, extensions: $extensions, skin: $skin, useCase: $useCase },
+    { media: $renderer, extensions: $extensions, skin: $skin, useCase: $useCase },
     [],
     undefined,
     VJS10_VERSION

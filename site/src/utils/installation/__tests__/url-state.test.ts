@@ -22,7 +22,7 @@ describe('parseInstallationSearch', () => {
       project: 'existing',
       useCase: 'live-video',
       skin: 'minimal-video',
-      renderer: 'hls',
+      media: 'hls',
       extensions: [],
       sourceUrl: '',
       installMethod: 'npm',
@@ -46,7 +46,7 @@ describe('parseInstallationSearch', () => {
     const selection = parseInstallationSearch('?preset=live-audio&media=youtube&skin=fancy&package-manager=curl');
 
     expect(selection.useCase).toBe('live-audio');
-    expect(selection.renderer).toBe('mux-audio');
+    expect(selection.media).toBe('mux-audio');
     expect(selection.skin).toBe('audio');
     expect(selection.installMethod).toBe('pnpm');
   });
@@ -120,7 +120,7 @@ describe('serializeInstallationSearch', () => {
         project: 'existing',
         useCase: 'live-video',
         skin: 'minimal-video',
-        renderer: 'hls',
+        media: 'hls',
         extensions: [],
         sourceUrl: '',
         installMethod: 'pnpm',
@@ -136,7 +136,7 @@ describe('serializeInstallationSearch', () => {
       project: 'new',
       useCase: 'default-audio',
       skin: 'none',
-      renderer: 'spotify',
+      media: 'spotify',
       extensions: [],
       sourceUrl: 'https://open.spotify.com/track/1',
       installMethod: 'pnpm',
@@ -165,14 +165,14 @@ describe('serializeInstallationSearch', () => {
     expect(
       serializeInstallationSearch({
         ...DEFAULT_SELECTION,
-        renderer: 'hls',
+        media: 'hls',
         extensions: ['google-cast'],
       })
     ).toBe('?media=hls&extensions=google-cast');
     expect(
       serializeInstallationSearch({
         ...DEFAULT_SELECTION,
-        renderer: 'mux-video',
+        media: 'mux-video',
         extensions: [],
       })
     ).toBe('?media=mux-video&extensions=none');
@@ -226,12 +226,12 @@ describe('parseInstallationSearchForRoute on the Shadcn guide', () => {
     ).toMatchObject({
       useCase: 'default-video',
       skin: 'minimal-video',
-      renderer: 'html5-video',
+      media: 'html5-video',
     });
     expect(parseInstallationSearchForRoute('shadcn', '?preset=audio&skin=none&media=spotify')).toMatchObject({
       useCase: 'default-audio',
       skin: 'audio',
-      renderer: 'spotify',
+      media: 'spotify',
     });
   });
 

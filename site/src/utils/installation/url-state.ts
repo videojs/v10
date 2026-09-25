@@ -36,7 +36,7 @@ export interface InstallationUiSelection {
   project: InstallationProject;
   useCase: UseCase;
   skin: Skin;
-  renderer: Renderer;
+  media: Renderer;
   extensions: readonly InstallationExtension[];
   sourceUrl: string;
   installMethod: InstallMethod;
@@ -49,7 +49,7 @@ export const DEFAULT_SELECTION: InstallationUiSelection = {
   project: 'existing',
   useCase: 'default-video',
   skin: 'video',
-  renderer: 'html5-video',
+  media: 'html5-video',
   extensions: [],
   sourceUrl: '',
   installMethod: 'pnpm',
@@ -127,7 +127,7 @@ export function parseInstallationSearch(search: string, options: ParseOptions = 
     project: selection.project,
     useCase: selection.useCase,
     skin: selection.skin,
-    renderer: selection.media,
+    media: selection.media,
     extensions: selection.extensions,
     sourceUrl: containsControlCharacter(sourceUrl) ? '' : sourceUrl,
     installMethod: selection.packageManager,
@@ -182,11 +182,11 @@ export function serializeInstallationSearch(selection: InstallationUiSelection, 
   if (selection.useCase === 'background-video') params.delete('skin');
   else write('skin', skinToFlag(selection.skin), skinToFlag(defaults.skin));
 
-  write('media', selection.renderer, defaults.renderer);
+  write('media', selection.media, defaults.media);
   write(
     'extensions',
     serializeInstallationExtensions(selection.extensions),
-    serializeInstallationExtensions(defaultInstallationExtensions(selection.renderer))
+    serializeInstallationExtensions(defaultInstallationExtensions(selection.media))
   );
   write('package-manager', selection.installMethod, defaults.installMethod);
   write(SOURCE_URL_QUERY, selection.sourceUrl, '');

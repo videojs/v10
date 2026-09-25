@@ -105,7 +105,7 @@ describe('resolveInstallationMethodHref', () => {
       current,
       '/docs/guides/installation/html',
       'packaged',
-      { ...DEFAULT_SELECTION, useCase: 'default-audio', skin: 'minimal-audio', renderer: 'html5-audio' },
+      { ...DEFAULT_SELECTION, useCase: 'default-audio', skin: 'minimal-audio', media: 'html5-audio' },
       'html'
     );
 
@@ -119,7 +119,7 @@ describe('resolveInstallationMethodHref', () => {
       installMethod: 'bun',
       useCase: 'default-audio',
       skin: 'minimal-audio',
-      renderer: 'html5-audio',
+      media: 'html5-audio',
       sourceUrl: 'https://example.com/audio.mp3',
     });
 

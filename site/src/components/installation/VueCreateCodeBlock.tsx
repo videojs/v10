@@ -13,7 +13,7 @@ function VueCreateCodeBlock() {
   const code = generateVueCreateCode({
     useCase,
     skin: useSelection('skin'),
-    renderer: useSelection('renderer'),
+    media: useSelection('media'),
     extensions: useSelection('extensions'),
   });
 

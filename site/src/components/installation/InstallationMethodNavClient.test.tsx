@@ -3,7 +3,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { framework, project, renderer, skin, template, useCase } from '@/stores/installation';
+import { framework, project, media, skin, template, useCase } from '@/stores/installation';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -23,7 +23,7 @@ describe('InstallationMethodNavClient', () => {
     cleanup();
     useCase.set('default-video');
     skin.set('video');
-    renderer.set('html5-video');
+    media.set('html5-video');
     template.set('next');
     project.set('existing');
     framework.set('react');
@@ -50,7 +50,7 @@ describe('InstallationMethodNavClient', () => {
   });
 
   it('keeps the active CDN method visible while route state is normalized', () => {
-    renderer.set('vimeo');
+    media.set('vimeo');
 
     const markup = renderToString(<InstallationMethodNavClient currentFramework="html" route="cdn" />);
 
@@ -76,14 +76,14 @@ describe('InstallationMethodNavClient', () => {
 
     act(() => {
       useCase.set('background-video');
-      renderer.set('background-video');
+      media.set('background-video');
     });
 
     await waitFor(() => expect(queryByRole('link', { name: /Shadcn/ })).toHaveAttribute('aria-disabled', 'true'));
 
     act(() => {
       useCase.set('default-video');
-      renderer.set('html5-video');
+      media.set('html5-video');
       skin.set('none');
     });
 
@@ -109,7 +109,7 @@ describe('InstallationMethodNavClient', () => {
 
     act(() => {
       useCase.set('background-video');
-      renderer.set('background-video');
+      media.set('background-video');
     });
 
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -139,7 +139,7 @@ describe('InstallationMethodNavClient', () => {
     window.history.replaceState(null, '', '/docs/guides/installation/html?preset=audio');
     useCase.set('default-audio');
     skin.set('minimal-audio');
-    renderer.set('html5-audio');
+    media.set('html5-audio');
     template.set('vite');
 
     const { getByRole } = render(<InstallationMethodNavClient currentFramework="html" route="html" />);
@@ -189,7 +189,7 @@ describe('InstallationMethodNavClient', () => {
     window.history.replaceState(null, '', '/docs/guides/installation/react?preset=audio');
     useCase.set('default-audio');
     skin.set('minimal-audio');
-    renderer.set('html5-audio');
+    media.set('html5-audio');
     const { getByRole } = render(<InstallationMethodNavClient currentFramework="react" route="react" />);
     const link = getByRole('link', { name: /Shadcn/ });
 

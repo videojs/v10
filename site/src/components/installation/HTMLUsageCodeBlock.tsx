@@ -46,7 +46,7 @@ function CodeBlock({
 function HTMLUsageCodeBlock({ installMethod }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $extensions = useSelection('extensions');
   const selectedInstallMethod = useSelection('installMethod');
   const $sourceUrl = useSelection('sourceUrl');
@@ -58,7 +58,7 @@ function HTMLUsageCodeBlock({ installMethod }: Props) {
   const result = generateHTMLUsageCode({
     useCase: $useCase,
     skin: $skin,
-    renderer: $renderer,
+    media: $renderer,
     extensions: $extensions,
     sourceUrl: $sourceUrl,
     installMethod: method,

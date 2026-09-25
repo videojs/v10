@@ -14,7 +14,7 @@ import { withSelectionMarker } from './withSelectionMarker';
 function ReactCreateCodeBlock() {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $extensions = useSelection('extensions');
   const $sourceUrl = useSelection('sourceUrl');
   const $template = useSelection('template');
@@ -22,7 +22,7 @@ function ReactCreateCodeBlock() {
   const result = generateReactCreateCode({
     useCase: $useCase,
     skin: $skin,
-    renderer: $renderer,
+    media: $renderer,
     extensions: $extensions,
     sourceUrl: $sourceUrl,
   });

@@ -20,7 +20,7 @@ import VimeoLogo from '@/assets/logos/brands/vimeo.svg?react';
 import YoutubeLogo from '@/assets/logos/brands/youtube.svg?react';
 import MuxLogo from '@/assets/logos/mux-small.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
-import { renderer, sourceUrl } from '@/stores/installation';
+import { media, sourceUrl } from '@/stores/installation';
 
 import MuxUploaderPanel from './MuxUploaderPanel';
 import { useSelection } from './useSelection';
@@ -75,7 +75,7 @@ interface Props {
 }
 
 function MediaSourcePicker({ supportedRenderers }: Props) {
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   const $useCase = useSelection('useCase');
   const $sourceUrl = useSelection('sourceUrl');
 
@@ -122,14 +122,14 @@ function MediaSourcePicker({ supportedRenderers }: Props) {
   const detectedRenderer = detection && renderers.includes(detection.renderer) ? detection.renderer : null;
 
   useEffect(() => {
-    if (!rendererSupported && firstRenderer) renderer.set(firstRenderer);
+    if (!rendererSupported && firstRenderer) media.set(firstRenderer);
   }, [firstRenderer, rendererSupported]);
 
   // Follow the detected renderer for a pasted URL. Uses the primitive `detectedRenderer` string instead of the
   // `detection` object so the effect does not re-fire on every render and override a manual selection. Fitting the
   // renderer to the use case lives in the store.
   useEffect(() => {
-    if (detectedRenderer) renderer.set(detectedRenderer);
+    if (detectedRenderer) media.set(detectedRenderer);
   }, [detectedRenderer]);
 
   const hasUrl = $sourceUrl.trim().length > 0;
@@ -183,7 +183,7 @@ function MediaSourcePicker({ supportedRenderers }: Props) {
               This looks like {articleFor(detection.renderer)} {detection.label} link.{' '}
               <button
                 type="button"
-                onClick={() => renderer.set(detection.renderer)}
+                onClick={() => media.set(detection.renderer)}
                 className="intent:decoration-gold cursor-pointer underline"
               >
                 Select {detection.label}
@@ -199,7 +199,7 @@ function MediaSourcePicker({ supportedRenderers }: Props) {
 
       <CardRadioGroup
         value={$renderer}
-        onChange={(value) => renderer.set(value)}
+        onChange={(value) => media.set(value)}
         options={renderers.map((value) => ({
           value,
           label: getInstallationRenderer(value).label,

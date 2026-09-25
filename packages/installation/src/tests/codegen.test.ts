@@ -25,7 +25,7 @@ import type { Renderer } from '../index';
 const baseHTML: InstallationOptions = {
   useCase: 'default-video',
   skin: 'video',
-  renderer: 'html5-video',
+  media: 'html5-video',
   sourceUrl: '',
   installMethod: 'npm',
 };
@@ -33,7 +33,7 @@ const baseHTML: InstallationOptions = {
 const baseReact: InstallationOptions = {
   useCase: 'default-video',
   skin: 'video',
-  renderer: 'html5-video',
+  media: 'html5-video',
   sourceUrl: '',
   installMethod: 'npm',
 };
@@ -58,13 +58,13 @@ describe('generateHTMLInstallCode', () => {
   });
 
   it('includes HLS media script in CDN output', () => {
-    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' }, manifest);
+    const result = generateHTMLInstallCode({ ...baseHTML, media: 'hls' }, manifest);
 
     expect(result.cdn).toContain('media/hlsjs-video.js');
   });
 
   it('includes the Mux Data extension script alongside Mux media in CDN output', () => {
-    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'mux-video' }, manifest);
+    const result = generateHTMLInstallCode({ ...baseHTML, media: 'mux-video' }, manifest);
 
     expect(result.cdn).toContain('media/mux-video.js');
     expect(result.cdn).toContain('extensions/mux-data.js');
@@ -78,15 +78,15 @@ describe('generateHTMLInstallCode', () => {
   });
 
   it('installs the selected playback adapter', () => {
-    const hls = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' }, manifest);
-    const dash = generateHTMLInstallCode({ ...baseHTML, renderer: 'dash' }, manifest);
+    const hls = generateHTMLInstallCode({ ...baseHTML, media: 'hls' }, manifest);
+    const dash = generateHTMLInstallCode({ ...baseHTML, media: 'dash' }, manifest);
 
     expect(hls.npm).toBe('npm install @videojs/html @videojs/hlsjs-video');
     expect(dash.pnpm).toBe('pnpm add @videojs/html @videojs/dash-video');
   });
 
   it('installs selected extensions', () => {
-    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls', extensions: ['google-cast'] }, manifest);
+    const result = generateHTMLInstallCode({ ...baseHTML, media: 'hls', extensions: ['google-cast'] }, manifest);
 
     expect(result.pnpm).toBe('pnpm add @videojs/html @videojs/hlsjs-video @videojs/google-cast');
   });
@@ -102,7 +102,7 @@ describe('generateHTMLInstallCode', () => {
     ] as const satisfies ReadonlyArray<readonly [Renderer, string]>;
 
     for (const [renderer, adapter] of expected) {
-      const result = generateHTMLInstallCode({ ...baseHTML, renderer }, manifest);
+      const result = generateHTMLInstallCode({ ...baseHTML, media: renderer }, manifest);
 
       expect(result.npm).toBe(`npm install @videojs/html ${adapter}`);
     }
@@ -110,14 +110,14 @@ describe('generateHTMLInstallCode', () => {
 
   it('installs only the framework for built-in renderers', () => {
     for (const renderer of ['html5-video', 'html5-audio', 'background-video'] as const) {
-      expect(generateHTMLInstallCode({ ...baseHTML, renderer }, manifest).npm).toBe('npm install @videojs/html');
+      expect(generateHTMLInstallCode({ ...baseHTML, media: renderer }, manifest).npm).toBe('npm install @videojs/html');
     }
   });
 
   it('installs the Mux Data extension package alongside Mux media adapters', () => {
-    const video = generateHTMLInstallCode({ ...baseHTML, renderer: 'mux-video' }, manifest);
+    const video = generateHTMLInstallCode({ ...baseHTML, media: 'mux-video' }, manifest);
     const audio = generateHTMLInstallCode(
-      { ...baseHTML, useCase: 'default-audio', skin: 'audio', renderer: 'mux-audio' },
+      { ...baseHTML, useCase: 'default-audio', skin: 'audio', media: 'mux-audio' },
       manifest
     );
 
@@ -137,19 +137,19 @@ describe('generateReactInstallCode', () => {
   });
 
   it('installs the selected playback adapter', () => {
-    const result = generateReactInstallCode({ renderer: 'hls' });
+    const result = generateReactInstallCode({ media: 'hls' });
 
     expect(result.npm).toBe('npm install @videojs/react @videojs/hlsjs-video');
   });
 
   it('installs the Mux Data extension package alongside Mux media adapters', () => {
-    const result = generateReactInstallCode({ renderer: 'mux-video' });
+    const result = generateReactInstallCode({ media: 'mux-video' });
 
     expect(result.npm).toBe('npm install @videojs/react @videojs/mux-video @videojs/mux-data');
   });
 
   it('installs Google Cast when selected', () => {
-    const result = generateReactInstallCode({ renderer: 'hls', extensions: ['google-cast'] });
+    const result = generateReactInstallCode({ media: 'hls', extensions: ['google-cast'] });
 
     expect(result.pnpm).toBe('pnpm add @videojs/react @videojs/hlsjs-video @videojs/google-cast');
   });
@@ -174,7 +174,7 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('registers and renders selected extensions', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls', extensions: ['google-cast'] });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'hls', extensions: ['google-cast'] });
 
     expect(result.imports).toContain("import '@videojs/html/extensions/google-cast'");
     expect(result.html).toContain('<google-cast></google-cast>');
@@ -191,7 +191,7 @@ describe('generateHTMLUsageCode', () => {
       ...baseHTML,
       useCase: 'default-audio',
       skin: 'audio',
-      renderer: 'html5-audio',
+      media: 'html5-audio',
     };
     const result = generateHTMLUsageCode(opts);
 
@@ -205,7 +205,7 @@ describe('generateHTMLUsageCode', () => {
     const opts: InstallationOptions = {
       ...baseHTML,
       useCase: 'background-video',
-      renderer: 'background-video',
+      media: 'background-video',
     };
     const result = generateHTMLUsageCode(opts);
 
@@ -214,13 +214,13 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('includes the HLS media TypeScript import', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'hls' });
 
     expect(result.imports).toContain("import '@videojs/html/media/hlsjs-video'");
   });
 
   it('uses the dash-video tag, playsinline, and media import for DASH', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'dash' });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'dash' });
 
     expect(result.html).toContain('<dash-video src=');
     expect(result.html).toContain('playsinline');
@@ -229,7 +229,7 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('uses the mux-video tag, playsinline, and media import for Mux video', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'mux-video' });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'mux-video' });
 
     expect(result.html).toContain('<mux-video src=');
     expect(result.html).toContain('playsinline');
@@ -237,7 +237,7 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('adds the Mux Data component and import alongside Mux video by default', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'mux-video' });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'mux-video' });
 
     expect(result.html).toContain('<mux-data></mux-data>');
     expect(result.html).toContain('Mux Data monitors playback quality');
@@ -245,14 +245,14 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('does not add Mux Data for non-Mux media', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'hls' });
 
     expect(result.html).not.toContain('mux-data');
     expect(result.imports).not.toContain('mux-data');
   });
 
   it('uses the vimeo-video tag and media import, without playsinline (iframe)', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'vimeo' });
+    const result = generateHTMLUsageCode({ ...baseHTML, media: 'vimeo' });
 
     expect(result.html).toContain('<vimeo-video src=');
     expect(result.html).not.toContain('playsinline');
@@ -262,14 +262,14 @@ describe('generateHTMLUsageCode', () => {
 
   it('uses the embed-provider tags and media imports, without playsinline (iframe)', () => {
     const cases = [
-      { renderer: 'youtube', tag: 'youtube-video', urlPart: 'youtube.com' },
-      { renderer: 'cloudflare', tag: 'cloudflare-video', urlPart: 'videodelivery.net' },
-      { renderer: 'tiktok', tag: 'tiktok-video', urlPart: 'tiktok.com' },
-      { renderer: 'twitch', tag: 'twitch-video', urlPart: 'twitch.tv' },
+      { media: 'youtube', tag: 'youtube-video', urlPart: 'youtube.com' },
+      { media: 'cloudflare', tag: 'cloudflare-video', urlPart: 'videodelivery.net' },
+      { media: 'tiktok', tag: 'tiktok-video', urlPart: 'tiktok.com' },
+      { media: 'twitch', tag: 'twitch-video', urlPart: 'twitch.tv' },
     ] as const;
 
-    for (const { renderer, tag, urlPart } of cases) {
-      const result = generateHTMLUsageCode({ ...baseHTML, renderer });
+    for (const { media, tag, urlPart } of cases) {
+      const result = generateHTMLUsageCode({ ...baseHTML, media });
 
       expect(result.html).toContain(`<${tag} src=`);
       expect(result.html).not.toContain('playsinline');
@@ -283,7 +283,7 @@ describe('generateHTMLUsageCode', () => {
       ...baseHTML,
       useCase: 'default-audio',
       skin: 'audio',
-      renderer: 'spotify',
+      media: 'spotify',
     });
 
     expect(result.html).toContain('<spotify-audio src=');
@@ -297,7 +297,7 @@ describe('generateHTMLUsageCode', () => {
       ...baseHTML,
       useCase: 'default-audio',
       skin: 'audio',
-      renderer: 'mux-audio',
+      media: 'mux-audio',
     });
 
     expect(result.html).toContain('<mux-audio src=');
@@ -342,7 +342,7 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('uses live-video tags and imports for the live video use case', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
+    const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', media: 'hls' });
 
     expect(result.html).toContain('<live-video-player>');
     expect(result.html).toContain('<live-video-skin style=');
@@ -358,7 +358,7 @@ describe('generateHTMLUsageCode', () => {
       ...baseHTML,
       useCase: 'live-video',
       skin: 'minimal-video',
-      renderer: 'hls',
+      media: 'hls',
     });
 
     expect(result.html).toContain('<live-video-minimal-skin style=');
@@ -366,7 +366,7 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('omits the skin for a headless live video player', () => {
-    const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', skin: 'none', renderer: 'hls' });
+    const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', skin: 'none', media: 'hls' });
 
     expect(result.html).toContain('<live-video-player>');
     expect(result.html).not.toContain('<live-video-skin>');
@@ -379,7 +379,7 @@ describe('generateHTMLUsageCode', () => {
       ...baseHTML,
       useCase: 'live-audio',
       skin: 'audio',
-      renderer: 'mux-audio',
+      media: 'mux-audio',
     });
 
     expect(result.html).toContain('<live-audio-player>');
@@ -394,8 +394,8 @@ describe('generateHTMLUsageCode', () => {
   });
 
   it('defaults live use cases to a live source URL', () => {
-    const live = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
-    const onDemand = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+    const live = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', media: 'hls' });
+    const onDemand = generateHTMLUsageCode({ ...baseHTML, media: 'hls' });
 
     expect(live.html).toContain('.m3u8');
     // A distinct asset from the on-demand demo, so the live player actually
@@ -405,7 +405,7 @@ describe('generateHTMLUsageCode', () => {
 });
 
 describe('Vue and Svelte code generation', () => {
-  const hlsOptions = { ...baseHTML, renderer: 'hls' as const };
+  const hlsOptions = { ...baseHTML, media: 'hls' as const };
 
   it('configures Vue to pass the selected custom elements to the browser', () => {
     const code = generateVueCustomElementConfigCode(hlsOptions);
@@ -491,7 +491,7 @@ video-skin {
     const audioOptions = {
       ...baseHTML,
       useCase: 'default-audio' as const,
-      renderer: 'html5-audio' as const,
+      media: 'html5-audio' as const,
     };
 
     expect(generateVueUsageCode(audioOptions)['App.vue']).toContain('<AudioPlayer>');
@@ -520,7 +520,7 @@ describe('generateReactCreateCode', () => {
   });
 
   it('uses separate media import for HLS', () => {
-    const result = generateReactCreateCode({ ...baseReact, renderer: 'hls' });
+    const result = generateReactCreateCode({ ...baseReact, media: 'hls' });
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { VideoPlayer, VideoSkin } from '@videojs/react/video'");
@@ -530,7 +530,7 @@ describe('generateReactCreateCode', () => {
   });
 
   it('uses separate media import for DASH', () => {
-    const result = generateReactCreateCode({ ...baseReact, renderer: 'dash' });
+    const result = generateReactCreateCode({ ...baseReact, media: 'dash' });
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { DashVideo } from '@videojs/react/media/dash-video'");
@@ -548,7 +548,7 @@ describe('generateReactCreateCode', () => {
   });
 
   it('uses separate media import for Mux video', () => {
-    const result = generateReactCreateCode({ ...baseReact, renderer: 'mux-video' });
+    const result = generateReactCreateCode({ ...baseReact, media: 'mux-video' });
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { MuxVideo } from '@videojs/react/media/mux-video'");
@@ -557,7 +557,7 @@ describe('generateReactCreateCode', () => {
   });
 
   it('renders and imports the Mux Data component alongside Mux video by default', () => {
-    const code = generateReactCreateCode({ ...baseReact, renderer: 'mux-video' })['app/page.tsx'];
+    const code = generateReactCreateCode({ ...baseReact, media: 'mux-video' })['app/page.tsx'];
 
     expect(code).toContain("import { MuxData } from '@videojs/react/extensions/mux-data'");
     expect(code).toContain('<MuxData />');
@@ -565,14 +565,14 @@ describe('generateReactCreateCode', () => {
   });
 
   it('does not add Mux Data for non-Mux media', () => {
-    const code = generateReactCreateCode({ ...baseReact, renderer: 'hls' })['app/page.tsx'];
+    const code = generateReactCreateCode({ ...baseReact, media: 'hls' })['app/page.tsx'];
 
     expect(code).not.toContain('MuxData');
     expect(code).not.toContain('mux-data');
   });
 
   it('uses separate media import for Vimeo without playsInline (iframe)', () => {
-    const result = generateReactCreateCode({ ...baseReact, renderer: 'vimeo' });
+    const result = generateReactCreateCode({ ...baseReact, media: 'vimeo' });
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { VimeoVideo } from '@videojs/react/media/vimeo-video'");
@@ -582,14 +582,14 @@ describe('generateReactCreateCode', () => {
 
   it('uses separate media imports for the embed providers without playsInline (iframe)', () => {
     const cases = [
-      { renderer: 'youtube', component: 'YouTubeVideo', subpath: 'youtube-video' },
-      { renderer: 'cloudflare', component: 'CloudflareVideo', subpath: 'cloudflare-video' },
-      { renderer: 'tiktok', component: 'TikTokVideo', subpath: 'tiktok-video' },
-      { renderer: 'twitch', component: 'TwitchVideo', subpath: 'twitch-video' },
+      { media: 'youtube', component: 'YouTubeVideo', subpath: 'youtube-video' },
+      { media: 'cloudflare', component: 'CloudflareVideo', subpath: 'cloudflare-video' },
+      { media: 'tiktok', component: 'TikTokVideo', subpath: 'tiktok-video' },
+      { media: 'twitch', component: 'TwitchVideo', subpath: 'twitch-video' },
     ] as const;
 
-    for (const { renderer, component, subpath } of cases) {
-      const code = generateReactCreateCode({ ...baseReact, renderer })['app/page.tsx'];
+    for (const { media, component, subpath } of cases) {
+      const code = generateReactCreateCode({ ...baseReact, media })['app/page.tsx'];
 
       expect(code).toContain(`import { ${component} } from '@videojs/react/media/${subpath}'`);
       expect(code).toContain(`<${component} src={"`);
@@ -602,7 +602,7 @@ describe('generateReactCreateCode', () => {
       ...baseReact,
       useCase: 'default-audio',
       skin: 'audio',
-      renderer: 'spotify',
+      media: 'spotify',
     })['app/page.tsx'];
 
     expect(code).toContain("import { SpotifyAudio } from '@videojs/react/media/spotify-audio'");
@@ -614,7 +614,7 @@ describe('generateReactCreateCode', () => {
       ...baseReact,
       useCase: 'default-audio',
       skin: 'audio',
-      renderer: 'html5-audio',
+      media: 'html5-audio',
     };
     const result = generateReactCreateCode(opts);
     const code = result['app/page.tsx'];
@@ -650,7 +650,7 @@ describe('generateReactCreateCode', () => {
   });
 
   it('uses the live video player, skin, and CSS import', () => {
-    const result = generateReactCreateCode({ ...baseReact, useCase: 'live-video', renderer: 'hls' });
+    const result = generateReactCreateCode({ ...baseReact, useCase: 'live-video', media: 'hls' });
     const code = result['app/page.tsx'];
 
     expect(code).toContain('<LiveVideoPlayer>');
@@ -667,7 +667,7 @@ describe('generateReactCreateCode', () => {
       ...baseReact,
       useCase: 'live-video',
       skin: 'minimal-video',
-      renderer: 'hls',
+      media: 'hls',
     });
     const code = result['app/page.tsx'];
 
@@ -676,7 +676,7 @@ describe('generateReactCreateCode', () => {
   });
 
   it('omits the skin for a headless live video player', () => {
-    const result = generateReactCreateCode({ ...baseReact, useCase: 'live-video', skin: 'none', renderer: 'hls' });
+    const result = generateReactCreateCode({ ...baseReact, useCase: 'live-video', skin: 'none', media: 'hls' });
     const code = result['app/page.tsx'];
 
     expect(code).toContain("import { LiveVideoPlayer } from '@videojs/react/live-video'");
@@ -690,7 +690,7 @@ describe('generateReactCreateCode', () => {
       ...baseReact,
       useCase: 'live-audio',
       skin: 'audio',
-      renderer: 'mux-audio',
+      media: 'mux-audio',
     });
     const code = result['app/page.tsx'];
 
@@ -709,7 +709,7 @@ describe('generateReactCreateCode', () => {
       ...baseReact,
       useCase: 'live-audio',
       skin: 'minimal-audio',
-      renderer: 'mux-audio',
+      media: 'mux-audio',
     });
 
     expect(result['app/page.tsx']).toContain('<MinimalLiveAudioSkin>');
@@ -719,7 +719,7 @@ describe('generateReactCreateCode', () => {
     const opts: InstallationOptions = {
       ...baseReact,
       useCase: 'background-video',
-      renderer: 'background-video',
+      media: 'background-video',
     };
     const result = generateReactCreateCode(opts);
     const code = result['app/page.tsx'];
@@ -738,7 +738,7 @@ describe('generateReactCreateCode', () => {
     const code = generateReactCreateCode({
       ...baseReact,
       useCase: 'background-video',
-      renderer: 'hls-background-video',
+      media: 'hls-background-video',
     })['app/page.tsx'];
 
     expect(code).toContain("import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video'");
@@ -754,7 +754,7 @@ describe('source installation code', () => {
   });
 
   it('uses the local React skin source with the selected media adapter', () => {
-    const code = generateSourceReactCreateCode({ ...baseReact, renderer: 'hls' })['app/page.tsx'];
+    const code = generateSourceReactCreateCode({ ...baseReact, media: 'hls' })['app/page.tsx'];
 
     expect(code).not.toContain("'use client'");
     expect(code).toContain("import { VideoSkin } from '@/components/videojs/video/skin'");
@@ -808,7 +808,7 @@ describe('source installation code', () => {
   });
 
   it('shows the exact HTML skin file, media markup, and registrations to edit', () => {
-    const code = generateSourceHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+    const code = generateSourceHTMLUsageCode({ ...baseHTML, media: 'hls' });
 
     expect(code.skinFile).toBe('components/videojs/video/skin.html');
     expect(code.media).toContain('<hlsjs-video src=');
@@ -820,7 +820,7 @@ describe('source installation code', () => {
   });
 
   it('leaves audio players unsized', () => {
-    const code = generateSourceHTMLUsageCode({ ...baseHTML, useCase: 'default-audio', renderer: 'html5-audio' });
+    const code = generateSourceHTMLUsageCode({ ...baseHTML, useCase: 'default-audio', media: 'html5-audio' });
 
     expect(code.player).toMatch(/^<audio-player>/);
   });

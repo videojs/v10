@@ -356,7 +356,7 @@ function installationOptions(selection: InstallationSelection): InstallationOpti
   return {
     useCase: selection.useCase,
     skin: selection.skin,
-    renderer: selection.media,
+    media: selection.media,
     extensions: selection.extensions,
     sourceUrl: selection.sourceUrl,
     installMethod: selection.method === 'cdn' ? 'cdn' : selection.packageManager,

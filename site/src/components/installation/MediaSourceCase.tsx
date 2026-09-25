@@ -11,7 +11,7 @@ interface MediaSourceCaseProps {
 
 /** Client-side gate for installation prose that only applies to some media source picks. */
 function MediaSourceCase({ renderers, children }: MediaSourceCaseProps) {
-  const $renderer = useSelection('renderer');
+  const $renderer = useSelection('media');
   if (!renderers.includes($renderer)) return null;
 
   return children;

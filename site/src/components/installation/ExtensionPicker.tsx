@@ -34,7 +34,7 @@ function ExtensionPicker() {
   const selected = useSelection('extensions');
   const useCase = useSelection('useCase');
   const skin = useSelection('skin');
-  const renderer = useSelection('renderer');
+  const renderer = useSelection('media');
   const available = installationExtensionsFor(useCase, skin, renderer);
 
   if (available.length === 0) {
