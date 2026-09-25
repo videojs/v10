@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { INSTALLATION_DEMO_SOURCES } from '../defaults';
 import { PACKAGE_MANAGERS, type InstallationInput } from '../parameters';
 import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from '../presets';
 import { INSTALLATION_FRAMEWORKS } from '../projects';
@@ -127,6 +128,23 @@ describe('resolveInstallationSelection', () => {
         sourceUrl: 'https://example.com/video.mp4',
       })
     ).toMatchObject({ ok: false, errors: [{ field: 'sourceUrl' }] });
+  });
+
+  it('plays the Mux static-rendition demo sources with native media', () => {
+    expect(resolveInstallationSelection({ preset: 'audio', sourceUrl: INSTALLATION_DEMO_SOURCES.audio })).toMatchObject(
+      {
+        ok: true,
+        selection: { media: 'html5-audio', extensions: [] },
+      }
+    );
+    expect(resolveInstallationSelection({ sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4 })).toMatchObject({
+      ok: true,
+      selection: { media: 'html5-video' },
+    });
+    expect(resolveInstallationSelection({ sourceUrl: INSTALLATION_DEMO_SOURCES.videoHls })).toMatchObject({
+      ok: true,
+      selection: { media: 'mux-video', extensions: ['mux-data'] },
+    });
   });
 
   it('infers streaming background-video renderers from the source URL', () => {

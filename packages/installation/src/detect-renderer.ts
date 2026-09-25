@@ -8,22 +8,6 @@ export interface DetectionResult {
 }
 
 const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Renderer }> = [
-  // Mux is matched by hostname before the `.m3u8` extension rule below, so a
-  // `stream.mux.com` URL resolves to a Mux renderer (with Mux Data) rather than
-  // generic HLS. Candidate order lets the selected use case choose video,
-  // audio, or background playback.
-  {
-    match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
-    renderer: 'mux-video',
-  },
-  {
-    match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
-    renderer: 'mux-audio',
-  },
-  {
-    match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
-    renderer: 'mux-background-video',
-  },
   {
     match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
     renderer: 'vimeo',
@@ -79,6 +63,10 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
   // },
 ];
 
+const MUX_HOSTNAMES = new Set(['stream.mux.com', 'mux.com', 'www.mux.com']);
+// Candidate order lets the selected use case choose video, audio, or background playback.
+const MUX_RENDERERS = ['mux-video', 'mux-audio', 'mux-background-video'] as const satisfies readonly Renderer[];
+
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.webm', '.mov', '.ogv']);
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.m4a', '.wav', '.ogg', '.flac', '.aac']);
 
@@ -110,8 +98,14 @@ export function detectRendererCandidates(url: string): readonly Renderer[] {
   const parsed = parseUrl(trimmed);
   if (!parsed) return [];
 
-  const renderers = DOMAIN_RULES.filter((rule) => rule.match(parsed.hostname)).map(({ renderer }) => renderer);
   const ext = getExtension(parsed.pathname);
+  // A Mux playback URL (`<id>.m3u8` or a bare playback ID) wins over generic HLS so it gets Mux Data. Static
+  // renditions such as `<id>/highest.mp4` or `<id>/audio.m4a` are plain files that the Mux media cannot play.
+  const muxPlayback = MUX_HOSTNAMES.has(parsed.hostname) && (ext === '' || ext === '.m3u8');
+  const renderers: Renderer[] = [
+    ...(muxPlayback ? MUX_RENDERERS : []),
+    ...DOMAIN_RULES.filter((rule) => rule.match(parsed.hostname)).map(({ renderer }) => renderer),
+  ];
 
   if (ext === '.m3u8') {
     renderers.push('hls', 'hls-background-video');

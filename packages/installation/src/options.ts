@@ -196,7 +196,7 @@ export function installationDecisionOrderFor({
     {
       title: 'Choose the media',
       guidance:
-        'Infer the adapter from the source when possible, such as hls for an .m3u8 URL or mux-video for Mux playback.',
+        'Infer the adapter from the source when possible. Mux wins for Mux playback URLs: stream.mux.com/<playback-id>.m3u8 or a bare playback ID uses mux-video, mux-audio, or mux-background-video rather than hls. Mux static renditions such as .mp4 or .m4a files use html5-video or html5-audio. Other .m3u8 URLs use hls.',
     },
     {
       title: 'Choose extensions',

@@ -18,6 +18,21 @@ describe('detectRenderer', () => {
       });
     });
 
+    it('detects a bare Mux playback ID as Mux', () => {
+      expect(detectRenderer('https://stream.mux.com/abc123', 'default-video')?.renderer).toBe('mux-video');
+      expect(detectRenderer('https://stream.mux.com/abc123', 'default-audio')?.renderer).toBe('mux-audio');
+    });
+
+    it('detects Mux static renditions as native media for each preset', () => {
+      const video = 'https://stream.mux.com/abc123/highest.mp4';
+      const audio = 'https://stream.mux.com/abc123/audio.m4a';
+
+      expect(detectRenderer(video, 'default-video')?.renderer).toBe('html5-video');
+      expect(detectRenderer(video, 'background-video')?.renderer).toBe('background-video');
+      expect(detectRenderer(audio, 'default-audio')?.renderer).toBe('html5-audio');
+      expect(detectRenderer(video, 'live-video')).toBeNull();
+    });
+
     it('detects vimeo.com as Vimeo', () => {
       expect(detectRenderer('https://vimeo.com/76979871', 'default-video')).toEqual({
         renderer: 'vimeo',
@@ -177,11 +192,7 @@ describe('detectRenderer', () => {
       });
     });
 
-    it('detects .m4a as HTML5 Audio alongside a provider-specific candidate', () => {
-      expect(detectRenderer('https://stream.mux.com/example/audio.m4a', 'default-audio')).toEqual({
-        renderer: 'mux-audio',
-        label: 'Mux',
-      });
+    it('detects .m4a as HTML5 Audio', () => {
       expect(detectRenderer('https://example.com/audio.m4a', 'default-audio')).toEqual({
         renderer: 'html5-audio',
         label: 'HTML5 Audio',
