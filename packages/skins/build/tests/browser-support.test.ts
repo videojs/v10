@@ -76,6 +76,24 @@ describe('auditSkinCss', () => {
     expect(problems[1]).toContain('`:dir()`');
   });
 
+  it('keeps every `text-current/*` utility behind the `media-current-mix` variant', () => {
+    // Consumers compile the Tailwind skins themselves, so only the source can keep `color: color-mix()` of
+    // `currentcolor` from WebKit 16, which crashes on it.
+    const sources = globSync('packages/skins/src/**/*.{ts,tsx,css}', { cwd: workspaceDir }).filter(
+      (file) => !file.includes('/tests/')
+    );
+    const unguarded = sources.flatMap((file) =>
+      // Backticks mark prose that names the utility, not a class list that uses it.
+      [...readFileSync(resolve(workspaceDir, file), 'utf8').matchAll(/(?<![`\w:-])[\w:-]*text-current\/[\w.]+/g)]
+        .map(([utility]) => utility)
+        .filter((utility) => !utility.split(':').includes('media-current-mix'))
+        .map((utility) => `${file}: ${utility}`)
+    );
+
+    expect(sources.length).toBeGreaterThan(0);
+    expect(unguarded).toEqual([]);
+  });
+
   it('pairs each prefixed property with its `-webkit-` form in the Tailwind utilities', () => {
     // Tailwind emits `@utility` bodies as written, and Lightning CSS cannot lower them before they ship.
     const utilities = readFileSync(resolve(workspaceDir, 'packages/skins/src/styles/tailwind.css'), 'utf8');
