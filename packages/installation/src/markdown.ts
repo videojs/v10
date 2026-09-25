@@ -3,7 +3,7 @@ import type { InstallationDiscoveryCompatibility } from './options';
 import { installationParameterForKey } from './parameters';
 import type { InstallationDiscovery, InstallationPlan } from './plan';
 import { INSTALLATION_FRAMEWORKS } from './projects';
-import { selectionToInput, type SelectionError } from './selection';
+import { containsControlCharacter, selectionToInput, type SelectionError } from './selection';
 
 function fenced(language: string, value: string): string {
   const longestRun = Math.max(2, ...[...value.matchAll(/`+/g)].map((match) => match[0].length));
@@ -211,12 +211,34 @@ ${steps}
 `;
 }
 
+const MAX_ERROR_VALUE_LENGTH = 80;
+
+/** Quote a rejected value on one line so line breaks and control characters cannot shape the terminal output. */
+function errorValue(value: string): string {
+  const characters = Array.from(value);
+  const shown =
+    characters.length > MAX_ERROR_VALUE_LENGTH ? [...characters.slice(0, MAX_ERROR_VALUE_LENGTH - 1), '…'] : characters;
+  const escaped = shown
+    .map((character) => {
+      if (character === '"' || character === '\\') return `\\${character}`;
+
+      if (!containsControlCharacter(character)) return character;
+
+      return `\\u${character.codePointAt(0)!.toString(16).padStart(4, '0')}`;
+    })
+    .join('');
+
+  return `"${escaped}"`;
+}
+
 export function renderSelectionErrors(errors: readonly SelectionError[]): string {
   return `Invalid installation options:\n${errors
     .map((error) => {
       const field = error.field === 'arguments' ? 'arguments' : installationParameterForKey(error.field).flag;
+      const value = error.value === undefined ? '' : ` ${errorValue(error.value)}`;
+      const hint = error.hint ? ` ${error.hint}` : '';
 
-      return `- ${field}: ${error.message}`;
+      return `- ${field}${value}: ${error.message}${hint}`;
     })
     .join('\n')}`;
 }

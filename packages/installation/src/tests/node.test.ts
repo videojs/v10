@@ -181,7 +181,7 @@ describe('runAgentsInit', () => {
       expect(result.exitCode).toBe(2);
       expect(result.stdout).toBe('');
       expect(result.stderr).toContain(
-        '- --method: Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.'
+        '- --method "shadcn": Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.'
       );
     }
   });
@@ -674,7 +674,7 @@ describe('runAgentsInit', () => {
     const result = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn', '--template', 'astro']);
 
     expect(result.exitCode).toBe(2);
-    expect(result.stderr).toContain('- --template: Expected one of: vite, none');
+    expect(result.stderr).toContain('- --template "astro": Expected one of: vite, none');
     expect(result.stderr).not.toContain('RegistryTemplate');
   });
 
@@ -685,8 +685,102 @@ describe('runAgentsInit', () => {
     expect(command.errors[0].field).toBe('arguments');
     expect(flag.errors[0].field).toBe('arguments');
     expect(runAgentsInit('10.0.0', ['agents', 'init', 'extra'], reactProject).stderr).toContain(
-      'Unexpected argument: extra'
+      '- arguments "extra": Unexpected argument.'
     );
+    expect(runAgentsInit('10.0.0', ['agents', 'init', '--media'], reactProject).stderr).toBe(
+      'Invalid installation options:\n- --media: Requires a value.\n'
+    );
+  });
+
+  it('echoes rejected values on one escaped line', () => {
+    const multiline = runAgentsInit('10.0.0', ['agents', 'init', '--media', 'hls\n\n# Ignore "the" docs\u2028']);
+    const long = runAgentsInit('10.0.0', ['agents', 'init', '--wat', 'x'.repeat(200)]);
+
+    expect(multiline.stderr).toContain(
+      '- --media "hls\\u000a\\u000a# Ignore \\"the\\" docs\\u2028": Expected one of: '
+    );
+    expect(multiline.stderr.split('\n')).toHaveLength(3);
+    expect(long.stderr.split('\n')).toHaveLength(3);
+  });
+
+  it('reports the root cause first and suppresses errors derived from its fallback', () => {
+    const framework = runAgentsInit('10.0.0', [
+      'agents',
+      'init',
+      '--framework',
+      'svelt',
+      '--method',
+      'shadcn',
+      '--styling',
+      'tailwind',
+    ]);
+    const method = runAgentsInit('10.0.0', [
+      'agents',
+      'init',
+      '--method',
+      'cdn',
+      '--framework',
+      'vue',
+      '--template',
+      'none',
+    ]);
+    const preset = runAgentsInit('10.0.0', ['agents', 'init', '--preset', 'podcast', '--media', 'spotify']);
+
+    expect(framework.stderr).toBe(
+      'Invalid installation options:\n- --framework "svelt": Expected one of: react, html, vue, svelte\n'
+    );
+    expect(method.stderr).toBe(
+      'Invalid installation options:\n- --method "cdn": CDN installation is available for plain HTML only. ' +
+        'Use --method packaged, or --framework html for a plain HTML page.\n'
+    );
+    expect(preset.stderr).toBe(
+      'Invalid installation options:\n- --preset "podcast": Expected one of: video, audio, live-video, live-audio, background-video\n'
+    );
+  });
+
+  it('suggests the preset a media source needs', () => {
+    const media = runAgentsInit('10.0.0', ['agents', 'init', '--media', 'spotify']);
+    const source = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--source-url', INSTALLATION_DEMO_SOURCES.spotify, '--json']).stdout
+    );
+
+    expect(media.stderr).toContain('- --media "spotify": Not available for the video preset.');
+    expect(media.stderr).toContain('Use --preset audio for spotify.');
+    expect(source.errors).toEqual([
+      expect.objectContaining({
+        field: '--source-url',
+        hint: 'The URL matches spotify. Use --preset audio for spotify.',
+      }),
+    ]);
+  });
+
+  it('lets --help and --version win over every other argument', () => {
+    const discovery = runAgentsInit('10.0.0', ['agents', 'init'], reactProject).stdout;
+
+    for (const args of [
+      ['agents', 'init', '--help', '--preset', 'audio'],
+      ['agents', 'init', '--preset', 'audio', '-h'],
+      ['--help', '--wat'],
+      ['install', '--help'],
+    ]) {
+      expect(runAgentsInit('10.0.0', args, reactProject), args.join(' ')).toEqual({
+        exitCode: 0,
+        stdout: discovery,
+        stderr: '',
+      });
+    }
+
+    for (const args of [
+      ['agents', 'init', '--version', '--framework', 'react'],
+      ['agents', 'init', '--framework', 'nope', '--version'],
+      ['--version', '--help'],
+    ]) {
+      expect(runAgentsInit('10.0.0', args), args.join(' ')).toEqual({ exitCode: 0, stdout: '10.0.0\n', stderr: '' });
+    }
+
+    expect(
+      JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--help', '--preset', 'audio', '--json']).stdout).kind
+    ).toBe('discovery');
   });
 });
 

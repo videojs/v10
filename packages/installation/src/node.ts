@@ -39,80 +39,60 @@ export interface AgentsInitResult {
 
 interface ParsedArguments {
   json: boolean;
-  help: boolean;
   selected: boolean;
   input: InstallationInput;
 }
 
 type ParseResult = { ok: true; value: ParsedArguments } | { ok: false; json: boolean; errors: SelectionError[] };
 
+const USAGE_HINT = 'Run `agents init` without selection flags to list every option.';
+
 function parseArguments(args: readonly string[]): ParseResult {
   const json = args.includes('--json');
+  const failure = (error: SelectionError): ParseResult => ({ ok: false, json, errors: [error] });
 
   if (args[0] !== 'agents' || args[1] !== 'init') {
-    return {
-      ok: false,
-      json,
-      errors: [
-        {
-          field: 'arguments',
-          message: 'Expected `agents init`. Run `agents init` without selection flags to list every option.',
-        },
-      ],
-    };
+    return failure({
+      field: 'arguments',
+      value: args.slice(0, 2).join(' '),
+      message: 'Expected `agents init`.',
+      hint: USAGE_HINT,
+    });
   }
 
   const input: InstallationInput = {};
   let selected = false;
-  let help = false;
 
   for (let index = 2; index < args.length; index++) {
     const argument = args[index]!;
     if (argument === '--json') continue;
 
-    if (argument === '--help' || argument === '-h') {
-      help = true;
-      continue;
-    }
-
     const equals = argument.indexOf('=');
     const flag = equals === -1 ? argument : argument.slice(0, equals);
-
     const key = installationInputKeyFromFlag(flag);
 
     if (!key) {
-      const message = argument.startsWith('-') ? `Unknown flag: ${argument}` : `Unexpected argument: ${argument}`;
-
-      return {
-        ok: false,
-        json,
-        errors: [{ field: 'arguments', value: argument, message }],
-      };
+      return failure({
+        field: 'arguments',
+        value: argument,
+        message: argument.startsWith('-') ? 'Unknown flag.' : 'Unexpected argument.',
+        hint: USAGE_HINT,
+      });
     }
 
     const value = equals === -1 ? args[++index] : argument.slice(equals + 1);
 
     if (value === undefined || value.startsWith('--') || (value.length === 0 && key !== 'sourceUrl')) {
-      return {
-        ok: false,
-        json,
-        errors: [{ field: key, message: `${flag} requires a value.` }],
-      };
+      return failure({ field: key, message: 'Requires a value.' });
     }
 
-    if (input[key] !== undefined) {
-      return {
-        ok: false,
-        json,
-        errors: [{ field: key, value, message: `${flag} may only be provided once.` }],
-      };
-    }
+    if (input[key] !== undefined) return failure({ field: key, value, message: 'May only be provided once.' });
 
     input[key] = value;
     selected = true;
   }
 
-  return { ok: true, value: { json, help, selected, input } };
+  return { ok: true, value: { json, selected, input } };
 }
 
 function jsonDocument<Value>(value: Value): string {
@@ -232,12 +212,9 @@ export function runAgentsInit(
 ): AgentsInitResult {
   try {
     const json = args.includes('--json');
-    const nonJsonArgs = args.filter((argument) => argument !== '--json');
-    const versionRequested =
-      (nonJsonArgs.length === 1 && nonJsonArgs[0] === '--version') ||
-      (nonJsonArgs.length === 3 && nonJsonArgs.join(' ') === 'agents init --version');
 
-    if (versionRequested) {
+    // `--version` and `--help` win over every other argument, including ones that would otherwise be rejected.
+    if (args.includes('--version')) {
       return {
         exitCode: 0,
         stdout: json
@@ -247,32 +224,30 @@ export function runAgentsInit(
       };
     }
 
-    const topLevelDiscovery =
-      nonJsonArgs.length === 0 ||
-      (nonJsonArgs.length === 1 && (nonJsonArgs[0] === '--help' || nonJsonArgs[0] === '-h'));
-    const normalizedArgs = topLevelDiscovery ? ['agents', 'init', '--help', ...(json ? ['--json'] : [])] : args;
-    const parsed = parseArguments(normalizedArgs);
-    if (!parsed.ok) return errorResult(parsed.json, parsed.errors);
+    const bare = args.every((argument) => argument === '--json');
+    const help = bare || args.includes('--help') || args.includes('-h');
+    const parsed = help ? null : parseArguments(args);
+    if (parsed && !parsed.ok) return errorResult(parsed.json, parsed.errors);
 
-    if (!parsed.value.selected || parsed.value.help) {
+    if (!parsed || !parsed.value.selected) {
       const discovery = createInstallationDiscovery(packageVersion, defaults);
 
       return {
         exitCode: 0,
-        stdout: parsed.value.json ? jsonDocument(discovery) : renderDiscoveryMarkdown(discovery),
+        stdout: json ? jsonDocument(discovery) : renderDiscoveryMarkdown(discovery),
         stderr: '',
       };
     }
 
     const resolved = resolveInstallationSelection(parsed.value.input, packageVersion, defaults);
-    if (!resolved.ok) return errorResult(parsed.value.json, resolved.errors);
+    if (!resolved.ok) return errorResult(json, resolved.errors);
 
     const plan = createInstallationPlan(resolved.selection, packageVersion);
     const versionNotice = installationVersionNotice(plan, defaults.installedVersions);
 
     return {
       exitCode: 0,
-      stdout: parsed.value.json
+      stdout: json
         ? jsonDocument(installationPlanJson(plan, versionNotice))
         : renderInstallationMarkdown(plan, versionNotice ? { versionNotice: versionNotice.message } : {}),
       stderr: '',

@@ -79,7 +79,10 @@ export type SelectionErrorField = InstallationInputKey | 'arguments';
 export interface SelectionError {
   field: SelectionErrorField;
   message: string;
+  /** The rejected input. Renderers must escape it; it is never part of `message`. */
   value?: string;
+  /** A CLI-oriented suggestion, such as the preset a media source needs. */
+  hint?: string;
 }
 
 export type SelectionResult =
@@ -220,12 +223,47 @@ export interface InstallationSelectionDefaults {
   framework?: DetectedInstallationDefault<InstallationFramework>;
 }
 
+/** Presets whose media list includes a renderer, for hints that point at the preset a source needs. */
+function presetsFor(renderer: Renderer): PresetFlag[] {
+  return USE_CASES.filter((useCase) => getInstallationPreset(useCase).renderers.includes(renderer)).map(
+    (useCase) => INSTALLATION_PRESETS[useCase].flag
+  );
+}
+
+function presetHint(renderer: Renderer): string | undefined {
+  const presets = presetsFor(renderer);
+  if (presets.length === 0) return undefined;
+
+  return `Use ${presets.map((preset) => `--preset ${preset}`).join(' or ')} for ${renderer}.`;
+}
+
+function unsupportedMethodError(method: InstallationMethod): SelectionError {
+  return method === 'cdn'
+    ? {
+        field: 'method',
+        value: method,
+        message: 'CDN installation is available for plain HTML only.',
+        hint: 'Use --method packaged, or --framework html for a plain HTML page.',
+      }
+    : {
+        field: 'method',
+        value: method,
+        message:
+          'Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.',
+      };
+}
+
+/**
+ * Resolve one requested installation. Errors report root causes first: when a choice is invalid, checks that only
+ * compare other options against its fallback value are skipped instead of reported as a cascade.
+ */
 export function resolveInstallationSelection(
   input: InstallationInput,
   packageVersion = 'latest',
   defaults: InstallationSelectionDefaults = {}
 ): SelectionResult {
   const errors: SelectionError[] = [];
+  const derivedErrors: SelectionError[] = [];
   const defaulted: InstallationInputKey[] = [];
   const defaultSources: Partial<Record<InstallationInputKey, string>> = {};
   const defaultValue = <Key extends InstallationInputKey>(key: Key, value: NonNullable<InstallationInput[Key]>) => {
@@ -235,23 +273,31 @@ export function resolveInstallationSelection(
   };
 
   const methodValue = defaultValue('method', 'packaged');
+  const methodValid = includes(INSTALLATION_METHODS, methodValue);
   const method = resolveChoice('method', methodValue, INSTALLATION_METHODS, 'packaged', errors);
 
   const frameworkValue = defaultValue('framework', defaults.framework?.value ?? 'html');
+  const frameworkValid = includes(INSTALLATION_FRAMEWORKS, frameworkValue);
   const framework = resolveChoice('framework', frameworkValue, INSTALLATION_FRAMEWORKS, 'html', errors);
 
   if (input.framework === undefined && defaults.framework) defaultSources.framework = defaults.framework.source;
 
+  const methodSupported = methodValid && frameworkValid && installationMethodsForFramework(framework).includes(method);
+
+  if (methodValid && frameworkValid && !methodSupported) errors.push(unsupportedMethodError(method));
+
   const projectValue = defaultValue('project', 'existing');
+  const projectValid = includes(INSTALLATION_PROJECTS, projectValue);
   const project = resolveChoice('project', projectValue, INSTALLATION_PROJECTS, 'existing', errors);
 
   const presetValue = defaultValue('preset', 'video');
   const presetFlags = Object.values(INSTALLATION_PRESETS).map(({ flag }) => flag);
+  const presetValid = includes(presetFlags, presetValue);
   const preset = resolveChoice('preset', presetValue, presetFlags, 'video', errors);
-  const requestedUseCase = useCaseFromPreset(preset);
-  const useCase = requestedUseCase ?? 'default-video';
+  const useCase = useCaseFromPreset(preset) ?? 'default-video';
 
   const skinValue = useCase === 'background-video' ? 'default' : defaultValue('skin', 'default');
+  const skinValid = includes(INSTALLATION_SKIN_FLAGS, skinValue);
   const skinFlag = resolveChoice('skin', skinValue, INSTALLATION_SKIN_FLAGS, 'default', errors);
 
   if (useCase === 'background-video' && input.skin !== undefined) {
@@ -285,34 +331,39 @@ export function resolveInstallationSelection(
   const compatibleDetectedCandidates = detectedCandidates.filter((candidate) => availableMedia.includes(candidate));
   const detectedMedia = validSourceUrl ? detectRenderer(sourceUrl, useCase)?.renderer : undefined;
   const mediaValue = defaultValue('media', detectedMedia ?? availableMedia[0]!);
+  const mediaValid = includes(RENDERERS, mediaValue);
   const media = resolveChoice('media', mediaValue, RENDERERS, availableMedia[0]!, errors);
+  const mediaAvailable = presetValid && mediaValid && availableMedia.includes(media);
 
-  if (validSourceUrl && detectedCandidates.length > 0) {
+  if (presetValid && mediaValid && !mediaAvailable) {
+    const hint = presetHint(media);
+
+    errors.push({
+      field: 'media',
+      value: media,
+      message: `Not available for the ${preset} preset. Expected one of: ${availableMedia.join(', ')}`,
+      ...(hint ? { hint } : {}),
+    });
+  }
+
+  if (presetValid && validSourceUrl && detectedCandidates.length > 0 && (mediaAvailable || !mediaValid)) {
     if (!detectedMedia) {
+      const candidate = detectedCandidates[0]!;
+      const hint = presetHint(candidate);
+
       errors.push({
         field: 'sourceUrl',
         value: sourceUrl,
         message: `Does not match a media source available for the ${preset} preset.`,
+        ...(hint ? { hint: `The URL matches ${candidate}. ${hint}` } : {}),
       });
-    } else if (
-      input.media !== undefined &&
-      includes(RENDERERS, mediaValue) &&
-      !compatibleDetectedCandidates.includes(mediaValue)
-    ) {
+    } else if (input.media !== undefined && mediaAvailable && !compatibleDetectedCandidates.includes(media)) {
       errors.push({
         field: 'media',
-        value: mediaValue,
+        value: media,
         message: `Does not match the supplied source URL. Expected one of: ${compatibleDetectedCandidates.join(', ')}`,
       });
     }
-  }
-
-  if (includes(RENDERERS, mediaValue) && !availableMedia.includes(mediaValue)) {
-    errors.push({
-      field: 'media',
-      value: mediaValue,
-      message: `Not available for the ${preset} preset. Expected one of: ${availableMedia.join(', ')}`,
-    });
   }
 
   const availableExtensions = installationExtensionsFor(useCase, skin, media);
@@ -320,6 +371,8 @@ export function resolveInstallationSelection(
     input.extensions === undefined
       ? defaultInstallationExtensions(media)
       : [...new Set(parseInstallationExtensions(input.extensions))];
+  // Extension compatibility depends on the preset, skin, and media, so it is only checked once they are valid.
+  const extensionErrors = mediaAvailable && skinValid ? errors : derivedErrors;
 
   if (input.extensions === undefined) defaulted.push('extensions');
 
@@ -333,10 +386,11 @@ export function resolveInstallationSelection(
         message: 'Expected a comma-separated list containing google-cast, mux-data, or none.',
       });
     } else if (!availableExtensions.includes(extension)) {
-      errors.push({
+      extensionErrors.push({
         field: 'extensions',
         value: extension,
         message: `${extension} does not apply to the selected preset, skin, and media source.`,
+        hint: `Use --extensions ${serializeInstallationExtensions(availableExtensions)}.`,
       });
     } else {
       requestedExtensions.add(extension);
@@ -346,15 +400,15 @@ export function resolveInstallationSelection(
   const extensions = INSTALLATION_EXTENSIONS.filter((extension) => requestedExtensions.has(extension));
 
   const sourceFramework = sourceFrameworkFor(framework);
-  // An unsupported method is reported once below; list the framework's packaged app setups instead of none.
-  const templateMethod = installationMethodsForFramework(framework).includes(method) ? method : 'packaged';
-  const availableTemplates = installationTemplatesForMethod(framework, templateMethod);
-  const defaultTemplate =
-    templateMethod === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
+  // App setups depend on a supported method and framework, which are reported above when they are not.
+  const templateErrors = methodSupported ? errors : derivedErrors;
+  const availableTemplates = installationTemplatesForMethod(framework, method);
+  const defaultTemplate = method === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
   const templateValue = defaultValue('template', defaultTemplate);
-  const template = resolveChoice('template', templateValue, availableTemplates, defaultTemplate, errors);
+  const templateValid = includes(availableTemplates, templateValue);
+  const template = resolveChoice('template', templateValue, availableTemplates, defaultTemplate, templateErrors);
 
-  if (template === 'none' && project === 'new') {
+  if (methodSupported && projectValid && templateValid && template === 'none' && project === 'new') {
     errors.push({
       field: 'project',
       value: project,
@@ -376,54 +430,46 @@ export function resolveInstallationSelection(
 
   let styling: RegistryStyling | null = null;
 
-  if (method === 'cdn') {
-    if (framework !== 'html') {
-      errors.push({
-        field: 'method',
-        value: method,
-        message: 'CDN installation is available for plain HTML only.',
-      });
-    }
-
-    if (!rendererSupportsCdn(media, CDN_MEDIA_SUBPATHS)) {
-      errors.push({ field: 'media', value: media, message: `${media} is not published by @videojs/cdn.` });
-    }
+  if (methodSupported && method === 'cdn' && mediaValid && !rendererSupportsCdn(media, CDN_MEDIA_SUBPATHS)) {
+    errors.push({
+      field: 'media',
+      value: media,
+      message: `${media} is not published by @videojs/cdn.`,
+      hint: `Use --method packaged for ${media}.`,
+    });
   }
 
   if (method === 'shadcn') {
-    if (!installationMethodsForFramework(framework).includes('shadcn')) {
-      errors.push({
-        field: 'method',
-        value: method,
-        message:
-          'Shadcn installation is available for React and plain HTML. Use packaged installation for Vue or Svelte.',
-      });
-    }
-
-    if (useCase === 'background-video') {
+    if (presetValid && useCase === 'background-video') {
       errors.push({
         field: 'preset',
         value: preset,
         message: 'Background Video is not available from the Shadcn registry.',
+        hint: 'Use --method packaged for background video.',
       });
     }
 
-    if (skinFlag === 'none') {
+    if (skinValid && skinFlag === 'none') {
       errors.push({
         field: 'skin',
         value: skinFlag,
         message: 'Shadcn installs editable skin source, so the `none` skin is not available.',
+        hint: 'Use --skin default or --skin minimal, or --method packaged for a skinless player.',
       });
     }
 
     const stylingValue = defaultValue('styling', defaultRegistryStyling(sourceFramework));
     const stylings = registryStylings(sourceFramework);
 
-    styling = resolveChoice('styling', stylingValue, stylings, defaultRegistryStyling(sourceFramework), errors);
-  } else {
-    if (input.styling !== undefined) {
-      errors.push({ field: 'styling', message: 'only applies to Shadcn installation.' });
-    }
+    styling = resolveChoice(
+      'styling',
+      stylingValue,
+      stylings,
+      defaultRegistryStyling(sourceFramework),
+      methodSupported ? errors : derivedErrors
+    );
+  } else if (methodValid && input.styling !== undefined) {
+    errors.push({ field: 'styling', value: input.styling, message: 'only applies to Shadcn installation.' });
   }
 
   if (errors.length > 0) return { ok: false, errors };
