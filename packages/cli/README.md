@@ -27,6 +27,9 @@ npx @videojs/cli agents init --framework html --method cdn --project existing --
 
 Add `--json` for a structured document instead of Markdown, or `--version` to print the CLI version.
 
+A global install (`npm install --global @videojs/cli`) adds the same command as `videojs agents init`. The `docs` and
+`config` commands from earlier releases are deprecated: they print where to find installation instructions and docs.
+
 Each plan ends with a command that reproduces it with every choice spelled out. When you omit `--framework`, the command
 reads the nearest `package.json`: React, Next.js, TanStack Start, and React Router projects get React instructions, Vue
 and Nuxt projects get Vue, Svelte and SvelteKit projects get Svelte, and anything else gets plain HTML. React

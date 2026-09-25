@@ -204,14 +204,17 @@ const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 const CLI_PACKAGE_DIR = 'cli';
 
 /**
- * `npx @videojs/cli` runs the package's only bin, and every cold run downloads its dependencies, so the CLI stays one
- * bundled file with no runtime dependencies.
+ * `npx @videojs/cli` runs the package's only bin, which installs globally as `videojs`, and every cold run downloads
+ * its dependencies, so the CLI stays one bundled file with no runtime dependencies.
  */
 function cliMetadataWarnings(pkg) {
   const warnings = [];
 
-  if (typeof pkg.bin !== 'string') {
-    warnings.push(`${pkg.name}: "bin" should be one path so \`npx ${pkg.name}\` runs it`);
+  if (
+    JSON.stringify(Object.keys(pkg.bin ?? {})) !== JSON.stringify(['videojs']) ||
+    typeof pkg.bin.videojs !== 'string'
+  ) {
+    warnings.push(`${pkg.name}: "bin" should be { "videojs": "<path>" } so \`npx ${pkg.name}\` runs its only command`);
   }
 
   if (JSON.stringify(pkg.files) !== JSON.stringify(['dist'])) {

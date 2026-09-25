@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -6,10 +6,14 @@ import { describe, expect, it } from 'vitest';
 
 import packageJson from '../../package.json' with { type: 'json' };
 
-const bin = resolve(import.meta.dirname, '../..', packageJson.bin);
+const bin = resolve(import.meta.dirname, '../..', packageJson.bin.videojs);
 
 function run(...args: string[]): string {
   return execFileSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
+}
+
+function runWithStderr(...args: string[]) {
+  return spawnSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
 }
 
 describe('bin', () => {
@@ -20,6 +24,17 @@ describe('bin', () => {
       package: '@videojs/cli',
       packageVersion: packageJson.version,
     });
+  });
+
+  it('points the deprecated docs and config commands at agents init', () => {
+    for (const command of ['docs', 'config']) {
+      const result = runWithStderr(command, 'installation');
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(`\`videojs ${command}\` is deprecated`);
+      expect(result.stderr).toContain('npx @videojs/cli agents init');
+    }
   });
 
   it('prints version-pinned commands for this release', () => {
