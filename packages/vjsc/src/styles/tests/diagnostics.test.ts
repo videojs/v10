@@ -132,7 +132,6 @@ function rule(token: string, utilities: readonly string[]): ResolvedStyleRule {
     file: 'test.css',
     layer: 'videojs.components',
     scopeRoot: false,
-    shadowHost: false,
     utilityGroups: utilities,
     utilities,
     variantGroups: {},

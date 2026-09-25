@@ -4,7 +4,7 @@ export interface StylesheetOptions {
   readonly input: string;
   /** Runtime base CSS entry imported before generated semantic styles. */
   readonly base?: string | undefined;
-  /** Optional selector wrapped around emitted CSS with `@scope`. */
+  /** Optional selector list emitted CSS is scoped under, as a zero-specificity `:where()` root. */
   readonly scope?: string | undefined;
 }
 
