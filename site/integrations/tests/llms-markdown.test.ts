@@ -363,8 +363,15 @@ describe('generateInstallationIndex', () => {
   it('lists canonical routes and only supported Markdown query parameters', () => {
     const markdown = generateInstallationIndex(SITE_URL);
 
-    expect(markdown).toContain('/docs/guides/installation/shadcn.md?framework=vue');
-    expect(markdown).toContain('`framework`: On the Shadcn page');
+    expect(markdown).toContain(
+      '- [HTML source](https://videojs.org/docs/guides/installation/shadcn.md?framework=html)'
+    );
+    expect(markdown).not.toContain('shadcn.md?framework=vue');
+    expect(markdown).toContain('`framework`: On the Shadcn page, choose `react` or `html`.');
+    expect(markdown).toContain('`extensions`:');
+    expect(markdown).toContain('Applies when method=shadcn.');
+    expect(markdown).toContain('Use `project=existing&template=none` for an existing page');
+    expect(markdown).not.toMatch(/--[a-z]/);
     expect(markdown).toContain('`package-manager`');
     expect(markdown).toContain('`package-manager`: The command runner used for app setup');
     expect(markdown).toContain('Default: pnpm.');

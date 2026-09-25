@@ -4,8 +4,12 @@ import { fileURLToPath } from 'node:url';
 
 import {
   createInstallationDiscovery,
+  INSTALLATION_FRAMEWORKS,
+  INSTALLATION_METHODS,
   installationCompatibility,
+  installationMethodsForFramework,
   installationOptionDefinitionsFor,
+  QUERY_OPTION_SYNTAX,
   renderInstallationCompatibilityMarkdown,
 } from '@videojs/installation';
 import type { AstroIntegration } from 'astro';
@@ -23,6 +27,7 @@ import {
   getInstallationRouteSegment,
   INSTALLATION_ROUTES,
   INSTALLATION_ROUTE_SEGMENTS,
+  installationMarkdownGuides,
 } from '../src/utils/installation/routes';
 import { outsideCodeFences } from '../src/utils/markdown-text';
 import { filterSidebarForLlms, llmsSections, sidebarSlugs } from './llms-sections';
@@ -271,32 +276,29 @@ export default function llmsMarkdown(): AstroIntegration {
 export function generateInstallationIndex(siteUrl = 'https://videojs.org'): string {
   const origin = siteUrl || 'https://videojs.org';
   const discovery = createInstallationDiscovery(INSTALLATION_PACKAGE_VERSION);
-  const options = installationOptionDefinitionsFor({
-    methods: ['packaged', 'shadcn', 'cdn'],
-    frameworks: ['react', 'html', 'vue', 'svelte'],
-  });
+  const options = installationOptionDefinitionsFor(
+    { methods: INSTALLATION_METHODS, frameworks: INSTALLATION_FRAMEWORKS },
+    QUERY_OPTION_SYNTAX
+  );
   const optionLines = options
-    .filter(({ flag }) =>
-      [
-        '--project',
-        '--preset',
-        '--skin',
-        '--media',
-        '--source-url',
-        '--package-manager',
-        '--template',
-        '--styling',
-      ].includes(flag)
-    )
+    .filter(({ query }) => query && !['method', 'framework'].includes(query))
     .map((option) => {
-      const key = option.query;
       const values = option.values ? ` Values: ${option.values.map((value) => `\`${value}\``).join(', ')}.` : '';
-      const applies = option.appliesWhen ? ` Applies when ${option.appliesWhen.replaceAll('--', '')}.` : '';
-      const defaultValue = option.flag === '--package-manager' ? 'pnpm' : option.default;
+      const applies = option.appliesWhen ? ` Applies when ${option.appliesWhen}.` : '';
+      const defaultValue = option.query === 'package-manager' ? 'pnpm' : option.default;
 
-      return `- \`${key}\`: ${option.description}${values} Default: ${defaultValue}.${applies}`;
+      return `- \`${option.query}\`: ${option.description}${values} Default: ${defaultValue}.${applies}`;
     })
     .join('\n');
+  const shadcnFrameworks = INSTALLATION_FRAMEWORKS.filter((framework) =>
+    installationMethodsForFramework(framework).includes('shadcn')
+  ).map((framework) => `\`${framework}\``);
+  const guides = installationMarkdownGuides()
+    .map(
+      ({ title, guides }) =>
+        `## ${title}\n\n${guides.map(({ label, path }) => `- [${label}](${origin}${path})`).join('\n')}`
+    )
+    .join('\n\n');
 
   return `# Video.js installation guides
 
@@ -310,34 +312,18 @@ Install the [Video.js skill](https://github.com/videojs/skills), then ask the Vi
 ${discovery.command}
 \`\`\`
 
-## Packaged modules
-
-- [React](${origin}/docs/guides/installation/react.md)
-- [HTML](${origin}/docs/guides/installation/html.md)
-- [Vue](${origin}/docs/guides/installation/vue.md)
-- [Svelte](${origin}/docs/guides/installation/svelte.md)
-
-## Editable Shadcn source
-
-- [React source](${origin}/docs/guides/installation/shadcn.md?framework=react)
-- [HTML source](${origin}/docs/guides/installation/shadcn.md?framework=html)
-- [HTML source in Vue](${origin}/docs/guides/installation/shadcn.md?framework=vue)
-- [HTML source in Svelte](${origin}/docs/guides/installation/shadcn.md?framework=svelte)
-
-## CDN
-
-- [HTML from jsDelivr](${origin}/docs/guides/installation/cdn.md)
+${guides}
 
 ## Query parameters
 
 The page route selects Packaged, Shadcn, or CDN and fixes the framework except on the Shadcn page. Query parameters select the remaining options:
 
-- \`framework\`: On the Shadcn page, choose \`react\`, \`html\`, \`vue\`, or \`svelte\`. Default: \`react\`.
+- \`framework\`: On the Shadcn page, choose ${shadcnFrameworks.join(' or ')}. Default: \`react\`.
 ${optionLines}
 
 ## Compatibility
 
-${renderInstallationCompatibilityMarkdown(installationCompatibility)}
+${renderInstallationCompatibilityMarkdown(installationCompatibility, QUERY_OPTION_SYNTAX)}
 `;
 }
 

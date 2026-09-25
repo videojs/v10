@@ -1,4 +1,10 @@
-import type { InstallationFramework } from '@videojs/installation';
+import {
+  INSTALLATION_FRAMEWORKS,
+  INSTALLATION_METHODS,
+  installationMethodsForFramework,
+  type InstallationFramework,
+  type InstallationMethod,
+} from '@videojs/installation';
 
 import type { SupportedFramework } from '../../types/docs.ts';
 
@@ -9,6 +15,9 @@ export interface InstallationRouteConfig {
   description: string;
   framework: SupportedFramework;
   frameworks: readonly SupportedFramework[];
+  /** The installation method every selection on this route uses. */
+  method: InstallationMethod;
+  /** The framework the route selects; on the Shadcn route, the default of its `framework` query parameter. */
   pickerFramework: InstallationFramework;
   slug: string;
 }
@@ -20,6 +29,7 @@ export const INSTALLATION_ROUTES = {
       'Install Video.js in React and build an accessible, customizable video player with composable controls',
     framework: 'react',
     frameworks: ['react'],
+    method: 'packaged',
     pickerFramework: 'react',
     slug: 'guides/installation',
   },
@@ -27,6 +37,7 @@ export const INSTALLATION_ROUTES = {
     description: 'Install Video.js with HTML custom elements and build an accessible, customizable video player',
     framework: 'html',
     frameworks: ['html'],
+    method: 'packaged',
     pickerFramework: 'html',
     slug: 'guides/installation',
   },
@@ -34,6 +45,7 @@ export const INSTALLATION_ROUTES = {
     description: 'Install Video.js in Vue or Nuxt and build a video player with HTML custom elements',
     framework: 'html',
     frameworks: ['html'],
+    method: 'packaged',
     pickerFramework: 'vue',
     slug: 'guides/installation-vue',
   },
@@ -41,6 +53,7 @@ export const INSTALLATION_ROUTES = {
     description: 'Install Video.js in Svelte or SvelteKit and build a video player with HTML custom elements',
     framework: 'html',
     frameworks: ['html'],
+    method: 'packaged',
     pickerFramework: 'svelte',
     slug: 'guides/installation-svelte',
   },
@@ -48,6 +61,7 @@ export const INSTALLATION_ROUTES = {
     description: 'Add editable React or HTML skin source with the Shadcn registry',
     framework: 'react',
     frameworks: ['react', 'html'],
+    method: 'shadcn',
     pickerFramework: 'react',
     slug: 'guides/installation-shadcn',
   },
@@ -55,6 +69,7 @@ export const INSTALLATION_ROUTES = {
     description: 'Load Video.js from jsDelivr and build an HTML video player without installing Video.js packages',
     framework: 'html',
     frameworks: ['html'],
+    method: 'cdn',
     pickerFramework: 'html',
     slug: 'guides/installation-cdn',
   },
@@ -81,4 +96,56 @@ export function getInstallationRouteSegment(pathname: string): InstallationRoute
   const route = normalized.slice(prefix.length);
 
   return isInstallationRouteSegment(route) ? route : null;
+}
+
+const INSTALLATION_FRAMEWORK_TITLES = {
+  react: 'React',
+  html: 'HTML',
+  vue: 'Vue',
+  svelte: 'Svelte',
+} as const satisfies Record<InstallationFramework, string>;
+
+const INSTALLATION_METHOD_TITLES = {
+  packaged: 'Packaged modules',
+  shadcn: 'Editable Shadcn source',
+  cdn: 'CDN',
+} as const satisfies Record<InstallationMethod, string>;
+
+export interface InstallationMarkdownGuide {
+  label: string;
+  /** Root-relative Markdown path, with the query that selects the framework on the Shadcn route. */
+  path: string;
+}
+
+export interface InstallationMarkdownGuideGroup {
+  method: InstallationMethod;
+  title: string;
+  guides: readonly InstallationMarkdownGuide[];
+}
+
+function installationMarkdownGuidesFor(route: InstallationRouteSegment): InstallationMarkdownGuide[] {
+  const { method, pickerFramework } = INSTALLATION_ROUTES[route];
+  const path = `${getInstallationRoutePath(route)}.md`;
+
+  if (method === 'cdn') return [{ label: 'HTML from jsDelivr', path }];
+
+  if (method === 'packaged') return [{ label: INSTALLATION_FRAMEWORK_TITLES[pickerFramework], path }];
+
+  return INSTALLATION_FRAMEWORKS.filter((framework) => installationMethodsForFramework(framework).includes(method)).map(
+    (framework) => ({
+      label: `${INSTALLATION_FRAMEWORK_TITLES[framework]} source`,
+      path: `${path}?framework=${framework}`,
+    })
+  );
+}
+
+/** The Markdown entry point for every installation route and Shadcn source framework, grouped by method. */
+export function installationMarkdownGuides(): InstallationMarkdownGuideGroup[] {
+  return INSTALLATION_METHODS.map((method) => ({
+    method,
+    title: INSTALLATION_METHOD_TITLES[method],
+    guides: INSTALLATION_ROUTE_SEGMENTS.filter((route) => INSTALLATION_ROUTES[route].method === method).flatMap(
+      installationMarkdownGuidesFor
+    ),
+  }));
 }

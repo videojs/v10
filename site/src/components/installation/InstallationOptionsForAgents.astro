@@ -5,45 +5,39 @@ import {
   installationDecisionOrderFor,
   installationOptionDefinitionsFor,
   installationTemplatesForMethod,
+  QUERY_OPTION_SYNTAX,
   type InstallationFramework,
-  type InstallationMethod,
 } from '@videojs/installation';
 
-import { isInstallationRouteSegment } from '@/utils/installation/routes';
+import { INSTALLATION_ROUTES, installationMarkdownGuides, isInstallationRouteSegment } from '@/utils/installation/routes';
 
 const route = Astro.params.framework;
 if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
 
 const command = installationCommand(undefined, null);
-const fixedMethod: InstallationMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
-const fixedFramework: InstallationFramework | null = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
+const { method: fixedMethod, pickerFramework } = INSTALLATION_ROUTES[route];
+const fixedFramework: InstallationFramework | null = fixedMethod === 'shadcn' ? null : pickerFramework;
 const frameworks: readonly InstallationFramework[] = fixedFramework ? [fixedFramework] : ['react', 'html'];
-const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks });
-const decisionOrder = installationDecisionOrderFor({ methods: [fixedMethod], frameworks });
+const definitions = installationOptionDefinitionsFor({ methods: [fixedMethod], frameworks }, QUERY_OPTION_SYNTAX);
+const decisionOrder = installationDecisionOrderFor({ methods: [fixedMethod], frameworks }, QUERY_OPTION_SYNTAX);
 const queryOptions = definitions
   .filter((option) => {
-    if (['--json', '--method'].includes(option.flag)) return false;
+    if (!option.query || option.query === 'method') return false;
 
-    if (option.flag === '--framework') return route === 'shadcn';
+    if (option.query === 'framework') return route === 'shadcn';
 
     return true;
   })
-  .map((option) => option.flag === '--package-manager' ? { ...option, default: 'pnpm' } : option);
-const availablePresets = queryOptions.find(({ flag }) => flag === '--preset')?.values ?? [];
+  .map((option) => option.query === 'package-manager' ? { ...option, default: 'pnpm' } : option);
+const availablePresets = queryOptions.find(({ query }) => query === 'preset')?.values ?? [];
 const mediaByPreset = Object.entries(installationCompatibility.mediaByPreset).filter(([preset]) =>
   availablePresets.includes(preset)
 );
 // Package text marks code with backticks; render those spans as code so they do not print as literal backticks.
 const codeSpans = (text: string) => text.split('`').map((part, index) => ({ part, code: index % 2 === 1 }));
-const routeExamples = [
-  ['/docs/guides/installation/react.md', 'React with packaged modules'],
-  ['/docs/guides/installation/html.md', 'HTML with packaged modules'],
-  ['/docs/guides/installation/vue.md', 'Vue with packaged HTML custom elements'],
-  ['/docs/guides/installation/svelte.md', 'Svelte with packaged HTML custom elements'],
-  ['/docs/guides/installation/shadcn.md?framework=react', 'Shadcn with React source'],
-  ['/docs/guides/installation/shadcn.md?framework=html', 'Shadcn with plain HTML source'],
-  ['/docs/guides/installation/cdn.md', 'HTML from the CDN'],
-] as const;
+const guides = installationMarkdownGuides().flatMap(({ title, guides }) =>
+  guides.map((guide) => ({ ...guide, label: `${title}: ${guide.label}` }))
+);
 ---
 
 <div hidden data-llms-only>
@@ -74,7 +68,7 @@ const routeExamples = [
             Values: {option.values.map((value, index) => <>{index > 0 && ', '}<code>{value}</code></>)}.{' '}
           </>
         )}
-        Default: {codeSpans(option.default).map(({ part, code }) => (code ? <code>{part}</code> : part))}.{option.appliesWhen && <> Applies when {option.appliesWhen.replaceAll('--', '')}.</>}
+        Default: {codeSpans(option.default).map(({ part, code }) => (code ? <code>{part}</code> : part))}.{option.appliesWhen && <> Applies when {option.appliesWhen}.</>}
       </li>
     ))}
   </ul>
@@ -123,6 +117,6 @@ const routeExamples = [
   <h3>Installation pages</h3>
 
   <ul>
-    {routeExamples.map(([href, label]) => <li><a href={href}>{label}</a></li>)}
+    {guides.map(({ path, label }) => <li><a href={path}>{label}</a></li>)}
   </ul>
 </div>
