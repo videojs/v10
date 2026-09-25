@@ -25,8 +25,6 @@ browser distribution just for its instructions:
 npx @videojs/html agents init --method cdn
 ```
 
-If `npx` reports `could not determine executable to run`, the project has an older `@videojs/html` without this command. Upgrade the package, or follow the [HTML installation guide](https://videojs.org/docs/guides/installation/html).
-
 ## Build output
 
 Run `pnpm build:cdn` from the workspace root. The task writes publishable files directly to `packages/cdn/`, which is

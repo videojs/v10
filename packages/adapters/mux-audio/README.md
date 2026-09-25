@@ -20,8 +20,6 @@ npx @videojs/react agents init --preset audio --media mux-audio
 npx @videojs/html agents init --preset audio --media mux-audio
 ```
 
-If `npx` reports `could not determine executable to run`, the project has an older `@videojs/react` or `@videojs/html` without this command. Upgrade the package, or follow the [React installation guide](https://videojs.org/docs/guides/installation/react) or the [HTML installation guide](https://videojs.org/docs/guides/installation/html).
-
 ## Usage
 
 ```ts
