@@ -18,11 +18,11 @@ installation.
 ## AI Quickstart
 
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads the docs that
-match this package version before writing code. Then print a complete CDN installation without downloading this full
-browser distribution just for its instructions:
+match this package version before writing code. Then print a complete CDN installation. The command downloads only the
+small `@videojs/cli` package, not this browser distribution:
 
 ```sh
-npx @videojs/html agents init --method cdn
+npx @videojs/cli agents init --framework html --method cdn
 ```
 
 ## Build output

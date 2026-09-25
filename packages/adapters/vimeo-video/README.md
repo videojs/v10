@@ -15,8 +15,8 @@ Using an AI coding agent? Install the [Video.js skill](https://github.com/videoj
 match this package version before writing code. Then print installation instructions with this adapter selected:
 
 ```sh
-npx @videojs/react agents init --media vimeo
-npx @videojs/html agents init --media vimeo
+npx @videojs/cli agents init --framework react --media vimeo
+npx @videojs/cli agents init --framework html --media vimeo
 ```
 
 ## Usage

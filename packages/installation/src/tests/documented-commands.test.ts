@@ -21,13 +21,13 @@ describe('documented agents init commands', () => {
     for (const readme of readmes) {
       const source = readFileSync(readme, 'utf8');
 
-      expect(source, readme).not.toMatch(/@videojs\/(?:react|html)@latest agents init/);
+      expect(source, readme).not.toMatch(/@videojs\/cli@latest agents init/);
+      expect(source, readme).not.toMatch(/@videojs\/(?:react|html)(?:@\S+)? agents init/);
 
-      for (const match of source.matchAll(/^npx @videojs\/(react|html) agents init([^\n]*)$/gm)) {
+      for (const match of source.matchAll(/^npx @videojs\/cli agents init([^\n]*)$/gm)) {
         commandCount += 1;
-        const owner = match[1] as 'html' | 'react';
-        const flags = match[2]!.trim().split(/\s+/).filter(Boolean);
-        const result = runAgentsInit(owner, '10.0.0-test', ['agents', 'init', ...flags]);
+        const flags = match[1]!.trim().split(/\s+/).filter(Boolean);
+        const result = runAgentsInit('10.0.0-test', ['agents', 'init', ...flags]);
 
         if (result.exitCode !== 0) failures.push(`${readme}: ${match[0]}\n${result.stderr || result.stdout}`);
       }

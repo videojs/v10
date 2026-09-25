@@ -207,7 +207,8 @@ Every generated page has a static `.md` twin. The Netlify edge functions in
 [`netlify/edge-functions/`](netlify/edge-functions/) set the Markdown response headers and negotiate
 `Accept: text/markdown`. Installation twins are the exception to the otherwise static response: the shared renderer in
 `@videojs/installation` validates their query parameters and replaces the generated installation section at the edge.
-The same renderer powers each package's `agents init` command and bundled docs.
+The same renderer powers the `npx @videojs/cli agents init` command and the docs bundled with `@videojs/react` and
+`@videojs/html`.
 
 Edge functions resolve workspace packages through [`netlify/edge-functions/import_map.json`](netlify/edge-functions/import_map.json).
 Keep that map in sync when an edge handler adds or moves a workspace import.

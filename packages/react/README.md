@@ -24,10 +24,11 @@ import { DashVideo } from '@videojs/react/media/dash-video';
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
 the docs that match this package version before writing code.
 
-Then list the version-matched installation choices. This command returns instructions without modifying your project:
+Then print version-matched React installation instructions. This command returns instructions without modifying your
+project; run it without flags to list every option:
 
 ```sh
-npx @videojs/react agents init
+npx @videojs/cli agents init --framework react
 ```
 
 ## Documentation

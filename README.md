@@ -20,12 +20,11 @@ Video.js v10 is close to stable. Try it out in real projects and share your feed
 Using an AI coding agent? Install the [Video.js skill](https://github.com/videojs/skills) so it reads
 the docs that match this package version before writing code.
 
-Then print the version-matched installation choices for the player you are using. These commands return instructions
-without modifying your project:
+Then print the version-matched installation choices for your framework. The command returns instructions without
+modifying your project:
 
 ```sh
-npx @videojs/react agents init
-npx @videojs/html agents init
+npx @videojs/cli agents init
 ```
 
 ## Timeline

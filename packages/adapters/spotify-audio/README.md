@@ -15,8 +15,8 @@ Using an AI coding agent? Install the [Video.js skill](https://github.com/videoj
 match this package version before writing code. Then print installation instructions with this adapter selected:
 
 ```sh
-npx @videojs/react agents init --preset audio --media spotify
-npx @videojs/html agents init --preset audio --media spotify
+npx @videojs/cli agents init --framework react --preset audio --media spotify
+npx @videojs/cli agents init --framework html --preset audio --media spotify
 ```
 
 ## Usage

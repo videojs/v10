@@ -14,8 +14,8 @@ Using an AI coding agent? Install the [Video.js skill](https://github.com/videoj
 match this package version before writing code. Then print installation instructions that include Google Cast:
 
 ```sh
-npx @videojs/react agents init --media hls --extensions google-cast
-npx @videojs/html agents init --media hls --extensions google-cast
+npx @videojs/cli agents init --framework react --media hls --extensions google-cast
+npx @videojs/cli agents init --framework html --media hls --extensions google-cast
 ```
 
 ## Usage
