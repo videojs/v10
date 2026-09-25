@@ -17,6 +17,8 @@ interface CardCheckboxGroupProps<T = string> {
   onChange: (value: T[]) => void;
   options: readonly CardCheckboxOption<T>[];
   'aria-label': string;
+  /** Minimum column width; the grid fills as many columns as fit, like CardRadioGroup. */
+  minColumnWidth?: string;
 }
 
 /** Multi-select counterpart to CardRadioGroup with the same card and selection treatment. */
@@ -25,6 +27,7 @@ export default function CardCheckboxGroup<T extends string = string>({
   onChange,
   options,
   'aria-label': ariaLabel,
+  minColumnWidth = '14rem',
 }: CardCheckboxGroupProps<T>) {
   return (
     <CheckboxGroup
@@ -32,7 +35,8 @@ export default function CardCheckboxGroup<T extends string = string>({
       // SAFETY: every rendered Checkbox.Root receives an option value of type T, so the group can only report T values.
       onValueChange={(newValue) => onChange(newValue as T[])}
       aria-label={ariaLabel}
-      className="grid auto-rows-fr gap-3 sm:grid-cols-2"
+      className="grid auto-rows-fr gap-3"
+      style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${minColumnWidth}), 1fr))` }}
     >
       {options.map((option) => {
         const isSelected = value.includes(option.value);

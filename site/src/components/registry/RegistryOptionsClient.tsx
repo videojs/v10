@@ -104,6 +104,7 @@ function RegistryStylingCards({ framework }: { framework: RegistryFramework }) {
         media: STYLING_CARD_ICONS[value],
       }))}
       aria-label="Select styling"
+      minColumnWidth="15rem"
     />
   );
 }
