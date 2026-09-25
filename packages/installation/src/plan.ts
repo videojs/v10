@@ -251,13 +251,15 @@ export function createInstallationDiscovery(
     frameworks: INSTALLATION_FRAMEWORKS,
   }).map((option) => {
     const detected =
-      option.flag === '--package-manager'
-        ? defaults.packageManager
-        : option.flag === '--framework'
-          ? defaults.framework
-          : option.flag === '--template'
-            ? defaults.template
-            : undefined;
+      option.flag === '--method'
+        ? defaults.method
+        : option.flag === '--package-manager'
+          ? defaults.packageManager
+          : option.flag === '--framework'
+            ? defaults.framework
+            : option.flag === '--template'
+              ? defaults.template
+              : undefined;
     if (detected?.value) return { ...option, default: `${detected.value} (from ${detected.source})` };
 
     if (option.flag !== '--framework') return option;

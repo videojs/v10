@@ -1,6 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -40,6 +41,26 @@ describe('bin', () => {
 
   it('prints version-pinned commands for this release', () => {
     expect(run('agents', 'init')).toContain(`npx @videojs/cli@${packageJson.version} agents init`);
+  });
+
+  it('defaults a plain HTML page to CDN scripts', () => {
+    const page = mkdtempSync(join(tmpdir(), 'videojs-cli-'));
+
+    try {
+      writeFileSync(join(page, 'index.html'), '<!doctype html>');
+
+      const plan = JSON.parse(
+        execFileSync(process.execPath, [bin, 'agents', 'init', '--media', 'hls', '--json'], {
+          cwd: page,
+          encoding: 'utf8',
+        })
+      );
+
+      expect(plan.selectedOptions).toMatchObject({ method: 'cdn', template: 'none' });
+      expect(plan.defaultedOptionSources.method).toBe('an index.html page with no package.json');
+    } finally {
+      rmSync(page, { recursive: true, force: true });
+    }
   });
 
   it('lists both commands for a bare or top-level help run', () => {

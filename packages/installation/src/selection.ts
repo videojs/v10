@@ -219,6 +219,8 @@ export interface DetectedInstallationDefault<Value extends string | null> {
 }
 
 export interface InstallationSelectionDefaults {
+  /** Installation method used when the input omits one and the selected framework supports it. */
+  method?: DetectedInstallationDefault<InstallationMethod>;
   /**
    * App setup used when the input omits one and it fits the selected framework and method. A `null` value records that
    * detection found nothing, so the fallback can say so.
@@ -281,9 +283,19 @@ export function resolveInstallationSelection(
     return input[key] ?? value;
   };
 
-  const methodValue = defaultValue('method', 'packaged');
+  // A detected method only applies when the framework it will be paired with supports it.
+  const requestedFramework = input.framework ?? defaults.framework?.value ?? 'html';
+  const detectedMethod =
+    defaults.method &&
+    includes(INSTALLATION_FRAMEWORKS, requestedFramework) &&
+    installationMethodsForFramework(requestedFramework).includes(defaults.method.value)
+      ? defaults.method
+      : undefined;
+  const methodValue = defaultValue('method', detectedMethod?.value ?? 'packaged');
   const methodValid = includes(INSTALLATION_METHODS, methodValue);
   const method = resolveChoice('method', methodValue, INSTALLATION_METHODS, 'packaged', errors);
+
+  if (input.method === undefined && detectedMethod) defaultSources.method = detectedMethod.source;
 
   const frameworkValue = defaultValue('framework', defaults.framework?.value ?? 'html');
   const frameworkValid = includes(INSTALLATION_FRAMEWORKS, frameworkValue);
