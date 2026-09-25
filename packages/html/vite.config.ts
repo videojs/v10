@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
-import { agentsPackConfig } from '../../build/agents-pack.ts';
 import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
@@ -19,6 +18,7 @@ const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const generatedSkinRegistration = /\/internal\/skins\/.+\/register\.[cm]?[jt]s$/;
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
+
 const defineEntries = Object.fromEntries(
   globSync('src/define/**/*.ts', { cwd: packageDir })
     .filter((file) => !file.includes('.test.'))
@@ -115,5 +115,5 @@ export default defineConfig({
     // Dynamic composite imports can exceed Vitest's default under workspace load.
     testTimeout: 15_000,
   },
-  pack: [...packageBuildModes.map(createPackConfig), agentsPackConfig()],
+  pack: packageBuildModes.map(createPackConfig),
 });

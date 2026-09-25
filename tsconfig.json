@@ -61,7 +61,9 @@
     { "path": "packages/html" },
     { "path": "packages/react" },
 
-    { "path": "packages/video.js" }
+    { "path": "packages/video.js" },
+
+    { "path": "packages/cli" }
   ],
   "files": []
 }

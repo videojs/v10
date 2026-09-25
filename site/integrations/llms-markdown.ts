@@ -13,8 +13,7 @@ import GithubSlugger from 'github-slugger';
 import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
 
-import htmlPackage from '../../packages/html/package.json';
-import reactPackage from '../../packages/react/package.json';
+import cliPackage from '../../packages/cli/package.json';
 import { FIRST_V10_BLOG_MONTH, SITE_DESCRIPTION, VJS10_VERSION } from '../src/consts';
 import { sidebar } from '../src/docs.config';
 import type { Section, Sidebar, SupportedFramework } from '../src/types/docs';
@@ -274,8 +273,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
 export function generateInstallationIndex(siteUrl = 'https://videojs.org'): string {
   const origin = siteUrl || 'https://videojs.org';
-  const html = createInstallationDiscovery('html', htmlPackage.version);
-  const react = createInstallationDiscovery('react', reactPackage.version);
+  const discovery = createInstallationDiscovery(cliPackage.version);
   const options = installationOptionDefinitionsFor({
     methods: ['packaged', 'shadcn', 'cdn'],
     frameworks: ['react', 'html', 'vue', 'svelte'],
@@ -309,11 +307,10 @@ Choose the guide for the framework and installation path you intend to use. Each
 
 ## AI Quickstart
 
-Install the [Video.js skill](https://github.com/videojs/skills), then ask for version-matched installation choices from the player package. These commands only print instructions and never modify a project.
+Install the [Video.js skill](https://github.com/videojs/skills), then ask the Video.js CLI for version-matched installation choices for every framework. The command only prints instructions and never modifies a project.
 
 \`\`\`sh
-${react.command}
-${html.command}
+${discovery.command}
 \`\`\`
 
 ## Packaged modules
@@ -1045,7 +1042,7 @@ export function generateRootIndex({
 
   content += `> AI coding agents can install the [Video.js skill](https://github.com/videojs/skills) to find version-matched documentation and follow current Video.js 10 patterns.\n\n`;
 
-  content += `> Print version-matched installation options without changing files: \`npx @videojs/react agents init\` or \`npx @videojs/html agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/cli agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
 
   content += `## Documentation\n\n`;
 
@@ -1116,7 +1113,7 @@ export function generateDocsIndex(
 
   content += `> Install the [Video.js skill](https://github.com/videojs/skills) to help AI coding agents find version-matched pages from this index.\n\n`;
 
-  content += `> Print version-matched installation options without changing files: \`npx @videojs/${framework} agents init\`. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
+  content += `> Print version-matched installation options without changing files: \`npx @videojs/cli agents init\`, then pass \`--framework ${framework}\` with the other choices. Installation guide index: ${siteUrl}/docs/guides/installation.md\n\n`;
 
   // Get sidebar filtered for this framework (production only)
   if (!isValidFramework(framework)) return content;

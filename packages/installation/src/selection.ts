@@ -73,6 +73,8 @@ export interface InstallationSelection {
   styling: RegistryStyling | null;
   cdnBase: string;
   defaulted: readonly InstallationInputKey[];
+  /** Where a detected default came from, keyed by the defaulted option. */
+  defaultSources: Readonly<Partial<Record<InstallationInputKey, string>>>;
 }
 
 export type SelectionErrorField = InstallationInputKey | 'arguments';
@@ -193,14 +195,25 @@ export function sourceFrameworkFor(framework: InstallationFramework): RegistryFr
   return framework === 'react' ? 'react' : 'html';
 }
 
+/** The player package a framework installs: React uses `@videojs/react`; HTML, Vue, and Svelte use `@videojs/html`. */
+export function playerOwnerFor(framework: InstallationFramework): PlayerOwner {
+  return framework === 'react' ? 'react' : 'html';
+}
+
+export interface InstallationSelectionDefaults {
+  packageManager?: PackageManager;
+  /** Project framework used when the input omits one, with where it was found for the defaulted-options summary. */
+  framework?: { value: InstallationFramework; source: string };
+}
+
 export function resolveInstallationSelection(
-  owner: PlayerOwner,
   input: InstallationInput,
   packageVersion = 'latest',
-  defaults: { packageManager?: PackageManager } = {}
+  defaults: InstallationSelectionDefaults = {}
 ): SelectionResult {
   const errors: SelectionError[] = [];
   const defaulted: InstallationInputKey[] = [];
+  const defaultSources: Partial<Record<InstallationInputKey, string>> = {};
   const defaultValue = <Key extends InstallationInputKey>(key: Key, value: NonNullable<InstallationInput[Key]>) => {
     if (input[key] === undefined) defaulted.push(key);
 
@@ -208,42 +221,12 @@ export function resolveInstallationSelection(
   };
 
   const methodValue = defaultValue('method', 'packaged');
-  const ownerMethods = owner === 'react' ? (['packaged', 'shadcn'] as const) : INSTALLATION_METHODS;
-  const method =
-    owner === 'react' && methodValue === 'cdn'
-      ? 'packaged'
-      : resolveChoice('method', methodValue, ownerMethods, 'packaged', errors);
+  const method = resolveChoice('method', methodValue, INSTALLATION_METHODS, 'packaged', errors);
 
-  if (owner === 'react' && methodValue === 'cdn') {
-    errors.push({
-      field: 'method',
-      value: methodValue,
-      message: 'CDN installation is available for plain HTML through `@videojs/html`.',
-    });
-  }
+  const frameworkValue = defaultValue('framework', defaults.framework?.value ?? 'html');
+  const framework = resolveChoice('framework', frameworkValue, INSTALLATION_FRAMEWORKS, 'html', errors);
 
-  const defaultFramework = owner === 'react' ? 'react' : 'html';
-  const frameworkValue = defaultValue('framework', defaultFramework);
-  const ownerFrameworks = owner === 'react' ? (['react'] as const) : (['html', 'vue', 'svelte'] as const);
-  const unsupportedKnownFramework =
-    includes(INSTALLATION_FRAMEWORKS, frameworkValue) && !includes(ownerFrameworks, frameworkValue);
-  const framework = unsupportedKnownFramework
-    ? defaultFramework
-    : resolveChoice('framework', frameworkValue, ownerFrameworks, defaultFramework, errors);
-
-  if (owner === 'react' && unsupportedKnownFramework) {
-    errors.push({
-      field: 'framework',
-      value: frameworkValue,
-      message: '`@videojs/react` supports the React framework. Use `@videojs/html` for HTML, Vue, or Svelte.',
-    });
-  } else if (owner === 'html' && unsupportedKnownFramework) {
-    errors.push({
-      field: 'framework',
-      value: frameworkValue,
-      message: '`@videojs/html` supports HTML, Vue, or Svelte. Use `@videojs/react` for React.',
-    });
-  }
+  if (input.framework === undefined && defaults.framework) defaultSources.framework = defaults.framework.source;
 
   const projectValue = defaultValue('project', 'existing');
   const project = resolveChoice('project', projectValue, INSTALLATION_PROJECTS, 'existing', errors);
@@ -345,8 +328,11 @@ export function resolveInstallationSelection(
   const extensions = INSTALLATION_EXTENSIONS.filter((extension) => requestedExtensions.has(extension));
 
   const sourceFramework = sourceFrameworkFor(framework);
-  const availableTemplates = installationTemplatesForMethod(framework, method);
-  const defaultTemplate = method === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
+  // An unsupported method is reported once below; list the framework's packaged app setups instead of none.
+  const templateMethod = installationMethodsForFramework(framework).includes(method) ? method : 'packaged';
+  const availableTemplates = installationTemplatesForMethod(framework, templateMethod);
+  const defaultTemplate =
+    templateMethod === 'cdn' && project === 'existing' ? 'none' : defaultInstallationTemplate(framework);
   const templateValue = defaultValue('template', defaultTemplate);
   const template = resolveChoice('template', templateValue, availableTemplates, defaultTemplate, errors);
 
@@ -373,7 +359,7 @@ export function resolveInstallationSelection(
       errors.push({
         field: 'method',
         value: method,
-        message: 'CDN installation is available for plain HTML through `@videojs/html`.',
+        message: 'CDN installation is available for plain HTML only.',
       });
     }
 
@@ -423,7 +409,7 @@ export function resolveInstallationSelection(
   return {
     ok: true,
     selection: {
-      owner,
+      owner: playerOwnerFor(framework),
       method,
       framework,
       project,
@@ -440,6 +426,7 @@ export function resolveInstallationSelection(
       styling,
       cdnBase: cdnBaseForVersion(packageVersion),
       defaulted,
+      defaultSources,
     },
   };
 }

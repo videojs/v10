@@ -18,7 +18,7 @@ import { CDN_MEDIA_SUBPATHS, INSTALLATION_DEMO_SOURCES } from './defaults';
 import {
   installationCompatibilityFor,
   installationDecisionOrderFor,
-  installationOptionDefinitions,
+  installationOptionDefinitionsFor,
   type InstallationDiscoveryCompatibility,
   type InstallationOptionDefinition,
 } from './options';
@@ -35,7 +35,14 @@ import {
   installationVueConfigFilename,
 } from './projects';
 import { getAdapterPackage } from './renderers';
-import { type InstallationSelection, type PlayerOwner, selectionToInput } from './selection';
+import {
+  INSTALLATION_FRAMEWORKS,
+  INSTALLATION_METHODS,
+  selectionToInput,
+  type InstallationSelection,
+  type InstallationSelectionDefaults,
+  type PlayerOwner,
+} from './selection';
 import {
   registrySkinSelection,
   shadcnAddCommand,
@@ -65,8 +72,10 @@ export interface InstallationStep {
 export interface InstallationPlan {
   schemaVersion: 1;
   kind: 'instructions';
-  package: '@videojs/html' | '@videojs/react';
+  package: typeof INSTALLATION_CLI_PACKAGE;
   packageVersion: string;
+  /** The player package these instructions install. */
+  playerPackage: PlayerPackage;
   selection: InstallationSelection;
   resolvedSourceUrl: string;
   reproduceCommand: string;
@@ -78,7 +87,7 @@ export interface InstallationPlan {
 export interface InstallationDiscovery {
   schemaVersion: 1;
   kind: 'discovery';
-  package: '@videojs/html' | '@videojs/react';
+  package: typeof INSTALLATION_CLI_PACKAGE;
   packageVersion: string;
   command: string;
   options: readonly InstallationOptionDefinition[];
@@ -88,21 +97,22 @@ export interface InstallationDiscovery {
   notice: string;
 }
 
-const OWNER_PACKAGES = {
+/** The package whose `agents init` command prints installation instructions. */
+export const INSTALLATION_CLI_PACKAGE = '@videojs/cli';
+
+export const PLAYER_PACKAGES = {
   html: '@videojs/html',
   react: '@videojs/react',
-} as const;
+} as const satisfies Record<PlayerOwner, string>;
+
+export type PlayerPackage = (typeof PLAYER_PACKAGES)[PlayerOwner];
 
 function shellQuote(value: string): string {
   return /^[a-z0-9_./:@-]+$/i.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
 }
 
-export function installationCommand(
-  owner: PlayerOwner,
-  input?: InstallationInput,
-  packageVersion: string | null = null
-): string {
-  const packageSpecifier = packageVersion ? `${OWNER_PACKAGES[owner]}@${packageVersion}` : OWNER_PACKAGES[owner];
+export function installationCommand(input?: InstallationInput, packageVersion: string | null = null): string {
+  const packageSpecifier = packageVersion ? `${INSTALLATION_CLI_PACKAGE}@${packageVersion}` : INSTALLATION_CLI_PACKAGE;
   const parts = [`npx ${packageSpecifier} agents init`];
 
   if (!input) return parts[0]!;
@@ -116,23 +126,61 @@ export function installationCommand(
   return parts.join(' ');
 }
 
+/** Every choice that applies to a resolved selection, so a rerun never depends on defaults or project detection. */
+export function installationReproduceInput(selection: InstallationSelection): InstallationInput {
+  const explicit = selectionToInput(selection);
+  const input: InstallationInput = {
+    method: explicit.method,
+    framework: explicit.framework,
+    project: explicit.project,
+    preset: explicit.preset,
+    media: explicit.media,
+    extensions: explicit.extensions,
+    sourceUrl: explicit.sourceUrl,
+  };
+
+  if (selection.useCase !== 'background-video') input.skin = explicit.skin;
+
+  if (selection.method !== 'cdn' || selection.template !== 'none') {
+    input.packageManager = explicit.packageManager;
+  }
+
+  input.template = explicit.template;
+
+  if (selection.method === 'shadcn') {
+    input.styling = explicit.styling;
+  }
+
+  return input;
+}
+
+/** The option reference printed by a bare `agents init`, covering every framework and installation method. */
 export function createInstallationDiscovery(
-  owner: PlayerOwner,
   packageVersion: string,
-  defaults: { packageManager?: InstallationSelection['packageManager'] } = {}
+  defaults: InstallationSelectionDefaults = {}
 ): InstallationDiscovery {
-  const command = installationCommand(owner, undefined, packageVersion);
-  const frameworks = owner === 'react' ? (['react'] as const) : (['html', 'vue', 'svelte'] as const);
-  const methods = owner === 'react' ? (['packaged', 'shadcn'] as const) : (['packaged', 'shadcn', 'cdn'] as const);
+  const command = installationCommand(undefined, packageVersion);
   const packageManager = defaults.packageManager ?? 'pnpm';
-  const options = installationOptionDefinitions(owner).map((option) =>
-    option.flag === '--package-manager' ? { ...option, default: packageManager } : option
-  );
-  const packagedInput: InstallationInput = {
+  const options = installationOptionDefinitionsFor({
+    methods: INSTALLATION_METHODS,
+    frameworks: INSTALLATION_FRAMEWORKS,
+  }).map((option) => {
+    if (option.flag === '--package-manager') return { ...option, default: packageManager };
+
+    if (option.flag !== '--framework') return option;
+
+    return {
+      ...option,
+      default: defaults.framework
+        ? `${defaults.framework.value} (from ${defaults.framework.source})`
+        : 'detected from package.json dependencies; otherwise html',
+    };
+  });
+  const reactInput: InstallationInput = {
     method: 'packaged',
-    framework: owner === 'react' ? 'react' : 'html',
+    framework: 'react',
     project: 'existing',
-    template: owner === 'react' ? 'next' : 'vite',
+    template: 'next',
     preset: 'video',
     skin: 'default',
     media: 'mux-video',
@@ -140,57 +188,48 @@ export function createInstallationDiscovery(
     sourceUrl: INSTALLATION_DEMO_SOURCES.videoHls,
     packageManager,
   };
-  const shadcnInput: InstallationInput = {
+  const htmlInput: InstallationInput = {
     method: 'shadcn',
-    framework: owner === 'react' ? 'react' : 'html',
+    framework: 'html',
     project: 'new',
-    template: owner === 'react' ? 'next' : 'vite',
+    template: 'vite',
     preset: 'video',
     skin: 'default',
     media: 'html5-video',
     extensions: 'none',
     sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
     packageManager,
-    styling: owner === 'react' ? 'tailwind' : 'css',
+    styling: 'css',
+  };
+  const cdnInput: InstallationInput = {
+    method: 'cdn',
+    framework: 'html',
+    project: 'new',
+    template: 'vite',
+    preset: 'video',
+    skin: 'default',
+    media: 'html5-video',
+    extensions: 'none',
+    sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
+    packageManager,
   };
 
   return {
     schemaVersion: 1,
     kind: 'discovery',
-    package: OWNER_PACKAGES[owner],
+    package: INSTALLATION_CLI_PACKAGE,
     packageVersion,
     command,
     options,
-    compatibility: installationCompatibilityFor(frameworks),
-    decisionOrder: installationDecisionOrderFor({ methods, frameworks }),
+    compatibility: installationCompatibilityFor(INSTALLATION_FRAMEWORKS),
+    decisionOrder: installationDecisionOrderFor({ methods: INSTALLATION_METHODS, frameworks: INSTALLATION_FRAMEWORKS }),
     examples: [
-      installationCommand(owner, packagedInput, packageVersion),
-      installationCommand(owner, shadcnInput, packageVersion),
-      ...(owner === 'html'
-        ? [
-            installationCommand(
-              owner,
-              {
-                method: 'cdn',
-                framework: 'html',
-                project: 'new',
-                template: 'vite',
-                preset: 'video',
-                skin: 'default',
-                media: 'html5-video',
-                extensions: 'none',
-                sourceUrl: INSTALLATION_DEMO_SOURCES.videoMp4,
-                packageManager,
-              },
-              packageVersion
-            ),
-          ]
-        : []),
+      installationCommand(reactInput, packageVersion),
+      installationCommand(htmlInput, packageVersion),
+      installationCommand(cdnInput, packageVersion),
     ],
     notice:
-      owner === 'react'
-        ? 'This command prints instructions. Packaged dependencies match this package version; Shadcn copies the current registry source. It never installs packages, prompts, saves preferences, or writes files.'
-        : 'This command prints instructions. Packaged and CDN dependencies match this package version; Shadcn copies the current registry source. It never installs packages, prompts, saves preferences, or writes files.',
+      'This command prints instructions. Packaged and CDN dependencies match this CLI version; Shadcn copies the current registry source. It never installs packages, prompts, saves preferences, or writes files.',
   };
 }
 
@@ -623,28 +662,7 @@ export function createInstallationPlan(
   commandVersion: string | null = packageVersion
 ): InstallationPlan {
   const resolvedSourceUrl = resolveInstallationSourceUrl(selection.sourceUrl, selection.media, selection.useCase);
-  const explicit = selectionToInput({ ...selection, sourceUrl: resolvedSourceUrl });
-  const relevantInput: InstallationInput = {
-    method: explicit.method,
-    framework: explicit.framework,
-    project: explicit.project,
-    preset: explicit.preset,
-    media: explicit.media,
-    extensions: explicit.extensions,
-    sourceUrl: explicit.sourceUrl,
-  };
-
-  if (selection.useCase !== 'background-video') relevantInput.skin = explicit.skin;
-
-  if (selection.method !== 'cdn' || selection.template !== 'none') {
-    relevantInput.packageManager = explicit.packageManager;
-  }
-
-  relevantInput.template = explicit.template;
-
-  if (selection.method === 'shadcn') {
-    relevantInput.styling = explicit.styling;
-  }
+  const resolvedSelection = { ...selection, sourceUrl: resolvedSourceUrl };
 
   const steps =
     selection.method === 'cdn'
@@ -657,11 +675,12 @@ export function createInstallationPlan(
   return {
     schemaVersion: 1,
     kind: 'instructions',
-    package: OWNER_PACKAGES[selection.owner],
+    package: INSTALLATION_CLI_PACKAGE,
     packageVersion,
-    selection: { ...selection, sourceUrl: resolvedSourceUrl },
+    playerPackage: PLAYER_PACKAGES[selection.owner],
+    selection: resolvedSelection,
     resolvedSourceUrl,
-    reproduceCommand: installationCommand(selection.owner, relevantInput, commandVersion),
+    reproduceCommand: installationCommand(installationReproduceInput(resolvedSelection), commandVersion),
     steps,
     next: [
       {

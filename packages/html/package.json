@@ -17,9 +17,6 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/html"
   },
-  "bin": {
-    "videojs-html": "./dist/bin/agents.mjs"
-  },
   "files": [
     "dist",
     "docs"
@@ -176,7 +173,6 @@
     "@videojs/google-cast": "workspace:*",
     "@videojs/hlsjs-video": "workspace:*",
     "@videojs/icons": "workspace:*",
-    "@videojs/installation": "workspace:*",
     "@videojs/mux-audio": "workspace:*",
     "@videojs/mux-data": "workspace:*",
     "@videojs/mux-video": "workspace:*",

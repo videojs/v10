@@ -303,12 +303,12 @@ describe('packageDocumentation', () => {
     const fixture = createFixture();
 
     writeInstallationDocs(fixture.siteDist, 'react');
-    writeDoc(fixture.siteDist, 'react', 'llms.txt', 'Run `npx @videojs/react agents init`.');
+    writeDoc(fixture.siteDist, 'react', 'llms.txt', 'Run `npx @videojs/cli agents init`.');
     writeDoc(
       fixture.siteDist,
       'react',
       'guides/build-with-ai.md',
-      'Use `npx @videojs/react agents init --method shadcn` for version-matched instructions.'
+      'Use `npx @videojs/cli agents init --framework react --method shadcn` for version-matched instructions.'
     );
 
     packageDocumentation({
@@ -319,9 +319,9 @@ describe('packageDocumentation', () => {
 
     const packageDocs = join(fixture.packagesDirectory, 'react/docs');
 
-    expect(readFileSync(join(packageDocs, 'llms.txt'), 'utf-8')).toContain('npx @videojs/react agents init');
+    expect(readFileSync(join(packageDocs, 'llms.txt'), 'utf-8')).toContain('npx @videojs/cli agents init');
     expect(readFileSync(join(packageDocs, 'guides/build-with-ai.md'), 'utf-8')).toContain(
-      'npx @videojs/react agents init --method shadcn'
+      'npx @videojs/cli agents init --framework react --method shadcn'
     );
   });
 

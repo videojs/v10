@@ -24,6 +24,9 @@
     "test": "vp test run",
     "clean": "rimraf dist types '*.tsbuildinfo'"
   },
+  "dependencies": {
+    "@videojs/utils": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^22.18.6",
     "typescript": "6.0.2",

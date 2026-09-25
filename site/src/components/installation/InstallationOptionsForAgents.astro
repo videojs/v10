@@ -14,10 +14,7 @@ import { isInstallationRouteSegment } from '@/utils/installation/routes';
 const route = Astro.params.framework;
 if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
 
-const owner = route === 'react' || route === 'shadcn' ? 'react' : 'html';
-const commands = route === 'shadcn'
-  ? [installationCommand('react', undefined, null), installationCommand('html', undefined, null)]
-  : [installationCommand(owner, undefined, null)];
+const command = installationCommand(undefined, null);
 const fixedMethod: InstallationMethod = route === 'shadcn' ? 'shadcn' : route === 'cdn' ? 'cdn' : 'packaged';
 const fixedFramework: InstallationFramework | null = route === 'shadcn' ? null : route === 'cdn' ? 'html' : route;
 const frameworks: readonly InstallationFramework[] = fixedFramework ? [fixedFramework] : ['react', 'html'];
@@ -52,9 +49,8 @@ const routeExamples = [
 
   <p>
     The web Markdown page contains the default installation. Add the query parameters below to its <code>.md</code> URL
-    for a complete, validated variation. From an installed package or an offline docs bundle, run the package command
-    below instead. Both paths use the same installation renderer and only return instructions; they do not modify a
-    project.
+    for a complete, validated variation. From a project or an offline docs bundle, run the CLI command below instead.
+    Both paths use the same installation renderer and only return instructions; they do not modify a project.
   </p>
 
   <p>
@@ -63,7 +59,7 @@ const routeExamples = [
       : <>. The <code>framework</code> query parameter selects React or HTML</>}.
   </p>
 
-  <pre><code class="language-sh">{commands.join('\n')}</code></pre>
+  <pre><code class="language-sh">{command}</code></pre>
 
   <h3>Query parameters</h3>
 
@@ -82,7 +78,7 @@ const routeExamples = [
   </ul>
 
   <p>
-    Run a bare package command above to see the corresponding CLI flags for the installed package version.
+    Run the command above without flags to see the corresponding CLI flags for every framework.
   </p>
 
   <h3>Decide in this order</h3>

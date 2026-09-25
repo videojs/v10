@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
-import { agentsPackConfig } from '../../build/agents-pack.ts';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { reactCompilerPlugin } from '../../build/react-compiler.ts';
@@ -11,6 +10,7 @@ import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
+
 const i18nLocaleEntries = Object.fromEntries([
   ['i18n/locales/all', 'src/i18n/locales/all.ts'],
   ['i18n/locales/all/register', 'src/i18n/locales/all/register.ts'],
@@ -58,5 +58,5 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'tests/**/*.test.ts'],
   },
-  pack: [...packageBuildModes.map(createPackConfig), agentsPackConfig()],
+  pack: packageBuildModes.map(createPackConfig),
 });

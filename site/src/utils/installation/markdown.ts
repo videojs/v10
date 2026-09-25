@@ -10,7 +10,6 @@ import {
   type InstallationInput,
   type InstallationMethod,
   type InstallationPlan,
-  type PlayerOwner,
   type SelectionError,
 } from '@videojs/installation';
 
@@ -26,7 +25,6 @@ export const INSTALLATION_MARKDOWN_PARAMS = new Set(
 );
 
 interface InstallationRouteDefaults {
-  owner: PlayerOwner;
   method: InstallationMethod;
   framework: string;
 }
@@ -36,22 +34,19 @@ function installationRouteDefaults(path: string, params: URLSearchParams): Insta
   const route = getInstallationRouteSegment(normalized);
   if (!route) return null;
 
-  if (route === 'react') return { owner: 'react', method: 'packaged', framework: 'react' };
+  if (route === 'react') return { method: 'packaged', framework: 'react' };
 
-  if (route === 'html') return { owner: 'html', method: 'packaged', framework: 'html' };
+  if (route === 'html') return { method: 'packaged', framework: 'html' };
 
-  if (route === 'vue') return { owner: 'html', method: 'packaged', framework: 'vue' };
+  if (route === 'vue') return { method: 'packaged', framework: 'vue' };
 
-  if (route === 'svelte') return { owner: 'html', method: 'packaged', framework: 'svelte' };
+  if (route === 'svelte') return { method: 'packaged', framework: 'svelte' };
 
-  if (route === 'cdn') return { owner: 'html', method: 'cdn', framework: 'html' };
+  if (route === 'cdn') return { method: 'cdn', framework: 'html' };
 
   if (route !== 'shadcn') return null;
 
-  const framework = params.get('framework') || 'react';
-  const owner = framework === 'html' || framework === 'vue' || framework === 'svelte' ? 'html' : 'react';
-
-  return { owner, method: 'shadcn', framework };
+  return { method: 'shadcn', framework: params.get('framework') || 'react' };
 }
 
 function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchParams): InstallationInput {
@@ -133,7 +128,7 @@ export function resolveInstallationMarkdownPlan(
     };
   }
 
-  const resolved = resolveInstallationSelection(defaults.owner, inputFromQuery(defaults, params), packageVersion);
+  const resolved = resolveInstallationSelection(inputFromQuery(defaults, params), packageVersion);
   if (!resolved.ok) return resolved;
 
   // The site deploys from main, so a pinned release could reject options added since then.

@@ -14,12 +14,10 @@ import {
 } from './projects';
 import { RENDERERS, type Renderer } from './renderers';
 import {
-  INSTALLATION_FRAMEWORKS,
   installationMethodsForFramework,
   installationTemplatesForMethod,
   sourceFrameworkFor,
   type InstallationMethod,
-  type PlayerOwner,
   type PresetFlag,
   type SkinFlag,
 } from './selection';
@@ -158,9 +156,11 @@ export function installationDecisionOrderFor({
         : methods[0] === 'shadcn'
           ? 'This guide uses Shadcn to copy editable skin source. React uses the React source catalog; plain HTML uses the HTML source catalog. Vue and Svelte use packaged modules.'
           : 'This guide uses CDN scripts for plain HTML. Use an existing page when one is available, and scaffold a minimal Vite app only when no app exists.'
-      : frameworks.includes('react')
-        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. Use @videojs/html when the project needs CDN scripts.'
-        : 'Use packaged modules by default, Shadcn when a plain HTML project should own editable skin source, or CDN for a plain HTML integration. Packaged modules need a bundler, so use CDN for an existing site without a build step. Vue and Svelte use packaged modules. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
+      : frameworks.length === 1 && frameworks[0] === 'react'
+        ? 'Use packaged modules by default or Shadcn when the project should own editable skin source. CDN scripts are available for plain HTML only.'
+        : frameworks.includes('react')
+          ? 'Use packaged modules by default, or Shadcn when a React or plain HTML project should own editable skin source. CDN scripts are for plain HTML only; packaged modules need a bundler, so use CDN for an existing site without a build step. Vue and Svelte use packaged modules. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.'
+          : 'Use packaged modules by default, Shadcn when a plain HTML project should own editable skin source, or CDN for a plain HTML integration. Packaged modules need a bundler, so use CDN for an existing site without a build step. Vue and Svelte use packaged modules. CDN can use any existing HTML page or app; only scaffold a minimal Vite app when no app exists. The HTML source registry uses CSS styling.';
 
   const stylingDecisions: InstallationDecision[] =
     methods.includes('shadcn') && frameworks.includes('react')
@@ -176,7 +176,7 @@ export function installationDecisionOrderFor({
     {
       title: 'Inspect the project',
       guidance:
-        'Read package.json, framework config, and lockfiles to infer the framework, app setup, and package manager. Use @videojs/react for React or @videojs/html for HTML, Vue, and Svelte.',
+        'Read package.json, framework config, and lockfiles to infer the framework, app setup, and package manager. React installs @videojs/react; HTML, Vue, and Svelte install @videojs/html.',
     },
     {
       title: 'Choose the starting point',
@@ -239,7 +239,8 @@ export function installationOptionDefinitionsFor(
     optionDefinition('framework', {
       values: frameworks,
       default: frameworks[0]!,
-      description: 'The application framework that will host the player.',
+      description:
+        'The application framework that will host the player. React installs @videojs/react; HTML, Vue, and Svelte install @videojs/html.',
     }),
     optionDefinition('project', {
       values: INSTALLATION_PROJECTS,
@@ -311,11 +312,4 @@ export function installationOptionDefinitionsFor(
   });
 
   return definitions;
-}
-
-export function installationOptionDefinitions(owner: PlayerOwner): readonly InstallationOptionDefinition[] {
-  return installationOptionDefinitionsFor({
-    methods: owner === 'react' ? ['packaged', 'shadcn'] : ['packaged', 'shadcn', 'cdn'],
-    frameworks: owner === 'react' ? ['react'] : INSTALLATION_FRAMEWORKS.filter((value) => value !== 'react'),
-  });
 }

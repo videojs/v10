@@ -19,6 +19,7 @@ export default {
         'cdn',
         'ci',
         'claude',
+        'cli',
         'vjsc',
         'core',
         'design',

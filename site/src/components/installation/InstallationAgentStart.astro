@@ -5,14 +5,14 @@ import CopyButton from '@/components/CopyButton';
 import P from '@/components/typography/P.astro';
 
 const route = Astro.params.framework;
-const owner = route === 'react' || route === 'shadcn' ? 'react' : 'html';
-const input = {
-  ...(route === 'cdn' || route === 'shadcn' ? { method: route } : {}),
-  ...(route === 'vue' || route === 'svelte' ? { framework: route } : {}),
-};
-const init = installationCommand(owner, input, null);
+const input = route === 'cdn'
+  ? { method: 'cdn', framework: 'html' }
+  : route === 'vue' || route === 'svelte'
+    ? { framework: route }
+    : undefined;
+const init = installationCommand(input, null);
 const installationPrompt = route === 'shadcn'
-  ? `When installation details are needed, run \`${installationCommand('react', { method: 'shadcn' }, null)}\` for React, or \`${installationCommand('html', { method: 'shadcn' }, null)}\` for plain HTML. The command prints version-matched choices and instructions without changing files.`
+  ? `When installation details are needed, run \`${installationCommand({ method: 'shadcn', framework: 'react' }, null)}\` for React, or \`${installationCommand({ method: 'shadcn', framework: 'html' }, null)}\` for plain HTML. The command prints version-matched choices and instructions without changing files.`
   : `When installation details are needed, run \`${init}\` to print the version-matched choices and instructions without changing files.`;
 const prompt = `Install the Video.js skill using one method. In Codex, run \`codex plugin marketplace add videojs/skills\`, then \`codex plugin add videojs@videojs\`, and start a new session. In Claude Code, run \`claude plugin marketplace add videojs/skills\`, then \`claude plugin install videojs@videojs\`, and start a new session or run \`/reload-plugins\`. In VS Code or Cursor, install \`https://github.com/videojs/skills\` as a plugin from source. For another agent, run \`npx skills add https://github.com/videojs/skills\` and select the agent. Then use the Video.js skill when working on this project. ${installationPrompt}`;
 ---

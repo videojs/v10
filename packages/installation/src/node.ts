@@ -1,6 +1,8 @@
 import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { dirname, join, parse, resolve } from 'node:path';
 
+import { isPlainObject, isString } from '@videojs/utils/predicate';
+
 import { renderDiscoveryMarkdown, renderInstallationMarkdown, renderSelectionErrors } from './markdown';
 import {
   INSTALLATION_PARAMETERS,
@@ -9,11 +11,22 @@ import {
   type InstallationInput,
   type PackageManager,
 } from './parameters';
-import { createInstallationDiscovery, createInstallationPlan } from './plan';
+import {
+  createInstallationDiscovery,
+  createInstallationPlan,
+  INSTALLATION_CLI_PACKAGE,
+  installationCommand,
+  installationReproduceInput,
+  PLAYER_PACKAGES,
+  type InstallationPlan,
+  type PlayerPackage,
+} from './plan';
+import type { InstallationFramework } from './projects';
 import {
   isPackageManager,
   resolveInstallationSelection,
   selectionToInput,
+  type InstallationSelectionDefaults,
   type PlayerOwner,
   type SelectionError,
 } from './selection';
@@ -106,7 +119,43 @@ function jsonDocument<Value>(value: Value): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-function installationPlanJson(plan: ReturnType<typeof createInstallationPlan>) {
+export interface InstallationVersionNotice {
+  package: PlayerPackage;
+  installedVersion: string;
+  /** Prints the same selection from the CLI release that matches the installed player. */
+  command: string;
+  message: string;
+}
+
+function installationVersionNotice(
+  plan: InstallationPlan,
+  installedVersions: AgentsInitDefaults['installedVersions']
+): InstallationVersionNotice | null {
+  const installedVersion = installedVersions?.[plan.selection.owner];
+  if (!installedVersion || installedVersion === plan.packageVersion) return null;
+
+  const command = installationCommand(installationReproduceInput(plan.selection), installedVersion);
+
+  return {
+    package: plan.playerPackage,
+    installedVersion,
+    command,
+    message: `These instructions target Video.js ${plan.packageVersion}, but this project has \`${plan.playerPackage}@${installedVersion}\`. For instructions that match the installed version, run \`${command}\`. If \`${INSTALLATION_CLI_PACKAGE}@${installedVersion}\` predates \`agents init\`, upgrade the project's Video.js packages to ${plan.packageVersion} and follow these instructions instead.`,
+  };
+}
+
+interface InstallationPlanJson extends Omit<InstallationPlan, 'selection'> {
+  versionNotice?: InstallationVersionNotice;
+  selectedOptions: Record<string, string>;
+  defaultedOptions: string[];
+  /** Where each detected default came from, keyed by option name. */
+  defaultedOptionSources: Record<string, string>;
+}
+
+function installationPlanJson(
+  plan: InstallationPlan,
+  versionNotice: InstallationVersionNotice | null
+): InstallationPlanJson {
   const { selection, ...document } = plan;
   const input = selectionToInput(selection);
   const selectedOptions: Record<string, string> = {};
@@ -121,13 +170,27 @@ function installationPlanJson(plan: ReturnType<typeof createInstallationPlan>) {
     selectedOptions[parameter.query] = input[parameter.key];
   }
 
-  return {
+  const defaultedOptions = selection.defaulted.filter(
+    (key) => key !== 'skin' || selection.useCase !== 'background-video'
+  );
+  const defaultedOptionSources: Record<string, string> = {};
+
+  for (const key of defaultedOptions) {
+    const source = selection.defaultSources[key];
+
+    if (source) defaultedOptionSources[installationParameterForKey(key).query] = source;
+  }
+
+  const json: InstallationPlanJson = {
     ...document,
     selectedOptions,
-    defaultedOptions: selection.defaulted
-      .filter((key) => key !== 'skin' || selection.useCase !== 'background-video')
-      .map((key) => installationParameterForKey(key).query),
+    defaultedOptions: defaultedOptions.map((key) => installationParameterForKey(key).query),
+    defaultedOptionSources,
   };
+
+  if (versionNotice) json.versionNotice = versionNotice;
+
+  return json;
 }
 
 function errorResult(json: boolean, errors: readonly SelectionError[]): AgentsInitResult {
@@ -150,11 +213,22 @@ function errorResult(json: boolean, errors: readonly SelectionError[]): AgentsIn
   return { exitCode: 2, stdout: '', stderr: `${renderSelectionErrors(errors)}\n` };
 }
 
+/** Player package versions found in a project, keyed by the player package that owns them. */
+export type InstalledPlayerVersions = Partial<Record<PlayerOwner, string>>;
+
+export interface AgentsInitDefaults extends InstallationSelectionDefaults {
+  /** Used to flag instructions generated for another release than the project's player. */
+  installedVersions?: InstalledPlayerVersions;
+}
+
+/**
+ * Resolve one `agents init` invocation without touching the process or file system. Project detection results arrive
+ * through `defaults`, so the same arguments always produce the same output.
+ */
 export function runAgentsInit(
-  owner: PlayerOwner,
   packageVersion: string,
   args: readonly string[],
-  defaults: { packageManager?: PackageManager } = {}
+  defaults: AgentsInitDefaults = {}
 ): AgentsInitResult {
   try {
     const json = args.includes('--json');
@@ -167,7 +241,7 @@ export function runAgentsInit(
       return {
         exitCode: 0,
         stdout: json
-          ? jsonDocument({ schemaVersion: 1, kind: 'version', package: `@videojs/${owner}`, packageVersion })
+          ? jsonDocument({ schemaVersion: 1, kind: 'version', package: INSTALLATION_CLI_PACKAGE, packageVersion })
           : `${packageVersion}\n`,
         stderr: '',
       };
@@ -181,7 +255,7 @@ export function runAgentsInit(
     if (!parsed.ok) return errorResult(parsed.json, parsed.errors);
 
     if (!parsed.value.selected || parsed.value.help) {
-      const discovery = createInstallationDiscovery(owner, packageVersion, defaults);
+      const discovery = createInstallationDiscovery(packageVersion, defaults);
 
       return {
         exitCode: 0,
@@ -190,14 +264,17 @@ export function runAgentsInit(
       };
     }
 
-    const resolved = resolveInstallationSelection(owner, parsed.value.input, packageVersion, defaults);
+    const resolved = resolveInstallationSelection(parsed.value.input, packageVersion, defaults);
     if (!resolved.ok) return errorResult(parsed.value.json, resolved.errors);
 
     const plan = createInstallationPlan(resolved.selection, packageVersion);
+    const versionNotice = installationVersionNotice(plan, defaults.installedVersions);
 
     return {
       exitCode: 0,
-      stdout: parsed.value.json ? jsonDocument(installationPlanJson(plan)) : renderInstallationMarkdown(plan),
+      stdout: parsed.value.json
+        ? jsonDocument(installationPlanJson(plan, versionNotice))
+        : renderInstallationMarkdown(plan, versionNotice ? { versionNotice: versionNotice.message } : {}),
       stderr: '',
     };
   } catch (error) {
@@ -212,11 +289,18 @@ export function runAgentsInit(
   }
 }
 
-/** Run the package's instruction-only agent CLI and publish its process result. */
-export function runAgentsCli(owner: PlayerOwner, packageVersion: string, args = process.argv.slice(2)): void {
-  const result = runAgentsInit(owner, packageVersion, args, {
-    packageManager: detectPackageManager(process.cwd(), process.env),
-  });
+/** Run the instruction-only `agents init` CLI from the current directory and publish its process result. */
+export function runAgentsCli(packageVersion: string, args = process.argv.slice(2)): void {
+  const cwd = process.cwd();
+  const defaults: AgentsInitDefaults = {
+    packageManager: detectPackageManager(cwd, process.env),
+    installedVersions: detectInstalledPlayerVersions(cwd),
+  };
+  const framework = detectFramework(cwd);
+
+  if (framework) defaults.framework = framework;
+
+  const result = runAgentsInit(packageVersion, args, defaults);
 
   if (result.stdout) process.stdout.write(result.stdout);
 
@@ -231,18 +315,135 @@ interface PackageManagerEnvironment {
   npm_config_user_agent?: string;
 }
 
+const DEPENDENCY_FIELDS = ['dependencies', 'devDependencies'] as const;
+
+type DependencyField = (typeof DEPENDENCY_FIELDS)[number];
+
 interface PackageManifest {
-  packageManager?: string;
-  workspaces?: unknown;
+  packageManager: string | null;
+  hasWorkspaces: boolean;
+  version: string | null;
+  /** Declared dependency ranges by field; entries with non-string values are dropped. */
+  dependencies: Readonly<Record<DependencyField, ReadonlyMap<string, string>>>;
+}
+
+function stringEntries(value: unknown): ReadonlyMap<string, string> {
+  if (!isPlainObject(value)) return new Map();
+
+  return new Map(Object.entries(value).filter((entry): entry is [string, string] => isString(entry[1])));
 }
 
 function readPackageManifest(path: string): PackageManifest | null {
+  let value: unknown;
+
   try {
-    // SAFETY: consumers validate the only optional fields they read before using them.
-    return JSON.parse(readFileSync(path, 'utf8')) as PackageManifest;
+    value = JSON.parse(readFileSync(path, 'utf8'));
   } catch {
     return null;
   }
+
+  if (!isPlainObject(value)) return null;
+
+  return {
+    packageManager: isString(value.packageManager) ? value.packageManager : null,
+    hasWorkspaces: value.workspaces !== undefined,
+    version: isString(value.version) ? value.version : null,
+    dependencies: {
+      dependencies: stringEntries(value.dependencies),
+      devDependencies: stringEntries(value.devDependencies),
+    },
+  };
+}
+
+interface ProjectManifests {
+  /** The start directory followed by each ancestor up to the file system root. */
+  directories: readonly string[];
+  manifests: readonly (PackageManifest | null)[];
+  /** Index of the outermost directory that still belongs to the project. */
+  boundary: number;
+}
+
+/** Walk from `cwd` to the nearest repository or workspace root, or else to the nearest package. */
+function readProjectManifests(cwd: string): ProjectManifests {
+  const start = resolve(cwd);
+  const root = parse(start).root;
+  const directories: string[] = [];
+  let directory = start;
+
+  while (true) {
+    directories.push(directory);
+
+    if (directory === root) break;
+
+    directory = dirname(directory);
+  }
+
+  const manifests = directories.map((candidate) => readPackageManifest(join(candidate, 'package.json')));
+  const workspaceBoundary = directories.findIndex(
+    (candidate, index) =>
+      existsSync(join(candidate, '.git')) ||
+      existsSync(join(candidate, 'pnpm-workspace.yaml')) ||
+      manifests[index]?.hasWorkspaces
+  );
+  const nearestPackage = manifests.findIndex((manifest) => manifest !== null);
+  const boundary = workspaceBoundary >= 0 ? workspaceBoundary : nearestPackage >= 0 ? nearestPackage : 0;
+
+  return { directories, manifests, boundary };
+}
+
+function nearestProjectManifest({ manifests, boundary }: ProjectManifests): PackageManifest | null {
+  return manifests.slice(0, boundary + 1).find((manifest) => manifest !== null) ?? null;
+}
+
+const FRAMEWORK_DEPENDENCIES = [
+  ['react', ['react', 'react-dom', 'next', '@tanstack/react-start', 'react-router', '@videojs/react']],
+  ['vue', ['vue', 'nuxt']],
+  ['svelte', ['svelte', '@sveltejs/kit']],
+] as const satisfies ReadonlyArray<readonly [InstallationFramework, readonly string[]]>;
+
+/** Infer the framework from the nearest project manifest. Returns `null` when no framework dependency is present. */
+export function detectFramework(cwd: string): NonNullable<InstallationSelectionDefaults['framework']> | null {
+  const manifest = nearestProjectManifest(readProjectManifests(cwd));
+
+  for (const [framework, dependencies] of FRAMEWORK_DEPENDENCIES) {
+    for (const field of DEPENDENCY_FIELDS) {
+      const declared = manifest?.dependencies[field];
+
+      if (dependencies.some((dependency) => declared?.has(dependency))) {
+        return { value: framework, source: `package.json ${field}` };
+      }
+    }
+  }
+
+  return null;
+}
+
+const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[0-9a-z.-]+)?(?:\+[0-9a-z.-]+)?$/i;
+
+/**
+ * Find the `@videojs/react` and `@videojs/html` versions a project uses: the installed package when Node would resolve
+ * one from `cwd`, otherwise an exact version declared in the nearest project manifest. Ranges are ignored because they
+ * do not identify one release.
+ */
+export function detectInstalledPlayerVersions(cwd: string): InstalledPlayerVersions {
+  const project = readProjectManifests(cwd);
+  const manifest = nearestProjectManifest(project);
+  const versions: InstalledPlayerVersions = {};
+
+  for (const owner of ['react', 'html'] as const) {
+    const packageName = PLAYER_PACKAGES[owner];
+    const installed = project.directories
+      .map((directory) => readPackageManifest(join(directory, 'node_modules', packageName, 'package.json'))?.version)
+      .find(isString);
+    const declared = DEPENDENCY_FIELDS.map((field) => manifest?.dependencies[field].get(packageName)).find(
+      (version) => isString(version) && EXACT_VERSION.test(version)
+    );
+    const version = installed ?? declared;
+
+    if (version) versions[owner] = version;
+  }
+
+  return versions;
 }
 
 function packageManagerFromManifest(manifest: PackageManifest | null): PackageManager | null {
@@ -272,19 +473,7 @@ export function detectPackageManager(
   cwd: string,
   environment: PackageManagerEnvironment = process.env
 ): PackageManager {
-  const start = resolve(cwd);
-  const root = parse(start).root;
-  const directories: string[] = [];
-  let directory = start;
-
-  while (true) {
-    directories.push(directory);
-
-    if (directory === root) break;
-
-    directory = dirname(directory);
-  }
-
+  const { directories, manifests, boundary } = readProjectManifests(cwd);
   const lockfiles = [
     ['pnpm-lock.yaml', 'pnpm'],
     ['yarn.lock', 'yarn'],
@@ -292,15 +481,6 @@ export function detectPackageManager(
     ['bun.lockb', 'bun'],
     ['package-lock.json', 'npm'],
   ] as const;
-  const manifests = directories.map((candidate) => readPackageManifest(join(candidate, 'package.json')));
-  const workspaceBoundary = directories.findIndex(
-    (candidate, index) =>
-      existsSync(join(candidate, '.git')) ||
-      existsSync(join(candidate, 'pnpm-workspace.yaml')) ||
-      manifests[index]?.workspaces !== undefined
-  );
-  const nearestPackage = manifests.findIndex((manifest) => manifest !== null);
-  const boundary = workspaceBoundary >= 0 ? workspaceBoundary : nearestPackage >= 0 ? nearestPackage : 0;
 
   for (let index = 0; index <= boundary; index++) {
     const candidate = directories[index]!;

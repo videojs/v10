@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  installationCompatibility,
-  installationDecisionOrderFor,
-  installationOptionDefinitions,
-  installationOptionDefinitionsFor,
-} from '../options';
+import { installationCompatibility, installationDecisionOrderFor, installationOptionDefinitionsFor } from '../options';
 
 function valuesFor(
   definitions: ReturnType<typeof installationOptionDefinitionsFor>,
@@ -14,19 +9,27 @@ function valuesFor(
   return definitions.find((option) => option.flag === flag)?.values;
 }
 
-describe('installationOptionDefinitions', () => {
-  it('only advertises methods supported by each package', () => {
-    const react = installationOptionDefinitions('react');
+describe('installationOptionDefinitionsFor', () => {
+  it('only advertises the methods supported by the selected frameworks', () => {
+    const react = installationOptionDefinitionsFor({ methods: ['packaged', 'shadcn'], frameworks: ['react'] });
+    const every = installationOptionDefinitionsFor({
+      methods: ['packaged', 'shadcn', 'cdn'],
+      frameworks: ['react', 'html', 'vue', 'svelte'],
+    });
 
     expect(valuesFor(react, '--method')).toEqual(['packaged', 'shadcn']);
     expect(react.find(({ flag }) => flag === '--method')?.description).toBe(
       'Choose packaged modules or editable Shadcn source.'
     );
-    expect(valuesFor(installationOptionDefinitions('html'), '--method')).toEqual(['packaged', 'shadcn', 'cdn']);
+    expect(valuesFor(every, '--method')).toEqual(['packaged', 'shadcn', 'cdn']);
+    expect(valuesFor(every, '--framework')).toEqual(['react', 'html', 'vue', 'svelte']);
   });
 
-  it('advertises every app setup supported by the HTML package frameworks', () => {
-    const definitions = installationOptionDefinitions('html');
+  it('advertises every app setup supported by the HTML custom-element frameworks', () => {
+    const definitions = installationOptionDefinitionsFor({
+      methods: ['packaged', 'shadcn', 'cdn'],
+      frameworks: ['html', 'vue', 'svelte'],
+    });
 
     expect(valuesFor(definitions, '--template')).toEqual(['vite', 'astro', 'laravel', 'none', 'nuxt', 'sveltekit']);
     expect(valuesFor(definitions, '--project')).toEqual(['new', 'existing']);
@@ -34,9 +37,7 @@ describe('installationOptionDefinitions', () => {
     expect(definitions.find(({ flag }) => flag === '--template')?.default).toBe('vite');
     expect(definitions.find(({ flag }) => flag === '--styling')?.default).toBe('css');
   });
-});
 
-describe('installationOptionDefinitionsFor', () => {
   it('filters choices for a Shadcn-only route', () => {
     const definitions = installationOptionDefinitionsFor({ methods: ['shadcn'], frameworks: ['react', 'html'] });
 
@@ -57,6 +58,20 @@ describe('installationOptionDefinitionsFor', () => {
 });
 
 describe('installationDecisionOrderFor', () => {
+  it('explains every installation method when all frameworks are available', () => {
+    const decisions = installationDecisionOrderFor({
+      methods: ['packaged', 'shadcn', 'cdn'],
+      frameworks: ['react', 'html', 'vue', 'svelte'],
+    });
+    const guidance = decisions.find(({ title }) => title === 'Choose how to install')?.guidance;
+
+    expect(guidance).toContain('Shadcn when a React or plain HTML project');
+    expect(guidance).toContain('CDN scripts are for plain HTML only');
+    expect(decisions.find(({ title }) => title === 'Inspect the project')?.guidance).toContain(
+      'React installs @videojs/react; HTML, Vue, and Svelte install @videojs/html.'
+    );
+  });
+
   it('describes the fixed installation path represented by a guide', () => {
     const shadcn = installationDecisionOrderFor({ methods: ['shadcn'], frameworks: ['react', 'html'] });
     const cdn = installationDecisionOrderFor({ methods: ['cdn'], frameworks: ['html'] });

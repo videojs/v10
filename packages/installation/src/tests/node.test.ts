@@ -5,7 +5,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { INSTALLATION_DEMO_SOURCES } from '../defaults';
-import { detectPackageManager, runAgentsInit } from '../node';
+import {
+  detectFramework,
+  detectInstalledPlayerVersions,
+  detectPackageManager,
+  runAgentsInit,
+  type AgentsInitDefaults,
+} from '../node';
 import { installationCommand } from '../plan';
 import {
   INSTALLATION_FRAMEWORKS,
@@ -15,14 +21,33 @@ import {
 } from '../selection';
 import { defaultRegistryStyling } from '../shadcn';
 
-describe('runAgentsInit', () => {
-  it('can target the locally installed package without forcing an npm tag', () => {
-    expect(installationCommand('react', undefined, null)).toBe('npx @videojs/react agents init');
-    expect(installationCommand('react')).toBe('npx @videojs/react agents init');
-  });
+const reactProject = {
+  framework: { value: 'react', source: 'package.json dependencies' },
+} as const satisfies AgentsInitDefaults;
 
+function withTemporaryDirectory(run: (root: string) => void): void {
+  const root = mkdtempSync(join(tmpdir(), 'videojs-installation-'));
+
+  try {
+    run(root);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+describe('installationCommand', () => {
+  it('runs the CLI package without forcing an npm tag', () => {
+    expect(installationCommand(undefined, null)).toBe('npx @videojs/cli agents init');
+    expect(installationCommand()).toBe('npx @videojs/cli agents init');
+    expect(installationCommand({ framework: 'react', media: 'hls' }, '10.0.0')).toBe(
+      'npx @videojs/cli@10.0.0 agents init --framework react --media hls'
+    );
+  });
+});
+
+describe('runAgentsInit', () => {
   it('returns discovery without modifying a project', () => {
-    const result = runAgentsInit('react', '10.0.0', ['agents', 'init']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init'], reactProject);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('never installs packages');
@@ -31,7 +56,7 @@ describe('runAgentsInit', () => {
 
   it('uses the detected package manager and gives fully explicit examples', () => {
     const discovery = JSON.parse(
-      runAgentsInit('html', '10.0.0', ['agents', 'init', '--json'], { packageManager: 'yarn' }).stdout
+      runAgentsInit('10.0.0', ['agents', 'init', '--json'], { packageManager: 'yarn' }).stdout
     );
     const packageManager = discovery.options.find(({ flag }: { flag: string }) => flag === '--package-manager');
 
@@ -40,7 +65,7 @@ describe('runAgentsInit', () => {
     // SAFETY: discovery JSON is produced by createInstallationDiscovery, whose examples field is a string array.
     for (const example of discovery.examples as string[]) {
       const args = example.split(' ').slice(2);
-      const result = runAgentsInit('html', '10.0.0', args);
+      const result = runAgentsInit('10.0.0', args);
 
       expect(result.exitCode, example).toBe(0);
       expect(result.stdout, example).toContain('Defaulted options: none.');
@@ -48,7 +73,7 @@ describe('runAgentsInit', () => {
   });
 
   it('returns complete selected instructions', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'shadcn', '--media', 'hls']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--media', 'hls']);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('## Configure Shadcn');
@@ -63,14 +88,11 @@ describe('runAgentsInit', () => {
   });
 
   it('adds selected extensions to packages and player code', () => {
-    const result = runAgentsInit('react', '10.0.0', [
-      'agents',
-      'init',
-      '--media',
-      'hls',
-      '--extensions',
-      'google-cast',
-    ]);
+    const result = runAgentsInit(
+      '10.0.0',
+      ['agents', 'init', '--media', 'hls', '--extensions', 'google-cast'],
+      reactProject
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('@videojs/google-cast@10.0.0');
@@ -79,7 +101,7 @@ describe('runAgentsInit', () => {
   });
 
   it('omits the unused package manager for an existing CDN page', () => {
-    const result = runAgentsInit('html', '10.0.0', [
+    const result = runAgentsInit('10.0.0', [
       'agents',
       'init',
       '--method',
@@ -103,7 +125,7 @@ describe('runAgentsInit', () => {
   });
 
   it('uses an existing HTML setup without inventing scaffold or run commands', () => {
-    const result = runAgentsInit('html', '10.0.0', [
+    const result = runAgentsInit('10.0.0', [
       'agents',
       'init',
       '--method',
@@ -122,18 +144,22 @@ describe('runAgentsInit', () => {
   });
 
   it('shows the likely development command for an existing named app setup', () => {
-    const result = runAgentsInit('react', '10.0.0', [
-      'agents',
-      'init',
-      '--method',
-      'packaged',
-      '--framework',
-      'react',
-      '--project',
-      'existing',
-      '--template',
-      'start',
-    ]);
+    const result = runAgentsInit(
+      '10.0.0',
+      [
+        'agents',
+        'init',
+        '--method',
+        'packaged',
+        '--framework',
+        'react',
+        '--project',
+        'existing',
+        '--template',
+        'start',
+      ],
+      reactProject
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).not.toContain('## Prepare');
@@ -144,14 +170,7 @@ describe('runAgentsInit', () => {
 
   it('rejects Shadcn for Vue and Svelte projects', () => {
     for (const framework of ['vue', 'svelte']) {
-      const result = runAgentsInit('html', '10.0.0', [
-        'agents',
-        'init',
-        '--framework',
-        framework,
-        '--method',
-        'shadcn',
-      ]);
+      const result = runAgentsInit('10.0.0', ['agents', 'init', '--framework', framework, '--method', 'shadcn']);
 
       expect(result.exitCode).toBe(2);
       expect(result.stdout).toBe('');
@@ -162,18 +181,11 @@ describe('runAgentsInit', () => {
   });
 
   it('lets Shadcn scaffold a new React Tailwind app without double scaffolding', () => {
-    const result = runAgentsInit('react', '10.0.0', [
-      'agents',
-      'init',
-      '--method',
-      'shadcn',
-      '--project',
-      'new',
-      '--template',
-      'vite',
-      '--styling',
-      'tailwind',
-    ]);
+    const result = runAgentsInit(
+      '10.0.0',
+      ['agents', 'init', '--method', 'shadcn', '--project', 'new', '--template', 'vite', '--styling', 'tailwind'],
+      reactProject
+    );
 
     expect(result.stdout).toContain('pnpm dlx shadcn@latest init --template vite');
     expect(result.stdout).not.toContain('pnpm dlx shadcn@latest init --base base --preset nova --yes');
@@ -182,18 +194,11 @@ describe('runAgentsInit', () => {
   });
 
   it('keeps alias-free Shadcn initialization with the registry commands', () => {
-    const result = runAgentsInit('react', '10.0.0', [
-      'agents',
-      'init',
-      '--method',
-      'shadcn',
-      '--project',
-      'existing',
-      '--template',
-      'next',
-      '--styling',
-      'tailwind',
-    ]);
+    const result = runAgentsInit(
+      '10.0.0',
+      ['agents', 'init', '--method', 'shadcn', '--project', 'existing', '--template', 'next', '--styling', 'tailwind'],
+      reactProject
+    );
 
     expect(result.stdout).not.toContain('## Configure Shadcn');
     expect(result.stdout).toContain('## Create components.json (optional)');
@@ -204,16 +209,11 @@ describe('runAgentsInit', () => {
   });
 
   it('writes Shadcn aliases where Vite and Shadcn both resolve them', () => {
-    const result = runAgentsInit('react', '10.0.0', [
-      'agents',
-      'init',
-      '--method',
-      'shadcn',
-      '--template',
-      'vite',
-      '--styling',
-      'css',
-    ]);
+    const result = runAgentsInit(
+      '10.0.0',
+      ['agents', 'init', '--method', 'shadcn', '--template', 'vite', '--styling', 'css'],
+      reactProject
+    );
 
     expect(result.stdout).toContain('### `tsconfig.json`');
     expect(result.stdout).toContain('### `tsconfig.app.json`');
@@ -222,8 +222,8 @@ describe('runAgentsInit', () => {
   });
 
   it('uses Astro and Laravel entry conventions for HTML apps', () => {
-    const astro = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'html', '--template', 'astro']);
-    const laravel = runAgentsInit('html', '10.0.0', [
+    const astro = runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'html', '--template', 'astro']);
+    const laravel = runAgentsInit('10.0.0', [
       'agents',
       'init',
       '--framework',
@@ -242,7 +242,7 @@ describe('runAgentsInit', () => {
   });
 
   it('keeps the optional Vite scaffold in CDN agent instructions', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn', '--project', 'new']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn', '--project', 'new']);
 
     expect(result.stdout).toContain('## Create the app');
     expect(result.stdout).toContain('pnpm create vite');
@@ -253,7 +253,7 @@ describe('runAgentsInit', () => {
   });
 
   it('keeps packaged Nuxt player markup on the client', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue', '--template', 'nuxt']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'vue', '--template', 'nuxt']);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('app/components/VideoPlayer.client.vue');
@@ -262,15 +262,11 @@ describe('runAgentsInit', () => {
   });
 
   it('does not add framework setup instructions to an existing Astro app', () => {
-    const result = runAgentsInit('react', '10.0.0', [
-      'agents',
-      'init',
-      '--method',
-      'shadcn',
-      '--template',
-      'astro',
-      '--json',
-    ]);
+    const result = runAgentsInit(
+      '10.0.0',
+      ['agents', 'init', '--method', 'shadcn', '--template', 'astro', '--json'],
+      reactProject
+    );
     // SAFETY: runAgentsInit produced instruction JSON above, whose steps expose stable string IDs.
     const steps = JSON.parse(result.stdout).steps as Array<{ id: string }>;
 
@@ -280,21 +276,22 @@ describe('runAgentsInit', () => {
 
   it('re-runs the generated native-audio command without changing its selection', () => {
     const first = JSON.parse(
-      runAgentsInit('html', '10.0.0', ['agents', 'init', '--preset', 'audio', '--media', 'html5-audio', '--json'])
-        .stdout
+      runAgentsInit('10.0.0', ['agents', 'init', '--preset', 'audio', '--media', 'html5-audio', '--json']).stdout
     );
     const args = first.reproduceCommand.split(' ').slice(2);
 
-    expect(first.reproduceCommand).toMatch(/^npx @videojs\/html@10\.0\.0 agents init /);
+    expect(first.reproduceCommand).toMatch(
+      /^npx @videojs\/cli@10\.0\.0 agents init --method packaged --framework html /
+    );
 
-    const reproduced = runAgentsInit('html', '10.0.0', [...args, '--json']);
+    const reproduced = runAgentsInit('10.0.0', [...args, '--json']);
 
     expect(reproduced.exitCode).toBe(0);
     expect(JSON.parse(reproduced.stdout).selectedOptions).toEqual(first.selectedOptions);
   });
 
   it('returns one JSON document', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--json']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--json']);
     const value = JSON.parse(result.stdout);
 
     expect(result.stderr).toBe('');
@@ -308,7 +305,7 @@ describe('runAgentsInit', () => {
   });
 
   it('exposes public option names without internal selection fields in instruction JSON', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--preset', 'background-video', '--json']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--preset', 'background-video', '--json']);
     const value = JSON.parse(result.stdout);
 
     expect(value.kind).toBe('instructions');
@@ -325,20 +322,20 @@ describe('runAgentsInit', () => {
   });
 
   it('supports top-level discovery and version JSON forms', () => {
-    const discovery = JSON.parse(runAgentsInit('react', '10.0.0', ['--help', '--json']).stdout);
-    const bareJson = JSON.parse(runAgentsInit('react', '10.0.0', ['--json']).stdout);
-    const version = JSON.parse(runAgentsInit('react', '10.0.0', ['agents', 'init', '--version', '--json']).stdout);
-    const topLevelVersion = JSON.parse(runAgentsInit('react', '10.0.0', ['--version', '--json']).stdout);
+    const discovery = JSON.parse(runAgentsInit('10.0.0', ['--help', '--json'], reactProject).stdout);
+    const bareJson = JSON.parse(runAgentsInit('10.0.0', ['--json'], reactProject).stdout);
+    const version = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--version', '--json'], reactProject).stdout);
+    const topLevelVersion = JSON.parse(runAgentsInit('10.0.0', ['--version', '--json'], reactProject).stdout);
 
     expect(discovery.kind).toBe('discovery');
     expect(bareJson.kind).toBe('discovery');
-    expect(version).toMatchObject({ kind: 'version', package: '@videojs/react', packageVersion: '10.0.0' });
+    expect(version).toMatchObject({ kind: 'version', package: '@videojs/cli', packageVersion: '10.0.0' });
     expect(topLevelVersion).toEqual(version);
   });
 
   it('escapes a custom source URL in generated markup and Markdown fences', () => {
     const source = 'https://example.com/video.mp4?label="four````ticks"&autoplay=1';
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--source-url', source]);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--source-url', source]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain(
@@ -350,9 +347,9 @@ describe('runAgentsInit', () => {
   });
 
   it('uses the demo source when source-url is explicitly empty', () => {
-    const separate = runAgentsInit('html', '10.0.0', ['agents', 'init', '--source-url', '']);
-    const equals = runAgentsInit('html', '10.0.0', ['agents', 'init', '--source-url=']);
-    const missingMethod = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', '']);
+    const separate = runAgentsInit('10.0.0', ['agents', 'init', '--source-url', '']);
+    const equals = runAgentsInit('10.0.0', ['agents', 'init', '--source-url=']);
+    const missingMethod = runAgentsInit('10.0.0', ['agents', 'init', '--method', '']);
 
     expect(separate.exitCode).toBe(0);
     expect(separate.stdout).toContain(INSTALLATION_DEMO_SOURCES.videoMp4);
@@ -362,8 +359,8 @@ describe('runAgentsInit', () => {
   });
 
   it('returns valid framework-specific next links in JSON and Markdown', () => {
-    const json = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue', '--json']);
-    const markdown = runAgentsInit('html', '10.0.0', ['agents', 'init', '--framework', 'vue']);
+    const json = runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'vue', '--json']);
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'vue']);
     const value = JSON.parse(json.stdout);
 
     expect(value.next).toEqual([
@@ -377,24 +374,16 @@ describe('runAgentsInit', () => {
   });
 
   it('pins package installs and source media adapters to the requested release', () => {
-    const packaged = runAgentsInit('react', '10.0.0-rc.2', [
-      'agents',
-      'init',
-      '--media',
-      'mux-video',
-      '--package-manager',
-      'npm',
-    ]);
-    const shadcn = runAgentsInit('react', '10.0.0-rc.2', [
-      'agents',
-      'init',
-      '--method',
-      'shadcn',
-      '--media',
-      'hls',
-      '--package-manager',
-      'npm',
-    ]);
+    const packaged = runAgentsInit(
+      '10.0.0-rc.2',
+      ['agents', 'init', '--media', 'mux-video', '--package-manager', 'npm'],
+      reactProject
+    );
+    const shadcn = runAgentsInit(
+      '10.0.0-rc.2',
+      ['agents', 'init', '--method', 'shadcn', '--media', 'hls', '--package-manager', 'npm'],
+      reactProject
+    );
 
     expect(packaged.stdout).toContain(
       'npm install @videojs/react@10.0.0-rc.2 @videojs/mux-video@10.0.0-rc.2 @videojs/mux-data@10.0.0-rc.2'
@@ -404,25 +393,102 @@ describe('runAgentsInit', () => {
   });
 
   it('omits skin from background-video instructions and reproduction commands', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--preset', 'background-video']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--preset', 'background-video']);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).not.toContain('- `skin`:');
     expect(result.stdout).not.toContain('--skin');
   });
 
-  it('scopes discovery choices to the package that owns the command', () => {
-    const markdown = runAgentsInit('react', '10.0.0', ['agents', 'init']);
-    const json = JSON.parse(runAgentsInit('react', '10.0.0', ['agents', 'init', '--json']).stdout);
-    const method = json.options.find(({ flag }: { flag: string }) => flag === '--method');
+  it('covers every framework and installation method in one discovery', () => {
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init'], reactProject);
+    const json = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--json']).stdout);
+    const option = (name: string) => json.options.find(({ flag }: { flag: string }) => flag === name);
 
-    expect(method.description).not.toContain('CDN');
-    expect(json.compatibility.methodsByFramework).toEqual({ react: ['packaged', 'shadcn'] });
-    expect(json.compatibility.templatesByFramework).toEqual({
-      react: ['next', 'vite', 'start', 'react-router', 'astro', 'laravel'],
+    expect(json.package).toBe('@videojs/cli');
+    expect(json.command).toBe('npx @videojs/cli@10.0.0 agents init');
+    expect(option('--method').values).toEqual(['packaged', 'shadcn', 'cdn']);
+    expect(option('--framework').values).toEqual(['react', 'html', 'vue', 'svelte']);
+    expect(option('--framework').default).toBe('detected from package.json dependencies; otherwise html');
+    expect(Object.keys(json.compatibility.methodsByFramework)).toEqual(['react', 'html', 'vue', 'svelte']);
+    expect(json.examples).toEqual([
+      expect.stringMatching(/^npx @videojs\/cli@10\.0\.0 agents init --method packaged --framework react /),
+      expect.stringMatching(/^npx @videojs\/cli@10\.0\.0 agents init --method shadcn --framework html /),
+      expect.stringMatching(/^npx @videojs\/cli@10\.0\.0 agents init --method cdn --framework html /),
+    ]);
+    expect(markdown.stdout).toContain('Default: react (from package.json dependencies).');
+    expect(markdown.stdout).toContain('- `html`: app setups');
+    expect(markdown.stdout).toContain('- `svelte`: app setups');
+    expect(markdown.stdout).toContain('CDN is plain HTML only');
+  });
+
+  it('derives the player package from the framework', () => {
+    const react = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'react', '--json']).stdout);
+    const vue = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'vue', '--json']).stdout);
+
+    expect(react).toMatchObject({ package: '@videojs/cli', playerPackage: '@videojs/react' });
+    expect(vue).toMatchObject({ package: '@videojs/cli', playerPackage: '@videojs/html' });
+  });
+
+  it('lists a detected framework as a defaulted option with its source and pins it in the rerun command', () => {
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init', '--media', 'hls'], reactProject);
+    const json = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--media', 'hls', '--json'], reactProject).stdout
+    );
+    const explicit = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--framework', 'vue', '--json'], reactProject).stdout
+    );
+
+    expect(markdown.stdout).toContain('Defaulted options: method, framework (react from package.json dependencies),');
+    expect(json.selectedOptions.framework).toBe('react');
+    expect(json.defaultedOptions).toContain('framework');
+    expect(json.defaultedOptionSources).toEqual({ framework: 'package.json dependencies' });
+    expect(json.reproduceCommand).toContain('--framework react');
+    expect(explicit.selectedOptions.framework).toBe('vue');
+    expect(explicit.defaultedOptions).not.toContain('framework');
+    expect(explicit.defaultedOptionSources).toEqual({});
+  });
+
+  it('defaults to plain HTML when no framework is detected', () => {
+    const json = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--media', 'hls', '--json']).stdout);
+
+    expect(json.selectedOptions.framework).toBe('html');
+    expect(json.defaultedOptions).toContain('framework');
+    expect(json.defaultedOptionSources).toEqual({});
+  });
+
+  it('points at the matching CLI release when the project has another player version', () => {
+    const defaults = { ...reactProject, installedVersions: { react: '10.0.0-rc.1', html: '10.0.0' } };
+    const args = ['agents', 'init', '--preset', 'audio', '--media', 'html5-audio'];
+    const markdown = runAgentsInit('10.0.0', args, defaults);
+    const json = JSON.parse(runAgentsInit('10.0.0', [...args, '--json'], defaults).stdout);
+    const command = json.reproduceCommand.replace('@videojs/cli@10.0.0 ', '@videojs/cli@10.0.0-rc.1 ');
+
+    expect(json.versionNotice).toEqual({
+      package: '@videojs/react',
+      installedVersion: '10.0.0-rc.1',
+      command,
+      message: expect.stringContaining('`@videojs/cli@10.0.0-rc.1` predates `agents init`'),
     });
-    expect(markdown.stdout).not.toContain('- `html`: templates');
-    expect(markdown.stdout).not.toContain('CDN is plain HTML only');
+    expect(command).toContain('--framework react');
+    expect(markdown.stdout).toContain(
+      `> **Version mismatch.** These instructions target Video.js 10.0.0, but this project has \`@videojs/react@10.0.0-rc.1\`. For instructions that match the installed version, run \`${command}\`.`
+    );
+    expect(markdown.stdout.indexOf('Version mismatch')).toBeLessThan(markdown.stdout.indexOf('## Selected options'));
+  });
+
+  it('omits the version notice when the installed player matches or belongs to the other framework', () => {
+    const args = ['agents', 'init', '--framework', 'html', '--json'];
+    const matching = JSON.parse(runAgentsInit('10.0.0', args, { installedVersions: { html: '10.0.0' } }).stdout);
+    const otherPlayer = JSON.parse(
+      runAgentsInit('10.0.0', args, { installedVersions: { react: '10.0.0-rc.1' } }).stdout
+    );
+
+    expect(matching.versionNotice).toBeUndefined();
+    expect(otherPlayer.versionNotice).toBeUndefined();
+    expect(runAgentsInit('10.0.0', args.slice(0, -1), { installedVersions: { html: '10.0.0' } }).stdout).not.toContain(
+      'Version mismatch'
+    );
   });
 
   it('renders every supported framework, method, app setup, and starting point without hidden defaults', () => {
@@ -430,8 +496,6 @@ describe('runAgentsInit', () => {
     let scenarioCount = 0;
 
     for (const framework of INSTALLATION_FRAMEWORKS) {
-      const owner = framework === 'react' ? 'react' : 'html';
-
       for (const method of installationMethodsForFramework(framework)) {
         for (const template of installationTemplatesForMethod(framework, method)) {
           const projects = template === 'none' ? (['existing'] as const) : (['new', 'existing'] as const);
@@ -467,9 +531,9 @@ describe('runAgentsInit', () => {
               args.push('--styling', defaultRegistryStyling(sourceFrameworkFor(framework)));
             }
 
-            const result = runAgentsInit(owner, '10.0.0-test', args);
-            const jsonResult = runAgentsInit(owner, '10.0.0-test', [...args, '--json']);
-            const label = `${owner}/${framework}/${method}/${template}/${project}`;
+            const result = runAgentsInit('10.0.0-test', args);
+            const jsonResult = runAgentsInit('10.0.0-test', [...args, '--json']);
+            const label = `${framework}/${method}/${template}/${project}`;
 
             if (result.exitCode !== 0 || !result.stdout.includes('Defaulted options: none.')) {
               failures.push(`${label}: ${result.stderr || result.stdout}`);
@@ -513,7 +577,7 @@ describe('runAgentsInit', () => {
   });
 
   it('returns usage errors with exit code 2', () => {
-    const result = runAgentsInit('react', '10.0.0', ['agents', 'init', '--method', 'cdn', '--json']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn', '--json'], reactProject);
     const value = JSON.parse(result.stdout);
 
     expect(result.exitCode).toBe(2);
@@ -521,7 +585,7 @@ describe('runAgentsInit', () => {
   });
 
   it('uses public flags in text validation errors', () => {
-    const result = runAgentsInit('html', '10.0.0', ['agents', 'init', '--method', 'cdn', '--template', 'astro']);
+    const result = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn', '--template', 'astro']);
 
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('- --template: Expected one of: vite, none');
@@ -529,12 +593,12 @@ describe('runAgentsInit', () => {
   });
 
   it('attributes CLI syntax errors to arguments rather than an installation option', () => {
-    const command = JSON.parse(runAgentsInit('react', '10.0.0', ['install', '--json']).stdout);
-    const flag = JSON.parse(runAgentsInit('react', '10.0.0', ['agents', 'init', '--wat', '--json']).stdout);
+    const command = JSON.parse(runAgentsInit('10.0.0', ['install', '--json'], reactProject).stdout);
+    const flag = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--wat', '--json'], reactProject).stdout);
 
     expect(command.errors[0].field).toBe('arguments');
     expect(flag.errors[0].field).toBe('arguments');
-    expect(runAgentsInit('react', '10.0.0', ['agents', 'init', 'extra']).stderr).toContain(
+    expect(runAgentsInit('10.0.0', ['agents', 'init', 'extra'], reactProject).stderr).toContain(
       'Unexpected argument: extra'
     );
   });
@@ -542,10 +606,9 @@ describe('runAgentsInit', () => {
 
 describe('detectPackageManager', () => {
   it('uses the nearest project signal before the invoking manager', () => {
-    const root = mkdtempSync(join(tmpdir(), 'videojs-installation-'));
-    const app = join(root, 'apps', 'player');
+    withTemporaryDirectory((root) => {
+      const app = join(root, 'apps', 'player');
 
-    try {
       mkdirSync(app, { recursive: true });
       writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@4.9.2' }));
       writeFileSync(join(app, 'package-lock.json'), '{}');
@@ -561,8 +624,58 @@ describe('detectPackageManager', () => {
       rmSync(join(app, 'package.json'));
       rmSync(join(app, 'package-lock.json'));
       expect(detectPackageManager(app, { PATH: '', npm_config_user_agent: 'bun/1.2.0' })).toBe('bun');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+    });
+  });
+});
+
+describe('detectFramework', () => {
+  it('reads framework dependencies from the nearest project manifest', () => {
+    withTemporaryDirectory((root) => {
+      const app = join(root, 'apps', 'player');
+
+      mkdirSync(join(root, '.git'));
+      mkdirSync(app, { recursive: true });
+      writeFileSync(join(root, 'package.json'), JSON.stringify({ dependencies: { react: '^19.0.0' } }));
+
+      expect(detectFramework(app)).toEqual({ value: 'react', source: 'package.json dependencies' });
+
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ devDependencies: { '@sveltejs/kit': '^2.0.0' } }));
+      expect(detectFramework(app)).toEqual({ value: 'svelte', source: 'package.json devDependencies' });
+
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ dependencies: { nuxt: '^4.0.0' } }));
+      expect(detectFramework(app)).toEqual({ value: 'vue', source: 'package.json dependencies' });
+
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ dependencies: { next: '^16.0.0', vue: '^3.0.0' } }));
+      expect(detectFramework(app)).toEqual({ value: 'react', source: 'package.json dependencies' });
+
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ dependencies: { '@videojs/react': '^10.0.0' } }));
+      expect(detectFramework(app)).toEqual({ value: 'react', source: 'package.json dependencies' });
+
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ dependencies: { vite: '^7.0.0' } }));
+      expect(detectFramework(app)).toBeNull();
+    });
+  });
+});
+
+describe('detectInstalledPlayerVersions', () => {
+  it('prefers installed packages and otherwise uses exact declared versions', () => {
+    withTemporaryDirectory((root) => {
+      const app = join(root, 'apps', 'player');
+      const installedReact = join(root, 'node_modules', '@videojs', 'react');
+
+      mkdirSync(join(root, '.git'));
+      mkdirSync(app, { recursive: true });
+      mkdirSync(installedReact, { recursive: true });
+      writeFileSync(join(installedReact, 'package.json'), JSON.stringify({ version: '10.0.0-rc.1' }));
+      writeFileSync(
+        join(app, 'package.json'),
+        JSON.stringify({ dependencies: { '@videojs/react': '10.0.0-rc.2', '@videojs/html': '10.0.0-rc.1' } })
+      );
+
+      expect(detectInstalledPlayerVersions(app)).toEqual({ react: '10.0.0-rc.1', html: '10.0.0-rc.1' });
+
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ dependencies: { '@videojs/html': '^10.0.0-rc.1' } }));
+      expect(detectInstalledPlayerVersions(app)).toEqual({ react: '10.0.0-rc.1' });
+    });
   });
 });
