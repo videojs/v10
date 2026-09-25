@@ -13,7 +13,12 @@ import {
   type AgentsInitDefaults,
 } from '../node';
 import { installationCompatibility } from '../options';
-import { installationCommand } from '../plan';
+import {
+  INSTALLATION_BLOCK_OPERATIONS,
+  INSTALLATION_BLOCK_PLACEMENTS,
+  INSTALLATION_STEP_CONDITIONS,
+  installationCommand,
+} from '../plan';
 import { INSTALLATION_FRAMEWORKS } from '../projects';
 import { installationMethodsForFramework, installationTemplatesForMethod, sourceFrameworkFor } from '../selection';
 import { defaultRegistryStyling } from '../shadcn';
@@ -207,11 +212,31 @@ describe('runAgentsInit', () => {
     );
 
     expect(result.stdout).not.toContain('## Configure Shadcn');
-    expect(result.stdout).toContain('## Create components.json (optional)');
+    expect(result.stdout).toContain(
+      '## Create components.json\n\n_Only when components.json is missing._\n\nThe registry steps below need components.json'
+    );
+    expect(result.stdout).toContain('`shadcn init` also rewrites the theme tokens in the global stylesheet');
     expect(result.stdout).toContain('## Add the Video.js Registry');
     expect(result.stdout).toContain('## Add the skin source');
-    expect(result.stdout).toContain('# Optional: run if components.json does not exist.');
-    expect(result.stdout).toContain('pnpm dlx shadcn@latest init --base base --preset nova --yes');
+    expect(result.stdout).toContain('Make sure the working tree is clean or checkpointed');
+    expect(result.stdout).toContain('ask before committing');
+    expect(result.stdout).not.toContain('Commit current source first');
+    expect(result.stdout).toContain('```bash\npnpm dlx shadcn@latest init --base base --preset nova --yes\n```');
+  });
+
+  it('marks standard-config Shadcn setup as conditional on a missing or nonstandard components.json', () => {
+    const json = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'html', '--json']).stdout
+    );
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'html']).stdout;
+
+    expect(json.steps.find(({ id }: { id: string }) => id === 'configure-source-registry')).toMatchObject({
+      condition: 'when-components-json-missing-or-nonstandard',
+    });
+    expect(markdown).toContain(
+      '_Only when components.json is missing or does not use the standard https://ui.shadcn.com/schema.json schema._'
+    );
+    expect(markdown).not.toContain('Skip this step when components.json');
   });
 
   it('writes Shadcn aliases where Vite and Shadcn both resolve them', () => {
@@ -254,8 +279,121 @@ describe('runAgentsInit', () => {
     expect(result.stdout).toContain('pnpm create vite');
     expect(result.stdout).toContain('## Run your app');
     expect(result.stdout).toContain('Scaffold a minimal Vite site');
-    expect(result.stdout).toContain('page head or before the closing body tag');
-    expect(result.stdout).toContain('inside the page body');
+    expect(result.stdout).toContain('Replace the starter page with this page');
+    expect(result.stdout.match(/### `index.html`/g)).toHaveLength(1);
+  });
+
+  it('places CDN scripts in the head and markup in the body of an existing page', () => {
+    const json = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn', '--json']).stdout);
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn']).stdout;
+    const blocks = json.steps.flatMap(({ blocks }: { blocks: unknown[] }) => blocks);
+
+    expect(blocks).toEqual([
+      expect.objectContaining({ filename: 'index.html', operation: 'merge', placement: 'head' }),
+      expect.objectContaining({ filename: 'index.html', operation: 'merge', placement: 'body' }),
+    ]);
+    expect(markdown).toContain('### `index.html` (head)\n\n_Merge this into the page `<head>`._');
+    expect(markdown).toContain(
+      '### `index.html` (body)\n\n_Merge this into the page `<body>` where the player should appear._'
+    );
+  });
+
+  it('replaces starter pages in new apps and merges into existing ones without demo headings', () => {
+    const blocksFor = (args: string[]) =>
+      JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', ...args, '--json'], reactProject).stdout).steps.find(
+        ({ id }: { id: string }) => id === 'player'
+      );
+    const next = blocksFor(['--project', 'new', '--template', 'next']);
+    const nextExisting = blocksFor(['--project', 'existing', '--template', 'next']);
+    const vite = blocksFor(['--framework', 'html', '--project', 'new', '--template', 'vite']);
+    const vue = blocksFor(['--framework', 'vue', '--project', 'new', '--template', 'vite']);
+    const vueExisting = blocksFor(['--framework', 'vue', '--project', 'existing', '--template', 'vite']);
+
+    expect(next.blocks).toEqual([expect.objectContaining({ filename: 'app/page.tsx', operation: 'replace' })]);
+    expect(nextExisting.blocks).toEqual([expect.objectContaining({ filename: 'app/page.tsx', operation: 'merge' })]);
+    expect(vite.blocks).toEqual([
+      expect.objectContaining({ filename: 'src/player.ts', operation: 'create' }),
+      expect.objectContaining({
+        filename: 'index.html',
+        operation: 'replace',
+        code: expect.stringMatching(/^<!doctype html>/),
+      }),
+    ]);
+    expect(vite.removeFiles).toEqual(['src/main.ts', 'src/counter.ts', 'src/style.css', 'src/typescript.svg']);
+    expect(vue.blocks.map(({ operation }: { operation: string }) => operation)).toEqual(['create', 'replace']);
+    expect(vue.removeFiles).toEqual(['src/components/HelloWorld.vue']);
+    expect(vueExisting.blocks.map(({ operation }: { operation: string }) => operation)).toEqual(['merge', 'merge']);
+    expect(vueExisting.removeFiles).toBeUndefined();
+    expect(JSON.stringify(vueExisting)).not.toContain('<h1>');
+  });
+
+  it('runs every step after a subdirectory scaffold from the new app directory', () => {
+    const shadcn = JSON.parse(
+      runAgentsInit(
+        '10.0.0',
+        [
+          'agents',
+          'init',
+          '--method',
+          'shadcn',
+          '--project',
+          'new',
+          '--template',
+          'next',
+          '--styling',
+          'tailwind',
+          '--json',
+        ],
+        reactProject
+      ).stdout
+    );
+    const markdown = runAgentsInit(
+      '10.0.0',
+      ['agents', 'init', '--method', 'shadcn', '--project', 'new', '--template', 'next', '--styling', 'tailwind'],
+      reactProject
+    ).stdout;
+    const inPlace = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--project', 'new', '--template', 'next', '--json'], reactProject)
+        .stdout
+    );
+
+    expect(shadcn.steps.map(({ workingDirectory }: { workingDirectory: string }) => workingDirectory)).toEqual([
+      '.',
+      ...shadcn.steps.slice(1).map(() => 'videojs-app'),
+    ]);
+    expect(markdown).toContain('It creates `videojs-app`');
+    expect(markdown).toContain('## Add the Video.js Registry\n\n_Working directory: `videojs-app`._');
+    expect(inPlace.steps.every(({ workingDirectory }: { workingDirectory: string }) => workingDirectory === '.')).toBe(
+      true
+    );
+  });
+
+  it('marks the development server as long-running', () => {
+    const json = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--template', 'vite', '--json']).stdout);
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init', '--template', 'vite']).stdout;
+
+    expect(json.steps.at(-1)).toMatchObject({
+      id: 'run',
+      blocks: [{ code: 'pnpm dev', operation: 'run', longRunning: true }],
+    });
+    expect(markdown).toContain('_Long-running: start it in the background, verify the result, then stop it._');
+  });
+
+  it('describes the copied HTML skin insertion in JSON', () => {
+    const json = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--method', 'shadcn', '--framework', 'html', '--json']).stdout
+    );
+    const page = json.steps
+      .find(({ id }: { id: string }) => id === 'player')
+      .blocks.find(({ filename }: { filename: string }) => filename === 'index.html');
+
+    expect(page.insertContents).toEqual([
+      {
+        anchor: '<!-- Paste the contents of src/components/videojs/video/skin.html here. -->',
+        from: 'src/components/videojs/video/skin.html',
+      },
+    ]);
+    expect(page.code).toContain(page.insertContents[0].anchor);
   });
 
   it('keeps packaged Nuxt player markup on the client', () => {
@@ -294,6 +432,22 @@ describe('runAgentsInit', () => {
 
     expect(reproduced.exitCode).toBe(0);
     expect(JSON.parse(reproduced.stdout).selectedOptions).toEqual(first.selectedOptions);
+  });
+
+  it('documents the plan vocabulary in discovery', () => {
+    const json = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--json']).stdout);
+    const markdown = runAgentsInit('10.0.0', ['agents', 'init']).stdout;
+
+    expect(Object.keys(json.planFormat.operations)).toEqual(['create', 'merge', 'replace', 'run']);
+    expect(Object.keys(json.planFormat.placements)).toEqual(['head', 'body']);
+    expect(Object.keys(json.planFormat.conditions)).toEqual([
+      'when-components-json-missing',
+      'when-components-json-missing-or-nonstandard',
+    ]);
+    expect(Object.keys(json.planFormat.fields)).toContain('steps[].blocks[].longRunning');
+    expect(markdown).toContain('## Plan format');
+    expect(markdown).toContain('- `steps[].workingDirectory`: ');
+    expect(markdown).toContain('- `when-components-json-missing-or-nonstandard`: ');
   });
 
   it('returns one JSON document', () => {
@@ -633,7 +787,18 @@ describe('runAgentsInit', () => {
             // SAFETY: successful --json output above is produced by installationPlanJson with this stable shape.
             const document = JSON.parse(jsonResult.stdout) as {
               defaultedOptions: string[];
-              steps: Array<{ id: string; blocks: Array<{ code: string }> }>;
+              steps: Array<{
+                id: string;
+                condition?: string;
+                workingDirectory: string;
+                blocks: Array<{
+                  code: string;
+                  operation: string;
+                  filename?: string;
+                  anchor?: string;
+                  placement?: string;
+                }>;
+              }>;
             };
             const stepIds = document.steps.map(({ id }) => id);
             const code = document.steps.flatMap(({ blocks }) => blocks.map((block) => block.code)).join('\n');
@@ -652,6 +817,30 @@ describe('runAgentsInit', () => {
 
             if ((project === 'new') !== stepIds.includes('prepare-app')) {
               failures.push(`${label}: incorrect app preparation`);
+            }
+
+            for (const step of document.steps) {
+              const targets = step.blocks
+                .filter((block) => block.filename)
+                .map((block) => `${block.filename} ${block.anchor ?? ''} ${block.placement ?? ''}`);
+
+              if (new Set(targets).size !== targets.length) failures.push(`${label}/${step.id}: ambiguous file blocks`);
+
+              if (step.condition && !(step.condition in INSTALLATION_STEP_CONDITIONS)) {
+                failures.push(`${label}/${step.id}: undocumented condition`);
+              }
+
+              if (!step.workingDirectory) failures.push(`${label}/${step.id}: missing working directory`);
+
+              for (const block of step.blocks) {
+                if (!(block.operation in INSTALLATION_BLOCK_OPERATIONS)) {
+                  failures.push(`${label}/${step.id}: undocumented operation`);
+                }
+
+                if (block.placement && !(block.placement in INSTALLATION_BLOCK_PLACEMENTS)) {
+                  failures.push(`${label}/${step.id}: undocumented placement`);
+                }
+              }
             }
           }
         }

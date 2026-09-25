@@ -508,7 +508,6 @@ ${vuePlayerImport(componentName, opts.playerImport)}
 </script>
 
 <template>
-  <h1>Welcome to My App</h1>
   <${componentName}>
 ${indentBlock(media, '    ')}
   </${componentName}>
@@ -552,7 +551,6 @@ export function generateSvelteUsageCode(
   import ${componentName} from '${path}';
 </script>
 
-<h1>Welcome to My App</h1>
 <${componentName}>
 ${indentBlock(media, '  ')}
 </${componentName}>`;
@@ -762,6 +760,8 @@ export interface SourceHTMLUsageCode {
   media: string;
   player: string;
   skinFile: string;
+  /** The comment in `player` to replace with the contents of `skinFile`. */
+  skinPlaceholder: string;
 }
 
 /** Build the imports and two small edits needed to use an HTML skin copied into the app by Shadcn. */
@@ -781,6 +781,8 @@ export function generateSourceHTMLUsageCode(
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
   // The copied skin's container fills its player, so the player owns the video layout.
   const playerLayout = isSizedVideoPlayer(useCase) ? htmlVideoLayout : '';
+  const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`;
+  const skinPlaceholder = `<!-- Paste the contents of ${skinFile} here. -->`;
   const imports = [
     `import '@videojs/html/${preset.group}/player';`,
     ...(mediaSubpath ? [`import '@videojs/html/media/${mediaSubpath}';`] : []),
@@ -794,8 +796,9 @@ export function generateSourceHTMLUsageCode(
     imports,
     media: generateMediaMarkup(tag, source, playsInline, extensions, ''),
     player: `<${getPlayerTag(useCase)}${playerLayout}>
-  <!-- Paste the contents of ${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html here. -->
+  ${skinPlaceholder}
 </${getPlayerTag(useCase)}>`,
-    skinFile: `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`,
+    skinFile,
+    skinPlaceholder,
   };
 }

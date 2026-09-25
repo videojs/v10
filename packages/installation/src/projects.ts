@@ -37,6 +37,9 @@ const TEMPLATES_BY_FRAMEWORK = {
   svelte: ['vite', 'astro', 'sveltekit'],
 } as const satisfies Record<InstallationFramework, readonly InstallationTemplate[]>;
 
+/** The directory Laravel and Shadcn app scaffolds create; every other scaffold writes into the current directory. */
+export const INSTALLATION_NEW_APP_DIRECTORY = 'videojs-app';
+
 export interface InstallationProjectFiles {
   componentsAlias: string;
   componentsDirectory: string;
@@ -394,7 +397,7 @@ export function installationProjectCreateCommand(
     const starter = framework === 'react' ? ' --react' : '';
     const usePackageManager = packageManager === 'npm' ? '' : ` --${packageManager}`;
 
-    return `laravel new videojs-app${starter}${usePackageManager} --no-interaction\ncd videojs-app`;
+    return `laravel new ${INSTALLATION_NEW_APP_DIRECTORY}${starter}${usePackageManager} --no-interaction\ncd ${INSTALLATION_NEW_APP_DIRECTORY}`;
   }
 
   if (template === 'nuxt') {
@@ -446,6 +449,42 @@ export function installationHtmlPageCode(markup: string, template: InstallationT
   }
 
   return `${markup}\n\n<script type="module" src="/${entryFile}"></script>`;
+}
+
+function indentLines(value: string, indent: string): string {
+  return value
+    .split('\n')
+    .map((line) => (line ? `${indent}${line}` : line))
+    .join('\n');
+}
+
+/** A complete page for a new app, which replaces the scaffold's starter page instead of merging into it. */
+export function installationHtmlDocumentCode(body: string, head = ''): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video.js</title>${head ? `\n${indentLines(head, '    ')}` : ''}
+  </head>
+  <body>
+${indentLines(body, '    ')}
+  </body>
+</html>`;
+}
+
+/** Scaffold files a new app no longer uses once the generated files replace its starter page. */
+export function installationStarterFiles(
+  framework: InstallationFramework,
+  template: InstallationTemplate
+): readonly string[] {
+  if (template !== 'vite') return [];
+
+  if (framework === 'html') return ['src/main.ts', 'src/counter.ts', 'src/style.css', 'src/typescript.svg'];
+
+  if (framework === 'react') return ['src/App.css'];
+
+  return framework === 'vue' ? ['src/components/HelloWorld.vue'] : ['src/lib/Counter.svelte'];
 }
 
 export function installationVueConfigFilename(

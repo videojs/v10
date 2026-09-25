@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  installationHtmlDocumentCode,
   installationHtmlPageCode,
   installationHtmlEntrySetup,
   installationProjectCreateCommand,
@@ -8,6 +9,7 @@ import {
   installationProjectAliasSetup,
   installationProjectRunCommand,
   installationReactPlayerCode,
+  installationStarterFiles,
 } from '../projects';
 
 describe('installationProjectFiles', () => {
@@ -135,5 +137,23 @@ describe('installationReactPlayerCode', () => {
     expect(result).toContain("import { createFileRoute } from '@tanstack/react-router';");
     expect(result).toContain("export const Route = createFileRoute('/')({ component: Page });");
     expect(result).not.toContain('export default function Page');
+  });
+});
+
+describe('installationHtmlDocumentCode', () => {
+  it('places head content and the page body in a complete document', () => {
+    const page = installationHtmlDocumentCode('<video-player>\n</video-player>', '<script type="module"></script>');
+
+    expect(page).toMatch(/^<!doctype html>\n<html lang="en">/);
+    expect(page).toContain('    <title>Video.js</title>\n    <script type="module"></script>\n  </head>');
+    expect(page).toContain('  <body>\n    <video-player>\n    </video-player>\n  </body>');
+  });
+});
+
+describe('installationStarterFiles', () => {
+  it('lists the Vite starter files a replaced starter page leaves unused', () => {
+    expect(installationStarterFiles('html', 'vite')).toContain('src/main.ts');
+    expect(installationStarterFiles('react', 'vite')).toEqual(['src/App.css']);
+    expect(installationStarterFiles('react', 'next')).toEqual([]);
   });
 });

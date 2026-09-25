@@ -1,6 +1,7 @@
 import { PACKAGE_MANAGERS, type InstallationProject, type PackageManager } from './parameters';
 import { getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
+  INSTALLATION_NEW_APP_DIRECTORY,
   installationProjectAliasSetup,
   type InstallationProjectSetupBlock,
   type InstallationTemplate,
@@ -122,13 +123,13 @@ export function shadcnCommand(runner: ShadcnRunner, action: string): string {
 export function shadcnInitCommand(runner: ShadcnRunner, template?: InstallationTemplate): string {
   if (!template) return shadcnCommand(runner, 'init --base base --preset nova --yes');
 
-  const action = `init --template ${template} --no-monorepo --base base --preset nova --name videojs-app --yes`;
+  const action = `init --template ${template} --no-monorepo --base base --preset nova --name ${INSTALLATION_NEW_APP_DIRECTORY} --yes`;
   const command =
     runner === 'yarn'
       ? `npx --yes --package shadcn@latest --call 'npm_config_user_agent="yarn/1.22.22" shadcn ${action}'`
       : shadcnCommand(runner, action);
 
-  return `${command}\ncd videojs-app`;
+  return `${command}\ncd ${INSTALLATION_NEW_APP_DIRECTORY}`;
 }
 
 /** Initialize Shadcn only when an existing project has no components config. */

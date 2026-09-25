@@ -24,17 +24,20 @@ import {
 } from './options';
 import { INSTALLATION_PARAMETERS, type InstallationInput } from './parameters';
 import {
+  INSTALLATION_FRAMEWORKS,
+  INSTALLATION_NEW_APP_DIRECTORY,
   INSTALLATION_TEMPLATE_LABELS,
+  installationHtmlDocumentCode,
   installationHtmlEntrySetup,
+  installationHtmlPageCode,
   installationProjectCreateCommand,
   installationProjectFiles,
-  type InstallationProjectFiles,
-  installationHtmlPageCode,
   installationProjectRunCommand,
-  INSTALLATION_FRAMEWORKS,
   installationReactPlayerCode,
   installationReactUsageCode,
+  installationStarterFiles,
   installationVueConfigFilename,
+  type InstallationProjectFiles,
 } from './projects';
 import { getAdapterPackage } from './renderers';
 import {
@@ -48,28 +51,77 @@ import {
   registrySkinSelection,
   shadcnAddCommand,
   shadcnInitCommand,
-  optionalShadcnInitCommand,
   shadcnProjectConfiguration,
   shadcnProjectConfigurationPlacement,
   shadcnRegistryAddCommand,
   type RegistryStyling,
 } from './shadcn';
 
+/** What an agent does with each code block. Discovery publishes these descriptions as the plan vocabulary. */
+export const INSTALLATION_BLOCK_OPERATIONS = {
+  create: 'Create the file with this content.',
+  merge: 'Merge this into the existing file, or create the file when it is missing.',
+  replace: 'With `anchor`, replace that exact text in the file. Without `anchor`, replace the whole file.',
+  run: 'Run this shell command.',
+} as const;
+
+export type InstallationBlockOperation = keyof typeof INSTALLATION_BLOCK_OPERATIONS;
+
+/** Where a merged HTML block belongs in its page. */
+export const INSTALLATION_BLOCK_PLACEMENTS = {
+  head: 'Inside the page `<head>`.',
+  body: 'Inside the page `<body>`, where the player should appear.',
+} as const;
+
+export type InstallationBlockPlacement = keyof typeof INSTALLATION_BLOCK_PLACEMENTS;
+
+/** When a conditional step applies. */
+export const INSTALLATION_STEP_CONDITIONS = {
+  'when-components-json-missing': 'Only when components.json is missing.',
+  'when-components-json-missing-or-nonstandard':
+    'Only when components.json is missing or does not use the standard https://ui.shadcn.com/schema.json schema.',
+} as const;
+
+export type InstallationStepCondition = keyof typeof INSTALLATION_STEP_CONDITIONS;
+
+/** The plan fields beyond each step's title, description, and code. */
+export const INSTALLATION_PLAN_FIELDS = {
+  'steps[].workingDirectory':
+    'Directory, relative to where agents init ran, to run the step commands and resolve its filenames from. A new app scaffolded into a subdirectory changes it for every later step.',
+  'steps[].condition': 'Run the step only when its condition holds.',
+  'steps[].removeFiles': "Starter files to delete, when present, after applying the step's blocks.",
+  'steps[].blocks[].operation': 'What to do with the block.',
+  'steps[].blocks[].anchor': 'The exact existing text a `replace` operation targets.',
+  'steps[].blocks[].placement': 'Where a merged HTML block belongs in its page.',
+  'steps[].blocks[].insertContents':
+    "After applying the block, replace each `anchor` in the file with the full contents of the `from` file, after that file's own edits.",
+  'steps[].blocks[].longRunning':
+    'The command keeps running, such as a development server. Start it in the background, verify the result, then stop it.',
+} as const;
+
 export interface InstallationCodeBlock {
   language: string;
   code: string;
   filename?: string;
-  operation: 'create' | 'merge' | 'replace' | 'run';
+  operation: InstallationBlockOperation;
   anchor?: string;
+  placement?: InstallationBlockPlacement;
+  insertContents?: readonly { anchor: string; from: string }[];
+  longRunning?: true;
 }
 
 export interface InstallationStep {
   id: string;
   title: string;
   description?: string;
-  condition?: 'when-components-json-missing';
+  condition?: InstallationStepCondition;
+  workingDirectory: string;
+  removeFiles?: readonly string[];
   blocks: readonly InstallationCodeBlock[];
 }
+
+/** A step before `createInstallationPlan` assigns its working directory. */
+type InstallationStepContent = Omit<InstallationStep, 'workingDirectory'>;
 
 export interface InstallationPlan {
   schemaVersion: 1;
@@ -86,6 +138,13 @@ export interface InstallationPlan {
   notice: string;
 }
 
+export interface InstallationPlanFormat {
+  fields: typeof INSTALLATION_PLAN_FIELDS;
+  operations: typeof INSTALLATION_BLOCK_OPERATIONS;
+  placements: typeof INSTALLATION_BLOCK_PLACEMENTS;
+  conditions: typeof INSTALLATION_STEP_CONDITIONS;
+}
+
 export interface InstallationDiscovery {
   schemaVersion: 1;
   kind: 'discovery';
@@ -95,6 +154,8 @@ export interface InstallationDiscovery {
   options: readonly InstallationOptionDefinition[];
   compatibility: InstallationDiscoveryCompatibility;
   decisionOrder: readonly { title: string; guidance: string }[];
+  /** The vocabulary of the instruction plans that selections return. */
+  planFormat: InstallationPlanFormat;
   examples: readonly string[];
   notice: string;
 }
@@ -155,6 +216,26 @@ export function installationReproduceInput(selection: InstallationSelection): In
 
   return input;
 }
+
+/** The options that apply to a plan, keyed by public option name in flag order, as Markdown and JSON list them. */
+export function installationSelectedOptions(plan: InstallationPlan): Record<string, string> {
+  const input = installationReproduceInput(plan.selection);
+
+  return Object.fromEntries(
+    INSTALLATION_PARAMETERS.flatMap(({ key, query }) => {
+      const value = input[key];
+
+      return value === undefined ? [] : [[query, value]];
+    })
+  );
+}
+
+export const INSTALLATION_PLAN_FORMAT: InstallationPlanFormat = {
+  fields: INSTALLATION_PLAN_FIELDS,
+  operations: INSTALLATION_BLOCK_OPERATIONS,
+  placements: INSTALLATION_BLOCK_PLACEMENTS,
+  conditions: INSTALLATION_STEP_CONDITIONS,
+};
 
 /** The option reference printed by a bare `agents init`, covering every framework and installation method. */
 export function createInstallationDiscovery(
@@ -226,6 +307,7 @@ export function createInstallationDiscovery(
     options,
     compatibility: installationCompatibilityFor(INSTALLATION_FRAMEWORKS),
     decisionOrder: installationDecisionOrderFor({ methods: INSTALLATION_METHODS, frameworks: INSTALLATION_FRAMEWORKS }),
+    planFormat: INSTALLATION_PLAN_FORMAT,
     examples: [
       installationCommand(reactInput, packageVersion),
       installationCommand(htmlInput, packageVersion),
@@ -236,20 +318,38 @@ export function createInstallationDiscovery(
   };
 }
 
-function code(
-  language: string,
-  value: string,
-  filename?: string,
-  operation: InstallationCodeBlock['operation'] = filename ? 'merge' : 'run',
-  anchor?: string
+type CodeBlockOptions = Omit<InstallationCodeBlock, 'language' | 'code'>;
+
+function command(value: string, options: Omit<CodeBlockOptions, 'operation'> = {}): InstallationCodeBlock {
+  return { language: 'bash', code: value, operation: 'run', ...options };
+}
+
+function file(language: string, value: string, options: CodeBlockOptions): InstallationCodeBlock {
+  return { language, code: value, ...options };
+}
+
+/** A file the player adds: created in a new app, merged into an existing app that may already have it. */
+function addedFile(selection: InstallationSelection, language: string, value: string, filename: string) {
+  return file(language, value, { filename, operation: selection.project === 'new' ? 'create' : 'merge' });
+}
+
+/** The page that renders the player: it replaces a new app's starter page and merges into an existing one. */
+function pageFile(selection: InstallationSelection, language: string, value: string, filename: string) {
+  return file(language, value, { filename, operation: selection.project === 'new' ? 'replace' : 'merge' });
+}
+
+/** The HTML page that renders the player; a new app gets a complete document in place of its starter page. */
+function htmlPageFile(
+  selection: InstallationSelection,
+  markup: string,
+  project: InstallationProjectFiles,
+  options: Pick<CodeBlockOptions, 'insertContents'> = {}
 ): InstallationCodeBlock {
-  const block: InstallationCodeBlock = { language, code: value, operation };
+  const page = installationHtmlPageCode(markup, selection.template, project.usage!);
 
-  if (filename) block.filename = filename;
-
-  if (anchor) block.anchor = anchor;
-
-  return block;
+  return selection.project === 'new'
+    ? file('html', installationHtmlDocumentCode(page), { filename: project.player, operation: 'replace', ...options })
+    : file('html', page, { filename: project.player, operation: 'merge', placement: 'body', ...options });
 }
 
 function installationOptions(selection: InstallationSelection): InstallationOptions {
@@ -264,15 +364,37 @@ function installationOptions(selection: InstallationSelection): InstallationOpti
   };
 }
 
-function packageInstallStep(command: string): InstallationStep {
-  return { id: 'install', title: 'Install the packages', blocks: [code('bash', command)] };
+/** New Laravel apps and Shadcn's own app scaffold land in a named subdirectory; other scaffolds run in place. */
+function installationAppDirectory(selection: InstallationSelection, project: InstallationProjectFiles): string {
+  if (selection.project !== 'new') return '.';
+
+  if (selection.template === 'laravel') return INSTALLATION_NEW_APP_DIRECTORY;
+
+  if (selection.method !== 'shadcn' || !selection.styling) return '.';
+
+  const configuration = shadcnProjectConfiguration(
+    selection.sourceFramework,
+    selection.template,
+    selection.styling,
+    project.componentsAlias
+  );
+
+  return shadcnProjectConfigurationPlacement(configuration, selection.project) === 'app'
+    ? INSTALLATION_NEW_APP_DIRECTORY
+    : '.';
 }
 
-function prepareAppStep(selection: InstallationSelection): InstallationStep | null {
+const SUBDIRECTORY_SCAFFOLD_DESCRIPTION = `Run this from the parent directory. It creates \`${INSTALLATION_NEW_APP_DIRECTORY}\`; rename it if needed and use the new name as the working directory of every later step.`;
+
+function packageInstallStep(value: string): InstallationStepContent {
+  return { id: 'install', title: 'Install the packages', blocks: [command(value)] };
+}
+
+function prepareAppStep(selection: InstallationSelection): InstallationStepContent | null {
   if (selection.project === 'existing') return null;
 
-  const command = installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager);
-  if (!command) throw new Error('A new project needs an app setup command.');
+  const value = installationProjectCreateCommand(selection.framework, selection.template, selection.packageManager);
+  if (!value) throw new Error('A new project needs an app setup command.');
 
   const templateLabel = INSTALLATION_TEMPLATE_LABELS[selection.template];
   const article = selection.template === 'astro' ? 'an' : 'a';
@@ -284,21 +406,21 @@ function prepareAppStep(selection: InstallationSelection): InstallationStep | nu
       selection.method === 'cdn'
         ? 'Scaffold a minimal Vite site in the intended empty app directory, then continue from that directory.'
         : selection.template === 'laravel'
-          ? 'Make sure PHP, Composer, and the Laravel installer are available. Run this from the parent directory, change videojs-app to your preferred directory name when needed, and continue from the new app.'
+          ? `Make sure PHP, Composer, and the Laravel installer are available. ${SUBDIRECTORY_SCAFFOLD_DESCRIPTION}`
           : `Scaffold ${article} ${templateLabel} app in the intended empty app directory, then continue from that directory.`,
-    blocks: [code('bash', command)],
+    blocks: [command(value)],
   };
 }
 
-function runAppStep(selection: InstallationSelection): InstallationStep | null {
-  const command = installationProjectRunCommand(selection.template, selection.packageManager);
-  if (!command) return null;
+function runAppStep(selection: InstallationSelection): InstallationStepContent | null {
+  const value = installationProjectRunCommand(selection.template, selection.packageManager);
+  if (!value) return null;
 
   return {
     id: 'run',
     title: 'Run your app',
     description: 'Start the development server and verify that the selected media plays.',
-    blocks: [code('bash', command)],
+    blocks: [command(value, { longRunning: true })],
   };
 }
 
@@ -308,20 +430,33 @@ function playerFileDescription(selection: InstallationSelection): string {
   }
 
   return selection.project === 'new'
-    ? 'Add these files to the new app, replacing the starter page where shown.'
+    ? 'Add these files to the new app. Blocks marked replace overwrite the starter files.'
     : `Merge the example into the existing ${INSTALLATION_TEMPLATE_LABELS[selection.template]} route or component that should render the player, and preserve unrelated content.`;
 }
 
 /** Drop the steps that do not apply to a selection while keeping the plan order. */
-function presentSteps(...steps: readonly (InstallationStep | null)[]): InstallationStep[] {
+function presentSteps(...steps: readonly (InstallationStepContent | null)[]): InstallationStepContent[] {
   return steps.filter((step) => step !== null);
 }
 
-function playerStep(description: string, blocks: readonly InstallationCodeBlock[]): InstallationStep {
-  return { id: 'player', title: 'Add your player', description, blocks };
+function playerStep(
+  selection: InstallationSelection,
+  description: string,
+  blocks: readonly InstallationCodeBlock[]
+): InstallationStepContent {
+  const step: InstallationStepContent = { id: 'player', title: 'Add your player', description, blocks };
+  const removeFiles =
+    selection.project === 'new' ? installationStarterFiles(selection.framework, selection.template) : [];
+
+  if (removeFiles.length > 0) step.removeFiles = removeFiles;
+
+  return step;
 }
 
-function htmlEntrySetupStep(template: InstallationSelection['template'], entryFile: string): InstallationStep | null {
+function htmlEntrySetupStep(
+  template: InstallationSelection['template'],
+  entryFile: string
+): InstallationStepContent | null {
   const entrySetup = installationHtmlEntrySetup(template, entryFile);
   if (entrySetup.length === 0) return null;
 
@@ -329,7 +464,9 @@ function htmlEntrySetupStep(template: InstallationSelection['template'], entryFi
     id: 'configure-app-entry',
     title: 'Configure your app entry',
     description: `Merge the generated player entry into the existing ${entrySetup[0]!.filename} configuration. Keep every existing input, plugin, and option.`,
-    blocks: entrySetup.map((block) => code(block.language, block.code, block.filename)),
+    blocks: entrySetup.map((block) =>
+      file(block.language, block.code, { filename: block.filename, operation: 'merge' })
+    ),
   };
 }
 
@@ -339,23 +476,28 @@ function reactPlayerBlocks(
   project: InstallationProjectFiles
 ): InstallationCodeBlock[] {
   const usage = installationReactUsageCode(selection.template);
+  const player = installationReactPlayerCode(pageCode, selection.template);
 
-  return [
-    code('tsx', installationReactPlayerCode(pageCode, selection.template), project.player),
-    ...(usage && project.usage ? [code('astro', usage, project.usage)] : []),
-  ];
+  // Astro renders the player as a component from its page; every other app setup renders it as the page itself.
+  if (!usage || !project.usage) return [pageFile(selection, 'tsx', player, project.player)];
+
+  return [addedFile(selection, 'tsx', player, project.player), pageFile(selection, 'astro', usage, project.usage)];
 }
 
 function packagedPlayerSteps(
   selection: InstallationSelection,
   opts: InstallationOptions,
   project: InstallationProjectFiles
-): InstallationStep[] {
+): InstallationStepContent[] {
   if (selection.framework === 'react') {
     const player = generateReactCreateCode(opts);
 
     return [
-      playerStep(playerFileDescription(selection), reactPlayerBlocks(selection, player['app/page.tsx'], project)),
+      playerStep(
+        selection,
+        playerFileDescription(selection),
+        reactPlayerBlocks(selection, player['app/page.tsx'], project)
+      ),
     ];
   }
 
@@ -370,11 +512,16 @@ function packagedPlayerSteps(
         id: 'configure',
         title: 'Register custom elements',
         description: 'Use the file that matches your Vue toolchain.',
-        blocks: [code(astro ? 'js' : 'ts', config[installationVueConfigFilename(selection.template)], project.config)],
+        blocks: [
+          file(astro ? 'js' : 'ts', config[installationVueConfigFilename(selection.template)], {
+            filename: project.config!,
+            operation: 'merge',
+          }),
+        ],
       },
-      playerStep(playerFileDescription(selection), [
-        code('vue', component.component, project.player),
-        code(astro ? 'astro' : 'vue', astro ? usage['index.astro'] : usage['App.vue'], project.usage),
+      playerStep(selection, playerFileDescription(selection), [
+        addedFile(selection, 'vue', component.component, project.player),
+        pageFile(selection, astro ? 'astro' : 'vue', astro ? usage['index.astro'] : usage['App.vue'], project.usage!),
       ]),
     ];
   }
@@ -390,9 +537,9 @@ function packagedPlayerSteps(
           : usage['App.svelte'];
 
     return [
-      playerStep(playerFileDescription(selection), [
-        code('svelte', component.component, project.player),
-        code(selection.template === 'astro' ? 'astro' : 'svelte', usageCode, project.usage),
+      playerStep(selection, playerFileDescription(selection), [
+        addedFile(selection, 'svelte', component.component, project.player),
+        pageFile(selection, selection.template === 'astro' ? 'astro' : 'svelte', usageCode, project.usage!),
       ]),
     ];
   }
@@ -401,14 +548,14 @@ function packagedPlayerSteps(
 
   return presentSteps(
     htmlEntrySetupStep(selection.template, project.usage!),
-    playerStep(playerFileDescription(selection), [
-      ...(usage.imports ? [code('ts', usage.imports, project.usage)] : []),
-      code('html', installationHtmlPageCode(usage.html, selection.template, project.usage!), project.player),
+    playerStep(selection, playerFileDescription(selection), [
+      ...(usage.imports ? [addedFile(selection, 'ts', usage.imports, project.usage!)] : []),
+      htmlPageFile(selection, usage.html, project),
     ])
   );
 }
 
-function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
+function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStepContent[] {
   const opts = installationOptions(selection);
   const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
   const install =
@@ -424,33 +571,43 @@ function createPackagedSteps(selection: InstallationSelection, packageVersion: s
   );
 }
 
-function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
+function cdnPageSteps(selection: InstallationSelection): InstallationStepContent[] {
   const opts = installationOptions(selection);
-  const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase);
-  const usage = generateHTMLUsageCode(opts);
+  const scripts = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase).cdn;
+  const markup = generateHTMLUsageCode(opts).html;
 
-  return presentSteps(
-    prepareAppStep(selection),
+  if (selection.project === 'new') {
+    return [
+      playerStep(selection, 'Replace the starter page with this page, which loads Video.js and renders the player.', [
+        file('html', installationHtmlDocumentCode(markup, scripts), { filename: 'index.html', operation: 'replace' }),
+      ]),
+    ];
+  }
+
+  return [
     {
       id: 'load',
       title: 'Load Video.js',
-      description: 'Add these module scripts to the page head or before the closing body tag.',
-      blocks: [code('html', install.cdn, 'index.html')],
+      description: 'Add these module scripts to the page head. Module scripts are deferred, so they wait for the page.',
+      blocks: [file('html', scripts, { filename: 'index.html', operation: 'merge', placement: 'head' })],
     },
-    {
-      id: 'player',
-      title: 'Add your player',
-      description: 'Add this markup inside the page body where the player should appear.',
-      blocks: [code('html', usage.html, 'index.html')],
-    },
-    runAppStep(selection)
-  );
+    playerStep(selection, 'Add this markup inside the page body where the player should appear.', [
+      file('html', markup, { filename: 'index.html', operation: 'merge', placement: 'body' }),
+    ]),
+  ];
 }
+
+function createCdnSteps(selection: InstallationSelection): InstallationStepContent[] {
+  return presentSteps(prepareAppStep(selection), ...cdnPageSteps(selection), runAppStep(selection));
+}
+
+const SHADCN_INIT_THEME_NOTE =
+  '`shadcn init` also rewrites the theme tokens in the global stylesheet, such as app/globals.css or src/index.css; review that diff and restore any project tokens that should stay.';
 
 function shadcnConfigurationSteps(
   selection: InstallationSelection & { styling: RegistryStyling },
   project: InstallationProjectFiles
-): InstallationStep[] {
+): InstallationStepContent[] {
   const configuration = shadcnProjectConfiguration(
     selection.sourceFramework,
     selection.template,
@@ -458,15 +615,20 @@ function shadcnConfigurationSteps(
     project.componentsAlias
   );
   const placement = shadcnProjectConfigurationPlacement(configuration, selection.project);
-  const aliasBlocks = configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename));
+  const aliasBlocks = configuration.aliasSetup.map((block) =>
+    file(block.language, block.code, { filename: block.filename, operation: 'merge' })
+  );
 
   if (configuration.mode === 'components-json') {
     return presentSteps(prepareAppStep(selection), {
       id: 'configure-source-registry',
       title: 'Configure Shadcn',
-      condition: 'when-components-json-missing',
-      description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
-      blocks: [...aliasBlocks, code('json', configuration.componentsConfig, 'components.json', 'create')],
+      condition: 'when-components-json-missing-or-nonstandard',
+      description: `Merge every app-alias block below, then write the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
+      blocks: [
+        ...aliasBlocks,
+        file('json', configuration.componentsConfig, { filename: 'components.json', operation: 'create' }),
+      ],
     });
   }
 
@@ -475,8 +637,8 @@ function shadcnConfigurationSteps(
       {
         id: 'prepare-app',
         title: 'Create and configure the app',
-        description: `Run this from the parent directory, change videojs-app to your preferred directory name when needed, and continue from the new app. Shadcn creates the ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app and components.json together.`,
-        blocks: [code('bash', shadcnInitCommand(selection.packageManager, selection.template))],
+        description: `${SUBDIRECTORY_SCAFFOLD_DESCRIPTION} Shadcn creates the ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app and components.json together.`,
+        blocks: [command(shadcnInitCommand(selection.packageManager, selection.template))],
       },
     ];
   }
@@ -487,9 +649,8 @@ function shadcnConfigurationSteps(
         id: 'configure-source-registry',
         title: 'Configure Shadcn',
         condition: 'when-components-json-missing',
-        description:
-          'Merge any missing alias configuration below first, keep the app’s existing plugins and compiler options, then initialize Shadcn non-interactively. This path assumes the app already uses Tailwind CSS; otherwise, rerun agents init with --styling css.',
-        blocks: [...aliasBlocks, code('bash', optionalShadcnInitCommand(selection.packageManager))],
+        description: `Merge the alias configuration below, keeping the app's existing plugins and compiler options, then initialize Shadcn non-interactively. ${SHADCN_INIT_THEME_NOTE} This path assumes the app already uses Tailwind CSS; otherwise, rerun agents init with --styling css.`,
+        blocks: [...aliasBlocks, command(shadcnInitCommand(selection.packageManager))],
       },
     ];
   }
@@ -497,14 +658,15 @@ function shadcnConfigurationSteps(
   return [
     {
       id: 'create-components-json',
-      title: 'Create components.json (optional)',
+      title: 'Create components.json',
       condition: 'when-components-json-missing',
-      blocks: [code('bash', optionalShadcnInitCommand(selection.packageManager))],
+      description: `The registry steps below need components.json, so create it when the project has none. ${SHADCN_INIT_THEME_NOTE}`,
+      blocks: [command(shadcnInitCommand(selection.packageManager))],
     },
   ];
 }
 
-function shadcnMediaStep(selection: InstallationSelection, packageVersion: string): InstallationStep | null {
+function shadcnMediaStep(selection: InstallationSelection, packageVersion: string): InstallationStepContent | null {
   const mediaInstall = generateSourceMediaInstallCode(selection.media, packageVersion, selection.extensions);
   if (!mediaInstall) return null;
 
@@ -519,7 +681,7 @@ function shadcnMediaStep(selection: InstallationSelection, packageVersion: strin
     id: 'media-adapter',
     title,
     description: 'Install the supporting packages at the version that matches these instructions.',
-    blocks: [code('bash', mediaInstall[selection.packageManager])],
+    blocks: [command(mediaInstall[selection.packageManager])],
   };
 }
 
@@ -527,7 +689,7 @@ function shadcnPlayerSteps(
   selection: InstallationSelection & { styling: RegistryStyling },
   opts: InstallationOptions,
   project: InstallationProjectFiles
-): InstallationStep[] {
+): InstallationStepContent[] {
   if (selection.framework === 'react') {
     const player = generateSourceReactCreateCode({
       ...opts,
@@ -537,6 +699,7 @@ function shadcnPlayerSteps(
 
     return [
       playerStep(
+        selection,
         `Use the aliases.components value from components.json in the skin import when it differs from the generated ${project.componentsAlias} path. ${playerFileDescription(selection)}`,
         reactPlayerBlocks(selection, player['app/page.tsx'], project)
       ),
@@ -548,21 +711,25 @@ function shadcnPlayerSteps(
     componentsAlias: project.componentsAlias,
     componentsDirectory: project.componentsDirectory,
   });
+  const mediaPlaceholder = '<!-- Add a compatible media element here. -->';
 
   return presentSteps(
     htmlEntrySetupStep(selection.template, project.usage!),
     playerStep(
-      `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Then paste the complete updated skin markup into the player where indicated. ${playerFileDescription(selection)}`,
+      selection,
+      `Replace the ${mediaPlaceholder} placeholder in ${player.skinFile} with the media snippet below. Then replace the ${player.skinPlaceholder} comment in the page with the complete updated skin markup. ${playerFileDescription(selection)}`,
       [
-        code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
-        code('ts', player.imports, project.usage),
-        code('html', installationHtmlPageCode(player.player, selection.template, project.usage!), project.player),
+        file('html', player.media, { filename: player.skinFile, operation: 'replace', anchor: mediaPlaceholder }),
+        addedFile(selection, 'ts', player.imports, project.usage!),
+        htmlPageFile(selection, player.player, project, {
+          insertContents: [{ anchor: player.skinPlaceholder, from: player.skinFile }],
+        }),
       ]
     )
   );
 }
 
-function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
+function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStepContent[] {
   const opts = installationOptions(selection);
   const registry = registrySkinSelection({ useCase: selection.useCase, skin: selection.skin });
   const { styling } = selection;
@@ -578,10 +745,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       description:
         'This adds the selected @videojs catalog when the namespace is missing. If components.json already defines @videojs with another URL, replace that value with the URL from this command first because Shadcn skips configured namespaces.',
       blocks: [
-        code(
-          'bash',
-          shadcnRegistryAddCommand(selection.packageManager, selection.sourceFramework, styling, registry.theme)
-        ),
+        command(shadcnRegistryAddCommand(selection.packageManager, selection.sourceFramework, styling, registry.theme)),
       ],
     },
     {
@@ -589,7 +753,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       title: 'Add the skin source',
       description: [
         selection.project === 'existing'
-          ? 'Commit current source first so every added or replaced file is reviewable.'
+          ? 'Make sure the working tree is clean or checkpointed so every added or replaced file is reviewable; ask before committing.'
           : null,
         'The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog.',
         selection.sourceFramework === 'html'
@@ -598,7 +762,7 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       ]
         .filter((sentence) => sentence !== null)
         .join(' '),
-      blocks: [code('bash', shadcnAddCommand(selection.packageManager, [registry.item]))],
+      blocks: [command(shadcnAddCommand(selection.packageManager, [registry.item]))],
     },
     shadcnMediaStep(selection, packageVersion),
     ...shadcnPlayerSteps({ ...selection, styling }, opts, project),
@@ -617,6 +781,10 @@ export function createInstallationPlan(
 ): InstallationPlan {
   const resolvedSourceUrl = resolveInstallationSourceUrl(selection.sourceUrl, selection.media, selection.useCase);
   const resolvedSelection = { ...selection, sourceUrl: resolvedSourceUrl };
+  const appDirectory = installationAppDirectory(
+    selection,
+    installationProjectFiles(selection.framework, selection.template, selection.useCase)
+  );
 
   const steps =
     selection.method === 'cdn'
@@ -635,7 +803,8 @@ export function createInstallationPlan(
     selection: resolvedSelection,
     resolvedSourceUrl,
     reproduceCommand: installationCommand(installationReproduceInput(resolvedSelection), commandVersion),
-    steps,
+    // The scaffold runs where agents init ran; everything after it runs inside the app it creates.
+    steps: steps.map((step) => ({ ...step, workingDirectory: step.id === 'prepare-app' ? '.' : appDirectory })),
     next: [
       {
         label: 'Customize skins',

@@ -5,7 +5,6 @@ import { isPlainObject, isString } from '@videojs/utils/predicate';
 
 import { renderDiscoveryMarkdown, renderInstallationMarkdown, renderSelectionErrors } from './markdown';
 import {
-  INSTALLATION_PARAMETERS,
   installationInputKeyFromFlag,
   installationParameterForKey,
   type InstallationInput,
@@ -17,6 +16,7 @@ import {
   INSTALLATION_CLI_PACKAGE,
   installationCommand,
   installationReproduceInput,
+  installationSelectedOptions,
   PLAYER_PACKAGES,
   type InstallationPlan,
   type PlayerPackage,
@@ -25,7 +25,6 @@ import type { InstallationFramework } from './projects';
 import {
   isPackageManager,
   resolveInstallationSelection,
-  selectionToInput,
   type InstallationSelectionDefaults,
   type PlayerOwner,
   type SelectionError,
@@ -137,25 +136,9 @@ function installationPlanJson(
   versionNotice: InstallationVersionNotice | null
 ): InstallationPlanJson {
   const { selection, ...document } = plan;
-  const input = selectionToInput(selection);
-  const selectedOptions: Record<string, string> = {};
-
-  for (const parameter of INSTALLATION_PARAMETERS) {
-    if (parameter.key === 'skin' && selection.useCase === 'background-video') continue;
-
-    if (parameter.key === 'packageManager' && selection.method === 'cdn' && selection.template === 'none') continue;
-
-    if (parameter.key === 'styling' && selection.styling === null) continue;
-
-    selectedOptions[parameter.query] = input[parameter.key];
-  }
-
-  const defaultedOptions = selection.defaulted.filter(
-    (key) => key !== 'skin' || selection.useCase !== 'background-video'
-  );
   const defaultedOptionSources: Record<string, string> = {};
 
-  for (const key of defaultedOptions) {
+  for (const key of selection.defaulted) {
     const source = selection.defaultSources[key];
 
     if (source) defaultedOptionSources[installationParameterForKey(key).query] = source;
@@ -163,8 +146,8 @@ function installationPlanJson(
 
   const json: InstallationPlanJson = {
     ...document,
-    selectedOptions,
-    defaultedOptions: defaultedOptions.map((key) => installationParameterForKey(key).query),
+    selectedOptions: installationSelectedOptions(plan),
+    defaultedOptions: selection.defaulted.map((key) => installationParameterForKey(key).query),
     defaultedOptionSources,
   };
 

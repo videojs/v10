@@ -1,9 +1,16 @@
-import { serializeInstallationExtensions } from './extensions';
 import type { InstallationDiscoveryCompatibility } from './options';
 import { installationParameterForKey } from './parameters';
-import type { InstallationDiscovery, InstallationPlan } from './plan';
+import {
+  INSTALLATION_STEP_CONDITIONS,
+  installationSelectedOptions,
+  type InstallationCodeBlock,
+  type InstallationDiscovery,
+  type InstallationPlan,
+  type InstallationPlanFormat,
+  type InstallationStep,
+} from './plan';
 import { INSTALLATION_FRAMEWORKS } from './projects';
-import { containsControlCharacter, selectionToInput, type SelectionError } from './selection';
+import { containsControlCharacter, type SelectionError } from './selection';
 
 function fenced(language: string, value: string): string {
   const longestRun = Math.max(2, ...[...value.matchAll(/`+/g)].map((match) => match[0].length));
@@ -68,6 +75,30 @@ ${mediaCompatibility}
 ${shadcnCompatibility}`;
 }
 
+function definitionList(definitions: Readonly<Record<string, string>>): string {
+  return Object.entries(definitions)
+    .map(([name, description]) => `- \`${name}\`: ${description}`)
+    .join('\n');
+}
+
+function renderPlanFormatMarkdown(format: InstallationPlanFormat): string {
+  return `Instruction plans list their steps in order. The JSON plan carries these fields, and the Markdown plan shows the same information in each step.
+
+${definitionList(format.fields)}
+
+Operations:
+
+${definitionList(format.operations)}
+
+Placements:
+
+${definitionList(format.placements)}
+
+Conditions:
+
+${definitionList(format.conditions)}`;
+}
+
 export function renderDiscoveryMarkdown(discovery: InstallationDiscovery): string {
   const options = discovery.options
     .map((option) => {
@@ -106,6 +137,10 @@ ${options}
 
 ${renderInstallationCompatibilityMarkdown(discovery.compatibility)}
 
+## Plan format
+
+${renderPlanFormatMarkdown(discovery.planFormat)}
+
 ## Examples
 
 ${discovery.examples.map((example) => fenced('sh', example)).join('\n\n')}
@@ -132,68 +167,73 @@ ${plan.next.map(({ label, url }) => `- [${label}](${url})`).join('\n')}
 `;
 }
 
-export function renderInstallationPlanSections(plan: InstallationPlan): string {
-  const relevantDefaulted = plan.selection.defaulted.filter(
-    (key) => key !== 'skin' || plan.selection.useCase !== 'background-video'
+function blockInstruction(block: InstallationCodeBlock): string | null {
+  if (block.operation === 'run') {
+    return block.longRunning ? '_Long-running: start it in the background, verify the result, then stop it._' : null;
+  }
+
+  if (block.operation === 'create') return '_Create this file._';
+
+  if (block.operation === 'replace') {
+    return block.anchor
+      ? `_Replace ${inlineCode(block.anchor)} with this block._`
+      : '_Replace the whole file with this block._';
+  }
+
+  if (block.placement === 'head') return '_Merge this into the page `<head>`._';
+
+  if (block.placement === 'body') return '_Merge this into the page `<body>` where the player should appear._';
+
+  return '_Merge this into the existing file, or create the file when it is missing._';
+}
+
+function renderBlock(block: InstallationCodeBlock): string {
+  const placement = block.placement ? ` (${block.placement})` : '';
+  const heading = block.filename ? `### \`${block.filename}\`${placement}` : null;
+  const inserts = (block.insertContents ?? []).map(
+    ({ anchor, from }) => `_Then replace ${inlineCode(anchor)} with the full contents of \`${from}\`._`
   );
-  const input = selectionToInput(plan.selection);
+
+  return [heading, blockInstruction(block), fenced(block.language, block.code), ...inserts]
+    .filter((paragraph) => paragraph !== null)
+    .join('\n\n');
+}
+
+function renderStep(step: InstallationStep): string {
+  const condition = step.condition ? `_${INSTALLATION_STEP_CONDITIONS[step.condition]}_` : null;
+  const workingDirectory = step.workingDirectory === '.' ? null : `_Working directory: \`${step.workingDirectory}\`._`;
+  const removeFiles = step.removeFiles
+    ? `Delete these starter files if present: ${step.removeFiles.map((filename) => `\`${filename}\``).join(', ')}.`
+    : null;
+
+  return [
+    `## ${step.title}`,
+    condition,
+    workingDirectory,
+    step.description ?? null,
+    ...step.blocks.map(renderBlock),
+    removeFiles,
+  ]
+    .filter((paragraph) => paragraph !== null)
+    .join('\n\n');
+}
+
+export function renderInstallationPlanSections(plan: InstallationPlan): string {
+  const selected = installationSelectedOptions(plan);
   const defaulted =
-    relevantDefaulted.length > 0
-      ? relevantDefaulted
+    plan.selection.defaulted.length > 0
+      ? plan.selection.defaulted
           .map((key) => {
             const query = installationParameterForKey(key).query;
             const source = plan.selection.defaultSources[key];
 
-            return source ? `${query} (${input[key]} from ${source})` : query;
+            return source ? `${query} (${selected[query]} from ${source})` : query;
           })
           .join(', ')
       : 'none';
-  const selected: Array<[string, string]> = [
-    ['method', plan.selection.method],
-    ['framework', plan.selection.framework],
-    ['project', plan.selection.project],
-    ['preset', plan.selection.preset],
-    ['media', plan.selection.media],
-    ['extensions', serializeInstallationExtensions(plan.selection.extensions)],
-    ['source-url', plan.resolvedSourceUrl],
-  ];
-
-  if (plan.selection.useCase !== 'background-video') selected.splice(3, 0, ['skin', plan.selection.skinFlag]);
-
-  if (plan.selection.method !== 'cdn' || plan.selection.template !== 'none') {
-    selected.push(['package-manager', plan.selection.packageManager]);
-  }
-
-  selected.push(['template', plan.selection.template]);
-
-  if (plan.selection.styling) selected.push(['styling', plan.selection.styling]);
-
-  const selection = selected.map(([key, value]) => `- \`${key}\`: ${inlineCode(value)}`).join('\n');
-  const steps = plan.steps
-    .map((step) => {
-      const description = step.description ? `\n${step.description}\n` : '';
-      const blocks = step.blocks
-        .map((block) => {
-          const heading = block.filename ? `### \`${block.filename}\`\n\n` : '';
-          const operation =
-            block.operation === 'create'
-              ? '_Create this file._\n\n'
-              : block.operation === 'replace'
-                ? `_Replace ${block.anchor ? inlineCode(block.anchor) : 'the matching placeholder'} with this block._\n\n`
-                : block.operation === 'merge'
-                  ? '_Merge this into the existing file, or create the file when it is missing._\n\n'
-                  : '';
-
-          return `${heading}${operation}${fenced(block.language, block.code)}`;
-        })
-        .join('\n\n');
-
-      const condition =
-        step.condition === 'when-components-json-missing' ? '\n_Only when components.json is missing._\n' : '';
-
-      return `## ${step.title}\n${condition}${description}${blocks ? `\n${blocks}` : ''}`;
-    })
-    .join('\n\n');
+  const selection = Object.entries(selected)
+    .map(([key, value]) => `- \`${key}\`: ${inlineCode(value)}`)
+    .join('\n');
 
   return `## Selected options
 
@@ -205,7 +245,7 @@ Defaulted options: ${defaulted}.
 
 ${fenced('sh', plan.reproduceCommand)}
 
-${steps}
+${plan.steps.map(renderStep).join('\n\n')}
 
 > ${plan.notice}
 `;
