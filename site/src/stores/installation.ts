@@ -72,6 +72,7 @@ export const selectionAtoms: SelectionAtoms = {
   styling,
 };
 
+// SAFETY: `selectionAtoms` has exactly one atom per selection key.
 const SELECTION_KEYS = Object.keys(selectionAtoms) as (keyof InstallationUiSelection)[];
 
 let syncedUrl: string | null = null;
@@ -135,6 +136,7 @@ function applySelection(patch: Partial<InstallationUiSelection>): void {
 
   try {
     for (const key of SELECTION_KEYS) {
+      // SAFETY: `patch[key]` has the value type of the atom stored under the same key.
       if (key in patch) (selectionAtoms[key] as WritableAtom<unknown>).set(patch[key]);
     }
   } finally {
@@ -170,12 +172,13 @@ export function syncInstallationSelectionFromUrl(url?: URL): void {
 }
 
 export function selectInstallationTemplate(nextTemplate: InstallationTemplate): void {
-  const resolvedTemplate = resolveInstallationTemplate(framework.get(), nextTemplate);
+  const patch: Partial<InstallationUiSelection> = {
+    template: resolveInstallationTemplate(framework.get(), nextTemplate),
+  };
 
-  updateInstallationSelection({
-    template: resolvedTemplate,
-    ...(resolvedTemplate === 'none' ? { project: 'existing' } : {}),
-  });
+  if (patch.template === 'none') patch.project = 'existing';
+
+  updateInstallationSelection(patch);
 }
 
 export function selectInstallationStartingPoint(nextProject: InstallationProject): void {
