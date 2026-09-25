@@ -1,6 +1,6 @@
 {
   "name": "@videojs/cli",
-  "version": "10.0.0-rc.2",
+  "version": "10.0.0-rc.3",
   "description": "Video.js command line: version-matched installation instructions for coding agents",
   "homepage": "https://videojs.org",
   "license": "Apache-2.0",
