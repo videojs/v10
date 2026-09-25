@@ -23,7 +23,6 @@ import {
 import type { Renderer } from '../index';
 
 const baseHTML: InstallationOptions = {
-  framework: 'html',
   useCase: 'default-video',
   skin: 'video',
   renderer: 'html5-video',
@@ -32,7 +31,6 @@ const baseHTML: InstallationOptions = {
 };
 
 const baseReact: InstallationOptions = {
-  framework: 'react',
   useCase: 'default-video',
   skin: 'video',
   renderer: 'html5-video',

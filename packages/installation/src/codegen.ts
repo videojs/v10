@@ -14,7 +14,6 @@ import type { InstallMethod } from './selection';
 import type { RegistryStyling } from './shadcn';
 
 export interface InstallationOptions {
-  framework: 'html' | 'react';
   useCase: UseCase;
   skin: Skin;
   renderer: Renderer;

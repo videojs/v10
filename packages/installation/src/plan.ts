@@ -354,7 +354,6 @@ function htmlPageFile(
 
 function installationOptions(selection: InstallationSelection): InstallationOptions {
   return {
-    framework: selection.sourceFramework,
     useCase: selection.useCase,
     skin: selection.skin,
     renderer: selection.media,
