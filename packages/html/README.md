@@ -29,6 +29,8 @@ Then list the version-matched installation choices. This command returns instruc
 npx @videojs/html agents init
 ```
 
+If `npx` reports `could not determine executable to run`, the project has an older `@videojs/html` without this command. Upgrade the package, or follow the [HTML installation guide](https://videojs.org/docs/guides/installation/html).
+
 ## Documentation
 
 Read the docs at [videojs.org](https://videojs.org/docs/framework/html), or after installing,
