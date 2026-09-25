@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +29,7 @@ import {
   INSTALLATION_ROUTE_SEGMENTS,
   installationMarkdownGuides,
 } from '../src/utils/installation/routes';
+import { staticMarkdownHeaderRules } from '../src/utils/markdown-handler';
 import { outsideCodeFences } from '../src/utils/markdown-text';
 import { filterSidebarForLlms, llmsSections, sidebarSlugs } from './llms-sections';
 
@@ -103,6 +104,7 @@ export default function llmsMarkdown(): AstroIntegration {
         const blogPages: PageEntry[] = [];
         const changelogPages: PageEntry[] = [];
         const otherPages: PageEntry[] = [];
+        const twinPaths: string[] = [];
 
         logger.info('Generating LLM-optimized markdown files...');
 
@@ -143,6 +145,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown + footer, 'utf-8');
+            twinPaths.push(`/${pathname}.md`);
 
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
@@ -180,6 +183,10 @@ export default function llmsMarkdown(): AstroIntegration {
 
         await mkdir(dirname(installationIndexPath), { recursive: true });
         await writeFile(installationIndexPath, generateInstallationIndex(siteUrl), 'utf-8');
+        twinPaths.push('/docs/guides/installation.md');
+
+        // Append rather than overwrite, so `_headers` rules from `public/` survive.
+        await appendFile(join(siteDir, '_headers'), `\n${staticMarkdownHeaderRules(twinPaths.sort())}\n`, 'utf-8');
 
         // Group docs by framework
         const docsByFramework = new Map<string, PageEntry[]>();

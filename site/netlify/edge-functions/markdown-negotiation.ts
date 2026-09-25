@@ -28,7 +28,7 @@ export const config: Config = {
   // Plain HTML requests never reach this function, so their responses carry no `Vary: Accept`. Adding it site-wide
   // would make browsers miss prefetched pages, whose `Accept` differs from the navigation's; Netlify's cache already
   // keeps the two representations apart because it routes on this header match before its cache lookup.
-  // Netlify requires inline static config values. Keep these routes aligned with markdown-direct.
+  // Direct `.md` requests never negotiate. Netlify requires inline static config values.
   excludedPath: ['/blog/*.md', '/changelog/*.md', '/docs/*.md', '/html5-video-support.md', '/about-this-player.md'],
   // Netlify tests this regex against the header value without flags, so it spells out both cases. It only narrows
   // which requests reach the function; prefersMarkdown weighs the q-values.

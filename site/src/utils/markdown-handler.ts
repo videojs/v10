@@ -1,4 +1,5 @@
 import { INSTALLATION_MARKDOWN_PARAMS, renderInstallationMarkdownSelection } from './installation/markdown.ts';
+import { getInstallationRouteSegment } from './installation/routes.ts';
 
 const INSTALLATION_PATH = '/docs/guides/installation/';
 // RFC 9110 qvalue: 0 to 1 with at most three decimals.
@@ -25,17 +26,36 @@ export function prefersMarkdown(accept: string): boolean {
   return markdown > 0 && markdown >= html;
 }
 
+const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
+
 // Netlify purges its CDN on every deploy, which is when the Markdown and its package version change, so only its cache
 // keeps the long TTL. Browsers and other shared caches revalidate.
+const PUBLIC_MARKDOWN_CACHE = {
+  'cache-control': 'public, max-age=0, must-revalidate',
+  'netlify-cdn-cache-control': 'public, s-maxage=31536000',
+};
+
 function setPublicMarkdownCache(headers: Headers): void {
-  headers.set('cache-control', 'public, max-age=0, must-revalidate');
-  headers.set('netlify-cdn-cache-control', 'public, s-maxage=31536000');
+  for (const [name, value] of Object.entries(PUBLIC_MARKDOWN_CACHE)) headers.set(name, value);
+}
+
+/**
+ * Netlify `_headers` rules for the static Markdown twins, which Netlify serves without an edge function. Installation
+ * twins are left out: their body depends on the query, so the edge function renders them and sets their headers.
+ */
+export function staticMarkdownHeaderRules(paths: readonly string[]): string {
+  const headers = Object.entries({ 'content-type': MARKDOWN_CONTENT_TYPE, ...PUBLIC_MARKDOWN_CACHE });
+
+  return paths
+    .filter((path) => !getInstallationRouteSegment(path))
+    .map((path) => [path, ...headers.map(([name, value]) => `  ${name}: ${value}`)].join('\n'))
+    .join('\n\n');
 }
 
 function markMarkdownResponse(response: Response): Response {
   const headers = new Headers(response.headers);
 
-  headers.set('content-type', 'text/markdown; charset=utf-8');
+  headers.set('content-type', MARKDOWN_CONTENT_TYPE);
   setPublicMarkdownCache(headers);
   headers.set('vary', 'Accept');
 
@@ -49,7 +69,7 @@ function markMarkdownResponse(response: Response): Response {
 function installationMarkdownResponse(body: string, status: 200 | 400 | 500, privateResponse: boolean): Response {
   const response = new Response(body, { status });
 
-  response.headers.set('content-type', 'text/markdown; charset=utf-8');
+  response.headers.set('content-type', MARKDOWN_CONTENT_TYPE);
 
   if (privateResponse) response.headers.set('cache-control', 'private, no-store');
   else setPublicMarkdownCache(response.headers);

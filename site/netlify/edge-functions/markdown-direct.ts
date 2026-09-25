@@ -7,6 +7,7 @@ export default handleMarkdown;
 export const config: Config = {
   cache: 'manual',
   method: 'GET',
-  // Netlify requires inline static config values. Keep these routes aligned with markdown-negotiation.
-  path: ['/blog/*.md', '/changelog/*.md', '/docs/*.md', '/html5-video-support.md', '/about-this-player.md'],
+  // Only installation twins vary by query; Netlify serves every other twin statically with the headers the build writes
+  // to `_headers`. Netlify requires inline static config values, so this matches `getInstallationRoutePath`.
+  path: '/docs/guides/installation/*.md',
 };

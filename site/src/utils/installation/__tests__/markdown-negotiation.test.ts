@@ -192,16 +192,28 @@ Default steps.
   });
 
   it('declares separate direct Markdown and Accept-negotiation routes', () => {
+    const matches = (paths: string | string[] | undefined, pathname: string) =>
+      [paths ?? []].flat().some((path) => new URLPattern({ pathname: path }).test(`https://videojs.org${pathname}`));
+
     expect(negotiationConfig.header).toEqual({ accept: '[Tt][Ee][Xx][Tt]/[Mm][Aa][Rr][Kk][Dd][Oo][Ww][Nn]' });
-    expect(negotiationConfig.excludedPath).toContain('/docs/*.md');
     expect(negotiationConfig.method).toBe('GET');
-    expect(directConfig.path).toContain('/docs/*.md');
     expect(directConfig.method).toBe('GET');
-    expect(negotiationConfig.excludedPath).toEqual(directConfig.path);
 
-    const directPaths = Array.isArray(directConfig.path) ? directConfig.path : [directConfig.path];
-    const nestedGuide = new URL('https://videojs.org/docs/guides/installation/shadcn.md');
+    for (const pathname of ['/docs/guides/installation/shadcn.md', '/docs/guides/installation/react.md']) {
+      expect(matches(directConfig.path, pathname)).toBe(true);
+      expect(matches(negotiationConfig.excludedPath, pathname)).toBe(true);
+    }
 
-    expect(directPaths.some((path) => new URLPattern({ pathname: path }).test(nestedGuide))).toBe(true);
+    for (const pathname of [
+      '/docs/guides/installation.md',
+      '/docs/framework/react/guides/build-with-ai.md',
+      '/blog/launch.md',
+      '/about-this-player.md',
+    ]) {
+      expect(matches(directConfig.path, pathname)).toBe(false);
+      expect(matches(negotiationConfig.excludedPath, pathname)).toBe(true);
+    }
+
+    expect(matches(negotiationConfig.path, '/docs/framework/react/guides/build-with-ai')).toBe(true);
   });
 });
