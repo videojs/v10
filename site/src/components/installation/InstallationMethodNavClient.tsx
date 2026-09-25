@@ -21,10 +21,9 @@ import { resolveInstallationMethodHref } from '@/utils/installation/method-navig
 import { INSTALLATION_METHOD_OPTIONS } from '@/utils/installation/method-options';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
-import { useIsHydrationSettled } from '@/utils/useIsHydrated';
 
 import { useRegistryFramework } from './useRegistryFramework';
-import { useSelection } from './useSelection';
+import { useInstallationSelectionReady, useSelection } from './useSelection';
 
 const ICONS = {
   packaged: NpmLogo,
@@ -64,20 +63,15 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const selectedUseCase = useSelection('useCase');
   const selectedStyling = useSelection('styling');
   const registryFramework = useRegistryFramework(sourceFrameworkFor(currentFramework));
-  const isHydrated = useIsHydrationSettled();
+  const isSelectionReady = useInstallationSelectionReady();
   const framework = route === 'shadcn' ? registryFramework : currentFramework;
   const active = getActiveMethod(route);
-  const availableMethods = installationMethodsForFramework(framework);
-  const items =
-    route === 'shadcn'
-      ? INSTALLATION_METHOD_OPTIONS
-      : INSTALLATION_METHOD_OPTIONS.filter(({ id }) => installationMethodsForFramework(currentFramework).includes(id));
+  const items = INSTALLATION_METHOD_OPTIONS.filter(({ id }) => installationMethodsForFramework(framework).includes(id));
 
   const isMethodAvailable = (id: InstallationMethod) => {
-    if (!availableMethods.includes(id)) return false;
-
     if (id === 'shadcn' && route !== 'shadcn') {
-      if (selectedTemplate === 'none') return false;
+      // A packaged existing site without a bundler cannot build skin source; the CDN guide has no app setup to check.
+      if (route !== 'cdn' && selectedTemplate === 'none') return false;
 
       return registrySkinSelection({ useCase: selectedUseCase, skin: selectedSkin }) !== null;
     }
@@ -90,7 +84,8 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const getMethodHref = (method: InstallationMethod) => {
     const baseHref = getMethodBaseHref(method, framework);
 
-    if (!isHydrated) return baseHref;
+    // The prerendered links name only the destination; the reader's picks join them once the stores hold them.
+    if (!isSelectionReady) return baseHref;
 
     return resolveInstallationMethodHref(
       new URL(window.location.href),
@@ -158,7 +153,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
         const Icon = ICONS[id];
         const href = getMethodHref(id);
         const available = isMethodAvailable(id);
-        const showSelection = isHydrated && active === id;
+        const isActive = active === id;
 
         return (
           <a
@@ -166,7 +161,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
             href={href}
             onClick={(event) => handleNavigation(event, href, available)}
             data-installation-method={id}
-            aria-current={active === id ? 'page' : undefined}
+            aria-current={isActive ? 'page' : undefined}
             aria-disabled={available ? undefined : true}
             className={clsx(
               'group relative flex min-w-0 items-center gap-3 rounded-xl corner-squircle border bg-surface p-3 no-underline transition duration-150 ease-out select-none',
@@ -174,7 +169,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
               available
                 ? 'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0'
                 : 'cursor-not-allowed opacity-50',
-              showSelection
+              isActive
                 ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
                 : 'border-line ring-1 ring-transparent intent:border-line-strong'
             )}
@@ -193,7 +188,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
               aria-hidden="true"
               className={clsx(
                 'absolute top-3 right-3 flex size-5 items-center justify-center rounded-full border transition',
-                showSelection
+                isActive
                   ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
                   : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100'
               )}

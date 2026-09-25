@@ -36,12 +36,7 @@ import TanStackLogo from '@/assets/logos/brands/tanstack.svg?react';
 import ViteLogoUrl from '@/assets/logos/brands/vite.svg?url';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
 import SkinPreview from '@/components/installation/SkinPreview';
-import {
-  useInstallationTemplate,
-  useRegistrySkin,
-  useRegistryStyling,
-  useRegistryTheme,
-} from '@/components/installation/useRegistryFramework';
+import { useRegistrySkin, useRegistryStyling, useRegistryTheme } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
 import { Select } from '@/components/Select';
 import {
@@ -142,7 +137,7 @@ function RegistryTemplateCards({
   const selectedFramework = useSelection('framework', framework);
   const activeFramework = fixedFramework ? framework : selectedFramework;
   const defaultTemplate = defaultInstallationTemplate(activeFramework);
-  const $template = useInstallationTemplate(defaultTemplate);
+  const $template = useSelection('template', defaultTemplate);
   const template = resolveInstallationTemplateForMethod(activeFramework, $template, method ?? 'packaged');
 
   return (

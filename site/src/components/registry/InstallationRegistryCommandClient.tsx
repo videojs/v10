@@ -10,11 +10,7 @@ import {
   shadcnProjectSetup,
 } from '@videojs/installation';
 
-import {
-  useInstallationTemplate,
-  useRegistryFramework,
-  useRegistryStyling,
-} from '@/components/installation/useRegistryFramework';
+import { useRegistryFramework, useRegistryStyling } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
 
 import RegistryCommandClient from './RegistryCommandClient';
@@ -28,7 +24,7 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
   const selectedFramework = useRegistryFramework(framework);
-  const $template = useInstallationTemplate(defaultInstallationTemplate(selectedFramework));
+  const $template = useSelection('template', defaultInstallationTemplate(selectedFramework));
   const template = resolveInstallationTemplate(selectedFramework, $template);
   const styling = resolveRegistryStyling(framework, useRegistryStyling());
   const projectFiles = installationProjectFiles(selectedFramework, template);

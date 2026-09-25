@@ -3,7 +3,7 @@ import { atom } from 'nanostores';
 import { useSyncExternalStore } from 'react';
 import { hydrateRoot, type Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import CardRadioGroup from '../CardRadioGroup';
 
@@ -41,34 +41,32 @@ describe('CardRadioGroup', () => {
 
     root = null;
     framework.set('html');
+    vi.restoreAllMocks();
   });
 
-  it('keeps every card visible while the URL-backed selection hydrates', async () => {
+  it('shows the server selection, then the store selection once hydrated', async () => {
     const container = document.createElement('div');
 
     container.innerHTML = renderToString(<FrameworkPicker />);
 
-    const serverGroup = container.querySelector('[role="radiogroup"]');
-
     const serverSelection = container.querySelector('[role="radio"][aria-checked="true"]');
 
-    expect(serverGroup).not.toHaveAttribute('data-selection-ready');
     expect(serverSelection).toHaveTextContent('React');
-    expect(serverSelection).toHaveClass('ring-transparent');
+    expect(serverSelection).toHaveClass('ring-accent');
     expect(container.querySelectorAll('[role="radio"]')).toHaveLength(2);
+
+    const errors = vi.spyOn(console, 'error');
 
     await act(async () => {
       root = hydrateRoot(container, <FrameworkPicker />);
     });
 
-    expect(container.querySelector('[role="radio"].ring-accent')).toBeNull();
+    await waitFor(() =>
+      expect(container.querySelector('[role="radio"][aria-checked="true"]')).toHaveTextContent('HTML')
+    );
 
-    await waitFor(() => expect(container.querySelector('[role="radiogroup"]')).toHaveAttribute('data-selection-ready'));
-
-    const clientSelection = container.querySelector('[role="radio"][aria-checked="true"]');
-
-    expect(clientSelection).toHaveTextContent('HTML');
-    expect(clientSelection).toHaveClass('ring-accent');
+    expect(container.querySelector('[role="radio"].ring-accent')).toHaveTextContent('HTML');
     expect(container.querySelectorAll('[role="radio"]')).toHaveLength(2);
+    expect(errors).not.toHaveBeenCalled();
   });
 });

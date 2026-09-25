@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 
 import Check from '@/assets/icons/check.svg?react';
 import { twMerge } from '@/utils/twMerge';
-import { useIsHydrationSettled } from '@/utils/useIsHydrated';
 
 export interface CardRadioOption<T = string> {
   value: T;
@@ -41,21 +40,17 @@ export default function CardRadioGroup<T extends string = string>({
   layout = 'tile',
   minColumnWidth = '11rem',
 }: CardRadioGroupProps<T>) {
-  const isHydrated = useIsHydrationSettled();
-
   return (
     <RadioGroup
       value={value}
       // SAFETY: every rendered Radio.Root receives an option value of type T, so the group can only report one back.
       onValueChange={(newValue) => onChange(newValue as T)}
       aria-label={ariaLabel}
-      data-selection-ready={isHydrated ? '' : undefined}
       className={twMerge(clsx('grid auto-rows-fr gap-3'), className)}
       style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${minColumnWidth}), 1fr))` }}
     >
       {options.map((option) => {
         const isSelected = value === option.value;
-        const showSelection = isHydrated && isSelected;
 
         return (
           <Radio.Root
@@ -72,7 +67,7 @@ export default function CardRadioGroup<T extends string = string>({
               option.disabled
                 ? 'cursor-not-allowed opacity-50'
                 : 'cursor-pointer intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
-              showSelection
+              isSelected
                 ? 'border-accent bg-surface-raised shadow-sm ring-accent'
                 : 'border-line intent:border-line-strong'
             )}
@@ -100,7 +95,7 @@ export default function CardRadioGroup<T extends string = string>({
               className={clsx(
                 'absolute flex size-5 items-center justify-center rounded-full border transition-[color,background-color,border-color,opacity,transform] duration-200',
                 layout === 'tile' ? 'top-3 right-3' : 'top-1/2 right-3 -translate-y-1/2',
-                showSelection
+                isSelected
                   ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
                   : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100'
               )}

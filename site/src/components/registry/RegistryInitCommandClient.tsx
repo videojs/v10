@@ -12,11 +12,8 @@ import ClientCode from '@/components/Code/ClientCode';
 import { focusLinesContaining } from '@/components/Code/focusLines';
 import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
-import {
-  useInstallationTemplate,
-  useRegistryFramework,
-  useRegistryStyling,
-} from '@/components/installation/useRegistryFramework';
+import { useRegistryFramework, useRegistryStyling } from '@/components/installation/useRegistryFramework';
+import { useSelection } from '@/components/installation/useSelection';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 
@@ -53,7 +50,7 @@ function ConfigurationBlock({ block }: { block: { code: string; filename: string
 
 export default function RegistryInitCommandClient({ framework, installation }: Props) {
   const selectedFramework = useRegistryFramework(framework);
-  const $template = useInstallationTemplate(defaultInstallationTemplate(selectedFramework));
+  const $template = useSelection('template', defaultInstallationTemplate(selectedFramework));
   const template = resolveInstallationTemplate(selectedFramework, $template);
   const styling = resolveRegistryStyling(selectedFramework, useRegistryStyling());
   const project = installationProjectFiles(selectedFramework, template);

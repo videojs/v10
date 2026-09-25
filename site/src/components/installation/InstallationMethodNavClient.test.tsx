@@ -124,7 +124,7 @@ describe('InstallationMethodNavClient', () => {
     container.remove();
   });
 
-  it('keeps the Shadcn method grid stable while CDN availability follows the framework', async () => {
+  it('offers CDN on the Shadcn guide only for the HTML framework', async () => {
     framework.set('html');
     const { queryByRole } = render(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
 
@@ -132,7 +132,7 @@ describe('InstallationMethodNavClient', () => {
 
     act(() => framework.set('react'));
 
-    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).toHaveAttribute('aria-disabled', 'true'));
+    await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).not.toBeInTheDocument());
   });
 
   it('carries HTML selections into the HTML Shadcn route', async () => {
@@ -168,12 +168,21 @@ describe('InstallationMethodNavClient', () => {
     await waitFor(() => expect(link.getAttribute('href')).toContain('project=new'));
   });
 
-  it('prerenders every Shadcn method card so early framework CSS can choose the stable set', () => {
-    const markup = renderToString(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
+  it('prerenders the active method from the route', () => {
+    const shadcn = renderToString(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
+    const cdn = renderToString(<InstallationMethodNavClient currentFramework="html" route="cdn" />);
 
-    expect(markup).toContain('data-installation-method="packaged"');
-    expect(markup).toContain('data-installation-method="shadcn"');
-    expect(markup).toContain('data-installation-method="cdn"');
+    expect(shadcn).toMatch(/data-installation-method="shadcn" aria-current="page"[^>]*ring-accent/);
+    expect(shadcn).not.toContain('data-installation-method="cdn"');
+    expect(cdn).toMatch(/data-installation-method="cdn" aria-current="page"[^>]*ring-accent/);
+  });
+
+  it('keeps Shadcn available from the CDN guide, which has no app setup', () => {
+    const { queryByRole } = render(<InstallationMethodNavClient currentFramework="html" route="cdn" />);
+
+    act(() => template.set('none'));
+
+    expect(queryByRole('link', { name: /Shadcn/ })).not.toHaveAttribute('aria-disabled');
   });
 
   it('hands method navigation to Astro with the existing scroll restoration metadata', async () => {

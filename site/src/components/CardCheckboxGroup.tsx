@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
 import Check from '@/assets/icons/check.svg?react';
-import { useIsHydrationSettled } from '@/utils/useIsHydrated';
 
 export interface CardCheckboxOption<T = string> {
   value: T;
@@ -27,19 +26,16 @@ export default function CardCheckboxGroup<T extends string = string>({
   options,
   'aria-label': ariaLabel,
 }: CardCheckboxGroupProps<T>) {
-  const isHydrated = useIsHydrationSettled();
-
   return (
     <CheckboxGroup
       value={[...value]}
       // SAFETY: every rendered Checkbox.Root receives an option value of type T, so the group can only report T values.
       onValueChange={(newValue) => onChange(newValue as T[])}
       aria-label={ariaLabel}
-      data-selection-ready={isHydrated ? '' : undefined}
       className="grid auto-rows-fr gap-3 sm:grid-cols-2"
     >
       {options.map((option) => {
-        const showSelection = isHydrated && value.includes(option.value);
+        const isSelected = value.includes(option.value);
 
         return (
           <Checkbox.Root
@@ -52,7 +48,7 @@ export default function CardCheckboxGroup<T extends string = string>({
               'transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out',
               'intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
-              showSelection
+              isSelected
                 ? 'border-accent bg-surface-raised shadow-sm ring-accent'
                 : 'border-line intent:border-line-strong'
             )}
@@ -73,7 +69,7 @@ export default function CardCheckboxGroup<T extends string = string>({
               className={clsx(
                 'absolute top-1/2 right-3 flex size-5 -translate-y-1/2 items-center justify-center rounded-full border',
                 'transition-[color,background-color,border-color,opacity,transform] duration-200',
-                showSelection
+                isSelected
                   ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'
                   : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100'
               )}
