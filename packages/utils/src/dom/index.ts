@@ -39,6 +39,7 @@ export {
   getElementPadding,
   getElementSize,
   getInlineExtent,
+  isPointInElement,
   type LogicalBoxEdges,
   type MeasureElementChildrenOptions,
   type MeasureElementOptions,
@@ -99,6 +100,7 @@ export {
   supportsAnimationFrame,
   supportsConstructableStyleSheets,
   supportsIdleCallback,
+  supportsPopoverAPI,
 } from './supports';
 export { cloneTemplateRoot, createTemplate, getTemplateElement, getTemplateRoot, renderTemplate } from './template';
 export { type CaptionOrSubtitleKind, findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack } from './text-track';
