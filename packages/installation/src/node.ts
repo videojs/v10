@@ -1,5 +1,5 @@
 import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
-import { dirname, join, parse, resolve } from 'node:path';
+import { dirname, join, parse, relative, resolve } from 'node:path';
 
 import { isPlainObject, isString } from '@videojs/utils/predicate';
 
@@ -468,31 +468,60 @@ function executableExists(name: string, environment: PackageManagerEnvironment):
   );
 }
 
-/** Match an existing workspace first, then prefer pnpm for a new project when it is available. */
+const LOCKFILES = [
+  ['pnpm-lock.yaml', 'pnpm'],
+  ['yarn.lock', 'yarn'],
+  ['bun.lock', 'bun'],
+  ['bun.lockb', 'bun'],
+  ['package-lock.json', 'npm'],
+] as const satisfies ReadonlyArray<readonly [string, PackageManager]>;
+
+/**
+ * Match an existing workspace first, then prefer pnpm for a new project when it is available. npm's user agent is
+ * ignored because `npx` runs this CLI for every package manager, so it says nothing about the project's preference.
+ */
 export function detectPackageManager(
   cwd: string,
   environment: PackageManagerEnvironment = process.env
-): PackageManager {
+): NonNullable<InstallationSelectionDefaults['packageManager']> {
+  const start = resolve(cwd);
   const { directories, manifests, boundary } = readProjectManifests(cwd);
-  const lockfiles = [
-    ['pnpm-lock.yaml', 'pnpm'],
-    ['yarn.lock', 'yarn'],
-    ['bun.lock', 'bun'],
-    ['bun.lockb', 'bun'],
-    ['package-lock.json', 'npm'],
-  ] as const;
+  const displayPath = (directory: string, filename: string) => relative(start, join(directory, filename));
 
   for (let index = 0; index <= boundary; index++) {
-    const candidate = directories[index]!;
+    const directory = directories[index]!;
     const fromManifest = packageManagerFromManifest(manifests[index] ?? null);
-    if (fromManifest) return fromManifest;
 
-    const fromLockfile = lockfiles.find(([filename]) => existsSync(join(candidate, filename)))?.[1];
-    if (fromLockfile) return fromLockfile;
+    if (fromManifest) {
+      return { value: fromManifest, source: `the ${displayPath(directory, 'package.json')} packageManager field` };
+    }
+
+    const lockfiles = LOCKFILES.filter(([filename]) => existsSync(join(directory, filename)));
+    const [winner] = lockfiles;
+    if (!winner) continue;
+
+    const [lockfile, value] = winner;
+    const conflicts = lockfiles
+      .filter(([, manager]) => manager !== value)
+      .map(([filename]) => displayPath(directory, filename));
+    const conflict =
+      conflicts.length > 0
+        ? `; ${conflicts.join(' and ')} also found, and ${displayPath(directory, lockfile)} takes precedence`
+        : '';
+
+    return { value, source: `${displayPath(directory, lockfile)}${conflict}` };
   }
 
   const fromUserAgent = environment.npm_config_user_agent?.split('/')[0] ?? '';
-  if (fromUserAgent !== 'npm' && isPackageManager(fromUserAgent)) return fromUserAgent;
 
-  return executableExists('pnpm', environment) ? 'pnpm' : 'npm';
+  if (fromUserAgent !== 'npm' && isPackageManager(fromUserAgent)) {
+    return {
+      value: fromUserAgent,
+      source: `the ${fromUserAgent} invocation (npm_config_user_agent); no lockfile or packageManager field found`,
+    };
+  }
+
+  return executableExists('pnpm', environment)
+    ? { value: 'pnpm', source: 'the pnpm executable on PATH; no lockfile or packageManager field found' }
+    : { value: 'npm', source: 'the npm fallback; no lockfile, packageManager field, or pnpm on PATH found' };
 }

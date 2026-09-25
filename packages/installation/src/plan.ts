@@ -162,21 +162,22 @@ export function createInstallationDiscovery(
   defaults: InstallationSelectionDefaults = {}
 ): InstallationDiscovery {
   const command = installationCommand(undefined, packageVersion);
-  const packageManager = defaults.packageManager ?? 'pnpm';
+  const packageManager = defaults.packageManager?.value ?? 'pnpm';
   const options = installationOptionDefinitionsFor({
     methods: INSTALLATION_METHODS,
     frameworks: INSTALLATION_FRAMEWORKS,
   }).map((option) => {
-    if (option.flag === '--package-manager') return { ...option, default: packageManager };
+    const detected =
+      option.flag === '--package-manager'
+        ? defaults.packageManager
+        : option.flag === '--framework'
+          ? defaults.framework
+          : undefined;
+    if (detected) return { ...option, default: `${detected.value} (from ${detected.source})` };
 
     if (option.flag !== '--framework') return option;
 
-    return {
-      ...option,
-      default: defaults.framework
-        ? `${defaults.framework.value} (from ${defaults.framework.source})`
-        : 'detected from package.json dependencies; otherwise html',
-    };
+    return { ...option, default: 'detected from package.json dependencies; otherwise html' };
   });
   const reactInput: InstallationInput = {
     method: 'packaged',

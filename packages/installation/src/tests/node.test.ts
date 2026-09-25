@@ -22,6 +22,10 @@ const reactProject = {
   framework: { value: 'react', source: 'package.json dependencies' },
 } as const satisfies AgentsInitDefaults;
 
+const yarnProject = {
+  packageManager: { value: 'yarn', source: 'yarn.lock' },
+} as const satisfies AgentsInitDefaults;
+
 /** Split a printed command whose quoted values never contain an escaped quote. */
 function commandArguments(command: string): string[] {
   const words = command.match(/'[^']*'|\S+/g) ?? [];
@@ -59,12 +63,10 @@ describe('runAgentsInit', () => {
   });
 
   it('uses the detected package manager and gives fully explicit examples', () => {
-    const discovery = JSON.parse(
-      runAgentsInit('10.0.0', ['agents', 'init', '--json'], { packageManager: 'yarn' }).stdout
-    );
+    const discovery = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--json'], yarnProject).stdout);
     const packageManager = discovery.options.find(({ flag }: { flag: string }) => flag === '--package-manager');
 
-    expect(packageManager.default).toBe('yarn');
+    expect(packageManager.default).toBe('yarn (from yarn.lock)');
 
     // SAFETY: discovery JSON is produced by createInstallationDiscovery, whose examples field is a string array.
     for (const example of discovery.examples as string[]) {
@@ -516,6 +518,23 @@ describe('runAgentsInit', () => {
     expect(explicit.defaultedOptionSources).toEqual({});
   });
 
+  it('explains a detected package manager in Markdown and JSON', () => {
+    const args = ['agents', 'init', '--media', 'hls'];
+    const markdown = runAgentsInit('10.0.0', args, yarnProject);
+    const json = JSON.parse(runAgentsInit('10.0.0', [...args, '--json'], yarnProject).stdout);
+    const explicit = JSON.parse(
+      runAgentsInit('10.0.0', [...args, '--package-manager', 'npm', '--json'], yarnProject).stdout
+    );
+    const cdnPage = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--method', 'cdn', '--json'], yarnProject).stdout
+    );
+
+    expect(markdown.stdout).toContain('package-manager (yarn from yarn.lock)');
+    expect(json.defaultedOptionSources).toEqual({ 'package-manager': 'yarn.lock' });
+    expect(explicit.defaultedOptionSources).toEqual({});
+    expect(cdnPage.defaultedOptionSources).toEqual({});
+  });
+
   it('defaults to plain HTML when no framework is detected', () => {
     const json = JSON.parse(runAgentsInit('10.0.0', ['agents', 'init', '--media', 'hls', '--json']).stdout);
 
@@ -672,25 +691,69 @@ describe('runAgentsInit', () => {
 });
 
 describe('detectPackageManager', () => {
-  it('uses the nearest project signal before the invoking manager', () => {
+  it('uses the nearest project signal before the invoking manager and says where it came from', () => {
     withTemporaryDirectory((root) => {
       const app = join(root, 'apps', 'player');
+      const bun = { PATH: '', npm_config_user_agent: 'bun/1.2.0' };
 
       mkdirSync(app, { recursive: true });
       writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@4.9.2' }));
       writeFileSync(join(app, 'package-lock.json'), '{}');
 
-      expect(detectPackageManager(app, { PATH: '', npm_config_user_agent: 'bun/1.2.0' })).toBe('npm');
-
-      writeFileSync(join(root, 'package.json'), '{}');
-      expect(detectPackageManager(app, { PATH: '', npm_config_user_agent: 'bun/1.2.0' })).toBe('npm');
+      expect(detectPackageManager(app, bun)).toEqual({ value: 'npm', source: 'package-lock.json' });
 
       writeFileSync(join(app, 'package.json'), JSON.stringify({ packageManager: 'pnpm@10.0.0' }));
-      expect(detectPackageManager(app, { PATH: '', npm_config_user_agent: 'bun/1.2.0' })).toBe('pnpm');
+      expect(detectPackageManager(app, bun)).toEqual({
+        value: 'pnpm',
+        source: 'the package.json packageManager field',
+      });
 
       rmSync(join(app, 'package.json'));
       rmSync(join(app, 'package-lock.json'));
-      expect(detectPackageManager(app, { PATH: '', npm_config_user_agent: 'bun/1.2.0' })).toBe('bun');
+      expect(detectPackageManager(app, bun)).toEqual({
+        value: 'yarn',
+        source: `the ${join('..', '..', 'package.json')} packageManager field`,
+      });
+
+      writeFileSync(join(root, 'package.json'), '{}');
+      expect(detectPackageManager(app, bun)).toEqual({
+        value: 'bun',
+        source: 'the bun invocation (npm_config_user_agent); no lockfile or packageManager field found',
+      });
+    });
+  });
+
+  it('names conflicting lockfiles and the one that wins', () => {
+    withTemporaryDirectory((root) => {
+      writeFileSync(join(root, 'package.json'), '{}');
+      writeFileSync(join(root, 'yarn.lock'), '');
+      writeFileSync(join(root, 'package-lock.json'), '{}');
+
+      expect(detectPackageManager(root, { PATH: '' })).toEqual({
+        value: 'yarn',
+        source: 'yarn.lock; package-lock.json also found, and yarn.lock takes precedence',
+      });
+    });
+  });
+
+  it('ignores npx and prefers pnpm on PATH in an empty directory', () => {
+    withTemporaryDirectory((root) => {
+      const bin = join(root, 'bin');
+      const app = join(root, 'app');
+      const npx = { npm_config_user_agent: 'npm/10.9.0 node/v22.0.0' };
+
+      mkdirSync(bin);
+      mkdirSync(join(app, '.git'), { recursive: true });
+      writeFileSync(join(bin, 'pnpm'), '', { mode: 0o755 });
+
+      expect(detectPackageManager(app, { ...npx, PATH: bin })).toEqual({
+        value: 'pnpm',
+        source: 'the pnpm executable on PATH; no lockfile or packageManager field found',
+      });
+      expect(detectPackageManager(app, { ...npx, PATH: '' })).toEqual({
+        value: 'npm',
+        source: 'the npm fallback; no lockfile, packageManager field, or pnpm on PATH found',
+      });
     });
   });
 });

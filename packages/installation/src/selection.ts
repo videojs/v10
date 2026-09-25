@@ -207,10 +207,17 @@ export function playerOwnerFor(framework: InstallationFramework): PlayerOwner {
   return framework === 'react' ? 'react' : 'html';
 }
 
+/** A value detected from the project, with where it was found for the defaulted-options summary. */
+export interface DetectedInstallationDefault<Value extends string> {
+  value: Value;
+  source: string;
+}
+
 export interface InstallationSelectionDefaults {
-  packageManager?: PackageManager;
-  /** Project framework used when the input omits one, with where it was found for the defaulted-options summary. */
-  framework?: { value: InstallationFramework; source: string };
+  /** Package manager used when the input omits one. */
+  packageManager?: DetectedInstallationDefault<PackageManager>;
+  /** Project framework used when the input omits one. */
+  framework?: DetectedInstallationDefault<InstallationFramework>;
 }
 
 export function resolveInstallationSelection(
@@ -356,12 +363,16 @@ export function resolveInstallationSelection(
     });
   }
 
-  const defaultPackageManager = defaults.packageManager ?? 'pnpm';
+  const defaultPackageManager = defaults.packageManager?.value ?? 'pnpm';
   const packageManagerValue =
     method === 'cdn' && template === 'none'
       ? (input.packageManager ?? defaultPackageManager)
       : defaultValue('packageManager', defaultPackageManager);
   const packageManager = resolveChoice('packageManager', packageManagerValue, PACKAGE_MANAGERS, 'pnpm', errors);
+
+  if (defaulted.includes('packageManager') && defaults.packageManager) {
+    defaultSources.packageManager = defaults.packageManager.source;
+  }
 
   let styling: RegistryStyling | null = null;
 

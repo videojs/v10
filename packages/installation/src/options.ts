@@ -280,7 +280,8 @@ export function installationOptionDefinitionsFor(
   definitions.push(
     optionDefinition('packageManager', {
       values: PACKAGE_MANAGERS,
-      default: "the project's package manager; otherwise pnpm when available",
+      default:
+        'the packageManager field or lockfile; otherwise the invoking bun, pnpm, or yarn; otherwise pnpm when it is on PATH; otherwise npm',
       description: 'The command runner used for app setup, packages, Shadcn, and the development server.',
       appliesWhen: '--method is not cdn with --template none',
     }),
