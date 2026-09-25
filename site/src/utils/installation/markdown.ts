@@ -1,6 +1,7 @@
 import {
   createInstallationPlan,
   INSTALLATION_FRAMEWORKS,
+  INSTALLATION_PARAMETERS,
   INSTALLATION_QUERY_PARAMETERS,
   installationParameterForKey,
   isInstallationFramework,
@@ -8,14 +9,14 @@ import {
   renderInstallationPlanSections,
   resolveInstallationSelection,
   type InstallationInput,
-  type InstallationMethod,
+  type InstallationInputKey,
   type InstallationPlan,
   type SelectionError,
 } from '@videojs/installation';
 
 import cliPackage from '../../../../packages/cli/package.json' with { type: 'json' };
 import { closesCodeFence, codeFenceOpening, outsideCodeFences } from '../markdown-text.ts';
-import { getInstallationRouteSegment } from './routes.ts';
+import { getInstallationRouteSegment, INSTALLATION_ROUTES, type InstallationRouteSegment } from './routes.ts';
 
 /** The `@videojs/cli` release the published plans describe; the player packages they install share its version. */
 export const INSTALLATION_PACKAGE_VERSION = cliPackage.version;
@@ -24,45 +25,16 @@ const PLAN_PATTERN = /<!-- installation-plan:start -->[\s\S]*?<!-- installation-
 const FRAMEWORK_BRANCH_OPEN = /^[ \t]*<!-- installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
 const FRAMEWORK_BRANCH_CLOSE = /^[ \t]*<!-- \/installation:framework (\S+) -->[ \t]*(?:\r?\n)?$/;
 
-export const INSTALLATION_MARKDOWN_PARAMS = new Set(
-  INSTALLATION_QUERY_PARAMETERS.filter((parameter) => parameter !== 'method')
-);
+/** The query parameters an installation twin reads. It ignores every other parameter, such as `utm_source`. */
+export const INSTALLATION_MARKDOWN_PARAMS = INSTALLATION_QUERY_PARAMETERS;
 
-interface InstallationRouteDefaults {
-  method: InstallationMethod;
-  framework: string;
-}
-
-function installationRouteDefaults(path: string, params: URLSearchParams): InstallationRouteDefaults | null {
-  const normalized = `/${path.replace(/^\//, '').replace(/\.md$/, '').replace(/\/$/, '')}`;
-  const route = getInstallationRouteSegment(normalized);
-  if (!route) return null;
-
-  if (route === 'react') return { method: 'packaged', framework: 'react' };
-
-  if (route === 'html') return { method: 'packaged', framework: 'html' };
-
-  if (route === 'vue') return { method: 'packaged', framework: 'vue' };
-
-  if (route === 'svelte') return { method: 'packaged', framework: 'svelte' };
-
-  if (route === 'cdn') return { method: 'cdn', framework: 'html' };
-
-  if (route !== 'shadcn') return null;
-
-  return { method: 'shadcn', framework: params.get('framework') || 'react' };
-}
-
-function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchParams): InstallationInput {
-  const value = (key: keyof InstallationInput) => {
-    const query = installationParameterForKey(key).query;
-
-    return params.get(query) ?? undefined;
-  };
+function inputFromQuery(route: InstallationRouteSegment, params: URLSearchParams): InstallationInput {
+  const { method, pickerFramework } = INSTALLATION_ROUTES[route];
+  const value = (key: InstallationInputKey) => params.get(installationParameterForKey(key).query) ?? undefined;
 
   return {
-    method: defaults.method,
-    framework: defaults.framework,
+    method,
+    framework: method === 'shadcn' ? value('framework') || pickerFramework : pickerFramework,
     project: value('project'),
     preset: value('preset'),
     skin: value('skin'),
@@ -73,6 +45,42 @@ function inputFromQuery(defaults: InstallationRouteDefaults, params: URLSearchPa
     template: value('template'),
     styling: value('styling'),
   };
+}
+
+/** Query values the route itself rules out. The selection resolver never sees them, so they cannot cascade. */
+function routeQueryErrors(route: InstallationRouteSegment, params: URLSearchParams): SelectionError[] {
+  const { method, pickerFramework } = INSTALLATION_ROUTES[route];
+  const errors: SelectionError[] = INSTALLATION_PARAMETERS.filter(({ query }) => params.getAll(query).length > 1).map(
+    ({ key }) => ({ field: key, message: 'Pass this parameter at most once.' })
+  );
+
+  const requestedMethod = params.get('method');
+
+  if (requestedMethod && requestedMethod !== method) {
+    errors.push({
+      field: 'method',
+      value: requestedMethod,
+      message: `This route uses the ${method} method. Choose its canonical installation route instead.`,
+    });
+  }
+
+  const requestedFramework = params.get('framework');
+
+  if (requestedFramework && !isInstallationFramework(requestedFramework)) {
+    errors.push({
+      field: 'framework',
+      value: requestedFramework,
+      message: `Expected one of: ${INSTALLATION_FRAMEWORKS.join(', ')}`,
+    });
+  } else if (method !== 'shadcn' && requestedFramework && requestedFramework !== pickerFramework) {
+    errors.push({
+      field: 'framework',
+      value: requestedFramework,
+      message: `This route uses the ${pickerFramework} framework. Choose its canonical installation route instead.`,
+    });
+  }
+
+  return errors;
 }
 
 export type InstallationMarkdownPlanResult =
@@ -100,39 +108,13 @@ export function resolveInstallationMarkdownPlan(
   params: URLSearchParams,
   packageVersion = INSTALLATION_PACKAGE_VERSION
 ): InstallationMarkdownPlanResult {
-  const route = getInstallationRouteSegment(path);
-  const requestedFramework = params.get('framework');
+  const route = getInstallationRouteSegment(`/${path.replace(/^\//, '')}`);
+  if (!route) return null;
 
-  if (requestedFramework && !isInstallationFramework(requestedFramework)) {
-    return {
-      ok: false,
-      errors: [
-        {
-          field: 'framework',
-          value: requestedFramework,
-          message: `Expected one of: ${INSTALLATION_FRAMEWORKS.join(', ')}`,
-        },
-      ],
-    };
-  }
+  const errors = routeQueryErrors(route, params);
+  if (errors.length > 0) return { ok: false, errors };
 
-  const defaults = installationRouteDefaults(path, params);
-  if (!defaults) return null;
-
-  if (route !== 'shadcn' && requestedFramework && requestedFramework !== defaults.framework) {
-    return {
-      ok: false,
-      errors: [
-        {
-          field: 'framework',
-          value: requestedFramework,
-          message: `This route uses the ${defaults.framework} framework. Choose its canonical installation route instead.`,
-        },
-      ],
-    };
-  }
-
-  const resolved = resolveInstallationSelection(inputFromQuery(defaults, params), packageVersion);
+  const resolved = resolveInstallationSelection(inputFromQuery(route, params), packageVersion);
   if (!resolved.ok) return resolved;
 
   // The site deploys from main, so a pinned release could reject options added since then.

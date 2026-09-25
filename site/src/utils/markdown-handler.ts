@@ -54,7 +54,7 @@ function installationMarkdownResponse(body: string, status: 200 | 400 | 500, pri
   if (privateResponse) response.headers.set('cache-control', 'private, no-store');
   else setPublicMarkdownCache(response.headers);
 
-  response.headers.set('netlify-vary', `query=${[...INSTALLATION_MARKDOWN_PARAMS].join('|')}`);
+  response.headers.set('netlify-vary', `query=${INSTALLATION_MARKDOWN_PARAMS.join('|')}`);
   response.headers.set('vary', 'Accept');
   response.headers.set('x-markdown-tokens', String(Math.ceil(body.length / 4)));
 

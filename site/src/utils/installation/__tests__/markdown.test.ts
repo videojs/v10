@@ -178,6 +178,58 @@ describe('resolveInstallationMarkdownPlan', () => {
       expect.objectContaining({ field: 'framework', value: 'vue' })
     );
   });
+
+  it('accepts a method query that matches the route', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/cdn.md',
+      new URLSearchParams({ method: 'cdn' }),
+      '10.0.0-test'
+    );
+
+    expect(result).toMatchObject({ ok: true, plan: { selection: { method: 'cdn' } } });
+  });
+
+  it('rejects a method query that conflicts with the route', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/react.md',
+      new URLSearchParams({ method: 'shadcn' }),
+      '10.0.0-test'
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        {
+          field: 'method',
+          value: 'shadcn',
+          message: 'This route uses the packaged method. Choose its canonical installation route instead.',
+        },
+      ],
+    });
+  });
+
+  it('rejects a repeated installation parameter instead of choosing one value', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/react.md',
+      new URLSearchParams('preset=audio&preset=video&media=hls'),
+      '10.0.0-test'
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [{ field: 'preset', message: 'Pass this parameter at most once.' }],
+    });
+  });
+
+  it('ignores parameters outside the installation schema', () => {
+    const result = resolveInstallationMarkdownPlan(
+      '/docs/guides/installation/react.md',
+      new URLSearchParams('utm_source=newsletter&utm_source=repeat&ref=agent&preset=audio'),
+      '10.0.0-test'
+    );
+
+    expect(result).toMatchObject({ ok: true, plan: { selection: { preset: 'audio' } } });
+  });
 });
 
 describe('replaceInstallationMarkdownPlan', () => {

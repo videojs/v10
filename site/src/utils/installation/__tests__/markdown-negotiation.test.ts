@@ -96,6 +96,42 @@ describe('markdown negotiation', () => {
     expect(await response!.text()).toContain('framework: Expected one of: react, html, vue, svelte');
   });
 
+  it('rejects a method that conflicts with the route', async () => {
+    const { context } = createContext();
+    const request = new Request('https://videojs.org/docs/guides/installation/shadcn.md?method=cdn');
+    const response = await directMarkdown(request, context);
+
+    expect(response?.status).toBe(400);
+    expect(response?.headers.get('cache-control')).toBe('private, no-store');
+    expect(await response!.text()).toBe(
+      'Invalid installation options:\n- method: This route uses the shadcn method. Choose its canonical installation route instead.\n'
+    );
+  });
+
+  it('rejects a repeated installation parameter', async () => {
+    const { context } = createContext();
+    const request = new Request(
+      'https://videojs.org/docs/guides/installation/shadcn.md?framework=html&framework=react'
+    );
+    const response = await directMarkdown(request, context);
+
+    expect(response?.status).toBe(400);
+    expect(await response!.text()).toContain('- framework: Pass this parameter at most once.');
+  });
+
+  it('ignores parameters outside the installation schema', async () => {
+    const { context } = createContext();
+    const request = new Request(
+      'https://videojs.org/docs/guides/installation/shadcn.md?method=shadcn&framework=html&utm_source=a&utm_source=b'
+    );
+    const response = await directMarkdown(request, context);
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get('netlify-vary')).toContain('method');
+    expect(response?.headers.get('netlify-vary')).not.toContain('utm_source');
+    expect(await response!.text()).toContain('- `framework`: `html`');
+  });
+
   it('does not reflect invalid query content into Markdown errors', async () => {
     const { context } = createContext();
     const request = new Request(
