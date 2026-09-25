@@ -934,7 +934,7 @@ describe('runAgentsInit', () => {
     );
 
     expect(media.stderr).toContain('- --media "spotify": Not available for the video preset.');
-    expect(media.stderr).toContain('Use --preset audio for spotify.');
+    expect(media.stderr).toContain('tiktok, twitch. Use --preset audio for spotify.');
     expect(source.errors).toEqual([
       expect.objectContaining({
         field: '--source-url',

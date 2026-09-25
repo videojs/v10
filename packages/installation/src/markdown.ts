@@ -281,7 +281,7 @@ export function renderSelectionErrors(errors: readonly SelectionError[]): string
     .map((error) => {
       const field = error.field === 'arguments' ? 'arguments' : installationParameterForKey(error.field).flag;
       const value = error.value === undefined ? '' : ` ${errorValue(error.value)}`;
-      const hint = error.hint ? ` ${error.hint}` : '';
+      const hint = error.hint ? `${/[.!?]$/.test(error.message) ? ' ' : '. '}${error.hint}` : '';
 
       return `- ${field}${value}: ${error.message}${hint}`;
     })
