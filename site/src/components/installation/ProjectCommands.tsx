@@ -8,7 +8,7 @@ import {
 } from '@videojs/installation';
 
 import PackageManagerTabs from './PackageManagerTabs';
-import { useRegistryStyling } from './useRegistryProjectFramework';
+import { useRegistryStyling } from './useRegistryFramework';
 import { useSelection } from './useSelection';
 
 interface Props {

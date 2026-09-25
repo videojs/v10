@@ -40,11 +40,10 @@ import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGrou
 import SkinPreview from '@/components/installation/SkinPreview';
 import {
   useInstallationTemplate,
-  useRegistryProjectFramework,
   useRegistrySkin,
   useRegistryStyling,
   useRegistryTheme,
-} from '@/components/installation/useRegistryProjectFramework';
+} from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
 import { Select } from '@/components/Select';
 import {
@@ -141,17 +140,17 @@ function RegistryTemplateCards({
   framework,
   method,
 }: Pick<Props, 'fixedFramework' | 'framework' | 'method'>) {
-  const selectedFramework = useRegistryProjectFramework(framework);
-  const projectFramework = fixedFramework ? framework : selectedFramework;
-  const defaultTemplate = defaultInstallationTemplate(projectFramework);
+  const selectedFramework = useSelection('framework', framework);
+  const activeFramework = fixedFramework ? framework : selectedFramework;
+  const defaultTemplate = defaultInstallationTemplate(activeFramework);
   const $template = useInstallationTemplate(defaultTemplate);
-  const template = resolveInstallationTemplateForMethod(projectFramework, $template, method ?? 'packaged');
+  const template = resolveInstallationTemplateForMethod(activeFramework, $template, method ?? 'packaged');
 
   return (
     <CardRadioGroup
       value={template}
       onChange={selectInstallationTemplate}
-      options={templateCardOptions(projectFramework, method)}
+      options={templateCardOptions(activeFramework, method)}
       aria-label="Select app setup"
     />
   );

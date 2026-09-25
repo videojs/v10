@@ -6,10 +6,10 @@ import Css3Logo from '@/assets/logos/brands/css3.svg?react';
 import Html5Logo from '@/assets/logos/brands/html5.svg?react';
 import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import TailwindLogo from '@/assets/logos/brands/tailwindcss.svg?react';
-import { useRegistryFramework } from '@/components/installation/useRegistryProjectFramework';
+import { useRegistryFramework } from '@/components/installation/useRegistryFramework';
 import { Select, type SelectOption } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
-import { selectRegistryProjectFramework } from '@/stores/registry';
+import { selectRegistryFramework } from '@/stores/registry';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
   FRAMEWORK_LABELS,
@@ -73,7 +73,7 @@ export function Selectors({
     if (!isValidFramework(newFramework) || newFramework === displayedFramework) return;
 
     if (registryFrameworkSelection) {
-      selectRegistryProjectFramework(newFramework);
+      selectRegistryFramework(newFramework);
       focusVisibleFrameworkSelector();
       return;
     }

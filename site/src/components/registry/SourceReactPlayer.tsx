@@ -9,7 +9,7 @@ import {
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 
-import { useRegistryStyling } from '../installation/useRegistryProjectFramework';
+import { useRegistryStyling } from '../installation/useRegistryFramework';
 import { useSelection } from '../installation/useSelection';
 
 export default function SourceReactPlayer() {

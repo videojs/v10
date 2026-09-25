@@ -46,19 +46,16 @@ describe('resolveShadcnUrlSelection', () => {
   it('uses a valid query before the saved fallback', () => {
     const url = new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html');
 
-    expect(resolveShadcnUrlSelection(url, 'react')).toMatchObject({
-      projectFramework: 'html',
-      sourceFramework: 'html',
-    });
+    expect(resolveShadcnUrlSelection(url, 'react')).toMatchObject({ framework: 'html' });
   });
 
-  it('uses the saved fallback for a missing query and falls back to HTML source for Vue', () => {
+  it('uses the saved fallback for a missing query and falls back to HTML for Vue', () => {
     expect(
       resolveShadcnUrlSelection(new URL('https://videojs.org/docs/guides/installation/shadcn'), 'html')
-    ).toMatchObject({ projectFramework: 'html', sourceFramework: 'html' });
+    ).toMatchObject({ framework: 'html' });
     expect(
       resolveShadcnUrlSelection(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'), 'react')
-    ).toMatchObject({ projectFramework: 'html', sourceFramework: 'html' });
+    ).toMatchObject({ framework: 'html' });
   });
 
   it('does not resolve non-Shadcn routes', () => {

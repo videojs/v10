@@ -5,7 +5,12 @@ import type {
   RegistryStyling,
   RegistryTheme,
 } from '@videojs/installation';
-import { registryStylings, resolveInstallationTemplateForMethod, resolveRegistryStyling } from '@videojs/installation';
+import {
+  registryStylings,
+  resolveInstallationTemplateForMethod,
+  resolveRegistryStyling,
+  sourceFrameworkFor,
+} from '@videojs/installation';
 import { atom, computed } from 'nanostores';
 
 import {
@@ -17,31 +22,25 @@ import { currentFramework } from '@/stores/preferences';
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import {
   isShadcnInstallationUrl,
-  resolveShadcnProjectFramework,
+  resolveShadcnFramework,
   resolveShadcnUrlSelection,
   updateShadcnInstallationUrl,
 } from '@/utils/installation/framework-navigation';
 
-function getInitialRegistryProjectFramework(): RegistryFramework {
+function getInitialRegistryFramework(): RegistryFramework {
   if (!globalThis.window) return 'react';
 
   const fallback = getFrameworkPreferenceClient() ?? 'react';
 
-  return resolveShadcnProjectFramework(new URL(window.location.href), fallback) ?? fallback;
+  return resolveShadcnFramework(new URL(window.location.href), fallback) ?? fallback;
 }
 
-const initialProjectFramework = getInitialRegistryProjectFramework();
+const initialFramework = getInitialRegistryFramework();
 const initialUrl = globalThis.window ? new URL(window.location.href) : null;
-const initialUrlSelection = initialUrl ? resolveShadcnUrlSelection(initialUrl, initialProjectFramework) : null;
+const initialUrlSelection = initialUrl ? resolveShadcnUrlSelection(initialUrl, initialFramework) : null;
 
-/** The application framework selected on the Shadcn installation guide. */
-export const registryProjectFramework = installationFramework;
-
-/** React or HTML source shown on the standalone Shadcn installation page. */
-export const registryFramework = computed(
-  registryProjectFramework,
-  (framework): RegistryFramework => (framework === 'react' ? 'react' : 'html')
-);
+/** The installation framework narrowed to the React or HTML app selected on the Shadcn installation guide. */
+export const registryFramework = computed(installationFramework, sourceFrameworkFor);
 
 /**
  * The styling catalog the registry commands point at. `null` means the framework's default: Tailwind for React, vanilla
@@ -55,7 +54,7 @@ export const registrySkin = atom<RegistryPreset | null>(null);
 /** The skin theme catalog selected on the page; `null` lets an installation skin supply the initial choice. */
 export const registryTheme = atom<RegistryTheme | null>(null);
 
-function applyRegistryProjectFramework(
+function applyRegistryFramework(
   framework: RegistryFramework,
   requestedTemplate: InstallationTemplate | null = installationTemplate.get(),
   requestedStyling: RegistryStyling | null = registryStyling.get()
@@ -64,7 +63,7 @@ function applyRegistryProjectFramework(
   const nextStyling =
     requestedStyling && registryStylings(framework).includes(requestedStyling) ? requestedStyling : null;
 
-  if (registryProjectFramework.get() !== framework) {
+  if (installationFramework.get() !== framework) {
     selectInstallationAppSetup(framework, nextTemplate, false);
   } else if (installationTemplate.get() !== nextTemplate) {
     installationTemplate.set(nextTemplate);
@@ -80,12 +79,12 @@ function applyRegistryProjectFramework(
   setFrameworkPreferenceClient(framework);
 }
 
-/** Synchronize the project framework from an authoritative Shadcn URL without rewriting history. */
-export function syncRegistryProjectFramework(framework: RegistryFramework, url?: URL): void {
+/** Synchronize the framework from an authoritative Shadcn URL without rewriting history. */
+export function syncRegistryFramework(framework: RegistryFramework, url?: URL): void {
   const selection = url ? resolveShadcnUrlSelection(url, framework) : null;
 
-  if (selection) applyRegistryProjectFramework(framework, selection.template, selection.styling);
-  else applyRegistryProjectFramework(framework);
+  if (selection) applyRegistryFramework(framework, selection.template, selection.styling);
+  else applyRegistryFramework(framework);
 
   if (selection) {
     registrySkin.set(null);
@@ -94,7 +93,7 @@ export function syncRegistryProjectFramework(framework: RegistryFramework, url?:
 }
 
 /** Select the React or HTML app framework and its matching registry catalog. */
-export function selectRegistryProjectFramework(framework: RegistryFramework): void {
+export function selectRegistryFramework(framework: RegistryFramework): void {
   if (globalThis.window) {
     const url = new URL(window.location.href);
 
@@ -106,16 +105,15 @@ export function selectRegistryProjectFramework(framework: RegistryFramework): vo
       });
 
       // Update the shared stores before revealing the prerendered card group for the next framework.
-      applyRegistryProjectFramework(framework);
+      applyRegistryFramework(framework);
       history.replaceState(history.state, '', `${target.pathname}${target.search}${target.hash}`);
-      document.documentElement.dataset.registryProjectFramework = framework;
       document.documentElement.dataset.registryFramework = framework;
 
       return;
     }
   }
 
-  applyRegistryProjectFramework(framework);
+  applyRegistryFramework(framework);
 }
 
 function writeRegistryStyling(styling: RegistryStyling): void {

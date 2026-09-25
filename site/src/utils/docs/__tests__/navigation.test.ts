@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { template } from '@/stores/installation';
+import { framework, template } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
-import { registryFramework, registryProjectFramework, registryStyling } from '@/stores/registry';
+import { registryFramework, registryStyling } from '@/stores/registry';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
@@ -18,7 +18,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     window.__videojsDocsNavigationController?.abort();
     delete window.__videojsDocsNavigationController;
     currentFramework.set(null);
-    registryProjectFramework.set('react');
+    framework.set('react');
     registryStyling.set(null);
     template.set('next');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
@@ -49,7 +49,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
   it('synchronizes the query-controlled Shadcn framework', () => {
     currentFramework.set('react');
-    registryProjectFramework.set('react');
+    framework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
@@ -59,10 +59,9 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     expect(getFrameworkPreferenceClient()).toBe('html');
   });
 
-  it('falls back from a Vue Shadcn query to the HTML source and preferences', () => {
+  it('falls back from a Vue Shadcn query to HTML and preferences', () => {
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'));
 
-    expect(registryProjectFramework.get()).toBe('html');
     expect(registryFramework.get()).toBe('html');
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
@@ -70,7 +69,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
 
   it('uses the saved preference when the Shadcn query is missing', () => {
     currentFramework.set('react');
-    registryProjectFramework.set('react');
+    framework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
     syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'));
@@ -105,7 +104,7 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     initializeDocsNavigation();
 
     expect(window.location.search).toBe('?framework=html&styling=css');
-    expect(registryProjectFramework.get()).toBe('html');
+    expect(registryFramework.get()).toBe('html');
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 360 });

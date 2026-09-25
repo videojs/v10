@@ -135,7 +135,6 @@ export function useRenderedHeadings(headings: MarkdownHeading[]): MarkdownHeadin
         'data-installation-project',
         'data-installation-template',
         'data-registry-framework',
-        'data-registry-project-framework',
         'data-registry-styling',
       ],
     });

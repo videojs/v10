@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { template } from '@/stores/installation';
-import { registryProjectFramework, registryStyling } from '@/stores/registry';
+import { framework, template } from '@/stores/installation';
+import { registryStyling } from '@/stores/registry';
 
 vi.mock('@/components/Code/ClientCode', () => ({
   default: ({ code }: { code: string }) => <pre>{code}</pre>,
@@ -27,7 +27,7 @@ describe('RegistryInitCommandClient', () => {
 
   afterEach(() => {
     cleanup();
-    registryProjectFramework.set('react');
+    framework.set('react');
     registryStyling.set(null);
     template.set('next');
     vi.unstubAllGlobals();
@@ -65,7 +65,7 @@ describe('RegistryInitCommandClient', () => {
   });
 
   it('shows every HTML alias and components configuration as a step', () => {
-    registryProjectFramework.set('html');
+    framework.set('html');
     registryStyling.set('css');
     template.set('vite');
 

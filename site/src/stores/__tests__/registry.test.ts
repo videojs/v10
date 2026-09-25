@@ -1,29 +1,27 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { selectInstallationTemplate, template } from '@/stores/installation';
+import { framework, selectInstallationTemplate, template } from '@/stores/installation';
 import { currentFramework } from '@/stores/preferences';
 import {
   registryFramework,
-  registryProjectFramework,
   registrySkin,
   registryStyling,
   registryTheme,
-  selectRegistryProjectFramework,
+  selectRegistryFramework,
   selectRegistryStyling,
-  syncRegistryProjectFramework,
+  syncRegistryFramework,
 } from '@/stores/registry';
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 
-describe('selectRegistryProjectFramework', () => {
+describe('selectRegistryFramework', () => {
   afterEach(() => {
     currentFramework.set(null);
-    registryProjectFramework.set('react');
+    framework.set('react');
     registrySkin.set(null);
     registryStyling.set(null);
     template.set('next');
     registryTheme.set(null);
     document.documentElement.removeAttribute('data-registry-framework');
-    document.documentElement.removeAttribute('data-registry-project-framework');
     document.documentElement.removeAttribute('data-registry-styling');
     document.cookie = `${FRAMEWORK_COOKIE}=; max-age=0; path=/`;
     window.history.replaceState(null, '', '/');
@@ -33,7 +31,7 @@ describe('selectRegistryProjectFramework', () => {
     registryStyling.set('tailwind');
     template.set('next');
 
-    selectRegistryProjectFramework('html');
+    selectRegistryFramework('html');
 
     expect(registryFramework.get()).toBe('html');
     expect(currentFramework.get()).toBe('html');
@@ -43,12 +41,12 @@ describe('selectRegistryProjectFramework', () => {
   });
 
   it('keeps registry options when only the site-wide preference is stale', () => {
-    registryProjectFramework.set('html');
+    framework.set('html');
     registryStyling.set('css');
     template.set('astro');
     currentFramework.set('react');
 
-    selectRegistryProjectFramework('html');
+    selectRegistryFramework('html');
 
     expect(currentFramework.get()).toBe('html');
     expect(registryStyling.get()).toBe('css');
@@ -60,7 +58,7 @@ describe('selectRegistryProjectFramework', () => {
     template.set('vite');
     registryStyling.set('css');
 
-    selectRegistryProjectFramework('html');
+    selectRegistryFramework('html');
 
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
@@ -72,7 +70,7 @@ describe('selectRegistryProjectFramework', () => {
     template.set('vite');
     registryStyling.set('css');
 
-    selectRegistryProjectFramework('react');
+    selectRegistryFramework('react');
 
     expect(template.get()).toBe('vite');
     expect(registryStyling.get()).toBe('css');
@@ -82,12 +80,11 @@ describe('selectRegistryProjectFramework', () => {
   it('updates the Shadcn URL and root attribute for an in-page selection', () => {
     window.history.replaceState({ index: 2, scrollX: 0, scrollY: 320 }, '', '/docs/guides/installation/shadcn');
 
-    selectRegistryProjectFramework('html');
+    selectRegistryFramework('html');
 
     expect(window.location.href).toContain('/docs/guides/installation/shadcn?framework=html');
     expect(window.history.state).toEqual({ index: 2, scrollX: 0, scrollY: 320 });
     expect(document.documentElement.dataset.registryFramework).toBe('html');
-    expect(document.documentElement.dataset.registryProjectFramework).toBe('html');
     expect(document.documentElement.dataset.registryStyling).toBe('css');
   });
 
@@ -110,9 +107,9 @@ describe('selectRegistryProjectFramework', () => {
       'https://videojs.org/docs/guides/installation/shadcn?framework=html&template=astro&styling=css'
     );
 
-    syncRegistryProjectFramework('html', url);
+    syncRegistryFramework('html', url);
 
-    expect(registryProjectFramework.get()).toBe('html');
+    expect(registryFramework.get()).toBe('html');
     expect(template.get()).toBe('astro');
     expect(registryStyling.get()).toBe('css');
     expect(registrySkin.get()).toBeNull();
@@ -122,7 +119,7 @@ describe('selectRegistryProjectFramework', () => {
   it('syncs a destination without rewriting the departing URL', () => {
     window.history.replaceState({ index: 2 }, '', '/docs/guides/installation/react?preset=audio');
 
-    syncRegistryProjectFramework('html');
+    syncRegistryFramework('html');
 
     expect(window.location.pathname).toBe('/docs/guides/installation/react');
     expect(window.location.search).toBe('?preset=audio');

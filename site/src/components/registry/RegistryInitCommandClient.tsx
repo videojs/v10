@@ -1,11 +1,11 @@
 import {
   defaultInstallationTemplate,
-  type InstallationFramework,
   installationProjectFiles,
   optionalShadcnInitCommand,
   resolveRegistryStyling,
   resolveInstallationTemplate,
   shadcnProjectConfiguration,
+  type RegistryFramework,
 } from '@videojs/installation';
 
 import ClientCode from '@/components/Code/ClientCode';
@@ -14,14 +14,14 @@ import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
 import {
   useInstallationTemplate,
-  useRegistryProjectFramework,
+  useRegistryFramework,
   useRegistryStyling,
-} from '@/components/installation/useRegistryProjectFramework';
+} from '@/components/installation/useRegistryFramework';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 
 interface Props {
-  framework: InstallationFramework;
+  framework: RegistryFramework;
   installation: boolean;
 }
 
@@ -52,13 +52,12 @@ function ConfigurationBlock({ block }: { block: { code: string; filename: string
 }
 
 export default function RegistryInitCommandClient({ framework, installation }: Props) {
-  const projectFramework = useRegistryProjectFramework(framework);
-  const $template = useInstallationTemplate(defaultInstallationTemplate(projectFramework));
-  const template = resolveInstallationTemplate(projectFramework, $template);
-  const sourceFramework = projectFramework === 'react' ? 'react' : 'html';
-  const styling = resolveRegistryStyling(sourceFramework, useRegistryStyling());
-  const project = installationProjectFiles(projectFramework, template);
-  const configuration = shadcnProjectConfiguration(sourceFramework, template, styling, project.componentsAlias);
+  const selectedFramework = useRegistryFramework(framework);
+  const $template = useInstallationTemplate(defaultInstallationTemplate(selectedFramework));
+  const template = resolveInstallationTemplate(selectedFramework, $template);
+  const styling = resolveRegistryStyling(selectedFramework, useRegistryStyling());
+  const project = installationProjectFiles(selectedFramework, template);
+  const configuration = shadcnProjectConfiguration(selectedFramework, template, styling, project.componentsAlias);
   const aliasSteps = configuration.aliasSetup.map((block) => ({
     key: block.filename,
     title: `Configure ${block.filename}`,

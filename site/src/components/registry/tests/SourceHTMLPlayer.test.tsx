@@ -2,8 +2,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { template } from '@/stores/installation';
-import { registryProjectFramework } from '@/stores/registry';
+import { framework, template } from '@/stores/installation';
 
 vi.mock('@/components/Code/ClientCode', () => ({
   default: ({ code }: { code: string }) => <pre>{code}</pre>,
@@ -24,13 +23,13 @@ describe('SourceHTMLPlayer', () => {
 
   afterEach(() => {
     cleanup();
-    registryProjectFramework.set('react');
+    framework.set('react');
     template.set('next');
     vi.unstubAllGlobals();
   });
 
   it('shows the entry setup for the selected HTML app', () => {
-    registryProjectFramework.set('html');
+    framework.set('html');
     template.set('vite');
 
     const { rerender } = render(<SourceHTMLPlayer part="imports" />);
@@ -46,7 +45,7 @@ describe('SourceHTMLPlayer', () => {
   });
 
   it('switches the player file in place when the app setup changes', () => {
-    registryProjectFramework.set('html');
+    framework.set('html');
     template.set('vite');
     render(<SourceHTMLPlayer part="player" />);
 
@@ -60,7 +59,7 @@ describe('SourceHTMLPlayer', () => {
   });
 
   it('renders the plain HTML route shape during SSR', () => {
-    registryProjectFramework.set('react');
+    framework.set('react');
 
     const markup = renderToString(<SourceHTMLPlayer part="player" />);
 

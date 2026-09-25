@@ -8,14 +8,13 @@ import {
   resolveRegistryStyling,
   shadcnProjectConfiguration,
   shadcnProjectConfigurationPlacement,
-  sourceFrameworkFor,
 } from '@videojs/installation';
 
 import {
   useInstallationTemplate,
-  useRegistryProjectFramework,
+  useRegistryFramework,
   useRegistryStyling,
-} from '@/components/installation/useRegistryProjectFramework';
+} from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
 
 import RegistryCommandClient from './RegistryCommandClient';
@@ -28,17 +27,12 @@ interface Props {
 export default function InstallationRegistryCommandClient({ framework }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const projectFramework = useRegistryProjectFramework(framework);
-  const $template = useInstallationTemplate(defaultInstallationTemplate(projectFramework));
-  const template = resolveInstallationTemplate(projectFramework, $template);
+  const selectedFramework = useRegistryFramework(framework);
+  const $template = useInstallationTemplate(defaultInstallationTemplate(selectedFramework));
+  const template = resolveInstallationTemplate(selectedFramework, $template);
   const styling = resolveRegistryStyling(framework, useRegistryStyling());
-  const projectFiles = installationProjectFiles(projectFramework, template);
-  const configuration = shadcnProjectConfiguration(
-    sourceFrameworkFor(projectFramework),
-    template,
-    styling,
-    projectFiles.componentsAlias
-  );
+  const projectFiles = installationProjectFiles(selectedFramework, template);
+  const configuration = shadcnProjectConfiguration(selectedFramework, template, styling, projectFiles.componentsAlias);
   const selection = registrySkinSelection({ useCase: $useCase, skin: $skin });
   const command = (optionalInit: boolean) => (
     <RegistryCommandClient

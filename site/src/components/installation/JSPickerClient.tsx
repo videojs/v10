@@ -6,12 +6,12 @@ import ReactLogo from '@/assets/logos/brands/react.svg?react';
 import SvelteLogo from '@/assets/logos/brands/svelte.svg?react';
 import VueLogo from '@/assets/logos/brands/vue.svg?react';
 import CardRadioGroup, { type CardRadioOption } from '@/components/CardRadioGroup';
-import { selectRegistryProjectFramework } from '@/stores/registry';
+import { selectRegistryFramework } from '@/stores/registry';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { resolveInstallationFrameworkNavigation } from '@/utils/installation/framework-navigation';
 import type { InstallationRouteSegment } from '@/utils/installation/routes';
 
-import { useRegistryProjectFramework } from './useRegistryProjectFramework';
+import { useRegistryFramework } from './useRegistryFramework';
 
 /** Framework entry points. The selected framework determines which installation methods the next section offers. */
 const OPTIONS: CardRadioOption<InstallationFramework>[] = [
@@ -47,7 +47,7 @@ interface Props {
 }
 
 export default function JSPickerClient({ currentFramework, route }: Props) {
-  const selectedRegistryFramework = useRegistryProjectFramework(currentFramework);
+  const selectedRegistryFramework = useRegistryFramework(sourceFrameworkFor(currentFramework));
   const displayedFramework = route === 'shadcn' ? selectedRegistryFramework : currentFramework;
   const options =
     route === 'shadcn'
@@ -58,7 +58,7 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
     if (next === displayedFramework) return;
 
     if (route === 'shadcn') {
-      selectRegistryProjectFramework(sourceFrameworkFor(next));
+      selectRegistryFramework(sourceFrameworkFor(next));
       return;
     }
 

@@ -14,6 +14,13 @@ describe('resolveInstallationMethodUrl', () => {
     expect(result.searchParams.get('skin')).toBe('minimal');
   });
 
+  it('carries the React route into Shadcn when the destination names no framework', () => {
+    const current = new URL('https://videojs.org/docs/guides/installation/react');
+    const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn', 'shadcn');
+
+    expect(result.searchParams.get('framework')).toBe('react');
+  });
+
   it('drops the no-scaffold choice when switching to Shadcn', () => {
     const current = new URL('https://videojs.org/docs/guides/installation/html?template=none');
     const result = resolveInstallationMethodUrl(current, '/docs/guides/installation/shadcn', 'shadcn');

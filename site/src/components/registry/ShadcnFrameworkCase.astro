@@ -3,21 +3,15 @@ import type { RegistryFramework } from '@videojs/installation';
 
 interface Props {
   framework: RegistryFramework;
-  /** Match the React/HTML source catalog by default, or one exact app framework. */
-  match?: 'project' | 'source';
   /** Label this branch with its framework in generated Markdown. */
   llmsHeading?: boolean;
 }
 
-const { framework, match = 'source', llmsHeading = true } = Astro.props;
+const { framework, llmsHeading = true } = Astro.props;
 const label = framework === 'react' ? 'React' : 'HTML';
 ---
 
-<div
-  class="contents"
-  data-shadcn-framework={match === 'source' ? framework : undefined}
-  data-shadcn-project-framework={match === 'project' ? framework : undefined}
->
+<div class="contents" data-shadcn-framework={framework}>
   {
     llmsHeading && (
       <div hidden data-llms-only>

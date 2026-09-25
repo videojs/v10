@@ -4,6 +4,7 @@ import {
   registrySkinSelection,
   rendererSupportsCdn,
   resolveInstallationTemplate,
+  sourceFrameworkFor,
   type InstallationFramework,
   type InstallationMethod,
 } from '@videojs/installation';
@@ -22,7 +23,7 @@ import type { InstallationRouteSegment } from '@/utils/installation/routes';
 import { getInstallationRoutePath } from '@/utils/installation/routes';
 import { useIsHydrationSettled } from '@/utils/useIsHydrated';
 
-import { useRegistryProjectFramework } from './useRegistryProjectFramework';
+import { useRegistryFramework } from './useRegistryFramework';
 import { useSelection } from './useSelection';
 
 const ICONS = {
@@ -61,9 +62,9 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
   const selectedSourceUrl = useSelection('sourceUrl');
   const selectedTemplate = useSelection('template');
   const selectedUseCase = useSelection('useCase');
-  const registrySelection = useRegistryProjectFramework(currentFramework);
+  const registryFramework = useRegistryFramework(sourceFrameworkFor(currentFramework));
   const isHydrated = useIsHydrationSettled();
-  const framework = route === 'shadcn' ? registrySelection : currentFramework;
+  const framework = route === 'shadcn' ? registryFramework : currentFramework;
   const active = getActiveMethod(route);
   const availableMethods = installationMethodsForFramework(framework);
   const items =
@@ -105,7 +106,7 @@ export default function InstallationMethodNavClient({ currentFramework, route }:
         template: resolveInstallationTemplate(framework, selectedTemplate),
         useCase: selectedUseCase,
       },
-      route === 'shadcn' ? framework : undefined
+      route === 'shadcn' ? registryFramework : undefined
     );
   };
 

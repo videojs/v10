@@ -3,8 +3,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { project, renderer, skin, template, useCase } from '@/stores/installation';
-import { registryProjectFramework } from '@/stores/registry';
+import { framework, project, renderer, skin, template, useCase } from '@/stores/installation';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -27,7 +26,7 @@ describe('InstallationMethodNavClient', () => {
     renderer.set('html5-video');
     template.set('next');
     project.set('existing');
-    registryProjectFramework.set('react');
+    framework.set('react');
     window.history.replaceState(null, '', '/');
     vi.clearAllMocks();
   });
@@ -125,13 +124,13 @@ describe('InstallationMethodNavClient', () => {
     container.remove();
   });
 
-  it('keeps the Shadcn method grid stable while CDN availability follows the project framework', async () => {
-    registryProjectFramework.set('html');
+  it('keeps the Shadcn method grid stable while CDN availability follows the framework', async () => {
+    framework.set('html');
     const { queryByRole } = render(<InstallationMethodNavClient currentFramework="react" route="shadcn" />);
 
     await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).not.toHaveAttribute('aria-disabled'));
 
-    act(() => registryProjectFramework.set('react'));
+    act(() => framework.set('react'));
 
     await waitFor(() => expect(queryByRole('link', { name: /CDN/ })).toHaveAttribute('aria-disabled', 'true'));
   });

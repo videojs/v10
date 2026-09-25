@@ -61,7 +61,7 @@ describe('initializeDocsLinks', () => {
     window.history.replaceState(
       null,
       '',
-      '/docs/guides/installation/vue?preset=audio&skin=minimal&media=spotify&package-manager=yarn&template=nuxt'
+      '/docs/guides/installation/html?preset=audio&skin=minimal&media=spotify&package-manager=yarn&template=astro'
     );
     syncInstallationSelectionFromUrl();
     document.body.innerHTML = `
@@ -82,8 +82,8 @@ describe('initializeDocsLinks', () => {
       skin: 'minimal',
       media: 'spotify',
       'package-manager': 'yarn',
-      template: 'nuxt',
-      framework: 'vue',
+      template: 'astro',
+      framework: 'html',
     });
   });
 });

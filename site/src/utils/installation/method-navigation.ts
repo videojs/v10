@@ -1,10 +1,10 @@
 import {
   defaultInstallationTemplate,
-  isInstallationFramework,
   isInstallationTemplate,
   resolveInstallationTemplateForMethod,
   type InstallationFramework,
   type InstallationMethod,
+  type RegistryFramework,
 } from '@videojs/installation';
 
 import { isShadcnInstallationUrl } from '@/utils/installation/framework-navigation';
@@ -13,12 +13,6 @@ import type { InstallationUiSelection } from '@/utils/installation/url-state';
 import { serializeInstallationSearch } from '@/utils/installation/url-state';
 
 export type { InstallationMethod } from '@videojs/installation';
-
-function frameworkFromInstallationPath(pathname: string): InstallationFramework | null {
-  const route = getInstallationRouteSegment(pathname);
-
-  return isInstallationFramework(route) ? route : null;
-}
 
 /** Carry compatible installation choices to another method's guide. */
 export function resolveInstallationMethodUrl(current: URL, href: string, method: InstallationMethod): URL {
@@ -40,10 +34,8 @@ export function resolveInstallationMethodUrl(current: URL, href: string, method:
     target.searchParams.delete('framework');
     target.searchParams.delete('styling');
   } else if (method === 'shadcn') {
-    const requested = target.searchParams.get('framework');
-    const framework = isInstallationFramework(requested)
-      ? requested
-      : (frameworkFromInstallationPath(current.pathname) ?? 'html');
+    const requested = target.searchParams.get('framework') ?? getInstallationRouteSegment(current.pathname);
+    const framework: RegistryFramework = requested === 'react' ? 'react' : 'html';
     const requestedTemplate = target.searchParams.get('template');
     const template = resolveInstallationTemplateForMethod(
       framework,

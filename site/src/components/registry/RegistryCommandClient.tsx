@@ -10,11 +10,7 @@ import {
 
 import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
 import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
-import {
-  useRegistrySkin,
-  useRegistryStyling,
-  useRegistryTheme,
-} from '@/components/installation/useRegistryProjectFramework';
+import { useRegistrySkin, useRegistryStyling, useRegistryTheme } from '@/components/installation/useRegistryFramework';
 
 interface Props {
   /** Skin to add until the page's skin selector changes it. Omit for commands with fixed items. */

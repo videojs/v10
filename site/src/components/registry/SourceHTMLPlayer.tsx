@@ -8,10 +8,7 @@ import {
 
 import ClientCode from '@/components/Code/ClientCode';
 import { focusLinesContaining } from '@/components/Code/focusLines';
-import {
-  useInstallationTemplate,
-  useRegistryProjectFramework,
-} from '@/components/installation/useRegistryProjectFramework';
+import { useInstallationTemplate, useRegistryFramework } from '@/components/installation/useRegistryFramework';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 
@@ -51,10 +48,10 @@ function CodeTabs({ label, tabs }: { label: string; tabs: readonly CodeTab[] }) 
 }
 
 export default function SourceHTMLPlayer({ part }: Props) {
-  const projectFramework = useRegistryProjectFramework('html');
-  const template = useInstallationTemplate(defaultInstallationTemplate(projectFramework));
+  const framework = useRegistryFramework('html');
+  const template = useInstallationTemplate(defaultInstallationTemplate(framework));
   const useCase = useSelection('useCase');
-  const project = installationProjectFiles(projectFramework, template, useCase);
+  const project = installationProjectFiles(framework, template, useCase);
   const options = {
     useCase,
     renderer: useSelection('renderer'),

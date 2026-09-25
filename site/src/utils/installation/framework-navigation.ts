@@ -22,8 +22,7 @@ export interface InstallationFrameworkNavigation {
 }
 
 export interface ShadcnUrlSelection {
-  projectFramework: InstallationFramework;
-  sourceFramework: RegistryFramework;
+  framework: RegistryFramework;
   styling: RegistryStyling | null;
   template: InstallationTemplate | null;
 }
@@ -32,8 +31,8 @@ export function isShadcnInstallationUrl(url: Pick<URL, 'pathname'>): boolean {
   return url.pathname.replace(/\.md$/, '').replace(/\/$/, '') === SHADCN_INSTALLATION_PATH;
 }
 
-/** Resolve the source framework for the query-controlled Shadcn guide. Vue and Svelte fall back to the HTML source. */
-export function resolveShadcnProjectFramework(url: URL, fallback: InstallationFramework): RegistryFramework | null {
+/** Resolve the framework for the query-controlled Shadcn guide. Vue and Svelte fall back to HTML. */
+export function resolveShadcnFramework(url: URL, fallback: InstallationFramework): RegistryFramework | null {
   if (!isShadcnInstallationUrl(url)) return null;
 
   const requested = url.searchParams.get('framework');
@@ -41,29 +40,27 @@ export function resolveShadcnProjectFramework(url: URL, fallback: InstallationFr
   return sourceFrameworkFor(isInstallationFramework(requested) ? requested : fallback);
 }
 
-/** Resolve the URL-backed Shadcn choices, dropping options the selected source framework cannot use. */
+/** Resolve the URL-backed Shadcn choices, dropping options the selected framework cannot use. */
 export function resolveShadcnUrlSelection(url: URL, fallback: InstallationFramework): ShadcnUrlSelection | null {
-  const projectFramework = resolveShadcnProjectFramework(url, fallback);
-  if (!projectFramework) return null;
+  const framework = resolveShadcnFramework(url, fallback);
+  if (!framework) return null;
 
-  const sourceFramework = projectFramework === 'react' ? 'react' : 'html';
   const requestedTemplate = url.searchParams.get('template');
   const requestedStyling = url.searchParams.get('styling');
   const template =
-    installationTemplatesForMethod(projectFramework, 'shadcn').find((candidate) => candidate === requestedTemplate) ??
-    null;
-  const styling = registryStylings(sourceFramework).find((candidate) => candidate === requestedStyling) ?? null;
+    installationTemplatesForMethod(framework, 'shadcn').find((candidate) => candidate === requestedTemplate) ?? null;
+  const styling = registryStylings(framework).find((candidate) => candidate === requestedStyling) ?? null;
 
-  return { projectFramework, sourceFramework, styling, template };
+  return { framework, styling, template };
 }
 
-/** Return one canonical Shadcn URL with incompatible project options removed. */
+/** Return one canonical Shadcn URL with options the framework cannot use removed. */
 export function canonicalShadcnInstallationUrl(url: URL, fallback: InstallationFramework): URL | null {
   const selection = resolveShadcnUrlSelection(url, fallback);
   if (!selection) return null;
 
   const target = new URL(url);
-  const params = new URLSearchParams([['framework', selection.projectFramework]]);
+  const params = new URLSearchParams([['framework', selection.framework]]);
 
   for (const [key, value] of target.searchParams) {
     if (key === 'framework') continue;
@@ -80,7 +77,7 @@ export function canonicalShadcnInstallationUrl(url: URL, fallback: InstallationF
   return target;
 }
 
-/** Apply a Shadcn project choice while preserving explicit options the next framework also supports. */
+/** Apply a Shadcn installation choice while preserving explicit options the next framework also supports. */
 export function updateShadcnInstallationUrl(
   url: URL,
   update: {

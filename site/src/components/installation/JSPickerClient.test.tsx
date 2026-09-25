@@ -1,7 +1,7 @@
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { registryProjectFramework } from '@/stores/registry';
+import { framework } from '@/stores/installation';
 
 vi.mock('@/components/CardRadioGroup', () => ({
   default: ({ options, value }: { options: { value: string }[]; value: string }) => (
@@ -15,7 +15,7 @@ import JSPickerClient from './JSPickerClient';
 
 describe('JSPickerClient', () => {
   afterEach(() => {
-    registryProjectFramework.set('react');
+    framework.set('react');
   });
 
   it('shows every framework on packaged and CDN installation routes', () => {
@@ -32,7 +32,7 @@ describe('JSPickerClient', () => {
   });
 
   it('prerenders one picker from the Shadcn route while the client store hydrates', () => {
-    registryProjectFramework.set('html');
+    framework.set('html');
     const markup = renderToString(<JSPickerClient currentFramework="react" route="shadcn" />);
 
     expect(markup).toContain('data-testid="framework">react</span>');

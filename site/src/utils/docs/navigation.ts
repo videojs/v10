@@ -1,11 +1,11 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
 import { currentFramework } from '@/stores/preferences';
-import { syncRegistryProjectFramework } from '@/stores/registry';
+import { syncRegistryFramework } from '@/stores/registry';
 import {
   canonicalShadcnInstallationUrl,
   isShadcnInstallationUrl,
-  resolveShadcnProjectFramework,
+  resolveShadcnFramework,
 } from '@/utils/installation/framework-navigation';
 
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
@@ -91,9 +91,9 @@ function savePageScrollToHistory(): void {
 export function syncFrameworkPreferenceFromUrl(url: URL): void {
   if (isShadcnInstallationUrl(url)) {
     const fallback = getFrameworkPreferenceClient() ?? 'react';
-    const framework = resolveShadcnProjectFramework(url, fallback);
+    const framework = resolveShadcnFramework(url, fallback);
 
-    if (framework) syncRegistryProjectFramework(framework, url);
+    if (framework) syncRegistryFramework(framework, url);
 
     return;
   }

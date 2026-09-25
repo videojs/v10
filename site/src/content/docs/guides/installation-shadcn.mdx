@@ -52,11 +52,11 @@ Choose the JavaScript framework for your project.
 
 Choose the app environment that controls the setup commands and file locations below.
 
-<ShadcnFrameworkCase framework="react" match="project" llmsHeading={false}>
+<ShadcnFrameworkCase framework="react" llmsHeading={false}>
 <RegistryOptions framework="react" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="html" match="project">
+<ShadcnFrameworkCase framework="html">
 <RegistryOptions framework="html" fixedFramework kind="template" method="shadcn" />
 </ShadcnFrameworkCase>
 
@@ -134,11 +134,11 @@ Commit your work before installing or updating source so you can review every fi
 
 ## Configure Shadcn
 
-<ShadcnFrameworkCase framework="react" match="project">
+<ShadcnFrameworkCase framework="react">
 <RegistryInitCommand framework="react" installation />
 </ShadcnFrameworkCase>
 
-<ShadcnFrameworkCase framework="html" match="project">
+<ShadcnFrameworkCase framework="html">
 <RegistryInitCommand framework="html" installation />
 </ShadcnFrameworkCase>
 
@@ -175,7 +175,6 @@ Add the player to the file shown for your selected app setup. It imports the pla
 <ShadcnFrameworkCase framework="html">
 The steps below add HTML skin source to a plain HTML app. For Vue or Svelte, use the packaged skins in the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>.
 
-<ShadcnFrameworkCase framework="html" match="project" llmsHeading={false}>
 <Steps>
   <Step number={1} title="Add the media element">
     <SourceHTMLPlayer client:load part="media" />
@@ -187,7 +186,6 @@ The steps below add HTML skin source to a plain HTML app. For Vue or Svelte, use
     <SourceHTMLPlayer client:load part="player" />
   </Step>
 </Steps>
-</ShadcnFrameworkCase>
 
 </ShadcnFrameworkCase>
 

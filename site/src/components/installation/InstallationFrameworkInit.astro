@@ -18,16 +18,7 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
     display: contents;
   }
 
-  html [data-shadcn-project-framework] {
-    display: none;
-  }
-
-  html[data-registry-project-framework="react"] [data-shadcn-project-framework="react"],
-  html[data-registry-project-framework="html"] [data-shadcn-project-framework="html"] {
-    display: contents;
-  }
-
-  html:not([data-registry-project-framework="html"])
+  html:not([data-registry-framework="html"])
     [data-shadcn-installation-method-nav]
     [data-installation-method="cdn"] {
     display: none;
@@ -207,7 +198,6 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
 
     if (!isShadcn) {
       delete root.dataset.registryFramework;
-      delete root.dataset.registryProjectFramework;
       delete root.dataset.registryStyling;
       return;
     }
@@ -220,7 +210,7 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
       .find(([key]) => key === frameworkCookie)?.[1];
 
     // Vue and Svelte install packaged skins, so their Shadcn links show the HTML source.
-    const projectFramework = requested === "react"
+    const framework = requested === "react"
       ? "react"
       : requested === "html" || requested === "vue" || requested === "svelte"
         ? "html"
@@ -228,9 +218,8 @@ import { SHADCN_INSTALLATION_PATH } from '@/utils/installation/framework-navigat
         ? saved
         : "react";
 
-    root.dataset.registryProjectFramework = projectFramework;
-    root.dataset.registryFramework = projectFramework === "react" ? "react" : "html";
-    root.dataset.registryStyling = projectFramework === "react" && params.get("styling") !== "css" ? "tailwind" : "css";
+    root.dataset.registryFramework = framework;
+    root.dataset.registryStyling = framework === "react" && params.get("styling") !== "css" ? "tailwind" : "css";
   }
 
   applyInstallationFramework(window.location, document.documentElement);
