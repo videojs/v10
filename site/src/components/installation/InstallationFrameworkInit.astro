@@ -9,7 +9,7 @@ import {
   installationProjectFiles,
   REGISTRY_STYLINGS,
   shadcnProjectConfiguration,
-  shadcnProjectConfigurationPlacement,
+  shadcnProjectSetup,
   sourceFrameworkFor,
   type InstallationTemplate,
 } from '@videojs/installation';
@@ -99,7 +99,7 @@ const configurationOutsideSection = REGISTRY_FRAMEWORKS.flatMap((framework) => {
           installationProjectFiles(framework, template).componentsAlias
         );
 
-        return shadcnProjectConfigurationPlacement(configuration, project) === 'section'
+        return shadcnProjectSetup(configuration, project) === 'configure'
           ? []
           : [
               `html[data-registry-framework="${framework}"][data-registry-styling="${styling}"][data-installation-project="${project}"][data-installation-template="${template}"]`,

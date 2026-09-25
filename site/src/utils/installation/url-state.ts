@@ -73,11 +73,10 @@ function methodForRoute(route: InstallationRouteSegment | ''): InstallationMetho
  * choice is dropped in parameter order until the rest resolves, and the page shows that choice's default instead.
  */
 function resolveUrlInput(input: InstallationInput): InstallationSelection {
-  const owner = input.framework === 'react' ? 'react' : 'html';
   let remaining = input;
 
   for (;;) {
-    const result = resolveInstallationSelection(owner, remaining);
+    const result = resolveInstallationSelection(remaining);
     if (result.ok) return result.selection;
 
     const rejected = INSTALLATION_PARAMETERS.find(
