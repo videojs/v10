@@ -13,9 +13,10 @@ export function resolveInstallationMethodLinks(): void {
   const selection = currentInstallationSelection();
 
   for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[data-installation-method-link="shadcn"]')) {
+    // Keep a link's heading anchor; only the path and installation picks are rewritten.
     anchor.href = resolveInstallationMethodHref(
       new URL(location.href),
-      getInstallationRoutePath('shadcn'),
+      getInstallationRoutePath('shadcn') + anchor.hash,
       'shadcn',
       selection,
       selection.framework

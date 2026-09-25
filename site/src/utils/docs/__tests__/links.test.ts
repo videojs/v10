@@ -106,4 +106,24 @@ describe('initializeDocsLinks', () => {
 
     expect(link.search).toBe('?framework=html&preset=audio');
   });
+
+  it('keeps a heading anchor on Shadcn links across later picks', async () => {
+    window.history.replaceState(null, '', '/docs/guides/installation/html');
+    syncInstallationSelectionFromUrl();
+    document.body.innerHTML = `
+      <a href="/docs/guides/installation/shadcn#choose-how-to-install" data-installation-method-link="shadcn">Guide</a>
+    `;
+
+    initializeDocsLinks();
+
+    const link = document.querySelector<HTMLAnchorElement>('a')!;
+
+    await vi.waitFor(() => expect(link.search).toBe('?framework=html'));
+    expect(link.hash).toBe('#choose-how-to-install');
+
+    useCase.set('default-audio');
+
+    expect(link.search).toBe('?framework=html&preset=audio');
+    expect(link.hash).toBe('#choose-how-to-install');
+  });
 });
