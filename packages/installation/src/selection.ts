@@ -11,9 +11,11 @@ import {
   type InstallationExtension,
 } from './extensions';
 import {
+  CLI_OPTION_SYNTAX,
   INSTALLATION_PROJECTS,
   PACKAGE_MANAGERS,
   type InstallationInput,
+  type InstallationOptionSyntax,
   type InstallationInputKey,
   type InstallationProject,
   type PackageManager,
@@ -230,20 +232,20 @@ function presetsFor(renderer: Renderer): PresetFlag[] {
   );
 }
 
-function presetHint(renderer: Renderer): string | undefined {
+function presetHint(renderer: Renderer, syntax: InstallationOptionSyntax): string | undefined {
   const presets = presetsFor(renderer);
   if (presets.length === 0) return undefined;
 
-  return `Use ${presets.map((preset) => `--preset ${preset}`).join(' or ')} for ${renderer}.`;
+  return `Use ${presets.map((preset) => syntax.options(['preset', preset])).join(' or ')} for ${renderer}.`;
 }
 
-function unsupportedMethodError(method: InstallationMethod): SelectionError {
+function unsupportedMethodError(method: InstallationMethod, syntax: InstallationOptionSyntax): SelectionError {
   return method === 'cdn'
     ? {
         field: 'method',
         value: method,
         message: 'CDN installation is available for plain HTML only.',
-        hint: 'Use --method packaged, or --framework html for a plain HTML page.',
+        hint: `Use ${syntax.options(['method', 'packaged'])}, or ${syntax.options(['framework', 'html'])} for a plain HTML page.`,
       }
     : {
         field: 'method',
@@ -255,12 +257,14 @@ function unsupportedMethodError(method: InstallationMethod): SelectionError {
 
 /**
  * Resolve one requested installation. Errors report root causes first: when a choice is invalid, checks that only
- * compare other options against its fallback value are skipped instead of reported as a cascade.
+ * compare other options against its fallback value are skipped instead of reported as a cascade. Messages name options
+ * in `syntax`, as CLI flags by default or as query parameters for a Markdown guide URL.
  */
 export function resolveInstallationSelection(
   input: InstallationInput,
   packageVersion = 'latest',
-  defaults: InstallationSelectionDefaults = {}
+  defaults: InstallationSelectionDefaults = {},
+  syntax: InstallationOptionSyntax = CLI_OPTION_SYNTAX
 ): SelectionResult {
   const errors: SelectionError[] = [];
   const derivedErrors: SelectionError[] = [];
@@ -284,7 +288,7 @@ export function resolveInstallationSelection(
 
   const methodSupported = methodValid && frameworkValid && installationMethodsForFramework(framework).includes(method);
 
-  if (methodValid && frameworkValid && !methodSupported) errors.push(unsupportedMethodError(method));
+  if (methodValid && frameworkValid && !methodSupported) errors.push(unsupportedMethodError(method, syntax));
 
   // CDN only scaffolds Vite for a new app, so asking for Vite there implies one.
   const projectValue = defaultValue('project', method === 'cdn' && input.template === 'vite' ? 'new' : 'existing');
@@ -337,7 +341,7 @@ export function resolveInstallationSelection(
   const mediaAvailable = presetValid && mediaValid && availableMedia.includes(media);
 
   if (presetValid && mediaValid && !mediaAvailable) {
-    const hint = presetHint(media);
+    const hint = presetHint(media, syntax);
 
     errors.push({
       field: 'media',
@@ -350,7 +354,7 @@ export function resolveInstallationSelection(
   if (presetValid && validSourceUrl && detectedCandidates.length > 0 && (mediaAvailable || !mediaValid)) {
     if (!detectedMedia) {
       const candidate = detectedCandidates[0]!;
-      const hint = presetHint(candidate);
+      const hint = presetHint(candidate, syntax);
 
       errors.push({
         field: 'sourceUrl',
@@ -391,7 +395,7 @@ export function resolveInstallationSelection(
         field: 'extensions',
         value: extension,
         message: `${extension} does not apply to the selected preset, skin, and media source.`,
-        hint: `Use --extensions ${serializeInstallationExtensions(availableExtensions)}.`,
+        hint: `Use ${syntax.options(['extensions', serializeInstallationExtensions(availableExtensions)])}.`,
       });
     } else {
       requestedExtensions.add(extension);
@@ -420,8 +424,8 @@ export function resolveInstallationSelection(
     templateErrors.push({
       field: 'template',
       value: template,
-      message: 'CDN scripts go on an existing page with --template none, or into a new Vite app with --project new.',
-      hint: 'For an existing Vite app, use --method packaged.',
+      message: `CDN scripts go on an existing page with ${syntax.options(['template', 'none'])}, or into a new Vite app with ${syntax.options(['project', 'new'])}.`,
+      hint: `For an existing Vite app, use ${syntax.options(['method', 'packaged'])}.`,
     });
   }
 
@@ -429,8 +433,7 @@ export function resolveInstallationSelection(
     errors.push({
       field: 'project',
       value: project,
-      message:
-        'A new project needs a named app setup. Choose a template, or use --project existing with --template none.',
+      message: `A new project needs a named app setup. Choose a template, or use ${syntax.options(['project', 'existing'], ['template', 'none'])}.`,
     });
   }
 
@@ -452,7 +455,7 @@ export function resolveInstallationSelection(
       field: 'media',
       value: media,
       message: `${media} is not published by @videojs/cdn.`,
-      hint: `Use --method packaged for ${media}.`,
+      hint: `Use ${syntax.options(['method', 'packaged'])} for ${media}.`,
     });
   }
 
@@ -462,7 +465,7 @@ export function resolveInstallationSelection(
         field: 'preset',
         value: preset,
         message: 'Background Video is not available from the Shadcn registry.',
-        hint: 'Use --method packaged for background video.',
+        hint: `Use ${syntax.options(['method', 'packaged'])} for background video.`,
       });
     }
 
@@ -471,7 +474,7 @@ export function resolveInstallationSelection(
         field: 'skin',
         value: skinFlag,
         message: 'Shadcn installs editable skin source, so the `none` skin is not available.',
-        hint: 'Use --skin default or --skin minimal, or --method packaged for a skinless player.',
+        hint: `Use ${syntax.options(['skin', 'default'])} or ${syntax.options(['skin', 'minimal'])}, or ${syntax.options(['method', 'packaged'])} for a skinless player.`,
       });
     }
 

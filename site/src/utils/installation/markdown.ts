@@ -6,6 +6,8 @@ import {
   installationParameterForKey,
   isInstallationFramework,
   PRIVATE_INSTALLATION_QUERY_PARAMETERS,
+  QUERY_OPTION_SYNTAX,
+  renderArgumentErrors,
   renderInstallationPlanSections,
   resolveInstallationSelection,
   type InstallationInput,
@@ -92,14 +94,13 @@ function queryField(error: SelectionError): string {
   return error.field === 'arguments' ? 'arguments' : installationParameterForKey(error.field).query;
 }
 
+// Rejected values are left out so a crafted query cannot write its own text into the served Markdown. Hints only name
+// validated choices.
 function renderInstallationQueryErrors(errors: readonly SelectionError[]): string {
-  const items = errors.map((error) => {
-    const field = queryField(error);
-
-    return `- ${field}: ${error.message}`;
-  });
-
-  return `Invalid installation options:\n${items.join('\n')}`;
+  return renderArgumentErrors(
+    'Invalid installation options:',
+    errors.map(({ value: _value, ...error }) => ({ ...error, field: queryField(error) }))
+  );
 }
 
 /** Resolve one canonical installation route and its query parameters through the shared installation schema. */
@@ -114,7 +115,7 @@ export function resolveInstallationMarkdownPlan(
   const errors = routeQueryErrors(route, params);
   if (errors.length > 0) return { ok: false, errors };
 
-  const resolved = resolveInstallationSelection(inputFromQuery(route, params), packageVersion);
+  const resolved = resolveInstallationSelection(inputFromQuery(route, params), packageVersion, {}, QUERY_OPTION_SYNTAX);
   if (!resolved.ok) return resolved;
 
   // The site deploys from main, so a pinned release could reject options added since then.

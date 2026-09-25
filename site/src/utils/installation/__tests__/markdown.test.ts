@@ -410,6 +410,21 @@ HTML next step
     });
   });
 
+  it('names options as query parameters in validation errors and hints', () => {
+    const result = renderInstallationMarkdownSelection(
+      markdown,
+      '/docs/guides/installation/cdn',
+      new URLSearchParams({ project: 'existing', template: 'vite' }),
+      '10.0.0-test'
+    );
+
+    expect(result?.status).toBe(400);
+    expect(result?.body).toContain(
+      '- template: CDN scripts go on an existing page with template=none, or into a new Vite app with project=new. For an existing Vite app, use method=packaged.'
+    );
+    expect(result?.body).not.toContain('--');
+  });
+
   it('reports web query names in validation errors', () => {
     const packageManager = renderInstallationMarkdownSelection(
       markdown,

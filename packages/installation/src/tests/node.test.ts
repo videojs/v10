@@ -740,6 +740,7 @@ describe('runAgentsInit', () => {
 
     expect(existingVite.exitCode).toBe(2);
     expect(existingVite.stderr).toContain('For an existing Vite app, use --method packaged.');
+    expect(existingVite.stderr).toContain('with --template none, or into a new Vite app with --project new.');
     expect(JSON.parse(vite.stdout).selectedOptions).toMatchObject({ project: 'new', template: 'vite' });
   });
 
