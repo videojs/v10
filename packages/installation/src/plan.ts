@@ -28,15 +28,16 @@ import {
   installationHtmlEntrySetup,
   installationProjectCreateCommand,
   installationProjectFiles,
+  type InstallationProjectFiles,
   installationHtmlPageCode,
   installationProjectRunCommand,
+  INSTALLATION_FRAMEWORKS,
   installationReactPlayerCode,
   installationReactUsageCode,
   installationVueConfigFilename,
 } from './projects';
 import { getAdapterPackage } from './renderers';
 import {
-  INSTALLATION_FRAMEWORKS,
   INSTALLATION_METHODS,
   selectionToInput,
   type InstallationSelection,
@@ -51,6 +52,7 @@ import {
   shadcnProjectConfiguration,
   shadcnProjectConfigurationPlacement,
   shadcnRegistryAddCommand,
+  type RegistryStyling,
 } from './shadcn';
 
 export interface InstallationCodeBlock {
@@ -309,138 +311,111 @@ function playerFileDescription(selection: InstallationSelection): string {
     : `Merge the example into the existing ${INSTALLATION_TEMPLATE_LABELS[selection.template]} route or component that should render the player, and preserve unrelated content.`;
 }
 
-function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
-  const opts = installationOptions(selection);
-  const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
-  const steps: InstallationStep[] = [];
-  const prepareApp = prepareAppStep(selection);
+function playerStep(description: string, blocks: readonly InstallationCodeBlock[]): InstallationStep {
+  return { id: 'player', title: 'Add your player', description, blocks };
+}
 
-  if (prepareApp) steps.push(prepareApp);
+function htmlEntrySetupStep(template: InstallationSelection['template'], entryFile: string): InstallationStep | null {
+  const entrySetup = installationHtmlEntrySetup(template, entryFile);
+  if (entrySetup.length === 0) return null;
 
+  return {
+    id: 'configure-app-entry',
+    title: 'Configure your app entry',
+    description: `Merge the generated player entry into the existing ${entrySetup[0]!.filename} configuration. Keep every existing input, plugin, and option.`,
+    blocks: entrySetup.map((block) => code(block.language, block.code, block.filename)),
+  };
+}
+
+function reactPlayerBlocks(
+  selection: InstallationSelection,
+  pageCode: string,
+  project: InstallationProjectFiles
+): InstallationCodeBlock[] {
+  const usage = installationReactUsageCode(selection.template);
+
+  return [
+    code('tsx', installationReactPlayerCode(pageCode, selection.template), project.player),
+    ...(usage && project.usage ? [code('astro', usage, project.usage)] : []),
+  ];
+}
+
+function packagedPlayerSteps(
+  selection: InstallationSelection,
+  opts: InstallationOptions,
+  project: InstallationProjectFiles
+): InstallationStep[] {
   if (selection.framework === 'react') {
-    const install = generateReactInstallCode(opts, packageVersion);
     const player = generateReactCreateCode(opts);
 
-    steps.push(packageInstallStep(install[selection.packageManager]), {
-      id: 'player',
-      title: 'Add your player',
-      description: playerFileDescription(selection),
-      blocks: [code('tsx', installationReactPlayerCode(player['app/page.tsx'], selection.template), project.player)],
-    });
-
-    if (project.usage) {
-      steps.at(-1)!.blocks = [
-        ...steps.at(-1)!.blocks,
-        code('astro', installationReactUsageCode(selection.template)!, project.usage),
-      ];
-    }
-
-    const runApp = runAppStep(selection);
-
-    if (runApp) steps.push(runApp);
-
-    return steps;
+    return [
+      playerStep(playerFileDescription(selection), reactPlayerBlocks(selection, player['app/page.tsx'], project)),
+    ];
   }
-
-  const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase, packageVersion);
 
   if (selection.framework === 'vue') {
     const config = generateVueCustomElementConfigCode(opts);
     const component = generateVueCreateCode(opts);
     const usage = generateVueUsageCode({ ...opts, playerImport: project.playerImport });
+    const astro = selection.template === 'astro';
 
-    steps.push(
-      packageInstallStep(install[selection.packageManager]),
+    return [
       {
         id: 'configure',
         title: 'Register custom elements',
         description: 'Use the file that matches your Vue toolchain.',
-        blocks: [
-          code(
-            selection.template === 'astro' ? 'js' : 'ts',
-            config[installationVueConfigFilename(selection.template)],
-            project.config
-          ),
-        ],
+        blocks: [code(astro ? 'js' : 'ts', config[installationVueConfigFilename(selection.template)], project.config)],
       },
-      {
-        id: 'player',
-        title: 'Add your player',
-        description: playerFileDescription(selection),
-        blocks: [
-          code('vue', component.component, project.player),
-          code(
-            selection.template === 'astro' ? 'astro' : 'vue',
-            selection.template === 'astro' ? usage['index.astro'] : usage['App.vue'],
-            project.usage
-          ),
-        ],
-      }
-    );
-    const runApp = runAppStep(selection);
-
-    if (runApp) steps.push(runApp);
-
-    return steps;
+      playerStep(playerFileDescription(selection), [
+        code('vue', component.component, project.player),
+        code(astro ? 'astro' : 'vue', astro ? usage['index.astro'] : usage['App.vue'], project.usage),
+      ]),
+    ];
   }
 
   if (selection.framework === 'svelte') {
     const component = generateSvelteCreateCode(opts);
     const usage = generateSvelteUsageCode({ ...opts, playerImport: project.playerImport });
+    const usageCode =
+      selection.template === 'astro'
+        ? usage['index.astro']
+        : selection.template === 'sveltekit'
+          ? usage['+page.svelte']
+          : usage['App.svelte'];
 
-    steps.push(packageInstallStep(install[selection.packageManager]), {
-      id: 'player',
-      title: 'Add your player',
-      description: playerFileDescription(selection),
-      blocks: [
+    return [
+      playerStep(playerFileDescription(selection), [
         code('svelte', component.component, project.player),
-        code(
-          selection.template === 'astro' ? 'astro' : 'svelte',
-          selection.template === 'astro'
-            ? usage['index.astro']
-            : selection.template === 'sveltekit'
-              ? usage['+page.svelte']
-              : usage['App.svelte'],
-          project.usage
-        ),
-      ],
-    });
-    const runApp = runAppStep(selection);
-
-    if (runApp) steps.push(runApp);
-
-    return steps;
+        code(selection.template === 'astro' ? 'astro' : 'svelte', usageCode, project.usage),
+      ]),
+    ];
   }
 
   const usage = generateHTMLUsageCode(opts);
-  const entrySetup = installationHtmlEntrySetup(selection.template, project.usage!);
-  const blocks = [
-    ...(usage.imports ? [code('ts', usage.imports, project.usage)] : []),
-    code('html', installationHtmlPageCode(usage.html, selection.template, project.usage!), project.player),
-  ];
 
-  steps.push(packageInstallStep(install[selection.packageManager]));
+  return [
+    htmlEntrySetupStep(selection.template, project.usage!),
+    playerStep(playerFileDescription(selection), [
+      ...(usage.imports ? [code('ts', usage.imports, project.usage)] : []),
+      code('html', installationHtmlPageCode(usage.html, selection.template, project.usage!), project.player),
+    ]),
+  ].filter((step) => step !== null);
+}
 
-  if (entrySetup.length > 0) {
-    steps.push({
-      id: 'configure-app-entry',
-      title: 'Configure your app entry',
-      description: `Merge the generated player entry into the existing ${entrySetup[0]!.filename} configuration. Keep every existing input, plugin, and option.`,
-      blocks: entrySetup.map((block) => code(block.language, block.code, block.filename)),
-    });
-  }
+function createPackagedSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
+  const opts = installationOptions(selection);
+  const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
+  const install =
+    selection.framework === 'react'
+      ? generateReactInstallCode(opts, packageVersion)
+      : generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase, packageVersion);
 
-  steps.push({
-    id: 'player',
-    title: 'Add your player',
-    description: playerFileDescription(selection),
-    blocks,
-  });
-  const runApp = runAppStep(selection);
-
-  if (runApp) steps.push(runApp);
-
-  return steps;
+  return [
+    prepareAppStep(selection),
+    packageInstallStep(install[selection.packageManager]),
+    ...packagedPlayerSteps(selection, opts, project),
+    runAppStep(selection),
+  ].filter((step) => step !== null);
 }
 
 function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
@@ -448,12 +423,8 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
   const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS, selection.cdnBase);
   const usage = generateHTMLUsageCode(opts);
 
-  const steps: InstallationStep[] = [];
-  const prepareApp = prepareAppStep(selection);
-
-  if (prepareApp) steps.push(prepareApp);
-
-  steps.push(
+  return [
+    prepareAppStep(selection),
     {
       id: 'load',
       title: 'Load Video.js',
@@ -465,142 +436,95 @@ function createCdnSteps(selection: InstallationSelection): InstallationStep[] {
       title: 'Add your player',
       description: 'Add this markup inside the page body where the player should appear.',
       blocks: [code('html', usage.html, 'index.html')],
-    }
-  );
-
-  const runApp = runAppStep(selection);
-
-  if (runApp) steps.push(runApp);
-
-  return steps;
+    },
+    runAppStep(selection),
+  ].filter((step) => step !== null);
 }
 
-function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
-  const opts = installationOptions(selection);
-  const registry = registrySkinSelection({ useCase: selection.useCase, skin: selection.skin });
-  if (!registry || !selection.styling) throw new Error('Invalid Shadcn selection');
-
-  const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
+function shadcnConfigurationSteps(
+  selection: InstallationSelection & { styling: RegistryStyling },
+  project: InstallationProjectFiles
+): InstallationStep[] {
   const configuration = shadcnProjectConfiguration(
     selection.sourceFramework,
     selection.template,
     selection.styling,
     project.componentsAlias
   );
-  const steps: InstallationStep[] = [];
-  const configurationPlacement = shadcnProjectConfigurationPlacement(configuration, selection.project);
-  const inlineOptionalInit = configurationPlacement === 'registry';
+  const placement = shadcnProjectConfigurationPlacement(configuration, selection.project);
+  const aliasBlocks = configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename));
 
-  if (configuration.mode === 'shadcn-init') {
-    if (configurationPlacement === 'app') {
-      steps.push({
+  if (configuration.mode === 'components-json') {
+    return [
+      prepareAppStep(selection),
+      {
+        id: 'configure-source-registry',
+        title: 'Configure Shadcn',
+        condition: 'when-components-json-missing',
+        description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
+        blocks: [...aliasBlocks, code('json', configuration.componentsConfig, 'components.json', 'create')],
+      },
+    ].filter((step) => step !== null);
+  }
+
+  if (placement === 'app') {
+    return [
+      {
         id: 'prepare-app',
         title: 'Create and configure the app',
         description: `Run this from the parent directory, change videojs-app to your preferred directory name when needed, and continue from the new app. Shadcn creates the ${INSTALLATION_TEMPLATE_LABELS[selection.template]} app and components.json together.`,
         blocks: [code('bash', shadcnInitCommand(selection.packageManager, selection.template))],
-      });
-    }
+      },
+    ];
+  }
 
-    if (configurationPlacement === 'section') {
-      steps.push({
+  if (placement === 'section') {
+    return [
+      {
         id: 'configure-source-registry',
         title: 'Configure Shadcn',
         condition: 'when-components-json-missing',
         description:
           'Merge any missing alias configuration below first, keep the app’s existing plugins and compiler options, then initialize Shadcn non-interactively. This path assumes the app already uses Tailwind CSS; otherwise, rerun agents init with --styling css.',
-        blocks: [
-          ...configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename)),
-          code('bash', optionalShadcnInitCommand(selection.packageManager)),
-        ],
-      });
-    }
-  } else {
-    const prepareApp = prepareAppStep(selection);
-
-    if (prepareApp) steps.push(prepareApp);
-
-    steps.push({
-      id: 'configure-source-registry',
-      title: 'Configure Shadcn',
-      condition: 'when-components-json-missing',
-      description: `Skip this step when components.json already uses the standard https://ui.shadcn.com/schema.json schema; preserve that file and its aliases. Otherwise, merge every app-alias block below, then create the standard config in the app directory. When converting a framework-specific Shadcn config, keep its alias values but use the standard schema. The generated components alias maps registry files to ${project.componentsDirectory}.`,
-      blocks: [
-        ...configuration.aliasSetup.map((block) => code(block.language, block.code, block.filename)),
-        code('json', configuration.componentsConfig!, 'components.json', 'create'),
-      ],
-    });
+        blocks: [...aliasBlocks, code('bash', optionalShadcnInitCommand(selection.packageManager))],
+      },
+    ];
   }
 
-  if (inlineOptionalInit) {
-    steps.push({
+  return [
+    {
       id: 'create-components-json',
       title: 'Create components.json (optional)',
       condition: 'when-components-json-missing',
       blocks: [code('bash', optionalShadcnInitCommand(selection.packageManager))],
-    });
-  }
+    },
+  ];
+}
 
-  steps.push({
-    id: 'videojs-registry',
-    title: 'Add the Video.js Registry',
-    description:
-      'This adds the selected @videojs catalog when the namespace is missing. If components.json already defines @videojs with another URL, replace that value with the URL from this command first because Shadcn skips configured namespaces.',
-    blocks: [
-      code(
-        'bash',
-        shadcnRegistryAddCommand(selection.packageManager, selection.sourceFramework, selection.styling, registry.theme)
-      ),
-    ],
-  });
-
-  steps.push({
-    id: 'skin-source',
-    title: 'Add the skin source',
-    description: [
-      selection.project === 'existing'
-        ? 'Commit current source first so every added or replaced file is reviewable.'
-        : null,
-      'The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog.',
-      selection.sourceFramework === 'html'
-        ? 'The later media step restores the selected media element after an overwrite.'
-        : null,
-    ]
-      .filter((sentence) => sentence !== null)
-      .join(' '),
-    blocks: [code('bash', shadcnAddCommand(selection.packageManager, [registry.item]))],
-  });
-
+function shadcnMediaStep(selection: InstallationSelection, packageVersion: string): InstallationStep | null {
   const mediaInstall = generateSourceMediaInstallCode(selection.media, packageVersion, selection.extensions);
+  if (!mediaInstall) return null;
 
-  if (mediaInstall) {
-    const hasAdapter = getAdapterPackage(selection.media) !== null;
-    const title = hasAdapter
-      ? selection.extensions.length > 0
-        ? 'Install the media adapter and extensions'
-        : 'Install the media adapter'
-      : 'Install the extensions';
+  const hasAdapter = getAdapterPackage(selection.media) !== null;
+  const title = hasAdapter
+    ? selection.extensions.length > 0
+      ? 'Install the media adapter and extensions'
+      : 'Install the media adapter'
+    : 'Install the extensions';
 
-    steps.push({
-      id: 'media-adapter',
-      title,
-      description: 'Install the supporting packages at the version that matches these instructions.',
-      blocks: [code('bash', mediaInstall[selection.packageManager])],
-    });
-  }
+  return {
+    id: 'media-adapter',
+    title,
+    description: 'Install the supporting packages at the version that matches these instructions.',
+    blocks: [code('bash', mediaInstall[selection.packageManager])],
+  };
+}
 
-  if (selection.framework === 'html' && project.usage) {
-    const entrySetup = installationHtmlEntrySetup(selection.template, project.usage);
-
-    if (entrySetup.length > 0) {
-      steps.push({
-        id: 'configure-app-entry',
-        title: 'Configure your app entry',
-        description: `Merge the generated player entry into the existing ${entrySetup[0]!.filename} configuration. Keep every existing input, plugin, and option.`,
-        blocks: entrySetup.map((block) => code(block.language, block.code, block.filename)),
-      });
-    }
-  }
-
+function shadcnPlayerSteps(
+  selection: InstallationSelection,
+  opts: InstallationOptions,
+  project: InstallationProjectFiles
+): InstallationStep[] {
   if (selection.framework === 'react') {
     const player = generateSourceReactCreateCode({
       ...opts,
@@ -608,25 +532,12 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
       styling: selection.styling ?? undefined,
     });
 
-    steps.push({
-      id: 'player',
-      title: 'Add your player',
-      description: `Use the aliases.components value from components.json in the skin import when it differs from the generated ${project.componentsAlias} path. ${playerFileDescription(selection)}`,
-      blocks: [code('tsx', installationReactPlayerCode(player['app/page.tsx'], selection.template), project.player)],
-    });
-
-    if (project.usage) {
-      steps.at(-1)!.blocks = [
-        ...steps.at(-1)!.blocks,
-        code('astro', installationReactUsageCode(selection.template)!, project.usage),
-      ];
-    }
-
-    const runApp = runAppStep(selection);
-
-    if (runApp) steps.push(runApp);
-
-    return steps;
+    return [
+      playerStep(
+        `Use the aliases.components value from components.json in the skin import when it differs from the generated ${project.componentsAlias} path. ${playerFileDescription(selection)}`,
+        reactPlayerBlocks(selection, player['app/page.tsx'], project)
+      ),
+    ];
   }
 
   const player = generateSourceHTMLUsageCode({
@@ -635,21 +546,61 @@ function createShadcnSteps(selection: InstallationSelection, packageVersion: str
     componentsDirectory: project.componentsDirectory,
   });
 
-  steps.push({
-    id: 'player',
-    title: 'Add your player',
-    description: `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Then paste the complete updated skin markup into the player where indicated. ${playerFileDescription(selection)}`,
-    blocks: [
-      code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
-      code('ts', player.imports, project.usage),
-      code('html', installationHtmlPageCode(player.player, selection.template, project.usage!), project.player),
-    ],
-  });
-  const runApp = runAppStep(selection);
+  return [
+    htmlEntrySetupStep(selection.template, project.usage!),
+    playerStep(
+      `Replace the <!-- Add a compatible media element here. --> placeholder in ${player.skinFile} with the media snippet below. Then paste the complete updated skin markup into the player where indicated. ${playerFileDescription(selection)}`,
+      [
+        code('html', player.media, player.skinFile, 'replace', '<!-- Add a compatible media element here. -->'),
+        code('ts', player.imports, project.usage),
+        code('html', installationHtmlPageCode(player.player, selection.template, project.usage!), project.player),
+      ]
+    ),
+  ].filter((step) => step !== null);
+}
 
-  if (runApp) steps.push(runApp);
+function createShadcnSteps(selection: InstallationSelection, packageVersion: string): InstallationStep[] {
+  const opts = installationOptions(selection);
+  const registry = registrySkinSelection({ useCase: selection.useCase, skin: selection.skin });
+  const { styling } = selection;
+  if (!registry || !styling) throw new Error('Invalid Shadcn selection');
 
-  return steps;
+  const project = installationProjectFiles(selection.framework, selection.template, selection.useCase);
+
+  return [
+    ...shadcnConfigurationSteps({ ...selection, styling }, project),
+    {
+      id: 'videojs-registry',
+      title: 'Add the Video.js Registry',
+      description:
+        'This adds the selected @videojs catalog when the namespace is missing. If components.json already defines @videojs with another URL, replace that value with the URL from this command first because Shadcn skips configured namespaces.',
+      blocks: [
+        code(
+          'bash',
+          shadcnRegistryAddCommand(selection.packageManager, selection.sourceFramework, styling, registry.theme)
+        ),
+      ],
+    },
+    {
+      id: 'skin-source',
+      title: 'Add the skin source',
+      description: [
+        selection.project === 'existing'
+          ? 'Commit current source first so every added or replaced file is reviewable.'
+          : null,
+        'The add command overwrites an existing Video.js skin so catalog and theme changes fully apply. Review and remove obsolete Video.js style files left by a previous catalog.',
+        selection.sourceFramework === 'html'
+          ? 'The later media step restores the selected media element after an overwrite.'
+          : null,
+      ]
+        .filter((sentence) => sentence !== null)
+        .join(' '),
+      blocks: [code('bash', shadcnAddCommand(selection.packageManager, [registry.item]))],
+    },
+    shadcnMediaStep(selection, packageVersion),
+    ...shadcnPlayerSteps(selection, opts, project),
+    runAppStep(selection),
+  ].filter((step) => step !== null);
 }
 
 /**

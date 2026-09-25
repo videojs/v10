@@ -1,11 +1,6 @@
 import { generateCdnCode } from './cdn-code';
 import { INSTALLATION_DEMO_SOURCES } from './defaults';
-import {
-  defaultInstallationExtensions,
-  getInstallationExtension,
-  installationExtensionsFor,
-  type InstallationExtension,
-} from './extensions';
+import { defaultInstallationExtensions, getInstallationExtension, type InstallationExtension } from './extensions';
 import { getInstallationPlayerComponentName, getInstallationPreset, type Skin, type UseCase } from './presets';
 import {
   getAdapterPackage,
@@ -46,36 +41,6 @@ export interface HTMLInstallCode extends PackageManagerInstallCommands {
 
 export interface ReactCreateCode {
   'app/page.tsx': string;
-}
-
-type ValidationResult = { valid: true } | { valid: false; reason: string };
-
-export function validateInstallationOptions(opts: InstallationOptions): ValidationResult {
-  const preset = getInstallationPreset(opts.useCase);
-
-  if (!preset.renderers.includes(opts.renderer)) {
-    return {
-      valid: false,
-      reason: `Invalid media type "${opts.renderer}" for the "${preset.flag}" preset. Valid options: ${preset.renderers.join(', ')}`,
-    };
-  }
-
-  if (opts.framework === 'react' && opts.installMethod === 'cdn') {
-    return { valid: false, reason: 'CDN installation is not supported for React. Use npm, pnpm, yarn, or bun.' };
-  }
-
-  const availableExtensions = installationExtensionsFor(opts.useCase, opts.skin, opts.renderer);
-  const selectedExtensions = opts.extensions ?? defaultInstallationExtensions(opts.renderer);
-  const invalidExtension = selectedExtensions.find((extension) => !availableExtensions.includes(extension));
-
-  if (invalidExtension) {
-    return {
-      valid: false,
-      reason: `Invalid extension "${invalidExtension}" for the selected preset, skin, and media source. Valid options: ${availableExtensions.join(', ') || 'none'}`,
-    };
-  }
-
-  return { valid: true };
 }
 
 // ---------------------------------------------------------------------------

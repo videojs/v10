@@ -19,7 +19,6 @@ import {
   getSkinTag,
   INSTALLATION_DEMO_SOURCES,
   type InstallationOptions,
-  validateInstallationOptions,
 } from '../index';
 import type { Renderer } from '../index';
 
@@ -40,35 +39,6 @@ const baseReact: InstallationOptions = {
   sourceUrl: '',
   installMethod: 'npm',
 };
-
-describe('validateInstallationOptions', () => {
-  it('accepts valid HTML + npm combo', () => {
-    expect(validateInstallationOptions(baseHTML)).toEqual({ valid: true });
-  });
-
-  it('accepts valid React + npm combo', () => {
-    expect(validateInstallationOptions(baseReact)).toEqual({ valid: true });
-  });
-
-  it('rejects React + CDN', () => {
-    const result = validateInstallationOptions({ ...baseReact, installMethod: 'cdn' });
-
-    expect(result.valid).toBe(false);
-
-    if (!result.valid) {
-      expect(result.reason).toContain('CDN');
-    }
-  });
-
-  it('rejects media that does not support the preset', () => {
-    const result = validateInstallationOptions({ ...baseHTML, useCase: 'live-audio', renderer: 'hls' });
-
-    expect(result).toEqual({
-      valid: false,
-      reason: 'Invalid media type "hls" for the "live-audio" preset. Valid options: mux-audio',
-    });
-  });
-});
 
 describe('generateHTMLInstallCode', () => {
   const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio'];

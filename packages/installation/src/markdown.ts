@@ -2,7 +2,8 @@ import { serializeInstallationExtensions } from './extensions';
 import type { InstallationDiscoveryCompatibility } from './options';
 import { installationParameterForKey } from './parameters';
 import type { InstallationDiscovery, InstallationPlan } from './plan';
-import { INSTALLATION_FRAMEWORKS, selectionToInput, type SelectionError } from './selection';
+import { INSTALLATION_FRAMEWORKS } from './projects';
+import { selectionToInput, type SelectionError } from './selection';
 
 function fenced(language: string, value: string): string {
   const longestRun = Math.max(2, ...[...value.matchAll(/`+/g)].map((match) => match[0].length));

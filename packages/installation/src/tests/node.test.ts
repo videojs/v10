@@ -13,12 +13,8 @@ import {
   type AgentsInitDefaults,
 } from '../node';
 import { installationCommand } from '../plan';
-import {
-  INSTALLATION_FRAMEWORKS,
-  installationMethodsForFramework,
-  installationTemplatesForMethod,
-  sourceFrameworkFor,
-} from '../selection';
+import { INSTALLATION_FRAMEWORKS } from '../projects';
+import { installationMethodsForFramework, installationTemplatesForMethod, sourceFrameworkFor } from '../selection';
 import { defaultRegistryStyling } from '../shadcn';
 
 const reactProject = {

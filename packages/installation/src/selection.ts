@@ -18,7 +18,6 @@ import {
   type InstallationProject,
   type PackageManager,
 } from './parameters';
-export { INSTALLATION_PROJECTS, PACKAGE_MANAGERS, type InstallationProject, type PackageManager } from './parameters';
 import {
   getInstallationPreset,
   INSTALLATION_PRESETS,
@@ -36,8 +35,6 @@ import {
 } from './projects';
 import { RENDERERS, type Renderer } from './renderers';
 import { defaultRegistryStyling, registryStylings, type RegistryFramework, type RegistryStyling } from './shadcn';
-
-export { INSTALLATION_FRAMEWORKS, type InstallationFramework } from './projects';
 
 export const INSTALLATION_METHODS = ['packaged', 'shadcn', 'cdn'] as const;
 export type InstallationMethod = (typeof INSTALLATION_METHODS)[number];

@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { InstallationInput } from '../parameters';
+import { PACKAGE_MANAGERS, type InstallationInput } from '../parameters';
 import { INSTALLATION_PRESETS, INSTALLATION_SKIN_FLAGS } from '../presets';
-import {
-  fitSelectionToPreset,
-  INSTALLATION_FRAMEWORKS,
-  PACKAGE_MANAGERS,
-  playerOwnerFor,
-  resolveInstallationSelection,
-} from '../selection';
+import { INSTALLATION_FRAMEWORKS } from '../projects';
+import { fitSelectionToPreset, playerOwnerFor, resolveInstallationSelection } from '../selection';
 
 describe('resolveInstallationSelection', () => {
   it('resolves defaults for each player package', () => {
