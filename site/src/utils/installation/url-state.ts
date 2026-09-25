@@ -2,6 +2,7 @@ import {
   containsControlCharacter,
   defaultInstallationExtensions,
   getInstallationPreset,
+  INSTALLATION_DEMO_SOURCE_URL,
   INSTALLATION_PARAMETERS,
   installationParameterForKey,
   isInstallationFramework,
@@ -112,7 +113,9 @@ export function parseInstallationSearch(search: string, options: ParseOptions = 
   }
 
   const selection = resolveUrlInput(input);
-  const sourceUrl = params.get(SOURCE_URL_QUERY) ?? '';
+  const requestedSourceUrl = params.get(SOURCE_URL_QUERY) ?? '';
+  // The CLI's explicit demo choice is the page's empty source, so the URL drops it like any other default.
+  const sourceUrl = requestedSourceUrl === INSTALLATION_DEMO_SOURCE_URL ? '' : requestedSourceUrl;
 
   return {
     framework: selection.framework,

@@ -57,6 +57,10 @@ describe('parseInstallationSearch', () => {
     );
   });
 
+  it('reads the demo source choice as the empty source URL', () => {
+    expect(parseInstallationSearch('?source-url=demo').sourceUrl).toBe('');
+  });
+
   it('drops source URLs containing control characters', () => {
     expect(parseInstallationSearch('?source-url=line%0Abreak').sourceUrl).toBe('');
     expect(parseInstallationSearch('?source-url=line%E2%80%A8break').sourceUrl).toBe('');
@@ -273,6 +277,10 @@ describe('canonicalInstallationSearch', () => {
         '?framework=vue&template=next&styling=css&preset=audio&skin=fancy&utm_source=docs'
       )
     ).toBe('?framework=html&styling=css&preset=audio&utm_source=docs');
+  });
+
+  it('drops the demo source choice, which the page shows by default', () => {
+    expect(canonicalInstallationSearch('react', '?preset=audio&source-url=demo')).toBe('?preset=audio');
   });
 });
 
