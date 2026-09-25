@@ -28,7 +28,7 @@ function FrameworkPicker() {
         },
         { value: 'html', label: 'HTML', media: <span /> },
       ]}
-      aria-label="Select JS framework"
+      aria-label="Select framework"
     />
   );
 }

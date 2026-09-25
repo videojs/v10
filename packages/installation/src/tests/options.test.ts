@@ -70,16 +70,16 @@ describe('installationDecisionOrderFor', () => {
     );
   });
 
-  it('asks for the CSS framework after the Shadcn method when React source is possible', () => {
+  it('asks for the styling after the Shadcn method when React source is possible', () => {
     const shadcn = installationDecisionOrderFor({ methods: ['shadcn'], frameworks: ['react', 'html'] });
     const titles = shadcn.map(({ title }) => title);
     const packaged = installationDecisionOrderFor({ methods: ['packaged', 'shadcn'], frameworks: ['react'] });
     const htmlOnly = installationDecisionOrderFor({ methods: ['packaged', 'shadcn', 'cdn'], frameworks: ['html'] });
 
-    expect(titles.indexOf('Choose the CSS framework')).toBe(titles.indexOf('Choose how to install') + 1);
-    expect(shadcn.find(({ title }) => title === 'Choose the CSS framework')?.guidance).toMatch(/^For React/);
-    expect(packaged.find(({ title }) => title === 'Choose the CSS framework')?.guidance).toMatch(/^Only for Shadcn/);
-    expect(htmlOnly.some(({ title }) => title === 'Choose the CSS framework')).toBe(false);
+    expect(titles.indexOf('Choose the styling')).toBe(titles.indexOf('Choose how to install') + 1);
+    expect(shadcn.find(({ title }) => title === 'Choose the styling')?.guidance).toMatch(/^For React/);
+    expect(packaged.find(({ title }) => title === 'Choose the styling')?.guidance).toMatch(/^Only for Shadcn/);
+    expect(htmlOnly.some(({ title }) => title === 'Choose the styling')).toBe(false);
   });
 });
 

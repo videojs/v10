@@ -89,14 +89,14 @@ describe('RegistryOptionsClient', () => {
     expect(shadcn).toContain('data-options="Vite,Astro,Laravel"');
   });
 
-  it('renders the Shadcn CSS framework choice as cards for the source catalog', () => {
+  it('renders the Shadcn styling choice as cards for the source catalog', () => {
     registryStyling.set('css');
 
     const react = renderToString(<RegistryOptionsClient framework="react" installation kind="styling" />);
     const html = renderToString(<RegistryOptionsClient framework="html" installation kind="styling" />);
 
-    expect(react).toContain('data-label="Select CSS framework"');
-    expect(react).toContain('data-options="Tailwind CSS,Vanilla CSS"');
+    expect(react).toContain('data-label="Select styling"');
+    expect(react).toContain('data-options="Vanilla CSS,Tailwind CSS"');
     expect(react).toContain('>tailwind</span>');
     expect(html).toContain('data-options="Vanilla CSS"');
   });

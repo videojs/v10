@@ -76,6 +76,9 @@ const STYLING_CARD_ICONS = {
   css: <CssLogo className="h-7 w-auto" />,
 } satisfies Record<RegistryStyling, ReactNode>;
 
+/** Plain CSS leads because it works in every app; Tailwind stays the React default for new Shadcn apps. */
+const STYLING_CARD_ORDER = ['css', 'tailwind'] as const satisfies readonly RegistryStyling[];
+
 const STYLING_DESCRIPTIONS = {
   tailwind: 'Utility classes, included in new Shadcn apps',
   css: 'Plain stylesheets for apps without Tailwind',
@@ -184,13 +187,13 @@ function RegistryStylingCards({ framework }: { framework: RegistryFramework }) {
     <CardRadioGroup
       value={styling}
       onChange={selectRegistryStyling}
-      options={registryStylings(framework).map((value) => ({
+      options={STYLING_CARD_ORDER.filter((value) => registryStylings(framework).includes(value)).map((value) => ({
         value,
         label: REGISTRY_STYLING_LABELS[value],
         description: STYLING_DESCRIPTIONS[value],
         media: STYLING_CARD_ICONS[value],
       }))}
-      aria-label="Select CSS framework"
+      aria-label="Select styling"
     />
   );
 }

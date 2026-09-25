@@ -166,7 +166,7 @@ export function installationDecisionOrderFor({
     methods.includes('shadcn') && frameworks.includes('react')
       ? [
           {
-            title: 'Choose the CSS framework',
+            title: 'Choose the styling',
             guidance: `${methods.length === 1 ? '' : 'Only for Shadcn. '}For React, use tailwind in a new app or an existing Tailwind app; otherwise use css. HTML source uses css.`,
           },
         ]

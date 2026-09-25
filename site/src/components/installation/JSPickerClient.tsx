@@ -73,7 +73,7 @@ export default function JSPickerClient({ currentFramework, route }: Props) {
       value={displayedFramework}
       onChange={handleChange}
       options={options}
-      aria-label="Select JS framework"
+      aria-label="Select framework"
     />
   );
 }
