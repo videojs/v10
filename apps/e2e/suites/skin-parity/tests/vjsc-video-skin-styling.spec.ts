@@ -390,7 +390,8 @@ for (const variant of CASES) {
           position: '0px 0px',
           repeat: 'no-repeat',
           size: width <= 320 ? '400% 100%' : '200% 100%',
-          transition: 'mask-position 0.05s ease-out',
+          // Lightning CSS pairs `mask-position` with its `-webkit-` form for Chrome before 120.
+          transition: '-webkit-mask-position, mask-position 0.05s, 0.05s ease-out, ease-out',
         });
       }
     });

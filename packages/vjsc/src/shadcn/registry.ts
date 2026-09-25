@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, posix, relative, resolve as resolvePath } from 'node:path';
 
+import type { Targets } from 'lightningcss';
 import { type Registry, type RegistryItem, registryItemSchema, registrySchema } from 'shadcn/schema';
 
 import type { ModuleMeta } from '../components/meta';
@@ -425,7 +426,13 @@ async function buildPublishedItem<Meta extends ModuleMeta>(
     });
 
   if (item.build.stylesheet) {
-    const css = await registryStyles(item.name, owned.modules, graph, item.build.stylesheet.include ?? []);
+    const css = await registryStyles(
+      item.name,
+      owned.modules,
+      graph,
+      options.targets,
+      item.build.stylesheet.include ?? []
+    );
     const filename = basename(item.build.stylesheet.target);
     const path = posix.join('files', item.name, filename);
     const target = posix.join(normalizePath(options.paths.install), normalizePath(item.build.stylesheet.target));
@@ -547,6 +554,7 @@ async function buildStyleItem<Meta extends ModuleMeta>(
     item.name,
     item.build.modules,
     graph,
+    options.targets,
     item.build.include ?? [],
     item.build.asset,
     item.build.asset !== undefined
@@ -617,6 +625,7 @@ async function registryStyles<Meta extends ModuleMeta>(
   label: string,
   modules: readonly GraphModule<Meta>[],
   graph: Graph<Meta>,
+  targets: Targets | undefined,
   supplemental: readonly string[],
   asset?: string,
   includeAssets = true
@@ -628,6 +637,7 @@ async function registryStyles<Meta extends ModuleMeta>(
     files: supplemental,
     asset,
     includeAssets,
+    targets,
   });
 }
 

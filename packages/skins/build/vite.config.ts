@@ -13,6 +13,7 @@ import {
   skinMetaDefaults,
   skinUtils,
 } from './config.ts';
+import { cssTargets } from './css-targets.ts';
 import { skinClassNameMergeImport } from './imports.ts';
 import { packageSkinsPlugin } from './packages/plugin.ts';
 import { formatSource } from './registry/format.ts';
@@ -70,6 +71,7 @@ export const skinBuildConfig: PackUserConfig = {
         },
         items: registryItems(target),
         styles: registryStyles(target),
+        targets: cssTargets,
       })
     ),
     {
