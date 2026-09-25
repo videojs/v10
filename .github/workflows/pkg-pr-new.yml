@@ -123,6 +123,7 @@ jobs:
           pnpm --config.verify-deps-before-run=false exec pkg-pr-new publish --pnpm --previewVersion --peerDeps
           --packageManager=pnpm
           './packages/cdn'
+          './packages/cli'
           './packages/core'
           './packages/element'
           './packages/html'

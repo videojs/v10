@@ -14,6 +14,7 @@
       "groupName": "videojs",
       "components": [
         "@videojs/cdn",
+        "@videojs/cli",
         "@videojs/cloudflare-video",
         "@videojs/core",
         "@videojs/dash-video",
@@ -47,6 +48,12 @@
   "packages": {
     "packages/cdn": {
       "component": "@videojs/cdn",
+      "prerelease": true,
+      "prerelease-type": "rc",
+      "versioning": "prerelease"
+    },
+    "packages/cli": {
+      "component": "@videojs/cli",
       "prerelease": true,
       "prerelease-type": "rc",
       "versioning": "prerelease"

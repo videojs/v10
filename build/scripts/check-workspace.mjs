@@ -200,6 +200,33 @@ const REQUIRED_FIELDS = ['sideEffects', 'files', 'exports'];
 /** Required only when the package has a root "." export. */
 const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 
+/** The only package that publishes an executable. It is bin-only, so library fields don't apply. */
+const CLI_PACKAGE_DIR = 'cli';
+
+/**
+ * `npx @videojs/cli` runs the package's only bin, and every cold run downloads its dependencies, so the CLI stays one
+ * bundled file with no runtime dependencies.
+ */
+function cliMetadataWarnings(pkg) {
+  const warnings = [];
+
+  if (typeof pkg.bin !== 'string') {
+    warnings.push(`${pkg.name}: "bin" should be one path so \`npx ${pkg.name}\` runs it`);
+  }
+
+  if (JSON.stringify(pkg.files) !== JSON.stringify(['dist'])) {
+    warnings.push(`${pkg.name}: "files" should be ["dist"]`);
+  }
+
+  for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies']) {
+    if (Object.keys(pkg[field] ?? {}).length > 0) {
+      warnings.push(`${pkg.name}: "${field}" should be empty; bundle workspace code into the bin instead`);
+    }
+  }
+
+  return warnings;
+}
+
 function checkPackageMetadata() {
   const warnings = [];
 
@@ -208,9 +235,17 @@ function checkPackageMetadata() {
     // Skip private packages — they're internal.
     if (pkg.private) continue;
 
-    // publishConfig.access is required for scoped public packages.
     if (pkg.publishConfig?.access !== 'public') {
       warnings.push(`${pkg.name}: missing publishConfig.access = "public"`);
+    }
+
+    if (dir === CLI_PACKAGE_DIR) {
+      warnings.push(...cliMetadataWarnings(pkg));
+      continue;
+    }
+
+    if (pkg.bin !== undefined) {
+      warnings.push(`${pkg.name}: remove "bin"; command line tools ship in @videojs/cli`);
     }
 
     for (const field of REQUIRED_FIELDS) {
