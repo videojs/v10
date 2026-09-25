@@ -3,6 +3,7 @@ import {
   fitSelectionToPreset,
   getInstallationPreset,
   installationExtensionsFor,
+  PRIVATE_INSTALLATION_QUERY_PARAMETERS,
   resolveInstallationTemplate,
   resolveRegistryStyling,
   sourceFrameworkFor,
@@ -115,7 +116,27 @@ function syncInstallationDocument(route: InstallationRouteSegment, selection: In
   root.toggleAttribute('data-installation-pending', isCustomInstallationSelection(route, selection));
 }
 
-/** The one writer for installation URLs: replace the current entry's query with the canonical one for the picks. */
+/**
+ * Point the head's Markdown twin at the picks. The link is prerendered without a query, so an agent following it would
+ * otherwise read the default plan. Private input such as a source URL stays out of the advertised link.
+ */
+function syncMarkdownAlternate(search: string): void {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="alternate"][type="text/markdown"]');
+  if (!link) return;
+
+  const href = new URL(link.href);
+  const params = new URLSearchParams(search);
+
+  for (const parameter of PRIVATE_INSTALLATION_QUERY_PARAMETERS) params.delete(parameter);
+
+  href.search = params.toString();
+  link.href = href.href;
+}
+
+/**
+ * The one writer for installation URLs: replace the current entry's query with the canonical one for the picks, and
+ * keep the Markdown twin link in step.
+ */
 function writeInstallationUrl(): void {
   urlWriteScheduled = false;
 
@@ -132,6 +153,7 @@ function writeInstallationUrl(): void {
 
   syncedUrl = `${location.pathname}${search}`;
   syncInstallationDocument(route, selection);
+  syncMarkdownAlternate(search);
 }
 
 /**

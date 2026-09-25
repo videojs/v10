@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FRAMEWORK_COOKIE } from '@/utils/docs/preferences';
 
@@ -225,6 +225,43 @@ describe('syncInstallationSelectionFromUrl', () => {
 
     expect(window.location.search).toBe('');
     expect(document.documentElement).not.toHaveAttribute('data-installation-pending');
+  });
+
+  describe('with a Markdown alternate link', () => {
+    let link: HTMLLinkElement;
+
+    beforeEach(() => {
+      link = document.createElement('link');
+      link.rel = 'alternate';
+      link.type = 'text/markdown';
+      link.href = 'https://videojs.org/docs/guides/installation/react.md';
+      document.head.append(link);
+    });
+
+    afterEach(() => {
+      link.remove();
+    });
+
+    it('carries the canonical picks from the initial URL without the private source URL', () => {
+      window.history.replaceState(
+        null,
+        '',
+        '/docs/guides/installation/react?preset=audio&media=spotify&source-url=https%3A%2F%2Fopen.spotify.com%2Ftrack%2F1'
+      );
+      syncInstallationSelectionFromUrl();
+
+      expect(link.href).toBe('https://videojs.org/docs/guides/installation/react.md?preset=audio&media=spotify');
+    });
+
+    it('follows later picks', async () => {
+      window.history.replaceState(null, '', '/docs/guides/installation/react?preset=audio');
+      syncInstallationSelectionFromUrl();
+
+      useCase.set('default-video');
+      await settleUrl();
+
+      expect(link.href).toBe('https://videojs.org/docs/guides/installation/react.md');
+    });
   });
 });
 
