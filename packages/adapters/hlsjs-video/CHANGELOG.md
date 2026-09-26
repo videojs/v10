@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/hlsjs-video@10.0.0-rc.3...@videojs/hlsjs-video@10.0.0-rc.4) (2026-09-26)
+
+
+### Bug Fixes
+
+* **hlsjs-video:** apply auto quality while playback is stalled ([#2979](https://github.com/videojs/v10/issues/2979)) ([4ca4ee5](https://github.com/videojs/v10/commit/4ca4ee5b269e49c73f82edb29889798099773ae5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-rc.4
+    * @videojs/native-hls-video bumped to 10.0.0-rc.4
+    * @videojs/utils bumped to 10.0.0-rc.4
+
 ## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/hlsjs-video@10.0.0-rc.2...@videojs/hlsjs-video@10.0.0-rc.3) (2026-09-25)
 
 
