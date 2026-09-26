@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-rc.4] - 2026-09-26
+
+### 🐛 Bug Fixes
+- *(hlsjs-video)* Apply auto quality while playback is stalled ([#2979](https://github.com/videojs/v10/pull/2979)) by [@luwes](https://github.com/luwes)
+- *(installation)* Default a plain HTML page to CDN scripts ([#2983](https://github.com/videojs/v10/pull/2983)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Tighten docs header and switch sidebar sections in place ([#2987](https://github.com/videojs/v10/pull/2987)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Upgrade astro to 7.3.5 ([#2986](https://github.com/videojs/v10/pull/2986)) by [@mihar-22](https://github.com/mihar-22)
+
+### 📚 Documentation
+- *(site)* Add changelog prose for 10.0.0-rc.3 ([#2977](https://github.com/videojs/v10/pull/2977)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(packages)* Fix broken doc links and hls-video source docs ([#2985](https://github.com/videojs/v10/pull/2985)) by [@mihar-22](https://github.com/mihar-22)
+
 ## [@videojs/core@10.0.0-rc.3] - 2026-09-25
 
 ### 🚀 Features
@@ -2147,6 +2159,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-rc.4]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.3...@videojs/core@10.0.0-rc.4
 [@videojs/core@10.0.0-rc.3]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.2...@videojs/core@10.0.0-rc.3
 [@videojs/core@10.0.0-rc.2]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.1...@videojs/core@10.0.0-rc.2
 [@videojs/core@10.0.0-rc.1]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.32...@videojs/core@10.0.0-rc.1
