@@ -74,6 +74,8 @@
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
+    "@svta/cml-error-codes": "^0.1.1",
+    "@svta/cml-utils": "^1.6.1",
     "@videojs/media": "workspace:*",
     "@videojs/utils": "workspace:*",
     "signal-polyfill": "^0.2.2"

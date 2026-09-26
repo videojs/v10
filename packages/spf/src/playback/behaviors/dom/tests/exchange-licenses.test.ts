@@ -5,8 +5,8 @@ import { type DrmSystemsConfig, fetchDrm } from '../../../../media/dom/eme';
 import { DEFAULT_KEY_SYSTEMS, widevineKeySystem } from '../../../../media/dom/key-systems';
 import {
   SVTA_BAD_LICENSE_REQUEST,
-  SVTA_DRM_LICENSE_RESPONSE_REJECTED,
-  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_LICENSE_RESPONSE_REJECTED,
+  SVTA_LICENSE_REQUEST_GENERATION_ERROR,
   SVTA_DRM_SESSION_ERROR,
   SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
   SVTA_LICENSE_EXPIRED,
@@ -488,7 +488,7 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
 
     await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_RESPONSE_REJECTED])
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_LICENSE_RESPONSE_REJECTED])
     );
     expect(sessions[0]!.update).not.toHaveBeenCalled();
 
@@ -517,7 +517,7 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
 
     await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_RESPONSE_REJECTED])
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_LICENSE_RESPONSE_REJECTED])
     );
 
     reactor.destroy();
@@ -545,7 +545,7 @@ describe('exchangeLicenses', () => {
     });
 
     await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED])
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_LICENSE_REQUEST_GENERATION_ERROR])
     );
     expect(sessions).toHaveLength(0);
 

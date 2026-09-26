@@ -9,6 +9,17 @@ import {
   svtaIndex,
 } from '../errors';
 
+describe('SVTA_UNSUPPORTED_PLAYBACK_FEATURE', () => {
+  it('sits in the publisher-defined range of the custom category', () => {
+    // The spec defines only 99000 (Unknown) in the custom category and leaves
+    // 99001–99999 to publishers, so the one code SPF owns must stay above the
+    // former and within the latter.
+    expect(SVTA_UNSUPPORTED_PLAYBACK_FEATURE).toBeGreaterThan(99000);
+    expect(SVTA_UNSUPPORTED_PLAYBACK_FEATURE).toBeLessThanOrEqual(99999);
+    expect(svtaCategory(SVTA_UNSUPPORTED_PLAYBACK_FEATURE)).toBe(99);
+  });
+});
+
 describe('svtaCategory', () => {
   it('reads the category from a four-digit native code', () => {
     expect(svtaCategory(SVTA_NO_SUPPORTED_VIDEO_TRACK)).toBe(2);
@@ -34,6 +45,14 @@ describe('svtaCategory', () => {
   it('reports category 0 for the fully-unknown code', () => {
     expect(svtaCategory(999)).toBe(0);
   });
+
+  it('answers undefined where the spec assigns no category', () => {
+    // The spec assigns no category to a reserved value (8–98), a negative, or a
+    // non-integer, so the answer is `undefined` rather than a number.
+    expect(svtaCategory(8000)).toBeUndefined();
+    expect(svtaCategory(-1)).toBeUndefined();
+    expect(svtaCategory(2011.5)).toBeUndefined();
+  });
 });
 
 describe('svtaIndex', () => {
@@ -55,5 +74,10 @@ describe('svtaIndex', () => {
 
   it('reads 999 for the fully-unknown code', () => {
     expect(svtaIndex(999)).toBe(999);
+  });
+
+  it('answers undefined for anything but a non-negative integer', () => {
+    expect(svtaIndex(-1)).toBeUndefined();
+    expect(svtaIndex(2011.5)).toBeUndefined();
   });
 });
