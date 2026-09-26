@@ -1,5 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { type Plugin, type RolldownOutput, rolldown } from 'rolldown';
@@ -10,6 +9,9 @@ import { vjscPlugin, vjscRegistryPlugin } from '..';
 import type { ComponentMeta } from '../../components';
 import type { GraphModule } from '../../graph';
 import type { VjscRegistryOptions, RegistryModuleItem } from '../../shadcn';
+import { useTemporaryDirectories } from '../../tests/temp-directory';
+
+const temporaryDirectories = useTemporaryDirectories();
 
 interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component' | 'support';
@@ -451,7 +453,7 @@ function meta(name: string, type: FixtureMeta['type'] = 'component'): string {
 }
 
 function setup(files: Readonly<Record<string, string>>): string {
-  const root = mkdtempSync(join(tmpdir(), 'vjsc-shadcn-'));
+  const root = temporaryDirectories.createSync('vjsc-shadcn-');
 
   for (const [filename, source] of Object.entries(files)) {
     const path = join(root, filename);

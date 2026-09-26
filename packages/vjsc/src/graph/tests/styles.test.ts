@@ -1,11 +1,13 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { useTemporaryDirectories } from '../../tests/temp-directory';
 import { bundleStyles } from '../styles';
 import type { Graph, GraphModule } from '../types';
+
+const temporaryDirectories = useTemporaryDirectories();
 
 describe('bundleStyles', () => {
   it('emits dependency styles before the modules that compose them', async () => {
@@ -50,7 +52,7 @@ describe('bundleStyles', () => {
   });
 
   it('lets authored files restyle classes that generated assets define', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'vjsc-bundle-'));
+    const root = await temporaryDirectories.create('vjsc-bundle-');
     const module = fixtureModule('root', ['virtual:vjsc/css/1/buttons.css']);
     const graph: Graph = {
       root,
