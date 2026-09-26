@@ -103,20 +103,14 @@ function readList(list: Node, ctx: MdastVisitorContext): RelatedLink[] | null {
   return items.length > 0 ? items : null;
 }
 
-/**
- * Sätteri materialises a fresh object per child, so identity fails, and byte offsets drift past multi-byte characters;
- * the starting line is stable on both sides and identifies a node among its siblings.
- */
+/** Sätteri materialises a fresh object per child, so `parent.children.indexOf(node)` fails; `ctx.indexOf` does not. */
 function siblingIndex(node: Node, ctx: MdastVisitorContext): { siblings: readonly Node[]; index: number } | null {
   const parent = ctx.parent(node);
-  if (!parent) return null;
+  const index = ctx.indexOf(node);
+  if (!parent || index === undefined) return null;
 
   // SAFETY: a node's parent is a container whose children are MDAST nodes, including the node itself.
-  const siblings = parent.children as readonly Node[];
-  const line = node.position?.start.line;
-  const index = siblings.findIndex((sibling) => sibling.type === node.type && sibling.position?.start.line === line);
-
-  return index === -1 ? null : { siblings, index };
+  return { siblings: parent.children as readonly Node[], index };
 }
 
 /** "Related components" → "Components"; a bare "Related" has no group label. */
