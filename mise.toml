@@ -15,7 +15,7 @@ idiomatic_version_file_enable_tools = ["node"]
 [tools]
 # Mirrors `packageManager` in package.json; `pnpm check:workspace` enforces it.
 # Node is deliberately absent — see `[settings]` above.
-pnpm = "12.4.1"
+pnpm = "12.6.0"
 
 [env]
 # Expose workspace binaries (biome, turbo, tsgo, prettier, tsx) directly, so

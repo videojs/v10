@@ -65,7 +65,7 @@
     "vite-plus": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.6.0",
   "stackblitz": {
     "installDependencies": false,
     "startCommand": "pnpm install --ignore-scripts --config.nodeLinker=hoisted --config.blockExoticSubdeps=false && pnpm --config.verifyDepsBeforeRun=false exec vp run dev"
