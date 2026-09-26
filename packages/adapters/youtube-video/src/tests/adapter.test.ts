@@ -1,3 +1,4 @@
+import { expectIframeAdapterDefaults, iframeAdapterDeferredSourceContract } from '@videojs/adapter-test/iframe';
 import { MediaError } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -90,14 +91,6 @@ afterEach(() => {
 
 function createIframe(): HTMLIFrameElement {
   return document.createElement('iframe');
-}
-
-/** An iframe as React renders it before a source resolves: `src` present but empty. */
-function createEmptySrcIframe(): HTMLIFrameElement {
-  const iframe = document.createElement('iframe');
-
-  iframe.setAttribute('src', '');
-  return iframe;
 }
 
 /** Flush the microtask the deferred embed waits on before it is built. */
@@ -335,17 +328,22 @@ describe('buildYouTubeIframeSrc', () => {
 
 describe('YouTubeAdapter', () => {
   it('has expected default state before attach', () => {
-    const media = new YouTubeAdapter();
+    expectIframeAdapterDefaults(new YouTubeAdapter(), YouTubeAdapter.defaultProps.src);
+  });
 
-    expect(media.engine).toBe(null);
-    expect(media.target).toBe(null);
-    expect(media.paused).toBe(true);
-    expect(media.ended).toBe(false);
-    expect(media.currentTime).toBe(0);
-    expect(media.duration).toBeNaN();
-    expect(media.src).toBe(YouTubeAdapter.defaultProps.src);
-    expect(media.buffered.length).toBe(0);
-    expect(media.played.length).toBeGreaterThanOrEqual(1);
+  iframeAdapterDeferredSourceContract({
+    adapterName: 'YouTubeAdapter',
+    createAdapter: () => new YouTubeAdapter(),
+    createIframe,
+    firstSource: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+    emptySource: 'aqz-KE-bpKQ',
+    queuedSource: 'aqz-KE-bpKQ',
+    replacementSource: 'dQw4w9WgXcQ',
+    expectedFirstEmbed: 'https://www.youtube.com/embed/aqz-KE-bpKQ',
+    expectedReplacementEmbed: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    flush: flushDeferredEmbed,
+    waitForEngine,
+    assertSingleBuild: () => expect(MockPlayer.instances).toHaveLength(1),
   });
 
   it('sets the initial iframe src and creates a player when attached', async () => {
@@ -362,71 +360,6 @@ describe('YouTubeAdapter', () => {
     await waitForEngine(media);
     expect(media.engine).not.toBe(null);
     media.detach();
-  });
-
-  it('defers the player until a source arrives', async () => {
-    const media = new YouTubeAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-
-    // How every framework builds the element: created first, `src` set after.
-    const iframe = createIframe();
-
-    media.attach(iframe);
-    expect(iframe.getAttribute('src')).toBe(null);
-    expect(media.engine).toBe(null);
-    expect(loadstart).not.toHaveBeenCalled();
-
-    media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/aqz-KE-bpKQ');
-    expect(loadstart).toHaveBeenCalledTimes(1);
-    await waitForEngine(media);
-    media.detach();
-  });
-
-  it('defers the player for an iframe rendered with an empty src', async () => {
-    const media = new YouTubeAdapter();
-    // React renders `src=""` before a source resolves. The `src` property reports
-    // the document URL for it, so only the attribute says there is no embed.
-    const iframe = createEmptySrcIframe();
-
-    media.attach(iframe);
-    expect(media.engine).toBe(null);
-
-    media.src = 'aqz-KE-bpKQ';
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/aqz-KE-bpKQ');
-    await waitForEngine(media);
-    media.detach();
-  });
-
-  it('builds a deferred embed once for repeated source changes in the same task', async () => {
-    const media = new YouTubeAdapter();
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    media.src = 'aqz-KE-bpKQ';
-    media.src = 'dQw4w9WgXcQ';
-    await waitForEngine(media);
-
-    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/dQw4w9WgXcQ');
-    expect(MockPlayer.instances.length).toBe(1);
-    media.detach();
-  });
-
-  it('does not leave play() waiting while the embed is deferred', async () => {
-    const media = new YouTubeAdapter();
-
-    media.attach(createIframe());
-
-    // No embed means no player is coming to report a load; waiting would hang.
-    await expect(media.play()).resolves.toBeUndefined();
-    expect(media.engine).toBe(null);
   });
 
   it('waits for a deferred embed to load before playing', async () => {

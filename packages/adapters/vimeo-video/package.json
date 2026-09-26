@@ -46,6 +46,7 @@
     "@vimeo/player": "2.30.3"
   },
   "devDependencies": {
+    "@videojs/adapter-test": "workspace:*",
     "jsdom": "^26.1.0",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
