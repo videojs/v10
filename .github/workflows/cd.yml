@@ -66,6 +66,19 @@ jobs:
               exit 1
             fi
 
+            # Publishing sets latest and later force-pushes site/v10, so only
+            # the current release on main is safe to resume.
+            if [ "$GITHUB_REF" != 'refs/heads/main' ]; then
+              echo '::error::Release recovery must be dispatched from main'
+              exit 1
+            fi
+
+            current_version=$(gh api "repos/${GITHUB_REPOSITORY}/contents/packages/cdn/package.json?ref=main" --jq '.content | @base64d | fromjson | .version')
+            if [ "$RECOVER_VERSION" != "$current_version" ]; then
+              echo "::error::Release recovery must use the current CDN version ($current_version)"
+              exit 1
+            fi
+
             tag="@videojs/cdn@$RECOVER_VERSION"
             gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName > /dev/null
             echo "ref=refs/tags/$tag" >> "$GITHUB_OUTPUT"
@@ -115,8 +128,22 @@ jobs:
         if: ${{ steps.target.outputs.released == 'true' }}
         run: |
           node -e "process.exit(require('./packages/cdn/package.json').version === process.env.VERSION ? 0 : 1)"
+
+          if [ -n "$RECOVER_VERSION" ]; then
+            git fetch origin main --quiet
+            if ! git merge-base --is-ancestor HEAD origin/main; then
+              echo '::error::The recovery tag is not on main'
+              exit 1
+            fi
+
+            if ! git diff --quiet HEAD origin/main -- packages site; then
+              echo '::error::Packages or site changed on main since this release'
+              exit 1
+            fi
+          fi
         env:
           VERSION: ${{ steps.target.outputs.version }}
+          RECOVER_VERSION: ${{ inputs.recover_version }}
 
       - name: Restore Vite Task cache
         if: ${{ steps.target.outputs.released == 'true' }}
