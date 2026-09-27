@@ -403,18 +403,22 @@ export function App() {
     if (!availableSources.includes(source)) setSource(descriptor.fallbackSource ?? DEFAULT_SOURCE);
   }, [availableSources, descriptor.fallbackSource, source]);
 
-  // Land on the media's own source when *switched into*, rather than inheriting whatever the previous media was
-  // showing — `readParams` covers the first-mount half. Keyed on entry, so a source picked afterwards sticks. Declared
-  // after the constraint so the landing wins when both fire in one pass.
-  const previousMedia = useRef(media);
+  // Switching media also picks its source, in the same update: the new media gets a new preview frame, which takes its
+  // source from its URL once and only hears changes after it loads. Applied in an effect, a source the new media lands
+  // on (`entrySource`) or falls back to would reach that frame too late, and it would play the previous media's source.
+  // `readParams` covers the first mount.
+  const handleMediaChange = useCallback(
+    (next: MediaId) => {
+      const { entrySource, fallbackSource } = MEDIA[next];
+      const nextSources = mediaSources(next, platform);
 
-  useEffect(() => {
-    const entered = previousMedia.current !== media;
-
-    previousMedia.current = media;
-
-    if (entered && descriptor.entrySource) setSource(descriptor.entrySource);
-  }, [media, descriptor.entrySource]);
+      setMedia(next);
+      setSource(
+        (current) => entrySource ?? (nextSources.includes(current) ? current : (fallbackSource ?? DEFAULT_SOURCE))
+      );
+    },
+    [platform]
+  );
 
   useEffect(() => {
     if (!tailwindAvailable && styling === 'tailwind') setStyling('css');
@@ -498,7 +502,7 @@ export function App() {
         platform={platform}
         onPlatformChange={setPlatform}
         media={media}
-        onMediaChange={setMedia}
+        onMediaChange={handleMediaChange}
         source={source}
         onSourceChange={handleSourceChange}
         availableSources={availableSources}
