@@ -5,6 +5,7 @@ import { type ReturnedRule, type Targets, transform as transformCss } from 'ligh
 
 import type { ModuleMeta } from '../components/meta';
 import { lowerStyles } from '../styles/lower';
+import { flattenScopes } from '../styles/scope';
 import { setUnique } from '../utils/map';
 import { isInsideRoot } from '../utils/path';
 import type { GraphModule, Graph } from './types';
@@ -20,8 +21,13 @@ export interface BundleStylesOptions {
   readonly asset?: string | undefined;
   /** Whether captured virtual stylesheet assets should be included. */
   readonly includeAssets?: boolean | undefined;
-  /** Lower the bundle and add color-function fallbacks for these browsers, from `browserslistToTargets()`. */
+  /** Lower the bundle for these browsers, from `browserslistToTargets()`. */
   readonly targets?: Targets | undefined;
+  /**
+   * Rewrite `@scope` blocks into zero-specificity `:where()` selectors, for bundles that must render in browsers
+   * without `@scope`. Registry output keeps `@scope`, which reads better in the files consumers edit.
+   */
+  readonly flattenScopes?: boolean | undefined;
 }
 
 /** Merge exact authored and transformed styles used by a set of module graph modules. */
@@ -76,7 +82,9 @@ export async function bundleStyles<Node extends ModuleMeta>(
 
   const merged = mergeStyles(source.trimEnd() + '\n', `${options.label}.css`, options.label, pieces);
 
-  return options.targets ? lowerStyles(merged, { targets: options.targets }) : merged;
+  const scoped = options.flattenScopes ? flattenScopes(merged) : merged;
+
+  return options.targets ? lowerStyles(scoped, { targets: options.targets }) : scoped;
 }
 
 /** One authored file or generated asset within a bundle, located by the line where its CSS starts. */
