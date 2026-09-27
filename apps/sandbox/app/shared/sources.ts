@@ -14,7 +14,8 @@ export interface SandboxSource {
   label: string;
   /** Plain media URL. Absent when the source needs more than a URL can carry. */
   url?: string;
-  type: 'hls' | 'mp4' | 'dash' | 'none';
+  /** `playerjs` is an embed page URL for `<playerjs-video>` rather than a media file or manifest. */
+  type: 'hls' | 'mp4' | 'dash' | 'none' | 'playerjs';
   subType?: 'ts' | 'mp4';
   live?: boolean;
   /** DRM protected, so only a preset that can license it should offer it. */
@@ -503,6 +504,48 @@ const SOURCE_MAP = {
     url: '',
     type: 'none',
   },
+  // player.js is a protocol rather than a host, so one media plays every service
+  // below. They implement the spec to different degrees, which is what makes them
+  // worth switching between: Mux Player reports no duration before playback and
+  // keeps its controls, which no parameter hides; FrameRate adds `seeked`; Livid
+  // sticks to the spec, with no `seeked` or `progress`; Bunny adds rate; Streamable
+  // sends no `seeked` and no duration before playback; Gumlet adds rate, seek, and
+  // volume events.
+  // Mux Player's iframe embed, playing the same asset as `hls-1`.
+  'playerjs-mux': {
+    label: 'Player.js - Mux Player (iframe)',
+    url: 'https://player.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+    type: 'playerjs',
+  },
+  // A video from a FrameRate user's public profile.
+  'playerjs-framerate': {
+    label: 'Player.js - FrameRate',
+    url: 'https://framerate.tv/embed/361c224a-b10f-483f-811b-8602f46b7be8',
+    type: 'playerjs',
+  },
+  // The demo on Livid's own homepage.
+  'playerjs-livid': {
+    label: 'Player.js - Livid',
+    url: 'https://livid.com/embed/AJPwABnzkTXj',
+    type: 'playerjs',
+  },
+  // A video from Bunny's own public demo library, so it may not stay up for good.
+  'playerjs-bunny': {
+    label: 'Player.js - Bunny Stream',
+    // The current player host; the legacy `iframe.mediadelivery.net` one serves an older player without playback rate.
+    url: 'https://player.mediadelivery.net/embed/759/eb1c4f77-0cda-46be-b47d-1118ad7c2ffe',
+    type: 'playerjs',
+  },
+  'playerjs-streamable': {
+    label: 'Player.js - Streamable',
+    url: 'https://streamable.com/e/moo',
+    type: 'playerjs',
+  },
+  'playerjs-gumlet': {
+    label: 'Player.js - Gumlet',
+    url: 'https://play.gumlet.io/embed/64bfb0913ed6e5096d66dc1e',
+    type: 'playerjs',
+  },
 } satisfies Record<string, SandboxSource>;
 
 export type SourceId = keyof typeof SOURCE_MAP;
@@ -512,7 +555,15 @@ export type SourceId = keyof typeof SOURCE_MAP;
 // instead of a union of literal types that only some members share.
 export const SOURCES: Record<SourceId, SandboxSource> = SOURCE_MAP;
 
-export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
+const ALL_SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
+
+/**
+ * Every media file and manifest. The player.js embed pages are left out: only `<playerjs-video>` can play one, so every
+ * list derived from this one stays free of them.
+ */
+export const SOURCE_IDS = ALL_SOURCE_IDS.filter((id) => SOURCES[id].type !== 'playerjs');
+export const PLAYERJS_SOURCE_IDS = ALL_SOURCE_IDS.filter((id) => SOURCES[id].type === 'playerjs');
+export const DEFAULT_PLAYERJS_SOURCE: SourceId = 'playerjs-mux';
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && !isDrmSource(id) && !isMuxSource(id)
 );

@@ -4,10 +4,12 @@ import {
   DASH_SOURCE_IDS,
   DEFAULT_BACKGROUND_SOURCE,
   DEFAULT_DASH_SOURCE,
+  DEFAULT_PLAYERJS_SOURCE,
   HLS_SOURCE_IDS,
   MUX_SOURCE_IDS,
   MUX_SPF_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
+  PLAYERJS_SOURCE_IDS,
   type SandboxSource,
   SHAKA_SOURCE_IDS,
   SOURCE_IDS,
@@ -217,7 +219,8 @@ const MEDIA_MAP = {
     entrySource: DEFAULT_BACKGROUND_SOURCE,
     outcome: backgroundOutcome,
   },
-  // Each embed renders one provider page URL rather than the picker's list.
+  // Each embed renders one provider page URL rather than the picker's list, except `<playerjs-video>`, whose protocol
+  // many providers speak, so it picks between their embed pages.
   'vimeo-video': {
     label: 'Vimeo Video',
     player: 'video',
@@ -241,6 +244,15 @@ const MEDIA_MAP = {
     embed: true,
     fixedSource: CLOUDFLARE_VIDEO_SRC,
     sources: NON_DASH_SOURCE_IDS,
+  },
+  'playerjs-video': {
+    label: 'Player.js Video',
+    player: 'video',
+    tag: 'playerjs-video',
+    embed: true,
+    sources: PLAYERJS_SOURCE_IDS,
+    fallbackSource: DEFAULT_PLAYERJS_SOURCE,
+    entrySource: DEFAULT_PLAYERJS_SOURCE,
   },
   'spotify-audio': {
     label: 'Spotify Audio',
