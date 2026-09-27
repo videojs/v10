@@ -606,6 +606,9 @@ importers:
       '@videojs/media':
         specifier: workspace:*
         version: link:../../media
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../../spf
       '@videojs/utils':
         specifier: workspace:*
         version: link:../../utils

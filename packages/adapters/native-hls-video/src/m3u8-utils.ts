@@ -32,7 +32,7 @@ export function looksLikeM3u8(src: string) {
  *
  * The presence of `#EXT-X-STREAM-INF` is conclusive — media playlists only contain `#EXTINF` segment tags.
  */
-function isMultivariantPlaylist(playlist: string) {
+export function isMultivariantPlaylist(playlist: string) {
   return playlist.includes('#EXT-X-STREAM-INF');
 }
 
@@ -139,7 +139,41 @@ function parseStreamInfo(playlist: string): StreamInfo {
   return { targetLiveWindow, liveEdgeStartOffset };
 }
 
-async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: string; url: string }> {
+/** One `NAME=value` attribute; a quoted value may contain commas. */
+const ATTRIBUTE = /([A-Z0-9-]+)=("[^"]*"|[^,]*)/g;
+
+function parseAttributes(list: string): Map<string, string> {
+  const attributes = new Map<string, string>();
+
+  for (const [, name, raw] of list.matchAll(ATTRIBUTE)) {
+    if (!name || raw === undefined) continue;
+
+    attributes.set(name, raw.startsWith('"') ? raw.slice(1, -1) : raw);
+  }
+
+  return attributes;
+}
+
+/**
+ * The `URI` of the first `#EXT-X-SESSION-DATA` tag carrying `dataId` by reference, as written in the playlist —
+ * unresolved, so relative to the playlist's own URL. `undefined` when no such tag points at a resource; an entry
+ * carrying its datum inline as `VALUE` is skipped.
+ */
+export function findSessionDataUri(playlist: string, dataId: string): string | undefined {
+  for (const raw of playlist.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line.startsWith('#EXT-X-SESSION-DATA:')) continue;
+
+    const attributes = parseAttributes(line.slice('#EXT-X-SESSION-DATA:'.length));
+    const uri = attributes.get('URI');
+    if (attributes.get('DATA-ID') === dataId && uri) return uri;
+  }
+
+  return undefined;
+}
+
+/** Fetch a playlist's text, along with the URL it was served from after any redirects. */
+export async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: string; url: string }> {
   const response = await fetch(url, init);
   if (!response.ok) throw new Error(`Failed to fetch playlist (${response.status}): ${url}`);
 
