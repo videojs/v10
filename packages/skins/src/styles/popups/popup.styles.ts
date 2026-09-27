@@ -36,6 +36,8 @@ export default styles({
       utilities: ['transition-media-popup data-ending-style:duration-media-instant'],
     },
     surface: {
+      // Also carried by `<media-slider-thumbnail>`, which hosts a shadow root.
+      shadowHost: true,
       utilities: 'bg-media-popover text-media-popover-foreground surface-media after:surface-media-inset',
       variants: {
         minimal: 'after:hidden',
