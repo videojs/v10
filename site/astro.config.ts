@@ -206,12 +206,15 @@ export default defineConfig({
       display: 'swap',
     },
     {
-      provider: fontProviders.google(),
-      name: 'IBM Plex Mono',
-      cssVariable: '--font-ibm-plex-mono',
-      weights: ['600', '400'],
-      styles: ['normal'],
-      subsets: ['latin'],
+      provider: fontProviders.local(),
+      name: 'Paper Mono',
+      cssVariable: '--font-paper-mono',
+      options: {
+        variants: [
+          { src: ['./src/assets/fonts/paper-mono/PaperMono-Regular.woff2'], weight: '400', style: 'normal' },
+          { src: ['./src/assets/fonts/paper-mono/PaperMono-SemiBold.woff2'], weight: '600', style: 'normal' },
+        ],
+      },
       fallbacks: ['monospace'],
       optimizedFallbacks: true,
       display: 'swap',
