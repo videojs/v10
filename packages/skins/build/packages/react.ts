@@ -90,6 +90,8 @@ export async function createReactPackageSkins(
         label: `${skin.theme}-${skin.preset}`,
         files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
         targets: cssTargets,
+        // Packaged skins reach browsers without `@scope`; the registry keeps it.
+        flattenScopes: true,
       })
     );
   }

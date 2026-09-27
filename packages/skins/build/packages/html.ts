@@ -45,6 +45,8 @@ export async function createHtmlPackageSkins(
         label: name,
         files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
         targets: cssTargets,
+        // Packaged skins reach browsers without `@scope`; the registry keeps it.
+        flattenScopes: true,
       })
     );
   }
