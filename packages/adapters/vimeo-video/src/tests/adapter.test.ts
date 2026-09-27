@@ -1,3 +1,4 @@
+import { expectIframeAdapterDefaults, iframeAdapterDeferredSourceContract } from '@videojs/adapter-test/iframe';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { buildVimeoIframeSrc, parseVimeoSource, parseVimeoVideoId, VimeoAdapter } from '..';
@@ -78,14 +79,6 @@ vi.mock('@vimeo/player', () => {
 
 function createIframe(): HTMLIFrameElement {
   return document.createElement('iframe');
-}
-
-/** An iframe as React renders it before a source resolves: `src` present but empty. */
-function createEmptySrcIframe(): HTMLIFrameElement {
-  const iframe = document.createElement('iframe');
-
-  iframe.setAttribute('src', '');
-  return iframe;
 }
 
 /** Flush the microtask the deferred embed waits on before it is built. */
@@ -246,17 +239,27 @@ describe('buildVimeoIframeSrc', () => {
 
 describe('VimeoAdapter', () => {
   it('has expected default state before attach', () => {
-    const media = new VimeoAdapter();
+    expectIframeAdapterDefaults(new VimeoAdapter(), VimeoAdapter.defaultProps.src);
+  });
 
-    expect(media.engine).toBe(null);
-    expect(media.target).toBe(null);
-    expect(media.paused).toBe(true);
-    expect(media.ended).toBe(false);
-    expect(media.currentTime).toBe(0);
-    expect(media.duration).toBeNaN();
-    expect(media.src).toBe(VimeoAdapter.defaultProps.src);
-    expect(media.buffered.length).toBe(0);
-    expect(media.played.length).toBeGreaterThanOrEqual(1);
+  iframeAdapterDeferredSourceContract({
+    adapterName: 'VimeoAdapter',
+    createAdapter: () => new VimeoAdapter(),
+    createIframe,
+    firstSource: '76979871',
+    replacementSource: '12345',
+    expectedFirstEmbed: 'https://player.vimeo.com/video/76979871',
+    expectedReplacementEmbed: 'https://player.vimeo.com/video/12345',
+    flush: flushDeferredEmbed,
+    assertDeferredState: (media) => {
+      expect(media.engine).toBe(null);
+      expect(media.currentSrc).toBe('');
+    },
+    assertBuilt: (media, _iframe, expectedEmbed) => {
+      expect(media.engine).not.toBe(null);
+      expect(media.currentSrc).toContain(expectedEmbed);
+    },
+    assertSingleBuild: (media) => expect((media.engine as unknown as MockPlayerLike).loadVideo).not.toHaveBeenCalled(),
   });
 
   it('creates a Player when attached to an iframe', () => {
@@ -268,45 +271,6 @@ describe('VimeoAdapter', () => {
     media.attach(iframe);
 
     expect(media.target).toBe(iframe);
-    expect(media.engine).not.toBe(null);
-  });
-
-  it('defers the player until a source arrives', async () => {
-    const media = new VimeoAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-
-    // How every framework builds the element: created first, `src` set after.
-    const iframe = createIframe();
-
-    expect(() => media.attach(iframe)).not.toThrow();
-    expect(media.engine).toBe(null);
-    expect(media.currentSrc).toBe('');
-    expect(loadstart).not.toHaveBeenCalled();
-
-    media.src = '76979871';
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/76979871');
-    expect(media.engine).not.toBe(null);
-    expect(media.currentSrc).toContain('https://player.vimeo.com/video/76979871');
-    expect(loadstart).toHaveBeenCalledTimes(1);
-  });
-
-  it('defers the player for an iframe rendered with an empty src', async () => {
-    const media = new VimeoAdapter();
-    // React renders `src=""` before a source resolves. The `src` property reports
-    // the document URL for it, so only the attribute says there is no embed.
-    const iframe = createEmptySrcIframe();
-
-    expect(() => media.attach(iframe)).not.toThrow();
-    expect(media.engine).toBe(null);
-
-    media.src = '76979871';
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/76979871');
     expect(media.engine).not.toBe(null);
   });
 
@@ -326,30 +290,6 @@ describe('VimeoAdapter', () => {
     expect(iframe.getAttribute('src')).toContain('autoplay=1');
     expect(iframe.getAttribute('src')).toContain('muted=1');
     expect(iframe.getAttribute('src')).toContain('autopause=1');
-  });
-
-  it('builds a deferred embed once for repeated source changes in the same task', async () => {
-    const media = new VimeoAdapter();
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    media.src = '76979871';
-    media.src = '12345';
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/12345');
-    expect((media.engine as unknown as MockPlayerLike).loadVideo).not.toHaveBeenCalled();
-  });
-
-  it('does not leave play() waiting while the embed is deferred', async () => {
-    const media = new VimeoAdapter();
-
-    media.attach(createIframe());
-
-    // No embed means no `loaded` is ever coming; waiting on it would hang.
-    await expect(media.play()).resolves.toBeUndefined();
-    expect(media.engine).toBe(null);
   });
 
   it('reports an error instead of throwing for an iframe that is not a Vimeo embed', () => {

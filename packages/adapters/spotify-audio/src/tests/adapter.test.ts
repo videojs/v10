@@ -1,3 +1,4 @@
+import { expectIframeAdapterDefaults, iframeAdapterDeferredSourceContract } from '@videojs/adapter-test/iframe';
 import { isMediaVolumeCapable, MediaError, type Video } from '@videojs/media';
 import { loadScript } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -105,14 +106,6 @@ function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
 
   document.body.append(iframe);
-  return iframe;
-}
-
-/** An iframe as React renders it before a source resolves: `src` present but empty. */
-function createEmptySrcIframe(): HTMLIFrameElement {
-  const iframe = createIframe();
-
-  iframe.setAttribute('src', '');
   return iframe;
 }
 
@@ -259,16 +252,22 @@ describe('SpotifyAdapter', () => {
   it('has expected default state before attach', () => {
     const media = new SpotifyAdapter();
 
-    expect(media.engine).toBe(null);
-    expect(media.target).toBe(null);
-    expect(media.paused).toBe(true);
-    expect(media.ended).toBe(false);
-    expect(media.currentTime).toBe(0);
-    expect(media.duration).toBeNaN();
-    expect(media.src).toBe(SpotifyAdapter.defaultProps.src);
-    expect(media.buffered.length).toBe(0);
+    expectIframeAdapterDefaults(media, SpotifyAdapter.defaultProps.src);
     expect(media.textTracks.length).toBe(0);
-    expect(media.played.length).toBeGreaterThanOrEqual(1);
+  });
+
+  iframeAdapterDeferredSourceContract({
+    adapterName: 'SpotifyAdapter',
+    createAdapter: () => new SpotifyAdapter(),
+    createIframe,
+    firstSource: TRACK_URL,
+    emptySource: `spotify:track:${TRACK_ID}`,
+    replacementSource: EPISODE_URL,
+    expectedFirstEmbed: `https://open.spotify.com/embed/track/${TRACK_ID}`,
+    expectedReplacementEmbed: 'https://open.spotify.com/embed/episode/',
+    flush: flushDeferredEmbed,
+    waitForEngine,
+    assertSingleBuild: () => expect(MockController.instances).toHaveLength(1),
   });
 
   it('sets the initial iframe src and creates a controller when attached', async () => {
@@ -338,71 +337,6 @@ describe('SpotifyAdapter', () => {
     expect(MockController.instances.length).toBe(1);
     expect(media.engine).toBe(MockController.instances[0]);
     media.detach();
-  });
-
-  it('defers the controller until a source arrives', async () => {
-    const media = new SpotifyAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-
-    // How every framework builds the element: created first, `src` set after.
-    const iframe = createIframe();
-
-    media.attach(iframe);
-    expect(iframe.getAttribute('src')).toBe(null);
-    expect(media.engine).toBe(null);
-    expect(loadstart).not.toHaveBeenCalled();
-
-    media.src = TRACK_URL;
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain(`https://open.spotify.com/embed/track/${TRACK_ID}`);
-    expect(loadstart).toHaveBeenCalledTimes(1);
-    await waitForEngine(media);
-    media.detach();
-  });
-
-  it('defers the controller for an iframe rendered with an empty src', async () => {
-    const media = new SpotifyAdapter();
-    // React renders `src=""` before a source resolves. The `src` property reports
-    // the document URL for it, so only the attribute says there is no embed.
-    const iframe = createEmptySrcIframe();
-
-    media.attach(iframe);
-    expect(media.engine).toBe(null);
-
-    media.src = `spotify:track:${TRACK_ID}`;
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain(`https://open.spotify.com/embed/track/${TRACK_ID}`);
-    await waitForEngine(media);
-    media.detach();
-  });
-
-  it('builds a deferred embed once for repeated source changes in the same task', async () => {
-    const media = new SpotifyAdapter();
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    media.src = TRACK_URL;
-    media.src = EPISODE_URL;
-    await waitForEngine(media);
-
-    expect(iframe.getAttribute('src')).toContain('https://open.spotify.com/embed/episode/');
-    expect(MockController.instances.length).toBe(1);
-    media.detach();
-  });
-
-  it('does not leave play() waiting while the embed is deferred', async () => {
-    const media = new SpotifyAdapter();
-
-    media.attach(createIframe());
-
-    // No embed means no controller is coming to report a load; waiting would hang.
-    await expect(media.play()).resolves.toBeUndefined();
-    expect(media.engine).toBe(null);
   });
 
   it('waits for a deferred embed to load before playing', async () => {

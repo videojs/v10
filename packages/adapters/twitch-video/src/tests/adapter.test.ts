@@ -1,3 +1,4 @@
+import { expectIframeAdapterDefaults, iframeAdapterDeferredSourceContract } from '@videojs/adapter-test/iframe';
 import { MediaError } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -38,14 +39,6 @@ function createIframe(): HTMLIFrameElement {
     value: { postMessage: vi.fn() } satisfies EmbedWindow,
     configurable: true,
   });
-  return iframe;
-}
-
-/** An iframe as React renders it before a source resolves: `src` present but empty. */
-function createEmptySrcIframe(): HTMLIFrameElement {
-  const iframe = createIframe();
-
-  iframe.setAttribute('src', '');
   return iframe;
 }
 
@@ -233,16 +226,20 @@ describe('TwitchAdapter', () => {
   it('has expected default state before attach', () => {
     const media = new TwitchAdapter();
 
-    expect(media.engine).toBe(null);
-    expect(media.target).toBe(null);
-    expect(media.paused).toBe(true);
-    expect(media.ended).toBe(false);
-    expect(media.currentTime).toBe(0);
-    expect(media.duration).toBeNaN();
-    expect(media.src).toBe(TwitchAdapter.defaultProps.src);
-    expect(media.buffered.length).toBe(0);
+    expectIframeAdapterDefaults(media, TwitchAdapter.defaultProps.src);
     expect(media.textTracks.length).toBe(0);
-    expect(media.played.length).toBeGreaterThanOrEqual(1);
+  });
+
+  iframeAdapterDeferredSourceContract({
+    adapterName: 'TwitchAdapter',
+    createAdapter: () => new TwitchAdapter(),
+    createIframe,
+    firstSource: VOD_SRC,
+    replacementSource: 'https://www.twitch.tv/videos/222',
+    expectedFirstEmbed: 'video=v123456789',
+    expectedReplacementEmbed: 'video=v222',
+    flush: flushDeferredEmbed,
+    assertBuilt: (media, iframe) => expect(media.engine).toBe(iframe.contentWindow),
   });
 
   it('sets the initial iframe src and binds the embed when attached', () => {
@@ -290,73 +287,6 @@ describe('TwitchAdapter', () => {
 
     expect(iframe.getAttribute('src')).toBe(src);
     media.detach();
-  });
-
-  it('defers the embed until a source arrives', async () => {
-    const media = new TwitchAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-
-    // How every framework builds the element: created first, `src` set after.
-    const iframe = createIframe();
-
-    media.attach(iframe);
-    expect(iframe.getAttribute('src')).toBe(null);
-    expect(media.engine).toBe(null);
-    expect(loadstart).not.toHaveBeenCalled();
-
-    media.src = VOD_SRC;
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('video=v123456789');
-    expect(loadstart).toHaveBeenCalledTimes(1);
-    expect(media.engine).toBe(iframe.contentWindow);
-    media.detach();
-  });
-
-  it('defers the embed for an iframe rendered with an empty src', async () => {
-    const media = new TwitchAdapter();
-    // React renders `src=""` before a source resolves. The `src` property reports
-    // the document URL for it, so only the attribute says there is no embed.
-    const iframe = createEmptySrcIframe();
-
-    media.attach(iframe);
-    expect(media.engine).toBe(null);
-
-    media.src = VOD_SRC;
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('video=v123456789');
-    media.detach();
-  });
-
-  it('builds a deferred embed once for repeated source changes in the same task', async () => {
-    const media = new TwitchAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    media.src = VOD_SRC;
-    media.src = 'https://www.twitch.tv/videos/222';
-    await flushDeferredEmbed();
-
-    expect(iframe.getAttribute('src')).toContain('video=v222');
-    expect(loadstart).toHaveBeenCalledTimes(1);
-    media.detach();
-  });
-
-  it('does not leave play() waiting while the embed is deferred', async () => {
-    const media = new TwitchAdapter();
-
-    media.attach(createIframe());
-
-    // No embed means no `ready` is coming to report a load; waiting would hang.
-    await expect(media.play()).resolves.toBeUndefined();
-    expect(media.engine).toBe(null);
   });
 
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {

@@ -1,3 +1,4 @@
+import { expectIframeAdapterDefaults, iframeAdapterDeferredSourceContract } from '@videojs/adapter-test/iframe';
 import { isMediaMutedCapable, isMediaVolumeCapable, MediaError, type Video } from '@videojs/media';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -19,14 +20,6 @@ function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
 
   document.body.append(iframe);
-  return iframe;
-}
-
-/** An iframe as React renders it before a source resolves: `src` present but empty. */
-function createEmptySrcIframe(): HTMLIFrameElement {
-  const iframe = createIframe();
-
-  iframe.setAttribute('src', '');
   return iframe;
 }
 
@@ -221,17 +214,19 @@ describe('buildTikTokIframeSrc', () => {
 
 describe('TikTokAdapter', () => {
   it('has expected default state before attach', () => {
-    const media = new TikTokAdapter();
+    expectIframeAdapterDefaults(new TikTokAdapter(), TikTokAdapter.defaultProps.src);
+  });
 
-    expect(media.engine).toBe(null);
-    expect(media.target).toBe(null);
-    expect(media.paused).toBe(true);
-    expect(media.ended).toBe(false);
-    expect(media.currentTime).toBe(0);
-    expect(media.duration).toBeNaN();
-    expect(media.src).toBe(TikTokAdapter.defaultProps.src);
-    expect(media.buffered.length).toBe(0);
-    expect(media.played.length).toBeGreaterThanOrEqual(1);
+  iframeAdapterDeferredSourceContract({
+    adapterName: 'TikTokAdapter',
+    createAdapter: () => new TikTokAdapter(),
+    createIframe,
+    firstSource: VIDEO_ID,
+    replacementSource: OTHER_VIDEO_ID,
+    expectedFirstEmbed: `https://www.tiktok.com/player/v1/${VIDEO_ID}`,
+    expectedReplacementEmbed: `https://www.tiktok.com/player/v1/${OTHER_VIDEO_ID}`,
+    flush: flushLoad,
+    assertDeferredState: (media) => expect(media.currentSrc).toBe(''),
   });
 
   it('sets the initial iframe src when attached', () => {
@@ -247,66 +242,6 @@ describe('TikTokAdapter', () => {
     expect(media.target).toBe(iframe);
     expect(media.engine).toBe(iframe.contentWindow);
     media.detach();
-  });
-
-  it('defers the embed until a source arrives', async () => {
-    const media = new TikTokAdapter();
-    const loadstart = vi.fn();
-
-    media.addEventListener('loadstart', loadstart);
-
-    // How every framework builds the element: created first, `src` set after.
-    const iframe = createIframe();
-
-    media.attach(iframe);
-    expect(iframe.getAttribute('src')).toBe(null);
-    expect(loadstart).not.toHaveBeenCalled();
-
-    media.src = VIDEO_ID;
-    await flushLoad();
-
-    expect(iframe.getAttribute('src')).toContain(`https://www.tiktok.com/player/v1/${VIDEO_ID}`);
-    expect(loadstart).toHaveBeenCalledTimes(1);
-    media.detach();
-  });
-
-  it('defers the embed for an iframe rendered with an empty src', async () => {
-    const media = new TikTokAdapter();
-    // React renders `src=""` before a source resolves. The `src` property reports
-    // the document URL for it, so only the attribute says there is no embed.
-    const iframe = createEmptySrcIframe();
-
-    media.attach(iframe);
-    expect(media.currentSrc).toBe('');
-
-    media.src = VIDEO_ID;
-    await flushLoad();
-
-    expect(iframe.getAttribute('src')).toContain(`https://www.tiktok.com/player/v1/${VIDEO_ID}`);
-    media.detach();
-  });
-
-  it('builds a deferred embed once for repeated source changes in the same task', async () => {
-    const media = new TikTokAdapter();
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    media.src = VIDEO_ID;
-    media.src = OTHER_VIDEO_ID;
-    await flushLoad();
-
-    expect(iframe.getAttribute('src')).toContain(`https://www.tiktok.com/player/v1/${OTHER_VIDEO_ID}`);
-    media.detach();
-  });
-
-  it('does not leave play() waiting while the embed is deferred', async () => {
-    const media = new TikTokAdapter();
-
-    media.attach(createIframe());
-
-    // No embed means no `onPlayerReady` is coming to report a load; waiting would hang.
-    await expect(media.play()).resolves.toBeUndefined();
   });
 
   it('waits for a deferred embed to be ready before playing', async () => {
