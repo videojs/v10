@@ -17,6 +17,8 @@ We test in and fix bugs for these versions. Each minimum comes from a feature wi
 
 The packaged skins are generated CSS, and the build lowers them for the browsers above. It flattens CSS nesting, adds vendor prefixes such as `-webkit-backdrop-filter`, and writes each skin's scope as a [`:where()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where) selector, which adds no specificity, rather than [`@scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope).
 
+Skins you add as source through the <DocsLink slug="guides/installation-shadcn">Shadcn registry</DocsLink> keep `@scope`, which reads more clearly in files you edit. Their plain CSS versions need Chrome and Edge 118, Firefox 146, and Safari and iOS 17.4; the Tailwind versions style elements with utility classes and follow the versions above.
+
 Newer color functions get a fallback, and the original declaration moves inside [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports), so browsers that have the function still use it:
 
 - [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark) uses its light color. The audio skins render their light theme, and the video skins keep the light hairline border.
