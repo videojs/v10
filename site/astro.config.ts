@@ -211,8 +211,7 @@ export default defineConfig({
       cssVariable: '--font-paper-mono',
       options: {
         variants: [
-          { src: ['./src/assets/fonts/paper-mono/PaperMono-Regular.woff2'], weight: '400', style: 'normal' },
-          { src: ['./src/assets/fonts/paper-mono/PaperMono-SemiBold.woff2'], weight: '600', style: 'normal' },
+          { src: ['./src/assets/fonts/paper-mono/PaperMono-Variable.woff2'], weight: '100 800', style: 'normal' },
         ],
       },
       fallbacks: ['monospace'],
