@@ -2,6 +2,7 @@ import { existsSync, globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import browserslist from 'browserslist';
+import { browserslistToTargets, Features, transform } from 'lightningcss';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { auditSkinCss } from '../browser-support.ts';
@@ -76,37 +77,24 @@ describe('auditSkinCss', () => {
     expect(problems[1]).toContain('`:dir()`');
   });
 
-  it('keeps every `text-current/*` utility behind the `media-current-mix` variant', () => {
-    // Consumers compile the Tailwind skins themselves, so only the source can keep `color: color-mix()` of
-    // `currentcolor` from WebKit 16, which crashes on it.
+  it('never fades text with `text-current/*`', () => {
+    // It compiles to `color: color-mix()` of `currentcolor`, which crashes WebKit 16, and consumers compile the
+    // Tailwind skins themselves, so only the source can keep it out.
     const sources = globSync('packages/skins/src/**/*.{ts,tsx,css}', { cwd: workspaceDir }).filter(
       (file) => !file.includes('/tests/')
     );
     const unguarded = sources.flatMap((file) =>
       // Backticks mark prose that names the utility, not a class list that uses it.
-      [...readFileSync(resolve(workspaceDir, file), 'utf8').matchAll(/(?<![`\w:-])[\w:-]*text-current\/[\w.]+/g)]
-        .map(([utility]) => utility)
-        .filter((utility) => !utility.split(':').includes('media-current-mix'))
-        .map((utility) => `${file}: ${utility}`)
+      [...readFileSync(resolve(workspaceDir, file), 'utf8').matchAll(/(?<![`\w:-])[\w:-]*text-current\/[\w.]+/g)].map(
+        ([utility]) => `${file}: ${utility}`
+      )
     );
 
     expect(sources.length).toBeGreaterThan(0);
     expect(unguarded).toEqual([]);
   });
 
-  it('pairs each prefixed property with its `-webkit-` form in the Tailwind utilities', () => {
-    // Tailwind emits `@utility` bodies as written, and Lightning CSS cannot lower them before they ship.
-    const utilities = readFileSync(resolve(workspaceDir, 'packages/skins/src/styles/tailwind.css'), 'utf8');
-
-    for (const property of ['backdrop-filter', 'mask-image', 'mask-position', 'mask-repeat']) {
-      const plain = utilities.match(new RegExp(`(?<![-\\w])${property}:`, 'g'))?.length ?? 0;
-      const prefixed = utilities.match(new RegExp(`-webkit-${property}:`, 'g'))?.length ?? 0;
-
-      expect(prefixed, property).toBe(plain);
-    }
-  });
-
-  it('passes every generated skin stylesheet for the workspace browserslist', () => {
+  it('passes every generated skin stylesheet once lowered like the package builds', () => {
     const files = [
       ...globSync('packages/html/src/internal/skins/*/skin.css', { cwd: workspaceDir }),
       ...globSync('packages/react/src/presets/*/{skin,minimal-skin}.css', { cwd: workspaceDir }).filter(
@@ -118,7 +106,7 @@ describe('auditSkinCss', () => {
 
     for (const file of files) {
       const path = resolve(workspaceDir, file);
-      const audit = existsSync(path) ? auditSkinCss(readFileSync(path, 'utf8'), browsers) : undefined;
+      const audit = existsSync(path) ? auditSkinCss(lowerLikePackageBuild(readFileSync(path)), browsers) : undefined;
 
       expect(audit?.problems, file).toEqual([]);
       expect(
@@ -128,3 +116,18 @@ describe('auditSkinCss', () => {
     }
   });
 });
+
+/**
+ * The generated skins ship through `copyCssPlugin` and tsdown, which lower them for the root browserslist and leave
+ * `:dir()` and `light-dark()` alone, as `build/css-targets.ts` configures.
+ */
+function lowerLikePackageBuild(css: Buffer): string {
+  const { code } = transform({
+    filename: 'skin.css',
+    code: css,
+    targets: browserslistToTargets(browsers),
+    exclude: Features.DirSelector | Features.LightDark,
+  });
+
+  return new TextDecoder().decode(code);
+}
