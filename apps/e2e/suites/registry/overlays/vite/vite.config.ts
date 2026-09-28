@@ -1,15 +1,8 @@
 import { fileURLToPath, URL } from 'node:url';
 
-import { defineConfig } from 'vite-plus';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
-  test: {
-    // Vitest v4 compatibility: preserve mock call history.
-    // Remove after tests no longer rely on calls from setup or earlier tests.
-    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
-    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
-    clearMocks: false,
-  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

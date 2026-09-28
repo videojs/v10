@@ -309,6 +309,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       __SANDBOX_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
     },
     test: {
+      clearMocks: false,
       // The shell's tables and helpers, not the templates: those run under Playwright from `apps/e2e`.
       root: __dirname,
       include: ['app/tests/**/*.test.ts'],

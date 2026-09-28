@@ -17,6 +17,7 @@ const reactPlugins = react() as Plugin[];
 const config: ViteUserConfig = {
   plugins: [demoPlaceholderPlugin(), ...reactPlugins],
   test: {
+    clearMocks: false,
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
