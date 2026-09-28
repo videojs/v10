@@ -56,6 +56,7 @@ describe('auditSkinCss', () => {
     const mix = '.a { color: color-mix(in oklab, currentcolor 65%, transparent); }';
 
     expect(auditSkinCss(mix, floor).problems).toHaveLength(1);
+    expect(auditSkinCss(mix.replace(';', ' !important;'), floor).problems).toHaveLength(1);
     expect(auditSkinCss(`@supports (contain-intrinsic-size: auto 1px) { ${mix} }`, floor).problems).toEqual([]);
   });
 

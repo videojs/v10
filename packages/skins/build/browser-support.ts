@@ -93,7 +93,7 @@ function auditRules(
       // WebKit 16 crashes the page on this; the compiler moves it behind a condition Safari 16 fails.
       if (
         !conditions.some((condition) => condition.includes('contain-intrinsic-size')) &&
-        (rule.value.declarations?.declarations ?? []).some(isCurrentColorMix)
+        styleDeclarations(rule).some(isCurrentColorMix)
       ) {
         problems.push(`\`color: color-mix(…currentcolor…)\` in \`${describe(rule)}\` reaches WebKit 16`);
       }
@@ -123,18 +123,17 @@ function auditRules(
   }
 }
 
+function styleDeclarations(rule: Extract<Rule, { type: 'style' }>): Declaration[] {
+  return [...(rule.value.declarations?.declarations ?? []), ...(rule.value.declarations?.importantDeclarations ?? [])];
+}
+
 function auditDeclarations(
   rule: Extract<Rule, { type: 'style' }>,
   conditions: readonly string[],
   problems: string[],
   degraded: Set<string>
 ): void {
-  const declarations = [
-    ...(rule.value.declarations?.declarations ?? []),
-    ...(rule.value.declarations?.importantDeclarations ?? []),
-  ];
-
-  for (const declaration of declarations) {
+  for (const declaration of styleDeclarations(rule)) {
     const text = JSON.stringify(declaration);
     const functions = [
       ...GUARDED_FUNCTIONS.filter((name) => text.includes(`"${name}"`)),
