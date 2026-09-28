@@ -1,7 +1,7 @@
 {
   "name": "@videojs/element",
   "version": "10.0.0-rc.4",
-  "description": "Lightweight reactive custom element base for Video.js 10, installed with @videojs/html",
+  "description": "Lightweight reactive custom element base for Video.js",
   "keywords": [
     "custom-element",
     "element",
