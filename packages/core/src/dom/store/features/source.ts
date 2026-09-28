@@ -1,14 +1,28 @@
 import type { MediaSourceState } from '@videojs/media';
-import { isMediaSourceCapable } from '@videojs/media';
+import { isMediaSourceCapable, MediaReadyState } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 
 import { definePlayerFeature } from '../../feature';
+
+/** Events after which `readyState` may have risen or fallen; the media fires none dedicated to it. */
+const READY_STATE_EVENTS = [
+  'loadstart',
+  'emptied',
+  'loadedmetadata',
+  'loadeddata',
+  'canplay',
+  'canplaythrough',
+  'playing',
+  'waiting',
+  'seeking',
+  'seeked',
+] as const;
 
 export const sourceFeature = definePlayerFeature({
   name: 'source',
   state: ({ target, signals }): MediaSourceState => ({
     source: null,
-    canPlay: false,
+    readyState: MediaReadyState.HAVE_NOTHING,
     loadSource(src: string) {
       signals.clear();
 
@@ -29,14 +43,13 @@ export const sourceFeature = definePlayerFeature({
     const sync = () =>
       set({
         source: media.currentSrc || media.src || null,
-        canPlay: media.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA,
+        readyState: media.readyState,
       });
 
     sync();
 
-    listen(media, 'canplay', sync, { signal });
-    listen(media, 'canplaythrough', sync, { signal });
-    listen(media, 'loadstart', sync, { signal });
-    listen(media, 'emptied', sync, { signal });
+    for (const type of READY_STATE_EVENTS) {
+      listen(media, type, sync, { signal });
+    }
   },
 });

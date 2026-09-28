@@ -11,7 +11,7 @@ export type {
 } from '@videojs/element';
 // Element — reactive primitives for users extending UIElement
 export { DestroyMixin, ReactiveElement } from '@videojs/element';
-// Media predicates
+// Media predicates and constants
 export {
   hasMetadata,
   isMediaAudioTrackCapable,
@@ -29,6 +29,7 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
+  MediaReadyState,
   type NodeListLike,
 } from '@videojs/media';
 // Media

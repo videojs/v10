@@ -4,7 +4,7 @@ export type { IndicatorStatus, InputAction, InputIndicatorLabels } from '@videoj
 export * from './constants';
 // Core
 export * from '@videojs/core/dom';
-// Media predicates
+// Media predicates and constants
 export {
   hasMetadata,
   isMediaAudioTrackCapable,
@@ -22,6 +22,7 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
+  MediaReadyState,
   type NodeListLike,
 } from '@videojs/media';
 // Media

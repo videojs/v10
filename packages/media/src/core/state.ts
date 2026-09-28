@@ -116,11 +116,12 @@ export interface MediaSourceState {
    */
   source: string | null;
   /**
-   * Whether enough data is loaded to begin playback.
+   * How much media data is available, from `MediaReadyState.HAVE_NOTHING` (0) to `MediaReadyState.HAVE_ENOUGH_DATA`
+   * (4). Playback can begin at `HAVE_FUTURE_DATA`, when the media fires `canplay`.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState
    */
-  canPlay: boolean;
+  readyState: number;
   /**
    * Load a new media source. Returns the new source URL.
    *

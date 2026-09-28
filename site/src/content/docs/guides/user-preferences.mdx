@@ -183,14 +183,17 @@ export default function App() {
 
 ### Persist caption preference
 
-Save the showing track's `language` (not its generated id, which can change between sources), or `'off'` when the user turns captions off. Restoring is two phases: while the media loads, assert the saved preference whenever the track modes drift from it, because browsers can auto-enable a track of their own during loading. Once the media can play (`canPlay`), treat every change as the user's choice and save it. A restore that re-runs forever would keep overriding the user; one that runs only once can get overridden by the browser.
+Save the showing track's `language` (not its generated id, which can change between sources), or `'off'` when the user turns captions off. Restoring is two phases: while the media loads, assert the saved preference whenever the track modes drift from it, because browsers can auto-enable a track of their own during loading. Once the media can play (`readyState` reaches `MediaReadyState.HAVE_FUTURE_DATA`), treat every change as the user's choice and save it. A restore that re-runs forever would keep overriding the user; one that runs only once can get overridden by the browser.
 
 <FrameworkCase frameworks={["react"]}>
 
 ```tsx
 function CaptionsPersistence() {
   const store = usePlayer();
-  const { tracks, canPlay } = usePlayer((s) => ({ tracks: s.textTrackList, canPlay: s.canPlay }));
+  const { tracks, canPlay } = usePlayer((s) => ({
+    tracks: s.textTrackList,
+    canPlay: s.readyState >= MediaReadyState.HAVE_FUTURE_DATA,
+  }));
   const [saved] = useState(() => localStorage.getItem('player:captions'));
   const restored = useRef(false);
 
@@ -224,7 +227,7 @@ function CaptionsPersistence() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`: until `canPlay` is true, re-apply the saved preference by passing the matching track's `id` (or `'off'`) to `selectSubtitlesTrack` whenever the modes drift; afterward, save the showing track's `language`, or `'off'` when none is showing, on every change.
+Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`: until `store.readyState >= MediaReadyState.HAVE_FUTURE_DATA`, re-apply the saved preference by passing the matching track's `id` (or `'off'`) to `selectSubtitlesTrack` whenever the modes drift; afterward, save the showing track's `language`, or `'off'` when none is showing, on every change.
 
 </FrameworkCase>
 

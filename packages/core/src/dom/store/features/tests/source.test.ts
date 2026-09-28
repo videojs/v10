@@ -20,7 +20,13 @@ describe('sourceFeature', () => {
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
-      expect(store.state.canPlay).toBe(true);
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_ENOUGH_DATA);
+    });
+
+    it('starts at HAVE_NOTHING before attach', () => {
+      const store = createStore<PlayerTarget>()(sourceFeature);
+
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_NOTHING);
     });
 
     it('returns null source when no source set', () => {
@@ -35,10 +41,10 @@ describe('sourceFeature', () => {
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe(null);
-      expect(store.state.canPlay).toBe(false);
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_NOTHING);
     });
 
-    it('updates on canplay event', () => {
+    it('follows readyState as it rises while loading', () => {
       const video = createMockVideo({
         currentSrc: '',
         readyState: HTMLMediaElement.HAVE_NOTHING,
@@ -48,17 +54,41 @@ describe('sourceFeature', () => {
 
       store.attach({ media: video, container: null });
 
-      expect(store.state.canPlay).toBe(false);
+      setReadyState(video, HTMLMediaElement.HAVE_METADATA);
+      video.dispatchEvent(new Event('loadedmetadata'));
 
-      // Update mock to ready state
-      Object.defineProperty(video, 'readyState', {
-        value: HTMLMediaElement.HAVE_ENOUGH_DATA,
-        writable: false,
-        configurable: true,
-      });
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_METADATA);
+
+      setReadyState(video, HTMLMediaElement.HAVE_FUTURE_DATA);
       video.dispatchEvent(new Event('canplay'));
 
-      expect(store.state.canPlay).toBe(true);
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_FUTURE_DATA);
+
+      setReadyState(video, HTMLMediaElement.HAVE_ENOUGH_DATA);
+      video.dispatchEvent(new Event('canplaythrough'));
+
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_ENOUGH_DATA);
+    });
+
+    it('follows readyState as it falls while waiting for data', () => {
+      const video = createMockVideo({
+        currentSrc: 'https://example.com/video.mp4',
+        readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
+      });
+
+      const store = createStore<PlayerTarget>()(sourceFeature);
+
+      store.attach({ media: video, container: null });
+
+      setReadyState(video, HTMLMediaElement.HAVE_CURRENT_DATA);
+      video.dispatchEvent(new Event('waiting'));
+
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_CURRENT_DATA);
+
+      setReadyState(video, HTMLMediaElement.HAVE_FUTURE_DATA);
+      video.dispatchEvent(new Event('playing'));
+
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_FUTURE_DATA);
     });
 
     it('updates on loadstart event', () => {
@@ -93,19 +123,15 @@ describe('sourceFeature', () => {
 
       store.attach({ media: video, container: null });
 
-      expect(store.state.canPlay).toBe(true);
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_ENOUGH_DATA);
 
       // Update mock to empty state
       Object.defineProperty(video, 'currentSrc', { value: '', writable: false, configurable: true });
-      Object.defineProperty(video, 'readyState', {
-        value: HTMLMediaElement.HAVE_NOTHING,
-        writable: false,
-        configurable: true,
-      });
+      setReadyState(video, HTMLMediaElement.HAVE_NOTHING);
       video.dispatchEvent(new Event('emptied'));
 
       expect(store.state.source).toBe(null);
-      expect(store.state.canPlay).toBe(false);
+      expect(store.state.readyState).toBe(HTMLMediaElement.HAVE_NOTHING);
     });
   });
 
@@ -154,3 +180,7 @@ describe('sourceFeature', () => {
     });
   });
 });
+
+function setReadyState(video: HTMLVideoElement, readyState: number): void {
+  Object.defineProperty(video, 'readyState', { value: readyState, writable: false, configurable: true });
+}
