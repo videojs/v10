@@ -7,17 +7,26 @@ const readVersion = (): string => {
 };
 
 /**
- * Version of the `@videojs/core` build in use, matching the package's published version — for example `'10.0.0-rc.4'`.
- * The string is replaced at build time, so it identifies the exact published build rather than the version range a
- * consumer installed, which makes it useful for bug reports, diagnostics, and analytics.
+ * Version of the Video.js build in use, matching the installed player package's published version — for example
+ * `'10.0.0-rc.4'`. The string is replaced at build time, so it identifies the exact published build rather than the
+ * version range a consumer installed, which makes it useful for bug reports, diagnostics, and analytics.
  *
  * Falls back to `'UNKNOWN'` when the source is consumed without the build-time replacement applied.
  *
  * @example
+ *   HTML player
  *   ```ts
- *   import { VERSION } from '@videojs/core';
+ *   import { VERSION } from '@videojs/html';
  *
  *   console.log(VERSION); // '10.0.0-rc.4'
- *   ```;
+ *   ```
+ *
+ * @example
+ *   React player
+ *   ```ts
+ *   import { VERSION } from '@videojs/react';
+ *
+ *   console.log(VERSION); // '10.0.0-rc.4'
+ *   ```
  */
 export const VERSION: string = readVersion();
