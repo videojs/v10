@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/mux-audio@10.0.0-rc.3...@videojs/mux-audio@10.0.0-rc.4) (2026-09-26)
+
+
+### Miscellaneous Chores
+
+* **@videojs/mux-audio:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/mux-video bumped to 10.0.0-rc.4
+    * @videojs/spf bumped to 10.0.0-rc.4
+    * @videojs/utils bumped to 10.0.0-rc.4
+
 ## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/mux-audio@10.0.0-rc.2...@videojs/mux-audio@10.0.0-rc.3) (2026-09-25)
 
 

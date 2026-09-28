@@ -19,10 +19,21 @@ const HlsJsMediaTracks = HlsJsMediaTracksMixin(MediaTracksMixin(FakeHost));
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
 
-  return {
+  const engine = {
     audioTracks: [{ id: 0 }, { id: 1 }],
     audioTrack: 0,
-    nextLevel: -1,
+    manualLevel: -1,
+    // Level of the fragment buffered after the playing one, or -1 if none.
+    bufferedLevel: -1,
+    nextLevelWrites: [] as number[],
+    // Mirrors hls.js: the getter reports buffer state, the setter sets the selection.
+    get nextLevel(): number {
+      return engine.bufferedLevel;
+    },
+    set nextLevel(level: number) {
+      engine.manualLevel = level;
+      engine.nextLevelWrites.push(level);
+    },
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
 
@@ -44,7 +55,9 @@ function createEngine(): Hls {
     emit(event: string, ...args: any[]) {
       for (const fn of [...(listeners.get(event) ?? [])]) fn(event, ...args);
     },
-  } as unknown as Hls;
+  };
+
+  return engine as unknown as Hls;
 }
 
 const manifestParsed = (engine: Hls, levels: Array<Record<string, unknown>>) =>
@@ -123,7 +136,55 @@ describe('HlsJsMediaTracksMixin', () => {
     host.videoRenditions.selectedIndex = 2;
     await flush();
 
-    expect(engine.nextLevel).toBe(2);
+    expect(engine.manualLevel).toBe(2);
+  });
+
+  it('restores auto level selection when nothing is buffered ahead', async () => {
+    const engine = createEngine();
+    const host = new HlsJsMediaTracks(engine);
+
+    manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
+
+    host.videoRenditions.selectedIndex = 2;
+    await flush();
+
+    // Stalled: no fragment is buffered after the playing one.
+    (engine as any).bufferedLevel = -1;
+    host.videoRenditions.selectedIndex = -1;
+    await flush();
+
+    expect(engine.manualLevel).toBe(-1);
+  });
+
+  it('applies a manual selection that matches the next buffered level', async () => {
+    const engine = createEngine();
+    const host = new HlsJsMediaTracks(engine);
+
+    manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
+
+    // Auto mode has already buffered the next fragment at level 1.
+    (engine as any).bufferedLevel = 1;
+    host.videoRenditions.selectedIndex = 1;
+    await flush();
+
+    expect(engine.manualLevel).toBe(1);
+  });
+
+  it('skips the engine write when the selection is unchanged', async () => {
+    const engine = createEngine();
+    const host = new HlsJsMediaTracks(engine);
+
+    manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
+
+    host.videoRenditions.selectedIndex = 2;
+    await flush();
+
+    // Selection changes back and forth within one tick, so `change` fires with the original value.
+    host.videoRenditions.selectedIndex = 1;
+    host.videoRenditions.selectedIndex = 2;
+    await flush();
+
+    expect((engine as any).nextLevelWrites).toEqual([2]);
   });
 
   it('marks the active rendition from LEVEL_SWITCHED', () => {
@@ -135,7 +196,7 @@ describe('HlsJsMediaTracksMixin', () => {
     (engine as any).emit(Hls.Events.LEVEL_SWITCHED, { level: 1 });
 
     expect([...host.videoRenditions].map((rendition) => rendition.active)).toEqual([false, true, false]);
-    expect(engine.nextLevel).toBe(-1);
+    expect(engine.manualLevel).toBe(-1);
   });
 
   it('forwards an audio track selection to engine.audioTrack', async () => {

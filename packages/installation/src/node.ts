@@ -515,6 +515,9 @@ export function runAgentsCli(packageVersion: string, args = process.argv.slice(2
 
   defaults.template = detectTemplate(cwd);
 
+  // Packaged modules need a bundler, so a page without a package.json gets CDN scripts unless another method is asked for.
+  if (defaults.template.value === 'none') defaults.method = { value: 'cdn', source: defaults.template.source };
+
   const result = runAgentsCommand(packageVersion, args, defaults);
 
   if (result.stdout) process.stdout.write(result.stdout);
