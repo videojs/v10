@@ -8,8 +8,8 @@ import PenIcon from '@/assets/icons/pen.svg?react';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
-import { filterSidebar, findFirstGuide } from '@/utils/docs/sidebar';
-import { buildDocsUrl, isDocsGuideActive } from '@/utils/docs/routing';
+import { filterSidebar } from '@/utils/docs/sidebar';
+import { isDocsGuideActive } from '@/utils/docs/routing';
 
 type Props = {
   framework: SupportedFramework;
@@ -41,8 +41,9 @@ function containsActivePath(item: SidebarItemType): boolean {
   return isDocsGuideActive(framework, item.slug, currentPath);
 }
 
-// Top-level sections are the sidebar's switcher. Each entry links to its first guide; the entry that contains the
-// current page is open. Fall back to the first entry so index-style pages still show a navigation tree.
+// Top-level sections are the sidebar's tabs. Every section's tree is rendered so switching tabs only swaps the visible
+// tree, keeping the reader on the current page (and the mobile menu open). The section that contains the current page
+// starts selected; fall back to the first so index-style pages still show a navigation tree.
 const tabs = filteredSidebar.filter(isSection);
 const looseItems = filteredSidebar.filter((item) => !isSection(item));
 const activeTab = tabs.find(containsActivePath) ?? tabs[0];
@@ -53,12 +54,17 @@ const indicatorTransitionName =
     ? `sidebar-indicator-${activeTab.sidebarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     : undefined;
 
-// Cross-document view transition names for the section switcher. Framework changes temporarily disable these names
-// so the sidebar updates atomically, while section navigation keeps the pill and label transitions.
-const tabTransition = (slug: string) =>
-  animateIndicator ? `view-transition-name: sidebar-tab-${slug}; view-transition-class: sidebar-tab-label` : undefined;
-const pillTransition = animateIndicator ? 'view-transition-name: sidebar-tab-pill' : undefined;
+// View transition names that slide the pill between tabs. The animated sidebar keeps them so the pill also moves across
+// page navigations; `section-tabs` lends them to other sidebars only while a tab switches in place, because a mobile
+// menu that is gone after navigating would otherwise leave its tabs fading over the next page. Framework changes
+// temporarily disable these names so the sidebar updates atomically.
+const pillTransitionName = 'sidebar-tab-pill';
+const labelTransitionName = (slug: string) => `sidebar-tab-${slug}`;
+const transitionStyle = (name: string, extra = '') =>
+  [animateIndicator && `view-transition-name: ${name}`, extra].filter(Boolean).join('; ') || undefined;
 const tabSlug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+// Layouts render one sidebar per placement and framework, so tab and panel IDs need both to stay unique.
+const idPrefix = `docs-sidebar-${framework}-${animateIndicator ? 'aside' : 'menu'}`;
 
 const TAB_ICONS = {
   Guides: BookIcon,
@@ -72,44 +78,49 @@ const TAB_ICONS = {
   <slot />
   {
     tabs.length > 1 && (
-      <nav aria-label="Docs sections" class="px-6 pt-5">
-        <div class="mx-auto grid w-full max-w-3xl gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
+      <div class="px-6 pt-5">
+        <div
+          role="tablist"
+          aria-label="Docs sections"
+          aria-orientation="vertical"
+          data-docs-section-tabs
+          class="mx-auto grid w-full max-w-3xl gap-1 rounded-lg corner-squircle border border-line bg-surface p-1"
+        >
           {tabs.map((tab) => {
             const isActive = tab === activeTab;
             const Icon = TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS];
-            const firstGuide = findFirstGuide(framework, tab.contents);
+            const slug = tabSlug(tab.sidebarLabel);
 
             return (
-              <a
-                href={buildDocsUrl(framework, firstGuide)}
-                data-docs-slug={firstGuide}
-                aria-current={isActive ? "true" : undefined}
+              <button
+                type="button"
+                role="tab"
+                id={`${idPrefix}-tab-${slug}`}
+                aria-controls={`${idPrefix}-panel-${slug}`}
+                aria-selected={isActive ? "true" : "false"}
+                tabindex={isActive ? 0 : -1}
                 class:list={[
-                  // One weight for both states prevents a layout shift when the active section changes.
-                  "relative isolate flex items-center rounded-md corner-squircle px-3 py-2 text-p3 leading-5 font-medium select-none",
-                  isActive
-                    ? "text-faded-black dark:text-manila-light"
-                    : "text-muted intent:text-faded-black dark:intent:text-manila-light",
+                  // One weight for both states prevents a layout shift when the selected section changes.
+                  "group relative isolate flex cursor-pointer items-center rounded-md corner-squircle px-3 py-2 text-left text-p3 leading-5 font-medium select-none",
+                  "text-muted intent:text-faded-black dark:intent:text-manila-light aria-selected:text-faded-black dark:aria-selected:text-manila-light",
+                  "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold",
                 ]}
               >
-                {isActive && (
-                  <span
-                    aria-hidden="true"
-                    data-docs-view-transition
-                    class="absolute inset-0 -z-10 rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line"
-                    style={pillTransition}
-                  />
-                )}
+                <span
+                  aria-hidden="true"
+                  data-docs-view-transition
+                  data-docs-tab-transition={pillTransitionName}
+                  class="absolute inset-0 -z-10 hidden rounded-md corner-squircle bg-surface-raised shadow-xs ring-1 ring-line group-aria-selected:block"
+                  style={transitionStyle(pillTransitionName)}
+                />
                 <span
                   class="flex flex-1 items-center gap-2.5"
                   data-docs-view-transition
-                  style={tabTransition(tabSlug(tab.sidebarLabel))}
+                  data-docs-tab-transition={labelTransitionName(slug)}
+                  style={transitionStyle(labelTransitionName(slug), 'view-transition-class: sidebar-tab-label')}
                 >
                   {Icon && (
-                    <Icon
-                      className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
-                      aria-hidden="true"
-                    />
+                    <Icon className="size-4 shrink-0 opacity-70 group-aria-selected:opacity-100" aria-hidden="true" />
                   )}
                   <span class="flex-1">{tab.sidebarLabel}</span>
                   {tab.devOnly && (
@@ -118,24 +129,48 @@ const TAB_ICONS = {
                     </span>
                   )}
                 </span>
-              </a>
+              </button>
             );
           })}
         </div>
-      </nav>
+      </div>
     )
   }
   <nav aria-label="Docs sidebar" class="px-6 pt-8 pb-6">
     {
-      activeTab?.contents.map((item) => (
-        <SidebarItem
-          item={item}
-          framework={framework}
-          docTitles={docTitles}
-          docStabilities={docStabilities}
-          indicatorTransitionName={indicatorTransitionName}
-        />
-      ))
+      tabs.length > 1
+        ? tabs.map((tab) => {
+            const slug = tabSlug(tab.sidebarLabel);
+            const isActive = tab === activeTab;
+
+            return (
+              <div
+                role="tabpanel"
+                id={`${idPrefix}-panel-${slug}`}
+                aria-labelledby={`${idPrefix}-tab-${slug}`}
+                hidden={!isActive}
+              >
+                {tab.contents.map((item) => (
+                  <SidebarItem
+                    item={item}
+                    framework={framework}
+                    docTitles={docTitles}
+                    docStabilities={docStabilities}
+                    indicatorTransitionName={isActive ? indicatorTransitionName : undefined}
+                  />
+                ))}
+              </div>
+            );
+          })
+        : activeTab?.contents.map((item) => (
+            <SidebarItem
+              item={item}
+              framework={framework}
+              docTitles={docTitles}
+              docStabilities={docStabilities}
+              indicatorTransitionName={indicatorTransitionName}
+            />
+          ))
     }
     {
       looseItems.map((item) => (
@@ -144,6 +179,12 @@ const TAB_ICONS = {
     }
   </nav>
 </div>
+
+<script>
+  import { initializeDocsSectionTabs } from '@/utils/docs/section-tabs';
+
+  initializeDocsSectionTabs();
+</script>
 
 <style is:global>
   /* Keep the morphing pill beneath the labels while the page transition runs. */

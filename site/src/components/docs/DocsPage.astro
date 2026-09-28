@@ -108,9 +108,17 @@ const jsonLdSchema = createTechArticleSchema({
         data-category={category}
         data-type={doc.data.type}
       >
-        <header class="mx-auto mb-8 max-w-3xl border-b border-line pt-10 pb-8">
-          <div class="mb-2 flex items-center justify-between gap-4" data-llms-ignore data-search-ignore>
-            <p class="flex items-center gap-1.5 font-display text-h4 uppercase text-accent select-none">
+        {/* Narrow containers stack the copy button above the eyebrow; wider ones give it a column beside the title. */}
+        <header
+          class="mx-auto mb-8 grid max-w-3xl grid-cols-1 border-b border-line pt-10 pb-8 @xl:grid-cols-(--xl-cols) @xl:gap-x-6"
+          style="--xl-cols: minmax(0, 1fr) auto"
+        >
+          <div class="row-start-2 @xl:row-start-1">
+            <p
+              class="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 font-display text-h4 uppercase text-accent select-none"
+              data-llms-ignore
+              data-search-ignore
+            >
               {typeLabel}
               {eyebrowSection && (
                 <>
@@ -119,27 +127,26 @@ const jsonLdSchema = createTechArticleSchema({
                 </>
               )}
             </p>
-            <CopyMarkdownButton client:idle className="ml-auto shrink-0" />
+            <div class="mb-4 flex flex-wrap items-center gap-3">
+              <H2Markdown
+                as="h1"
+                maxWidth={false}
+                class={clsx(
+                  "mt-0 mb-0 text-h25 leading-tight",
+                  isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
+                )}
+              >
+                {getDocTitle(doc, framework)}
+              </H2Markdown>
+              {doc.data.stability && <ApiStabilityBadge stability={doc.data.stability} />}
+            </div>
+            {/* Guides that share a header reserve their longest description so switching between them doesn't shift the page. */}
+            <p class:list={["text-p2", stabilizeHeader && "min-h-18 @md:min-h-12"]}>{description}</p>
           </div>
-          <div
-            class:list={[
-              "mb-4 flex flex-wrap items-center gap-3",
-              stabilizeHeader && "min-h-24 @sm:min-h-18 @xl:min-h-9",
-            ]}
-          >
-            <H2Markdown
-              as="h1"
-              maxWidth={false}
-              class={clsx(
-                "mt-0 mb-0 text-h25 leading-tight @lg:text-h2 @lg:leading-tight",
-                isCodeIdentifier(getDocTitle(doc, framework)) && "normal-case",
-              )}
-            >
-              {getDocTitle(doc, framework)}
-            </H2Markdown>
-            {doc.data.stability && <ApiStabilityBadge stability={doc.data.stability} />}
+          {/* The negative offset centres the button on the eyebrow's line. */}
+          <div class="row-start-1 mb-8 @xl:col-start-2 @xl:mb-0 @xl:-mt-2" data-llms-ignore data-search-ignore>
+            <CopyMarkdownButton client:idle />
           </div>
-          <p class:list={["text-p2", stabilizeHeader && "min-h-12 @xl:min-h-6"]}>{description}</p>
         </header>
         {
           doc.data.stability === "unstable" && (

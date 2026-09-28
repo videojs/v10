@@ -698,12 +698,12 @@ v8 put a handful of utilities on the `videojs` global for anyone building a cust
 These are worth reaching for before writing your own when extending the player. For example, `formatTime` is the exact digital-clock formatting the packaged skins use for their own time displays, so a custom one will match.
 The package is split into subpaths, so you can import only the module you need. Other than `time`, it includes `array`, `events`, `i18n`, `jwt`, `predicate`, `string`, and `types` subpaths for anything else a custom component or plugin replacement needs.
 
-Import the util function directly with a `<script>` tag:
+Import the util function directly in a module `<script>` tag:
 
 ```html
-<script src="
-    {{VJS10_UTILS_CDN_BASE}}/dist/time/formatTime.min.js
-"></script>
+<script type="module">
+  import { formatTime } from '{{VJS10_UTILS_CDN_BASE}}/dist/time.js';
+</script>
 ```
 
 Or with a bundler:

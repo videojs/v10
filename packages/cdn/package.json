@@ -1,12 +1,15 @@
 {
   "name": "@videojs/cdn",
-  "version": "10.0.0-rc.3",
-  "description": "Browser-ready Video.js distribution bundles",
+  "version": "10.0.0-rc.4",
+  "description": "Video.js 10 as browser-ready bundles for script tags, with no build step",
   "keywords": [
+    "audio",
     "cdn",
     "html",
     "media",
     "player",
+    "video",
+    "video.js",
     "videojs"
   ],
   "homepage": "https://videojs.org",

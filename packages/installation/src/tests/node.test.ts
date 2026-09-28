@@ -94,6 +94,15 @@ describe('runAgentsInit', () => {
     );
     expect(template(undetected)).toBe('next for React; vite otherwise');
 
+    const source = 'an index.html page with no package.json';
+    const plainPage = JSON.parse(
+      runAgentsInit('10.0.0', ['agents', 'init', '--json'], { method: { value: 'cdn', source } }).stdout
+    );
+
+    expect(plainPage.options.find(({ flag }: { flag: string }) => flag === '--method').default).toBe(
+      `cdn (from ${source})`
+    );
+
     // SAFETY: discovery JSON is produced by createInstallationDiscovery, whose examples field is a string array.
     for (const example of discovery.examples as string[]) {
       const args = example.split(' ').slice(2);
@@ -777,6 +786,25 @@ describe('runAgentsInit', () => {
     expect(json.selectedOptions.framework).toBe('html');
     expect(json.defaultedOptions).toContain('framework');
     expect(json.defaultedOptionSources).toEqual({});
+  });
+
+  it('defaults a plain HTML page to CDN scripts unless another method or framework is requested', () => {
+    const source = 'an index.html page with no package.json';
+    const plainPage = { method: { value: 'cdn', source }, template: { value: 'none', source } } as const;
+    const args = ['agents', 'init', '--media', 'hls'];
+    const markdown = runAgentsInit('10.0.0', args, plainPage);
+    const json = JSON.parse(runAgentsInit('10.0.0', [...args, '--json'], plainPage).stdout);
+    const packaged = JSON.parse(runAgentsInit('10.0.0', [...args, '--method', 'packaged', '--json'], plainPage).stdout);
+    const react = JSON.parse(runAgentsInit('10.0.0', [...args, '--framework', 'react', '--json'], plainPage).stdout);
+
+    expect(markdown.stdout).toContain(`Defaulted options: method (cdn from ${source}),`);
+    expect(json.selectedOptions).toMatchObject({ method: 'cdn', project: 'existing', template: 'none' });
+    expect(json.defaultedOptionSources).toEqual({ method: source, template: source });
+    expect(json.reproduceCommand).toContain('--method cdn');
+    expect(packaged.selectedOptions.method).toBe('packaged');
+    expect(packaged.defaultedOptionSources).toEqual({ template: source });
+    expect(react.selectedOptions.method).toBe('packaged');
+    expect(react.defaultedOptionSources).not.toHaveProperty('method');
   });
 
   it('points at the matching CLI release when the project has another player version', () => {
