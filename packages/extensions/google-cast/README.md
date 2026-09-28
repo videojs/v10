@@ -30,4 +30,4 @@ import { GoogleCast } from '@videojs/react/extensions/google-cast';
 
 ## License
 
-[Apache-2.0](../../LICENSE)
+[Apache-2.0](../../../LICENSE)

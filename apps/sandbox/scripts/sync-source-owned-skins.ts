@@ -158,7 +158,7 @@ async function writeFixture(root: string, address: string, alias: string): Promi
     name: 'videojs-sandbox-skins',
     private: true,
     type: 'module',
-    packageManager: 'pnpm@12.3.4',
+    packageManager: 'pnpm@12.6.0',
     // Every package the registry items depend on, so the CLI copies files without installing anything.
     dependencies: {
       '@videojs/core': '*',

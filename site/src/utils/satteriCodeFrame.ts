@@ -1,4 +1,4 @@
-import type { MdastContent } from 'satteri';
+import type { MdastParentContent } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
 
 import type { MdastVisitorContext } from './satteriAstroData';
@@ -36,12 +36,13 @@ export function satteriCodeFrame() {
 
       if (title) attributes.push({ type: 'mdxJsxAttribute', name: 'title', value: title });
 
+      // SAFETY: the literal is a well-formed `mdxJsxFlowElement` parent; its inferred attribute type is too wide.
       ctx.wrapNode(node, {
         type: 'mdxJsxFlowElement',
         name: 'CodeFrame',
         attributes,
         children: [],
-      } as MdastContent);
+      } as MdastParentContent);
     },
   });
 }
