@@ -20,20 +20,9 @@ const READY_STATE_EVENTS = [
 
 export const sourceFeature = definePlayerFeature({
   name: 'source',
-  state: ({ target, signals }): MediaSourceState => ({
-    source: null,
+  state: (): MediaSourceState => ({
+    currentSrc: '',
     readyState: MediaReadyState.HAVE_NOTHING,
-    loadSource(src: string) {
-      signals.clear();
-
-      const { media } = target();
-      if (!isMediaSourceCapable(media)) return src;
-
-      media.src = src;
-      media.load();
-
-      return src;
-    },
   }),
 
   attach({ target, signal, set }) {
@@ -42,7 +31,7 @@ export const sourceFeature = definePlayerFeature({
 
     const sync = () =>
       set({
-        source: media.currentSrc || media.src || null,
+        currentSrc: media.currentSrc,
         readyState: media.readyState,
       });
 

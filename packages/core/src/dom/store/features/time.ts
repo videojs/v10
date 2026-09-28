@@ -6,6 +6,7 @@ import {
   type MediaTimeState,
 } from '@videojs/media';
 import { listen, onEvent } from '@videojs/utils/dom';
+import { anyAbortSignal } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
 
 import { definePlayerFeature } from '../../feature';
@@ -32,7 +33,16 @@ export const timeFeature = definePlayerFeature({
       set({ currentTime: clampedTime, seeking: true });
 
       media.currentTime = clampedTime;
-      await onEvent(media, 'seeked', { signal }).catch(noop);
+
+      // A new source abandons the seek without `seeked`, so `emptied` settles it too.
+      const settled = new AbortController();
+      const until = anyAbortSignal([signal, settled.signal]);
+
+      await Promise.race([
+        onEvent(media, 'seeked', { signal: until }).catch(noop),
+        onEvent(media, 'emptied', { signal: until }).catch(noop),
+      ]);
+      settled.abort();
 
       return media.currentTime;
     },

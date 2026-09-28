@@ -109,12 +109,12 @@ export interface MediaTimeState {
 
 export interface MediaSourceState {
   /**
-   * Current media source URL (null if none).
+   * URL of the loaded media resource, or an empty string when there is none. Set sources on the media element, whose
+   * `src` or `source` also carries type and engine configuration.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentSrc
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src
    */
-  source: string | null;
+  currentSrc: string;
   /**
    * How much media data is available, from `MediaReadyState.HAVE_NOTHING` (0) to `MediaReadyState.HAVE_ENOUGH_DATA`
    * (4). Playback can begin at `HAVE_FUTURE_DATA`, when the media fires `canplay`.
@@ -122,13 +122,6 @@ export interface MediaSourceState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState
    */
   readyState: number;
-  /**
-   * Load a new media source. Returns the new source URL.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load
-   */
-  loadSource(src: string): string;
 }
 
 export interface MediaStreamTypeState {
