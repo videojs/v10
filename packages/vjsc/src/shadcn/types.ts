@@ -1,4 +1,3 @@
-import type { Targets } from 'lightningcss';
 import type { RegistryItem } from 'shadcn/schema';
 
 import type { ModuleMeta } from '../components/meta';
@@ -108,6 +107,4 @@ export interface VjscRegistryOptions<Meta extends ModuleMeta = ModuleMeta> {
   readonly items: RegistryItemsOptions<Meta>;
   readonly styles?: RegistryStylesOptions | undefined;
   readonly meta?: RegistryItem['meta'];
-  /** Lower emitted stylesheets for these browsers, from `browserslistToTargets()`. */
-  readonly targets?: Targets | undefined;
 }

@@ -47,7 +47,7 @@ Packaged HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/
 
 </FrameworkCase>
 
-[Lightning CSS](https://lightningcss.dev/transpilation.html), which Vite uses to minify CSS, rewrites `light-dark()` and `:dir()` for every browser when its targets include older ones, not only for those older browsers. Its `light-dark()` output depends on a `color-scheme` declaration the skins do not make, so the skin colors break. The skins already handle both features, so exclude them:
+[Lightning CSS](https://lightningcss.dev/transpilation.html), which Vite uses to minify CSS, rewrites `light-dark()` and `:dir()` for every browser when its targets include older ones, not only for those older browsers. Its `light-dark()` output depends on a `color-scheme` declaration the skins do not make, so the skin colors break. The skins keep `light-dark()` inside `@supports` checks, which Lightning CSS 1.32 and earlier leave alone but 1.33 and later rewrite anyway. The skins already handle both features, so exclude them:
 
 ```ts title="vite.config.ts"
 import { Features } from 'lightningcss';

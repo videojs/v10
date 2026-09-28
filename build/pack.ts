@@ -20,9 +20,15 @@ export const baseConfig = {
   // Matches `packages/<name>/dist` and bucketed `packages/<bucket>/<name>/dist`.
   ignoreWatch: [/[/\\]packages[/\\](?:[^/\\]+[/\\])?[^/\\]+[/\\]dist(?:[/\\]|$)/],
   report: process.env.CI === 'true',
-  // tsdown transforms `?inline` CSS itself, and without targets it drops the vendor prefixes the skins rely on.
-  css: { lightningcss: { targets: cssTargets, exclude: cssExclude } },
 } satisfies PackUserConfig;
+
+/**
+ * CSS options for packs that inline skin CSS through `?inline` imports, which tsdown transforms itself: without targets
+ * it drops the vendor prefixes the skins rely on.
+ */
+export const inlineCssConfig = {
+  lightningcss: { targets: cssTargets, exclude: cssExclude },
+} satisfies PackUserConfig['css'];
 
 /** Shared options for packages that emit `dist/dev` and `dist/default`. */
 export function packageBuildConfig(mode: PackageBuildMode, platform: 'browser' | 'neutral' = 'neutral') {

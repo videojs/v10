@@ -1,10 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
-import { type ReturnedRule, type Targets, transform as transformCss } from 'lightningcss';
+import { type ReturnedRule, transform as transformCss } from 'lightningcss';
 
 import type { ModuleMeta } from '../components/meta';
-import { lowerStyles } from '../styles/lower';
 import { flattenScopes } from '../styles/scope';
 import { setUnique } from '../utils/map';
 import { isInsideRoot } from '../utils/path';
@@ -21,8 +20,6 @@ export interface BundleStylesOptions {
   readonly asset?: string | undefined;
   /** Whether captured virtual stylesheet assets should be included. */
   readonly includeAssets?: boolean | undefined;
-  /** Lower the bundle for these browsers, from `browserslistToTargets()`. */
-  readonly targets?: Targets | undefined;
   /**
    * Rewrite `@scope` blocks into zero-specificity `:where()` selectors, for bundles that must render in browsers
    * without `@scope`. Registry output keeps `@scope`, which reads better in the files consumers edit.
@@ -82,9 +79,7 @@ export async function bundleStyles<Node extends ModuleMeta>(
 
   const merged = mergeStyles(source.trimEnd() + '\n', `${options.label}.css`, options.label, pieces);
 
-  const scoped = options.flattenScopes ? flattenScopes(merged) : merged;
-
-  return options.targets ? lowerStyles(scoped, { targets: options.targets }) : scoped;
+  return options.flattenScopes ? flattenScopes(merged) : merged;
 }
 
 /** One authored file or generated asset within a bundle, located by the line where its CSS starts. */

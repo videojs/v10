@@ -29,6 +29,6 @@ export const viteCssTarget = browsers.flatMap((browser) => {
 
 /**
  * Features Lightning CSS would rewrite for every browser instead of only old ones. Skin stylesheets keep `:dir()`
- * inside forgiving `:where()` lists and ship their own `light-dark()` fallbacks; see `lowerStyles` in `vjsc`.
+ * inside forgiving `:where()` lists and ship their own `light-dark()` fallbacks inside `@supports`.
  */
 export const cssExclude = Features.DirSelector | Features.LightDark;

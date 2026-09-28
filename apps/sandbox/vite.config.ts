@@ -419,7 +419,6 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       port: 5173,
       strictPort: true,
     },
-    // Skins keep `:dir()` in forgiving lists and ship their own `light-dark()` fallbacks, so the minifier leaves both.
     // Tailwind's dev output keeps nested rules and newer `color-mix()` syntax for its production optimizer, so lower
     // every stylesheet in dev too; older supported browsers otherwise drop those rules. Skins keep `:dir()` in
     // forgiving lists and ship their own `light-dark()` fallbacks, so both stay as written.
