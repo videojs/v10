@@ -6,21 +6,22 @@ on:
   push:
     branches:
       - main
-  # Recovery hatch: release-please recomputes each package's commit range from its
-  # latest release, so a missing tag makes that package replay old commits into the
-  # next release PR. Dispatching re-runs the calculation once the tag is restored,
-  # without needing an unrelated commit on main to trigger it. release-please
-  # detects the target branch from the repository default, so no ref input is
-  # needed here.
+  # An empty version re-runs release-please after a missing tag is restored.
+  # A version resumes an existing release whose publication failed partway.
   workflow_dispatch:
+    inputs:
+      recover_version:
+        description: 'Existing release version to finish publishing (for example, 10.0.0-rc.4); leave empty to run release-please'
+        required: false
+        type: string
 
 jobs:
   release:
     runs-on: ubuntu-latest
     environment: production
     outputs:
-      released: ${{ steps.release.outputs.releases_created }}
-      version: ${{ steps.release.outputs['packages/html--version'] }}
+      released: ${{ steps.target.outputs.released }}
+      version: ${{ steps.target.outputs.dist_tag_version }}
     permissions:
       contents: write
       pull-requests: write
@@ -35,51 +36,117 @@ jobs:
       # the app's bot user rather than a maintainer.
       - uses: actions/create-github-app-token@v2
         id: app-token
+        if: ${{ inputs.recover_version == '' }}
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - uses: googleapis/release-please-action@v4
         id: release
+        if: ${{ inputs.recover_version == '' }}
         with:
           token: ${{ steps.app-token.outputs.token }}
           config-file: .github/release-please/release-please-config.json
           manifest-file: .github/release-please/.release-please-manifest.json
 
+      - name: Select release to publish
+        id: target
+        env:
+          RECOVER_VERSION: ${{ inputs.recover_version }}
+          RELEASE_CREATED: ${{ steps.release.outputs.releases_created }}
+          RELEASE_SHA: ${{ steps.release.outputs['packages/cdn--sha'] }}
+          RELEASE_VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
+          RELEASE_TAG: ${{ steps.release.outputs['packages/cdn--tag_name'] }}
+          DIST_TAG_VERSION: ${{ steps.release.outputs['packages/html--version'] }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$RECOVER_VERSION" ]; then
+            if [[ ! "$RECOVER_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Invalid release version: $RECOVER_VERSION"
+              exit 1
+            fi
+
+            # Publishing sets latest and later force-pushes site/v10, so only
+            # the current release on main is safe to resume.
+            if [ "$GITHUB_REF" != 'refs/heads/main' ]; then
+              echo '::error::Release recovery must be dispatched from main'
+              exit 1
+            fi
+
+            current_version=$(gh api "repos/${GITHUB_REPOSITORY}/contents/packages/cdn/package.json?ref=main" --jq '.content | @base64d | fromjson | .version')
+            if [ "$RECOVER_VERSION" != "$current_version" ]; then
+              echo "::error::Release recovery must use the current CDN version ($current_version)"
+              exit 1
+            fi
+
+            tag="@videojs/cdn@$RECOVER_VERSION"
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName > /dev/null
+            echo "ref=refs/tags/$tag" >> "$GITHUB_OUTPUT"
+            echo "version=$RECOVER_VERSION" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            echo "dist_tag_version=$RECOVER_VERSION" >> "$GITHUB_OUTPUT"
+          elif [ "$RELEASE_CREATED" = 'true' ]; then
+            if [ -z "$RELEASE_SHA" ] || [ -z "$RELEASE_VERSION" ] || [ -z "$RELEASE_TAG" ]; then
+              echo '::error::Release Please did not provide the CDN release ref, version, and tag'
+              exit 1
+            fi
+
+            echo "ref=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+            echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+            echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+            echo "dist_tag_version=$DIST_TAG_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            exit 0
+          fi
+
+          echo 'released=true' >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v5
-        # these if statements ensure that a publication only occurs when
-        # a new release is created:
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         with:
           fetch-depth: 0 # Fetch all history for all tags and branches
           # release-please creates the tags while this job is running, so the
-          # triggering SHA is still the commit before the release PR. Build the
-          # exact commit tagged for @videojs/cdn instead.
-          ref: ${{ steps.release.outputs['packages/cdn--sha'] }}
+          # triggering SHA is still the commit before the release PR. Recovery
+          # also checks out the exact commit tagged for @videojs/cdn.
+          ref: ${{ steps.target.outputs.ref }}
 
       - name: Setup pnpm
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         uses: pnpm/action-setup@v6.1.0
 
       - uses: actions/setup-node@v5
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: pnpm i --frozen-lockfile
 
       - name: Verify release checkout
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: |
           node -e "process.exit(require('./packages/cdn/package.json').version === process.env.VERSION ? 0 : 1)"
+
+          if [ -n "$RECOVER_VERSION" ]; then
+            git fetch origin main --quiet
+            if ! git merge-base --is-ancestor HEAD origin/main; then
+              echo '::error::The recovery tag is not on main'
+              exit 1
+            fi
+
+            if ! git diff --quiet HEAD origin/main -- packages site; then
+              echo '::error::Packages or site changed on main since this release'
+              exit 1
+            fi
+          fi
         env:
-          VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
+          VERSION: ${{ steps.target.outputs.version }}
+          RECOVER_VERSION: ${{ inputs.recover_version }}
 
       - name: Restore Vite Task cache
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
@@ -88,25 +155,25 @@ jobs:
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Clean
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: .github/scripts/run-logged.sh clean pnpm clean
 
       - name: Build
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: .github/scripts/run-logged.sh build-packages pnpm build:packages
 
       - name: Build CDN bundles
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: .github/scripts/run-logged.sh build-cdn pnpm build:cdn
 
       # Fail before publishing rather than ship bundles that reach out to a public
       # CDN at runtime, which would break self-hosted and archive installs.
       - name: Check CDN bundles are self-contained
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: pnpm -F @videojs/cdn check:cdn
 
       - name: Build distribution archive
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: pnpm -F @videojs/cdn build:archive
 
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
@@ -114,20 +181,20 @@ jobs:
       # below) copy that subtree into each package's docs/ directory so it ships in the tarball.
       # The task graph lets Vite Task reuse the package builds here.
       - name: Build site (required by html/react prepack)
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: .github/scripts/run-logged.sh build-site pnpm build:site
 
       - name: Publish
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: pnpm --fail-if-no-match -r publish --filter "./packages/**" --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Attach the archive to the @videojs/cdn release so installers outside npm
-      # (Composer, Drupal) have a stable, versioned download. Use the outputs from
-      # the release that this run created, matching the SHA checked out above.
+      # (Composer, Drupal) have a stable, versioned download. Use the tag and
+      # version selected above, matching the checkout for this run.
       - name: Upload distribution archive to the release
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: |
           gh release upload "$RELEASE_TAG" \
             "packages/cdn/archive/videojs-cdn-${VERSION}.zip" \
@@ -141,11 +208,11 @@ jobs:
           grep -Fx "SHA256SUMS" <<< "$ASSETS"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.release.outputs['packages/cdn--tag_name'] }}
-          VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
+          RELEASE_TAG: ${{ steps.target.outputs.tag }}
+          VERSION: ${{ steps.target.outputs.version }}
 
       - name: Update site/v10 branch
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.target.outputs.released == 'true' }}
         run: git push origin HEAD:refs/heads/site/v10 --force
 
   # `pnpm publish` above tags each release `latest`; keep `next` on the same
