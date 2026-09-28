@@ -3,7 +3,6 @@ import { bundleStyles, renderHtml } from 'vjsc/graph';
 
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import { skinCatalogEntry } from '../catalog.ts';
-import { cssTargets } from '../css-targets.ts';
 import { skinBaseStylesheet } from '../skin.ts';
 import { iconImports } from '../target/html-render.ts';
 import { htmlComponentTarget } from '../target/html.tsx';
@@ -44,7 +43,6 @@ export async function createHtmlPackageSkins(
       await bundleStyles(graph, skin.modules, {
         label: name,
         files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
-        targets: cssTargets,
         // Packaged skins reach browsers without `@scope`; the registry keeps it.
         flattenScopes: true,
       })

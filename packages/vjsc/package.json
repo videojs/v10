@@ -97,7 +97,6 @@
     "tailwindcss": "catalog:"
   },
   "devDependencies": {
-    "browserslist": "^4.29.0",
     "vite": "catalog:",
     "vite-plus": "catalog:"
   }
