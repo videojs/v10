@@ -84,10 +84,11 @@ export default styles({
       variants: { default: 'shadow-media-separator' },
     },
     hint: {
-      utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 opacity-65',
+      utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2',
     },
     hintLabel: {
-      utilities: 'max-w-24 truncate',
+      // Faded on its own so the chevron beside it keeps its color.
+      utilities: 'max-w-24 truncate opacity-65',
     },
     tier: {
       utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none opacity-70',
