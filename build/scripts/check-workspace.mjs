@@ -9,8 +9,8 @@
  * non-private packages have required fields 5. Release-please config — every versioned package is registered 6. Bundled
  * docs — package publishing wires include generated docs 7. Define imports — no bare side-effect imports from relative
  * paths 8. i18n locales — tag lists match locale files and generated stubs 9. Agent context — portable skill metadata,
- * compatibility imports, and budgets 10. Internal records — organized design docs, frontmatter, and lifecycle status
- * 11. mise tool pins — optional mise.toml agrees with the canonical version pins
+ * compatibility imports, and budgets 10. Internal records — organized design docs, frontmatter, and lifecycle status 11.
+ * mise tool pins — optional mise.toml agrees with the canonical version pins
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
