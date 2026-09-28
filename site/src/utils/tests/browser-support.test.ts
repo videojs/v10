@@ -43,6 +43,15 @@ describe('resolveSupportedBrowsers', () => {
 });
 
 describe('featureSupport', () => {
+  it('reads @scope support, which only the registry CSS skins need', () => {
+    const scope = featureSupport(CSS_REQUIREMENTS.find((requirement) => requirement.id === 'css-cascade-scope')!);
+
+    expect(scope.firstVersion.chrome).toBe('118');
+    expect(scope.firstVersion.safari).toBe('17.4');
+    expect(versionNumber(scope.firstVersion.firefox!)).toBeGreaterThanOrEqual(146);
+    expect(scope.caniuseUrl).toBe('https://caniuse.com/css-cascade-scope');
+  });
+
   it('reads the first fully supporting version per browser from caniuse-lite', () => {
     const has = featureSupport(CSS_REQUIREMENTS.find((requirement) => requirement.id === 'css-has')!);
 

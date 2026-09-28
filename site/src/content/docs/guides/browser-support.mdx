@@ -17,7 +17,7 @@ We test in and fix bugs for these versions. Each minimum comes from a feature wi
 
 The packaged skins are generated CSS, and the build lowers them for the browsers above. It flattens CSS nesting, adds vendor prefixes such as `-webkit-backdrop-filter`, and writes each skin's scope as a [`:where()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where) selector, which adds no specificity, rather than [`@scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope).
 
-Skins you add as source through the <DocsLink slug="guides/installation-shadcn">Shadcn registry</DocsLink> keep `@scope`, which reads more clearly in files you edit. Their plain CSS versions need Chrome and Edge 118, Firefox 146, and Safari and iOS 17.4; the Tailwind versions style elements with utility classes and follow the versions above.
+Skins you add as source through the <DocsLink slug="guides/installation-shadcn">Shadcn registry</DocsLink> keep `@scope`, which reads more clearly in files you edit. Their plain CSS versions need Chrome and Edge 118, Firefox 146, and Safari and iOS 17.4 unless you [flatten `@scope` in your build](#flatten-scope-in-registry-skins); the Tailwind versions style elements with utility classes and follow the versions above.
 
 Newer color functions get a fallback, and the original declaration moves inside [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports), so browsers that have the function still use it:
 
@@ -27,7 +27,7 @@ Newer color functions get a fallback, and the original declaration moves inside 
 
 Tooltips, menus, and popovers use the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) where it exists (Chrome 114, Firefox 125, Safari 17). In older supported versions they stay inside the player instead of the top layer: the skins hide them while closed and position them against the player while open, so on the video skins a menu taller than the player is cut off.
 
-The table reads the first fully supporting version of each feature from [caniuse-lite](https://github.com/browserslist/caniuse-lite) when the docs build, and feature names link to [caniuse.com](https://caniuse.com/). **Required** features have no fallback. **Degrades** features lose one visual detail. **Has a fallback** features keep working another way: anchor positioning falls back to positions computed in JavaScript, and `:dir()` sits beside `[dir="rtl"]` selectors.
+The table reads the first fully supporting version of each feature from [caniuse-lite](https://github.com/browserslist/caniuse-lite) when the docs build, and feature names link to [caniuse.com](https://caniuse.com/). **Required** features have no fallback. **Degrades** features lose one visual detail. **Has a fallback** features keep working another way: anchor positioning falls back to positions computed in JavaScript, `:dir()` sits beside `[dir="rtl"]` selectors, and the packaged skins flatten `@scope` into `:where()` selectors.
 
 <BrowserSupportTable kind="requirements" />
 
@@ -59,6 +59,64 @@ export default defineConfig({
   },
 });
 ```
+
+### Flatten `@scope` in registry skins
+
+Registry skins in plain CSS keep `@scope`, and Lightning CSS passes it through unchanged. To reach browsers without `@scope`, add a PostCSS plugin that rewrites each block into descendant selectors prefixed with [`:where(root)`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where), which adds no specificity. Vite, Next.js, and most bundlers pick it up from `postcss.config.mjs` and run it before Lightning CSS:
+
+```bash
+npm install --save-dev postcss postcss-selector-parser
+```
+
+```js title="postcss.config.mjs"
+import selectorParser from 'postcss-selector-parser';
+
+/** Rewrite `@scope (<root>) { … }` into descendant selectors that older browsers understand. */
+function flattenScope() {
+  const rewrite = (selector, root) =>
+    selectorParser((selectors) => {
+      selectors.each((sel) => {
+        let referencesRoot = false;
+
+        sel.walk((node) => {
+          if (node.type === 'nesting' || (node.type === 'pseudo' && node.value === ':scope')) {
+            node.replaceWith(selectorParser.string({ value: `:where(${root})` }));
+            referencesRoot = true;
+          }
+        });
+
+        if (!referencesRoot) {
+          sel.prepend(selectorParser.combinator({ value: ' ' }));
+          sel.prepend(selectorParser.string({ value: `:where(${root})` }));
+        }
+      });
+    }).processSync(selector);
+
+  return {
+    postcssPlugin: 'flatten-scope',
+    OnceExit(css) {
+      const scopes = [];
+      css.walkAtRules('scope', (atRule) => scopes.push(atRule));
+
+      // Innermost first, so a nested scope is flattened before its parent prefixes it.
+      for (const atRule of scopes.reverse()) {
+        const match = /^\(\s*(.+?)\s*\)\s*$/.exec(atRule.params);
+        if (!match || /\)\s*to\s*\(/.test(atRule.params)) continue;
+
+        atRule.walkRules((rule) => {
+          rule.selectors = rule.selectors.map((selector) => rewrite(selector.trim(), match[1]));
+        });
+        atRule.replaceWith(atRule.nodes);
+      }
+    },
+  };
+}
+flattenScope.postcss = true;
+
+export default { plugins: [flattenScope()] };
+```
+
+Flattening trades scope proximity for source order, the same way the packaged skins do. Keep the Lightning CSS `exclude` setting above so the colors still work.
 
 {/* Reveal inside `<StyleCase styles={['tailwind']}>` once the docs offer a Tailwind style.
 
