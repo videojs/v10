@@ -39,6 +39,12 @@ export interface CssRequirement {
  * in prose with MDN data instead.
  */
 export const CSS_REQUIREMENTS: readonly CssRequirement[] = [
+  {
+    id: 'css-cascade-scope',
+    label: '@scope',
+    kind: 'guarded',
+    effect: 'Packaged skins use :where() selectors instead; registry CSS skins need it',
+  },
   { id: 'css-cascade-layers', label: '@layer', kind: 'required', effect: 'No component styling' },
   { id: 'css-has', label: ':has()', kind: 'required', effect: 'Menu and slider focus states are lost' },
   {
