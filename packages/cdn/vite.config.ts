@@ -192,7 +192,7 @@ cdnPackConfigs.push({
   format: 'es',
   clean: false,
   outDir: packageDir,
-  dts: { emitDtsOnly: true, tsgo: true, tsconfig: 'tsconfig.dts.json' },
+  dts: { emitDtsOnly: true, generator: 'tsgo', tsconfig: 'tsconfig.dts.json' },
   deps: { dts: { alwaysBundle: [/^@videojs\//] } },
 });
 

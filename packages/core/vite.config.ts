@@ -22,7 +22,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   dts:
     mode === 'dev'
       ? {
-          tsgo: true,
+          generator: 'tsgo',
           tsconfig: 'tsconfig.dts.json',
           entry: ['src/**/*.ts'],
         }
