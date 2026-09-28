@@ -45,6 +45,8 @@ const overlaysDir = resolve(suiteDir, 'overlays');
 const require = createRequire(import.meta.url);
 const shadcnBin = require.resolve('shadcn');
 const children: ChildProcess[] = [];
+/** How long a consumer server gets to exit after SIGTERM before its process group is killed. */
+const SERVER_STOP_TIMEOUT = 10_000;
 /**
  * Packages the overlays import beyond what the registry items declare. The validation video plays through
  * `@videojs/react/media/hlsjs-video` and `@videojs/html/media/hlsjs-video`, whose adapter package is an optional peer
@@ -378,7 +380,7 @@ async function verifyConsumer(project: RegistryConsumerProject): Promise<void> {
 
 async function startConsumer(project: RegistryConsumerProject): Promise<void> {
   const projectDir = resolve(generatedDir, project.directory);
-  const [executable, args] = consumerServer(project);
+  const [executable, args] = await consumerServer(project, projectDir);
   const child = spawn(executable, args, {
     cwd: projectDir,
     detached: true,
@@ -390,17 +392,32 @@ async function startConsumer(project: RegistryConsumerProject): Promise<void> {
   await waitForUrl(`http://127.0.0.1:${project.port}`);
 }
 
-/** Next and Vite serve their own builds; a plain bundle is served from `dist/` by the overlay's static server. */
-function consumerServer(project: RegistryConsumerProject): [string, string[]] {
+/**
+ * Next and Vite serve their own builds; a plain bundle is served from `dist/` by the overlay's static server. Each
+ * server runs under Node directly rather than through pnpm, which starts its command in a process group of its own, so
+ * the server leads the detached group that `cleanup` signals.
+ */
+async function consumerServer(project: RegistryConsumerProject, projectDir: string): Promise<[string, string[]]> {
   const port = String(project.port);
 
   switch (project.bundler) {
     case 'next':
-      return ['pnpm', ['--ignore-workspace', 'run', 'start', '--hostname', '127.0.0.1', '--port', port]];
+      return [
+        process.execPath,
+        [await packageBin(projectDir, 'next', 'next'), 'start', '--hostname', '127.0.0.1', '--port', port],
+      ];
     case 'vite':
       return [
-        'pnpm',
-        ['--ignore-workspace', 'exec', 'vite', 'preview', '--host', '127.0.0.1', '--port', port, '--strictPort'],
+        process.execPath,
+        [
+          await packageBin(projectDir, 'vite', 'vite'),
+          'preview',
+          '--host',
+          '127.0.0.1',
+          '--port',
+          port,
+          '--strictPort',
+        ],
       ];
     case 'webpack':
     case 'rspack':
@@ -672,6 +689,17 @@ function consumerEnvironment(): NodeJS.ProcessEnv {
   };
 }
 
+/** The script a consumer's installed package runs for one of its `bin` commands. */
+async function packageBin(projectDir: string, name: string, command: string): Promise<string> {
+  const packageDir = resolve(projectDir, 'node_modules', name);
+  const manifest: unknown = JSON.parse(await readFile(resolve(packageDir, 'package.json'), 'utf8'));
+  const bin = isPlainObject(manifest) ? manifest.bin : undefined;
+  const path = isString(bin) ? bin : isPlainObject(bin) ? bin[command] : undefined;
+  if (!isString(path)) throw new Error(`${name} in ${projectDir} has no \`${command}\` binary.`);
+
+  return resolve(packageDir, path);
+}
+
 async function waitForUrl(url: string): Promise<void> {
   const timeout = Date.now() + 120_000;
 
@@ -686,18 +714,40 @@ async function waitForUrl(url: string): Promise<void> {
 }
 
 async function cleanup(): Promise<void> {
-  for (const child of children.splice(0)) {
-    if (!child.pid || child.exitCode !== null) continue;
-
-    try {
-      process.kill(-child.pid, 'SIGTERM');
-    } catch {
-      child.kill('SIGTERM');
-    }
-  }
+  await Promise.all(children.splice(0).map(stopServer));
 
   if (!process.env.VIDEOJS_KEEP_REGISTRY_FIXTURES) {
     await rm(generatedDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+  }
+}
+
+/**
+ * Stop a consumer server and everything in its process group. A task runner that caches this suite waits for every
+ * descendant to exit, so a server left behind holds the run open until the job times out.
+ */
+async function stopServer(child: ChildProcess): Promise<void> {
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
+
+  const exited = new Promise<void>((resolveExit) => child.once('exit', () => resolveExit()));
+
+  signalGroup(child, 'SIGTERM');
+
+  const timedOut = await Promise.race([
+    exited.then(() => false),
+    new Promise<boolean>((resolveTimeout) => setTimeout(() => resolveTimeout(true), SERVER_STOP_TIMEOUT)),
+  ]);
+
+  // Descendants share the group, so this also ends any the server left behind.
+  signalGroup(child, 'SIGKILL');
+
+  if (timedOut) await exited;
+}
+
+function signalGroup(child: ChildProcess, signal: NodeJS.Signals): void {
+  try {
+    process.kill(-child.pid!, signal);
+  } catch {
+    // The group is already gone.
   }
 }
 
