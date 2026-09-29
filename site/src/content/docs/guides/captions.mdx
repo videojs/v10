@@ -8,6 +8,10 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import CustomUiNote from '@/components/docs/CustomUiNote.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import StyleCase from '@/components/docs/StyleCase.astro';
+import ServerCode from '@/components/Code/ServerCode.astro';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import captionsMenuTsx from '@/components/docs/demos/text-tracks/react/css/CaptionsMenu.tsx?raw';
+import captionsVtt from '../../../../public/docs/demos/text-tracks/captions.vtt?raw';
 
 {/* React demos */}
 import BasicUsageDemoReact from '@/components/docs/demos/text-tracks/react/css/BasicUsage';
@@ -32,11 +36,14 @@ Add WebVTT tracks as `<track>` children of the media element, and give users a <
 Add WebVTT tracks as `<track>` children of the media element, and give users a <DocsLink slug="reference/components/captions-button">`<media-captions-button>`</DocsLink> to toggle them.
 </FrameworkCase>
 
+The `<track>` loads `/docs/demos/text-tracks/captions.vtt`, shown in the `captions.vtt` tab. Host a WebVTT file for your video and point `src` at its URL.
+
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
       { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      { title: "captions.vtt", code: captionsVtt, lang: "text" },
     ]}>
       <BasicUsageDemoReact client:idle />
     </Demo>
@@ -49,6 +56,7 @@ Add WebVTT tracks as `<track>` children of the media element, and give users a <
       { title: "index.html", code: basicUsageHtml, lang: "html" },
       { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      { title: "captions.vtt", code: captionsVtt, lang: "text" },
     ]}>
       <BasicUsageDemoHtml />
     </Demo>
@@ -61,7 +69,7 @@ The <DocsLink slug="reference/api/feature-text-tracks">text track feature</DocsL
 
 - `textTrackList` holds every track with its `id`, `kind`, `label`, `language`, and `mode`.
 - `subtitlesShowing` is `true` when any caption or subtitle track is showing.
-- `toggleSubtitles(forceShow?)` shows or hides all caption and subtitle tracks.
+- `toggleSubtitles(forceShow?)` hides captions if a caption or subtitle track is showing. Otherwise it shows one track: the last one shown, then one matching the browser language, then the first available track. Pass `true` or `false` to force captions on or off.
 - `selectSubtitlesTrack(id)` shows one track and disables the rest; pass `'off'` to disable all.
 
 Tracks don't have to come from `<track>` elements: tracks that streaming media exposes (for example in-manifest HLS captions) appear in `textTrackList` the same way.
@@ -94,33 +102,18 @@ For multiple languages, render a menu instead of a toggle.
 
 <FrameworkCase frameworks={["react"]}>
 
-`useCaptionsOptions` provides the option list (including "Off"), the selected value, and availability:
+Add a `<track>` for each language, then render `CaptionsMenu` inside `Container`. `useCaptionsOptions` returns an "Off" option, one option per caption or subtitle track, and the current selection. `Menu.Content` must sit inside `Menu.Popup`, which positions it against the trigger:
 
-```tsx
-import { Menu, useCaptionsOptions } from '@videojs/react';
+<TabsRoot client:idle>
+  <TabsList client:idle label="Captions menu source">
+    <Tab client:idle value="captions-menu" initial>CaptionsMenu.tsx</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="captions-menu" initial>
+    <ServerCode code={captionsMenuTsx} lang="tsx" />
+  </TabsPanel>
+</TabsRoot>
 
-function CaptionsMenu() {
-  const captions = useCaptionsOptions();
-  if (captions?.state.availability !== 'available') return null;
-
-  return (
-    <Menu.Root side="top" align="end">
-      <Menu.Trigger render={<button type="button" />}>Captions</Menu.Trigger>
-      <Menu.Content>
-        <Menu.RadioGroup value={captions.value} onValueChange={captions.setValue} aria-label="Captions">
-          {captions.options.map((option) => (
-            <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-              {option.label}
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
-      </Menu.Content>
-    </Menu.Root>
-  );
-}
-```
-
-See the <DocsLink slug="reference/components/captions-radio-group">CaptionsRadioGroup</DocsLink> reference for the complete pattern.
+To show the selected track in the trigger, use the <DocsLink slug="reference/components/captions-radio-group">CaptionsRadioGroup</DocsLink> parts.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>

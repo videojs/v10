@@ -59,9 +59,13 @@ export default function App() {
     <mux-data></mux-data> <!-- [!code focus] -->
   </media-container>
 </video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/ui/container';
+  import '@videojs/html/media/mux-video';
+  import '@videojs/html/extensions/mux-data';
+</script>
 ```
-
-Register the `<mux-data>` element by importing `@videojs/html/extensions/mux-data`.
 </FrameworkCase>
 
 That's the whole setup for Mux-hosted playback — no environment key required. The extension renders nothing; place it inside the player, as a sibling of the media element.

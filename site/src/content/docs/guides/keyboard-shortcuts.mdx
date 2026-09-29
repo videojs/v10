@@ -71,11 +71,9 @@ export default function App() {
 </video-player>
 <script type="module">
   import '@videojs/html/video/player';
+  import '@videojs/html/ui/container';
   import '@videojs/html/ui/hotkey';
-  import { GestureElement } from '@videojs/html';
-
-  // Gesture has no standalone define entry; register the element directly.
-  customElements.define(GestureElement.tagName, GestureElement);
+  import '@videojs/html/ui/gesture';
 </script>
 ```
 
