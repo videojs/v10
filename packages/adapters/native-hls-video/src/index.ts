@@ -2,3 +2,4 @@ export type { DrmSystemConfig, DrmSystemsConfig, KeySystem } from '@videojs/medi
 export { KeySystems } from '@videojs/media';
 export { type NativeHlsDrmErrorContext, NativeHlsDrmErrors } from './fairplay';
 export * from './adapter';
+export { isNativeHlsMedia } from './predicate';

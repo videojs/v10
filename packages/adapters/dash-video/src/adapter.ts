@@ -1,10 +1,11 @@
-import type { EngineAdapter } from '@videojs/media';
+import { type EngineAdapter, MEDIA_BRANDS } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 import { deepEqual } from '@videojs/utils/object';
 import * as dashjs from 'dashjs';
 
 import { DashMediaTracksMixin } from './media-tracks';
+import { DASH_MEDIA } from './predicate';
 
 /** Structured DASH source: which source to play, plus how to play it. */
 export interface DashSource {
@@ -131,4 +132,6 @@ class DashAdapterCore
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
  *   new value.
  */
-export class DashAdapter extends DashMediaTracksMixin(DashAdapterCore) {}
+export class DashAdapter extends DashMediaTracksMixin(DashAdapterCore) {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [DASH_MEDIA];
+}

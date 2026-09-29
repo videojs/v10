@@ -1,8 +1,11 @@
 // Only the mixin is used from `@videojs/mux-video/spf`. Its `MuxVideoAdapter` (and the full HLS engine behind it) is
 // left for the consumer's bundler to drop, which `sideEffects: false` on that package allows, so this entry stays
 // audio-only.
+import { MEDIA_BRANDS } from '@videojs/media';
 import { type MuxAdapterProps, MuxMixin } from '@videojs/mux-video/spf';
 import { HlsAudioAdapter, type HlsAudioAdapterProps } from '@videojs/spf/hls-audio';
+
+import { MUX_AUDIO_SPF_MEDIA } from './predicate';
 
 /**
  * The Mux Media over the SPF audio-only HLS engine.
@@ -21,6 +24,8 @@ import { HlsAudioAdapter, type HlsAudioAdapterProps } from '@videojs/spf/hls-aud
  * known shortcoming on the video flavor, which shares the derivation.
  */
 export class MuxAudioAdapter extends MuxMixin(HlsAudioAdapter) {
+  static override readonly [MEDIA_BRANDS]: readonly string[] = [...HlsAudioAdapter[MEDIA_BRANDS], MUX_AUDIO_SPF_MEDIA];
+
   static override readonly defaultProps: Omit<HlsAudioAdapterProps, 'src' | 'source'> & MuxAdapterProps = {
     ...HlsAudioAdapter.defaultProps,
     src: '',

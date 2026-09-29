@@ -9,5 +9,6 @@ export type {
   TikTokPlayerEventMessage,
   TikTokPlayerEventType,
 } from './player-api';
+export { isTikTokMedia } from './predicate';
 export type { TikTokAdapterProps } from './props';
 export * from './source';

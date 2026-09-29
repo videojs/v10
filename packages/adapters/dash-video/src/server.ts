@@ -1,12 +1,17 @@
+import { MEDIA_BRANDS } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 
 import type { DashAdapterProps, DashSource } from './adapter';
+import { DASH_MEDIA } from './predicate';
 
 export type { DashEngineConfig, DashAdapterProps, DashSource } from './adapter';
+export { isDashMedia } from './predicate';
 
 /** An inert DASH host used when the package is evaluated outside a browser. */
 export class DashAdapter extends MediaTracksMixin(HTMLVideoAdapter) implements DashAdapterProps {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [DASH_MEDIA];
+
   static readonly defaultProps: DashAdapterProps = {
     src: '',
     source: null,

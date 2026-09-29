@@ -11,5 +11,6 @@ export type {
   TwitchPlayerState,
   TwitchVideoStats,
 } from './player-api';
+export { isTwitchMedia } from './predicate';
 export type { TwitchAdapterProps } from './props';
 export * from './source';

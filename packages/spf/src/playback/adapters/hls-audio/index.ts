@@ -5,3 +5,4 @@
 export type { HlsAudioAdapterAPI, HlsAudioAdapterOptions, HlsAudioAdapterProps } from './mixin';
 export { HlsAudioAdapterCore, HlsAudioMixin } from './mixin';
 export { HlsAudioAdapter } from './adapter';
+export { isHlsAudioMedia } from './predicate';

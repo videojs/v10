@@ -11,3 +11,4 @@ export type { MuxContentData, MuxSourceBase } from '@videojs/mux';
 export type { MuxAdapterAPI, MuxAdapterProps } from './mixin';
 export { MuxMixin } from './mixin';
 export { MuxVideoAdapter } from './adapter';
+export { isMuxVideoMedia } from './predicate';

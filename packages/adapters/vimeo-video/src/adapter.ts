@@ -2,6 +2,7 @@ import {
   EMPTY_TEXT_TRACKS,
   EMPTY_TIME_RANGES,
   type ErrorLike,
+  MEDIA_BRANDS,
   type MediaContentData,
   MediaError,
   type MediaPreloadType,
@@ -14,6 +15,8 @@ import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils
 import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
+
+import { VIMEO_MEDIA } from './predicate';
 
 export { type ParsedVimeoSource, parseVimeoSource, parseVimeoVideoId } from '@videojs/media';
 
@@ -59,6 +62,8 @@ export interface VimeoAdapterProps {
  *   for the new value.
  */
 export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [VIMEO_MEDIA];
+
   static readonly defaultProps: VimeoAdapterProps = {
     src: '',
     autoplay: false,

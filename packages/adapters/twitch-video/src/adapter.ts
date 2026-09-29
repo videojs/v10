@@ -2,7 +2,7 @@
 // Source: https://github.com/muxinc/media-elements
 // License: MIT
 
-import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type Video } from '@videojs/media';
+import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MEDIA_BRANDS, MediaError, type Video } from '@videojs/media';
 import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
@@ -27,6 +27,7 @@ import {
   type TwitchPlaybackState,
   type TwitchPlayerState,
 } from './player-api';
+import { TWITCH_MEDIA } from './predicate';
 import type { TwitchAdapterProps } from './props';
 import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './source';
 
@@ -35,6 +36,8 @@ import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './so
  *   new value.
  */
 export class TwitchAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [TWITCH_MEDIA];
+
   static readonly defaultProps: TwitchAdapterProps = {
     src: '',
     autoplay: false,

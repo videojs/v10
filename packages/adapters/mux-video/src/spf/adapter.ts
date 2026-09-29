@@ -1,6 +1,8 @@
+import { MEDIA_BRANDS } from '@videojs/media';
 import { HlsVideoAdapter, type HlsVideoAdapterProps } from '@videojs/spf/hls-video';
 
 import { type MuxAdapterProps, MuxMixin } from './mixin';
+import { MUX_VIDEO_SPF_MEDIA } from './predicate';
 
 /**
  * The Mux Media over the SPF HLS engine.
@@ -15,6 +17,8 @@ import { type MuxAdapterProps, MuxMixin } from './mixin';
  * exactly as an engine with no EME does.
  */
 export class MuxVideoAdapter extends MuxMixin(HlsVideoAdapter) {
+  static override readonly [MEDIA_BRANDS]: readonly string[] = [...HlsVideoAdapter[MEDIA_BRANDS], MUX_VIDEO_SPF_MEDIA];
+
   static override readonly defaultProps: Omit<HlsVideoAdapterProps, 'src' | 'source'> & MuxAdapterProps = {
     ...HlsVideoAdapter.defaultProps,
     src: '',
