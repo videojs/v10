@@ -1,6 +1,8 @@
 ---
 title: createTranslator
 description: Build a typed translator from a resolved translation map
+apis:
+  - Translator
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
@@ -20,7 +22,7 @@ import { createTranslator } from "@videojs/html/i18n";
 ```
 </FrameworkCase>
 
-`createTranslator` wraps the flat map returned by `getI18nTranslations` and returns a typed translator. Providers call this internally after merging registry, lazy-loaded built-in packs, browser-translated fallback copy, and provider layers. Use it directly for custom UI outside built-in controls.
+`createTranslator` wraps the flat map returned by `getI18nTranslations` and returns a typed `Translator` function. Providers call this internally after merging registry, lazy-loaded built-in packs, browser-translated fallback copy, and provider layers. Use it directly for custom UI outside built-in controls.
 
 <FrameworkCase frameworks={["html"]}>
 
