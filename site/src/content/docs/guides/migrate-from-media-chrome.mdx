@@ -30,6 +30,8 @@ Check [Known gaps](#known-gaps) for controller options and preferences your app 
 Install Video.js and choose a <DocsLink slug="guides/presets">preset</DocsLink> (see <DocsLink slug="guides/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
 <FrameworkCase frameworks={["html"]}>
+Remove Media Chrome imports and CDN scripts from the document before loading Video.js HTML, then reload the page. Both libraries register names such as `media-play-button`. A custom-element name can only have one definition per document; Video.js leaves an existing definition in place. This also applies to Media Chrome registrations pulled in by another component. If you need both libraries during migration, isolate them in separate documents, such as an iframe.
+
 ```bash
 npm install @videojs/html
 ```
@@ -84,13 +86,13 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
     ```html
     <!-- Video.js -->
     <video-player>
-      <media-container>
-        <video src="video.mp4"></video>
+      <media-container class="app-player-container">
+        <video class="app-player-media" src="video.mp4" playsinline></video>
         <media-controls>
-          <media-controls-content>
+          <media-controls-content class="app-player-controls">
             <media-play-button class="player-play-button">
-              <media-icon class="player-play-icon" name="play"></media-icon>
-              <media-icon class="player-pause-icon" name="pause"></media-icon>
+              <media-icon class="player-play-icon" name="play" aria-hidden="true"></media-icon>
+              <media-icon class="player-pause-icon" name="pause" aria-hidden="true"></media-icon>
             </media-play-button>
           </media-controls-content>
         </media-controls>
@@ -100,7 +102,55 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
   </TabsPanel>
   <TabsPanel client:idle value="css">
     ```css
-    .player-pause-icon {
+    .app-player-container {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+    }
+
+    .app-player-media {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .app-player-controls {
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      display: flex;
+      padding: 0.75rem;
+      background: rgb(0 0 0 / 70%);
+    }
+
+    .app-player-controls:not([data-visible]) {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .player-play-button {
+      padding: 0.5rem;
+      color: white;
+      cursor: pointer;
+      background: #222;
+      border: 1px solid white;
+      border-radius: 0.25rem;
+    }
+
+    .player-play-button:focus-visible {
+      outline: 2px solid white;
+      outline-offset: 2px;
+    }
+
+    .player-play-button media-icon {
+      display: inline-flex;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .player-play-button .player-pause-icon {
       display: none;
     }
 
@@ -123,24 +173,74 @@ Media Chrome's React package wraps its custom elements. `@videojs/react` ships n
 ```tsx
 'use client';
 
-import { Container, PlayButton } from '@videojs/react';
+import { Container, Controls, PlayButton } from '@videojs/react';
 import { Video, VideoPlayer } from '@videojs/react/video';
+import './player.css';
 
 export function MyPlayer() {
   return (
     <VideoPlayer>
-      <Container>
-        <Video src="video.mp4" />
-        <PlayButton
-          render={(props, state) => (
-            <button {...props} className="play-button">
-              {state.paused ? <span className="play-icon">Play</span> : <span className="pause-icon">Pause</span>}
-            </button>
-          )}
-        />
+      <Container className="app-player-container">
+        <Video className="app-player-media" src="video.mp4" playsInline />
+        <Controls.Root>
+          <Controls.Content className="app-player-controls">
+            <PlayButton
+              render={(props, state) => (
+                <button {...props} className="player-play-button">
+                  {state.paused ? 'Play' : 'Pause'}
+                </button>
+              )}
+            />
+          </Controls.Content>
+        </Controls.Root>
       </Container>
     </VideoPlayer>
   );
+}
+```
+
+Add `player.css` for layout, button styling, and control visibility:
+
+```css title="player.css"
+.app-player-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.app-player-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.app-player-controls {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  padding: 0.75rem;
+  background: rgb(0 0 0 / 70%);
+}
+
+.app-player-controls:not([data-visible]) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.player-play-button {
+  padding: 0.5rem;
+  color: white;
+  cursor: pointer;
+  background: #222;
+  border: 1px solid white;
+  border-radius: 0.25rem;
+}
+
+.player-play-button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 ```
 
@@ -368,7 +468,7 @@ media-play-button[data-paused] .play-icon { display: inline; }
 <FrameworkCase frameworks={["react"]}>
 ```css
 /* Video.js React: target the className on your rendered button */
-.play-button[data-paused] .play-icon { display: inline; }
+.player-play-button[data-paused] { /* your paused-button styles */ }
 ```
 </FrameworkCase>
 
