@@ -1,5 +1,7 @@
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
+import { cssExclude, cssTargets } from './css-targets.ts';
+
 /** `dev` and `default` outputs consumed by package `exports` conditions. */
 export type PackageBuildMode = 'dev' | 'default';
 
@@ -14,11 +16,27 @@ export const baseConfig = {
     experimental: {
       nativeMagicString: true,
     },
+    // Every pack is unbundled, so each source file maps to one output file and
+    // `'use client'` stays at the top of it. The warning only applies to
+    // directives that get merged into a shared chunk.
+    onLog(level, log, defaultHandler) {
+      if (log.code === 'MODULE_LEVEL_DIRECTIVE') return;
+
+      defaultHandler(level, log);
+    },
   },
   // Matches `packages/<name>/dist` and bucketed `packages/<bucket>/<name>/dist`.
   ignoreWatch: [/[/\\]packages[/\\](?:[^/\\]+[/\\])?[^/\\]+[/\\]dist(?:[/\\]|$)/],
   report: process.env.CI === 'true',
 } satisfies PackUserConfig;
+
+/**
+ * CSS options for packs that inline skin CSS through `?inline` imports, which tsdown transforms itself: without targets
+ * it drops the vendor prefixes the skins rely on.
+ */
+export const inlineCssConfig = {
+  lightningcss: { targets: cssTargets, exclude: cssExclude },
+} satisfies PackUserConfig['css'];
 
 /** Shared options for packages that emit `dist/dev` and `dist/default`. */
 export function packageBuildConfig(mode: PackageBuildMode, platform: 'browser' | 'neutral' = 'neutral') {
@@ -37,7 +55,7 @@ export function packageBuildConfig(mode: PackageBuildMode, platform: 'browser' |
     define: {
       __DEV__: mode === 'dev' ? 'true' : 'false',
     },
-    dts: mode === 'dev' ? ({ tsgo: true, tsconfig: 'tsconfig.dts.json' } as const) : (false as const),
+    dts: mode === 'dev' ? ({ generator: 'tsgo', tsconfig: 'tsconfig.dts.json' } as const) : (false as const),
   };
 }
 
@@ -54,5 +72,5 @@ export const neutralLibraryConfig = {
   clean: !isWatchMode,
   hash: false,
   unbundle: true,
-  dts: { tsgo: true, tsconfig: 'tsconfig.dts.json' } as const,
+  dts: { generator: 'tsgo', tsconfig: 'tsconfig.dts.json' } as const,
 };

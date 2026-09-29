@@ -5,7 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
-import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import {
+  inlineCssConfig,
+  isDevBuildMode,
+  type PackageBuildMode,
+  packageBuildConfig,
+  packageBuildModes,
+} from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
@@ -79,8 +85,8 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     alwaysBundle: [/^@videojs\/icons/],
   },
   alias: srcAlias,
-  // Minifies the skins' `.css?inline` imports, which tsdown inlines into the JavaScript.
-  css: { minify: !isDevBuildMode(mode) },
+  // Also minifies the skins' `.css?inline` imports, which tsdown inlines into the JavaScript.
+  css: { ...inlineCssConfig, minify: !isDevBuildMode(mode) },
   plugins: [copyCssPlugin({ outDir: `dist/${mode}` }), inlineTemplatePlugin({ minify: !isDevBuildMode(mode) })],
 });
 
@@ -90,8 +96,10 @@ export default defineConfig({
       build: {
         command: 'vp pack',
         dependsOn: [...workspaceTaskDependencies(), '@videojs/skins#generate'],
-        input: cachedTaskInputs,
-        output: ['dist/**'],
+        cache: {
+          input: cachedTaskInputs,
+          output: ['dist/**'],
+        },
       },
       'test:ci': packageTestTask(),
     },
@@ -106,6 +114,11 @@ export default defineConfig({
     conditions: ['browser', 'development', 'module', 'import', 'default'],
   },
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     passWithNoTests: true,
     onConsoleLog: (log) => !log.includes('Lit is in dev mode'),
     environment: 'happy-dom',
