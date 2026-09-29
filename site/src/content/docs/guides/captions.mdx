@@ -83,7 +83,7 @@ The browser renders the cues. Style them with the `::cue` pseudo-element.
 - Cues load asynchronously. A track appears in `textTrackList` before its cues are parsed, so cue-driven UI fills in when the track finishes loading.
 - Cross-origin track files require CORS: serve the VTT with CORS headers and set `crossOrigin` on the media element.
 - Track selection UIs identify tracks by `label` and `language`; give every track both.
-- `default` on a `<track>` makes the browser show it initially.
+- `default` on a `<track>` marks it as the preferred initial track. The browser's caption preferences can select another track.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -91,7 +91,7 @@ The browser renders the cues. Style them with the `::cue` pseudo-element.
 - Cues load asynchronously. A track appears in `textTrackList` before its cues are parsed, so cue-driven UI fills in when the track finishes loading.
 - Cross-origin track files require CORS: serve the VTT with CORS headers and set `crossorigin` on the media element.
 - Track selection UIs identify tracks by `label` and `language`; give every track both.
-- `default` on a `<track>` makes the browser show it initially.
+- `default` on a `<track>` marks it as the preferred initial track. The browser's caption preferences can select another track.
 </FrameworkCase>
 
 ## Common variations

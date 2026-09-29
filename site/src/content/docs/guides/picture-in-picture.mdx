@@ -72,7 +72,7 @@ Picture-in-picture and fullscreen are exclusive: requesting one exits the other 
 <FrameworkCase frameworks={["react"]}>
 - Show picture-in-picture controls only when `pipAvailability` is `'available'`. PiPButton handles this for you.
 - Requests must come from a user gesture; browsers reject requests outside one.
-- Firefox 153 (July 2026) added the programmatic picture-in-picture API. Earlier versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users.
+- [Firefox 153](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) (July 2026) added the programmatic picture-in-picture API on desktop. Earlier desktop versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users. Check `pipAvailability` rather than inferring support from the browser version.
 - On iOS, picture-in-picture is supported on iPhone and iPad through the WebKit presentation mode; the player handles this path for you.
 - The browser owns the floating window: its size, position, and built-in controls aren't yours to style.
 - The user can close the window or return the video at any time. React to `pip` state instead of assuming your button is the only entry and exit.
@@ -81,7 +81,7 @@ Picture-in-picture and fullscreen are exclusive: requesting one exits the other 
 <FrameworkCase frameworks={["html"]}>
 - Show picture-in-picture controls only when `pipAvailability` is `'available'`. `<media-pip-button>` handles this for you.
 - Requests must come from a user gesture; browsers reject requests outside one.
-- Firefox 153 (July 2026) added the programmatic picture-in-picture API. Earlier versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users.
+- [Firefox 153](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) (July 2026) added the programmatic picture-in-picture API on desktop. Earlier desktop versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users. Check `pipAvailability` rather than inferring support from the browser version.
 - On iOS, picture-in-picture is supported on iPhone and iPad through the WebKit presentation mode; the player handles this path for you.
 - The browser owns the floating window: its size, position, and built-in controls aren't yours to style.
 - The user can close the window or return the video at any time. React to `pip` state instead of assuming your button is the only entry and exit.

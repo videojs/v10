@@ -87,7 +87,7 @@ The <DocsLink slug="reference/api/feature-remote-playback">remote playback featu
 
 - `remotePlaybackAvailability` is `'available'` when a remote device can be reached, `'unavailable'` when the API exists but no device is reachable, and `'unsupported'` when the browser has no remote playback route.
 - `remotePlaybackState` is `'disconnected'`, `'connecting'`, or `'connected'`.
-- `toggleRemotePlayback()` opens the browser's device picker, or disconnects an active session.
+- `toggleRemotePlayback()` opens the browser's device picker, including during an active session. Use the picker to connect to a device or return to local playback.
 
 AirPlay uses WebKit's presentation APIs. Google Cast uses a sender and receiver: the browser sends the receiver a media URL and then controls playback. Your UI reads the same Video.js state for either route.
 
