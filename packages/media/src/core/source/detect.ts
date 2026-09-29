@@ -6,8 +6,8 @@ import { parseVimeoSource } from './vimeo';
 import { parseWistiaMediaId } from './wistia';
 import { parseYouTubeSource } from './youtube';
 
-/** A kind of source {@link detectMediaSource} recognizes. Each kind is played by a different media component. */
-export type MediaSourceKind =
+/** A kind of source {@link detectSource} recognizes. Each kind is played by a different media component. */
+export type SourceKind =
   | 'youtube'
   | 'vimeo'
   | 'wistia'
@@ -21,10 +21,10 @@ export type MediaSourceKind =
   | 'video'
   | 'audio';
 
-/** What {@link detectMediaSource} found out about a source. */
-export interface DetectedMediaSource {
+/** What {@link detectSource} found out about a source. */
+export interface DetectedSource {
   /** Which kind of media plays the source. */
-  kind: MediaSourceKind;
+  kind: SourceKind;
   /**
    * The source to give that media. `youtube/<id>` and `vimeo/<id>` shorthands and `player.mux.com` page URLs expand to
    * a URL the media accepts; every other source comes back as given.
@@ -51,14 +51,14 @@ export interface DetectedMediaSource {
  *   without one can still be detected.
  * @public
  */
-export function detectMediaSource(src: string, type?: string): DetectedMediaSource | null {
+export function detectSource(src: string, type?: string): DetectedSource | null {
   const source = src.trim();
   if (!source) return null;
 
   return detectShorthand(source) ?? detectProvider(source) ?? detectByType(source, type) ?? detectByExtension(source);
 }
 
-function detectShorthand(src: string): DetectedMediaSource | null {
+function detectShorthand(src: string): DetectedSource | null {
   const youtubeId = YOUTUBE_SHORTHAND.exec(src)?.[1];
   // Vidstack played these shorthands from YouTube's privacy-enhanced host, so they keep doing so.
   if (youtubeId) return { kind: 'youtube', src: `https://www.youtube-nocookie.com/embed/${youtubeId}`, id: youtubeId };
@@ -69,7 +69,7 @@ function detectShorthand(src: string): DetectedMediaSource | null {
   return { kind: 'vimeo', src: `https://vimeo.com/${vimeoId}${hash ? `?h=${hash}` : ''}`, id: vimeoId };
 }
 
-function detectProvider(src: string): DetectedMediaSource | null {
+function detectProvider(src: string): DetectedSource | null {
   if (SPOTIFY_URI.test(src)) return fromId('spotify', src, parseSpotifySource(src)?.id);
 
   const url = parseUrl(src);
@@ -120,7 +120,7 @@ function detectProvider(src: string): DetectedMediaSource | null {
   return null;
 }
 
-function detectByType(src: string, type: string | undefined): DetectedMediaSource | null {
+function detectByType(src: string, type: string | undefined): DetectedSource | null {
   const mimeType = type?.trim().toLowerCase();
   if (!mimeType) return null;
 
@@ -135,7 +135,7 @@ function detectByType(src: string, type: string | undefined): DetectedMediaSourc
   return null;
 }
 
-function detectByExtension(src: string): DetectedMediaSource | null {
+function detectByExtension(src: string): DetectedSource | null {
   const extension = EXTENSION.exec(src.split(/[?#]/, 1)[0]!)?.[1]?.toLowerCase();
   if (!extension) return null;
 
@@ -144,7 +144,7 @@ function detectByExtension(src: string): DetectedMediaSource | null {
   return match ? { kind: match.kind, src, type: match.type } : null;
 }
 
-function fromId(kind: MediaSourceKind, src: string, id: string | null | undefined): DetectedMediaSource | null {
+function fromId(kind: SourceKind, src: string, id: string | null | undefined): DetectedSource | null {
   return id ? { kind, src, id } : null;
 }
 
@@ -200,7 +200,7 @@ const HLS_TYPES: ReadonlySet<string> = new Set([
 ]);
 const DASH_TYPE = 'application/dash+xml';
 
-const EXTENSIONS: ReadonlyMap<string, { kind: MediaSourceKind; type: string }> = new Map([
+const EXTENSIONS: ReadonlyMap<string, { kind: SourceKind; type: string }> = new Map([
   ['m3u8', { kind: 'hls', type: 'application/x-mpegurl' }],
   ['mpd', { kind: 'dash', type: DASH_TYPE }],
   ['mp4', { kind: 'video', type: 'video/mp4' }],

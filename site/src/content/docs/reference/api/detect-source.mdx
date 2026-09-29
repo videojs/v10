@@ -1,5 +1,5 @@
 ---
-title: detectMediaSource
+title: detectSource
 description: Detect which kind of media plays a source URL, from its host, MIME type, or file extension
 ---
 
@@ -11,22 +11,22 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { detectMediaSource } from '@videojs/react';
+import { detectSource } from '@videojs/react';
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { detectMediaSource } from '@videojs/html';
+import { detectSource } from '@videojs/html';
 ```
 </FrameworkCase>
 
-`detectMediaSource` reads a source URL and reports which kind of media plays it, so an app that plays sources from a catalog or from user input can pick the matching <DocsLink slug="guides/media-sources">media component</DocsLink>. It returns `null` for sources it doesn't recognize.
+`detectSource` reads a source URL and reports which kind of media plays it, so an app that plays sources from a catalog or from user input can pick the matching <DocsLink slug="guides/media-sources">media component</DocsLink>. It returns `null` for sources it doesn't recognize.
 
 Detection is a pure string check. It doesn't fetch the source, load an engine, or touch the DOM.
 
 <FrameworkCase frameworks={["react"]}>
-`@videojs/react` is a client module, so call `detectMediaSource` from a Client Component. To choose the media in a Server Component, install `@videojs/media` and import `detectMediaSource` from it instead. That package has no client directive.
+`@videojs/react` is a client module, so call `detectSource` from a Client Component. To choose the media in a Server Component, install `@videojs/media` and import `detectSource` from it instead. That package has no client directive.
 </FrameworkCase>
 
 ## Usage
@@ -35,14 +35,14 @@ Detection is a pure string check. It doesn't fetch the source, load an engine, o
 Switch on `kind` and render the media component for it. Pass the returned `src`, which expands [shorthands](#shorthands):
 
 ```tsx
-import { detectMediaSource } from '@videojs/react';
+import { detectSource } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { VimeoVideo } from '@videojs/react/media/vimeo-video';
 import { YouTubeVideo } from '@videojs/react/media/youtube-video';
 import { Video } from '@videojs/react/video';
 
 function Media({ url }: { url: string }) {
-  const source = detectMediaSource(url);
+  const source = detectSource(url);
 
   switch (source?.kind) {
     case 'youtube':
@@ -66,7 +66,7 @@ Each media component you import adds its engine to your bundle, so load the rare
 Switch on `kind` and create the media element for it. Set the returned `src`, which expands [shorthands](#shorthands):
 
 ```ts
-import { detectMediaSource } from '@videojs/html';
+import { detectSource } from '@videojs/html';
 import '@videojs/html/media/hlsjs-video';
 import '@videojs/html/media/vimeo-video';
 import '@videojs/html/media/youtube-video';
@@ -74,7 +74,7 @@ import '@videojs/html/media/youtube-video';
 const TAGS = { youtube: 'youtube-video', vimeo: 'vimeo-video', hls: 'hlsjs-video', video: 'video' } as const;
 
 function createMedia(url: string) {
-  const source = detectMediaSource(url);
+  const source = detectSource(url);
   const tag = source && source.kind in TAGS ? TAGS[source.kind as keyof typeof TAGS] : null;
   if (!source || !tag) return null;
 
@@ -130,7 +130,7 @@ A `kind` names the source, not the playback engine. An HLS stream comes back as 
 Pass a MIME type as the second argument when the URL doesn't end in a file extension, such as an extensionless manifest or a `blob:` URL. The MIME type takes precedence over the extension; provider URLs are recognized either way.
 
 ```ts
-detectMediaSource('https://example.com/manifest', 'application/vnd.apple.mpegurl'); // { kind: 'hls', … }
+detectSource('https://example.com/manifest', 'application/vnd.apple.mpegurl'); // { kind: 'hls', … }
 ```
 
 ### Bare ids
@@ -139,7 +139,7 @@ A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia i
 
 ### Shorthands
 
-`detectMediaSource` recognizes `youtube/<id>` and `vimeo/<id>` shorthands and returns a `src` the matching media accepts:
+`detectSource` recognizes `youtube/<id>` and `vimeo/<id>` shorthands and returns a `src` the matching media accepts:
 
 | Shorthand | Returned `src` |
 |---|---|
@@ -149,4 +149,4 @@ A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia i
 
 YouTube shorthands expand to the privacy-enhanced `youtube-nocookie.com` host.
 
-<UtilReference util="detectMediaSource" />
+<UtilReference util="detectSource" />

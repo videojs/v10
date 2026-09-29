@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { type DetectedMediaSource, detectMediaSource } from '../detect';
+import { type DetectedSource, detectSource } from '../detect';
 
-describe('detectMediaSource', () => {
-  it.each<[string, DetectedMediaSource]>([
+describe('detectSource', () => {
+  it.each<[string, DetectedSource]>([
     [
       'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
       { kind: 'youtube', src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ', id: 'aqz-KE-bpKQ' },
@@ -77,22 +77,22 @@ describe('detectMediaSource', () => {
     ],
     ['https://www.twitch.tv/monstercat', { kind: 'twitch', src: 'https://www.twitch.tv/monstercat', id: 'monstercat' }],
   ])('detects the provider of %s', (src, expected) => {
-    expect(detectMediaSource(src)).toEqual(expected);
+    expect(detectSource(src)).toEqual(expected);
   });
 
   describe('shorthands', () => {
     it('expands youtube/<id> to a privacy-enhanced embed URL', () => {
-      expect(detectMediaSource('youtube/aqz-KE-bpKQ')).toEqual({
+      expect(detectSource('youtube/aqz-KE-bpKQ')).toEqual({
         kind: 'youtube',
         src: 'https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ',
         id: 'aqz-KE-bpKQ',
       });
 
-      expect(detectMediaSource('youtube/shorts/aqz-KE-bpKQ')?.id).toBe('aqz-KE-bpKQ');
+      expect(detectSource('youtube/shorts/aqz-KE-bpKQ')?.id).toBe('aqz-KE-bpKQ');
     });
 
     it('expands vimeo/<id> to a Vimeo URL, keeping the hash', () => {
-      expect(detectMediaSource('vimeo/76979871')).toEqual({
+      expect(detectSource('vimeo/76979871')).toEqual({
         kind: 'vimeo',
         src: 'https://vimeo.com/76979871',
         id: '76979871',
@@ -103,13 +103,13 @@ describe('detectMediaSource', () => {
         'vimeo/76979871?h=8272103f6e',
         'vimeo/76979871/8272103f6e',
       ]) {
-        expect(detectMediaSource(shorthand)?.src).toBe('https://vimeo.com/76979871?h=8272103f6e');
+        expect(detectSource(shorthand)?.src).toBe('https://vimeo.com/76979871?h=8272103f6e');
       }
     });
   });
 
   it('converts Mux player URLs into the stream URL Mux media plays', () => {
-    expect(detectMediaSource('https://player.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M')).toEqual({
+    expect(detectSource('https://player.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M')).toEqual({
       kind: 'mux',
       src: 'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8',
       id: 'a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M',
@@ -124,19 +124,19 @@ describe('detectMediaSource', () => {
     ['https://cdn.example.com/podcast.mp3#t=30', 'audio', 'audio/mpeg'],
     ['https://stream.example.com/abc.m3u8', 'hls', 'application/x-mpegurl'],
   ])('detects %s by its file extension', (src, kind, type) => {
-    expect(detectMediaSource(src)).toEqual({ kind, src, type });
+    expect(detectSource(src)).toEqual({ kind, src, type });
   });
 
   it('prefers the MIME type over the file extension', () => {
-    expect(detectMediaSource('https://example.com/manifest', 'application/vnd.apple.mpegurl')).toEqual({
+    expect(detectSource('https://example.com/manifest', 'application/vnd.apple.mpegurl')).toEqual({
       kind: 'hls',
       src: 'https://example.com/manifest',
       type: 'application/vnd.apple.mpegurl',
     });
 
-    expect(detectMediaSource('blob:https://example.com/1234', 'video/mp4')?.kind).toBe('video');
-    expect(detectMediaSource('https://example.com/stream', 'application/dash+xml')?.kind).toBe('dash');
-    expect(detectMediaSource('https://example.com/episode', 'audio/mpeg')?.kind).toBe('audio');
+    expect(detectSource('blob:https://example.com/1234', 'video/mp4')?.kind).toBe('video');
+    expect(detectSource('https://example.com/stream', 'application/dash+xml')?.kind).toBe('dash');
+    expect(detectSource('https://example.com/episode', 'audio/mpeg')?.kind).toBe('audio');
   });
 
   it.each([
@@ -151,6 +151,6 @@ describe('detectMediaSource', () => {
     ['a Twitch clip', 'https://clips.twitch.tv/SomeClipSlug'],
     ['a provider URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
   ])('returns null for %s', (_, src) => {
-    expect(detectMediaSource(src)).toBe(null);
+    expect(detectSource(src)).toBe(null);
   });
 });

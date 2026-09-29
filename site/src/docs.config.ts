@@ -400,7 +400,7 @@ export const sidebar: Sidebar = [
           html: 'Lower-level building blocks: source detection, and the keyboard shortcut controller for custom components.',
         },
         contents: [
-          { slug: 'reference/api/detect-media-source', sidebarLabel: 'detectMediaSource' },
+          { slug: 'reference/api/detect-source', sidebarLabel: 'detectSource' },
           { slug: 'reference/api/use-button', frameworks: ['react'] },
           { slug: 'reference/api/use-slider', frameworks: ['react'] },
           { slug: 'reference/api/use-composed-refs', frameworks: ['react'] },
