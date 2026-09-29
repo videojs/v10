@@ -119,35 +119,13 @@ describe('createPlayerStoreReferenceModel', () => {
     expect(volume.description).toBe('Volume level.');
     expect(volume.feature.docsSlug).toBe('reference/api/feature-volume');
   });
-
-  it('formats the store type as one object type commented by feature', () => {
-    const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
-
-    expect(model.storeType).toBe(
-      [
-        '{',
-        '  // playbackFeature (video, audio, live-video)',
-        '  readonly paused: boolean;',
-        '  play: () => Promise<void>;',
-        '',
-        '  // volumeFeature (video, audio, live-video)',
-        '  readonly volume: number;',
-        '  setVolume: (volume: number) => number;',
-        '',
-        '  // streamTypeFeature (opt-in)',
-        "  readonly streamType: 'live' | 'on-demand' | 'unknown';",
-        '}',
-      ].join('\n')
-    );
-  });
 });
 
 describe('buildPlayerStoreReferenceTocHeadings', () => {
-  it('lists the store shape, member table, and preset sections', () => {
+  it('lists the member table and preset sections', () => {
     const headings = buildPlayerStoreReferenceTocHeadings(createPlayerStoreReferenceModel(FEATURES, PRESETS));
 
     expect(headings).toEqual([
-      { depth: 2, text: 'Store shape', slug: 'store-shape' },
       { depth: 2, text: 'State and actions', slug: 'state-and-actions' },
       { depth: 2, text: 'Features by preset', slug: 'features-by-preset' },
     ]);

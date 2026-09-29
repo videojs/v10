@@ -1,8 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
-import ServerCode from '@/components/Code/ServerCode.astro';
+
 import ContentWidth from '@/components/frames/ContentWidth.astro';
-import CodeFrame from '@/components/typography/CodeFrame.astro';
+
 import H2 from '@/components/typography/H2Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
@@ -34,25 +34,17 @@ const toggleColumn = model.members.some((member) => Boolean(member.description))
 ---
 
 <ContentWidth>
-  <H2 id={model.headings.storeType.id}>{model.headings.storeType.text}</H2>
-  <P>
-    Every state field and action the store can hold when the player includes every feature, grouped by the feature that
-    adds it. Each comment names the presets that include the feature.
-  </P>
-  <CodeFrame lang="ts">
-    <ServerCode code={model.storeType} lang="ts" />
-  </CodeFrame>
 
   <H2 id={model.headings.members.id}>{model.headings.members.text}</H2>
   <P>Each feature links to the same entry on its reference page.</P>
-  <ApiTable columns={["Name", "Kind", "Type", "Feature"]} toggle={toggleColumn}>
+  <ApiTable columns={["Name", "Type", "Feature"]} toggle={toggleColumn}>
     {
       model.members.map((member) => (
         <DetailRow
           id={member.id}
           name={member.name}
           description={member.description}
-          colspan={4}
+          colspan={3}
           toggleColumn={toggleColumn}
         >
           <td>
@@ -61,7 +53,7 @@ const toggleColumn = model.members.some((member) => Boolean(member.description))
               <AnchorLink id={member.id} name={member.name} />
             </span>
           </td>
-          <td>{member.kind}</td>
+
           <td class="w-full" data-apiref-cell="type">
             <MarkdownCode code={member.type} />
           </td>

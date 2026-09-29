@@ -6,8 +6,6 @@
  *
  * Structure:
  *
- * ## Store shape (H2) — every member as one TypeScript object type, commented by feature
- *
  * ## State and actions (H2) — every member in one table, in feature order
  *
  * ## Features by preset (H2) — which preset feature bundles include each feature
@@ -79,15 +77,12 @@ interface PlayerStoreHeading {
 
 export interface PlayerStoreReferenceModel {
   headings: {
-    storeType: PlayerStoreHeading;
     members: PlayerStoreHeading;
     presets: PlayerStoreHeading;
   };
   presets: PlayerStorePreset[];
   features: PlayerStoreFeature[];
   members: PlayerStoreMember[];
-  /** Every member as one TypeScript object type, grouped and commented by feature. */
-  storeType: string;
 }
 
 function comparePresets(a: PresetReference, b: PresetReference): number {
@@ -134,19 +129,6 @@ function toMembers(
   });
 }
 
-function formatStoreType(features: PlayerStoreFeature[], members: PlayerStoreMember[]): string {
-  const groups = features.map((feature) => {
-    const presets = feature.presets.length > 0 ? feature.presets.join(', ') : 'opt-in';
-    const lines = members
-      .filter((member) => member.feature === feature)
-      .map((member) => `  ${member.kind === 'state' ? 'readonly ' : ''}${member.name}: ${member.type};`);
-
-    return [`  // ${feature.exportName} (${presets})`, ...lines].join('\n');
-  });
-
-  return `{\n${groups.join('\n\n')}\n}`;
-}
-
 export function createPlayerStoreReferenceModel(
   featureRefs: FeatureReference[],
   presetRefs: PresetReference[]
@@ -173,19 +155,17 @@ export function createPlayerStoreReferenceModel(
 
   return {
     headings: {
-      storeType: { id: 'store-shape', depth: 2, text: 'Store shape' },
       members: { id: 'state-and-actions', depth: 2, text: 'State and actions' },
       presets: { id: 'features-by-preset', depth: 2, text: 'Features by preset' },
     },
     presets: presetColumns.map(({ name, featureBundle }) => ({ name, featureBundle })),
     features,
     members,
-    storeType: formatStoreType(features, members),
   };
 }
 
 export function buildPlayerStoreReferenceTocHeadings(model: PlayerStoreReferenceModel): TocHeading[] {
-  const { storeType, members, presets } = model.headings;
+  const { members, presets } = model.headings;
 
-  return [storeType, members, presets].map(({ depth, text, id }) => ({ depth, text, slug: id }));
+  return [members, presets].map(({ depth, text, id }) => ({ depth, text, slug: id }));
 }
