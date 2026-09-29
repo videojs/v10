@@ -113,6 +113,10 @@ export function MyPlayer() {
     <video src="/video.mp4" playsinline></video>
   </video-skin>
 </video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+</script>
 ```
 
 </FrameworkCase>
@@ -135,9 +139,11 @@ The packaged skins also accept an image of your own, for when a plain `<img>` is
 
 <FrameworkCase frameworks={["react"]}>
 
-Pass `renderPoster` to the skin. Video.js passes the poster URL as `src` alongside the rest of the image props; `src` stays `undefined` until a poster URL resolves. That fits a framework image component:
+Pass `renderPoster` to the skin. Its callback receives image props and poster state. Read `src` from the second argument; it is an empty string until a poster URL resolves. Forward the image props, including the ref and load handlers, so Video.js can track the image. For Next.js:
 
 ```tsx
+'use client';
+
 import '@videojs/react/video/skin.css';
 import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
 import NextImage from 'next/image';
@@ -146,7 +152,7 @@ export function MyPlayer() {
   return (
     <VideoPlayer poster="/poster.jpg">
       <VideoSkin
-        renderPoster={({ src, ...props }) =>
+        renderPoster={(props, { src }) =>
           src ? <NextImage {...props} src={src} alt="" fill /> : null
         }
       >
@@ -162,6 +168,8 @@ export function MyPlayer() {
 <FrameworkCase frameworks={["html"]}>
 
 Add your image to the skin's `poster` slot. Leave off `src` and Video.js fills in the player's poster. Provide a `src`, a `srcset`, or `<picture>` sources and Video.js leaves the image alone:
+
+Keep the player and skin imports from the previous section.
 
 ```html
 <video-player>
@@ -181,6 +189,8 @@ Add your image to the skin's `poster` slot. Leave off `src` and Video.js fills i
 
 A placeholder is a tiny preview that appears while the poster downloads, so a slow poster does not leave the player as empty space. Keep it small enough to include with the page, such as a short data URL. Add it to the customized image from the previous section.
 
+Replace `data:image/webp;base64,…` in the examples below with a complete data URL generated from your poster.
+
 <FrameworkCase frameworks={["react"]}>
 
 ### Use your framework's image component
@@ -188,6 +198,8 @@ A placeholder is a tiny preview that appears while the poster downloads, so a sl
 If your image component supports placeholders, pass yours through `renderPoster`:
 
 ```tsx
+'use client';
+
 import '@videojs/react/video/skin.css';
 import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
 import NextImage from 'next/image';
@@ -196,7 +208,7 @@ export function MyPlayer() {
   return (
     <VideoPlayer poster="/poster.jpg">
       <VideoSkin
-        renderPoster={({ src, ...props }) =>
+        renderPoster={(props, { src }) =>
           src ? (
             <NextImage
               {...props}
@@ -216,7 +228,7 @@ export function MyPlayer() {
 }
 ```
 
-Next.js generates blur data for static imports. Here, the poster URL arrives while the player runs, so provide `blurDataURL` yourself.
+Next.js can generate blur data for supported static image imports. For a poster URL supplied at runtime, provide `blurDataURL` yourself. Configure [`remotePatterns`](https://nextjs.org/docs/app/api-reference/components/image#remotepatterns) in Next.js if the poster comes from another origin.
 
 ### Use a plain image
 
@@ -335,7 +347,7 @@ Check that the player has a `poster` or that the media component can create one 
 
 <FrameworkCase frameworks={["react"]}>
 
-Pass the `src` from `renderPoster` to your image. If your image component requires a source, return `null` until `src` is available.
+Pass `src` from the callback's second argument to your image. If your image component requires a source, return `null` until `src` is available.
 
 </FrameworkCase>
 
