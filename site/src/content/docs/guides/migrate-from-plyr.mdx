@@ -320,7 +320,7 @@ Video.js defaults to English. To migrate Plyr's `i18n` strings, register transla
 
 <FrameworkCase frameworks={["html"]}>
 
-To select a locale, import the i18n module and wrap the player in `<media-i18n lang="ja">`, using your desired locale tag. For English overrides from the CDN:
+To select a locale, wrap the player in `<media-i18n lang="ja">`, using your desired locale tag. The CDN preset registers this element. With a bundler, import `@videojs/html/i18n` to register it. For English overrides from the CDN:
 
 ```html
 <script type="module">
@@ -430,17 +430,19 @@ Individual React buttons do not include visible content. Use their `render` prop
 
 ## Use the imperative API
 
-Use store actions for playback, seeking, fullscreen, and captions. Set volume or mute directly on the media when you need to preserve assignment behavior:
+Use store actions for playback, seeking, volume, fullscreen, and captions. For an explicit muted value, set the media property directly:
 
 | Plyr | Video.js v10 |
 |---|---|
 | `player.play()`, `player.pause()` | `play()`, `pause()`, or `togglePaused()` |
 | `player.currentTime = 10` | `seek(10)` |
-| `player.volume = 0.5` | `media.volume = 0.5`; `setVolume(0.5)` also unmutes |
+| `player.volume = 0.5` | `setVolume(0.5)`, which also unmutes |
 | `player.muted = true` | `media.muted = true` on the attached media |
 | `player.speed = 1.5` | `setPlaybackRate(1.5)` |
 | `player.fullscreen.enter()` | `requestFullscreen()` |
 | `player.toggleCaptions()` | `toggleSubtitles()` |
+
+Plyr's [volume setter](https://github.com/sampotts/plyr/blob/v3.8.4/src/js/plyr.js#L507-L542) unmutes for values above zero, as `setVolume` does. Set `media.volume` directly only when you intend to preserve mute state.
 
 `toggleMuted()` toggles the effective muted state; it can unmute an already muted player. Use it for a mute button, not as a replacement for an assignment.
 

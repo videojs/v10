@@ -200,7 +200,7 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
 | `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
 | `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
-| `lang` | `<media-i18n>` | Load the i18n module and wrap the player in `<media-i18n lang="…">`. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>. |
+| `lang` | `<media-i18n>` | Wrap the player in `<media-i18n lang="…">`. CDN presets register it; with a bundler, import `@videojs/html/i18n`. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>. |
 </FrameworkCase>
 
 ### Hotkeys

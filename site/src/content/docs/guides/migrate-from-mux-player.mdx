@@ -27,7 +27,7 @@ Make a migration checklist before changing your embed:
 - **Find your event listeners and imperative calls** (`play()`, `currentTime`, `addChapters`). Media APIs move to the media element; the rest is mapped under [Drive playback](#drive-playback).
 - **Note your theme and CSS variables.** Two skins replace Mux Player's five themes, and `--accent-color` and friends have new names.
 - **Check [Known gaps](#known-gaps)** for features your app needs.
-- **Check your catalog for DRM or TS-packaged assets.** They decide which of the two Mux media flavors you can use; see [Which Mux media should you use?](#which-mux-media-should-you-use).
+- **Check your catalog for MPEG-TS, raw ADTS AAC, AES-128, low-latency HLS, or DVR streams.** These requirements determine whether the SPF flavor fits. Verify DRM playback with either engine; see [Which Mux media should you use?](#which-mux-media-should-you-use).
 
 ## Your first player
 

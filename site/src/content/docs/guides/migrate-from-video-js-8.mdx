@@ -565,7 +565,7 @@ Swapping sources is the change most likely to surprise you. There's no `player.s
 Video.js defaults to English and ships locale packs that load on demand. Select the locale and move `videojs.addLanguage` overrides into the i18n registry or provider. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>.
 
 <FrameworkCase frameworks={["html"]}>
-To migrate `language: 'ja'`, load the i18n module and wrap your player in `<media-i18n lang="ja">`. If v8 inherited the nearest `lang` attribute, use `<media-i18n>` without `lang` to keep that behavior.
+To migrate `language: 'ja'`, wrap your player in `<media-i18n lang="ja">`. The CDN preset registers this element. With a bundler, import `@videojs/html/i18n` to register it. If v8 inherited the nearest `lang` attribute, use `<media-i18n>` without `lang` to keep that behavior.
 
 For a CDN page, register string overrides in a module script:
 
@@ -580,7 +580,7 @@ For a CDN page, register string overrides in a module script:
 </script>
 ```
 
-With a bundler, import `registerI18n` from `@videojs/html/i18n` instead. Loading either module also registers `<media-i18n>`.
+With a bundler, import `registerI18n` from `@videojs/html/i18n` instead. The CDN `i18n.js` module exports translation functions; element registration comes from the preset.
 
 See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink> for scoped overrides, custom locales, and runtime switching.
 </FrameworkCase>
@@ -695,7 +695,7 @@ Check these limitations against your required features:
 - No text-track settings dialog equivalent to v8's `textTrackSettings`. You can still style browser-rendered cues with `::cue`; see <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
 - Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
-- No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the lightweight HLS component deliberately exposes few of them.
+- No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the SPF HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom layout or a skin layout in your project.
 - No full-window fullscreen fallback. Test fullscreen on your supported browsers; see <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
