@@ -294,6 +294,11 @@ export const sidebar: Sidebar = [
           { slug: 'reference/components/status-announcer' },
         ],
       },
+      {
+        sidebarLabel: 'Icons',
+        llmsDescription: 'API reference for the icon sets the skins use, available for your own controls.',
+        contents: [{ slug: 'reference/components/icons' }],
+      },
     ],
   },
   {
@@ -311,6 +316,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/api/create-player', frameworks: ['react'] },
           { slug: 'reference/api/html-create-player', sidebarLabel: 'createPlayer', frameworks: ['html'] },
           { slug: 'reference/api/player-controller', frameworks: ['html'] },
+          { slug: 'reference/api/ui-element', sidebarLabel: 'UIElement', frameworks: ['html'] },
           { slug: 'reference/api/use-player', frameworks: ['react'] },
           { slug: 'reference/api/use-optional-player', frameworks: ['react'] },
           { slug: 'reference/api/use-media', frameworks: ['react'] },

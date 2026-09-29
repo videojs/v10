@@ -1,0 +1,77 @@
+---
+/**
+ * Table of the packaged icons: a preview from each set beside the names readers import or pass to `<media-icon>`.
+ *
+ * Rows come from the public HTML string exports, so the table follows the icon build without a hand-kept list.
+ */
+import * as defaultIcons from '@videojs/html/icons/default';
+import * as minimalIcons from '@videojs/html/icons/minimal';
+
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import { resolveDocsFramework } from '@/types/docs';
+
+const framework = resolveDocsFramework(Astro.params.framework);
+const minimal = new Map<string, string>(Object.entries(minimalIcons));
+
+const icons = Object.entries(defaultIcons)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([htmlName, defaultSvg]) => {
+    const base = htmlName.replace(/Icon$/, '');
+
+    return {
+      // Asset files spell `airplay` as one word, while export names capitalize `AirPlay`.
+      name: base.replace(/^airPlay/, 'airplay').replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`),
+      htmlName,
+      reactName: `${base[0]!.toUpperCase()}${base.slice(1)}Icon`,
+      defaultSvg,
+      minimalSvg: minimal.get(htmlName) ?? "",
+    };
+  });
+---
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      <Th>Default</Th>
+      <Th>Minimal</Th>
+      {framework === 'html' && <Th>Name</Th>}
+      <Th>Export</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      icons.map((icon) => (
+        <Tr>
+          <Td>
+            <span class="icon-table__preview" set:html={icon.defaultSvg} />
+          </Td>
+          <Td>
+            <span class="icon-table__preview" set:html={icon.minimalSvg} />
+          </Td>
+          {framework === 'html' && (
+            <Td>
+              <MarkdownCode>{icon.name}</MarkdownCode>
+            </Td>
+          )}
+          <Td class="w-full">
+            <MarkdownCode>{framework === 'html' ? icon.htmlName : icon.reactName}</MarkdownCode>
+          </Td>
+        </Tr>
+      ))
+    }
+  </Tbody>
+</Table>
+
+<style>
+  .icon-table__preview {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+  }
+</style>
