@@ -92,7 +92,7 @@ The dialog owns presentation, not recovery. Decide the next step in your applica
 - For a terminal failure, load a new or refreshed source to recover. An aborted load or an adapter-specific error may have different behavior.
 - Standard media error codes distinguish broad classes — aborted, network, decode, and source-not-supported — rather than root causes. A media adapter can report its own numeric code too.
 - Streaming engines handle recoverable segment and network failures before surfacing a terminal error. Do not layer a generic same-source retry loop on top of the engine.
-- Once the player attaches to the media element, errors land in state even before any UI renders (bad URL at mount); make sure your error surface renders regardless of playback state.
+- The feature listens for error events after attachment. An error already present on the media before attachment is not copied into state. Attach before starting a load when you control that sequence, and check the media's existing `error` when adopting an already loaded element. Keep the error surface mounted regardless of playback state.
 
 ## Common variations
 
@@ -116,8 +116,7 @@ Place a reporter inside `VideoPlayer`, alongside the skin or your custom control
 
 ```tsx
 import { useEffect } from 'react';
-import { selectError } from '@videojs/react';
-import { usePlayer } from '@videojs/react/video';
+import { selectError, usePlayer } from '@videojs/react';
 
 function PlaybackErrorReporter({
   onError,
