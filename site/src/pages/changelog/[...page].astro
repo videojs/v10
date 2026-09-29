@@ -3,6 +3,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 import type { GetStaticPaths, Page } from 'astro';
+import { compareVersions } from '@videojs/installation/node';
 import BlogPagination from '@/components/blog/BlogPagination.astro';
 import ChangelogEntryCard from '@/components/changelog/ChangelogEntryCard.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
@@ -13,7 +14,7 @@ export const getStaticPaths = (async ({ paginate }) => {
   const entries = (await getCollection('changelog')).sort(
     (a, b) =>
       b.data.date.valueOf() - a.data.date.valueOf() ||
-      b.data.version.localeCompare(a.data.version, undefined, { numeric: true })
+      compareVersions(b.data.version, a.data.version)
   );
 
   return paginate(entries, { pageSize: BLOG_PAGE_SIZE });
