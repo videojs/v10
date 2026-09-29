@@ -51,14 +51,23 @@ const PRESETS = [
 ];
 
 describe('createPlayerStoreReferenceModel', () => {
-  it('orders features by name and names their exports', () => {
+  it('orders features most used first and names their exports', () => {
     const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
 
     expect(model.features.map((feature) => feature.exportName)).toEqual([
       'playbackFeature',
-      'streamTypeFeature',
       'volumeFeature',
+      'streamTypeFeature',
     ]);
+  });
+
+  it('places unranked features after the ranked ones, by name', () => {
+    const model = createPlayerStoreReferenceModel(
+      [makeFeature('zoom'), makeFeature('streamType'), makeFeature('annotations'), makeFeature('playback')],
+      PRESETS
+    );
+
+    expect(model.features.map((feature) => feature.name)).toEqual(['playback', 'streamType', 'annotations', 'zoom']);
   });
 
   it('pins video and audio before the other presets and drops presets with empty bundles', () => {
@@ -88,9 +97,9 @@ describe('createPlayerStoreReferenceModel', () => {
     expect(model.members.map(({ name, kind, id }) => ({ name, kind, id }))).toEqual([
       { name: 'paused', kind: 'state', id: 'playback-state-paused' },
       { name: 'play', kind: 'action', id: 'playback-action-play' },
-      { name: 'streamType', kind: 'state', id: 'streamType-state-streamType' },
       { name: 'volume', kind: 'state', id: 'volume-state-volume' },
       { name: 'setVolume', kind: 'action', id: 'volume-action-setVolume' },
+      { name: 'streamType', kind: 'state', id: 'streamType-state-streamType' },
     ]);
   });
 
@@ -121,12 +130,12 @@ describe('createPlayerStoreReferenceModel', () => {
         '  readonly paused: boolean;',
         '  play: () => Promise<void>;',
         '',
-        '  // streamTypeFeature (opt-in)',
-        "  readonly streamType: 'live' | 'on-demand' | 'unknown';",
-        '',
         '  // volumeFeature (video, audio, live-video)',
         '  readonly volume: number;',
         '  setVolume: (volume: number) => number;',
+        '',
+        '  // streamTypeFeature (opt-in)',
+        "  readonly streamType: 'live' | 'on-demand' | 'unknown';",
         '}',
       ].join('\n')
     );

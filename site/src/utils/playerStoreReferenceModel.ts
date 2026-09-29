@@ -21,6 +21,32 @@ import type { TocHeading } from './componentReferenceModel';
 /** Presets listed first, in this order; the rest follow by name. Matches PresetReference.astro. */
 const PINNED_PRESETS = ['video', 'audio'];
 
+/**
+ * Features in the order a custom player UI most likely needs them: core playback controls first, then presentation,
+ * content, and track selection, with live-only and opt-in features last. A feature missing from this list follows the
+ * listed ones by name, so a new feature still appears before anyone places it.
+ */
+const FEATURE_ORDER = [
+  'playback',
+  'time',
+  'volume',
+  'fullscreen',
+  'controls',
+  'buffer',
+  'textTrack',
+  'playbackRate',
+  'pip',
+  'error',
+  'metadata',
+  'source',
+  'quality',
+  'audioTrack',
+  'remotePlayback',
+  'live',
+  'streamType',
+  'orientationLock',
+];
+
 export interface PlayerStorePreset {
   name: string;
   featureBundle: string;
@@ -76,6 +102,18 @@ function comparePresets(a: PresetReference, b: PresetReference): number {
   return a.name.localeCompare(b.name);
 }
 
+function compareFeatures(a: FeatureReference, b: FeatureReference): number {
+  const aRank = FEATURE_ORDER.indexOf(a.name);
+  const bRank = FEATURE_ORDER.indexOf(b.name);
+  if (aRank !== -1 && bRank !== -1) return aRank - bRank;
+
+  if (aRank !== -1) return -1;
+
+  if (bRank !== -1) return 1;
+
+  return a.name.localeCompare(b.name);
+}
+
 function toMembers(
   feature: PlayerStoreFeature,
   kind: PlayerStoreMember['kind'],
@@ -115,7 +153,7 @@ export function createPlayerStoreReferenceModel(
 ): PlayerStoreReferenceModel {
   // A preset with an empty bundle contributes nothing to the store, so it gets no column.
   const presetColumns = presetRefs.filter((preset) => preset.features.length > 0).sort(comparePresets);
-  const sortedRefs = [...featureRefs].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedRefs = [...featureRefs].sort(compareFeatures);
   const features: PlayerStoreFeature[] = [];
   const members: PlayerStoreMember[] = [];
 
