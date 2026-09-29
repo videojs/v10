@@ -92,7 +92,11 @@ The dialog owns presentation, not recovery. Decide the next step in your applica
 - For a terminal failure, load a new or refreshed source to recover. An aborted load or an adapter-specific error may have different behavior.
 - Standard media error codes distinguish broad classes — aborted, network, decode, and source-not-supported — rather than root causes. A media adapter can report its own numeric code too.
 - Streaming engines handle recoverable segment and network failures before surfacing a terminal error. Do not layer a generic same-source retry loop on top of the engine.
-- The feature listens for error events after attachment. An error already present on the media before attachment is not copied into state. Attach before starting a load when you control that sequence, and check the media's existing `error` when adopting an already loaded element. Keep the error surface mounted regardless of playback state.
+- The feature records `error` events after attachment. An error already present on the media is not copied into state. Keep the error surface mounted regardless of playback state.
+
+<FrameworkCase frameworks={["html"]}>
+A `src` in page markup can start loading before the player script runs. To capture startup failures, omit `src` from the markup and assign it after the player imports and attachment. Check `player.store.target` to confirm attachment; if it is absent, wait for a store notification. When adopting an already loaded element, check `video.error` once and show an application message if an error is present.
+</FrameworkCase>
 
 ## Common variations
 

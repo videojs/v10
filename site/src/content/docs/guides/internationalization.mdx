@@ -118,7 +118,7 @@ Each label uses the first available value:
 3. The component's English default
 </FrameworkCase>
 
-<DocsLink slug="reference/api/register-i18n">`registerI18n(locale, translations)`</DocsLink> adds or replaces keys in the shared registry. Mounted providers pick up later registrations, including overrides for an already loaded pack. Registering any strings for a locale prevents its pack from loading automatically. For partial global overrides, register the full pack first, as shown below.
+<DocsLink slug="reference/api/register-i18n">`registerI18n(locale, translations)`</DocsLink> adds or replaces keys in the shared registry. Mounted providers pick up later registrations. Registering any strings for a locale prevents its pack from loading automatically. For partial global overrides, import the locale's `/register` entry first, as shown below. This keeps the full translation available after a locale switch or provider remount.
 
 When no shipped pack matches, the provider can use the browser's on-device Translation API. Supply your own translations when you need reviewed wording or consistent availability across browsers.
 
@@ -211,20 +211,20 @@ import { registerI18n } from '@videojs/html/i18n';
 registerI18n('ja', { buttons: { play: '再生', pause: '一時停止' } });
 ```
 
-Import the full pack before registering partial overrides so the remaining labels stay in Japanese. Overrides also update mounted providers after a pack has loaded.
+Import the full pack before registering partial overrides so the remaining labels stay in Japanese. Overrides registered after lazy loading apply immediately, but the provider won't reload that pack after a locale switch or remount. Importing `/register` avoids losing the remaining labels.
 
 </FrameworkCase>
 
 ### Register your own locale
 
-Registered packs are partial: missing keys fall back through the locale chain to a shipped pack or English.
+Register strings for a locale your application supports. Missing keys fall back to registered parent strings, a shipped parent pack, or English. For example, registering `es-MX` overrides some Mexican Spanish labels while the `es` pack supplies the rest. Registering a tag with its own shipped pack prevents that pack from loading; use the full-pack pattern above for that case.
 
 <FrameworkCase frameworks={["react"]}>
 
 ```ts
 import { registerI18n, type Translations } from '@videojs/react/i18n';
 
-const es = {
+const esMX = {
   buttons: {
     play: 'Reproducir',
     pause: 'Pausa',
@@ -233,7 +233,7 @@ const es = {
   },
 } satisfies Partial<Translations>;
 
-registerI18n('es', es);
+registerI18n('es-MX', esMX);
 ```
 
 </FrameworkCase>
@@ -242,7 +242,7 @@ registerI18n('es', es);
 ```ts
 import { registerI18n, type Translations } from '@videojs/html/i18n';
 
-const es = {
+const esMX = {
   buttons: {
     play: 'Reproducir',
     pause: 'Pausa',
@@ -251,7 +251,7 @@ const es = {
   },
 } satisfies Partial<Translations>;
 
-registerI18n('es', es);
+registerI18n('es-MX', esMX);
 ```
 
 </FrameworkCase>
@@ -480,8 +480,10 @@ Pass `locale` explicitly on the server — there's no DOM to resolve `lang` from
 Emit `lang`, wrap the player with `<media-i18n>`, and register packs in the entry module loaded before custom elements upgrade:
 
 ```ts
-import '@videojs/html/video/player';
 import '@videojs/html/i18n/locales/es/register';
+import '@videojs/html/i18n';
+import '@videojs/html/video/player';
+import '@videojs/html/ui/container';
 ```
 
 <Aside type="caution">
