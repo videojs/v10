@@ -279,12 +279,12 @@ Remove `controls` yourself: Video.js doesn't turn native controls off when a ski
 | `keyShortcuts`, `keyTarget`, `keyDisabled` | Hotkeys. See [Keyboard shortcuts and gestures](#keyboard-shortcuts-and-gestures) |
 | `googleCast` | `receiver` on the Google Cast extension. See [AirPlay and Google Cast](#airplay-and-google-cast) |
 | `controlsDelay`, `hideControlsOnMouseLeave` | Not configurable. Controls hide after 2 seconds and when the pointer leaves ([#1728](https://github.com/videojs/v10/issues/1728)) |
-| `load`, `posterLoad` | No equivalent. See [Loading](#loading) |
+| `load`, `posterLoad` | No equivalent ([#3043](https://github.com/videojs/v10/issues/3043)). See [Loading](#loading) |
 | `storage` | No equivalent ([#944](https://github.com/videojs/v10/issues/944)). See <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink> |
 | `duration` | No equivalent ([#1729](https://github.com/videojs/v10/issues/1729)) |
-| `clipStartTime`, `clipEndTime` | No equivalent |
+| `clipStartTime`, `clipEndTime` | No equivalent ([#3040](https://github.com/videojs/v10/issues/3040)) |
 | `liveEdgeTolerance`, `minLiveDVRWindow` | No equivalent ([#1730](https://github.com/videojs/v10/issues/1730)) |
-| `artist`, `artwork` | No equivalent; Video.js doesn't set Media Session metadata |
+| `artist`, `artwork` | No equivalent; Video.js doesn't set Media Session metadata ([#3042](https://github.com/videojs/v10/issues/3042)) |
 | `logLevel` | No equivalent ([#1406](https://github.com/videojs/v10/issues/1406)); development builds print warnings |
 </FrameworkCase>
 
@@ -303,12 +303,12 @@ Remove `controls` yourself: Video.js doesn't turn native controls off when a ski
 | `keyShortcuts`, `key-target`, `key-disabled` | Hotkeys. See [Keyboard shortcuts and gestures](#keyboard-shortcuts-and-gestures) |
 | `googleCast` | `receiver` on `<google-cast>`. See [AirPlay and Google Cast](#airplay-and-google-cast) |
 | `controls-delay`, `hide-controls-on-mouse-leave` | Not configurable. Controls hide after 2 seconds and when the pointer leaves ([#1728](https://github.com/videojs/v10/issues/1728)) |
-| `load`, `poster-load` | No equivalent. See [Loading](#loading) |
+| `load`, `poster-load` | No equivalent ([#3043](https://github.com/videojs/v10/issues/3043)). See [Loading](#loading) |
 | `storage` | No equivalent ([#944](https://github.com/videojs/v10/issues/944)). See <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink> |
 | `duration` | No equivalent ([#1729](https://github.com/videojs/v10/issues/1729)) |
-| `clip-start-time`, `clip-end-time` | No equivalent |
+| `clip-start-time`, `clip-end-time` | No equivalent ([#3040](https://github.com/videojs/v10/issues/3040)) |
 | `live-edge-tolerance`, `min-live-dvr-window` | No equivalent ([#1730](https://github.com/videojs/v10/issues/1730)) |
-| `artist`, `artwork` | No equivalent; Video.js doesn't set Media Session metadata |
+| `artist`, `artwork` | No equivalent; Video.js doesn't set Media Session metadata ([#3042](https://github.com/videojs/v10/issues/3042)) |
 | `log-level` | No equivalent ([#1406](https://github.com/videojs/v10/issues/1406)); development builds print warnings |
 | `keep-alive` | `keep-alive` on each element you move. See [Element lifecycle](#element-lifecycle) |
 </FrameworkCase>
@@ -329,7 +329,7 @@ Vidstack's `<media-provider>` read `src`, guessed a type from the extension or a
 | DASH | <DocsLink slug="reference/components/dash-video">`DashVideo`</DocsLink>, or <DocsLink slug="reference/components/shaka-video">`ShakaVideo`</DocsLink> for live DASH | `@videojs/dash-video`, `@videojs/shaka-video` |
 | YouTube | <DocsLink slug="reference/components/youtube-video">`YouTubeVideo`</DocsLink> | `@videojs/youtube-video` |
 | Vimeo | <DocsLink slug="reference/components/vimeo-video">`VimeoVideo`</DocsLink> | `@videojs/vimeo-video` |
-| Remotion | No equivalent | |
+| Remotion | No equivalent ([#3053](https://github.com/videojs/v10/issues/3053)) | |
 
 Import each media component from `@videojs/react/media/<name>`, for example `@videojs/react/media/hlsjs-video`.
 </FrameworkCase>
@@ -344,7 +344,7 @@ Import each media component from `@videojs/react/media/<name>`, for example `@vi
 | DASH | <DocsLink slug="reference/components/dash-video">`<dash-video>`</DocsLink>, or <DocsLink slug="reference/components/shaka-video">`<shaka-video>`</DocsLink> for live DASH | `@videojs/dash-video`, `@videojs/shaka-video` |
 | YouTube | <DocsLink slug="reference/components/youtube-video">`<youtube-video>`</DocsLink> | `@videojs/youtube-video` |
 | Vimeo | <DocsLink slug="reference/components/vimeo-video">`<vimeo-video>`</DocsLink> | `@videojs/vimeo-video` |
-| Remotion | No equivalent | |
+| Remotion | No equivalent ([#3053](https://github.com/videojs/v10/issues/3053)) | |
 
 Register each media element with `import '@videojs/html/media/<name>'`, or load `{{VJS10_CDN_BASE}}/media/<name>.js` from the CDN, where the engine is already bundled.
 </FrameworkCase>
@@ -460,7 +460,7 @@ The embeds take a URL or a bare ID as `src`. Two Vidstack shortcuts don't carry 
 - **`youtube/ID` and `vimeo/ID` aren't recognized.** Use the full URL or just the ID.
 - **Vimeo's `?hash=` becomes `?h=`.** Unlisted videos need `?h=HASH` or the hash as the last path segment.
 
-Vidstack fetched a poster for embeds automatically. Video.js doesn't; set `poster` on the player if you want your own image before playback.
+Vidstack fetched a poster for embeds automatically. Video.js doesn't ([#3049](https://github.com/videojs/v10/issues/3049)); set `poster` on the player if you want your own image before playback.
 
 <Aside type="caution" title="Embed privacy defaults changed">
 Vidstack loaded YouTube from `youtube-nocookie.com` and asked Vimeo not to track viewers unless you turned cookies on. Video.js uses the standard YouTube host unless your `src` is a `youtube-nocookie.com` URL, and sends Vimeo's `dnt` flag only when you set `source.engine.vimeo.dnt`. Keep the privacy-enhanced behavior by writing `https://www.youtube-nocookie.com/embed/VIDEO_ID` as the YouTube `src` and adding `dnt: true` to the Vimeo engine options.
@@ -539,7 +539,7 @@ For a single source, calling `loadSource(src)` on the player store swaps the URL
 
 Vidstack waited until the player was visible before it loaded the provider (`load="visible"`), and embeds loaded lazily with preconnect hints. Video.js media starts loading as soon as it attaches, following its `preload` attribute, and embeds create their iframe right away.
 
-To defer network work, set `preload="none"` on streaming media; hls.js-backed media then waits for playback to fetch segments. For players far down a page, render or import the media when it scrolls into view with your own `IntersectionObserver`. There's no `startLoading()`; set `src` when you're ready.
+To defer network work, set `preload="none"` on streaming media; hls.js-backed media then waits for playback to fetch segments. For players far down a page, render or import the media when it scrolls into view with your own `IntersectionObserver`. There's no `startLoading()`; set `src` when you're ready. Follow [#3043](https://github.com/videojs/v10/issues/3043) for built-in deferred loading and [#1433](https://github.com/videojs/v10/issues/1433) for preconnect hints.
 
 ## Layouts become skins
 
@@ -565,7 +565,7 @@ Vidstack rendered the audio and video layouts side by side and matched one at ru
 | A custom layout with no controls | `<background-video-skin>` from `@videojs/html/background/skin` |
 </FrameworkCase>
 
-The video skins cover the Default Layout's core controls: play, volume, time, the time slider with thumbnails and chapter segments, captions, fullscreen, picture-in-picture, AirPlay, Cast, and a settings menu with quality, audio track, playback rate, and captions. They add an error dialog and on-screen feedback for hotkeys and gestures. The Default Layout's chapters menu, accessibility menu, audio boost, loop toggle, and download button have no equivalent yet.
+The video skins cover the Default Layout's core controls: play, volume, time, the time slider with thumbnails and chapter segments, captions, fullscreen, picture-in-picture, AirPlay, Cast, and a settings menu with quality, audio track, playback rate, and captions. They add an error dialog and on-screen feedback for hotkeys and gestures. The Default Layout's chapters menu ([#1873](https://github.com/videojs/v10/issues/1873)), accessibility menu, audio boost ([#1135](https://github.com/videojs/v10/issues/1135)), loop toggle, and download button ([#3041](https://github.com/videojs/v10/issues/3041)) have no equivalent yet.
 
 ### Map layout props
 
@@ -587,7 +587,7 @@ Packaged skins take almost no props. Most layout props either move somewhere els
 | `hideQualityBitrate` | Bitrate shows only to tell apart renditions of the same size |
 | `noModal`, `menuContainer` | Not needed. Menus render in the browser's top layer |
 | `audioGains`, `noAudioGain` | No audio gain ([#1135](https://github.com/videojs/v10/issues/1135)) |
-| `download` | No equivalent |
+| `download` | No equivalent ([#3041](https://github.com/videojs/v10/issues/3041)) |
 | `sliderChaptersMinWidth`, `noScrubGesture` | No equivalent |
 </FrameworkCase>
 
@@ -605,7 +605,7 @@ Packaged skins take almost no props. Most layout props either move somewhere els
 | `hide-quality-bitrate` | Bitrate shows only to tell apart renditions of the same size |
 | `no-modal`, `menu-container` | Not needed. Menus render in the browser's top layer |
 | `audio-gains`, `no-audio-gain` | No audio gain ([#1135](https://github.com/videojs/v10/issues/1135)) |
-| `download` | No equivalent |
+| `download` | No equivalent ([#3041](https://github.com/videojs/v10/issues/3041)) |
 | `slider-chapters-min-width`, `no-scrub-gesture` | No equivalent |
 </FrameworkCase>
 
@@ -737,7 +737,7 @@ Vidstack's Tailwind plugin added state variants like `media-paused:` and `media-
 ```
 </FrameworkCase>
 
-Skin source in Tailwind defines its own `media-sm:`, `media-lg:`, and similar variants. Those are container-width breakpoints, not state. The Tailwind skin source needs Tailwind 4.3 or later, and it's available for React only; HTML skin source uses CSS. Vidstack's plugin targeted Tailwind 3.
+Skin source in Tailwind defines its own `media-sm:`, `media-lg:`, and similar variants. Those are container-width breakpoints, not state. The Tailwind skin source needs Tailwind 4.3 or later, and it's available for React only; HTML skin source uses CSS ([#3055](https://github.com/videojs/v10/issues/3055)). Vidstack's plugin targeted Tailwind 3.
 
 ### Responsive layouts
 
@@ -745,7 +745,7 @@ Vidstack switched to a small layout when `smallWhen` matched the player's width 
 
 ### Color scheme
 
-Vidstack's `colorScheme` toggled light and dark classes on the layout. Video.js skins read the inherited CSS `color-scheme`, so `:root { color-scheme: light dark; }` follows the system setting. The audio skins change their palette with the scheme. The video skins stay dark over video; only their border follows it.
+Vidstack's `colorScheme` toggled light and dark classes on the layout. Video.js skins read the inherited CSS `color-scheme`, so `:root { color-scheme: light dark; }` follows the system setting. The audio skins change their palette with the scheme. The video skins stay dark over video; only their border follows it ([#3054](https://github.com/videojs/v10/issues/3054)).
 
 ### Icons
 
@@ -1062,8 +1062,8 @@ Caption `<track>` elements move from `<media-provider>` to the media. Video.js r
 
 The browser parses and renders the cues, so:
 
-- **Only WebVTT works.** Vidstack parsed SRT, SSA/ASS, and JSON with `type`. Convert them to WebVTT at build time or on your server.
-- **Style captions with `::cue`.** `<media-captions>`, its `data-part` selectors, and the `--media-cue-*` variables have no equivalent. The skins keep native captions clear of the controls in Chromium and WebKit browsers.
+- **Only WebVTT works.** Vidstack parsed SRT, SSA/ASS, and JSON with `type` ([#3037](https://github.com/videojs/v10/issues/3037)). Convert them to WebVTT at build time or on your server.
+- **Style captions with `::cue`.** `<media-captions>`, its `data-part` selectors, and the `--media-cue-*` variables have no equivalent ([#3038](https://github.com/videojs/v10/issues/3038)). The skins keep native captions clear of the controls in Chromium and WebKit browsers.
 - **There's no caption style menu** for viewers to pick fonts, colors, and backgrounds ([#1437](https://github.com/videojs/v10/issues/1437)). Viewers can still set caption preferences in their operating system or browser.
 - **Adding tracks from code is native.** `textTracks.add()` becomes a `<track>` element, or `addTextTrack()` and `VTTCue` on a plain `<video>`.
 
@@ -1084,7 +1084,7 @@ The `thumbnails` layout prop and `Thumbnail`'s `src` become a track on the media
 </Video>
 ```
 
-`default` is required, or the cues never load. Set `crossOrigin` on the media when the storyboard images come from another origin. Vidstack also accepted JSON and Mux `storyboard.json` URLs; fetch and convert those yourself and pass the result to the `thumbnails` prop on `Thumbnail.Root`, or use `MuxVideo`, which adds the storyboard track for you. See <DocsLink slug="guides/thumbnails">Thumbnails</DocsLink>.
+`default` is required, or the cues never load. Set `crossOrigin` on the media when the storyboard images come from another origin. Vidstack also accepted JSON and Mux `storyboard.json` URLs ([#3044](https://github.com/videojs/v10/issues/3044)); fetch and convert those yourself and pass the result to the `thumbnails` prop on `Thumbnail.Root`, or use `MuxVideo`, which adds the storyboard track for you. See <DocsLink slug="guides/thumbnails">Thumbnails</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -1096,7 +1096,7 @@ The `thumbnails` layout attribute and `<media-thumbnail src>` become a track on 
 </video>
 ```
 
-`default` is required, or the cues never load. Set `crossorigin` on the media when the storyboard images come from another origin. Vidstack also accepted JSON and Mux `storyboard.json` URLs; fetch and convert those yourself and assign the result to the `thumbnails` property on `<media-thumbnail>`, or use `<mux-video>`, which adds the storyboard track for you. See <DocsLink slug="guides/thumbnails">Thumbnails</DocsLink>.
+`default` is required, or the cues never load. Set `crossorigin` on the media when the storyboard images come from another origin. Vidstack also accepted JSON and Mux `storyboard.json` URLs ([#3044](https://github.com/videojs/v10/issues/3044)); fetch and convert those yourself and assign the result to the `thumbnails` property on `<media-thumbnail>`, or use `<mux-video>`, which adds the storyboard track for you. See <DocsLink slug="guides/thumbnails">Thumbnails</DocsLink>.
 </FrameworkCase>
 
 ## Keyboard shortcuts and gestures
@@ -1161,7 +1161,7 @@ Vidstack's gestures listened for any DOM event and took their hit area from thei
 | Other events, such as `mouseleave` | No equivalent |
 | `will-trigger` and `trigger` events | Use `useTapGesture` or `useDoubleTapGesture` in React, or `createTapGesture` in HTML, and decide in the callback |
 
-The packaged video skins already bind these defaults. Vidstack's swipe-to-scrub gesture has no equivalent.
+The packaged video skins already bind these defaults. Vidstack's swipe-to-scrub gesture has no equivalent ([#3046](https://github.com/videojs/v10/issues/3046)).
 
 ## Fullscreen and orientation
 
@@ -1242,7 +1242,7 @@ Vidstack's `googleCast` property becomes the `<google-cast>` extension, placed n
 Register it with `import '@videojs/html/extensions/google-cast'`.
 </FrameworkCase>
 
-Only the receiver ID carries over from Vidstack's Cast options. The device name, `remotePlaybackType`, and the Cast prompt events have no equivalent. See <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink>.
+Only the receiver ID carries over from Vidstack's Cast options, and the Cast prompt events have no equivalent ([#3048](https://github.com/videojs/v10/issues/3048)). There's no device name or `remotePlaybackType` either ([#3047](https://github.com/videojs/v10/issues/3047)). See <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink>.
 
 ## Languages
 
@@ -1303,7 +1303,7 @@ In Angular, add `CUSTOM_ELEMENTS_SCHEMA` to the `schemas` of the component that 
 
 ## Element lifecycle
 
-Vidstack elements destroyed themselves when they were removed from the page and not put back within a frame, unless they carried `keep-alive`, which the player passed down to its children. Video.js keeps the attribute but doesn't pass it down: set it on each element you plan to move, then call `destroy()` when you're done with it. Packaged skins don't pass it to their controls either, so move a player that uses one within a single task. See the player's <DocsLink slug="reference/components/player" anchor="lifecycle">lifecycle</DocsLink>.
+Vidstack elements destroyed themselves when they were removed from the page and not put back within a frame, unless they carried `keep-alive`, which the player passed down to its children. Video.js keeps the attribute but doesn't pass it down: set it on each element you plan to move, then call `destroy()` when you're done with it. Packaged skins don't pass it to their controls either ([#3036](https://github.com/videojs/v10/issues/3036)), so move a player that uses one within a single task. See the player's <DocsLink slug="reference/components/player" anchor="lifecycle">lifecycle</DocsLink>.
 
 </FrameworkCase>
 
@@ -1326,26 +1326,27 @@ These changes don't throw errors, so test for them:
 
 ## Known gaps
 
-Ordered roughly by how likely each is to block a Vidstack migration.
+Ordered roughly by how likely each is to block a Vidstack migration. Follow [Vidstack Parity](https://github.com/videojs/v10/issues/3035) for progress.
 
 - **No automatic provider selection.** Choose the media component per source ([#2160](https://github.com/videojs/v10/issues/2160)).
 - **Nothing persists** between visits: volume, captions, language, rate, quality, or position ([#944](https://github.com/videojs/v10/issues/944)).
-- **No caption style settings** ([#1437](https://github.com/videojs/v10/issues/1437)), no custom caption renderer, and WebVTT only: no SRT, SSA/ASS, or JSON captions. Audio players don't show captions.
+- **No caption style settings** ([#1437](https://github.com/videojs/v10/issues/1437)), no custom caption renderer ([#3038](https://github.com/videojs/v10/issues/3038)), and WebVTT only: no SRT, SSA/ASS, or JSON captions ([#3037](https://github.com/videojs/v10/issues/3037)). Audio players don't show captions ([#3039](https://github.com/videojs/v10/issues/3039)).
 - **No chapters menu** or chapter title outside the time slider ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points and markers aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
-- **Fixed playback rates**: `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` ([#1404](https://github.com/videojs/v10/issues/1404)). No speed or quality sliders.
+- **Fixed playback rates**: `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` ([#1404](https://github.com/videojs/v10/issues/1404)). No speed or quality sliders ([#3052](https://github.com/videojs/v10/issues/3052)).
 - **No audio gain or boost** ([#1135](https://github.com/videojs/v10/issues/1135)).
-- **No load strategies.** Vidstack's media and poster loading strategies and `startLoading()` have no equivalent.
-- **No clipping.** Vidstack's clip start and end times have no equivalent.
-- **No download button.**
-- **No Remotion provider** or Remotion components.
-- **No Media Session** metadata from `title`, `artist`, and `artwork`.
+- **No load strategies.** Vidstack's media and poster loading strategies and `startLoading()` have no equivalent ([#3043](https://github.com/videojs/v10/issues/3043)), and embeds don't preconnect ([#1433](https://github.com/videojs/v10/issues/1433)).
+- **No clipping.** Vidstack's clip start and end times have no equivalent ([#3040](https://github.com/videojs/v10/issues/3040)).
+- **No download button** ([#3041](https://github.com/videojs/v10/issues/3041)).
+- **No Remotion provider** or Remotion components ([#3053](https://github.com/videojs/v10/issues/3053)).
+- **No Media Session** metadata from `title`, `artist`, and `artwork` ([#3042](https://github.com/videojs/v10/issues/3042)).
 - **Fixed timing.** The controls hide delay ([#1728](https://github.com/videojs/v10/issues/1728)) and the live edge tolerance ([#1730](https://github.com/videojs/v10/issues/1730)) aren't configurable, and there's no duration override ([#1729](https://github.com/videojs/v10/issues/1729)).
 - **No debug logging** to replace Vidstack's log level ([#1406](https://github.com/videojs/v10/issues/1406)).
-- **Fewer embed conveniences.** No `youtube/ID` or `vimeo/ID` shorthands, automatic embed posters, Vimeo chapters, or Vimeo quality selection.
-- **Less remote playback detail.** No route type, device name, Cast prompt events, or Cast options beyond the receiver ID.
+- **Fewer embed conveniences.** No `youtube/ID` or `vimeo/ID` shorthands ([#2160](https://github.com/videojs/v10/issues/2160)), automatic embed posters ([#3049](https://github.com/videojs/v10/issues/3049)), Vimeo chapters ([#3050](https://github.com/videojs/v10/issues/3050)), or Vimeo quality selection ([#3051](https://github.com/videojs/v10/issues/3051)).
+- **Less remote playback detail.** No route type or device name ([#3047](https://github.com/videojs/v10/issues/3047)), and no Cast prompt events or Cast options beyond the receiver ID ([#3048](https://github.com/videojs/v10/issues/3048)).
+- **Fewer time slider and gesture extras.** No video preview in the time slider ([#3045](https://github.com/videojs/v10/issues/3045)), JSON thumbnail storyboards ([#3044](https://github.com/videojs/v10/issues/3044)), or swipe to scrub ([#3046](https://github.com/videojs/v10/issues/3046)).
 - **No request events**, event triggers, or ways to cancel a request, by design.
-- **No light theme for video skins**, no Plyr-style skin, and no Tailwind skin source for HTML.
-- **No ads**, which are on the roadmap for late 2026.
+- **No light theme for video skins** ([#3054](https://github.com/videojs/v10/issues/3054)), no Plyr-style skin ([#181](https://github.com/videojs/v10/issues/181)), and no Tailwind skin source for HTML ([#3055](https://github.com/videojs/v10/issues/3055)).
+- **No ads** ([#3056](https://github.com/videojs/v10/issues/3056)), which are on the roadmap for late 2026.
 
 ## See also
 
