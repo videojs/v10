@@ -73,7 +73,7 @@ Set size, position, and transforms on the decorative wrapper so the poster and v
 - Use a source the browser can play directly, such as MP4 or WebM.
 - Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
 - BackgroundVideo does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
-- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`; apply the same policy to the streaming variations below.
+- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`. The streaming variations below require mounting and unmounting the video instead.
 - If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
 </FrameworkCase>
 
@@ -81,7 +81,7 @@ Set size, position, and transforms on the decorative wrapper so the poster and v
 - Use a source the browser can play directly, such as MP4 or WebM.
 - Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
 - `<background-video>` does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
-- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`; apply the same policy to the streaming variations below.
+- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`. The streaming variations below require adding and removing the element instead.
 - If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
 </FrameworkCase>
 
@@ -104,6 +104,16 @@ Choose a variation based on the source you already have:
 </FrameworkCase>
 
 ### Play an HLS video
+
+These streaming background components always autoplay. They ignore `autoPlay={false}` and `noautoplay`.
+
+<FrameworkCase frameworks={["react"]}>
+Keep the poster and motion button from the primary example. Render the streaming component only while `motionEnabled` is true, and remove the native video's `play()`/`pause()` effect. Unmounting the component stops playback; mounting it again restarts the stream.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Keep the poster and motion button from the primary example. Change `setMotion` to create and append a streaming element only when motion is enabled, and remove it when motion is disabled. Do not set `keep-alive`: removal must destroy playback. Create a fresh element when enabling motion again. These elements expose the inner video as `video`, rather than the native background element's `target`.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 HlsBackgroundVideo plays an HLS video without adding controls, audio, or captions. Pass a complete HLS URL through `src`:
