@@ -59,18 +59,18 @@ Wrap your control UI in <DocsLink slug="reference/components/controls">`<media-c
 
 The <DocsLink slug="reference/api/feature-controls">controls feature</DocsLink> tracks activity on the player container:
 
-- `userActive` is `true` while the user interacts — pointer movement, keyboard input, or focus — and flips to `false` after two seconds of inactivity.
+- `userActive` becomes `true` on pointer movement, keyboard input, or focus entry, and flips to `false` after two seconds without another activity event.
 - `controlsVisible` derives from activity and playback: controls stay visible while paused or while a remote playback session is connecting or connected, regardless of idle state.
-- `toggleControls()` flips visibility, for wiring to custom triggers.
+- `toggleControls()` shows the controls or marks the user inactive. Paused playback, a remote session, or an open menu can keep controls visible even when the user is inactive.
 
 On touch devices, a tap on the media toggles the controls instead of relying on pointer movement, and mid-gesture movement doesn't flicker visibility.
 
-The feature needs the player container for activity tracking; without a container it stays inactive and warns in development.
+The feature needs the player container for activity tracking. Without one, it keeps its initial active and visible state and warns in development.
 
 ## Availability and constraints
 
 - Activity tracking listens on the player container, so controls placed outside it don't keep the player "active" — put control UI inside the container.
-- Keyboard focus counts as activity: controls stay reachable for keyboard and assistive-technology users while focus is inside them.
+- Focus entry restarts the idle timer; holding focus alone does not keep controls visible. The example uses `:focus-within` to keep focused controls visible after the timer expires.
 - Touch and mouse behave differently by design — mouse movement shows controls, touch requires a tap. Test both.
 - The idle delay is fixed at two seconds.
 
@@ -79,11 +79,11 @@ The feature needs the player container for activity tracking; without a containe
 ### Always-visible controls
 
 <FrameworkCase frameworks={["react"]}>
-Set `visibility="always"` on <DocsLink slug="reference/components/controls">Controls</DocsLink>. The controls stay visible and report the user as active while the feature keeps tracking activity for anything else that needs it. The packaged audio skins use this mode.
+Set `visibility="always"` on <DocsLink slug="reference/components/controls">Controls</DocsLink>. This keeps the UI visible. When the controls feature is present, `userActive` still follows its activity tracking. The packaged audio skins use this mode.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Set `visibility="always"` on <DocsLink slug="reference/components/controls">`<media-controls>`</DocsLink>. The controls stay visible and report the user as active while the feature keeps tracking activity for anything else that needs it. The packaged audio skins use this mode.
+Set `visibility="always"` on <DocsLink slug="reference/components/controls">`<media-controls>`</DocsLink>. This keeps the UI visible. When the controls feature is present, `userActive` still follows its activity tracking. The packaged audio skins use this mode.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -105,6 +105,14 @@ Set `visibility="always"` on <DocsLink slug="reference/components/controls">`<me
 ### Custom show/hide styling
 
 Controls hide by state, so you own the transition. Style the visible and hidden states in CSS — fade, slide, or scale — driven by the component's rendered state rather than re-implementing the idle timer.
+
+Keep focused controls visible in your hiding rule:
+
+```css
+.media-controls:not([data-visible]):not(:focus-within) {
+  opacity: 0;
+}
+```
 
 ## Troubleshooting
 
