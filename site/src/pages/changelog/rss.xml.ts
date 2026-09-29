@@ -1,14 +1,12 @@
 import rss from '@astrojs/rss';
-import { compareVersions } from '@videojs/installation/node';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 
 import { SITE_TITLE } from '@/consts';
+import { compareChangelogEntries } from '@/utils/changelog';
 
 export const GET: APIRoute = async (context) => {
-  const entries = (await getCollection('changelog')).sort(
-    (a, b) => b.data.date.valueOf() - a.data.date.valueOf() || compareVersions(b.data.version, a.data.version)
-  );
+  const entries = (await getCollection('changelog')).sort((a, b) => compareChangelogEntries(a.data, b.data));
 
   return rss({
     title: `${SITE_TITLE} Changelog`,
