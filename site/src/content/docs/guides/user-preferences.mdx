@@ -48,7 +48,8 @@ Subscribe to the state you want to remember, write it to storage when it changes
   // Guard storage access so playback still works when storage is blocked.
   function readSaved() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+      const value = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+      return Number.isFinite(value?.volume) && typeof value?.muted === 'boolean' ? value : null;
     } catch {
       return null;
     }
@@ -69,9 +70,9 @@ Subscribe to the state you want to remember, write it to storage when it changes
       if (!store.target) return false;
       const v = selectVolume(store.state);
       v?.setVolume(saved.volume);
-      // setVolume above zero unmutes, so mute again if that's the saved preference.
-      // At volume zero the player already counts as muted, and toggling would unmute.
-      if (v && saved.muted && saved.volume > 0) v.toggleMuted();
+      // Restore mute at the actual level, including platforms that ignore volume.
+      const current = selectVolume(store.state);
+      if (current && saved.muted && current.volume > 0 && !current.muted) current.toggleMuted();
       return true;
     };
     if (!restore()) {
@@ -116,21 +117,21 @@ Subscribe to the state you want to remember, write it to storage when it changes
 ## Availability and constraints
 
 - Video.js does not write preferences to storage. Initial values come from the media element, track markup, and playback engine.
-- `setVolume` clamps to 0–1 and unmutes above zero. Restore volume first, then toggle mute back on if the saved preference is muted. Skip that toggle at volume zero: it would unmute and raise the volume.
-- Feature writes update `store.state` synchronously; subscriber notifications are batched. Some actions wait for a media event before writing state. Read `store.state` for the current snapshot; a React hook's selected value updates on the next render.
+- `setVolume` clamps to 0–1 and unmutes above zero. Restore volume first, then restore mute if the actual level is above zero and the media is unmuted. At zero, `toggleMuted` would unmute and raise the volume.
+- `setVolume` updates `store.state` immediately. `toggleMuted` updates it on `volumechange`; subscribe if you need the resulting state. A React hook's selected value updates on the next render.
 - Restore track and quality selections after the media exposes them: track and rendition lists arrive when the media loads, not at player creation. Subscribe and apply when the saved entry appears in the list.
-- Programmatic volume control is unavailable on some platforms (after attach, iOS Safari reports `volumeAvailability: 'unsupported'`); volume persistence quietly does nothing there.
+- On iOS Safari, `volumeAvailability` is `'unsupported'` after attachment. Restoring the volume level has no effect there; mute can still be restored.
 - Local storage is per-origin and can be unavailable (private modes, embedded contexts); guard reads and writes accordingly.
 
 ## Common variations
 
 ### Persist caption preference
 
-Save the showing track's `language` (not its generated id, which can change between sources), or `'off'` when the user turns captions off. Restoring is two phases: while the media loads, assert the saved preference whenever the track modes drift from it, because browsers can auto-enable a track of their own during loading. Once the media can play (`canPlay`), treat every change as the user's choice and save it. A restore that re-runs forever would keep overriding the user; one that runs only once can get overridden by the browser.
+Save the showing track's `language`, or `'off'` when captions are off. Track ids can change between sources. While the media loads, reapply the saved preference if the browser enables another track. Once `canPlay` is true, finish restoration and save later selection changes. If the saved language is absent, leave the stored preference intact until the selection changes.
 
 <FrameworkCase frameworks={["react"]}>
 
-Place this component inside the same player as your media and caption controls:
+`CaptionsPersistence` imports `usePlayer` from `VolumePersistence.tsx` above. Render `<CaptionsPersistence />` next to `<VolumePersistence />` inside `Container`. Add a `<track>` with `label` and `srcLang` for each language to `Video`, as in <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>. Remount `CaptionsPersistence` when changing sources, using a key derived from the source URL, so restoration runs again.
 
 <TabsRoot client:idle>
   <TabsList client:idle label="Captions persistence source">
@@ -144,7 +145,7 @@ Place this component inside the same player as your media and caption controls:
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`: until `canPlay` is true, re-apply the saved preference by passing the matching track's `id` (or `'off'`) to `selectSubtitlesTrack` whenever the modes drift; afterward, save the showing track's `language`, or `'off'` when none is showing, on every change.
+Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`. Until `canPlay` is true, reapply the saved preference with `selectSubtitlesTrack`, passing the matching track's `id` or `'off'`. When restoration ends, record the current selection and return without saving. Save only later selection changes, preserving an unmatched preference. Guard `localStorage` reads and writes, and restart restoration for each new source.
 
 </FrameworkCase>
 
@@ -157,7 +158,7 @@ Adapt the same restore-then-save pattern to the <DocsLink slug="reference/api/fe
 3. Call `selectVideoRendition` with the matching entry's id, or `'auto'` if no match exists. An entry without an id uses its index in the list as a string.
 4. Finish restoration before saving later selections, so restoring the default does not overwrite the saved choice. Let subsequent changes follow the user.
 
-To remember a data-saving limit while preserving automatic switching, persist a source-level resolution cap instead. See <DocsLink slug="guides/media-sources" anchor="options-videojs-normalizes">Cap the maximum resolution</DocsLink>.
+To remember a data-saving limit while preserving automatic switching, persist `maxAutoResolution` and pass it on the next source. It needs the hls.js engine; native HLS playback ignores it. See <DocsLink slug="guides/media-sources" anchor="options-videojs-normalizes">Options Video.js normalizes</DocsLink>.
 
 ### Persist to your backend
 

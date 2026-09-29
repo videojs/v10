@@ -7,9 +7,11 @@ export const { Player, usePlayer } = createPlayer({ features: videoFeatures });
 const STORAGE_KEY = 'player:volume';
 
 // Guard storage access so playback still works when storage is blocked.
-function readSaved() {
+function readSaved(): { volume: number; muted: boolean } | null {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+    const value = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+
+    return Number.isFinite(value?.volume) && typeof value?.muted === 'boolean' ? value : null;
   } catch {
     return null;
   }
@@ -45,9 +47,10 @@ function VolumePersistence() {
       if (saved) {
         store.setVolume(saved.volume);
 
-        // setVolume above zero unmutes, so mute again if that's the saved preference.
-        // At volume zero the player already counts as muted, and toggling would unmute.
-        if (saved.muted && saved.volume > 0) store.toggleMuted();
+        // Restore mute at the actual level, including platforms that ignore volume.
+        const current = store.state;
+
+        if (saved.muted && current.volume > 0 && !current.muted) store.toggleMuted();
       }
 
       restored.current = true;

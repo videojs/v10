@@ -103,7 +103,7 @@ If you don't want to expose manual selection, do nothing: adaptive selection is 
 
 ### Pin quality programmatically
 
-Call `selectVideoRendition` to hold one rendition until the user selects "Auto". To limit resolution while keeping automatic switching, configure a <DocsLink slug="guides/media-sources" anchor="options-videojs-normalizes">maximum resolution on the source</DocsLink> instead.
+Call `selectVideoRendition` to hold one rendition until the user selects "Auto". To limit resolution while keeping automatic switching, set `maxAutoResolution` on the source. It needs the hls.js engine; native HLS playback ignores it. See <DocsLink slug="guides/media-sources" anchor="options-videojs-normalizes">Options Video.js normalizes</DocsLink>.
 
 <FrameworkCase frameworks={["react"]}>
 

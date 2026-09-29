@@ -13,10 +13,14 @@ export default function CaptionsPersistence() {
     }
   });
   const restored = useRef(false);
+  const lastSelection = useRef<string | null>(null);
 
   useEffect(() => {
     const subtitles = tracks.filter((t) => t.kind === 'captions' || t.kind === 'subtitles');
     if (!subtitles.length) return;
+
+    const showing = subtitles.find((t) => t.mode === 'showing');
+    const selection = showing ? showing.language : 'off';
 
     // Restore phase: assert the saved preference until the media can play.
     if (!restored.current) {
@@ -34,13 +38,17 @@ export default function CaptionsPersistence() {
       if (!canPlay) return;
 
       restored.current = true;
+      lastSelection.current = selection;
+      return;
     }
 
-    // Save phase: the showing track's language, or 'off'.
-    const showing = subtitles.find((t) => t.mode === 'showing');
+    // Save only later selection changes, preserving an unmatched preference.
+    if (selection === lastSelection.current) return;
+
+    lastSelection.current = selection;
 
     try {
-      localStorage.setItem('player:captions', showing ? showing.language : 'off');
+      localStorage.setItem('player:captions', selection);
     } catch {
       // Continue without persistence when storage is blocked.
     }
