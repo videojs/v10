@@ -2,7 +2,11 @@ import { toPercent } from '@videojs/utils/number';
 
 import type { SliderState } from './core';
 
-/** A numeric range rendered as one segment of a slider. */
+/**
+ * A numeric range rendered as one segment of a slider.
+ *
+ * @internal
+ */
 export interface SliderSegmentRange {
   /** Stable identity used by platform renderers. */
   key: string;
@@ -14,6 +18,7 @@ export interface SliderSegmentRange {
   highlight?: boolean;
 }
 
+/** @internal */
 export interface SliderSegmentGeometry extends SliderSegmentRange {
   /** Position in the normalized collection. */
   index: number;
@@ -31,6 +36,7 @@ export interface SliderSegmentGeometry extends SliderSegmentRange {
   endPercent: `${number}%`;
 }
 
+/** @internal */
 export interface SliderSegmentState extends Omit<SliderSegmentGeometry, 'last'> {
   /** Fill from 0–100 relative to this segment. */
   fillPercent: number;
@@ -46,6 +52,7 @@ export interface SliderSegmentState extends Omit<SliderSegmentGeometry, 'last'> 
   interactive: boolean;
 }
 
+/** @internal */
 export interface SliderSegmentsGeometryInput {
   ranges: readonly SliderSegmentRange[];
   min: number;
@@ -53,7 +60,11 @@ export interface SliderSegmentsGeometryInput {
   orientation: SliderState['orientation'];
 }
 
-/** Localizes ordered numeric ranges into slider geometry and interaction state. */
+/**
+ * Localizes ordered numeric ranges into slider geometry and interaction state.
+ *
+ * @internal
+ */
 export class SliderSegmentsCore {
   getGeometry(input: SliderSegmentsGeometryInput): SliderSegmentGeometry[] {
     const { ranges, min, max, orientation } = input;
@@ -108,6 +119,7 @@ export class SliderSegmentsCore {
   }
 }
 
+/** @internal */
 export namespace SliderSegmentsCore {
   export type Range = SliderSegmentRange;
   export type Geometry = SliderSegmentGeometry;

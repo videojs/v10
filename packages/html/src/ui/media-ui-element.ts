@@ -9,7 +9,11 @@ import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/controller';
 import { UIElement } from './ui-element';
 
-/** Abstract base for HTML custom elements that display media state with data attributes. */
+/**
+ * Abstract base for HTML custom elements that display media state with data attributes.
+ *
+ * @internal
+ */
 export abstract class MediaUIElement<Core extends MediaUIComponent> extends UIElement {
   readonly #i18n = new I18nController(this, i18nContext);
 

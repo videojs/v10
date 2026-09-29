@@ -17,6 +17,7 @@ export interface SeekButtonProps {
   disabled?: boolean | undefined;
 }
 
+/** @internal */
 export type SeekButtonDirection = 'forward' | 'backward';
 
 export interface SeekButtonState extends ButtonState {
@@ -26,6 +27,7 @@ export interface SeekButtonState extends ButtonState {
   direction: SeekButtonDirection;
 }
 
+/** @internal */
 export class SeekButtonCore {
   static readonly defaultProps: NonNullableObject<SeekButtonProps> = {
     seconds: 30,
@@ -91,6 +93,7 @@ export class SeekButtonCore {
   }
 }
 
+/** @internal */
 export namespace SeekButtonCore {
   export type Props = SeekButtonProps;
   export type State = SeekButtonState;

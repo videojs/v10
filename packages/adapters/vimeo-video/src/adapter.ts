@@ -16,13 +16,21 @@ import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type Vim
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
-/** Vimeo engine options: embed parameters forwarded verbatim to `@vimeo/player` and the embed URL. */
+/**
+ * Vimeo engine options: embed parameters forwarded verbatim to `@vimeo/player` and the embed URL.
+ *
+ * @internal
+ */
 export interface VimeoEngineConfig extends VimeoEmbedParameters {
   /** `referrerpolicy` for the embed iframe. Not a Vimeo embed parameter. */
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured Vimeo source: which source to play, plus how to play it. */
+/**
+ * Structured Vimeo source: which source to play, plus how to play it.
+ *
+ * @internal
+ */
 export interface VimeoSource {
   /** Vimeo URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -30,13 +38,21 @@ export interface VimeoSource {
   engine?: VimeoSourceEngineConfig | undefined;
 }
 
-/** The engines a Vimeo source can configure. */
+/**
+ * The engines a Vimeo source can configure.
+ *
+ * @internal
+ */
 export interface VimeoSourceEngineConfig {
   /** Vimeo's own embed parameters, passed through untouched. */
   vimeo?: VimeoEngineConfig | undefined;
 }
 
-/** Parsed pieces of a Vimeo source URL. */
+/**
+ * Parsed pieces of a Vimeo source URL.
+ *
+ * @internal
+ */
 export interface ParsedVimeoSource {
   id: number;
   /** `'video'` for regular clips, `'event'` for live events. */
@@ -45,6 +61,7 @@ export interface ParsedVimeoSource {
   hash: string | null;
 }
 
+/** @internal */
 export interface VimeoAdapterProps {
   src: string;
   autoplay: boolean;
@@ -63,6 +80,7 @@ export interface VimeoAdapterProps {
  *   new value.
  * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData`
  *   for the new value.
+ * @internal
  */
 export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: VimeoAdapterProps = {
@@ -686,7 +704,11 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
   }
 }
 
-/** Extract a Vimeo video id from a numeric id, vimeo.com URL, or player URL. */
+/**
+ * Extract a Vimeo video id from a numeric id, vimeo.com URL, or player URL.
+ *
+ * @internal
+ */
 export function parseVimeoVideoId(src: string) {
   return parseVimeoSource(src)?.id ?? null;
 }
@@ -694,6 +716,8 @@ export function parseVimeoVideoId(src: string) {
 /**
  * Parse a Vimeo source: a numeric id, `vimeo.com/<id>`, `vimeo.com/video/<id>`, `player.vimeo.com/video/<id>`, or
  * `vimeo.com/event/<id>` (live events), plus unlisted/event hashes from `?h=` or a `/<hash>` segment.
+ *
+ * @internal
  */
 export function parseVimeoSource(src: string): ParsedVimeoSource | null {
   if (!src) return null;
@@ -715,7 +739,11 @@ export function parseVimeoSource(src: string): ParsedVimeoSource | null {
   return { id: Number(match[2]), kind, hash: queryHash ?? match[3] ?? null };
 }
 
-/** Build the iframe `src` URL for an initial Vimeo embed from the given props. */
+/**
+ * Build the iframe `src` URL for an initial Vimeo embed from the given props.
+ *
+ * @internal
+ */
 export function buildVimeoIframeSrc(src: string, props: Partial<VimeoAdapterProps> = {}) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return '';

@@ -5,8 +5,10 @@ export interface Text {
   readonly text: string;
 }
 
+/** @internal */
 export function isText(value: unknown): value is Text {
   return isObject(value) && 'key' in value && 'text' in value;
 }
 
+/** @internal */
 export type TextParams = Record<string, string | number>;

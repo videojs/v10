@@ -9,6 +9,8 @@ import type { TikTokAdapterProps } from './props';
  * Parameters the host owns are deliberately absent: `autoplay`, `controls`, `loop`, and `muted` come from the props of
  * the same name, so configuring them here would give two ways to say one thing. The index signature still carries
  * anything not listed here, so undocumented knobs and whatever TikTok adds next keep working.
+ *
+ * @internal
  */
 export interface TikTokEngineConfig extends Record<string, unknown> {
   /** Show the closed-caption button. Defaults to `1`. */
@@ -35,7 +37,11 @@ export interface TikTokEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured TikTok source: which source to play, plus how to play it. */
+/**
+ * Structured TikTok source: which source to play, plus how to play it.
+ *
+ * @internal
+ */
 export interface TikTokSource {
   /** TikTok URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -43,7 +49,11 @@ export interface TikTokSource {
   engine?: TikTokSourceEngineConfig | undefined;
 }
 
-/** The engines a TikTok source can configure. */
+/**
+ * The engines a TikTok source can configure.
+ *
+ * @internal
+ */
 export interface TikTokSourceEngineConfig {
   /** TikTok's own player parameters, passed through untouched. */
   tiktok?: TikTokEngineConfig | undefined;
@@ -52,13 +62,19 @@ export interface TikTokSourceEngineConfig {
 /**
  * Parsed pieces of a TikTok source URL. TikTok embeds one thing — a video named by a numeric id — so the id is all
  * there is to take from a source.
+ *
+ * @internal
  */
 export interface ParsedTikTokSource {
   /** Numeric video id. */
   id: string;
 }
 
-/** Extract a TikTok video id from a raw numeric id or any recognized URL. */
+/**
+ * Extract a TikTok video id from a raw numeric id or any recognized URL.
+ *
+ * @internal
+ */
 export function parseTikTokVideoId(src: string) {
   return parseTikTokSource(src)?.id ?? null;
 }
@@ -66,6 +82,8 @@ export function parseTikTokVideoId(src: string) {
 /**
  * Parse a TikTok source string. Recognizes raw numeric ids, `player/v1/` embed URLs, `share/video/` links, and the
  * `@user/video/` URLs the app hands out.
+ *
+ * @internal
  */
 export function parseTikTokSource(src: string): ParsedTikTokSource | null {
   if (!src) return null;
@@ -84,6 +102,8 @@ export function parseTikTokSource(src: string): ParsedTikTokSource | null {
  * creates no media element, never reports `onPlayerReady`, and drops every command silently, until something is clicked
  * inside the frame — which a frame under a player skin never gets. The host parks the player as soon as it is up, so
  * this buys one that answers commands, not a video that plays.
+ *
+ * @internal
  */
 export function shouldBootstrapTikTokEmbed(props: Partial<TikTokAdapterProps> = {}) {
   // `preload="none"` trades those working controls back for an untouched network, and `controls` hands the player
@@ -91,7 +111,11 @@ export function shouldBootstrapTikTokEmbed(props: Partial<TikTokAdapterProps> = 
   return !props.autoplay && props.preload !== 'none' && props.controls !== true;
 }
 
-/** Build the iframe `src` URL for a TikTok embed from the given props. */
+/**
+ * Build the iframe `src` URL for a TikTok embed from the given props.
+ *
+ * @internal
+ */
 export function buildTikTokIframeSrc(src: string, props: Partial<TikTokAdapterProps> = {}) {
   const parsed = parseTikTokSource(src);
   if (!parsed) return '';

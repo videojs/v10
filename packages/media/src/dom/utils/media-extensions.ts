@@ -8,6 +8,7 @@ import type {
 
 const componentRegistry = new WeakMap<AnyHTMLMediaAdapter, MediaExtensions>();
 
+/** @internal */
 export function getMediaExtensions(adapter: AnyHTMLMediaAdapter) {
   let map = componentRegistry.get(adapter);
 
@@ -16,6 +17,7 @@ export function getMediaExtensions(adapter: AnyHTMLMediaAdapter) {
   return map;
 }
 
+/** @internal */
 export function addMediaExtension<T extends MediaExtension>(adapter: AnyHTMLMediaAdapter, component: T) {
   const components = getMediaExtensions(adapter);
   // Get the component's constructor to use as the key for the component in the registry.
@@ -40,6 +42,7 @@ export function addMediaExtension<T extends MediaExtension>(adapter: AnyHTMLMedi
   };
 }
 
+/** @internal */
 export function getMediaProp<T extends TargetLike, K extends keyof T>(
   adapter: AnyHTMLMediaAdapter<T>,
   prop: K
@@ -47,6 +50,7 @@ export function getMediaProp<T extends TargetLike, K extends keyof T>(
   return getMediaOwner(adapter, prop)?.[prop];
 }
 
+/** @internal */
 export function setMediaProp<T extends TargetLike, K extends keyof T>(
   adapter: AnyHTMLMediaAdapter<T>,
   prop: K,
@@ -60,6 +64,8 @@ export function setMediaProp<T extends TargetLike, K extends keyof T>(
 /**
  * Find the object that owns a media property: the first component `override` exposing it, otherwise the attached
  * target.
+ *
+ * @internal
  */
 export function getMediaOwner<T extends TargetLike>(adapter: AnyHTMLMediaAdapter<T>, prop: keyof T): Partial<T> | null {
   for (const component of getMediaExtensions(adapter).values()) {

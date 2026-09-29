@@ -8,11 +8,13 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** @experimental */
 export interface ShakaVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof ShakaAdapterProps>, Partial<ShakaAdapterProps> {
   children?: ReactNode;
 }
 
+/** @experimental */
 export const ShakaVideo = forwardRef<HTMLVideoElement, ShakaVideoProps>(function ShakaVideo(
   { children, ...props },
   ref
@@ -29,6 +31,7 @@ export const ShakaVideo = forwardRef<HTMLVideoElement, ShakaVideoProps>(function
   );
 });
 
+/** @experimental */
 export namespace ShakaVideo {
   export type Props = ShakaVideoProps;
 }

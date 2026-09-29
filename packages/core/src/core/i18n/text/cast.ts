@@ -4,16 +4,19 @@ import type { Text } from '../text';
 
 const prefix = 'cast.';
 
+/** @internal */
 export const startText = {
   key: `${prefix}start`,
   text: 'Start casting',
 } as const satisfies Text;
 
+/** @internal */
 export const stopText = {
   key: `${prefix}stop`,
   text: 'Stop casting',
 } as const satisfies Text;
 
+/** @internal */
 export const connectingText = {
   key: `${prefix}connecting`,
   text: 'Connecting',

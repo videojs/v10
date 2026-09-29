@@ -13,11 +13,13 @@ import type { Constructor } from '@videojs/utils/types';
 
 import { createMuxDrmSystems } from '../drm';
 
+/** @internal */
 export interface MuxAdapterProps {
   src: string;
   source: MuxSourceBase | null;
 }
 
+/** @internal */
 export interface MuxAdapterAPI extends MuxAdapterProps {
   readonly contentData: MuxContentData;
 }
@@ -40,6 +42,7 @@ export interface MuxAdapterAPI extends MuxAdapterProps {
  *   new value.
  * @fires contentdatachange - Fired when `contentData` changes: the derived URLs with `source`, and the metadata once it
  *   loads. Read `contentData` for the new value.
+ * @internal
  */
 export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class MuxImpl extends BaseClass {

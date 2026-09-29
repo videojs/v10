@@ -37,7 +37,11 @@ function getLabelParams<Core extends MediaButtonComponent>(
   return (core as LabelParamsCore<Core>).getLabelParams?.(state);
 }
 
-/** Abstract base for HTML custom elements that render a media-control button. */
+/**
+ * Abstract base for HTML custom elements that render a media-control button.
+ *
+ * @internal
+ */
 export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends UIElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },

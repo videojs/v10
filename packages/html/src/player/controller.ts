@@ -6,6 +6,7 @@ import { StoreController } from '@videojs/store/html';
 
 import type { PlayerContext } from './context';
 
+/** @internal */
 export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**

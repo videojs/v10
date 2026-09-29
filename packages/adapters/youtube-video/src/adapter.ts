@@ -26,6 +26,7 @@ import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from '.
 const SEEK_TOLERANCE = 1;
 const SEEK_SETTLE_TIMEOUT = 1_000;
 
+/** @internal */
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: YouTubeAdapterProps = {
     src: '',

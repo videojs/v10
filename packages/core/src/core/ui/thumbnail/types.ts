@@ -1,3 +1,4 @@
+/** @internal */
 export interface ThumbnailCoords {
   x: number;
   y: number;
@@ -12,14 +13,19 @@ export interface ThumbnailImage {
   coords?: ThumbnailCoords;
 }
 
+/** @internal */
 export type ThumbnailSrc = string | ThumbnailImage[] | null;
 
+/** @internal */
 export type ThumbnailCrossOrigin = 'anonymous' | 'use-credentials' | '' | null;
 
+/** @internal */
 export type ThumbnailLoading = 'eager' | 'lazy';
 
+/** @internal */
 export type ThumbnailFetchPriority = 'high' | 'low' | 'auto';
 
+/** @internal */
 export interface ThumbnailConstraints {
   minWidth: number;
   maxWidth: number;
@@ -27,6 +33,7 @@ export interface ThumbnailConstraints {
   maxHeight: number;
 }
 
+/** @internal */
 export interface ThumbnailResizeResult {
   scale: number;
   containerWidth: number;

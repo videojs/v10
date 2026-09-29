@@ -12,6 +12,7 @@ import { useDestroy } from './use-destroy';
  * cannot carry media extensions and is ignored.
  *
  * @param ExtensionClass - Media extension class to instantiate and register.
+ * @internal
  */
 export function useMediaExtension<Component extends MediaExtension & { destroy(): void }>(
   ExtensionClass: new () => Component

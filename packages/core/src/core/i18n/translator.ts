@@ -1,6 +1,7 @@
 import type { FlatTranslations, Locale, TranslationKey, TranslationParams } from './params';
 import type { Text, TextParams } from './text';
 
+/** @internal */
 export interface TranslationOptions {
   default?: string;
 }

@@ -19,12 +19,14 @@ import { MenuContentDataAttrs } from '../../../core/ui/menu/data';
 import { MenuCSSVars } from '../../../core/ui/menu/vars';
 import type { MenuApi } from './menu';
 
+/** @internal */
 export interface MenuContentRegistration {
   menu: MenuApi;
   parent: MenuApi | null;
   element: HTMLElement;
 }
 
+/** @internal */
 export interface MenuPopupApi {
   readonly element: HTMLElement | null;
   setElement: (element: HTMLElement | null) => void;
@@ -39,7 +41,11 @@ interface RegisteredContent extends MenuContentRegistration {
   unsubscribe: () => void;
 }
 
-/** Coordinates sibling Contents and sizes their shared Popup. */
+/**
+ * Coordinates sibling Contents and sizes their shared Popup.
+ *
+ * @internal
+ */
 export function createMenuPopup(): MenuPopupApi {
   const contents = new Set<RegisteredContent>();
   const exitFrames = new Map<RegisteredContent, number>();

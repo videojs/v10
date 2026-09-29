@@ -8,11 +8,13 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+/** @experimental */
 export interface DashVideoProps
   extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashAdapterProps>, Partial<DashAdapterProps> {
   children?: ReactNode;
 }
 
+/** @experimental */
 export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo({ children, ...props }, ref) {
   const media = useMediaInstance(DashAdapter);
   const attachRef = useAttachMedia(media);
@@ -26,6 +28,7 @@ export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function D
   );
 });
 
+/** @experimental */
 export namespace DashVideo {
   export type Props = DashVideoProps;
 }

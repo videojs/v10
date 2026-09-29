@@ -2,18 +2,27 @@ import type { State } from '@videojs/store';
 
 import type { Text, TextParams } from '../i18n';
 
+/** @internal */
 export type StateAttrMap<State> = {
   [Key in keyof State]?: string;
 };
 
-/** Constraint for core UI classes that compute component state. */
+/**
+ * Constraint for core UI classes that compute component state.
+ *
+ * @internal
+ */
 export interface UIComponent<Props = object, State extends object = object> {
   getState(): State;
   setProps?(props: Props): void;
   getAttrs?(state: State): object;
 }
 
-/** Constraint for core UI classes that derive component state from media state. */
+/**
+ * Constraint for core UI classes that derive component state from media state.
+ *
+ * @internal
+ */
 export interface MediaUIComponent<Props = object, State extends object = object> extends UIComponent<Props, State> {
   setMedia(media: object): void;
 }
@@ -22,7 +31,11 @@ export interface ButtonState {
   label: Text | string;
 }
 
-/** A normalized radio option produced by a framework-neutral UI core. */
+/**
+ * A normalized radio option produced by a framework-neutral UI core.
+ *
+ * @internal
+ */
 export interface RadioOption {
   /** Value passed back to the core when this option is selected. */
   value: string;
@@ -34,7 +47,11 @@ export interface RadioOption {
   disabled: boolean;
 }
 
-/** Shared state contract for media-backed radio option groups. */
+/**
+ * Shared state contract for media-backed radio option groups.
+ *
+ * @internal
+ */
 export interface RadioOptionsState<Option extends RadioOption = RadioOption> extends ButtonState {
   /** Current radio-group value. */
   value: string;
@@ -48,7 +65,11 @@ export interface RadioOptionsState<Option extends RadioOption = RadioOption> ext
   availability: 'available' | 'unavailable';
 }
 
-/** Constraint for media button cores that provide a label derived from state. */
+/**
+ * Constraint for media button cores that provide a label derived from state.
+ *
+ * @internal
+ */
 export interface MediaButtonComponent<
   Props = object,
   ComponentState extends ButtonState = ButtonState,
@@ -57,8 +78,16 @@ export interface MediaButtonComponent<
   getLabel(state: ComponentState): Text | string;
 }
 
-/** Extracts the media state parameter type from a core's `setMedia` method. */
+/**
+ * Extracts the media state parameter type from a core's `setMedia` method.
+ *
+ * @internal
+ */
 export type InferMediaState<Core extends MediaUIComponent> = Parameters<Core['setMedia']>[0];
 
-/** Extracts the component state return type from a core's `getState` method. */
+/**
+ * Extracts the component state return type from a core's `getState` method.
+ *
+ * @internal
+ */
 export type InferComponentState<Core extends UIComponent> = ReturnType<Core['getState']>;

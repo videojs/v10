@@ -8,6 +8,7 @@ import { createDOMRect } from '../../utils/layout';
 
 export { getPositionedSide } from '@videojs/utils/dom';
 
+/** @internal */
 export interface PositioningOptions {
   side: PopoverSide;
   align: PopoverAlign;
@@ -20,7 +21,11 @@ export interface PositioningOffsets {
   boundaryOffset?: number;
 }
 
-/** CSS custom property names for anchor-based positioning. */
+/**
+ * CSS custom property names for anchor-based positioning.
+ *
+ * @internal
+ */
 export interface PositioningCSSVars {
   sideOffset: string;
   alignOffset: string;

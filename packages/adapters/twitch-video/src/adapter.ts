@@ -33,6 +33,7 @@ import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './so
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
  *   new value.
+ * @internal
  */
 export class TwitchAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: TwitchAdapterProps = {

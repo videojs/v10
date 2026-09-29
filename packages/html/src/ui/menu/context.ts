@@ -2,6 +2,7 @@ import type { MenuCore, MenuOptionState, MenuState } from '@videojs/core';
 import type { MenuApi, MenuPopupApi } from '@videojs/core/dom';
 import { createContext } from '@videojs/element/context';
 
+/** @internal */
 export interface MenuContextValue {
   core: MenuCore;
   menu: MenuApi;
@@ -11,6 +12,7 @@ export interface MenuContextValue {
   setOptionState: (source: symbol, state: MenuOptionState | null) => void;
 }
 
+/** @internal */
 export interface MenuGroupContextValue {
   registerLabel: (id: string) => () => void;
 }
@@ -18,7 +20,9 @@ export interface MenuGroupContextValue {
 const MENU_CONTEXT_KEY = Symbol('@videojs/menu');
 const MENU_GROUP_CONTEXT_KEY = Symbol('@videojs/menu-group');
 
+/** @internal */
 export const menuContext = createContext<MenuContextValue>(MENU_CONTEXT_KEY);
+/** @internal */
 export const menuGroupContext = createContext<MenuGroupContextValue>(MENU_GROUP_CONTEXT_KEY);
 
 export {

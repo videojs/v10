@@ -11,6 +11,8 @@ import { type WistiaSource, wistiaPlayerStyle } from './source';
  * Wistia in would leave a bundler free to drop this module and React rendering an undefined tag.
  *
  * `server.ts` declares it too, for the runtimes that resolve there instead.
+ *
+ * @internal
  */
 export const WISTIA_PLAYER_TAG = 'wistia-player';
 
@@ -24,6 +26,8 @@ export type { WistiaPlayer };
  * `normalizeWistiaPlayer` gives the player the members and events `HTMLMediaElement` has that Wistia names differently
  * or not at all. This class does the rest: the attributes a media element is written with, which Wistia has its own
  * names, spellings, and defaults for.
+ *
+ * @internal
  */
 export class WistiaAdapter extends WistiaPlayer {
   static readonly defaultProps: WistiaAdapterProps = {

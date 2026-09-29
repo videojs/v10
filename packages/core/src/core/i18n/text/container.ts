@@ -4,6 +4,7 @@ import type { Text } from '../text';
 
 const prefix = 'container.';
 
+/** @internal */
 export const labelText = {
   key: `${prefix}label`,
   text: 'Media player',

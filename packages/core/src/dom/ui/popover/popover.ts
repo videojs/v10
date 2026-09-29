@@ -7,6 +7,7 @@ import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
 import type { PopupGroup, PopupGroupCloseReason } from './group';
 
+/** @internal */
 export type PopoverOpenChangeReason =
   | 'click'
   | 'hover'
@@ -17,6 +18,7 @@ export type PopoverOpenChangeReason =
   | 'imperative-action'
   | 'group-open';
 
+/** @internal */
 export interface PopoverChangeDetails {
   reason: PopoverOpenChangeReason;
   event?: Event;
@@ -53,6 +55,7 @@ export interface PopoverPopupProps {
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
+/** @internal */
 export interface PopoverApi {
   input: State<PopoverInput>;
   triggerProps: PopoverTriggerProps;
@@ -67,6 +70,7 @@ export interface PopoverApi {
   destroy: () => void;
 }
 
+/** @internal */
 export function createPopover(options: PopoverOptions): PopoverApi {
   const { onOpenChange, closeOnOutsideClick } = options;
 

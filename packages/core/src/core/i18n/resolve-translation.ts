@@ -7,7 +7,11 @@ type ResolveTranslationArgs<Key extends string> = Key extends TranslationKey
     : [params: TranslationParams[Key] & TranslationOptions]
   : [params?: Record<string, string | number> & TranslationOptions];
 
-/** Resolves a semantic key with optional template params via a translator. */
+/**
+ * Resolves a semantic key with optional template params via a translator.
+ *
+ * @internal
+ */
 export function resolveTranslation<Key extends string>(
   translator: Translator,
   key: Key,

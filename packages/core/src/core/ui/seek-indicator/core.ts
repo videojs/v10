@@ -39,6 +39,7 @@ const INITIAL_STATE: SeekIndicatorState = {
   transitionEnding: false,
 };
 
+/** @internal */
 export class SeekIndicatorCore {
   readonly state = createState<SeekIndicatorState>({ ...INITIAL_STATE });
 
@@ -113,6 +114,7 @@ export class SeekIndicatorCore {
   }
 }
 
+/** @internal */
 export namespace SeekIndicatorCore {
   export type Props = SeekIndicatorProps;
   export type State = SeekIndicatorState;

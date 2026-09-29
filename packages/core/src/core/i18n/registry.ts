@@ -66,7 +66,11 @@ function chineseFallback(segments: string[]): Locale | undefined {
   return script === 'hant' ? 'zh-tw' : script === 'hans' ? 'zh-cn' : undefined;
 }
 
-/** Registry map key: normalized tag with unicode extensions removed (same base as {@link findLocaleKeys}). */
+/**
+ * Registry map key: normalized tag with unicode extensions removed (same base as {@link findLocaleKeys}).
+ *
+ * @internal
+ */
 export function getCanonicalLocaleKey(locale: Locale): Locale {
   return stripUnicodeExtensions(normalizeLocaleTag(locale));
 }
@@ -76,6 +80,8 @@ export function getCanonicalLocaleKey(locale: Locale): Locale {
  *
  * @example
  *   `es-419-u-nu-latn` → `['es-419', 'es', 'en']`
+ *
+ * @internal
  */
 export function findLocaleKeys(locale: Locale): Locale[] {
   const base = getCanonicalLocaleKey(locale);
@@ -180,7 +186,11 @@ export function hasRegisteredLocale(locale: Locale): boolean {
   return getRegistry().layers.has(getCanonicalLocaleKey(locale));
 }
 
-/** Clears registered locale overlays (test isolation). */
+/**
+ * Clears registered locale overlays (test isolation).
+ *
+ * @internal
+ */
 export function resetI18nRegistry(): void {
   const { layers, subscribers } = getRegistry();
 

@@ -10,18 +10,27 @@ import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { TimeRangeLike } from '../../core/types';
 
+/** @internal */
 export interface PlayedRange {
   start: number;
   end: number;
 }
 
-/** Surface a media adapter must expose for played-range tracking. */
+/**
+ * Surface a media adapter must expose for played-range tracking.
+ *
+ * @internal
+ */
 export interface MediaPlayedRangesHost extends EventTarget {
   currentTime: number;
   paused: boolean;
 }
 
-/** Public surface contributed by {@link MediaPlayedRangesMixin}. */
+/**
+ * Public surface contributed by {@link MediaPlayedRangesMixin}.
+ *
+ * @internal
+ */
 export interface MediaPlayedRangesAPI {
   /** `TimeRanges`-like view of the ranges the user has actually played. */
   readonly played: TimeRangeLike;
@@ -37,6 +46,8 @@ export interface MediaPlayedRangesAPI {
  *
  * @example
  *   class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) { ... }
+ *
+ * @internal
  */
 export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { destroy?(): void }>>(
   BaseClass: Base

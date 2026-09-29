@@ -5,6 +5,7 @@
 import { MediaError } from '@videojs/media';
 import { loadScript } from '@videojs/utils/dom';
 
+/** @internal */
 export interface YouTubePlayerApi {
   playVideo(): void;
   pauseVideo(): void;
@@ -36,6 +37,7 @@ export interface YouTubePlayerEvents {
   onError?: (event: { data: number }) => void;
 }
 
+/** @internal */
 export interface YouTubeApi {
   Player: new (target: HTMLIFrameElement, options: { events?: YouTubePlayerEvents }) => YouTubePlayerApi;
   ready(callback: () => void): void;

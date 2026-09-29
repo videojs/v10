@@ -61,6 +61,7 @@ export interface SliderRootProps {
   onLostPointerCapture: () => void;
 }
 
+/** @internal */
 export interface SliderRootStyle extends Record<string, string> {
   touchAction: string;
   userSelect: string;
@@ -72,6 +73,7 @@ export interface SliderThumbProps {
   onBlur: () => void;
 }
 
+/** @internal */
 export interface SliderApi {
   input: State<SliderInput>;
   rootProps: SliderRootProps;
@@ -85,6 +87,7 @@ export interface SliderApi {
   destroy: () => void;
 }
 
+/** @internal */
 export function createSlider(options: SliderOptions): SliderApi {
   const input = createState<SliderInput>({
     pointerPercent: 0,

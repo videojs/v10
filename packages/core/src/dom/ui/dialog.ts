@@ -21,6 +21,7 @@ export interface DialogTriggerProps {
   onClick: (event: UIEvent) => void;
 }
 
+/** @internal */
 export interface DialogApi {
   /** Reactive transition state that platforms subscribe to for rendering. */
   input: State<DialogInput>;
@@ -42,11 +43,16 @@ export interface DialogApi {
   destroy(): void;
 }
 
+/** @internal */
 export interface DialogModality {
   documentModal: boolean;
 }
 
-/** Manages modal dialog transitions, dismissal, initial focus, focus trapping, and focus restoration. */
+/**
+ * Manages modal dialog transitions, dismissal, initial focus, focus trapping, and focus restoration.
+ *
+ * @internal
+ */
 export function createDialog(options: DialogOptions): DialogApi {
   let popupElement: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;

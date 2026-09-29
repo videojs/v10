@@ -27,6 +27,7 @@ export interface SliderProps {
   max?: number | undefined;
 }
 
+/** @internal */
 export type SliderPreviewOverflow = 'clamp' | 'visible';
 
 export interface SliderPreviewProps {
@@ -34,7 +35,11 @@ export interface SliderPreviewProps {
   overflow?: SliderPreviewOverflow | undefined;
 }
 
-/** Current pointer/drag input state, typically provided by a DOM controller. */
+/**
+ * Current pointer/drag input state, typically provided by a DOM controller.
+ *
+ * @internal
+ */
 export interface SliderInput {
   /** Pointer position as a percentage of the track (0–100). */
   pointerPercent: number;
@@ -69,7 +74,11 @@ export interface SliderState {
   thumbAlignment: 'center' | 'edge';
 }
 
-/** Base slider logic: value mapping, ARIA attrs, and step calculations. */
+/**
+ * Base slider logic: value mapping, ARIA attrs, and step calculations.
+ *
+ * @internal
+ */
 export class SliderCore {
   static readonly defaultProps: NonNullableObject<SliderProps> = {
     label: '',
@@ -198,6 +207,7 @@ export class SliderCore {
   }
 }
 
+/** @internal */
 export namespace SliderCore {
   export type Props = SliderProps;
   export type State = SliderState;

@@ -4,11 +4,13 @@ import type { Text } from '../text';
 
 const prefix = 'common.';
 
+/** @internal */
 export const emptyText = {
   key: `${prefix}empty`,
   text: '',
 } as const satisfies Text;
 
+/** @internal */
 export const okText = {
   key: `${prefix}ok`,
   text: 'OK',

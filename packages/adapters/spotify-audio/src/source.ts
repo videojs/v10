@@ -9,6 +9,8 @@ import type { SpotifyAdapterProps } from './props';
  * Spotify publishes only a handful of them, and the ones the host owns are deliberately absent: the start position
  * comes from the `t` parameter on `src`. The index signature still carries anything not listed here, so undocumented
  * knobs and whatever Spotify adds next keep working.
+ *
+ * @internal
  */
 export interface SpotifyEngineConfig extends Record<string, unknown> {
   /** Start position in seconds. */
@@ -24,7 +26,11 @@ export interface SpotifyEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured Spotify source: which source to play, plus how to play it. */
+/**
+ * Structured Spotify source: which source to play, plus how to play it.
+ *
+ * @internal
+ */
 export interface SpotifySource {
   /** Spotify URL or URI. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -32,16 +38,28 @@ export interface SpotifySource {
   engine?: SpotifySourceEngineConfig | undefined;
 }
 
-/** The engines a Spotify source can configure. */
+/**
+ * The engines a Spotify source can configure.
+ *
+ * @internal
+ */
 export interface SpotifySourceEngineConfig {
   /** Spotify's own embed options, passed through untouched. */
   spotify?: SpotifyEngineConfig | undefined;
 }
 
-/** The entities Spotify can embed. */
+/**
+ * The entities Spotify can embed.
+ *
+ * @internal
+ */
 export type SpotifyEntityType = 'track' | 'episode' | 'album' | 'playlist' | 'show' | 'artist';
 
-/** Parsed pieces of a Spotify source URL or URI. */
+/**
+ * Parsed pieces of a Spotify source URL or URI.
+ *
+ * @internal
+ */
 export interface ParsedSpotifySource {
   /** Which kind of entity the embed plays; it names the embed path. */
   type: SpotifyEntityType;
@@ -51,7 +69,11 @@ export interface ParsedSpotifySource {
   startTime: number | null;
 }
 
-/** Extract a Spotify entity id from any recognized URL or `spotify:` URI. */
+/**
+ * Extract a Spotify entity id from any recognized URL or `spotify:` URI.
+ *
+ * @internal
+ */
 export function parseSpotifyEntityId(src: string) {
   return parseSpotifySource(src)?.id ?? null;
 }
@@ -60,6 +82,8 @@ export function parseSpotifyEntityId(src: string) {
  * Parse a Spotify source string. Recognizes `open.spotify.com` URLs for every embeddable entity — including the
  * localized (`/intl-de/`) and already-embedded (`/embed/`) forms, since the entity type and id sit in the same place in
  * all of them — `spotify:<type>:<id>` URIs, and start positions via the `t` parameter.
+ *
+ * @internal
  */
 export function parseSpotifySource(src: string): ParsedSpotifySource | null {
   if (!src) return null;
@@ -72,7 +96,11 @@ export function parseSpotifySource(src: string): ParsedSpotifySource | null {
   return { type, id, startTime: parseStartTime(src) };
 }
 
-/** Build the iframe `src` URL for an initial Spotify embed from the given props. */
+/**
+ * Build the iframe `src` URL for an initial Spotify embed from the given props.
+ *
+ * @internal
+ */
 export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyAdapterProps> = {}) {
   const parsed = parseSpotifySource(src);
   if (!parsed) return '';

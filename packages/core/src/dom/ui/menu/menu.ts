@@ -12,8 +12,10 @@ import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason 
 import type { PositioningCSSVars, PositioningOptions } from '../popover/positioning';
 import type { TransitionApi } from '../transition';
 
+/** @internal */
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
+/** @internal */
 export type MenuChangeDetails = PopoverChangeDetails;
 
 export interface MenuOptions {
@@ -39,12 +41,14 @@ export interface MenuContentProps {
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
+/** @internal */
 export interface MenuHighlightOptions {
   focus?: boolean;
   preventScroll?: boolean;
   pointer?: boolean;
 }
 
+/** @internal */
 export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   const { key } = event;
 
@@ -62,13 +66,18 @@ export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   );
 }
 
+/** @internal */
 export function getRootPositionOptions(side: MenuState['side'], align: MenuState['align']): PositioningOptions | null {
   if (!side || !align) return null;
 
   return { side, align };
 }
 
-/** Uses Popover offset inputs while publishing Menu-owned available-size outputs. */
+/**
+ * Uses Popover offset inputs while publishing Menu-owned available-size outputs.
+ *
+ * @internal
+ */
 export const MenuPositioningCSSVars = {
   ...PopoverCSSVars,
   availableWidth: MenuCSSVars.availableWidth,
@@ -77,6 +86,7 @@ export const MenuPositioningCSSVars = {
 
 const parents = new WeakMap<MenuApi, MenuApi>();
 
+/** @internal */
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;
@@ -112,10 +122,12 @@ export interface MenuApi {
   destroy: () => void;
 }
 
+/** @internal */
 export function completeMenuItemSelection(menu: MenuApi): void {
   menu.close();
 }
 
+/** @internal */
 export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.

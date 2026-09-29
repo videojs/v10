@@ -60,7 +60,11 @@ const loaders = {
   zh: () => import('./locales/zh'),
 } as const satisfies Record<string, () => Promise<{ default: Translations }>>;
 
-/** Lazy-import a shipped locale pack when the tag is not already in the registry. */
+/**
+ * Lazy-import a shipped locale pack when the tag is not already in the registry.
+ *
+ * @internal
+ */
 export async function loadLocale(tag: string): Promise<Partial<FlatTranslations> | undefined> {
   if (hasRegisteredLocale(tag)) return undefined;
   for (const chainTag of findLocaleKeys(tag)) {

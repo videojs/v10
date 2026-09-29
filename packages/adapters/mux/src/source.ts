@@ -16,6 +16,7 @@ export const MUX_VIDEO_DOMAIN = 'mux.com';
 export type MuxResolution = MediaResolution;
 export type MuxRenditionOrder = 'desc';
 export type MuxImageExt = 'webp' | 'jpg' | 'png';
+/** @internal */
 export type MuxPosterFitMode = 'preserve' | 'stretch' | 'crop' | 'smartcrop' | 'pad';
 
 /**
@@ -89,6 +90,8 @@ export interface MuxStoryboardParams {
 /**
  * Mux's DRM authoring input: a license token, in place of the license servers `source.drm` normally names. Servers
  * named outright alongside it still win, key by key, for content Mux does not license.
+ *
+ * @internal
  */
 export interface MuxDrmParams extends DrmSystemsConfig {
   /**
@@ -104,6 +107,8 @@ export interface MuxDrmParams extends DrmSystemsConfig {
  * the stream and derive the URL; `src` is a fallback for playing a non-Mux URL.
  *
  * Each Mux Media extends this with whatever its own engine takes — see `MuxSource` for the hls.js-backed one.
+ *
+ * @internal
  */
 export interface MuxSourceBase {
   /** Manifest URL. Derived from `playbackId` when there is one. */
@@ -212,6 +217,8 @@ function parseMuxParamValue(value: string): string | number | boolean {
  *
  * The index signature comes from `MediaContentData`, which the shared `contentData` capability is typed as, so it can't
  * be closed off here — extending it is what keeps this assignable to that contract.
+ *
+ * @internal
  */
 export interface MuxContentData extends MediaContentData {
   readonly title?: string;

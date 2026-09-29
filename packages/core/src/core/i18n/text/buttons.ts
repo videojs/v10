@@ -4,26 +4,31 @@ import type { Text } from '../text';
 
 const prefix = 'buttons.';
 
+/** @internal */
 export const playText = {
   key: `${prefix}play`,
   text: 'Play',
 } as const satisfies Text;
 
+/** @internal */
 export const pauseText = {
   key: `${prefix}pause`,
   text: 'Pause',
 } as const satisfies Text;
 
+/** @internal */
 export const replayText = {
   key: `${prefix}replay`,
   text: 'Replay',
 } as const satisfies Text;
 
+/** @internal */
 export const muteText = {
   key: `${prefix}mute`,
   text: 'Mute',
 } as const satisfies Text;
 
+/** @internal */
 export const unmuteText = {
   key: `${prefix}unmute`,
   text: 'Unmute',

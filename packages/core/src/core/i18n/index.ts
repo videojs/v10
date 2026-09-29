@@ -13,6 +13,7 @@ export { loadLocale } from './load-locale';
 export type { LocaleAlias } from './locales';
 export { LOCALES, localeAliases } from './locales';
 export { flattenTranslations } from './utils';
+/** @internal */
 export const translations = en;
 export type * from './params';
 export {

@@ -5,6 +5,7 @@ import { useStore } from '@videojs/store/react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { createContext, useContext } from 'react';
 
+/** @internal */
 export interface PlayerContextValue {
   store: UnknownStore;
   media: Media | null;
@@ -30,7 +31,11 @@ export function PlayerContextProvider({
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
-/** Access the full player context value. Throws if used outside a Player. */
+/**
+ * Access the full player context value. Throws if used outside a Player.
+ *
+ * @internal
+ */
 export function usePlayerContext(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
   if (!ctx) throw new Error('usePlayerContext must be used within a Player');
@@ -106,7 +111,11 @@ export function useOptionalContainer(): MediaContainer | null {
   return ctx?.container ?? null;
 }
 
-/** Access the media attach setter for connecting a media element to the player. */
+/**
+ * Access the media attach setter for connecting a media element to the player.
+ *
+ * @internal
+ */
 export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
 

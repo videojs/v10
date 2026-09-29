@@ -1,4 +1,8 @@
-/** CSS custom property names for menu layout and positioning. */
+/**
+ * CSS custom property names for menu layout and positioning.
+ *
+ * @internal
+ */
 export const MenuCSSVars = {
   /** Width of the active menu panel (px). */
   width: '--media-menu-width',

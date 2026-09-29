@@ -1,3 +1,4 @@
+/** @internal */
 export interface UIEvent {
   readonly defaultPrevented?: boolean;
   readonly detail?: number;
@@ -5,6 +6,7 @@ export interface UIEvent {
   stopPropagation(): void;
 }
 
+/** @internal */
 export interface UIKeyboardEvent extends UIEvent {
   key: string;
   repeat?: boolean;
@@ -16,6 +18,7 @@ export interface UIKeyboardEvent extends UIEvent {
   currentTarget: EventTarget;
 }
 
+/** @internal */
 export interface UIPointerEvent extends UIEvent {
   clientX: number;
   clientY: number;
@@ -24,10 +27,12 @@ export interface UIPointerEvent extends UIEvent {
   buttons: number;
 }
 
+/** @internal */
 export interface UIWheelEvent extends UIEvent {
   deltaY: number;
 }
 
+/** @internal */
 export interface UIFocusEvent extends UIEvent {
   relatedTarget: EventTarget | null;
 }

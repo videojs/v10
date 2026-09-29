@@ -17,7 +17,11 @@ import {
 } from '../../i18n/text/time';
 import { resolveLabel } from '../utils/resolve-label';
 
-/** Time display type. */
+/**
+ * Time display type.
+ *
+ * @internal
+ */
 export type TimeType = 'current' | 'duration' | 'remaining';
 
 export interface TimeProps {
@@ -68,6 +72,7 @@ const TOGGLE_DESCRIPTIONS: Record<TimeType, Text> = {
   remaining: toggleDurationText,
 };
 
+/** @internal */
 export class TimeCore {
   static readonly defaultProps: NonNullableObject<TimeProps> = {
     type: 'current',
@@ -212,6 +217,7 @@ export class TimeCore {
   }
 }
 
+/** @internal */
 export namespace TimeCore {
   export type Props = TimeProps;
   export type State = TimeState;

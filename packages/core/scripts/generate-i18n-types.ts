@@ -26,7 +26,11 @@ function generate(): string {
     .join('\n');
 
   return `${GENERATED_HEADER}
-/** Generated translation parameter contract from the English catalogue. */
+/**
+ * Generated translation parameter contract from the English catalogue.
+ *
+ * @internal
+ */
 export interface TranslationParams {
 ${params}
 }

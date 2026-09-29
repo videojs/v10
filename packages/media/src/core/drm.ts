@@ -2,6 +2,7 @@
  * EME key system identifiers. The value is what a CDM is asked for, and what `source.drm` — and each engine's own DRM
  * configuration — is keyed by.
  *
+ * @internal
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/requestMediaKeySystemAccess
  */
 export const KeySystems = {
@@ -11,9 +12,14 @@ export const KeySystems = {
   CLEARKEY: 'org.w3.clearkey',
 } as const;
 
+/** @internal */
 export type KeySystem = (typeof KeySystems)[keyof typeof KeySystems];
 
-/** Where one key system's licenses come from. */
+/**
+ * Where one key system's licenses come from.
+ *
+ * @internal
+ */
 export interface DrmSystemConfig {
   /** License server the CDM's license request is POSTed to. */
   licenseUrl: string;
@@ -30,5 +36,7 @@ export interface DrmSystemConfig {
  * Name every system you hold a license server for: which one is negotiated is the browser's choice, and each playback
  * path reads the systems it can reach. hls.js's own `drmSystems` takes the same shape, so a single object describes DRM
  * for either engine.
+ *
+ * @internal
  */
 export type DrmSystemsConfig = Partial<Record<KeySystem, DrmSystemConfig>>;

@@ -3,7 +3,11 @@ import { omit, pick } from '@videojs/utils/object';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
-/** CSS custom property names for video elements. */
+/**
+ * CSS custom property names for video elements.
+ *
+ * @internal
+ */
 export const VideoCSSVars = {
   /** Border radius of the video element. */
   borderRadius: '--media-video-border-radius',
@@ -19,7 +23,11 @@ export const VideoCSSVars = {
   captionTrackY: '--media-caption-track-y',
 } as const;
 
-/** CSS custom property names for audio elements. */
+/**
+ * CSS custom property names for audio elements.
+ *
+ * @internal
+ */
 export const AudioCSSVars = {} as const;
 
 /** Helper function to generate the HTML template for video elements. */
@@ -119,6 +127,7 @@ function propertyValueFor(attrValue: string | null, current: unknown, config?: P
   return attrValue ?? (config && 'empty' in config ? config.empty : '');
 }
 
+/** @internal */
 export interface PlaybackAdapter extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
@@ -127,6 +136,7 @@ export interface PlaybackAdapter extends EventTarget {
   [key: string]: any;
 }
 
+/** @internal */
 export type CustomMediaConstructor<T extends Constructor<PlaybackAdapter>> = Constructor<
   HTMLElement &
     InstanceType<T> & {
@@ -140,6 +150,7 @@ export type CustomMediaConstructor<T extends Constructor<PlaybackAdapter>> = Con
   readonly observedAttributes: string[];
 };
 
+/** @internal */
 export function CustomMediaElement<T extends Constructor<PlaybackAdapter>>(
   tag: string,
   PlaybackAdapter: T

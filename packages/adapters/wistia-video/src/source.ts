@@ -8,6 +8,8 @@ import { VideoCSSVars } from '@videojs/media/dom';
  * The members a media element already names are deliberately absent — `endVideoBehavior` is `loop`, the eight
  * control-bar switches are `controls`, and `autoplay`, `muted`, `poster`, `preload`, `volume`, `currentTime`, and
  * `playbackRate` are props of their own. The index signature carries whatever Wistia adds next.
+ *
+ * @internal
  */
 export interface WistiaSource extends Record<string, unknown> {
   /** **Required**. The hashed id of the media to play. */
@@ -55,6 +57,8 @@ export interface WistiaSource extends Record<string, unknown> {
 /**
  * The quality levels Wistia's automatic playback picks between. Mirrors the package's own `AllowedQualities`, which is
  * the value its player accepts; the docs list `3840` for the top one, but the player names it `2160`.
+ *
+ * @internal
  */
 export type WistiaQuality = 224 | 360 | 540 | 720 | 1080 | 2160;
 
@@ -62,6 +66,8 @@ export type WistiaQuality = 224 | 360 | 540 | 720 | 1080 | 2160;
  * What a Wistia player is started with here, whatever Wistia's default or the Wistia app says; a source overrides it.
  * Only the corner radius so far, squared because the skin is what rounds a media — see `wistiaPlayerStyle`.
  * `roundedPlayer` is the one to set: the three `*BorderRadius` options derive from it.
+ *
+ * @internal
  */
 export const wistiaPlayerDefaultOptions = {
   roundedPlayer: 0,
@@ -76,6 +82,8 @@ export const wistiaPlayerDefaultOptions = {
  * those clicks and answers them with chrome of its own. The iframe embeds do the same through a
  * `:host(:not([controls]))` rule in a template they own, which a player that brings its own element has no equivalent
  * of.
+ *
+ * @internal
  */
 export function wistiaPlayerStyle(controls: boolean) {
   return {
@@ -89,6 +97,8 @@ export function wistiaPlayerStyle(controls: boolean) {
 /**
  * The eight control-bar switches `controls` drives as a group, since Wistia has no single chromeless flag.
  * `playBarControl` doubles as the one the group is read back from.
+ *
+ * @internal
  */
 export function wistiaControlProps(controls: boolean) {
   return {
@@ -107,6 +117,8 @@ export function wistiaControlProps(controls: boolean) {
  * Extract a Wistia hashed id from a raw ten-character id or any recognized URL: media pages
  * (`<account>.wistia.com/medias/<id>`), embed URLs (`fast.wistia.net/embed/iframe/<id>` and the `medias/<id>.jsonp` and
  * `playlists/<id>` paths), the `wi.st` short host, and the `wvideo=<id>` parameter Wistia links carry.
+ *
+ * @internal
  */
 export function parseWistiaMediaId(src: string): string | null {
   if (!src) return null;
@@ -119,6 +131,8 @@ export function parseWistiaMediaId(src: string): string | null {
 /**
  * Parse the `wtime` parameter of a Wistia URL into seconds. Wistia spells timestamps the way it spells them elsewhere:
  * `90`, `90s`, `1m30s`, `1h2m3s`.
+ *
+ * @internal
  */
 export function parseWistiaStartTime(src: string): number | null {
   const value = /[?&]wtime=([\dhms]+)/i.exec(src)?.[1]?.toLowerCase();

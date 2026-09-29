@@ -12,6 +12,8 @@ import type { CloudflareAdapterProps } from './props';
  * come from the props of the same name, so configuring them here would give two ways to say one thing. The index
  * signature still carries anything not listed here, so undocumented knobs and whatever Cloudflare adds next keep
  * working.
+ *
+ * @internal
  */
 export interface CloudflareEngineConfig extends Record<string, unknown> {
   /** BCP 47 language of the text track to show by default (`'en'`, `'de'`). */
@@ -28,7 +30,11 @@ export interface CloudflareEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured Cloudflare source: which source to play, plus how to play it. */
+/**
+ * Structured Cloudflare source: which source to play, plus how to play it.
+ *
+ * @internal
+ */
 export interface CloudflareSource {
   /** Cloudflare Stream URL, video UID, or signed token. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -36,13 +42,21 @@ export interface CloudflareSource {
   engine?: CloudflareSourceEngineConfig | undefined;
 }
 
-/** The engines a Cloudflare source can configure. */
+/**
+ * The engines a Cloudflare source can configure.
+ *
+ * @internal
+ */
 export interface CloudflareSourceEngineConfig {
   /** Cloudflare's own embed parameters, passed through untouched. */
   cloudflare?: CloudflareEngineConfig | undefined;
 }
 
-/** Parsed pieces of a Cloudflare Stream source. */
+/**
+ * Parsed pieces of a Cloudflare Stream source.
+ *
+ * @internal
+ */
 export interface ParsedCloudflareSource {
   /** Video UID, or the signed token standing in for one. */
   id: string;
@@ -56,7 +70,11 @@ export interface ParsedCloudflareSource {
   origin: string | null;
 }
 
-/** Extract a Cloudflare video UID from a raw UID, a signed token, or any recognized URL. */
+/**
+ * Extract a Cloudflare video UID from a raw UID, a signed token, or any recognized URL.
+ *
+ * @internal
+ */
 export function parseCloudflareVideoId(src: string) {
   return parseCloudflareSource(src)?.id ?? null;
 }
@@ -65,6 +83,8 @@ export function parseCloudflareVideoId(src: string) {
  * Parse a Cloudflare Stream source string. Recognizes `videodelivery.net` and `cloudflarestream.com` URLs (embed,
  * iframe, manifest, and thumbnail paths all carry the id in the same position), raw 32-character video UIDs, and signed
  * tokens, which stand in for the UID wherever it appears.
+ *
+ * @internal
  */
 export function parseCloudflareSource(src: string): ParsedCloudflareSource | null {
   if (!src) return null;
@@ -75,7 +95,11 @@ export function parseCloudflareSource(src: string): ParsedCloudflareSource | nul
   return { id, signed: MATCH_SIGNED_TOKEN.test(id), origin: MATCH_CUSTOMER_ORIGIN.exec(src)?.[1] ?? null };
 }
 
-/** Build the iframe `src` URL for an initial Cloudflare Stream embed from the given props. */
+/**
+ * Build the iframe `src` URL for an initial Cloudflare Stream embed from the given props.
+ *
+ * @internal
+ */
 // Literal fallbacks mirror `CloudflareAdapter.defaultProps`; the class imports this module, so it cannot be imported back.
 export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareAdapterProps> = {}) {
   const parsed = parseCloudflareSource(src);

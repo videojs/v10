@@ -14,6 +14,7 @@ import { usePlayer } from '../../player/context';
 import type { HTMLProps, UIComponentProps } from '../../utils/types';
 import { SliderSegments } from './segments';
 
+/** @internal */
 export type TimeSliderChapterState = TimeSliderChaptersCore.State;
 
 export interface TimeSliderChaptersState {

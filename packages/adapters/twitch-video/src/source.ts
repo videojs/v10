@@ -13,6 +13,8 @@ import type { TwitchAdapterProps } from './props';
  * by inclusion, and `quality` belongs to the scripted embed's `setQuality` — since naming them here would promise an
  * effect the URL cannot have. The index signature still carries anything not listed, so undocumented knobs and whatever
  * Twitch adds next keep working.
+ *
+ * @internal
  */
 export interface TwitchEngineConfig extends Record<string, unknown> {
   /**
@@ -31,7 +33,11 @@ export interface TwitchEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured Twitch source: which source to play, plus how to play it. */
+/**
+ * Structured Twitch source: which source to play, plus how to play it.
+ *
+ * @internal
+ */
 export interface TwitchSource {
   /** Twitch VOD or channel URL. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -39,13 +45,21 @@ export interface TwitchSource {
   engine?: TwitchSourceEngineConfig | undefined;
 }
 
-/** The engines a Twitch source can configure. */
+/**
+ * The engines a Twitch source can configure.
+ *
+ * @internal
+ */
 export interface TwitchSourceEngineConfig {
   /** Twitch's own embed parameters, passed through untouched. */
   twitch?: TwitchEngineConfig | undefined;
 }
 
-/** Parsed pieces of a Twitch source URL. */
+/**
+ * Parsed pieces of a Twitch source URL.
+ *
+ * @internal
+ */
 export interface ParsedTwitchSource {
   /** `'video'` for VODs, `'channel'` for live channels. */
   kind: 'video' | 'channel';
@@ -55,7 +69,11 @@ export interface ParsedTwitchSource {
   channel: string | null;
 }
 
-/** Extract a Twitch VOD id from any recognized video URL. */
+/**
+ * Extract a Twitch VOD id from any recognized video URL.
+ *
+ * @internal
+ */
 export function parseTwitchVideoId(src: string) {
   return parseTwitchSource(src)?.id ?? null;
 }
@@ -63,6 +81,8 @@ export function parseTwitchVideoId(src: string) {
 /**
  * Parse a Twitch source string. Recognizes VOD URLs (`twitch.tv/videos/<id>` and `twitch.tv/?video=<id>`) and channel
  * URLs (`twitch.tv/<channel>`), with or without the `www.` and `go.` hosts, and with or without a trailing slash.
+ *
+ * @internal
  */
 export function parseTwitchSource(src: string): ParsedTwitchSource | null {
   if (!src) return null;
@@ -77,7 +97,11 @@ export function parseTwitchSource(src: string): ParsedTwitchSource | null {
   return null;
 }
 
-/** Build the iframe `src` URL for an initial Twitch embed from the given props. */
+/**
+ * Build the iframe `src` URL for an initial Twitch embed from the given props.
+ *
+ * @internal
+ */
 // Literal fallbacks mirror `TwitchAdapter.defaultProps`; the class imports this module, so it cannot be imported back.
 export function buildTwitchIframeSrc(src: string, props: Partial<TwitchAdapterProps> = {}) {
   const parsed = parseTwitchSource(src);

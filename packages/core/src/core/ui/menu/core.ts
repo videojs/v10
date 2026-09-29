@@ -35,6 +35,7 @@ export interface MenuPopupProps {
   keepMounted?: boolean | undefined;
 }
 
+/** @internal */
 export interface MenuOptionState {
   /** Selected value displayed by an option group's `Value` part. */
   value: string;
@@ -55,7 +56,11 @@ export interface MenuItemIndicatorProps {
   forceMount?: boolean | undefined;
 }
 
-/** Combines direct and nested option-menu state for a parent trigger. */
+/**
+ * Combines direct and nested option-menu state for a parent trigger.
+ *
+ * @internal
+ */
 export function resolveMenuOptionState(states: Iterable<MenuOptionState>): MenuOptionState | null {
   const options = [...states];
   if (options.length === 0) return null;
@@ -77,7 +82,11 @@ export function resolveMenuOptionState(states: Iterable<MenuOptionState>): MenuO
   };
 }
 
-/** Runtime input derived by framework adapters and `createTransition`. */
+/**
+ * Runtime input derived by framework adapters and `createTransition`.
+ *
+ * @internal
+ */
 export interface MenuInput extends TransitionState {
   /** Whether this menu is nested inside another menu's content. */
   isSubmenu: boolean;
@@ -93,7 +102,11 @@ export interface MenuState extends TransitionFlags {
   isSubmenu: boolean;
 }
 
-/** Base menu logic: ARIA attributes and open/close state computation. */
+/**
+ * Base menu logic: ARIA attributes and open/close state computation.
+ *
+ * @internal
+ */
 export class MenuCore {
   static readonly defaultProps: NonNullableObject<MenuCoreProps> = {
     side: 'bottom',
@@ -158,6 +171,7 @@ export class MenuCore {
   }
 }
 
+/** @internal */
 export namespace MenuCore {
   export type Props = MenuCoreProps;
   export type State = MenuState;

@@ -49,7 +49,11 @@ const loaders = {
 ${entries}
 } as const satisfies Record<string, () => Promise<{ default: Translations }>>;
 
-/** Lazy-import a shipped locale pack when the tag is not already in the registry. */
+/**
+ * Lazy-import a shipped locale pack when the tag is not already in the registry.
+ *
+ * @internal
+ */
 export async function loadLocale(tag: string): Promise<Partial<FlatTranslations> | undefined> {
   if (hasRegisteredLocale(tag)) return undefined;
   for (const chainTag of findLocaleKeys(tag)) {
@@ -71,14 +75,23 @@ function generateCoreAllTs(): string {
   return `${GENERATED_HEADER}import type { Translations } from '../params';
 ${imports}
 
-/** Every built-in locale pack keyed by BCP 47 tag. */
+/**
+ * Every built-in locale pack keyed by BCP 47 tag.
+ *
+ * @internal
+ */
 export const all = {
 ${objectLines}
 } as const satisfies Record<string, Partial<Translations>>;
 
+/** @internal */
 export type LocaleTag = keyof typeof all;
 
-/** BCP 47 tags for every pack in {@link all}. */
+/**
+ * BCP 47 tags for every pack in {@link all}.
+ *
+ * @internal
+ */
 export const localeTags = Object.keys(all) as LocaleTag[];
 `;
 }
@@ -109,7 +122,7 @@ function generateTextModule(entries: [string, string][]): string {
   const exports = entries
     .map(
       ([key, text]) =>
-        `export const ${exportName(key)} = {\n  key: \`\${prefix}${key.slice(prefix.length)}\`,\n  text: ${stringLiteral(text)},\n} as const satisfies Text;`
+        `/** @internal */\nexport const ${exportName(key)} = {\n  key: \`\${prefix}${key.slice(prefix.length)}\`,\n  text: ${stringLiteral(text)},\n} as const satisfies Text;`
     )
     .join('\n\n');
 

@@ -14,14 +14,20 @@ import { getMediaExtensions, getMediaOwner, getMediaProp, setMediaProp } from '.
 
 export { addMediaExtension, getMediaExtensions, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
+/** @internal */
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
 }
 
-/** An {@link HTMLMediaAdapter} over any target and event map: the shape extensions and element façades share. */
+/**
+ * An {@link HTMLMediaAdapter} over any target and event map: the shape extensions and element façades share.
+ *
+ * @internal
+ */
 export type AnyHTMLMediaAdapter<Target extends HTMLMediaTargetLike = any> = HTMLMediaAdapter<Target, any>;
 
+/** @internal */
 export interface MediaExtension<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
   readonly targetOverride?: Partial<Target> | null;
   setAdapter?(adapter: AnyHTMLMediaAdapter<Target>): void;
@@ -30,15 +36,18 @@ export interface MediaExtension<Target extends HTMLMediaTargetLike = HTMLMediaTa
   destroy?(): void;
 }
 
+/** @internal */
 export interface MediaExtensionConstructor<T extends MediaExtension = MediaExtension> {
   new (...args: any[]): T;
 }
 
+/** @internal */
 export interface MediaExtensions extends Map<MediaExtensionConstructor, MediaExtension> {
   get<T extends MediaExtension>(component: MediaExtensionConstructor<T>): T | undefined;
   set<T extends MediaExtension>(component: MediaExtensionConstructor<T>, instance: T): this;
 }
 
+/** @internal */
 export class HTMLMediaAdapter<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
   implements CommonMedia

@@ -12,6 +12,7 @@ declare global {
   }
 }
 
+/** @internal */
 export class MediaError extends Error {
   static MEDIA_ERR_ABORTED = 1 as const;
   static MEDIA_ERR_NETWORK = 2 as const;

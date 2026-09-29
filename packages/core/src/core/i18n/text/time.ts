@@ -4,66 +4,79 @@ import type { Text } from '../text';
 
 const prefix = 'time.';
 
+/** @internal */
 export const currentText = {
   key: `${prefix}current`,
   text: 'Current time',
 } as const satisfies Text;
 
+/** @internal */
 export const durationText = {
   key: `${prefix}duration`,
   text: 'Duration',
 } as const satisfies Text;
 
+/** @internal */
 export const remainingText = {
   key: `${prefix}remaining`,
   text: 'Remaining',
 } as const satisfies Text;
 
+/** @internal */
 export const elapsedSuffixText = {
   key: `${prefix}elapsedSuffix`,
   text: '{duration} elapsed',
 } as const satisfies Text;
 
+/** @internal */
 export const durationSuffixText = {
   key: `${prefix}durationSuffix`,
   text: '{duration} duration',
 } as const satisfies Text;
 
+/** @internal */
 export const remainingSuffixText = {
   key: `${prefix}remainingSuffix`,
   text: '{duration} remaining',
 } as const satisfies Text;
 
+/** @internal */
 export const showElapsedText = {
   key: `${prefix}showElapsed`,
   text: 'Show elapsed time, {duration}.',
 } as const satisfies Text;
 
+/** @internal */
 export const showDurationText = {
   key: `${prefix}showDuration`,
   text: 'Show duration, {duration}.',
 } as const satisfies Text;
 
+/** @internal */
 export const showRemainingText = {
   key: `${prefix}showRemaining`,
   text: 'Show remaining time, {duration}.',
 } as const satisfies Text;
 
+/** @internal */
 export const toggleElapsedText = {
   key: `${prefix}toggleElapsed`,
   text: 'Toggle between elapsed and remaining time.',
 } as const satisfies Text;
 
+/** @internal */
 export const toggleDurationText = {
   key: `${prefix}toggleDuration`,
   text: 'Toggle between duration and remaining time.',
 } as const satisfies Text;
 
+/** @internal */
 export const positionText = {
   key: `${prefix}position`,
   text: '{current} of {duration}',
 } as const satisfies Text;
 
+/** @internal */
 export const unknownText = {
   key: `${prefix}unknown`,
   text: 'Media not loaded, unknown time.',

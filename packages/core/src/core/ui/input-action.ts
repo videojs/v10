@@ -1,5 +1,7 @@
+/** @internal */
 export type InputActionSource = 'gesture' | 'hotkey';
 
+/** @internal */
 export type InputAction =
   | 'togglePaused'
   | 'toggleMuted'
@@ -14,6 +16,7 @@ export type InputAction =
   | 'speedDown'
   | (string & {});
 
+/** @internal */
 export interface InputActionEvent {
   action?: string | undefined;
   value?: number | undefined;
@@ -22,6 +25,7 @@ export interface InputActionEvent {
   repeat?: boolean | undefined;
 }
 
+/** @internal */
 export interface MediaSnapshot {
   paused?: boolean | undefined;
   volume?: number | undefined;
@@ -37,6 +41,7 @@ export interface MediaSnapshot {
   seeking?: boolean | undefined;
 }
 
+/** @internal */
 export function isInputActionIncluded(
   action: string | undefined,
   actions: readonly InputAction[] | undefined

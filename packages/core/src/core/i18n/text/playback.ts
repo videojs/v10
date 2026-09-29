@@ -4,6 +4,7 @@ import type { Text } from '../text';
 
 const prefix = 'playback.';
 
+/** @internal */
 export const rateText = {
   key: `${prefix}rate`,
   text: 'Playback rate {rate}',

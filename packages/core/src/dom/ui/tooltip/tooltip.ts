@@ -12,8 +12,10 @@ import {
 } from '../popover/popover';
 import type { TransitionApi } from '../transition';
 
+/** @internal */
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
 
+/** @internal */
 export interface TooltipChangeDetails {
   reason: TooltipOpenChangeReason;
   event?: Event;
@@ -38,6 +40,7 @@ export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'
 
 export interface TooltipPopupProps extends PopoverPopupProps {}
 
+/** @internal */
 export interface TooltipApi extends Omit<PopoverApi, 'triggerProps' | 'popupProps' | 'open' | 'close'> {
   triggerProps: TooltipTriggerProps;
   popupProps: TooltipPopupProps;
@@ -54,6 +57,7 @@ const REASON_MAP: Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReaso
   'imperative-action': 'imperative-action',
 };
 
+/** @internal */
 export function createTooltip(options: TooltipOptions): TooltipApi {
   const popoverOpts: PopoverOptions = {
     transition: options.transition,

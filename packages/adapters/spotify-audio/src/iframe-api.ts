@@ -3,7 +3,11 @@
 
 import { loadScript } from '@videojs/utils/dom';
 
-/** Everything the embed reports about playback, with times in milliseconds. */
+/**
+ * Everything the embed reports about playback, with times in milliseconds.
+ *
+ * @internal
+ */
 export interface SpotifyPlaybackState {
   isPaused: boolean;
   isBuffering: boolean;
@@ -11,10 +15,12 @@ export interface SpotifyPlaybackState {
   duration: number;
 }
 
+/** @internal */
 export interface SpotifyPlaybackUpdateEvent {
   data: SpotifyPlaybackState;
 }
 
+/** @internal */
 export interface SpotifyControllerApi {
   /** The iframe the controller drives, which it builds itself and swaps in for the target it was handed. */
   iframeElement: HTMLIFrameElement;
@@ -39,6 +45,7 @@ export interface SpotifyControllerOptions extends Record<string, unknown> {
   height?: string | number;
 }
 
+/** @internal */
 export interface SpotifyIframeApi {
   /** Build a controller; `target` is replaced by an iframe of the controller's own, so hand it a placeholder. */
   createController(

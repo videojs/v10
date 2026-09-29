@@ -2,6 +2,7 @@ import type { PopoverCore, StateAttrMap } from '@videojs/core';
 import type { MediaContainer, PopoverApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
+/** @internal */
 export interface PopoverContextValue {
   core: PopoverCore;
   popover: PopoverApi;
@@ -19,7 +20,11 @@ const PopoverContext = createContext<PopoverContextValue | null>(null);
 
 export const PopoverContextProvider = PopoverContext.Provider;
 
-/** Returns the current popover compound-component context. Throws outside `Popover.Root`. */
+/**
+ * Returns the current popover compound-component context. Throws outside `Popover.Root`.
+ *
+ * @internal
+ */
 export function usePopoverContext(): PopoverContextValue {
   const ctx = useContext(PopoverContext);
   if (!ctx) throw new Error('Popover compound components must be used within a Popover.Root');

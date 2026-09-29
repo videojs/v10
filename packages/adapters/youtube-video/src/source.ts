@@ -11,6 +11,8 @@ import type { YouTubeAdapterProps } from './props';
  * the same name, so configuring them here would give two ways to say one thing. Parameters YouTube has deprecated
  * (`modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`) are absent too. The index signature
  * still carries anything not listed here, so undocumented knobs and whatever YouTube adds next keep working.
+ *
+ * @internal
  */
 export interface YouTubeEngineConfig extends Record<string, unknown> {
   /** ISO 639-1 language to display captions in. Pair with `cc_load_policy`. */
@@ -51,7 +53,11 @@ export interface YouTubeEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured YouTube source: which source to play, plus how to play it. */
+/**
+ * Structured YouTube source: which source to play, plus how to play it.
+ *
+ * @internal
+ */
 export interface YouTubeSource {
   /** YouTube URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -59,13 +65,21 @@ export interface YouTubeSource {
   engine?: YouTubeSourceEngineConfig | undefined;
 }
 
-/** The engines a YouTube source can configure. */
+/**
+ * The engines a YouTube source can configure.
+ *
+ * @internal
+ */
 export interface YouTubeSourceEngineConfig {
   /** YouTube's own player parameters, passed through untouched. */
   youtube?: YouTubeEngineConfig | undefined;
 }
 
-/** Parsed pieces of a YouTube source URL. */
+/**
+ * Parsed pieces of a YouTube source URL.
+ *
+ * @internal
+ */
 export interface ParsedYouTubeSource {
   /** 11-character video id (null for playlist-only sources). */
   id: string | null;
@@ -79,7 +93,11 @@ export interface ParsedYouTubeSource {
   noCookie: boolean;
 }
 
-/** Extract a YouTube video id from a raw 11-character id or any recognized URL. */
+/**
+ * Extract a YouTube video id from a raw 11-character id or any recognized URL.
+ *
+ * @internal
+ */
 export function parseYouTubeVideoId(src: string) {
   return parseYouTubeSource(src)?.id ?? null;
 }
@@ -88,6 +106,8 @@ export function parseYouTubeVideoId(src: string) {
  * Parse a YouTube source string. Recognizes raw 11-character ids, `youtu.be` short links, `watch?v=`, `embed/`, `v/`,
  * `shorts/` and `live/` URLs (with or without the `-nocookie` host), playlist URLs via the `list` parameter, and start
  * times via the `t` parameter.
+ *
+ * @internal
  */
 export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   if (!src) return null;
@@ -113,7 +133,11 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   };
 }
 
-/** Build the iframe `src` URL for an initial YouTube embed from the given props. */
+/**
+ * Build the iframe `src` URL for an initial YouTube embed from the given props.
+ *
+ * @internal
+ */
 // Literal fallbacks mirror `YouTubeAdapter.defaultProps`; the class imports this module, so it cannot be imported back.
 export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeAdapterProps> = {}) {
   const parsed = parseYouTubeSource(src);

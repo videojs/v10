@@ -32,6 +32,7 @@ const MEDIA_EVENT_PROPS = {
   onWaiting: 'waiting',
 } as const;
 
+/** @internal */
 export type MediaEventPropName = keyof typeof MEDIA_EVENT_PROPS;
 
 const MEDIA_EVENT_PROP_NAMES = Object.keys(MEDIA_EVENT_PROPS) as MediaEventPropName[];
@@ -41,6 +42,8 @@ const MEDIA_EVENT_PROP_NAMES = Object.keys(MEDIA_EVENT_PROPS) as MediaEventPropN
  *
  * The event is the plain `Event` the adapter dispatched on itself, so `currentTarget` is the adapter rather than a DOM
  * element; read playback state such as `currentTime` or `paused` from it the way a `<video>` handler would.
+ *
+ * @internal
  */
 export type MediaEventHandler<Target extends EventTarget = EventTarget> = (
   event: Event & { readonly currentTarget: Target }
@@ -49,6 +52,8 @@ export type MediaEventHandler<Target extends EventTarget = EventTarget> = (
 /**
  * Standard media event props for a media component whose playback engine is not an `HTMLMediaElement`, such as an
  * iframe embed. Named after the React props on `<video>` (`onPlay`, `onTimeUpdate`, …) so handlers port across.
+ *
+ * @internal
  */
 export type MediaEventProps<Target extends EventTarget = EventTarget> = {
   [Prop in MediaEventPropName]?: MediaEventHandler<Target> | undefined;
@@ -68,6 +73,7 @@ export type MediaEventProps<Target extends EventTarget = EventTarget> = {
  * @param props - Component props, which may include media event handlers.
  * @param media - Adapter that dispatches the standard media events. Omit it when the rendered element is the media
  *   itself, such as a third-party web component; the listeners then bind to whatever the ref receives.
+ * @internal
  */
 export function useMediaEvents<Props extends Record<string, unknown>>(
   props: Props,
@@ -116,6 +122,7 @@ export function useMediaEvents<Props extends Record<string, unknown>>(
   return { ref, props: rest as Omit<Props, MediaEventPropName> };
 }
 
+/** @internal */
 export namespace useMediaEvents {
   export interface Result<Props> {
     /** Ref for the rendered element; compose it ahead of the ref that attaches the media. */

@@ -1,6 +1,10 @@
+/** @internal */
 export type GestureType = 'tap' | 'doubletap';
+/** @internal */
 export type GesturePointerType = 'mouse' | 'touch' | 'pen';
+/** @internal */
 export type GestureRegion = 'left' | 'center' | 'right';
+/** @internal */
 export type GestureActionName =
   | 'togglePaused'
   | 'toggleMuted'

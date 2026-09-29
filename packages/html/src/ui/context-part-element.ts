@@ -4,7 +4,11 @@ import type { PropertyValues } from '@videojs/element';
 
 import { UIElement } from './ui-element';
 
-/** Shape that compound context values must satisfy for parts to consume. */
+/**
+ * Shape that compound context values must satisfy for parts to consume.
+ *
+ * @internal
+ */
 export interface PartContextValue<State extends object> {
   state: State;
   stateAttrMap: StateAttrMap<State>;
@@ -22,6 +26,8 @@ export interface PartContextValue<State extends object> {
  *   protected readonly consumer = new ContextConsumer(this, { context: sliderContext, subscribe: true });
  * }
  * ```
+ *
+ * @internal
  */
 export abstract class ContextPartElement<State extends object> extends UIElement {
   protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };

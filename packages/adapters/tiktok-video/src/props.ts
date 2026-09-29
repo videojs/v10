@@ -10,6 +10,8 @@ import type { TikTokSource } from './source';
  * dormant player up with an `autoplay` it then parks (see `shouldBootstrapTikTokEmbed`), which `controls` also opts out
  * of by handing playback to TikTok's own chrome. That buys commands the embed answers, not metadata — TikTok reports a
  * duration of 0 until it plays.
+ *
+ * @internal
  */
 export interface TikTokAdapterProps extends Pick<
   Video,

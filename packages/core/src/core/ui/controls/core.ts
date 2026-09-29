@@ -2,6 +2,7 @@ import type { MediaControlsState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
+/** @internal */
 export type ControlsVisibility = 'auto' | 'always';
 
 export interface ControlsProps {
@@ -16,6 +17,7 @@ export interface ControlsState {
   userActive: boolean;
 }
 
+/** @internal */
 export class ControlsCore {
   static readonly defaultProps: NonNullableObject<ControlsProps> = {
     visibility: 'auto',
@@ -47,6 +49,7 @@ export class ControlsCore {
   }
 }
 
+/** @internal */
 export namespace ControlsCore {
   export type Props = ControlsProps;
   export type State = ControlsState;

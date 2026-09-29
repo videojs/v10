@@ -2,6 +2,7 @@ import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../in
 import type { InputActionEvent, MediaSnapshot } from '../input-action';
 import { deriveVolumeStatus } from '../volume-indicator/status';
 
+/** @internal */
 export type IndicatorStatus =
   | 'pause'
   | 'play'
@@ -15,7 +16,11 @@ export type IndicatorStatus =
   | 'pip'
   | 'exit-pip';
 
-/** Predicted display details for a supported status-indicator action. */
+/**
+ * Predicted display details for a supported status-indicator action.
+ *
+ * @internal
+ */
 export interface StatusDetails {
   /** Visual status corresponding to the predicted post-action state. */
   status: IndicatorStatus;
@@ -25,7 +30,11 @@ export interface StatusDetails {
   value: string | null;
 }
 
-/** Derives the predicted visual status from an input action and its pre-action media snapshot. */
+/**
+ * Derives the predicted visual status from an input action and its pre-action media snapshot.
+ *
+ * @internal
+ */
 export function deriveStatus(
   event: InputActionEvent,
   snapshot: MediaSnapshot,
@@ -78,7 +87,11 @@ export function deriveStatus(
   }
 }
 
-/** Returns the volume percentage when present, then the translated status label. */
+/**
+ * Returns the volume percentage when present, then the translated status label.
+ *
+ * @internal
+ */
 export function getStatusIndicatorDisplayValue(state: { value: string | null; label: string | null }): string {
   return state.value ?? state.label ?? '';
 }

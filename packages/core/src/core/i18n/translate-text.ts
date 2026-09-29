@@ -3,8 +3,11 @@ import type { Text, TextParams } from './text';
 import type { Translator } from './translator';
 import { interpolate } from './utils';
 
+/** @internal */
 export function translateText(text: Text | string, params?: TextParams): string;
+/** @internal */
 export function translateText(text: Text | string, translator: Translator | undefined, params?: TextParams): string;
+/** @internal */
 export function translateText(
   text: Text | string,
   translatorOrParams?: Translator | TextParams,

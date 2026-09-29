@@ -4,11 +4,13 @@ import type { Text } from '../text';
 
 const prefix = 'captions.';
 
+/** @internal */
 export const enableText = {
   key: `${prefix}enable`,
   text: 'Enable captions',
 } as const satisfies Text;
 
+/** @internal */
 export const disableText = {
   key: `${prefix}disable`,
   text: 'Disable captions',

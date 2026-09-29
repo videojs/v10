@@ -4,41 +4,49 @@ import type { Text } from '../text';
 
 const prefix = 'errors.';
 
+/** @internal */
 export const abortedText = {
   key: `${prefix}aborted`,
   text: 'You stopped media playback before it finished.',
 } as const satisfies Text;
 
+/** @internal */
 export const networkText = {
   key: `${prefix}network`,
   text: 'This media could not be loaded due to a network or server issue.',
 } as const satisfies Text;
 
+/** @internal */
 export const decodeText = {
   key: `${prefix}decode`,
   text: 'This media could not be played. It may be corrupted, or your browser may not support its format.',
 } as const satisfies Text;
 
+/** @internal */
 export const sourceText = {
   key: `${prefix}source`,
   text: 'This media could not be loaded. It may be unavailable, or your browser may not support its format.',
 } as const satisfies Text;
 
+/** @internal */
 export const encryptedText = {
   key: `${prefix}encrypted`,
   text: 'This media could not be played because it could not be decrypted.',
 } as const satisfies Text;
 
+/** @internal */
 export const unplayableText = {
   key: `${prefix}unplayable`,
   text: 'This media is unsupported by the player.',
 } as const satisfies Text;
 
+/** @internal */
 export const titleText = {
   key: `${prefix}title`,
   text: 'Something went wrong.',
 } as const satisfies Text;
 
+/** @internal */
 export const unexpectedText = {
   key: `${prefix}unexpected`,
   text: 'An unexpected error occurred.',

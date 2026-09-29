@@ -2,6 +2,7 @@ import type { ErrorLike, MediaFeatureAvailability, MediaStreamType, TextTrackKin
 
 export type { TextTrackKind };
 
+/** @internal */
 export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
@@ -37,6 +38,7 @@ export interface MediaPlaybackState {
   pause(): void;
 }
 
+/** @internal */
 export interface MediaVolumeState {
   /**
    * Volume level from 0 (silent) to 1 (max).
@@ -79,6 +81,7 @@ export interface MediaVolumeState {
   setMuted(muted: boolean): boolean;
 }
 
+/** @internal */
 export interface MediaTimeState {
   /**
    * Current playback position in seconds.
@@ -106,6 +109,7 @@ export interface MediaTimeState {
   seek(time: number): Promise<number>;
 }
 
+/** @internal */
 export interface MediaSourceState {
   /**
    * Current media source URL (empty string if none).
@@ -121,6 +125,7 @@ export interface MediaSourceState {
   canPlay: boolean;
 }
 
+/** @internal */
 export interface MediaStreamTypeState {
   /**
    * Current stream delivery type.
@@ -134,7 +139,11 @@ export interface MediaStreamTypeState {
   streamType: MediaStreamType;
 }
 
-/** Resolved content metadata exposed by the player store. */
+/**
+ * Resolved content metadata exposed by the player store.
+ *
+ * @internal
+ */
 export interface MediaMetadataState {
   /** The resolved content title. Set it through the player, not through the store. */
   title: string;
@@ -145,6 +154,7 @@ export interface MediaMetadataState {
   poster: string;
 }
 
+/** @internal */
 export interface MediaLiveState {
   /**
    * Playback time where the live edge begins.
@@ -163,6 +173,7 @@ export interface MediaLiveState {
   targetLiveWindow: number;
 }
 
+/** @internal */
 export interface MediaBufferState {
   /**
    * Buffered time ranges as [start, end] tuples.
@@ -178,6 +189,7 @@ export interface MediaBufferState {
   seekable: [number, number][];
 }
 
+/** @internal */
 export interface MediaFullscreenState {
   /**
    * Whether fullscreen mode is currently active.
@@ -205,6 +217,7 @@ export interface MediaFullscreenState {
   exitFullscreen(): Promise<void>;
 }
 
+/** @internal */
 export interface MediaControlsState {
   /** Whether the user has recently interacted with the player. */
   userActive: boolean;
@@ -221,6 +234,7 @@ export interface MediaControlsState {
   toggleControls(forceShow?: boolean): boolean;
 }
 
+/** @internal */
 export interface MediaPlaybackRateState {
   /**
    * Available playback rates.
@@ -242,6 +256,7 @@ export interface MediaPlaybackRateState {
   setPlaybackRate(rate: number): void;
 }
 
+/** @internal */
 export interface MediaVideoRendition {
   /** Rendition id, used by `selectVideoRendition`. */
   id: string;
@@ -253,6 +268,7 @@ export interface MediaVideoRendition {
   selected: boolean;
 }
 
+/** @internal */
 export interface MediaQualityState {
   /** Video renditions available for manual quality selection. */
   videoRenditionList: MediaVideoRendition[];
@@ -262,6 +278,7 @@ export interface MediaQualityState {
   selectVideoRendition(id: string): void;
 }
 
+/** @internal */
 export interface MediaAudioTrack {
   /** Track id, used by `selectAudioTrack`. */
   id: string;
@@ -271,6 +288,7 @@ export interface MediaAudioTrack {
   enabled: boolean;
 }
 
+/** @internal */
 export interface MediaAudioTrackState {
   /** Audio tracks available for manual track selection. */
   audioTrackList: MediaAudioTrack[];
@@ -281,6 +299,7 @@ export interface MediaAudioTrackState {
 /**
  * A text cue.
  *
+ * @internal
  * @see https://developer.mozilla.org/en-US/docs/Web/API/VTTCue
  */
 export interface MediaTextCue {
@@ -292,6 +311,7 @@ export interface MediaTextCue {
 /**
  * The mode of a text track.
  *
+ * @internal
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/mode
  */
 export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
@@ -299,6 +319,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
 /**
  * A text track.
  *
+ * @internal
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
@@ -310,7 +331,11 @@ export interface MediaTextTrack<Kind extends string = TextTrackKind> {
   mode: TextTrackMode;
 }
 
-/** The first `kind="metadata" label="thumbnails"` track. */
+/**
+ * The first `kind="metadata" label="thumbnails"` track.
+ *
+ * @internal
+ */
 export interface MediaThumbnailsTrack {
   /** The track's cues, whose text points at thumbnail images. */
   cues: MediaTextCue[];
@@ -327,6 +352,8 @@ export interface MediaThumbnailsTrack {
 /**
  * Text track state. Member prefixes follow the authored track identity: `subtitles` covers `kind="captions"` and
  * `kind="subtitles"`, `chapters` is `kind="chapters"`, and `thumbnails` is `label="thumbnails"`.
+ *
+ * @internal
  */
 export interface MediaTextTrackState {
   /** All text tracks available on the media element. */
@@ -346,6 +373,7 @@ export interface MediaTextTrackState {
   thumbnailsTrack: MediaThumbnailsTrack | null;
 }
 
+/** @internal */
 export interface MediaErrorState {
   /**
    * The current media error, or null if none.
@@ -357,8 +385,10 @@ export interface MediaErrorState {
   dismissError(): void;
 }
 
+/** @internal */
 export type RemotePlaybackConnectionState = 'disconnected' | 'connecting' | 'connected';
 
+/** @internal */
 export interface MediaRemotePlaybackState {
   /**
    * Current remote playback connection state.
@@ -380,6 +410,7 @@ export interface MediaRemotePlaybackState {
   promptRemotePlayback(): Promise<void>;
 }
 
+/** @internal */
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.

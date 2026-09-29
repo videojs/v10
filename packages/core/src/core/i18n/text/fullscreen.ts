@@ -4,11 +4,13 @@ import type { Text } from '../text';
 
 const prefix = 'fullscreen.';
 
+/** @internal */
 export const enterText = {
   key: `${prefix}enter`,
   text: 'Enter fullscreen',
 } as const satisfies Text;
 
+/** @internal */
 export const exitText = {
   key: `${prefix}exit`,
   text: 'Exit fullscreen',

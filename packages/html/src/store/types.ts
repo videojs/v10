@@ -16,4 +16,5 @@ export type PlayerElement<Store extends PlayerStore> = UIElement &
     readonly store: Store;
   };
 
+/** @internal */
 export type PlayerElementConstructor<Store extends PlayerStore> = typeof UIElement & Constructor<PlayerElement<Store>>;
