@@ -6,6 +6,7 @@ description: Move a Video.js 8 integration to v10, mapping the options object, t
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import MigrationAgentStart from '@/components/docs/MigrationAgentStart.astro';
 
 Video.js 8 gives you one function, `videojs()`, and one large options object. It enhances a `<video>` element and returns a player with a control bar, plugin system, and component tree.
 
@@ -16,6 +17,8 @@ This isn't a version bump you can do with a find-and-replace. Plan it as a rewri
 </Aside>
 
 Video.js 8 lives on at its [repo](https://github.com/videojs/video.js) and [docs](https://legacy.videojs.org). The `video.js` package on npm is still Video.js 8, so `npm install video.js` won't get you v10. Video.js 10 ships as scoped `@videojs/*` packages.
+
+<MigrationAgentStart />
 
 ## Three pieces instead of one
 

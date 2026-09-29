@@ -1,0 +1,29 @@
+---
+import { installationCommand, SKILLS_REPOSITORY_URL, skillsCommand } from '@videojs/installation';
+
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import { resolveDocsFramework } from '@/types/docs';
+
+const framework = resolveDocsFramework(Astro.params.framework);
+const packageName = framework === 'react' ? '@videojs/react' : '@videojs/html';
+const docsIndex = `node_modules/${packageName}/docs/llms.txt`;
+---
+
+<Aside type="tip" title="Migrate with a coding agent">
+  <p>
+    If your agent does not have the <a href={SKILLS_REPOSITORY_URL}>Video.js skill</a>, run{' '}
+    <code>{skillsCommand()}</code> and follow the printed installation and session-reload steps.
+  </p>
+  <p>
+    From your application's root, run <code>{installationCommand()}</code> to list installation options. Then request
+    a plan with <code>--framework {framework}</code>, <code>--project existing</code>, and explicit choices for the media,
+    source URL, installation method, preset, skin, and extensions. Follow any version-mismatch notice. Both CLI commands
+    only print instructions; they do not install packages, edit files, or migrate your player.
+  </p>
+  <p>
+    Read <code>{docsIndex}</code> for documentation matching the installed package. Before installation, use the{' '}
+    <DocsLink slug="guides/installation">installation guide</DocsLink>. Keep your existing media URLs and required
+    behavior, check this guide's known gaps, and verify playback, captions, controls, and analytics after migration.
+  </p>
+</Aside>

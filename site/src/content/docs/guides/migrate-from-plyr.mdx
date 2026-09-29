@@ -6,10 +6,13 @@ description: Move an existing Plyr integration to Video.js v10, mapping Plyr opt
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import MigrationAgentStart from '@/components/docs/MigrationAgentStart.astro';
 
 Video.js v10 is not a drop-in replacement for Plyr. Plyr wraps one media element with a constructor and options object. Video.js composes a player, media component, and skin in markup, then exposes behavior through <DocsLink slug="guides/features">player state</DocsLink>.
 
 Start with the Minimal skin, move media settings into markup, and replace calls to the Plyr instance with native media APIs or Video.js state actions.
+
+<MigrationAgentStart />
 
 ## What changes
 

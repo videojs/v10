@@ -6,6 +6,7 @@ description: Map Media Chrome's controller, elements, and attributes onto Video.
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import MigrationAgentStart from '@/components/docs/MigrationAgentStart.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
 <FrameworkCase frameworks={["react"]}>
@@ -19,6 +20,8 @@ Video.js v10's HTML player uses the same `media-*` custom-element convention as 
 <Aside type="note">
 Scoped to apps that compose their own player from Media Chrome elements. If you use `<mux-player>`, follow the Mux Player migration guide instead.
 </Aside>
+
+<MigrationAgentStart />
 
 ## Before you begin
 
