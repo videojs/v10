@@ -77,7 +77,7 @@ Apply these changes to your existing markup:
 - **The poster is player metadata, not a media attribute.** Set `poster` on `<video-player>`, and the skin, not the browser, controls how it appears. For more advanced control (like supplying your own image element), see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
 - **Your `<track>` elements don't change.** Captions, subtitles, chapters, and thumbnails are all still tracks, and the skin shows the matching controls when it finds them.
 
-There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `video.js` for `video-minimal.js` and `<video-skin>` for `<video-minimal-skin>`.
+For the Minimal skin, replace `<video-skin>` with `<video-minimal-skin>`. Load `video-minimal.js` from the CDN, or replace the bundler skin import with `@videojs/html/video/minimal-skin`.
 
 </FrameworkCase>
 
@@ -263,7 +263,7 @@ Set sizing and aspect ratio on the skin with CSS:
 
 ### Composition
 
-These are the ones that need a decision rather than a rename, so each has a section below.
+These options need a migration decision. Each row links to the relevant guidance or identifies a gap.
 
 | Video.js 8 | Where it lives now |
 |---|---|
@@ -426,18 +426,12 @@ For a control bar built from scratch, follow <DocsLink slug="guides/ui-component
 
 ## Plugins
 
-v10 has no plugin system. There's no `videojs.registerPlugin`, no `player.myPlugin()`, and no plugin lifecycle.
+v10 has no `videojs.registerPlugin`, `player.myPlugin()`, or plugin lifecycle. Audit each plugin and plan its replacement:
 
-That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skin source you can change, and media elements you can swap. Most of what plugins did is now ordinary composition.
-
-Audit your plugins and sort them into four piles:
-
-- **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace with the matching media component. See [Techs become media components](#techs-become-media-components).
-- **UI additions** (extra buttons, overlays, custom control bars). Rebuild them by editing the skin source in your project, or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
-- **Workarounds** for v8 limitations. Check whether the limitation still exists before you port anything.
-- **Genuinely missing features** (ads, playlists). These need real work, and some have no home yet. Get them on the list early, because they'll drive your timeline.
-
-That last pile is the honest risk in a v8 migration. If your player depends on an ads plugin, there's no v10 answer today.
+- **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace them with the matching [media component](#techs-become-media-components).
+- **UI additions** (extra buttons, overlays, custom control bars). Rebuild them in local skin source or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>.
+- **Workarounds** for v8 limitations. Check whether the limitation still exists before porting the workaround.
+- **Missing features** such as ads and playlists. Check [Known gaps](#known-gaps) before scheduling the migration. An ads-dependent player has no built-in replacement today.
 
 ## Read and control the player
 
@@ -623,7 +617,7 @@ Load the live preset and the hls.js media component:
 </live-video-player>
 ```
 
-For audio, use the audio player with the audio skin, or the live audio pair. There's also a background video player for muted, chrome-free background video, which v8 had no answer for.
+For audio, use the audio player and skin, or the live audio pair. For muted video without controls, use the background video preset.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -639,7 +633,7 @@ import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video';
 </LiveVideoPlayer>
 ```
 
-For audio, use the audio preset, or the live audio one. There's also a background video preset for muted, chrome-free background video, which v8 had no answer for.
+For audio, use the audio or live audio preset. For muted video without controls, use the background video preset.
 </FrameworkCase>
 
 You get `targetLiveWindow` and `liveEdgeStart` in state, plus a live button that jumps to the live edge. The live preset does not include `streamType`; add the stream type feature to a custom player when you need it. v8's `liveTracker` tuning has no equivalent ([#1730](https://github.com/videojs/v10/issues/1730)).
@@ -666,10 +660,11 @@ v8 put a handful of utilities on the `videojs` global for anyone building a cust
 | `videojs.dom.isEl(value)` and its type-specific cousins | `isHTMLVideoElement`, `isHTMLMediaElement`, `isDocument`, and other narrowing checks from `@videojs/utils/dom` |
 | `videojs.obj.merge(a, b)` | No equivalent deep merge. Keep a deep-merge implementation if your configuration needs recursive merging. |
 
-`defaults` from `@videojs/utils/object` fills undefined values only for keys present in the defaults object. It is shallow, gives the first argument precedence, and drops other keys. Do not use it as a replacement for v8's deep merge. For a shallow merge where `b` overrides `a`, use `{ ...a, ...b }`.
+For a shallow merge where `b` overrides `a`, use `{ ...a, ...b }`.
 
 Use these utilities when extending the player. For example, `formatTime` is the exact digital-clock formatting the packaged skins use for their own time displays, so a custom one will match.
-The package is split into subpaths, so you can import only the module you need. Other than `time`, it includes `array`, `events`, `i18n`, `jwt`, `predicate`, `string`, and `types` subpaths for anything else a custom component or plugin replacement needs.
+
+The package is split into subpaths, so you can import only the module you need. Other than `time`, it includes `array`, `events`, `i18n`, `jwt`, `predicate`, `string`, `types`, and other subpaths for custom components or plugin replacements.
 
 Import the util function directly in a module `<script>` tag:
 
@@ -691,15 +686,15 @@ import { formatTime } from '@videojs/utils/time';
 
 ## Known gaps
 
-Ordered roughly by how likely each is to block a v8 migration.
+Check these limitations against your required features:
 
-- **No ads support.** v8's IMA and ad-plugin ecosystem has no v10 equivalent. This is the most common hard blocker.
+- **No ads support.** v8's IMA and ad-plugin ecosystem has no v10 equivalent. Check ads support before replacing your player.
 - **No playlist support.** No `videojs-playlist` equivalent.
 - **No plugin system**, by design. Budget for rebuilding UI plugins as components. See [Plugins](#plugins).
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — so v8's `playbackRates` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - No text-track settings dialog equivalent to v8's `textTrackSettings`. You can still style browser-rendered cues with `::cue`; see <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
-- Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
+- Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the lightweight HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom layout or a skin layout in your project.

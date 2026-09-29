@@ -220,7 +220,7 @@ Put standard media handlers such as `onPlay`, `onTimeUpdate`, `onEnded`, and `on
 
 ## Three pieces instead of one
 
-Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
+Use these three pieces when deciding where each Mux Player setting belongs:
 
 <FrameworkCase frameworks={["html"]}>
 **The player** is the outer custom element. It holds state, hands that state to everything inside it, and draws no UI itself. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
@@ -230,7 +230,7 @@ Mux Player packs three jobs into a single element. Video.js splits them up, so i
 **The player** is the outer React component. It holds state, hands that state to everything inside it, and renders no DOM of its own. Which state it holds depends on the <DocsLink slug="guides/features">features</DocsLink> it's built from.
 </FrameworkCase>
 
-**The media** is the thing that plays the video. The Mux media is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for another <DocsLink slug="guides/media-sources">media component</DocsLink> and the rest of your player keeps working.
+**The media** is the thing that plays the video. Use Mux media for Mux playback IDs and source settings. Choose another <DocsLink slug="guides/media-sources">media component</DocsLink> when changing providers, and check which capabilities it exposes.
 
 **The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. <DocsLink slug="guides/skins">Skins</DocsLink> are pre-built arrangements of smaller components, and you can use one as-is, restyle it, or take it apart.
 
@@ -555,7 +555,7 @@ These examples use 30 seconds forward and backward. Use your existing offsets:
 ```
 </FrameworkCase>
 
-While you're in there: neither packaged video skin includes skip *buttons*. Mux Player's themes show them, so if your users expect them, add a <DocsLink slug="reference/components/seek-button">seek button</DocsLink>, which takes `seconds` and defaults to 30.
+Neither packaged video skin includes skip buttons. To keep those controls from Mux Player, add a <DocsLink slug="reference/components/seek-button">seek button</DocsLink>, which takes `seconds` and defaults to 30.
 
 To remove a control, remove it and its tooltip wrapper from the local controls layout.
 
@@ -909,12 +909,12 @@ Program Date Time has no convenience surface: no `getStartDate()`, no `currentPd
 
 ## Known gaps
 
-Ordered roughly by how many migrations they'll touch.
+Check these limitations against your required features:
 
-- Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer skins whose files you can add to your project, but it's a real difference if you shipped `theme="classic"`.
+- The two packaged skins do not reproduce Mux Player's themes, and there is no runtime theme switch. Plan skin customization when preserving a theme such as `classic`.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
 - The controls auto-hide delay isn't configurable ([#1728](https://github.com/videojs/v10/issues/1728)). Always-visible controls are available through `visibility="always"` on the controls component in a custom layout or a skin layout in your project.
-- Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide. For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
+- Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide. For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - Smaller conveniences without homes yet: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)). Unmuting from zero volume already restores a sensible level, so Mux Player's smart-unmute behavior carries over.
 
 ## See also

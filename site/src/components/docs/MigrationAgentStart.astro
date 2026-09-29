@@ -21,14 +21,14 @@ const onlineDocsIndex = `/docs/framework/${framework}/llms.txt`;
   </P>
   <P>
     From your application's root, run <Code>{installationCommand()}</Code> to list installation options. Then request
-    a plan with <Code>--framework {framework}</Code>, <Code>--project existing</Code>, and explicit choices for the media,
-    source URL, installation method, preset, skin, and extensions. Follow any version-mismatch notice. Both CLI commands
+    a plan with <Code>--framework {framework}</Code>, <Code>--project existing</Code>, and explicit choices for <Code>--media</Code>, <Code>--source-url</Code>, <Code>--method</Code>,
+    <Code>--preset</Code>, <Code>--skin</Code>, and <Code>--extensions</Code>. Follow any version-mismatch notice. Both CLI commands
     only print instructions; they do not install packages, edit files, or migrate your player.
   </P>
   <P>
-    For an installed package, read <Code class="break-all">{docsIndex}</Code> for documentation matching its version.
-    For CDN installations or before installing packages, use the <A href={onlineDocsIndex}>framework docs index</A>{' '}
+    After installing the package, read <Code class="break-all">{docsIndex}</Code> for documentation matching its version.
+    That file is unavailable before installation. For CDN installations or until the package is installed, use the <A href={onlineDocsIndex}>framework docs index</A>{' '}
     and the <DocsLink slug="guides/installation">installation guide</DocsLink>. Keep your existing media URLs and required
-    behavior, check this guide's known gaps, and verify playback, captions, controls, and analytics after migration.
+    behavior, check this guide's known gaps, and verify playback, captions, controls, and analytics on your supported browsers after migration.
   </P>
 </Aside>

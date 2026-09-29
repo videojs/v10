@@ -16,19 +16,13 @@ Start with the Minimal skin, move media settings into markup, and replace calls 
 
 ## What changes
 
-<FrameworkCase frameworks={["react"]}>
-- **The player becomes three pieces.** Player state, the media component, and the skin are separate, so you can replace one without wrapping or forking the others.
-- **Streaming behavior becomes player state.** HLS, DASH, and Mux integrations expose renditions, tracks, and live state to the UI instead of leaving that wiring to application code.
-- **React uses native components and hooks.** `@videojs/react` owns its lifecycle instead of wrapping an imperative constructor around framework-owned DOM.
-- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [add its source to your project](#edit-skin-source) when you need to change the structure.
-- **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast extension.
-</FrameworkCase>
+- **Player, media, and skin are separate.** Put source settings on the media, poster metadata on the player, and controls in the skin.
+- **Streaming needs a media component.** Keep the engine your app requires; see [Streaming](#streaming).
+- **Controls are composed in a skin.** To migrate Plyr's `controls`, hotkeys, or gestures, [edit skin source](#edit-skin-source).
+- **Casting needs setup.** The video skins include AirPlay and Cast buttons; Google Cast requires an extension. Follow <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink>.
 
-<FrameworkCase frameworks={["html"]}>
-- **The player becomes three pieces.** Player state, the media component, and the skin are separate, so you can replace one without wrapping or forking the others.
-- **Streaming behavior becomes player state.** HLS, DASH, and Mux integrations expose renditions, tracks, and live state to the UI instead of leaving that wiring to application code.
-- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [add its source to your project](#edit-skin-source) when you need to change the structure.
-- **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast extension.
+<FrameworkCase frameworks={["react"]}>
+Use `@videojs/react` components and hooks to replace the Plyr constructor and disposal effect.
 </FrameworkCase>
 
 <Aside type="note">
@@ -130,7 +124,7 @@ export function AppVideoPlayer() {
 
 - `@videojs/react/video` is a <DocsLink slug="guides/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="guides/features">features</DocsLink> for video.
 - The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
-- There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
+- To use the Default skin, import `skin.css` and replace `MinimalVideoSkin` with `VideoSkin` in the import and JSX.
 
 </FrameworkCase>
 
@@ -352,7 +346,7 @@ To select a locale, import the i18n module and wrap the player in `<media-i18n l
 </video-player>
 ```
 
-For package users, same idea but import from `@videojs/html/i18n`.
+With a bundler, import `registerI18n` from `@videojs/html/i18n`.
 
 </FrameworkCase>
 
@@ -395,20 +389,20 @@ export function MyPlayer() {
 
 ## Configuration
 
-Move media options to attributes or props. For controls and interactions, use a skin or edit its installed source:
+Move media options to attributes or props. For controls and interactions, use a skin or [edit its installed source](#edit-skin-source). The table's source edits refer to those local files:
 
 | Plyr option | Video.js v10 |
 |---|---|
-| `controls` | The <DocsLink slug="guides/skins">skins</DocsLink> include the common controls, laid out in a familiar way that users would expect. Not every Plyr control ships in every skin—the video skins do not include `rewind` and `fast-forward` buttons, for example. To change which controls appear, or to customize the skin beyond basic colors, [add the skin source to your project](#edit-skin-source) and change controls, layout, styles, or icons. |
-| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Add the skin source to your project](#edit-skin-source), then add a <DocsLink slug="reference/components/seek-button">seek button</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
+| `controls` | Choose a <DocsLink slug="guides/skins">skin</DocsLink> with the controls you need, or edit local skin source. Video skins do not include `rewind` or `fast-forward` buttons. |
+| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. In local skin source, add a <DocsLink slug="reference/components/seek-button">seek button</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | Set these on the media. In React, use `autoPlay` and `playsInline`; the other names stay the same. |
 | `poster` / `data-poster` | Set `poster` on the player. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. `hideControls: false` maps to `visibility="always"` on the controls component in a custom or installed skin layout; the delay is currently not configurable. |
-| `clickToPlay` | Preset video skins include click and tap gestures. [Add the skin source to your project](#edit-skin-source) to remove or change them. |
-| `keyboard` | Preset video skins include common hotkeys. [Add the skin source to your project](#edit-skin-source) to remove or change them. |
-| `tooltips` | Preset skins include tooltips for common controls. [Add the skin source to your project](#edit-skin-source) to customize them. |
+| `clickToPlay` | Preset video skins include click and tap gestures. Edit local skin source to remove or change them. |
+| `keyboard` | Preset video skins include common hotkeys. Edit local skin source to remove or change them. |
+| `tooltips` | Preset skins include tooltips for common controls. Edit local skin source to customize them. |
 | `captions` | Add `<track kind="captions">` or `<track kind="subtitles">`; preset skins show captions controls when tracks are available. |
 | `previewThumbnails` | Add `<track kind="metadata" label="thumbnails">`; preset video skins show slider thumbnails when thumbnail cues are available. |
 | `quality` | Works when the media provider exposes renditions. Plain MP4 source arrays do not currently become a quality menu automatically. |
@@ -416,7 +410,7 @@ Move media options to attributes or props. For controls and interactions, use a 
 | `fullscreen` | Native fullscreen is supported; Plyr's full-window fallback is not a matching feature. |
 | `provider: 'vimeo'` | Use the Vimeo media component inside the player skin as shown in [Vimeo](#vimeo) above. |
 | `provider: 'youtube'` | Use the YouTube media component inside the player skin as shown in [YouTube](#youtube) above. |
-| `storage` | Unsupported at this time. |
+| `storage` | Persist preferences in your app; see <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>. |
 | `i18n` | English is the default. Select a locale with an i18n provider or provide custom translations. See [Internationalization](#internationalization). |
 | `ads` | Unsupported at this time. |
 
@@ -436,7 +430,7 @@ Individual React buttons do not include visible content. Use their `render` prop
 
 ## Use the imperative API
 
-Use store actions for playback, seeking, volume, fullscreen, and captions. For an explicit muted value, set the media property directly:
+Use store actions for playback, seeking, fullscreen, and captions. Set volume or mute directly on the media when you need to preserve assignment behavior:
 
 | Plyr | Video.js v10 |
 |---|---|
