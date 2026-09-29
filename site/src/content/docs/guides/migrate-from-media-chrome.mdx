@@ -482,39 +482,9 @@ There's no player input for a pre-load duration. Use `preload="metadata"`, the d
 
 ### Preference persistence
 
-Media Chrome remembers volume, muted state, and language across sessions. Video.js v10 persists nothing, so restore and save the values yourself.
+Media Chrome remembers volume, muted state, and language across sessions. Video.js does not persist these preferences. Follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink> to restore and save them in your app.
 
-<FrameworkCase frameworks={["react"]}>
-```tsx
-import { selectVolume, usePlayer } from '@videojs/react';
-import { useEffect, useState } from 'react';
-
-function PersistVolume() {
-  const volume = usePlayer(selectVolume);
-  const [readyToSave, setReadyToSave] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('vjs:volume');
-    if (saved !== null) {
-      const savedVolume = Number(saved);
-      if (Number.isFinite(savedVolume)) volume.setVolume(savedVolume);
-    }
-    setReadyToSave(true);
-  }, []);
-
-  useEffect(() => {
-    if (!readyToSave) return;
-    localStorage.setItem('vjs:volume', String(volume.volume));
-  }, [readyToSave, volume.volume]);
-
-  return null;
-}
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-Work against the store directly: `selectVolume(store.state).setVolume(…)` on init, and `store.subscribe(…)` to save on change.
-</FrameworkCase>
+Wait for `store.target` before calling actions to restore saved values, then start saving changes. Actions throw before media attachment. For captions or quality, also wait for the relevant track or rendition list before restoring a selection.
 
 ### Live edge offsets
 

@@ -433,17 +433,19 @@ Individual React buttons do not include visible content. Use their `render` prop
 
 ## Use the imperative API
 
-Control everything through the player's store. Every Plyr call has a matching store action, so one mental model covers playback, volume, fullscreen, and captions alike:
+Use store actions for playback, seeking, volume, fullscreen, and captions. For an explicit muted value, set the media property directly:
 
-| Plyr | Video.js v10 store action |
+| Plyr | Video.js v10 |
 |---|---|
 | `player.play()`, `player.pause()` | `play()`, `pause()`, or `togglePaused()` |
 | `player.currentTime = 10` | `seek(10)` |
 | `player.volume = 0.5` | `setVolume(0.5)` |
-| `player.muted = true` | `toggleMuted()` |
+| `player.muted = true` | `media.muted = true` on the attached media |
 | `player.speed = 1.5` | `setPlaybackRate(1.5)` |
 | `player.fullscreen.enter()` | `requestFullscreen()` |
 | `player.toggleCaptions()` | `toggleSubtitles()` |
+
+`toggleMuted()` toggles the effective muted state; it can unmute an already muted player. Use it for a mute button, not as a replacement for an assignment.
 
 <FrameworkCase frameworks={["react"]}>
 You can still script the media element directly when you want to. Plyr routed calls through its wrapper because the wrapper had to know about every change; Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 10` keeps every control in sync. The media element is also the way to change content: set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `Video` to `HlsVideo`. The player UI follows the attached media.

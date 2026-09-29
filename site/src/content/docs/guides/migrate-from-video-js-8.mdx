@@ -221,7 +221,7 @@ Move native media settings onto the media component.
 | Video.js 8 | Video.js v10 |
 |---|---|
 | `poster` | `poster` on `VideoPlayer` |
-| `posterImage: false` | leave the player's poster unset |
+| `posterImage: false` | set `poster=""` on the player, or remove the poster component from your local skin |
 | the title in `TitleBar` | `title` on `VideoPlayer`, rendered with the Title component |
 </FrameworkCase>
 
@@ -229,11 +229,13 @@ Move native media settings onto the media component.
 | Video.js 8 | Video.js v10 |
 |---|---|
 | `poster` | `poster` on `<video-player>` |
-| `posterImage: false` | leave the player's poster unset |
+| `posterImage: false` | set `poster=""` on the player, or remove the poster component from your local skin |
 | the title in `TitleBar` | `content-title` on `<video-player>`, rendered with the `<media-title>` element |
 </FrameworkCase>
 
-The poster belongs to player state rather than the media, which lets the skin control how it appears:
+An unset player poster falls back to metadata supplied by the media, such as a generated Mux poster. An explicit empty string suppresses that fallback.
+
+Set a poster URL on the player for the skin to display:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
@@ -307,12 +309,14 @@ v10 replaces the whole mechanism with a choice you make in markup. You pick the 
 | MP4, WebM | `techOrder: ['html5']` | a plain `<video>` |
 | HLS | VHS | <DocsLink slug="reference/components/hls-video">HLS video</DocsLink> |
 | HLS, needing hls.js directly | `videojs.Vhs` | <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink> |
-| HLS, native only | `html5.vhs.overrideNative: false` | <DocsLink slug="reference/components/native-hls-video">native HLS video</DocsLink> |
+| HLS, native only | native HLS without VHS fallback | <DocsLink slug="reference/components/native-hls-video">native HLS video</DocsLink> |
 | DASH | VHS | <DocsLink slug="reference/components/dash-video">DASH video</DocsLink> |
 | YouTube, Vimeo | a tech plugin | the YouTube and Vimeo components |
 | Mux | a tech plugin | <DocsLink slug="reference/components/mux-video">Mux Video</DocsLink> |
 
-Each needs its own import.
+`html5.vhs.overrideNative: false` lets v8 use native HLS where available while retaining VHS elsewhere. It does not mean native-only playback. Choose an HLS engine that supports your required browsers; native HLS has no fallback on browsers that cannot play the stream themselves. See <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
+
+Each media component needs its own import.
 
 Package-manager installations also need the matching media package. The lightweight HLS component shown below uses
 `@videojs/spf`; the hls.js component uses `@videojs/hlsjs-video`; Mux video and audio use `@videojs/mux-video` and
@@ -413,101 +417,23 @@ video-player {
 
 ### Level 3: edit skin source
 
-For changes to controls, layout, or interactions, add the skin source to your project. Its components and styles become local files. <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> covers the setup and available skins.
-
-This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
+To migrate `controlBar`, `addChild`, or custom component layouts, add the closest skin's source to your project. Follow <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> for installation and file locations.
 
 <FrameworkCase frameworks={["html"]}>
+Keep the player and media imports. Replace the packaged skin import with the installed `skin.ts` module, then use the markup from `skin.html` around your media. The module registers the elements and loads the local stylesheet.
 
-Keep the player and skin registration imports. The skin import registers the container and UI elements that the copied layout uses; you do not render the skin element itself:
-
-```js
-import '@videojs/html/video/player';
-import '@videojs/html/video/skin';
-```
-
-Then write the layout yourself:
-
-```html
-<video-player>
-  <media-container>
-    <video src="/video.mp4" playsinline></video>
-
-    <media-poster><img src="/poster.jpg" alt="" decoding="async" /></media-poster>
-
-    <media-controls>
-      <media-controls-content>
-        <media-play-button></media-play-button>
-        <media-mute-button></media-mute-button>
-        <media-volume-slider></media-volume-slider>
-        <media-time type="current"></media-time>
-        <media-time-slider>
-          <media-slider-track>
-            <media-slider-fill></media-slider-fill>
-            <media-slider-buffer></media-slider-buffer>
-          </media-slider-track>
-          <media-slider-thumb></media-slider-thumb>
-        </media-time-slider>
-        <media-time type="duration"></media-time>
-        <media-fullscreen-button></media-fullscreen-button>
-        <!-- No media-pip-button, so no picture-in-picture control renders. -->
-      </media-controls-content>
-    </media-controls>
-
-    <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
-    <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
-    <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
-    <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
-
-    <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
-  </media-container>
-</video-player>
-```
-
+To remove the picture-in-picture button, remove its markup from the installed controls layout. Keep the other controls' contents, classes, and styles.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
+Keep the package imports for `VideoPlayer` and the media. Replace the packaged `VideoSkin` import with the installed skin component.
 
-Drop `VideoSkin` and compose the <DocsLink slug="guides/ui-components">UI components</DocsLink> yourself. `Container` is what the skin used to render for you: the box the media and controls live in. Compound parts are namespaced, so a time slider is assembled from `TimeSlider.Root`, `TimeSlider.Track`, and friends:
-
-```tsx
-import { Container, Controls, Hotkey, MuteButton, PlayButton, TimeSlider } from '@videojs/react';
-import { Video, VideoPlayer } from '@videojs/react/video';
-
-export function MyPlayer() {
-  return (
-    <VideoPlayer>
-      <Container>
-        <Video src="/video.mp4" playsInline />
-
-        <Controls.Root>
-          <Controls.Content>
-            <PlayButton />
-            <MuteButton />
-            <TimeSlider.Root>
-              <TimeSlider.Track>
-                <TimeSlider.Fill />
-                <TimeSlider.Buffer />
-              </TimeSlider.Track>
-              <TimeSlider.Thumb />
-            </TimeSlider.Root>
-            {/* No PiPButton, so no picture-in-picture control renders. */}
-          </Controls.Content>
-        </Controls.Root>
-
-        <Hotkey keys="Space" action="togglePaused" />
-        <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      </Container>
-    </VideoPlayer>
-  );
-}
-```
-
+To remove the picture-in-picture button, remove `PiPButton` and its tooltip wrapper from the local controls layout. Keep the other controls' contents, classes, and styles.
 </FrameworkCase>
 
-Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
+Move `userActions.hotkeys` customizations into the local hotkey declarations. Move click and double-click customizations into the gesture declarations. The installed skin includes both; edit those files to preserve the interactions you need.
 
-When you add the skin source, you also take on its CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, so the added source includes the skin's stylesheet next to its markup.
+For a control bar built from scratch, follow <DocsLink slug="guides/ui-components">UI components</DocsLink>. Individual controls supply behavior and accessible names. You supply their visible contents, layout, and CSS.
 
 ## Plugins
 
@@ -722,9 +648,11 @@ v8 put a handful of utilities on the `videojs` global for anyone building a cust
 | a hand-rolled remaining-time or percent string | `formatTimeAsPhrase(seconds)` and `formatPercent(fraction)`, from `@videojs/utils/time` and `@videojs/utils/percent` |
 | `videojs.fn.throttle(fn, wait)` | `throttle(fn, ms)` from `@videojs/utils/function` |
 | `videojs.dom.isEl(value)` and its type-specific cousins | `isHTMLVideoElement`, `isHTMLMediaElement`, `isDocument`, and other narrowing checks from `@videojs/utils/dom` |
-| `videojs.obj.merge(a, b)` | `defaults(object, defaultValues)` from `@videojs/utils/object`, alongside `pick`, `omit`, `deepEqual`, and `shallowEqual` |
+| `videojs.obj.merge(a, b)` | No equivalent deep merge. Keep a deep-merge implementation if your configuration needs recursive merging. |
 
-These are worth reaching for before writing your own when extending the player. For example, `formatTime` is the exact digital-clock formatting the packaged skins use for their own time displays, so a custom one will match.
+`defaults` from `@videojs/utils/object` fills undefined values only for keys present in the defaults object. It is shallow, gives the first argument precedence, and drops other keys. Do not use it as a replacement for v8's deep merge. For a shallow merge where `b` overrides `a`, use `{ ...a, ...b }`.
+
+Use these utilities when extending the player. For example, `formatTime` is the exact digital-clock formatting the packaged skins use for their own time displays, so a custom one will match.
 The package is split into subpaths, so you can import only the module you need. Other than `time`, it includes `array`, `events`, `i18n`, `jwt`, `predicate`, `string`, and `types` subpaths for anything else a custom component or plugin replacement needs.
 
 Import the util function directly in a module `<script>` tag:
@@ -753,7 +681,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - **No playlist support.** No `videojs-playlist` equivalent.
 - **No plugin system**, by design. Budget for rebuilding UI plugins as components. See [Plugins](#plugins).
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — so v8's `playbackRates` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
-- No text-track settings dialog. v8's `textTrackSettings` let viewers restyle captions; v10 exposes only the positioning custom properties its skins define.
+- No text-track settings dialog. v8's `textTrackSettings` let viewers restyle captions; v10 has no viewer-facing caption styling dialog. You can still style browser-rendered cues with `::cue`; see <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the lightweight HLS component deliberately exposes few of them.

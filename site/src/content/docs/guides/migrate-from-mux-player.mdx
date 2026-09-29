@@ -777,12 +777,12 @@ On a video player, the settings menu appears on its own when there's something t
 
 | What | Component | Notes |
 |---|---|---|
-| Quality | <DocsLink slug="reference/components/quality-radio-group">Quality radio group</DocsLink> | Lets a viewer pick the video quality. To set the highest available quality instead, use `source.playback.maxResolution`. |
+| Quality | <DocsLink slug="reference/components/quality-radio-group">Quality radio group</DocsLink> | Lets a viewer pick the video quality. Use `source.playback.maxResolution` to cap the stream's available resolution; it does not force playback at that resolution. |
 | Audio tracks | <DocsLink slug="reference/components/audio-track-radio-group">Audio track radio group</DocsLink> | For multi-language audio. |
 | Captions | <DocsLink slug="reference/components/captions-radio-group">Captions radio group</DocsLink> | Rendered by the browser. |
 | Speed | <DocsLink slug="reference/components/playback-rate-radio-group">Playback rate radio group</DocsLink> | The rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — and you can't choose your own yet ([#1404](https://github.com/videojs/v10/issues/1404)). |
 
-Caption *styling* is limited to the positioning custom properties the skins expose. There's no equivalent of a text-track settings dialog.
+Video.js has no viewer-facing text-track settings dialog. You can style browser-rendered captions with `::cue`, and the skins expose positioning custom properties. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 
 ## Chapters and cue points
 
