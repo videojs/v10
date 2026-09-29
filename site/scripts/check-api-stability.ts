@@ -221,12 +221,13 @@ export function isCoveredName(name: string, covered: ReadonlySet<string>): boole
     if (name.length > suffix.length && name.endsWith(suffix)) candidates.push(name.slice(0, -suffix.length));
   }
 
-  // `UseHotkeyOptions` belongs to `useHotkey`, and `QualityOptionsResult` to `useQualityOptions`.
+  // A companion belongs to its hook: `UseHotkeyOptions` to `useHotkey`, `QualityOptionsResult` to
+  // `useQualityOptions`. The name itself only matches exactly, so `PlayerContext` isn't covered by `playerContext`.
   return candidates.some(
     (candidate) =>
       covered.has(candidate) ||
-      covered.has(candidate[0]!.toLowerCase() + candidate.slice(1)) ||
-      (candidate !== name && covered.has(`use${candidate}`))
+      (candidate !== name &&
+        (covered.has(candidate[0]!.toLowerCase() + candidate.slice(1)) || covered.has(`use${candidate}`)))
   );
 }
 

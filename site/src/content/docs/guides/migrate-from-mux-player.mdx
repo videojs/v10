@@ -578,9 +578,9 @@ Removing a control is removing a line. That's the trade you get for the extra se
 For UI state rather than media state, use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync:
 
 ```js
-import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
+import { PlayerController, playerContext, selectTime, UIElement } from '@videojs/html';
 
-class MyElapsed extends ReactiveElement {
+class MyElapsed extends UIElement {
   #time = new PlayerController(this, playerContext, selectTime);
 }
 ```
