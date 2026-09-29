@@ -101,6 +101,9 @@ const docs = defineCollection({
     ogTitle: z.string().optional(),
     stability: z.enum(DOC_STABILITIES).optional(),
     frameworkTitle: z.partialRecord(z.enum(SUPPORTED_FRAMEWORKS as [string, ...string[]]), z.string()).optional(),
+    // Extra exports a reference page documents beyond its subject, or `@videojs/...` module patterns whose default
+    // export it documents. Read by `scripts/check-api-stability.ts`.
+    apis: z.array(z.string()).optional(),
   }),
 });
 

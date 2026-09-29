@@ -62,6 +62,7 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 - Keep dev-only warnings, debug helpers, and `displayName` assignments behind `__DEV__`.
 - Comments and JSDoc should explain non-obvious intent or contracts, not restate TypeScript or the next line.
 - API-reference exports need richer JSDoc because the site builder extracts it; use `write-api-reference` for those changes.
+- A published export is stable only when a site reference page documents it. Tag every other export `@internal`, or `@experimental` when a `stability: unstable` page documents it; `pnpm -F site check:api-stability` enforces this (SPF and store are not checked yet).
 
 ## Design records
 

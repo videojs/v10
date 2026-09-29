@@ -157,6 +157,27 @@ stability: unstable
 Use `frameworkTitle` to show the HTML custom element tag name when the HTML framework is selected.
 Add `stability: unstable` when an API works but its shape may still change in a minor release. The page header, the sidebar, and an explanatory note at the top of the page show the status automatically.
 
+### Which exports a page documents
+
+An export of a published package is stable only when a reference page documents it. `pnpm -F site check:api-stability` enforces this: every other export must carry `@internal` in its JSDoc, or `@experimental` when a `stability: unstable` page documents it. A page documents:
+
+- its subject: `title`, `frameworkTitle`, and the `component`, `util`, `media`, `feature`, and `react` props of the reference components
+- the subject's companion types, such as `PlayButtonProps`, `PlayButtonState`, `PlayButtonElement`, and `UseHotkeyOptions`
+- parts written against the subject in the page's code, such as `TimeSlider.Chapters`
+- on a feature page, the `select*` selectors its code names
+- anything listed in `apis`
+
+Use `apis` when a page documents more than its subject, such as a preset's feature bundle or a set of type guards. An entry can also be a `@videojs/...` module pattern whose default export the page documents:
+
+```yaml
+apis:
+  - videoFeatures
+  - VideoFeatures
+  - '@videojs/react/i18n/locales/*'
+```
+
+Guides and examples don't make an export stable. The check warns when docs code imports an export that isn't, or imports from an internal package such as `@videojs/core` or `@videojs/utils`.
+
 ### Imports
 
 ```tsx
