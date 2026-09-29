@@ -50,6 +50,7 @@ export interface DetectedMediaSource {
  * @param src - The source URL, or a Vidstack-style shorthand.
  * @param type - The source's MIME type, when known. It takes precedence over the file extension, so manifests and files
  *   without one can still be detected.
+ * @public
  */
 export function detectMediaSource(src: string, type?: string): DetectedMediaSource | null {
   const source = src.trim();
