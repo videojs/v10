@@ -1,3 +1,7 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import ts from 'typescript';
 import { describe, expect, it } from 'vite-plus/test';
 
@@ -9,6 +13,7 @@ import {
   documentedStability,
   findDeclarations,
   findUnstableImports,
+  fixSourceFile,
   isCoveredName,
   matchesModulePattern,
   missingTag,
@@ -202,6 +207,22 @@ describe('addTag', () => {
 
   it('tags a default export', () => {
     expect(tag("export default { a: 'b' };\n", 'default')).toBe("/** @internal */\nexport default { a: 'b' };\n");
+  });
+});
+
+describe('fixSourceFile', () => {
+  it('tags every overload of a function', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'api-stability-'));
+    const file = join(directory, 'overloads.ts');
+
+    writeFileSync(file, '/** One. */\nexport function foo(): void;\nexport function foo(a?: number): void {}\n');
+
+    expect(fixSourceFile(file, new Map([['foo', 'internal']]))).toBe(2);
+    expect(readFileSync(file, 'utf8')).toBe(
+      '/**\n * One.\n *\n * @internal\n */\nexport function foo(): void;\n/** @internal */\nexport function foo(a?: number): void {}\n'
+    );
+
+    rmSync(directory, { recursive: true });
   });
 });
 
