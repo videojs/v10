@@ -11,6 +11,7 @@ import { resolveDocsFramework } from '@/types/docs';
 const framework = resolveDocsFramework(Astro.params.framework);
 const packageName = framework === 'react' ? '@videojs/react' : '@videojs/html';
 const docsIndex = `node_modules/${packageName}/docs/llms.txt`;
+const onlineDocsIndex = `/docs/framework/${framework}/llms.txt`;
 ---
 
 <Aside type="tip" title="Migrate with a coding agent">
@@ -25,8 +26,9 @@ const docsIndex = `node_modules/${packageName}/docs/llms.txt`;
     only print instructions; they do not install packages, edit files, or migrate your player.
   </P>
   <P>
-    Read <Code class="break-all">{docsIndex}</Code> for documentation matching the installed package. Before installation, use the{' '}
-    <DocsLink slug="guides/installation">installation guide</DocsLink>. Keep your existing media URLs and required
+    For an installed package, read <Code class="break-all">{docsIndex}</Code> for documentation matching its version.
+    For CDN installations or before installing packages, use the <A href={onlineDocsIndex}>framework docs index</A>{' '}
+    and the <DocsLink slug="guides/installation">installation guide</DocsLink>. Keep your existing media URLs and required
     behavior, check this guide's known gaps, and verify playback, captions, controls, and analytics after migration.
   </P>
 </Aside>
