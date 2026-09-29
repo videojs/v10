@@ -186,7 +186,7 @@ Set the `src` to the URL for the m3u8 manifest.
 
 #### DASH
 
-Very similar to HLS in that we have a drop-in component.
+Use the DASH media component for your existing DASH source.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -226,11 +226,17 @@ Set the `src` to the URL for the mpd manifest.
 
 ### Vimeo
 
-Vimeo is supported through a prebuilt component.
+Use the Vimeo media component for your existing Vimeo source.
 
 <FrameworkCase frameworks={["html"]}>
 
-Replace `<video>` with `<vimeo-video>` and add the module import:
+Replace `<video>` with `<vimeo-video>`. For a CDN installation, add the media script:
+
+```html
+<script type="module" src="{{VJS10_CDN_BASE}}/media/vimeo-video.js"></script>
+```
+
+For a bundler installation, install the adapter package and add the module import:
 
 ```bash
 npm install @videojs/html @videojs/vimeo-video
