@@ -103,8 +103,6 @@ Choose a variation based on the source you already have:
 | The same background-only player for a Mux HLS URL | <DocsLink slug="reference/components/mux-background-video">`<mux-background-video>`</DocsLink> |
 </FrameworkCase>
 
-### Play an HLS video
-
 These streaming background components always autoplay. They ignore `autoPlay={false}` and `noautoplay`.
 
 <FrameworkCase frameworks={["react"]}>
@@ -114,6 +112,8 @@ Keep the poster and motion button from the primary example. Render the streaming
 <FrameworkCase frameworks={["html"]}>
 Keep the poster and motion button from the primary example. Change `setMotion` to create and append a streaming element only when motion is enabled, and remove it when motion is disabled. Do not set `keep-alive`: removal must destroy playback. Create a fresh element when enabling motion again. These elements expose the inner video as `video`, rather than the native background element's `target`.
 </FrameworkCase>
+
+### Play an HLS video
 
 <FrameworkCase frameworks={["react"]}>
 HlsBackgroundVideo plays an HLS video without adding controls, audio, or captions. Pass a complete HLS URL through `src`:
