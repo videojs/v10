@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       recover_version:
-        description: 'Existing release version to finish publishing (for example, 10.0.0-rc.4); leave empty to run release-please'
+        description: 'Existing release version to finish publishing (for example, 10.0.1); leave empty to run release-please'
         required: false
         type: string
 
