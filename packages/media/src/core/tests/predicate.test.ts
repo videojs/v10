@@ -4,10 +4,12 @@ import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants
 import {
   getTimeRangeEnd,
   hasTimeRange,
+  isBrandedMedia,
   isMediaBufferCapable,
   isMediaContentDataCapable,
   isMediaRemotePlaybackCapable,
   isMediaTextTrackCapable,
+  MEDIA_BRANDS,
 } from '../predicate';
 
 describe('getTimeRangeEnd', () => {
@@ -84,5 +86,52 @@ describe('isMediaRemotePlaybackCapable', () => {
 
   it('accepts defined non-stub remote playback', () => {
     expect(isMediaRemotePlaybackCapable({ remote: new EventTarget() })).toBe(true);
+  });
+});
+
+describe('isBrandedMedia', () => {
+  class HlsMedia {
+    static readonly [MEDIA_BRANDS]: readonly string[] = ['hls'];
+  }
+
+  class MuxMedia extends HlsMedia {
+    static override readonly [MEDIA_BRANDS] = [...HlsMedia[MEDIA_BRANDS], 'mux'];
+  }
+
+  class AudioOnlyMedia extends MuxMedia {
+    static override readonly [MEDIA_BRANDS] = MuxMedia[MEDIA_BRANDS].filter((brand) => brand !== 'mux');
+  }
+
+  it('matches the brands the class lists', () => {
+    expect(isBrandedMedia(new HlsMedia(), 'hls')).toBe(true);
+    expect(isBrandedMedia(new HlsMedia(), 'mux')).toBe(false);
+  });
+
+  it('matches brands a subclass keeps or adds, and not ones it drops', () => {
+    expect(isBrandedMedia(new MuxMedia(), 'hls')).toBe(true);
+    expect(isBrandedMedia(new MuxMedia(), 'mux')).toBe(true);
+    expect(isBrandedMedia(new AudioOnlyMedia(), 'hls')).toBe(true);
+    expect(isBrandedMedia(new AudioOnlyMedia(), 'mux')).toBe(false);
+  });
+
+  it('looks through a custom media element to its adapter', () => {
+    expect(isBrandedMedia({ adapter: new MuxMedia() }, 'mux')).toBe(true);
+    expect(isBrandedMedia({ adapter: {} }, 'mux')).toBe(false);
+  });
+
+  it('matches a class branded by another copy of the package', () => {
+    const OTHER_COPY_BRANDS = Symbol.for('@videojs/media/brands');
+
+    class OtherCopyMedia {
+      static readonly [OTHER_COPY_BRANDS] = ['hls'];
+    }
+
+    expect(isBrandedMedia(new OtherCopyMedia(), 'hls')).toBe(true);
+  });
+
+  it('rejects unbranded values', () => {
+    expect(isBrandedMedia({}, 'hls')).toBe(false);
+    expect(isBrandedMedia(null, 'hls')).toBe(false);
+    expect(isBrandedMedia('hls', 'hls')).toBe(false);
   });
 });
