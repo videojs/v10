@@ -9,6 +9,8 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+export { isMuxAudioMedia } from '@videojs/mux-audio';
+
 // `source` comes from `MuxAudioAdapterProps` only: `MuxSource` extends `HlsSource` with
 // Mux identity fields, so the narrower type has to win.
 export interface MuxAudioProps
