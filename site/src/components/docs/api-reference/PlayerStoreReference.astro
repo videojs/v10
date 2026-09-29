@@ -1,8 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
+import ServerCode from '@/components/Code/ServerCode.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
+import CodeFrame from '@/components/typography/CodeFrame.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
-import H3 from '@/components/typography/H3Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
 import Table from '@/components/typography/Table.astro';
@@ -13,10 +14,11 @@ import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import { isValidFramework } from '@/types/docs';
 import { findGuideBySlug } from '@/utils/docs/sidebar';
-import { createPlayerStoreReferenceModel } from '@/utils/playerStoreReferenceModel';
+import { createPlayerStoreReferenceModel, type PlayerStoreFeature } from '@/utils/playerStoreReferenceModel';
 import DocsLink from '../DocsLink.astro';
-import ApiActionsTable from './ApiActionsTable.astro';
-import ApiStateTable from './ApiStateTable.astro';
+import AnchorLink from './AnchorLink.astro';
+import ApiTable from './ApiTable.astro';
+import DetailRow from './DetailRow.astro';
 
 const { framework } = Astro.params;
 if (!framework || !isValidFramework(framework)) throw new Error(`Invalid or missing framework param.`);
@@ -27,10 +29,56 @@ const model = createPlayerStoreReferenceModel(
 );
 
 const createPlayerSlug = framework === 'react' ? 'reference/api/create-player' : 'reference/api/html-create-player';
-const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+const hasPage = (feature: PlayerStoreFeature) => Boolean(findGuideBySlug(feature.docsSlug));
+const toggleColumn = model.members.some((member) => Boolean(member.description));
 ---
 
 <ContentWidth>
+  <H2 id={model.headings.storeType.id}>{model.headings.storeType.text}</H2>
+  <P>
+    Every state field and action the store can hold when the player includes every feature, grouped by the feature that
+    adds it. Each comment names the presets that include the feature.
+  </P>
+  <CodeFrame lang="ts">
+    <ServerCode code={model.storeType} lang="ts" />
+  </CodeFrame>
+
+  <H2 id={model.headings.members.id}>{model.headings.members.text}</H2>
+  <P>Each feature links to the same entry on its reference page.</P>
+  <ApiTable columns={["Name", "Kind", "Type", "Feature"]} toggle={toggleColumn}>
+    {
+      model.members.map((member) => (
+        <DetailRow
+          id={member.id}
+          name={member.name}
+          description={member.description}
+          colspan={4}
+          toggleColumn={toggleColumn}
+        >
+          <td>
+            <span class="inline-flex items-center whitespace-nowrap">
+              <MarkdownCode>{member.name}</MarkdownCode>
+              <AnchorLink id={member.id} name={member.name} />
+            </span>
+          </td>
+          <td>{member.kind}</td>
+          <td class="w-full" data-apiref-cell="type">
+            <MarkdownCode code={member.type} />
+          </td>
+          <td class="whitespace-nowrap">
+            {hasPage(member.feature) ? (
+              <DocsLink slug={member.feature.docsSlug} anchor={member.id}>
+                <MarkdownCode>{member.feature.exportName}</MarkdownCode>
+              </DocsLink>
+            ) : (
+              <MarkdownCode>{member.feature.exportName}</MarkdownCode>
+            )}
+          </td>
+        </DetailRow>
+      ))
+    }
+  </ApiTable>
+
   <H2 id={model.headings.presets.id}>{model.headings.presets.text}</H2>
   <P>
     Each column is a preset's feature bundle. A feature no bundle includes is opt-in: add it to your{' '}
@@ -55,7 +103,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'conjunction
         model.features.map((feature) => (
           <Tr>
             <Td>
-              {findGuideBySlug(feature.docsSlug) ? (
+              {hasPage(feature) ? (
                 <DocsLink slug={feature.docsSlug}>
                   <MarkdownCode>{feature.exportName}</MarkdownCode>
                 </DocsLink>
@@ -75,47 +123,4 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'conjunction
       }
     </Tbody>
   </Table>
-
-  <H2 id={model.headings.features.id}>{model.headings.features.text}</H2>
-
-  {
-    model.features.map((feature) => {
-      const bundles = model.presets
-        .filter((preset) => feature.presets.includes(preset.name))
-        .map((preset) => preset.featureBundle);
-      const hasState = Object.keys(feature.state).length > 0;
-      const hasActions = Object.keys(feature.actions).length > 0;
-      const hasPage = Boolean(findGuideBySlug(feature.docsSlug));
-
-      return (
-        <>
-          <H3 id={feature.id}>
-            <MarkdownCode>{feature.exportName}</MarkdownCode>
-          </H3>
-          <P>
-            {bundles.length > 0 ? (
-              <>
-                Included in{' '}
-                {listFormat.formatToParts(bundles).map((part) =>
-                  part.type === 'element' ? <MarkdownCode>{part.value}</MarkdownCode> : <span>{part.value}</span>
-                )}
-                <span>.</span>
-              </>
-            ) : (
-              'Opt-in: no preset feature bundle includes it.'
-            )}
-            {!hasState && !hasActions && ' Adds no state or actions to the store.'}
-            {hasPage && (
-              <>
-                {' See the '}
-                <DocsLink slug={feature.docsSlug}><MarkdownCode>{feature.exportName}</MarkdownCode> reference</DocsLink>.
-              </>
-            )}
-          </P>
-          {hasState && <ApiStateTable state={feature.state} componentName={feature.name} />}
-          {hasActions && <ApiActionsTable actions={feature.actions} featureName={feature.name} />}
-        </>
-      );
-    })
-  }
 </ContentWidth>

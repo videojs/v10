@@ -32,11 +32,14 @@ function makePreset(name: string, featureBundle: string, features: string[]): Pr
 }
 
 const FEATURES = [
-  makeFeature('volume', { state: { volume: { type: 'number' } }, actions: { setVolume: { type: '(v) => void' } } }),
-  makeFeature('streamType', { state: { streamType: { type: 'MediaStreamType' } } }),
+  makeFeature('volume', {
+    state: { volume: { type: 'number', description: 'Volume level.' } },
+    actions: { setVolume: { type: 'function', detailedType: '(volume: number) => number' } },
+  }),
+  makeFeature('streamType', { state: { streamType: { type: "'live' | 'on-demand' | 'unknown'" } } }),
   makeFeature('playback', {
     state: { paused: { type: 'boolean' } },
-    actions: { play: { type: '() => Promise<void>' } },
+    actions: { play: { type: 'function', detailedType: '() => Promise<void>' } },
   }),
 ];
 
@@ -48,13 +51,13 @@ const PRESETS = [
 ];
 
 describe('createPlayerStoreReferenceModel', () => {
-  it('orders features by name and names their exports and section ids', () => {
+  it('orders features by name and names their exports', () => {
     const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
 
-    expect(model.features.map(({ name, exportName, id }) => ({ name, exportName, id }))).toEqual([
-      { name: 'playback', exportName: 'playbackFeature', id: 'playback-feature' },
-      { name: 'streamType', exportName: 'streamTypeFeature', id: 'stream-type-feature' },
-      { name: 'volume', exportName: 'volumeFeature', id: 'volume-feature' },
+    expect(model.features.map((feature) => feature.exportName)).toEqual([
+      'playbackFeature',
+      'streamTypeFeature',
+      'volumeFeature',
     ]);
   });
 
@@ -79,26 +82,65 @@ describe('createPlayerStoreReferenceModel', () => {
     });
   });
 
-  it('carries each feature state, actions, and docs slug through unchanged', () => {
+  it('flattens every feature into one member list, state before actions', () => {
     const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
-    const playback = model.features.find((feature) => feature.name === 'playback')!;
 
-    expect(playback.docsSlug).toBe('reference/api/feature-playback');
-    expect(playback.state).toEqual({ paused: { type: 'boolean' } });
-    expect(playback.actions).toEqual({ play: { type: '() => Promise<void>' } });
+    expect(model.members.map(({ name, kind, id }) => ({ name, kind, id }))).toEqual([
+      { name: 'paused', kind: 'state', id: 'playback-state-paused' },
+      { name: 'play', kind: 'action', id: 'playback-action-play' },
+      { name: 'streamType', kind: 'state', id: 'streamType-state-streamType' },
+      { name: 'volume', kind: 'state', id: 'volume-state-volume' },
+      { name: 'setVolume', kind: 'action', id: 'volume-action-setVolume' },
+    ]);
+  });
+
+  it('shows action signatures instead of the abbreviated function type', () => {
+    const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
+    const types = Object.fromEntries(model.members.map((member) => [member.name, member.type]));
+
+    expect(types.play).toBe('() => Promise<void>');
+    expect(types.setVolume).toBe('(volume: number) => number');
+    expect(types.volume).toBe('number');
+  });
+
+  it('keeps descriptions and links each member back to its feature', () => {
+    const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
+    const volume = model.members.find((member) => member.name === 'volume')!;
+
+    expect(volume.description).toBe('Volume level.');
+    expect(volume.feature.docsSlug).toBe('reference/api/feature-volume');
+  });
+
+  it('formats the store type as one object type commented by feature', () => {
+    const model = createPlayerStoreReferenceModel(FEATURES, PRESETS);
+
+    expect(model.storeType).toBe(
+      [
+        '{',
+        '  // playbackFeature (video, audio, live-video)',
+        '  readonly paused: boolean;',
+        '  play: () => Promise<void>;',
+        '',
+        '  // streamTypeFeature (opt-in)',
+        "  readonly streamType: 'live' | 'on-demand' | 'unknown';",
+        '',
+        '  // volumeFeature (video, audio, live-video)',
+        '  readonly volume: number;',
+        '  setVolume: (volume: number) => number;',
+        '}',
+      ].join('\n')
+    );
   });
 });
 
 describe('buildPlayerStoreReferenceTocHeadings', () => {
-  it('nests one heading per feature under the state and actions section', () => {
+  it('lists the store shape, member table, and preset sections', () => {
     const headings = buildPlayerStoreReferenceTocHeadings(createPlayerStoreReferenceModel(FEATURES, PRESETS));
 
     expect(headings).toEqual([
-      { depth: 2, text: 'Features by preset', slug: 'features-by-preset' },
+      { depth: 2, text: 'Store shape', slug: 'store-shape' },
       { depth: 2, text: 'State and actions', slug: 'state-and-actions' },
-      { depth: 3, text: 'playbackFeature', slug: 'playback-feature' },
-      { depth: 3, text: 'streamTypeFeature', slug: 'stream-type-feature' },
-      { depth: 3, text: 'volumeFeature', slug: 'volume-feature' },
+      { depth: 2, text: 'Features by preset', slug: 'features-by-preset' },
     ]);
   });
 });

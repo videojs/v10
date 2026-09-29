@@ -6,16 +6,14 @@
  *
  * Structure:
  *
+ * ## Store shape (H2) — every member as one TypeScript object type, commented by feature
+ *
+ * ## State and actions (H2) — every member in one table, in feature order
+ *
  * ## Features by preset (H2) — which preset feature bundles include each feature
- *
- * ## State and actions (H2)
- *
- * ### `{name}Feature` (H3) — one per feature, in name order
  */
 
-import { kebabCase } from 'es-toolkit/string';
-
-import type { FeatureReference } from '@/types/feature-reference';
+import type { FeatureReference, FeatureStateDef } from '@/types/feature-reference';
 import type { PresetReference } from '@/types/preset-reference';
 
 import type { TocHeading } from './componentReferenceModel';
@@ -31,22 +29,39 @@ export interface PlayerStorePreset {
 export interface PlayerStoreFeature {
   name: string;
   exportName: string;
-  /** Heading id of the feature's section on the overview page. */
-  id: string;
   docsSlug: string;
   /** Names of the presets whose feature bundle includes the feature, in preset column order. */
   presets: string[];
-  state: FeatureReference['state'];
-  actions: FeatureReference['actions'];
+}
+
+export interface PlayerStoreMember {
+  name: string;
+  kind: 'state' | 'action';
+  /** Display type. Actions show their full signature instead of the abbreviated `function`. */
+  type: string;
+  description?: string;
+  /** Row id, matching the row id on the feature's own reference page. */
+  id: string;
+  feature: PlayerStoreFeature;
+}
+
+interface PlayerStoreHeading {
+  id: string;
+  depth: number;
+  text: string;
 }
 
 export interface PlayerStoreReferenceModel {
   headings: {
-    presets: { id: string; depth: number; text: string };
-    features: { id: string; depth: number; text: string };
+    storeType: PlayerStoreHeading;
+    members: PlayerStoreHeading;
+    presets: PlayerStoreHeading;
   };
   presets: PlayerStorePreset[];
   features: PlayerStoreFeature[];
+  members: PlayerStoreMember[];
+  /** Every member as one TypeScript object type, grouped and commented by feature. */
+  storeType: string;
 }
 
 function comparePresets(a: PresetReference, b: PresetReference): number {
@@ -61,45 +76,78 @@ function comparePresets(a: PresetReference, b: PresetReference): number {
   return a.name.localeCompare(b.name);
 }
 
+function toMembers(
+  feature: PlayerStoreFeature,
+  kind: PlayerStoreMember['kind'],
+  defs: Record<string, FeatureStateDef>
+): PlayerStoreMember[] {
+  return Object.entries(defs).map(([name, def]) => {
+    const member: PlayerStoreMember = {
+      name,
+      kind,
+      type: kind === 'action' ? (def.detailedType ?? def.type) : def.type,
+      id: `${feature.name}-${kind}-${name}`,
+      feature,
+    };
+
+    if (def.description) member.description = def.description;
+
+    return member;
+  });
+}
+
+function formatStoreType(features: PlayerStoreFeature[], members: PlayerStoreMember[]): string {
+  const groups = features.map((feature) => {
+    const presets = feature.presets.length > 0 ? feature.presets.join(', ') : 'opt-in';
+    const lines = members
+      .filter((member) => member.feature === feature)
+      .map((member) => `  ${member.kind === 'state' ? 'readonly ' : ''}${member.name}: ${member.type};`);
+
+    return [`  // ${feature.exportName} (${presets})`, ...lines].join('\n');
+  });
+
+  return `{\n${groups.join('\n\n')}\n}`;
+}
+
 export function createPlayerStoreReferenceModel(
-  features: FeatureReference[],
-  presets: PresetReference[]
+  featureRefs: FeatureReference[],
+  presetRefs: PresetReference[]
 ): PlayerStoreReferenceModel {
   // A preset with an empty bundle contributes nothing to the store, so it gets no column.
-  const presetColumns = presets.filter((preset) => preset.features.length > 0).sort(comparePresets);
+  const presetColumns = presetRefs.filter((preset) => preset.features.length > 0).sort(comparePresets);
+  const sortedRefs = [...featureRefs].sort((a, b) => a.name.localeCompare(b.name));
+  const features: PlayerStoreFeature[] = [];
+  const members: PlayerStoreMember[] = [];
+
+  for (const ref of sortedRefs) {
+    const feature: PlayerStoreFeature = {
+      name: ref.name,
+      exportName: `${ref.name}Feature`,
+      docsSlug: ref.docsSlug,
+      presets: presetColumns
+        .filter((preset) => preset.features.some((included) => included.name === ref.name))
+        .map((preset) => preset.name),
+    };
+
+    features.push(feature);
+    members.push(...toMembers(feature, 'state', ref.state), ...toMembers(feature, 'action', ref.actions));
+  }
 
   return {
     headings: {
+      storeType: { id: 'store-shape', depth: 2, text: 'Store shape' },
+      members: { id: 'state-and-actions', depth: 2, text: 'State and actions' },
       presets: { id: 'features-by-preset', depth: 2, text: 'Features by preset' },
-      features: { id: 'state-and-actions', depth: 2, text: 'State and actions' },
     },
     presets: presetColumns.map(({ name, featureBundle }) => ({ name, featureBundle })),
-    features: [...features]
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((feature) => {
-        const exportName = `${feature.name}Feature`;
-
-        return {
-          name: feature.name,
-          exportName,
-          id: kebabCase(exportName),
-          docsSlug: feature.docsSlug,
-          presets: presetColumns
-            .filter((preset) => preset.features.some((included) => included.name === feature.name))
-            .map((preset) => preset.name),
-          state: feature.state,
-          actions: feature.actions,
-        };
-      }),
+    features,
+    members,
+    storeType: formatStoreType(features, members),
   };
 }
 
 export function buildPlayerStoreReferenceTocHeadings(model: PlayerStoreReferenceModel): TocHeading[] {
-  const { presets, features } = model.headings;
+  const { storeType, members, presets } = model.headings;
 
-  return [
-    { depth: presets.depth, text: presets.text, slug: presets.id },
-    { depth: features.depth, text: features.text, slug: features.id },
-    ...model.features.map((feature) => ({ depth: 3, text: feature.exportName, slug: feature.id })),
-  ];
+  return [storeType, members, presets].map(({ depth, text, id }) => ({ depth, text, slug: id }));
 }
