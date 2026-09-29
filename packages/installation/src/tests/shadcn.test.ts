@@ -32,6 +32,9 @@ describe('registryNamespaceUrl', () => {
     expect(registryNamespaceUrl('html', 'css', 'neutral')).toBe(
       'https://shadcn.videojs.org/r/html/neutral/{name}.json'
     );
+    expect(registryNamespaceUrl('react', 'css', 'starter')).toBe(
+      'https://shadcn.videojs.org/r/react/css/starter/{name}.json'
+    );
   });
 });
 
@@ -158,10 +161,14 @@ describe('REGISTRY_SKINS', () => {
     expect(REGISTRY_SKINS.map((skin) => skin.item)).toEqual([
       'video',
       'video',
+      'video',
+      'audio',
       'audio',
       'audio',
       'live-video',
       'live-video',
+      'live-video',
+      'live-audio',
       'live-audio',
       'live-audio',
     ]);

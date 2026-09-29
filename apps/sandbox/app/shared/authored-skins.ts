@@ -18,6 +18,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/video/skin.tsx?style=css&target=react&skin=neutral-video&theme=neutral'),
   'react/video/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/video/skin.tsx?style=tailwind&target=react&skin=neutral-video&theme=neutral'),
+  'react/video/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/video/skin.tsx?style=css&target=react&skin=starter-video&theme=starter'),
+  'react/video/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/video/skin.tsx?style=tailwind&target=react&skin=starter-video&theme=starter'),
   'react/live-video/default/css': () =>
     import('../../../../packages/skins/src/skins/default/live-video/skin.tsx?style=css&target=react&skin=default-live-video&theme=default'),
   'react/live-video/default/tailwind': () =>
@@ -26,6 +30,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/live-video/skin.tsx?style=css&target=react&skin=neutral-live-video&theme=neutral'),
   'react/live-video/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/live-video/skin.tsx?style=tailwind&target=react&skin=neutral-live-video&theme=neutral'),
+  'react/live-video/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/live-video/skin.tsx?style=css&target=react&skin=starter-live-video&theme=starter'),
+  'react/live-video/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/live-video/skin.tsx?style=tailwind&target=react&skin=starter-live-video&theme=starter'),
   'react/audio/default/css': () =>
     import('../../../../packages/skins/src/skins/default/audio/skin.tsx?style=css&target=react&skin=default-audio&theme=default'),
   'react/audio/default/tailwind': () =>
@@ -34,6 +42,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/audio/skin.tsx?style=css&target=react&skin=neutral-audio&theme=neutral'),
   'react/audio/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/audio/skin.tsx?style=tailwind&target=react&skin=neutral-audio&theme=neutral'),
+  'react/audio/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/audio/skin.tsx?style=css&target=react&skin=starter-audio&theme=starter'),
+  'react/audio/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/audio/skin.tsx?style=tailwind&target=react&skin=starter-audio&theme=starter'),
   'react/live-audio/default/css': () =>
     import('../../../../packages/skins/src/skins/default/live-audio/skin.tsx?style=css&target=react&skin=default-live-audio&theme=default'),
   'react/live-audio/default/tailwind': () =>
@@ -42,6 +54,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/live-audio/skin.tsx?style=css&target=react&skin=neutral-live-audio&theme=neutral'),
   'react/live-audio/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/live-audio/skin.tsx?style=tailwind&target=react&skin=neutral-live-audio&theme=neutral'),
+  'react/live-audio/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/live-audio/skin.tsx?style=css&target=react&skin=starter-live-audio&theme=starter'),
+  'react/live-audio/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/live-audio/skin.tsx?style=tailwind&target=react&skin=starter-live-audio&theme=starter'),
   'html/video/default/css': () =>
     import('../../../../packages/skins/src/skins/default/video/skin.tsx?style=css&target=html&skin=default-video&theme=default'),
   'html/video/default/tailwind': () =>
@@ -50,6 +66,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/video/skin.tsx?style=css&target=html&skin=neutral-video&theme=neutral'),
   'html/video/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/video/skin.tsx?style=tailwind&target=html&skin=neutral-video&theme=neutral'),
+  'html/video/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/video/skin.tsx?style=css&target=html&skin=starter-video&theme=starter'),
+  'html/video/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/video/skin.tsx?style=tailwind&target=html&skin=starter-video&theme=starter'),
   'html/live-video/default/css': () =>
     import('../../../../packages/skins/src/skins/default/live-video/skin.tsx?style=css&target=html&skin=default-live-video&theme=default'),
   'html/live-video/default/tailwind': () =>
@@ -58,6 +78,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/live-video/skin.tsx?style=css&target=html&skin=neutral-live-video&theme=neutral'),
   'html/live-video/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/live-video/skin.tsx?style=tailwind&target=html&skin=neutral-live-video&theme=neutral'),
+  'html/live-video/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/live-video/skin.tsx?style=css&target=html&skin=starter-live-video&theme=starter'),
+  'html/live-video/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/live-video/skin.tsx?style=tailwind&target=html&skin=starter-live-video&theme=starter'),
   'html/audio/default/css': () =>
     import('../../../../packages/skins/src/skins/default/audio/skin.tsx?style=css&target=html&skin=default-audio&theme=default'),
   'html/audio/default/tailwind': () =>
@@ -66,6 +90,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/audio/skin.tsx?style=css&target=html&skin=neutral-audio&theme=neutral'),
   'html/audio/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/audio/skin.tsx?style=tailwind&target=html&skin=neutral-audio&theme=neutral'),
+  'html/audio/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/audio/skin.tsx?style=css&target=html&skin=starter-audio&theme=starter'),
+  'html/audio/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/audio/skin.tsx?style=tailwind&target=html&skin=starter-audio&theme=starter'),
   'html/live-audio/default/css': () =>
     import('../../../../packages/skins/src/skins/default/live-audio/skin.tsx?style=css&target=html&skin=default-live-audio&theme=default'),
   'html/live-audio/default/tailwind': () =>
@@ -74,6 +102,10 @@ const authoredSkins = {
     import('../../../../packages/skins/src/skins/neutral/live-audio/skin.tsx?style=css&target=html&skin=neutral-live-audio&theme=neutral'),
   'html/live-audio/neutral/tailwind': () =>
     import('../../../../packages/skins/src/skins/neutral/live-audio/skin.tsx?style=tailwind&target=html&skin=neutral-live-audio&theme=neutral'),
+  'html/live-audio/starter/css': () =>
+    import('../../../../packages/skins/src/skins/starter/live-audio/skin.tsx?style=css&target=html&skin=starter-live-audio&theme=starter'),
+  'html/live-audio/starter/tailwind': () =>
+    import('../../../../packages/skins/src/skins/starter/live-audio/skin.tsx?style=tailwind&target=html&skin=starter-live-audio&theme=starter'),
 } satisfies Record<AuthoredKey, () => Promise<object>>;
 
 /** Theme catalogs share one export name per preset, such as `LiveVideoSkin`; both render targets use that name. */
@@ -87,9 +119,9 @@ export function authoredExportName(preset: SkinPreset): string {
  * Tailwind for authored skins: the skins' own entry plus the utilities the compiler recorded. Loaded once, and only for
  * a Tailwind skin, so pages that never show one never pull a second Tailwind root.
  */
-let tailwind: Promise<unknown> | undefined;
+let tailwind: Promise<object> | undefined;
 
-function loadAuthoredTailwind(): Promise<unknown> {
+function loadAuthoredTailwind(): Promise<object> {
   tailwind ??= import('../styles.authored.css');
 
   return tailwind;

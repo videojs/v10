@@ -7,6 +7,10 @@ import { describe, expect, it } from 'vite-plus/test';
 const workspaceDir = resolve(import.meta.dirname, '../../../../..');
 const outputRoot = resolve(workspaceDir, 'packages/html/src/internal/skins');
 const skins = [
+  'starter-video',
+  'starter-audio',
+  'starter-live-video',
+  'starter-live-audio',
   'default-video',
   'neutral-video',
   'default-audio',
@@ -36,15 +40,40 @@ describe('generated HTML package skins', () => {
     expect(template).not.toMatch(/(?:virtual:vjsc|vjsc\/components|vjsc\/target)/);
     expect(registeredTags).toEqual(tags);
     expect(registeredIcons).toEqual(iconNames);
-    expect(stylesheet.length).toBeGreaterThan(10_000);
+    expect(stylesheet).toContain('.media-container');
 
     if (skin.endsWith('video')) {
-      expect(template).toMatch(/<media-title class="media-title">\s*<\/media-title>/);
       expect(template).not.toContain('media-metadata');
+      expect(template).toMatch(/<media-title class="media-title">\s*<\/media-title>/);
       expect(tags).toContain('title');
       expect(stylesheet).toContain('.media-title:not([data-visible])');
     } else {
       expect(tags).not.toContain('title');
+    }
+
+    if (skin.startsWith('starter-')) {
+      expect(template).toContain('family="starter"');
+      expect(registration).toContain("from '../../../icons/starter';");
+      expect(tags).toEqual(
+        expect.arrayContaining([
+          'play-button',
+          'mute-button',
+          'volume-popover',
+          'volume-slider',
+          'time',
+          'captions-button',
+          'menu',
+        ])
+      );
+    }
+
+    if (skin === 'starter-video' || skin === 'starter-audio') {
+      expect(tags).toContain('time-slider');
+      expect(tags).toContain('time-slider-chapters');
+    }
+
+    if (skin === 'starter-live-video' || skin === 'starter-live-audio') {
+      expect(tags).not.toContain('time-slider');
     }
 
     for (const tag of registeredTags) {

@@ -15,7 +15,7 @@ export interface SkinMeta extends ComponentMeta {
 /** Build-time styling identity of one skin: its CSS scope, theme, and preset. Keyed by skin name in `skinStyles`. */
 export interface SkinStyle {
   readonly scope: string;
-  readonly theme: 'default' | 'neutral';
+  readonly theme: 'starter' | 'default' | 'neutral';
   readonly preset: 'video' | 'audio' | 'live-video' | 'live-audio';
 }
 
@@ -67,6 +67,26 @@ export const skinStyles = {
     scope: '.media-skin[data-theme="neutral"][data-preset="audio"]',
     theme: 'neutral',
     preset: 'audio',
+  },
+  'starter-video': {
+    scope: '.media-skin[data-theme="starter"][data-preset="video"]',
+    theme: 'starter',
+    preset: 'video',
+  },
+  'starter-live-video': {
+    scope: '.media-skin[data-theme="starter"][data-preset="live-video"]',
+    theme: 'starter',
+    preset: 'live-video',
+  },
+  'starter-audio': {
+    scope: '.media-skin[data-theme="starter"][data-preset="audio"]',
+    theme: 'starter',
+    preset: 'audio',
+  },
+  'starter-live-audio': {
+    scope: '.media-skin[data-theme="starter"][data-preset="live-audio"]',
+    theme: 'starter',
+    preset: 'live-audio',
   },
 } as const satisfies Record<string, SkinStyle>;
 

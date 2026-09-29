@@ -21,6 +21,11 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/video/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/video/skin'),
     ]),
+  'video/starter': () =>
+    Promise.all([
+      import('@registry-html-starter/components/videojs/video/skin.html?raw'),
+      import('@registry-html-starter/components/videojs/video/skin'),
+    ]),
   'live-video/default': () =>
     Promise.all([
       import('@registry-html-default/components/videojs/live-video/skin.html?raw'),
@@ -30,6 +35,11 @@ const registrySkins = {
     Promise.all([
       import('@registry-html-neutral/components/videojs/live-video/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/live-video/skin'),
+    ]),
+  'live-video/starter': () =>
+    Promise.all([
+      import('@registry-html-starter/components/videojs/live-video/skin.html?raw'),
+      import('@registry-html-starter/components/videojs/live-video/skin'),
     ]),
   'audio/default': () =>
     Promise.all([
@@ -41,6 +51,11 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/audio/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/audio/skin'),
     ]),
+  'audio/starter': () =>
+    Promise.all([
+      import('@registry-html-starter/components/videojs/audio/skin.html?raw'),
+      import('@registry-html-starter/components/videojs/audio/skin'),
+    ]),
   'live-audio/default': () =>
     Promise.all([
       import('@registry-html-default/components/videojs/live-audio/skin.html?raw'),
@@ -51,7 +66,12 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/live-audio/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/live-audio/skin'),
     ]),
-} satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
+  'live-audio/starter': () =>
+    Promise.all([
+      import('@registry-html-starter/components/videojs/live-audio/skin.html?raw'),
+      import('@registry-html-starter/components/videojs/live-audio/skin'),
+    ]),
+} satisfies Partial<Record<`${SkinPreset}/${Skin}`, SkinLoader>>;
 
 /** A skin shipped as markup: where the page's media goes, and where a slotted poster image goes. */
 export interface SkinTemplate {
@@ -163,7 +183,10 @@ export async function loadRegistrySkinTag(preset: SkinPreset, skin: Skin): Promi
   const tagName = registrySkinTag(preset, skin);
   if (customElements.get(tagName)) return tagName;
 
-  const [module] = await registrySkins[`${preset}/${skin}`]();
+  const load = registrySkins[`${preset}/${skin}`];
+  if (!load) throw new Error(`Registry skin ${preset}/${skin} is unavailable.`);
+
+  const [module] = await load();
 
   return defineTemplateSkin(tagName, registryTemplate(module.default));
 }

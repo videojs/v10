@@ -103,7 +103,7 @@ describe('auditSkinCss', () => {
       ),
     ];
 
-    expect(files.length, 'Generate the skins first: pnpm exec vp run @videojs/skins#generate').toBe(16);
+    expect(files.length, 'Generate the skins first: pnpm exec vp run @videojs/skins#generate').toBe(20);
 
     for (const file of files) {
       const path = resolve(workspaceDir, file);

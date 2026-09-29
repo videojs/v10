@@ -15,16 +15,23 @@ export interface HtmlSkinRequest {
 const packageSkins = {
   'video/default': () => import('@videojs/html/video/skin'),
   'video/neutral': () => import('@videojs/html/video/neutral-skin'),
+  'video/starter': () => import('@videojs/html/video/starter-skin'),
   'live-video/default': () => import('@videojs/html/live-video/skin'),
   'live-video/neutral': () => import('@videojs/html/live-video/neutral-skin'),
+  'live-video/starter': () => import('@videojs/html/live-video/starter-skin'),
   'audio/default': () => import('@videojs/html/audio/skin'),
   'audio/neutral': () => import('@videojs/html/audio/neutral-skin'),
+  'audio/starter': () => import('@videojs/html/audio/starter-skin'),
   'live-audio/default': () => import('@videojs/html/live-audio/skin'),
   'live-audio/neutral': () => import('@videojs/html/live-audio/neutral-skin'),
-} satisfies Record<`${SkinPreset}/${Skin}`, () => Promise<unknown>>;
+  'live-audio/starter': () => import('@videojs/html/live-audio/starter-skin'),
+} satisfies Partial<Record<`${SkinPreset}/${Skin}`, () => Promise<unknown>>>;
 
 async function loadPackageSkin({ player, live, skin }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
-  await packageSkins[`${preset}/${skin}`]();
+  const load = packageSkins[`${preset}/${skin}`];
+  if (!load) throw new Error(`Package skin ${preset}/${skin} is unavailable.`);
+
+  await load();
   await (player === 'audio' ? loadAudioStylesheets(skin, live) : loadVideoStylesheets(skin, live));
 
   return packageSkinTag(preset, skin);

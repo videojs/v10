@@ -1,18 +1,19 @@
 import corePackage from '../../../core/package.json' with { type: 'json' };
 import htmlPackage from '../../../html/package.json' with { type: 'json' };
 import reactPackage from '../../../react/package.json' with { type: 'json' };
+import type { SkinStyle } from '../../src/meta.ts';
 
 export type RegistryTarget =
   | {
       readonly framework: 'react';
       readonly styling: 'css' | 'tailwind';
-      readonly theme: 'default' | 'neutral';
+      readonly theme: SkinStyle['theme'];
       readonly output: string;
     }
   | {
       readonly framework: 'html';
       readonly styling: 'css';
-      readonly theme: 'default' | 'neutral';
+      readonly theme: SkinStyle['theme'];
       readonly output: string;
     };
 
@@ -28,6 +29,9 @@ export const registryTargets = [
   { framework: 'react', styling: 'css', theme: 'neutral', output: 'r/react/css/neutral' },
   { framework: 'html', styling: 'css', theme: 'default', output: 'r/html' },
   { framework: 'html', styling: 'css', theme: 'neutral', output: 'r/html/neutral' },
+  { framework: 'react', styling: 'tailwind', theme: 'starter', output: 'r/react/starter' },
+  { framework: 'react', styling: 'css', theme: 'starter', output: 'r/react/css/starter' },
+  { framework: 'html', styling: 'css', theme: 'starter', output: 'r/html/starter' },
 ] as const satisfies readonly RegistryTarget[];
 
 export const packageRequirements = {

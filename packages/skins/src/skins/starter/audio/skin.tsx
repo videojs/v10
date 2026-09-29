@@ -1,0 +1,37 @@
+import * as $ from '@videojs/core/vjsc';
+import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
+
+import type { SkinDescription } from '../../../meta';
+import { PlaybackHotkeys } from '../../shared/behaviors/playback-hotkeys';
+import { StatusAnnouncer } from '../shared/components';
+import { ErrorDialog } from '../shared/error-dialog';
+import styles from '../shared/skin.styles';
+import { AudioControls } from './controls';
+
+export interface AudioSkinProps extends Omit<PropsOf<typeof $.Container>, 'children'> {
+  children?: VjscNode;
+  renderThumbnail?: PropsOf<typeof $.Slider.Thumbnail.Image>['children'];
+}
+
+export function AudioSkin({ children, className, renderThumbnail, ...props }: AudioSkinProps = {}) {
+  return (
+    <$.Container
+      className={['media-skin', styles.root, styles.audioRoot, className]}
+      data-theme="starter"
+      data-preset="audio"
+      {...props}
+    >
+      <Slot>{children}</Slot>
+      <ErrorDialog />
+      <AudioControls renderThumbnail={renderThumbnail} />
+
+      <PlaybackHotkeys />
+      <StatusAnnouncer />
+    </$.Container>
+  );
+}
+
+export const meta = {
+  title: 'Starter Audio Skin',
+  description: 'A basic on-demand audio skin with a solid background and two-row control layout.',
+} as const satisfies SkinDescription;

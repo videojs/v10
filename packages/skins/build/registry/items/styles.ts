@@ -17,6 +17,20 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
     meta,
   } satisfies Pick<NonNullable<RegistryStylesOptions['theme']>, 'meta'>;
 
+  if (target.theme === 'starter') {
+    return {
+      theme: {
+        ...shared,
+        name: '_style-starter',
+        target: 'styles/starter/base.css',
+        files: { './styles/starter/base.css': 'styles/starter/base.css' },
+        title: 'Video.js starter styles',
+        description: 'Basic resets used by the editable starter skin.',
+      },
+      files: target.framework === 'react' && target.styling === 'css' ? 'styles' : undefined,
+    };
+  }
+
   const themes = [
     {
       ...shared,

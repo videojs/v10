@@ -3,22 +3,26 @@ import type { Skin } from '../../types';
 const videoStylesheets = {
   default: new URL('@videojs/html/video/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/video/neutral-skin.css', import.meta.url).href,
-} satisfies Record<Skin, string>;
+  starter: new URL('@videojs/html/video/starter-skin.css', import.meta.url).href,
+} satisfies Partial<Record<Skin, string>>;
 
 const liveVideoStylesheets = {
   default: new URL('@videojs/html/live-video/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/live-video/neutral-skin.css', import.meta.url).href,
-} satisfies Record<Skin, string>;
+  starter: new URL('@videojs/html/live-video/starter-skin.css', import.meta.url).href,
+} satisfies Partial<Record<Skin, string>>;
 
 const audioStylesheets = {
   default: new URL('@videojs/html/audio/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/audio/neutral-skin.css', import.meta.url).href,
-} satisfies Record<Skin, string>;
+  starter: new URL('@videojs/html/audio/starter-skin.css', import.meta.url).href,
+} satisfies Partial<Record<Skin, string>>;
 
 const liveAudioStylesheets = {
   default: new URL('@videojs/html/live-audio/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/live-audio/neutral-skin.css', import.meta.url).href,
-} satisfies Record<Skin, string>;
+  starter: new URL('@videojs/html/live-audio/starter-skin.css', import.meta.url).href,
+} satisfies Partial<Record<Skin, string>>;
 
 const loading = new Map<string, { href: string; promise: Promise<void> }>();
 
@@ -57,9 +61,15 @@ function loadStylesheet(id: string, url: string): Promise<void> {
 }
 
 export function loadVideoStylesheets(skin: Skin, live = false): Promise<void> {
-  return loadStylesheet('video-skin', (live ? liveVideoStylesheets : videoStylesheets)[skin]);
+  const url = (live ? liveVideoStylesheets : videoStylesheets)[skin];
+  if (!url) throw new Error(`Video skin stylesheet ${skin} is unavailable.`);
+
+  return loadStylesheet('video-skin', url);
 }
 
 export function loadAudioStylesheets(skin: Skin, live = false): Promise<void> {
-  return loadStylesheet('audio-skin', (live ? liveAudioStylesheets : audioStylesheets)[skin]);
+  const url = (live ? liveAudioStylesheets : audioStylesheets)[skin];
+  if (!url) throw new Error(`Audio skin stylesheet ${skin} is unavailable.`);
+
+  return loadStylesheet('audio-skin', url);
 }
