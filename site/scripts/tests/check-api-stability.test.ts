@@ -129,9 +129,10 @@ describe('isCoveredName', () => {
     expect(isCoveredName('QualityOptionsResult', covered)).toBe(true);
   });
 
-  it('does not match unrelated names or a bare `use` prefix', () => {
+  it('does not match unrelated names, a bare `use` prefix, or a differently cased name', () => {
     expect(isCoveredName('PlayButtonCore', covered)).toBe(false);
     expect(isCoveredName('Hotkey', covered)).toBe(false);
+    expect(isCoveredName('UseHotkey', covered)).toBe(false);
   });
 });
 
