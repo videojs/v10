@@ -1,0 +1,152 @@
+---
+title: detectMediaSource
+description: Detect which kind of media plays a source URL, from its host, MIME type, or file extension
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { detectMediaSource } from '@videojs/react';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { detectMediaSource } from '@videojs/html';
+```
+</FrameworkCase>
+
+`detectMediaSource` reads a source URL and reports which kind of media plays it, so an app that plays sources from a catalog or from user input can pick the matching <DocsLink slug="guides/media-sources">media component</DocsLink>. It returns `null` for sources it doesn't recognize.
+
+Detection is a pure string check. It doesn't fetch the source, load an engine, or touch the DOM.
+
+<FrameworkCase frameworks={["react"]}>
+`@videojs/react` is a client module, so call `detectMediaSource` from a Client Component. To choose the media in a Server Component, install `@videojs/media` and import `detectMediaSource` from it instead. That package has no client directive.
+</FrameworkCase>
+
+## Usage
+
+<FrameworkCase frameworks={["react"]}>
+Switch on `kind` and render the media component for it. Pass the returned `src`, which expands [Vidstack shorthands](#vidstack-shorthands):
+
+```tsx
+import { detectMediaSource } from '@videojs/react';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { VimeoVideo } from '@videojs/react/media/vimeo-video';
+import { YouTubeVideo } from '@videojs/react/media/youtube-video';
+import { Video } from '@videojs/react/video';
+
+function Media({ url }: { url: string }) {
+  const source = detectMediaSource(url);
+
+  switch (source?.kind) {
+    case 'youtube':
+      return <YouTubeVideo src={source.src} />;
+    case 'vimeo':
+      return <VimeoVideo src={source.src} />;
+    case 'hls':
+      return <HlsJsVideo src={source.src} playsInline />;
+    case 'video':
+      return <Video src={source.src} playsInline />;
+    default:
+      return null;
+  }
+}
+```
+
+Each media component you import adds its engine to your bundle, so load the rarely used ones with `React.lazy`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Switch on `kind` and create the media element for it. Set the returned `src`, which expands [Vidstack shorthands](#vidstack-shorthands):
+
+```ts
+import { detectMediaSource } from '@videojs/html';
+import '@videojs/html/media/hlsjs-video';
+import '@videojs/html/media/vimeo-video';
+import '@videojs/html/media/youtube-video';
+
+const TAGS = { youtube: 'youtube-video', vimeo: 'vimeo-video', hls: 'hlsjs-video', video: 'video' } as const;
+
+function createMedia(url: string) {
+  const source = detectMediaSource(url);
+  const tag = source && source.kind in TAGS ? TAGS[source.kind as keyof typeof TAGS] : null;
+  if (!source || !tag) return null;
+
+  const media = document.createElement(tag);
+  media.setAttribute('src', source.src);
+  return media;
+}
+```
+
+Each media module you import adds its engine to your bundle, so import the rarely used ones dynamically.
+</FrameworkCase>
+
+### Kinds
+
+<FrameworkCase frameworks={["react"]}>
+| `kind` | Recognized sources | Media component |
+|---|---|---|
+| `youtube` | `youtube.com`, `youtu.be`, and `youtube-nocookie.com` video and playlist URLs | `YouTubeVideo` |
+| `vimeo` | `vimeo.com` and `player.vimeo.com` URLs | `VimeoVideo` |
+| `wistia` | `wistia.com`, `wistia.net`, and `wi.st` URLs, and pages with a `wvideo` parameter | `WistiaVideo` |
+| `mux` | `stream.mux.com` and `player.mux.com` URLs | `MuxVideo` or `MuxAudio` |
+| `cloudflare` | `cloudflarestream.com` and `videodelivery.net` URLs | `CloudflareVideo` |
+| `spotify` | `open.spotify.com` URLs and `spotify:` URIs | `SpotifyAudio` |
+| `tiktok` | `tiktok.com` video URLs | `TikTokVideo` |
+| `twitch` | `twitch.tv` video and channel URLs | `TwitchVideo` |
+| `hls` | `.m3u8` files and HLS MIME types | `HlsVideo`, `HlsJsVideo`, or `NativeHlsVideo` |
+| `dash` | `.mpd` files and `application/dash+xml` | `DashVideo` or `ShakaVideo` |
+| `video` | `.mp4`, `.webm`, `.mov`, and `.ogv` files, and `video/*` MIME types | `Video` |
+| `audio` | `.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`, and `.aac` files, and `audio/*` MIME types | `Audio` |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+| `kind` | Recognized sources | Media element |
+|---|---|---|
+| `youtube` | `youtube.com`, `youtu.be`, and `youtube-nocookie.com` video and playlist URLs | `<youtube-video>` |
+| `vimeo` | `vimeo.com` and `player.vimeo.com` URLs | `<vimeo-video>` |
+| `wistia` | `wistia.com`, `wistia.net`, and `wi.st` URLs, and pages with a `wvideo` parameter | `<wistia-video>` |
+| `mux` | `stream.mux.com` and `player.mux.com` URLs | `<mux-video>` or `<mux-audio>` |
+| `cloudflare` | `cloudflarestream.com` and `videodelivery.net` URLs | `<cloudflare-video>` |
+| `spotify` | `open.spotify.com` URLs and `spotify:` URIs | `<spotify-audio>` |
+| `tiktok` | `tiktok.com` video URLs | `<tiktok-video>` |
+| `twitch` | `twitch.tv` video and channel URLs | `<twitch-video>` |
+| `hls` | `.m3u8` files and HLS MIME types | `<hls-video>`, `<hlsjs-video>`, or `<native-hls-video>` |
+| `dash` | `.mpd` files and `application/dash+xml` | `<dash-video>` or `<shaka-video>` |
+| `video` | `.mp4`, `.webm`, `.mov`, and `.ogv` files, and `video/*` MIME types | `<video>` |
+| `audio` | `.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`, and `.aac` files, and `audio/*` MIME types | `<audio>` |
+</FrameworkCase>
+
+A `kind` names the source, not the playback engine. An HLS stream comes back as `hls` whichever engine you play it with; see <DocsLink slug="guides/media-sources">Media sources</DocsLink> to choose one. Mux streams served from a custom domain are recognized as plain `hls`.
+
+### MIME types
+
+Pass a MIME type as the second argument when the URL doesn't end in a file extension, such as an extensionless manifest or a `blob:` URL. The MIME type takes precedence over the extension; provider URLs are recognized either way.
+
+```ts
+detectMediaSource('https://example.com/manifest', 'application/vnd.apple.mpegurl'); // { kind: 'hls', … }
+```
+
+### Bare ids
+
+A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia id look alike, so providers are only recognized from URLs, `spotify:` URIs, and Vidstack's shorthands. If you already know the provider, pass the id to its media component directly.
+
+### Vidstack shorthands
+
+Vidstack accepted `youtube/<id>` and `vimeo/<id>` as `src`. `detectMediaSource` recognizes both and returns a `src` the matching media accepts:
+
+| Shorthand | Returned `src` |
+|---|---|
+| `youtube/<id>`, `youtube/shorts/<id>` | `https://www.youtube-nocookie.com/embed/<id>` |
+| `vimeo/<id>` | `https://vimeo.com/<id>` |
+| `vimeo/<id>?hash=<hash>`, `vimeo/<id>?h=<hash>`, `vimeo/<id>/<hash>` | `https://vimeo.com/<id>?h=<hash>` |
+
+YouTube shorthands expand to the privacy-enhanced `youtube-nocookie.com` host, which is where Vidstack played them from.
+
+<UtilReference util="detectMediaSource" />
