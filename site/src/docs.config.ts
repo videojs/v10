@@ -298,6 +298,7 @@ export const sidebar: Sidebar = [
         contents: [
           { slug: 'reference/api/create-player', frameworks: ['react'] },
           { slug: 'reference/api/html-create-player', sidebarLabel: 'createPlayer', frameworks: ['html'] },
+          { slug: 'reference/api/player-store', sidebarLabel: 'Store' },
           { slug: 'reference/api/player-controller', frameworks: ['html'] },
           { slug: 'reference/api/use-player', frameworks: ['react'] },
           { slug: 'reference/api/use-optional-player', frameworks: ['react'] },
@@ -328,7 +329,6 @@ export const sidebar: Sidebar = [
         llmsDescription:
           'API reference for the feature modules passed to createPlayer, which provide player capabilities and state.',
         contents: [
-          { slug: 'reference/api/player-store', sidebarLabel: 'Overview' },
           { slug: 'reference/api/feature-buffer' },
           { slug: 'reference/api/feature-controls' },
           { slug: 'reference/api/feature-error' },
