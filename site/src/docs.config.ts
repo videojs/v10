@@ -328,6 +328,7 @@ export const sidebar: Sidebar = [
         llmsDescription:
           'API reference for the feature modules passed to createPlayer, which provide player capabilities and state.',
         contents: [
+          { slug: 'reference/api/player-store', sidebarLabel: 'Overview' },
           { slug: 'reference/api/feature-buffer' },
           { slug: 'reference/api/feature-controls' },
           { slug: 'reference/api/feature-error' },
