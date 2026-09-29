@@ -152,21 +152,21 @@ export const sidebar: Sidebar = [
     ],
   },
   {
+    sidebarLabel: 'Presets',
+    llmsDescription:
+      'API reference for the presets: each bundles a player, feature bundle, skins, and media for one use case.',
+    contents: [
+      { slug: 'reference/presets/video', sidebarLabel: 'Video' },
+      { slug: 'reference/presets/audio', sidebarLabel: 'Audio' },
+      { slug: 'reference/presets/live-video', sidebarLabel: 'Live video' },
+      { slug: 'reference/presets/live-audio', sidebarLabel: 'Live audio' },
+      { slug: 'reference/presets/background', sidebarLabel: 'Background' },
+    ],
+  },
+  {
     sidebarLabel: 'Components',
     llmsDescription: 'API reference for skins, media components, extensions, and interface components.',
     contents: [
-      {
-        sidebarLabel: 'Presets',
-        llmsDescription:
-          'API reference for the presets: each bundles a player, feature bundle, skins, and media for one use case.',
-        contents: [
-          { slug: 'reference/presets/video', sidebarLabel: 'Video' },
-          { slug: 'reference/presets/audio', sidebarLabel: 'Audio' },
-          { slug: 'reference/presets/live-video', sidebarLabel: 'Live video' },
-          { slug: 'reference/presets/live-audio', sidebarLabel: 'Live audio' },
-          { slug: 'reference/presets/background', sidebarLabel: 'Background' },
-        ],
-      },
       {
         sidebarLabel: 'Layout',
         llmsDescription: 'API reference for the components that establish a player and lay out its interface.',
