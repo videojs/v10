@@ -23,7 +23,7 @@ store.play();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The player element exposes the store as `store`. State fields and actions are properties of the store, `store.state` is the current state snapshot, and `store.subscribe()` reports changes. Inside a custom element, <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> subscribes to a selection and updates its host.
+The player element exposes the store as `store`. State fields and actions are properties of the store, and `store.subscribe()` reports changes. `store.state` is a frozen snapshot of the current state, which is the object selectors take. Inside a custom element, <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> subscribes to a selection and updates its host.
 
 ```ts
 const player = document.querySelector('video-player');
@@ -32,7 +32,7 @@ player.store.paused;
 player.store.play();
 
 const unsubscribe = player.store.subscribe(() => {
-  console.log(player.store.state.currentTime);
+  console.log(player.store.currentTime);
 });
 ```
 </FrameworkCase>
