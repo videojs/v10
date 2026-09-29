@@ -12,7 +12,7 @@ Vidstack Player gives you one `<media-player>` that holds state, picks a provide
 Video.js 10 grew out of the same ideas: composed, accessible components, one store per player, and state you can style against. The teams behind Vidstack, Plyr, Media Chrome, and Video.js now focus their work on Video.js. The code is new, though, and the jobs `<media-player>` did are split across smaller pieces. Most of this guide is about where each Vidstack concept moved.
 
 <Aside type="note">
-We'll merge priority security patches into Vidstack Player 1.x until March 2028. After that, Vidstack won't receive further updates. This guide covers Vidstack 1.x.
+We'll merge priority security patches into Vidstack Player 1.x until January 2028. After that, Vidstack won't receive further updates. This guide covers Vidstack 1.x.
 </Aside>
 
 <Aside type="caution">
@@ -25,13 +25,13 @@ The [Video.js skill](https://github.com/videojs/skills) teaches coding agents ho
 
 <FrameworkCase frameworks={["react"]}>
 ```text
-Install the Video.js skill: run `npx @videojs/cli agents skills` and follow the steps for the agent you are running in. If you can't run commands, follow the install instructions at https://github.com/videojs/skills instead. Then use the Video.js skill to migrate this project from @vidstack/react to @videojs/react. Follow the Vidstack migration guide that ships with the package at node_modules/@videojs/react/docs/guides/migrate-from-vidstack.md. Until @videojs/react is installed, read https://videojs.org/docs/framework/react/guides/migrate-from-vidstack.md instead. When installation details are needed, run `npx @videojs/cli agents init` to print version-matched instructions without changing files. Before changing code, compare the Vidstack features this project uses with the guide's "Known gaps" section and tell me about any that have no Video.js equivalent.
+Install the Video.js skill: run `npx @videojs/cli agents skills` and follow the steps for the agent you are running in. If you can't run commands, follow the install instructions at https://github.com/videojs/skills instead. Then run `npx @videojs/cli agents init --framework react` to print version-matched installation instructions without changing files. Use the Video.js skill to migrate this project from @vidstack/react to @videojs/react, following the Vidstack migration guide that ships with the package at node_modules/@videojs/react/docs/guides/migrate-from-vidstack.md. Until @videojs/react is installed, read https://videojs.org/docs/framework/react/guides/migrate-from-vidstack.md instead. Before changing code, compare the Vidstack features this project uses with the guide's "Known gaps" section and tell me about any that have no Video.js equivalent.
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```text
-Install the Video.js skill: run `npx @videojs/cli agents skills` and follow the steps for the agent you are running in. If you can't run commands, follow the install instructions at https://github.com/videojs/skills instead. Then use the Video.js skill to migrate this project from vidstack to @videojs/html. Follow the Vidstack migration guide that ships with the package at node_modules/@videojs/html/docs/guides/migrate-from-vidstack.md. Until @videojs/html is installed, read https://videojs.org/docs/framework/html/guides/migrate-from-vidstack.md instead. When installation details are needed, run `npx @videojs/cli agents init` to print version-matched instructions without changing files. Before changing code, compare the Vidstack features this project uses with the guide's "Known gaps" section and tell me about any that have no Video.js equivalent.
+Install the Video.js skill: run `npx @videojs/cli agents skills` and follow the steps for the agent you are running in. If you can't run commands, follow the install instructions at https://github.com/videojs/skills instead. Then run `npx @videojs/cli agents init` to print version-matched installation instructions without changing files. Use the Video.js skill to migrate this project from vidstack to @videojs/html, following the Vidstack migration guide that ships with the package at node_modules/@videojs/html/docs/guides/migrate-from-vidstack.md. Until @videojs/html is installed, read https://videojs.org/docs/framework/html/guides/migrate-from-vidstack.md instead. Before changing code, compare the Vidstack features this project uses with the guide's "Known gaps" section and tell me about any that have no Video.js equivalent.
 ```
 </FrameworkCase>
 
