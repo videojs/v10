@@ -604,7 +604,7 @@ Access the store actions through the player state APIs above. Standard media pro
 
 ## Which Mux media should you use?
 
-Choose the engine before migration when your catalog uses DRM or TS-packaged media.
+Choose and test the engine before migration, especially when your catalog uses DRM or TS-packaged media.
 
 <FrameworkCase frameworks={["react"]}>
 `MuxVideo` comes in two flavors, backed by two different playback engines, and the import path chooses between them. Start with the default. The tradeoff: the `/spf` flavor is smaller and the `/hls-js` flavor is more compatible:
@@ -617,13 +617,12 @@ Choose the engine before migration when your catalog uses DRM or TS-packaged med
 | Import | Engine | When |
 |---|---|---|
 | `.../media/mux-video` | hls.js | **The default. Start here.** |
-| `.../media/mux-video/spf` | SPF | You want a much smaller bundle and neither problem below applies. |
+| `.../media/mux-video/spf` | SPF | Your streams use fMP4/CMAF segments and fit the limitations below. |
 | `.../media/mux-video/hls-js` | hls.js | You want to pin hls.js, and reach its instance and settings. |
 
-The SPF engine does not support these Mux playback requirements:
+The SPF engine does not support MPEG-TS segments, raw ADTS AAC, or whole-segment AES-128 encryption. Keep the default for assets that need those formats. It also lacks low-latency HLS support; DVR playback is experimental.
 
-- **TS-packaged media.** Some Mux assets are packaged as TS rather than CMAF. If any of your catalog is, stay on the default.
-- **DRM.** SPF doesn't license protected content.
+Both flavors support DRM through `source.drm`. Verify license exchange and playback with your protected assets on supported browsers before changing engines.
 
 <FrameworkCase frameworks={["html"]}>
 All three imports register the same `<mux-video>` tag and accept the same source, so changing the engine is an import change. Load only one registration for that tag on a page.
@@ -806,7 +805,7 @@ Signed playback needs its own poster token even when the Mux media would otherwi
 
 Neither player refreshes tokens. Mux Player at least notices an expired one and shows a friendly message; Video.js doesn't surface that yet ([#1432](https://github.com/videojs/v10/issues/1432)).
 
-For DRM on the default Mux media or native HLS, supply a license token. Video.js derives the FairPlay, Widevine, and PlayReady license servers and the FairPlay application certificate:
+For DRM on either Mux media flavor, supply a license token. Video.js derives the FairPlay, Widevine, and PlayReady license servers and the FairPlay application certificate:
 
 ```js
 {
@@ -818,7 +817,7 @@ For DRM on the default Mux media or native HLS, supply a license token. Video.js
 
 DRM playback is always signed, so `drm.token` needs a `playback.token` beside it. For content Mux doesn't license, name license servers yourself, keyed by key system; yours win over the derived ones key by key.
 
-The SPF flavor doesn't license DRM ([#1776](https://github.com/videojs/v10/issues/1776)), which is one of the two reasons to stay on the default import.
+The SPF flavor supports FairPlay, Widevine, and PlayReady through its EME license pipeline. DRM availability still depends on the browser, key system, and asset configuration.
 
 ## Access the media and playback engine
 

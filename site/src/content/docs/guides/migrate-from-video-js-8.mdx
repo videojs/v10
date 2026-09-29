@@ -288,8 +288,8 @@ Choose a media component for each format or provider your v8 techs handled. Chec
 | What you're playing | Video.js 8 | Video.js v10 |
 |---|---|---|
 | MP4, WebM | `techOrder: ['html5']` | a plain `<video>` |
-| HLS | VHS | <DocsLink slug="reference/components/hls-video">HLS video</DocsLink> |
-| HLS, needing engine settings or access | `videojs.Vhs` | <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink> |
+| HLS | VHS | <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink> |
+| HLS with fMP4/CMAF segments | VHS | <DocsLink slug="reference/components/hls-video">SPF HLS video</DocsLink>, after checking its limitations |
 | HLS, native only | native HLS without VHS fallback | <DocsLink slug="reference/components/native-hls-video">native HLS video</DocsLink> |
 | DASH | VHS | <DocsLink slug="reference/components/dash-video">DASH video</DocsLink> |
 | YouTube, Vimeo | a tech plugin | the YouTube and Vimeo components |
@@ -297,28 +297,39 @@ Choose a media component for each format or provider your v8 techs handled. Chec
 
 `html5.vhs.overrideNative: false` lets v8 use native HLS where available while retaining VHS elsewhere. It does not mean native-only playback. Choose an HLS engine that supports your required browsers; native HLS has no fallback on browsers that cannot play the stream themselves. See <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
 
-Each media component needs its own import.
+For an existing VHS integration, start with hls.js video and test your streams on supported browsers. This is also the component selected by the installation CLI's `--media hls` option.
 
-Package-manager installations also need the matching media package. The lightweight HLS component shown below uses
-`@videojs/spf`; the hls.js component uses `@videojs/hlsjs-video`; Mux video and audio use `@videojs/mux-video` and
-`@videojs/mux-audio`; DASH uses `@videojs/dash-video`; Vimeo uses `@videojs/vimeo-video`; and Shaka and Wistia use
-`@videojs/shaka-video` and `@videojs/wistia-video`. YouTube uses `@videojs/youtube-video`.
+The SPF HLS component is an alternative for fMP4/CMAF streams. It does not support MPEG-TS segments, raw ADTS AAC, or whole-segment AES-128 encryption. It supports DRM through `source.drm`, but each engine's license configuration and browser support still need verification. See <DocsLink slug="reference/components/hls-video">HLS video</DocsLink> and <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink>.
+
+Each media component needs its own import. For package-manager installations, install the matching adapter package:
+
+| Media | Package |
+|---|---|
+| hls.js video | `@videojs/hlsjs-video` |
+| DASH | `@videojs/dash-video` |
+| Mux video / audio | `@videojs/mux-video` / `@videojs/mux-audio` |
+| YouTube | `@videojs/youtube-video` |
+| Vimeo | `@videojs/vimeo-video` |
+| Shaka | `@videojs/shaka-video` |
+| Wistia | `@videojs/wistia-video` |
+
+SPF and native HLS are included as dependencies of the HTML and React packages.
 
 <FrameworkCase frameworks={["html"]}>
-For HLS from the CDN:
+For hls.js video from the CDN:
 
 ```html
-<script type="module" src="{{VJS10_CDN_BASE}}/media/hls-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/hlsjs-video.js"></script>
 ```
 
-With a package manager, install SPF and import the HTML registration instead:
+With a package manager, install the adapter and import its HTML registration:
 
 ```bash
-npm install @videojs/html @videojs/spf
+npm install @videojs/html @videojs/hlsjs-video
 ```
 
 ```ts
-import '@videojs/html/media/hls-video';
+import '@videojs/html/media/hlsjs-video';
 ```
 
 Then swap the tag:
@@ -326,31 +337,29 @@ Then swap the tag:
 ```html
 <video-player>
   <video-skin>
-    <hls-video src="/stream.m3u8" playsinline></hls-video>
+    <hlsjs-video src="/stream.m3u8" playsinline></hlsjs-video>
   </video-skin>
 </video-player>
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-For HLS, import the component and swap it for `<Video>`:
+For hls.js video, import the component and swap it for `<Video>`:
 
 ```bash
-npm install @videojs/react @videojs/spf
+npm install @videojs/react @videojs/hlsjs-video
 ```
 
 ```tsx
-import { HlsVideo } from '@videojs/react/media/hls-video';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 
 <VideoPlayer>
   <VideoSkin>
-    <HlsVideo src="/stream.m3u8" playsInline />
+    <HlsJsVideo src="/stream.m3u8" playsInline />
   </VideoSkin>
 </VideoPlayer>
 ```
 </FrameworkCase>
-
-The lightweight HLS component runs on SPF, Video.js's own playback engine, and helps keep v10 small. The hls.js component is a much larger download but more compatible, supporting TS-packaged media and DRM. Choose the one whose supported feature set fits your stream.
 
 Your VHS tuning options don't have direct equivalents. Rendition capping, bandwidth hints, and the rest are engine-specific, so they belong to whichever engine you chose rather than to a shared options object.
 
@@ -581,10 +590,15 @@ See <DocsLink slug="guides/internationalization">Internationalize the player</Do
 Replace `liveui` or `audioOnlyMode` with the matching live or audio <DocsLink slug="guides/presets">preset</DocsLink>. Check its feature list when your app needs controls beyond those shown by the preset.
 
 <FrameworkCase frameworks={["html"]}>
+Load the live preset and the hls.js media component:
+
 ```html
+<script type="module" src="{{VJS10_CDN_BASE}}/live-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/hlsjs-video.js"></script>
+
 <live-video-player>
   <live-video-skin>
-    <hls-video src="/live.m3u8"></hls-video>
+    <hlsjs-video src="/live.m3u8"></hlsjs-video>
   </live-video-skin>
 </live-video-player>
 ```
@@ -595,12 +609,12 @@ For audio, use the audio player with the audio skin, or the live audio pair. The
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import '@videojs/react/live-video/skin.css';
-import { HlsVideo } from '@videojs/react/media/hls-video';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video';
 
 <LiveVideoPlayer>
   <LiveVideoSkin>
-    <HlsVideo src="/live.m3u8" playsInline />
+    <HlsJsVideo src="/live.m3u8" playsInline />
   </LiveVideoSkin>
 </LiveVideoPlayer>
 ```

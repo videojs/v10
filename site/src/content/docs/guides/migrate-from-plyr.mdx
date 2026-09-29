@@ -148,36 +148,40 @@ For HLS or DASH, replace the native video component with a <DocsLink slug="guide
 
 #### HLS
 
+If your Plyr integration uses hls.js, keep that engine through the hls.js video component. The installation CLI's `--media hls` option selects it too.
+
+The SPF <DocsLink slug="reference/components/hls-video">HLS video</DocsLink> component is an alternative for fMP4/CMAF streams. It does not support MPEG-TS segments, raw ADTS AAC, or whole-segment AES-128 encryption. It supports DRM through `source.drm`; verify the engine's license configuration and browser support before switching.
+
 <FrameworkCase frameworks={["html"]}>
 
-Replace `<video>` with `<hls-video>`. If you're using the CDN, add an additional script:
+Replace `<video>` with `<hlsjs-video>`. If you're using the CDN, add an additional script:
 
 ```html
-<script type="module" src="{{VJS10_CDN_BASE}}/media/hls-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/hlsjs-video.js"></script>
 ```
 
-For a bundler installation, install SPF and add the framework import:
+For a bundler installation, install the adapter package and add the media import:
 
 ```bash
-npm install @videojs/html @videojs/spf
+npm install @videojs/html @videojs/hlsjs-video
 ```
 
 ```js
-import '@videojs/html/media/hls-video';
+import '@videojs/html/media/hlsjs-video';
 ```
 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
-Replace `<Video>` with `<HlsVideo>` and add the import:
+Replace `<Video>` with `<HlsJsVideo>` and add the import:
 
 ```bash
-npm install @videojs/react @videojs/spf
+npm install @videojs/react @videojs/hlsjs-video
 ```
 
 ```js
-import { HlsVideo } from '@videojs/react/media/hls-video';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 ```
 
 </FrameworkCase>
@@ -196,7 +200,7 @@ Replace `<video>` with `<dash-video>`. If you're using the CDN, add an additiona
 <script type="module" src="{{VJS10_CDN_BASE}}/media/dash-video.js"></script>
 ```
 
-For a package-manager installation, install dash.js and add its façade import:
+For a package-manager installation, install the DASH adapter package and add the media import:
 
 ```bash
 npm install @videojs/html @videojs/dash-video
@@ -451,11 +455,11 @@ Use store actions for playback, seeking, volume, fullscreen, and captions. For a
 `toggleMuted()` toggles the effective muted state; it can unmute an already muted player. Use it for a mute button, not as a replacement for an assignment.
 
 <FrameworkCase frameworks={["react"]}>
-Native media methods and properties also update player state through media events. To change content, set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `Video` to `HlsVideo`. The player UI follows the attached media.
+Native media methods and properties also update player state through media events. To change content, set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `Video` to `HlsJsVideo`. The player UI follows the attached media.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Native media methods and properties also update player state through media events. To change content, set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `<video>` to `<hls-video>`. The player UI follows the attached media.
+Native media methods and properties also update player state through media events. To change content, set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `<video>` to `<hlsjs-video>`. The player UI follows the attached media.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
