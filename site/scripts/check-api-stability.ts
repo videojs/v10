@@ -529,13 +529,13 @@ export function addTag(source: string, sourceFile: ts.SourceFile, node: Document
   return `${source.slice(0, jsDoc.getStart(sourceFile))}${replacement}${source.slice(jsDoc.end)}`;
 }
 
-/** Tag declarations in one source file, applying edits bottom-up so offsets stay valid. */
+/** Tag declarations in one source file, applying edits bottom-up so offsets stay valid. Returns the edit count. */
 export function fixSourceFile(filePath: string, fixes: ReadonlyMap<string, string>): number {
   let source = readFileSync(filePath, 'utf8');
   const sourceFile = parseSource(filePath, source);
+  // Every overload carries its own JSDoc, so each declaration of the name gets the tag.
   const edits = [...fixes]
-    .map(([name, tag]) => ({ node: findDeclarations(sourceFile, name)[0], tag }))
-    .filter((edit): edit is { node: DocumentableNode; tag: string } => edit.node !== undefined)
+    .flatMap(([name, tag]) => findDeclarations(sourceFile, name).map((node) => ({ node, tag })))
     .filter((edit, index, all) => all.findIndex((other) => other.node === edit.node) === index)
     .sort((a, b) => b.node.getStart(sourceFile) - a.node.getStart(sourceFile));
 
