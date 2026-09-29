@@ -26,8 +26,8 @@ export interface DetectedMediaSource {
   /** Which kind of media plays the source. */
   kind: MediaSourceKind;
   /**
-   * The source to give that media. Vidstack's `youtube/<id>` and `vimeo/<id>` shorthands expand to a URL the media
-   * accepts; every other source comes back as given.
+   * The source to give that media. `youtube/<id>` and `vimeo/<id>` shorthands and `player.mux.com` page URLs expand to
+   * a URL the media accepts; every other source comes back as given.
    */
   src: string;
   /** The provider's id for the source (a video, playback, or entity id, or a channel name), when the kind has one. */
@@ -42,12 +42,11 @@ export interface DetectedMediaSource {
  * files, by MIME type when you pass one and by file extension otherwise.
  *
  * Returns `null` for anything else, including bare ids: an 11-character YouTube id and a 10-character Wistia id look
- * alike, so providers are only matched on URLs, `spotify:` URIs, and Vidstack's `youtube/<id>` and `vimeo/<id>`
- * shorthands.
+ * alike, so providers are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
  *
  * Detection names a kind of source, not a playback engine. Choosing between the HLS engines is up to you.
  *
- * @param src - The source URL, or a Vidstack-style shorthand.
+ * @param src - The source URL, or a `youtube/<id>` or `vimeo/<id>` shorthand.
  * @param type - The source's MIME type, when known. It takes precedence over the file extension, so manifests and files
  *   without one can still be detected.
  * @public

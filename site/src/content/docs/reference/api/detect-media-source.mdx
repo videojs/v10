@@ -32,7 +32,7 @@ Detection is a pure string check. It doesn't fetch the source, load an engine, o
 ## Usage
 
 <FrameworkCase frameworks={["react"]}>
-Switch on `kind` and render the media component for it. Pass the returned `src`, which expands [Vidstack shorthands](#vidstack-shorthands):
+Switch on `kind` and render the media component for it. Pass the returned `src`, which expands [shorthands](#shorthands):
 
 ```tsx
 import { detectMediaSource } from '@videojs/react';
@@ -63,7 +63,7 @@ Each media component you import adds its engine to your bundle, so load the rare
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Switch on `kind` and create the media element for it. Set the returned `src`, which expands [Vidstack shorthands](#vidstack-shorthands):
+Switch on `kind` and create the media element for it. Set the returned `src`, which expands [shorthands](#shorthands):
 
 ```ts
 import { detectMediaSource } from '@videojs/html';
@@ -135,11 +135,11 @@ detectMediaSource('https://example.com/manifest', 'application/vnd.apple.mpegurl
 
 ### Bare ids
 
-A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia id look alike, so providers are only recognized from URLs, `spotify:` URIs, and Vidstack's shorthands. If you already know the provider, pass the id to its media component directly.
+A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia id look alike, so providers are only recognized from URLs, `spotify:` URIs, and [shorthands](#shorthands). If you already know the provider, pass the id to its media component directly.
 
-### Vidstack shorthands
+### Shorthands
 
-Vidstack accepted `youtube/<id>` and `vimeo/<id>` as `src`. `detectMediaSource` recognizes both and returns a `src` the matching media accepts:
+`detectMediaSource` recognizes `youtube/<id>` and `vimeo/<id>` shorthands and returns a `src` the matching media accepts:
 
 | Shorthand | Returned `src` |
 |---|---|
@@ -147,6 +147,6 @@ Vidstack accepted `youtube/<id>` and `vimeo/<id>` as `src`. `detectMediaSource` 
 | `vimeo/<id>` | `https://vimeo.com/<id>` |
 | `vimeo/<id>?hash=<hash>`, `vimeo/<id>?h=<hash>`, `vimeo/<id>/<hash>` | `https://vimeo.com/<id>?h=<hash>` |
 
-YouTube shorthands expand to the privacy-enhanced `youtube-nocookie.com` host, which is where Vidstack played them from.
+YouTube shorthands expand to the privacy-enhanced `youtube-nocookie.com` host.
 
 <UtilReference util="detectMediaSource" />

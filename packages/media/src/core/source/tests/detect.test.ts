@@ -80,7 +80,7 @@ describe('detectMediaSource', () => {
     expect(detectMediaSource(src)).toEqual(expected);
   });
 
-  describe('Vidstack shorthands', () => {
+  describe('shorthands', () => {
     it('expands youtube/<id> to a privacy-enhanced embed URL', () => {
       expect(detectMediaSource('youtube/aqz-KE-bpKQ')).toEqual({
         kind: 'youtube',
