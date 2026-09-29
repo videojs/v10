@@ -12,6 +12,7 @@ import {
   type Coverage,
   documentedStability,
   findDeclarations,
+  findSourceDeclarations,
   findUnstableImports,
   fixSourceFile,
   isCoveredName,
@@ -224,6 +225,31 @@ describe('fixSourceFile', () => {
     );
 
     rmSync(directory, { recursive: true });
+  });
+});
+
+describe('findSourceDeclarations', () => {
+  const root = join(import.meta.dirname, '..', '..', '..');
+
+  it('maps a built declaration that mirrors src', () => {
+    const declarations = findSourceDeclarations(
+      join(root, 'packages/utils/dist/object/shallow-equal.d.ts'),
+      'shallowEqual'
+    );
+
+    expect(declarations?.file).toBe(join(root, 'packages/utils/src/object/shallow-equal.ts'));
+  });
+
+  it('finds the authored module behind a renamed or bundled entry', () => {
+    expect(findSourceDeclarations(join(root, 'packages/core/dist/dev/i18n/text/airplay.d.ts'), 'startText')?.file).toBe(
+      join(root, 'packages/core/src/core/i18n/text/airplay.ts')
+    );
+    expect(
+      findSourceDeclarations(
+        join(root, 'packages/adapters/mux-video/dist/dev/mux/dist/dev/source.d.ts'),
+        'MuxDrmParams'
+      )?.file
+    ).toBe(join(root, 'packages/adapters/mux/src/source.ts'));
   });
 });
 
