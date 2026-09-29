@@ -334,6 +334,53 @@ export function sourcePathFor(declarationFile: string): string | undefined {
 }
 
 const sourceFiles = new Map<string, ts.SourceFile>();
+let authoredFiles: string[] | undefined;
+
+/** Every authored module under a package's `src/`, including private packages that others bundle. */
+function authoredSourceFiles(): string[] {
+  authoredFiles ??= walkFiles(join(monorepoRoot, 'packages'), (path) => /\.tsx?$/.test(path)).filter((path) => {
+    const segments = relative(monorepoRoot, path).split(sep);
+
+    return (
+      segments.includes('src') &&
+      !segments.includes('dist') &&
+      !segments.includes('tests') &&
+      !/\.test\.tsx?$/.test(path)
+    );
+  });
+
+  return authoredFiles;
+}
+
+/**
+ * Find the authored declarations of `name` behind a built declaration file. Entries that a build renames or bundles
+ * (`src/core/i18n/…` built to `dist/dev/i18n/…`, a private package copied into another's `dist/`) don't mirror `src/`,
+ * so the path after the last `dist/` is matched against authored files that declare the name, and a match is used only
+ * when it is unique.
+ */
+export function findSourceDeclarations(
+  declarationFile: string,
+  name: string
+): { file: string; nodes: DocumentableNode[] } | undefined {
+  const direct = sourcePathFor(declarationFile);
+  const directNodes = direct ? findDeclarations(cachedSource(direct), name) : [];
+  if (direct && directNodes.length > 0) return { file: direct, nodes: directNodes };
+
+  const tail = declarationFile
+    .split(sep)
+    .join('/')
+    .split('/dist/')
+    .at(-1)!
+    .replace(/^(?:dev|default)\//, '')
+    .replace(/\.d\.ts$/, '');
+  const suffixes = ['.ts', '.tsx', '/index.ts', '/index.tsx'].map((extension) => `/${tail}${extension}`);
+  const candidates = authoredSourceFiles()
+    .filter((file) => suffixes.some((suffix) => file.split(sep).join('/').endsWith(suffix)))
+    .map((file) => ({ file, nodes: findDeclarations(cachedSource(file), name) }))
+    .filter((candidate) => candidate.nodes.length > 0);
+
+  return candidates.length === 1 ? candidates[0] : undefined;
+}
 
 function parseSource(filePath: string, text = readFileSync(filePath, 'utf8')): ts.SourceFile {
   const kind = filePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
@@ -442,10 +489,10 @@ export function collectPublicExports(entries: readonly PublicEntry[]): PublicExp
       const isDefault = exported.name === 'default' || symbol.name === '_default';
       const name = isDefault ? 'default' : symbol.name.replace(/\$\d+$/, '');
       const declarationFile = declaration.getSourceFile().fileName;
-      const sourcePath = sourcePathFor(declarationFile);
-      const sourceDeclarations = sourcePath ? findDeclarations(cachedSource(sourcePath), name) : [];
-      const hasSource = sourceDeclarations.length > 0;
-      const file = hasSource ? sourcePath! : declarationFile;
+      const source = findSourceDeclarations(declarationFile, name);
+      const sourceDeclarations = source?.nodes ?? [];
+      const hasSource = source !== undefined;
+      const file = source?.file ?? declarationFile;
       const key = `${file}#${name}`;
 
       let record = exports.get(key);
