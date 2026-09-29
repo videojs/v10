@@ -1,6 +1,6 @@
 ---
 title: Migrate from Media Chrome
-description: Map Media Chrome's controller, elements, and attributes onto Video.js v10, where most of the work is renaming and reshaping rather than rewriting
+description: Move a Media Chrome player to Video.js v10, mapping its controller, controls, styles, and imperative calls
 ---
 
 import Aside from '@/components/Aside.astro';
@@ -10,20 +10,22 @@ import MigrationAgentStart from '@/components/docs/MigrationAgentStart.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
 <FrameworkCase frameworks={["react"]}>
-Video.js v10's React components mirror Media Chrome's elements — `media-play-button` becomes `PlayButton` — so most of the work is **renaming and reshaping**, not rewriting.
+Replace Media Chrome's controller with a Video.js player and container, then migrate your controls to React components. Keep the playback sources and interactions your app needs; rebuild the controls' visible contents and styles.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Video.js v10's HTML player uses the same `media-*` custom-element convention as Media Chrome, so most of the work is **renaming and reshaping**, not rewriting.
+Replace Media Chrome's controller with a Video.js player and container, then migrate your controls. The libraries share `media-*` tag names, but their attributes, child markup, icons, and styles differ.
 </FrameworkCase>
 
 <Aside type="note">
-Scoped to apps that compose their own player from Media Chrome elements. If you use `<mux-player>`, follow the Mux Player migration guide instead.
+Scoped to apps that compose their own player from Media Chrome elements. If you use Mux Player, follow <DocsLink slug="guides/migrate-from-mux-player">Migrate from Mux Player</DocsLink> instead.
 </Aside>
 
 <MigrationAgentStart />
 
 ## Before you begin
+
+Check [Known gaps](#known-gaps) for controller options and preferences your app relies on. List your media sources, custom controls, event handlers, and theme rules.
 
 Install Video.js and choose a <DocsLink slug="guides/presets">preset</DocsLink> (see <DocsLink slug="guides/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
@@ -262,7 +264,7 @@ Remove an element or set `disabled` to turn a gesture off.
 ## Map the elements
 
 <FrameworkCase frameworks={["react"]}>
-Most names carry over as PascalCase components without the `media-` prefix. These are the renames that bite:
+Most names carry over as PascalCase components without the `media-` prefix. Start with these name changes:
 
 | Media Chrome | Video.js v10 | Note |
 |---|---|---|
@@ -287,7 +289,7 @@ Matching names do not mean matching appearance. Media Chrome buttons include def
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Most names match. These are the renames that bite:
+Most names match. Start with these name changes:
 
 | Media Chrome | Video.js v10 | Note |
 |---|---|---|
@@ -405,7 +407,7 @@ React skins do not use Shadow DOM. Use `render` props when you build individual 
 
 ## Control the player imperatively
 
-Control everything through the player's store. Media Chrome had no player object; Video.js gives you one, with an action for every operation — `play`, `togglePaused`, `seek`, `setVolume`, `toggleFullscreen` — so one mental model covers playback and the state the browser doesn't own, such as fullscreen, captions, and quality.
+Use store actions such as `play`, `togglePaused`, `seek`, `setVolume`, and `toggleFullscreen` to control playback and UI state.
 
 <FrameworkCase frameworks={["html"]}>
 Hold a reference to the player element and call actions on its store:
@@ -431,7 +433,7 @@ function FullscreenShortcut() {
 ```
 </FrameworkCase>
 
-The Media Chrome habit of scripting the media element directly still works, unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. The media element also stays the way to swap `src`, replace the media component, and listen for native events.
+Keep native media calls such as `video.play()` and assignments such as `video.currentTime = 30`. Video.js updates player state from media events. Set `src` on the media component to change content, and replace the component when the source needs a different playback engine.
 
 <FrameworkCase frameworks={["react"]}>
 Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
@@ -481,7 +483,7 @@ The skin root is an inline-size container named `media-root`, so write responsiv
 
 ### Default duration
 
-There's no player input for a pre-load duration. Use `preload="metadata"`, the default, so the real duration is known almost immediately; only `preload="none"` defers it. If you must defer loading, render your own static placeholder in markup.
+There is no player input for a duration placeholder. Use `preload="metadata"` to request metadata before playback, but allow for network and engine loading time. If you defer loading, render a static placeholder in your own UI.
 
 ### Preference persistence
 
