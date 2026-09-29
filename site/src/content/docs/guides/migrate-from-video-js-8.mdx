@@ -520,9 +520,9 @@ One category doesn't survive that translation, because those were never media ev
 Use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
 
 ```js
-import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
+import { PlayerController, playerContext, selectTime, UIElement } from '@videojs/html';
 
-class MyElapsed extends ReactiveElement {
+class MyElapsed extends UIElement {
   #time = new PlayerController(this, playerContext, selectTime);
 }
 ```
