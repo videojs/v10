@@ -1,6 +1,6 @@
 ---
 title: Migrate from Mux Player
-description: Move a Mux Player embed to Video.js v10, splitting one element into a player, a media, and a skin
+description: Move a Mux Player embed to Video.js v10 using a player, media component, skin, and analytics extension
 ---
 
 import Aside from '@/components/Aside.astro';
@@ -22,7 +22,7 @@ Did you use Mux Player without controls as a hero, ambient loop, or decorative v
 
 Make a migration checklist before changing your embed:
 
-- **List the Mux Player attributes or React props you set.** Compare them with the mapping tables below to make your migration checklist.
+- **List the Mux Player attributes or React props you set.** Compare them with the mapping tables below.
 - **Grep your codebase for `mux-player` selectors.** CSS rules and `querySelector` calls that reach into the element — `mux-player::part(…)`, `mux-player [role="slider"]`, `player.shadowRoot` — will silently stop matching after the swap. Plan to restyle with the skin's custom properties or rebuild against Video.js components.
 - **Find your event listeners and imperative calls** (`play()`, `currentTime`, `addChapters`). Media APIs move to the media element; the rest is mapped under [Drive playback](#drive-playback).
 - **Note your theme and CSS variables.** Two skins replace Mux Player's five themes, and `--accent-color` and friends have new names.
@@ -73,7 +73,7 @@ From the CDN, load the video <DocsLink slug="guides/presets">preset</DocsLink>, 
 </script>
 ```
 
-If you use a bundler instead of the CDN, the imports are the same three pieces plus the Mux Data extension:
+With a bundler, install the HTML package, Mux media adapter, and Mux Data extension. Import the player, skin, media, and extension:
 
 ```bash
 npm install @videojs/html @videojs/mux-video @videojs/mux-data
@@ -104,7 +104,7 @@ export function MyPlayer() {
 }
 ```
 
-`@videojs/react` gives you real React components rather than one component wrapping a custom element.
+`@videojs/react` provides native React components for the player, media, skin, and extensions.
 
 ```bash
 npm install @videojs/react @videojs/mux-video @videojs/mux-data
@@ -796,7 +796,7 @@ To find the times a viewer can seek to, read `buffer.seekable`. It contains `[st
 
 ## The settings menu
 
-On a video player, the settings menu appears on its own when there's something to put in it:
+The video skins include a settings menu with the available quality, audio-track, captions, and playback-rate controls:
 
 | What | Component | Notes |
 |---|---|---|
@@ -809,7 +809,7 @@ Video.js has no viewer-facing text-track settings dialog. You can style browser-
 
 ## Chapters and cue points
 
-Chapters are content, not an API call. Add a chapters track inside your media and the skins segment the <DocsLink slug="reference/components/time-slider">time slider</DocsLink> and show the chapter title on hover:
+Add a chapters track inside your media. The skins segment the <DocsLink slug="reference/components/time-slider">time slider</DocsLink> and show the chapter title on hover:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
@@ -827,7 +827,7 @@ Chapters are content, not an API call. Add a chapters track inside your media an
 ```
 </FrameworkCase>
 
-There's no `addChapters()`. If you were building that VTT on the fly, you'll still need to, but you point the player at it instead of passing an array ([#1268](https://github.com/videojs/v10/issues/1268)).
+To replace `addChapters()`, convert your chapter array to a WebVTT file and set its URL as the track's `src` ([#1268](https://github.com/videojs/v10/issues/1268)).
 
 The time slider marks the segment containing the current playback time with `data-active`, so you can style the active segment. The player still has no active-chapter state, `chapterchange` event, or menu for jumping between chapters ([#1873](https://github.com/videojs/v10/issues/1873)). If UI outside the time slider needs the current chapter, derive it from `currentTime` and the read-only `chaptersCues` array. Cue points aren't implemented at all ([#1442](https://github.com/videojs/v10/issues/1442)).
 

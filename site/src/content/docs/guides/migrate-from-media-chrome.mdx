@@ -244,7 +244,7 @@ Add `player.css` for layout, button styling, and control visibility:
 }
 ```
 
-A preset player carries a fixed set of <DocsLink slug="guides/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
+A preset player has a fixed set of <DocsLink slug="guides/features">features</DocsLink>. For a custom set, call <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> once outside your React component. Pass the feature list and use its returned `Player` component and typed `usePlayer` hook.
 
 ```tsx
 import { createPlayer } from '@videojs/react';
