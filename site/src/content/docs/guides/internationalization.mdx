@@ -46,7 +46,7 @@ export default function App() {
 }
 ```
 
-Omit `locale` to follow the nearest ancestor `lang` attribute (usually `<html lang>`).
+Omit `locale` to inherit a parent provider's locale or follow the document's `lang`. Use `langRootRef` to follow a particular DOM ancestor.
 
 Pick a language and every label follows — no remount:
 
@@ -315,10 +315,29 @@ document.documentElement.lang = 'fr';
 Ambient switching only applies when `I18nProvider` has no explicit `locale`. To drive it from state:
 
 ```tsx
-const [locale, setLocale] = useState<'en' | 'es' | 'fr'>('en');
+import { useState, type ReactNode } from 'react';
+import { I18nProvider } from '@videojs/react/i18n';
 
-<I18nProvider locale={locale}>{/* player */}</I18nProvider>
+export default function LocaleSwitcher({ children }: { children: ReactNode }) {
+  const [locale, setLocale] = useState<'en' | 'es' | 'fr'>('en');
+
+  return (
+    <>
+      <label>
+        Language
+        <select value={locale} onChange={(event) => setLocale(event.target.value as typeof locale)}>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+      </label>
+      <I18nProvider locale={locale}>{children}</I18nProvider>
+    </>
+  );
+}
 ```
+
+Wrap your player in `LocaleSwitcher`.
 
 Changing `locale` lazy-loads the pack, which can briefly show English. Preload the locales your picker offers:
 
@@ -337,12 +356,14 @@ const loaders = {
   fr: () => import('@videojs/react/i18n/locales/fr'),
 };
 
-async function switchTo(next: keyof typeof loaders) {
+async function switchTo(next: keyof typeof loaders, setLocale: (locale: keyof typeof loaders) => void) {
   const { default: translations } = await loaders[next]();
   registerI18n(next, translations);
   setLocale(next);
 }
 ```
+
+Call `switchTo(next, setLocale)` from your language picker.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -430,6 +451,7 @@ Render the document language on the server (`<html lang="es">`) and make transla
 Import the pack on the server and pass it as `translations` so server-rendered labels and the first client render use the same strings. The provider can still load a locale pack on the client; the supplied strings take precedence:
 
 ```tsx
+import type { ReactNode } from 'react';
 import { I18nProvider } from '@videojs/react/i18n';
 
 const loaders = {
@@ -437,14 +459,14 @@ const loaders = {
   fr: () => import('@videojs/react/i18n/locales/fr'),
 };
 
-export async function Player({ locale }: { locale: string }) {
+export async function Player({ locale, children }: { locale: string; children: ReactNode }) {
   const load = loaders[locale as keyof typeof loaders];
   if (!load) throw new Error(`Unsupported locale: ${locale}`);
   const { default: translations } = await load();
 
   return (
     <I18nProvider locale={locale} translations={translations}>
-      {/* player */}
+      {children}
     </I18nProvider>
   );
 }

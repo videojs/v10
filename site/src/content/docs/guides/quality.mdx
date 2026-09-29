@@ -122,7 +122,7 @@ function PinLowestRendition() {
   const lowest = renditions
     .map((rendition, index) => ({ ...rendition, value: rendition.id || String(index) }))
     .sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
-  if (quality?.availability !== 'available' || !lowest) return null;
+  if (quality?.state.availability !== 'available' || !lowest) return null;
 
   return (
     <button type="button" onClick={() => store.selectVideoRendition(lowest.value)}>
