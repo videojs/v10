@@ -25,11 +25,11 @@ import basicUsageHtmlTs from '@/components/docs/demos/fullscreen-button/html/css
 ## Recommended approach
 
 <FrameworkCase frameworks={["react"]}>
-Add a <DocsLink slug="reference/components/fullscreen-button">FullscreenButton</DocsLink> inside the player container. It requests fullscreen on the container, so everything inside it — controls, captions, overlays — stays visible in the fullscreen presentation.
+Add a <DocsLink slug="reference/components/fullscreen-button">FullscreenButton</DocsLink> inside the player container. When element fullscreen is supported, it presents the whole container, including controls, captions, and overlays. On iPhone Safari, it uses the native video presentation instead.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Add a <DocsLink slug="reference/components/fullscreen-button">`<media-fullscreen-button>`</DocsLink> inside the player container. It requests fullscreen on the container, so everything inside it — controls, captions, overlays — stays visible in the fullscreen presentation.
+Add a <DocsLink slug="reference/components/fullscreen-button">`<media-fullscreen-button>`</DocsLink> inside the player container. When element fullscreen is supported, it presents the whole container, including controls, captions, and overlays. On iPhone Safari, it uses the native video presentation instead.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -67,6 +67,8 @@ Fullscreen and picture-in-picture are exclusive: requesting fullscreen exits an 
 
 Style fullscreen state through the container's `:fullscreen` pseudo-class, or through the `fullscreen` state in components.
 
+The built-in button hides when `fullscreenAvailability` is not `'available'`. Use the same check for custom controls and handle rejected requests. When the attached media has no supported fullscreen method, the action resolves without changing the presentation.
+
 ## Availability and constraints
 
 - Fullscreen requests must come from a user gesture; browsers reject requests outside one.
@@ -85,7 +87,7 @@ Add `orientationLockFeature` to lock screen orientation while the player is full
 Because the feature list changes, build the player yourself with <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
 
 ```tsx
-import { Container, createPlayer, orientationLockFeature } from '@videojs/react';
+import { Container, createPlayer, FullscreenButton, orientationLockFeature } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 const { Player } = createPlayer({
@@ -97,6 +99,7 @@ export default function App() {
     <Player>
       <Container>
         <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+        <FullscreenButton>Fullscreen</FullscreenButton>
       </Container>
     </Player>
   );
@@ -109,6 +112,27 @@ export default function App() {
 Add `orientationLockFeature` to lock screen orientation while the player is fullscreen. It isn't part of `videoFeatures`, so the preset `<video-player>` doesn't include it. It locks to `landscape` by default and unlocks on exit.
 
 Compose a player with `orientationLockFeature` in its feature list through <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink>; the prebuilt `<video-player>` element doesn't include it.
+
+```html
+<orientation-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+    <media-fullscreen-button>Fullscreen</media-fullscreen-button>
+  </media-container>
+</orientation-player>
+<script type="module">
+  import { createPlayer, orientationLockFeature } from '@videojs/html';
+  import { videoFeatures } from '@videojs/html/video';
+  import '@videojs/html/ui/container';
+  import '@videojs/html/ui/fullscreen-button';
+
+  const { PlayerElement } = createPlayer({
+    features: [...videoFeatures, orientationLockFeature],
+  });
+
+  customElements.define('orientation-player', PlayerElement);
+</script>
+```
 
 </FrameworkCase>
 
@@ -152,7 +176,7 @@ Use the `<media-gesture>` element — the default skins ship this exact binding.
 
 ### The fullscreen request is rejected
 
-The request didn't come from a user gesture, fullscreen is unsupported, or an embedding iframe lacks `allow="fullscreen"`.
+Call the action directly from a click handler and check that an embedding iframe permits fullscreen with `allow="fullscreen"`. Handle the returned promise's rejection. To detect unsupported fullscreen, check `fullscreenAvailability`; an unsupported request can resolve without entering fullscreen.
 
 ### Custom controls disappear in fullscreen on iPhone
 
