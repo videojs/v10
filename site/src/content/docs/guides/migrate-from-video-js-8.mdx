@@ -568,7 +568,7 @@ You can also write to the media element directly. That is safe because player st
 | `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
 | `player.error()` | `error` in player state |
 | `player.dispose()` | unmount the component |
-| `player.tech()` | the media component's public `engine` escape hatch, where one exists; reach it through `useMedia()` |
+| `player.tech()` | the media component's public `engine` escape hatch, where one exists; reach it through `useMedia()` and its guard. See <DocsLink slug="guides/media-sources" anchor="reach-the-running-engine">Reach the running engine</DocsLink> |
 | `videojs.getPlayer(id)` | call `usePlayer` from a component inside the player |
 </FrameworkCase>
 
@@ -586,7 +586,7 @@ You can also write to the media element directly. That is safe because player st
 | `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
 | `player.error()` | `error` in player state |
 | `player.dispose()` | remove the element |
-| `player.tech()` | the media component's public `engine` escape hatch, where one exists |
+| `player.tech()` | the media component's public `engine` escape hatch, where one exists. See <DocsLink slug="guides/media-sources" anchor="reach-the-running-engine">Reach the running engine</DocsLink> |
 | `videojs.getPlayer(id)` | hold a reference to the element |
 </FrameworkCase>
 
