@@ -301,9 +301,11 @@ export const sidebar: Sidebar = [
           { slug: 'reference/api/player-controller', frameworks: ['html'] },
           { slug: 'reference/api/use-player', frameworks: ['react'] },
           { slug: 'reference/api/use-optional-player', frameworks: ['react'] },
+          { slug: 'reference/api/use-media', frameworks: ['react'] },
           { slug: 'reference/api/use-container', frameworks: ['react'] },
           { slug: 'reference/api/use-optional-container', frameworks: ['react'] },
           { slug: 'reference/api/use-container-attach', frameworks: ['react'] },
+          { slug: 'reference/api/media-capabilities', sidebarLabel: 'Media capability guards' },
         ],
       },
       {
