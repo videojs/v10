@@ -430,11 +430,12 @@ function main(): void {
   }
 
   if (fix) {
-    const byFile = Map.groupBy(
-      violations.filter((record) => record.hasSource),
-      (record) => record.file
-    );
+    const byFile = new Map<string, PublicExport[]>();
     let fixed = 0;
+
+    for (const record of violations) {
+      if (record.hasSource) byFile.set(record.file, [...(byFile.get(record.file) ?? []), record]);
+    }
 
     for (const [file, records] of byFile)
       fixed += fixSourceFile(
