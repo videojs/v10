@@ -92,7 +92,7 @@ import '@videojs/html/video/minimal-skin';
 
 - The skin attaches its styles automatically to its shadow root.
 - The poster moves from `data-poster` on the media to `poster` on `<video-player>`. The skin reads that value and controls how the poster appears. For more advanced control (like supplying your own image element), see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
-- There's also a default skin with a modern, frosted appearance that some may prefer. Try it by removing the `-minimal` suffix from the script `src` if you're using the CDN, or the `minimal-` prefix from the imports.
+- To use the Default skin, change `<video-minimal-skin>` to `<video-skin>`. For the CDN, use `video.js`; for a bundler, import `@videojs/html/video/skin`.
 
 </FrameworkCase>
 
@@ -112,17 +112,13 @@ Then create a reusable player component in your app:
 import '@videojs/react/video/minimal-skin.css';
 import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
 
-interface AppVideoPlayerProps {
-  origin: string;
-}
-
-export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
+export function AppVideoPlayer() {
   return (
-    <VideoPlayer poster={`${origin}/poster.jpg`}>
+    <VideoPlayer poster="/path/to/poster.jpg">
       <MinimalVideoSkin className="app-video-player" style={{ aspectRatio: '16 / 9' }}>
-        <Video src={`${origin}/video.mp4`} playsInline>
-          <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srcLang="en" default />
-          <track kind="metadata" label="thumbnails" src={`${origin}/storyboard.vtt`} default />
+        <Video src="/path/to/video.mp4" playsInline>
+          <track kind="captions" label="English" src="/path/to/captions/en.vtt" srcLang="en" default />
+          <track kind="metadata" label="thumbnails" src="/path/to/storyboard.vtt" default />
         </Video>
       </MinimalVideoSkin>
     </VideoPlayer>
@@ -134,11 +130,11 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 
 - `@videojs/react/video` is a <DocsLink slug="guides/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="guides/features">features</DocsLink> for video.
 - The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin — see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
-- Replace `origin` and the example filenames with your existing asset paths.
-- If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink>.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
 
 </FrameworkCase>
+
+If captions or thumbnail tracks use a different origin from the page, enable CORS on the media (`crossorigin="anonymous"` in HTML; `crossOrigin="anonymous"` in React) and serve the media and track files with appropriate CORS headers. See <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink>.
 
 ## Map common features
 
@@ -416,7 +412,7 @@ Move media options to attributes or props. For controls and interactions, use a 
 | `captions` | Add `<track kind="captions">` or `<track kind="subtitles">`; preset skins show captions controls when tracks are available. |
 | `previewThumbnails` | Add `<track kind="metadata" label="thumbnails">`; preset video skins show slider thumbnails when thumbnail cues are available. |
 | `quality` | Works when the media provider exposes renditions. Plain MP4 source arrays do not currently become a quality menu automatically. |
-| `speed` | Included in the preset settings menu when playback rates are available. |
+| `speed` | The preset settings menu uses a fixed rate list; `speed.options` does not carry over. See [Known gaps](#known-gaps). |
 | `fullscreen` | Native fullscreen is supported; Plyr's full-window fallback is not a matching feature. |
 | `provider: 'vimeo'` | Use the Vimeo media component inside the player skin as shown in [Vimeo](#vimeo) above. |
 | `provider: 'youtube'` | Use the YouTube media component inside the player skin as shown in [YouTube](#youtube) above. |
@@ -446,7 +442,7 @@ Use store actions for playback, seeking, volume, fullscreen, and captions. For a
 |---|---|
 | `player.play()`, `player.pause()` | `play()`, `pause()`, or `togglePaused()` |
 | `player.currentTime = 10` | `seek(10)` |
-| `player.volume = 0.5` | `setVolume(0.5)` |
+| `player.volume = 0.5` | `media.volume = 0.5`; `setVolume(0.5)` also unmutes |
 | `player.muted = true` | `media.muted = true` on the attached media |
 | `player.speed = 1.5` | `setPlaybackRate(1.5)` |
 | `player.fullscreen.enter()` | `requestFullscreen()` |
@@ -536,12 +532,13 @@ video-player {
 
 ## Edit skin source
 
-For changes to controls, layout, or icons, add the skin source to your project. Its components and styles become local files. <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> covers the setup and available skins.
+For changes to controls, layout, or icons, add the skin source to your project. Its TypeScript components and styles become local files that need a build step. A CDN-only page must add one to use this source. <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> covers the setup and available skins.
 
 ## Known gaps
 
 - Plyr's `ads` option has no built-in equivalent.
-- Plyr's `storage` option has no built-in equivalent for persisted volume, captions language, muted state, speed, or quality. Player setting persistence is tracked in [#944](https://github.com/videojs/v10/issues/944); subtitle language preference is tracked in [#1423](https://github.com/videojs/v10/issues/1423).
+- Plyr's `storage` option has no built-in equivalent for persisted volume, captions language, muted state, speed, or quality. Player setting persistence is tracked in [#944](https://github.com/videojs/v10/issues/944); subtitle language preference is tracked in [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
+- Playback rates are fixed at `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, and `2`. Plyr's `speed.options` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - Plyr's full-window fullscreen fallback has no matching Video.js feature. Test fullscreen on your supported browsers; see <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
 - Plain MP4 source arrays with `size` metadata do not automatically create a quality menu. Use Mux, HLS, or DASH for adaptive quality when possible. A simpler source-driven quality menu may be considered later.
 - Preset skins segment the time slider and show chapter titles when the media includes a default `<track kind="chapters">`. Dedicated cue-point APIs are not complete yet; see [#1442](https://github.com/videojs/v10/issues/1442).

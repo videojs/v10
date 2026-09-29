@@ -406,7 +406,7 @@ video-player {
 
 ### Level 3: edit skin source
 
-To migrate `controlBar`, `addChild`, or custom component layouts, add the closest skin's source to your project. Follow <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> for installation and file locations.
+To migrate `controlBar`, `addChild`, or custom component layouts, add the closest skin's source to your project. The installed TypeScript and styles need a build step; a CDN-only page must add one to use this source. Follow <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> for installation and file locations.
 
 <FrameworkCase frameworks={["html"]}>
 Keep the player and media imports. Replace the packaged skin import with the installed `skin.ts` module, then use the markup from `skin.html` around your media. The module registers the elements and loads the local stylesheet.
@@ -439,7 +439,7 @@ Audit your plugins and sort them into four piles:
 
 That last pile is the honest risk in a v8 migration. If your player depends on an ads plugin, there's no v10 answer today.
 
-## Read player state
+## Read and control the player
 
 ### Events
 
@@ -455,7 +455,13 @@ const video = document.querySelector('video');
 video.addEventListener('timeupdate', () => console.log(video.currentTime));
 ```
 
-One category doesn't survive that translation, because those were never media events. v8's UI events (`useractive`, `userinactive`, `playerresize`, `texttrackchange`) were the player's own. Read the equivalent from player state instead.
+Map v8's player-specific events separately:
+
+| Video.js 8 event | Video.js v10 |
+|---|---|
+| `useractive`, `userinactive` | Read `userActive` from player state; use `controlsVisible` for whether controls are shown. |
+| `texttrackchange` | Read `textTrackList` from player state. |
+| `playerresize` | Observe your skin or container with `ResizeObserver`. There is no player size state. |
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -502,7 +508,7 @@ Replace v8 accessor methods with player state for reads and store actions or med
 | `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
 | `player.currentTime()` / `player.currentTime(10)` | `currentTime` in player state, the player's `seek(10)`, or `media.currentTime` |
 | `player.duration()` | `duration` in player state, or `media.duration` |
-| `player.volume()` / `player.volume(0.5)` | `volume` in player state / the player's `setVolume(0.5)` |
+| `player.volume()` / `player.volume(0.5)` | `volume` in player state / `media.volume = 0.5` |
 | `player.muted()` / `player.muted(true)` | `muted` in player state / `media.muted = true` |
 | `player.playbackRate()` / `player.playbackRate(1.5)` | `playbackRate` in player state / the player's `setPlaybackRate(1.5)` |
 | `player.src({ src, type })` | set `src` on the media or replace the media component (`Video`, `HlsJsVideo`, `DashVideo`, etc) |
@@ -521,7 +527,7 @@ Replace v8 accessor methods with player state for reads and store actions or med
 | `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
 | `player.currentTime()` / `player.currentTime(10)` | `currentTime` in player state, the player's `seek(10)`, or `media.currentTime` |
 | `player.duration()` | `duration` in player state, or `media.duration` |
-| `player.volume()` / `player.volume(0.5)` | `volume` in player state / the player's `setVolume(0.5)` |
+| `player.volume()` / `player.volume(0.5)` | `volume` in player state / `media.volume = 0.5` |
 | `player.muted()` / `player.muted(true)` | `muted` in player state / `media.muted = true` |
 | `player.playbackRate()` / `player.playbackRate(1.5)` | `playbackRate` in player state / the player's `setPlaybackRate(1.5)` |
 | `player.src({ src, type })` | set `src` on the media or replace the media element (`<video>` tag, `<hlsjs-video>`, `<dash-video>`, etc) |
@@ -535,18 +541,28 @@ Replace v8 accessor methods with player state for reads and store actions or med
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Everything the table describes as "the player's" lives on the player element's store. Hold a reference to `<video-player>` the way you held a v8 player instance, and call actions on its `store.state`:
+Everything the table describes as "the player's" lives on the player element's store. Call actions on `store.state` after media attachment. Fullscreen requests must run from a user interaction:
 
-```js
-const player = document.querySelector('video-player');
+```html
+<button id="toggle-fullscreen" type="button">Toggle fullscreen</button>
 
-player.store.state.toggleFullscreen();
+<script type="module">
+  await customElements.whenDefined('video-player');
+  const player = document.querySelector('video-player');
+
+  document.querySelector('#toggle-fullscreen').addEventListener('click', () => {
+    if (!player.store.target) return;
+    player.store.state.toggleFullscreen();
+  });
+</script>
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, `useMedia` returns the Video.js media object.
 </FrameworkCase>
+
+`setVolume(value)` also unmutes when `value` is above zero. Use `media.volume = value` to preserve the current mute state.
 
 Swapping sources is the change most likely to surprise you. There's no `player.src()`; you set `src` on the media element, or replace the media element entirely, and the UI follows. Changing formats is changing tags.
 
@@ -555,24 +571,28 @@ Swapping sources is the change most likely to surprise you. There's no `player.s
 Video.js defaults to English and ships locale packs that load on demand. Select the locale and move `videojs.addLanguage` overrides into the i18n registry or provider. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>.
 
 <FrameworkCase frameworks={["html"]}>
-To migrate `language: 'ja'`, import `@videojs/html/i18n` and wrap your player in `<media-i18n lang="ja">`.
+To migrate `language: 'ja'`, load the i18n module and wrap your player in `<media-i18n lang="ja">`. If v8 inherited the nearest `lang` attribute, use `<media-i18n>` without `lang` to keep that behavior.
 
-To override individual strings:
+For a CDN page, register string overrides in a module script:
 
-```js
-import { registerI18n } from '@videojs/html/i18n';
+```html
+<script type="module">
+  import { registerI18n } from '{{VJS10_CDN_BASE}}/i18n.js';
 
-registerI18n('en', {
-  buttons: { play: 'Start video', pause: 'Pause video' },
-  menu: { settings: 'Options' },
-});
+  registerI18n('en', {
+    buttons: { play: 'Start video', pause: 'Pause video' },
+    menu: { settings: 'Options' },
+  });
+</script>
 ```
+
+With a bundler, import `registerI18n` from `@videojs/html/i18n` instead. Loading either module also registers `<media-i18n>`.
 
 See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink> for scoped overrides, custom locales, and runtime switching.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-To migrate `language: 'ja'`, wrap your player in <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> with `locale="ja"`. To override individual strings, pass `translations`:
+To migrate `language: 'ja'`, wrap your player in <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> with `locale="ja"`. To follow `<html lang>`, omit `locale`. For a nearer `lang` on a player wrapper, pass its ref as `langRootRef`. To override individual strings, pass `translations`:
 
 ```tsx
 import { I18nProvider } from '@videojs/react/i18n';
@@ -679,7 +699,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — so v8's `playbackRates` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - No text-track settings dialog equivalent to v8's `textTrackSettings`. You can still style browser-rendered cues with `::cue`; see <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
-- Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
+- Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the lightweight HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom layout or a skin layout in your project.

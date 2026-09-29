@@ -178,7 +178,7 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
 | `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
 | `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
-| `lang` | i18n translator | Localization is configured through the <DocsLink slug="guides/internationalization">translator and locale registry</DocsLink>. |
+| `lang` | `I18nProvider` | Wrap the player in `I18nProvider` and pass `locale`. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>. |
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -200,7 +200,7 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
 | `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
 | `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
-| `lang` | i18n translator | Localization is configured through the <DocsLink slug="guides/internationalization">translator and locale registry</DocsLink>. |
+| `lang` | `<media-i18n>` | Load the i18n module and wrap the player in `<media-i18n lang="…">`. See <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>. |
 </FrameworkCase>
 
 ### Hotkeys
@@ -410,12 +410,20 @@ React skins do not use Shadow DOM. Use `render` props when you build individual 
 Use store actions such as `play`, `togglePaused`, `seek`, `setVolume`, and `toggleFullscreen` to control playback and UI state.
 
 <FrameworkCase frameworks={["html"]}>
-Hold a reference to the player element and call actions on its store:
+Call actions on the player element's store after media attachment. Fullscreen requests must run from a user interaction:
 
-```js
-const player = document.querySelector('video-player');
+```html
+<button id="toggle-fullscreen" type="button">Toggle fullscreen</button>
 
-player.store.state.toggleFullscreen();
+<script type="module">
+  await customElements.whenDefined('video-player');
+  const player = document.querySelector('video-player');
+
+  document.querySelector('#toggle-fullscreen').addEventListener('click', () => {
+    if (!player.store.target) return;
+    player.store.state.toggleFullscreen();
+  });
+</script>
 ```
 </FrameworkCase>
 
@@ -427,8 +435,7 @@ import { usePlayer } from '@videojs/react/video';
 
 function FullscreenShortcut() {
   const toggleFullscreen = usePlayer((state) => state.toggleFullscreen);
-  // Call toggleFullscreen() from your own UI.
-  return null;
+  return <button type="button" onClick={() => toggleFullscreen()}>Toggle fullscreen</button>;
 }
 ```
 </FrameworkCase>
@@ -473,13 +480,20 @@ Set `visibility="always"` on `media-controls` and the controls stay visible rega
 
 ### Breakpoints
 
-The skin root is an inline-size container named `media-root`, so write responsive styles with container queries instead of `breakpoints` attributes. This is exactly how the built-in skins adapt:
+For custom UI, add a class to your container and another to the controls you want to change. Define and query your own CSS container:
 
 ```css
-@container media-root (width > 40rem) {
-  .media-controls { /* wide layout */ }
+.app-player-container {
+  container-type: inline-size;
+  container-name: app-player;
+}
+
+@container app-player (width > 40rem) {
+  .app-player-controls { /* your wide layout */ }
 }
 ```
+
+Packaged HTML skin controls are inside Shadow DOM; external selectors cannot reach them. React skin selectors are private. To change a packaged skin's responsive layout, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add its source to your project</DocsLink> and edit the container queries in its local styles.
 
 ### Default duration
 

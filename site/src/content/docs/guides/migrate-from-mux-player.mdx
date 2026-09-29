@@ -214,7 +214,7 @@ If you leave out `<video-skin>` to build your own UI, add a <DocsLink slug="refe
 
 <FrameworkCase frameworks={["react"]}>
 <Aside type="note">
-Put standard media handlers such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `MuxVideo`. Use <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> for player-store state. See [Read player state](#read-player-state).
+Put standard media handlers such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `MuxVideo`. Use <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> for player-store state. See [Read and control the player](#read-and-control-the-player).
 </Aside>
 </FrameworkCase>
 
@@ -303,7 +303,7 @@ Here's where the Mux Player attributes land:
 | `playback-token` | `source.playback.token` |
 | `thumbnail-token`, `storyboard-token` | `source.poster.token`, `source.storyboard.token` |
 | `drm-token` | `source.drm.token` |
-| `thumbnail-time` | `source.poster.time` |
+| `thumbnail-time` | `poster-time` on `<mux-video>`, or `source.poster.time` |
 | poster size, crop, rotation, format | `source.poster.width`, `.height`, `.fitMode`, `.rotate`, `.ext` |
 </FrameworkCase>
 
@@ -346,7 +346,7 @@ Mux Player's analytics settings become attributes or properties on the <DocsLink
 | `disable-cookies` | `disable-cookies` |
 | `beacon-collection-domain` | `beacon-collection-domain` |
 | `player-software-name`, `player-software-version` | `player-software-name`, `player-software-version` |
-| `debug` | the `debug` property |
+| `debug` | the `debug` attribute or property |
 | `disable-tracking` | omit the component |
 
 `metadata` is a property rather than an attribute because an object has no sensible string form.
@@ -437,7 +437,7 @@ A generated poster becomes available after `MuxVideo` mounts. Pass `poster` to `
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-player poster="https://image.mux.com/YOUR_PLAYBACK_ID/thumbnail.webp?time=2">
+<video-player>
   <video-skin>
     <mux-video src="https://stream.mux.com/YOUR_PLAYBACK_ID.m3u8"></mux-video>
     <img
@@ -449,12 +449,12 @@ A generated poster becomes available after `MuxVideo` mounts. Pass `poster` to `
 </video-player>
 ```
 
-The player supplies the full poster. Replace `/placeholder.webp` with your existing placeholder image URL or data URL; the slotted image shows it while the poster loads.
+The Mux media supplies the full poster from its source, including poster settings and any thumbnail token. Replace `/placeholder.webp` with your existing placeholder image URL or data URL; the slotted image shows it while the poster loads.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```jsx
-<VideoPlayer poster="https://image.mux.com/YOUR_PLAYBACK_ID/thumbnail.webp?time=2">
+<VideoPlayer>
   <VideoSkin
     renderPoster={
       <img
@@ -468,7 +468,7 @@ The player supplies the full poster. Replace `/placeholder.webp` with your exist
 </VideoPlayer>
 ```
 
-`renderPoster` customizes the poster image. Replace `/placeholder.webp` with your existing placeholder image URL or data URL to show it while the full poster loads.
+`renderPoster` customizes the image while preserving the poster URL from the Mux source, including any thumbnail token. Replace `/placeholder.webp` with your existing placeholder image URL or data URL to show it while the full poster loads.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -476,7 +476,7 @@ Mux serves the poster from its `thumbnail` endpoint, and `source.poster` configu
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Mux serves the poster from its `thumbnail` endpoint, and `source.poster` configures that URL: `thumbnail-time` is `source.poster.time`, and the size, crop, rotation, and format options are `width`, `height`, `fitMode`, `rotate`, and `ext` beside it. Video.js converts those camel-case keys to the `snake_case` query parameters Mux expects. See <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> for more examples or the <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink> reference for the element itself.
+Mux serves the poster from its `thumbnail` endpoint, and `source.poster` configures that URL: `thumbnail-time` maps to `poster-time` on `<mux-video>` or `source.poster.time`, and the size, crop, rotation, and format options are `width`, `height`, `fitMode`, `rotate`, and `ext` beside it. Video.js converts those camel-case keys to the `snake_case` query parameters Mux expects. See <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink> for more examples or the <DocsLink slug="reference/components/poster">`<media-poster>`</DocsLink> reference for the element itself.
 </FrameworkCase>
 
 ## Customize your player
@@ -525,15 +525,24 @@ The skins use a different visual design, so you may not need to replace Mux Play
 
 ### Level 3: edit skin source
 
-For changes to controls, layout, or interactions, add the skin source to your project. Its components and styles become local files. <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> covers the setup and available skins.
+For changes to controls, layout, or interactions, add the skin source to your project. Its TypeScript components and styles become local files that need a build step. A CDN-only page must add one to use this source. <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink> covers the setup and available skins.
 
-To migrate seek-offset settings, edit the installed skin's hotkey and gesture declarations:
+<FrameworkCase frameworks={["html"]}>
+To migrate `forward-seek-offset` and `backward-seek-offset`, edit the installed skin's hotkey and gesture declarations:
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+To migrate `forwardSeekOffset` and `backwardSeekOffset`, edit the installed skin's hotkey and gesture declarations:
+</FrameworkCase>
+
+These examples use 30 seconds forward and backward. Use your existing offsets:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
 <media-hotkey keys="ArrowRight" action="seekStep" value="30"></media-hotkey>
 <media-hotkey keys="ArrowLeft" action="seekStep" value="-30"></media-hotkey>
 <media-gesture type="doubletap" action="seekStep" value="30" region="right"></media-gesture>
+<media-gesture type="doubletap" action="seekStep" value="-30" region="left"></media-gesture>
 ```
 </FrameworkCase>
 
@@ -542,6 +551,7 @@ To migrate seek-offset settings, edit the installed skin's hotkey and gesture de
 <Hotkey keys="ArrowRight" action="seekStep" value={30} />
 <Hotkey keys="ArrowLeft" action="seekStep" value={-30} />
 <Gesture type="doubletap" action="seekStep" value={30} region="right" />
+<Gesture type="doubletap" action="seekStep" value={-30} region="left" />
 ```
 </FrameworkCase>
 
@@ -549,7 +559,7 @@ While you're in there: neither packaged video skin includes skip *buttons*. Mux 
 
 To remove a control, remove it and its tooltip wrapper from the local controls layout.
 
-## Read player state
+## Read and control the player
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -594,13 +604,46 @@ Use a ref for imperative browser media APIs or for custom events that do not hav
 |---|---|
 | `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
 | `player.currentTime = 10` | the player's `seek(10)`, or `media.currentTime = 10` |
-| `player.volume` | `volume` in player state; write with `setVolume(value)` or `media.volume = value` |
+| `player.volume` | `volume` in player state; write with `media.volume = value` to preserve mute state; `setVolume(value)` also unmutes for values above zero |
 | `player.muted` | `muted` in player state; write with `media.muted = value` |
 | `player.playbackRate` | the player's `setPlaybackRate`, or `media.playbackRate` |
 | `player.requestFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
 | `player.addChapters([…])` | a `<track kind="chapters">`, covered below |
 
-Access the store actions through the player state APIs above. Standard media properties also update player state through media events. Use `toggleMuted()` for a toggle interaction; set `media.muted` when you need a specific value.
+Standard media properties update player state through media events. Use `toggleMuted()` for a toggle interaction; set `media.muted` when you need a specific value.
+
+<FrameworkCase frameworks={["html"]}>
+Call actions on the player element's `store.state` after media attachment. For example, wire seeking to a button:
+
+```html
+<button id="seek-to-ten" type="button">Seek to 10 seconds</button>
+
+<script type="module">
+  await customElements.whenDefined('video-player');
+  const player = document.querySelector('video-player');
+
+  document.querySelector('#seek-to-ten').addEventListener('click', () => {
+    if (!player.store.target) return;
+    player.store.state.seek(10);
+  });
+</script>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Select actions with `usePlayer` in a descendant of `VideoPlayer` and call them from your UI:
+
+```tsx
+import { usePlayer } from '@videojs/react/video';
+
+function SeekToTen() {
+  const seek = usePlayer((state) => state.seek);
+  return <button type="button" onClick={() => seek(10)}>Seek to 10 seconds</button>;
+}
+```
+</FrameworkCase>
+
+Actions throw before media attachment. Call fullscreen actions from a user interaction.
 
 ## Which Mux media should you use?
 
@@ -762,7 +805,7 @@ On a video player, the settings menu appears on its own when there's something t
 | Captions | <DocsLink slug="reference/components/captions-radio-group">Captions radio group</DocsLink> | Rendered by the browser. |
 | Speed | <DocsLink slug="reference/components/playback-rate-radio-group">Playback rate radio group</DocsLink> | The rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — and you can't choose your own yet ([#1404](https://github.com/videojs/v10/issues/1404)). |
 
-Video.js has no viewer-facing text-track settings dialog. You can style browser-rendered captions with `::cue`, and the skins expose positioning custom properties. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
+Video.js has no viewer-facing text-track settings dialog. You can style browser-rendered captions with `::cue`. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 
 ## Chapters and cue points
 
@@ -871,7 +914,7 @@ Ordered roughly by how many migrations they'll touch.
 - Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer skins whose files you can add to your project, but it's a real difference if you shipped `theme="classic"`.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
 - The controls auto-hide delay isn't configurable ([#1728](https://github.com/videojs/v10/issues/1728)). Always-visible controls are available through `visibility="always"` on the controls component in a custom layout or a skin layout in your project.
-- Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide.
+- Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide. For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - Smaller conveniences without homes yet: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)). Unmuting from zero volume already restores a sensible level, so Mux Player's smart-unmute behavior carries over.
 
 ## See also
