@@ -298,7 +298,6 @@ export const sidebar: Sidebar = [
         contents: [
           { slug: 'reference/api/create-player', frameworks: ['react'] },
           { slug: 'reference/api/html-create-player', sidebarLabel: 'createPlayer', frameworks: ['html'] },
-          { slug: 'reference/api/player-store', sidebarLabel: 'Store' },
           { slug: 'reference/api/player-controller', frameworks: ['html'] },
           { slug: 'reference/api/use-player', frameworks: ['react'] },
           { slug: 'reference/api/use-optional-player', frameworks: ['react'] },
@@ -315,6 +314,7 @@ export const sidebar: Sidebar = [
           html: 'API reference for reading and subscribing to player state: selectors and the store controllers.',
         },
         contents: [
+          { slug: 'reference/api/player-store', sidebarLabel: 'Overview' },
           { slug: 'reference/api/create-selector' },
           { slug: 'reference/api/use-store', frameworks: ['react'] },
           { slug: 'reference/api/use-selector', frameworks: ['react'] },
