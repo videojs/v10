@@ -53,7 +53,6 @@ Load the video <DocsLink slug="guides/presets">preset</DocsLink> from the CDN an
   <video-skin style="aspect-ratio: 16 / 9">
     <video src="/video.mp4" preload="auto" playsinline>
       <track kind="captions" src="/captions/en.vtt" srclang="en" label="English" default />
-      <track kind="metadata" src="/storyboard.vtt" label="thumbnails" default />
     </video>
   </video-skin>
 </video-player>
@@ -130,10 +129,7 @@ export function MyPlayer() {
   return (
     <VideoPlayer poster="/poster.jpg">
       <VideoSkin className="app-video-player" style={{ aspectRatio: '16 / 9' }}>
-        <Video src="/video.mp4" preload="auto" playsInline>
-          <track kind="captions" src="/captions/en.vtt" srcLang="en" label="English" default />
-          <track kind="metadata" src="/storyboard.vtt" label="thumbnails" default />
-        </Video>
+        <Video src="/video.mp4" preload="auto" playsInline />
       </VideoSkin>
     </VideoPlayer>
   );
