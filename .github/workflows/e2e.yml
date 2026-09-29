@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'release-please--branches--main'
   pull_request:
     types: [opened, labeled, synchronize]
 
@@ -13,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Pull requests run the browser suites when they touch code the suites render; the `test:e2e` label forces them.
+  # Pull requests run the browser suites when they touch code the suites render; the `test:e2e` label forces them. The
+  # release pull request only bumps versions and changelogs on top of `main`, whose push already ran every suite.
   changes:
     name: Changed areas
     if: github.event_name == 'pull_request'
@@ -28,7 +28,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
+          if [ "$HEAD_REF" = 'release-please--branches--main' ]; then
+            printf 'player=false\nskins=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           files=$(gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate --jq '.[].filename')
           flag() {
             if grep -Eq "$2" <<<"$files"; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi
