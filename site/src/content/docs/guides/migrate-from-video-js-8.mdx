@@ -83,7 +83,7 @@ v10 ships web components, so the migration keeps its declarative feel. One scrip
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 
 <video-player poster="/poster.jpg">
-  <video-skin class="aspect-video">
+  <video-skin style="aspect-ratio: 16 / 9">
     <video src="/video.mp4" preload="auto" playsinline>
       <track kind="captions" src="/captions/en.vtt" srclang="en" label="English" default />
       <track kind="metadata" src="/storyboard.vtt" label="thumbnails" default />
@@ -92,7 +92,11 @@ v10 ships web components, so the migration keeps its declarative feel. One scrip
 </video-player>
 ```
 
-With a bundler, the same thing is two imports:
+With a bundler, install the HTML package and import the player and skin:
+
+```bash
+npm install @videojs/html
+```
 
 ```js
 import '@videojs/html/video/player';
@@ -158,9 +162,9 @@ import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
 export function MyPlayer() {
   return (
     <VideoPlayer poster="/poster.jpg">
-      <VideoSkin className="aspect-video">
+      <VideoSkin className="app-video-player" style={{ aspectRatio: '16 / 9' }}>
         <Video src="/video.mp4" preload="auto" playsInline>
-          <track kind="captions" src="/captions/en.vtt" srclang="en" label="English" default />
+          <track kind="captions" src="/captions/en.vtt" srcLang="en" label="English" default />
           <track kind="metadata" src="/storyboard.vtt" label="thumbnails" default />
         </Video>
       </VideoSkin>
@@ -192,13 +196,24 @@ The v8 options object is gone, and its contents scattered in four directions. Th
 
 ### Media attributes
 
-Port these across untouched. They're native attributes and always were.
+Move native media settings onto the media component.
 
+<FrameworkCase frameworks={["html"]}>
 | Video.js 8 | Video.js v10 |
 |---|---|
 | `autoplay`, `muted`, `loop`, `preload`, `playsinline`, `crossorigin` | the same attributes on your media |
 | `sources: [{ src, type }]` | `src`, or `<source>` children for progressive fallback |
-| `disablePictureInPicture` | `disablepictureinpicture` |
+| `disablePictureInPicture` | `disablepictureinpicture` on your media |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+| Video.js 8 | Video.js v10 |
+|---|---|
+| `autoplay`, `playsinline`, `crossorigin` | `autoPlay`, `playsInline`, `crossOrigin` on your media |
+| `muted`, `loop`, `preload` | the same props on your media |
+| `sources: [{ src, type }]` | `src`, or `<source>` children for progressive fallback |
+| `disablePictureInPicture` | `disablePictureInPicture` on your media |
+</FrameworkCase>
 
 ### Player metadata
 
@@ -302,7 +317,7 @@ Each needs its own import.
 Package-manager installations also need the matching media package. The lightweight HLS component shown below uses
 `@videojs/spf`; the hls.js component uses `@videojs/hlsjs-video`; Mux video and audio use `@videojs/mux-video` and
 `@videojs/mux-audio`; DASH uses `@videojs/dash-video`; Vimeo uses `@videojs/vimeo-video`; and Shaka and Wistia use
-`@videojs/shaka-video` and `@videojs/wistia-video`.
+`@videojs/shaka-video` and `@videojs/wistia-video`. YouTube uses `@videojs/youtube-video`.
 
 <FrameworkCase frameworks={["html"]}>
 For HLS from the CDN:
@@ -374,11 +389,25 @@ v8 customization meant writing selectors against internal class names and hoping
   background-color: rebeccapurple;
 }
 
-/* Video.js v10 */
+```
+
+<FrameworkCase frameworks={["html"]}>
+```css
+/* Video.js HTML */
 video-player {
   --media-accent-color: rebeccapurple;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+/* The className on VideoSkin in the first example */
+.app-video-player {
+  --media-accent-color: rebeccapurple;
+}
+```
+</FrameworkCase>
 
 `--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="guides/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> has the full list.
 

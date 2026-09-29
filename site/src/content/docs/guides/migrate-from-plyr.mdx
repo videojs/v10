@@ -65,7 +65,7 @@ The easiest path is the CDN:
 <script type="module" src="{{VJS10_CDN_BASE}}/video-minimal.js"></script>
 
 <video-player poster="/path/to/poster.jpg">
-  <video-minimal-skin>
+  <video-minimal-skin style="aspect-ratio: 16 / 9">
     <video src="/path/to/video.mp4" playsinline>
       <track kind="captions" label="English" src="/path/to/captions/en.vtt" srclang="en" default />
       <track kind="metadata" label="thumbnails" src="/path/to/storyboard.vtt" default />
@@ -74,7 +74,11 @@ The easiest path is the CDN:
 </video-player>
 ```
 
-If you prefer not to use the CDN, you can use the individual modules:
+For a bundler installation, install the HTML package and import the player and skin:
+
+```bash
+npm install @videojs/html
+```
 
 ```js
 import '@videojs/html/video/player';
@@ -112,9 +116,9 @@ interface AppVideoPlayerProps {
 export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
   return (
     <VideoPlayer poster={`${origin}/poster.jpg`}>
-      <MinimalVideoSkin className="app-video-player">
+      <MinimalVideoSkin className="app-video-player" style={{ aspectRatio: '16 / 9' }}>
         <Video src={`${origin}/video.mp4`} playsInline>
-          <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srclang="en" default />
+          <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srcLang="en" default />
           <track kind="metadata" label="thumbnails" src={`${origin}/storyboard.vtt`} default />
         </Video>
       </MinimalVideoSkin>
@@ -257,7 +261,17 @@ YouTube is supported through a first-class media component.
 
 <FrameworkCase frameworks={["html"]}>
 
-Replace `<video>` with `<youtube-video>` and add the module import:
+Replace `<video>` with `<youtube-video>`. For a CDN installation, add the media script:
+
+```html
+<script type="module" src="{{VJS10_CDN_BASE}}/media/youtube-video.js"></script>
+```
+
+For a bundler installation, install the adapter package and add the module import:
+
+```bash
+npm install @videojs/html @videojs/youtube-video
+```
 
 ```js
 import '@videojs/html/media/youtube-video';
@@ -275,7 +289,11 @@ import '@videojs/html/media/youtube-video';
 
 <FrameworkCase frameworks={["react"]}>
 
-Replace `<Video>` with `<YouTubeVideo>` and add the import:
+Replace `<Video>` with `<YouTubeVideo>`, install the adapter package, and add the import:
+
+```bash
+npm install @videojs/react @videojs/youtube-video
+```
 
 ```js
 import { YouTubeVideo } from '@videojs/react/media/youtube-video';
@@ -381,7 +399,7 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 | `controls` | The <DocsLink slug="guides/skins">skins</DocsLink> include the common controls, laid out in a familiar way that users would expect. Not every Plyr control ships in every skin—the video skins do not include `rewind` and `fast-forward` buttons, for example. To change which controls appear, or to customize the skin beyond basic colors, [add the skin source to your project](#edit-skin-source) and change controls, layout, styles, or icons. |
 | `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Add the skin source to your project](#edit-skin-source), then add a <DocsLink slug="reference/components/seek-button">seek button</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
-| `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
+| `autoplay`, `muted`, `loop`, `playsinline`, `preload` | Set these on the media. In React, use `autoPlay` and `playsInline`; the other names stay the same. |
 | `poster` / `data-poster` | Set `poster` on the player. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. `hideControls: false` maps to `visibility="always"` on the controls component in a custom or installed skin layout; the delay is currently not configurable. |

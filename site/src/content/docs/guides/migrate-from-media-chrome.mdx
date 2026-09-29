@@ -38,6 +38,8 @@ npm install @videojs/react
 
 ## Map the controller
 
+The examples use the same MP4 source before and after migration. For HLS, DASH, or an embed, keep your existing source and choose its <DocsLink slug="guides/media-sources">media component</DocsLink>.
+
 <FrameworkCase frameworks={["react"]}>
 Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controller>`. Video.js splits that into two components. The player owns state and draws nothing. The container is the box everything lives in, with the media as a plain child.
 </FrameworkCase>
@@ -49,7 +51,7 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 ```html
 <!-- Media Chrome -->
 <media-controller>
-  <video slot="media" src="video.m3u8"></video>
+  <video slot="media" src="video.mp4"></video>
   <media-control-bar>
     <media-play-button></media-play-button>
   </media-control-bar>
