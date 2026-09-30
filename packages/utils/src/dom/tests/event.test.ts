@@ -76,15 +76,19 @@ describe('onEvent', () => {
   it('cleans up abort listener when event fires', async () => {
     const target = new EventTarget();
     const controller = new AbortController();
+    const addSpy = vi.spyOn(controller.signal, 'addEventListener');
+    const removeSpy = vi.spyOn(controller.signal, 'removeEventListener');
+    const first = new Event('click');
+    const second = new Event('click');
 
     const promise = onEvent(target, 'click', { signal: controller.signal });
+    const abortCallback = addSpy.mock.calls.find(([type]) => type === 'abort')![1];
 
-    target.dispatchEvent(new Event('click'));
+    target.dispatchEvent(first);
+    target.dispatchEvent(second);
 
-    await promise;
-
-    // Aborting after resolution should not cause issues
-    controller.abort();
+    await expect(promise).resolves.toBe(first);
+    expect(removeSpy).toHaveBeenCalledExactlyOnceWith('abort', abortCallback);
   });
 
   it('passes options to addEventListener', async () => {

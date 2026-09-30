@@ -13,6 +13,7 @@ describe('formatTime', () => {
   it('formats minutes and seconds', () => {
     expect(formatTime(60)).toBe('1:00');
     expect(formatTime(90)).toBe('1:30');
+    expect(formatTime(90, undefined, { locale: 'en' })).toBe('1:30');
     expect(formatTime(125)).toBe('2:05');
     expect(formatTime(599)).toBe('9:59');
     expect(formatTime(600)).toBe('10:00');
