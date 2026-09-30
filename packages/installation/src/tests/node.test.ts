@@ -1400,6 +1400,11 @@ describe('detectTemplate', () => {
 });
 
 describe('compareVersions', () => {
+  it('ranks numeric prerelease identifiers below nonnumeric identifiers', () => {
+    expect(compareVersions('10.0.0-2', '10.0.0-10a')).toBe(-1);
+    expect(compareVersions('10.0.0-10a', '10.0.0-2')).toBe(1);
+  });
+
   it('orders releases and prereleases by semver precedence', () => {
     expect(compareVersions('10.0.0-rc.2', '10.0.0-rc.10')).toBe(-1);
     expect(compareVersions('10.0.0-rc.3', LAST_RELEASE_WITHOUT_AGENTS_INIT)).toBe(1);
