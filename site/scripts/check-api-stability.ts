@@ -36,6 +36,13 @@ const EXCLUDED_PACKAGES = new Set(['@videojs/cdn']);
 const UNCHECKED_PACKAGE_DIRECTORIES = ['packages/spf/', 'packages/store/'];
 
 /**
+ * Packages whose type aliases count as written out where a public type uses them. `@videojs/utils` is internal, and its
+ * aliases (`Constructor`, `MixinReturn`, …) are type-level helpers that mixin declarations name everywhere; their
+ * targets are checked instead, as if each use spelled the type out.
+ */
+const WRITTEN_OUT_ALIAS_DIRECTORIES = ['packages/utils/'];
+
+/**
  * Whether a class or interface makes what it `extends` or `implements` stable. Flip this to keep base classes internal
  * while the members they add still make their own types stable.
  */
@@ -614,6 +621,14 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
   const checkedDeclarations = (symbol: ts.Symbol) =>
     (symbol.declarations ?? []).filter((node) => isCheckedDeclaration(node.getSourceFile().fileName, root));
 
+  const isWrittenOut = (symbol: ts.Symbol) =>
+    (symbol.flags & ts.SymbolFlags.TypeAlias) !== 0 &&
+    (symbol.declarations ?? []).some((node) => {
+      const path = relative(root, node.getSourceFile().fileName).split(sep).join('/');
+
+      return WRITTEN_OUT_ALIAS_DIRECTORIES.some((directory) => path.startsWith(directory));
+    });
+
   const collect = (exported: ts.Symbol, exportedName: string, entry: PublicEntry, namespaces: Set<ts.Symbol>) => {
     // `index_parts_d_exports` re-exported under its own synthetic name is bundler output, not API.
     if (isSyntheticNamespace(exportedName)) return;
@@ -702,7 +717,8 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
   };
 
   // A type no entry exports (a local helper, a mixin's `_base` constant) is still part of the surface that names it, so
-  // its own references count as the referrer's, through its heritage when the helper was reached through heritage.
+  // its own references count as the referrer's, through its heritage when the helper was reached through heritage. A
+  // written-out alias is expanded the same way even though an entry exports it.
   for (const [symbol, record] of bySymbol) {
     const visited = new Set([symbol]);
 
@@ -710,7 +726,12 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
       for (const node of nodes) {
         forEachTypeName(node, (parts, isHeritage) => {
           const heritage = throughHeritage || isHeritage;
-          const reference = parts.map(recordOf).find((candidate) => candidate !== undefined);
+          const located = parts[0] && checker.getSymbolAtLocation(parts[0]);
+          const helper = located && resolveAlias(checker, located);
+          const reference =
+            helper && isWrittenOut(helper)
+              ? undefined
+              : parts.map(recordOf).find((candidate) => candidate !== undefined);
 
           if (reference) {
             if (reference !== record) (heritage ? record.heritageReferences : record.references).add(reference);
@@ -718,8 +739,6 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
             return;
           }
 
-          const located = parts[0] && checker.getSymbolAtLocation(parts[0]);
-          const helper = located && resolveAlias(checker, located);
           if (!helper || visited.has(helper)) return;
 
           visited.add(helper);

@@ -701,6 +701,32 @@ describe('resolveStabilities', () => {
     expect(resolve().MixinOptions).toBe('stable <- HlsVideo');
   });
 
+  it('expands utils type aliases instead of making them stable, and propagates through their targets', () => {
+    const root = fixture({
+      'packages/utils/dist/types.d.ts': [
+        'export type Constructor<T> = new (...args: any[]) => T;',
+        'export interface Callbacks { connectedCallback?(): void }',
+      ].join('\n'),
+      'packages/core/dist/index.d.ts': 'export interface ElementState { ready: boolean }\n',
+      'packages/html/dist/index.d.ts': [
+        "import { Callbacks, Constructor } from '../../utils/dist/types.js';",
+        "import { ElementState } from '../../core/dist/index.js';",
+        'export interface PlayButtonOptions { base: Constructor<ElementState>; callbacks: Callbacks }',
+      ].join('\n'),
+    });
+    const records = exportsOf(root, {
+      '@videojs/utils/types': 'packages/utils/dist/types.d.ts',
+      '@videojs/core': 'packages/core/dist/index.d.ts',
+      '@videojs/html': 'packages/html/dist/index.d.ts',
+    });
+    const resolved = resolveStabilities(records, coverage({ stable: new Set(['PlayButton']) }));
+    const stability = (name: string) => resolved.get(byName(records, name))!.stability;
+
+    expect(stability('Constructor')).toBe('internal');
+    expect(stability('ElementState')).toBe('stable');
+    expect(stability('Callbacks')).toBe('stable');
+  });
+
   it('ignores hidden members and exports nothing names', () => {
     expect(resolve()).toMatchObject({ Hidden: 'internal', Unreached: 'internal' });
   });
