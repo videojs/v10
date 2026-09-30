@@ -35,37 +35,92 @@ describe.each([
   { name: 'HlsAudioAdapterCore', Adapter: HlsAudioAdapterCore },
   { name: 'HlsBackgroundVideoAdapterCore', Adapter: HlsBackgroundVideoAdapterCore },
 ])('$name', ({ Adapter }) => {
-  it('cancels a pending play retry when the element is replaced and detached', async () => {
+  beforeEach(() => {
     vi.stubGlobal(
       'fetch',
       vi.fn(() => new Promise<Response>(() => {}))
     );
-
-    const media = new Adapter();
-    const first = document.createElement('video');
-    const second = document.createElement('video');
-    const play = vi
-      .spyOn(first, 'play')
-      .mockRejectedValueOnce(new DOMException('No source yet', 'NotSupportedError'))
-      .mockResolvedValue(undefined);
-
-    try {
-      media.attach(first);
-      media.src = 'https://example.com/v.m3u8';
-      media.play().catch(() => {});
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      expect(play).toHaveBeenCalledTimes(1);
-
-      media.attach(second);
-      media.detach();
-      first.dispatchEvent(new Event('loadstart'));
-
-      expect(play).toHaveBeenCalledTimes(1);
-    } finally {
-      media.destroy();
-      vi.unstubAllGlobals();
-    }
   });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each(['replacement', 'detach', 'destroy', 'src change'] as const)(
+    'does not retry play after immediate %s',
+    async (action) => {
+      const media = new Adapter();
+      const first = document.createElement('video');
+      const play = vi
+        .spyOn(first, 'play')
+        .mockRejectedValueOnce(new DOMException('No source yet', 'NotSupportedError'))
+        .mockResolvedValue(undefined);
+      const settled = vi.fn();
+
+      try {
+        media.attach(first);
+        media.src = 'https://example.com/v.m3u8';
+        media.play().then(settled, settled);
+
+        // Invalidate the play before its native rejection handler can register a retry.
+        if (action === 'replacement') media.attach(document.createElement('video'));
+        else if (action === 'detach') media.detach();
+        else if (action === 'destroy') media.destroy();
+        else media.src = 'https://example.com/next.m3u8';
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        first.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
+
+        expect(play).toHaveBeenCalledTimes(1);
+        expect(settled.mock.calls[0]?.[0]).toMatchObject({ name: 'AbortError' });
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
+    }
+  );
+
+  it.each(['replacement', 'detach', 'destroy', 'src change'] as const)(
+    'rejects pending play retries on %s',
+    async (action) => {
+      const media = new Adapter();
+      const first = document.createElement('video');
+      const play = vi
+        .spyOn(first, 'play')
+        .mockRejectedValueOnce(new DOMException('No source yet', 'NotSupportedError'))
+        .mockRejectedValueOnce(new DOMException('No source yet', 'NotSupportedError'))
+        .mockResolvedValue(undefined);
+      const settled = vi.fn();
+
+      try {
+        media.attach(first);
+        media.src = 'https://example.com/v.m3u8';
+        media.play().then(settled, settled);
+        media.play().then(settled, settled);
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(2);
+        expect(settled).not.toHaveBeenCalled();
+
+        if (action === 'replacement') media.attach(document.createElement('video'));
+        else if (action === 'detach') media.detach();
+        else if (action === 'destroy') media.destroy();
+        else media.src = 'https://example.com/next.m3u8';
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(settled).toHaveBeenCalledTimes(2);
+        expect(settled.mock.calls[0]![0]).toMatchObject({ name: 'AbortError' });
+        expect(settled.mock.calls[1]![0]).toMatchObject({ name: 'AbortError' });
+
+        first.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
+        expect(play).toHaveBeenCalledTimes(2);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
+    }
+  );
 });
 
 describe('HlsVideoAdapterCore', () => {
