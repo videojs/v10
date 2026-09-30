@@ -19,11 +19,19 @@ export default function BasicUsage() {
     const video = videoRef.current;
     if (!video) return;
 
+    let cancelled = false;
+
     if (motionEnabled) {
-      video.play().catch(() => setMotionEnabled(false));
+      video.play().catch(() => {
+        if (!cancelled) setMotionEnabled(false);
+      });
     } else {
       video.pause();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [motionEnabled]);
 
   return (
