@@ -178,13 +178,15 @@ describe('VolumeSliderCore', () => {
     it('rounds value in valuetext', () => {
       const core = new VolumeSliderCore();
 
+      core.setFormatLocale('en');
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ volume: 0.333 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(formatPercent(0.333));
-      expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.333) });
+      expect(attrs['aria-valuetext']).toBe('33%');
+      expect(core.getValueTextParams(state)).toEqual({ percent: '33%' });
     });
 
     it('uses custom label', () => {

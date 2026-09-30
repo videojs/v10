@@ -94,7 +94,21 @@ describe('TimeSliderChaptersCore', () => {
     const result = core.getRanges(cues, 0, 100);
 
     expect(core.getRanges(cues, 0, 100)).toBe(result);
-    expect(core.getRanges([], 0, 100)).not.toBe(result);
+    expect(core.getRanges(cues, 0, 80)).toMatchObject({
+      max: 80,
+      ranges: [
+        { start: 0, end: 50 },
+        { start: 50, end: 80 },
+      ],
+    });
+    expect(core.getRanges(cues, 10, 80)).toMatchObject({
+      max: 80,
+      ranges: [
+        { start: 10, end: 50 },
+        { start: 50, end: 80 },
+      ],
+    });
+    expect(core.getRanges([], 10, 80).ranges).toMatchObject([{ start: 10, end: 80, highlight: false }]);
   });
 
   it('finds the chapter at a value including the final endpoint', () => {

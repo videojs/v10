@@ -294,7 +294,8 @@ describe('SliderCore', () => {
     it('returns raw percent for center alignment', () => {
       const core = new SliderCore({ thumbAlignment: 'center' });
 
-      expect(core.adjustPercentForAlignment(50, 20, 200)).toBe(50);
+      expect(core.adjustPercentForAlignment(0, 20, 200)).toBe(0);
+      expect(core.adjustPercentForAlignment(100, 20, 200)).toBe(100);
     });
 
     it('returns raw percent when track size is 0', () => {

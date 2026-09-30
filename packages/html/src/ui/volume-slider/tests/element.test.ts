@@ -5,6 +5,7 @@ import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { measureSlider, pointer } from '../../slider/tests/support';
 import { SliderThumbElement } from '../../slider/thumb';
 import { UIElement } from '../../ui-element';
 import { VolumeSliderElement } from '../element';
@@ -22,6 +23,8 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
+const setVolume = vi.fn();
+
 function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability']): AnyPlayerStore {
   return createStore<unknown>()<MediaVolumeState>({
     name: 'volume',
@@ -32,7 +35,7 @@ function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailabil
       // Mute has an availability of its own, and this slider reads the level's;
       // these tests vary that one and leave the mute available throughout.
       mutedAvailability: 'available',
-      setVolume: vi.fn(),
+      setVolume,
       setMuted: vi.fn(),
     }),
   }) as unknown as AnyPlayerStore;
@@ -55,6 +58,7 @@ if (!customElements.get('test-volume-slider-player')) {
 
 afterEach(() => {
   document.body.innerHTML = '';
+  setVolume.mockClear();
 });
 
 describe('VolumeSliderElement', () => {
@@ -74,16 +78,24 @@ describe('VolumeSliderElement', () => {
   });
 
   it('binds rootProps pointer events on connect', async () => {
+    const provider = document.createElement('test-volume-slider-player') as TestPlayerProviderElement;
     const slider = createElement(VolumeSliderElement);
 
-    document.body.appendChild(slider);
+    document.body.append(provider);
+    provider.append(slider);
     await slider.updateComplete;
+    measureSlider(slider);
+    pointer(slider, 'pointerdown', 50);
+    pointer(slider, 'pointerup', 50, 0);
+    pointer(slider, 'lostpointercapture', 50, 0);
+    expect(setVolume).toHaveBeenCalledWith(0.25);
 
-    // Without store, slider is disabled — but rootProps should still be bound.
-    slider.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 50, clientY: 0 }));
+    vi.mocked(setVolume).mockClear();
+    const wheel = new WheelEvent('wheel', { deltaY: 1, bubbles: true, cancelable: true });
 
-    // No errors thrown means rootProps were bound correctly.
-    expect(slider.isConnected).toBe(true);
+    slider.dispatchEvent(wheel);
+    expect(wheel.defaultPrevented).toBe(true);
+    expect(setVolume).toHaveBeenCalledOnce();
   });
 
   it('sets touch-action and user-select styles on connect', async () => {
@@ -96,11 +108,20 @@ describe('VolumeSliderElement', () => {
     expect(slider.style.userSelect).toBe('none');
   });
 
-  it('supports vertical orientation', () => {
+  it('supports vertical orientation', async () => {
+    const provider = document.createElement('test-volume-slider-player');
     const slider = createElement(VolumeSliderElement);
+    const thumb = createElement(SliderThumbElement);
 
-    slider.orientation = 'vertical';
-    expect(slider.orientation).toBe('vertical');
+    slider.setAttribute('orientation', 'vertical');
+    slider.append(thumb);
+    document.body.append(provider);
+    provider.append(slider);
+    await slider.updateComplete;
+    await thumb.updateComplete;
+
+    expect(slider.getAttribute('data-orientation')).toBe('vertical');
+    expect(thumb.getAttribute('aria-orientation')).toBe('vertical');
   });
 
   it('does not set CSS vars without player context', async () => {
@@ -111,6 +132,13 @@ describe('VolumeSliderElement', () => {
 
     // Without player store providing volume state, the element guards early.
     expect(slider.style.getPropertyValue('--media-slider-fill')).toBe('');
+
+    const provider = document.createElement('test-volume-slider-player');
+
+    document.body.append(provider);
+    provider.append(slider);
+    await slider.updateComplete;
+    expect(slider.style.getPropertyValue('--media-slider-fill')).toBe('100.000%');
   });
 
   it('connects without errors when no store is available', async () => {
@@ -147,14 +175,20 @@ describe('VolumeSliderElement', () => {
   });
 
   it('cleans up on disconnect', async () => {
+    const provider = document.createElement('test-volume-slider-player') as TestPlayerProviderElement;
     const slider = createElement(VolumeSliderElement);
 
-    document.body.appendChild(slider);
+    document.body.append(provider);
+    provider.append(slider);
     await slider.updateComplete;
+    slider.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, bubbles: true, cancelable: true }));
+    expect(setVolume).toHaveBeenCalledOnce();
 
-    document.body.removeChild(slider);
-
-    // Verifies no errors during disconnect/cleanup.
-    expect(slider.isConnected).toBe(false);
+    slider.remove();
+    provider.append(slider);
+    await slider.updateComplete;
+    vi.mocked(setVolume).mockClear();
+    slider.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, bubbles: true, cancelable: true }));
+    expect(setVolume).toHaveBeenCalledOnce();
   });
 });

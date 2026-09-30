@@ -1,8 +1,10 @@
+import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { ThumbnailElement } from '../../thumbnail/element';
 import { SliderElement } from '../element';
 import { SliderThumbnailElement } from '../thumbnail';
+import { measureSlider, pointer } from './support';
 
 let tagCounter = 0;
 
@@ -80,6 +82,13 @@ describe('SliderThumbnailElement', () => {
 
     // In idle state, pointerPercent=0 → pointerValue=0 → selects 'thumb-0.jpg'.
     expect(img.getAttribute('src')).toBe('thumb-0.jpg');
+
+    measureSlider(slider, 100);
+    pointer(slider, 'pointermove', 40, 0);
+    flush();
+    await slider.updateComplete;
+    await thumbnail.updateComplete;
+    expect(img.getAttribute('src')).toBe('thumb-30.jpg');
   });
 
   it('does not have data-hidden when thumbnails match', async () => {

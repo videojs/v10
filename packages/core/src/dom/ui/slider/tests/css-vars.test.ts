@@ -68,11 +68,7 @@ describe('getSliderPreviewStyle', () => {
   it('clamps left within slider bounds by default', () => {
     const style = getSliderPreviewStyle(100, 'clamp');
 
-    expect(style.left).toContain('min(');
-    expect(style.left).toContain('max(');
-    expect(style.left).toContain('var(--media-slider-pointer)');
-    expect(style.left).toContain('50px');
-    expect(style.left).toContain('100px');
+    expect(style.left).toBe('min(max(0px, calc(var(--media-slider-pointer) - 50px)), calc(100% - 100px))');
   });
 
   it('uses unclamped calc when overflow is visible', () => {

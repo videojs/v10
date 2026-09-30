@@ -1,66 +1,9 @@
 import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { Slider } from '..';
-
-const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
-  mockSliderApi: () => ({
-    input: {
-      current: {
-        pointerPercent: 50,
-        dragPercent: 0,
-        dragging: false,
-        pointing: true,
-        focused: false,
-      },
-      subscribe: vi.fn(() => vi.fn()),
-    },
-    rootProps: {
-      onPointerDown: vi.fn(),
-      onPointerMove: vi.fn(),
-      onPointerLeave: vi.fn(),
-    },
-    thumbProps: {
-      onKeyDownCapture: vi.fn(),
-      onFocus: vi.fn(),
-      onBlur: vi.fn(),
-    },
-    adjustForAlignment: <S,>(state: S): S => state,
-    destroy: vi.fn(),
-  }),
-  mockThumbnailApi: () => ({
-    loading: false,
-    error: false,
-    naturalWidth: 0,
-    naturalHeight: 0,
-    readConstraints: vi.fn(() => ({
-      minWidth: 0,
-      maxWidth: Infinity,
-      minHeight: 0,
-      maxHeight: Infinity,
-    })),
-    updateSrc: vi.fn(),
-    connect: vi.fn(),
-    disconnectImg: vi.fn(),
-    destroy: vi.fn(),
-  }),
-}));
-
-vi.mock('@videojs/core/dom', async (importOriginal) => {
-  const orig: Record<string, unknown> = await importOriginal();
-
-  return {
-    ...orig,
-    createSlider: vi.fn(mockSliderApi),
-    createThumbnail: vi.fn(mockThumbnailApi),
-  };
-});
-
-vi.mock('@videojs/store/react', () => ({
-  useSnapshot: vi.fn((state: { current: unknown }) => state.current),
-  useStore: vi.fn(),
-}));
+import { measureSlider, pointer } from './support';
 
 afterEach(cleanup);
 
@@ -159,8 +102,13 @@ describe('Slider.Thumbnail', () => {
       </Slider.Root>
     );
 
-    // pointerPercent is 50 → pointerValue = 50 (generic slider, min=0, max=100).
-    // findActiveThumbnail(thumbnails, 50) → 'thumb-5.jpg' (startTime 5 ≤ 50).
+    const image = getByTestId('image');
+
+    expect(image.getAttribute('src')).toBe('thumb-0.jpg');
+    const root = image.closest('[data-orientation]') as HTMLElement;
+
+    measureSlider(root);
+    pointer(root, 'pointermove', 100, 0);
     expect(getByTestId('image').getAttribute('src')).toBe('thumb-5.jpg');
   });
 

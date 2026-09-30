@@ -3,8 +3,8 @@ import { flush } from '@videojs/store';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderFill } from '../../slider/fill';
+import { createSliderPlayerWrapper as createPlayerWrapper } from '../../slider/tests/support';
 import { SliderThumb } from '../../slider/thumb';
 import { SliderTrack } from '../../slider/track';
 import { SliderValue } from '../../slider/value';
@@ -98,8 +98,8 @@ describe('VolumeSliderRoot', () => {
 
     const el = container.querySelector('[data-orientation]') as HTMLElement;
 
-    expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
-    expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
+    expect(el?.style.getPropertyValue('--media-slider-fill')).toBe('80.000%');
+    expect(el?.style.getPropertyValue('--media-slider-pointer')).toBe('0.000%');
   });
 
   it('commits the step-rounded volume displayed while dragging', () => {
@@ -190,7 +190,7 @@ describe('VolumeSlider compound', () => {
 
     const output = container.querySelector('[data-testid="value"]');
 
-    expect(output?.textContent).toContain('%');
+    expect(output?.textContent).toBe('80%');
   });
 });
 
@@ -257,7 +257,7 @@ describe('VolumeSliderRoot wheel handling', () => {
   });
 
   it('attaches wheel handling when volume appears after initial null', () => {
-    const { Wrapper, store } = createPlayerWrapper();
+    const { Wrapper, update } = createPlayerWrapper();
     const { container, rerender } = render(
       <Wrapper>
         <VolumeSliderRoot />
@@ -268,7 +268,7 @@ describe('VolumeSliderRoot wheel handling', () => {
     expect(container.querySelector('[data-orientation]')).toBeNull();
 
     // Simulate volume becoming available.
-    store.state = mockVolumeState;
+    update(mockVolumeState);
     rerender(
       <Wrapper>
         <VolumeSliderRoot />
