@@ -676,14 +676,14 @@ You get `targetLiveWindow` and `liveEdgeStart` in state, plus a live button that
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need an omitted feature on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
-That's what <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
+That's what <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `PlayerElement` class to register as your own player element, plus a `PlayerController` bound to that player's features.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 That's what <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
 </FrameworkCase>
 
-## Moved utilities
+## Replace v8 utilities
 
 v8 put a handful of utilities on the `videojs` global for anyone building a custom component or plugin: `videojs.time.formatTime`, `videojs.dom`, `videojs.fn.throttle`, and a few others. v10 has no global and doesn't publish replacements, so use a platform API, a short helper of your own, or a utility library you already depend on.
 
@@ -692,17 +692,21 @@ v8 put a handful of utilities on the `videojs` global for anyone building a cust
 | `videojs.time.formatTime(seconds, guide)` | The <DocsLink slug="reference/components/time">Time</DocsLink> component for an on-screen time display. For a string of your own, a few lines of arithmetic (below), or `Intl.DurationFormat` in browsers that support it |
 | `videojs.fn.throttle(fn, wait)` | Your own helper, or `throttle` from a utility library such as lodash |
 | `videojs.dom.isEl(value)` and its type-specific cousins | `instanceof` checks such as `value instanceof Element`, `value instanceof HTMLMediaElement`, or `value instanceof HTMLVideoElement` |
-| `videojs.obj.merge(a, b)` | Object spread (`{ ...a, ...b }`) for a shallow merge, or `merge` from a utility library such as lodash for a deep one. Wrap the result in `structuredClone()` if it must not share nested objects with the inputs |
+| `videojs.obj.merge(a, b)` | Object spread (`{ ...a, ...b }`) for a shallow merge, or `merge({}, a, b)` from a utility library such as lodash for a deep one. Pass the empty object first, because lodash's `merge` mutates its first argument |
 
 For example, a clock-style string such as `1:05` or `1:02:03`:
 
 ```js
 function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor(seconds / 60) % 60;
-  const s = String(Math.floor(seconds % 60)).padStart(2, '0');
+  if (!Number.isFinite(seconds)) return '0:00';
 
-  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+  const total = Math.floor(Math.abs(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor(total / 60) % 60;
+  const s = String(total % 60).padStart(2, '0');
+  const time = h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+
+  return seconds < 0 ? `-${time}` : time;
 }
 ```
 

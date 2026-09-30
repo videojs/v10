@@ -161,9 +161,9 @@ Add `stability: unstable` when an API works but its shape may still change in a 
 
 An export of a published package is stable only when a reference page documents it. `pnpm -F site check:api-stability` enforces this: every other export must carry `@internal` in its JSDoc, or `@experimental` when a `stability: unstable` page documents it. A page documents:
 
-- its subject: `title`, `frameworkTitle`, and the `component`, `util`, `media`, `feature`, and `react` props of the reference components
+- its subject: `title`, `frameworkTitle`, the `component`, `util`, `media`, `feature`, and `react` props of the reference components, and the `html` prop of `ComponentImports`
 - the subject's companion types, such as `PlayButtonProps`, `PlayButtonState`, `PlayButtonElement`, and `UseHotkeyOptions`
-- parts written against the subject in the page's code, such as `TimeSlider.Chapters`
+- parts written against the subject in the page's code, such as `TimeSlider.Chapters`. The check reads a namespace export like `export * as Slider` member by member, so `Slider.Buffer` is checked as `SliderBuffer` and the page's `Slider.Buffer` covers it
 - on a feature page, the `select*` selectors its code names
 - anything listed in `apis`
 
@@ -176,7 +176,13 @@ apis:
   - '@videojs/react/i18n/locales/*'
 ```
 
-Guides and examples don't make an export stable. The check warns when docs code imports an export that isn't, or imports from an internal package such as `@videojs/core` or `@videojs/utils`.
+Pages document what readers import from `@videojs/react`, `@videojs/html`, and the adapter and extension packages. `@videojs/core`, `@videojs/media`, `@videojs/utils`, and `@videojs/element` are published, but no page documents them directly: an export only they expose is internal even when a page documents a same-named export, and a core type becomes stable when `@videojs/react` or `@videojs/html` re-exports it under a documented name.
+
+The page wins over the tag. A documented export that still carries `@internal`, or `@experimental` on a stable page, fails the check until the tag is removed; `--fix` removes it, or replaces `@internal` with `@experimental` for an unstable page. Each declaration of a merged name, and each overload signature, needs its own tag.
+
+A stable or experimental export must not expose an internal one. The check fails when a documented export's public type surface names another public export that is internal: an `extends` clause, a public property or method, an aliased type, a function's parameters, return type, or type parameters, or a variable's declared type. Private, protected, and `@internal` members don't count. `--fix` can't resolve this; either document the referenced type, usually by adding it to the `apis` of the page that documents the export exposing it, or change the signature so it no longer names it.
+
+Guides and examples don't make an export stable. The check warns when docs code imports an export that isn't, or imports from `@videojs/core`, `@videojs/utils`, or another package no page documents directly.
 
 ### Imports
 
