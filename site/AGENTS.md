@@ -67,7 +67,7 @@ pnpm -F site astro check
 
 PostHog loads in production only, from `src/components/Posthog.astro`; its config lives in `src/utils/analytics.ts`. It runs cookieless, so there is no durable person: never call `identify`, `alias`, or a person-property API, and expect super properties to last one page load.
 
-- Mark any installation query parameter that can carry reader data as `private` in `@videojs/installation`. The config masks private parameters everywhere in outgoing events.
+- Mark any installation query parameter that can carry reader data as `private` in `@videojs/installation`. The config masks private parameters, and their current values wherever the page renders them, everywhere in outgoing events. Keep session replay off: it records page text outside `before_send`.
 
 ## API references
 
