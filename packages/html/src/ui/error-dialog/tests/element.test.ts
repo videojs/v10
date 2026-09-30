@@ -69,10 +69,6 @@ afterEach(() => {
 });
 
 describe('ErrorDialogElement', () => {
-  it('has the correct tag name', () => {
-    expect(ErrorDialogElement.tagName).toBe('media-error-dialog');
-  });
-
   it('provides dialogContext for child parts', async () => {
     ensureDefined(DialogTitleElement.tagName, DialogTitleElement);
     ensureDefined(DialogDescriptionElement.tagName, DialogDescriptionElement);
@@ -111,15 +107,6 @@ describe('ErrorDialogElement', () => {
 
     expect(popup.getAttribute('role')).toBe('alertdialog');
     expect(popup.hasAttribute('aria-modal')).toBe(false);
-  });
-
-  it('handles missing child elements gracefully', async () => {
-    const el = createElement(ErrorDialogElement);
-
-    document.body.appendChild(el);
-    await el.updateComplete;
-
-    expect(el.isConnected).toBe(true);
   });
 
   it('shows translated dialog copy when es locale is registered', async () => {

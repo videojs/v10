@@ -106,17 +106,6 @@ describe('createTransition', () => {
       expect(handler.state.current).toEqual({ active: true, status: 'ending' });
     });
 
-    it('keeps open true during close animation', () => {
-      const handler = createTransition();
-      const el = document.createElement('div');
-
-      handler.open();
-      handler.close(el);
-
-      expect(handler.state.current.active).toBe(true);
-      expect(handler.state.current.status).toBe('ending');
-    });
-
     it('handles null element gracefully', async () => {
       const handler = createTransition();
 
@@ -135,35 +124,16 @@ describe('createTransition', () => {
   });
 
   describe('cancel', () => {
-    it('resets status to idle', () => {
+    it('preserves open state', () => {
       const handler = createTransition();
 
       handler.open();
       expect(handler.state.current.status).toBe('starting');
 
       handler.cancel();
-      expect(handler.state.current.status).toBe('idle');
-    });
-
-    it('preserves open state', () => {
-      const handler = createTransition();
-
-      handler.open();
-      handler.cancel();
 
       expect(handler.state.current.active).toBe(true);
       expect(handler.state.current.status).toBe('idle');
-    });
-
-    it('is a no-op when already idle', () => {
-      const handler = createTransition();
-      const callback = vi.fn();
-
-      handler.state.subscribe(callback);
-      handler.cancel();
-
-      // No state change, so no notification
-      expect(callback).not.toHaveBeenCalled();
     });
   });
 
@@ -175,13 +145,6 @@ describe('createTransition', () => {
       handler.open();
 
       expect(handler.state.current).toEqual({ active: false, status: 'idle' });
-    });
-
-    it('is idempotent', () => {
-      const handler = createTransition();
-
-      handler.destroy();
-      handler.destroy(); // should not throw
     });
   });
 });

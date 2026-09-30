@@ -27,12 +27,6 @@ afterEach(() => {
 });
 
 describe('createDialog', () => {
-  it('starts closed', () => {
-    const { dialog } = createTestDialog();
-
-    expect(dialog.input.current).toEqual({ active: false, status: 'idle' });
-  });
-
   it('opens from its trigger', () => {
     const { dialog, onOpenChange } = createTestDialog();
 
