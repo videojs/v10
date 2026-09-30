@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { type MediaSourceKind, resolveSourceKind, resolveMimeType } from '../source-kind';
+import {
+  type MediaSourceKind,
+  resolveFormatKind,
+  resolveMimeType,
+  resolveProviderKind,
+  resolveSourceKind,
+} from '../source-kind';
 
 describe('resolveSourceKind', () => {
   it.each<[string, MediaSourceKind]>([
@@ -56,6 +62,15 @@ describe('resolveSourceKind', () => {
     expect(resolveSourceKind('https://example.com/episode', 'audio/mpeg')).toBe('audio');
   });
 
+  it('prefers the provider over the MIME type', () => {
+    expect(
+      resolveSourceKind(
+        'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8',
+        'application/x-mpegurl'
+      )
+    ).toBe('mux');
+  });
+
   it('falls back to the file extension for an unrecognized MIME type', () => {
     expect(resolveSourceKind('https://example.com/video.mp4', 'application/octet-stream')).toBe('video');
   });
@@ -75,6 +90,38 @@ describe('resolveSourceKind', () => {
     ['a provider URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
   ])('returns null for %s', (_, src) => {
     expect(resolveSourceKind(src)).toBe(null);
+  });
+});
+
+describe('resolveProviderKind', () => {
+  it('resolves provider URLs and shorthands', () => {
+    expect(resolveProviderKind('https://youtu.be/aqz-KE-bpKQ')).toBe('youtube');
+    expect(resolveProviderKind('vimeo/76979871')).toBe('vimeo');
+    expect(resolveProviderKind('https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8')).toBe('mux');
+  });
+
+  it.each([
+    ['a file URL', 'https://example.com/video.mp4'],
+    ['a Mux static rendition', 'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M/highest.mp4'],
+    ['a relative path', 'media/youtube.mp4'],
+  ])('returns null for %s', (_, src) => {
+    expect(resolveProviderKind(src)).toBe(null);
+  });
+});
+
+describe('resolveFormatKind', () => {
+  it('ignores the host', () => {
+    expect(resolveFormatKind('https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8')).toBe('hls');
+    expect(resolveFormatKind('https://youtu.be/aqz-KE-bpKQ')).toBe(null);
+  });
+
+  it('prefers the MIME type over the file extension', () => {
+    expect(resolveFormatKind('https://example.com/video.mp4', 'application/dash+xml')).toBe('dash');
+    expect(resolveFormatKind('https://example.com/video.mp4')).toBe('video');
+  });
+
+  it('returns null for an empty source', () => {
+    expect(resolveFormatKind('', 'video/mp4')).toBe(null);
   });
 });
 
