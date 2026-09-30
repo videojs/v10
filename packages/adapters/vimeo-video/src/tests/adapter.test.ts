@@ -900,4 +900,40 @@ describe('VimeoAdapter', () => {
     expect(media.target).toBe(null);
     expect(media.engine).toBe(null);
   });
+
+  it('preserves the attached iframe when destroying the player on detach', async () => {
+    // The SDK removes attached iframes during destruction; the mock above does not.
+    vi.doUnmock('@vimeo/player');
+    vi.resetModules();
+    const { VimeoAdapter } = await import('../adapter');
+    const media = new VimeoAdapter();
+    const iframe = createIframe();
+    const container = document.createElement('div');
+
+    media.src = '76979871';
+    container.append(iframe);
+    document.body.append(container);
+
+    try {
+      media.attach(iframe);
+      const player = media.engine;
+      const frameDocument = iframe.contentDocument;
+
+      expect(player).not.toBe(null);
+
+      media.detach();
+
+      expect(container.firstChild).toBe(iframe);
+      expect(iframe.contentDocument).toBe(frameDocument);
+      expect(media.engine).toBe(null);
+
+      // Reattaching must create a fresh SDK instance, not reuse its destroyed player cache.
+      media.attach(iframe);
+      expect(media.engine).not.toBe(null);
+      expect(media.engine).not.toBe(player);
+    } finally {
+      media.destroy();
+      container.remove();
+    }
+  });
 });

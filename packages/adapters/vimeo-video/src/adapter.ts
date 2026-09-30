@@ -137,10 +137,26 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
   }
 
   detach(): void {
-    if (!this.#target) return;
+    const target = this.#target;
+    if (!target) return;
 
     this.#teardownTextTracks();
-    this.#player?.destroy().catch(() => {});
+
+    if (this.#player) {
+      // Vimeo removes its iframe synchronously in destroy(). Hide the parent for that call so the SDK releases its
+      // caches and listeners while leaving caller-owned DOM in place, including the iframe's browsing context.
+      const parentNodeDescriptor = Object.getOwnPropertyDescriptor(target, 'parentNode');
+
+      Object.defineProperty(target, 'parentNode', { value: null, configurable: true });
+
+      try {
+        this.#player.destroy().catch(() => {});
+      } finally {
+        if (parentNodeDescriptor) Object.defineProperty(target, 'parentNode', parentNodeDescriptor);
+        else Reflect.deleteProperty(target, 'parentNode');
+      }
+    }
+
     this.#player = null;
     this.#target = null;
     this.#loadComplete.resolve();
