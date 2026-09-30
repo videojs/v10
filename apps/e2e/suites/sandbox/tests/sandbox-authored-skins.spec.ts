@@ -109,7 +109,7 @@ test('the starter preview keeps its thumbnail fixed when the chapter title chang
   const root = page.getByRole('group', { name: 'Media player' }).first();
   const slider = root.locator('media-time-slider');
   const thumb = root.getByRole('slider', { name: 'Seek' });
-  const preview = slider.locator('.media-preview');
+  const preview = slider.locator('media-slider-preview');
 
   await expect(root).toBeVisible({ timeout: 30_000 });
   await expect(thumb).toBeEnabled({ timeout: 30_000 });
@@ -121,7 +121,7 @@ test('the starter preview keeps its thumbnail fixed when the chapter title chang
   await expect(slider).toHaveAttribute('data-pointing', '');
   await expect(preview).toHaveCSS('opacity', '1');
   const positions = await slider.evaluate((element) => {
-    const preview = element.querySelector<HTMLElement>('.media-preview');
+    const preview = element.querySelector<HTMLElement>('media-slider-preview');
     const thumbnail = element.querySelector<HTMLElement>('media-slider-thumbnail');
     const chapter = element.querySelector<HTMLElement>('media-time-slider-chapter-title');
     if (!preview || !thumbnail || !chapter) throw new Error('Preview is incomplete');
