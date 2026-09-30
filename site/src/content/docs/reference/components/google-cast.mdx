@@ -36,7 +36,7 @@ Adds the <DocsLink slug="guides/architecture">Google Cast extension</DocsLink> t
 | Prop | Type | Description |
 |---|---|---|
 | `receiver` | `string` | Cast receiver application ID. Defaults to Google's Default Media Receiver (`CC1AD845`) |
-| `src` | `string` | Source URL loaded on the receiver. Defaults to the source the browser is playing |
+| `src` | `string` | Source URL loaded on the receiver. Defaults to the source the browser is playing. Required for YouTube and Vimeo embeds |
 | `contentType` | `string` | MIME type of the Cast source. When unset, the receiver infers it from the URL |
 | `streamType` | `'on-demand' \| 'live'` | Stream type reported to the receiver. Falls back to the player's stream type |
 | `customData` | `object` | Custom data sent to the receiver with each load request |
@@ -46,7 +46,7 @@ Adds the <DocsLink slug="guides/architecture">Google Cast extension</DocsLink> t
 | Attribute | Property | Description |
 |---|---|---|
 | `receiver` | `receiver` | Cast receiver application ID. Defaults to Google's Default Media Receiver (`CC1AD845`) |
-| `src` | `src` | Source URL loaded on the receiver. Defaults to the source the browser is playing |
+| `src` | `src` | Source URL loaded on the receiver. Defaults to the source the browser is playing. Required for YouTube and Vimeo embeds |
 | `content-type` | `contentType` | MIME type of the Cast source. When unset, the receiver infers it from the URL |
 | `stream-type` | `streamType` | Stream type reported to the receiver. Falls back to the player's stream type |
 | — | `customData` | Custom data sent to the receiver with each load request |

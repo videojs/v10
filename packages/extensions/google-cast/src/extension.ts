@@ -1,12 +1,13 @@
 import type { MediaOverride, PlayerExtension, PlayerTarget } from '@videojs/core/dom';
 import type { MediaStreamType } from '@videojs/media';
 import { getMediaElement, type HTMLMediaTargetLike } from '@videojs/media/dom';
+import { isUndefined } from '@videojs/utils/predicate';
 
 import { GoogleCastProvider } from './provider';
 import { requiresCastFramework } from './utils';
 
 export interface GoogleCastExtensionProps {
-  /** Source URL loaded on the Cast receiver. Falls back to the media's `src` / `currentSrc`. */
+  /** Source URL loaded on the Cast receiver. Falls back to the source the media is playing. */
   src?: string | undefined;
   /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
   contentType?: string | undefined;
@@ -60,9 +61,7 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
       this.#override = this.#createRemoteOverride();
     }
 
-    // The provider drives the native element when there is one: its `<track>` children carry the real modes, and
-    // events dispatched there already forward through any custom element or adapter to the player's listeners.
-    this.#provider?.attach((getMediaElement(target) as HTMLMediaTargetLike | null) ?? target);
+    this.#bindProvider();
     target.addEventListener('loadstart', this.#onLoadStart);
   }
 
@@ -83,6 +82,24 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
     return this.#override;
   }
 
+  /**
+   * Point the provider at the native element behind the media: its `<track>` children carry the real modes, and events
+   * dispatched there already forward through any custom element or adapter to the player's listeners. A custom element
+   * or adapter can swap that element (an engine change, for example), so this runs again on every `loadstart`.
+   */
+  #bindProvider() {
+    const provider = this.#provider;
+    const media = this.#media;
+    if (!provider || !media) return;
+
+    const element = (getMediaElement(media) as HTMLMediaTargetLike | null) ?? media;
+    if (provider.target === element) return;
+
+    if (provider.target) provider.detach();
+
+    provider.attach(element);
+  }
+
   #onStateChange = () => {
     if (!this.#provider) return;
 
@@ -98,6 +115,8 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
    * source before it starts loading, so the several `loadstart`s one local load can produce reach the receiver once.
    */
   #onLoadStart = () => {
+    this.#bindProvider();
+
     const provider = this.#provider;
     if (!provider || provider.remote.state !== 'connected') return;
 
@@ -116,15 +135,25 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
     };
   }
 
-  /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
+  /**
+   * Source URL loaded on the Cast receiver. Falls back to the source the media is playing: its `src`, else the
+   * `<source>` child the browser selected (`currentSrc`), else the first `<source>` child before selection has run. An
+   * adapter reports the URL it plays on `src`; a `blob:` `currentSrc` is a MediaSource handle a receiver can't load.
+   *
+   * An embed (YouTube, Vimeo) has no fallback: its `src` is a provider page, not a stream a receiver can play, so it is
+   * cast only when this is set explicitly. Without a source, nothing is loaded on the receiver.
+   */
   get src() {
-    return (
-      this.#src ??
-      this.#media?.querySelector<HTMLSourceElement>('source')?.src ??
-      this.#media?.src ??
-      this.#media?.currentSrc ??
-      ''
-    );
+    if (!isUndefined(this.#src)) return this.#src;
+
+    const media = this.#media;
+    if (!media || !getMediaElement(media)) return '';
+
+    if (media.src) return media.src;
+
+    if (media.currentSrc && !media.currentSrc.startsWith('blob:')) return media.currentSrc;
+
+    return media.querySelector<HTMLSourceElement>('source')?.src ?? '';
   }
 
   set src(value: string | undefined) {

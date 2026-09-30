@@ -1,5 +1,4 @@
-import { createPlayerMedia } from '@videojs/core/dom';
-import type { Media } from '@videojs/media';
+import { PlayerExtensionCoordinator } from '@videojs/core/dom';
 import type { HTMLMediaTargetLike } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -127,7 +126,7 @@ function createCastSdk() {
 }
 
 /** A provider with a connected session. `config` is read live, so tests set `src` after the session starts. */
-async function createCastingProvider(config: GoogleCastExtensionProps) {
+async function createCastingProvider(config: GoogleCastExtensionProps, target = createTarget().target) {
   const sdk = createCastSdk();
 
   mocks.castFramework = sdk.framework;
@@ -138,7 +137,6 @@ async function createCastingProvider(config: GoogleCastExtensionProps) {
   vi.mocked(currentSession).mockReturnValue(sdk.session as unknown as cast.framework.CastSession);
 
   const provider = new GoogleCastProvider(config);
-  const { target } = createTarget();
 
   provider.attach(target);
   await provider.requestCastSession();
@@ -252,6 +250,30 @@ describe('GoogleCastProvider', () => {
       expect(provider.loadedSrc).toBe('https://example.com/video.mp4');
     });
 
+    it('sends nothing to the receiver without a source, as for an embed with no cast src', async () => {
+      const { provider, session } = await createCastingProvider({});
+
+      session.loadMedia.mockClear();
+      await provider.load();
+
+      expect(session.loadMedia).not.toHaveBeenCalled();
+      expect(provider.loadedSrc).toBeNull();
+    });
+
+    it('casts an explicit src from media with no DOM children, such as an embed', async () => {
+      const { target } = createTarget();
+
+      Reflect.deleteProperty(target, 'querySelectorAll');
+
+      const config: GoogleCastExtensionProps = {};
+      const { provider, session } = await createCastingProvider(config, target);
+
+      config.src = 'https://example.com/stream.m3u8';
+      await provider.load();
+
+      expect(session.loadMedia).toHaveBeenCalledTimes(1);
+    });
+
     it('releases the claim when the load request fails', async () => {
       const config: GoogleCastExtensionProps = {};
       const { provider, session } = await createCastingProvider(config);
@@ -287,20 +309,29 @@ describe('GoogleCastProvider', () => {
 });
 
 describe('GoogleCastExtension', () => {
+  /** A real `<video>`, so the extension treats it as castable, whose `textTracks` the provider can listen to. */
+  function createVideo() {
+    const video = document.createElement('video');
+
+    Object.defineProperty(video, 'textTracks', { value: new EventTarget() });
+
+    return video;
+  }
+
   it('loads the cast framework when the player reads remote while attached', () => {
     vi.stubGlobal('chrome', {});
 
-    const { target } = createTarget();
+    const video = createVideo();
     const googleCast = new GoogleCastExtension();
+    const coordinator = new PlayerExtensionCoordinator(() => {});
 
-    googleCast.attach({ media: target as Media, container: null });
+    coordinator.register(googleCast);
+    coordinator.attach({ media: video, container: null });
     expect(ensureCastFramework).not.toHaveBeenCalled();
 
     // The extension's override must expose `remote` as an accessor so player
     // reads reach the provider's lazy-loading getter.
-    const media = createPlayerMedia(target as Media, () => [googleCast]);
-
-    void (media as HTMLMediaTargetLike).remote;
+    void (coordinator.wrap(video) as unknown as HTMLMediaTargetLike).remote;
 
     expect(ensureCastFramework).toHaveBeenCalled();
   });
@@ -308,15 +339,15 @@ describe('GoogleCastExtension', () => {
   it('does not load the cast framework when remote is read after detach', () => {
     vi.stubGlobal('chrome', {});
 
-    const { target } = createTarget();
+    const video = createVideo();
     const googleCast = new GoogleCastExtension();
+    const coordinator = new PlayerExtensionCoordinator(() => {});
 
-    googleCast.attach({ media: target as Media, container: null });
-    googleCast.detach();
+    coordinator.register(googleCast);
+    coordinator.attach({ media: video, container: null });
+    coordinator.detach();
 
-    const media = createPlayerMedia(target as Media, () => [googleCast]);
-
-    void (media as HTMLMediaTargetLike).remote;
+    void (coordinator.wrap(video) as unknown as HTMLMediaTargetLike).remote;
 
     expect(ensureCastFramework).not.toHaveBeenCalled();
   });

@@ -179,7 +179,8 @@ export class GoogleCastProvider {
     mediaInfo.customData = this.#googleCast.customData ?? null;
 
     const { target } = this;
-    const subtitles = [...(target?.querySelectorAll<HTMLTrackElement>('track') ?? [])].filter(
+    // Embed adapters (YouTube, Vimeo) have no `<track>` children to query; an explicit `src` can still be cast.
+    const subtitles = [...(target?.querySelectorAll?.<HTMLTrackElement>('track') ?? [])].filter(
       (el) => el.src && isCaptionOrSubtitleTrack(el)
     );
 

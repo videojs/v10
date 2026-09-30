@@ -1,4 +1,5 @@
-import { createPlayerMedia } from '@videojs/core/dom';
+import { PlayerExtensionCoordinator } from '@videojs/core/dom';
+import type { Media } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastExtension } from '../index';
@@ -25,9 +26,14 @@ const mocks = vi.hoisted(() => {
     currentTime = 42;
     muted = false;
     loadedSrc: string | null = null;
+    target: unknown = null;
     load = vi.fn();
-    attach = vi.fn();
-    detach = vi.fn();
+    attach = vi.fn((target: unknown) => {
+      this.target = target;
+    });
+    detach = vi.fn(() => {
+      this.target = null;
+    });
     destroy = vi.fn();
 
     constructor(public config: unknown) {
@@ -45,14 +51,21 @@ vi.mock('../provider', () => ({
 function setup() {
   const video = document.createElement('video');
   const googleCast = new GoogleCastExtension();
+  const coordinator = new PlayerExtensionCoordinator(() => {});
 
-  googleCast.attach({ media: video, container: null });
+  coordinator.register(googleCast);
+  coordinator.attach({ media: video, container: null });
 
   const provider = mocks.FakeProvider.instances.at(-1)!;
   // What the player's store sees once the extension is registered.
-  const media = createPlayerMedia(video, () => [googleCast]);
+  const media = coordinator.wrap(video);
 
   return { video, media, googleCast, provider };
+}
+
+/** A custom media element or adapter: fronts a native element as `target` and forwards its events. */
+function createHost(element: HTMLVideoElement) {
+  return Object.assign(new EventTarget(), { target: element, src: '', currentSrc: '' });
 }
 
 function connect(provider: InstanceType<typeof mocks.FakeProvider>) {
@@ -85,6 +98,75 @@ describe('GoogleCastExtension', () => {
 
     expect(mocks.FakeProvider.instances).toHaveLength(0);
     expect(googleCast.mediaOverride).toBeNull();
+  });
+
+  describe('embeds', () => {
+    /** Shaped like the YouTube and Vimeo adapters: an iframe `target`, a provider page `src`, no DOM children. */
+    function createEmbed() {
+      return Object.assign(new EventTarget(), {
+        target: document.createElement('iframe'),
+        src: 'https://www.youtube.com/watch?v=abc',
+        currentSrc: 'https://www.youtube.com/watch?v=abc',
+      });
+    }
+
+    it('attaches to an embed', () => {
+      const googleCast = new GoogleCastExtension();
+      const embed = createEmbed();
+
+      googleCast.attach({ media: embed as unknown as Media, container: null });
+
+      expect(mocks.FakeProvider.instances.at(-1)!.attach).toHaveBeenCalledWith(embed);
+      expect(googleCast.mediaOverride).not.toBeNull();
+    });
+
+    it('never falls back to the page an embed plays', () => {
+      const googleCast = new GoogleCastExtension();
+
+      googleCast.attach({ media: createEmbed() as unknown as Media, container: null });
+
+      expect(googleCast.src).toBe('');
+    });
+
+    it('casts an explicit src for an embed', () => {
+      const googleCast = new GoogleCastExtension();
+
+      googleCast.attach({ media: createEmbed() as unknown as Media, container: null });
+      googleCast.src = 'https://example.com/stream.m3u8';
+
+      expect(googleCast.src).toBe('https://example.com/stream.m3u8');
+    });
+  });
+
+  it('drives the native element behind a custom media element or adapter', () => {
+    const googleCast = new GoogleCastExtension();
+    const video = document.createElement('video');
+
+    googleCast.attach({ media: createHost(video) as unknown as Media, container: null });
+
+    expect(mocks.FakeProvider.instances.at(-1)!.attach).toHaveBeenCalledWith(video);
+  });
+
+  it('follows the native element when the media swaps it', () => {
+    const googleCast = new GoogleCastExtension();
+    const first = document.createElement('video');
+    const second = document.createElement('video');
+    const host = createHost(first);
+
+    googleCast.attach({ media: host as unknown as Media, container: null });
+
+    const provider = mocks.FakeProvider.instances.at(-1)!;
+
+    host.target = second;
+    host.dispatchEvent(new Event('loadstart'));
+
+    expect(provider.detach).toHaveBeenCalledTimes(1);
+    expect(provider.attach).toHaveBeenLastCalledWith(second);
+
+    // The same element on the next load is left bound.
+    host.dispatchEvent(new Event('loadstart'));
+
+    expect(provider.attach).toHaveBeenCalledTimes(2);
   });
 
   it('attaches the provider to the media and follows media changes', () => {
@@ -248,7 +330,7 @@ describe('GoogleCastExtension', () => {
       expect(googleCast.src).toBe('https://example.com/local.mp4');
     });
 
-    it('prefers a source child of the media', () => {
+    it('prefers the media src over its source children, as resource selection does', () => {
       const { video, googleCast } = setup();
       const source = document.createElement('source');
 
@@ -256,7 +338,39 @@ describe('GoogleCastExtension', () => {
       video.append(source);
       video.src = 'https://example.com/local.mp4';
 
+      expect(googleCast.src).toBe('https://example.com/local.mp4');
+    });
+
+    it('reads the source child the browser selected', () => {
+      const { video, googleCast } = setup();
+      const first = document.createElement('source');
+      const second = document.createElement('source');
+
+      first.src = 'https://example.com/first.webm';
+      second.src = 'https://example.com/second.mp4';
+      video.append(first, second);
+      // The test environment never runs resource selection; stand in for the browser picking the second.
+      Object.defineProperty(video, 'currentSrc', { value: second.src, configurable: true });
+
+      expect(googleCast.src).toBe('https://example.com/second.mp4');
+    });
+
+    it('falls back to the first source child before selection has run', () => {
+      const { video, googleCast } = setup();
+      const source = document.createElement('source');
+
+      source.src = 'https://example.com/source.mp4';
+      video.append(source);
+
       expect(googleCast.src).toBe('https://example.com/source.mp4');
+    });
+
+    it('does not cast a blob currentSrc', () => {
+      const { video, googleCast } = setup();
+
+      Object.defineProperty(video, 'currentSrc', { value: 'blob:https://example.com/1', configurable: true });
+
+      expect(googleCast.src).toBe('');
     });
 
     it('prefers an explicit cast src over the media', () => {

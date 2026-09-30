@@ -32,7 +32,7 @@ export class GoogleCastExtension extends PlayerExtensionElement<GoogleCastExtens
     return new GoogleCastExtensionBase();
   }
 
-  /** Source URL loaded on the Cast receiver. Falls back to the media's `src` / `currentSrc`. */
+  /** Source URL loaded on the Cast receiver. Falls back to the source the media is playing. */
   get src(): string {
     return this.extension.src ?? '';
   }
