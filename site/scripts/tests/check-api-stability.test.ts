@@ -14,6 +14,7 @@ import {
   type Coverage,
   documentedStability,
   findDeclarations,
+  findStaleApis,
   findUnexportedExports,
   findSourceDeclarations,
   findUnstableImports,
@@ -154,6 +155,34 @@ describe('collectPageCoverage', () => {
     expect(names).not.toContain('helper');
   });
 
+  it('covers names in code headings and in the first column of the Exports tables', () => {
+    const { names } = collectPageCoverage(
+      page(
+        'title: Media capability guards',
+        [
+          '## Guards',
+          '### `isMediaPauseCapable`',
+          '### Using `isMediaSeekCapable`',
+          '```md\n## `fencedHeading`\n```',
+          '| Guard | Adds |\n| --- | --- |\n| `isMediaVolumeCapable` | `volume` |',
+          '## Exports',
+          '| Export | Description |\n| --- | --- |\n| `VideoPlayer`, `VideoPlayerProps` | The `player`. |',
+          '| Entry point | Registers |\n| --- | --- |\n| `@videojs/html/video/player` | `<video-player>` |',
+          '## Skins',
+          '| `VideoSkin` | Not an export table. |',
+        ].join('\n\n')
+      )
+    );
+
+    expect(names).toContain('isMediaPauseCapable');
+    expect(names).toContain('VideoPlayer');
+    expect(names).toContain('VideoPlayerProps');
+
+    for (const name of ['isMediaSeekCapable', 'fencedHeading', 'isMediaVolumeCapable', 'player', 'VideoSkin']) {
+      expect(names).not.toContain(name);
+    }
+  });
+
   it('splits apis into names and module patterns and reports unstable pages', () => {
     const result = collectPageCoverage(
       page("title: Locales\nstability: unstable\napis: [Locale, '@videojs/html/i18n/locales/*']")
@@ -219,6 +248,18 @@ describe('documentedStability', () => {
       'stable'
     );
     expect(documentedStability(record('default', { specifiers: ['@videojs/core/vjsc'] }), docs)).toBe('internal');
+    expect(documentedStability(record('all', { specifiers: ['@videojs/react/i18n/locales/all'] }), docs)).toBe(
+      'internal'
+    );
+  });
+
+  it('covers every export of an exact entry point', () => {
+    const docs = coverage({ stableModules: ['@videojs/react/icons'] });
+
+    expect(documentedStability(record('PlayIcon', { specifiers: ['@videojs/react/icons'] }), docs)).toBe('stable');
+    expect(documentedStability(record('PlayIcon', { specifiers: ['@videojs/react/icons/minimal'] }), docs)).toBe(
+      'internal'
+    );
   });
 
   it('keeps exports only internal packages expose internal, whatever their name', () => {
@@ -240,6 +281,35 @@ describe('documentedStability', () => {
     expect(documentedStability(record('PlayButton', { specifiers: ['@videojs/html'] }), docs)).toBe('stable');
     expect(documentedStability(record('PlayButtonProps', { specifiers: ['@videojs/react'] }), docs)).toBe('stable');
     expect(documentedStability(record('PlayButton', { specifiers: ['@videojs/element'] }), docs)).toBe('internal');
+  });
+});
+
+describe('findStaleApis', () => {
+  const surface = {
+    exports: [
+      record('PlayIcon', { specifiers: ['@videojs/react/icons'] }),
+      record('PlayButtonState', { specifiers: ['@videojs/core'] }),
+    ],
+    unresolved: ['@videojs/mux-data#MuxDataOptions'],
+  };
+
+  it('reports names and module patterns that match no framework-facing export', () => {
+    const stale = findStaleApis(
+      [
+        {
+          file: 'icons.mdx',
+          apis: ['PlayIcon', 'PlayButtonState', 'RemovedIcon', '@videojs/react/icons', '@videojs/react/emoji/*'],
+        },
+        { file: 'mux-data.mdx', apis: ['MuxDataOptions', '@videojs/mux-data'] },
+      ],
+      surface
+    );
+
+    expect(stale).toEqual([
+      { file: 'icons.mdx', api: 'PlayButtonState' },
+      { file: 'icons.mdx', api: 'RemovedIcon' },
+      { file: 'icons.mdx', api: '@videojs/react/emoji/*' },
+    ]);
   });
 });
 
