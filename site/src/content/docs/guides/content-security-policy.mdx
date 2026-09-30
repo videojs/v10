@@ -13,18 +13,18 @@ Content Security Policy (CSP) limits which resources a page can load. Video.js u
 <FrameworkCase frameworks={["react"]}>
 - `media-src` must allow your media URLs.
 - `img-src` must allow any poster or thumbnail image URLs.
-- `connect-src` must allow HLS manifests, playlists, captions, and segment requests when using HLS playback.
-- `media-src blob:` is required when using the HLS player variants, which use MSE-backed playback.
-- `worker-src blob:` is required when using the `hls.js` player variants.
+- `connect-src` must allow manifests, playlists, captions, and segment requests when using HLS or DASH playback.
+- `media-src blob:` is required when your engine uses Media Source Extensions (MSE), including HLS and DASH engines.
+- `worker-src blob:` is required for hls.js workers, which are enabled by default.
 - `style-src 'unsafe-inline'` is required for some player UI.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 - `media-src` must allow your media URLs.
 - `img-src` must allow any poster or thumbnail image URLs.
-- `connect-src` must allow HLS manifests, playlists, captions, and segment requests when using HLS playback.
-- `media-src blob:` is required when using the HLS player variants, which use MSE-backed playback.
-- `worker-src blob:` is required when using the `hls.js` player variants.
+- `connect-src` must allow manifests, playlists, captions, and segment requests when using HLS or DASH playback.
+- `media-src blob:` is required when your engine uses Media Source Extensions (MSE), including HLS and DASH engines.
+- `worker-src blob:` is required for hls.js workers, which are enabled by default.
 - `style-src 'unsafe-inline'` is required for some player UI and HTML player styling behavior.
 </FrameworkCase>
 
@@ -43,13 +43,13 @@ Content-Security-Policy:
   frame-src 'none';
 ```
 
-This policy assumes you bundle Video.js with your application or serve it from your own origin. If you load the player from a CDN, add that CDN's origin to `script-src`.
+This policy assumes you bundle Video.js with your application or serve it from your own origin. If you load the player from a CDN, add that CDN's origin to `script-src`. Add it to `style-src` too if you load stylesheets from that CDN.
 
-Replace broad sources such as `https:` with the exact origins your player uses. Remove sources your deployment does not need, and keep `blob:` only where your selected HLS renderer requires it.
+Replace broad sources such as `https:` with the exact origins your player uses. Remove sources your deployment does not need. Keep `media-src blob:` for engines that use MSE. Keep `worker-src blob:` for engines that create blob workers, as hls.js does by default.
 
 ## Allow embeds and Google Cast
 
-Add only the origins for the providers you use. Extend `script-src` with their script origins. Replace `frame-src 'none'` with their iframe origins if needed. A dash means the adapter does not directly load that resource.
+Add only the origins for the providers you use. Extend `script-src` with their script origins. If a provider lists iframe origins, replace `frame-src 'none'` with those origins. A dash means the Video.js integration does not directly load that resource.
 
 | Provider | `script-src` origins | `frame-src` origins |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Add only the origins for the providers you use. Extend `script-src` with their s
 
 For Cloudflare, use `https://iframe.videodelivery.net` unless your source URL names a customer origin. In that case, replace `<code>` with your customer code.
 
-Wistia normally renders its player in the page. Its bundled SDK also supports an iframe fallback. The installed SDK loads scripts and fetches media data from `fast.wistia.com` and `fast.wistia.net`, so allow both origins in `connect-src` too.
+The Wistia SDK bundled with Video.js normally renders its player in the page and can fall back to an iframe. It loads scripts and media data from `fast.wistia.com` and `fast.wistia.net`. If you narrow `connect-src`, keep both origins.
 
 The table covers entry scripts and embed frames. Provider SDKs can request additional resources. Test your selected media under your policy, check the browser's CSP violations, and allow the exact origins those requests need.
 

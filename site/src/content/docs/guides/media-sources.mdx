@@ -237,7 +237,7 @@ video.source = {
 
 Because `engine.dashJs` replaces rather than merges, dropping a key restores the dash.js default instead of leaving the old value behind.
 
-Shaka also applies `engine.shaka` configuration to the running player without recreating it.
+Shaka also applies `engine.shaka` configuration to the running player without recreating it. Dropping a key restores its default. Video.js enables `abr.restrictToElementSize` by default to limit adaptation to the player size.
 
 ### Options Video.js normalizes
 

@@ -67,7 +67,8 @@ The `side` and `align` props control the preferred popup placement relative to t
 <FrameworkCase frameworks={["html"]}>
   `<media-popover>` is the popup. A trigger links to it through `commandfor`
   set to the popup's `id`. If the popup has no `id`, it uses the element
-  immediately before it as the trigger and creates the link automatically.
+  immediately before it as the trigger. It gives the popup a generated `id`
+  and sets the trigger's `commandfor` to that value.
   That element must not already target another popup through `commandfor`.
 </FrameworkCase>
 
