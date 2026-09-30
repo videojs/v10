@@ -148,7 +148,7 @@ If the saved language is absent from that first list, leave the stored preferenc
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`. When the first caption or subtitle list arrives, mark restoration complete before calling `selectSubtitlesTrack` with the saved track's `id` or `'off'`. Record that selection without saving it. Save later selection changes, preserving an unmatched preference until then. Guard `localStorage` reads and writes, and restart restoration for each new source.
+Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`. When the first caption or subtitle list arrives, record the current selection and mark restoration complete before calling `selectSubtitlesTrack` with the saved track's `id` or `'off'`. Skip saving during that first pass. Save later selection changes, preserving an unmatched preference until then. Guard `localStorage` reads and writes, and restart restoration for each new source.
 
 </FrameworkCase>
 

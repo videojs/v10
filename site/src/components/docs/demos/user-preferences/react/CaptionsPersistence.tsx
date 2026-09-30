@@ -27,7 +27,7 @@ export default function CaptionsPersistence() {
       const desired = saved === 'off' ? undefined : subtitles.find((t) => t.language === saved);
 
       restored.current = true;
-      lastSelection.current = saved && (desired || saved === 'off') ? (desired?.language ?? 'off') : selection;
+      lastSelection.current = selection;
 
       if (saved && (desired || saved === 'off')) {
         store.selectSubtitlesTrack(desired?.id ?? 'off');
