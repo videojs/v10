@@ -85,6 +85,37 @@ describe('fetchResolvable', () => {
   });
 });
 
+describe('createTrackedFetch', () => {
+  it('samples every emitted chunk with cumulative byte totals', async () => {
+    const totals: number[] = [];
+    const trackedFetch = createTrackedFetch(
+      { fastEstimate: 0, slowEstimate: 0, fastTotalWeight: 0, slowTotalWeight: 0, bytesSampled: 0 },
+      ({ bytesSampled }) => totals.push(bytesSampled)
+    );
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const size of [150_000, 150_000, 50_000]) controller.enqueue(new Uint8Array(size));
+
+        controller.close();
+      },
+    });
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body));
+
+    try {
+      const sizes: number[] = [];
+
+      for await (const chunk of await trackedFetch({ url: 'https://example.com/media.m4s' })) {
+        sizes.push(chunk.byteLength);
+      }
+
+      expect(sizes).toEqual([150_000, 150_000, 50_000]);
+      expect(totals).toEqual([150_000, 300_000, 350_000]);
+    } finally {
+      fetch.mockRestore();
+    }
+  });
+});
+
 describe('getResponseText', () => {
   it('extracts text from ResponseLike', async () => {
     const response = {

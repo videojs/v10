@@ -113,12 +113,17 @@ const makeMockSourceBuffer = () => {
 function makeControllableFetch() {
   const resolvers = new Map<string, () => void>();
   const fetchedUrls: string[] = [];
+  const signals = new Map<string, AbortSignal>();
 
   const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
 
     fetchedUrls.push(url);
-    return new Promise<Response>((resolve) => {
+    const signal = (input as Request).signal;
+
+    signals.set(url, signal);
+    return new Promise<Response>((resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true });
       resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100), { status: 200 })));
     });
   });
@@ -126,7 +131,7 @@ function makeControllableFetch() {
   const resolve = (url: string) => resolvers.get(url)?.();
   const resolveAll = () => resolvers.forEach((fn) => fn());
 
-  return { fetch, fetchedUrls, resolve, resolveAll };
+  return { fetch, fetchedUrls, signals, resolve, resolveAll };
 }
 
 // ============================================================================
@@ -417,7 +422,7 @@ describe('loadSegments — track switch', () => {
   });
 
   it('preempts in-flight fetch when track switches; loads new track init', async () => {
-    const { fetch: controllableFetch, fetchedUrls, resolve } = makeControllableFetch();
+    const { fetch: controllableFetch, fetchedUrls, signals, resolve } = makeControllableFetch();
 
     globalThis.fetch = controllableFetch;
 
@@ -443,12 +448,11 @@ describe('loadSegments — track switch', () => {
 
     state.selectedVideoTrackId.set('track-b');
 
-    resolve('https://example.com/track-a-init.mp4');
-
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-b-init.mp4'), {
       timeout: 3000,
     });
 
+    expect(signals.get('https://example.com/track-a-init.mp4')!.aborted).toBe(true);
     resolve('https://example.com/track-b-init.mp4');
 
     await vi.waitFor(() => expect(videoBufferActor.snapshot.get().context.initTrackId).toBe('track-b'), {
@@ -536,7 +540,13 @@ describe('loadSegments — track switch', () => {
 
     const reactor = loadVideoSegments.setup({ state, context });
 
-    await new Promise((r) => setTimeout(r, 50));
+    await vi.waitFor(() => {
+      expect(videoBufferActor.snapshot.get().context.initTrackId).toBe('track-a');
+      expect(videoBufferActor.snapshot.get().context.segments.map(({ id, partial }) => ({ id, partial }))).toEqual([
+        { id: 'a1', partial: undefined },
+      ]);
+      expect(videoLoader.snapshot.get().value).toBe('idle');
+    });
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
