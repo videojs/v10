@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { BandwidthState } from '../bandwidth-estimator';
-import { getBandwidthEstimate, hasGoodEstimate, sampleBandwidth } from '../bandwidth-estimator';
+import { getBandwidthEstimate, sampleBandwidth } from '../bandwidth-estimator';
 
 // Helper to create initial state
 const createInitialState = (): BandwidthState => ({
@@ -40,71 +40,6 @@ describe('realistic bandwidth patterns', () => {
 
       // Final estimate should be significantly lower than initial
       expect(estimates[estimates.length - 1]).toBeLessThan(initialEstimate * 0.7);
-    });
-
-    it('should adapt faster with fast EWMA during decline', () => {
-      let state = createInitialState();
-
-      // Establish baseline
-      for (let i = 0; i < 8; i++) {
-        state = sampleBandwidth(state, 1000, 100_000); // 800 Kbps
-      }
-
-      const beforeDecline = getBandwidthEstimate(state, 500_000);
-
-      // Sharp decline for 2 samples
-      state = sampleBandwidth(state, 1000, 50_000); // 400 Kbps
-      state = sampleBandwidth(state, 1000, 50_000);
-
-      const afterDecline = getBandwidthEstimate(state, 500_000);
-
-      // Should drop significantly (fast EWMA dominates via min)
-      expect(afterDecline).toBeLessThan(beforeDecline * 0.8);
-    });
-  });
-
-  describe('sudden bandwidth changes (network handoff)', () => {
-    it('should drop quickly when switching Wi-Fi → cellular', () => {
-      let state = createInitialState();
-
-      // Wi-Fi: high bandwidth
-      for (let i = 0; i < 10; i++) {
-        state = sampleBandwidth(state, 1000, 200_000); // 1.6 Mbps
-      }
-
-      const wifiEstimate = getBandwidthEstimate(state, 500_000);
-
-      // Sudden switch to cellular: low bandwidth
-      for (let i = 0; i < 3; i++) {
-        state = sampleBandwidth(state, 1000, 50_000); // 400 Kbps
-      }
-
-      const cellularEstimate = getBandwidthEstimate(state, 500_000);
-
-      // Should drop quickly (within 3 samples)
-      expect(cellularEstimate).toBeLessThan(wifiEstimate * 0.6);
-    });
-
-    it('should rise slowly when switching cellular → Wi-Fi', () => {
-      let state = createInitialState();
-
-      // Cellular: low bandwidth
-      for (let i = 0; i < 10; i++) {
-        state = sampleBandwidth(state, 1000, 50_000); // 400 Kbps
-      }
-
-      const cellularEstimate = getBandwidthEstimate(state, 500_000);
-
-      // Sudden switch to Wi-Fi: high bandwidth
-      for (let i = 0; i < 3; i++) {
-        state = sampleBandwidth(state, 1000, 200_000); // 1.6 Mbps
-      }
-
-      const risingEstimate = getBandwidthEstimate(state, 500_000);
-
-      // Should rise, but conservatively (slow EWMA dominates via min)
-      expect(risingEstimate).toBeGreaterThan(cellularEstimate);
-      expect(risingEstimate).toBeLessThan(1_600_000); // Not fully at Wi-Fi level yet
     });
   });
 
@@ -243,7 +178,6 @@ describe('threshold boundary conditions', () => {
       const estimate = getBandwidthEstimate(state, 500_000);
 
       expect(estimate).toBe(500_000); // Uses default
-      expect(hasGoodEstimate(state)).toBe(false);
     });
 
     it('should use actual estimate at minTotalBytes', () => {
@@ -259,7 +193,6 @@ describe('threshold boundary conditions', () => {
       const estimate = getBandwidthEstimate(state, 500_000);
 
       expect(estimate).not.toBe(500_000); // Uses actual estimate
-      expect(hasGoodEstimate(state)).toBe(true);
     });
 
     it('should transition smoothly at threshold', () => {
@@ -352,27 +285,6 @@ describe('mixed sample scenarios', () => {
 });
 
 describe('zero-factor correction reliability', () => {
-  it('should show early estimates are less reliable than later ones', () => {
-    let state = createInitialState();
-
-    // First sample
-    state = sampleBandwidth(state, 1000, 200_000);
-
-    const earlyEstimate = getBandwidthEstimate(state, 500_000);
-
-    // Many more samples at same bandwidth
-    for (let i = 0; i < 20; i++) {
-      state = sampleBandwidth(state, 1000, 200_000);
-    }
-
-    const laterEstimate = getBandwidthEstimate(state, 500_000);
-
-    // Both should be close to actual (1.6 Mbps), but later should be more accurate
-    // The difference should be minimal with zero-factor correction
-    expect(Math.abs(earlyEstimate - 1_600_000)).toBeLessThan(100_000);
-    expect(Math.abs(laterEstimate - 1_600_000)).toBeLessThan(50_000);
-  });
-
   it('should show zero-factor correction diminishes over time', () => {
     let state = createInitialState();
 

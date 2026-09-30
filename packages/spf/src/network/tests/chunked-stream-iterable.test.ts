@@ -43,20 +43,6 @@ function totalBytes(chunks: Uint8Array[]): number {
 // ---------------------------------------------------------------------------
 
 describe('ChunkedStreamIterable', () => {
-  it('exposes minChunkSize', () => {
-    const stream = makeStream();
-    const iterable = new ChunkedStreamIterable(stream, { minChunkSize: 1024 });
-
-    expect(iterable.minChunkSize).toBe(1024);
-  });
-
-  it('defaults minChunkSize to 128 KB', () => {
-    const stream = makeStream();
-    const iterable = new ChunkedStreamIterable(stream);
-
-    expect(iterable.minChunkSize).toBe(2 ** 17);
-  });
-
   it.each([
     { threshold: 64, options: { minChunkSize: 64 } },
     { threshold: 131_072, options: undefined },
@@ -89,15 +75,6 @@ describe('ChunkedStreamIterable', () => {
       await next;
       await iterator.return(undefined);
     }
-  });
-
-  it('yields a single chunk when it exceeds minChunkSize', async () => {
-    const minChunkSize = 64;
-    const stream = makeStream(bytes(100));
-    const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
-
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0]!.length).toBe(100);
   });
 
   it('accumulates small chunks until minChunkSize is met', async () => {

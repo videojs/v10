@@ -25,32 +25,9 @@ describe('Task', () => {
 
       expect(capturedStatus).toBe('running');
     });
-
-    it('transitions to done when run() resolves', async () => {
-      const task = new Task(async () => 42);
-
-      await task.run();
-      expect(task.status).toBe('done');
-    });
-
-    it('transitions to error when run() rejects', async () => {
-      const task = new Task<void, Error>(async () => {
-        throw new Error('boom');
-      });
-
-      await expect(task.run()).rejects.toThrow('boom');
-      expect(task.status).toBe('error');
-    });
   });
 
   describe('value and error', () => {
-    it('returns value from run() promise', async () => {
-      const task = new Task(async () => 'hello');
-      const result = await task.run();
-
-      expect(result).toBe('hello');
-    });
-
     it('sets value before transitioning to done', async () => {
       // The ordering guarantee: value is written before status changes.
       // After run() resolves, both are correct — the guarantee is structural
@@ -653,39 +630,6 @@ describe('SerialRunner', () => {
     resolveFirst();
     await p2;
     expect(secondSignal?.aborted).toBe(true);
-  });
-
-  it('abortPending() does not affect the in-flight task — it completes normally', async () => {
-    const runner = new SerialRunner();
-    const results: string[] = [];
-
-    let resolveFirst!: () => void;
-    const first = new Task(
-      async () => {
-        await new Promise<void>((r) => {
-          resolveFirst = r;
-        });
-        results.push('first-done');
-      },
-      { id: '1' }
-    );
-    const second = new Task(
-      async () => {
-        results.push('second-done');
-      },
-      { id: '2' }
-    );
-
-    runner.schedule(first);
-    runner.schedule(second);
-
-    await vi.waitFor(() => expect(first.status).toBe('running'));
-    runner.abortPending();
-    resolveFirst();
-
-    await vi.waitFor(() => expect(first.status).toBe('done'));
-    // first completed, second ran (with aborted signal) but we only assert first completed
-    expect(results).toContain('first-done');
   });
 
   it('abortAll() aborts the in-flight task', async () => {

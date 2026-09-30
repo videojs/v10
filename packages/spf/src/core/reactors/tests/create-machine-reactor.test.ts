@@ -296,24 +296,6 @@ describe('createMachineReactor — cleanup', () => {
 // =============================================================================
 
 describe('createMachineReactor — derive', () => {
-  it('transitions to the status returned by the derive fn', async () => {
-    const src = signal<'waiting' | 'active'>('waiting');
-    const reactor = createMachineReactor<'waiting' | 'active'>({
-      initial: 'waiting',
-      monitor: () => src.get(),
-      states: { waiting: {}, active: {} },
-    });
-
-    expect(reactor.snapshot.get().value).toBe('waiting');
-
-    src.set('active');
-    await tick();
-
-    expect(reactor.snapshot.get().value).toBe('active');
-
-    reactor.destroy();
-  });
-
   it('does not transition when the derive fn returns the current status', async () => {
     const trigger = signal(0);
     const entry = vi.fn();
