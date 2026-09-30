@@ -81,16 +81,41 @@ Mux Data needs to know which environment a view belongs to. For Mux-hosted playb
 Set `envKey` when you monitor a source Mux doesn't host, like a self-hosted HLS or DASH stream. Find the key in the [Mux dashboard](https://dashboard.mux.com/settings/data):
 
 <FrameworkCase frameworks={["react"]}>
+For the hls.js example, also install `@videojs/hlsjs-video`. Replace the media and extension in the primary example with `<MonitoredHlsVideo />`:
+
+```bash
+pnpm add @videojs/hlsjs-video
+```
+
 ```tsx
-<HlsJsVideo src="https://example.com/stream.m3u8" />
-<MuxData envKey="YOUR_ENV_KEY" /> {/* [!code focus] */}
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { MuxData } from '@videojs/react/extensions/mux-data';
+
+function MonitoredHlsVideo() {
+  return (
+    <>
+      <HlsJsVideo src="https://example.com/stream.m3u8" />
+      <MuxData envKey="YOUR_ENV_KEY" /> {/* [!code focus] */}
+    </>
+  );
+}
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
+For the hls.js example, also install `@videojs/hlsjs-video`. Replace `<mux-video>` in the primary example with `<hlsjs-video>` and keep both elements inside its container:
+
+```bash
+pnpm add @videojs/hlsjs-video
+```
+
 ```html
 <hlsjs-video src="https://example.com/stream.m3u8"></hlsjs-video>
 <mux-data env-key="YOUR_ENV_KEY"></mux-data> <!-- [!code focus] -->
+<script type="module">
+  import '@videojs/html/media/hlsjs-video';
+  import '@videojs/html/extensions/mux-data';
+</script>
 ```
 </FrameworkCase>
 

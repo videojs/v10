@@ -191,7 +191,41 @@ export default function App() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-`<media-live-button>` selects from the live, time, and buffer features and reflects live state. To swap larger parts of the UI on `streamType`, build a provider with <DocsLink slug="reference/api/html-create-player">createPlayer</DocsLink> and add `streamTypeFeature` to its features (`<live-video-player>` uses `liveVideoFeatures`, which does not include it), then read `streamType` from the player store through the <DocsLink slug="reference/api/player-controller">player controller</DocsLink>.
+`<media-live-button>` already reflects live state. To show a whole group of controls only for live streams, compose a custom player and subscribe to its store:
+
+```html
+<stream-type-player>
+  <media-container>
+    <hlsjs-video src="https://your-stream.example.com/live.m3u8" autoplay muted playsinline></hlsjs-video>
+    <div id="live-controls" hidden>
+      <media-live-button></media-live-button>
+    </div>
+  </media-container>
+</stream-type-player>
+<script type="module">
+  import { createPlayer, selectStreamType, streamTypeFeature } from '@videojs/html';
+  import { liveVideoFeatures } from '@videojs/html/live-video';
+  import '@videojs/html/media/hlsjs-video';
+  import '@videojs/html/ui/container';
+  import '@videojs/html/ui/live-button';
+
+  const { PlayerElement } = createPlayer({
+    features: [...liveVideoFeatures, streamTypeFeature],
+  });
+  customElements.define('stream-type-player', PlayerElement);
+
+  const player = document.querySelector('stream-type-player');
+  const store = player.store;
+  const controls = document.querySelector('#live-controls');
+  const update = () => {
+    controls.hidden = selectStreamType(store.state)?.streamType !== 'live';
+  };
+
+  const unsubscribe = store.subscribe(update);
+  update();
+  // Call unsubscribe() when this player is removed.
+</script>
+```
 
 </FrameworkCase>
 

@@ -118,7 +118,30 @@ To show the selected track in the trigger, use the <DocsLink slug="reference/com
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Use <DocsLink slug="reference/components/captions-radio-group">`<media-captions-radio-group>`</DocsLink> inside a menu or popover for explicit track selection.
+Replace the Captions button in the primary example with a menu containing <DocsLink slug="reference/components/captions-radio-group">`<media-captions-radio-group>`</DocsLink>. Keep the player, container, and track setup, and add these imports:
+
+```html
+<button type="button" commandfor="captions-menu">Captions</button>
+<media-menu id="captions-menu" side="top" align="end">
+  <media-menu-content>
+    <media-captions-radio-group label="Captions">
+      <template>
+        <media-menu-radio-item>
+          <span data-part="label"></span>
+          <media-menu-item-indicator>✓</media-menu-item-indicator>
+        </media-menu-radio-item>
+      </template>
+    </media-captions-radio-group>
+  </media-menu-content>
+</media-menu>
+<script type="module">
+  import '@videojs/html/ui/menu';
+  import '@videojs/html/ui/menu-content';
+  import '@videojs/html/ui/menu-radio-item';
+  import '@videojs/html/ui/menu-item-indicator';
+  import '@videojs/html/ui/captions-radio-group';
+</script>
+```
 
 </FrameworkCase>
 
@@ -150,7 +173,7 @@ The track file is served from another origin without CORS headers. Serve it with
 The track file is served from another origin without CORS headers. Serve it with `Access-Control-Allow-Origin` and set `crossorigin` on the media element.
 </FrameworkCase>
 
-### The selection menu is empty
+### The captions menu doesn't render
 
 The media has no caption or subtitle tracks, so captions availability is `'unavailable'`. For streaming sources, confirm the manifest actually declares text tracks.
 
