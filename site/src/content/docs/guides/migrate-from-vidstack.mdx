@@ -533,7 +533,7 @@ function load(src) {
 When the media changes, the player detaches from the old one, resets its state, and attaches to the new one; the skin follows. Every media module you import adds its engine to your bundle, so import the rarely used ones dynamically.
 </FrameworkCase>
 
-For a single source, calling `loadSource(src)` on the player store swaps the URL on the current media without replacing it.
+For a single source, change the media's `src` or `source` instead. The same media swaps the URL without being replaced.
 
 ### Loading
 
@@ -904,6 +904,8 @@ Vidstack's media store becomes the player store. Two differences catch most migr
 - **State keys come from features.** Every Vidstack key always existed. In Video.js, a key exists only when its feature is part of the player, and some live in no preset.
 - **Subscriptions don't track what you read.** Vidstack's `subscribe` re-ran only when the keys you read changed. The Video.js store notifies on any change; selectors give you change-only updates.
 
+The <DocsLink slug="reference/api/player-store">player store reference</DocsLink> lists every state field and action, grouped by the feature that adds it.
+
 <FrameworkCase frameworks={["react"]}>
 | Vidstack | Video.js 10 |
 |---|---|
@@ -913,7 +915,7 @@ Vidstack's media store becomes the player store. Two differences catch most migr
 | `useMediaRemote()` | `usePlayer((state) => state.seek)`, or any other action |
 | `useMediaPlayer()` | `usePlayer()` for state and actions, `useContainer()` for the element |
 | `useMediaProvider()` | `useMedia()` |
-| `player.subscribe(callback)` | `usePlayer().subscribe(callback)`, reading `store.state` inside |
+| `player.subscribe(callback)` | `usePlayer().subscribe(callback)`, reading values off the store inside |
 
 ```tsx
 // Vidstack
@@ -945,7 +947,7 @@ function SkipIntro() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The store lives on the player element as `store`. Read values from `store.state`, call actions on it, and subscribe to changes:
+The store lives on the player element as `store`. State values and actions are properties of it, and `subscribe` reports changes:
 
 ```js
 // Vidstack
@@ -963,14 +965,13 @@ const { store } = player;
 
 let lastPaused;
 store.subscribe(() => {
-  const { paused } = store.state;
-  if (paused === lastPaused) return;
-  lastPaused = paused;
-  console.log(paused);
+  if (store.paused === lastPaused) return;
+  lastPaused = store.paused;
+  console.log(store.paused);
 });
 ```
 
-The callback receives no arguments and runs after any state change, batched once per microtask, so compare the values you care about. `store.state` is a snapshot; read it fresh each time.
+The callback receives no arguments and runs after any state change, batched once per microtask, so compare the values you care about.
 
 Inside a custom element, use a <DocsLink slug="reference/api/player-controller">player controller</DocsLink> with a selector instead. It updates your element only when the selected state changes. See <DocsLink slug="guides/build-your-own-component">Build your own UI component</DocsLink>.
 </FrameworkCase>
@@ -981,22 +982,24 @@ Vidstack's remote control dispatched request events that the player satisfied. V
 
 | Vidstack | Video.js 10 action |
 |---|---|
-| `play()`, `pause()`, `togglePaused()` | `play()`, `pause()`, `togglePaused()` |
+| `play()`, `pause()`, `togglePaused()` | `play()`, `pause()` |
 | `seek(time)` | `seek(time)` |
 | `seekToLiveEdge()` | Use `LiveButton`, or seek to the end of the last `seekable` range |
 | `changeVolume(volume)` | `setVolume(volume)`; a value above 0 also unmutes |
-| `mute()`, `unmute()`, `toggleMuted()` | `toggleMuted()` |
+| `mute()`, `unmute()`, `toggleMuted()` | `setMuted(muted)` |
 | `changePlaybackRate(rate)` | `setPlaybackRate(rate)` |
-| `enterFullscreen(target)`, `exitFullscreen()`, `toggleFullscreen()` | `requestFullscreen()`, `exitFullscreen()`, `toggleFullscreen()`; there's no target |
-| `enterPictureInPicture()`, `exitPictureInPicture()`, `togglePictureInPicture()` | `requestPictureInPicture()`, `exitPictureInPicture()`, `togglePictureInPicture()` |
+| `enterFullscreen(target)`, `exitFullscreen()`, `toggleFullscreen()` | `requestFullscreen()`, `exitFullscreen()`; there's no target |
+| `enterPictureInPicture()`, `exitPictureInPicture()`, `togglePictureInPicture()` | `requestPictureInPicture()`, `exitPictureInPicture()` |
 | `toggleCaptions()`, `showCaptions()`, `disableCaptions()` | `toggleSubtitles()`, `toggleSubtitles(true)`, `toggleSubtitles(false)` |
-| `changeTextTrackMode(index, mode)` | `selectSubtitlesTrack(id)`, or `'off'` |
+| `changeTextTrackMode(index, mode)` | `selectSubtitlesTrack(id)`, or `selectSubtitlesTrack(null)` to turn them off |
 | `changeQuality(index)`, `requestAutoQuality()` | `selectVideoRendition(id)`, `selectVideoRendition('auto')` |
 | `changeAudioTrack(index)` | `selectAudioTrack(id)` |
 | `pauseControls()`, `resumeControls()` | `requestControlsLock()`, which returns a release function |
 | `toggleControls()` | `toggleControls()` |
-| `requestAirPlay()`, `requestGoogleCast()` | `toggleRemotePlayback()` |
+| `requestAirPlay()`, `requestGoogleCast()` | `promptRemotePlayback()` |
 | `startLoading()`, `startLoadingPoster()`, `changeDuration()`, `changeClipStart()`, `changeAudioGain()`, `seeking()` | No equivalent |
+
+The store has no toggles apart from `toggleSubtitles()` and `toggleControls()`, so call the pair you need, as in `paused ? play() : pause()`. Hotkeys and gestures keep the toggle names, so `togglePaused` still works as their action.
 
 Vidstack methods took an optional trigger event as their last argument. Video.js actions don't, so wrap them in a handler, as in `onClick={() => seek(30)}`. Passing an action straight to `onClick` would hand it the click event.
 
@@ -1004,8 +1007,8 @@ State keys follow the same pattern. The common renames:
 
 | Vidstack | Video.js 10 |
 |---|---|
-| `canFullscreen`, `canPictureInPicture`, `canSetVolume` | `fullscreenAvailability`, `pipAvailability`, `volumeAvailability` |
-| `pictureInPicture` | `pip` |
+| `canFullscreen`, `canPictureInPicture`, `canSetVolume` | `fullscreenAvailability`, `pictureInPictureAvailability`, `volumeAvailability` |
+| `fullscreen`, `pictureInPicture` | `isFullscreen`, `isPictureInPicture` |
 | `canAirPlay`, `canGoogleCast` | `remotePlaybackAvailability` |
 | `qualities`, `quality`, `autoQuality` | `videoRenditionList`, `activeVideoRendition`; auto is on when no rendition is `selected` |
 | `audioTracks`, `audioTrack` | `audioTrackList`, the entry with `enabled` |
@@ -1015,7 +1018,7 @@ State keys follow the same pattern. The common renames:
 | `streamType` | `streamType`, once you add `streamTypeFeature`; only `live`, `on-demand`, and `unknown` |
 | `playing`, `canSeek`, `autoPlayError`, `mediaType`, `viewType`, `orientation`, `pointer`, `width`, `height` | No store key |
 
-Two keys behave differently. `canPlay` turns on once the media has enough data to play through, not at the first `canplay`, and `started` can turn off again after the media is reset or sits paused at the start. `currentTime` follows native `timeupdate`, about four times a second, where Vidstack updated it every animation frame.
+Two keys behave differently. `started` can turn off again after the media is reset or sits paused at the start, and `currentTime` follows native `timeupdate`, about four times a second, where Vidstack updated it every animation frame.
 
 ### Events
 
@@ -1030,8 +1033,8 @@ Put standard media event props on the media component: `onPlay`, `onCanPlay`, `o
 
 // Video.js 10
 function FullscreenTracker() {
-  const fullscreen = usePlayer((state) => state.fullscreen);
-  useEffect(() => track(fullscreen), [fullscreen]);
+  const isFullscreen = usePlayer((state) => state.isFullscreen);
+  useEffect(() => track(isFullscreen), [isFullscreen]);
   return null;
 }
 ```
@@ -1044,7 +1047,7 @@ Listen on the media element with native event names: `canplay` for `can-play`, `
 | Vidstack event | Video.js 10 |
 |---|---|
 | `can-play`, `loaded-metadata`, `time-update`, `duration-change`, `volume-change`, `rate-change` | `canplay`, `loadedmetadata`, `timeupdate`, `durationchange`, `volumechange`, `ratechange` on the media |
-| `fullscreen-change`, `picture-in-picture-change`, `controls-change`, `remote-playback-change` | The `fullscreen`, `pip`, `controlsVisible`, and `remotePlaybackState` state |
+| `fullscreen-change`, `picture-in-picture-change`, `controls-change`, `remote-playback-change` | The `isFullscreen`, `isPictureInPicture`, `controlsVisible`, and `remotePlaybackState` state |
 | `quality-change`, `audio-track-change`, `text-track-change` | The `activeVideoRendition`, `audioTrackList`, and `textTrackList` state |
 | `provider-change`, `provider-setup` | The media's `source`, and its `engine` |
 | `play-fail`, `fullscreen-error`, `picture-in-picture-error` | A rejected action promise |
@@ -1212,7 +1215,7 @@ See <DocsLink slug="guides/live-streams">Live streams</DocsLink>.
 
 ## AirPlay and Google Cast
 
-The video skins include AirPlay and Cast buttons. Both call one action, `toggleRemotePlayback()`, and each button shows only on the platform that supports it. Without the Google Cast extension, the Cast button uses the browser's Remote Playback API.
+The video skins include AirPlay and Cast buttons. Both call one action, `promptRemotePlayback()`, and each button shows only on the platform that supports it. Without the Google Cast extension, the Cast button uses the browser's Remote Playback API.
 
 <FrameworkCase frameworks={["react"]}>
 Vidstack's `googleCast` prop becomes the `GoogleCast` extension, placed next to the media:
