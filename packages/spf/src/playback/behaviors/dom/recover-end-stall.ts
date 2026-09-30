@@ -52,7 +52,7 @@ export const DEFAULT_END_STALL_NUDGE_WINDOW = 0.2;
  * playback is active (not paused/seeking/already-ended), and the playhead sits within `nudgeWindow` of the reachable
  * buffered end (so it's the true end, not a mid-stream buffer hole). Pure — the behavior supplies the live values.
  */
-export function shouldForceEnded(
+function shouldForceEnded(
   input: {
     msEnded: boolean;
     durationFinite: boolean;
