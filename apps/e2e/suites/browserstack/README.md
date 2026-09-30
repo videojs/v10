@@ -10,7 +10,7 @@ This suite replaces the previous Docker floor job and its pinned Playwright clie
 2. Confirm the pinned combinations are available to that account using [BrowserStack's supported browser matrix](https://www.browserstack.com/docs/automate/playwright/browsers-and-os).
 3. Dispatch the BrowserStack workflow. No repository variables are required. Missing credentials fail before dependencies are installed or the app is built.
 
-The workflow runs nightly at 16:00 UTC and can be dispatched against a branch. It does not run on pull requests or have access to fork PR code. It starts and stops a BrowserStack Local tunnel for the generated app. One worker limits remote concurrency. Reports and screenshots are uploaded to Actions; session recordings are available in BrowserStack.
+The workflow runs on pull requests from branches in this repository, nightly at 16:00 UTC, and via manual dispatch. Fork pull requests skip the cloud job because repository secrets are unavailable. It starts and stops a BrowserStack Local tunnel for the generated app. One worker limits remote concurrency. Reports and screenshots are uploaded to Actions; session recordings are available in BrowserStack.
 
 The suite asserts browser versions from their user agents so an unexpected upgrade fails. Chrome, Edge, and iOS request their resolved minimum versions directly. Bundled Firefox/WebKit still require matching Playwright server releases in the config; if browserslist changes, the version checks fail until those releases are updated. These combinations require a first cloud run with credentials before they can be considered verified.
 
