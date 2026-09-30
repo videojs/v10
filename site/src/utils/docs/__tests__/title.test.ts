@@ -9,7 +9,7 @@ describe('getDocTitle', () => {
     id: 'components/play-button',
     collection: 'docs',
     data: {
-      title: 'PlayButton',
+      title: 'Playback control',
       description: 'A button component for playing and pausing media playback',
       type: 'reference',
       frameworkTitle: {
@@ -38,7 +38,7 @@ describe('getDocTitle', () => {
     id: 'components/mute-button',
     collection: 'docs',
     data: {
-      title: 'MuteButton',
+      title: 'Mute control',
       description: 'A button for muting audio',
       type: 'reference',
       frameworkTitle: {
@@ -108,7 +108,7 @@ describe('getDocTitle', () => {
     it('should fall back to default title when framework not in frameworkTitle', () => {
       const htmlTitle = getDocTitle(mockDocWithPartialFrameworkTitle, 'html');
 
-      expect(htmlTitle).toBe('MuteButton'); // Falls back to default title
+      expect(htmlTitle).toBe('Mute control');
     });
   });
 

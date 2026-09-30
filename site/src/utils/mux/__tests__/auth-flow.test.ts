@@ -21,17 +21,23 @@ describe('initiateAuthPopup', () => {
   it('opens centered popup with correct dimensions', () => {
     openSpy.mockReturnValue({} as Window);
 
-    initiateAuthPopup({
+    vi.spyOn(window.screen, 'width', 'get').mockReturnValue(1920);
+    vi.spyOn(window.screen, 'height', 'get').mockReturnValue(1080);
+
+    const cleanup = initiateAuthPopup({
       authorizationUrl: 'https://auth.example.com',
       onSuccess: vi.fn(),
       onError: vi.fn(),
     });
 
-    expect(openSpy).toHaveBeenCalledWith(
-      'https://auth.example.com',
-      'oauth-login',
-      expect.stringMatching(/width=1366,height=768/)
-    );
+    try {
+      expect(openSpy).toHaveBeenCalledWith('https://auth.example.com', 'oauth-login', expect.any(String));
+      const features = Object.fromEntries(openSpy.mock.calls[0]![2].split(',').map((part: string) => part.split('=')));
+
+      expect(features).toMatchObject({ width: '1366', height: '768', left: '277', top: '156' });
+    } finally {
+      cleanup();
+    }
   });
 
   it('adds message event listener when popup opens', () => {
@@ -173,45 +179,59 @@ describe('initiateAuthPopup', () => {
 
   it('removes listener after successful auth', () => {
     openSpy.mockReturnValue({} as Window);
-
-    // Capture the handler when addEventListener is called
-    let messageHandler: ((event: MessageEvent) => void) | null = null;
-
-    addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
-      if (type === 'message') {
-        messageHandler = handler as (event: MessageEvent) => void;
-      }
-    });
-
-    initiateAuthPopup({
+    const onSuccess = vi.fn();
+    const cleanup = initiateAuthPopup({
       authorizationUrl: 'https://auth.example.com',
-      onSuccess: vi.fn(),
+      onSuccess,
       onError: vi.fn(),
     });
 
-    // Simulate message from same origin
-    messageHandler!(
-      new MessageEvent('message', {
-        origin: window.location.origin,
-        data: { type: 'auth-complete' },
-      })
-    );
+    try {
+      for (let i = 0; i < 2; i++) {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: window.location.origin,
+            data: { type: 'auth-complete' },
+          })
+        );
+      }
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('message', expect.any(Function));
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+    } finally {
+      cleanup();
+    }
   });
 
   it('returns cleanup function that removes listener', () => {
     openSpy.mockReturnValue({} as Window);
-
+    const onSuccess = vi.fn();
+    const onActiveSuccess = vi.fn();
     const cleanup = initiateAuthPopup({
       authorizationUrl: 'https://auth.example.com',
-      onSuccess: vi.fn(),
+      onSuccess,
+      onError: vi.fn(),
+    });
+    const activeCleanup = initiateAuthPopup({
+      authorizationUrl: 'https://auth.example.com',
+      onSuccess: onActiveSuccess,
       onError: vi.fn(),
     });
 
-    cleanup();
+    try {
+      cleanup();
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: window.location.origin,
+          data: { type: 'auth-complete' },
+        })
+      );
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('message', expect.any(Function));
+      expect(onActiveSuccess).toHaveBeenCalledTimes(1);
+      expect(onSuccess).not.toHaveBeenCalled();
+    } finally {
+      cleanup();
+      activeCleanup();
+    }
   });
 });
 

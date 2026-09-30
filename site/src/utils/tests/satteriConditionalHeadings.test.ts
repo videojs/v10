@@ -45,8 +45,10 @@ describe('satteriConditionalHeadings', () => {
       '## Shared\n\n<FrameworkCase frameworks={["react"]}>\n\n## React Only\n\n</FrameworkCase>'
     );
 
-    expect(headings.find((h) => h.text === 'Shared')?.frameworks).toBeUndefined();
-    expect(headings.find((h) => h.text === 'React Only')?.frameworks).toEqual(['react']);
+    expect(headings).toEqual([
+      { depth: 2, text: 'Shared', slug: 'shared' },
+      { depth: 2, text: 'React Only', slug: 'react-only', frameworks: ['react'] },
+    ]);
   });
 
   it('attaches style context from an enclosing StyleCase', () => {

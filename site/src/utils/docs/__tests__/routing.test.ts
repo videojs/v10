@@ -206,13 +206,16 @@ describe('routing utilities', () => {
 
     describe('slug selection', () => {
       it('should always select a valid slug for the framework', () => {
-        const result = resolveIndexRedirect({
-          preferences: { framework: 'react' },
-          params: {},
-        });
+        const result = resolveIndexRedirect(
+          {
+            preferences: { framework: 'html' },
+            params: {},
+          },
+          [guideReactOnly, guideHtmlOnly]
+        );
 
-        expect(result.selectedSlug).toBeTruthy();
-        expect(typeof result.selectedSlug).toBe('string');
+        expect(result.selectedSlug).toBe('guides/html-only');
+        expect(result.url).toBe('/docs/framework/html/guides/html-only');
       });
 
       it('should build correct URL', () => {
@@ -254,7 +257,8 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('guides/html-only');
+        expect(result.selectedSlug).toBe('concepts/everyone');
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
         expect(result.slugChanged).toBe(true);
         expect(result.shouldReplace).toBe(false);
         expect(result.reason).toContain('changed slug');
@@ -270,7 +274,8 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('components/html-controller');
+        expect(result.selectedSlug).toBe('concepts/everyone');
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
         expect(result.slugChanged).toBe(true);
         expect(result.shouldReplace).toBe(false);
       });

@@ -7,7 +7,6 @@ import {
   FRAMEWORK_COOKIE,
   getFrameworkPreferenceClient,
   getPreferencesServer,
-  STYLE_STORAGE_KEY_PREFIX,
   setFrameworkPreferenceClient,
   setStylePreferenceClient,
 } from '../preferences';
@@ -200,7 +199,7 @@ describe('preferences utilities', () => {
 
       setStylePreferenceClient(firstFramework, 'css');
 
-      const expectedKey = STYLE_STORAGE_KEY_PREFIX + firstFramework;
+      const expectedKey = `vjs_docs_style_${firstFramework}`;
 
       expect(mockStorage[expectedKey]).toBe('css');
     });
