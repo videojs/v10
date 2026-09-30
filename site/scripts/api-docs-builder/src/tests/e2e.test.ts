@@ -141,7 +141,7 @@ describe('Component pipeline (end-to-end)', () => {
 
       // ── Props ──
       // `ref` prop is auto-skipped. `_internalFlag` has @ignore and is skipped.
-      // What remains: disabled, label, onPressedChange.
+      // The sorting fixture also includes an optional and a required boolean.
       expect(Object.keys(ref.props)).toEqual(expect.arrayContaining(['disabled', 'label', 'onPressedChange']));
       expect(ref.props['ref' as keyof typeof ref.props]).toBeUndefined();
       expect(ref.props['_internalFlag' as keyof typeof ref.props]).toBeUndefined();
@@ -674,12 +674,9 @@ describe('Component pipeline (end-to-end)', () => {
     });
 
     it('props are sorted: required first, then alphabetical', () => {
-      // All ToggleButton props are required (non-optional in the interface),
-      // so they should be purely alphabetical within the required group.
       const toggleProps = Object.keys(findComponent('ToggleButton')!.reference.props);
-      const sorted = [...toggleProps].sort((a, b) => a.localeCompare(b));
 
-      expect(toggleProps).toEqual(sorted);
+      expect(toggleProps).toEqual(['disabled', 'label', 'onPressedChange', 'zzzRequired', 'aaaOptional']);
     });
 
     it('optional fields are omitted from JSON when undefined', () => {
@@ -1599,7 +1596,7 @@ describe('Preset pipeline (end-to-end)', () => {
     it('excludes React tailwind skins', () => {
       const skinNames = findPreset('video')!.reference.react.skins.map((s) => s.name);
 
-      expect(skinNames).not.toContain('VideoSkinTailwind');
+      expect(skinNames).not.toContain('VideoTailwindSkin');
     });
 
     it('detects React media element', () => {
@@ -2497,7 +2494,7 @@ describe('Media element pipeline (end-to-end)', () => {
       const ref = findElement('SpfAudio')!.reference;
       const names = ref.platforms.html.events.custom.map((e) => e.name);
 
-      expect(names).toEqual([...names].sort());
+      expect(names).toEqual(['audiomodechange', 'manifestparsed']);
     });
 
     it('has empty AudioCSSVars', () => {
