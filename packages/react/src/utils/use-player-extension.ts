@@ -14,6 +14,7 @@ import { useDestroy } from './use-destroy';
  * changes. Outside a Player the extension is created but never registered.
  *
  * @param ExtensionClass - Player extension class to instantiate and register.
+ * @internal Backs the packaged extension components; not exported from `@videojs/react`.
  */
 export function usePlayerExtension<Extension extends PlayerExtension & { destroy(): void }>(
   ExtensionClass: new () => Extension

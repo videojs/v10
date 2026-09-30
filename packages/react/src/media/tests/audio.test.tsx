@@ -72,7 +72,6 @@ describe('Audio', () => {
         setMedia,
         container: null,
         setContainer: vi.fn(),
-        registerExtension: vi.fn(() => vi.fn()),
       };
 
       render(<Audio />, { wrapper: createWrapper(value) });
@@ -89,7 +88,6 @@ describe('Audio', () => {
         setMedia,
         container: null,
         setContainer: vi.fn(),
-        registerExtension: vi.fn(() => vi.fn()),
       };
 
       const { unmount } = render(<Audio />, { wrapper: createWrapper(value) });
@@ -109,7 +107,6 @@ describe('Audio', () => {
         setMedia,
         container: null,
         setContainer: vi.fn(),
-        registerExtension: vi.fn(() => vi.fn()),
       };
 
       const ref = createRef<HTMLAudioElement>();

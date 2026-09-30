@@ -16,7 +16,6 @@ function createContextValue(container: HTMLElement): PlayerContextValue {
     setMedia: vi.fn(),
     container,
     setContainer: vi.fn(),
-    registerExtension: vi.fn(() => vi.fn()),
   };
 }
 

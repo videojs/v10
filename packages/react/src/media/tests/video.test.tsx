@@ -75,7 +75,6 @@ describe('Video', () => {
         setMedia,
         container: null,
         setContainer: vi.fn(),
-        registerExtension: vi.fn(() => vi.fn()),
       };
 
       render(<Video />, { wrapper: createWrapper(value) });
@@ -92,7 +91,6 @@ describe('Video', () => {
         setMedia,
         container: null,
         setContainer: vi.fn(),
-        registerExtension: vi.fn(() => vi.fn()),
       };
 
       const { unmount } = render(<Video />, { wrapper: createWrapper(value) });
@@ -112,7 +110,6 @@ describe('Video', () => {
         setMedia,
         container: null,
         setContainer: vi.fn(),
-        registerExtension: vi.fn(() => vi.fn()),
       };
 
       const ref = createRef<HTMLVideoElement>();

@@ -62,7 +62,6 @@ export {
   type PlayerContextValue,
   useContainer,
   useContainerAttach,
-  useExtensionRegistrar,
   useMedia,
   useMediaAttach,
   useOptionalContainer,
@@ -186,6 +185,6 @@ export {
   useMediaEvents,
 } from './utils/use-media-events';
 export { useMediaInstance } from './utils/use-media-instance';
-export { usePlayerExtension } from './utils/use-player-extension';
+
 export { renderElement } from './utils/use-render';
 export * from './version';

@@ -13,8 +13,12 @@ export interface PlayerContextValue {
   setMedia: Dispatch<SetStateAction<Media | null>>;
   container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
-  /** Register a player extension with this player. Returns a release callback for that exact instance. */
-  registerExtension: (extension: PlayerExtension) => () => void;
+  /**
+   * Register a player extension with this player. Returns a release callback for that exact instance.
+   *
+   * @internal Used by the packaged extension components; not a stable authoring API.
+   */
+  registerExtension?: ((extension: PlayerExtension) => () => void) | undefined;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -124,8 +128,12 @@ export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null
   return ctx?.setContainer;
 }
 
-/** Access the extension registrar for adding a player extension to the surrounding player. */
-export function useExtensionRegistrar(): PlayerContextValue['registerExtension'] | undefined {
+/**
+ * Access the extension registrar for adding a player extension to the surrounding player.
+ *
+ * @internal
+ */
+export function useExtensionRegistrar(): PlayerContextValue['registerExtension'] {
   const ctx = useContext(PlayerContext);
 
   return ctx?.registerExtension;
