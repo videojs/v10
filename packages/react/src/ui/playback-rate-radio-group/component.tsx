@@ -40,9 +40,6 @@ export interface PlaybackRateRadioGroupOptionsProps extends Omit<
 
 export type PlaybackRateRadioGroupValueProps = UIComponentProps<'span', PlaybackRateOptionsResult>;
 
-export interface PlaybackRateRadioGroupLegacyProps
-  extends PlaybackRateRadioGroupOptionsProps, PlaybackRateOptionsProps {}
-
 const PlaybackRateRadioGroupContext = createContext<PlaybackRateOptionsResult | null | undefined>(undefined);
 
 /** Owns playback-rate option state and shares it with an enclosing menu. Does not render a DOM element. */
@@ -121,17 +118,6 @@ export const PlaybackRateRadioGroupOptions = forwardRef<HTMLDivElement, Playback
           );
         })}
       </MenuRadioGroup>
-    );
-  }
-);
-
-/** @internal Compatibility adapter for the existing preset sources. */
-export const PlaybackRateRadioGroupLegacy = forwardRef<HTMLDivElement, PlaybackRateRadioGroupLegacyProps>(
-  function PlaybackRateRadioGroupLegacy({ label, formatRate, disabled, ...props }, forwardedRef) {
-    return (
-      <PlaybackRateRadioGroupRoot label={label} formatRate={formatRate} disabled={disabled}>
-        <PlaybackRateRadioGroupOptions {...props} ref={forwardedRef} />
-      </PlaybackRateRadioGroupRoot>
     );
   }
 );
