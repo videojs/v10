@@ -2,7 +2,7 @@
 
 Run the packaged HTML and React video, minimal video, and audio pages at the Chrome, Edge, Firefox, and Safari minimums resolved from the root browserslist. Desktop Safari coverage uses WebKit. The checks cover CSS fallbacks, closed popovers, playback, seeking, and opening menus. Playback failure is a test failure, including missing H.264 support.
 
-This suite replaces the previous Docker floor job and its pinned Playwright clients. BrowserStack's desktop WebKit is still an engine approximation, not actual Safari. The iOS project runs Safari on a real device selected from BrowserStack's device API at the browserslist minimum. Selection uses a stable ordering of matching iPhones and fails if no exact OS version is supported; it never substitutes a newer version. The suite does not currently verify captions or fullscreen.
+This suite replaces the previous Docker floor job and its pinned Playwright clients. BrowserStack's desktop WebKit is still an engine approximation, not actual Safari. The iOS project runs Safari on a real device selected from BrowserStack's device API at the browserslist minimum's major iOS version. BrowserStack exposes major versions for device selection and capabilities; the user-agent assertion still requires the full browserslist minimum. Selection uses a stable ordering of matching iPhones and fails if that major version is unavailable; it never substitutes a newer major version. The suite does not currently verify captions or fullscreen.
 
 ## Enable CI
 
@@ -12,7 +12,7 @@ This suite replaces the previous Docker floor job and its pinned Playwright clie
 
 The workflow runs on pull requests from branches in this repository, nightly at 16:00 UTC, and via manual dispatch. Fork pull requests skip the cloud job because repository secrets are unavailable. It starts and stops a BrowserStack Local tunnel for the generated app. One worker limits remote concurrency. Reports and screenshots are uploaded to Actions; session recordings are available in BrowserStack.
 
-The suite asserts browser versions from their user agents so an unexpected upgrade fails. Chrome, Edge, and iOS request their resolved minimum versions directly. Bundled Firefox/WebKit still require matching Playwright server releases in the config; if browserslist changes, the version checks fail until those releases are updated. These combinations require a first cloud run with credentials before they can be considered verified.
+The suite asserts browser versions from their user agents so an unexpected upgrade fails. Chrome and Edge request their resolved minimum versions directly. iOS requests the corresponding major version, then checks the full minimum in the user agent. Bundled Firefox/WebKit still require matching Playwright server releases in the config; if browserslist changes, the version checks fail until those releases are updated. These combinations require a first cloud run with credentials before they can be considered verified.
 
 ## Run locally
 

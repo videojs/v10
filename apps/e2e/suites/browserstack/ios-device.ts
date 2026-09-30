@@ -6,6 +6,7 @@ interface Device {
 }
 
 export async function getIosDevice(version: string, username: string, key: string): Promise<string> {
+  const major = version.split('.')[0];
   const response = await fetch('https://api.browserstack.com/automate/browsers.json', {
     headers: { Authorization: `Basic ${Buffer.from(`${username}:${key}`).toString('base64')}` },
     signal: AbortSignal.timeout(15_000),
@@ -20,7 +21,7 @@ export async function getIosDevice(version: string, username: string, key: strin
   const device = devices
     .flatMap((entry: Device) =>
       entry.os.toLowerCase() === 'ios' &&
-      entry.os_version === version &&
+      entry.os_version.split('.')[0] === major &&
       (entry.real_mobile === true || entry.real_mobile === 'true') &&
       entry.device?.startsWith('iPhone')
         ? [entry.device]

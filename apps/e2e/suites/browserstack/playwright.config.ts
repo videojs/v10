@@ -60,7 +60,7 @@ export default defineConfig<{}, Options>({
         {
           name: `ios-safari-${versions.ios}`,
           use: {
-            caps: { browser: 'safari', osVersion: versions.ios, realMobile: 'true' },
+            caps: { browser: 'safari', osVersion: versions.ios.split('.')[0]!, realMobile: 'true' },
             viewport: null,
           },
         },

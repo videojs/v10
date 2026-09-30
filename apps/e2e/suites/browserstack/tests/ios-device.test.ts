@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { getIosDevice } from '../ios-device.ts';
 
-const iphone = (device: string, os_version = '16.4') => ({ os: 'ios', os_version, device, real_mobile: true });
+const iphone = (device: string, os_version = '16') => ({ os: 'ios', os_version, device, real_mobile: true });
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -28,6 +28,12 @@ describe('getIosDevice', () => {
       headers: { Authorization: `Basic ${Buffer.from('user:key').toString('base64')}` },
       signal: expect.any(AbortSignal),
     });
+  });
+
+  it('matches a major capability against a detailed API version', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json([iphone('iPhone 14', '16.4')])));
+
+    expect(await getIosDevice('16', 'user', 'key')).toBe('iPhone 14');
   });
 
   it('fails rather than substituting a newer OS', async () => {
