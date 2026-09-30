@@ -325,7 +325,7 @@ describe('switchVideoTrack', () => {
       const reactor = switchVideoTrack.setup({ state });
 
       await flush();
-      // Among 1080a (3M) and 1080b (5.5M), 8 Mbps fits both; selectQuality
+      // Among 1080a (3M) and 1080b (5.5M), 8 Mbps fits both; bandwidth ranking
       // picks the highest bandwidth track (5.5M → 1080-high).
       expect(state.selectedVideoTrackId.get()).toBe('1080-high');
 

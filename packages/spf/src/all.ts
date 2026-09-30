@@ -31,7 +31,7 @@ export { resolveUrl } from './media/hls/resolve-url';
 // =============================================================================
 
 export type { QualityConfig } from './media/abr/quality-selection';
-export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG } from './media/abr/quality-selection';
 export type { BandwidthConfig, BandwidthState } from './network/bandwidth-estimator';
 export { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate, sampleBandwidth } from './network/bandwidth-estimator';
 
