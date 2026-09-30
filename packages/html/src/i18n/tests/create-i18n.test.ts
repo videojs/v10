@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createI18n } from '../../i18n/create-i18n';
 import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 
-describe('createI18n (HTML)', () => {
+describe('createI18n', () => {
   afterEach(async () => {
     resetI18nRegistry();
     resetBrowserTranslationCacheForTesting();
@@ -230,6 +230,41 @@ describe('createI18n (HTML)', () => {
     await vi.waitFor(() => {
       expect(text.textContent).toBe('BuiltinFr');
     });
+  });
+
+  it('handles rejected locale loads while preserving English fallback', async () => {
+    const unhandled: Error[] = [];
+    const onUnhandled = (reason: Error) => unhandled.push(reason);
+    const loader = vi.fn(async () => {
+      throw new Error('locale chunk unavailable');
+    });
+    const { ProviderMixin } = createI18n({ loader });
+
+    class RejectedLocaleProvider extends ProviderMixin(ReactiveElement) {}
+    customElements.define('i18n-rejected-locale-provider', RejectedLocaleProvider);
+
+    const provider = new RejectedLocaleProvider();
+
+    provider.lang = 'de';
+    const text = new MediaTextElement();
+
+    text.setAttribute('token', 'buttons.play');
+    text.textContent = 'Play';
+    provider.appendChild(text);
+    process.on('unhandledRejection', onUnhandled);
+
+    try {
+      document.body.appendChild(provider);
+      await text.updateComplete;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(loader).toHaveBeenCalled();
+      expect(text.textContent).toBe('Play');
+      expect(unhandled).toEqual([]);
+    } finally {
+      provider.remove();
+      process.off('unhandledRejection', onUnhandled);
+    }
   });
 
   it('updates media-text when provider lang changes', async () => {
