@@ -19,8 +19,6 @@ import { HlsAudioAdapter, type HlsAudioAdapterProps } from '@videojs/spf/hls-aud
  * audio is usually a _video_ asset, whose poster and storyboard exist and which an audio skin may well want. The
  * element ignores it either way. Mux publishes neither for a genuinely audio-only asset, so those URLs 404 — see the
  * known shortcoming on the video flavor, which shares the derivation.
- *
- * @internal
  */
 export class MuxAudioAdapter extends MuxMixin(HlsAudioAdapter) {
   static override readonly defaultProps: Omit<HlsAudioAdapterProps, 'src' | 'source'> & MuxAdapterProps = {

@@ -139,6 +139,6 @@ class DashAdapterCore
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
  *   new value.
- * @internal
+ * @experimental
  */
 export class DashAdapter extends DashMediaTracksMixin(DashAdapterCore) {}

@@ -1,3 +1,5 @@
+'use client';
+
 import { getSeekIndicatorDisplayValue, type SeekIndicatorState } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';

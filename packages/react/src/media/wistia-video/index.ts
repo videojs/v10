@@ -1,2 +1,2 @@
 export * from './adapter';
-export type { WistiaAdapterProps, WistiaQuality, WistiaSource } from '@videojs/wistia-video';
+export type { WistiaAdapter, WistiaAdapterProps, WistiaQuality, WistiaSource } from '@videojs/wistia-video';

@@ -128,7 +128,6 @@ export interface MediaStreamTypeState {
    * Components use this to show live-specific UI (for example, a live indicator or a "jump to live edge" button) or
    * hide the time display.
    *
-   * @see {@link MediaStreamTypes} for the canonical string values.
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
    */
   streamType: MediaStreamType;
@@ -334,8 +333,9 @@ export interface MediaTextTrackState {
   /** Whether a captions/subtitles track is showing. */
   subtitlesShowing: boolean;
   /**
-   * Toggle captions/subtitles visibility. Showing restores the track that was last showing, or the first
-   * caption/subtitle track when there is none. Returns the new enabled value.
+   * Toggle captions/subtitles visibility. Showing enables one caption/subtitle track. A track already showing stays
+   * selected. Otherwise, selection prefers the last track shown, then a track matching the browser language, then the
+   * first available track. Returns whether a track is showing.
    */
   toggleSubtitles(forceShow?: boolean): boolean;
   /** Show the captions/subtitles track with `id`, or turn captions/subtitles off with `null`. */

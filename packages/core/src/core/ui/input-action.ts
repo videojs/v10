@@ -1,4 +1,3 @@
-/** @internal */
 export type InputActionSource = 'gesture' | 'hotkey';
 
 export type InputAction =
@@ -15,7 +14,6 @@ export type InputAction =
   | 'speedDown'
   | (string & {});
 
-/** @internal */
 export interface InputActionEvent {
   action?: string | undefined;
   value?: number | undefined;
@@ -24,7 +22,6 @@ export interface InputActionEvent {
   repeat?: boolean | undefined;
 }
 
-/** @internal */
 export interface MediaSnapshot {
   paused?: boolean | undefined;
   volume?: number | undefined;

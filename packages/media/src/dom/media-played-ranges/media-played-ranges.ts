@@ -26,11 +26,7 @@ export interface MediaPlayedRangesHost extends EventTarget {
   paused: boolean;
 }
 
-/**
- * Public surface contributed by {@link MediaPlayedRangesMixin}.
- *
- * @internal
- */
+/** Public surface contributed by {@link MediaPlayedRangesMixin}. */
 export interface MediaPlayedRangesAPI {
   /** `TimeRanges`-like view of the ranges the user has actually played. */
   readonly played: TimeRangeLike;

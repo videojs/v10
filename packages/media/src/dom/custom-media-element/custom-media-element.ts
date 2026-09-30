@@ -127,7 +127,6 @@ function propertyValueFor(attrValue: string | null, current: unknown, config?: P
   return attrValue ?? (config && 'empty' in config ? config.empty : '');
 }
 
-/** @internal */
 export interface PlaybackAdapter extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
@@ -136,7 +135,6 @@ export interface PlaybackAdapter extends EventTarget {
   [key: string]: any;
 }
 
-/** @internal */
 export type CustomMediaConstructor<T extends Constructor<PlaybackAdapter>> = Constructor<
   HTMLElement &
     InstanceType<T> & {

@@ -18,7 +18,6 @@ export interface MuxAdapterProps {
   source: MuxSourceBase | null;
 }
 
-/** @internal */
 export interface MuxAdapterAPI extends MuxAdapterProps {
   readonly contentData: MuxContentData;
 }

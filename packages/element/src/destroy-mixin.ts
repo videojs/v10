@@ -1,7 +1,6 @@
 import type { ReactiveElement } from './reactive-element';
 import type { ReactiveController } from './types';
 
-/** @internal */
 export interface Destroyable {
   readonly destroyed: boolean;
   destroy(): void;

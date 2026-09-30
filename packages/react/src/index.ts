@@ -1,5 +1,3 @@
-'use client';
-
 // Component state, props, and option types
 export type {
   AirPlayButtonState,
@@ -8,6 +6,7 @@ export type {
   AudioTrackRadioGroupProps,
   AudioTrackRadioGroupState,
   BufferingIndicatorState,
+  BuiltInIndicatorStatus,
   ButtonState,
   CaptionsButtonState,
   CaptionsRadioGroupOption,
@@ -17,6 +16,7 @@ export type {
   ControlsProps,
   ControlsState,
   ControlsVisibility,
+  DeriveCustomStatus,
   DialogProps,
   DialogState,
   FullscreenButtonState,
@@ -26,8 +26,11 @@ export type {
   IndicatorStatus,
   IndicatorVolumeLevel,
   InputAction,
+  InputActionEvent,
+  InputActionSource,
   InputIndicatorLabels,
   LiveButtonState,
+  MediaSnapshot,
   MenuInput,
   MenuOptionState,
   MenuProps,
@@ -54,6 +57,7 @@ export type {
   SeekButtonState,
   SeekIndicatorProps,
   SeekIndicatorState,
+  SliderInput,
   SliderProps,
   SliderSegmentGeometry,
   SliderSegmentRange,
@@ -61,6 +65,7 @@ export type {
   SliderState,
   StatusAnnouncerLabels,
   StatusAnnouncerState,
+  StatusDetails,
   StatusIndicatorProps,
   StatusIndicatorState,
   ThumbnailCoords,
@@ -117,14 +122,17 @@ export {
 // Media types
 export type {
   AudioRenditionLike,
+  AudioRenditionListLike,
   AudioTrackLike,
   AudioTrackListLike,
   CanPlayTypeResult,
   CommonMedia,
   CommonMediaEvents,
+  EngineAdapter,
   ErrorLike,
   EventLike,
   EventTargetLike,
+  MediaAudioRenditionCapability,
   MediaAudioTrack,
   MediaAudioTrackCapability,
   MediaAudioTrackState,
@@ -165,7 +173,6 @@ export type {
   MediaPosterCapability,
   MediaPreloadType,
   MediaQualityState,
-  MediaReadyState,
   MediaReadyStateValue,
   MediaRemotePlaybackCapability,
   MediaRemotePlaybackState,
@@ -178,7 +185,6 @@ export type {
   MediaStreamType,
   MediaStreamTypeCapability,
   MediaStreamTypeEvents,
-  MediaStreamTypes,
   MediaStreamTypeState,
   MediaTargetLike,
   MediaTextCue,
@@ -191,6 +197,7 @@ export type {
   MediaVideoDimensionsEvents,
   MediaVideoRendition,
   MediaVideoRenditionCapability,
+  MediaVideoTrackCapability,
   MediaVolumeCapability,
   MediaVolumeEvents,
   MediaVolumeState,
@@ -208,9 +215,13 @@ export type {
   VideoEvents,
   VideoRenditionLike,
   VideoRenditionListLike,
+  VideoTargetLike,
+  VideoTrackLike,
+  VideoTrackListLike,
 } from '@videojs/media';
 // Media
 export * from '@videojs/media/dom';
+export type { WithMediaTracks } from '@videojs/media/media-tracks';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';

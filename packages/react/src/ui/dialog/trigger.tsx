@@ -1,3 +1,5 @@
+'use client';
+
 import type { DialogState } from '@videojs/core';
 import { forwardRef, useCallback } from 'react';
 

@@ -2,12 +2,11 @@ import { HlsJsVideo } from '../../media/hlsjs-video';
 import { safeDefine } from '../../registration/safe-define';
 
 export type {
-  ContentTypes,
   HlsEngineConfig,
+  HlsJsAdapter,
   HlsJsAdapterProps,
   HlsSource,
   PlaybackType,
-  PlaybackTypes,
   PreloadType,
   SourceType,
   StreamType,

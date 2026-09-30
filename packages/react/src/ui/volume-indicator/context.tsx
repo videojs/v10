@@ -1,3 +1,5 @@
+'use client';
+
 import type { VolumeIndicatorState } from '@videojs/core';
 import { createContext, type ProviderProps, useContext } from 'react';
 

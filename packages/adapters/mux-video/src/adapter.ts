@@ -36,7 +36,6 @@ export interface MuxVideoAdapterProps {
  *   new value.
  * @fires contentdatachange - Fired when `contentData` changes: the derived URLs with `source`, and the metadata once it
  *   loads. Read `contentData` for the new value.
- * @internal
  */
 export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProps {
   static override readonly defaultProps: Omit<HlsJsAdapterProps, 'source'> & MuxVideoAdapterProps = {

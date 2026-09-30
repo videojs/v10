@@ -1,2 +1,2 @@
 export * from './adapter';
-export type { DashAdapterProps, DashEngineConfig, DashSource } from '@videojs/dash-video';
+export type { DashAdapter, DashAdapterProps, DashEngineConfig, DashSource } from '@videojs/dash-video';

@@ -20,7 +20,7 @@ const monorepoRoot = resolve(scriptPath, '..', '..', '..');
 /** Tags that satisfy each required stability. */
 const ACCEPTED_TAGS = {
   experimental: ['experimental', 'deprecated'],
-  internal: ['internal', 'experimental', 'deprecated'],
+  internal: ['internal', 'deprecated'],
 } as const;
 
 /** Suffixes of companion exports a page documents alongside its subject (prop/state tables, element classes, …). */
@@ -33,6 +33,13 @@ const EXCLUDED_PACKAGES = new Set(['@videojs/cdn']);
 const UNCHECKED_PACKAGE_DIRECTORIES = ['packages/spf/'];
 
 /**
+ * Packages whose type aliases count as written out where a public type uses them. `@videojs/utils` is internal, and its
+ * aliases (`Constructor`, `MixinReturn`, …) are type-level helpers that mixin declarations name everywhere; their
+ * targets are checked instead, as if each use spelled the type out.
+ */
+const WRITTEN_OUT_ALIAS_DIRECTORIES = ['packages/utils/'];
+
+/**
  * Whether a class or interface makes what it `extends` or `implements` stable. Flip this to keep base classes internal
  * while the members they add still make their own types stable.
  */
@@ -40,6 +47,9 @@ export const PROPAGATE_THROUGH_HERITAGE = true;
 
 /** Packages docs examples must not import from; their public parts are re-exported by `@videojs/html` and `/react`. */
 const INTERNAL_PACKAGE_PATTERN = /^@videojs\/(?:core|media|utils|element|icons|skins)(?:\/|$)/;
+
+/** Packages readers import stable API from, besides the extension packages. */
+const FRAMEWORK_PACKAGE_PATTERN = /^@videojs\/(?:react|html|store)(?:\/|$)/;
 
 const MEMBER_PATTERN = /\b([A-Z][\w$]*)((?:\.[A-Z][\w$]*)+)/g;
 const SELECTOR_PATTERN = /\bselect[A-Z][\w$]*/g;
@@ -608,6 +618,14 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
   const checkedDeclarations = (symbol: ts.Symbol) =>
     (symbol.declarations ?? []).filter((node) => isCheckedDeclaration(node.getSourceFile().fileName, root));
 
+  const isWrittenOut = (symbol: ts.Symbol) =>
+    (symbol.flags & ts.SymbolFlags.TypeAlias) !== 0 &&
+    (symbol.declarations ?? []).some((node) => {
+      const path = relative(root, node.getSourceFile().fileName).split(sep).join('/');
+
+      return WRITTEN_OUT_ALIAS_DIRECTORIES.some((directory) => path.startsWith(directory));
+    });
+
   const collect = (exported: ts.Symbol, exportedName: string, entry: PublicEntry, namespaces: Set<ts.Symbol>) => {
     // `index_parts_d_exports` re-exported under its own synthetic name is bundler output, not API.
     if (isSyntheticNamespace(exportedName)) return;
@@ -695,15 +713,43 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
     return bySource.get(symbol);
   };
 
+  // A type no entry exports (a local helper, a mixin's `_base` constant) is still part of the surface that names it, so
+  // its own references count as the referrer's, through its heritage when the helper was reached through heritage. A
+  // written-out alias is expanded the same way even though an entry exports it. A global the packages only augment, such
+  // as `HTMLElementTagNameMap`, isn't a helper: naming it doesn't expose every element registered on it.
   for (const [symbol, record] of bySymbol) {
-    for (const node of checkedDeclarations(symbol).flatMap(publicSurface)) {
-      forEachTypeName(node, (parts, isHeritage) => {
-        const reference = parts.map(recordOf).find((candidate) => candidate !== undefined);
-        if (!reference || reference === record) return;
+    const visited = new Set([symbol]);
 
-        (isHeritage ? record.heritageReferences : record.references).add(reference);
-      });
-    }
+    const walk = (nodes: readonly ts.Node[], throughHeritage: boolean) => {
+      for (const node of nodes) {
+        forEachTypeName(node, (parts, isHeritage) => {
+          const heritage = throughHeritage || isHeritage;
+          const located = parts[0] && checker.getSymbolAtLocation(parts[0]);
+          const helper = located && resolveAlias(checker, located);
+          const reference =
+            helper && isWrittenOut(helper)
+              ? undefined
+              : parts.map(recordOf).find((candidate) => candidate !== undefined);
+
+          if (reference) {
+            if (reference !== record) (heritage ? record.heritageReferences : record.references).add(reference);
+
+            return;
+          }
+
+          if (!helper || visited.has(helper)) return;
+
+          visited.add(helper);
+
+          const declarations = checkedDeclarations(helper);
+          if (declarations.length < (helper.declarations?.length ?? 0)) return;
+
+          walk(declarations.flatMap(publicSurface), heritage);
+        });
+      }
+    };
+
+    walk(checkedDeclarations(symbol).flatMap(publicSurface), false);
   }
 
   return { exports: [...exports.values()], unresolved };
@@ -834,7 +880,8 @@ export interface TagChange {
 
 /**
  * The change one declaration's tags need, or `undefined` when they comply. Stability wins over a tag: a stable or
- * experimental export loses a contradicting `@internal` (and a stable one `@experimental`) instead of being ignored.
+ * experimental export loses a contradicting `@internal`, and a stable or internal one `@experimental`, which only a
+ * `stability: unstable` page or an experimental export's types can earn.
  */
 export function tagChange(tags: ReadonlySet<string>, stability: Stability): TagChange | undefined {
   if (stability === 'stable') {
@@ -843,7 +890,8 @@ export function tagChange(tags: ReadonlySet<string>, stability: Stability): TagC
     return remove.length > 0 ? { remove } : undefined;
   }
 
-  const remove: StabilityTag[] = stability === 'experimental' && tags.has('internal') ? ['internal'] : [];
+  const contradicting = stability === 'experimental' ? 'internal' : 'experimental';
+  const remove: StabilityTag[] = tags.has(contradicting) ? [contradicting] : [];
   const add = ACCEPTED_TAGS[stability].some((tag) => tags.has(tag)) ? undefined : stability;
   if (!add && remove.length === 0) return undefined;
 
@@ -880,6 +928,8 @@ export function tagViolation(
         : `is documented on a reference page but tagged ${tags} — remove the tag`;
     }
 
+    if (stability === 'internal') return `is neither documented nor referenced but tagged ${tags} — use @internal`;
+
     return reason
       ? `is experimental because ${reason} — use @experimental instead of ${tags}`
       : `is documented on an unstable page but tagged ${tags} — use @experimental`;
@@ -897,17 +947,26 @@ export interface UnexportedExport {
   reason: string;
 }
 
+export interface PackageKinds {
+  /** Playback adapter packages, whose types the framework packages re-export from `/media/*`. */
+  adapters: ReadonlySet<string>;
+  /** Extension packages, which readers import from directly. */
+  extensions: ReadonlySet<string>;
+}
+
 /**
- * Stable and experimental exports that only internal and adapter packages export. Readers import the API from the
- * framework-facing packages, which re-export an adapter's types from their `/media/*` entry, so a person has to add the
- * re-export or change the signature; `--fix` leaves these alone.
+ * Stable and experimental exports that no framework-facing package exports: only `@videojs/react`, `@videojs/html`,
+ * `@videojs/store`, and the extension packages count. Readers import the API from those, which re-export an adapter's
+ * types from their `/media/*` entry, so a person has to add the re-export or change the signature; `--fix` leaves these
+ * alone.
  */
 export function findUnexportedExports(
   resolved: ReadonlyMap<PublicExport, ResolvedStability>,
-  adapterPackages: ReadonlySet<string>
+  { adapters: adapterPackages, extensions }: PackageKinds
 ): UnexportedExport[] {
   const isAdapter = (specifier: string) => adapterPackages.has(packageName(specifier));
-  const isImportable = (specifier: string) => !INTERNAL_PACKAGE_PATTERN.test(specifier) && !isAdapter(specifier);
+  const isImportable = (specifier: string) =>
+    FRAMEWORK_PACKAGE_PATTERN.test(specifier) || extensions.has(packageName(specifier));
 
   return [...resolved].flatMap(([record, { stability, referrers }]) => {
     if (stability === 'internal' || [...record.specifiers].some(isImportable)) return [];
@@ -918,7 +977,7 @@ export function findUnexportedExports(
     const exporter =
       adapters.length > 0
         ? `only ${adapters.join(' and ')} ${adapters.length === 1 ? 'exports' : 'export'} it`
-        : 'only internal packages export it';
+        : 'no framework-facing package exports it';
     const targets =
       adapters.length > 0
         ? adapters
@@ -1048,10 +1107,27 @@ function renderComment(lines: readonly string[], indent: string): string {
   return ['/**', ...lines.map((line) => (line ? `${indent} * ${line}` : `${indent} *`)), `${indent} */`].join('\n');
 }
 
+/** Line comments that apply to the next line; a JSDoc block goes above them. */
+const DIRECTIVE_PATTERN = /^\/\/\s*(?:@ts-|eslint-|oxlint-|biome-ignore|prettier-ignore)/;
+
+/** Where the directive comments directly above `node` begin, or `start` when there are none. */
+function directiveStart(source: string, node: ts.Node, start: number): number {
+  let at = start;
+
+  for (const range of (ts.getLeadingCommentRanges(source, node.pos) ?? []).reverse()) {
+    const text = source.slice(range.pos, range.end);
+    if (!DIRECTIVE_PATTERN.test(text) || source.slice(range.end, at).trim()) break;
+
+    at = range.pos;
+  }
+
+  return at;
+}
+
 /**
- * Return `source` with the JSDoc of `node` changed as `change` says: a replaced `@internal` becomes `@experimental` in
- * place, a comment left empty is deleted, and a new comment is created when needed. The result is formatter-clean when
- * `source` is.
+ * Return `source` with the JSDoc of `node` changed as `change` says: a replaced tag becomes the added one in place, a
+ * comment left empty is deleted, and a new comment is created when needed, above any directive comments such as `//
+ * @ts-expect-error` so they keep applying to the declaration. The result is formatter-clean when `source` is.
  */
 export function applyTagChange(
   source: string,
@@ -1064,7 +1140,11 @@ export function applyTagChange(
   const comments = ts.getJSDocCommentsAndTags(node).filter(ts.isJSDoc);
 
   if (comments.length === 0) {
-    return change.add ? `${source.slice(0, start)}/** @${change.add} */\n${indent}${source.slice(start)}` : source;
+    if (!change.add) return source;
+
+    const at = directiveStart(source, node, start);
+
+    return `${source.slice(0, at)}/** @${change.add} */\n${indent}${source.slice(at)}`;
   }
 
   let add = change.add;
@@ -1074,11 +1154,10 @@ export function applyTagChange(
   for (const [index, comment] of [...comments.entries()].reverse()) {
     const commentStart = comment.getStart(sourceFile);
     let lines = commentLines(source.slice(commentStart, comment.end));
-    const replaced =
-      add && change.remove.includes('internal') && blockTags(lines).find((tag) => tag.tag === 'internal');
+    const replaced = add && blockTags(lines).find((tag) => change.remove.includes(tag.tag as StabilityTag));
 
     if (replaced) {
-      lines[replaced.index] = lines[replaced.index]!.replace('@internal', `@${add}`);
+      lines[replaced.index] = lines[replaced.index]!.replace(`@${replaced.tag}`, `@${add}`);
       add = undefined;
     }
 
@@ -1097,15 +1176,15 @@ export function applyTagChange(
 
 /**
  * Bring the stability tags of the named declarations in one source file in line with their stability, applying edits
- * bottom-up so offsets stay valid. Every declaration of a name is checked, overload implementations included. Returns
- * the number of declarations changed.
+ * bottom-up so offsets stay valid. Every declaration of a name is checked except an overload implementation, which
+ * consumers never see. Returns the number of declarations changed.
  */
 export function fixSourceFile(filePath: string, fixes: ReadonlyMap<string, Stability>): number {
   let source = readFileSync(filePath, 'utf8');
   const sourceFile = parseSource(filePath, source);
   const edits = [...fixes]
     .flatMap(([name, stability]) =>
-      findDeclarations(sourceFile, name).flatMap((node) => {
+      signatureDeclarations(findDeclarations(sourceFile, name)).flatMap((node) => {
         const change = tagChange(jsDocTagNames(node), stability);
 
         return change ? [{ node, change }] : [];
@@ -1180,15 +1259,15 @@ export function findUnstableImports(
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
-/** Names of the playback adapter packages, whose types the framework packages re-export from `/media/*`. */
-function adapterPackageNames(): Set<string> {
-  const adapters = packageDirectories().filter(
-    (directory) => relative(monorepoRoot, directory).split(sep)[1] === 'adapters'
+/** Names of the packages in one `packages/<group>/` directory, such as the playback adapters or the extensions. */
+function packageNamesIn(group: string): Set<string> {
+  const directories = packageDirectories().filter(
+    (directory) => relative(monorepoRoot, directory).split(sep)[1] === group
   );
 
   // SAFETY: workspace manifests are validated by `pnpm check:workspace`; only `name` is read.
   return new Set(
-    adapters.map(
+    directories.map(
       (directory) => (JSON.parse(readFileSync(join(directory, 'package.json'), 'utf8')) as { name: string }).name
     )
   );
@@ -1294,7 +1373,10 @@ function main(): void {
   if (unresolved.length > 0)
     console.warn(`⚠ ${unresolved.length} public exports can't be resolved, so aren't checked.\n`);
 
-  const unexported = findUnexportedExports(resolved, adapterPackageNames());
+  const unexported = findUnexportedExports(resolved, {
+    adapters: packageNamesIn('adapters'),
+    extensions: packageNamesIn('extensions'),
+  });
 
   reportPropagated(resolved);
 

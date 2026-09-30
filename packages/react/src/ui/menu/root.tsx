@@ -1,3 +1,5 @@
+'use client';
+
 import { MenuCore, type MenuOptionState, resolveMenuOptionState, type MenuProps } from '@videojs/core';
 import {
   createMenu,

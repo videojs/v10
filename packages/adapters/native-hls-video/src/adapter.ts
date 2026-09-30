@@ -152,7 +152,6 @@ class NativeHlsAdapterCore extends HTMLVideoAdapter implements Omit<NativeHlsAda
   }
 }
 
-/** @internal */
 export class NativeHlsAdapter extends NativeHlsLiveMixin(
   NativeHlsStreamTypeMixin(NativeHlsDrmMixin(NativeHlsErrorsMixin(NativeHlsAdapterCore)))
 ) {}

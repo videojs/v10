@@ -477,7 +477,7 @@ class ShakaAdapterCore
  * @fires error - Fired when playback fails in a way Shaka could not recover from. Read `error` for the failure.
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when `targetLiveWindow` changes. Read it for the new value.
- * @internal
+ * @experimental
  */
 export class ShakaAdapter extends ShakaLiveMixin(ShakaStreamTypeMixin(ShakaMediaTracksMixin(ShakaAdapterCore))) {}
 

@@ -107,6 +107,7 @@ export interface MediaSeekCapability {
 
 export type MediaPreloadType = '' | 'none' | 'metadata' | 'auto';
 
+/** @internal */
 export const MediaReadyState = {
   HAVE_NOTHING: 0,
   HAVE_METADATA: 1,
@@ -115,7 +116,8 @@ export const MediaReadyState = {
   HAVE_ENOUGH_DATA: 4,
 } as const;
 
-export type MediaReadyStateValue = (typeof MediaReadyState)[keyof typeof MediaReadyState];
+/** An `HTMLMediaElement.readyState` value, from `0` (`HAVE_NOTHING`) to `4` (`HAVE_ENOUGH_DATA`). */
+export type MediaReadyStateValue = 0 | 1 | 2 | 3 | 4;
 
 export interface MediaSourceEvents {
   loadstart: EventLike;
@@ -295,7 +297,6 @@ export interface AudioTrackListLike extends EventTargetLike<MediaTrackListEvents
   getTrackById(id: string): AudioTrackLike | null;
 }
 
-/** @internal */
 export interface VideoTrackLike {
   id: string | undefined;
   readonly kind: string | undefined;
@@ -313,7 +314,6 @@ export interface VideoTrackLike {
   removeRendition(rendition: VideoRenditionLike): void;
 }
 
-/** @internal */
 export interface VideoTrackListLike extends EventTargetLike<MediaTrackListEvents<VideoTrackLike>> {
   readonly length: number;
   readonly [index: number]: VideoTrackLike;
@@ -328,7 +328,7 @@ export interface MediaAudioTrackCapability {
   removeAudioTrack(track: AudioTrackLike): void;
 }
 
-/** @internal */
+/** @experimental */
 export interface MediaVideoTrackCapability {
   readonly videoTracks: VideoTrackListLike;
   addVideoTrack(kind: string, label?: string, language?: string): VideoTrackLike;
@@ -356,7 +356,6 @@ export interface AudioRenditionLike {
   selected: boolean;
 }
 
-/** @internal */
 export interface AudioRenditionListLike extends EventTargetLike<RenditionListEvents<AudioRenditionLike>> {
   readonly length: number;
   readonly [index: number]: AudioRenditionLike;
@@ -388,7 +387,7 @@ export interface VideoRenditionListLike extends EventTargetLike<VideoRenditionLi
   selectedIndex: number;
 }
 
-/** @internal */
+/** @experimental */
 export interface MediaAudioRenditionCapability {
   readonly audioRenditions: AudioRenditionListLike;
 }
@@ -428,12 +427,9 @@ export interface MediaPictureInPictureCapability {
 // ----------------------------------------
 
 /**
- * Canonical values for {@link MediaStreamType}.
+ * Named values of {@link MediaStreamType}.
  *
- * - `ON_DEMAND` — a finite-duration asset (VOD). Scrubbing is generally supported across the full timeline.
- * - `LIVE` — a live or DVR stream. The seekable window may slide as new segments are published, and `duration` is
- *   typically `Infinity`.
- * - `UNKNOWN` — the stream type has not been determined yet (no source, or metadata has not loaded).
+ * @internal
  */
 export const MediaStreamTypes = {
   ON_DEMAND: 'on-demand',
@@ -441,7 +437,15 @@ export const MediaStreamTypes = {
   UNKNOWN: 'unknown',
 } as const;
 
-export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
+/**
+ * How a stream is delivered.
+ *
+ * - `on-demand` — a finite-duration asset (VOD). Scrubbing is generally supported across the full timeline.
+ * - `live` — a live or DVR stream. The seekable window may slide as new segments are published, and `duration` is
+ *   typically `Infinity`.
+ * - `unknown` — the stream type has not been determined yet (no source, or metadata has not loaded).
+ */
+export type MediaStreamType = 'on-demand' | 'live' | 'unknown';
 
 export interface MediaStreamTypeEvents {
   streamtypechange: EventLike;
@@ -657,7 +661,6 @@ export interface MediaTargetLike
   title: string;
 }
 
-/** @internal */
 export interface VideoTargetLike
   extends MediaTargetLike, MediaPosterCapability, MediaPlaysInlineCapability, MediaVideoDimensionsCapability {
   disablePictureInPicture: boolean;
@@ -665,7 +668,7 @@ export interface VideoTargetLike
   requestFullscreen(): Promise<unknown>;
 }
 
-/** @internal */
+/** @experimental */
 export interface EngineAdapter<Engine = unknown, Target = unknown> {
   readonly engine: Engine | null;
   attach?(target: Target): void;

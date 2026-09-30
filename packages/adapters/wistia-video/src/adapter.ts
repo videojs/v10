@@ -26,8 +26,6 @@ export type { WistiaPlayer };
  * `normalizeWistiaPlayer` gives the player the members and events `HTMLMediaElement` has that Wistia names differently
  * or not at all. This class does the rest: the attributes a media element is written with, which Wistia has its own
  * names, spellings, and defaults for.
- *
- * @internal
  */
 export class WistiaAdapter extends WistiaPlayer {
   static readonly defaultProps: WistiaAdapterProps = {
