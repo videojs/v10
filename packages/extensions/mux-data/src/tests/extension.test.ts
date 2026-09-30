@@ -119,6 +119,41 @@ describe('MuxDataExtension', () => {
     );
   });
 
+  it('reports the time the player was created as the player init time', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxDataExtension({ MuxDataSdk: sdk });
+    const video = document.createElement('video');
+
+    data.attach({ media: video, container: null }, { initTime: 1_000 });
+
+    await settle();
+
+    expect(data.playerInitTime).toBe(1_000);
+    expect(monitor).toHaveBeenCalledWith(
+      video,
+      expect.objectContaining({ data: expect.objectContaining({ player_init_time: 1_000 }) })
+    );
+  });
+
+  it('prefers an explicit player init time over the player creation time', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, playerInitTime: 500 });
+    const video = document.createElement('video');
+
+    data.attach({ media: video, container: null }, { initTime: 1_000 });
+
+    await settle();
+
+    expect(monitor).toHaveBeenCalledWith(
+      video,
+      expect.objectContaining({ data: expect.objectContaining({ player_init_time: 500 }) })
+    );
+
+    data.playerInitTime = undefined;
+
+    expect(data.playerInitTime).toBe(1_000);
+  });
+
   it('monitors a plain video element directly', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });

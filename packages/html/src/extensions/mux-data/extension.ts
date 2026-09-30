@@ -94,7 +94,7 @@ export class MuxDataExtension extends PlayerExtensionElement<MuxDataExtensionBas
     this.extension.playerSoftwareVersion = value ?? undefined;
   }
 
-  /** Epoch milliseconds the player was initialized. Defaults to the extension's creation time. */
+  /** Epoch milliseconds the player was initialized. Defaults to when the player was created. */
   get playerInitTime(): number | undefined {
     return this.extension.playerInitTime;
   }

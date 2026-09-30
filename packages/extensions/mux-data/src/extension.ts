@@ -1,4 +1,4 @@
-import type { PlayerExtension, PlayerTarget } from '@videojs/core/dom';
+import type { PlayerExtension, PlayerExtensionContext, PlayerTarget } from '@videojs/core/dom';
 import { isEngineAdapter, isMediaSourceCapable, type Media } from '@videojs/media';
 import { getMediaAdapter, getMediaElement } from '@videojs/media/dom';
 import { listen } from '@videojs/utils/dom';
@@ -64,7 +64,7 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
     envKey: undefined,
     playerSoftwareName: undefined,
     playerSoftwareVersion: getPlayerVersion(),
-    // Generated per instance; see `#generatePlayerInitTime()`.
+    // Falls back to the player's creation time; see `playerInitTime`.
     playerInitTime: undefined,
     metadata: undefined,
   };
@@ -78,7 +78,11 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
   #envKey: string | undefined = MuxDataExtension.defaultProps.envKey;
   #playerSoftwareName: string | undefined = MuxDataExtension.defaultProps.playerSoftwareName;
   #playerSoftwareVersion: string | undefined = MuxDataExtension.defaultProps.playerSoftwareVersion;
-  #playerInitTime: number | undefined = this.#generatePlayerInitTime();
+  #playerInitTime: number | undefined = MuxDataExtension.defaultProps.playerInitTime;
+  // Mux measures Player Startup Time from `player_init_time`, so it comes from the player rather than from when this
+  // extension happened to load. The construction time only stands in when no player has attached this extension.
+  #playerCreatedAt: number | undefined;
+  readonly #constructedAt: number | undefined = this.#generatePlayerInitTime();
   #media: Media | null = null;
   #stopListening: (() => void) | null = null;
   #target: HTMLVideoElement | null = null;
@@ -93,10 +97,11 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
     Object.assign(this, props);
   }
 
-  attach({ media }: PlayerTarget) {
+  attach({ media }: PlayerTarget, player?: PlayerExtensionContext) {
     if (this.#media === media) return;
 
     this.detach();
+    this.#playerCreatedAt = player?.initTime ?? this.#playerCreatedAt;
     this.#media = media;
     this.#stopListening = listen(media, 'loadstart', this.#syncMonitor);
 
@@ -197,15 +202,19 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
     this.#target?.mux?.updateData(value ? { player_software_version: value } : {});
   }
 
+  /** Epoch milliseconds the player was initialized. Defaults to when the player was created. */
   get playerInitTime() {
-    return this.#playerInitTime;
+    return this.#playerInitTime ?? this.#playerCreatedAt ?? this.#constructedAt;
   }
 
   set playerInitTime(value) {
     if (this.#playerInitTime === value) return;
 
     this.#playerInitTime = value;
-    this.#target?.mux?.updateData(value ? { player_init_time: value } : {});
+
+    const initTime = this.playerInitTime;
+
+    this.#target?.mux?.updateData(initTime ? { player_init_time: initTime } : {});
   }
 
   get metadata() {
