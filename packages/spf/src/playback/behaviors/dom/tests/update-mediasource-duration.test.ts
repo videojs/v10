@@ -299,6 +299,32 @@ describe('updateMediaSourceDuration', () => {
     reactor.destroy();
   });
 
+  it('preserves a finite duration set while waiting for buffers to finish updating', async () => {
+    const { state, context, reactor } = setupUpdateMediaSourceDuration();
+
+    const { buffer: mockBuffer, finishUpdating } = makeUpdatingSourceBuffer();
+    const addEventListener = vi.spyOn(mockBuffer, 'addEventListener');
+    const mockMediaSource = makeMediaSource({ sourceBuffers: [mockBuffer] });
+
+    try {
+      context.mediaSource.set(mockMediaSource);
+      state.presentation.set({ url: 'https://example.com/video.m3u8', duration: 60 });
+
+      await vi.waitFor(() => {
+        expect(addEventListener).toHaveBeenCalled();
+      });
+
+      mockMediaSource.duration = 42;
+      finishUpdating();
+
+      // Let the resumed write settle before asserting that duration was preserved.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(mockMediaSource.duration).toBe(42);
+    } finally {
+      reactor.destroy();
+    }
+  });
+
   it('defers until every attached SourceBuffer finishes updating', async () => {
     const { state, context, reactor } = setupUpdateMediaSourceDuration();
 
