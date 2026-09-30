@@ -201,6 +201,7 @@ video.m3u8`;
     const text = `#EXTM3U
 # This is a comment
 #EXT-X-STREAM-INF:BANDWIDTH=800000
+# Comment while a stream URI is pending
 video.m3u8`;
 
     const result = parseMultivariantPlaylist(text, { url: baseUrl });
@@ -208,6 +209,7 @@ video.m3u8`;
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
     expect(videoTracks).toHaveLength(1);
+    expect(videoTracks?.[0]).toMatchObject({ url: 'https://example.com/video.m3u8', bandwidth: 800000 });
   });
 
   it('handles empty playlist (only #EXTM3U)', () => {
@@ -492,7 +494,7 @@ video.m3u8`;
 
       expect(textTracks).toHaveLength(3);
 
-      // DEFAULT=YES only: default flag should NOT be set (following hls.js pattern)
+      // SPF requires AUTOSELECT alongside DEFAULT for the default flag.
       const defaultOnly = textTracks?.[0];
 
       expect(defaultOnly?.label).toBe('Only Default');
@@ -566,7 +568,16 @@ video.m3u8`;
     });
 
     it('defaults FORMAT to JSON and honors FORMAT=RAW', () => {
-      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const result = parseMultivariantPlaylist(
+        `${text}\n#EXT-X-SESSION-DATA:DATA-ID="default-format",URI="default.json"`,
+        { url: baseUrl }
+      );
+
+      expect(getSessionData(result, 'default-format')[0]).toEqual({
+        dataId: 'default-format',
+        uri: 'https://example.com/default.json',
+        format: 'JSON',
+      });
 
       expect(getSessionData(result, 'com.apple.hls.chapters')[0]?.format).toBe('JSON');
       expect(getSessionData(result, 'com.example.blob')[0]).toEqual({
@@ -628,19 +639,14 @@ video.m3u8`,
 
   describe('Edge cases', () => {
     it('handles empty lines and whitespace', () => {
-      const text = `#EXTM3U
-
-#EXT-X-STREAM-INF:BANDWIDTH=800000
-
-video.m3u8
-
-`;
+      const text = ['#EXTM3U', '', '  #EXT-X-STREAM-INF:BANDWIDTH=800000  ', '  ', '  video.m3u8  ', ''].join('\n');
 
       const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const videoSet = result.selectionSets.find((s) => s.type === 'video');
       const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
       expect(videoTracks).toHaveLength(1);
+      expect(videoTracks?.[0]).toMatchObject({ url: 'https://example.com/video.m3u8', bandwidth: 800000 });
     });
 
     it('skips #EXT-X-VERSION and other unsupported tags', () => {

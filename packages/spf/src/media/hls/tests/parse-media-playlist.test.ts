@@ -822,7 +822,7 @@ s0.ts
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
 
-      expect(r.segments.every((s) => s.startDate === undefined)).toBe(true);
+      expect(r.segments.map((segment) => segment.startDate)).toEqual([undefined, undefined]);
     });
 
     it('exposes Track.startDate as the wall-clock at the origin (startDate − startTime)', () => {

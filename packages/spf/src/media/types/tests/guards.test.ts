@@ -62,12 +62,17 @@ describe('Type Guards', () => {
         segments: [],
       };
 
-      if (isResolvedTrack(track)) {
-        // TypeScript should know track is VideoTrack here
-        const segments = track.segments;
+      function checkNarrowing(value: PartiallyResolvedVideoTrack | VideoTrack) {
+        expect(isResolvedTrack(value)).toBe(true);
 
-        expect(segments).toBeDefined();
+        if (!isResolvedTrack(value)) throw new Error('Expected a resolved track');
+
+        const resolved: VideoTrack = value;
+
+        expect(resolved.segments).toEqual([]);
       }
+
+      checkNarrowing(track);
     });
 
     it('works for audio tracks', () => {
@@ -138,12 +143,17 @@ describe('Type Guards', () => {
         selectionSets: [],
       };
 
-      if (hasPresentationDuration(presentation)) {
-        // TypeScript knows duration is number (not undefined)
-        const d: number = presentation.duration;
+      function checkNarrowing(value: MaybeResolvedPresentation) {
+        expect(hasPresentationDuration(value)).toBe(true);
 
-        expect(d).toBe(100);
+        if (!hasPresentationDuration(value)) throw new Error('Expected a presentation duration');
+
+        const duration: number = value.duration;
+
+        expect(duration).toBe(100);
       }
+
+      checkNarrowing(presentation);
     });
   });
 
@@ -211,14 +221,18 @@ describe('Type Guards', () => {
         selectionSets: [],
       };
 
-      if (isResolvedPresentation(presentation)) {
-        // TypeScript should know presentation is Presentation here
-        const id: string = presentation.id;
-        const sets = presentation.selectionSets;
+      function checkNarrowing(value: MaybeResolvedPresentation | undefined) {
+        expect(isResolvedPresentation(value)).toBe(true);
 
-        expect(id).toBe('presentation-0');
-        expect(sets).toBeDefined();
+        if (!isResolvedPresentation(value)) throw new Error('Expected a resolved presentation');
+
+        const resolved: Presentation = value;
+
+        expect(resolved.id).toBe('presentation-0');
+        expect(resolved.selectionSets).toEqual([]);
       }
+
+      checkNarrowing(presentation);
     });
   });
 });

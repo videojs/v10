@@ -630,19 +630,47 @@ describe('switchVideoTrack', () => {
   });
 
   describe('configuration', () => {
+    it('includes the exact bandwidth threshold and excludes a rendition just above it', async () => {
+      const ladder = [
+        createVideoTrack('low', 500_000),
+        createVideoTrack('mid', 2_000_000),
+        createVideoTrack('high', 4_000_000),
+      ];
+
+      for (const [bandwidth, expected] of [
+        [2_000_000, 'mid'],
+        [1_999_999, 'low'],
+      ] as const) {
+        const state = makeState({
+          presentation: createPresentation(ladder),
+          // Mature weights make zero-factor correction exactly 1 at this boundary.
+          bandwidthState: { ...createBandwidthState(bandwidth), fastTotalWeight: 1000, slowTotalWeight: 1000 },
+        });
+        const reactor = switchVideoTrack.setup({ state, config: { quality: { safetyMargin: 1 } } });
+
+        await flush();
+        expect(state.selectedVideoTrackId.get()).toBe(expected);
+        reactor.destroy();
+      }
+    });
+
     it('uses custom safetyMargin', async () => {
-      const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-        selectedVideoTrackId: '360p',
-      });
+      const ladder = [createVideoTrack('mid', 2_000_000), createVideoTrack('high', 4_000_000)];
 
-      const config: SwitchVideoTrackConfig = { quality: { safetyMargin: 1.0 } };
-      const reactor = switchVideoTrack.setup({ state, config });
+      for (const [config, expected] of [
+        [{}, 'mid'],
+        [{ quality: { safetyMargin: 0.9 } }, 'high'],
+      ] as const) {
+        const state = makeState({
+          presentation: createPresentation(ladder),
+          bandwidthState: createBandwidthState(4_500_000),
+        });
+        const reactor = switchVideoTrack.setup({ state, config });
 
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-      reactor.destroy();
+        await flush();
+        expect(state.selectedVideoTrackId.get()).toBe(expected);
+        reactor.destroy();
+      }
     });
 
     it('uses custom upgradeMargin', async () => {

@@ -6,7 +6,7 @@ import {
   readFirstBaseMediaDecodeTime,
   readFirstMediaTimescale,
 } from '../timestamp-origin';
-import { box, initSegment, mediaSegment, trak } from './synthetic-boxes';
+import { box, hdlr, initSegment, mediaSegment, tfhd, tkhd, trak } from './synthetic-boxes';
 
 // Mirrors the Apple bipbop advanced example: a video init/segment that muxes a
 // closed-caption (`clcp`) track alongside the `vide` track, each with its own
@@ -45,6 +45,14 @@ describe('readFirstMediaTimescale', () => {
 });
 
 describe('findMediaTrack', () => {
+  it('returns undefined when a matching track has no mdhd or the init structure is absent', () => {
+    const missingMdhd = initSegment(box('trak', tkhd(1), box('mdia', hdlr('vide'))));
+
+    expect(findMediaTrack(missingMdhd, 'vide')).toBeUndefined();
+    expect(findMediaTrack(box('ftyp'), 'vide')).toBeUndefined();
+    expect(findMediaTrack(box('moov', box('mvhd')), 'vide')).toBeUndefined();
+  });
+
   it('selects the media track by handler, ignoring a muxed caption track', () => {
     expect(findMediaTrack(muxedVideoInit, 'vide')).toEqual({ trackId: 1, timescale: 6000 });
   });
@@ -85,6 +93,19 @@ describe('readFirstBaseMediaDecodeTime', () => {
 });
 
 describe('readBaseMediaDecodeTime', () => {
+  it('reads a matching track’s 64-bit v1 decode time beyond the 32-bit range', () => {
+    const large = 2 ** 33 + 12345;
+    const segment = mediaSegment({ trackId: 1, baseMediaDecodeTime: large, version: 1 });
+
+    expect(readBaseMediaDecodeTime(segment, 1)).toBe(large);
+  });
+
+  it('returns undefined when moof, traf, or a matching track’s tfdt is absent', () => {
+    expect(readBaseMediaDecodeTime(box('styp'), 1)).toBeUndefined();
+    expect(readBaseMediaDecodeTime(box('moof'), 1)).toBeUndefined();
+    expect(readBaseMediaDecodeTime(box('moof', box('traf', tfhd(1))), 1)).toBeUndefined();
+  });
+
   it('selects the traf matching track_id in a muxed segment', () => {
     expect(readBaseMediaDecodeTime(muxedVideoSegment, 1)).toBe(60000);
     expect(readBaseMediaDecodeTime(muxedVideoSegment, 2)).toBe(300000);

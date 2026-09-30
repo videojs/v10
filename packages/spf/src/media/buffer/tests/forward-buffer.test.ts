@@ -55,6 +55,7 @@ describe('mergeTimeRanges', () => {
       mergeTimeRanges([
         { start: 20, end: 30 },
         { start: 5, end: 5 },
+        { start: 50, end: 40 },
         { start: 0, end: 10 },
       ])
     ).toEqual([
