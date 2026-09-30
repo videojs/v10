@@ -7,10 +7,7 @@ import { parseWistiaMediaId } from './wistia';
 import { parseYouTubeSource } from './youtube';
 
 /** A kind of source {@link resolveSourceKind} recognizes. Each kind is played by a different media component. */
-export type MediaSourceKind = MediaSourcePlatform | MediaSourceFormat;
-
-/** A hosting platform {@link resolveSourcePlatform} recognizes from a source URL. */
-export type MediaSourcePlatform =
+export type MediaSourceKind =
   | 'youtube'
   | 'vimeo'
   | 'wistia'
@@ -18,10 +15,11 @@ export type MediaSourcePlatform =
   | 'cloudflare'
   | 'spotify'
   | 'tiktok'
-  | 'twitch';
-
-/** A stream or file format {@link resolveSourceFormat} recognizes from a MIME type or file extension. */
-export type MediaSourceFormat = 'hls' | 'dash' | 'video' | 'audio';
+  | 'twitch'
+  | 'hls'
+  | 'dash'
+  | 'video'
+  | 'audio';
 
 /**
  * Resolve which kind of source a URL is, so you can render the media component that plays it and pass it the same
@@ -29,7 +27,7 @@ export type MediaSourceFormat = 'hls' | 'dash' | 'video' | 'audio';
  * manifests; and video and audio files, by MIME type when you pass one and by file extension otherwise.
  *
  * Returns `null` for anything else, including bare ids: an 11-character YouTube id and a 10-character Wistia id look
- * alike, so platforms are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
+ * alike, so providers are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
  *
  * The result names a kind of source, not a playback engine. Choosing between the HLS engines is up to you.
  *
@@ -39,38 +37,10 @@ export type MediaSourceFormat = 'hls' | 'dash' | 'video' | 'audio';
  * @public
  */
 export function resolveSourceKind(src: string, type?: string): MediaSourceKind | null {
-  return resolveSourcePlatform(src) ?? resolveSourceFormat(src, type);
-}
-
-/**
- * Resolve which hosting platform serves a source, from its host or a `youtube/<id>`, `vimeo/<id>`, or `spotify:`
- * shorthand. A URL only matches when the platform's parser finds a video in it. File extensions are ignored.
- */
-export function resolveSourcePlatform(src: string): MediaSourcePlatform | null {
   const source = src.trim();
   if (!source) return null;
 
-  // Shorthands go through the same parsers the YouTube and Vimeo media use, so the media accepts what matches here.
-  if (source.startsWith('youtube/')) return parseYouTubeSource(source) ? 'youtube' : null;
-
-  if (source.startsWith('vimeo/')) return parseVimeoSource(source) ? 'vimeo' : null;
-
-  if (SPOTIFY_URI.test(source)) return parseSpotifySource(source) ? 'spotify' : null;
-
-  const url = parseUrl(source);
-  if (!url) return null;
-
-  return fromHost(source, url);
-}
-
-/**
- * Resolve a source's stream or file format from its MIME type when given, and from its file extension otherwise. Hosts
- * are ignored, so a platform's `.m3u8` manifest resolves to `hls`.
- */
-export function resolveSourceFormat(src: string, type?: string): MediaSourceFormat | null {
-  if (!src.trim()) return null;
-
-  return fromMimeType(type) ?? fromMimeType(resolveMimeType(src));
+  return resolveProvider(source) ?? fromMimeType(type) ?? fromMimeType(resolveMimeType(source));
 }
 
 /**
@@ -89,7 +59,17 @@ export function resolveMimeType(src: string): string | null {
   return (extension && MIME_TYPES.get(extension)) || null;
 }
 
-function fromHost(src: string, url: URL): MediaSourcePlatform | null {
+function resolveProvider(src: string): MediaSourceKind | null {
+  // Shorthands go through the same parsers the YouTube and Vimeo media use, so the media accepts what matches here.
+  if (src.startsWith('youtube/')) return parseYouTubeSource(src) ? 'youtube' : null;
+
+  if (src.startsWith('vimeo/')) return parseVimeoSource(src) ? 'vimeo' : null;
+
+  if (SPOTIFY_URI.test(src)) return parseSpotifySource(src) ? 'spotify' : null;
+
+  const url = parseUrl(src);
+  if (!url) return null;
+
   const host = url.hostname.toLowerCase();
   if (YOUTUBE_HOSTS.has(host)) return parseYouTubeSource(src) ? 'youtube' : null;
 
@@ -120,7 +100,7 @@ function fromHost(src: string, url: URL): MediaSourcePlatform | null {
   return null;
 }
 
-function fromMimeType(type: string | null | undefined): MediaSourceFormat | null {
+function fromMimeType(type: string | null | undefined): MediaSourceKind | null {
   const mimeType = type?.trim().toLowerCase();
   if (!mimeType) return null;
 

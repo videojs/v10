@@ -1,16 +1,11 @@
-import {
-  type MediaSourceFormat,
-  type MediaSourcePlatform,
-  resolveSourceFormat,
-  resolveSourcePlatform,
-} from '@videojs/media';
+import { type MediaSourceKind, resolveSourceKind } from '@videojs/media';
 
 import type { UseCase } from './presets';
 import { getInstallationPreset } from './presets';
 import { getInstallationRenderer, type Renderer } from './renderers';
 
 // Candidate order within a kind lets the selected use case choose video, audio, or background playback.
-const PLATFORM_RENDERERS: Record<MediaSourcePlatform, readonly Renderer[]> = {
+const SOURCE_KIND_RENDERERS: Record<MediaSourceKind, readonly Renderer[]> = {
   youtube: ['youtube'],
   vimeo: ['vimeo'],
   // No Wistia renderer is offered yet.
@@ -20,24 +15,23 @@ const PLATFORM_RENDERERS: Record<MediaSourcePlatform, readonly Renderer[]> = {
   spotify: ['spotify'],
   tiktok: ['tiktok'],
   twitch: ['twitch'],
-};
-
-const FORMAT_RENDERERS: Record<MediaSourceFormat, readonly Renderer[]> = {
   hls: ['hls', 'hls-background-video'],
   dash: ['dash'],
   video: ['html5-video', 'background-video'],
   audio: ['html5-audio'],
 };
 
-/**
- * Renderers whose accepted source shape matches a URL, ordered from platform-specific to generic. A platform's
- * manifest, such as a Mux or Cloudflare `.m3u8`, also plays in the generic stream renderers.
- */
+/** Renderers whose accepted source shape matches a URL, ordered from provider-specific to generic. */
 export function resolveRendererCandidates(url: string): readonly Renderer[] {
-  const platform = resolveSourcePlatform(url);
-  const format = resolveSourceFormat(url);
+  const kind = resolveSourceKind(url);
+  if (!kind) return [];
 
-  return [...(platform ? PLATFORM_RENDERERS[platform] : []), ...(format ? FORMAT_RENDERERS[format] : [])];
+  // A provider's manifest, such as a Mux or Cloudflare `.m3u8`, also plays in the generic stream renderers. The file
+  // name alone carries no host, so it resolves by extension.
+  const fileName = url.split(/[?#]/, 1)[0]!.split('/').pop();
+  const fileKind = fileName ? resolveSourceKind(fileName) : null;
+
+  return [...new Set([...SOURCE_KIND_RENDERERS[kind], ...(fileKind ? SOURCE_KIND_RENDERERS[fileKind] : [])])];
 }
 
 /** The first renderer for a URL that the use case offers. */
