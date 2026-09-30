@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { RAW_MEDIA, unwrapMedia } from '@videojs/media';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerMedia, type MediaOverride, type MediaOverrideSource } from '../media';
 
@@ -47,19 +48,6 @@ class PrivateMedia extends EventTarget {
   }
 }
 
-/** Answers the fullscreen question itself, like `HTMLVideoAdapter` does. */
-class PresentationMedia extends EventTarget {
-  fullscreen = false;
-
-  get isFullscreen() {
-    return this.fullscreen;
-  }
-
-  play() {
-    return Promise.resolve();
-  }
-}
-
 class ShadowMedia extends HTMLElement {
   play() {
     return Promise.resolve();
@@ -68,9 +56,7 @@ class ShadowMedia extends HTMLElement {
 
 customElements.define('test-shadow-media', ShadowMedia);
 
-type PresentationVideoElement = HTMLVideoElement & { isFullscreen?: boolean; isPictureInPicture?: boolean };
-
-function createVideo(): PresentationVideoElement {
+function createVideo(): HTMLVideoElement {
   return document.createElement('video');
 }
 
@@ -266,66 +252,18 @@ describe('createPlayerMedia', () => {
     expect(listener).toHaveBeenCalledOnce();
   });
 
-  describe('presentation members', () => {
-    afterEach(() => {
-      Reflect.deleteProperty(document, 'pictureInPictureElement');
-      Reflect.deleteProperty(document, 'fullscreenElement');
-      Reflect.deleteProperty(document, 'webkitFullscreenElement');
-    });
+  it('unwraps to the raw media', () => {
+    const video = createVideo();
+    const media = createPlayerMedia(video, () => []);
 
-    it('synthesizes isPictureInPicture against the document for media that lacks it', () => {
-      const video = createVideo();
-      const media = createPlayerMedia(video, () => []);
+    expect(media).not.toBe(video);
+    expect(unwrapMedia(media)).toBe(video);
+  });
 
-      expect(media.isPictureInPicture).toBe(false);
+  it('never lets an override shadow the raw media key', () => {
+    const video = createVideo();
+    const media = createPlayerMedia(video, () => [{ mediaOverride: { [RAW_MEDIA]: {} } as MediaOverride }]);
 
-      Object.defineProperty(document, 'pictureInPictureElement', { value: video, configurable: true });
-
-      expect(media.isPictureInPicture).toBe(true);
-    });
-
-    it('synthesizes isFullscreen against the document for media that lacks it', () => {
-      const video = createVideo();
-      const media = createPlayerMedia(video, () => []);
-
-      expect(media.isFullscreen).toBe(false);
-
-      Object.defineProperty(document, 'fullscreenElement', { value: document.body, configurable: true });
-
-      expect(media.isFullscreen).toBe(false);
-
-      Object.defineProperty(document, 'fullscreenElement', { value: video, configurable: true });
-
-      expect(media.isFullscreen).toBe(true);
-    });
-
-    it('honors the WebKit fullscreen element', () => {
-      const video = createVideo();
-      const media = createPlayerMedia(video, () => []);
-
-      Object.defineProperty(document, 'webkitFullscreenElement', { value: video, configurable: true });
-
-      expect(media.isFullscreen).toBe(true);
-    });
-
-    it('prefers the presentation getters a media defines itself', () => {
-      const raw = new PresentationMedia();
-      const media = createPlayerMedia(raw, () => []);
-
-      Object.defineProperty(document, 'fullscreenElement', { value: raw, configurable: true });
-
-      expect(media.isFullscreen).toBe(false);
-
-      raw.fullscreen = true;
-
-      expect(media.isFullscreen).toBe(true);
-    });
-
-    it('lets an override own the presentation getters', () => {
-      const video = createVideo();
-      const media = createPlayerMedia(video, () => [{ mediaOverride: { isFullscreen: true } }]);
-
-      expect(media.isFullscreen).toBe(true);
-    });
+    expect(unwrapMedia(media)).toBe(video);
   });
 });
