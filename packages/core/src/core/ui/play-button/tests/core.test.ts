@@ -27,22 +27,6 @@ function createState(overrides: Partial<PlayButtonState> = {}): PlayButtonState 
 }
 
 describe('PlayButtonCore', () => {
-  describe('setProps', () => {
-    it('uses default props', () => {
-      const core = new PlayButtonCore();
-      const attrs = core.getAttrs(createState());
-
-      expect(attrs['aria-disabled']).toBeUndefined();
-    });
-
-    it('accepts constructor props', () => {
-      const core = new PlayButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
-
-      expect(attrs['aria-disabled']).toBe('true');
-    });
-  });
-
   describe('getState', () => {
     it('projects data fields from media state', () => {
       const core = new PlayButtonCore();

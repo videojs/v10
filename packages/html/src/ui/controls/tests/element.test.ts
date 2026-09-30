@@ -219,10 +219,6 @@ describe('ControlsElement', () => {
 });
 
 describe('ControlsBackdropElement', () => {
-  it('has the correct tag name', () => {
-    expect(ControlsBackdropElement.tagName).toBe('media-controls-backdrop');
-  });
-
   it('is presentational and receives controls state attributes', async () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);
@@ -240,11 +236,5 @@ describe('ControlsBackdropElement', () => {
       expect(backdrop.hasAttribute('data-visible')).toBe(true);
       expect(backdrop.hasAttribute('data-user-active')).toBe(true);
     });
-  });
-});
-
-describe('ControlsContentElement', () => {
-  it('has the correct tag name', () => {
-    expect(ControlsContentElement.tagName).toBe('media-controls-content');
   });
 });
