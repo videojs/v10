@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import type { Guide, Sidebar } from '../../../types/docs';
 import {
   buildAgnosticDocsUrl,
-  buildDocsUrl,
   getFrameworkFromDocsPath,
   getFrameworkFromDocsUrl,
   isDocsGuideActive,
@@ -216,15 +215,14 @@ describe('routing utilities', () => {
 
         expect(result.selectedSlug).toBe('guides/html-only');
         expect(result.url).toBe('/docs/framework/html/guides/html-only');
-      });
 
-      it('should build correct URL', () => {
-        const result = resolveIndexRedirect({
+        const realSidebarResult = resolveIndexRedirect({
           preferences: { framework: 'react' },
           params: {},
         });
 
-        expect(result.url).toBe(buildDocsUrl('react', result.selectedSlug));
+        expect(realSidebarResult.selectedSlug).toBe('guides/installation');
+        expect(realSidebarResult.url).toBe('/docs/guides/installation/react');
       });
     });
   });

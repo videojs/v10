@@ -81,14 +81,12 @@ describe('findDiataxisIssues', () => {
 });
 
 describe('docs content', () => {
-  it('keeps every page inside the boundary of its folder', () => {
+  it('keeps every page inside the boundary of its folder', async () => {
     const issues = pages.flatMap((entry) => findDiataxisIssues(entry));
     const report = issues.map((issue) => `${issue.id} [${issue.rule}]: ${issue.message}`).join('\n');
 
     expect(issues, `\n${report}\n`).toEqual([]);
-  });
 
-  it('warns about task headings on concept pages', async () => {
     const { sidebar } = await import('../../../docs.config');
     const conceptSlugs = new Set<string>();
 

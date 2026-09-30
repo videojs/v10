@@ -58,27 +58,6 @@ describe('getDocTitle', () => {
       expect(reactTitle).toBe('PlayButton');
       expect(htmlTitle).toBe('play-button');
     });
-
-    it('should return react title for react framework', () => {
-      const result = getDocTitle(mockDocWithFrameworkTitle, 'react');
-
-      expect(result).toBe('PlayButton');
-    });
-
-    it('should return html title for html framework', () => {
-      const result = getDocTitle(mockDocWithFrameworkTitle, 'html');
-
-      expect(result).toBe('play-button');
-    });
-
-    it('should handle different titles for different frameworks', () => {
-      const reactTitle = getDocTitle(mockDocWithFrameworkTitle, 'react');
-      const htmlTitle = getDocTitle(mockDocWithFrameworkTitle, 'html');
-
-      expect(reactTitle).not.toBe(htmlTitle);
-      expect(reactTitle).toBe('PlayButton');
-      expect(htmlTitle).toBe('play-button');
-    });
   });
 
   describe('without frameworkTitle', () => {
@@ -88,13 +67,6 @@ describe('getDocTitle', () => {
 
       expect(reactTitle).toBe('Basic Concepts');
       expect(htmlTitle).toBe('Basic Concepts');
-    });
-
-    it('should return same title for both frameworks when no frameworkTitle', () => {
-      const reactTitle = getDocTitle(mockDocWithoutFrameworkTitle, 'react');
-      const htmlTitle = getDocTitle(mockDocWithoutFrameworkTitle, 'html');
-
-      expect(reactTitle).toBe(htmlTitle);
     });
   });
 
