@@ -417,6 +417,8 @@ Move media options to attributes or props. For controls and interactions, use a 
 | `i18n` | English is the default. Select a locale with an i18n provider or provide custom translations. See [Internationalization](#internationalization). |
 | `ads` | Unsupported at this time. |
 
+When enabling captions without a previous selection in this player instance, `toggleSubtitles()` prefers a track matching `navigator.language`, then falls back to the first available caption or subtitle track. For an authored track that should show on load, add `default`. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
+
 ## Customize the controls
 
 Plyr's `controls` option chooses which controls appear. Video.js skins come with their own control set and layout. Keep the skin when that UI fits your player. To remove, reorder, or restyle its controls, [add the skin source to your project](#edit-skin-source) and edit it. A component you add as a child of a packaged skin does not appear in its control bar.
@@ -573,7 +575,7 @@ For changes to controls, layout, or icons, add the skin source to your project. 
 ## Known gaps
 
 - Plyr's `ads` option has no built-in equivalent.
-- Plyr's `storage` option has no built-in equivalent for persisted volume, captions language, muted state, speed, or quality. Player setting persistence is tracked in [#944](https://github.com/videojs/v10/issues/944); subtitle language preference is tracked in [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
+- Plyr's `storage` option has no built-in equivalent for persisted volume, captions language, muted state, speed, or quality. Player setting persistence is tracked in [#944](https://github.com/videojs/v10/issues/944). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - Playback rates are fixed at `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, and `2`. Plyr's `speed.options` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - Plyr's full-window fullscreen fallback has no matching Video.js feature. Test fullscreen on your supported browsers; see <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
 - Plain MP4 source arrays with `size` metadata do not automatically create a quality menu. Use Mux, HLS, or DASH for adaptive quality when possible.

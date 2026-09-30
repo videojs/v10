@@ -152,6 +152,8 @@ Use `'use client'` at the client boundary in frameworks with React Server Compon
 
 If you have chapter tracks or thumbnail tracks (`kind="metadata" label="thumbnails"`), add `default` to each track so the browser loads its cues. Keep each track's existing `src` URL.
 
+When enabling captions without a previous selection in this player instance, `toggleSubtitles()` prefers a track matching `navigator.language`, then falls back to the first available caption or subtitle track. For an authored track that should show on load, add `default`. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
+
 ## Three pieces instead of one
 
 Use these three pieces when deciding where a v8 option belongs:
@@ -184,7 +186,7 @@ Move native media settings onto the media component.
 <FrameworkCase frameworks={["html"]}>
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `autoplay`, `muted`, `loop`, `preload`, `playsinline`, `crossorigin` | the same attributes on your media |
+| `autoplay` (boolean), `muted`, `loop`, `preload`, `playsinline`, `crossorigin` | the same attributes on your media |
 | `sources: [{ src, type }]` | `src`, or `<source>` children for progressive fallback |
 | `disablePictureInPicture` | `disablepictureinpicture` on your media |
 </FrameworkCase>
@@ -194,11 +196,19 @@ The React prop names in this table apply to video-backed media such as `Video` a
 
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `autoplay`, `playsinline`, `crossorigin` | `autoPlay`, `playsInline`, `crossOrigin` on video-backed media |
+| `autoplay` (boolean), `playsinline`, `crossorigin` | `autoPlay`, `playsInline`, `crossOrigin` on video-backed media |
 | `muted`, `loop`, `preload` | the same props on your media |
 | `sources: [{ src, type }]` | `src`, or `<source>` children for progressive fallback |
 | `disablePictureInPicture` | `disablePictureInPicture` on your media |
 </FrameworkCase>
+
+Video.js uses native autoplay. For v8's string-valued `autoplay` options:
+
+- `'muted'`: set both `autoplay` and `muted` on the media (`autoPlay` and `muted` on video-backed React media).
+- `'play'`: to preserve v8's explicit playback request, call `play()` on the media when it fires `loadstart` and handle rejection.
+- `'any'`: on `loadstart`, call `play()` on the media. If the returned promise rejects, mute the media and call `play()` again. Implement this fallback in your app.
+
+Keep a manual play control available if autoplay fails. See <DocsLink slug="guides/autoplay">Handle autoplay</DocsLink>.
 
 ### Player metadata
 
@@ -777,7 +787,7 @@ Check these limitations against your required features:
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — so v8's `playbackRates` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - No text-track settings dialog equivalent to v8's `textTrackSettings`. You can still style browser-rendered cues with `::cue`; see <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
-- Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
+- Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the SPF HLS component deliberately exposes few of them.
 - Chapters render in the time slider from a default `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). For `inactivityTimeout: 0`, set `visibility="always"` on the controls component in a custom layout or installed skin source.
@@ -785,7 +795,7 @@ Check these limitations against your required features:
 - Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality.
 - The Default and Minimal skins are available. Runtime theme switching is not supported.
 - Native controls are not automatically removed when custom controls load ([#1160](https://github.com/videojs/v10/issues/1160)).
-- Not yet available: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)).
+- Debug mode has no equivalent yet ([#1406](https://github.com/videojs/v10/issues/1406)).
 
 ## See also
 

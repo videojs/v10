@@ -243,6 +243,15 @@ Use these three pieces when deciding where each Mux Player setting belongs:
 
 **The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. <DocsLink slug="guides/skins">Skins</DocsLink> are pre-built arrangements of smaller components, and you can use one as-is, restyle it, or add its source to your project and edit it.
 
+## Autoplay
+
+Video.js uses native autoplay. Move Mux Player's boolean autoplay setting to the media. For its string-valued modes:
+
+- `muted`: set both `autoplay` and `muted` on the media (`autoPlay` and `muted` in React).
+- `any`: on `loadstart`, call `play()` on the media. If the returned promise rejects, mute the media and call `play()` again. Implement this fallback in your app.
+
+Keep a manual play control available if autoplay fails. See <DocsLink slug="guides/autoplay">Handle autoplay</DocsLink>.
+
 ## Mux settings live in a source object
 
 <FrameworkCase frameworks={["html"]}>
@@ -644,7 +653,7 @@ Use the <DocsLink slug="reference/api/player-store">player store</DocsLink> for 
 | `player.requestFullscreen()` | the player's `requestFullscreen`, `exitFullscreen` |
 | `player.addChapters([…])` | a `<track kind="chapters">`, covered below |
 
-Standard media properties update player state through media events. If the volume is `0`, `setMuted(false)` also sets it to `0.25`. To unmute and keep a zero volume, set `media.muted` directly.
+Standard media properties update player state through media events. If the volume is `0`, `setMuted(false)` also sets it to `0.25`. Mux Player's smart-unmute behavior carries over through `setMuted(false)`. To unmute and keep a zero volume, set `media.muted` directly.
 
 <FrameworkCase frameworks={["html"]}>
 Call actions on the player element's `store` only after `player.store.target` is set, which means the media has attached. For example, wire seeking to a button:
@@ -841,7 +850,9 @@ The video skins include a settings menu with the available quality, audio-track,
 | Captions | <DocsLink slug="reference/components/captions-radio-group">Captions radio group</DocsLink> | Rendered by the browser. |
 | Speed | <DocsLink slug="reference/components/playback-rate-radio-group">Playback rate radio group</DocsLink> | The rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — and you can't choose your own yet ([#1404](https://github.com/videojs/v10/issues/1404)). |
 
-Video.js has no viewer-facing text-track settings dialog. You can style browser-rendered captions with `::cue`. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
+When enabling captions without a previous selection in this player instance, `toggleSubtitles()` prefers a track matching `navigator.language`, then falls back to the first available caption or subtitle track. For an authored track that should show on load, add `default`. See <DocsLink slug="guides/captions">Show captions and subtitles</DocsLink>.
+
+Video.js has no viewer-facing text-track settings dialog. You can style browser-rendered captions with `::cue`.
 
 ## Chapters and cue points
 
@@ -952,8 +963,8 @@ Check these limitations against your required features:
 - The two packaged skins do not reproduce Mux Player's themes, and there is no runtime theme switch. Plan skin customization when preserving a theme such as `classic`.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
 - The controls auto-hide delay isn't configurable ([#1728](https://github.com/videojs/v10/issues/1728)). For always-visible controls, set `visibility="always"` on the controls component in a custom layout or installed skin source.
-- Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). Mux users can set `source.playback.defaultSubtitlesLang` so the HLS playlist sets the default subtitle language. For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
-- Not yet available: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)). Unmuting at zero volume restores the volume to `0.25`, so Mux Player's smart-unmute behavior carries over.
+- Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Mux users can set `source.playback.defaultSubtitlesLang` so the HLS playlist sets the default subtitle language. For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
+- Debug mode has no equivalent yet ([#1406](https://github.com/videojs/v10/issues/1406)).
 
 ## See also
 
