@@ -69,7 +69,8 @@ export function shouldForceEnded(
 
   const gap = bufferedEnd - currentTime;
 
-  return gap >= 0 && gap < nudgeWindow;
+  // getMinBufferedEnd returns 0 when no media is buffered.
+  return bufferedEnd > 0 && gap >= 0 && gap < nudgeWindow;
 }
 
 function recoverEndStallSetup({

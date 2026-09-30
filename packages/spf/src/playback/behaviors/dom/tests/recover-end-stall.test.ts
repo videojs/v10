@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { shouldForceEnded } from '../recover-end-stall';
+import { signal } from '../../../../core/signals/primitives';
+import { recoverEndStall, shouldForceEnded } from '../recover-end-stall';
 
 // At the end-of-stream freeze: MediaSource ended, finite duration, actively playing,
 // and the playhead a few frames short of the reachable (intersection) buffered end.
@@ -48,5 +49,33 @@ describe('shouldForceEnded', () => {
 
     expect(shouldForceEnded(gap015, 0.2)).toBe(true);
     expect(shouldForceEnded(gap015, 0.1)).toBe(false);
+  });
+});
+
+describe('recoverEndStall', () => {
+  it('does not skip to duration on waiting with no buffered media', () => {
+    const mediaElement = document.createElement('video');
+
+    Object.defineProperties(mediaElement, {
+      duration: { value: 60 },
+      paused: { value: false },
+      seeking: { value: false },
+      ended: { value: false },
+    });
+
+    const mediaSource = new MediaSource();
+
+    Object.defineProperty(mediaSource, 'readyState', { value: 'ended' });
+
+    const cleanup = recoverEndStall.setup({
+      context: { mediaElement: signal(mediaElement), mediaSource: signal(mediaSource) },
+    });
+
+    try {
+      mediaElement.dispatchEvent(new Event('waiting'));
+      expect(mediaElement.currentTime).toBe(0);
+    } finally {
+      cleanup();
+    }
   });
 });
