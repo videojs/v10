@@ -1,3 +1,5 @@
+'use client';
+
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
@@ -18,7 +20,7 @@ const noopVolume = {
   volumeAvailability: 'unsupported' as const,
   mutedAvailability: 'unsupported' as const,
   setVolume: () => 0,
-  toggleMuted: () => false,
+  setMuted: () => false,
 };
 
 export interface VolumeSliderRootProps extends UIComponentProps<'div', VolumeSliderCore.State>, VolumeSliderCore.Props {
