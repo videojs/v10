@@ -1,6 +1,6 @@
 import type { MediaTextTrack, MediaTextTrackState } from '@videojs/media';
 import { createState } from '@videojs/store';
-import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+import { getCaptionOrSubtitleTracks } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
@@ -31,14 +31,6 @@ function formatTrackLabel(track: MediaTextTrack): Text | string {
   if (track.language) return track.language;
 
   return track.kind === 'captions' ? captionsText : subtitlesText;
-}
-
-function sortCaptionTracks(a: MediaTextTrack, b: MediaTextTrack): number {
-  return a.kind > b.kind ? 1 : a.kind < b.kind ? -1 : 0;
-}
-
-function getCaptionTracks(textTrackList: readonly MediaTextTrack[]): MediaTextTrack[] {
-  return textTrackList.filter(isCaptionOrSubtitleTrack).sort(sortCaptionTracks);
 }
 
 export class CaptionsRadioGroupCore {
@@ -94,12 +86,12 @@ export class CaptionsRadioGroupCore {
 
   getState(): CaptionsRadioGroupState {
     const media = this.#media!;
-    const captionTracks = getCaptionTracks(media.textTrackList);
+    const captionTracks = getCaptionOrSubtitleTracks(media.textTrackList);
     const showingIndex = captionTracks.findIndex((track) => track.mode === 'showing');
     const options: CaptionsRadioGroupOption[] = [
       { value: CAPTIONS_OFF_VALUE, label: offText, disabled: false },
-      ...captionTracks.map((track, index) => ({
-        value: track.id || String(index),
+      ...captionTracks.map((track) => ({
+        value: track.id,
         label: this.getTrackLabel(track),
         disabled: false,
       })),
@@ -110,7 +102,7 @@ export class CaptionsRadioGroupCore {
 
     this.state.patch({
       options,
-      value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : captionTracks[showingIndex]!.id || String(showingIndex),
+      value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : captionTracks[showingIndex]!.id,
       subtitlesShowing: media.subtitlesShowing,
       disabled: this.#props.disabled || captionTracks.length === 0,
       hidden: availability === 'unavailable',
@@ -124,15 +116,15 @@ export class CaptionsRadioGroupCore {
   select(media: MediaTextTrackState, value: string): void {
     if (this.#props.disabled) return;
 
-    const captionTracks = getCaptionTracks(media.textTrackList);
+    const captionTracks = getCaptionOrSubtitleTracks(media.textTrackList);
     if (!captionTracks.length) return;
 
     if (value === CAPTIONS_OFF_VALUE) {
-      media.selectSubtitlesTrack(CAPTIONS_OFF_VALUE);
+      media.selectSubtitlesTrack(null);
       return;
     }
 
-    if (!captionTracks.some((track, index) => (track.id || String(index)) === value)) return;
+    if (!captionTracks.some((track) => track.id === value)) return;
 
     media.selectSubtitlesTrack(value);
   }
