@@ -1,4 +1,4 @@
-import { isNull, isObject } from '@videojs/utils/predicate';
+import { isFunction, isNull, isObject } from '@videojs/utils/predicate';
 
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
@@ -44,6 +44,9 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     const setupAbort = new AbortController();
     const signals = new AbortControllerRegistry();
+
+    // Stable wrappers keep unchanged public snapshots from notifying subscribers.
+    const actions = new WeakMap<(...args: any[]) => any, (...args: any[]) => any>();
 
     let sourceState: Readonly<SourceState>;
 
@@ -141,7 +144,32 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
         result[key] = source[key as keyof SourceState];
       }
 
-      return Object.assign(result, derived) as PublicState;
+      Object.assign(result, derived);
+
+      for (const key of Object.keys(result)) {
+        const value = result[key];
+
+        if (isFunction(value)) result[key] = wrapAction(value);
+      }
+
+      return result as PublicState;
+    }
+
+    function wrapAction(action: (...args: any[]) => any) {
+      const cached = actions.get(action);
+      if (cached) return cached;
+
+      const wrapped = function (this: unknown, ...args: unknown[]) {
+        try {
+          return action.apply(this, args);
+        } catch (error) {
+          reportError(error);
+          throw error;
+        }
+      };
+
+      actions.set(action, wrapped);
+      return wrapped;
     }
 
     function setSource(partial: Partial<SourceState>): void {

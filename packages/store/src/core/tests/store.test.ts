@@ -5,7 +5,7 @@ import { defineSlice } from '../slice';
 import { flush } from '../state';
 import { createStore, isStore } from '../store';
 
-describe('store', () => {
+describe('createStore', () => {
   // Mock target that mimics HTMLVideoElement
   class MockMedia extends EventTarget {
     volume = 1;
@@ -449,22 +449,25 @@ describe('store', () => {
       expect(listener).not.toHaveBeenCalled();
     });
 
-    it('calls onError for action errors', () => {
+    it('reports synchronous action errors to onError and rethrows', () => {
+      const error = new Error('action failed');
       const onError = vi.fn();
-
       const failingSlice = defineSlice<MockMedia>()({
-        state: ({ target }) => ({
-          value: 0,
+        state: () => ({
           fail() {
-            target(); // This will throw NO_TARGET
+            throw error;
           },
         }),
       });
-
       const store = createStore<MockMedia>()(failingSlice, { onError });
 
-      // No target attached, so target() will throw
-      expect(() => store.fail()).toThrow();
+      try {
+        expect(() => store.fail()).toThrow(error);
+        expect(onError).toHaveBeenCalledOnce();
+        expect(onError).toHaveBeenCalledWith({ store, error });
+      } finally {
+        store.destroy();
+      }
     });
   });
 
