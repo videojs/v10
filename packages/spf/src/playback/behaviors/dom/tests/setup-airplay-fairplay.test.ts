@@ -170,6 +170,45 @@ describe('setupAirPlayFairPlay', () => {
       .mockResolvedValue(new Uint8Array([9]));
   });
 
+  it('serves only fresh legacy requests after EME detachment and reload', async () => {
+    makeRefusingEme();
+    let releaseDetach!: () => void;
+    const detach = new Promise<void>((resolve) => {
+      releaseDetach = resolve;
+    });
+
+    vi.mocked(attachMediaKeys).mockResolvedValueOnce(undefined).mockReturnValueOnce(detach);
+    const { context, reactor } = setup();
+    const video = context.mediaElement.get()!;
+
+    goWireless(video, true);
+    const webkit = stubWebKitMediaKeys(video);
+    const load = vi.fn();
+
+    Object.defineProperty(video, 'load', { value: load, configurable: true });
+
+    try {
+      receiverRequest(video);
+      await vi.waitFor(() => expect(attachMediaKeys).toHaveBeenLastCalledWith(video, null));
+
+      // The refusal has started handover, but this payload still belongs to the old resource.
+      needKey(video);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(load).not.toHaveBeenCalled();
+      expect(webkit.created).toHaveLength(0);
+
+      releaseDetach();
+      await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+
+      needKey(video);
+      await vi.waitFor(() => expect(webkit.created).toHaveLength(1));
+    } finally {
+      releaseDetach();
+      reactor.destroy();
+      Reflect.deleteProperty(globalThis, 'WebKitMediaKeys');
+    }
+  });
+
   it('negotiates for skd, applies the certificate, attaches, and licenses the receiver request', async () => {
     const eme = makeFakeEme();
 
