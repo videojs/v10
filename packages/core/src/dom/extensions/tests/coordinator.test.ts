@@ -1,18 +1,30 @@
-import { describe, expect, it, vi } from 'vite-plus/test';
+import { unwrapMedia } from '@videojs/media';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { PlayerTarget } from '../../player';
 import { PlayerExtensionCoordinator } from '../coordinator';
-import type { PlayerExtension } from '../extension';
+import type { PlayerExtension, PlayerExtensionContext } from '../extension';
 
+/** An observer: declares no `mediaOverride`. */
 class TrackingExtension implements PlayerExtension {
-  attach = vi.fn<(target: PlayerTarget) => void>();
+  attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
   detach = vi.fn();
   destroy = vi.fn();
 }
 
 class MutedExtension implements PlayerExtension {
+  attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
+  detach = vi.fn();
+
   get mediaOverride() {
     return { muted: true };
+  }
+}
+
+/** Declares `mediaOverride` but has nothing to override yet, like Google Cast before a cast framework exists. */
+class IdleOverrideExtension implements PlayerExtension {
+  get mediaOverride() {
+    return null;
   }
 }
 
@@ -21,6 +33,10 @@ function createTarget(): PlayerTarget {
 }
 
 describe('PlayerExtensionCoordinator', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('attaches a registered extension to the current target immediately', () => {
     const coordinator = new PlayerExtensionCoordinator(() => {});
     const target = createTarget();
@@ -29,7 +45,7 @@ describe('PlayerExtensionCoordinator', () => {
     coordinator.attach(target);
     coordinator.register(extension);
 
-    expect(extension.attach).toHaveBeenCalledWith(target);
+    expect(extension.attach).toHaveBeenCalledWith(target, expect.anything());
     expect(coordinator.get(TrackingExtension)).toBe(extension);
   });
 
@@ -42,27 +58,52 @@ describe('PlayerExtensionCoordinator', () => {
     expect(extension.attach).not.toHaveBeenCalled();
 
     coordinator.attach(target);
-    expect(extension.attach).toHaveBeenCalledWith(target);
+    expect(extension.attach).toHaveBeenCalledWith(target, expect.anything());
   });
 
-  it('notifies on register and release', () => {
-    const onChange = vi.fn();
-    const coordinator = new PlayerExtensionCoordinator(onChange);
+  it('gives extensions the time the player was created, not the time they attached', () => {
+    vi.useFakeTimers({ now: 1_000 });
+
+    const coordinator = new PlayerExtensionCoordinator(() => {});
     const extension = new TrackingExtension();
 
-    const remove = coordinator.register(extension);
+    vi.setSystemTime(5_000);
+    coordinator.register(extension);
+    coordinator.attach(createTarget());
+
+    expect(extension.attach).toHaveBeenCalledWith(expect.anything(), { initTime: 1_000 });
+  });
+
+  it('notifies on register and release of an extension that overrides media', () => {
+    const onChange = vi.fn();
+    const coordinator = new PlayerExtensionCoordinator(onChange);
+
+    const remove = coordinator.register(new MutedExtension());
 
     expect(onChange).toHaveBeenCalledTimes(1);
 
     remove();
     expect(onChange).toHaveBeenCalledTimes(2);
-    expect(coordinator.get(TrackingExtension)).toBeUndefined();
+    expect(coordinator.get(MutedExtension)).toBeUndefined();
+  });
+
+  it('does not notify for an observer', () => {
+    const onChange = vi.fn();
+    const coordinator = new PlayerExtensionCoordinator(onChange);
+
+    coordinator.attach(createTarget());
+
+    const remove = coordinator.register(new TrackingExtension());
+
+    remove();
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('is a no-op to register the same instance twice', () => {
     const onChange = vi.fn();
     const coordinator = new PlayerExtensionCoordinator(onChange);
-    const extension = new TrackingExtension();
+    const extension = new MutedExtension();
 
     coordinator.attach(createTarget());
     coordinator.register(extension);
@@ -92,7 +133,7 @@ describe('PlayerExtensionCoordinator', () => {
     expect(coordinator.get(TrackingExtension)).toBe(second);
   });
 
-  it('moves extensions between targets and ignores an unchanged one', () => {
+  it('moves extensions between media and ignores an unchanged one', () => {
     const coordinator = new PlayerExtensionCoordinator(() => {});
     const extension = new TrackingExtension();
     const first = createTarget();
@@ -109,7 +150,20 @@ describe('PlayerExtensionCoordinator', () => {
 
     expect(extension.detach).toHaveBeenCalledTimes(1);
     expect(extension.attach).toHaveBeenCalledTimes(2);
-    expect(extension.attach).toHaveBeenLastCalledWith(second);
+    expect(extension.attach).toHaveBeenLastCalledWith(second, expect.anything());
+  });
+
+  it('keeps extensions attached when only the container changes', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const extension = new TrackingExtension();
+    const { media } = createTarget();
+
+    coordinator.register(extension);
+    coordinator.attach({ media, container: null });
+    coordinator.attach({ media, container: document.createElement('div') });
+
+    expect(extension.attach).toHaveBeenCalledTimes(1);
+    expect(extension.detach).not.toHaveBeenCalled();
   });
 
   it('detaches extensions without destroying them', () => {
@@ -137,7 +191,16 @@ describe('PlayerExtensionCoordinator', () => {
     expect(coordinator.wrap(media)).toBe(media);
   });
 
-  it('wraps the media once an extension is registered', () => {
+  it('returns the media itself while only observers are registered', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const { media } = createTarget();
+
+    coordinator.register(new TrackingExtension());
+
+    expect(coordinator.wrap(media)).toBe(media);
+  });
+
+  it('wraps the media once an extension that overrides media is registered', () => {
     const coordinator = new PlayerExtensionCoordinator(() => {});
     const video = document.createElement('video');
     const remove = coordinator.register(new MutedExtension());
@@ -146,9 +209,29 @@ describe('PlayerExtensionCoordinator', () => {
     expect(wrapped).not.toBe(video);
     expect(wrapped.muted).toBe(true);
     expect(wrapped instanceof HTMLVideoElement).toBe(true);
+    expect(unwrapMedia(wrapped)).toBe(video);
 
     // The facade tracks the live registry, so removal shows through without re-wrapping.
     remove();
     expect(wrapped.muted).toBe(false);
+  });
+
+  it('wraps for an extension that declares an override even while it has none', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const video = document.createElement('video');
+
+    coordinator.register(new IdleOverrideExtension());
+
+    expect(coordinator.wrap(video)).not.toBe(video);
+  });
+
+  it('returns the same facade for the same media', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const video = document.createElement('video');
+
+    coordinator.register(new MutedExtension());
+
+    expect(coordinator.wrap(video)).toBe(coordinator.wrap(video));
+    expect(coordinator.wrap(document.createElement('video'))).not.toBe(coordinator.wrap(video));
   });
 });

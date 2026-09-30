@@ -119,6 +119,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     // Re-attaches the store to the current target; set by the attach effect below while a target is attached.
     const reattach = useRef<(() => void) | null>(null);
+    // Created with the player, so its creation time is the player's init time.
     const [extensions] = useState(() => new PlayerExtensionCoordinator(() => reattach.current?.()));
     const registerExtension = useCallback((extension: PlayerExtension) => extensions.register(extension), [extensions]);
 
@@ -143,6 +144,14 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       syncedValues.current = { store, values: configValues };
     });
 
+    // Extensions follow the media, not the container: they detach only when the media goes away or changes, so a
+    // container change re-attaches the store without restarting an extension's session.
+    useEffect(() => {
+      if (!media) return;
+
+      return () => extensions.detach();
+    }, [media, extensions]);
+
     useEffect(() => {
       if (!media) return;
 
@@ -162,8 +171,8 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
       let detach = store.attach({ media: extensions.wrap(media), container });
 
-      // Features hold members read at attach time (such as `remote`), so an
-      // extension added or removed later re-attaches the store to the same target.
+      // Features hold members read at attach time (such as `remote`), so an extension
+      // that overrides media members, added or removed later, re-attaches the store.
       reattach.current = () => {
         detach();
         detach = store.attach({ media: extensions.wrap(media), container });
@@ -172,7 +181,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       return () => {
         reattach.current = null;
         detach();
-        extensions.detach();
       };
     }, [media, container, store, extensions]);
 

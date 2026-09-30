@@ -3,6 +3,7 @@ import {
   features,
   metadataFeature,
   type PlayerExtension,
+  type PlayerExtensionContext,
   type PlayerStore,
   type PlayerTarget,
   volumeFeature,
@@ -158,7 +159,7 @@ describe('createPlayer', () => {
     describe('extensions', () => {
       class MutedExtension implements PlayerExtension {
         static instances: MutedExtension[] = [];
-        attach = vi.fn<(target: PlayerTarget) => void>();
+        attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
         detach = vi.fn();
         destroy = vi.fn();
 
@@ -171,13 +172,31 @@ describe('createPlayer', () => {
         }
       }
 
+      /** Declares no `mediaOverride`, like Mux Data. */
+      class ObserverExtension implements PlayerExtension {
+        static instances: ObserverExtension[] = [];
+        attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
+        detach = vi.fn();
+        destroy = vi.fn();
+
+        constructor() {
+          ObserverExtension.instances.push(this);
+        }
+      }
+
       function Muted() {
         usePlayerExtension(MutedExtension);
         return null;
       }
 
+      function Observer() {
+        usePlayerExtension(ObserverExtension);
+        return null;
+      }
+
       afterEach(() => {
         MutedExtension.instances.length = 0;
+        ObserverExtension.instances.length = 0;
       });
 
       it('attaches extensions to a plain video and routes store reads through their overrides', () => {
@@ -200,7 +219,7 @@ describe('createPlayer', () => {
         const video = container.querySelector('video')!;
         const [extension] = MutedExtension.instances;
 
-        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }));
+        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }), expect.anything());
         expect(store.target?.media).not.toBe(video);
         expect(store.target?.media).toBeInstanceOf(HTMLVideoElement);
         expect(store.state.muted).toBe(true);
@@ -245,6 +264,71 @@ describe('createPlayer', () => {
         expect(extension!.detach).toHaveBeenCalledTimes(1);
         expect(store.target?.media).toBe(video);
         expect(store.state.muted).toBe(false);
+      });
+
+      it('never wraps the media or re-attaches the store for an observer', () => {
+        const { Player, usePlayer } = createPlayer({ features: [volumeFeature] });
+        let store!: PlayerStore<[typeof volumeFeature]>;
+
+        function Consumer() {
+          store = usePlayer();
+          return null;
+        }
+
+        function App({ observe }: { observe: boolean }) {
+          return (
+            <Player>
+              <Video />
+              {observe && <Observer />}
+              <Consumer />
+            </Player>
+          );
+        }
+
+        const { container, rerender } = render(<App observe={false} />);
+        const video = container.querySelector('video')!;
+        const attach = vi.spyOn(store, 'attach');
+
+        rerender(<App observe />);
+
+        const [extension] = ObserverExtension.instances;
+
+        expect(extension!.attach).toHaveBeenCalledWith(
+          expect.objectContaining({ media: video }),
+          expect.objectContaining({ initTime: expect.any(Number) })
+        );
+        expect(store.target?.media).toBe(video);
+
+        rerender(<App observe={false} />);
+
+        expect(extension!.detach).toHaveBeenCalledTimes(1);
+        expect(attach).not.toHaveBeenCalled();
+      });
+
+      it('keeps extensions attached when only the container changes', () => {
+        const { Player } = createPlayer({ features: [volumeFeature] });
+        let setContainer!: (container: HTMLElement | null) => void;
+
+        function Consumer() {
+          setContainer = usePlayerContext().setContainer;
+          return null;
+        }
+
+        render(
+          <Player>
+            <Video />
+            <Observer />
+            <Consumer />
+          </Player>
+        );
+
+        const [extension] = ObserverExtension.instances;
+
+        act(() => setContainer(document.createElement('div')));
+        act(() => setContainer(document.createElement('div')));
+
+        expect(extension!.attach).toHaveBeenCalledTimes(1);
+        expect(extension!.detach).not.toHaveBeenCalled();
       });
 
       it('detaches extensions with the store on unmount', () => {

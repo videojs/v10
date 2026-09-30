@@ -248,7 +248,8 @@ export function createPlayerElement<Store extends PlayerStore>(
 
     /**
      * Extensions attach before the store so their overrides are in place when features first read the media; the store
-     * then sees the media through the extensions' facade.
+     * then sees the media through the extensions' facade. Extensions follow the media only, so a container change
+     * re-attaches the store but leaves them attached.
      */
     #attach(target: PlayerTarget): void {
       const store = this.#store;
@@ -261,8 +262,9 @@ export function createPlayerElement<Store extends PlayerStore>(
     }
 
     /**
-     * An extension was added or removed. Features hold members read at attach time (such as `remote`), so the store
-     * re-attaches to the same target to pick up what the extensions now own. Extensions themselves stay attached.
+     * An extension that overrides media members was added or removed. Features hold members read at attach time (such
+     * as `remote`), so the store re-attaches to the same target to pick up what the extensions now own. Observers such
+     * as analytics never get here. Extensions themselves stay attached.
      */
     #syncExtensions(): void {
       if (this.#attached) this.#attach(this.#attached);
