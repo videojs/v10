@@ -630,20 +630,22 @@ Use a ref for imperative browser media APIs or for custom events that do not hav
 
 ### Drive playback
 
+Use the <DocsLink slug="reference/api/player-store">player store</DocsLink> for state and actions:
+
 | Mux Player | Video.js v10 |
 |---|---|
-| `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
+| `player.play()`, `player.pause()` | the player's `play`, `pause`, or `media.play()`, `media.pause()` |
 | `player.currentTime = 10` | the player's `seek(10)`, or `media.currentTime = 10` |
 | `player.volume` | `volume` in player state; write with `media.volume = value` to preserve mute state; `setVolume(value)` also unmutes for values above zero |
-| `player.muted` | `muted` in player state; write with `media.muted = value` |
+| `player.muted` | `muted` in player state; write with `setMuted(value)` |
 | `player.playbackRate` | the player's `setPlaybackRate`, or `media.playbackRate` |
-| `player.requestFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.requestFullscreen()` | the player's `requestFullscreen`, `exitFullscreen` |
 | `player.addChapters([…])` | a `<track kind="chapters">`, covered below |
 
-Standard media properties update player state through media events. Use `toggleMuted()` for a toggle interaction; set `media.muted` when you need a specific value.
+Standard media properties update player state through media events. `setMuted(false)` restores volume to `0.25` when it is zero; set `media.muted` directly to preserve a zero volume.
 
 <FrameworkCase frameworks={["html"]}>
-Call actions on the player element's `store.state` after media attachment. For example, wire seeking to a button:
+Call actions on the player element's `store` after media attachment. For example, wire seeking to a button:
 
 ```html
 <button id="seek-to-ten" type="button">Seek to 10 seconds</button>
@@ -654,7 +656,7 @@ Call actions on the player element's `store.state` after media attachment. For e
 
   document.querySelector('#seek-to-ten').addEventListener('click', () => {
     if (!player.store.target) return;
-    player.store.state.seek(10);
+    player.store.seek(10);
   });
 </script>
 ```

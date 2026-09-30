@@ -34,7 +34,7 @@ export const selectLive = createSelector(liveFeature);
 export const selectMetadata = createSelector(metadataFeature);
 /** Select the PiP state (picture-in-picture active, availability). */
 export const selectPiP = createSelector(pipFeature);
-/** Select the playback state (paused, ended, play, pause, toggle). */
+/** Select the playback state (paused, ended, play, pause). */
 export const selectPlayback = createSelector(playbackFeature);
 /** Select the playback rate state (playbackRate, playbackRates, setPlaybackRate). */
 export const selectPlaybackRate = createSelector(playbackRateFeature);
@@ -46,7 +46,7 @@ export const selectRemotePlayback = createSelector(remotePlaybackFeature);
 export const selectSource = createSelector(sourceFeature);
 /** Select the stream type state (`'on-demand' | 'live' | 'unknown'`). */
 export const selectStreamType = createSelector(streamTypeFeature);
-/** Select the text track state (chapters cues, thumbnail cues). */
+/** Select the text track state (textTrackList, subtitles, chaptersCues, thumbnailsTrack). */
 export const selectTextTrack = createSelector(textTrackFeature);
 /** Select the time state (currentTime, duration, seek). */
 export const selectTime = createSelector(timeFeature);

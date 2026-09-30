@@ -431,21 +431,22 @@ Individual React buttons do not include visible content. Use their `render` prop
 
 ## Use the imperative API
 
-Use store actions for playback, seeking, volume, fullscreen, and captions. For an explicit muted value, set the media property directly:
+Use <DocsLink slug="reference/api/player-store">store actions</DocsLink> for playback, seeking, volume, fullscreen, and captions:
 
 | Plyr | Video.js v10 |
 |---|---|
-| `player.play()`, `player.pause()` | `play()`, `pause()`, or `togglePaused()` |
+| `player.play()`, `player.pause()` | `play()`, `pause()` |
 | `player.currentTime = 10` | `seek(10)` |
 | `player.volume = 0.5` | `setVolume(0.5)`, which also unmutes |
-| `player.muted = true` | `media.muted = true` on the attached media |
+| `player.muted = true` | `setMuted(true)` |
 | `player.speed = 1.5` | `setPlaybackRate(1.5)` |
-| `player.fullscreen.enter()` | `requestFullscreen()` |
+| `player.fullscreen.enter()`, `player.fullscreen.exit()` | `requestFullscreen()`, `exitFullscreen()` |
+| `player.fullscreen.toggle()` | `isFullscreen ? exitFullscreen() : requestFullscreen()` |
 | `player.toggleCaptions()` | `toggleSubtitles()` |
 
 Plyr's [volume setter](https://github.com/sampotts/plyr/blob/v3.8.4/src/js/plyr.js#L507-L542) unmutes for values above zero, as `setVolume` does. Set `media.volume` directly only when you intend to preserve mute state.
 
-`toggleMuted()` toggles the effective muted state; it can unmute an already muted player. Use it for a mute button, not as a replacement for an assignment.
+`setMuted(false)` restores volume to `0.25` when it is zero. Set `media.muted` directly when you need to preserve a zero volume.
 
 <FrameworkCase frameworks={["react"]}>
 Native media methods and properties also update player state through media events. To change content, set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `Video` to `HlsJsVideo`. The player UI follows the attached media.
@@ -479,7 +480,7 @@ export function AppVideoPlayer() {
 }
 ```
 
-The same hook selects actions: `usePlayer((state) => state.togglePaused)` returns a function you can call from your own UI.
+The same hook selects actions: `usePlayer((state) => state.play)` returns a function you can call from your own UI.
 
 For video-backed media, a `ref` reaches the rendered `HTMLVideoElement`. YouTube and Vimeo refs reach an `HTMLIFrameElement`; use `useMedia()` inside the player to call media methods on those embeds. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
@@ -496,7 +497,12 @@ Call store actions after the player is defined and media is attached:
 
   document.querySelector('#toggle-playback').addEventListener('click', () => {
     if (!player.store.target) return;
-    player.store.state.togglePaused();
+
+    if (player.store.paused) {
+      player.store.play();
+    } else {
+      player.store.pause();
+    }
   });
 </script>
 ```

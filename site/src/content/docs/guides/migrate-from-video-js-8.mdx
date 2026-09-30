@@ -556,19 +556,19 @@ Every feature has a selector (`selectPlayback`, `selectTime`, `selectVolume`, `s
 
 ### Drive playback
 
-Replace v8 accessor methods with player state for reads and store actions or media properties for writes. Video.js updates player state from media events, so native calls such as `media.play()` and assignments such as `media.currentTime = 10` update the controls.
+Replace v8 accessor methods with <DocsLink slug="reference/api/player-store">player state</DocsLink> for reads and store actions or media properties for writes. Video.js updates player state from media events, so native calls such as `media.play()` and assignments such as `media.currentTime = 10` update the controls.
 
 <FrameworkCase frameworks={["react"]}>
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
+| `player.play()`, `player.pause()` | the player's `play`, `pause`, or `media.play()`, `media.pause()` |
 | `player.currentTime()` / `player.currentTime(10)` | `currentTime` in player state, the player's `seek(10)`, or `media.currentTime` |
 | `player.duration()` | `duration` in player state, or `media.duration` |
 | `player.volume()` / `player.volume(0.5)` | `volume` in player state / `media.volume = 0.5` |
-| `player.muted()` / `player.muted(true)` | `muted` in player state / `media.muted = true` |
+| `player.muted()` / `player.muted(true)` | `muted` in player state / the player's `setMuted(true)` |
 | `player.playbackRate()` / `player.playbackRate(1.5)` | `playbackRate` in player state / the player's `setPlaybackRate(1.5)` |
 | `player.src({ src, type })` | set `src` on the media or replace the media component (`Video`, `HlsJsVideo`, `DashVideo`, etc) |
-| `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen` |
 | `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state, `textTracks` in media |
 | `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
 | `player.error()` | `error` in player state |
@@ -580,14 +580,14 @@ Replace v8 accessor methods with player state for reads and store actions or med
 <FrameworkCase frameworks={["html"]}>
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
+| `player.play()`, `player.pause()` | the player's `play`, `pause`, or `media.play()`, `media.pause()` |
 | `player.currentTime()` / `player.currentTime(10)` | `currentTime` in player state, the player's `seek(10)`, or `media.currentTime` |
 | `player.duration()` | `duration` in player state, or `media.duration` |
 | `player.volume()` / `player.volume(0.5)` | `volume` in player state / `media.volume = 0.5` |
-| `player.muted()` / `player.muted(true)` | `muted` in player state / `media.muted = true` |
+| `player.muted()` / `player.muted(true)` | `muted` in player state / the player's `setMuted(true)` |
 | `player.playbackRate()` / `player.playbackRate(1.5)` | `playbackRate` in player state / the player's `setPlaybackRate(1.5)` |
 | `player.src({ src, type })` | set `src` on the media or replace the media element (`<video>` tag, `<hlsjs-video>`, `<dash-video>`, etc) |
-| `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen` |
 | `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state, `textTracks` in media |
 | `player.audioTracks()` | `audioTrackList` in player state, `audioTracks` in media |
 | `player.error()` | `error` in player state |
@@ -597,7 +597,7 @@ Replace v8 accessor methods with player state for reads and store actions or med
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Everything the table describes as "the player's" lives on the player element's store. Call actions on `store.state` after media attachment. Fullscreen requests must run from a user interaction:
+Everything the table describes as "the player's" lives on the player element's store. Call actions on `store` after media attachment. Fullscreen requests must run from a user interaction:
 
 ```html
 <button id="toggle-fullscreen" type="button">Toggle fullscreen</button>
@@ -608,17 +608,22 @@ Everything the table describes as "the player's" lives on the player element's s
 
   document.querySelector('#toggle-fullscreen').addEventListener('click', () => {
     if (!player.store.target) return;
-    player.store.state.toggleFullscreen();
+
+    if (player.store.isFullscreen) {
+      player.store.exitFullscreen();
+    } else {
+      player.store.requestFullscreen();
+    }
   });
 </script>
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-For video-backed media, a `ref` reaches the rendered `HTMLVideoElement`. YouTube and Vimeo render iframes, so their refs cannot call media methods; use `useMedia()` inside the player for those calls. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, `useMedia` returns the Video.js media object.
+For video-backed media, a `ref` reaches the rendered `HTMLVideoElement`. YouTube and Vimeo render iframes, so their refs cannot call media methods; use `useMedia()` inside the player for those calls. The player's actions come from the same `usePlayer` hook you read state with — select `play`, `setPlaybackRate`, or `requestFullscreen` from state and call it. Where `player.tech()` habits linger, `useMedia` returns the Video.js media object.
 </FrameworkCase>
 
-`setVolume(value)` also unmutes when `value` is above zero. Use `media.volume = value` to preserve the current mute state.
+`setVolume(value)` also unmutes when `value` is above zero. Use `media.volume = value` to preserve the current mute state. `setMuted(false)` restores volume to `0.25` when it is zero; set `media.muted` directly to preserve a zero volume.
 
 Swapping sources is the change most likely to surprise you. There's no `player.src()`; you set `src` on the media element, or replace the media element entirely, and the UI follows. Changing formats is changing tags.
 

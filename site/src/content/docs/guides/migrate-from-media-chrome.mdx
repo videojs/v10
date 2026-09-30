@@ -533,7 +533,7 @@ React skins do not use Shadow DOM. Use `render` props when you build individual 
 
 ## Control the player imperatively
 
-Use store actions such as `play`, `togglePaused`, `seek`, `setVolume`, and `toggleFullscreen` to control playback and UI state.
+Use <DocsLink slug="reference/api/player-store">store actions</DocsLink> such as `play`, `pause`, `seek`, `setVolume`, `requestFullscreen`, and `exitFullscreen` to control playback and UI state.
 
 <FrameworkCase frameworks={["html"]}>
 Call actions on the player element's store after media attachment. Fullscreen requests must run from a user interaction:
@@ -547,7 +547,12 @@ Call actions on the player element's store after media attachment. Fullscreen re
 
   document.querySelector('#toggle-fullscreen').addEventListener('click', () => {
     if (!player.store.target) return;
-    player.store.state.toggleFullscreen();
+
+    if (player.store.isFullscreen) {
+      player.store.exitFullscreen();
+    } else {
+      player.store.requestFullscreen();
+    }
   });
 </script>
 ```
@@ -560,8 +565,15 @@ Select an action with the same <DocsLink slug="reference/api/use-player">`usePla
 import { usePlayer } from '@videojs/react/video';
 
 function FullscreenShortcut() {
-  const toggleFullscreen = usePlayer((state) => state.toggleFullscreen);
-  return <button type="button" onClick={() => toggleFullscreen()}>Toggle fullscreen</button>;
+  const isFullscreen = usePlayer((state) => state.isFullscreen);
+  const requestFullscreen = usePlayer((state) => state.requestFullscreen);
+  const exitFullscreen = usePlayer((state) => state.exitFullscreen);
+
+  return (
+    <button type="button" onClick={() => isFullscreen ? exitFullscreen() : requestFullscreen()}>
+      Toggle fullscreen
+    </button>
+  );
 }
 ```
 </FrameworkCase>
