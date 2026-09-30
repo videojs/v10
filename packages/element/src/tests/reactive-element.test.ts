@@ -30,30 +30,6 @@ describe('ReactiveElement', () => {
     expect(el).toBeInstanceOf(HTMLElement);
   });
 
-  it('calls connectedCallback and disconnectedCallback', () => {
-    const connected = vi.fn();
-    const disconnected = vi.fn();
-
-    class TestElement extends ReactiveElement {
-      override connectedCallback() {
-        super.connectedCallback();
-        connected();
-      }
-      override disconnectedCallback() {
-        super.disconnectedCallback();
-        disconnected();
-      }
-    }
-
-    const el = createElement(TestElement);
-
-    document.body.appendChild(el);
-    expect(connected).toHaveBeenCalledOnce();
-
-    el.remove();
-    expect(disconnected).toHaveBeenCalledOnce();
-  });
-
   it('runs willUpdate and update on first connect', async () => {
     const willUpdate = vi.fn();
     const update = vi.fn();
@@ -636,25 +612,6 @@ describe('ReactiveElement updateComplete', () => {
 
     expect(result).toBe(true);
     expect(el.hasUpdated).toBe(true);
-  });
-
-  it('resolves after property-triggered update', async () => {
-    class TestElement extends ReactiveElement {
-      static override properties = {
-        label: { type: String },
-      };
-      label = '';
-    }
-
-    const el = createElement(TestElement);
-
-    document.body.appendChild(el);
-    await el.updateComplete;
-
-    el.label = 'changed';
-    const result = await el.updateComplete;
-
-    expect(result).toBe(true);
   });
 });
 

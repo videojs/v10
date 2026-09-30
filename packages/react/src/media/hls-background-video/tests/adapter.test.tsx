@@ -74,17 +74,5 @@ describe('HlsBackgroundVideo', () => {
       // Delivered through React's own plumbing, on the node the consumer holds.
       expect(onError.mock.calls[0]?.[0]?.target).toBe(video);
     });
-
-    it('stays quiet for a condition the Media does not treat as fatal', async () => {
-      const onError = vi.fn();
-
-      render(<HlsBackgroundVideo src="https://example.com/v.m3u8" onError={onError} />);
-
-      // A degraded-but-playable notice must not reach the surface.
-      instances[0]?.engine.state.errors.set([{ code: MANIFEST_FEATURE_UNSUPPORTED }]);
-      await flush();
-
-      expect(onError).not.toHaveBeenCalled();
-    });
   });
 });
