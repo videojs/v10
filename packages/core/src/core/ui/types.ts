@@ -2,7 +2,6 @@ import type { State } from '@videojs/store';
 
 import type { Text, TextParams } from '../i18n';
 
-/** @internal */
 export type StateAttrMap<State> = {
   [Key in keyof State]?: string;
 };

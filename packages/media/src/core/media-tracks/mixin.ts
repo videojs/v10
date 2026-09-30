@@ -17,7 +17,7 @@ import { VideoRenditionList } from './video-rendition-list';
 import { VideoTrack } from './video-track';
 import { addVideoTrack, removeVideoTrack, VideoTrackList } from './video-track-list';
 
-/** @internal */
+/** @experimental */
 export type WithMediaTracks<Base extends AnyConstructor<any>> = MixinReturn<
   Base,
   MediaVideoTrackCapability & MediaAudioTrackCapability & MediaVideoRenditionCapability & MediaAudioRenditionCapability

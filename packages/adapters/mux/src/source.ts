@@ -16,7 +16,6 @@ export const MUX_VIDEO_DOMAIN = 'mux.com';
 export type MuxResolution = MediaResolution;
 export type MuxRenditionOrder = 'desc';
 export type MuxImageExt = 'webp' | 'jpg' | 'png';
-/** @internal */
 export type MuxPosterFitMode = 'preserve' | 'stretch' | 'crop' | 'smartcrop' | 'pad';
 
 /**
@@ -213,8 +212,6 @@ function parseMuxParamValue(value: string): string | number | boolean {
  *
  * The index signature comes from `MediaContentData`, which the shared `contentData` capability is typed as, so it can't
  * be closed off here — extending it is what keeps this assignable to that contract.
- *
- * @internal
  */
 export interface MuxContentData extends MediaContentData {
   readonly title?: string;

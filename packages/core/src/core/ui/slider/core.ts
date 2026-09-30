@@ -34,11 +34,7 @@ export interface SliderPreviewProps {
   overflow?: SliderPreviewOverflow | undefined;
 }
 
-/**
- * Current pointer/drag input state, typically provided by a DOM controller.
- *
- * @internal
- */
+/** Current pointer/drag input state, typically provided by a DOM controller. */
 export interface SliderInput {
   /** Pointer position as a percentage of the track (0–100). */
   pointerPercent: number;

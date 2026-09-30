@@ -4,10 +4,8 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
 import { getMediaProp, HTMLMediaAdapter, type HTMLMediaTargetLike, setMediaProp } from '../html-media-adapter';
 
-/** @internal */
 export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
 
-/** @internal */
 export class HTMLVideoAdapter extends HTMLMediaAdapter<HTMLVideoTargetLike, VideoEvents> implements Video {
   get poster() {
     return getMediaProp(this, 'poster') ?? '';

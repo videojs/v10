@@ -107,6 +107,7 @@ export interface MediaSeekCapability {
 
 export type MediaPreloadType = '' | 'none' | 'metadata' | 'auto';
 
+/** @internal */
 export const MediaReadyState = {
   HAVE_NOTHING: 0,
   HAVE_METADATA: 1,
@@ -296,7 +297,6 @@ export interface AudioTrackListLike extends EventTargetLike<MediaTrackListEvents
   getTrackById(id: string): AudioTrackLike | null;
 }
 
-/** @internal */
 export interface VideoTrackLike {
   id: string | undefined;
   readonly kind: string | undefined;
@@ -314,7 +314,6 @@ export interface VideoTrackLike {
   removeRendition(rendition: VideoRenditionLike): void;
 }
 
-/** @internal */
 export interface VideoTrackListLike extends EventTargetLike<MediaTrackListEvents<VideoTrackLike>> {
   readonly length: number;
   readonly [index: number]: VideoTrackLike;
@@ -329,7 +328,7 @@ export interface MediaAudioTrackCapability {
   removeAudioTrack(track: AudioTrackLike): void;
 }
 
-/** @internal */
+/** @experimental */
 export interface MediaVideoTrackCapability {
   readonly videoTracks: VideoTrackListLike;
   addVideoTrack(kind: string, label?: string, language?: string): VideoTrackLike;
@@ -357,7 +356,6 @@ export interface AudioRenditionLike {
   selected: boolean;
 }
 
-/** @internal */
 export interface AudioRenditionListLike extends EventTargetLike<RenditionListEvents<AudioRenditionLike>> {
   readonly length: number;
   readonly [index: number]: AudioRenditionLike;
@@ -389,7 +387,7 @@ export interface VideoRenditionListLike extends EventTargetLike<VideoRenditionLi
   selectedIndex: number;
 }
 
-/** @internal */
+/** @experimental */
 export interface MediaAudioRenditionCapability {
   readonly audioRenditions: AudioRenditionListLike;
 }
@@ -428,7 +426,11 @@ export interface MediaPictureInPictureCapability {
 // Stream type
 // ----------------------------------------
 
-/** Named values of {@link MediaStreamType}. */
+/**
+ * Named values of {@link MediaStreamType}.
+ *
+ * @internal
+ */
 export const MediaStreamTypes = {
   ON_DEMAND: 'on-demand',
   LIVE: 'live',
@@ -659,7 +661,6 @@ export interface MediaTargetLike
   title: string;
 }
 
-/** @internal */
 export interface VideoTargetLike
   extends MediaTargetLike, MediaPosterCapability, MediaPlaysInlineCapability, MediaVideoDimensionsCapability {
   disablePictureInPicture: boolean;
@@ -667,7 +668,7 @@ export interface VideoTargetLike
   requestFullscreen(): Promise<unknown>;
 }
 
-/** @internal */
+/** @experimental */
 export interface EngineAdapter<Engine = unknown, Target = unknown> {
   readonly engine: Engine | null;
   attach?(target: Target): void;

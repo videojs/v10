@@ -25,11 +25,13 @@ export type PlaybackType = 'mse' | 'native' | (string & {});
 export type SourceType = 'application/vnd.apple.mpegurl' | 'video/mp4' | (string & {});
 export type StreamType = MediaStreamType;
 
+/** @internal */
 export const PlaybackTypes = {
   MSE: 'mse',
   NATIVE: 'native',
 };
 
+/** @internal */
 export const ContentTypes = {
   M3U8: 'application/vnd.apple.mpegurl',
   MP4: 'video/mp4',
@@ -167,7 +169,6 @@ class HlsMediaEvent extends Event {}
  *   new value.
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
- * @internal
  */
 export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps {
   static readonly defaultProps: HlsJsAdapterProps = {
