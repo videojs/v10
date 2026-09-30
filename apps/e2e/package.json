@@ -19,6 +19,7 @@
     "test:vite": "vp run test:player",
     "test:all": "vp run test:player && vp run test:skin-parity && vp run test:sandbox",
     "install:floor": "node node_modules/playwright-core-1-31/cli.js install chromium webkit && node node_modules/playwright-core-1-41/cli.js install firefox",
+    "test:browserstack": "playwright test --config suites/browserstack/playwright.config.ts",
     "test:floor": "tsx suites/floor/run.ts",
     "report": "playwright show-report"
   },

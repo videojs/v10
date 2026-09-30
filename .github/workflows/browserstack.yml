@@ -1,0 +1,72 @@
+name: BrowserStack
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browserstack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    # Enable after adding the secrets and confirming the account's browser matrix.
+    if: vars.BROWSERSTACK_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+      BROWSERSTACK_LOCAL_IDENTIFIER: videojs-${{ github.run_id }}-${{ github.run_attempt }}
+      BROWSERSTACK_BUILD: ${{ github.ref_name }}-${{ github.sha }}-${{ github.run_attempt }}
+      BROWSERSTACK_IOS_DEVICE: ${{ vars.BROWSERSTACK_IOS_DEVICE }}
+      BROWSERSTACK_IOS_VERSION: ${{ vars.BROWSERSTACK_IOS_VERSION }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare player pages
+        run: pnpm exec vp run '@videojs/e2e#prepare:player'
+
+      - name: Setup BrowserStack Local
+        uses: browserstack/github-actions/setup-local@v1.0.6
+        with:
+          local-testing: start
+          local-identifier: ${{ env.BROWSERSTACK_LOCAL_IDENTIFIER }}
+
+      - name: Run compatibility tests
+        run: pnpm -F @videojs/e2e test:browserstack
+
+      - name: Stop BrowserStack Local
+        if: always()
+        uses: browserstack/github-actions/setup-local@v1.0.6
+        with:
+          local-testing: stop
+          local-identifier: ${{ env.BROWSERSTACK_LOCAL_IDENTIFIER }}
+
+      - name: Upload reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browserstack-results
+          path: |
+            apps/e2e/playwright-report/browserstack/
+            apps/e2e/test-results/browserstack/
+          retention-days: 14

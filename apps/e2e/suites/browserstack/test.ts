@@ -1,0 +1,55 @@
+import { test as base } from '@playwright/test';
+import playwrightPkg from 'playwright-core/package.json' with { type: 'json' };
+
+export interface Options {
+  caps: Record<string, string>;
+}
+
+export const test = base.extend<{}, Options>({
+  caps: [{}, { option: true, scope: 'worker' }],
+  browser: async ({ playwright, caps }, use, testInfo) => {
+    if (process.env.BROWSERSTACK_LOCAL_TEST) {
+      const browser = await playwright.chromium.launch();
+
+      try {
+        await use(browser);
+      } finally {
+        await browser.close();
+      }
+
+      return;
+    }
+
+    const username = process.env.BROWSERSTACK_USERNAME;
+    const key = process.env.BROWSERSTACK_ACCESS_KEY;
+    if (!username || !key) throw new Error('Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY.');
+
+    const capabilities = {
+      ...caps,
+      'browserstack.username': username,
+      'browserstack.accessKey': key,
+      'browserstack.local': true,
+      'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER ?? 'videojs',
+      'client.playwrightVersion': playwrightPkg.version,
+      project: 'Video.js 10',
+      build: process.env.BROWSERSTACK_BUILD ?? 'local',
+      name: testInfo.project.name,
+    };
+    const endpoint = `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(capabilities))}`;
+    const type = caps.realMobile ? playwright.webkit : playwright.chromium;
+    // Connection errors can include the endpoint, which contains the credentials.
+    const browser = await type.connect(endpoint, { timeout: 60_000 }).catch(() => {
+      throw new Error(
+        `BrowserStack could not connect to ${testInfo.project.name}. Check its availability and credentials.`
+      );
+    });
+
+    try {
+      await use(browser);
+    } finally {
+      await browser.close();
+    }
+  },
+});
+
+export { expect } from '@playwright/test';

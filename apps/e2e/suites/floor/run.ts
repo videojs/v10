@@ -17,6 +17,7 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const e2eDir = resolve(import.meta.dirname, '../..');
@@ -46,7 +47,7 @@ interface Page {
   readonly preset: 'video' | 'audio';
 }
 
-const PAGES: readonly Page[] = [
+export const PAGES: readonly Page[] = [
   { path: '/pages/html-video-mp4.html', preset: 'video' },
   { path: '/pages/react-video-mp4.html', preset: 'video' },
   { path: '/pages/html-video-minimal-mp4.html', preset: 'video' },
@@ -247,7 +248,7 @@ async function readProbeWhenStable(page: import('playwright-core-1-31').Page): P
 }
 
 /** Find the first match in the document or any open shadow root below it. */
-function deepQuery(root: Document | ShadowRoot | Element, selector: string): Element | null {
+export function deepQuery(root: Document | ShadowRoot | Element, selector: string): Element | null {
   const found = root.querySelector(selector);
   if (found) return found;
 
@@ -260,7 +261,7 @@ function deepQuery(root: Document | ShadowRoot | Element, selector: string): Ele
 }
 
 /** Runs in the page, so it takes `deepQuery` as an argument instead of closing over it. */
-function readProbe(query: typeof deepQuery): Probe | null {
+export function readProbe(query: typeof deepQuery): Probe | null {
   const skin = query(document, '.media-skin');
   if (!skin) return null;
 
@@ -437,4 +438,4 @@ async function startServer(): Promise<ChildProcess> {
   throw new Error(`The e2e app did not start on port ${PORT}.`);
 }
 
-await main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
