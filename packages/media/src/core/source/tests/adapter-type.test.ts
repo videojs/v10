@@ -23,7 +23,7 @@ describe('resolveAdapterType', () => {
     ['https://www.tiktok.com/@scout2015/video/6718335390845095173', 'tiktok'],
     ['https://www.twitch.tv/videos/2175470236', 'twitch'],
     ['https://www.twitch.tv/monstercat', 'twitch'],
-  ])('resolves the provider of %s', (src, expected) => {
+  ])('resolves the service URL %s to %s', (src, expected) => {
     expect(resolveAdapterType(src)).toBe(expected);
   });
 
@@ -67,7 +67,7 @@ describe('resolveAdapterType', () => {
     expect(resolveAdapterType('https://example.com/manifest', 'audio/mpegurl; charset=utf-8')).toBe('hls');
   });
 
-  it('prefers the provider over the MIME type', () => {
+  it('prefers the service adapter type over the MIME type', () => {
     expect(
       resolveAdapterType(
         'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8',
@@ -93,7 +93,7 @@ describe('resolveAdapterType', () => {
     ['a Vimeo page without a video', 'https://vimeo.com/'],
     ['a TikTok short link', 'https://vm.tiktok.com/ZMabc123/'],
     ['a Twitch clip', 'https://clips.twitch.tv/SomeClipSlug'],
-    ['a provider URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
+    ['a service URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
   ])('returns null for %s', (_, src) => {
     expect(resolveAdapterType(src)).toBe(null);
   });

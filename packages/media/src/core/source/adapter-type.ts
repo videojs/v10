@@ -27,7 +27,7 @@ export type AdapterType =
  * manifests; and video and audio files, by MIME type when you pass one and by file extension otherwise.
  *
  * Returns `null` for anything else, including bare ids: an 11-character YouTube id and a 10-character Wistia id look
- * alike, so providers are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
+ * alike, so services are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
  *
  * `hls` covers every HLS adapter, and `dash` every DASH adapter. Choosing between them is up to you.
  *
@@ -40,7 +40,7 @@ export function resolveAdapterType(src: string, type?: string): AdapterType | nu
   const source = src.trim();
   if (!source) return null;
 
-  return resolveProvider(source) ?? fromMimeType(type) ?? fromMimeType(resolveMimeType(source));
+  return fromService(source) ?? fromMimeType(type) ?? fromMimeType(resolveMimeType(source));
 }
 
 /**
@@ -59,7 +59,7 @@ export function resolveMimeType(src: string): string | null {
   return (extension && MIME_TYPES.get(extension)) || null;
 }
 
-function resolveProvider(src: string): AdapterType | null {
+function fromService(src: string): AdapterType | null {
   // Shorthands go through the same parsers the YouTube and Vimeo media use, so the media accepts what matches here.
   if (src.startsWith('youtube/')) return parseYouTubeSource(src) ? 'youtube' : null;
 

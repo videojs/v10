@@ -121,7 +121,7 @@ Each media module you import adds its engine to your bundle, so import the rarel
 
 ### MIME types
 
-Pass a MIME type as the second argument when the URL doesn't end in a file extension, such as an extensionless manifest or a `blob:` URL. The MIME type takes precedence over the extension; provider URLs are recognized either way.
+Pass a MIME type as the second argument when the URL doesn't end in a file extension, such as an extensionless manifest or a `blob:` URL. The MIME type takes precedence over the extension; service URLs, such as YouTube or Mux, resolve the same either way.
 
 ```ts
 resolveAdapterType('https://example.com/manifest', 'application/vnd.apple.mpegurl'); // 'hls'
@@ -131,7 +131,7 @@ To get the MIME type a file extension implies, use <DocsLink slug="reference/api
 
 ### Bare ids
 
-A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia id look alike, so providers are only recognized from URLs, `spotify:` URIs, and [shorthands](#shorthands). If you already know the provider, pass the id to its media component directly.
+A bare id returns `null`. An 11-character YouTube id and a 10-character Wistia id look alike, so services are only recognized from URLs, `spotify:` URIs, and [shorthands](#shorthands). If you already know the service, pass the id to its media component directly.
 
 ### Shorthands
 

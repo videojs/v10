@@ -21,12 +21,12 @@ const ADAPTER_TYPE_RENDERERS: Record<AdapterType, readonly Renderer[]> = {
   audio: ['html5-audio'],
 };
 
-/** Renderers whose accepted source shape matches a URL, ordered from provider-specific to generic. */
+/** Renderers whose accepted source shape matches a URL: its adapter type's, then the generic stream renderers. */
 export function resolveRendererCandidates(url: string): readonly Renderer[] {
   const type = resolveAdapterType(url);
   if (!type) return [];
 
-  // A provider's manifest, such as a Mux or Cloudflare `.m3u8`, also plays in the generic stream renderers. The file
+  // A Mux or Cloudflare manifest, such as an `.m3u8`, also plays in the generic stream renderers. The file
   // name alone carries no host, so it resolves by extension.
   const fileName = url.split(/[?#]/, 1)[0]!.split('/').pop();
   const fileType = fileName ? resolveAdapterType(fileName) : null;

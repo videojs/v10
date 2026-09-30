@@ -60,7 +60,7 @@ describe('resolveRenderer', () => {
 });
 
 describe('resolveRendererCandidates', () => {
-  it('lists the generic stream renderers after a provider for its manifests', () => {
+  it('lists the generic stream renderers after the service renderers for a manifest', () => {
     expect(resolveRendererCandidates('https://stream.mux.com/abc123.m3u8')).toEqual([
       'mux-video',
       'mux-audio',
@@ -75,7 +75,7 @@ describe('resolveRendererCandidates', () => {
     ).toEqual(['cloudflare', 'dash']);
   });
 
-  it('lists only the provider for embed URLs', () => {
+  it('lists only the service renderers for a URL without a stream extension', () => {
     expect(resolveRendererCandidates('https://youtu.be/aqz-KE-bpKQ')).toEqual(['youtube']);
     expect(resolveRendererCandidates('https://stream.mux.com/abc123')).toEqual([
       'mux-video',
