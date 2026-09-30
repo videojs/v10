@@ -396,11 +396,11 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Utils',
         llmsDescription: {
           react:
-            'Lower-level building blocks: media and MIME type resolution, and refs, buttons, sliders, and rendering for custom components.',
-          html: 'Lower-level building blocks: media and MIME type resolution, and the keyboard shortcut controller for custom components.',
+            'Lower-level building blocks: source kind and MIME type resolution, and refs, buttons, sliders, and rendering for custom components.',
+          html: 'Lower-level building blocks: source kind and MIME type resolution, and the keyboard shortcut controller for custom components.',
         },
         contents: [
-          { slug: 'reference/api/resolve-media-type', sidebarLabel: 'resolveMediaType' },
+          { slug: 'reference/api/resolve-source-kind', sidebarLabel: 'resolveSourceKind' },
           { slug: 'reference/api/resolve-mime-type', sidebarLabel: 'resolveMimeType' },
           { slug: 'reference/api/use-button', frameworks: ['react'] },
           { slug: 'reference/api/use-slider', frameworks: ['react'] },

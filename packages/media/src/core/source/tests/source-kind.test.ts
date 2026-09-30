@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { type MediaType, resolveMediaType, resolveMimeType } from '../media-type';
+import { type MediaSourceKind, resolveSourceKind, resolveMimeType } from '../source-kind';
 
-describe('resolveMediaType', () => {
-  it.each<[string, MediaType]>([
+describe('resolveSourceKind', () => {
+  it.each<[string, MediaSourceKind]>([
     ['https://www.youtube.com/watch?v=aqz-KE-bpKQ', 'youtube'],
     ['https://youtu.be/aqz-KE-bpKQ', 'youtube'],
     ['youtu.be/aqz-KE-bpKQ', 'youtube'],
@@ -22,10 +22,10 @@ describe('resolveMediaType', () => {
     ['https://www.twitch.tv/videos/2175470236', 'twitch'],
     ['https://www.twitch.tv/monstercat', 'twitch'],
   ])('resolves the provider of %s', (src, expected) => {
-    expect(resolveMediaType(src)).toBe(expected);
+    expect(resolveSourceKind(src)).toBe(expected);
   });
 
-  it.each<[string, MediaType]>([
+  it.each<[string, MediaSourceKind]>([
     ['youtube/aqz-KE-bpKQ', 'youtube'],
     ['youtube/shorts/aqz-KE-bpKQ', 'youtube'],
     ['vimeo/76979871', 'vimeo'],
@@ -33,10 +33,10 @@ describe('resolveMediaType', () => {
     ['vimeo/76979871?h=8272103f6e', 'vimeo'],
     ['vimeo/76979871/8272103f6e', 'vimeo'],
   ])('resolves the %s shorthand', (src, expected) => {
-    expect(resolveMediaType(src)).toBe(expected);
+    expect(resolveSourceKind(src)).toBe(expected);
   });
 
-  it.each<[string, MediaType]>([
+  it.each<[string, MediaSourceKind]>([
     ['https://example.com/live/stream.m3u8', 'hls'],
     ['https://example.com/manifest.mpd?token=abc', 'dash'],
     ['/media/video.mp4', 'video'],
@@ -44,18 +44,18 @@ describe('resolveMediaType', () => {
     ['https://cdn.example.com/podcast.mp3#t=30', 'audio'],
     ['https://stream.example.com/abc.m3u8', 'hls'],
   ])('resolves %s by its file extension', (src, expected) => {
-    expect(resolveMediaType(src)).toBe(expected);
+    expect(resolveSourceKind(src)).toBe(expected);
   });
 
   it('prefers the MIME type over the file extension', () => {
-    expect(resolveMediaType('https://example.com/manifest', 'application/vnd.apple.mpegurl')).toBe('hls');
-    expect(resolveMediaType('https://example.com/video.mp4', 'application/dash+xml')).toBe('dash');
-    expect(resolveMediaType('blob:https://example.com/1234', 'video/mp4')).toBe('video');
-    expect(resolveMediaType('https://example.com/episode', 'audio/mpeg')).toBe('audio');
+    expect(resolveSourceKind('https://example.com/manifest', 'application/vnd.apple.mpegurl')).toBe('hls');
+    expect(resolveSourceKind('https://example.com/video.mp4', 'application/dash+xml')).toBe('dash');
+    expect(resolveSourceKind('blob:https://example.com/1234', 'video/mp4')).toBe('video');
+    expect(resolveSourceKind('https://example.com/episode', 'audio/mpeg')).toBe('audio');
   });
 
   it('falls back to the file extension for an unrecognized MIME type', () => {
-    expect(resolveMediaType('https://example.com/video.mp4', 'application/octet-stream')).toBe('video');
+    expect(resolveSourceKind('https://example.com/video.mp4', 'application/octet-stream')).toBe('video');
   });
 
   it.each([
@@ -72,7 +72,7 @@ describe('resolveMediaType', () => {
     ['a Twitch clip', 'https://clips.twitch.tv/SomeClipSlug'],
     ['a provider URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
   ])('returns null for %s', (_, src) => {
-    expect(resolveMediaType(src)).toBe(null);
+    expect(resolveSourceKind(src)).toBe(null);
   });
 });
 

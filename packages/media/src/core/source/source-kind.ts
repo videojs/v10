@@ -6,8 +6,8 @@ import { parseVimeoSource } from './vimeo';
 import { parseWistiaMediaId } from './wistia';
 import { parseYouTubeSource } from './youtube';
 
-/** A type of media {@link resolveMediaType} recognizes. Each one is played by a different media component. */
-export type MediaType =
+/** A kind of source {@link resolveSourceKind} recognizes. Each kind is played by a different media component. */
+export type MediaSourceKind =
   | 'youtube'
   | 'vimeo'
   | 'wistia'
@@ -22,21 +22,21 @@ export type MediaType =
   | 'audio';
 
 /**
- * Resolve which type of media plays a source, so you can render the matching media component and pass it the same
+ * Resolve which kind of source a URL is, so you can render the media component that plays it and pass it the same
  * `src`. Recognizes YouTube, Vimeo, Wistia, Mux, Cloudflare Stream, Spotify, TikTok, and Twitch URLs; HLS and DASH
  * manifests; and video and audio files, by MIME type when you pass one and by file extension otherwise.
  *
  * Returns `null` for anything else, including bare ids: an 11-character YouTube id and a 10-character Wistia id look
  * alike, so providers are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
  *
- * The result names a type of media, not a playback engine. Choosing between the HLS engines is up to you.
+ * The result names a kind of source, not a playback engine. Choosing between the HLS engines is up to you.
  *
  * @param src - The source URL, or a `youtube/<id>` or `vimeo/<id>` shorthand.
  * @param type - The source's MIME type, when known. It takes precedence over the file extension, so manifests and files
  *   without one can still be resolved.
  * @public
  */
-export function resolveMediaType(src: string, type?: string): MediaType | null {
+export function resolveSourceKind(src: string, type?: string): MediaSourceKind | null {
   const source = src.trim();
   if (!source) return null;
 
@@ -59,7 +59,7 @@ export function resolveMimeType(src: string): string | null {
   return (extension && MIME_TYPES.get(extension)) || null;
 }
 
-function resolveProvider(src: string): MediaType | null {
+function resolveProvider(src: string): MediaSourceKind | null {
   // Shorthands go through the same parsers the YouTube and Vimeo media use, so the media accepts what matches here.
   if (src.startsWith('youtube/')) return parseYouTubeSource(src) ? 'youtube' : null;
 
@@ -100,7 +100,7 @@ function resolveProvider(src: string): MediaType | null {
   return null;
 }
 
-function fromMimeType(type: string | null | undefined): MediaType | null {
+function fromMimeType(type: string | null | undefined): MediaSourceKind | null {
   const mimeType = type?.trim().toLowerCase();
   if (!mimeType) return null;
 

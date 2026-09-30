@@ -29,9 +29,9 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
-  type MediaType,
+  type MediaSourceKind,
   type NodeListLike,
-  resolveMediaType,
+  resolveSourceKind,
   resolveMimeType,
 } from '@videojs/media';
 // Media

@@ -1,5 +1,5 @@
 export * from './cloudflare';
-export * from './media-type';
+export * from './source-kind';
 export * from './spotify';
 export * from './tiktok';
 export * from './twitch';
