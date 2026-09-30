@@ -174,23 +174,6 @@ export interface SwitchAudioTrackConfig extends TrackSwitchingSharedConfig {
 export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 
 // ============================================================================
-// Rule chain
-// ============================================================================
-
-// Re-exported so a consumer typing against this module's rules doesn't need a
-// second import; the definitions live in `../primitives/selection-rules` so the
-// simple `selectVideoTrack` variant can share them without pulling the ABR path
-// in with them. See that module's note.
-export type { CodecPreferenceConfig, SelectionRule, SelectionRuleDeps } from '../primitives/selection-rules';
-export {
-  applyConstraints,
-  applyRules,
-  DEFAULT_PREFERRED_CODECS,
-  excludeUnplayableTracks,
-  preferCodecFamilies,
-} from '../primitives/selection-rules';
-
-// ============================================================================
 // Specialization helper
 //
 // `setupTrackSwitching` has the same shape as a Behavior `setup` function:
@@ -247,7 +230,7 @@ type SwitchableTrack = {
  * (text: opt-in captions, explicit off) supplies its own picker that may return `undefined`; the helper writes that
  * straight through to the slot, clearing it.
  */
-export type ResolveSelection<T extends SwitchableTrack, State = unknown, Context = unknown, Config = unknown> = (
+type ResolveSelection<T extends SwitchableTrack, State = unknown, Context = unknown, Config = unknown> = (
   candidates: readonly T[],
   deps: SelectionRuleDeps<State, Context, Config>
 ) => string | undefined;
@@ -695,7 +678,7 @@ function pickResolvedTextTrack<T extends TextTrackCandidate>(
 // to its constraint and forcing the slot required, so the variants forward it
 // untyped via the rest and it lands here — absent on direct setup calls, and
 // passed straight through to the rules (which don't read it yet).
-export function setupTrackSwitching<
+function setupTrackSwitching<
   S extends SelectionKey,
   T extends SwitchableTrack,
   C extends TrackSwitchingConfig<S, T>,
