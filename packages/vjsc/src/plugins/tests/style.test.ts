@@ -6,9 +6,8 @@ import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
-import type { ResolvedStyles, ResolvedStyleRule } from '../../styles/resolved';
+import type { ResolvedStyleRule } from '../../styles/resolved';
 import { toPosixPath } from '../../utils/path';
-import { readComponentSource, readModuleStyles } from '../component-meta';
 import {
   CANDIDATES_ALIAS,
   createCandidateManifest,
@@ -18,21 +17,12 @@ import {
   type StylePluginConfig,
   stylePlugin,
 } from '../style';
-import { componentSourcePlugin } from './helpers/component-source';
 
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixtures/button.styles.ts');
 const moduleId = `${filename}?target=react`;
 const designPath = resolve(import.meta.dirname, 'fixtures/design.css');
 const designDependency = resolve(import.meta.dirname, 'fixtures/theme.css');
-
-const rules = [rule(['button'], 'media-button', ['grid', 'p-0']), rule(['icon'], 'media-icon', ['size-4', 'shrink-0'])];
-
-const resolvedStyles: ResolvedStyles = {
-  modules: new Map([[modulePath, new Map(rules.map((item) => [item.tokenPath.join('.'), item]))]]),
-  rules,
-  watchFiles: [],
-};
 
 describe('renderCandidateManifest', () => {
   it('lists base and variant utilities once as Tailwind inline sources', () => {
@@ -92,7 +82,7 @@ describe('resolveCandidateManifestPath', () => {
 
 describe('stylePlugin', () => {
   it('aliases the default candidate manifest and re-includes it in the Vite watcher', () => {
-    const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, true) as Plugin & {
+    const plugin = stylePlugin({ mode: 'tailwind' }, {}, undefined, true) as Plugin & {
       config(config: { root?: string }): {
         resolve: { alias: Array<{ find: string; replacement: string }> };
         server: { watch: { ignored: string[] } };
@@ -108,11 +98,11 @@ describe('stylePlugin', () => {
 
   it('keeps candidates from an earlier session until modules record again', async () => {
     const manifest = join(await mkdtemp(join(tmpdir(), 'vjsc-candidates-')), 'candidates.css');
-    const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, manifest);
+    const plugin = stylePlugin({ mode: 'tailwind' }, {}, undefined, manifest);
 
     await writeFile(manifest, renderCandidateManifest([rule(['old'], 'media-old', ['persisted-class'])]));
     await transform(
-      `import styles from './fixtures/button.styles'; export const root = <div className={styles.button} />;`,
+      `import styles from './fixtures/utilities.styles'; export const root = <div className={styles.button} />;`,
       undefined,
       plugin
     );
@@ -124,10 +114,10 @@ describe('stylePlugin', () => {
 
   it('writes a candidate manifest for every resolved style module', async () => {
     const manifest = join(await mkdtemp(join(tmpdir(), 'vjsc-candidates-')), 'candidates.css');
-    const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, manifest);
+    const plugin = stylePlugin({ mode: 'tailwind' }, {}, undefined, manifest);
 
     await transform(
-      `import styles from './fixtures/button.styles'; export const root = <div className={styles.button} />;`,
+      `import styles from './fixtures/utilities.styles'; export const root = <div className={styles.button} />;`,
       undefined,
       plugin
     );
@@ -140,39 +130,38 @@ describe('stylePlugin', () => {
 
   it('rewrites style references with the Oxc AST and preserves expression source', async () => {
     const { source } = await transform(`
-      import styles from './fixtures/button.styles';
+      import styles from './fixtures/utilities.styles';
       export function Example({ active }) {
         return <button className={[styles.button, active && styles.icon, 'hook']} />;
       }
     `);
 
-    expect(source).not.toContain('button.styles');
+    expect(source).not.toContain('utilities.styles');
     expect(source).toContain('className={["grid", "p-0", active && "size-4 shrink-0", \'hook\']}');
   });
 
   it('rewrites static style references outside JSX', async () => {
     const { source } = await transform(`
-      import styles from './fixtures/button.styles';
+      import styles from './fixtures/utilities.styles';
       export const buttonClass = styles.button;
     `);
 
-    expect(source).not.toContain('button.styles');
+    expect(source).not.toContain('utilities.styles');
     expect(source).toContain('buttonClass = "grid p-0"');
   });
 
   it('preserves authored utility groups in direct JSX class values', async () => {
     const { source } = await transform(
-      `import styles from './fixtures/button.styles'; export const root = <div className={styles.button} />;`
+      `import styles from './fixtures/utilities.styles'; export const root = <div className={styles.button} />;`
     );
 
     expect(source).toContain('className={["grid", "p-0"]}');
   });
 
   it('preserves semantic hooks without utilities in Tailwind output', async () => {
-    const hookStyles = createResolvedStyles([rule(['root'], 'video-controls', [])]);
     const { source } = await transform(
-      `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`,
-      { resolvedStyles: hookStyles, mode: 'tailwind' }
+      `import styles from './fixtures/hooks.styles'; export const root = <div className={styles.root} />;`,
+      { mode: 'tailwind' }
     );
 
     expect(source).toContain('className={"video-controls"}');
@@ -228,7 +217,7 @@ describe('stylePlugin', () => {
       variants: ['compact', 'disabled'],
       stylesheet: { input: designPath },
     });
-    const { source, styleIds } = await transform(
+    const { source } = await transform(
       `
         import styles from './fixtures/button.styles';
         export const button = <button className={styles.root} />;
@@ -241,14 +230,13 @@ describe('stylePlugin', () => {
 
     const css = await loadPlugin(styles, id);
 
-    expect(styleIds).toContain(id);
     expect(css).toContain('padding: .25rem');
     expect(css).not.toContain('padding: .75rem');
     expect(css).toContain('pointer-events: none');
   });
 
   it('rejects non-static style binding usage', async () => {
-    const source = `import styles from './fixtures/button.styles'; export const value = styles;`;
+    const source = `import styles from './fixtures/utilities.styles'; export const value = styles;`;
 
     await expect(transform(source)).rejects.toMatchObject({
       errors: [
@@ -264,10 +252,10 @@ describe('stylePlugin', () => {
     const { source, watchFiles } = await transform(
       `
         'use client';
-        import styles from './fixtures/button.styles';
+        import styles from './fixtures/utilities.styles';
         export const button = <button className={styles.button} />;
       `,
-      { resolvedStyles, mode: 'css', stylesheet: { input: designPath } }
+      { mode: 'css', stylesheet: { input: designPath } }
     );
 
     const directive = source.indexOf(`'use client'`);
@@ -283,11 +271,10 @@ describe('stylePlugin', () => {
   it('imports runtime base CSS before generated semantic styles', async () => {
     const { source } = await transform(
       `
-        import styles from './fixtures/button.styles';
+        import styles from './fixtures/utilities.styles';
         export const button = <button className={styles.button} />;
       `,
       {
-        resolvedStyles,
         mode: 'css',
         stylesheet: { input: designPath, base: designDependency },
       }
@@ -303,12 +290,11 @@ describe('stylePlugin', () => {
   it('releases stale hashed CSS modules when an owner is recompiled', async () => {
     let scope = '.first';
     const styles = stylePlugin(() => ({
-      resolvedStyles,
       mode: 'css',
       stylesheet: { input: designPath, scope },
     }));
     const input = `
-      import styles from './fixtures/button.styles';
+      import styles from './fixtures/utilities.styles';
       export const button = <button className={styles.button} />;
     `;
 
@@ -327,14 +313,12 @@ describe('stylePlugin', () => {
   });
 
   it('warns once when authored and compiled checks find the same complex selector', async () => {
-    const complexStyles = createResolvedStyles([rule(['root'], 'media-root', ['[&_img]:block', '[&_video]:block'])]);
     const styles = stylePlugin({
-      resolvedStyles: complexStyles,
       mode: 'css',
       stylesheet: { input: designPath },
     });
     const { warnings } = await transform(
-      `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`,
+      `import styles from './fixtures/complex.styles'; export const root = <div className={styles.root} />;`,
       undefined,
       styles
     );
@@ -347,56 +331,45 @@ describe('stylePlugin', () => {
   });
 
   it('promotes or silences complex-selector warnings', async () => {
-    const complexStyles = createResolvedStyles([rule(['root'], 'media-root', ['[&_img]:block'])]);
-    const input = `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`;
+    const input = `import styles from './fixtures/complex.styles'; export const root = <div className={styles.root} />;`;
 
     await expect(
-      transform(
-        input,
-        undefined,
-        stylePlugin({ resolvedStyles: complexStyles, mode: 'tailwind' }, { complexSelectors: 'error' })
-      )
+      transform(input, undefined, stylePlugin({ mode: 'tailwind' }, { complexSelectors: 'error' }))
     ).rejects.toThrow('[VJSC_STYLE_COMPLEX_SELECTOR]');
 
     const { warnings } = await transform(
       input,
       undefined,
-      stylePlugin({ resolvedStyles: complexStyles, mode: 'tailwind' }, { complexSelectors: 'off' })
+      stylePlugin({ mode: 'tailwind' }, { complexSelectors: 'off' })
     );
 
     expect(warnings).toEqual([]);
   });
 
   it('keeps isolation errors active when complex-selector warnings are off', async () => {
-    const peerStyles = createResolvedStyles([rule(['root'], 'media-root', ['peer/dialog'])]);
-    const input = `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`;
+    const input = `import styles from './fixtures/peer.styles'; export const root = <div className={styles.root} />;`;
 
     await expect(
-      transform(
-        input,
-        undefined,
-        stylePlugin({ resolvedStyles: peerStyles, mode: 'tailwind' }, { complexSelectors: 'off' })
-      )
+      transform(input, undefined, stylePlugin({ mode: 'tailwind' }, { complexSelectors: 'off' }))
     ).rejects.toThrow('[VJSC_STYLE_PEER_RELATIONSHIP]');
   });
 });
 
 async function transform(
   source: string,
-  config: StylePluginConfig = { resolvedStyles, mode: 'tailwind' },
+  config: StylePluginConfig = { mode: 'tailwind' },
   styles: Plugin = stylePlugin(config)
 ): Promise<{
   readonly source: string;
-  readonly styleIds: readonly string[];
   readonly warnings: readonly string[];
   readonly watchFiles: readonly string[];
 }> {
-  let meta: unknown;
+  let output: string | undefined;
   const warnings: string[] = [];
   const inspect: Plugin = {
     name: 'fixture:inspect',
     buildEnd() {
-      meta = this.getModuleInfo(moduleId)?.meta;
+      output = this.getModuleInfo(moduleId)?.code ?? undefined;
     },
   };
   const bundle = await rolldown({
@@ -404,7 +377,7 @@ async function transform(
     experimental: { nativeMagicString: true },
     external: /^virtual:vjsc\/css\//,
     transform: { jsx: 'preserve' },
-    plugins: [fixturePlugin(source), styles, componentSourcePlugin(), inspect],
+    plugins: [fixturePlugin(source), styles, inspect],
     onLog(level, log) {
       if (level === 'warn') warnings.push(log.message);
     },
@@ -412,12 +385,10 @@ async function transform(
 
   await bundle.generate({ format: 'es' });
 
-  const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
   return {
     source: output,
-    styleIds: readModuleStyles(meta)?.assets ?? [],
     warnings,
     watchFiles: await bundle.watchFiles,
   };
@@ -475,13 +446,5 @@ function rule(tokenPath: readonly string[], className: string, utilities: readon
     utilities,
     variantGroups: {},
     variants: {},
-  };
-}
-
-function createResolvedStyles(items: readonly ResolvedStyleRule[]): ResolvedStyles {
-  return {
-    modules: new Map([[modulePath, new Map(items.map((item) => [item.tokenPath.join('.'), item]))]]),
-    rules: items,
-    watchFiles: [],
   };
 }

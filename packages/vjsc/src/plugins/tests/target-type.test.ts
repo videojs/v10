@@ -3,11 +3,9 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
-import { readComponentSource } from '../component-meta';
 import { componentTargetPlugin } from '../component-target';
 import { targetImportCleanupPlugin } from '../target-import-cleanup';
 import { targetTypePlugin } from '../target-type';
-import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const schema = defineSchema('@fixture/components', {
@@ -212,11 +210,11 @@ describe('targetTypePlugin', () => {
 });
 
 async function transform(source: string): Promise<string> {
-  let meta: unknown;
+  let output: string | undefined;
   const inspect: Plugin = {
     name: 'fixture:inspect',
     buildEnd() {
-      meta = this.getModuleInfo(MODULE_ID)?.meta;
+      output = this.getModuleInfo(MODULE_ID)?.code ?? undefined;
     },
   };
   const bundle = await rolldown({
@@ -229,13 +227,12 @@ async function transform(source: string): Promise<string> {
       targetTypePlugin({ targets: [target] }),
       componentTargetPlugin({ targets: [target] }),
       targetImportCleanupPlugin({ targets: [target] }),
-      componentSourcePlugin(),
       inspect,
     ],
   });
 
   await bundle.generate({ format: 'es' });
-  const output = readComponentSource(meta);
+
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
   return output;
