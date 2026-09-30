@@ -36,6 +36,6 @@ export default defineConfig({
     dts: false,
     banner: { js: '#!/usr/bin/env node' },
     // The published package has no runtime dependencies: `npx` fetches one file that only needs Node built-ins.
-    deps: { alwaysBundle: ['@videojs/installation', '@videojs/media', '@videojs/utils'] },
+    deps: { alwaysBundle: ['@videojs/installation', '@videojs/utils'] },
   },
 });

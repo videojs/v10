@@ -23,11 +23,11 @@
     "clean": "rimraf dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/media": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.18.6",
+    "@videojs/media": "workspace:*",
     "typescript": "6.0.2",
     "vite-plus": "catalog:"
   }
