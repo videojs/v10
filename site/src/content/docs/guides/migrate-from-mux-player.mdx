@@ -29,6 +29,10 @@ Make a migration checklist before changing your embed:
 - **Check [Known gaps](#known-gaps)** for features your app needs.
 - **Check your catalog for MPEG-TS, raw ADTS AAC, AES-128, low-latency HLS, or DVR streams.** These requirements determine whether the SPF flavor fits. Verify DRM playback with either engine; see [Which Mux media should you use?](#which-mux-media-should-you-use).
 
+<FrameworkCase frameworks={["html"]}>
+Remove Mux Player imports and CDN scripts, plus other imports that register legacy Mux Video or Media Chrome, before loading Video.js. Then reload the page. These libraries share custom-element names such as `mux-video` and `media-play-button`. A name can only have one definition per document, and Video.js keeps an existing definition. If both players must remain during migration, use separate documents, such as an iframe.
+</FrameworkCase>
+
 ## Your first player
 
 The examples keep a playback ID, analytics metadata, and a poster from two seconds into the video. Replace `YOUR_PLAYBACK_ID` with your existing playback ID before running them.
