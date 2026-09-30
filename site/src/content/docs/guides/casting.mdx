@@ -93,9 +93,7 @@ AirPlay uses WebKit's presentation APIs. Google Cast uses a sender and receiver:
 
 While connected, playback actions — play, pause, seek, volume — proxy to the remote device, and player state keeps reflecting the remote session. Local playback is suspended.
 
-For a custom control, call `toggleRemotePlayback()` directly from the click handler and catch its returned promise. Unsupported routes and rejected picker requests can fail; use connection state to confirm the result. The built-in buttons handle these requests for you.
-
-A canceled Google Cast picker can resolve without connecting. Confirm that `remotePlaybackState` is `'connected'` before showing a successful connection.
+For a custom control, call `toggleRemotePlayback()` directly from the click handler and catch its promise. It rejects when no remote route exists or the browser refuses the request. A canceled Google Cast picker can also resolve without connecting, so show success only when `remotePlaybackState` is `'connected'`. The built-in buttons handle the request for you.
 
 <FrameworkCase frameworks={["react"]}>
 The Google Cast SDK loads only when the `GoogleCast` extension is present in a Chromium browser. Players without that extension and browsers that cannot cast do not load it.

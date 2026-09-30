@@ -173,9 +173,21 @@ The track file is served from another origin without CORS headers. Serve it with
 The track file is served from another origin without CORS headers. Serve it with `Access-Control-Allow-Origin` and set `crossorigin` on the media element.
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
+
 ### The captions menu doesn't render
 
 The media has no caption or subtitle tracks, so captions availability is `'unavailable'`. For streaming sources, confirm the manifest actually declares text tracks.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+### The captions menu is empty
+
+The radio group hides when there are no caption or subtitle tracks, but the example's plain Captions button still renders. Hide or disable that trigger while `textTrackList` contains no caption or subtitle entries. For streaming sources, confirm the manifest actually declares text tracks.
+
+</FrameworkCase>
 
 ## Related components
 

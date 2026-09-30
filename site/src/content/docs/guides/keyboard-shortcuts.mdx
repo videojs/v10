@@ -83,12 +83,12 @@ export default function App() {
 
 <FrameworkCase frameworks={["react"]}>
 - `Hotkey` binds keys to player actions: `togglePaused`, `toggleMuted`, `toggleFullscreen`, `toggleSubtitles`, `togglePictureInPicture`, `seekStep`, `volumeStep`, `seekToPercent`, `speedUp`, and `speedDown`. Step actions have shared defaults and accept a custom `value`. The actions call the same feature state actions your components use.
-- `Gesture` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`) — regions split the container's width, not the rendered video's — so double-tap-left rewinds while double-tap-right skips forward.
+- `Gesture` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`), so double-tap-left rewinds while double-tap-right skips forward.
 - `StatusAnnouncer` announces action results to screen readers, and the input indicator components render transient on-screen feedback (volume level, captions on/off) the way native players do. The prebuilt skins wire these up.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 - `<media-hotkey>` binds keys to player actions: `togglePaused`, `toggleMuted`, `toggleFullscreen`, `toggleSubtitles`, `togglePictureInPicture`, `seekStep`, `volumeStep`, `seekToPercent`, `speedUp`, and `speedDown`. Step actions have shared defaults and accept a custom `value`. The actions call the same feature state actions your components use.
-- `<media-gesture>` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`) — regions split the container's width, not the rendered video's — so double-tap-left rewinds while double-tap-right skips forward.
+- `<media-gesture>` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`), so double-tap-left rewinds while double-tap-right skips forward.
 - `<media-status-announcer>` announces action results to screen readers, and the input indicator components render transient on-screen feedback (volume level, captions on/off) the way native players do. The prebuilt skins wire these up.
 </FrameworkCase>
 
