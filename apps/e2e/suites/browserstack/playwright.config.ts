@@ -63,7 +63,8 @@ export default defineConfig<{}, Options>({
           name: `ios-safari-${versions.ios}`,
           use: {
             caps: { browser: 'safari', osVersion: versions.ios.split('.')[0]!, realMobile: 'true' },
-            viewport: null,
+            // BrowserStack iOS requires an explicit viewport object.
+            viewport: { width: 390, height: 844 },
           },
         },
       ],

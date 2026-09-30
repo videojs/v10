@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { type BrowserContextOptions, test as base } from '@playwright/test';
 import playwrightPkg from 'playwright-core/package.json' with { type: 'json' };
 
 import { getIosDevice } from './ios-device.ts';
@@ -9,6 +9,25 @@ export interface Options {
 
 export const test = base.extend<{}, Options>({
   caps: [{}, { option: true, scope: 'worker' }],
+  context: async ({ browser, baseURL, viewport, actionTimeout }, use) => {
+    const options: BrowserContextOptions = { viewport };
+
+    if (baseURL) options.baseURL = baseURL;
+
+    // Explicit undefined prevents the runner injecting a download value rejected by older remote engines.
+    // The client omits it when serializing the protocol request.
+    Object.assign(options, { acceptDownloads: undefined });
+
+    const context = await browser.newContext(options);
+
+    context.setDefaultTimeout(actionTimeout);
+
+    try {
+      await use(context);
+    } finally {
+      await context.close();
+    }
+  },
   browser: async ({ playwright, caps }, use, testInfo) => {
     if (process.env.BROWSERSTACK_LOCAL_TEST) {
       const browser = await playwright.chromium.launch();
