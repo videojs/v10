@@ -41,6 +41,7 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
   #media: HTMLMediaTargetLike | null = null;
   #provider: GoogleCastProvider | null = null;
   #override: MediaOverride | null = null;
+  #connected = false;
 
   constructor(props: GoogleCastExtensionProps = {}) {
     Object.assign(this, props);
@@ -63,6 +64,10 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
 
     this.#bindProvider();
     target.addEventListener('loadstart', this.#onLoadStart);
+
+    // A media swapped in mid-session may have started loading before the player attached it, so its `loadstart` has
+    // already fired; follow its source now rather than waiting for one that may never come.
+    this.#followSource();
   }
 
   detach() {
@@ -76,6 +81,7 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
     this.#provider?.destroy();
     this.#provider = null;
     this.#override = null;
+    this.#connected = false;
   }
 
   get mediaOverride() {
@@ -103,27 +109,30 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, PlayerExte
   #onStateChange = () => {
     if (!this.#provider) return;
 
-    if (this.#provider.remote.state === 'connected') {
-      this.#override = this.#provider as MediaOverride;
-    } else {
-      this.#override = this.#createRemoteOverride();
-    }
+    this.#connected = this.#provider.remote.state === 'connected';
+    this.#override = this.#connected ? (this.#provider as MediaOverride) : this.#createRemoteOverride();
+  };
+
+  /** The media started loading a new source locally. */
+  #onLoadStart = () => {
+    this.#bindProvider();
+    this.#followSource();
   };
 
   /**
-   * The media started loading a new source locally. While casting, follow it on the receiver; the provider claims the
+   * While casting, load the media's current source on the receiver unless it is already there. The provider claims the
    * source before it starts loading, so the several `loadstart`s one local load can produce reach the receiver once.
    */
-  #onLoadStart = () => {
-    this.#bindProvider();
-
+  #followSource() {
+    // Read the tracked state, not `provider.remote`: that getter loads the Cast SDK, which attaching must not do.
     const provider = this.#provider;
-    if (!provider || provider.remote.state !== 'connected') return;
+    if (!provider || !this.#connected) return;
 
-    if (provider.loadedSrc === this.src) return;
+    const { src } = this;
+    if (!src || provider.loadedSrc === src) return;
 
     void provider.load();
-  };
+  }
 
   #createRemoteOverride(): MediaOverride {
     const provider = this.#provider!;

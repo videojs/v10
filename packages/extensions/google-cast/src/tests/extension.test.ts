@@ -310,6 +310,40 @@ describe('GoogleCastExtension', () => {
       expect(provider.load).not.toHaveBeenCalled();
     });
 
+    it('follows media swapped in mid-session whose load has already started', () => {
+      const { googleCast, provider } = setup();
+      const next = document.createElement('video');
+
+      connect(provider);
+      // Its `loadstart` fired before the player attached it, so no later one will arrive.
+      next.src = 'https://example.com/next.mp4';
+      googleCast.attach({ media: next, container: null });
+
+      expect(provider.load).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not reload a swapped-in source the receiver already has', () => {
+      const { googleCast, provider } = setup();
+      const next = document.createElement('video');
+
+      connect(provider);
+      next.src = 'https://example.com/next.mp4';
+      provider.loadedSrc = next.src;
+      googleCast.attach({ media: next, container: null });
+
+      expect(provider.load).not.toHaveBeenCalled();
+    });
+
+    it('does not load swapped-in media while disconnected', () => {
+      const { googleCast, provider } = setup();
+      const next = document.createElement('video');
+
+      next.src = 'https://example.com/next.mp4';
+      googleCast.attach({ media: next, container: null });
+
+      expect(provider.load).not.toHaveBeenCalled();
+    });
+
     it('stops following the media after detach', () => {
       const { video, googleCast, provider } = setup();
 
