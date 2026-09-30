@@ -184,9 +184,15 @@ describe('ReactiveElement properties', () => {
     await el.updateComplete;
 
     update.mockClear();
+    const previous = el.updateComplete;
 
     el.label = 'new';
-    await el.updateComplete;
+    const completion = el.updateComplete;
+
+    expect(completion).not.toBe(previous);
+    expect(el.isUpdatePending).toBe(true);
+    expect(await completion).toBe(true);
+    expect(el.isUpdatePending).toBe(false);
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;

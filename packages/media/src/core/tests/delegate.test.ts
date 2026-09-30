@@ -1,80 +1,34 @@
-import type { Constructor } from '@videojs/utils/types';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { bridgeEvents } from '../bridge-events';
 
-interface MediaBase extends EventTarget {
-  readonly target: EventTarget | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
-}
+describe('bridgeEvents', () => {
+  it('forwards events dispatched by a sub-delegate to the host', () => {
+    const source = new EventTarget();
+    const host = new EventTarget();
+    const handler = vi.fn();
 
-function TestMediaMixin<Base extends Constructor<MediaBase>>(BaseClass: Base) {
-  return class TestMedia extends BaseClass {
-    #subDelegate = new EventTarget();
-    #src = '';
+    host.addEventListener('custom', handler);
+    bridgeEvents(source, host);
+    source.dispatchEvent(new Event('custom'));
 
-    get src() {
-      return this.#src;
-    }
+    expect(handler).toHaveBeenCalledOnce();
+  });
 
-    set src(value: string) {
-      this.#src = value;
-    }
+  it('creates a new event instance for the host dispatch', () => {
+    const source = new EventTarget();
+    const host = new EventTarget();
+    const hostEvents: Event[] = [];
+    const original = new Event('custom');
 
-    fire() {
-      this.#subDelegate.dispatchEvent(new Event('custom'));
-    }
+    host.addEventListener('custom', (event) => hostEvents.push(event));
+    bridgeEvents(source, host);
+    source.dispatchEvent(original);
 
-    attach(target: EventTarget) {
-      bridgeEvents(this.#subDelegate, this);
-      super.attach?.(target);
-    }
-
-    detach() {
-      super.detach?.();
-    }
-  };
-}
-
-describe('Media Mixins', () => {
-  describe('event bridging from sub-delegates', () => {
-    it('forwards events dispatched by a sub-delegate to the host', () => {
-      class Base extends EventTarget {
-        get target() {
-          return null;
-        }
-      }
-      const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
-      const host = new Mixed();
-
-      const handler = vi.fn();
-
-      host.addEventListener('custom', handler);
-
-      host.attach(new EventTarget());
-      host.fire();
-
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
-    it('creates a new event instance for the host dispatch', () => {
-      class Base extends EventTarget {
-        get target() {
-          return null;
-        }
-      }
-      const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
-      const host = new Mixed();
-      const hostEvents: Event[] = [];
-
-      host.addEventListener('custom', (e) => hostEvents.push(e));
-
-      host.attach(new EventTarget());
-      host.fire();
-
-      expect(hostEvents).toHaveLength(1);
-      expect(hostEvents[0]!.type).toBe('custom');
-    });
+    expect(hostEvents).toHaveLength(1);
+    expect(hostEvents[0]!.type).toBe('custom');
+    expect(hostEvents[0]).not.toBe(original);
+    expect(hostEvents[0]!.target).toBe(host);
+    expect(original.target).not.toBe(host);
   });
 });
