@@ -727,6 +727,20 @@ describe('resolveStabilities', () => {
     expect(stability('Callbacks')).toBe('stable');
   });
 
+  it('does not propagate through a global interface the packages augment', () => {
+    const root = fixture({
+      'packages/html/dist/index.d.ts': [
+        'export declare class PlayButtonElement { query<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] }',
+        'export declare class DashVideoElement { src: string }',
+        'declare global { interface HTMLElementTagNameMap { "dash-video": DashVideoElement } }',
+      ].join('\n'),
+    });
+    const records = exportsOf(root, { '@videojs/html': 'packages/html/dist/index.d.ts' });
+    const resolved = resolveStabilities(records, coverage({ stable: new Set(['PlayButton']) }));
+
+    expect(resolved.get(byName(records, 'DashVideoElement'))!.stability).toBe('internal');
+  });
+
   it('ignores hidden members and exports nothing names', () => {
     expect(resolve()).toMatchObject({ Hidden: 'internal', Unreached: 'internal' });
   });
