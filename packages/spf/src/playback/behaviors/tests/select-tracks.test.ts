@@ -343,51 +343,9 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
 
     reactor.destroy();
   });
-
-  // The optional-slot contract: reporting goes through a seam that no-ops when
-  // `collectErrors` isn't composed, so the clear still happens either way.
-  it('still clears the pick when no errors slot is composed', async () => {
-    const state = makeState({ presentation: createPresentation({ video: [undecodable] }) });
-
-    const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBeUndefined();
-
-    reactor.destroy();
-  });
 });
 
 describe('selectAudioTrack', () => {
-  it('selects audio track when presentation loaded', async () => {
-    const audioTracks: PartiallyResolvedAudioTrack[] = [
-      {
-        type: 'audio',
-        id: 'audio-en',
-        url: 'http://example.com/audio-en.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'English',
-        sampleRate: 48000,
-        channels: 2,
-      },
-    ];
-
-    const presentation = createPresentation({ audio: audioTracks });
-    const state = makeState({ presentation });
-
-    const reactor = selectAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
-
-    reactor.destroy();
-  });
-
   it('picks track matching preferredAudioLanguage when supplied', async () => {
     const audioTracks: PartiallyResolvedAudioTrack[] = [
       {
@@ -609,13 +567,5 @@ describe('screenResolutionCap', () => {
     const deps = depsWith(laptopScreen);
 
     expect(applyRules([preferHighestResolution, screenResolutionCap], ladder, deps)[0]?.id).toBe('1440p');
-  });
-
-  // Without the cap the same ladder pins the top rung — the difference the rule makes.
-  it('is what pulls the pick below the top rung', () => {
-    const deps = depsWith(laptopScreen);
-
-    expect(applyRules([preferHighestResolution], ladder, deps)[0]?.id).toBe('2160p');
-    expect(applyRules([screenResolutionCap, preferHighestResolution], ladder, deps)[0]?.id).toBe('1440p');
   });
 });

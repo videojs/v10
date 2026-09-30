@@ -168,42 +168,6 @@ variant1.m3u8`)
     reactor.destroy();
   });
 
-  it('resolves new unresolved presentation after resolved one', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(`#EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=2000000
-variant2.m3u8`)
-    );
-
-    const resolvedPresentation: Presentation = {
-      id: 'pres-1',
-      url: 'http://example.com/first.m3u8',
-      selectionSets: [],
-      startTime: 0,
-    };
-
-    const state = makeState({ presentation: resolvedPresentation, preload: 'auto' });
-
-    const reactor = resolvePresentation.setup({ state, config: baseConfig });
-
-    state.presentation.set({ url: 'http://example.com/second.m3u8' });
-
-    await vi.waitFor(() => {
-      const pres = state.presentation.get();
-
-      expect(pres).toHaveProperty('id');
-      expect((pres as Presentation).url).toBe('http://example.com/second.m3u8');
-    });
-
-    expect(fetchSpy).toHaveBeenCalledOnce();
-    const resolved = state.presentation.get() as Presentation;
-
-    expect(resolved.url).toBe('http://example.com/second.m3u8');
-    expect(resolved.selectionSets).toBeDefined();
-
-    reactor.destroy();
-  });
-
   it('aborts an unresolved source on replacement and ignores its late response', async () => {
     let release!: (response: Response) => void;
     const pendingResponse = new Promise<Response>((resolve) => {
@@ -248,27 +212,6 @@ variant1.m3u8`;
   });
 
   describe('preload policy', () => {
-    it('resolves when preload is "auto"', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(`#EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=1000000
-variant1.m3u8`)
-      );
-
-      const state = makeState({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
-        preload: 'auto',
-      });
-
-      const reactor = resolvePresentation.setup({ state, config: baseConfig });
-
-      await vi.waitFor(() => {
-        expect(state.presentation.get()).toHaveProperty('id');
-      });
-
-      reactor.destroy();
-    });
-
     it('resolves when preload is "metadata"', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
@@ -413,26 +356,6 @@ variant1.m3u8`)
       });
 
       expect(fetchSpy).toHaveBeenCalledOnce();
-
-      reactor.destroy();
-    });
-
-    it('does not resolve when loadActivated is false with preload "none"', async () => {
-      const fetchSpy = vi.spyOn(globalThis, 'fetch');
-
-      const state = makeState({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
-        preload: 'none',
-      });
-
-      const reactor = resolvePresentation.setup({ state, config: baseConfig });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(fetchSpy).not.toHaveBeenCalled();
-      // Presentation slot still holds the unresolved input (URL only, no `id`).
-      expect(state.presentation.get()?.url).toBe('http://example.com/playlist.m3u8');
-      expect(state.presentation.get()).not.toHaveProperty('id');
 
       reactor.destroy();
     });

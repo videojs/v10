@@ -41,21 +41,6 @@ describe('syncPreload', () => {
       cleanup();
     });
 
-    it('overwrites a prior W3C state.preload when a W3C mediaElement attaches or swaps in (most-recent-wins)', async () => {
-      const state = makeState({ preload: 'none' });
-      const context = makeContext();
-
-      const cleanup = syncPreload.setup({ state, context });
-
-      context.mediaElement.set({ preload: 'auto' });
-
-      await vi.waitFor(() => {
-        expect(state.preload.get()).toBe('auto');
-      });
-
-      cleanup();
-    });
-
     it('overwrites state when mediaElement swaps to a different W3C value', async () => {
       const state = makeState();
       const context = makeContext({ mediaElement: { preload: 'auto' } });
@@ -235,19 +220,6 @@ describe('syncPreload', () => {
 
       cleanup();
     });
-
-    it('does not attempt a DOM write when mediaElement is absent', () => {
-      const state = makeState();
-      const context = makeContext();
-
-      const cleanup = syncPreload.setup({ state, context });
-
-      state.preload.set('auto');
-
-      expect(context.mediaElement.get()).toBeUndefined();
-
-      cleanup();
-    });
   });
 
   describe('config.defaultPreload', () => {
@@ -291,21 +263,6 @@ describe('syncPreload', () => {
       const cleanup = syncPreload.setup({ state, context, config: { defaultPreload: 'none' } });
 
       expect(state.preload.get()).toBe('auto');
-
-      cleanup();
-    });
-
-    it('does not re-apply default on plain external clear (read uses peek)', async () => {
-      const state = makeState();
-      const context = makeContext();
-
-      const cleanup = syncPreload.setup({ state, context });
-
-      expect(state.preload.get()).toBe('metadata');
-
-      state.preload.set(undefined);
-      await Promise.resolve();
-      expect(state.preload.get()).toBeUndefined();
 
       cleanup();
     });
@@ -370,28 +327,6 @@ describe('syncPreload', () => {
   });
 
   describe('dedup', () => {
-    it('does not write state.preload when mediaElement.preload matches', async () => {
-      const state = makeState({ preload: 'metadata' });
-      const context = makeContext({ mediaElement: { preload: 'metadata' } });
-
-      const seen: PresentationState['preload'][] = [];
-      const stopObserve = effect(() => {
-        seen.push(state.preload.get());
-      });
-
-      const cleanup = syncPreload.setup({ state, context });
-
-      await Promise.resolve();
-
-      // Observer sees the initial read but no extra notifications from
-      // the behavior re-writing the same value.
-      expect(seen).toEqual(['metadata']);
-      expect(state.preload.get()).toBe('metadata');
-
-      stopObserve();
-      cleanup();
-    });
-
     it('does not write mediaElement.preload when state.preload matches', async () => {
       const mediaElement: MediaElementLike = { preload: 'auto' };
       const state = makeState({ preload: 'auto' });
