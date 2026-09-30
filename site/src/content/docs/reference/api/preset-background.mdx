@@ -101,7 +101,7 @@ The preset also exports a `usePlayer` hook typed to `backgroundFeatures`. Use it
 | --- | --- | --- |
 | `keep-alive` | — | Keeps the player and its store alive when the element leaves the DOM. Call `destroy()` when you're done with it. |
 
-The bundle has no feature that takes player inputs, so the element observes no content attributes. Its read-only `store` property returns its player store.
+The bundle has no feature that takes player inputs, so the element has no player-input attributes such as `content-title` or `poster`; `keep-alive` is the only attribute it reads. Its read-only `store` property returns its player store.
 
 The preset root also exports a `PlayerController` bound to the background player's store. Use it from any custom element inside `<background-video-player>`; see <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink>.
 </FrameworkCase>

@@ -152,18 +152,6 @@ export const sidebar: Sidebar = [
     ],
   },
   {
-    sidebarLabel: 'Presets',
-    llmsDescription:
-      'API reference for the presets: each bundles a player, feature bundle, skins, and media for one use case.',
-    contents: [
-      { slug: 'reference/presets/video', sidebarLabel: 'Video' },
-      { slug: 'reference/presets/audio', sidebarLabel: 'Audio' },
-      { slug: 'reference/presets/live-video', sidebarLabel: 'Live video' },
-      { slug: 'reference/presets/live-audio', sidebarLabel: 'Live audio' },
-      { slug: 'reference/presets/background', sidebarLabel: 'Background' },
-    ],
-  },
-  {
     sidebarLabel: 'Components',
     llmsDescription: 'API reference for skins, media components, extensions, and interface components.',
     contents: [
@@ -305,8 +293,8 @@ export const sidebar: Sidebar = [
     sidebarLabel: 'API',
     llmsDescription: {
       react:
-        'API reference for the player factory, store, features, menus, gestures, translation tools, and utilities.',
-      html: 'API reference for the player factory, store controllers, features, translation tools, and utilities.',
+        'API reference for the player factory, presets, store, features, menus, gestures, translation tools, and utilities.',
+      html: 'API reference for the player factory, presets, store controllers, features, translation tools, and utilities.',
     },
     contents: [
       {
@@ -324,6 +312,18 @@ export const sidebar: Sidebar = [
           { slug: 'reference/api/use-optional-container', frameworks: ['react'] },
           { slug: 'reference/api/use-container-attach', frameworks: ['react'] },
           { slug: 'reference/api/media-capabilities', sidebarLabel: 'Media capability guards' },
+        ],
+      },
+      {
+        sidebarLabel: 'Presets',
+        llmsDescription:
+          'API reference for the presets: each bundles a player, feature bundle, skins, and media for one use case.',
+        contents: [
+          { slug: 'reference/api/preset-video', sidebarLabel: 'Video' },
+          { slug: 'reference/api/preset-audio', sidebarLabel: 'Audio' },
+          { slug: 'reference/api/preset-live-video', sidebarLabel: 'Live video' },
+          { slug: 'reference/api/preset-live-audio', sidebarLabel: 'Live audio' },
+          { slug: 'reference/api/preset-background', sidebarLabel: 'Background' },
         ],
       },
       {
