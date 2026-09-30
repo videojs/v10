@@ -1,3 +1,5 @@
+'use client';
+
 import { VolumePopoverCore } from '@videojs/core';
 import { selectVolume } from '@videojs/core/dom';
 import type { MediaVolumeState } from '@videojs/media';
@@ -16,7 +18,7 @@ const unavailableVolume: MediaVolumeState = {
   volumeAvailability: 'unsupported',
   mutedAvailability: 'unsupported',
   setVolume: () => 0,
-  toggleMuted: () => false,
+  setMuted: () => false,
 };
 
 export interface VolumePopoverRootProps extends PopoverRootProps {}
