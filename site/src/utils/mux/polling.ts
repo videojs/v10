@@ -54,7 +54,11 @@ export async function pollForPlaybackId(options: PollOptions): Promise<PollResul
     const result = await getUploadStatus(uploadId);
     if (result.error) return { status: 'error', message: result.error.message };
 
-    if (result.data?.status === 'errored') {
+    if (
+      result.data?.status === 'errored' ||
+      result.data?.status === 'cancelled' ||
+      result.data?.status === 'timed_out'
+    ) {
       return { status: 'error', message: 'Upload processing failed' };
     }
 
