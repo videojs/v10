@@ -1,8 +1,9 @@
 /**
- * Enforce the public API stability rule: an export a published package exposes is stable only when a reference page
- * documents it. Every other export must say so in its JSDoc: `@internal` by default, `@experimental` when it is
- * documented on a page marked `stability: unstable`, or `@deprecated`. A documented export must not carry a tag that
- * contradicts its page, and must not name an internal export in its public type surface.
+ * Enforce the public API stability rule: an export a published package exposes is stable when a reference page
+ * documents it or a stable export's public types name it, and experimental when only a page marked `stability:
+ * unstable` or an experimental export's public types do. Every other export must say so in its JSDoc: `@internal`, or
+ * `@deprecated`. A stable or experimental export must not carry a tag that contradicts its stability, and must be
+ * importable from a framework-facing package rather than only from an internal or adapter one.
  *
  * The public surface is read from the built declarations each package's `exports` map points at, so run `pnpm
  * build:packages` first. Tags are read from (and `--fix` writes to) the matching `src/` declaration.
@@ -33,6 +34,12 @@ const EXCLUDED_PACKAGES = new Set(['@videojs/cdn']);
  * store's public surface is still being decided.
  */
 const UNCHECKED_PACKAGE_DIRECTORIES = ['packages/spf/', 'packages/store/'];
+
+/**
+ * Whether a class or interface makes what it `extends` or `implements` stable. Flip this to keep base classes internal
+ * while the members they add still make their own types stable.
+ */
+export const PROPAGATE_THROUGH_HERITAGE = true;
 
 /** Packages docs examples must not import from; their public parts are re-exported by `@videojs/html` and `/react`. */
 const INTERNAL_PACKAGE_PATTERN = /^@videojs\/(?:core|media|utils|element|icons|skins)(?:\/|$)/;
@@ -324,8 +331,10 @@ export interface PublicExport {
    * overload signature, but not an overload implementation, which the built declarations drop.
    */
   declarationTags: Array<Set<string>>;
-  /** Other public exports that this export's public type surface names directly. */
+  /** Other public exports that this export's public type surface names directly, outside its heritage clauses. */
   references: Set<PublicExport>;
+  /** Other public exports that this export's `extends` or `implements` clauses name. */
+  heritageReferences: Set<PublicExport>;
 }
 
 export interface PublicSurface {
@@ -568,12 +577,15 @@ function nameParts(name: ts.Node): ts.Identifier[] {
   return [];
 }
 
-/** Call `visit` with the name parts of every type reference, heritage clause, and `typeof` query under `node`. */
-function forEachTypeName(node: ts.Node, visit: (parts: ts.Identifier[]) => void): void {
-  if (ts.isTypeReferenceNode(node)) visit(nameParts(node.typeName));
-  else if (ts.isExpressionWithTypeArguments(node)) visit(nameParts(node.expression));
-  else if (ts.isTypeQueryNode(node)) visit(nameParts(node.exprName));
-  else if (ts.isImportTypeNode(node) && node.qualifier) visit(nameParts(node.qualifier));
+/**
+ * Call `visit` with the name parts of every type reference, heritage clause, and `typeof` query under `node`, and
+ * whether the name is the base a heritage clause extends or implements. Type arguments of a heritage clause aren't.
+ */
+function forEachTypeName(node: ts.Node, visit: (parts: ts.Identifier[], isHeritage: boolean) => void): void {
+  if (ts.isTypeReferenceNode(node)) visit(nameParts(node.typeName), false);
+  else if (ts.isExpressionWithTypeArguments(node)) visit(nameParts(node.expression), ts.isHeritageClause(node.parent));
+  else if (ts.isTypeQueryNode(node)) visit(nameParts(node.exprName), false);
+  else if (ts.isImportTypeNode(node) && node.qualifier) visit(nameParts(node.qualifier), false);
 
   ts.forEachChild(node, (child) => forEachTypeName(child, visit));
 }
@@ -647,6 +659,7 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
         hasSource: source !== undefined,
         declarationTags: tagged.map(jsDocTagNames),
         references: new Set(),
+        heritageReferences: new Set(),
       };
       exports.set(key, record);
     }
@@ -687,10 +700,11 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
 
   for (const [symbol, record] of bySymbol) {
     for (const node of checkedDeclarations(symbol).flatMap(publicSurface)) {
-      forEachTypeName(node, (parts) => {
+      forEachTypeName(node, (parts, isHeritage) => {
         const reference = parts.map(recordOf).find((candidate) => candidate !== undefined);
+        if (!reference || reference === record) return;
 
-        if (reference && reference !== record) record.references.add(reference);
+        (isHeritage ? record.heritageReferences : record.references).add(reference);
       });
     }
   }
@@ -707,7 +721,8 @@ export type StabilityTag = 'experimental' | 'internal';
 /**
  * The stability the docs give an export: stable or experimental when a page documents it, internal otherwise. An export
  * only internal packages expose is internal whatever its name: pages document what `@videojs/react`, `@videojs/html`,
- * and the other framework-facing packages expose, not the core they build on.
+ * and the other framework-facing packages expose, not the core they build on. {@link resolveStabilities} starts from
+ * this.
  */
 export function documentedStability(
   record: Pick<PublicExport, 'name' | 'exportedNames' | 'specifiers'>,
@@ -728,6 +743,92 @@ export function documentedStability(
   return 'internal';
 }
 
+/** The entry a report names an export by: a framework-facing one when there is one. */
+function primarySpecifier(record: Pick<PublicExport, 'specifiers'>): string {
+  const specifiers = [...record.specifiers].sort();
+
+  return specifiers.find((specifier) => !INTERNAL_PACKAGE_PATTERN.test(specifier)) ?? specifiers[0]!;
+}
+
+function label(record: Pick<PublicExport, 'name' | 'specifiers'>): string {
+  return `${record.name} (${primarySpecifier(record)})`;
+}
+
+/** `@videojs/react` for `@videojs/react/ui/play-button`. */
+function packageName(specifier: string): string {
+  return specifier.split('/').slice(0, 2).join('/');
+}
+
+const STABILITY_RANK = { internal: 0, experimental: 1, stable: 2 } satisfies Record<Stability, number>;
+
+/** An export's stability, and the exports whose public types gave it that stability when the docs didn't. */
+export interface ResolvedStability {
+  stability: Stability;
+  /**
+   * Exports of the same stability whose public types name this one, documented ones first; empty when the docs give the
+   * export its stability.
+   */
+  referrers: PublicExport[];
+}
+
+export interface PropagationOptions {
+  /** Whether `extends` and `implements` clauses pass stability to their base. Defaults to `PROPAGATE_THROUGH_HERITAGE`. */
+  heritage?: boolean;
+}
+
+/**
+ * Give each export its stability. The docs set the starting point, and stability is transitive through public types: an
+ * export a stable export's public surface names is stable, and one that only experimental exports name is experimental,
+ * whichever package exposes it.
+ */
+export function resolveStabilities(
+  records: readonly PublicExport[],
+  coverage: Coverage,
+  { heritage = PROPAGATE_THROUGH_HERITAGE }: PropagationOptions = {}
+): Map<PublicExport, ResolvedStability> {
+  const documented = new Map(records.map((record) => [record, documentedStability(record, coverage)]));
+  const stabilities = new Map(documented);
+  const referencesOf = (record: PublicExport) =>
+    heritage ? [...record.references, ...record.heritageReferences] : [...record.references];
+
+  // Stable first, so an export both levels reach is stable. The queue grows as references raise exports.
+  for (const level of ['stable', 'experimental'] as const) {
+    const queue = records.filter((record) => stabilities.get(record) === level);
+
+    for (const record of queue) {
+      for (const reference of referencesOf(record)) {
+        const current = stabilities.get(reference);
+        if (current === undefined || STABILITY_RANK[current] >= STABILITY_RANK[level]) continue;
+
+        stabilities.set(reference, level);
+        queue.push(reference);
+      }
+    }
+  }
+
+  const referrers = new Map<PublicExport, PublicExport[]>();
+
+  for (const record of records) {
+    for (const reference of new Set(referencesOf(record))) {
+      const stability = stabilities.get(reference);
+      if (stability === documented.get(reference) || stability !== stabilities.get(record)) continue;
+
+      referrers.set(reference, [...(referrers.get(reference) ?? []), record]);
+    }
+  }
+
+  const isDocumented = (record: PublicExport) => documented.get(record) === stabilities.get(record);
+  const byReason = (a: PublicExport, b: PublicExport) =>
+    Number(isDocumented(b)) - Number(isDocumented(a)) || label(a).localeCompare(label(b));
+
+  return new Map(
+    records.map((record) => [
+      record,
+      { stability: stabilities.get(record)!, referrers: (referrers.get(record) ?? []).sort(byReason) },
+    ])
+  );
+}
+
 /** How one declaration's tags must change to match its stability. */
 export interface TagChange {
   add?: StabilityTag;
@@ -735,8 +836,8 @@ export interface TagChange {
 }
 
 /**
- * The change one declaration's tags need, or `undefined` when they comply. A page wins over a tag: a documented export
- * loses a contradicting `@internal` (and a stable one `@experimental`) instead of the page being ignored.
+ * The change one declaration's tags need, or `undefined` when they comply. Stability wins over a tag: a stable or
+ * experimental export loses a contradicting `@internal` (and a stable one `@experimental`) instead of being ignored.
  */
 export function tagChange(tags: ReadonlySet<string>, stability: Stability): TagChange | undefined {
   if (stability === 'stable') {
@@ -752,17 +853,38 @@ export function tagChange(tags: ReadonlySet<string>, stability: Stability): TagC
   return add ? { add, remove } : { remove };
 }
 
-/** Why `record` fails the tag rule at `stability`, or `undefined` when every declaration complies. */
-export function tagViolation(record: Pick<PublicExport, 'declarationTags'>, stability: Stability): string | undefined {
+/** `PlayButtonProps (@videojs/react) references it`, naming the first referrer and counting the rest. */
+function referenceReason(referrers: ReadonlyArray<Pick<PublicExport, 'name' | 'specifiers'>>): string {
+  const more = referrers.length > 1 ? ` (+${referrers.length - 1} more)` : '';
+
+  return `${label(referrers[0]!)} references it${more}`;
+}
+
+/**
+ * Why `record` fails the tag rule at `stability`, or `undefined` when every declaration complies. `referrers` are the
+ * exports that gave it that stability, when the docs didn't.
+ */
+export function tagViolation(
+  record: Pick<PublicExport, 'declarationTags'>,
+  stability: Stability,
+  referrers: ReadonlyArray<Pick<PublicExport, 'name' | 'specifiers'>> = []
+): string | undefined {
   const changes = record.declarationTags.map((tags) => tagChange(tags, stability));
   const removed = [...new Set(changes.flatMap((change) => change?.remove ?? []))];
   const untagged = changes.filter((change) => change?.add).length;
+  const reason = referrers.length > 0 ? referenceReason(referrers) : undefined;
 
   if (removed.length > 0) {
     const tags = removed.map((tag) => `@${tag}`).join(' and ');
 
-    return stability === 'stable'
-      ? `is documented on a reference page but tagged ${tags} — remove the tag`
+    if (stability === 'stable') {
+      return reason
+        ? `is stable because ${reason} — remove ${tags}`
+        : `is documented on a reference page but tagged ${tags} — remove the tag`;
+    }
+
+    return reason
+      ? `is experimental because ${reason} — use @experimental instead of ${tags}`
       : `is documented on an unstable page but tagged ${tags} — use @experimental`;
   }
 
@@ -770,28 +892,45 @@ export function tagViolation(record: Pick<PublicExport, 'declarationTags'>, stab
 
   const scope = untagged < changes.length ? ` on ${untagged} of ${changes.length} declarations` : '';
 
-  return `needs @${stability}${scope}`;
+  return `needs @${stability}${scope}${reason ? ` because ${reason}` : ''}`;
 }
 
-export interface InternalReference {
+export interface UnexportedExport {
   record: PublicExport;
-  reference: PublicExport;
+  reason: string;
 }
 
 /**
- * Stable and experimental exports whose public type surface names an internal export directly. Only a person can
- * resolve one, by documenting the referenced export or changing the signature, so `--fix` leaves them alone.
+ * Stable and experimental exports that only internal and adapter packages export. Readers import the API from the
+ * framework-facing packages, which re-export an adapter's types from their `/media/*` entry, so a person has to add the
+ * re-export or change the signature; `--fix` leaves these alone.
  */
-export function findInternalReferences(
-  records: readonly PublicExport[],
-  stabilities: ReadonlyMap<PublicExport, Stability>
-): InternalReference[] {
-  return records.flatMap((record) => {
-    if (stabilities.get(record) === 'internal') return [];
+export function findUnexportedExports(
+  resolved: ReadonlyMap<PublicExport, ResolvedStability>,
+  adapterPackages: ReadonlySet<string>
+): UnexportedExport[] {
+  const isAdapter = (specifier: string) => adapterPackages.has(packageName(specifier));
+  const isImportable = (specifier: string) => !INTERNAL_PACKAGE_PATTERN.test(specifier) && !isAdapter(specifier);
 
-    return [...record.references]
-      .filter((reference) => stabilities.get(reference) === 'internal')
-      .map((reference) => ({ record, reference }));
+  return [...resolved].flatMap(([record, { stability, referrers }]) => {
+    if (stability === 'internal' || [...record.specifiers].some(isImportable)) return [];
+
+    const adapters = [...new Set([...record.specifiers].filter(isAdapter).map(packageName))].sort();
+    const more = referrers.length > 1 ? `, +${referrers.length - 1} more` : '';
+    const why = referrers.length > 0 ? `${referrers[0]!.name} references it${more}` : 'documented';
+    const exporter =
+      adapters.length > 0
+        ? `only ${adapters.join(' and ')} ${adapters.length === 1 ? 'exports' : 'export'} it`
+        : 'only internal packages export it';
+    const targets =
+      adapters.length > 0
+        ? adapters
+            .map((adapter) => adapter.slice('@videojs/'.length))
+            .map((media) => `@videojs/react/media/${media} / @videojs/html/media/${media}`)
+            .join(' and ')
+        : '@videojs/react / @videojs/html';
+
+    return [{ record, reason: `is ${stability} (${why}) but ${exporter} — re-export it from ${targets}` }];
   });
 }
 
@@ -1044,43 +1183,73 @@ export function findUnstableImports(
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
-/** The entry a report names an export by: a framework-facing one when there is one. */
-function primarySpecifier(record: Pick<PublicExport, 'specifiers'>): string {
-  const specifiers = [...record.specifiers].sort();
-
-  return specifiers.find((specifier) => !INTERNAL_PACKAGE_PATTERN.test(specifier)) ?? specifiers[0]!;
-}
-
-function label(record: PublicExport): string {
-  return `${record.name} (${primarySpecifier(record)})`;
-}
-
-/** Print internal references grouped by the internal export they name, most referenced first. */
-function reportInternalReferences(references: readonly InternalReference[]): void {
-  const groups = new Map<PublicExport, PublicExport[]>();
-
-  for (const { record, reference } of references) groups.set(reference, [...(groups.get(reference) ?? []), record]);
-
-  const sorted = [...groups].sort(
-    ([a, left], [b, right]) => right.length - left.length || a.name.localeCompare(b.name)
+/** Names of the playback adapter packages, whose types the framework packages re-export from `/media/*`. */
+function adapterPackageNames(): Set<string> {
+  const adapters = packageDirectories().filter(
+    (directory) => relative(monorepoRoot, directory).split(sep)[1] === 'adapters'
   );
 
-  for (const [reference, records] of sorted) {
-    console.error(`✗ ${label(reference)}  ${records.length} ${records.length === 1 ? 'reference' : 'references'}`);
+  // SAFETY: workspace manifests are validated by `pnpm check:workspace`; only `name` is read.
+  return new Set(
+    adapters.map(
+      (directory) => (JSON.parse(readFileSync(join(directory, 'package.json'), 'utf8')) as { name: string }).name
+    )
+  );
+}
 
-    for (const record of records.sort((a, b) => a.name.localeCompare(b.name))) {
-      console.error(`  ${label(record)} references internal ${label(reference)}`);
+/** Print stable and experimental exports no framework-facing entry exports, grouped by package. */
+function reportUnexported(unexported: readonly UnexportedExport[]): void {
+  const byPackage = new Map<string, UnexportedExport[]>();
+
+  for (const entry of unexported) {
+    const name = packageName(primarySpecifier(entry.record));
+
+    byPackage.set(name, [...(byPackage.get(name) ?? []), entry]);
+  }
+
+  for (const [name, entries] of [...byPackage].sort(([a], [b]) => a.localeCompare(b))) {
+    console.error(`✗ ${name}  ${entries.length} ${entries.length === 1 ? 'export' : 'exports'}`);
+
+    for (const { record, reason } of entries.sort((a, b) => a.record.name.localeCompare(b.record.name))) {
+      console.error(`  ${label(record)} ${reason}`);
     }
   }
 
-  const referencing = new Set(references.map(({ record }) => record)).size;
-
   console.error(
-    `\n✗ ${referencing} stable or experimental exports make ${references.length} references to ${groups.size} ` +
-      'internal exports.\n' +
-      '  A documented export must not expose an undocumented one. Document the referenced export (list it in a\n' +
-      "  reference page's `apis`) or change the signature so it no longer names it. `--fix` doesn't resolve these."
+    `\n✗ ${unexported.length} stable or experimental exports can't be imported from a framework-facing package.\n` +
+      '  Re-export each from `@videojs/react` and `@videojs/html` (an adapter type from their `/media/*` entry), or\n' +
+      "  change the signature that makes it stable. `--fix` doesn't resolve these.\n"
   );
+}
+
+/** List the exports a reference made stable or experimental, by package, so a reviewer sees what propagation reached. */
+function reportPropagated(resolved: ReadonlyMap<PublicExport, ResolvedStability>): void {
+  for (const level of ['stable', 'experimental'] as const) {
+    const propagated = [...resolved].filter(
+      ([, { stability, referrers }]) => stability === level && referrers.length > 0
+    );
+    if (propagated.length === 0) continue;
+
+    const byPackage = new Map<string, Array<[PublicExport, ResolvedStability]>>();
+
+    for (const entry of propagated) {
+      const name = packageName(primarySpecifier(entry[0]));
+
+      byPackage.set(name, [...(byPackage.get(name) ?? []), entry]);
+    }
+
+    console.log(`\n${level === 'stable' ? 'Stable' : 'Experimental'} by reference: ${propagated.length} exports`);
+
+    for (const [name, entries] of [...byPackage].sort(([a], [b]) => a.localeCompare(b))) {
+      console.log(`  ${name} (${entries.length})`);
+
+      for (const [record, { referrers }] of entries.sort(([a], [b]) => a.name.localeCompare(b.name))) {
+        console.log(`    ${record.name}  ← ${referenceReason(referrers)}`);
+      }
+    }
+  }
+
+  console.log('');
 }
 
 function main(): void {
@@ -1099,15 +1268,12 @@ function main(): void {
 
   const coverage = collectCoverage(siteDirectory);
   const { exports, unresolved } = collectPublicExports(entries);
-  const stabilities = new Map<PublicExport, Stability>();
+  const resolved = resolveStabilities(exports, coverage);
   const importStabilities = new Map<string, Stability>();
   const violations: Array<{ record: PublicExport; stability: Stability; reason: string }> = [];
 
-  for (const record of exports) {
-    const stability = documentedStability(record, coverage);
-    const reason = tagViolation(record, stability);
-
-    stabilities.set(record, stability);
+  for (const [record, { stability, referrers }] of resolved) {
+    const reason = tagViolation(record, stability, referrers);
 
     for (const specifier of record.specifiers) {
       for (const name of record.exportedNames) importStabilities.set(`${specifier}#${name}`, stability);
@@ -1116,7 +1282,6 @@ function main(): void {
     if (reason) violations.push({ record, stability, reason });
   }
 
-  const references = findInternalReferences(exports, stabilities);
   const warnings = findUnstableImports(collectDocsImports(siteDirectory), importStabilities);
 
   for (const warning of warnings) {
@@ -1132,9 +1297,13 @@ function main(): void {
   if (unresolved.length > 0)
     console.warn(`⚠ ${unresolved.length} public exports can't be resolved, so aren't checked.\n`);
 
+  const unexported = findUnexportedExports(resolved, adapterPackageNames());
+
+  reportPropagated(resolved);
+
   const counts = { stable: 0, experimental: 0, internal: 0 };
 
-  for (const stability of stabilities.values()) counts[stability]++;
+  for (const { stability } of resolved.values()) counts[stability]++;
 
   console.log(
     `${exports.length} checked public exports: ${counts.stable} stable, ${counts.experimental} experimental, ` +
@@ -1143,8 +1312,8 @@ function main(): void {
 
   violations.sort((a, b) => a.record.file.localeCompare(b.record.file) || a.record.name.localeCompare(b.record.name));
 
-  if (violations.length === 0 && references.length === 0) {
-    console.log(`✓ All ${exports.length} checked public exports are documented or tagged.`);
+  if (violations.length === 0 && unexported.length === 0) {
+    console.log(`✓ All ${exports.length} checked public exports are documented, referenced, or tagged.`);
     return;
   }
 
@@ -1171,31 +1340,32 @@ function main(): void {
       console.error(`✗ ${unfixable.length} exports have no matching source declaration; fix their tags by hand:`);
 
       for (const { record, reason } of unfixable) {
-        console.error(`  ${relative(monorepoRoot, record.file)}  ${record.name}  ${reason}`);
+        console.error(`  ${relative(monorepoRoot, record.file)}  ${label(record)} ${reason}`);
       }
     }
 
-    if (references.length > 0) reportInternalReferences(references);
+    if (unexported.length > 0) reportUnexported(unexported);
 
-    if (unfixable.length > 0 || references.length > 0) process.exit(1);
+    if (unfixable.length > 0 || unexported.length > 0) process.exit(1);
 
     return;
   }
 
   for (const { record, reason } of violations) {
-    console.error(`✗ ${relative(monorepoRoot, record.file)}  ${record.name}  ${reason}  (${primarySpecifier(record)})`);
+    console.error(`✗ ${relative(monorepoRoot, record.file)}  ${label(record)} ${reason}`);
   }
 
   if (violations.length > 0) {
     console.error(
       `\n✗ ${violations.length} public exports have the wrong stability tag.\n` +
-        '  Exports are stable only when a reference page documents them (see writing-style/write-references).\n' +
-        '  Tag the rest `@internal`, or `@experimental` when a `stability: unstable` page documents them, and\n' +
-        '  drop the tag from documented ones. `pnpm -F site check:api-stability --fix` corrects the tags.\n'
+        "  Exports are stable when a reference page documents them or a stable export's public types name them (see\n" +
+        '  writing-style/write-references). Tag the rest `@internal`, or `@experimental` when only a `stability:\n' +
+        '  unstable` page or an experimental export makes them experimental, and drop the tag from stable ones.\n' +
+        '  `pnpm -F site check:api-stability --fix` corrects the tags.\n'
     );
   }
 
-  if (references.length > 0) reportInternalReferences(references);
+  if (unexported.length > 0) reportUnexported(unexported);
 
   process.exit(1);
 }
