@@ -496,7 +496,7 @@ Don't rely on browser-only translation APIs during SSR. Ship packs or register s
 
 ### Labels stay in English
 
-No provider is mounted, or the locale never resolved: check the `locale`/`lang` value and that it matches a shipped pack (regional tags fall back — `pt-BR` works; a bare unknown tag falls through to English).
+Check that a provider is mounted and that its `locale`/`lang` value matches a shipped pack. Regional tags fall back to their base language, so `pt-BR` works. An unmatched language falls back to English unless the browser's Translation API supplies translations; register your own pack for consistent coverage.
 
 ### Some strings are translated, others aren't
 

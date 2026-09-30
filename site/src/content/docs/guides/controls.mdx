@@ -120,6 +120,8 @@ Keep controls with keyboard focus visible in your hiding rule:
 
 The media is paused (controls intentionally stay visible), a remote playback session is active, an open menu or popover holds a controls lock, or something keeps triggering activity — for example a focused element inside the container receiving repeated events.
 
+With the `:has(:focus-visible)` CSS rule above, keyboard focus keeps the controls visible even after activity becomes idle. Move focus out of the controls to let them hide.
+
 ### Controls don't come back on touch
 
 A tap on the media toggles controls. If a custom overlay covers the media and swallows pointer events, taps never reach the container; let pointer events pass through decorative overlays.
