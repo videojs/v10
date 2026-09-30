@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import {
   type MediaSourceKind,
-  resolveFormatKind,
+  resolveSourceFormat,
   resolveMimeType,
-  resolveProviderKind,
+  resolveSourcePlatform,
   resolveSourceKind,
 } from '../source-kind';
 
@@ -28,7 +28,7 @@ describe('resolveSourceKind', () => {
     ['https://www.tiktok.com/@scout2015/video/6718335390845095173', 'tiktok'],
     ['https://www.twitch.tv/videos/2175470236', 'twitch'],
     ['https://www.twitch.tv/monstercat', 'twitch'],
-  ])('resolves the provider of %s', (src, expected) => {
+  ])('resolves the platform of %s', (src, expected) => {
     expect(resolveSourceKind(src)).toBe(expected);
   });
 
@@ -62,7 +62,7 @@ describe('resolveSourceKind', () => {
     expect(resolveSourceKind('https://example.com/episode', 'audio/mpeg')).toBe('audio');
   });
 
-  it('prefers the provider over the MIME type', () => {
+  it('prefers the platform over the MIME type', () => {
     expect(
       resolveSourceKind(
         'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8',
@@ -87,17 +87,19 @@ describe('resolveSourceKind', () => {
     ['a page without a video', 'https://www.youtube.com/'],
     ['a TikTok short link', 'https://vm.tiktok.com/ZMabc123/'],
     ['a Twitch clip', 'https://clips.twitch.tv/SomeClipSlug'],
-    ['a provider URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
+    ['a platform URL nested in a query parameter', 'https://example.com/share?url=https://youtu.be/aqz-KE-bpKQ'],
   ])('returns null for %s', (_, src) => {
     expect(resolveSourceKind(src)).toBe(null);
   });
 });
 
-describe('resolveProviderKind', () => {
-  it('resolves provider URLs and shorthands', () => {
-    expect(resolveProviderKind('https://youtu.be/aqz-KE-bpKQ')).toBe('youtube');
-    expect(resolveProviderKind('vimeo/76979871')).toBe('vimeo');
-    expect(resolveProviderKind('https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8')).toBe('mux');
+describe('resolveSourcePlatform', () => {
+  it('resolves platform URLs and shorthands', () => {
+    expect(resolveSourcePlatform('https://youtu.be/aqz-KE-bpKQ')).toBe('youtube');
+    expect(resolveSourcePlatform('vimeo/76979871')).toBe('vimeo');
+    expect(resolveSourcePlatform('https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8')).toBe(
+      'mux'
+    );
   });
 
   it.each([
@@ -105,23 +107,23 @@ describe('resolveProviderKind', () => {
     ['a Mux static rendition', 'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M/highest.mp4'],
     ['a relative path', 'media/youtube.mp4'],
   ])('returns null for %s', (_, src) => {
-    expect(resolveProviderKind(src)).toBe(null);
+    expect(resolveSourcePlatform(src)).toBe(null);
   });
 });
 
-describe('resolveFormatKind', () => {
+describe('resolveSourceFormat', () => {
   it('ignores the host', () => {
-    expect(resolveFormatKind('https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8')).toBe('hls');
-    expect(resolveFormatKind('https://youtu.be/aqz-KE-bpKQ')).toBe(null);
+    expect(resolveSourceFormat('https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8')).toBe('hls');
+    expect(resolveSourceFormat('https://youtu.be/aqz-KE-bpKQ')).toBe(null);
   });
 
   it('prefers the MIME type over the file extension', () => {
-    expect(resolveFormatKind('https://example.com/video.mp4', 'application/dash+xml')).toBe('dash');
-    expect(resolveFormatKind('https://example.com/video.mp4')).toBe('video');
+    expect(resolveSourceFormat('https://example.com/video.mp4', 'application/dash+xml')).toBe('dash');
+    expect(resolveSourceFormat('https://example.com/video.mp4')).toBe('video');
   });
 
   it('returns null for an empty source', () => {
-    expect(resolveFormatKind('', 'video/mp4')).toBe(null);
+    expect(resolveSourceFormat('', 'video/mp4')).toBe(null);
   });
 });
 
@@ -143,7 +145,7 @@ describe('resolveMimeType', () => {
     ['a URL without an extension', 'https://example.com/manifest'],
     ['an extension only in the query string', 'https://example.com/play?file=video.mp4'],
     ['an unknown file type', 'https://example.com/file.bin'],
-    ['a provider URL', 'https://youtu.be/aqz-KE-bpKQ'],
+    ['a platform URL', 'https://youtu.be/aqz-KE-bpKQ'],
   ])('returns null for %s', (_, src) => {
     expect(resolveMimeType(src)).toBe(null);
   });

@@ -7,13 +7,21 @@ import { parseWistiaMediaId } from './wistia';
 import { parseYouTubeSource } from './youtube';
 
 /** A kind of source {@link resolveSourceKind} recognizes. Each kind is played by a different media component. */
-export type MediaSourceKind = MediaProviderKind | MediaFormatKind;
+export type MediaSourceKind = MediaSourcePlatform | MediaSourceFormat;
 
-/** A hosting provider {@link resolveProviderKind} recognizes from a source URL. */
-export type MediaProviderKind = 'youtube' | 'vimeo' | 'wistia' | 'mux' | 'cloudflare' | 'spotify' | 'tiktok' | 'twitch';
+/** A hosting platform {@link resolveSourcePlatform} recognizes from a source URL. */
+export type MediaSourcePlatform =
+  | 'youtube'
+  | 'vimeo'
+  | 'wistia'
+  | 'mux'
+  | 'cloudflare'
+  | 'spotify'
+  | 'tiktok'
+  | 'twitch';
 
-/** A stream or file format {@link resolveFormatKind} recognizes from a MIME type or file extension. */
-export type MediaFormatKind = 'hls' | 'dash' | 'video' | 'audio';
+/** A stream or file format {@link resolveSourceFormat} recognizes from a MIME type or file extension. */
+export type MediaSourceFormat = 'hls' | 'dash' | 'video' | 'audio';
 
 /**
  * Resolve which kind of source a URL is, so you can render the media component that plays it and pass it the same
@@ -21,7 +29,7 @@ export type MediaFormatKind = 'hls' | 'dash' | 'video' | 'audio';
  * manifests; and video and audio files, by MIME type when you pass one and by file extension otherwise.
  *
  * Returns `null` for anything else, including bare ids: an 11-character YouTube id and a 10-character Wistia id look
- * alike, so providers are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
+ * alike, so platforms are only matched on URLs, `spotify:` URIs, and `youtube/<id>` and `vimeo/<id>` shorthands.
  *
  * The result names a kind of source, not a playback engine. Choosing between the HLS engines is up to you.
  *
@@ -31,14 +39,14 @@ export type MediaFormatKind = 'hls' | 'dash' | 'video' | 'audio';
  * @public
  */
 export function resolveSourceKind(src: string, type?: string): MediaSourceKind | null {
-  return resolveProviderKind(src) ?? resolveFormatKind(src, type);
+  return resolveSourcePlatform(src) ?? resolveSourceFormat(src, type);
 }
 
 /**
- * Resolve which hosting provider serves a source, from its host or a `youtube/<id>`, `vimeo/<id>`, or `spotify:`
- * shorthand. A URL only matches when the provider's parser finds a video in it. File extensions are ignored.
+ * Resolve which hosting platform serves a source, from its host or a `youtube/<id>`, `vimeo/<id>`, or `spotify:`
+ * shorthand. A URL only matches when the platform's parser finds a video in it. File extensions are ignored.
  */
-export function resolveProviderKind(src: string): MediaProviderKind | null {
+export function resolveSourcePlatform(src: string): MediaSourcePlatform | null {
   const source = src.trim();
   if (!source) return null;
 
@@ -57,9 +65,9 @@ export function resolveProviderKind(src: string): MediaProviderKind | null {
 
 /**
  * Resolve a source's stream or file format from its MIME type when given, and from its file extension otherwise. Hosts
- * are ignored, so a provider's `.m3u8` manifest resolves to `hls`.
+ * are ignored, so a platform's `.m3u8` manifest resolves to `hls`.
  */
-export function resolveFormatKind(src: string, type?: string): MediaFormatKind | null {
+export function resolveSourceFormat(src: string, type?: string): MediaSourceFormat | null {
   if (!src.trim()) return null;
 
   return fromMimeType(type) ?? fromMimeType(resolveMimeType(src));
@@ -81,7 +89,7 @@ export function resolveMimeType(src: string): string | null {
   return (extension && MIME_TYPES.get(extension)) || null;
 }
 
-function fromHost(src: string, url: URL): MediaProviderKind | null {
+function fromHost(src: string, url: URL): MediaSourcePlatform | null {
   const host = url.hostname.toLowerCase();
   if (YOUTUBE_HOSTS.has(host)) return parseYouTubeSource(src) ? 'youtube' : null;
 
@@ -112,7 +120,7 @@ function fromHost(src: string, url: URL): MediaProviderKind | null {
   return null;
 }
 
-function fromMimeType(type: string | null | undefined): MediaFormatKind | null {
+function fromMimeType(type: string | null | undefined): MediaSourceFormat | null {
   const mimeType = type?.trim().toLowerCase();
   if (!mimeType) return null;
 
