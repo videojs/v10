@@ -48,6 +48,10 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #pendingLoad = false;
   // Player creation is in flight; the API load makes it span more than a tick.
   #creatingPlayer = false;
+  // Keep URL-only option changes pending until a valid source can rebuild the embed.
+  #pendingEmbedOptions = false;
+  #restorePlayerSettings = false;
+  #pendingWrites: ((player: YouTubePlayerApi) => void)[] = [];
   #loadComplete = createPublicPromise<void>();
   // Guards async player creation across attach/detach cycles.
   #attachId = 0;
@@ -119,10 +123,15 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#playerReady = false;
     this.#pendingLoad = false;
     this.#creatingPlayer = false;
+    this.#restorePlayerSettings = false;
+    this.#pendingWrites = [];
     this.#target = null;
     // Unblock callers awaiting load; they re-check `#player` (now null) and no-op.
     this.#loadComplete.resolve();
     this.#resetState();
+    this.#volume = 1;
+    this.#muted = false;
+    this.#playbackRate = 1;
   }
 
   override destroy() {
@@ -220,6 +229,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #beginLoad(): PublicPromise<void> {
     this.#loadComplete.resolve();
     this.#loadComplete = createPublicPromise<void>();
+    this.#flushAfterLoad();
     return this.#loadComplete;
   }
 
@@ -368,22 +378,34 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     // Player parameters are read from the embed URL, not by `cueVideoById`/`loadVideoById`.
     const engineChanged = !deepEqual(this.#source?.engine?.youtube ?? null, source?.engine?.youtube ?? null);
 
+    this.#pendingEmbedOptions ||= engineChanged;
+
     this.#source = source;
     this.#src = src;
 
     const target = this.#target;
     const embedSrc =
-      engineChanged && target?.getAttribute('src') ? buildYouTubeIframeSrc(src, this.#snapshotProps()) : '';
+      this.#pendingEmbedOptions && target?.getAttribute('src') ? buildYouTubeIframeSrc(src, this.#snapshotProps()) : '';
 
     if (target && embedSrc) {
       // `destroy()` removes the iframe, so keep the host's target in its original position.
       const parent = target.parentNode;
       const nextSibling = target.nextSibling;
+      const volume = this.#volume;
+      const muted = this.#muted;
+      const playbackRate = this.#playbackRate;
+      const pendingWrites = this.#pendingWrites;
 
       this.detach();
       target.src = embedSrc;
+      this.#pendingEmbedOptions = false;
       parent?.insertBefore(target, nextSibling);
       this.#target = target;
+      this.#volume = volume;
+      this.#muted = muted;
+      this.#playbackRate = playbackRate;
+      this.#restorePlayerSettings = true;
+      this.#pendingWrites = pendingWrites;
 
       this.#beginLoad();
       this.dispatchEvent(new Event('emptied'));
@@ -443,7 +465,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     if (!target || this.#player || this.#creatingPlayer) return false;
 
     // Only the attribute tells an embed apart from a placeholder; `src` resolves empty to the document URL.
-    if (!target.getAttribute('src')) {
+    if (!target.getAttribute('src') || this.#pendingEmbedOptions) {
       const initialSrc = buildYouTubeIframeSrc(this.#src, this.#snapshotProps());
 
       // No embed means no player is coming to settle this load.
@@ -455,6 +477,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       target.src = initialSrc;
     }
 
+    this.#pendingEmbedOptions = false;
     this.#creatingPlayer = true;
     this.dispatchEvent(new Event('loadstart'));
     void this.#createPlayerApi(target);
@@ -510,10 +533,26 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
 
   // Defer a player call until `loadComplete` resolves, swallowing failures.
   #afterLoad(fn: (player: YouTubePlayerApi) => void) {
-    this.#loadComplete.then(() => {
-      const player = this.#player;
+    this.#pendingWrites.push(fn);
+    this.#flushAfterLoad();
+  }
 
-      if (player) tryCall(() => fn(player));
+  #flushAfterLoad() {
+    const load = this.#loadComplete;
+
+    load.then(() => {
+      // Only the latest load may drain the queue, preserving the order of writes across replacement.
+      if (load !== this.#loadComplete) return;
+
+      const player = this.#player;
+      if (!player) return;
+
+      while (load === this.#loadComplete && player === this.#player) {
+        const write = this.#pendingWrites.shift();
+        if (!write) break;
+
+        tryCall(() => write(player));
+      }
     }, noop);
   }
 
@@ -532,10 +571,8 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #resetState() {
     this.#currentTime = 0;
     this.#duration = Number.NaN;
-    this.#muted = false;
     this.#paused = !this.#autoplay;
     this.#ended = false;
-    this.#playbackRate = 1;
     this.#progress = 0;
     this.#readyState = READY_STATE_HAVE_NOTHING;
     this.#seeking = false;
@@ -544,13 +581,31 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#seekStartedAt = 0;
     this.#loaded = false;
     this.#playFired = false;
-    this.#volume = 1;
     this.#error = null;
     this.#isFullscreen = false;
   }
 
   #onPlayerReady() {
     this.#playerReady = true;
+
+    const player = this.#player;
+
+    if (this.#restorePlayerSettings && player) {
+      // Restore before metadata reads the replacement player's default settings.
+      const volume = this.#volume;
+      const muted = this.#muted;
+      const playbackRate = this.#playbackRate;
+
+      this.#restorePlayerSettings = false;
+      tryCall(() => {
+        player.setVolume(volume * 100);
+
+        if (muted) player.mute();
+        else player.unMute();
+
+        player.setPlaybackRate(playbackRate);
+      });
+    }
 
     if (this.#pendingLoad) {
       // The iframe was built from a stale src; skip its metadata and reload. The post-cue state
