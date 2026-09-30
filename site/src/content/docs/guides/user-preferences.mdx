@@ -118,6 +118,7 @@ Subscribe to the state you want to remember, write it to storage when it changes
 
 - Video.js does not write preferences to storage. Initial values come from the media element, track markup, and playback engine.
 - `setVolume` clamps to 0–1 and unmutes above zero. Restore volume first, then restore mute if the actual level is above zero and the media is unmuted. At zero, `toggleMuted` would unmute and raise the volume.
+- The volume examples use playback started by the user. For muted autoplay, defer volume restoration until a user action: restoring a positive volume unmutes the media and can interrupt autoplay, even if you immediately mute it again.
 - `setVolume` updates `store.state` immediately. `toggleMuted` updates it on `volumechange`; subscribe if you need the resulting state. A React hook's selected value updates on the next render.
 - Restore track and quality selections after the media exposes them: track and rendition lists arrive when the media loads, not at player creation. Subscribe and apply when the saved entry appears in the list.
 - On iOS Safari, `volumeAvailability` is `'unsupported'` after attachment. Restoring the volume level has no effect there; mute can still be restored.
@@ -127,7 +128,9 @@ Subscribe to the state you want to remember, write it to storage when it changes
 
 ### Persist caption preference
 
-Save the showing track's `language`, or `'off'` when captions are off. Track ids can change between sources. While the media loads, reapply the saved preference if the browser enables another track. Once `canPlay` is true, finish restoration and save later selection changes. If the saved language is absent, leave the stored preference intact until the selection changes.
+Save the showing track's `language`, or `'off'` when captions are off. Track ids can change between sources. Restore once when the first caption or subtitle list arrives, then save later selection changes. Do not wait for `canPlay`: with limited preloading, it can stay false until playback starts, and repeated restoration would override a user's earlier selection.
+
+If the saved language is absent from that first list, leave the stored preference intact until the selection changes. This example does not retry restoration when more tracks arrive; adapt the initial loading step if your engine exposes languages in several batches. Browser selection changes after restoration are saved just like user changes.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -145,7 +148,7 @@ Save the showing track's `language`, or `'off'` when captions are off. Track ids
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`. Until `canPlay` is true, reapply the saved preference with `selectSubtitlesTrack`, passing the matching track's `id` or `'off'`. When restoration ends, record the current selection and return without saving. Save only later selection changes, preserving an unmatched preference. Guard `localStorage` reads and writes, and restart restoration for each new source.
+Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`. When the first caption or subtitle list arrives, mark restoration complete before calling `selectSubtitlesTrack` with the saved track's `id` or `'off'`. Record that selection without saving it. Save later selection changes, preserving an unmatched preference until then. Guard `localStorage` reads and writes, and restart restoration for each new source.
 
 </FrameworkCase>
 

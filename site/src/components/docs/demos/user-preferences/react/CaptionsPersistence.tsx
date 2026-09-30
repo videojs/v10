@@ -4,7 +4,7 @@ import { usePlayer } from './VolumePersistence';
 
 export default function CaptionsPersistence() {
   const store = usePlayer();
-  const { tracks, canPlay } = usePlayer((s) => ({ tracks: s.textTrackList, canPlay: s.canPlay }));
+  const tracks = usePlayer((s) => s.textTrackList);
   const [saved] = useState(() => {
     try {
       return localStorage.getItem('player:captions');
@@ -22,23 +22,17 @@ export default function CaptionsPersistence() {
     const showing = subtitles.find((t) => t.mode === 'showing');
     const selection = showing ? showing.language : 'off';
 
-    // Restore phase: assert the saved preference until the media can play.
+    // Restore once the first subtitle list arrives, then honor later changes.
     if (!restored.current) {
       const desired = saved === 'off' ? undefined : subtitles.find((t) => t.language === saved);
 
-      if (saved && (desired || saved === 'off')) {
-        const applied = subtitles.every((t) => (t.mode === 'showing') === (t.id === desired?.id));
+      restored.current = true;
+      lastSelection.current = saved && (desired || saved === 'off') ? (desired?.language ?? 'off') : selection;
 
-        if (!applied) {
-          store.selectSubtitlesTrack(desired?.id ?? 'off');
-          return;
-        }
+      if (saved && (desired || saved === 'off')) {
+        store.selectSubtitlesTrack(desired?.id ?? 'off');
       }
 
-      if (!canPlay) return;
-
-      restored.current = true;
-      lastSelection.current = selection;
       return;
     }
 
@@ -52,7 +46,7 @@ export default function CaptionsPersistence() {
     } catch {
       // Continue without persistence when storage is blocked.
     }
-  }, [store, tracks, canPlay, saved]);
+  }, [store, tracks, saved]);
 
   return null;
 }
