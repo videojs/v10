@@ -600,6 +600,28 @@ describe('YouTubeAdapter', () => {
 
       expect(new URL(iframe.src).searchParams.get('cc_load_policy')).toBe('1');
       expect(iframe.isConnected).toBe(true);
+      const replacement = await waitForEngine(media);
+      const loadcomplete = vi.fn();
+
+      expect(replacement).not.toBe(player);
+      media.addEventListener('loadcomplete', loadcomplete);
+      const pending = media.play();
+
+      player.ready();
+      player.emit('onStateChange', STATE.PLAYING);
+      await flushDeferredEmbed();
+
+      expect(media.readyState).toBe(0);
+      expect(media.paused).toBe(true);
+      expect(loadcomplete).not.toHaveBeenCalled();
+      expect(replacement.playVideo).not.toHaveBeenCalled();
+
+      replacement.ready();
+      expect(media.readyState).toBe(1);
+      expect(loadcomplete).toHaveBeenCalledTimes(1);
+
+      await pending;
+      expect(replacement.playVideo).toHaveBeenCalledTimes(1);
     } finally {
       media.destroy();
       iframe.remove();

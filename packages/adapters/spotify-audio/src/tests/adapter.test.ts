@@ -1285,15 +1285,18 @@ describe('loadSpotifyIframeApi', () => {
     const ready = globals.onSpotifyIframeApiReady;
 
     expect(ready).not.toBe(hostReady);
-    ready?.({
+    const api = {
       createController: (target: HTMLIFrameElement, options: unknown, callback: (controller: MockController) => void) =>
         callback(new MockController(target, options)),
-    });
+    };
+
+    ready?.(api);
 
     await waitForEngine(media);
     // The loader script fires the global once and a second tag does nothing, so a
     // page that defined it first would never hear about the API again.
     expect(hostReady).toHaveBeenCalledTimes(1);
+    expect(hostReady.mock.calls[0]?.[0]).toBe(api);
     media.detach();
   });
 });
