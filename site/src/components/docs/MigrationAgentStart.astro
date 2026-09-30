@@ -1,43 +1,37 @@
 ---
 import { installationCommand, SKILLS_REPOSITORY_URL, skillsCommand } from '@videojs/installation';
 
-import Aside from '@/components/Aside.astro';
-import DocsLink from '@/components/docs/DocsLink.astro';
-import A from '@/components/typography/A.astro';
-import Code from '@/components/typography/MarkdownCode.astro';
-import Li from '@/components/typography/Li.astro';
-import P from '@/components/typography/P.astro';
-import Ul from '@/components/typography/Ul.astro';
-import { resolveDocsFramework } from '@/types/docs';
+import AgentPrompt from '@/components/AgentPrompt.astro';
+import { DEFAULT_FRAMEWORK, resolveDocsFramework } from '@/types/docs';
 
-const framework = resolveDocsFramework(Astro.params.framework);
+interface Props {
+  source: 'video-js-8' | 'media-chrome' | 'mux-player' | 'plyr';
+}
+
+const { source } = Astro.props;
+const names = {
+  'video-js-8': 'Video.js 8',
+  'media-chrome': 'Media Chrome',
+  'mux-player': 'Mux Player',
+  plyr: 'Plyr',
+};
+const framework = resolveDocsFramework(Astro.params.framework) ?? DEFAULT_FRAMEWORK;
 const packageName = framework === 'react' ? '@videojs/react' : '@videojs/html';
+const guide = `https://videojs.org/docs/framework/${framework}/guides/migrate-from-${source}`;
 const docsIndex = `node_modules/${packageName}/docs/llms.txt`;
-const onlineDocsIndex = `/docs/framework/${framework}/llms.txt`;
+const onlineDocsIndex = `https://videojs.org/docs/framework/${framework}/llms.txt`;
+const init = installationCommand({ framework, project: 'existing' });
+const prompt = `Migrate this project's ${names[source]} player to Video.js v10 for ${framework === 'react' ? 'React' : 'HTML'}.
+
+Install the Video.js skill: run \`${skillsCommand()}\` and follow the printed steps, including any required session reload. If you can't run commands, follow ${SKILLS_REPOSITORY_URL}. Use the skill for this migration.
+
+Read ${guide}, including its known gaps. Inspect the existing player and preserve its media URLs and required behavior. Identify any unsupported requirements before changing code.
+
+From the application root, run \`${installationCommand()}\` without flags to list installation options. Then run \`${init}\` with your chosen --media and --source-url for the existing content and playback requirements, --method for installation, and --preset, --skin, and --extensions for the UI and integrations. This prints the installation plan. Follow any version-mismatch notice. The agents skills and agents init commands print instructions; they do not install packages, edit files, or migrate the player.
+
+After package installation, read ${docsIndex} for documentation matching the installed version. For CDN installations or before the package is installed, use ${onlineDocsIndex} and the installation guide it links to.
+
+Implement the migration, then verify playback, captions, controls, and analytics on the project's supported browsers.`;
 ---
 
-<Aside type="tip" title="Migrate with a coding agent">
-  <P>
-    If your agent does not have the <A href={SKILLS_REPOSITORY_URL}>Video.js skill</A>, run{' '}
-    <Code>{skillsCommand()}</Code> and follow the printed installation and session-reload steps.
-  </P>
-  <P>
-    From your application's root, run <Code>{installationCommand()}</Code> to list installation options. Then request
-    a plan with <Code>--framework {framework}</Code> and <Code>--project existing</Code>. Choose:
-  </P>
-  <Ul>
-    <Li><Code>--media</Code> and <Code>--source-url</Code> for your existing content and playback requirements.</Li>
-    <Li><Code>--method</Code> for your installation method.</Li>
-    <Li><Code>--preset</Code>, <Code>--skin</Code>, and <Code>--extensions</Code> for your player UI and integrations.</Li>
-  </Ul>
-  <P>
-    Follow any version-mismatch notice. Both CLI commands
-    only print instructions; they do not install packages, edit files, or migrate your player.
-  </P>
-  <P>
-    After installing the package, read <Code class="break-all">{docsIndex}</Code> for documentation matching its version.
-    That file is unavailable before installation. For CDN installations or until the package is installed, use the <A href={onlineDocsIndex}>framework docs index</A>{' '}
-    and the <DocsLink slug="guides/installation">installation guide</DocsLink>. Keep your existing media URLs and required
-    behavior, check this guide's known gaps, and verify playback, captions, controls, and analytics on your supported browsers after migration.
-  </P>
-</Aside>
+<AgentPrompt prompt={prompt} />
