@@ -178,6 +178,10 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     attach(mediaElement: HTMLMediaElement): void {
+      if (mediaElement !== this.#signals.context.mediaElement.get()) {
+        this.#cancelPendingPlay();
+      }
+
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
     }

@@ -205,6 +205,10 @@ export function HlsBackgroundVideoMixin<Base extends Constructor<any>>(BaseClass
     // -------------------------------------------------------------------------
 
     attach(mediaElement: HTMLMediaElement): void {
+      if (mediaElement !== this.#signals.context.mediaElement.get()) {
+        this.#cancelPendingPlay();
+      }
+
       super.attach?.(mediaElement);
       // The one place the fixed behavior is stated. Muted and autoplay are what
       // let it start without a gesture, loop is the defining behavior, and

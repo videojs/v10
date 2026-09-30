@@ -26,7 +26,47 @@ import {
 } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
+import { HlsAudioAdapterCore } from '../../hls-audio/mixin';
+import { HlsBackgroundVideoAdapterCore } from '../../hls-background-video/mixin';
 import { HlsVideoAdapterCore, HlsVideoMixin } from '../mixin';
+
+describe.each([
+  { name: 'HlsVideoAdapterCore', Adapter: HlsVideoAdapterCore },
+  { name: 'HlsAudioAdapterCore', Adapter: HlsAudioAdapterCore },
+  { name: 'HlsBackgroundVideoAdapterCore', Adapter: HlsBackgroundVideoAdapterCore },
+])('$name', ({ Adapter }) => {
+  it('cancels a pending play retry when the element is replaced and detached', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => {}))
+    );
+
+    const media = new Adapter();
+    const first = document.createElement('video');
+    const second = document.createElement('video');
+    const play = vi
+      .spyOn(first, 'play')
+      .mockRejectedValueOnce(new DOMException('No source yet', 'NotSupportedError'))
+      .mockResolvedValue(undefined);
+
+    try {
+      media.attach(first);
+      media.src = 'https://example.com/v.m3u8';
+      media.play().catch(() => {});
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(play).toHaveBeenCalledTimes(1);
+
+      media.attach(second);
+      media.detach();
+      first.dispatchEvent(new Event('loadstart'));
+
+      expect(play).toHaveBeenCalledTimes(1);
+    } finally {
+      media.destroy();
+      vi.unstubAllGlobals();
+    }
+  });
+});
 
 describe('HlsVideoAdapterCore', () => {
   // Prevent real network calls from engines that auto-trigger resolution
