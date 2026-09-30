@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import { RAW_MEDIA } from '../../core/unwrap-media';
 import { CustomMediaElement } from '../custom-media-element';
 import { HTMLVideoAdapter } from '../html-video-adapter';
 import { getMediaAdapter, getMediaElement } from '../utils/media-target';
 
 class TestVideoAdapter extends HTMLVideoAdapter {}
+
+/** A stand-in for the player's facade: answers `RAW_MEDIA` with `raw` and shadows everything else. */
+function createFacade<T extends object>(raw: T, shadow: Record<PropertyKey, unknown> = {}): T {
+  return new Proxy(raw, {
+    get: (target, prop) => (prop === RAW_MEDIA ? target : (shadow[prop] ?? Reflect.get(target, prop))),
+  });
+}
 
 customElements.define('test-media-target-video', CustomMediaElement('video', TestVideoAdapter));
 
@@ -19,6 +27,12 @@ describe('getMediaAdapter', () => {
     const element = document.createElement('test-media-target-video') as HTMLElement & { adapter: TestVideoAdapter };
 
     expect(getMediaAdapter(element)).toBe(element.adapter);
+  });
+
+  it('sees through a player facade', () => {
+    const adapter = new TestVideoAdapter();
+
+    expect(getMediaAdapter(createFacade(adapter))).toBe(adapter);
   });
 
   it('returns null for a native element or an unrelated value', () => {
@@ -50,6 +64,23 @@ describe('getMediaElement', () => {
     adapter.attach(video);
 
     expect(getMediaElement(adapter)).toBe(video);
+  });
+
+  it('returns the native element behind a player facade, not the facade', () => {
+    const video = document.createElement('video');
+    const facade = createFacade(video);
+
+    expect(facade).toBeInstanceOf(HTMLVideoElement);
+    expect(getMediaElement(facade)).toBe(video);
+  });
+
+  it('ignores a target an override supplies on the facade', () => {
+    const adapter = new TestVideoAdapter();
+    const video = document.createElement('video');
+
+    adapter.attach(video);
+
+    expect(getMediaElement(createFacade(adapter, { target: null }))).toBe(video);
   });
 
   it('returns null for media without a native element behind it', () => {
