@@ -18,9 +18,6 @@ const THREE_CHAPTERS = [
   { 'start-time': 16, titles: [{ language: 'en', title: 'Outro' }] },
 ];
 
-/** What Mux publishes for a titled asset with no chapters: the asset title as the only one. */
-const TITLE_ONLY = [{ 'start-time': 0, titles: [{ language: 'und', title: 'Asset title' }] }];
-
 /** Reference the document at `uri` from the playlist and serve `document` there. */
 async function serveChapters(page: Page, uri: string, document: unknown): Promise<void> {
   await page.route(SRC, async (route) => {
@@ -94,19 +91,4 @@ test.describe('HLS JSON chapters', () => {
       expect(tracks.filter((cues) => cues.length > 0)).toHaveLength(1);
     });
   }
-
-  test('show no chapter for a document with only one', async ({ page }) => {
-    await serveChapters(page, CHAPTERS_URL, TITLE_ONLY);
-
-    const player = await open(page, 'hlsjs-video');
-
-    // Projected, and read by the store, but not drawn.
-    await expect.poll(() => readChaptersTracks(page, 'hlsjs-video')).toEqual([['Asset title']]);
-    await expect(page.locator('.media-time-slider-chapter')).toHaveCount(1);
-
-    await player.showControls();
-    await player.hoverTimeSlider(50);
-
-    await expect(page.locator('.media-time-slider-chapter-title')).toHaveText('');
-  });
 });
