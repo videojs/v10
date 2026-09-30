@@ -32,6 +32,14 @@ Install Video.js and choose a <DocsLink slug="guides/presets">preset</DocsLink> 
 <FrameworkCase frameworks={["html"]}>
 Remove Media Chrome imports and CDN scripts from the document before loading Video.js HTML, then reload the page. Both libraries register names such as `media-play-button`. A custom-element name can only have one definition per document; Video.js leaves an existing definition in place. This also applies to Media Chrome registrations pulled in by another component. If you need both libraries during migration, isolate them in separate documents, such as an iframe.
 
+For a page without a bundler, load the CDN video preset. It registers the player, UI elements, icons, and i18n element used below:
+
+```html
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+```
+
+For a bundler installation:
+
 ```bash
 npm install @videojs/html
 ```
@@ -66,6 +74,8 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 ```
 
 <FrameworkCase frameworks={["html"]}>
+With a bundler, use the JavaScript imports below. For the CDN, skip those imports: the video preset already registers these elements. Use the HTML and CSS from the other tabs.
+
 <TabsRoot client:idle>
   <TabsList client:idle label="Video.js HTML player source">
     <Tab client:idle value="javascript" initial>JavaScript</Tab>
@@ -311,11 +321,15 @@ Media Chrome toggles keyboard shortcuts with `nohotkeys` and `hotkeys`. Video.js
 ```tsx
 import { Hotkey } from '@videojs/react';
 
-<Hotkey keys="Space" action="togglePaused" />
-<Hotkey keys="m" action="toggleMuted" />
-<Hotkey keys="ArrowRight" action="seekStep" value={5} />
-<Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+<>
+  <Hotkey keys="Space" action="togglePaused" />
+  <Hotkey keys="m" action="toggleMuted" />
+  <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+  <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+</>
 ```
+
+Render these components inside the player's `Container`, or edit the matching declarations in installed skin source. When editing skin source, change its existing hotkeys.
 
 To drop a shortcut, remove its component or pass `disabled`. There's no global "all hotkeys off" switch; omit the components you don't need.
 </FrameworkCase>
@@ -341,10 +355,14 @@ To drop a shortcut, remove its element or add `disabled`. There's no global "all
 ```tsx
 import { Gesture } from '@videojs/react';
 
-<Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
-<Gesture type="doubletap" action="seekStep" value={-10} region="left" />
-<Gesture type="doubletap" action="seekStep" value={10} region="right" />
+<>
+  <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+  <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
+  <Gesture type="doubletap" action="seekStep" value={10} region="right" />
+</>
 ```
+
+Render these components inside the player's `Container`, or edit the matching declarations in installed skin source. Avoid adding duplicate gestures to a packaged skin.
 
 Remove a component or pass `disabled` to turn a gesture off.
 </FrameworkCase>
@@ -416,7 +434,7 @@ Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slide
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
+Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. With a bundler, import `@videojs/html/icons/element` to use `<media-icon>`; the CDN video preset already registers it. See the example in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -436,16 +454,16 @@ React buttons do not include visible content either. Use a button's `render` pro
 <FrameworkCase frameworks={["react"]}>
 Compound parts are namespaced under their component, such as `TimeSlider.Track`. See the <DocsLink slug="guides/ui-components">UI components</DocsLink> concept for the full set.
 
-`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster.Root` owns its state and `Poster.Image` accepts image attributes such as `alt`, `srcSet`, and `sizes`:
+`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster.Root` owns its state and `Poster.Image` accepts image attributes such as `alt`. An authored `srcSet` selects its own image sources and overrides the player poster URL; use it with `sizes` when supplying responsive images.
+
+Inside your custom player's container, render the poster beside its media and controls:
 
 ```tsx
-<VideoPlayer poster="/poster.jpg">
-  <Container>
-    <Poster.Root>
-      <Poster.Image alt="" />
-    </Poster.Root>
-  </Container>
-</VideoPlayer>
+import { Poster } from '@videojs/react';
+
+<Poster.Root>
+  <Poster.Image alt="" />
+</Poster.Root>
 ```
 </FrameworkCase>
 
@@ -543,7 +561,7 @@ function FullscreenShortcut() {
 Keep native media calls such as `video.play()` and assignments such as `video.currentTime = 30`. Video.js updates player state from media events. Set `src` on the media component to change content, and replace the component when the source needs a different playback engine.
 
 <FrameworkCase frameworks={["react"]}>
-Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+For video-backed media, a `ref` reaches the rendered `HTMLVideoElement`. YouTube and Vimeo refs reach an iframe; use `useMedia()` inside the player for their media methods. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 ## Known gaps
