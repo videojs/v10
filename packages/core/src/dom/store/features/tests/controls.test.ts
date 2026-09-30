@@ -525,6 +525,8 @@ describe('controlsFeature', () => {
       container!.dispatchEvent(new Event('pointermove'));
       flush();
 
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
       // Resume playback
       Object.defineProperty(video, 'paused', { value: false, configurable: true });
       video.dispatchEvent(new Event('play'));
@@ -532,10 +534,17 @@ describe('controlsFeature', () => {
 
       expect(store.state.controlsVisible).toBe(true);
 
-      // After idle delay, should hide
-      vi.advanceTimersByTime(IDLE_DELAY);
+      // Playback must restart the deadline established by pointer activity.
+      vi.advanceTimersByTime(500);
       flush();
 
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(false);
     });
   });
@@ -881,9 +890,10 @@ describe('controlsFeature', () => {
       detach();
       flush();
 
-      // Pause after detach — should not affect state
-      Object.defineProperty(video, 'paused', { value: true, configurable: true });
-      video.dispatchEvent(new Event('pause'));
+      // A leaked play listener would schedule a new idle timer after the reset.
+      Object.defineProperty(video, 'paused', { value: false, configurable: true });
+      video.dispatchEvent(new Event('play'));
+      vi.advanceTimersByTime(IDLE_DELAY);
       flush();
 
       // State was reset to initial on detach

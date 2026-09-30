@@ -8,27 +8,40 @@ import { createMockVideo } from '../../../tests/test-helpers';
 import { selectFullscreen } from '../../selectors';
 import { fullscreenFeature } from '../fullscreen';
 
+const presentationProperties = [
+  'fullscreenEnabled',
+  'fullscreenElement',
+  'pictureInPictureEnabled',
+  'pictureInPictureElement',
+  'exitFullscreen',
+  'exitPictureInPicture',
+] as const;
+let originalProperties: (PropertyDescriptor | undefined)[];
+let originalWebkitMethod: PropertyDescriptor | undefined;
+
+beforeEach(() => {
+  originalProperties = presentationProperties.map((key) => Object.getOwnPropertyDescriptor(document, key));
+  originalWebkitMethod = Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype, 'webkitSetPresentationMode');
+});
+
+afterEach(() => {
+  for (const [index, key] of presentationProperties.entries()) {
+    const original = originalProperties[index];
+
+    if (original) Object.defineProperty(document, key, original);
+    else Reflect.deleteProperty(document, key);
+  }
+
+  if (originalWebkitMethod) {
+    Object.defineProperty(HTMLVideoElement.prototype, 'webkitSetPresentationMode', originalWebkitMethod);
+  } else {
+    Reflect.deleteProperty(HTMLVideoElement.prototype, 'webkitSetPresentationMode');
+  }
+
+  vi.unstubAllGlobals();
+});
+
 describe('fullscreenFeature', () => {
-  let originalFullscreenEnabled: boolean | undefined;
-
-  beforeEach(() => {
-    originalFullscreenEnabled = document.fullscreenEnabled;
-  });
-
-  afterEach(() => {
-    Object.defineProperty(document, 'fullscreenEnabled', {
-      value: originalFullscreenEnabled,
-      writable: true,
-      configurable: true,
-    });
-    Object.defineProperty(document, 'fullscreenElement', {
-      value: null,
-      writable: true,
-      configurable: true,
-    });
-    vi.unstubAllGlobals();
-  });
-
   describe('attach', () => {
     it('exposes the fullscreen slice name for selectors', () => {
       expect(fullscreenFeature.name).toBe('fullscreen');
@@ -390,9 +403,12 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const originalExit = document.exitPictureInPicture;
+      let resolveExit!: () => void;
+      const exit = new Promise<void>((resolve) => {
+        resolveExit = resolve;
+      });
 
-      document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
+      document.exitPictureInPicture = vi.fn(() => exit);
 
       const video = createMockVideo();
       const container = document.createElement('div');
@@ -409,17 +425,18 @@ describe('fullscreenFeature', () => {
 
       store.attach({ media: video, container });
 
-      await store.requestFullscreen();
+      const request = store.requestFullscreen();
 
-      expect(document.exitPictureInPicture).toHaveBeenCalled();
-      expect(container.requestFullscreen).toHaveBeenCalled();
+      try {
+        expect(document.exitPictureInPicture).toHaveBeenCalledOnce();
+        await Promise.resolve();
+        expect(container.requestFullscreen).not.toHaveBeenCalled();
+      } finally {
+        resolveExit();
+      }
 
-      document.exitPictureInPicture = originalExit;
-      Object.defineProperty(document, 'pictureInPictureElement', {
-        value: null,
-        writable: true,
-        configurable: true,
-      });
+      await request;
+      expect(container.requestFullscreen).toHaveBeenCalledOnce();
     });
 
     it('requestFullscreen() exits PiP first if active', async () => {
@@ -488,26 +505,6 @@ describe('fullscreenFeature', () => {
 });
 
 describe('fullscreenFeature with HTMLVideoAdapter', () => {
-  let originalFullscreenEnabled: boolean | undefined;
-
-  beforeEach(() => {
-    originalFullscreenEnabled = document.fullscreenEnabled;
-  });
-
-  afterEach(() => {
-    Object.defineProperty(document, 'fullscreenEnabled', {
-      value: originalFullscreenEnabled,
-      writable: true,
-      configurable: true,
-    });
-    Object.defineProperty(document, 'fullscreenElement', {
-      value: null,
-      writable: true,
-      configurable: true,
-    });
-    vi.unstubAllGlobals();
-  });
-
   describe('attach', () => {
     it('syncs initial state on attach', () => {
       const video = createMockVideo();
@@ -671,6 +668,7 @@ describe('fullscreenFeature with HTMLVideoAdapter', () => {
       await store.requestFullscreen();
 
       expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('fullscreen');
+      expect(vi.mocked(video.webkitSetPresentationMode).mock.contexts).toEqual([video]);
     });
 
     it('exitFullscreen() calls document.exitFullscreen', async () => {

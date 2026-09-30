@@ -306,6 +306,9 @@ describe('orientationLockFeature', () => {
 
     const store = createOrientationStore();
 
+    store.state.setOrientationLockType('portrait');
+    expect(store.state.orientationLockType).toBe('portrait');
+
     store.state.setOrientationLockType('' as ScreenOrientationLockType);
 
     expect(store.state.orientationLockType).toBe('landscape');

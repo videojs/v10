@@ -173,8 +173,16 @@ describe('timeFeature', () => {
         store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(45);
+        let settled = false;
+
+        void resultPromise.then(() => {
+          settled = true;
+        });
 
         expect(video.currentTime).toBe(45);
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(settled).toBe(false);
 
         // Simulate browser firing seeked event
         video.dispatchEvent(new Event('seeked'));

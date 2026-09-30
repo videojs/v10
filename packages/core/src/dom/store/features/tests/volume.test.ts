@@ -27,8 +27,7 @@ describe('volumeFeature', () => {
 
       store.attach({ media: video, container: null });
 
-      // Should be 'available' or 'unsupported' based on browser capability
-      expect(['available', 'unsupported']).toContain(store.state.volumeAvailability);
+      expect(store.state.volumeAvailability).toBe('available');
       expect(store.state.mutedAvailability).toBe('available');
     });
 

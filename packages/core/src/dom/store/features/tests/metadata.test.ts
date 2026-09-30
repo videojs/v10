@@ -165,7 +165,7 @@ describe('metadataFeature', () => {
     store.attach(target(unsupported));
 
     expect(store.title).toBe('');
-    expect(addEventListener).not.toHaveBeenCalledWith('contentdatachange', expect.anything());
+    expect(addEventListener.mock.calls.map(([type]) => type)).not.toContain('contentdatachange');
   });
 
   it('takes the title under another name in markup, where `title` is the tooltip', () => {

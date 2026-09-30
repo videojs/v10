@@ -16,8 +16,8 @@ function enablePictureInPicture() {
 }
 
 /**
- * A video element as a browser that supports picture-in-picture presents one. happy-dom implements neither the method
- * nor the property, so a bare element reads as media that cannot enter picture-in-picture at all.
+ * A video element as a browser that supports picture-in-picture presents one. jsdom implements neither the method nor
+ * the property, so a bare element reads as media that cannot enter picture-in-picture at all.
  */
 function createPipCapableVideo(): HTMLVideoElement {
   const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
@@ -26,26 +26,40 @@ function createPipCapableVideo(): HTMLVideoElement {
   return video;
 }
 
+const presentationProperties = [
+  'fullscreenEnabled',
+  'fullscreenElement',
+  'pictureInPictureEnabled',
+  'pictureInPictureElement',
+  'exitFullscreen',
+  'exitPictureInPicture',
+] as const;
+let originalProperties: (PropertyDescriptor | undefined)[];
+let originalWebkitMethod: PropertyDescriptor | undefined;
+
+beforeEach(() => {
+  originalProperties = presentationProperties.map((key) => Object.getOwnPropertyDescriptor(document, key));
+  originalWebkitMethod = Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype, 'webkitSetPresentationMode');
+});
+
+afterEach(() => {
+  for (const [index, key] of presentationProperties.entries()) {
+    const original = originalProperties[index];
+
+    if (original) Object.defineProperty(document, key, original);
+    else Reflect.deleteProperty(document, key);
+  }
+
+  if (originalWebkitMethod) {
+    Object.defineProperty(HTMLVideoElement.prototype, 'webkitSetPresentationMode', originalWebkitMethod);
+  } else {
+    Reflect.deleteProperty(HTMLVideoElement.prototype, 'webkitSetPresentationMode');
+  }
+
+  vi.unstubAllGlobals();
+});
+
 describe('pipFeature', () => {
-  let originalPictureInPictureEnabled: boolean | undefined;
-
-  beforeEach(() => {
-    originalPictureInPictureEnabled = document.pictureInPictureEnabled;
-  });
-
-  afterEach(() => {
-    Object.defineProperty(document, 'pictureInPictureEnabled', {
-      value: originalPictureInPictureEnabled,
-      writable: true,
-      configurable: true,
-    });
-    Object.defineProperty(document, 'pictureInPictureElement', {
-      value: null,
-      writable: true,
-      configurable: true,
-    });
-  });
-
   describe('attach', () => {
     it('syncs initial state on attach', () => {
       const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
@@ -312,9 +326,12 @@ describe('pipFeature', () => {
 
   describe('transitions', () => {
     it('requestPictureInPicture() exits fullscreen first if active', async () => {
-      const originalExit = document.exitFullscreen;
+      let resolveExit!: () => void;
+      const exit = new Promise<void>((resolve) => {
+        resolveExit = resolve;
+      });
 
-      document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
+      document.exitFullscreen = vi.fn(() => exit);
 
       const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
@@ -332,12 +349,18 @@ describe('pipFeature', () => {
 
       store.attach({ media: video, container });
 
-      await store.requestPictureInPicture();
+      const request = store.requestPictureInPicture();
 
-      expect(document.exitFullscreen).toHaveBeenCalled();
-      expect(video.requestPictureInPicture).toHaveBeenCalled();
+      try {
+        expect(document.exitFullscreen).toHaveBeenCalledOnce();
+        await Promise.resolve();
+        expect(video.requestPictureInPicture).not.toHaveBeenCalled();
+      } finally {
+        resolveExit();
+      }
 
-      document.exitFullscreen = originalExit;
+      await request;
+      expect(video.requestPictureInPicture).toHaveBeenCalledOnce();
     });
 
     it('requestPictureInPicture() does not exit fullscreen if not active', async () => {
@@ -364,25 +387,6 @@ describe('pipFeature', () => {
 });
 
 describe('pipFeature with HTMLVideoAdapter', () => {
-  let originalPictureInPictureEnabled: boolean | undefined;
-
-  beforeEach(() => {
-    originalPictureInPictureEnabled = document.pictureInPictureEnabled;
-  });
-
-  afterEach(() => {
-    Object.defineProperty(document, 'pictureInPictureEnabled', {
-      value: originalPictureInPictureEnabled,
-      writable: true,
-      configurable: true,
-    });
-    Object.defineProperty(document, 'pictureInPictureElement', {
-      value: null,
-      writable: true,
-      configurable: true,
-    });
-  });
-
   describe('attach', () => {
     it('syncs initial state on attach', () => {
       const video = createMockVideo();
@@ -521,6 +525,7 @@ describe('pipFeature with HTMLVideoAdapter', () => {
       await store.requestPictureInPicture();
 
       expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('picture-in-picture');
+      expect(vi.mocked(video.webkitSetPresentationMode).mock.contexts).toEqual([video]);
       expect(video.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
