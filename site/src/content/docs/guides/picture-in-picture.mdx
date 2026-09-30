@@ -69,6 +69,8 @@ Picture-in-picture and fullscreen are exclusive: requesting one exits the other 
 
 ## Availability and constraints
 
+Video.js reports PiP as `'unsupported'` in Safari standalone web apps when the standard API is exposed. The built-in button hides in that case. Check `pipAvailability` in installed web apps as well as browser tabs.
+
 <FrameworkCase frameworks={["react"]}>
 - Show picture-in-picture controls only when `pipAvailability` is `'available'`. PiPButton handles this for you.
 - Requests must come from a user gesture; browsers reject requests outside one.

@@ -190,7 +190,7 @@ Enable inline playback with the `playsinline` attribute on the media element.
 
 ### The video starts without sound
 
-Expected with muted autoplay. Let the user unmute through a <DocsLink slug="reference/components/mute-button">Mute button</DocsLink> or <DocsLink slug="reference/components/volume-slider">Volume slider</DocsLink> rather than unmuting programmatically; programmatic volume changes are unsupported on some platforms.
+Expected with muted autoplay. Give the user a <DocsLink slug="reference/components/mute-button">Mute button</DocsLink> to unmute through an explicit action. Unmuting without a user action can cause the browser to pause or block playback. A <DocsLink slug="reference/components/volume-slider">Volume slider</DocsLink> can also unmute where volume control is supported; it hides on platforms such as iOS Safari.
 
 ## Related components
 
@@ -208,5 +208,6 @@ Expected with muted autoplay. Let the user unmute through a <DocsLink slug="refe
 
 ## Related guides
 
+- <DocsLink slug="guides/background-video">Add a decorative background video</DocsLink>
 - <DocsLink slug="guides/features">Features</DocsLink>
 - <DocsLink slug="guides/browser-support">Browser support</DocsLink>

@@ -98,6 +98,10 @@ The dialog owns presentation, not recovery. Decide the next step in your applica
 A `src` in page markup can start loading before the player script runs. To capture startup failures, omit `src` from the markup and assign it after the player imports and attachment. Check `player.store.target` to confirm attachment; if it is absent, wait for a store notification. When adopting an already loaded element, check `video.error` once and show an application message if an error is present.
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
+Server-rendered `<Video src={...}>` can start loading before hydration and player attachment. To capture startup failures, assign the source only after attachment, or check the native video's `error` once through a ref after attachment and show an application message if it is already set.
+</FrameworkCase>
+
 ## Common variations
 
 ### Offer an application-specific next step
