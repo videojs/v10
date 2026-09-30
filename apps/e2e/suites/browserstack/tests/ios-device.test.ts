@@ -30,10 +30,16 @@ describe('getIosDevice', () => {
     });
   });
 
-  it('matches a major capability against a detailed API version', async () => {
+  it('matches an exact minimum against a detailed API version', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json([iphone('iPhone 14', '16.4')])));
 
-    expect(await getIosDevice('16', 'user', 'key')).toBe('iPhone 14');
+    expect(await getIosDevice('16.4', 'user', 'key')).toBe('iPhone 14');
+  });
+
+  it('rejects a different minor version when the API provides it', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json([iphone('iPhone 13', '16.3')])));
+
+    await expect(getIosDevice('16.4', 'user', 'key')).rejects.toThrow('no real iPhone');
   });
 
   it('fails rather than substituting a newer OS', async () => {

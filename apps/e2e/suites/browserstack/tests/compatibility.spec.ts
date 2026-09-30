@@ -12,7 +12,6 @@ for (const target of PAGES) {
     const player = new PlayerPage(page);
 
     await page.goto(target.path);
-    await player.waitForMediaReady();
 
     const userAgent = await page.evaluate(() => navigator.userAgent);
 
@@ -29,6 +28,8 @@ for (const target of PAGES) {
     if (caps.realMobile) {
       expect(userAgent).toContain(`OS ${versions.ios.replaceAll('.', '_')}`);
     }
+
+    await player.waitForMediaReady();
 
     await expect
       .poll(async () => {
@@ -65,7 +66,9 @@ for (const target of PAGES) {
     // Unsupported H.264 or rejected playback must fail here.
     await player.play();
     await player.waitForPlayback(0.5);
-    await player.pause();
+    await player.playButton.dispatchEvent('click');
+    // Poll the value directly: WebKit's pinned server lacks the newer attribute-value matcher.
+    await expect.poll(() => player.playButton.getAttribute('data-paused'), { timeout: 5_000 }).toBe('');
     await player.seekTo(25);
     expect(await player.getCurrentTime()).toBeGreaterThan(1);
 

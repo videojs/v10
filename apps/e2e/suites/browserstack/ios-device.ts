@@ -21,7 +21,7 @@ export async function getIosDevice(version: string, username: string, key: strin
   const device = devices
     .flatMap((entry: Device) =>
       entry.os.toLowerCase() === 'ios' &&
-      entry.os_version.split('.')[0] === major &&
+      (entry.os_version === version || entry.os_version === major) &&
       (entry.real_mobile === true || entry.real_mobile === 'true') &&
       entry.device?.startsWith('iPhone')
         ? [entry.device]
