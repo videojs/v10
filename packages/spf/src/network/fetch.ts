@@ -141,7 +141,7 @@ export const fetchResolvableText: FetchText = async (addressable, options) => {
  *
  * Sibling to {@link fetchResolvableStream}, which is single-stage (calls `fetch` only when iteration starts). Pick
  * `fetchStream` when "when did the fetch start" needs to be observable separately from "when did the body begin
- * arriving."
+ * arriving." Non-OK responses reject before body iteration.
  */
 export type FetchOptions = RequestInit & ChunkedStreamIterableOptions;
 
@@ -150,6 +150,8 @@ export type FetchBytes = (addressable: Resource, options?: FetchOptions) => Prom
 export async function fetchStream(addressable: Resource, options?: FetchOptions): Promise<AsyncIterable<Uint8Array>> {
   const { minChunkSize, ...fetchOptions } = options ?? {};
   const response = await fetchResolvable(addressable, fetchOptions);
+  if (!response.ok) throw new Error(`fetchStream: ${response.status} ${response.statusText} for ${addressable.url}`);
+
   if (!response.body) throw new Error('Response has no body');
 
   return new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
@@ -171,20 +173,13 @@ export function createTrackedFetch(initial: BandwidthState, onSample: (next: Ban
   let state = initial;
 
   return async (addressable, options) => {
-    const { minChunkSize, ...fetchOptions } = options ?? {};
-    const response = await fetchResolvable(addressable, fetchOptions);
-    if (!response.body) throw new Error('Response has no body');
-
-    const body = response.body;
+    const body = await fetchStream(addressable, options);
 
     return {
       [Symbol.asyncIterator]: async function* () {
         let chunkStart = performance.now();
 
-        for await (const chunk of new ChunkedStreamIterable(
-          body,
-          ...(minChunkSize !== undefined ? [{ minChunkSize }] : [])
-        )) {
+        for await (const chunk of body) {
           const elapsed = performance.now() - chunkStart;
 
           state = sampleBandwidth(state, elapsed, chunk.byteLength);
