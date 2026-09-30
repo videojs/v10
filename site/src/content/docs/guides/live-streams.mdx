@@ -107,7 +107,9 @@ const { Player } = createPlayer({ features: [...liveVideoFeatures, streamTypeFea
 import { createPlayer, streamTypeFeature } from '@videojs/html';
 import { liveVideoFeatures } from '@videojs/html/live-video';
 
-const { ProviderMixin } = createPlayer({ features: [...liveVideoFeatures, streamTypeFeature] });
+const { PlayerElement: LivePlayer } = createPlayer({ features: [...liveVideoFeatures, streamTypeFeature] });
+
+customElements.define('live-player', LivePlayer);
 ```
 
 </FrameworkCase>
