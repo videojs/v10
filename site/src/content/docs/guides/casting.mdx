@@ -93,6 +93,14 @@ AirPlay uses WebKit's presentation APIs. Google Cast uses a sender and receiver:
 
 While connected, playback actions — play, pause, seek, volume — proxy to the remote device, and player state keeps reflecting the remote session. Local playback is suspended.
 
+<FrameworkCase frameworks={["react"]}>
+Control playback and read its state through the player while casting: use the built-in controls or the <DocsLink slug="reference/api/player-store">store actions and state</DocsLink> from `usePlayer`. Don't call methods on the media element or listen for its events to drive or track a session.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Control playback and read its state through the player while casting: use the built-in controls or the <DocsLink slug="reference/api/player-store">store actions and state</DocsLink> on the player element's `store`. Don't call methods on the media element or listen for its events to drive or track a session.
+</FrameworkCase>
+
 For a custom control, call `promptRemotePlayback()` directly from the click handler and catch its promise. It rejects when no remote route exists or the browser refuses the request. A canceled Google Cast picker can also resolve without connecting, so show success only when `remotePlaybackState` is `'connected'`. The built-in buttons handle the request for you.
 
 <FrameworkCase frameworks={["react"]}>
@@ -143,11 +151,11 @@ By default, Video.js sends the current source to Google's Default Media Receiver
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Use `src` and `contentType` when the receiver should load a different source than the browser. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">GoogleCast reference</DocsLink> for the exact option types.
+Use `src` and `contentType` when the receiver should load a different source than the browser. A YouTube or Vimeo embed needs `src`: the receiver can't play the embed itself, so without it nothing is sent to the receiver. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">GoogleCast reference</DocsLink> for the exact option types.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Use `src` and `contentType` when the receiver should load a different source than the browser. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">`<google-cast>` reference</DocsLink> for the exact option types and attribute-to-property mapping.
+Use `src` and `contentType` when the receiver should load a different source than the browser. A YouTube or Vimeo embed needs `src`: the receiver can't play the embed itself, so without it nothing is sent to the receiver. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">`<google-cast>` reference</DocsLink> for the exact option types and attribute-to-property mapping.
 </FrameworkCase>
 
 ### Read connection state
@@ -169,6 +177,10 @@ The Cast button hides when the route is unsupported. In Chromium with no Cast de
 ### Casting starts but the device shows an error
 
 The receiver cannot fetch the media. Confirm the source URL is reachable from the device and served with CORS headers, including caption tracks.
+
+### Custom UI shows local playback while casting
+
+The code reads or controls the media element directly. Read playback state from the player store and call its actions instead; only the player reflects the remote session.
 
 ### The UI freezes on "connecting"
 
