@@ -244,10 +244,10 @@ describe('documentedStability', () => {
 });
 
 describe('tagChange', () => {
-  it('accepts stronger tags for internal exports', () => {
+  it('accepts @internal or @deprecated for internal exports, and replaces @experimental', () => {
     expect(tagChange(new Set(), 'internal')).toEqual({ add: 'internal', remove: [] });
-    expect(tagChange(new Set(['experimental']), 'internal')).toBeUndefined();
     expect(tagChange(new Set(['deprecated']), 'internal')).toBeUndefined();
+    expect(tagChange(new Set(['experimental']), 'internal')).toEqual({ add: 'internal', remove: ['experimental'] });
   });
 
   it('replaces @internal with @experimental for exports documented on unstable pages', () => {
@@ -277,6 +277,9 @@ describe('tagViolation', () => {
   it('reports a tag that contradicts the page', () => {
     expect(tagViolation({ declarationTags: [new Set(['internal'])] }, 'stable')).toBe(
       'is documented on a reference page but tagged @internal — remove the tag'
+    );
+    expect(tagViolation({ declarationTags: [new Set(['experimental'])] }, 'internal')).toBe(
+      'is neither documented nor referenced but tagged @experimental — use @internal'
     );
     expect(tagViolation({ declarationTags: [new Set(['internal'])] }, 'experimental')).toBe(
       'is documented on an unstable page but tagged @internal — use @experimental'
@@ -367,6 +370,18 @@ describe('applyTagChange', () => {
         remove: ['internal'],
       })
     ).toBe('/**\n * Does foo.\n *\n * @experimental\n * @see bar\n */\nexport const foo = 1;\n');
+    expect(
+      edit('/** @experimental */\nexport const foo = 1;\n', 'foo', { add: 'internal', remove: ['experimental'] })
+    ).toBe('/** @internal */\nexport const foo = 1;\n');
+  });
+
+  it('creates a JSDoc block above directive comments so they still apply to the declaration', () => {
+    expect(tag('// @ts-expect-error -- untyped\nexport const foo: string = 1;\n', 'foo')).toBe(
+      '/** @internal */\n// @ts-expect-error -- untyped\nexport const foo: string = 1;\n'
+    );
+    expect(tag('// Explains foo.\nexport const foo = 1;\n', 'foo')).toBe(
+      '// Explains foo.\n/** @internal */\nexport const foo = 1;\n'
+    );
   });
 });
 
@@ -393,7 +408,7 @@ describe('fixSourceFile', () => {
     return readFileSync(file, 'utf8');
   }
 
-  it('tags every overload of a function', () => {
+  it('tags every overload signature of a function, but not its implementation', () => {
     const file = join(
       fixture({
         'overloads.ts': '/** One. */\nexport function foo(): void;\nexport function foo(a?: number): void {}\n',
@@ -401,9 +416,9 @@ describe('fixSourceFile', () => {
       'overloads.ts'
     );
 
-    expect(fixSourceFile(file, new Map([['foo', 'internal']]))).toBe(2);
+    expect(fixSourceFile(file, new Map([['foo', 'internal']]))).toBe(1);
     expect(readFileSync(file, 'utf8')).toBe(
-      '/**\n * One.\n *\n * @internal\n */\nexport function foo(): void;\n/** @internal */\nexport function foo(a?: number): void {}\n'
+      '/**\n * One.\n *\n * @internal\n */\nexport function foo(): void;\nexport function foo(a?: number): void {}\n'
     );
   });
 
@@ -580,18 +595,39 @@ describe('resolveStabilities', () => {
       'export interface CoreOptions { label: string; nested: CoreOption }',
       'export interface CoreOption { value: number }',
       'export interface Secret { value: number }',
+      'export interface Hidden { value: number }',
       'export interface Unreached { value: number }',
+      'export interface Contract { value: number }',
+      'export interface Bound { value: number }',
+      'export interface Fallback { value: number }',
+      'export type Aliased = { value: number }',
+      'export declare class AdapterCore { src: string }',
+      'export interface MixinOptions { value: number }',
       'export interface PreviewState { value: number }',
       'export declare class BaseCore { base: number }',
       'export declare namespace ButtonCore { export type Props = { disabled: boolean } }',
     ].join('\n'),
     'packages/react/dist/index.d.ts': [
-      "import { BaseCore, ButtonCore, CoreOptions, CoreState, PreviewState, Secret } from '../../core/dist/index.js';",
+      'import {',
+      '  AdapterCore, Aliased, BaseCore, Bound, ButtonCore, Contract, CoreOptions, CoreState, Fallback, Hidden,',
+      '  MixinOptions, PreviewState, Secret,',
+      "} from '../../core/dist/index.js';",
       // Like bundled output: `export {}` stops a declaration file exporting every top-level declaration.
       'export {};',
-      'interface Helper { state: Secret }',
+      'interface Helper {',
+      '  state: Secret;',
+      '  /** @internal */',
+      '  hidden: Hidden;',
+      '}',
       'export interface PlayButtonProps { state: CoreState; core: ButtonCore.Props }',
       'export interface PlayButtonState extends Helper {}',
+      'export interface PlayButtonContract extends Contract {}',
+      'export declare class PlayButtonController implements Contract {}',
+      'export type PlayButtonAlias = Aliased;',
+      'export declare function usePlayButtonValue<T extends Bound = Fallback>(value: T): T;',
+      'type Constructor<T> = { new (): T; options: MixinOptions };',
+      'declare const HlsVideo_base: Constructor<AdapterCore>;',
+      'export declare class HlsVideo extends HlsVideo_base {}',
       'export declare class PlayButtonElement extends BaseCore {',
       '  private secret: Secret;',
       '  protected guarded: Secret;',
@@ -607,7 +643,18 @@ describe('resolveStabilities', () => {
     '@videojs/core': 'packages/core/dist/index.d.ts',
     '@videojs/react': 'packages/react/dist/index.d.ts',
   });
-  const docs = coverage({ stable: new Set(['PlayButton', 'usePlayButton']), unstable: new Set(['DashVideo']) });
+  const docs = coverage({
+    stable: new Set([
+      'PlayButton',
+      'usePlayButton',
+      'PlayButtonAlias',
+      'PlayButtonContract',
+      'PlayButtonController',
+      'usePlayButtonValue',
+      'HlsVideo',
+    ]),
+    unstable: new Set(['DashVideo']),
+  });
 
   function resolve(options?: { heritage?: boolean }): Record<string, string> {
     const resolved = resolveStabilities(exports, docs, options);
@@ -641,8 +688,21 @@ describe('resolveStabilities', () => {
     });
   });
 
-  it('ignores hidden members, non-exported helpers, and exports nothing names', () => {
-    expect(resolve()).toMatchObject({ Secret: 'internal', Unreached: 'internal' });
+  it('propagates through type alias targets and type parameter constraints and defaults', () => {
+    expect(resolve()).toMatchObject({
+      Aliased: 'stable <- PlayButtonAlias',
+      Bound: 'stable <- usePlayButtonValue',
+      Fallback: 'stable <- usePlayButtonValue',
+    });
+  });
+
+  it('propagates through the public surface of types no entry exports', () => {
+    expect(resolve().Secret).toBe('stable <- PlayButtonState');
+    expect(resolve().MixinOptions).toBe('stable <- HlsVideo');
+  });
+
+  it('ignores hidden members and exports nothing names', () => {
+    expect(resolve()).toMatchObject({ Hidden: 'internal', Unreached: 'internal' });
   });
 
   it('propagates through heritage clauses unless heritage propagation is off', () => {
@@ -650,6 +710,13 @@ describe('resolveStabilities', () => {
     expect(resolve().BaseCore).toBe('stable <- PlayButtonElement');
     expect(resolve({ heritage: true }).BaseCore).toBe('stable <- PlayButtonElement');
     expect(resolve({ heritage: false }).BaseCore).toBe('internal');
+    expect(resolve().Contract).toBe('stable <- PlayButtonContract, PlayButtonController');
+    expect(resolve({ heritage: false }).Contract).toBe('internal');
+  });
+
+  it("propagates through a mixin's base constant as heritage", () => {
+    expect(resolve().AdapterCore).toBe('stable <- HlsVideo');
+    expect(resolve({ heritage: false }).AdapterCore).toBe('internal');
   });
 
   it('fixes the tags of exports a reference made stable or experimental', () => {
@@ -691,13 +758,17 @@ describe('findUnexportedExports', () => {
     'packages/core/dist/index.d.ts': [
       'export interface CoreState { paused: boolean }',
       'export interface SharedState { paused: boolean }',
+      'export interface EngineState { ready: boolean }',
       'export interface Unreached { value: number }',
     ].join('\n'),
     'packages/adapters/hlsjs-video/dist/index.d.ts': 'export interface HlsConfig { debug: boolean }\n',
+    'packages/spf/dist/index.d.ts': "export { EngineState } from '../../core/dist/index.js';\n",
+    'packages/extensions/mux-data/dist/index.d.ts': 'export interface MuxDataOptions { key: string }\n',
     'packages/react/dist/index.d.ts': [
-      "import { CoreState, SharedState } from '../../core/dist/index.js';",
+      "import { CoreState, EngineState, SharedState } from '../../core/dist/index.js';",
+      "import { MuxDataOptions } from '../../extensions/mux-data/dist/index.js';",
       "export { SharedState } from '../../core/dist/index.js';",
-      'export interface PlayButtonProps { state: CoreState; shared: SharedState }',
+      'export interface PlayButtonProps { state: CoreState; shared: SharedState; engine: EngineState; data: MuxDataOptions }',
     ].join('\n'),
     'packages/react/dist/media/hlsjs-video.d.ts': [
       "import { HlsConfig } from '../../../adapters/hlsjs-video/dist/index.js';",
@@ -707,16 +778,21 @@ describe('findUnexportedExports', () => {
   const exports = exportsOf(root, {
     '@videojs/core': 'packages/core/dist/index.d.ts',
     '@videojs/hlsjs-video': 'packages/adapters/hlsjs-video/dist/index.d.ts',
+    '@videojs/spf': 'packages/spf/dist/index.d.ts',
+    '@videojs/mux-data': 'packages/extensions/mux-data/dist/index.d.ts',
     '@videojs/react': 'packages/react/dist/index.d.ts',
     '@videojs/react/media/hlsjs-video': 'packages/react/dist/media/hlsjs-video.d.ts',
   });
   const docs = coverage({ stable: new Set(['PlayButton', 'HlsJsVideo']) });
-  const unexported = findUnexportedExports(resolveStabilities(exports, docs), new Set(['@videojs/hlsjs-video']));
+  const unexported = findUnexportedExports(resolveStabilities(exports, docs), {
+    adapters: new Set(['@videojs/hlsjs-video']),
+    extensions: new Set(['@videojs/mux-data']),
+  });
   const reasons = Object.fromEntries(unexported.map(({ record, reason }) => [record.name, reason]));
 
   it('reports a stable export only internal packages export', () => {
     expect(reasons.CoreState).toBe(
-      'is stable (PlayButtonProps references it) but only internal packages export it — re-export it from @videojs/react / @videojs/html'
+      'is stable (PlayButtonProps references it) but no framework-facing package exports it — re-export it from @videojs/react / @videojs/html'
     );
   });
 
@@ -726,8 +802,12 @@ describe('findUnexportedExports', () => {
     );
   });
 
-  it('accepts exports a framework-facing package also exports, and ignores internal ones', () => {
-    expect(Object.keys(reasons).sort()).toEqual(['CoreState', 'HlsConfig']);
+  it('does not count other published packages, such as SPF, as framework-facing', () => {
+    expect(reasons.EngineState).toMatch(/no framework-facing package exports it/);
+  });
+
+  it('accepts exports a framework-facing or extension package also exports, and ignores internal ones', () => {
+    expect(Object.keys(reasons).sort()).toEqual(['CoreState', 'EngineState', 'HlsConfig']);
   });
 });
 
