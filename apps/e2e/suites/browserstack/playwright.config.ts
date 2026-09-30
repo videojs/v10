@@ -12,6 +12,8 @@ export default defineConfig<{}, Options>({
   testMatch: '**/*.spec.ts',
   workers: 1,
   retries: 0,
+  // Remote media readiness and seeking can each take up to 40 seconds.
+  timeout: 3 * 60_000,
   globalTimeout: 25 * 60_000,
   forbidOnly: Boolean(process.env.CI),
   use: {
