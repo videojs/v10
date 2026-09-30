@@ -1,10 +1,4 @@
-import {
-  fetchHlsChaptersDocument,
-  findSessionDataUri,
-  HlsChaptersLoader,
-  type HlsChaptersDocumentLoader,
-  type HlsChaptersDocumentLoaderHost,
-} from '@videojs/native-hls-video';
+import { findSessionDataUri, HlsChaptersLoader } from '@videojs/native-hls-video';
 import { APPLE_HLS_CHAPTERS_DATA_ID } from '@videojs/spf/hls';
 import { isString } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
@@ -99,16 +93,6 @@ export function HlsJsChaptersMixin<Base extends Constructor<HlsEngineHost>>(Base
       engine.on(Hls.Events.DESTROYING, () => this.#reset());
     }
 
-    /**
-     * Replace where chapters documents come from; `undefined` goes back to fetching them. For an owner that already
-     * holds the document, so it is not fetched twice.
-     *
-     * @internal
-     */
-    setChaptersDocumentLoader(loader?: HlsChaptersDocumentLoader): void {
-      this.#chapters.loadDocument = loader ?? fetchHlsChaptersDocument;
-    }
-
     #load(): void {
       // The hls.js delegate always binds to the real `<video>` element.
       const target = this.target as HTMLVideoElement | null;
@@ -124,5 +108,5 @@ export function HlsJsChaptersMixin<Base extends Constructor<HlsEngineHost>>(Base
     }
   }
 
-  return HlsJsChapters as unknown as Base & Constructor<HlsChaptersDocumentLoaderHost>;
+  return HlsJsChapters as unknown as Base;
 }

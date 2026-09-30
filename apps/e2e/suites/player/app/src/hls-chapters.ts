@@ -1,11 +1,10 @@
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 import '@videojs/html/media/hlsjs-video';
-import '@videojs/html/media/mux-video';
 import '@videojs/html/media/native-hls-video';
 
 // `?media=` picks the HLS path under test; `?src=` is the source it plays.
-const MEDIA_ELEMENTS = ['hlsjs-video', 'mux-video', 'native-hls-video'];
+const MEDIA_ELEMENTS = ['hlsjs-video', 'native-hls-video'];
 
 const params = new URLSearchParams(location.search);
 const tag = params.get('media') ?? '';

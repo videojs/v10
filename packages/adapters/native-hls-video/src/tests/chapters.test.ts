@@ -153,34 +153,6 @@ describe('HlsChaptersLoader', () => {
     await vi.waitFor(() => expect(warn).toHaveBeenCalledTimes(3));
     expect(addChaptersTracksToMedia).not.toHaveBeenCalled();
   });
-
-  it('takes the document from its owner instead of fetching it', async () => {
-    const fetchMock = stubFetch({});
-    const media = document.createElement('video');
-    const loader = new HlsChaptersLoader();
-    const loadDocument = vi.fn(async () => DOCUMENT);
-
-    loader.loadDocument = loadDocument;
-    loader.load(media, 'chapters.json', 'https://cdn.example.com/a/main.m3u8');
-
-    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledWith(media, CHAPTERS));
-    expect(loadDocument).toHaveBeenCalledWith('https://cdn.example.com/a/chapters.json', expect.any(AbortSignal));
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('projects nothing, quietly, when its owner has no document to give', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const media = document.createElement('video');
-    const loader = new HlsChaptersLoader();
-
-    // The owner already announced its own failure.
-    loader.loadDocument = async () => undefined;
-    loader.load(media, 'chapters.json', 'https://example.com/main.m3u8');
-    await settle();
-
-    expect(addChaptersTracksToMedia).not.toHaveBeenCalled();
-    expect(warn).not.toHaveBeenCalled();
-  });
 });
 
 class FakeHost extends HTMLVideoAdapter {}
@@ -328,34 +300,5 @@ describe('NativeHlsChaptersMixin', () => {
     host.detach();
 
     expect(removeAllChaptersTracksFromMedia).toHaveBeenCalledWith(video);
-  });
-
-  it('loads chapters documents through the loader its owner sets, and fetches again without one', async () => {
-    const fetchMock = stubFetch({
-      'https://stream.example.com/a.m3u8': MULTIVARIANT,
-      'https://stream.example.com/b.m3u8': MULTIVARIANT,
-      'https://stream.example.com/chapters.json': DOCUMENT,
-    });
-    const video = createVideoWithSrc('https://stream.example.com/a.m3u8');
-    const host = new NativeHlsChapters();
-    const loadDocument = vi.fn(async () => DOCUMENT);
-
-    host.setChaptersDocumentLoader(loadDocument);
-    host.attach(video);
-    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledOnce());
-
-    expect(loadDocument).toHaveBeenCalledWith('https://stream.example.com/chapters.json', expect.any(AbortSignal));
-    expect(requestedUrls(fetchMock)).toEqual(['https://stream.example.com/a.m3u8']);
-
-    host.setChaptersDocumentLoader();
-    video.dispatchEvent(new Event('emptied'));
-    Object.defineProperty(video, 'currentSrc', { value: 'https://stream.example.com/b.m3u8' });
-    video.dispatchEvent(new Event('loadstart'));
-    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledTimes(2));
-
-    expect(requestedUrls(fetchMock)).toContain('https://stream.example.com/chapters.json');
-    expect(loadDocument).toHaveBeenCalledOnce();
-
-    host.destroy();
   });
 });

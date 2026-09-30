@@ -11,7 +11,6 @@ import { PlayerPage } from '../../../shared/page-objects/player';
 /** A 25-second Mux asset; the chapters below split it in three. */
 const SRC = MEDIA.hlsFmp4.url;
 const CHAPTERS_URL = 'https://chapters.test/chapters.json';
-const METADATA_URL = SRC.replace('.m3u8', '/metadata.json');
 
 const THREE_CHAPTERS = [
   { 'start-time': 0, titles: [{ language: 'en', title: 'Intro' }] },
@@ -22,10 +21,8 @@ const THREE_CHAPTERS = [
 /** What Mux publishes for a titled asset with no chapters: the asset title as the only one. */
 const TITLE_ONLY = [{ 'start-time': 0, titles: [{ language: 'und', title: 'Asset title' }] }];
 
-/** Reference the document at `uri` from the playlist, serve `document` there, and record every request for it. */
-async function serveChapters(page: Page, uri: string, document: unknown): Promise<string[]> {
-  const requests: string[] = [];
-
+/** Reference the document at `uri` from the playlist and serve `document` there. */
+async function serveChapters(page: Page, uri: string, document: unknown): Promise<void> {
   await page.route(SRC, async (route) => {
     const response = await route.fetch();
     const playlist = (await response.text()).replace(
@@ -35,13 +32,7 @@ async function serveChapters(page: Page, uri: string, document: unknown): Promis
 
     await route.fulfill({ response, body: playlist });
   });
-  await page.route(uri, (route) => {
-    requests.push(route.request().url());
-
-    return route.fulfill({ json: document, headers: { 'access-control-allow-origin': '*' } });
-  });
-
-  return requests;
+  await page.route(uri, (route) => route.fulfill({ json: document, headers: { 'access-control-allow-origin': '*' } }));
 }
 
 async function open(page: Page, media: string): Promise<PlayerPage> {
@@ -117,22 +108,5 @@ test.describe('HLS JSON chapters', () => {
     await player.hoverTimeSlider(50);
 
     await expect(page.locator('.media-time-slider-chapter-title')).toHaveText('');
-  });
-
-  test('`<mux-video>` fetches the metadata document once, for its title and its chapters', async ({ page }) => {
-    const requests = await serveChapters(page, METADATA_URL, THREE_CHAPTERS);
-
-    await open(page, 'mux-video');
-
-    await expect(page.locator('.media-time-slider-chapter')).toHaveCount(3);
-    await expect
-      .poll(() =>
-        page
-          .locator('mux-video')
-          .evaluate((element) => (element as HTMLElement & { contentData?: { title?: string } }).contentData?.title)
-      )
-      .toBe('Intro');
-
-    expect(requests).toEqual([METADATA_URL]);
   });
 });

@@ -55,17 +55,16 @@ export function parseMuxMetadata(json: unknown): MuxMetadata {
 }
 
 /**
- * Fetch the metadata document at `url` as it is published, unflattened — the Apple JSON chapters document a chapters
- * loader reads too.
+ * Fetch and flatten the metadata document at `url`.
  *
- * Resolves `undefined` when there is nothing to read: the request was aborted, or it failed. Metadata is optional and
+ * Resolves `undefined` when there is nothing to apply: the request was aborted, or it failed. Metadata is optional and
  * playback never depends on it, so a failure is never fatal — a `404` says the document does not exist and stays quiet,
  * and any other failure is only announced in development.
  */
-async function fetchMuxMetadataDocument(url: string, signal?: AbortSignal): Promise<unknown> {
+export async function loadMuxMetadata(url: string, signal?: AbortSignal): Promise<MuxMetadata | undefined> {
   try {
     const response = await fetch(url, signal ? { signal } : {});
-    if (response.ok) return await response.json();
+    if (response.ok) return parseMuxMetadata(await response.json());
 
     if (__DEV__ && response.status !== 404) {
       console.warn(`[vjs-mux] Failed to load the Mux metadata at ${url}: ${response.status} ${response.statusText}`);
@@ -77,28 +76,6 @@ async function fetchMuxMetadataDocument(url: string, signal?: AbortSignal): Prom
   }
 
   return undefined;
-}
-
-/**
- * Fetch and flatten the metadata document at `url`. Resolves `undefined` when there is nothing to apply, as
- * {@link fetchMuxMetadataDocument} does.
- */
-export async function loadMuxMetadata(url: string, signal?: AbortSignal): Promise<MuxMetadata | undefined> {
-  const document = await fetchMuxMetadataDocument(url, signal);
-
-  return document === undefined ? undefined : parseMuxMetadata(document);
-}
-
-/** Whether `url` names the same document as `metadataURL`: same host and path, whatever the query carries. */
-function isSameDocument(url: string, metadataURL: string): boolean {
-  try {
-    const a = new URL(url);
-    const b = new URL(metadataURL);
-
-    return a.origin === b.origin && a.pathname === b.pathname;
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -120,14 +97,10 @@ export function toMuxContentData(metadata?: MuxMetadata): MuxContentData {
  * keeps the document (an image param changing, say), and one that moves them drops it along with any request in flight.
  * A Media owns one of these next to its `source`, and folds `metadata` into `contentData` when `onChange` says it
  * moved.
- *
- * The document is Apple's JSON chapters format, and a multivariant playlist may reference it as the source's chapters
- * too. {@link MuxMetadataLoader.loadDocument} shares the one request with a chapters loader.
  */
 export class MuxMetadataLoader {
   #key: string | undefined;
   #metadata: MuxMetadata | undefined;
-  #document: Promise<unknown> | null = null;
   #request: AbortController | null = null;
   readonly #onChange: () => void;
 
@@ -151,7 +124,6 @@ export class MuxMetadataLoader {
     this.#key = key;
     this.#abort();
     this.#metadata = undefined;
-    this.#document = null;
   }
 
   /**
@@ -159,43 +131,23 @@ export class MuxMetadataLoader {
    * way — so repeated loads of one source cost one request.
    */
   load(): void {
-    this.#load();
-  }
-
-  /**
-   * The published document behind `url`, when `url` names this source's metadata document — same host and path, any
-   * query — fetching it now if nothing has yet. Resolves `undefined` when the request failed or was dropped with the
-   * source. `undefined` for any other URL, which is its caller's to fetch.
-   */
-  loadDocument(url: string): Promise<unknown> | undefined {
-    if (!this.#key || !isSameDocument(url, this.#key)) return undefined;
-
-    return this.#load();
-  }
-
-  destroy(): void {
-    this.#abort();
-  }
-
-  #load(): Promise<unknown> | undefined {
-    if (!this.#key) return undefined;
-
-    if (this.#document) return this.#document;
+    if (!this.#key || this.#metadata || this.#request) return;
 
     const request = (this.#request = new AbortController());
-    const document = (this.#document = fetchMuxMetadataDocument(this.#key, request.signal));
 
-    void document.then((json) => {
+    void loadMuxMetadata(this.#key, request.signal).then((metadata) => {
       if (request.signal.aborted) return;
 
       this.#request = null;
       // A failed request settles as an empty document, so the source is not
       // asked for again on the next load.
-      this.#metadata = json === undefined ? {} : parseMuxMetadata(json);
+      this.#metadata = metadata ?? {};
       this.#onChange();
     });
+  }
 
-    return document;
+  destroy(): void {
+    this.#abort();
   }
 
   #abort(): void {

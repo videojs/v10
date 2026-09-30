@@ -7,18 +7,13 @@ import { HlsJsChaptersMixin } from '../chapters';
 
 // The loader (fetch, parse, project) is shared with native playback and
 // covered there; here only what the mixin hands it is observed.
-const loader = vi.hoisted(() => ({ load: vi.fn(), reset: vi.fn(), instances: [] as { loadDocument: unknown }[] }));
+const loader = vi.hoisted(() => ({ load: vi.fn(), reset: vi.fn() }));
 
 vi.mock('@videojs/native-hls-video', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@videojs/native-hls-video')>()),
   HlsChaptersLoader: class {
-    loadDocument: unknown = 'default';
     load = loader.load;
     reset = loader.reset;
-
-    constructor() {
-      loader.instances.push(this);
-    }
   },
 }));
 
@@ -115,7 +110,6 @@ beforeEach(() => {
   playlists.clear();
   loader.load.mockClear();
   loader.reset.mockClear();
-  loader.instances.length = 0;
 });
 
 describe('HlsJsChaptersMixin', () => {
@@ -266,20 +260,5 @@ describe('HlsJsChaptersMixin', () => {
     emit(engine, Hls.Events.DESTROYING);
 
     expect(loader.reset).toHaveBeenCalledTimes(2);
-  });
-
-  it('hands documents to the loader from the owner that set one, and back to fetching without', () => {
-    const host = new HlsJsChapters(createEngine());
-    const [chapters] = loader.instances;
-    const loadDocument = vi.fn();
-
-    host.setChaptersDocumentLoader(loadDocument);
-
-    expect(chapters!.loadDocument).toBe(loadDocument);
-
-    host.setChaptersDocumentLoader();
-
-    expect(chapters!.loadDocument).not.toBe(loadDocument);
-    expect(chapters!.loadDocument).toBeTypeOf('function');
   });
 });

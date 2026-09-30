@@ -129,10 +129,9 @@ multivariant playlist itself) project the same tracks through the internal `HlsC
 - **First entry with a URI, on every path.** hls.js keeps one `sessionData` entry per `DATA-ID`, the last, so the
   hls.js mixin wraps the playlist loader (`pLoader`) to read the multivariant text and applies the same
   `findSessionDataUri` native playback does.
-- **Mux fetches its metadata document once.** Mux publishes asset metadata as an Apple JSON chapters document. When
-  the playlist names that document (same host and path as `createMuxMetadataURL`, any query), `MuxVideoAdapter`
-  serves the chapters request from `MuxMetadataLoader`'s request through `HlsJsAdapter.loadChaptersDocument`. The SPF
-  Mux flavor still fetches it twice: `loadChapters` has no document hook.
+- **Mux's metadata document is fetched twice.** Mux publishes asset metadata as an Apple JSON chapters document, so
+  when a playlist names it as its chapters, `MuxMetadataLoader` and the chapters loader each fetch it. Sharing the
+  request would need a hook between the adapters for a small, cacheable (`max-age=300`) document.
 - **Safari's own chapter tracks.** WebKit reads the same session data and adds one chapters text track per language
   after the `<track>` children, holding no cues (measured in Playwright WebKit on macOS, 2026-09-30). The projected
   track leads, so the store reads it. `apps/e2e/suites/player/tests/hls-chapters.spec.ts` covers this.

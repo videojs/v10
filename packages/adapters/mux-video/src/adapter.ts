@@ -148,16 +148,6 @@ export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProp
     return this.#contentData;
   }
 
-  /**
-   * Mux publishes its asset metadata as an Apple JSON chapters document, and a playlist can name that same document as
-   * the source's chapters. Hand it over from the metadata request rather than fetching it twice.
-   *
-   * @internal
-   */
-  override loadChaptersDocument(url: string, signal: AbortSignal): Promise<unknown> {
-    return this.#metadata.loadDocument(url) ?? super.loadChaptersDocument(url, signal);
-  }
-
   override load() {
     const loading = super.load();
 
