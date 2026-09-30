@@ -5,8 +5,19 @@ import { SeekIndicatorElement } from '../../seek-indicator/element';
 import { StatusIndicatorElement } from '../element';
 import { StatusIndicatorValueElement } from '../value';
 
+class TestStatusIndicatorElement extends StatusIndicatorElement {
+  get coreState() {
+    return this.core.state.current;
+  }
+
+  processEvent(action: string) {
+    return this.core.processEvent({ action }, {});
+  }
+}
+
 customElements.define(StatusIndicatorElement.tagName, StatusIndicatorElement);
 customElements.define(SeekIndicatorElement.tagName, SeekIndicatorElement);
+customElements.define('test-status-indicator', TestStatusIndicatorElement);
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -49,5 +60,17 @@ describe('StatusIndicatorElement', () => {
       status.dispose();
       seek.dispose();
     }
+  });
+
+  it('forwards deriveCustomStatus to the core', async () => {
+    const element = document.createElement('test-status-indicator') as TestStatusIndicatorElement;
+
+    element.deriveCustomStatus = (event) =>
+      event.action === 'frameStep' ? { status: 'frame', label: 'Frame', value: null } : null;
+    document.body.append(element);
+    await element.updateComplete;
+
+    expect(element.processEvent('frameStep')).toBe(true);
+    expect(element.coreState.status).toBe('frame');
   });
 });

@@ -88,4 +88,16 @@ describe('StatusIndicatorRoot', () => {
       fixture.dispose();
     }
   });
+
+  it('forwards deriveCustomStatus to the core props without rendering it', () => {
+    const deriveCustomStatus = () => null;
+    const { container } = render(<StatusIndicatorRoot deriveCustomStatus={deriveCustomStatus} />);
+
+    expect(inputIndicatorMock.useInputIndicatorRoot).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ deriveCustomStatus }),
+      { replayOnUpdate: false }
+    );
+    expect(container.firstElementChild?.hasAttribute('derivecustomstatus')).toBe(false);
+  });
 });
