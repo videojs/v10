@@ -3,7 +3,7 @@ import {
   features,
   metadataFeature,
   type PlayerExtension,
-  type PlayerExtensionContext,
+  type PlayerHandle,
   type PlayerStore,
   type PlayerTarget,
   volumeFeature,
@@ -159,7 +159,7 @@ describe('createPlayer', () => {
     describe('extensions', () => {
       class MutedExtension implements PlayerExtension {
         static instances: MutedExtension[] = [];
-        attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
+        attach = vi.fn<(target: PlayerTarget) => void>();
         detach = vi.fn();
         destroy = vi.fn();
 
@@ -175,7 +175,9 @@ describe('createPlayer', () => {
       /** Declares no `mediaOverride`, like Mux Data. */
       class ObserverExtension implements PlayerExtension {
         static instances: ObserverExtension[] = [];
-        attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
+        connect = vi.fn<(player: PlayerHandle) => void>();
+        disconnect = vi.fn();
+        attach = vi.fn<(target: PlayerTarget) => void>();
         detach = vi.fn();
         destroy = vi.fn();
 
@@ -219,7 +221,7 @@ describe('createPlayer', () => {
         const video = container.querySelector('video')!;
         const [extension] = MutedExtension.instances;
 
-        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }), expect.anything());
+        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }));
         expect(store.target?.media).not.toBe(video);
         expect(store.target?.media).toBeInstanceOf(HTMLVideoElement);
         expect(store.state.muted).toBe(true);
@@ -293,15 +295,14 @@ describe('createPlayer', () => {
 
         const [extension] = ObserverExtension.instances;
 
-        expect(extension!.attach).toHaveBeenCalledWith(
-          expect.objectContaining({ media: video }),
-          expect.objectContaining({ initTime: expect.any(Number) })
-        );
+        expect(extension!.connect).toHaveBeenCalledWith({ initTime: expect.any(Number) });
+        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }));
         expect(store.target?.media).toBe(video);
 
         rerender(<App observe={false} />);
 
         expect(extension!.detach).toHaveBeenCalledTimes(1);
+        expect(extension!.disconnect).toHaveBeenCalledTimes(1);
         expect(attach).not.toHaveBeenCalled();
       });
 

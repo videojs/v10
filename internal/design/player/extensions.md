@@ -46,13 +46,17 @@ The contract moves to `@videojs/core/dom` and receives the player's resolved tar
 interface PlayerExtension {
   /** Read on every access; may change while attached (e.g. only while a cast session is connected). */
   readonly mediaOverride?: Partial<Video> | null;
-  attach?(target: PlayerTarget, player: { initTime: number }): void; // { media, container }
+  connect?(player: PlayerHandle): void; // once, on register: { initTime }
+  disconnect?(): void; // on release
+  attach?(target: PlayerTarget): void; // every media change: { media, container }
   detach?(): void;
   destroy?(): void;
 }
 ```
 
-The owner (element or hook) creates and destroys the instance. The player attaches and detaches it alongside the store and moves it when the media changes; a container-only change leaves it attached. `PlayerExtensionCoordinator` holds one instance per class and is created with the player, so its creation time is the player's `initTime`.
+The owner (element or hook) creates and destroys the instance. The player connects it when it registers and disconnects it when it is released; in between, the player attaches and detaches it alongside the store and moves it when the media changes, and a container-only change leaves it attached. `PlayerExtensionCoordinator` holds one instance per class and is created with the player, so its creation time is the player's `initTime`; it outlives any store the player replaces, which is why `initTime` is not store state.
+
+`PlayerHandle` carries facts about the player that hold across media changes, so they never ride on `attach`. It grows as extensions need more of the player: the store (for the resolved title and poster Cast and Mux Data don't send yet), a player ID, or command observation.
 
 The authoring contract is internal at 10.0 (`@internal`, and not re-exported from `@videojs/react`): it is the part most likely to change as observers and owners split and Cast becomes real media.
 

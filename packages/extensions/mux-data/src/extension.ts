@@ -1,4 +1,4 @@
-import type { PlayerExtension, PlayerExtensionContext, PlayerTarget } from '@videojs/core/dom';
+import type { PlayerExtension, PlayerHandle, PlayerTarget } from '@videojs/core/dom';
 import { isEngineAdapter, isMediaSourceCapable, type Media } from '@videojs/media';
 import { getMediaAdapter, getMediaElement } from '@videojs/media/dom';
 import { listen } from '@videojs/utils/dom';
@@ -80,7 +80,7 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
   #playerSoftwareVersion: string | undefined = MuxDataExtension.defaultProps.playerSoftwareVersion;
   #playerInitTime: number | undefined = MuxDataExtension.defaultProps.playerInitTime;
   // Mux measures Player Startup Time from `player_init_time`, so it comes from the player rather than from when this
-  // extension happened to load. The construction time only stands in when no player has attached this extension.
+  // extension happened to load. The construction time only stands in when no player has connected this extension.
   #playerCreatedAt: number | undefined;
   readonly #constructedAt: number | undefined = this.#generatePlayerInitTime();
   #media: Media | null = null;
@@ -97,11 +97,18 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
     Object.assign(this, props);
   }
 
-  attach({ media }: PlayerTarget, player?: PlayerExtensionContext) {
+  connect(player: PlayerHandle) {
+    this.#playerCreatedAt = player.initTime;
+  }
+
+  disconnect() {
+    this.#playerCreatedAt = undefined;
+  }
+
+  attach({ media }: PlayerTarget) {
     if (this.#media === media) return;
 
     this.detach();
-    this.#playerCreatedAt = player?.initTime ?? this.#playerCreatedAt;
     this.#media = media;
     this.#stopListening = listen(media, 'loadstart', this.#syncMonitor);
 

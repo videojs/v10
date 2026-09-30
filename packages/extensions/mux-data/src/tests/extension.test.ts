@@ -124,7 +124,8 @@ describe('MuxDataExtension', () => {
     const data = new MuxDataExtension({ MuxDataSdk: sdk });
     const video = document.createElement('video');
 
-    data.attach({ media: video, container: null }, { initTime: 1_000 });
+    data.connect({ initTime: 1_000 });
+    data.attach({ media: video, container: null });
 
     await settle();
 
@@ -140,7 +141,8 @@ describe('MuxDataExtension', () => {
     const data = new MuxDataExtension({ MuxDataSdk: sdk, playerInitTime: 500 });
     const video = document.createElement('video');
 
-    data.attach({ media: video, container: null }, { initTime: 1_000 });
+    data.connect({ initTime: 1_000 });
+    data.attach({ media: video, container: null });
 
     await settle();
 
@@ -152,6 +154,15 @@ describe('MuxDataExtension', () => {
     data.playerInitTime = undefined;
 
     expect(data.playerInitTime).toBe(1_000);
+  });
+
+  it('stops using the player creation time once released from the player', () => {
+    const data = new MuxDataExtension();
+
+    data.connect({ initTime: 1_000 });
+    data.disconnect();
+
+    expect(data.playerInitTime).not.toBe(1_000);
   });
 
   it('monitors a plain video element directly', async () => {

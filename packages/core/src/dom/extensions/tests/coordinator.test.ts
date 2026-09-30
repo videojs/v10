@@ -3,17 +3,19 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { PlayerTarget } from '../../player';
 import { PlayerExtensionCoordinator } from '../coordinator';
-import type { PlayerExtension, PlayerExtensionContext } from '../extension';
+import type { PlayerExtension, PlayerHandle } from '../extension';
 
 /** An observer: declares no `mediaOverride`. */
 class TrackingExtension implements PlayerExtension {
-  attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
+  connect = vi.fn<(player: PlayerHandle) => void>();
+  disconnect = vi.fn();
+  attach = vi.fn<(target: PlayerTarget) => void>();
   detach = vi.fn();
   destroy = vi.fn();
 }
 
 class MutedExtension implements PlayerExtension {
-  attach = vi.fn<(target: PlayerTarget, player: PlayerExtensionContext) => void>();
+  attach = vi.fn<(target: PlayerTarget) => void>();
   detach = vi.fn();
 
   get mediaOverride() {
@@ -45,7 +47,7 @@ describe('PlayerExtensionCoordinator', () => {
     coordinator.attach(target);
     coordinator.register(extension);
 
-    expect(extension.attach).toHaveBeenCalledWith(target, expect.anything());
+    expect(extension.attach).toHaveBeenCalledWith(target);
     expect(coordinator.get(TrackingExtension)).toBe(extension);
   });
 
@@ -58,10 +60,21 @@ describe('PlayerExtensionCoordinator', () => {
     expect(extension.attach).not.toHaveBeenCalled();
 
     coordinator.attach(target);
-    expect(extension.attach).toHaveBeenCalledWith(target, expect.anything());
+    expect(extension.attach).toHaveBeenCalledWith(target);
   });
 
-  it('gives extensions the time the player was created, not the time they attached', () => {
+  it('connects extensions to the player on register, before they attach', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const extension = new TrackingExtension();
+
+    coordinator.attach(createTarget());
+    coordinator.register(extension);
+
+    expect(extension.connect).toHaveBeenCalledTimes(1);
+    expect(extension.connect.mock.invocationCallOrder[0]).toBeLessThan(extension.attach.mock.invocationCallOrder[0]!);
+  });
+
+  it('gives extensions the time the player was created, not the time they registered', () => {
     vi.useFakeTimers({ now: 1_000 });
 
     const coordinator = new PlayerExtensionCoordinator(() => {});
@@ -69,9 +82,35 @@ describe('PlayerExtensionCoordinator', () => {
 
     vi.setSystemTime(5_000);
     coordinator.register(extension);
-    coordinator.attach(createTarget());
 
-    expect(extension.attach).toHaveBeenCalledWith(expect.anything(), { initTime: 1_000 });
+    expect(extension.connect).toHaveBeenCalledWith({ initTime: 1_000 });
+  });
+
+  it('keeps extensions connected across media changes', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const extension = new TrackingExtension();
+
+    coordinator.register(extension);
+    coordinator.attach(createTarget());
+    coordinator.attach(createTarget());
+    coordinator.detach();
+
+    expect(extension.connect).toHaveBeenCalledTimes(1);
+    expect(extension.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('detaches then disconnects an extension on release', () => {
+    const coordinator = new PlayerExtensionCoordinator(() => {});
+    const extension = new TrackingExtension();
+
+    coordinator.attach(createTarget());
+    coordinator.register(extension)();
+
+    expect(extension.detach).toHaveBeenCalledTimes(1);
+    expect(extension.disconnect).toHaveBeenCalledTimes(1);
+    expect(extension.detach.mock.invocationCallOrder[0]).toBeLessThan(
+      extension.disconnect.mock.invocationCallOrder[0]!
+    );
   });
 
   it('notifies on register and release of an extension that overrides media', () => {
@@ -125,6 +164,8 @@ describe('PlayerExtensionCoordinator', () => {
     coordinator.register(second);
 
     expect(first.detach).toHaveBeenCalledTimes(1);
+    expect(first.disconnect).toHaveBeenCalledTimes(1);
+    expect(second.connect).toHaveBeenCalledTimes(1);
     expect(second.attach).toHaveBeenCalledTimes(1);
     expect(coordinator.get(TrackingExtension)).toBe(second);
 
@@ -150,7 +191,7 @@ describe('PlayerExtensionCoordinator', () => {
 
     expect(extension.detach).toHaveBeenCalledTimes(1);
     expect(extension.attach).toHaveBeenCalledTimes(2);
-    expect(extension.attach).toHaveBeenLastCalledWith(second, expect.anything());
+    expect(extension.attach).toHaveBeenLastCalledWith(second);
   });
 
   it('keeps extensions attached when only the container changes', () => {
@@ -177,9 +218,10 @@ describe('PlayerExtensionCoordinator', () => {
     expect(extension.detach).toHaveBeenCalledTimes(1);
     expect(extension.destroy).not.toHaveBeenCalled();
 
-    // Removing while detached must not detach again.
+    // Removing while detached must not detach again, but does disconnect.
     coordinator.destroy();
     expect(extension.detach).toHaveBeenCalledTimes(1);
+    expect(extension.disconnect).toHaveBeenCalledTimes(1);
     expect(extension.destroy).not.toHaveBeenCalled();
     expect(coordinator.size).toBe(0);
   });

@@ -2,22 +2,25 @@ import type { PlayerTarget } from '../player';
 import type { MediaOverrideSource } from './media';
 
 /**
- * What the player tells an extension about itself, beyond the media it attaches.
+ * The player an extension is registered with: facts about the player itself, which hold across media changes. Extends
+ * as extensions need more of the player.
  *
  * @internal
  */
-export interface PlayerExtensionContext {
+export interface PlayerHandle {
   /** Epoch milliseconds at which the player was created, before any extension or media existed. */
   readonly initTime: number;
 }
 
 /**
- * A player extension follows the player's attached media and may take over media members while it is active.
+ * A player extension joins a player, follows its attached media, and may take over media members while it is active.
  *
- * Extensions are owned by whoever registers them (an element, a hook); the player only attaches and detaches them
- * alongside its store. `attach` receives the media the player resolved, never the facade the store sees, so an
- * extension can read the real state under its own overrides. It runs when the media changes, not when only the
- * container does.
+ * Extensions are owned by whoever registers them (an element, a hook); the player only drives their lifecycle.
+ *
+ * - `connect` runs once, when the extension is registered with a player, and `disconnect` when it is released.
+ * - `attach` runs whenever the media changes (not when only the container does), after `connect`. It receives the media
+ *   the player resolved, never the facade the store sees, so an extension can read the real state under its own
+ *   overrides. `detach` runs before the next `attach`, when the media goes away, and before `disconnect`.
  *
  * An extension that declares no `mediaOverride` is an observer (analytics, for example): registering it never wraps the
  * media the store sees or re-attaches the store.
@@ -25,7 +28,9 @@ export interface PlayerExtensionContext {
  * @internal
  */
 export interface PlayerExtension extends MediaOverrideSource {
-  attach?(target: PlayerTarget, player: PlayerExtensionContext): void;
+  connect?(player: PlayerHandle): void;
+  disconnect?(): void;
+  attach?(target: PlayerTarget): void;
   detach?(): void;
   destroy?(): void;
 }
