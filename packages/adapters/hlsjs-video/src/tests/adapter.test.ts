@@ -2,6 +2,7 @@ import { MediaError, type RemotePlaybackLike } from '@videojs/media';
 import { addMediaExtension, CustomMediaElement, type MediaExtension } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import type { RenditionCapController } from '../cap-level';
 import { ContentTypes, Hls, HlsJsAdapter, type HlsSource } from '../index';
 
 // Stands in for `<hlsjs-video>`, so markup reaches the media adapter the same way
@@ -637,14 +638,14 @@ describe('HlsJsAdapter', () => {
     }
 
     it.each([
-      [1, 0],
-      [2, 1],
+      [1, 1],
+      [2, 2],
     ])('measures device pixels with the engine defaults at ratio %s', (ratio, expected) => {
       vi.stubGlobal('devicePixelRatio', ratio);
 
       const { media } = setupMse({ minAutoResolution: '270p' });
 
-      expect(cappedIndex(media, { width: 640, height: 360 }, media.engine!.config)).toBe(expected);
+      expect(cappedIndex(media, { width: 960, height: 540 }, media.engine!.config)).toBe(expected);
     });
 
     /** Small enough that every rung but the lowest is above what it needs. */
@@ -673,7 +674,8 @@ describe('HlsJsAdapter', () => {
       const { media } = setupMse();
       const engine = media.engine;
 
-      const apply = vi.spyOn(engine!.config.capLevelController.prototype, 'apply');
+      const prototype = engine!.config.capLevelController.prototype as unknown as RenditionCapController;
+      const apply = vi.spyOn(prototype, 'apply');
 
       media.source = { src: M3U8, maxAutoResolution: '360p' };
 

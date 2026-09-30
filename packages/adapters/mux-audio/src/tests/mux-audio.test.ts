@@ -14,7 +14,8 @@ describe('MuxAudioAdapter', () => {
     const adapter = new MuxAudioAdapter();
     const audio = document.createElement('audio');
 
-    adapter.attach(audio);
+    // The audio flavor currently inherits the video adapter's attach signature.
+    adapter.attach(audio as unknown as HTMLVideoElement);
     adapter.source = { playbackId: 'abc123', preferPlayback: 'native' };
     await Promise.resolve();
 
