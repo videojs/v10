@@ -1,7 +1,8 @@
 /**
  * Enforce the public API stability rule: an export a published package exposes is stable only when a reference page
  * documents it. Every other export must say so in its JSDoc: `@internal` by default, `@experimental` when it is
- * documented on a page marked `stability: unstable`, or `@deprecated`.
+ * documented on a page marked `stability: unstable`, or `@deprecated`. A documented export must not carry a tag that
+ * contradicts its page, and must not name an internal export in its public type surface.
  *
  * The public surface is read from the built declarations each package's `exports` map points at, so run `pnpm
  * build:packages` first. Tags are read from (and `--fix` writes to) the matching `src/` declaration.
@@ -308,19 +309,39 @@ export function collectPackageEntries(packageDirectory: string): PublicEntry[] {
 export interface PublicExport {
   /** Declaration name in source; `default` for a module's default export. */
   name: string;
-  /** Names consumers import it by. */
+  /**
+   * Names consumers import it by. A member of an `export * as Slider` namespace is named as its part is documented,
+   * `SliderBuffer` for `Slider.Buffer`; a member of a lowercase namespace keeps the dot, `features.pip`.
+   */
   exportedNames: Set<string>;
   specifiers: Set<string>;
   /** Source file owning the declaration, or the built declaration file when no source match exists. */
   file: string;
   /** Whether `file` is the authored source (and so fixable). */
   hasSource: boolean;
-  tags: Set<string>;
+  /**
+   * JSDoc tag names of each declaration that must carry the stability tag: every declaration of a merged name and every
+   * overload signature, but not an overload implementation, which the built declarations drop.
+   */
+  declarationTags: Array<Set<string>>;
+  /** Other public exports that this export's public type surface names directly. */
+  references: Set<PublicExport>;
+}
+
+export interface PublicSurface {
+  exports: PublicExport[];
+  /** `specifier#name` of exports that resolve to no declaration, such as a re-export of an unresolvable module. */
+  unresolved: string[];
 }
 
 /** Bundled declaration files wrap `export * as X` namespaces in synthetic `*_exports` modules. */
 function isSyntheticNamespace(name: string): boolean {
   return /_exports(?:\$\d+)?$/.test(name);
+}
+
+/** `Slider` + `Buffer` names the `Slider.Buffer` part `SliderBuffer`; any other member keeps the dot. */
+function namespaceMemberName(namespace: string, member: string): string {
+  return /^[A-Z]/.test(namespace) && /^[A-Z]/.test(member) ? `${namespace}${member}` : `${namespace}.${member}`;
 }
 
 /** Map `packages/<pkg>/dist[/dev|/default]/<path>.d.ts` back to its `src/` module. */
@@ -334,22 +355,27 @@ export function sourcePathFor(declarationFile: string): string | undefined {
 }
 
 const sourceFiles = new Map<string, ts.SourceFile>();
-let authoredFiles: string[] | undefined;
+const authoredFiles = new Map<string, string[]>();
 
 /** Every authored module under a package's `src/`, including private packages that others bundle. */
-function authoredSourceFiles(): string[] {
-  authoredFiles ??= walkFiles(join(monorepoRoot, 'packages'), (path) => /\.tsx?$/.test(path)).filter((path) => {
-    const segments = relative(monorepoRoot, path).split(sep);
+function authoredSourceFiles(root: string): string[] {
+  let files = authoredFiles.get(root);
 
-    return (
-      segments.includes('src') &&
-      !segments.includes('dist') &&
-      !segments.includes('tests') &&
-      !/\.test\.tsx?$/.test(path)
-    );
-  });
+  if (!files) {
+    files = walkFiles(join(root, 'packages'), (path) => /\.tsx?$/.test(path)).filter((path) => {
+      const segments = relative(root, path).split(sep);
 
-  return authoredFiles;
+      return (
+        segments.includes('src') &&
+        !segments.includes('dist') &&
+        !segments.includes('tests') &&
+        !/\.test\.tsx?$/.test(path)
+      );
+    });
+    authoredFiles.set(root, files);
+  }
+
+  return files;
 }
 
 /**
@@ -360,7 +386,8 @@ function authoredSourceFiles(): string[] {
  */
 export function findSourceDeclarations(
   declarationFile: string,
-  name: string
+  name: string,
+  root = monorepoRoot
 ): { file: string; nodes: DocumentableNode[] } | undefined {
   const direct = sourcePathFor(declarationFile);
   const directNodes = direct ? findDeclarations(cachedSource(direct), name) : [];
@@ -374,7 +401,7 @@ export function findSourceDeclarations(
     .replace(/^(?:dev|default)\//, '')
     .replace(/\.d\.ts$/, '');
   const suffixes = ['.ts', '.tsx', '/index.ts', '/index.tsx'].map((extension) => `/${tail}${extension}`);
-  const candidates = authoredSourceFiles()
+  const candidates = authoredSourceFiles(root)
     .filter((file) => suffixes.some((suffix) => file.split(sep).join('/').endsWith(suffix)))
     .map((file) => ({ file, nodes: findDeclarations(cachedSource(file), name) }))
     .filter((candidate) => candidate.nodes.length > 0);
@@ -402,8 +429,20 @@ function cachedSource(filePath: string): ts.SourceFile {
 /** The statement a declaration's JSDoc attaches to. */
 export type DocumentableNode = ts.Statement;
 
-/** Find the top-level statements declaring `name` in a source file; `default` finds `export default`. */
+/**
+ * Find the top-level statements declaring `name` in a source file. `default` finds `export default`; for `export
+ * default x` it finds the declarations of `x`, which carry the JSDoc consumers see.
+ */
 export function findDeclarations(sourceFile: ts.SourceFile, name: string): DocumentableNode[] {
+  if (name === 'default') {
+    const assignment = sourceFile.statements.find(
+      (statement): statement is ts.ExportAssignment => ts.isExportAssignment(statement) && !statement.isExportEquals
+    );
+    const target = assignment && ts.isIdentifier(assignment.expression) ? assignment.expression.text : undefined;
+    const targetDeclarations = target ? findDeclarations(sourceFile, target) : [];
+    if (targetDeclarations.length > 0) return targetDeclarations;
+  }
+
   return sourceFile.statements.filter((statement) => {
     if (name === 'default') {
       if (ts.isExportAssignment(statement)) return !statement.isExportEquals;
@@ -436,20 +475,21 @@ export function findDeclarations(sourceFile: ts.SourceFile, name: string): Docum
   });
 }
 
-function jsDocTagNames(nodes: readonly ts.Node[]): Set<string> {
-  const names = new Set<string>();
+/** Drop the implementation of an overloaded function: consumers only see its overload signatures. */
+function signatureDeclarations(nodes: readonly DocumentableNode[]): DocumentableNode[] {
+  const isOverloaded = nodes.some((node) => ts.isFunctionDeclaration(node) && !node.body);
 
-  for (const node of nodes) {
-    const target = ts.isVariableStatement(node) ? node.declarationList.declarations[0]! : node;
-
-    for (const tag of ts.getJSDocTags(target)) names.add(tag.tagName.text);
-  }
-
-  return names;
+  return nodes.filter((node) => !(isOverloaded && ts.isFunctionDeclaration(node) && node.body));
 }
 
-function isCheckedDeclaration(fileName: string): boolean {
-  const relativePath = relative(monorepoRoot, fileName).split(sep).join('/');
+function jsDocTagNames(node: ts.Node): Set<string> {
+  const target = ts.isVariableStatement(node) ? node.declarationList.declarations[0]! : node;
+
+  return new Set(ts.getJSDocTags(target).map((tag) => tag.tagName.text));
+}
+
+function isCheckedDeclaration(fileName: string, root: string): boolean {
+  const relativePath = relative(root, fileName).split(sep).join('/');
 
   return (
     relativePath.startsWith('packages/') &&
@@ -458,8 +498,88 @@ function isCheckedDeclaration(fileName: string): boolean {
   );
 }
 
+function resolveAlias(checker: ts.TypeChecker, symbol: ts.Symbol): ts.Symbol {
+  return symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
+}
+
+/** A module namespace: a bundled `*_exports` wrapper, or the module an unbundled `export * as X` points at. */
+function isModuleNamespace(symbol: ts.Symbol): boolean {
+  return isSyntheticNamespace(symbol.name) || (symbol.declarations?.some(ts.isSourceFile) ?? false);
+}
+
+function hasTag(node: ts.Node, name: string): boolean {
+  return ts.getJSDocTags(node).some((tag) => tag.tagName.text === name);
+}
+
+function isPublicMember(member: ts.ClassElement | ts.TypeElement): boolean {
+  const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
+  const isHidden = modifiers?.some(
+    (modifier) => modifier.kind === ts.SyntaxKind.PrivateKeyword || modifier.kind === ts.SyntaxKind.ProtectedKeyword
+  );
+  if (isHidden || (member.name && ts.isPrivateIdentifier(member.name))) return false;
+
+  return !hasTag(member, 'internal');
+}
+
+/**
+ * The parts of a built declaration a consumer's code can name: heritage clauses and public members of an interface or
+ * class, the aliased type, a function's parameters, return type, and type parameters, and a variable's declared type.
+ */
+function publicSurface(declaration: ts.Declaration): readonly ts.Node[] {
+  if (ts.isInterfaceDeclaration(declaration) || ts.isClassDeclaration(declaration)) {
+    const members: ReadonlyArray<ts.ClassElement | ts.TypeElement> = declaration.members;
+
+    return [
+      ...(declaration.typeParameters ?? []),
+      ...(declaration.heritageClauses ?? []),
+      ...members.filter(isPublicMember),
+    ];
+  }
+
+  if (ts.isTypeAliasDeclaration(declaration)) return [...(declaration.typeParameters ?? []), declaration.type];
+
+  if (ts.isFunctionDeclaration(declaration)) {
+    return [
+      ...(declaration.typeParameters ?? []),
+      ...declaration.parameters,
+      ...(declaration.type ? [declaration.type] : []),
+    ];
+  }
+
+  if (ts.isVariableDeclaration(declaration)) return declaration.type ? [declaration.type] : [];
+
+  if (ts.isModuleDeclaration(declaration) && declaration.body && ts.isModuleBlock(declaration.body)) {
+    return declaration.body.statements.filter((statement) => !hasTag(statement, 'internal'));
+  }
+
+  return [];
+}
+
+/** Identifiers of a type or heritage name, rightmost first: `SliderCore.Props` yields `Props`, then `SliderCore`. */
+function nameParts(name: ts.Node): ts.Identifier[] {
+  if (ts.isIdentifier(name)) return [name];
+
+  if (ts.isQualifiedName(name)) return [name.right, ...nameParts(name.left)];
+
+  if (ts.isPropertyAccessExpression(name) && ts.isIdentifier(name.name)) {
+    return [name.name, ...nameParts(name.expression)];
+  }
+
+  return [];
+}
+
+/** Call `visit` with the name parts of every type reference, heritage clause, and `typeof` query under `node`. */
+function forEachTypeName(node: ts.Node, visit: (parts: ts.Identifier[]) => void): void {
+  if (ts.isTypeReferenceNode(node)) visit(nameParts(node.typeName));
+  else if (ts.isExpressionWithTypeArguments(node)) visit(nameParts(node.expression));
+  else if (ts.isTypeQueryNode(node)) visit(nameParts(node.exprName));
+  else if (ts.isImportTypeNode(node) && node.qualifier) visit(nameParts(node.qualifier));
+
+  ts.forEachChild(node, (child) => forEachTypeName(child, visit));
+}
+
 /** Resolve every export of every public entry to its authored declaration, deduplicated across re-exports. */
-export function collectPublicExports(entries: readonly PublicEntry[]): PublicExport[] {
+export function collectPublicExports(entries: readonly PublicEntry[], root = monorepoRoot): PublicSurface {
   const program = ts.createProgram(
     entries.map((entry) => entry.declarationFile),
     {
@@ -473,61 +593,134 @@ export function collectPublicExports(entries: readonly PublicEntry[]): PublicExp
   );
   const checker = program.getTypeChecker();
   const exports = new Map<string, PublicExport>();
+  const bySymbol = new Map<ts.Symbol, PublicExport>();
+  const unresolved: string[] = [];
+
+  const checkedDeclarations = (symbol: ts.Symbol) =>
+    (symbol.declarations ?? []).filter((node) => isCheckedDeclaration(node.getSourceFile().fileName, root));
+
+  const collect = (exported: ts.Symbol, exportedName: string, entry: PublicEntry, namespaces: Set<ts.Symbol>) => {
+    // `index_parts_d_exports` re-exported under its own synthetic name is bundler output, not API.
+    if (isSyntheticNamespace(exportedName)) return;
+
+    const symbol = resolveAlias(checker, exported);
+
+    if (!symbol.declarations?.length) {
+      unresolved.push(`${entry.specifier}#${exportedName}`);
+      return;
+    }
+
+    const declarations = checkedDeclarations(symbol);
+    if (declarations.length === 0) return;
+
+    // Consumers never see JSDoc on `export * as Slider`, so a namespace is checked through its members.
+    if (isModuleNamespace(symbol)) {
+      if (namespaces.has(symbol)) return;
+
+      const nested = new Set([...namespaces, symbol]);
+
+      for (const member of checker.getExportsOfModule(symbol)) {
+        collect(member, namespaceMemberName(exportedName, member.name), entry, nested);
+      }
+
+      return;
+    }
+
+    // Bundled declarations rename default exports to `_default` and suffix colliding names, e.g. `IconProps$1`.
+    const isDefault = exported.name === 'default' || symbol.name === '_default';
+    const name = isDefault ? 'default' : symbol.name.replace(/\$\d+$/, '');
+    const declarationFile = declarations[0]!.getSourceFile().fileName;
+    const source = findSourceDeclarations(declarationFile, name, root);
+    const file = source?.file ?? declarationFile;
+    const key = `${file}#${name}`;
+
+    let record = exports.get(key);
+
+    if (!record) {
+      const tagged = source ? signatureDeclarations(source.nodes) : declarations;
+
+      record = {
+        name,
+        exportedNames: new Set(),
+        specifiers: new Set(),
+        file,
+        hasSource: source !== undefined,
+        declarationTags: tagged.map(jsDocTagNames),
+        references: new Set(),
+      };
+      exports.set(key, record);
+    }
+
+    record.exportedNames.add(exportedName);
+    record.specifiers.add(entry.specifier);
+    bySymbol.set(symbol, record);
+  };
 
   for (const entry of entries) {
     const sourceFile = program.getSourceFile(entry.declarationFile);
     const moduleSymbol = sourceFile && checker.getSymbolAtLocation(sourceFile);
     if (!moduleSymbol) continue;
 
-    for (const exported of checker.getExportsOfModule(moduleSymbol)) {
-      const symbol = exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported;
-      const declaration = symbol.declarations?.find((node) => isCheckedDeclaration(node.getSourceFile().fileName));
-      // Consumers never see JSDoc on `export * as X`, so namespaces are checked through their members.
-      if (!declaration || isSyntheticNamespace(exported.name) || isSyntheticNamespace(symbol.name)) continue;
+    for (const exported of checker.getExportsOfModule(moduleSymbol)) collect(exported, exported.name, entry, new Set());
+  }
 
-      // Bundled declarations rename default exports to `_default` and suffix colliding names, e.g. `IconProps$1`.
-      const isDefault = exported.name === 'default' || symbol.name === '_default';
-      const name = isDefault ? 'default' : symbol.name.replace(/\$\d+$/, '');
-      const declarationFile = declaration.getSourceFile().fileName;
-      const source = findSourceDeclarations(declarationFile, name);
-      const sourceDeclarations = source?.nodes ?? [];
-      const hasSource = source !== undefined;
-      const file = source?.file ?? declarationFile;
-      const key = `${file}#${name}`;
+  // A reference may name another bundle's copy of an export, so symbols no entry exported are matched by source.
+  const bySource = new Map<ts.Symbol, PublicExport | undefined>();
 
-      let record = exports.get(key);
+  const recordOf = (identifier: ts.Identifier): PublicExport | undefined => {
+    const located = checker.getSymbolAtLocation(identifier);
+    if (!located) return undefined;
 
-      if (!record) {
-        const tags = hasSource
-          ? jsDocTagNames(sourceDeclarations)
-          : new Set(symbol.getJsDocTags(checker).map((tag) => tag.name));
+    const symbol = resolveAlias(checker, located);
+    if (bySymbol.has(symbol)) return bySymbol.get(symbol);
 
-        record = { name, exportedNames: new Set(), specifiers: new Set(), file, hasSource, tags };
-        exports.set(key, record);
-      }
+    if (!bySource.has(symbol)) {
+      const declaration = checkedDeclarations(symbol)[0];
+      const name = symbol.name.replace(/\$\d+$/, '');
+      const source = declaration && findSourceDeclarations(declaration.getSourceFile().fileName, name, root);
 
-      record.exportedNames.add(exported.name);
-      record.specifiers.add(entry.specifier);
+      bySource.set(symbol, source ? exports.get(`${source.file}#${name}`) : undefined);
+    }
+
+    return bySource.get(symbol);
+  };
+
+  for (const [symbol, record] of bySymbol) {
+    for (const node of checkedDeclarations(symbol).flatMap(publicSurface)) {
+      forEachTypeName(node, (parts) => {
+        const reference = parts.map(recordOf).find((candidate) => candidate !== undefined);
+
+        if (reference && reference !== record) record.references.add(reference);
+      });
     }
   }
 
-  return [...exports.values()];
+  return { exports: [...exports.values()], unresolved };
 }
 
 // ── Classification ───────────────────────────────────────────────────────────
 
 export type Stability = 'stable' | 'experimental' | 'internal';
 
-/** The stability the docs give an export: stable or experimental when a page documents it, internal otherwise. */
+export type StabilityTag = 'experimental' | 'internal';
+
+/**
+ * The stability the docs give an export: stable or experimental when a page documents it, internal otherwise. An export
+ * only internal packages expose is internal whatever its name: pages document what `@videojs/react`, `@videojs/html`,
+ * and the other framework-facing packages expose, not the core they build on.
+ */
 export function documentedStability(
   record: Pick<PublicExport, 'name' | 'exportedNames' | 'specifiers'>,
   coverage: Coverage
 ): Stability {
+  const specifiers = [...record.specifiers].filter((specifier) => !INTERNAL_PACKAGE_PATTERN.test(specifier));
+  if (specifiers.length === 0) return 'internal';
+
   const names = [record.name, ...record.exportedNames].filter((name) => name !== 'default');
-  const specifiers = record.name === 'default' ? [...record.specifiers] : [];
-  const covers = (set: ReadonlySet<string>, modules: readonly string[]) =>
+  const modules = record.name === 'default' ? specifiers : [];
+  const covers = (set: ReadonlySet<string>, patterns: readonly string[]) =>
     names.some((name) => isCoveredName(name, set)) ||
-    specifiers.some((specifier) => matchesModulePattern(specifier, modules));
+    modules.some((specifier) => matchesModulePattern(specifier, patterns));
   if (covers(coverage.stable, coverage.stableModules)) return 'stable';
 
   if (covers(coverage.unstable, coverage.unstableModules)) return 'experimental';
@@ -535,61 +728,260 @@ export function documentedStability(
   return 'internal';
 }
 
-/** The tag `--fix` adds when `record` lacks one its stability accepts, or `undefined` when it complies. */
-export function missingTag(
-  record: Pick<PublicExport, 'tags'>,
-  stability: Stability
-): 'experimental' | 'internal' | undefined {
-  if (stability === 'stable') return undefined;
+/** How one declaration's tags must change to match its stability. */
+export interface TagChange {
+  add?: StabilityTag;
+  remove: StabilityTag[];
+}
 
-  return ACCEPTED_TAGS[stability].some((tag) => record.tags.has(tag)) ? undefined : stability;
+/**
+ * The change one declaration's tags need, or `undefined` when they comply. A page wins over a tag: a documented export
+ * loses a contradicting `@internal` (and a stable one `@experimental`) instead of the page being ignored.
+ */
+export function tagChange(tags: ReadonlySet<string>, stability: Stability): TagChange | undefined {
+  if (stability === 'stable') {
+    const remove = (['internal', 'experimental'] as const).filter((tag) => tags.has(tag));
+
+    return remove.length > 0 ? { remove } : undefined;
+  }
+
+  const remove: StabilityTag[] = stability === 'experimental' && tags.has('internal') ? ['internal'] : [];
+  const add = ACCEPTED_TAGS[stability].some((tag) => tags.has(tag)) ? undefined : stability;
+  if (!add && remove.length === 0) return undefined;
+
+  return add ? { add, remove } : { remove };
+}
+
+/** Why `record` fails the tag rule at `stability`, or `undefined` when every declaration complies. */
+export function tagViolation(record: Pick<PublicExport, 'declarationTags'>, stability: Stability): string | undefined {
+  const changes = record.declarationTags.map((tags) => tagChange(tags, stability));
+  const removed = [...new Set(changes.flatMap((change) => change?.remove ?? []))];
+  const untagged = changes.filter((change) => change?.add).length;
+
+  if (removed.length > 0) {
+    const tags = removed.map((tag) => `@${tag}`).join(' and ');
+
+    return stability === 'stable'
+      ? `is documented on a reference page but tagged ${tags} — remove the tag`
+      : `is documented on an unstable page but tagged ${tags} — use @experimental`;
+  }
+
+  if (untagged === 0) return undefined;
+
+  const scope = untagged < changes.length ? ` on ${untagged} of ${changes.length} declarations` : '';
+
+  return `needs @${stability}${scope}`;
+}
+
+export interface InternalReference {
+  record: PublicExport;
+  reference: PublicExport;
+}
+
+/**
+ * Stable and experimental exports whose public type surface names an internal export directly. Only a person can
+ * resolve one, by documenting the referenced export or changing the signature, so `--fix` leaves them alone.
+ */
+export function findInternalReferences(
+  records: readonly PublicExport[],
+  stabilities: ReadonlyMap<PublicExport, Stability>
+): InternalReference[] {
+  return records.flatMap((record) => {
+    if (stabilities.get(record) === 'internal') return [];
+
+    return [...record.references]
+      .filter((reference) => stabilities.get(reference) === 'internal')
+      .map((reference) => ({ record, reference }));
+  });
 }
 
 // ── Fix ──────────────────────────────────────────────────────────────────────
 
-/** Return `source` with `@<tag>` added to the JSDoc of `node`, creating the comment when absent. */
-export function addTag(source: string, sourceFile: ts.SourceFile, node: DocumentableNode, tag: string): string {
-  const start = node.getStart(sourceFile);
-  const jsDoc = ts.getJSDocCommentsAndTags(node).filter(ts.isJSDoc).at(-1);
-  const indent = source.slice(source.lastIndexOf('\n', start - 1) + 1, start).match(/^[ \t]*/)![0];
+/** `vp fmt` wraps JSDoc at this width and collapses a one-line comment that fits onto a single line. */
+const PRINT_WIDTH = 120;
 
-  if (!jsDoc) return `${source.slice(0, start)}/** @${tag} */\n${indent}${source.slice(start)}`;
+/** Block tags the formatter sorts after `@internal` and `@experimental`; it keeps every other tag's order. */
+const TRAILING_TAGS = new Set(['see', 'todo']);
 
-  const comment = source.slice(jsDoc.getStart(sourceFile), jsDoc.end);
+/** A JSDoc comment's content lines, without the comment markers, leading `*`, or surrounding blank lines. */
+function commentLines(comment: string): string[] {
   const lines = comment
     .replace(/^\/\*\*/, '')
     .replace(/\*\/$/, '')
     .split('\n')
     .map((line) => line.replace(/^\s*\*?\s?/, '').trimEnd());
 
-  while (lines.length > 0 && !lines[0]!.trim()) lines.shift();
-
-  while (lines.length > 0 && !lines.at(-1)!.trim()) lines.pop();
-
-  const hasTags = lines.some((line) => line.trimStart().startsWith('@'));
-  const body = [...lines, ...(lines.length > 0 && !hasTags ? [''] : []), `@${tag}`];
-  const replacement = [
-    '/**',
-    ...body.map((line) => (line ? `${indent} * ${line}` : `${indent} *`)),
-    `${indent} */`,
-  ].join('\n');
-
-  return `${source.slice(0, jsDoc.getStart(sourceFile))}${replacement}${source.slice(jsDoc.end)}`;
+  return trimBlankLines(lines);
 }
 
-/** Tag declarations in one source file, applying edits bottom-up so offsets stay valid. Returns the edit count. */
-export function fixSourceFile(filePath: string, fixes: ReadonlyMap<string, string>): number {
+function trimBlankLines(lines: readonly string[]): string[] {
+  let start = 0;
+  let end = lines.length;
+
+  while (start < end && !lines[start]!.trim()) start++;
+
+  while (end > start && !lines[end - 1]!.trim()) end--;
+
+  return lines.slice(start, end);
+}
+
+/** Block tags that start a line outside fenced code, with the line each starts on. */
+function blockTags(lines: readonly string[]): Array<{ index: number; tag: string }> {
+  const tags: Array<{ index: number; tag: string }> = [];
+  let fence: string | undefined;
+
+  lines.forEach((line, index) => {
+    const marker = line.match(/^\s*(`{3,}|~{3,})/)?.[1];
+
+    if (marker && (!fence || (marker[0] === fence[0] && marker.length >= fence.length))) {
+      fence = fence ? undefined : marker;
+    } else if (!fence) {
+      const tag = line.match(/^@([\w-]+)/)?.[1];
+
+      if (tag) tags.push({ index, tag });
+    }
+  });
+
+  return tags;
+}
+
+/**
+ * Remove each `@tag` block, from its tag line to the next tag, without leaving doubled blank lines. Text the tag
+ * carried moves to the end of the description, so dropping a tag drops no prose.
+ */
+function removeTagBlocks(lines: readonly string[], tag: string): string[] {
+  const result = [...lines];
+  const carried: string[] = [];
+  let tags = blockTags(result);
+  let at = tags.findIndex((candidate) => candidate.tag === tag);
+
+  while (at !== -1) {
+    const start = tags[at]!.index;
+    const end = tags[at + 1]?.index ?? result.length;
+    const text = trimBlankLines(
+      [result[start]!.replace(/^@[\w-]+\s*/, ''), ...result.slice(start + 1, end)].map((line) => line.trim())
+    );
+
+    if (text.length > 0) carried.push(...(carried.length > 0 ? [''] : []), ...text);
+
+    result.splice(start, end - start);
+
+    if (start > 0 && start < result.length && !result[start - 1] && !result[start]) result.splice(start, 1);
+
+    tags = blockTags(result);
+    at = tags.findIndex((candidate) => candidate.tag === tag);
+  }
+
+  const kept = trimBlankLines(result);
+
+  if (carried.length === 0) return kept;
+
+  const descriptionEnd = blockTags(kept)[0]?.index ?? kept.length;
+  const description = trimBlankLines(kept.slice(0, descriptionEnd));
+  const rest = kept.slice(descriptionEnd);
+
+  return [
+    ...description,
+    ...(description.length > 0 ? [''] : []),
+    ...carried,
+    ...(rest.length > 0 ? ['', ...rest] : []),
+  ];
+}
+
+/**
+ * Insert `@tag` where the formatter keeps it: after the other tags but before `@see` and `@todo`, separated by a blank
+ * line from the description and from an `@example`.
+ */
+function insertTag(lines: readonly string[], tag: string): string[] {
+  const tags = blockTags(lines);
+  const at = tags.find((candidate) => TRAILING_TAGS.has(candidate.tag))?.index ?? lines.length;
+  const previous = tags.filter((candidate) => candidate.index < at).at(-1);
+  const before = lines.slice(0, at);
+  const isSeparated = before.length > 0 && (!previous || previous.tag === 'example');
+
+  if (isSeparated && before.at(-1)) before.push('');
+
+  return [...before, `@${tag}`, ...lines.slice(at)];
+}
+
+function renderComment(lines: readonly string[], indent: string): string {
+  if (lines.length === 0) return '';
+
+  if (lines.length === 1 && `${indent}/** ${lines[0]} */`.length <= PRINT_WIDTH) return `/** ${lines[0]} */`;
+
+  return ['/**', ...lines.map((line) => (line ? `${indent} * ${line}` : `${indent} *`)), `${indent} */`].join('\n');
+}
+
+/**
+ * Return `source` with the JSDoc of `node` changed as `change` says: a replaced `@internal` becomes `@experimental` in
+ * place, a comment left empty is deleted, and a new comment is created when needed. The result is formatter-clean when
+ * `source` is.
+ */
+export function applyTagChange(
+  source: string,
+  sourceFile: ts.SourceFile,
+  node: DocumentableNode,
+  change: TagChange
+): string {
+  const start = node.getStart(sourceFile);
+  const indent = source.slice(source.lastIndexOf('\n', start - 1) + 1, start).match(/^[ \t]*/)![0];
+  const comments = ts.getJSDocCommentsAndTags(node).filter(ts.isJSDoc);
+
+  if (comments.length === 0) {
+    return change.add ? `${source.slice(0, start)}/** @${change.add} */\n${indent}${source.slice(start)}` : source;
+  }
+
+  let add = change.add;
+  let result = source;
+
+  // Edit the last comment first so earlier offsets stay valid; a new tag goes in the last comment, next to the node.
+  for (const [index, comment] of [...comments.entries()].reverse()) {
+    const commentStart = comment.getStart(sourceFile);
+    let lines = commentLines(source.slice(commentStart, comment.end));
+    const replaced =
+      add && change.remove.includes('internal') && blockTags(lines).find((tag) => tag.tag === 'internal');
+
+    if (replaced) {
+      lines[replaced.index] = lines[replaced.index]!.replace('@internal', `@${add}`);
+      add = undefined;
+    }
+
+    for (const tag of change.remove) lines = removeTagBlocks(lines, tag);
+
+    if (add && index === comments.length - 1) lines = insertTag(lines, add);
+
+    const rendered = renderComment(lines, indent);
+    const end = rendered ? comment.end : comment.end + source.slice(comment.end).match(/^\s*/)![0].length;
+
+    result = `${result.slice(0, commentStart)}${rendered}${result.slice(end)}`;
+  }
+
+  return result;
+}
+
+/**
+ * Bring the stability tags of the named declarations in one source file in line with their stability, applying edits
+ * bottom-up so offsets stay valid. Every declaration of a name is checked, overload implementations included. Returns
+ * the number of declarations changed.
+ */
+export function fixSourceFile(filePath: string, fixes: ReadonlyMap<string, Stability>): number {
   let source = readFileSync(filePath, 'utf8');
   const sourceFile = parseSource(filePath, source);
-  // Every overload carries its own JSDoc, so each declaration of the name gets the tag.
   const edits = [...fixes]
-    .flatMap(([name, tag]) => findDeclarations(sourceFile, name).map((node) => ({ node, tag })))
+    .flatMap(([name, stability]) =>
+      findDeclarations(sourceFile, name).flatMap((node) => {
+        const change = tagChange(jsDocTagNames(node), stability);
+
+        return change ? [{ node, change }] : [];
+      })
+    )
     .filter((edit, index, all) => all.findIndex((other) => other.node === edit.node) === index)
     .sort((a, b) => b.node.getStart(sourceFile) - a.node.getStart(sourceFile));
 
-  for (const { node, tag } of edits) source = addTag(source, sourceFile, node, tag);
+  for (const { node, change } of edits) source = applyTagChange(source, sourceFile, node, change);
 
-  writeFileSync(filePath, source);
+  if (edits.length > 0) writeFileSync(filePath, source);
+
   return edits.length;
 }
 
@@ -652,6 +1044,45 @@ export function findUnstableImports(
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
+/** The entry a report names an export by: a framework-facing one when there is one. */
+function primarySpecifier(record: Pick<PublicExport, 'specifiers'>): string {
+  const specifiers = [...record.specifiers].sort();
+
+  return specifiers.find((specifier) => !INTERNAL_PACKAGE_PATTERN.test(specifier)) ?? specifiers[0]!;
+}
+
+function label(record: PublicExport): string {
+  return `${record.name} (${primarySpecifier(record)})`;
+}
+
+/** Print internal references grouped by the internal export they name, most referenced first. */
+function reportInternalReferences(references: readonly InternalReference[]): void {
+  const groups = new Map<PublicExport, PublicExport[]>();
+
+  for (const { record, reference } of references) groups.set(reference, [...(groups.get(reference) ?? []), record]);
+
+  const sorted = [...groups].sort(
+    ([a, left], [b, right]) => right.length - left.length || a.name.localeCompare(b.name)
+  );
+
+  for (const [reference, records] of sorted) {
+    console.error(`✗ ${label(reference)}  ${records.length} ${records.length === 1 ? 'reference' : 'references'}`);
+
+    for (const record of records.sort((a, b) => a.name.localeCompare(b.name))) {
+      console.error(`  ${label(record)} references internal ${label(reference)}`);
+    }
+  }
+
+  const referencing = new Set(references.map(({ record }) => record)).size;
+
+  console.error(
+    `\n✗ ${referencing} stable or experimental exports make ${references.length} references to ${groups.size} ` +
+      'internal exports.\n' +
+      '  A documented export must not expose an undocumented one. Document the referenced export (list it in a\n' +
+      "  reference page's `apis`) or change the signature so it no longer names it. `--fix` doesn't resolve these."
+  );
+}
+
 function main(): void {
   const fix = process.argv.includes('--fix');
   const siteDirectory = resolve(scriptPath, '..', '..');
@@ -667,22 +1098,26 @@ function main(): void {
   }
 
   const coverage = collectCoverage(siteDirectory);
-  const exports = collectPublicExports(entries);
-  const stabilities = new Map<string, Stability>();
-  const violations: Array<{ record: PublicExport; tag: 'experimental' | 'internal' }> = [];
+  const { exports, unresolved } = collectPublicExports(entries);
+  const stabilities = new Map<PublicExport, Stability>();
+  const importStabilities = new Map<string, Stability>();
+  const violations: Array<{ record: PublicExport; stability: Stability; reason: string }> = [];
 
   for (const record of exports) {
     const stability = documentedStability(record, coverage);
-    const tag = missingTag(record, stability);
+    const reason = tagViolation(record, stability);
+
+    stabilities.set(record, stability);
 
     for (const specifier of record.specifiers) {
-      for (const name of record.exportedNames) stabilities.set(`${specifier}#${name}`, stability);
+      for (const name of record.exportedNames) importStabilities.set(`${specifier}#${name}`, stability);
     }
 
-    if (tag) violations.push({ record, tag });
+    if (reason) violations.push({ record, stability, reason });
   }
 
-  const warnings = findUnstableImports(collectDocsImports(siteDirectory), stabilities);
+  const references = findInternalReferences(exports, stabilities);
+  const warnings = findUnstableImports(collectDocsImports(siteDirectory), importStabilities);
 
   for (const warning of warnings) {
     console.warn(
@@ -692,54 +1127,76 @@ function main(): void {
 
   if (warnings.length > 0) console.warn(`⚠ ${warnings.length} docs imports use APIs that aren't stable.\n`);
 
+  for (const name of unresolved) console.warn(`⚠ ${name}  resolves to no declaration`);
+
+  if (unresolved.length > 0)
+    console.warn(`⚠ ${unresolved.length} public exports can't be resolved, so aren't checked.\n`);
+
+  const counts = { stable: 0, experimental: 0, internal: 0 };
+
+  for (const stability of stabilities.values()) counts[stability]++;
+
+  console.log(
+    `${exports.length} checked public exports: ${counts.stable} stable, ${counts.experimental} experimental, ` +
+      `${counts.internal} internal.`
+  );
+
   violations.sort((a, b) => a.record.file.localeCompare(b.record.file) || a.record.name.localeCompare(b.record.name));
 
-  if (violations.length === 0) {
+  if (violations.length === 0 && references.length === 0) {
     console.log(`✓ All ${exports.length} checked public exports are documented or tagged.`);
     return;
   }
 
-  if (fix) {
-    const byFile = new Map<string, Map<string, string>>();
+  if (fix && violations.length > 0) {
+    const byFile = new Map<string, Map<string, Stability>>();
     let fixed = 0;
 
-    for (const { record, tag } of violations) {
+    for (const { record, stability } of violations) {
       if (!record.hasSource) continue;
 
-      const fixes = byFile.get(record.file) ?? new Map<string, string>();
+      const fixes = byFile.get(record.file) ?? new Map<string, Stability>();
 
-      fixes.set(record.name, tag);
+      fixes.set(record.name, stability);
       byFile.set(record.file, fixes);
     }
 
     for (const [file, fixes] of byFile) fixed += fixSourceFile(file, fixes);
 
-    console.log(`✓ Tagged ${fixed} declarations in ${byFile.size} files.`);
+    console.log(`✓ Fixed the stability tags of ${fixed} declarations in ${byFile.size} files.`);
 
     const unfixable = violations.filter(({ record }) => !record.hasSource);
-    if (unfixable.length === 0) return;
 
-    console.error(`✗ ${unfixable.length} exports have no matching source declaration; tag them by hand:`);
+    if (unfixable.length > 0) {
+      console.error(`✗ ${unfixable.length} exports have no matching source declaration; fix their tags by hand:`);
 
-    for (const { record, tag } of unfixable) {
-      console.error(`  ${relative(monorepoRoot, record.file)}  ${record.name}  (@${tag})`);
+      for (const { record, reason } of unfixable) {
+        console.error(`  ${relative(monorepoRoot, record.file)}  ${record.name}  ${reason}`);
+      }
     }
 
-    process.exit(1);
+    if (references.length > 0) reportInternalReferences(references);
+
+    if (unfixable.length > 0 || references.length > 0) process.exit(1);
+
+    return;
   }
 
-  for (const { record, tag } of violations) {
+  for (const { record, reason } of violations) {
+    console.error(`✗ ${relative(monorepoRoot, record.file)}  ${record.name}  ${reason}  (${primarySpecifier(record)})`);
+  }
+
+  if (violations.length > 0) {
     console.error(
-      `✗ ${relative(monorepoRoot, record.file)}  ${record.name}  needs @${tag}  (${[...record.specifiers][0]})`
+      `\n✗ ${violations.length} public exports have the wrong stability tag.\n` +
+        '  Exports are stable only when a reference page documents them (see writing-style/write-references).\n' +
+        '  Tag the rest `@internal`, or `@experimental` when a `stability: unstable` page documents them, and\n' +
+        '  drop the tag from documented ones. `pnpm -F site check:api-stability --fix` corrects the tags.\n'
     );
   }
 
-  console.error(
-    `\n✗ ${violations.length} public exports need a stability tag.\n` +
-      '  Exports are stable only when a reference page documents them (see writing-style/write-references).\n' +
-      '  Tag the rest `@internal`, or `@experimental` when a `stability: unstable` page documents them.\n' +
-      '  `pnpm -F site check:api-stability --fix` adds the missing tags.'
-  );
+  if (references.length > 0) reportInternalReferences(references);
+
   process.exit(1);
 }
 
