@@ -177,7 +177,7 @@ export default styles({
     },
     centerButton: {
       utilities: [
-        'bg-[rgba(0,0,0,0.4)] media-opaque:bg-media-background forced-colors:bg-[ButtonFace]',
+        'bg-[rgba(0,0,0,0.4)]! media-opaque:bg-media-background! forced-colors:bg-[ButtonFace]!',
         'hover:bg-[rgba(0,0,0,0.85)]! focus-visible:bg-[rgba(0,0,0,0.85)]! aria-expanded:bg-[rgba(0,0,0,0.85)]!',
         'media-opaque:hover:bg-media-foreground! media-opaque:focus-visible:bg-media-foreground! media-opaque:aria-expanded:bg-media-foreground!',
         'forced-colors:hover:bg-[Highlight]! forced-colors:focus-visible:bg-[Highlight]! forced-colors:aria-expanded:bg-[Highlight]!',

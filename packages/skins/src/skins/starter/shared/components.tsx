@@ -212,7 +212,7 @@ function ControlsRow({
         {seekBackward}
         {seekForward}
         {live && <LiveButton />}
-        {audio ? <PlaybackRatePopover /> : <VolumePopover />}
+        {audio ? !live && <PlaybackRatePopover /> : <VolumePopover />}
         <$.Time.Group className={styles.timeGroup}>
           <$.Time.Value className={styles.compactTime} type="current" toggle />
           <$.Time.Value className={styles.currentTime} type="current" />
