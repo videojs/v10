@@ -57,6 +57,7 @@ export type {
   SeekButtonState,
   SeekIndicatorProps,
   SeekIndicatorState,
+  SliderInput,
   SliderProps,
   SliderSegmentGeometry,
   SliderSegmentRange,
@@ -121,14 +122,17 @@ export {
 // Media types
 export type {
   AudioRenditionLike,
+  AudioRenditionListLike,
   AudioTrackLike,
   AudioTrackListLike,
   CanPlayTypeResult,
   CommonMedia,
   CommonMediaEvents,
+  EngineAdapter,
   ErrorLike,
   EventLike,
   EventTargetLike,
+  MediaAudioRenditionCapability,
   MediaAudioTrack,
   MediaAudioTrackCapability,
   MediaAudioTrackState,
@@ -193,6 +197,7 @@ export type {
   MediaVideoDimensionsEvents,
   MediaVideoRendition,
   MediaVideoRenditionCapability,
+  MediaVideoTrackCapability,
   MediaVolumeCapability,
   MediaVolumeEvents,
   MediaVolumeState,
@@ -210,9 +215,13 @@ export type {
   VideoEvents,
   VideoRenditionLike,
   VideoRenditionListLike,
+  VideoTargetLike,
+  VideoTrackLike,
+  VideoTrackListLike,
 } from '@videojs/media';
 // Media
 export * from '@videojs/media/dom';
+export type { WithMediaTracks } from '@videojs/media/media-tracks';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';

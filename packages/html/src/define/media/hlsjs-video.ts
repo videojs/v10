@@ -3,6 +3,7 @@ import { safeDefine } from '../../registration/safe-define';
 
 export type {
   HlsEngineConfig,
+  HlsJsAdapter,
   HlsJsAdapterProps,
   HlsSource,
   PlaybackType,

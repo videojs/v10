@@ -1,7 +1,14 @@
 import { MuxVideo } from '../../../media/mux-video/hls-js';
 import { safeDefine } from '../../../registration/safe-define';
 
-export type { MuxDrmParams, MuxSource, MuxSourceBase, MuxVideoAdapterProps } from '@videojs/mux-video';
+export type {
+  MuxDrmParams,
+  MuxPosterFitMode,
+  MuxSource,
+  MuxSourceBase,
+  MuxVideoAdapter,
+  MuxVideoAdapterProps,
+} from '@videojs/mux-video';
 
 export class MuxVideoElement extends MuxVideo {
   static readonly tagName = 'mux-video';

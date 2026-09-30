@@ -1,6 +1,7 @@
 export * from './adapter';
 export type {
   HlsEngineConfig,
+  HlsJsAdapter,
   HlsJsAdapterProps,
   HlsSource,
   PlaybackType,

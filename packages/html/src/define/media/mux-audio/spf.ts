@@ -1,7 +1,13 @@
 import { MuxAudio } from '../../../media/mux-audio/spf';
 import { safeDefine } from '../../../registration/safe-define';
 
-export type { MuxAdapterProps, MuxSourceBase } from '@videojs/mux-audio/spf';
+export type {
+  MuxAdapterAPI,
+  MuxAdapterProps,
+  MuxAudioAdapter,
+  MuxContentData,
+  MuxSourceBase,
+} from '@videojs/mux-audio/spf';
 
 export class MuxAudioElement extends MuxAudio {
   static readonly tagName = 'mux-audio';
