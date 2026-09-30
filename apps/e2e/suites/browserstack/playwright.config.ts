@@ -10,7 +10,7 @@ export default defineConfig<{}, Options>({
   ...suiteConfig('browserstack'),
   testDir: resolve(import.meta.dirname, 'tests'),
   testMatch: '**/*.spec.ts',
-  workers: 1,
+  workers: 5,
   retries: 0,
   // Remote media readiness and seeking can each take up to 40 seconds.
   timeout: 3 * 60_000,
