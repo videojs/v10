@@ -7,6 +7,7 @@ import {
   failureReason,
   installationAnalyticsContext,
   isAgentHandoffMethod,
+  reportableSearchQuery,
   trackEvent,
 } from '../analytics-events';
 import { DEFAULT_SELECTION } from '../installation/url-state';
@@ -54,6 +55,22 @@ describe('isAgentHandoffMethod', () => {
     expect(isAgentHandoffMethod('install-agent-skill')).toBe(true);
     expect(isAgentHandoffMethod('copy-code')).toBe(false);
     expect(isAgentHandoffMethod(undefined)).toBe(false);
+  });
+});
+
+describe('reportableSearchQuery', () => {
+  it('trims and caps an ordinary query', () => {
+    expect(reportableSearchQuery('  picture in picture ')).toBe('picture in picture');
+    expect(reportableSearchQuery('requestPictureInPictureWindow')).toBe('requestPictureInPictureWindow');
+    expect(reportableSearchQuery('x '.repeat(80))).toHaveLength(100);
+  });
+
+  it('drops a query that looks like a URL, an address, or a token', () => {
+    expect(reportableSearchQuery('https://cdn.example.com/v.m3u8')).toBeUndefined();
+    expect(reportableSearchQuery('www.example.com')).toBeUndefined();
+    expect(reportableSearchQuery('me@example.com')).toBeUndefined();
+    expect(reportableSearchQuery('a4nOgmxGWg6gULfcBbAa00gXyfcwPnAF')).toBeUndefined();
+    expect(reportableSearchQuery('   ')).toBeUndefined();
   });
 });
 

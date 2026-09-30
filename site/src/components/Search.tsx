@@ -12,19 +12,18 @@ import {
   DOCSEARCH_DOCS_INDEX,
 } from '@/search.config';
 import { currentFramework } from '@/stores/preferences';
-import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics-events';
-
-const QUERY_LIMIT = 100;
+import { ANALYTICS_EVENTS, reportableSearchQuery, trackEvent } from '@/utils/analytics-events';
 
 let reportedQuery = '';
 
 // DocSearch builds this URL while rendering the no-results screen, once per keystroke. Waiting for typing to settle
 // reports the query the reader stopped on, not every prefix of it.
-const reportNoResults = debounce((query: string) => {
-  if (query === reportedQuery) return;
+const reportNoResults = debounce((input: string) => {
+  const query = reportableSearchQuery(input);
+  if (!query || query === reportedQuery) return;
 
   reportedQuery = query;
-  trackEvent(ANALYTICS_EVENTS.searchNoResults, { query: query.slice(0, QUERY_LIMIT) });
+  trackEvent(ANALYTICS_EVENTS.searchNoResults, { query });
 }, 1000);
 
 function missingResultsUrl({ query }: { query: string }): string {

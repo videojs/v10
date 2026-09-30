@@ -64,7 +64,7 @@ export interface AnalyticsEventProperties {
   mux_upload_completed: undefined;
   mux_upload_ready: undefined;
   /** Never carries upload IDs, playback IDs, or tokens: only the step and a short reason. */
-  mux_upload_failed: { stage: 'create_upload' | 'processing'; reason: string };
+  mux_upload_failed: { stage: 'create_upload' | 'upload' | 'processing'; reason: string };
   mux_upload_retried: undefined;
 }
 
@@ -77,6 +77,19 @@ const REASON_LIMIT = 100;
 /** A failure reason short enough to chart. Prefer an error code; a message is trimmed. */
 export function failureReason(error: { code?: string; message: string }): string {
   return error.code ?? error.message.slice(0, REASON_LIMIT);
+}
+
+const SEARCH_QUERY_LIMIT = 100;
+
+// Readers paste media URLs, addresses, and tokens into search too. Those are theirs to keep, and no page is missing.
+const PRIVATE_SEARCH_QUERY = /:\/\/|www\.|@|\b(?=[\w-]*\d)[\w-]{20,}/;
+
+/** A no-results query worth reporting as a content gap, trimmed and capped, or `undefined` for one that looks private. */
+export function reportableSearchQuery(query: string): string | undefined {
+  const trimmed = query.trim();
+  if (!trimmed || PRIVATE_SEARCH_QUERY.test(trimmed)) return undefined;
+
+  return trimmed.slice(0, SEARCH_QUERY_LIMIT);
 }
 
 /** Send a custom event. */

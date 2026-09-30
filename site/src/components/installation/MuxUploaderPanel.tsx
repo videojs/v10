@@ -134,6 +134,11 @@ export default function MuxUploaderPanel() {
     });
   }, []);
 
+  // The uploader's messages can name the upload URL, so only the step is recorded.
+  const handleUploadError = useCallback(() => {
+    trackEvent(ANALYTICS_EVENTS.muxUploadFailed, { stage: 'upload', reason: 'transfer_failed' });
+  }, []);
+
   /** Polls Mux API for playback ID after upload completes. Updates renderer to 'mux' and stores playback ID on success. */
   const handleUploadSuccess = useCallback(async () => {
     if (!uploadId) return;
@@ -216,6 +221,7 @@ export default function MuxUploaderPanel() {
         noRetry
         endpoint={getEndpoint}
         onSuccess={handleUploadSuccess}
+        onUploadError={handleUploadError}
       />
       {/* Custom Mux Uploader UI */}
       <MuxUploaderDrop
