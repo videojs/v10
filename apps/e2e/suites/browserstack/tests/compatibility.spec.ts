@@ -1,5 +1,5 @@
 import { PlayerPage } from '../../../shared/page-objects/player';
-import { deepQuery, PAGES, readProbe } from '../../floor/run.ts';
+import { deepQuery, PAGES, readProbe } from '../probes.ts';
 import { expect, test } from '../test.ts';
 
 for (const target of PAGES) {
@@ -61,7 +61,7 @@ for (const target of PAGES) {
       if (!target.path.includes('minimal')) expect(probe.surfaceBlur).toContain('blur');
     }
 
-    // Unlike the engine-only floor checks, unsupported H.264 or rejected playback must fail here.
+    // Unsupported H.264 or rejected playback must fail here.
     await player.play();
     await player.waitForPlayback(0.5);
     await player.pause();

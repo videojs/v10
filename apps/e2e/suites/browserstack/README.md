@@ -2,7 +2,7 @@
 
 Run the packaged HTML and React video, minimal video, and audio pages on Chrome 111, Edge 111, Firefox 121, and WebKit 16.4. The checks cover CSS fallbacks, closed popovers, playback, seeking, and opening menus. Playback failure is a test failure, including missing H.264 support.
 
-The existing floor job stays enabled. BrowserStack's desktop WebKit is still an engine approximation, not actual Safari. The optional iOS project runs Safari on a real device. Neither suite currently verifies captions or fullscreen.
+This suite replaces the previous Docker floor job and its pinned Playwright clients. BrowserStack's desktop WebKit is still an engine approximation, not actual Safari. The optional iOS project runs Safari on a real device. The suite does not currently verify captions or fullscreen.
 
 ## Enable CI
 
