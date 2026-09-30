@@ -15,6 +15,7 @@ describe('resolveSourceKind', () => {
     ['https://fast.wistia.net/embed/iframe/e4a27b971d', 'wistia'],
     ['https://example.com/page?wvideo=e4a27b971d', 'wistia'],
     ['https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8', 'mux'],
+    ['https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M', 'mux'],
     ['https://customer-abc123.cloudflarestream.com/5d5bc37ffcf54c9b82e996823bffbb81/manifest/video.m3u8', 'cloudflare'],
     ['https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M', 'spotify'],
     ['spotify:episode:7makk4oTQel546B0PZlDM5', 'spotify'],
@@ -43,6 +44,7 @@ describe('resolveSourceKind', () => {
     ['clip.WEBM', 'video'],
     ['https://cdn.example.com/podcast.mp3#t=30', 'audio'],
     ['https://stream.example.com/abc.m3u8', 'hls'],
+    ['https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M/highest.mp4', 'video'],
   ])('resolves %s by its file extension', (src, expected) => {
     expect(resolveSourceKind(src)).toBe(expected);
   });

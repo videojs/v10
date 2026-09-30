@@ -84,7 +84,7 @@ function resolveProvider(src: string): MediaSourceKind | null {
     return parseWistiaMediaId(src) ? 'wistia' : null;
   }
 
-  // `player.mux.com` page URLs aren't matched: Mux media plays stream URLs.
+  // `player.mux.com` page URLs aren't matched: Mux media plays stream URLs, with or without the `.m3u8` extension.
   if (host === 'stream.mux.com') return MUX_STREAM_PATH.test(url.pathname) ? 'mux' : null;
 
   if (isHost(host, 'cloudflarestream.com') || isHost(host, 'videodelivery.net')) {
@@ -139,7 +139,7 @@ const URL_SCHEME = /^[a-z][a-z\d+.-]*:\/\//i;
 // A dotted host followed by a path, like `youtu.be/<id>`, as opposed to a relative path like `media/video.mp4`.
 const HOST_FIRST = /^[\w-]+(?:\.[\w-]+)+\//;
 const EXTENSION = /\.([a-z\d]+)$/i;
-const MUX_STREAM_PATH = /^\/[^/]+\.m3u8$/;
+const MUX_STREAM_PATH = /^\/[^/.]+(?:\.m3u8)?$/;
 
 const YOUTUBE_HOSTS = new Set([
   'youtube.com',
