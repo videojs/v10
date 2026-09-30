@@ -12,7 +12,6 @@ import {
   detectPackageManager,
   detectTemplate,
   LAST_RELEASE_WITHOUT_AGENTS_INIT,
-  runAgentsCommand,
   runAgentsInit,
   runAgentsSkills,
   type AgentsInitDefaults,
@@ -1239,39 +1238,6 @@ describe('runAgentsSkills', () => {
     expect(runAgentsSkills('10.0.0', ['agents', 'skills', '--agent', 'nope', '--help'])).toEqual(listing);
     expect(runAgentsSkills('10.0.0', ['agents', 'skills', '-h'])).toEqual(listing);
     expect(runAgentsSkills('10.0.0', ['agents', 'skills', '--wat', '--version']).stdout).toBe('10.0.0\n');
-  });
-});
-
-describe('runAgentsCommand', () => {
-  it('routes agents skills and leaves everything else to agents init', () => {
-    expect(runAgentsCommand('10.0.0', ['agents', 'skills'])).toEqual(runAgentsSkills('10.0.0', ['agents', 'skills']));
-    expect(runAgentsCommand('10.0.0', ['agents', 'init'], reactProject)).toEqual(
-      runAgentsInit('10.0.0', ['agents', 'init'], reactProject)
-    );
-  });
-
-  it('lists the commands for bare and top-level help runs', () => {
-    for (const args of [[], ['--help'], ['-h']]) {
-      const result = runAgentsCommand('10.0.0', args, reactProject);
-
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('- `npx @videojs/cli agents init`:');
-      expect(result.stdout).toContain('- `npx @videojs/cli agents skills`:');
-      expect(result.stdout).not.toContain('## Options');
-    }
-
-    expect(JSON.parse(runAgentsCommand('10.0.0', ['--json']).stdout)).toMatchObject({
-      kind: 'usage',
-      package: '@videojs/cli',
-      commands: [{ command: 'npx @videojs/cli agents init' }, { command: 'npx @videojs/cli agents skills' }],
-    });
-    expect(runAgentsCommand('10.0.0', ['--version']).stdout).toBe('10.0.0\n');
-  });
-
-  it('names both subcommands for an unknown one', () => {
-    expect(runAgentsCommand('10.0.0', ['agents', 'install']).stderr).toContain(
-      '- arguments "agents install": Expected `agents init` or `agents skills`.'
-    );
   });
 });
 
