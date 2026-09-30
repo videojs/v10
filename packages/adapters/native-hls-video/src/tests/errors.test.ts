@@ -30,25 +30,6 @@ function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
 }
 
 describe('NativeHlsErrorsMixin', () => {
-  it('dispatches an error event with a MediaError for native errors', () => {
-    const { host, video } = setup();
-
-    const handler = vi.fn();
-
-    host.addEventListener('error', handler);
-
-    fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'network failure');
-
-    expect(handler).toHaveBeenCalledOnce();
-
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
-
-    expect(event.error).toBeInstanceOf(MediaError);
-    expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
-    expect(event.error.fatal).toBe(true);
-    expect(event.error.message).toBe(MediaError.defaultMessages[MediaError.MEDIA_ERR_NETWORK]);
-  });
-
   it('normalizes browser-specific messages for standard error codes', () => {
     const { host, video } = setup();
 

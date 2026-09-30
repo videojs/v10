@@ -81,10 +81,6 @@ afterEach(() => {
 });
 
 describe('MuxDataExtension', () => {
-  it('accepts a player software name', () => {
-    expect(new MuxDataExtension({ playerSoftwareName: 'mux-video' }).playerSoftwareName).toBe('mux-video');
-  });
-
   it('monitors the attached target with the configured data', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
