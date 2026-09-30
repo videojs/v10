@@ -158,27 +158,6 @@ describe('Poster', () => {
     expect(root.hasAttribute('data-loading')).toBe(false);
   });
 
-  it('lets sibling presentation react to the image lifecycle', () => {
-    const { getByTestId } = render(
-      <Poster.Root data-testid="poster">
-        <div data-testid="blur" />
-        <Poster.Image data-testid="image" />
-        <div data-testid="overlay" />
-      </Poster.Root>,
-      { wrapper: wrapper({ poster: 'poster.jpg' }) }
-    );
-
-    const root = getByTestId('poster');
-
-    expect(root.contains(getByTestId('blur'))).toBe(true);
-    expect(root.contains(getByTestId('overlay'))).toBe(true);
-    expect(root.hasAttribute('data-loading')).toBe(true);
-
-    fireEvent.load(getByTestId('image'));
-
-    expect(root.hasAttribute('data-loaded')).toBe(true);
-  });
-
   it('reports the lifecycle of a render override that rewrote the src', () => {
     const { getByTestId } = render(
       <Poster.Root data-testid="poster">

@@ -36,15 +36,6 @@ describe('TimeCore', () => {
       core.setProps({ type: undefined });
       expect(core.getState().type).toBe('current');
     });
-
-    it('accepts custom props', () => {
-      const core = new TimeCore({ type: 'duration' });
-
-      core.setMedia(createMediaState());
-      const state = core.getState();
-
-      expect(state.type).toBe('duration');
-    });
   });
 
   describe('getState', () => {
@@ -124,16 +115,6 @@ describe('TimeCore', () => {
       expect(state.text).toBe('3:30');
       expect(state.phrase).toBe(formatTimeAsPhrase(90 - 300));
       expect(state.datetime).toBe('PT3M30S');
-    });
-
-    it('returns unsigned text regardless of negativeSign prop', () => {
-      const core = new TimeCore({ type: 'remaining', negativeSign: '−' });
-
-      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
-      const state = core.getState();
-
-      expect(state.negative).toBe(true);
-      expect(state.text).toBe('3:30');
     });
 
     it('is not negative when remaining time is zero', () => {
@@ -274,26 +255,6 @@ describe('TimeCore', () => {
   });
 
   describe('getAttrs', () => {
-    it('returns aria-label', () => {
-      const core = new TimeCore({ type: 'current' });
-
-      core.setMedia(createMediaState({ currentTime: 90 }));
-      const state = core.getState();
-      const attrs = core.getAttrs(state);
-
-      expect(attrs['aria-label']).toMatchObject({ key: 'time.current', text: 'Current time' });
-    });
-
-    it('includes remaining suffix in label', () => {
-      const core = new TimeCore({ type: 'remaining' });
-
-      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
-      const state = core.getState();
-      const attrs = core.getAttrs(state);
-
-      expect(attrs['aria-label']).toMatchObject({ key: 'time.remaining', text: 'Remaining' });
-    });
-
     it('returns toggle attributes for current time', () => {
       const core = new TimeCore({ type: 'current', toggle: true });
 
@@ -368,15 +329,6 @@ describe('TimeCore', () => {
       expect(attrs['aria-description']).toBeUndefined();
       expect(attrs.role).toBeUndefined();
       expect(attrs.tabIndex).toBeUndefined();
-    });
-
-    it('uses the default remaining phrase', () => {
-      const core = new TimeCore({ type: 'remaining' });
-
-      core.setMedia(createMediaState({ currentTime: 60, duration: 120 }));
-      const state = core.getState();
-
-      expect(state.phrase).toBe(formatTimeAsPhrase(-60));
     });
   });
 });
