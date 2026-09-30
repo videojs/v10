@@ -5,7 +5,9 @@ import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import A from '@/components/typography/A.astro';
 import Code from '@/components/typography/MarkdownCode.astro';
+import Li from '@/components/typography/Li.astro';
 import P from '@/components/typography/P.astro';
+import Ul from '@/components/typography/Ul.astro';
 import { resolveDocsFramework } from '@/types/docs';
 
 const framework = resolveDocsFramework(Astro.params.framework);
@@ -21,8 +23,15 @@ const onlineDocsIndex = `/docs/framework/${framework}/llms.txt`;
   </P>
   <P>
     From your application's root, run <Code>{installationCommand()}</Code> to list installation options. Then request
-    a plan with <Code>--framework {framework}</Code>, <Code>--project existing</Code>, and explicit choices for <Code>--media</Code>, <Code>--source-url</Code>, <Code>--method</Code>,
-    <Code>--preset</Code>, <Code>--skin</Code>, and <Code>--extensions</Code>. Follow any version-mismatch notice. Both CLI commands
+    a plan with <Code>--framework {framework}</Code> and <Code>--project existing</Code>. Choose:
+  </P>
+  <Ul>
+    <Li><Code>--media</Code> and <Code>--source-url</Code> for your existing content and playback requirements.</Li>
+    <Li><Code>--method</Code> for your installation method.</Li>
+    <Li><Code>--preset</Code>, <Code>--skin</Code>, and <Code>--extensions</Code> for your player UI and integrations.</Li>
+  </Ul>
+  <P>
+    Follow any version-mismatch notice. Both CLI commands
     only print instructions; they do not install packages, edit files, or migrate your player.
   </P>
   <P>
