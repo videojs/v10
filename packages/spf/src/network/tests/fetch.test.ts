@@ -52,6 +52,21 @@ describe('fetchResolvable', () => {
     await expect(fetchResolvable(addressable)).resolves.toBeDefined();
   });
 
+  it('preserves byte ranges alongside caller headers', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('bytes'));
+
+    await fetchResolvable(
+      { url: 'https://example.com/file.mp4', byteRange: { start: 10, end: 19 } },
+      { headers: { Authorization: 'test-token' } }
+    );
+
+    // SAFETY: fetchResolvable passes a native Request to fetch.
+    const request = fetchSpy.mock.calls[0]![0] as Request;
+
+    expect(request.headers.get('Authorization')).toBe('test-token');
+    expect(request.headers.get('Range')).toBe('bytes=10-19');
+  });
+
   it('handles zero-offset byte range', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
 

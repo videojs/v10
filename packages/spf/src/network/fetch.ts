@@ -61,8 +61,8 @@ export async function fetchResolvable(addressable: Resource, options?: RequestIn
 
   const request = new Request(addressable.url, {
     method: 'GET',
-    headers,
     ...options,
+    headers,
   });
 
   return fetch(request);
