@@ -824,6 +824,9 @@ importers:
       '@videojs/installation':
         specifier: workspace:*
         version: link:../installation
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1049,6 +1052,9 @@ importers:
 
   packages/installation:
     dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

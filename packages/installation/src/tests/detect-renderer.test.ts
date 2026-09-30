@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { articleFor, detectRenderer, isRendererValidForUseCase } from '../index';
+import { articleFor, detectRenderer, detectRendererCandidates, isRendererValidForUseCase } from '../index';
 
 describe('detectRenderer', () => {
   describe('domain rules', () => {
@@ -31,6 +31,10 @@ describe('detectRenderer', () => {
       expect(detectRenderer(video, 'background-video')?.renderer).toBe('background-video');
       expect(detectRenderer(audio, 'default-audio')?.renderer).toBe('html5-audio');
       expect(detectRenderer(video, 'live-video')).toBeNull();
+    });
+
+    it('does not treat mux.com pages as Mux sources', () => {
+      expect(detectRenderer('https://www.mux.com/abc123', 'default-video')).toBeNull();
     });
 
     it('detects vimeo.com as Vimeo', () => {
@@ -114,6 +118,11 @@ describe('detectRenderer', () => {
         renderer: 'twitch',
         label: 'Twitch',
       });
+    });
+
+    it('returns null for a provider page without a video', () => {
+      expect(detectRenderer('https://www.youtube.com/', 'default-video')).toBeNull();
+      expect(detectRenderer('https://vimeo.com/', 'default-video')).toBeNull();
     });
 
     it('returns null for clips.twitch.tv (clips are a different embed)', () => {
@@ -294,6 +303,36 @@ describe('detectRenderer', () => {
     it('returns null for .m3u8 with live-audio use case (no HLS audio renderer)', () => {
       expect(detectRenderer('https://example.com/stream.m3u8', 'live-audio')).toBeNull();
     });
+  });
+});
+
+describe('detectRendererCandidates', () => {
+  it('lists the generic stream renderers after a provider for its manifests', () => {
+    expect(detectRendererCandidates('https://stream.mux.com/abc123.m3u8')).toEqual([
+      'mux-video',
+      'mux-audio',
+      'mux-background-video',
+      'hls',
+      'hls-background-video',
+    ]);
+    expect(
+      detectRendererCandidates(
+        'https://customer-abc123.cloudflarestream.com/bfbd585059e33391d67b0f1d15fe6ea4/manifest/video.mpd'
+      )
+    ).toEqual(['cloudflare', 'dash']);
+  });
+
+  it('lists only the provider for embed URLs', () => {
+    expect(detectRendererCandidates('https://youtu.be/aqz-KE-bpKQ')).toEqual(['youtube']);
+    expect(detectRendererCandidates('https://stream.mux.com/abc123')).toEqual([
+      'mux-video',
+      'mux-audio',
+      'mux-background-video',
+    ]);
+  });
+
+  it('returns no candidates for Wistia, which has no renderer yet', () => {
+    expect(detectRendererCandidates('https://fast.wistia.net/embed/iframe/e4a27b971d')).toEqual([]);
   });
 });
 

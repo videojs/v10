@@ -35,6 +35,7 @@
   "devDependencies": {
     "@types/node": "^22.18.6",
     "@videojs/installation": "workspace:*",
+    "@videojs/media": "workspace:*",
     "@videojs/utils": "workspace:*",
     "typescript": "6.0.2",
     "vite-plus": "catalog:"
