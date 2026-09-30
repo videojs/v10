@@ -89,15 +89,27 @@ describe('StatusIndicatorRoot', () => {
     }
   });
 
-  it('forwards deriveCustomStatus to the core props without rendering it', () => {
-    const deriveCustomStatus = () => null;
-    const { container } = render(<StatusIndicatorRoot deriveCustomStatus={deriveCustomStatus} />);
-
-    expect(inputIndicatorMock.useInputIndicatorRoot).toHaveBeenCalledWith(
-      expect.any(Function),
-      expect.objectContaining({ deriveCustomStatus }),
-      { replayOnUpdate: false }
+  it('renders deriveCustomStatus results without forwarding the prop to the DOM', async () => {
+    const fixture = renderIndicator(
+      <StatusIndicatorRoot
+        data-testid="status"
+        deriveCustomStatus={(event) =>
+          event.action === 'seekStep' ? { status: 'frame', label: 'Frame', value: null } : null
+        }
+      >
+        <StatusIndicatorValue />
+      </StatusIndicatorRoot>
     );
-    expect(container.firstElementChild?.hasAttribute('derivecustomstatus')).toBe(false);
+
+    try {
+      await fixture.input('l', 'seekStep', 10);
+      const root = fixture.getByTestId('status');
+
+      expect(root.getAttribute('data-status')).toBe('frame');
+      expect(root.textContent).toBe('Frame');
+      expect(root.hasAttribute('derivecustomstatus')).toBe(false);
+    } finally {
+      fixture.dispose();
+    }
   });
 });
