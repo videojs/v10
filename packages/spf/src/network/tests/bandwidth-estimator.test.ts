@@ -129,6 +129,14 @@ describe('getBandwidthEstimate', () => {
     expect(estimate).toBe(5_000_000);
   });
 
+  it('should keep startup fallback when cached samples exceed the byte threshold', () => {
+    const state = sampleBandwidth(createInitialState(), 2, 200_000);
+
+    const estimate = getBandwidthEstimate(state, 5_000_000);
+
+    expect(estimate).toBe(5_000_000);
+  });
+
   it('should return actual estimate when sufficient data', () => {
     let state = createInitialState();
 

@@ -144,7 +144,7 @@ export function getBandwidthEstimate(
   config: BandwidthConfig = DEFAULT_BANDWIDTH_CONFIG
 ): number {
   // Use default until we have enough samples to trust our estimate
-  if (!state || state.bytesSampled < config.minTotalBytes) {
+  if (!state || !hasGoodEstimate(state, config)) {
     return defaultEstimate;
   }
 
