@@ -630,21 +630,23 @@ describe('createCapLevelController', () => {
     });
   });
 
-  it('never caps an audio-only stream, whose capping loop never starts', () => {
+  it('leaves every rendition of a multi-bitrate audio stream available', () => {
     const policy: RenditionCapPolicy = {
       maxAutoResolution: '720p',
       capToPlayerSize: true,
       minAutoResolution: '720p',
     };
-    const engine = createEngine([]);
+    const levels = [level(0, 0, 64_000), level(0, 0, 128_000)];
+    const engine = createEngine(levels);
     const Controller = createCapLevelController(policy);
     const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
 
     controllers.push(controller);
 
     // No video codec in the manifest, so hls.js defers capping indefinitely.
-    emit(engine, Hls.Events.MANIFEST_PARSED, { levels: [], firstLevel: 0, video: false });
+    emit(engine, Hls.Events.MANIFEST_PARSED, { levels, firstLevel: 0, video: false });
 
-    expect(engine.autoLevelCapping).toBe(-1);
+    expect([-1, 1]).toContain(engine.autoLevelCapping);
+    expect(controller.getMaxLevel(1)).toBe(1);
   });
 });

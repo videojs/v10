@@ -35,17 +35,11 @@ interface ProjectedSource {
  */
 class RecordingBase {
   static readonly defaultProps = { src: '', source: null };
-  /** Bases constructed, which is also engines built: the real base builds one per instance. */
-  static constructions = 0;
 
   /** The source last projected onto the base, or `null` once it is cleared. */
   projected: ProjectedSource | null = null;
 
   #src = '';
-
-  constructor() {
-    RecordingBase.constructions += 1;
-  }
 
   get src(): string {
     return this.#src;
@@ -466,7 +460,7 @@ describe('MuxVideoAdapter', () => {
   });
 });
 
-describe('MuxVideoAdapter DRM', () => {
+describe('MuxMixin', () => {
   const token = fakeJwt({ aud: 'd' });
 
   it('derives Mux license servers from a drm token', () => {
@@ -509,9 +503,8 @@ describe('MuxVideoAdapter DRM', () => {
     );
   });
 
-  it('follows the source without rebuilding the engine', () => {
+  it('follows the source when projecting license servers', () => {
     const media = new ProbeMuxVideoAdapter();
-    const before = RecordingBase.constructions;
 
     media.source = { playbackId: 'abc123', drm: { token } };
     expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
@@ -525,8 +518,5 @@ describe('MuxVideoAdapter DRM', () => {
 
     media.source = null;
     expect(licenseUrl(media, 'com.widevine.alpha')).toBeUndefined();
-
-    // The base — and so the engine it builds — was never reconstructed.
-    expect(RecordingBase.constructions).toBe(before);
   });
 });

@@ -667,8 +667,14 @@ describe('HlsJsAdapter', () => {
      * The probe defaults to a viewport larger than the whole ladder, so the player-size ceiling never binds and a
      * requested resolution is what is being measured. Pass a smaller one to measure the size cap itself.
      */
-    function cappedIndex(media: HlsJsAdapter, playerSize = { width: 4096, height: 2160 }) {
+    function cappedIndex(
+      media: HlsJsAdapter,
+      playerSize = { width: 4096, height: 2160 },
+      config?: Partial<Hls['config']>
+    ) {
       const engine = probeEngine(LADDER);
+
+      Object.assign(engine.config, config);
       const Controller = media.engine!.config.capLevelController;
       const controller = new Controller(engine);
 
@@ -683,6 +689,17 @@ describe('HlsJsAdapter', () => {
       controller.destroy();
       return index;
     }
+
+    it.each([
+      [1, 0],
+      [2, 1],
+    ])('measures device pixels with the engine defaults at ratio %s', (ratio, expected) => {
+      vi.stubGlobal('devicePixelRatio', ratio);
+
+      const { media } = setupMse({ minAutoResolution: '270p' });
+
+      expect(cappedIndex(media, { width: 640, height: 360 }, media.engine!.config)).toBe(expected);
+    });
 
     /** Small enough that every rung but the lowest is above what it needs. */
     const SMALL_PLAYER = { width: 320, height: 180 };
@@ -716,11 +733,12 @@ describe('HlsJsAdapter', () => {
       const { media } = setupMse();
       const engine = media.engine;
 
-      expect(cappedIndex(media)).toBe(2);
+      const apply = vi.spyOn(engine!.config.capLevelController.prototype, 'apply');
 
       media.source = { src: M3U8, maxAutoResolution: '360p' };
 
       expect(media.engine).toBe(engine);
+      expect(apply).toHaveBeenCalledOnce();
       expect(cappedIndex(media)).toBe(0);
     });
 
@@ -1123,19 +1141,47 @@ describe('HlsJsAdapter', () => {
     });
 
     it('stops preserving after the user override is cleared with `unknown`', () => {
-      const { media } = setup();
+      const { media, video } = setup();
 
       media.streamType = 'live';
+      Object.defineProperty(video, 'duration', { value: 120, configurable: true });
       media.streamType = 'unknown';
+      expect(media.streamType).toBe('on-demand');
 
       media.source = { type: ContentTypes.M3U8, preferPlayback: 'mse' };
       media.load();
 
-      expect(media.streamType).toBe('unknown');
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
     });
   });
 
   describe('live edge', () => {
+    async function setupLive() {
+      const src = 'https://example.com/event.m3u8';
+      const playlist = '#EXTM3U\n#EXT-X-PLAYLIST-TYPE:EVENT\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\nsegment.ts';
+      const fetchMock = vi.fn(async () => new Response(playlist));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const { media, video } = setup();
+      const handler = vi.fn();
+
+      Object.defineProperty(video, 'currentSrc', { value: src, configurable: true });
+      Object.defineProperty(video, 'seekable', {
+        value: { length: 1, start: () => 0, end: () => 60 },
+        configurable: true,
+      });
+      media.addEventListener('targetlivewindowchange', handler);
+      media.src = src;
+      await Promise.resolve();
+      video.dispatchEvent(new Event('loadstart'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(fetchMock).toHaveBeenCalledWith(src, expect.anything());
+      return { media, handler };
+    }
+
     it('defaults to `NaN` for both values before load', () => {
       const media = new HlsJsAdapter();
 
@@ -1143,15 +1189,21 @@ describe('HlsJsAdapter', () => {
       expect(media.targetLiveWindow).toBeNaN();
     });
 
-    it('forwards `NaN` from the native delegate', () => {
-      const { media } = setup();
+    it('forwards the native live edge and window notification', async () => {
+      const { media, handler } = await setupLive();
 
-      expect(media.liveEdgeStart).toBeNaN();
-      expect(media.targetLiveWindow).toBeNaN();
+      expect(media.liveEdgeStart).toBe(42);
+      expect(media.targetLiveWindow).toBe(Infinity);
+      expect(handler).toHaveBeenCalledOnce();
+
+      media.destroy();
     });
 
-    it('returns `NaN` again after destroy', () => {
-      const { media } = setup();
+    it('returns `NaN` again after destroy', async () => {
+      const { media } = await setupLive();
+
+      expect(media.liveEdgeStart).toBe(42);
+      expect(media.targetLiveWindow).toBe(Infinity);
 
       media.destroy();
 

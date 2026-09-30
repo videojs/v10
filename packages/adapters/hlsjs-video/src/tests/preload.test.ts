@@ -225,9 +225,11 @@ describe('HlsJsPreloadMixin', () => {
 
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
 
+    (engine.resumeBuffering as ReturnType<typeof vi.fn>).mockClear();
     (engine as any).emit(Hls.Events.MEDIA_DETACHED);
 
     video.dispatchEvent(new Event('play'));
     expect(engine.startLoad).not.toHaveBeenCalled();
+    expect(engine.resumeBuffering).not.toHaveBeenCalled();
   });
 });

@@ -291,6 +291,10 @@ describe('HlsJsMediaTracksMixin', () => {
       engine,
       audioTracks.map((audioTrack) => ({ ...audioTrack }))
     );
+    expect(host.audioTracks[0]).toBe(english);
+    expect(host.audioTracks[1]).toBe(spanish);
+    expect(spanish!.enabled).toBe(true);
+
     (engine as any).audioTrack = 1;
     audioTrackSwitching(engine, audioTracks[1]!);
     await flush();
