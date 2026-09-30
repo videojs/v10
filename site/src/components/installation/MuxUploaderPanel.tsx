@@ -46,12 +46,17 @@ export default function MuxUploaderPanel() {
   const loginResolverRef = useRef<((url: string) => void) | null>(null);
   // Ref to the MuxUploader element for dispatching reset events
   const uploaderRef = useRef<HTMLElement>(null);
+  // MuxUploader also reports an error from `getEndpoint`, which records its own failure, so only a transfer that
+  // actually started counts as an upload failure.
+  const transferStartedRef = useRef(false);
 
   /**
    * Endpoint function called by MuxUploader when file is selected. Returns a Promise that resolves with the upload URL.
    * The upload waits for this Promise before starting.
    */
   const getEndpoint = useCallback(async (): Promise<string> => {
+    transferStartedRef.current = false;
+
     // Try to create upload - will fail with 401 if not authenticated
     const result = await actions.mux.createDirectUpload({
       corsOrigin: window.location.origin,
@@ -80,6 +85,7 @@ export default function MuxUploaderPanel() {
     // Authenticated - store upload ID and proceed
     setUploadId(result.data.uploadId);
     setState('uploading');
+    transferStartedRef.current = true;
     trackEvent(ANALYTICS_EVENTS.muxUploadStarted);
     return result.data.uploadUrl;
   }, []);
@@ -120,6 +126,7 @@ export default function MuxUploaderPanel() {
         // Store upload ID and resolve the pending Promise
         setUploadId(uploadResult.data.uploadId);
         setState('uploading');
+        transferStartedRef.current = true;
         trackEvent(ANALYTICS_EVENTS.muxUploadStarted);
         loginResolverRef.current?.(uploadResult.data.uploadUrl);
       },
@@ -136,6 +143,9 @@ export default function MuxUploaderPanel() {
 
   // The uploader's messages can name the upload URL, so only the step is recorded.
   const handleUploadError = useCallback(() => {
+    if (!transferStartedRef.current) return;
+
+    transferStartedRef.current = false;
     trackEvent(ANALYTICS_EVENTS.muxUploadFailed, { stage: 'upload', reason: 'transfer_failed' });
   }, []);
 

@@ -79,9 +79,15 @@ export function maskPrivateParameters(text: string): string {
 // Shorter values could match ordinary page text.
 const MIN_PRIVATE_VALUE_LENGTH = 8;
 
+// How the generated code writes a value into an HTML attribute, and so how the page renders it as text.
+function escapeHTMLAttribute(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
 /**
- * The private installation values on the current page, as the reader entered them and as the URL encodes them. The
- * installation store writes every pick to the URL as soon as it settles, so the URL always holds the current values.
+ * The private installation values on the current page: as the reader entered them, as the URL encodes them, and as the
+ * generated code renders them. The installation store writes every pick to the URL as soon as it settles, so the URL
+ * always holds the current values.
  */
 export function currentPrivateValues(search = globalThis.location?.search ?? ''): string[] {
   const params = new URLSearchParams(search);
@@ -90,7 +96,7 @@ export function currentPrivateValues(search = globalThis.location?.search ?? '')
     const value = params.get(name);
     if (!value || value.length < MIN_PRIVATE_VALUE_LENGTH) return [];
 
-    return [...new Set([value, encodeURIComponent(value)])];
+    return [...new Set([value, encodeURIComponent(value), escapeHTMLAttribute(value)])];
   });
 }
 
