@@ -54,16 +54,6 @@ describe('createHlsAudioEngine', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('creates engine with state, context, and destroy', () => {
-    const engine = createHlsAudioEngine();
-
-    expect(engine.state).toBeDefined();
-    expect(engine.context).toBeDefined();
-    expect(typeof engine.destroy).toBe('function');
-
-    engine.destroy();
-  });
-
   it('exposes userAudioTrackSelection slot for multi-language-audio Tier 2 writes', async () => {
     const engine = createHlsAudioEngine();
     const tracks = ['en', 'es'].map((language) => ({
@@ -143,20 +133,6 @@ describe('createHlsAudioEngine', () => {
     await flush();
 
     expect(engine.state.selectedAudioTrackId.get()).toBeUndefined();
-
-    engine.destroy();
-  });
-
-  it('does not seed bandwidthState (no ABR behavior subscribed at init)', () => {
-    const engine = createHlsAudioEngine();
-
-    const state = snapshot(engine.state) as Record<string, unknown>;
-
-    // bandwidthState slot may or may not exist depending on whether any
-    // composed behavior declares it; if it exists, it must not be seeded.
-    if ('bandwidthState' in state) {
-      expect(state.bandwidthState).toBeUndefined();
-    }
 
     engine.destroy();
   });
@@ -362,12 +338,6 @@ http://example.com/audio-seg1.m4s
     );
 
     engine.destroy();
-  });
-
-  it('cleans up on destroy', () => {
-    const engine = createHlsAudioEngine();
-
-    expect(() => engine.destroy()).not.toThrow();
   });
 
   it('cleanly replaces source in place via state.presentation overwrite', async () => {

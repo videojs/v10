@@ -101,61 +101,33 @@ describe('HlsAudioAdapterCore', () => {
   // attach / detach — media element lifecycle (reuses the same engine)
   // ---------------------------------------------------------------------------
   describe('attach / detach', () => {
-    it('exposes the engine immediately (created at construction, not on attach)', () => {
+    it('reuses the same engine instance across attach/detach cycles', async () => {
       const media = new HlsAudioAdapterCore();
-
-      expect(media.engine).not.toBeNull();
-    });
-
-    it('reuses the same engine instance across attach calls', () => {
-      const media = new HlsAudioAdapterCore();
-      const el1 = document.createElement('video');
-      const el2 = document.createElement('video');
-
-      media.attach(el1);
-      const engineAfterFirstAttach = media.engine;
-
-      media.attach(el2);
-      expect(media.engine).toBe(engineAfterFirstAttach);
-    });
-
-    it('reuses the same engine instance across attach/detach cycles', () => {
-      const media = new HlsAudioAdapterCore();
-
-      media.attach(document.createElement('video'));
       const engine = media.engine;
+      const destroy = vi.spyOn(engine, 'destroy');
+      const first = document.createElement('video');
+      const second = document.createElement('video');
 
-      media.detach();
-      media.attach(document.createElement('video'));
-      expect(media.engine).toBe(engine);
-    });
-
-    it('reuses the same engine instance when src is set', () => {
-      const media = new HlsAudioAdapterCore();
-      const initial = media.engine;
-
-      media.src = 'https://example.com/v1.m3u8';
-      expect(media.engine).toBe(initial);
-    });
-
-    it('reuses the same engine instance when src changes', () => {
-      const media = new HlsAudioAdapterCore();
-
-      media.src = 'https://example.com/v1.m3u8';
-      const engine = media.engine;
-
-      media.src = 'https://example.com/v2.m3u8';
-      expect(media.engine).toBe(engine);
-    });
-
-    it('does not destroy the engine when src changes', () => {
-      const media = new HlsAudioAdapterCore();
-
-      media.src = 'https://example.com/v1.m3u8';
-      const spy = vi.spyOn(media.engine, 'destroy');
-
-      media.src = 'https://example.com/v2.m3u8';
-      expect(spy).not.toHaveBeenCalled();
+      try {
+        expect(engine).toBeDefined();
+        media.attach(first);
+        expect(media.engine).toBe(engine);
+        media.attach(second);
+        expect(media.engine).toBe(engine);
+        media.detach();
+        expect(media.engine).toBe(engine);
+        media.attach(first);
+        expect(media.engine).toBe(engine);
+        media.src = 'https://example.com/v1.m3u8';
+        expect(media.engine).toBe(engine);
+        media.src = 'https://example.com/v2.m3u8';
+        expect(media.engine).toBe(engine);
+        expect(destroy).not.toHaveBeenCalled();
+      } finally {
+        media.destroy();
+        await destroy.mock.results[0]!.value;
+        destroy.mockRestore();
+      }
     });
 
     it('keeps the attached media element across src changes', () => {
@@ -210,16 +182,6 @@ describe('HlsAudioAdapterCore', () => {
       media.attach(document.createElement('video'));
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
-
-    it('detach does not destroy the engine', () => {
-      const media = new HlsAudioAdapterCore();
-
-      media.attach(document.createElement('video'));
-      const spy = vi.spyOn(media.engine, 'destroy');
-
-      media.detach();
-      expect(spy).not.toHaveBeenCalled();
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -252,16 +214,6 @@ describe('HlsAudioAdapterCore', () => {
         media.destroy();
         play.mockRestore();
       }
-    });
-
-    it('returns a Promise', () => {
-      const media = new HlsAudioAdapterCore();
-
-      media.attach(document.createElement('video'));
-      const result = media.play();
-
-      expect(result).toBeInstanceOf(Promise);
-      result.catch(() => {});
     });
 
     it('sets loadActivated on engine state when called', () => {

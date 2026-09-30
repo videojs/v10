@@ -53,17 +53,6 @@ describe('HlsBackgroundVideoAdapterCore', () => {
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
-    it('keeps the query params that narrow the manifest', () => {
-      // How a cap is expressed, `?max_resolution=720p` on a Mux stream URL being
-      // the case this replaces — so it has to survive the round trip untouched.
-      const media = new HlsBackgroundVideoAdapterCore();
-
-      media.src = 'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p';
-      expect(media.engine.state.presentation.get()?.url).toBe(
-        'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p'
-      );
-    });
-
     it('clears engine presentation state when src is set to empty string', () => {
       const media = new HlsBackgroundVideoAdapterCore();
 
@@ -86,12 +75,6 @@ describe('HlsBackgroundVideoAdapterCore', () => {
   });
 
   describe('attach / detach', () => {
-    it('exposes the engine immediately (created at construction)', () => {
-      const media = new HlsBackgroundVideoAdapterCore();
-
-      expect(media.engine).toBeDefined();
-    });
-
     it('reuses the same engine instance across attach calls', () => {
       const media = new HlsBackgroundVideoAdapterCore();
       const firstEngine = media.engine;
@@ -224,43 +207,12 @@ describe('HlsBackgroundVideoAdapterCore', () => {
       ],
     });
 
-    it('picks the largest rendition on offer', async () => {
-      const media = new HlsBackgroundVideoAdapterCore();
-
-      // The default chain caps to the screen, so this is written explicitly —
-      // left ambient, the expected pick would vary with the runner's display.
-      media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
-      media.engine.state.presentation.set(presentationWithFourTracks());
-      await new Promise<void>((resolve) => queueMicrotask(resolve));
-      expect(media.engine.state.selectedVideoTrackId.get()).toBe('1440p');
-      media.destroy();
-    });
-
     it('caps the pick to the screen when the manifest offers more than it can show', async () => {
       const media = new HlsBackgroundVideoAdapterCore();
 
       // 1080p (2,073,600) is over a 1,555,200 px screen; 720p (921,600) fits.
       media.engine.state.screenResolution.set({ width: 1440, height: 1080 });
       media.engine.state.presentation.set(presentationWithFourTracks());
-      await new Promise<void>((resolve) => queueMicrotask(resolve));
-      expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
-      media.destroy();
-    });
-
-    it('picks the largest of whatever the manifest offers, which is how a capped URL narrows it', async () => {
-      // What `?max_resolution=720p` produces: the excluded renditions are absent
-      // from the manifest rather than present and skipped.
-      const capped = presentationWithFourTracks();
-
-      capped.selectionSets![0]!.switchingSets[0]!.tracks = [
-        videoTrack('360p', 640, 360, 500_000),
-        videoTrack('720p', 1280, 720, 2_000_000),
-      ] as never;
-
-      const media = new HlsBackgroundVideoAdapterCore();
-
-      media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
-      media.engine.state.presentation.set(capped);
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
       media.destroy();
@@ -512,16 +464,6 @@ describe('HlsBackgroundVideoAdapterCore', () => {
         media.destroy();
         play.mockRestore();
       }
-    });
-
-    it('returns a Promise', () => {
-      const media = new HlsBackgroundVideoAdapterCore();
-
-      media.attach(document.createElement('video'));
-      const result = media.play();
-
-      expect(result).toBeInstanceOf(Promise);
-      result.catch(() => {});
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {

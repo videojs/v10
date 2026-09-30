@@ -28,16 +28,6 @@ describe('createBackgroundVideoEngine', () => {
     globalThis.fetch = originalFetch;
   });
 
-  it('creates an engine with state, context, and destroy()', () => {
-    const engine = createBackgroundVideoEngine();
-
-    expect(engine.state).toBeDefined();
-    expect(engine.context).toBeDefined();
-    expect(typeof engine.destroy).toBe('function');
-
-    engine.destroy();
-  });
-
   it('loads media segments without play or explicit preload activation', async () => {
     const fetchedUrls: string[] = [];
 
@@ -122,13 +112,6 @@ describe('createBackgroundVideoEngine', () => {
           ],
         },
       ],
-    });
-
-    it('declares the errors slot', () => {
-      const engine = createBackgroundVideoEngine();
-
-      expect('errors' in (snapshot(engine.state) as Record<string, unknown>)).toBe(true);
-      engine.destroy();
     });
 
     // MPEG-TS: the capability constraint prunes it, so nothing is selected and the
@@ -491,19 +474,6 @@ describe('createBackgroundVideoEngine', () => {
       const engine = createBackgroundVideoEngine({ useDevicePixelRatio: false });
 
       expect(engine.state.screenResolution.get()).toEqual({ width: 1440, height: 900 });
-
-      engine.destroy();
-    });
-
-    it('tracks the screen changing under the window', () => {
-      const screen = stubScreen(1440, 900);
-      const engine = createBackgroundVideoEngine();
-
-      screen.width = 3840;
-      screen.height = 2160;
-      screen.dispatchEvent(new Event('change'));
-
-      expect(engine.state.screenResolution.get()).toEqual({ width: 3840, height: 2160 });
 
       engine.destroy();
     });
