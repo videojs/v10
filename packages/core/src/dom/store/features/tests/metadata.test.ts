@@ -1,4 +1,5 @@
 import type { MediaContentData, MediaContentValue } from '@videojs/media';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
@@ -129,6 +130,31 @@ describe('metadataFeature', () => {
 
     media.setTitle('later title');
     expect(store.title).toBe('later title');
+  });
+
+  it('observes metadata when an adapter receives its target after store attachment', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    const media = new HTMLVideoAdapter();
+
+    try {
+      store.attach(target(media));
+      expect([store.title, store.poster]).toEqual(['', '']);
+
+      const video = Object.assign(document.createElement('video'), {
+        contentData: { title: 'loaded title', poster: 'loaded.jpg' },
+      });
+
+      media.attach(video);
+      video.dispatchEvent(new Event('loadstart'));
+      expect([store.title, store.poster]).toEqual(['loaded title', 'loaded.jpg']);
+
+      video.contentData = { title: 'updated title', poster: 'updated.jpg' };
+      video.dispatchEvent(new Event('contentdatachange'));
+      expect([store.title, store.poster]).toEqual(['updated title', 'updated.jpg']);
+    } finally {
+      store.destroy();
+      media.destroy();
+    }
   });
 
   it('does not listen to unsupported media', () => {
