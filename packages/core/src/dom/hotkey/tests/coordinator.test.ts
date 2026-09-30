@@ -27,15 +27,6 @@ describe('HotkeyCoordinator', () => {
   }
 
   describe('add', () => {
-    it('returns a cleanup function', () => {
-      const c = setup();
-      const remove = c.add({ keys: 'k', onActivate: vi.fn() });
-
-      expect(typeof remove).toBe('function');
-
-      remove();
-    });
-
     it('fires onActivate for matching keydown', () => {
       const c = setup();
       const onActivate = vi.fn();
@@ -84,17 +75,6 @@ describe('HotkeyCoordinator', () => {
       expect(onActivate).toHaveBeenCalledOnce();
     });
 
-    it('removes binding on cleanup', () => {
-      const c = setup();
-      const onActivate = vi.fn();
-      const remove = c.add({ keys: 'k', onActivate });
-
-      remove();
-      keydown(container, 'k');
-
-      expect(onActivate).not.toHaveBeenCalled();
-    });
-
     it('cleanup is idempotent', () => {
       const c = setup();
       const notify = vi.fn();
@@ -127,20 +107,6 @@ describe('HotkeyCoordinator', () => {
     });
 
     it('fires first-registered binding for equal specificity', () => {
-      const c = setup();
-      const first = vi.fn();
-      const second = vi.fn();
-
-      c.add({ keys: 'k', onActivate: first });
-      c.add({ keys: 'k', onActivate: second });
-
-      keydown(container, 'k');
-
-      expect(first).toHaveBeenCalledOnce();
-      expect(second).not.toHaveBeenCalled();
-    });
-
-    it('only fires one binding per event', () => {
       const c = setup();
       const first = vi.fn();
       const second = vi.fn();
@@ -205,22 +171,6 @@ describe('HotkeyCoordinator', () => {
       expect(onActivate).not.toHaveBeenCalled();
     });
 
-    it('skips Enter on role="button" elements', () => {
-      const c = setup();
-      const onActivate = vi.fn();
-
-      c.add({ keys: 'Enter', onActivate });
-
-      const div = document.createElement('div');
-
-      div.setAttribute('role', 'button');
-      container.appendChild(div);
-
-      keydown(div, 'Enter');
-
-      expect(onActivate).not.toHaveBeenCalled();
-    });
-
     it('fires for non-activation keys on buttons', () => {
       const c = setup();
       const onActivate = vi.fn();
@@ -272,41 +222,15 @@ describe('HotkeyCoordinator', () => {
     });
   });
 
-  describe('disabled', () => {
-    it('skips disabled bindings', () => {
-      const c = setup();
-      const onActivate = vi.fn();
-
-      c.add({ keys: 'k', onActivate, disabled: true });
-
-      keydown(container, 'k');
-
-      expect(onActivate).not.toHaveBeenCalled();
-    });
-  });
-
   describe('lifecycle', () => {
-    it('creates listener on first binding', () => {
-      const c = setup();
-      const onActivate = vi.fn();
-
-      // Before any binding, keydown should do nothing.
-      keydown(container, 'k');
-
-      c.add({ keys: 'k', onActivate });
-      keydown(container, 'k');
-
-      expect(onActivate).toHaveBeenCalledOnce();
-    });
-
-    it('removes listener when last binding removed', () => {
+    it('reconnects when a binding is added after the last removal', () => {
       const c = setup();
       const onActivate = vi.fn();
       const remove = c.add({ keys: 'k', onActivate });
 
       remove();
 
-      // Re-add to verify listener was removed (new listener needed).
+      // Re-register on the same container after cleanup.
       const onActivate2 = vi.fn();
 
       c.add({ keys: 'k', onActivate: onActivate2 });

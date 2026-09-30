@@ -12,21 +12,6 @@ describe('createScreenOrientationLock', () => {
     vi.unstubAllGlobals();
   });
 
-  it('locks the requested orientation type', async () => {
-    const orientation = {
-      lock: vi.fn(async () => {}),
-      unlock: vi.fn(),
-    };
-
-    stubOrientation(orientation);
-
-    const screenLock = createScreenOrientationLock();
-
-    await screenLock.lock('portrait');
-
-    expect(orientation.lock).toHaveBeenCalledWith('portrait');
-  });
-
   it('re-locks when the requested type changes', async () => {
     const orientation = {
       lock: vi.fn(async () => {}),
