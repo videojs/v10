@@ -519,7 +519,15 @@ Media Chrome and Video.js both use names beginning with `--media-`, but the shar
 | `--media-control-hover-background`                  | no direct equivalent   | Add the skin source and author the CSS.                                                             |
 | `--media-range-track-height`                        | no direct equivalent   | Add the skin source and author the slider CSS.                                                      |
 
-The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit` for broad customization. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
+The packaged Video.js skins expose eight custom properties:
+
+- Colors: `--media-accent-color`, `--media-accent-text-color`, and `--media-border-color`.
+- Corners: `--media-border-radius`.
+- Interface font: `--media-font-family`.
+- Media and poster fit and position: `--media-object-fit` and `--media-object-position`.
+- Control sizing: `--media-scale-unit`.
+
+See <DocsLink slug="guides/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> for their meanings and defaults. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
 
 ## Themes become skins
 
