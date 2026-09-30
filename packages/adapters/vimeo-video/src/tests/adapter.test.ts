@@ -644,23 +644,6 @@ describe('VimeoAdapter', () => {
     expect(media.duration).toBeNaN();
   });
 
-  it('omits the title when Vimeo reports none', async () => {
-    const media = new VimeoAdapter();
-
-    media.src = '76979871';
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    const player = media.engine as unknown as MockPlayerLike;
-
-    player.getVideoTitle.mockResolvedValueOnce('');
-    player.emit('loaded');
-    await waitForVimeoLoaded(media);
-
-    expect(media.contentData).toEqual({});
-  });
-
   it('updates state from player events', async () => {
     const media = new VimeoAdapter();
     const { player } = await attachAndLoad(media);

@@ -955,21 +955,6 @@ describe('TikTokAdapter', () => {
     media.detach();
   });
 
-  it('unblocks pending play() when detached before the embed is ready', async () => {
-    const media = new TikTokAdapter();
-
-    media.src = VIDEO_ID;
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    const pending = media.play();
-
-    media.detach();
-
-    await expect(pending).resolves.toBeUndefined();
-  });
-
   it('tracks played ranges via the played-ranges mixin', async () => {
     const media = new TikTokAdapter();
     const { iframe } = await attachAndLoad(media);

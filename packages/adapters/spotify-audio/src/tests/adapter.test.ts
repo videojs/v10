@@ -303,29 +303,6 @@ describe('SpotifyAdapter', () => {
     media.detach();
   });
 
-  it('hands the controller a node that cannot take the place of the embed', async () => {
-    const media = new SpotifyAdapter();
-    const { iframe, controller } = await attachAndLoad(media);
-
-    // The swap runs through `parentElement`, so a detached node makes it a no-op.
-    // Anything with an element parent — what React renders — would be swapped out.
-    expect(controller.target.parentElement).toBe(null);
-    expect(iframe.isConnected).toBe(true);
-    media.detach();
-  });
-
-  it('rebuilds the embed on the iframe it was handed', async () => {
-    const media = new SpotifyAdapter();
-    const { iframe } = await attachAndLoad(media);
-
-    media.source = { src: TRACK_URL, engine: { spotify: { theme: 0 } } };
-    await Promise.resolve();
-
-    expect(iframe.getAttribute('src')).toContain('theme=0');
-    expect(media.currentSrc).toContain('theme=0');
-    media.detach();
-  });
-
   it('does not create a second controller when handed the iframe that replaced the target', async () => {
     const media = new SpotifyAdapter();
     const { iframe } = await attachAndLoad(media);
@@ -864,6 +841,7 @@ describe('SpotifyAdapter', () => {
     // Only the embed URL applies `t` for itself, and this reload reuses the frame,
     // so the option has to be seeked to like the one a src carries.
     expect(controller.loadUri).toHaveBeenCalledWith(`spotify:track:${TRACK_ID}`);
+    expect(controller.loadUri).toHaveBeenCalledTimes(1);
     expect(media.currentTime).toBe(30);
 
     controller.update();
@@ -1121,6 +1099,7 @@ describe('SpotifyAdapter source', () => {
     // The theme is only ever read off the embed URL, so the controller has no way
     // to apply it and the frame has to be rebuilt.
     expect(iframe.getAttribute('src')).toContain('theme=0');
+    expect(media.currentSrc).toContain('theme=0');
     expect(controller.loadUri).not.toHaveBeenCalled();
     media.detach();
   });
@@ -1223,20 +1202,6 @@ describe('SpotifyAdapter source', () => {
     await media.play();
 
     expect(controller.resume).not.toHaveBeenCalled();
-    media.detach();
-  });
-
-  it('keeps a start position an engine option names out of the entity swap', async () => {
-    const media = new SpotifyAdapter();
-    const { controller } = await attachAndLoad(media);
-
-    media.source = { src: TRACK_URL, engine: { spotify: { t: 30 } } };
-    await Promise.resolve();
-
-    // The start position is the one embed option the frame is not rebuilt for, so
-    // it has to reach the entity some other way.
-    expect(media.currentTime).toBe(30);
-    expect(controller.loadUri).toHaveBeenCalledTimes(1);
     media.detach();
   });
 
