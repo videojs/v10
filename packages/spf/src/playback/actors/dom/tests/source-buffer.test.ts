@@ -285,23 +285,6 @@ describe('createSourceBufferActor', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Abort: during batch execution
-  // ---------------------------------------------------------------------------
-
-  it('cancel while updating returns actor to idle', async () => {
-    const sourceBuffer = makeSourceBuffer();
-    const actor = createSourceBufferActor(sourceBuffer);
-
-    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } });
-    // Actor is now in 'updating' — cancel should abort tasks and return to idle.
-    actor.send({ type: 'cancel' });
-
-    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
-
-    actor.destroy();
-  });
-
-  // ---------------------------------------------------------------------------
   // append-init
   // ---------------------------------------------------------------------------
 

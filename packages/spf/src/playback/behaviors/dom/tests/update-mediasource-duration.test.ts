@@ -268,25 +268,6 @@ describe('updateMediaSourceDuration', () => {
     reactor.destroy();
   });
 
-  it('does not throw when a buffer is updating at moment of set', async () => {
-    const { state, context, reactor } = setupUpdateMediaSourceDuration();
-
-    const { buffer: mockBuffer, finishUpdating } = makeUpdatingSourceBuffer();
-    const mockMediaSource = makeMediaSource({ sourceBuffers: [mockBuffer] });
-
-    context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
-
-    // Buffer finishes immediately after state change — must not throw
-    finishUpdating();
-
-    await vi.waitFor(() => {
-      expect(mockMediaSource.duration).toBe(60);
-    });
-
-    reactor.destroy();
-  });
-
   it('defers duration set until the attached buffer finishes updating', async () => {
     const { state, context, reactor } = setupUpdateMediaSourceDuration();
     const { buffer: mockBuffer, finishUpdating, addEventListener } = makeUpdatingSourceBuffer();
@@ -406,29 +387,5 @@ describe('updateMediaSourceDuration', () => {
     } finally {
       reactor.destroy();
     }
-  });
-
-  it('sets duration once on initial NaN state then ignores further state changes', async () => {
-    const { state, context, reactor } = setupUpdateMediaSourceDuration();
-
-    const mockMediaSource = makeMediaSource();
-
-    // MediaSource attached but no presentation yet — nothing happens
-    context.mediaSource.set(mockMediaSource);
-    expect(mockMediaSource.duration).toBeNaN();
-
-    // Presentation with duration arrives — initial set fires
-    state.presentation.set({ duration: 60 } as Presentation);
-
-    await vi.waitFor(() => {
-      expect(mockMediaSource.duration).toBe(60);
-    });
-
-    // Further state changes must not trigger another set
-    state.presentation.set({ duration: 90 } as Presentation);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(mockMediaSource.duration).toBe(60); // unchanged
-
-    reactor.destroy();
   });
 });

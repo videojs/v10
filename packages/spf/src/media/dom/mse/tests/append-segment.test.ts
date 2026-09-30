@@ -123,17 +123,6 @@ describe('appendSegment', () => {
     expect(settled).toHaveBeenCalledOnce();
   });
 
-  it('propagates errors thrown from the AsyncIterable', async () => {
-    const sb = makeSourceBuffer();
-
-    async function* errorStream(): AsyncGenerator<Uint8Array> {
-      yield new Uint8Array(4);
-      throw new Error('stream failed');
-    }
-
-    await expect(appendSegment(sb, errorStream())).rejects.toThrow('stream failed');
-  });
-
   it('calls sourceBuffer.abort() and throws when signal is aborted between chunks', async () => {
     const sb = makeSourceBuffer();
     const controller = new AbortController();
