@@ -22,14 +22,19 @@ function createMediaState(overrides: Partial<TimeMedia> = {}): TimeMedia {
 
 describe('TimeCore', () => {
   describe('setProps', () => {
-    it('uses default props', () => {
+    it('uses default props and restores them after prop updates', () => {
       const core = new TimeCore();
 
       core.setMedia(createMediaState());
       const state = core.getState();
 
       expect(state.type).toBe('current');
-      expect(TimeCore.defaultProps.toggle).toBe(false);
+
+      core.setProps({ type: 'duration' });
+      expect(core.getState().type).toBe('duration');
+
+      core.setProps({ type: undefined });
+      expect(core.getState().type).toBe('current');
     });
 
     it('accepts custom props', () => {
@@ -63,7 +68,7 @@ describe('TimeCore', () => {
 
       core.setMedia(createMediaState({ duration: 0, seekable: [[10, 120]] }));
 
-      expect(core.getState().disabled).toBe(false);
+      expect(core.getState().unavailable).toBe(false);
     });
 
     it('uses the seekable end when duration is unknown', () => {
@@ -349,13 +354,17 @@ describe('TimeCore', () => {
       expect(core.getLabelParams(state)).toEqual({ duration: '5 minutes duration' });
     });
 
-    it('does not return a description without toggle', () => {
-      const core = new TimeCore({ type: 'duration' });
+    it.each([
+      ['current', 'time.current', 'Current time'],
+      ['remaining', 'time.remaining', 'Remaining'],
+      ['duration', 'time.duration', 'Duration'],
+    ] as const)('returns static %s attributes without toggle', (type, key, text) => {
+      const core = new TimeCore({ type });
 
-      core.setMedia(createMediaState({ duration: 300 }));
-      const state = core.getState();
-      const attrs = core.getAttrs(state);
+      core.setMedia(createMediaState());
+      const attrs = core.getAttrs(core.getState());
 
+      expect(attrs['aria-label']).toMatchObject({ key, text });
       expect(attrs['aria-description']).toBeUndefined();
       expect(attrs.role).toBeUndefined();
       expect(attrs.tabIndex).toBeUndefined();

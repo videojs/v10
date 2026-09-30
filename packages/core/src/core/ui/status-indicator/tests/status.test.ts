@@ -53,7 +53,7 @@ describe('status', () => {
 
   it('does not derive status or values for seek and unsupported actions', () => {
     expect(deriveStatus({ action: 'seekStep', value: 10 }, SNAPSHOT)).toBeNull();
-    expect(deriveStatus({ action: 'seekToPercent', value: 50 }, SNAPSHOT)?.value ?? null).toBeNull();
+    expect(deriveStatus({ action: 'seekToPercent', value: 50 }, SNAPSHOT)).toBeNull();
     expect(deriveStatus({ action: 'speedUp' }, SNAPSHOT)).toBeNull();
   });
 
