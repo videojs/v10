@@ -123,7 +123,7 @@ describe('createPostHogConfig', () => {
   it('registers the docs context when PostHog finishes loading', () => {
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
-    const posthog = { init: vi.fn(), register: vi.fn() } satisfies PostHogClient;
+    const posthog = { init: vi.fn(), capture: vi.fn(), register: vi.fn() } satisfies PostHogClient;
     const { loaded } = createPostHogConfig();
 
     loaded(posthog);
@@ -137,7 +137,7 @@ describe('initAnalytics', () => {
     const callbacks: (() => void)[] = [];
 
     vi.stubGlobal('requestIdleCallback', (callback: () => void) => callbacks.push(callback));
-    window.posthog = { init: vi.fn(), register: vi.fn() };
+    window.posthog = { init: vi.fn(), capture: vi.fn(), register: vi.fn() };
 
     initAnalytics();
 

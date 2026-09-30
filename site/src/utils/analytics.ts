@@ -12,6 +12,7 @@ import { isPlainObject, isString } from 'es-toolkit/predicate';
 import { escapeRegExp } from 'es-toolkit/string';
 
 import { DEFAULT_FRAMEWORK, getDefaultStyle, type AnySupportedStyle, type SupportedFramework } from '@/types/docs';
+import { currentInstallationContext } from '@/utils/analytics-events';
 import { getFrameworkPreferenceClient, getStylePreferenceClient } from '@/utils/docs/preferences';
 
 const POSTHOG_PROJECT_KEY = 'phc_5gaDOyX1jWPR1n7JAiGiHdwXwGwfsknwdj1ILI2IiBr';
@@ -36,6 +37,7 @@ export interface AnalyticsEvent {
 /** The subset of the PostHog instance the site calls. The snippet's stub queues these until the library loads. */
 export interface PostHogClient {
   init(token: string, config: PostHogConfig): void;
+  capture(event: string, properties?: EventProperties): void;
   register(properties: EventProperties): void;
 }
 
@@ -116,6 +118,11 @@ export function getDocsContext(): DocsContext {
   return { docs_framework: framework, docs_style: style };
 }
 
+/** Super properties for the current page: the docs context everywhere, plus the picks on an installation guide. */
+function pageContext(): EventProperties {
+  return { ...getDocsContext(), ...currentInstallationContext() };
+}
+
 export function createPostHogConfig(): PostHogConfig {
   return {
     api_host: '/ph',
@@ -132,13 +139,17 @@ export function createPostHogConfig(): PostHogConfig {
     advanced_disable_feature_flags: true,
     before_send: maskPrivateEvent,
     // Runs before the initial $pageview, so that pageview carries the docs context too.
-    loaded: (posthog) => posthog.register({ ...getDocsContext() }),
+    loaded: (posthog) => posthog.register(pageContext()),
   };
 }
 
 /** Start PostHog once the browser is idle, so it never competes with the page for the main thread. */
 export function initAnalytics(): void {
   const load = () => window.posthog?.init(POSTHOG_PROJECT_KEY, createPostHogConfig());
+
+  // View transitions keep PostHog loaded across pages, so refresh the context when a link changes framework or opens
+  // an installation guide.
+  document.addEventListener('astro:page-load', () => window.posthog?.register(pageContext()));
 
   if ('requestIdleCallback' in window) requestIdleCallback(load);
   else setTimeout(load, 3000);

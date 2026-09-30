@@ -20,6 +20,7 @@ import {
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { atom, type WritableAtom } from 'nanostores';
 
+import { installationAnalyticsContext, registerAnalyticsContext } from '@/utils/analytics-events';
 import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import { getInstallationRouteSegment, type InstallationRouteSegment } from '@/utils/installation/routes';
 import {
@@ -135,7 +136,7 @@ function syncMarkdownAlternate(search: string): void {
 
 /**
  * The one writer for installation URLs: replace the current entry's query with the canonical one for the picks, and
- * keep the Markdown twin link in step.
+ * keep the Markdown twin link and the analytics context in step.
  */
 function writeInstallationUrl(): void {
   urlWriteScheduled = false;
@@ -154,6 +155,7 @@ function writeInstallationUrl(): void {
   syncedUrl = `${location.pathname}${search}`;
   syncInstallationDocument(route, selection);
   syncMarkdownAlternate(search);
+  registerAnalyticsContext(installationAnalyticsContext(route, selection));
 }
 
 /**
