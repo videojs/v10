@@ -688,29 +688,35 @@ describe('createMenu', () => {
       expect(onHighlightChange).not.toHaveBeenCalled();
     });
 
-    it.each([
-      { hiddenFirst: false, preventScroll: false },
-      { hiddenFirst: true, preventScroll: false },
-      { hiddenFirst: false, preventScroll: true },
-    ])('highlights the initial navigable DOM item: $hiddenFirst / $preventScroll', ({ hiddenFirst, preventScroll }) => {
-      const { menu } = createTestMenu();
-      const a = addItem('Alpha');
-      const b = addItem('Beta');
-      const expected = hiddenFirst ? b : a;
-      const other = hiddenFirst ? a : b;
-      const focus = vi.spyOn(expected, 'focus');
+    describe.each(['highlightFirstItem', 'highlightInitialItem'] as const)('%s', (method) => {
+      it.each([
+        { hiddenFirst: false, preventScroll: false },
+        { hiddenFirst: true, preventScroll: false },
+        { hiddenFirst: false, preventScroll: true },
+      ])(
+        'highlights the initial navigable DOM item: $hiddenFirst / $preventScroll',
+        ({ hiddenFirst, preventScroll }) => {
+          const { menu } = createTestMenu();
+          const a = addItem('Alpha');
+          const b = addItem('Beta');
+          const expected = hiddenFirst ? b : a;
+          const other = hiddenFirst ? a : b;
+          const focus = vi.spyOn(expected, 'focus');
 
-      a.hidden = hiddenFirst;
-      menu.registerItem(b);
-      menu.registerItem(a);
-      menu.highlightInitialItem({ preventScroll });
+          a.hidden = hiddenFirst;
+          menu.registerItem(b);
+          menu.registerItem(a);
+          menu[method]({ preventScroll });
 
-      expect(expected.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
-      expect(other.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+          expect(expected.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+          expect(other.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+          expect(focus).toHaveBeenCalledOnce();
 
-      if (preventScroll) expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+          if (preventScroll) expect(focus).toHaveBeenCalledWith({ preventScroll: true });
 
-      menu.destroy();
+          menu.destroy();
+        }
+      );
     });
 
     it('falls back to the first navigable item when the selected item is hidden', () => {
