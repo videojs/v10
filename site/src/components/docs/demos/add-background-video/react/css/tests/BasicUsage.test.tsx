@@ -21,7 +21,7 @@ describe('BasicUsage', () => {
   });
 
   it.each(['AbortError', 'NotAllowedError'])('ignores a stale %s after motion is enabled again', async (name) => {
-    let rejectPlay!: (reason: unknown) => void;
+    let rejectPlay!: (reason: DOMException) => void;
     const pendingPlay = new Promise<void>((_resolve, reject) => {
       rejectPlay = reject;
     });
