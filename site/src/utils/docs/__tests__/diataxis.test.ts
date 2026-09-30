@@ -4,9 +4,9 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { getDocTypeFromId, isSection } from '../../../types/docs';
-import type { DocPage } from '../diataxis';
-import { findDiataxisIssues, findTaskHeadings } from '../diataxis';
 import { getAllGuideSlugs } from '../sidebar';
+import type { DocPage } from './diataxis';
+import { findDiataxisIssues, findTaskHeadings } from './diataxis';
 
 const CONTENT_ROOT = resolve(process.cwd(), 'src/content/docs');
 
