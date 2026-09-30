@@ -85,6 +85,7 @@ import '@videojs/html/video/minimal-skin';
 ### Notes
 
 - The skin attaches its styles automatically to its shadow root.
+- Remove `controls` from the media so the browser's native controls do not appear beside the skin's controls.
 - The poster moves from `data-poster` on the media to `poster` on `<video-player>`. The skin reads that value and controls how the poster appears. For more advanced control (like supplying your own image element), see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
 - To use the Default skin, change `<video-minimal-skin>` to `<video-skin>`. For the CDN, use `video.js`; for a bundler, import `@videojs/html/video/skin`.
 
@@ -180,7 +181,7 @@ Set the `src` to the URL for the m3u8 manifest.
 
 #### DASH
 
-Use the DASH media component for your existing DASH source.
+Use the DASH media component for an unprotected DASH source. For DRM-protected DASH, use <DocsLink slug="reference/components/shaka-video">Shaka video</DocsLink> and configure `source.drm`; the dash.js component has no DRM configuration input. See <DocsLink slug="guides/migrate-from-video-js-8" anchor="drm">the DRM migration example</DocsLink>.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -396,12 +397,12 @@ Move media options to attributes or props. For controls and interactions, use a 
 | `controls` | Choose a <DocsLink slug="guides/skins">skin</DocsLink> with the controls you need, or edit local skin source. Video skins do not include `rewind` or `fast-forward` buttons. |
 | `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. In local skin source, add a <DocsLink slug="reference/components/seek-button">seek button</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
-| `autoplay`, `muted`, `loop`, `playsinline`, `preload` | Set these on the media. In React, use `autoPlay` and `playsInline`; the other names stay the same. |
+| `autoplay`, `muted`, `loop`, `playsinline`, `preload` | Set these on the media. For video-backed React media, use `autoPlay` and `playsInline`; the other names stay the same. YouTube and Vimeo use `autoplay`. |
 | `poster` / `data-poster` | Set `poster` on the player. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. `hideControls: false` maps to `visibility="always"` on the controls component in a custom or installed skin layout; the delay is currently not configurable. |
 | `clickToPlay` | Preset video skins include click and tap gestures. Edit local skin source to remove or change them. |
-| `keyboard` | Preset video skins include common hotkeys. Edit local skin source to remove or change them. |
+| `keyboard` | Preset video skins include common hotkeys. Edit local skin source to remove or change them. For `keyboard.global: true`, set `target="document"` on the hotkey components. |
 | `tooltips` | Preset skins include tooltips for common controls. Edit local skin source to customize them. |
 | `captions` | Add `<track kind="captions">` or `<track kind="subtitles">`; preset skins show captions controls when tracks are available. |
 | `previewThumbnails` | Add `<track kind="metadata" label="thumbnails">`; preset video skins show slider thumbnails when thumbnail cues are available. |
@@ -480,18 +481,47 @@ export function AppVideoPlayer() {
 
 The same hook selects actions: `usePlayer((state) => state.togglePaused)` returns a function you can call from your own UI.
 
-When you need the element itself, put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so `ref.current.play()` works the way Plyr's underlying element did. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+For video-backed media, a `ref` reaches the rendered `HTMLVideoElement`. YouTube and Vimeo refs reach an `HTMLIFrameElement`; use `useMedia()` inside the player to call media methods on those embeds. For the Video.js media object, call `useMedia` from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The store's actions live on the player element's `store.state`: query `<video-player>` and call `player.store.state.togglePaused()`. Your media element is also a plain child in your markup, so you can query and drive it directly. To keep a custom element in sync with player state, use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink>:
+Call store actions after the player is defined and media is attached:
+
+```html
+<button id="toggle-playback" type="button">Toggle playback</button>
+
+<script type="module">
+  await customElements.whenDefined('video-player');
+  const player = document.querySelector('video-player');
+
+  document.querySelector('#toggle-playback').addEventListener('click', () => {
+    if (!player.store.target) return;
+    player.store.state.togglePaused();
+  });
+</script>
+```
+
+To keep a custom element in sync with player state, use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink>:
 
 ```js
 import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
 
 class MyElapsed extends ReactiveElement {
   #time = new PlayerController(this, playerContext, selectTime);
+
+  update(changed) {
+    super.update(changed);
+    this.textContent = `Elapsed: ${(this.#time.value?.currentTime ?? 0).toFixed(1)} s`;
+  }
 }
+
+customElements.define('my-elapsed', MyElapsed);
+```
+
+Render it inside your existing `<video-player>` so it can read that player's state:
+
+```html
+<my-elapsed></my-elapsed>
 ```
 </FrameworkCase>
 
