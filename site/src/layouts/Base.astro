@@ -86,8 +86,8 @@ const fullTitle = buildPageTitle(title, suffix);
       )
     }
 
-    {/* Analytics (production only) */}
-    {import.meta.env.PROD && <Posthog />}
+    {/* Analytics on videojs.org only, so previews and the pre-release site stay out of the data */}
+    {import.meta.env.PROD && Astro.site?.origin === PRODUCTION_URL.origin && <Posthog />}
 
     {/* Important stuff */}
     <slot name="priority-head" />
