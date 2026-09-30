@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { resolveVttSegmentMetadata } from '../../../text/resolve-vtt-metadata';
-import { destroyVttResolver, resolveVttSegment, resolveVttSegmentWithMetadata } from '../resolve-vtt-segment';
+import { destroyVttResolver, resolveVttSegment } from '../resolve-vtt-segment';
 
 describe('resolveVttSegment', () => {
   beforeEach(() => {
@@ -232,25 +232,5 @@ The robot.
     const metadata = await resolveVttSegmentMetadata(vttDataUrl);
 
     expect(metadata.timestampMap).toBeUndefined();
-  });
-});
-
-describe('resolveVttSegmentWithMetadata', () => {
-  it('resolves cues and header metadata together', async () => {
-    const vttDataUrl =
-      'data:text/vtt,' +
-      encodeURIComponent(`WEBVTT
-X-TIMESTAMP-MAP=MPEGTS:900000,LOCAL:00:00:00.000
-
-1
-00:00:00.008 --> 00:00:00.992
-Bip!
-`);
-
-    const { cues, metadata } = await resolveVttSegmentWithMetadata(vttDataUrl);
-
-    expect(cues).toHaveLength(1);
-    expect(cues[0]!.text).toBe('Bip!');
-    expect(metadata.timestampMap).toEqual({ mpegts: 900000, local: 0 });
   });
 });
