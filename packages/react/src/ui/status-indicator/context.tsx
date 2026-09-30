@@ -1,3 +1,5 @@
+'use client';
+
 import type { StatusIndicatorState } from '@videojs/core';
 import { createContext, type ProviderProps, useContext } from 'react';
 

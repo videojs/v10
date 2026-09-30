@@ -159,7 +159,7 @@ Add `stability: unstable` when an API works but its shape may still change in a 
 
 ### Which exports a page documents
 
-An export of a published package is stable when a reference page documents it or a stable export's public types refer to it. `pnpm -F site check:api-stability` enforces this: every other export must carry `@internal` in its JSDoc, or `@experimental` when only a `stability: unstable` page or an experimental export's types refer to it. A page documents:
+An export of a published package is stable when a reference page documents it or a stable export's public types refer to it. `pnpm -F site check:api-stability` enforces this: every other export must carry `@internal` in its JSDoc, or `@experimental` when only a `stability: unstable` page or an experimental export's types refer to it. `@experimental` must be earned that way: an export nothing documents or refers to can't carry it. `@deprecated` satisfies either tag, so an export can keep it after its page is removed. A page documents:
 
 - its subject: `title`, `frameworkTitle`, the `component`, `util`, `media`, `feature`, and `react` props of the reference components, and the `html` prop of `ComponentImports`
 - the subject's companion types, such as `PlayButtonProps`, `PlayButtonState`, `PlayButtonElement`, and `UseHotkeyOptions`
@@ -178,9 +178,9 @@ apis:
 
 Pages document what readers import from `@videojs/react`, `@videojs/html`, and the adapter and extension packages. `@videojs/core`, `@videojs/media`, `@videojs/utils`, and `@videojs/element` are published, but no page documents them directly: an export only they expose is internal even when a page documents a same-named export, unless a stable export's types refer to it, and a core type becomes stable when `@videojs/react` or `@videojs/html` re-exports it under a documented name.
 
-The page wins over the tag. A documented export that still carries `@internal`, or `@experimental` on a stable page, fails the check until the tag is removed; `--fix` removes it, or replaces `@internal` with `@experimental` for an unstable page. Each declaration of a merged name, and each overload signature, needs its own tag.
+The page wins over the tag. A documented export that still carries `@internal`, or `@experimental` on a stable page, fails the check until the tag is removed; `--fix` removes it, replaces `@internal` with `@experimental` for an unstable page, and replaces an unearned `@experimental` with `@internal`. Each declaration of a merged name, and each overload signature, needs its own tag.
 
-Stability is transitive through public types. When a stable export's public surface names another export, that export is stable too, whichever package exposes it: an `extends` or `implements` clause, a public property or method, an aliased type, a function's parameters, return type, or type parameters, or a variable's declared type. `PlayButtonCore.State` counts as `PlayButtonCore`. Private, protected, and `@internal` members don't count. An export only experimental exports refer to is experimental and needs `@experimental`. A stable-by-reference export needs no tag and loses a contradicting one, as a documented export does. The check lists these exports under "Stable by reference" with one export that refers to each; document them over time. A stable or experimental export must also be importable from `@videojs/react`, `@videojs/html`, or another package outside core, media, utils, element, and the adapters; the check fails until a framework package re-exports it (an adapter's types from its `/media/*` entry).
+Stability is transitive through public types. When a stable export's public surface names another export, that export is stable too, whichever package exposes it: an `extends` or `implements` clause, a public property or method, an aliased type, a function's parameters, return type, or type parameters, or a variable's declared type. `PlayButtonCore.State` counts as `PlayButtonCore`. A type no entry exports, such as a local helper interface or the `_base` constant a mixin class extends, passes its own references on: readers reach them through the export that names it. Private, protected, and `@internal` members don't count. An export only experimental exports refer to is experimental and needs `@experimental`. A stable-by-reference export needs no tag and loses a contradicting one, as a documented export does. The check lists these exports under "Stable by reference" with one export that refers to each; document them over time. A stable or experimental export must also be importable from `@videojs/react`, `@videojs/html`, `@videojs/store`, or an extension package; the check fails until one of them re-exports it (an adapter's types from its `/media/*` entry) or the signature that makes it stable changes.
 
 Guides and examples don't make an export stable. The check warns when docs code imports an export that isn't, or imports from `@videojs/core`, `@videojs/utils`, or another package no page documents directly.
 
@@ -375,7 +375,7 @@ The **Components** tab holds `reference/components/` pages:
 
 The **API** tab holds `reference/api/` pages:
 
-- **Player** — player factories, hooks, controllers, and `UIElement`
+- **Player** — player factories, hooks, controllers, `UIElement`, and the media capability guards
 - **Presets** — one page per preset
 - **Store** — selectors and the store hooks and controllers
 - **Features** — feature modules passed to `createPlayer`

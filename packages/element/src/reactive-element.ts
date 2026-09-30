@@ -296,8 +296,8 @@ export class ReactiveElement extends HTMLElementBase {
   protected willUpdate(_changed: PropertyValues): void {}
 
   /**
-   * Updates the element. This method reflects property values to attributes and can be overridden to render and keep
-   * updated element DOM. Setting properties inside this method will _not_ trigger another update.
+   * Updates the element. Override it to render and keep the element's DOM up to date; properties are not reflected to
+   * attributes. Setting properties inside this method will _not_ trigger another update.
    */
   protected update(_changed: PropertyValues): void {}
 

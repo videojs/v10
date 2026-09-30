@@ -1,5 +1,3 @@
-'use client';
-
 // Component state, props, and option types
 export type {
   AirPlayButtonState,
@@ -8,6 +6,7 @@ export type {
   AudioTrackRadioGroupProps,
   AudioTrackRadioGroupState,
   BufferingIndicatorState,
+  BuiltInIndicatorStatus,
   ButtonState,
   CaptionsButtonState,
   CaptionsRadioGroupOption,
@@ -17,6 +16,7 @@ export type {
   ControlsProps,
   ControlsState,
   ControlsVisibility,
+  DeriveCustomStatus,
   DialogProps,
   DialogState,
   FullscreenButtonState,
@@ -26,8 +26,11 @@ export type {
   IndicatorStatus,
   IndicatorVolumeLevel,
   InputAction,
+  InputActionEvent,
+  InputActionSource,
   InputIndicatorLabels,
   LiveButtonState,
+  MediaSnapshot,
   MenuInput,
   MenuOptionState,
   MenuProps,
@@ -61,6 +64,7 @@ export type {
   SliderState,
   StatusAnnouncerLabels,
   StatusAnnouncerState,
+  StatusDetails,
   StatusIndicatorProps,
   StatusIndicatorState,
   ThumbnailCoords,

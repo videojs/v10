@@ -1,3 +1,5 @@
+'use client';
+
 import {
   QualityRadioGroupCore,
   type QualityRadioGroupOption,

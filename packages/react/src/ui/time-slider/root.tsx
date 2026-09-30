@@ -1,3 +1,5 @@
+'use client';
+
 import { TimeSliderCore, TimeSliderDataAttrs, type TimeSliderProps, type TimeSliderState } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
