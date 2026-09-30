@@ -12,15 +12,15 @@ export interface ParsedYouTubeSource {
   noCookie: boolean;
 }
 
-/** Extract a YouTube video id from a raw 11-character id or any recognized URL. */
+/** Extract a YouTube video id from a raw 11-character id, a `youtube/<id>` shorthand, or any recognized URL. */
 export function parseYouTubeVideoId(src: string) {
   return parseYouTubeSource(src)?.id ?? null;
 }
 
 /**
- * Parse a YouTube source string. Recognizes raw 11-character ids, `youtu.be` short links, `watch?v=`, `embed/`, `v/`,
- * `shorts/` and `live/` URLs (with or without the `-nocookie` host), playlist URLs via the `list` parameter, and start
- * times via the `t` parameter.
+ * Parse a YouTube source string. Recognizes raw 11-character ids, `youtube/<id>` and `youtube/shorts/<id>` shorthands,
+ * `youtu.be` short links, `watch?v=`, `embed/`, `v/`, `shorts/` and `live/` URLs (with or without the `-nocookie`
+ * host), playlist URLs via the `list` parameter, and start times via the `t` parameter.
  */
 export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   if (!src) return null;
@@ -28,6 +28,10 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   if (/^[\w-]{11}$/.test(src)) {
     return { id: src, kind: 'video', listId: null, startTime: null, noCookie: false };
   }
+
+  const shorthandId = SHORTHAND_SRC.exec(src)?.[1];
+  // Vidstack played its `youtube/<id>` shorthand from the privacy-enhanced host, so it keeps doing so.
+  if (shorthandId) return { id: shorthandId, kind: 'video', listId: null, startTime: null, noCookie: true };
 
   const noCookie = src.includes('-nocookie');
   const videoMatch = VIDEO_MATCH_SRC.exec(src);
@@ -79,6 +83,8 @@ function parseStartTime(url: string): number | null {
 
   return hasValue ? totalSeconds : null;
 }
+
+const SHORTHAND_SRC = /^youtube\/(?:shorts\/)?([\w-]{11})$/;
 
 const VIDEO_MATCH_SRC =
   /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))((?:\w|-){11})/;
