@@ -46,9 +46,15 @@ describe('createTextTracksActor', () => {
       expect(Array.from(es!.cues ?? [])).toMatchObject([{ startTime: 1, endTime: 3, text: 'Hola' }]);
       expect(Array.from(en!.cues ?? [])).toEqual([]);
 
-      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
+      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 5, 'Cue A')] });
+      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1'), cues: [new VTTCue(5, 10, 'Cue B')] });
+      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-2'), cues: [new VTTCue(10, 15, 'Cue C')] });
 
-      expect(Array.from(en!.cues ?? [])).toMatchObject([{ startTime: 0, endTime: 2, text: 'Hello' }]);
+      expect(Array.from(en!.cues ?? [])).toMatchObject([
+        { startTime: 0, endTime: 5, text: 'Cue A' },
+        { startTime: 5, endTime: 10, text: 'Cue B' },
+        { startTime: 10, endTime: 15, text: 'Cue C' },
+      ]);
       expect(Array.from(es!.cues ?? [])).toMatchObject([{ startTime: 1, endTime: 3, text: 'Hola' }]);
     } finally {
       actor.destroy();
@@ -127,24 +133,29 @@ describe('createTextTracksActor', () => {
 
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1', 10, 10), cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({
+      type: 'add-cues',
+      meta: meta('track-en', 'seg-0', 0, 10),
+      cues: [new VTTCue(0, 8, 'Unique to seg 0'), new VTTCue(8, 12, 'Boundary cue')],
+    });
+    actor.send({
+      type: 'add-cues',
+      meta: meta('track-en', 'seg-1', 10, 10),
+      cues: [new VTTCue(8, 12, 'Boundary cue'), new VTTCue(12, 20, 'Unique to seg 1')],
+    });
 
-    expect(textTrack.cues?.length).toBe(1);
-    expect(actor.snapshot.get().context.loaded['track-en']).toHaveLength(1);
-  });
+    const expected = [
+      { startTime: 0, endTime: 8, text: 'Unique to seg 0' },
+      { startTime: 8, endTime: 12, text: 'Boundary cue' },
+      { startTime: 12, endTime: 20, text: 'Unique to seg 1' },
+    ];
 
-  it('deduplicates segments by id', async () => {
-    const video = await makeMediaElement(['track-en']);
-    const actor = createTextTracksActor(video);
-    const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
-
-    textTrack.mode = 'hidden';
-
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
-
-    expect(actor.snapshot.get().context.segments['track-en']).toHaveLength(1);
+    expect(Array.from(textTrack.cues ?? [])).toMatchObject(expected);
+    expect(actor.snapshot.get().context.loaded['track-en']).toMatchObject(expected);
+    expect(actor.snapshot.get().context.segments['track-en']).toEqual([
+      { id: 'seg-0', startTime: 0, duration: 10 },
+      { id: 'seg-1', startTime: 10, duration: 10 },
+    ]);
   });
 
   it('does not update snapshot when both cues and segment are already recorded', async () => {
@@ -157,9 +168,12 @@ describe('createTextTracksActor', () => {
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
     const snapshotAfterFirst = actor.snapshot.get();
 
+    expect(snapshotAfterFirst.context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
+
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(actor.snapshot.get()).toBe(snapshotAfterFirst);
+    expect(actor.snapshot.get().context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
   });
 
   it('does not deduplicate cues with different text at the same time range', async () => {
@@ -172,7 +186,10 @@ describe('createTextTracksActor', () => {
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1', 10, 10), cues: [new VTTCue(0, 2, 'Hola')] });
 
-    expect(textTrack.cues?.length).toBe(2);
+    expect(Array.from(textTrack.cues ?? [])).toMatchObject([
+      { startTime: 0, endTime: 2, text: 'Hello' },
+      { startTime: 0, endTime: 2, text: 'Hola' },
+    ]);
   });
 
   it('tracks cues and segments independently per track ID', async () => {
@@ -228,23 +245,6 @@ describe('createTextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
-  it("'clear' message wipes loaded + segments context", async () => {
-    const video = await makeMediaElement(['track-en']);
-    const actor = createTextTracksActor(video);
-    const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
-
-    textTrack.mode = 'hidden';
-
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
-    expect(actor.snapshot.get().context.loaded['track-en']).toHaveLength(1);
-    expect(actor.snapshot.get().context.segments['track-en']).toHaveLength(1);
-
-    actor.send({ type: 'clear' });
-
-    expect(actor.snapshot.get().context.loaded).toEqual({});
-    expect(actor.snapshot.get().context.segments).toEqual({});
-  });
-
   it("after 'clear', a reused trackId can re-load segments (regression: stale cache across source resets)", async () => {
     // The actor's lifecycle is bound to mediaElement, so its cache
     // survives source resets. Without a clear on source reset,
@@ -264,6 +264,9 @@ describe('createTextTracksActor', () => {
 
     // Source unload — `syncTextTracks` clears the actor's cache.
     actor.send({ type: 'clear' });
+
+    expect(actor.snapshot.get().context.loaded).toEqual({});
+    expect(actor.snapshot.get().context.segments).toEqual({});
 
     // Source B: same trackId, fresh segment with same id as one in A.
     // The cache should accept it as new (no dedup against A's segment).

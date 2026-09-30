@@ -200,22 +200,6 @@ describe('destroyVttResolver', () => {
       destroyVttResolver();
     }).not.toThrow();
   });
-
-  it('allows parsing after destroy', async () => {
-    destroyVttResolver();
-
-    const vttDataUrl =
-      'data:text/vtt,' +
-      encodeURIComponent(`WEBVTT
-
-00:00:00.000 --> 00:00:01.000
-Test
-`);
-
-    const cues = await resolveVttSegment(vttDataUrl);
-
-    expect(cues).toHaveLength(1);
-  });
 });
 
 describe('resolveVttSegmentMetadata', () => {

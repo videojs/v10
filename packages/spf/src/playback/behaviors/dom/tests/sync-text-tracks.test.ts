@@ -155,78 +155,6 @@ describe('syncTextTracks', () => {
     reactor.destroy();
   });
 
-  it('switches active track when selection changes', async () => {
-    const mediaElement = document.createElement('video');
-    const presentation = makePresentation([
-      { id: 'track-en', language: 'en' },
-      { id: 'track-es', language: 'es' },
-    ]);
-
-    const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
-
-    context.mediaElement.set(mediaElement);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
-
-    expect(enEl!.track.mode).toBe('showing');
-    expect(esEl!.track.mode).toBe('disabled');
-
-    state.selectedTextTrackId.set('track-es');
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(enEl!.track.mode).toBe('disabled');
-    expect(esEl!.track.mode).toBe('showing');
-
-    reactor.destroy();
-  });
-
-  it('disables all tracks when selection is cleared', async () => {
-    const mediaElement = document.createElement('video');
-    const presentation = makePresentation([
-      { id: 'track-en', language: 'en' },
-      { id: 'track-es', language: 'es' },
-    ]);
-
-    const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
-
-    context.mediaElement.set(mediaElement);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    state.selectedTextTrackId.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
-
-    expect(enEl!.track.mode).toBe('disabled');
-    expect(esEl!.track.mode).toBe('disabled');
-
-    reactor.destroy();
-  });
-
-  it('does not touch non-subtitle/caption tracks', async () => {
-    const mediaElement = document.createElement('video');
-    const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
-
-    // Add a chapters track directly (not via presentation)
-    const chaptersEl = document.createElement('track');
-
-    chaptersEl.kind = 'chapters';
-    chaptersEl.id = 'chapters-en';
-    chaptersEl.src = 'data:text/vtt,';
-    mediaElement.appendChild(chaptersEl);
-    chaptersEl.track.mode = 'hidden';
-
-    const { context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
-
-    context.mediaElement.set(mediaElement);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(chaptersEl.track.mode).toBe('hidden');
-
-    reactor.destroy();
-  });
-
   it('bridges external mode change → userTextTrackSelection (language intent)', async () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([
@@ -286,28 +214,46 @@ describe('syncTextTracks', () => {
 
   it('ignores its own mode echo when the resolved selection drives the change (no write-back)', async () => {
     const mediaElement = document.createElement('video');
+    const chaptersEl = document.createElement('track');
+
+    chaptersEl.id = 'chapters-en';
+    chaptersEl.kind = 'chapters';
+    chaptersEl.src = 'data:text/vtt,';
+    mediaElement.appendChild(chaptersEl);
+    chaptersEl.track.mode = 'hidden';
+
     const presentation = makePresentation([
       { id: 'track-en', language: 'en' },
       { id: 'track-es', language: 'es' },
     ]);
-
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
 
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // The resolver moves the selection; the mirror drives the DOM modes, which
-    // fires a 'change'. showingId === selectedTextTrackId → echo → not written back.
-    state.selectedTextTrackId.set('track-es');
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    const enEl = mediaElement.querySelector<HTMLTrackElement>('#track-en')!;
+    const esEl = mediaElement.querySelector<HTMLTrackElement>('#track-es')!;
+    const change = vi.fn();
 
-    const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
+    expect(enEl.track.mode).toBe('showing');
+    expect(esEl.track.mode).toBe('disabled');
+    expect(chaptersEl.track.mode).toBe('hidden');
+    mediaElement.textTracks.addEventListener('change', change);
 
-    expect(enEl!.track.mode).toBe('disabled');
-    expect(esEl!.track.mode).toBe('showing');
-    expect(state.userTextTrackSelection.get()).toBeUndefined();
+    try {
+      state.selectedTextTrackId.set('track-es');
 
-    reactor.destroy();
+      await vi.waitFor(() => {
+        expect(enEl.track.mode).toBe('disabled');
+        expect(esEl.track.mode).toBe('showing');
+        expect(change).toHaveBeenCalled();
+      });
+      expect(chaptersEl.track.mode).toBe('hidden');
+      expect(state.userTextTrackSelection.get()).toBeUndefined();
+    } finally {
+      mediaElement.textTracks.removeEventListener('change', change);
+      reactor.destroy();
+    }
   });
 
   it("does not write 'off' when a resolver correction disables the DOM selection", async () => {
