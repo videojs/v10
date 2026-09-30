@@ -18,6 +18,12 @@ describe('fetchResolvable', () => {
     const response = await fetchResolvable(addressable);
 
     expect(fetchSpy).toHaveBeenCalledWith(expect.any(Request));
+    // SAFETY: fetchResolvable passes a native Request to fetch.
+    const request = fetchSpy.mock.calls[0]![0] as Request;
+
+    expect(request.url).toBe('https://example.com/playlist.m3u8');
+    expect(request.method).toBe('GET');
+    expect(request.headers.has('Range')).toBe(false);
     expect(response).toBeInstanceOf(Response);
   });
 
@@ -42,14 +48,19 @@ describe('fetchResolvable', () => {
   });
 
   it('accepts Resource with byteRange', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
 
     const addressable: Resource = {
       url: 'https://example.com/segment.m4s',
       byteRange: { start: 1000, end: 1999 },
     };
 
-    await expect(fetchResolvable(addressable)).resolves.toBeDefined();
+    await fetchResolvable(addressable);
+    // SAFETY: fetchResolvable passes a native Request to fetch.
+    const request = fetchSpy.mock.calls[0]![0] as Request;
+
+    expect(request.url).toBe('https://example.com/segment.m4s');
+    expect(request.headers.get('Range')).toBe('bytes=1000-1999');
   });
 
   it('preserves byte ranges alongside caller headers', async () => {
@@ -68,14 +79,19 @@ describe('fetchResolvable', () => {
   });
 
   it('handles zero-offset byte range', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
 
     const addressable: Resource = {
       url: 'https://example.com/init.mp4',
       byteRange: { start: 0, end: 999 },
     };
 
-    await expect(fetchResolvable(addressable)).resolves.toBeDefined();
+    await fetchResolvable(addressable);
+    // SAFETY: fetchResolvable passes a native Request to fetch.
+    const request = fetchSpy.mock.calls[0]![0] as Request;
+
+    expect(request.url).toBe('https://example.com/init.mp4');
+    expect(request.headers.get('Range')).toBe('bytes=0-999');
   });
 });
 

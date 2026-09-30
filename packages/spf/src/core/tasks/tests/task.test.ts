@@ -243,7 +243,8 @@ describe('Task', () => {
       cloned.abort();
       await run;
 
-      // Aborting the clone aborts only the clone's signal, not the original's.
+      expect(cloned.signal.aborted).toBe(true);
+      expect(original.signal.aborted).toBe(false);
       original.abort();
       expect(signals).toHaveLength(1);
       expect(signals[0]?.aborted).toBe(true);
@@ -394,19 +395,27 @@ describe('ConcurrentRunner', () => {
   it('whenSettled is superseded by abortAll()', async () => {
     const runner = new ConcurrentRunner();
     const cb = vi.fn();
-
+    let release!: () => void;
     const task = new Task(
-      async () => {
-        await new Promise<void>(() => {}); // never resolves on its own
-      },
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
       { id: 'x' }
     );
+    const scheduled = runner.schedule(task);
 
-    runner.schedule(task);
     runner.whenSettled(cb);
 
-    runner.abortAll();
-    await new Promise((r) => setTimeout(r, 10));
+    try {
+      runner.abortAll();
+      expect(task.signal.aborted).toBe(true);
+    } finally {
+      release();
+      await scheduled;
+      await Promise.resolve();
+      runner.destroy();
+    }
 
     expect(cb).not.toHaveBeenCalled();
   });
@@ -868,12 +877,21 @@ describe('RecurringRunner', () => {
     const task = new Task<number>(async () => ++runs, { id: 'x' });
     const runner = new RecurringRunner<number>(parkUntilAborted);
 
-    runner.schedule(task);
+    const scheduled = runner.schedule(task);
+
     await vi.waitFor(() => expect(runs).toBe(1));
 
-    runner.abortAll();
-    await flush();
-    expect(runs).toBe(1);
+    try {
+      runner.abortAll();
+      expect(task.signal.aborted).toBe(true);
+      await expect(scheduled).resolves.toBeUndefined();
+      await flush();
+      expect(runs).toBe(1);
+    } finally {
+      task.abort();
+      await scheduled;
+      runner.destroy();
+    }
   });
 
   it('does not run after destroy', async () => {

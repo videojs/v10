@@ -1,3 +1,4 @@
+import { Signal } from 'signal-polyfill';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { signal } from '../../signals/primitives';
@@ -314,19 +315,37 @@ describe('createMachineReactor — derive', () => {
   });
 
   it('does not transition when the derive fn returns the current status', async () => {
-    const activeFn = vi.fn();
-    const reactor = createMachineReactor<'idle' | 'active'>({
-      initial: 'idle',
-      monitor: () => 'idle',
-      states: { idle: {}, active: { entry: activeFn } },
+    const trigger = signal(0);
+    const entry = vi.fn();
+    const cleanup = vi.fn();
+    const reactor = createMachineReactor({
+      initial: 'idle' as const,
+      monitor: () => {
+        trigger.get();
+        return 'idle';
+      },
+      states: {
+        idle: {
+          entry: () => {
+            entry();
+            return cleanup;
+          },
+        },
+      },
     });
 
-    await tick();
+    try {
+      expect(entry).toHaveBeenCalledOnce();
+      trigger.set(1);
+      await tick();
+      await tick();
 
-    expect(reactor.snapshot.get().value).toBe('idle');
-    expect(activeFn).not.toHaveBeenCalled();
-
-    reactor.destroy();
+      expect(reactor.snapshot.get().value).toBe('idle');
+      expect(entry).toHaveBeenCalledOnce();
+      expect(cleanup).not.toHaveBeenCalled();
+    } finally {
+      reactor.destroy();
+    }
   });
 
   it('re-runs when reactive dependencies change', async () => {
@@ -439,7 +458,16 @@ describe('createMachineReactor — destroy', () => {
       states: { idle: { effects: [fn] } },
     });
 
+    expect(fn).toHaveBeenCalledOnce();
+    const [computation] = Signal.subtle.introspectSinks(src);
+
+    expect(computation).toBeInstanceOf(Signal.Computed);
+    // SAFETY: the isolated source is read by this reactor effect only.
+    const watched = computation as Signal.Computed<void>;
+
+    expect(Signal.subtle.hasSinks(watched)).toBe(true);
     reactor.destroy();
+    expect(Signal.subtle.hasSinks(watched)).toBe(false);
     fn.mockClear();
 
     src.set(1);

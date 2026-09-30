@@ -236,12 +236,9 @@ describe('threshold boundary conditions', () => {
     it('should use default when at minTotalBytes - 1', () => {
       let state = createInitialState();
 
-      // Sample 127KB
-      for (let i = 0; i < 7; i++) {
-        state = sampleBandwidth(state, 1000, 18_142); // ~127KB total
-      }
+      state = sampleBandwidth(state, 1000, 127_999);
 
-      expect(state.bytesSampled).toBeLessThan(128_000);
+      expect(state.bytesSampled).toBe(127_999);
 
       const estimate = getBandwidthEstimate(state, 500_000);
 
@@ -383,7 +380,7 @@ describe('zero-factor correction reliability', () => {
 
     // Track correction factor over many samples
     for (let i = 0; i < 20; i++) {
-      state = sampleBandwidth(state, 1000, 100_000);
+      state = sampleBandwidth(state, 1000, 200_000);
 
       // Ratio of corrected to uncorrected (approximation)
       const estimate = getBandwidthEstimate(state, 500_000);
@@ -393,6 +390,7 @@ describe('zero-factor correction reliability', () => {
       corrections.push(correctionRatio);
     }
 
+    expect(corrections[0]).toBeCloseTo(3.41421356, 7);
     // Early corrections should be larger
     expect(corrections[0]!).toBeGreaterThan(corrections[corrections.length - 1]!);
 
@@ -422,7 +420,7 @@ describe('real-world segment patterns', () => {
 
     // Phase 3: Congestion (bandwidth drops significantly)
     for (let i = 0; i < 5; i++) {
-      state = sampleBandwidth(state, 2000, 10_000); // Drop to 40 Kbps
+      state = sampleBandwidth(state, 4000, 16_000); // Accepted sample at 32 Kbps
     }
 
     history.push({ phase: 'congestion', estimate: getBandwidthEstimate(state, 2_000_000) });
@@ -437,8 +435,8 @@ describe('real-world segment patterns', () => {
     // Verify phase transitions
     expect(history[0]!.estimate).toBe(2_000_000); // Startup uses default
     expect(history[1]!.estimate).toBeLessThan(2_000_000); // Steady state has real estimate
-    expect(history[2]!.estimate).toBeLessThanOrEqual(history[1]!.estimate); // Congestion drops (or equals if slow EWMA hasn't adapted yet)
-    expect(history[3]!.estimate).toBeGreaterThanOrEqual(history[2]!.estimate); // Recovery rises (or equals)
+    expect(history[2]!.estimate).toBeLessThan(history[1]!.estimate);
+    expect(history[3]!.estimate).toBeGreaterThan(history[2]!.estimate);
     expect(history[3]!.estimate).toBeLessThanOrEqual(history[1]!.estimate); // Still conservative (or equals)
   });
 

@@ -152,23 +152,18 @@ describe('getBandwidthEstimate', () => {
     expect(estimate).toBeGreaterThan(0);
   });
 
-  it('should return minimum of fast and slow estimates', () => {
-    let state = createInitialState();
+  it.each([
+    { fastEstimate: 1_937_500, slowEstimate: 3_000_000 },
+    { fastEstimate: 3_875_000, slowEstimate: 1_500_000 },
+  ])('should return minimum of fast and slow estimates: %o', (estimates) => {
+    const state: BandwidthState = {
+      ...estimates,
+      fastTotalWeight: 10,
+      slowTotalWeight: 10,
+      bytesSampled: 200_000,
+    };
 
-    // Add initial samples at high bandwidth
-    for (let i = 0; i < 5; i++) {
-      state = sampleBandwidth(state, 1000, 50_000); // High bandwidth
-    }
-
-    // Add a low bandwidth sample
-    state = sampleBandwidth(state, 2000, 20_000); // Low bandwidth
-
-    const estimate = getBandwidthEstimate(state, 1_000_000);
-
-    // Fast EWMA should drop quickly, slow should lag
-    // min() should pick the lower (fast) one
-    // This tests the asymmetric behavior
-    expect(estimate).toBeGreaterThan(0);
+    expect(getBandwidthEstimate(state, 500_000)).toBeCloseTo(2_000_000, 5);
   });
 
   it('should use custom minTotalBytes threshold', () => {

@@ -139,28 +139,33 @@ describe('createComposition', () => {
     });
 
     it('awaits async cleanups before clearing', async () => {
+      let release!: () => void;
+      const barrier = new Promise<void>((resolve) => {
+        release = resolve;
+      });
       let cleanupCompleted = false;
-
-      const asyncCleanupBehavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
+      const behavior: Behavior<StateSignals<State>, ContextSignals<Context>, object> = {
         stateKeys: ['count'],
         contextKeys: [],
         setup:
           ({ state }) =>
           async () => {
-            await new Promise<void>((resolve) => setTimeout(resolve, 10));
+            await barrier;
+            expect(state.count.get()).toBe(42);
             cleanupCompleted = true;
-            // Verify state is still readable inside the cleanup.
-            void state.count.get();
           },
       };
+      const composition = createComposition([behavior], { initialState: { count: 42 } });
+      const destroying = composition.destroy();
 
-      const composition = createComposition([asyncCleanupBehavior]);
-
-      const destroyPromise = composition.destroy();
-
-      expect(cleanupCompleted).toBe(false);
-
-      await destroyPromise;
+      try {
+        await Promise.resolve();
+        expect(cleanupCompleted).toBe(false);
+        expect(composition.state.count.get()).toBe(42);
+      } finally {
+        release();
+        await destroying;
+      }
 
       expect(cleanupCompleted).toBe(true);
       expect(composition.state.count.get()).toBeUndefined();
