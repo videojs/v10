@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
@@ -120,11 +120,25 @@ describe('markdownUrl', () => {
       expect.stringContaining('source-url=')
     );
 
-    for (const name of ['Open in ChatGPT', 'Open in Claude']) {
-      const href = (await screen.findByRole('menuitem', { name })).getAttribute('href') ?? '';
+    for (const [name, origin, parameter] of [
+      ['Open in ChatGPT', 'https://chatgpt.com', 'prompt'],
+      ['Open in Claude', 'https://claude.ai', 'q'],
+    ]) {
+      const link = await screen.findByRole('menuitem', { name });
 
-      expect(decodeURIComponent(href)).not.toContain('source-url');
-      expect(decodeURIComponent(href)).not.toContain('signed.m3u8');
+      await waitFor(() => {
+        expect(link).toHaveAttribute('href');
+
+        const href = link.getAttribute('href')!;
+        const url = new URL(href);
+
+        expect(url.origin).toBe(origin);
+        expect(url.searchParams.get(parameter)).toBe(
+          'Read http://localhost:3000/docs/guides/installation/react.md?preset=audio so I can ask questions about it.'
+        );
+        expect(decodeURIComponent(href)).not.toContain('source-url');
+        expect(decodeURIComponent(href)).not.toContain('signed.m3u8');
+      });
     }
   });
 });
