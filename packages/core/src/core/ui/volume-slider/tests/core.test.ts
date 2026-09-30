@@ -214,6 +214,20 @@ describe('VolumeSliderCore', () => {
   });
 
   describe('setProps', () => {
+    it('preserves the wheel step independently of the pointer step', () => {
+      const core = new VolumeSliderCore({ step: 10, wheelStep: 5 });
+
+      expect(core.getWheelStepPercent()).toBe(5);
+
+      core.setProps({ step: 10, wheelStep: 2 });
+
+      expect(core.getWheelStepPercent()).toBe(2);
+
+      core.setProps({ step: 10 });
+
+      expect(core.getWheelStepPercent()).toBe(5);
+    });
+
     it('respects disabled prop', () => {
       const core = new VolumeSliderCore({ disabled: true });
 
