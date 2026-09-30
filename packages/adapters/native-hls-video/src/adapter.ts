@@ -6,15 +6,12 @@ import { NativeHlsErrorsMixin } from './errors';
 import { NativeHlsLiveMixin } from './live';
 import { NativeHlsStreamTypeMixin } from './stream-type';
 
-/** @internal */
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
-/** @internal */
 export type StreamType = MediaStreamType;
 
 /** @internal */
 export const StreamTypes = MediaStreamTypes;
 
-/** @internal */
 export interface NativeHlsAdapterProps {
   src: string;
   source: NativeHlsSource | null;
@@ -28,8 +25,6 @@ export interface NativeHlsAdapterProps {
  * Playback options sit under `engine`, keyed by engine, rather than at the top level. Native HLS is one of two paths
  * `HlsJsVideo` can take, and namespacing by engine lets a single source describe both without either reading the
  * other's options.
- *
- * @internal
  */
 export interface NativeHlsSource {
   /** Manifest URL. Mirrors the host's `src` property. */
@@ -44,11 +39,7 @@ export interface NativeHlsSource {
   engine?: NativeHlsEngineConfig | undefined;
 }
 
-/**
- * The engines a native HLS source can configure.
- *
- * @internal
- */
+/** The engines a native HLS source can configure. */
 export interface NativeHlsEngineConfig {
   /** Options for the browser's own HLS playback. */
   nativeHls?: NativeHlsConfig | undefined;
@@ -57,8 +48,6 @@ export interface NativeHlsEngineConfig {
 /**
  * Native HLS playback options. There is no JS engine to configure here — the browser plays the manifest itself — so
  * this is what Video.js does around it.
- *
- * @internal
  */
 export interface NativeHlsConfig {
   /**

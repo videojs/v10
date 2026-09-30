@@ -7,8 +7,6 @@ import type { TwitchSource } from './source';
  * reach the embed: `loop`, which it has no parameter for and the host emulates by seeking a finished VOD back to the
  * start (a live channel never ends, so it never repeats); `playsInline`, which Twitch decides for itself on a phone;
  * and `poster`, which the embed draws itself and offers no way to replace.
- *
- * @internal
  */
 export interface TwitchAdapterProps extends Pick<
   Video,

@@ -122,7 +122,7 @@ export const AudioTrackRadioGroupOptions = forwardRef<HTMLDivElement, AudioTrack
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
+/** Compatibility adapter for the existing preset sources. */
 export const AudioTrackRadioGroupLegacy = forwardRef<HTMLDivElement, AudioTrackRadioGroupLegacyProps>(
   function AudioTrackRadioGroupLegacy({ label, formatTrack, disabled, ...props }, forwardedRef) {
     return (

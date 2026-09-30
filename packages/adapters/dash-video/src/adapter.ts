@@ -9,7 +9,7 @@ import { DashMediaTracksMixin } from './media-tracks';
 /**
  * Structured DASH source: which source to play, plus how to play it.
  *
- * @internal
+ * @experimental
  */
 export interface DashSource {
   /** MPD URL. Mirrors the host's `src` property. */
@@ -21,14 +21,14 @@ export interface DashSource {
 /**
  * The engines a DASH source can configure.
  *
- * @internal
+ * @experimental
  */
 export interface DashEngineConfig {
   /** Dash.js's own settings, passed through untouched. Replacing them resets any previously applied settings. */
   dashJs?: dashjs.MediaPlayerSettingClass | undefined;
 }
 
-/** @internal */
+/** @experimental */
 export interface DashAdapterProps {
   src: string;
   source: DashSource | null;

@@ -26,16 +26,17 @@ export interface MenuProps {
 
 type MenuCoreProps = Omit<MenuProps, 'boundary'>;
 
+/** @internal */
 export interface MenuTriggerProps {
   disabled?: boolean | undefined;
 }
 
+/** @internal */
 export interface MenuPopupProps {
   /** Keep the popup mounted while closed. */
   keepMounted?: boolean | undefined;
 }
 
-/** @internal */
 export interface MenuOptionState {
   /** Selected value displayed by an option group's `Value` part. */
   value: string;
@@ -47,10 +48,12 @@ export interface MenuOptionState {
   availability: 'available' | 'unavailable' | 'unsupported';
 }
 
+/** @internal */
 export interface MenuItemProps {
   disabled?: boolean | undefined;
 }
 
+/** @internal */
 export interface MenuItemIndicatorProps {
   checked?: boolean | undefined;
   forceMount?: boolean | undefined;
@@ -82,11 +85,7 @@ export function resolveMenuOptionState(states: Iterable<MenuOptionState>): MenuO
   };
 }
 
-/**
- * Runtime input derived by framework adapters and `createTransition`.
- *
- * @internal
- */
+/** Runtime input derived by framework adapters and `createTransition`. */
 export interface MenuInput extends TransitionState {
   /** Whether this menu is nested inside another menu's content. */
   isSubmenu: boolean;

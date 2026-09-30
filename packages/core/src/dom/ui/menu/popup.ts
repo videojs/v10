@@ -19,14 +19,12 @@ import { MenuContentDataAttrs } from '../../../core/ui/menu/data';
 import { MenuCSSVars } from '../../../core/ui/menu/vars';
 import type { MenuApi } from './menu';
 
-/** @internal */
 export interface MenuContentRegistration {
   menu: MenuApi;
   parent: MenuApi | null;
   element: HTMLElement;
 }
 
-/** @internal */
 export interface MenuPopupApi {
   readonly element: HTMLElement | null;
   setElement: (element: HTMLElement | null) => void;

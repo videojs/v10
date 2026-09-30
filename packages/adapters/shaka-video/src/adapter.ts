@@ -43,14 +43,14 @@ type DeepPartial<T> = T extends Opaque | readonly any[] | ((...args: any[]) => a
 /**
  * Shaka Player's configuration, as `configure()` accepts it.
  *
- * @internal
+ * @experimental
  */
 export type ShakaConfig = DeepPartial<shaka.extern.PlayerConfiguration>;
 
 /**
  * Structured Shaka source: which source to play, plus how to play it.
  *
- * @internal
+ * @experimental
  */
 export interface ShakaSource {
   /**
@@ -77,7 +77,7 @@ export interface ShakaSource {
 /**
  * The engines a Shaka source can configure.
  *
- * @internal
+ * @experimental
  */
 export interface ShakaEngineConfig {
   /**
@@ -88,7 +88,7 @@ export interface ShakaEngineConfig {
   shaka?: ShakaConfig | undefined;
 }
 
-/** @internal */
+/** @experimental */
 export interface ShakaAdapterProps {
   src: string;
   source: ShakaSource | null;

@@ -8,7 +8,6 @@ import { muteText, unmuteText } from '../../i18n/text/buttons';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
-/** @internal */
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
 export interface MuteButtonProps {

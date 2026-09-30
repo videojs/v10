@@ -32,7 +32,6 @@ const MEDIA_EVENT_PROPS = {
   onWaiting: 'waiting',
 } as const;
 
-/** @internal */
 export type MediaEventPropName = keyof typeof MEDIA_EVENT_PROPS;
 
 const MEDIA_EVENT_PROP_NAMES = Object.keys(MEDIA_EVENT_PROPS) as MediaEventPropName[];
@@ -42,8 +41,6 @@ const MEDIA_EVENT_PROP_NAMES = Object.keys(MEDIA_EVENT_PROPS) as MediaEventPropN
  *
  * The event is the plain `Event` the adapter dispatched on itself, so `currentTarget` is the adapter rather than a DOM
  * element; read playback state such as `currentTime` or `paused` from it the way a `<video>` handler would.
- *
- * @internal
  */
 export type MediaEventHandler<Target extends EventTarget = EventTarget> = (
   event: Event & { readonly currentTarget: Target }
@@ -52,8 +49,6 @@ export type MediaEventHandler<Target extends EventTarget = EventTarget> = (
 /**
  * Standard media event props for a media component whose playback engine is not an `HTMLMediaElement`, such as an
  * iframe embed. Named after the React props on `<video>` (`onPlay`, `onTimeUpdate`, …) so handlers port across.
- *
- * @internal
  */
 export type MediaEventProps<Target extends EventTarget = EventTarget> = {
   [Prop in MediaEventPropName]?: MediaEventHandler<Target> | undefined;

@@ -3,7 +3,6 @@ import { clamp } from '@videojs/utils/number';
 import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../indicator/labels';
 import type { InputActionEvent, MediaSnapshot } from '../input-action';
 
-/** @internal */
 export type IndicatorVolumeLevel = 'off' | 'low' | 'high';
 
 /** @internal */

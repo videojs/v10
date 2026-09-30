@@ -1,7 +1,6 @@
 /** @internal */
 export type InputActionSource = 'gesture' | 'hotkey';
 
-/** @internal */
 export type InputAction =
   | 'togglePaused'
   | 'toggleMuted'

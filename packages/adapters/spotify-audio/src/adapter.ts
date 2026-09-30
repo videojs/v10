@@ -20,7 +20,6 @@ import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from '.
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
  *   new value.
- * @internal
  */
 export class SpotifyAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: SpotifyAdapterProps = {

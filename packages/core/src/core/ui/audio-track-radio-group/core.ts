@@ -17,7 +17,6 @@ export interface AudioTrackRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-/** @internal */
 export interface AudioTrackRadioGroupOption extends RadioOption {}
 
 export interface AudioTrackRadioGroupState extends RadioOptionsState<AudioTrackRadioGroupOption> {}

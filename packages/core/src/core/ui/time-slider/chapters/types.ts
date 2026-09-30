@@ -2,13 +2,11 @@ import type { MediaTextCue } from '@videojs/media';
 
 import type { SliderSegmentRange, SliderSegmentState } from '../../slider/segments';
 
-/** @internal */
 export interface TimeSliderChapterRange extends SliderSegmentRange {
   /** Authored chapter cue, or `null` for an uncovered interval. */
   cue: MediaTextCue | null;
 }
 
-/** @internal */
 export interface TimeSliderChapterState extends SliderSegmentState {
   /** Authored chapter cue, or `null` for an uncovered interval. */
   cue: MediaTextCue | null;

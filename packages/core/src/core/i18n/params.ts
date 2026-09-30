@@ -13,7 +13,6 @@ export interface Translations {
 
 export type { TranslationParams } from './params.generated';
 
-/** @internal */
 export type TranslationKey = keyof TranslationParams;
 
 type ParametricKey = {
@@ -33,11 +32,7 @@ type ParametricTranslations = {
   [Key in ParametricKey]: ParametricTemplate<TranslationParams[Key]>;
 };
 
-/**
- * Player copy keyed by semantic key; all entries are optional overlays.
- *
- * @internal
- */
+/** Player copy keyed by semantic key; all entries are optional overlays. */
 export type FlatTranslations = {
   [Key in TranslationKey]?: TranslationParams[Key] extends never
     ? string

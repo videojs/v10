@@ -31,11 +31,7 @@ export interface ButtonState {
   label: Text | string;
 }
 
-/**
- * A normalized radio option produced by a framework-neutral UI core.
- *
- * @internal
- */
+/** A normalized radio option produced by a framework-neutral UI core. */
 export interface RadioOption {
   /** Value passed back to the core when this option is selected. */
   value: string;
@@ -47,11 +43,7 @@ export interface RadioOption {
   disabled: boolean;
 }
 
-/**
- * Shared state contract for media-backed radio option groups.
- *
- * @internal
- */
+/** Shared state contract for media-backed radio option groups. */
 export interface RadioOptionsState<Option extends RadioOption = RadioOption> extends ButtonState {
   /** Current radio-group value. */
   value: string;

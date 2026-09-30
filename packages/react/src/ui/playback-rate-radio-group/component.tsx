@@ -125,7 +125,7 @@ export const PlaybackRateRadioGroupOptions = forwardRef<HTMLDivElement, Playback
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
+/** Compatibility adapter for the existing preset sources. */
 export const PlaybackRateRadioGroupLegacy = forwardRef<HTMLDivElement, PlaybackRateRadioGroupLegacyProps>(
   function PlaybackRateRadioGroupLegacy({ label, formatRate, disabled, ...props }, forwardedRef) {
     return (

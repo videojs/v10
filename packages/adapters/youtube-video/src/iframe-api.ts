@@ -5,7 +5,6 @@
 import { MediaError } from '@videojs/media';
 import { loadScript } from '@videojs/utils/dom';
 
-/** @internal */
 export interface YouTubePlayerApi {
   playVideo(): void;
   pauseVideo(): void;

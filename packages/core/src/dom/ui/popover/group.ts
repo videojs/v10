@@ -1,13 +1,10 @@
-/** @internal */
 export type PopupGroupCloseReason = 'group-open';
 
-/** @internal */
 export interface PopupGroupMember {
   close: (reason: PopupGroupCloseReason) => void;
   readonly triggerElement: HTMLElement | null;
 }
 
-/** @internal */
 export interface PopupGroup {
   open: (member: PopupGroupMember) => void;
   close: (member: PopupGroupMember) => void;

@@ -7,7 +7,6 @@ import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
 import type { PopupGroup, PopupGroupCloseReason } from './group';
 
-/** @internal */
 export type PopoverOpenChangeReason =
   | 'click'
   | 'hover'
@@ -18,7 +17,6 @@ export type PopoverOpenChangeReason =
   | 'imperative-action'
   | 'group-open';
 
-/** @internal */
 export interface PopoverChangeDetails {
   reason: PopoverOpenChangeReason;
   event?: Event;

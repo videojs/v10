@@ -1,6 +1,5 @@
 import type { UIEvent, UIKeyboardEvent } from './event';
 
-/** @internal */
 export type ButtonActivationSource = 'pointer' | 'keyboard' | 'virtual';
 
 export interface ButtonOptions {

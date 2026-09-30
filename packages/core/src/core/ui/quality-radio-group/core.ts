@@ -17,7 +17,6 @@ export interface QualityRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-/** @internal */
 export interface QualityRadioGroupOption extends RadioOption {
   tier?: string | undefined;
   badge?: string | undefined;

@@ -3,11 +3,7 @@
 
 import { loadScript } from '@videojs/utils/dom';
 
-/**
- * The Stream player mimics `HTMLVideoElement`, so only the parts of that surface the SDK implements are typed here.
- *
- * @internal
- */
+/** The Stream player mimics `HTMLVideoElement`, so only the parts of that surface the SDK implements are typed here. */
 export interface CloudflareStreamPlayerApi {
   play(): Promise<void> | void;
   pause(): void;

@@ -140,6 +140,7 @@ export type InferPlayerConfig<Store> = Store extends {
   ? Config
   : object;
 
+/** @internal */
 export type InferPlayerHtmlConfig<Store> = Store extends {
   readonly [PLAYER_HTML_CONFIG]?: infer Config;
 }
@@ -223,8 +224,11 @@ export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 
 export type AudioPlayerStore = PlayerStore<AudioFeatures>;
 
+/** @internal */
 export type BackgroundPlayerStore = PlayerStore<BackgroundFeatures>;
 
+/** @internal */
 export type LiveVideoPlayerStore = PlayerStore<LiveVideoFeatures>;
 
+/** @internal */
 export type LiveAudioPlayerStore = PlayerStore<LiveAudioFeatures>;

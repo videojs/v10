@@ -16,21 +16,13 @@ import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type Vim
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
-/**
- * Vimeo engine options: embed parameters forwarded verbatim to `@vimeo/player` and the embed URL.
- *
- * @internal
- */
+/** Vimeo engine options: embed parameters forwarded verbatim to `@vimeo/player` and the embed URL. */
 export interface VimeoEngineConfig extends VimeoEmbedParameters {
   /** `referrerpolicy` for the embed iframe. Not a Vimeo embed parameter. */
   referrerPolicy?: ReferrerPolicy;
 }
 
-/**
- * Structured Vimeo source: which source to play, plus how to play it.
- *
- * @internal
- */
+/** Structured Vimeo source: which source to play, plus how to play it. */
 export interface VimeoSource {
   /** Vimeo URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -38,11 +30,7 @@ export interface VimeoSource {
   engine?: VimeoSourceEngineConfig | undefined;
 }
 
-/**
- * The engines a Vimeo source can configure.
- *
- * @internal
- */
+/** The engines a Vimeo source can configure. */
 export interface VimeoSourceEngineConfig {
   /** Vimeo's own embed parameters, passed through untouched. */
   vimeo?: VimeoEngineConfig | undefined;
@@ -61,7 +49,6 @@ export interface ParsedVimeoSource {
   hash: string | null;
 }
 
-/** @internal */
 export interface VimeoAdapterProps {
   src: string;
   autoplay: boolean;
@@ -80,7 +67,6 @@ export interface VimeoAdapterProps {
  *   new value.
  * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData`
  *   for the new value.
- * @internal
  */
 export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: VimeoAdapterProps = {

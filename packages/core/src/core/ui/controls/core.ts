@@ -2,7 +2,6 @@ import type { MediaControlsState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-/** @internal */
 export type ControlsVisibility = 'auto' | 'always';
 
 export interface ControlsProps {

@@ -7,16 +7,11 @@ import type { Media } from '@videojs/media/dom';
 // Player Context
 // ----------------------------------------
 
-/** @internal */
 export const PLAYER_CONTEXT_KEY = Symbol.for('@videojs/player');
 
-/** @internal */
 export type PlayerContextValue<Store extends PlayerStore = AnyPlayerStore> = Store;
 
-/**
- * @displayType Context<symbol, {Store}>
- * @internal
- */
+/** @displayType Context<symbol, {Store}> */
 export type PlayerContext<Store extends PlayerStore = AnyPlayerStore> = Context<
   typeof PLAYER_CONTEXT_KEY,
   PlayerContextValue<Store>

@@ -117,7 +117,7 @@ export const QualityRadioGroupOptions = forwardRef<HTMLDivElement, QualityRadioG
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
+/** Compatibility adapter for the existing preset sources. */
 export const QualityRadioGroupLegacy = forwardRef<HTMLDivElement, QualityRadioGroupLegacyProps>(
   function QualityRadioGroupLegacy({ label, formatRendition, disabled, ...props }, forwardedRef) {
     return (

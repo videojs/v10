@@ -42,10 +42,12 @@ export interface MediaExtension<Target extends HTMLMediaTargetLike = HTMLMediaTa
   destroy?(): void;
 }
 
+/** @internal */
 export interface MediaExtensionConstructor<T extends MediaExtension = MediaExtension> {
   new (...args: any[]): T;
 }
 
+/** @internal */
 export interface MediaExtensions extends Map<MediaExtensionConstructor, MediaExtension> {
   get<T extends MediaExtension>(component: MediaExtensionConstructor<T>): T | undefined;
   set<T extends MediaExtension>(component: MediaExtensionConstructor<T>, instance: T): this;

@@ -9,11 +9,7 @@ export interface ScreenOrientationLock {
   unlock(): void;
 }
 
-/**
- * Orientation types accepted by the Screen Orientation API's `screen.orientation.lock()`.
- *
- * @internal
- */
+/** Orientation types accepted by the Screen Orientation API's `screen.orientation.lock()`. */
 export type ScreenOrientationLockType =
   | 'any'
   | 'landscape'

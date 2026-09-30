@@ -27,7 +27,6 @@ export interface SliderProps {
   max?: number | undefined;
 }
 
-/** @internal */
 export type SliderPreviewOverflow = 'clamp' | 'visible';
 
 export interface SliderPreviewProps {

@@ -1,9 +1,7 @@
 import type { StateAttrMap } from './types';
 
-/** @internal */
 export type TransitionStatus = 'idle' | 'starting' | 'ending';
 
-/** @internal */
 export interface TransitionState {
   /** Whether the element is logically active (stays `true` during ending animations). */
   active: boolean;
@@ -11,7 +9,6 @@ export interface TransitionState {
   status: TransitionStatus;
 }
 
-/** @internal */
 export interface TransitionFlags {
   /** Whether the open transition is in progress. */
   transitionStarting: boolean;

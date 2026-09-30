@@ -3,6 +3,7 @@ import { DialogCore, type DialogInput, type DialogProps, type DialogState } from
 export interface AlertDialogProps extends DialogProps {}
 /** @internal */
 export interface AlertDialogInput extends DialogInput {}
+/** @internal */
 export interface AlertDialogState extends DialogState {}
 
 /**

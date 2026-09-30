@@ -26,8 +26,6 @@ export interface PartContextValue<State extends object> {
  *   protected readonly consumer = new ContextConsumer(this, { context: sliderContext, subscribe: true });
  * }
  * ```
- *
- * @internal
  */
 export abstract class ContextPartElement<State extends object> extends UIElement {
   protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };

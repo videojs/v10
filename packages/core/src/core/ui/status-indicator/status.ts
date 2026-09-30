@@ -2,7 +2,6 @@ import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../in
 import type { InputActionEvent, MediaSnapshot } from '../input-action';
 import { deriveVolumeStatus } from '../volume-indicator/status';
 
-/** @internal */
 export type IndicatorStatus =
   | 'pause'
   | 'play'

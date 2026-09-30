@@ -1,5 +1,6 @@
 import { AlertDialogCore, type AlertDialogState } from '../alert-dialog/core';
 
+/** @internal */
 export interface ErrorDialogState extends AlertDialogState {}
 
 /**

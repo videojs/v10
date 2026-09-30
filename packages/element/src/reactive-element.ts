@@ -47,8 +47,6 @@ const HTMLElementBase = globalThis.HTMLElement ?? class {};
  *     variant = 'primary';
  *   }
  *   ```;
- *
- * @internal
  */
 export class ReactiveElement extends HTMLElementBase {
   /**

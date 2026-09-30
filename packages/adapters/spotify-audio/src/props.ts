@@ -8,8 +8,6 @@ import type { SpotifySource } from './source';
  * are absent rather than inert — a prop that cannot reach the player reads as a capability the player has. `poster` has
  * no artwork of its own to replace and `playsInline` no inline-playback switch, so those two are kept for a uniform
  * prop shape but are stored and reported without effect.
- *
- * @internal
  */
 export interface SpotifyAdapterProps extends Pick<
   Video,

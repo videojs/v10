@@ -2,11 +2,7 @@ import { toPercent } from '@videojs/utils/number';
 
 import type { SliderState } from './core';
 
-/**
- * A numeric range rendered as one segment of a slider.
- *
- * @internal
- */
+/** A numeric range rendered as one segment of a slider. */
 export interface SliderSegmentRange {
   /** Stable identity used by platform renderers. */
   key: string;
@@ -18,7 +14,6 @@ export interface SliderSegmentRange {
   highlight?: boolean;
 }
 
-/** @internal */
 export interface SliderSegmentGeometry extends SliderSegmentRange {
   /** Position in the normalized collection. */
   index: number;
@@ -36,7 +31,6 @@ export interface SliderSegmentGeometry extends SliderSegmentRange {
   endPercent: `${number}%`;
 }
 
-/** @internal */
 export interface SliderSegmentState extends Omit<SliderSegmentGeometry, 'last'> {
   /** Fill from 0–100 relative to this segment. */
   fillPercent: number;

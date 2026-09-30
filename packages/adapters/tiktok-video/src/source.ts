@@ -9,8 +9,6 @@ import type { TikTokAdapterProps } from './props';
  * Parameters the host owns are deliberately absent: `autoplay`, `controls`, `loop`, and `muted` come from the props of
  * the same name, so configuring them here would give two ways to say one thing. The index signature still carries
  * anything not listed here, so undocumented knobs and whatever TikTok adds next keep working.
- *
- * @internal
  */
 export interface TikTokEngineConfig extends Record<string, unknown> {
   /** Show the closed-caption button. Defaults to `1`. */
@@ -37,11 +35,7 @@ export interface TikTokEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/**
- * Structured TikTok source: which source to play, plus how to play it.
- *
- * @internal
- */
+/** Structured TikTok source: which source to play, plus how to play it. */
 export interface TikTokSource {
   /** TikTok URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -49,11 +43,7 @@ export interface TikTokSource {
   engine?: TikTokSourceEngineConfig | undefined;
 }
 
-/**
- * The engines a TikTok source can configure.
- *
- * @internal
- */
+/** The engines a TikTok source can configure. */
 export interface TikTokSourceEngineConfig {
   /** TikTok's own player parameters, passed through untouched. */
   tiktok?: TikTokEngineConfig | undefined;

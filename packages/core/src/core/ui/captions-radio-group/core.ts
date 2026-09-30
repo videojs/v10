@@ -18,7 +18,6 @@ export interface CaptionsRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-/** @internal */
 export interface CaptionsRadioGroupOption extends RadioOption {}
 
 export interface CaptionsRadioGroupState

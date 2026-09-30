@@ -18,7 +18,6 @@ export interface PlaybackRateRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-/** @internal */
 export interface PlaybackRateRadioGroupOption extends RadioOption {
   rate: number;
 }

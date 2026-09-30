@@ -8,8 +8,6 @@ import { VideoCSSVars } from '@videojs/media/dom';
  * The members a media element already names are deliberately absent — `endVideoBehavior` is `loop`, the eight
  * control-bar switches are `controls`, and `autoplay`, `muted`, `poster`, `preload`, `volume`, `currentTime`, and
  * `playbackRate` are props of their own. The index signature carries whatever Wistia adds next.
- *
- * @internal
  */
 export interface WistiaSource extends Record<string, unknown> {
   /** **Required**. The hashed id of the media to play. */
@@ -57,8 +55,6 @@ export interface WistiaSource extends Record<string, unknown> {
 /**
  * The quality levels Wistia's automatic playback picks between. Mirrors the package's own `AllowedQualities`, which is
  * the value its player accepts; the docs list `3840` for the top one, but the player names it `2160`.
- *
- * @internal
  */
 export type WistiaQuality = 224 | 360 | 540 | 720 | 1080 | 2160;
 

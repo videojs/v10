@@ -13,8 +13,6 @@ import type { TwitchAdapterProps } from './props';
  * by inclusion, and `quality` belongs to the scripted embed's `setQuality` — since naming them here would promise an
  * effect the URL cannot have. The index signature still carries anything not listed, so undocumented knobs and whatever
  * Twitch adds next keep working.
- *
- * @internal
  */
 export interface TwitchEngineConfig extends Record<string, unknown> {
   /**
@@ -33,11 +31,7 @@ export interface TwitchEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/**
- * Structured Twitch source: which source to play, plus how to play it.
- *
- * @internal
- */
+/** Structured Twitch source: which source to play, plus how to play it. */
 export interface TwitchSource {
   /** Twitch VOD or channel URL. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -45,11 +39,7 @@ export interface TwitchSource {
   engine?: TwitchSourceEngineConfig | undefined;
 }
 
-/**
- * The engines a Twitch source can configure.
- *
- * @internal
- */
+/** The engines a Twitch source can configure. */
 export interface TwitchSourceEngineConfig {
   /** Twitch's own embed parameters, passed through untouched. */
   twitch?: TwitchEngineConfig | undefined;

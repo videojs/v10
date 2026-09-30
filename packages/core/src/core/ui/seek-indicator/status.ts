@@ -3,7 +3,6 @@ import { formatTime } from '@videojs/utils/time';
 
 import type { InputActionEvent, MediaSnapshot } from '../input-action';
 
-/** @internal */
 export type IndicatorDirection = 'forward' | 'backward';
 
 /** @internal */

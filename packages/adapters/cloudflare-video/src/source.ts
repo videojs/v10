@@ -12,8 +12,6 @@ import type { CloudflareAdapterProps } from './props';
  * come from the props of the same name, so configuring them here would give two ways to say one thing. The index
  * signature still carries anything not listed here, so undocumented knobs and whatever Cloudflare adds next keep
  * working.
- *
- * @internal
  */
 export interface CloudflareEngineConfig extends Record<string, unknown> {
   /** BCP 47 language of the text track to show by default (`'en'`, `'de'`). */
@@ -30,11 +28,7 @@ export interface CloudflareEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/**
- * Structured Cloudflare source: which source to play, plus how to play it.
- *
- * @internal
- */
+/** Structured Cloudflare source: which source to play, plus how to play it. */
 export interface CloudflareSource {
   /** Cloudflare Stream URL, video UID, or signed token. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -42,11 +36,7 @@ export interface CloudflareSource {
   engine?: CloudflareSourceEngineConfig | undefined;
 }
 
-/**
- * The engines a Cloudflare source can configure.
- *
- * @internal
- */
+/** The engines a Cloudflare source can configure. */
 export interface CloudflareSourceEngineConfig {
   /** Cloudflare's own embed parameters, passed through untouched. */
   cloudflare?: CloudflareEngineConfig | undefined;

@@ -5,7 +5,6 @@ export function forceLayout(element: HTMLElement | null): void {
   element?.getBoundingClientRect();
 }
 
-/** @internal */
 export type PositioningBoundary = 'viewport' | 'container' | (string & {}) | Element | null | undefined;
 
 /** @internal */

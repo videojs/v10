@@ -11,8 +11,6 @@ import type { YouTubeAdapterProps } from './props';
  * the same name, so configuring them here would give two ways to say one thing. Parameters YouTube has deprecated
  * (`modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`) are absent too. The index signature
  * still carries anything not listed here, so undocumented knobs and whatever YouTube adds next keep working.
- *
- * @internal
  */
 export interface YouTubeEngineConfig extends Record<string, unknown> {
   /** ISO 639-1 language to display captions in. Pair with `cc_load_policy`. */
@@ -53,11 +51,7 @@ export interface YouTubeEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/**
- * Structured YouTube source: which source to play, plus how to play it.
- *
- * @internal
- */
+/** Structured YouTube source: which source to play, plus how to play it. */
 export interface YouTubeSource {
   /** YouTube URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -65,11 +59,7 @@ export interface YouTubeSource {
   engine?: YouTubeSourceEngineConfig | undefined;
 }
 
-/**
- * The engines a YouTube source can configure.
- *
- * @internal
- */
+/** The engines a YouTube source can configure. */
 export interface YouTubeSourceEngineConfig {
   /** YouTube's own player parameters, passed through untouched. */
   youtube?: YouTubeEngineConfig | undefined;

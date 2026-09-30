@@ -122,7 +122,7 @@ export const CaptionsRadioGroupOptions = forwardRef<HTMLDivElement, CaptionsRadi
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
+/** Compatibility adapter for the existing preset sources. */
 export const CaptionsRadioGroupLegacy = forwardRef<HTMLDivElement, CaptionsRadioGroupLegacyProps>(
   function CaptionsRadioGroupLegacy({ label, formatTrack, disabled, ...props }, forwardedRef) {
     return (

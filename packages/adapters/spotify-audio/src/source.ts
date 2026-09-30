@@ -9,8 +9,6 @@ import type { SpotifyAdapterProps } from './props';
  * Spotify publishes only a handful of them, and the ones the host owns are deliberately absent: the start position
  * comes from the `t` parameter on `src`. The index signature still carries anything not listed here, so undocumented
  * knobs and whatever Spotify adds next keep working.
- *
- * @internal
  */
 export interface SpotifyEngineConfig extends Record<string, unknown> {
   /** Start position in seconds. */
@@ -26,11 +24,7 @@ export interface SpotifyEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/**
- * Structured Spotify source: which source to play, plus how to play it.
- *
- * @internal
- */
+/** Structured Spotify source: which source to play, plus how to play it. */
 export interface SpotifySource {
   /** Spotify URL or URI. Mirrors the host's `src` property. */
   src?: string | undefined;
@@ -38,11 +32,7 @@ export interface SpotifySource {
   engine?: SpotifySourceEngineConfig | undefined;
 }
 
-/**
- * The engines a Spotify source can configure.
- *
- * @internal
- */
+/** The engines a Spotify source can configure. */
 export interface SpotifySourceEngineConfig {
   /** Spotify's own embed options, passed through untouched. */
   spotify?: SpotifyEngineConfig | undefined;

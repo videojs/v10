@@ -1,5 +1,6 @@
 import type { MediaControlsState } from '@videojs/media';
 
+/** @internal */
 export interface ContainerState {
   controlsVisible: boolean;
 }

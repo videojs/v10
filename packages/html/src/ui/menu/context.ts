@@ -2,7 +2,6 @@ import type { MenuCore, MenuOptionState, MenuState } from '@videojs/core';
 import type { MenuApi, MenuPopupApi } from '@videojs/core/dom';
 import { createContext } from '@videojs/element/context';
 
-/** @internal */
 export interface MenuContextValue {
   /** @internal The menu core that owns this menu; parts read `state` instead. */
   core: MenuCore;

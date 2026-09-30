@@ -2,7 +2,6 @@ import type { MediaPreloadType } from '@videojs/media';
 
 import type { YouTubeSource } from './source';
 
-/** @internal */
 export interface YouTubeAdapterProps {
   src: string;
   autoplay: boolean;

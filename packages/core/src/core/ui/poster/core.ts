@@ -28,7 +28,11 @@ export interface PosterState {
   error: boolean;
 }
 
-/** Framework-neutral poster image props. */
+/**
+ * Framework-neutral poster image props.
+ *
+ * @internal
+ */
 export interface PosterImageProps {
   src?: string | undefined;
 }

@@ -4,13 +4,11 @@ import { getTransitionFlags } from '../transition';
 /** @internal */
 export const INDICATOR_CLOSE_DELAY = 800;
 
-/** @internal */
 export interface IndicatorCoreProps {
   /** Delay in milliseconds before the indicator closes. */
   closeDelay?: number | undefined;
 }
 
-/** @internal */
 export interface IndicatorLifecycleState extends TransitionFlags {
   open: boolean;
   generation: number;

@@ -17,11 +17,7 @@ import {
 } from '../../i18n/text/time';
 import { resolveLabel } from '../utils/resolve-label';
 
-/**
- * Time display type.
- *
- * @internal
- */
+/** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
 
 export interface TimeProps {

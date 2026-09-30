@@ -17,8 +17,6 @@ import { createMuxDrmSystems } from './drm';
 /**
  * Structured Mux source for the hls.js-backed Media: Mux identity and params from {@link MuxSourceBase}, plus everything
  * the HLS layer takes — `type`, `preferPlayback`, and its `engine` config.
- *
- * @internal
  */
 export interface MuxSource extends HlsSource, MuxSourceBase {
   /**
@@ -28,7 +26,6 @@ export interface MuxSource extends HlsSource, MuxSourceBase {
   drm?: MuxDrmParams | undefined;
 }
 
-/** @internal */
 export interface MuxVideoAdapterProps {
   src: string;
   source: MuxSource | null;

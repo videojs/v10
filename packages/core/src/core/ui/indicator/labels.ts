@@ -12,7 +12,6 @@ import {
 } from '../../i18n/text/status';
 import { labelText, mutedText } from '../../i18n/text/volume';
 
-/** @internal */
 export interface InputIndicatorLabels {
   muted: string;
   volume: string;

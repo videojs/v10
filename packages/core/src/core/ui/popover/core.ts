@@ -4,13 +4,10 @@ import type { NonNullableObject } from '@videojs/utils/types';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
-/** @internal */
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
-/** @internal */
 export type PopoverAlign = 'start' | 'center' | 'end';
 
-/** @internal */
 export type PopoverBoundary = 'viewport' | 'container' | (string & {});
 
 export interface PopoverProps {

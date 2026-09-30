@@ -13,27 +13,21 @@ import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 
 import { HlsJsOnlyAdapter } from './hls-js-only';
 
-/** @internal */
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
 export type { MediaResolution };
 
 export { Hls };
 
-/** @internal */
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
-/** @internal */
 export type SourceType = (typeof ContentTypes)[keyof typeof ContentTypes];
-/** @internal */
 export type StreamType = MediaStreamType;
 
-/** @internal */
 export const PlaybackTypes = {
   MSE: 'mse',
   NATIVE: 'native',
 };
 
-/** @internal */
 export const ContentTypes = {
   M3U8: 'application/vnd.apple.mpegurl',
   MP4: 'video/mp4',
@@ -57,7 +51,6 @@ const MP4_CONTENT_TYPES: ReadonlySet<string> = new Set([ContentTypes.MP4]);
 /** @internal */
 export const StreamTypes = MediaStreamTypes;
 
-/** @internal */
 export interface HlsJsAdapterProps {
   src: string;
   source: HlsSource | null;
@@ -74,8 +67,6 @@ export interface HlsJsAdapterProps {
  *
  * `preferPlayback` and the engine options are all read when the engine is constructed, so changing any of them
  * recreates it.
- *
- * @internal
  */
 export interface HlsSource {
   /** Manifest URL. Mirrors the host's `src` property. */
@@ -152,11 +143,7 @@ export interface HlsSource {
   engine?: HlsEngineConfig | undefined;
 }
 
-/**
- * The engines an HLS source can configure.
- *
- * @internal
- */
+/** The engines an HLS source can configure. */
 export interface HlsEngineConfig {
   /**
    * Hls.js's own configuration, passed through untouched. A `drmSystems` of its own replaces `source.drm` for hls.js —

@@ -12,10 +12,8 @@ import {
 } from '../popover/popover';
 import type { TransitionApi } from '../transition';
 
-/** @internal */
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
 
-/** @internal */
 export interface TooltipChangeDetails {
   reason: TooltipOpenChangeReason;
   event?: Event;

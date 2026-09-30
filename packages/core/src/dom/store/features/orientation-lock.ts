@@ -11,11 +11,7 @@ export type { ScreenOrientationLockType };
 
 const DEFAULT_ORIENTATION_LOCK_TYPE: ScreenOrientationLockType = 'landscape';
 
-/**
- * Orientation lock configuration and its user-config writer.
- *
- * @internal
- */
+/** Orientation lock configuration and its user-config writer. */
 export interface OrientationLockState {
   /** Screen orientation type locked while fullscreen is active. */
   orientationLockType: ScreenOrientationLockType;

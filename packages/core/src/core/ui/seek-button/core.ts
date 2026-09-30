@@ -17,7 +17,6 @@ export interface SeekButtonProps {
   disabled?: boolean | undefined;
 }
 
-/** @internal */
 export type SeekButtonDirection = 'forward' | 'backward';
 
 export interface SeekButtonState extends ButtonState {

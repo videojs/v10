@@ -2,14 +2,12 @@
 // Event primitives
 // ----------------------------------------
 
-/** @internal */
 export interface EventLike<Detail = void> {
   readonly type: string;
   readonly timeStamp: number;
   readonly detail?: Detail;
 }
 
-/** @internal */
 export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike }> {
   addEventListener<K extends keyof Events & string>(
     type: K,
@@ -29,7 +27,6 @@ export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike
 // Shared value types
 // ----------------------------------------
 
-/** @internal */
 export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 /**
@@ -37,8 +34,6 @@ export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupporte
  *
  * Options that accept one match renditions by pixel area rather than by literal height, so anamorphic variants land in
  * the bucket their source material belongs to.
- *
- * @internal
  */
 export type MediaResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080p' | '1440p' | '2160p';
 
@@ -46,7 +41,6 @@ export type MediaResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080
 // Controls
 // ----------------------------------------
 
-/** @internal */
 export interface MediaControlsCapability {
   controls: boolean;
 }
@@ -55,14 +49,12 @@ export interface MediaControlsCapability {
 // Playback
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPlaybackEvents {
   play: EventLike;
   playing: EventLike;
   waiting: EventLike;
 }
 
-/** @internal */
 export interface MediaPlaybackCapability {
   play(): Promise<void>;
 }
@@ -71,7 +63,6 @@ export interface MediaPlaybackCapability {
 // Autoplay
 // ----------------------------------------
 
-/** @internal */
 export interface MediaAutoplayCapability {
   autoplay: boolean;
 }
@@ -80,13 +71,11 @@ export interface MediaAutoplayCapability {
 // Pause
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPauseEvents {
   pause: EventLike;
   ended: EventLike;
 }
 
-/** @internal */
 export interface MediaPauseCapability {
   pause(): void;
   readonly paused: boolean;
@@ -97,7 +86,6 @@ export interface MediaPauseCapability {
 // Seek
 // ----------------------------------------
 
-/** @internal */
 export interface MediaSeekEvents {
   timeupdate: EventLike;
   durationchange: EventLike;
@@ -106,7 +94,6 @@ export interface MediaSeekEvents {
   loadedmetadata: EventLike;
 }
 
-/** @internal */
 export interface MediaSeekCapability {
   currentTime: number;
   loop: boolean;
@@ -118,10 +105,8 @@ export interface MediaSeekCapability {
 // Source
 // ----------------------------------------
 
-/** @internal */
 export type MediaPreloadType = '' | 'none' | 'metadata' | 'auto';
 
-/** @internal */
 export const MediaReadyState = {
   HAVE_NOTHING: 0,
   HAVE_METADATA: 1,
@@ -130,10 +115,8 @@ export const MediaReadyState = {
   HAVE_ENOUGH_DATA: 4,
 } as const;
 
-/** @internal */
 export type MediaReadyStateValue = (typeof MediaReadyState)[keyof typeof MediaReadyState];
 
-/** @internal */
 export interface MediaSourceEvents {
   loadstart: EventLike;
   emptied: EventLike;
@@ -145,14 +128,9 @@ export interface MediaSourceEvents {
   suspend: EventLike;
 }
 
-/**
- * Result of {@link MediaSourceCapability.canPlayType}.
- *
- * @internal
- */
+/** Result of {@link MediaSourceCapability.canPlayType}. */
 export type CanPlayTypeResult = '' | 'maybe' | 'probably';
 
-/** @internal */
 export interface MediaSourceCapability {
   src: string;
   readonly currentSrc: string;
@@ -167,12 +145,10 @@ export interface MediaSourceCapability {
 // Volume
 // ----------------------------------------
 
-/** @internal */
 export interface MediaVolumeEvents {
   volumechange: EventLike;
 }
 
-/** @internal */
 export interface MediaVolumeCapability {
   volume: number;
   muted: boolean;
@@ -183,12 +159,10 @@ export interface MediaVolumeCapability {
 // Playback rate
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPlaybackRateEvents {
   ratechange: EventLike;
 }
 
-/** @internal */
 export interface MediaPlaybackRateCapability {
   playbackRate: number;
   defaultPlaybackRate: number;
@@ -198,19 +172,16 @@ export interface MediaPlaybackRateCapability {
 // Buffer
 // ----------------------------------------
 
-/** @internal */
 export interface TimeRangeLike {
   readonly length: number;
   start(index: number): number;
   end(index: number): number;
 }
 
-/** @internal */
 export interface MediaBufferEvents {
   progress: EventLike;
 }
 
-/** @internal */
 export interface MediaBufferCapability {
   readonly buffered: TimeRangeLike;
   readonly seekable: TimeRangeLike;
@@ -220,7 +191,6 @@ export interface MediaBufferCapability {
 // Played
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPlayedCapability {
   readonly played: TimeRangeLike;
 }
@@ -229,18 +199,15 @@ export interface MediaPlayedCapability {
 // Error
 // ----------------------------------------
 
-/** @internal */
 export interface ErrorLike {
   readonly code: number;
   readonly message: string;
 }
 
-/** @internal */
 export interface MediaErrorEvents {
   error: EventLike;
 }
 
-/** @internal */
 export interface MediaErrorCapability {
   readonly error: ErrorLike | null;
 }
@@ -249,14 +216,12 @@ export interface MediaErrorCapability {
 // Text tracks
 // ----------------------------------------
 
-/** @internal */
 export interface TextCueLike {
   readonly startTime: number;
   readonly endTime: number;
   readonly text?: string;
 }
 
-/** @internal */
 export interface TextCueListLike {
   readonly length: number;
   [Symbol.iterator](): Iterator<TextCueLike>;
@@ -266,12 +231,10 @@ export interface TextCueListLike {
 /**
  * The kind of text track.
  *
- * @internal
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
  */
 export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
 
-/** @internal */
 export interface TextTrackLike {
   readonly kind: string;
   readonly label: string;
@@ -283,14 +246,12 @@ export interface TextTrackLike {
   addCue?(cue: TextCueLike): void;
 }
 
-/** @internal */
 export interface TextTrackListEvents {
   addtrack: EventLike;
   removetrack: EventLike;
   change: EventLike;
 }
 
-/** @internal */
 export interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> {
   readonly length: number;
   readonly [index: number]: TextTrackLike;
@@ -298,7 +259,6 @@ export interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> 
   getTrackById?(id: string): TextTrackLike | null;
 }
 
-/** @internal */
 export interface MediaTextTrackCapability {
   readonly textTracks: TextTrackListLike;
   addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrackLike;
@@ -318,7 +278,6 @@ interface MediaTrackListEvents<Track> {
   change: EventLike;
 }
 
-/** @internal */
 export interface AudioTrackLike {
   id: string | undefined;
   readonly kind: string | undefined;
@@ -329,7 +288,6 @@ export interface AudioTrackLike {
   removeRendition(rendition: AudioRenditionLike): void;
 }
 
-/** @internal */
 export interface AudioTrackListLike extends EventTargetLike<MediaTrackListEvents<AudioTrackLike>> {
   readonly length: number;
   readonly [index: number]: AudioTrackLike;
@@ -364,7 +322,6 @@ export interface VideoTrackListLike extends EventTargetLike<MediaTrackListEvents
   readonly selectedIndex: number;
 }
 
-/** @internal */
 export interface MediaAudioTrackCapability {
   readonly audioTracks: AudioTrackListLike;
   addAudioTrack(kind: string, label?: string, language?: string): AudioTrackLike;
@@ -392,7 +349,6 @@ interface RenditionListEvents<Rendition> {
   change: EventLike;
 }
 
-/** @internal */
 export interface AudioRenditionLike {
   id: string | undefined;
   readonly bitrate: number | undefined;
@@ -409,7 +365,6 @@ export interface AudioRenditionListLike extends EventTargetLike<RenditionListEve
   selectedIndex: number;
 }
 
-/** @internal */
 export interface VideoRenditionLike {
   id: string | undefined;
   readonly width: number | undefined;
@@ -425,7 +380,6 @@ interface VideoRenditionListEvents extends RenditionListEvents<VideoRenditionLik
   activechange: EventLike;
 }
 
-/** @internal */
 export interface VideoRenditionListLike extends EventTargetLike<VideoRenditionListEvents> {
   readonly length: number;
   readonly [index: number]: VideoRenditionLike;
@@ -439,7 +393,6 @@ export interface MediaAudioRenditionCapability {
   readonly audioRenditions: AudioRenditionListLike;
 }
 
-/** @internal */
 export interface MediaVideoRenditionCapability {
   readonly videoRenditions: VideoRenditionListLike;
 }
@@ -448,7 +401,6 @@ export interface MediaVideoRenditionCapability {
 // Fullscreen
 // ----------------------------------------
 
-/** @internal */
 export interface MediaFullscreenCapability {
   readonly isFullscreen: boolean;
   requestFullscreen(): Promise<unknown>;
@@ -459,13 +411,11 @@ export interface MediaFullscreenCapability {
 // Picture-in-picture
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPictureInPictureEvents {
   enterpictureinpicture: EventLike;
   leavepictureinpicture: EventLike;
 }
 
-/** @internal */
 export interface MediaPictureInPictureCapability {
   readonly isPictureInPicture: boolean;
   disablePictureInPicture: boolean;
@@ -484,8 +434,6 @@ export interface MediaPictureInPictureCapability {
  * - `LIVE` — a live or DVR stream. The seekable window may slide as new segments are published, and `duration` is
  *   typically `Infinity`.
  * - `UNKNOWN` — the stream type has not been determined yet (no source, or metadata has not loaded).
- *
- * @internal
  */
 export const MediaStreamTypes = {
   ON_DEMAND: 'on-demand',
@@ -493,25 +441,20 @@ export const MediaStreamTypes = {
   UNKNOWN: 'unknown',
 } as const;
 
-/** @internal */
 export type MediaStreamType = (typeof MediaStreamTypes)[keyof typeof MediaStreamTypes];
 
-/** @internal */
 export interface MediaStreamTypeEvents {
   streamtypechange: EventLike;
 }
 
-/** @internal */
 export interface MediaStreamTypeCapability {
   streamType: MediaStreamType;
 }
 
-/** @internal */
 export interface MediaLiveEvents {
   targetlivewindowchange: EventLike;
 }
 
-/** @internal */
 export interface MediaLiveCapability {
   /**
    * Playback time where the live edge begins. Playback is live when `currentTime >= liveEdgeStart`. `NaN` when the
@@ -535,14 +478,12 @@ export interface MediaLiveCapability {
 // Remote playback
 // ----------------------------------------
 
-/** @internal */
 export interface RemotePlaybackEvents {
   connecting: EventLike;
   connect: EventLike;
   disconnect: EventLike;
 }
 
-/** @internal */
 export interface RemotePlaybackLike extends EventTargetLike<RemotePlaybackEvents> {
   readonly state: 'connecting' | 'connected' | 'disconnected';
   prompt(): Promise<void>;
@@ -550,7 +491,6 @@ export interface RemotePlaybackLike extends EventTargetLike<RemotePlaybackEvents
   cancelWatchAvailability(id?: number): Promise<void>;
 }
 
-/** @internal */
 export interface MediaRemotePlaybackCapability {
   readonly remote: RemotePlaybackLike;
   disableRemotePlayback: boolean;
@@ -560,7 +500,6 @@ export interface MediaRemotePlaybackCapability {
 // Plays inline (video-only)
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPlaysInlineCapability {
   playsInline: boolean;
 }
@@ -569,7 +508,6 @@ export interface MediaPlaysInlineCapability {
 // Poster (video-only)
 // ----------------------------------------
 
-/** @internal */
 export interface MediaPosterCapability {
   poster: string;
 }
@@ -578,11 +516,7 @@ export interface MediaPosterCapability {
 // Content metadata
 // ----------------------------------------
 
-/**
- * A media-owned content value. `undefined` means the key is absent; `null` means it has no current value.
- *
- * @internal
- */
+/** A media-owned content value. `undefined` means the key is absent; `null` means it has no current value. */
 export type MediaContentValue = string | null | undefined;
 
 /**
@@ -591,8 +525,6 @@ export type MediaContentValue = string | null | undefined;
  *
  * Report a key only for a value the media can vouch for. Omit it otherwise — an empty string is a deliberate blank that
  * stops a feature's fallback chain, so reporting `''` for "not loaded yet" suppresses the author's fallback.
- *
- * @internal
  */
 export interface MediaContentData {
   /** Title of the content. */
@@ -604,11 +536,7 @@ export interface MediaContentData {
   readonly [key: string]: MediaContentValue;
 }
 
-/**
- * Events emitted when a media implementation's content data changes.
- *
- * @internal
- */
+/** Events emitted when a media implementation's content data changes. */
 export interface MediaContentDataEvents {
   contentdatachange: EventLike;
 }
@@ -622,8 +550,6 @@ export interface MediaContentDataEvents {
  * Implementations dispatch `contentdatachange` when the bag changes, and only then; an assignment that leaves every key
  * and value alone stays quiet. They are also expected to clear content data when the source is replaced. Nothing
  * enforces that second half, so a media that skips it reports stale metadata across a source change.
- *
- * @internal
  */
 export interface MediaContentDataCapability {
   readonly contentData: MediaContentData | undefined;
@@ -633,12 +559,10 @@ export interface MediaContentDataCapability {
 // Video dimensions (video-only)
 // ----------------------------------------
 
-/** @internal */
 export interface MediaVideoDimensionsEvents {
   resize: EventLike;
 }
 
-/** @internal */
 export interface MediaVideoDimensionsCapability {
   readonly videoWidth: number;
   readonly videoHeight: number;
@@ -648,7 +572,6 @@ export interface MediaVideoDimensionsCapability {
 // Base Media
 // ----------------------------------------
 
-/** @internal */
 export interface MediaEvents extends MediaPlaybackEvents {}
 
 export interface Media<Events extends { [K in keyof Events]: EventLike } = MediaEvents>
@@ -658,7 +581,6 @@ export interface Media<Events extends { [K in keyof Events]: EventLike } = Media
 // Composed shapes
 // ----------------------------------------
 
-/** @internal */
 export interface CommonMediaEvents
   extends
     MediaEvents,
@@ -674,7 +596,6 @@ export interface CommonMediaEvents
     MediaLiveEvents,
     MediaContentDataEvents {}
 
-/** @internal */
 export interface CommonMedia<Events extends { [K in keyof Events]: EventLike } = CommonMediaEvents>
   extends
     Media<Events>,
@@ -694,7 +615,6 @@ export interface CommonMedia<Events extends { [K in keyof Events]: EventLike } =
     MediaControlsCapability,
     MediaAutoplayCapability {}
 
-/** @internal */
 export interface VideoEvents extends CommonMediaEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
 export interface Video
@@ -709,13 +629,13 @@ export interface Video
 /** @internal */
 export interface AudioEvents extends CommonMediaEvents {}
 
+/** @internal */
 export interface Audio extends CommonMedia<AudioEvents> {}
 
 // ----------------------------------------
 // Target shapes
 // ----------------------------------------
 
-/** @internal */
 export interface MediaTargetLike
   extends
     MediaPlaybackCapability,

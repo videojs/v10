@@ -1,8 +1,4 @@
-/**
- * Non-English locale packs shipped with Video.js.
- *
- * @internal
- */
+/** Non-English locale packs shipped with Video.js. */
 export const LOCALES = [
   'ar',
   'az',

@@ -1,4 +1,3 @@
-/** @internal */
 export interface ThumbnailCoords {
   x: number;
   y: number;
@@ -16,13 +15,10 @@ export interface ThumbnailImage {
 /** @internal */
 export type ThumbnailSrc = string | ThumbnailImage[] | null;
 
-/** @internal */
 export type ThumbnailCrossOrigin = 'anonymous' | 'use-credentials' | '' | null;
 
-/** @internal */
 export type ThumbnailLoading = 'eager' | 'lazy';
 
-/** @internal */
 export type ThumbnailFetchPriority = 'high' | 'low' | 'auto';
 
 /** @internal */

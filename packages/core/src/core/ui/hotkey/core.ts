@@ -1,4 +1,3 @@
-/** @internal */
 export type HotkeyActionName =
   | 'togglePaused'
   | 'toggleMuted'

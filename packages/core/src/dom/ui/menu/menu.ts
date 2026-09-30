@@ -12,10 +12,8 @@ import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason 
 import type { PositioningCSSVars, PositioningOptions } from '../popover/positioning';
 import type { TransitionApi } from '../transition';
 
-/** @internal */
 export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
-/** @internal */
 export type MenuChangeDetails = PopoverChangeDetails;
 
 export interface MenuOptions {
@@ -41,7 +39,6 @@ export interface MenuContentProps {
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
-/** @internal */
 export interface MenuHighlightOptions {
   focus?: boolean;
   preventScroll?: boolean;
@@ -86,7 +83,6 @@ export const MenuPositioningCSSVars = {
 
 const parents = new WeakMap<MenuApi, MenuApi>();
 
-/** @internal */
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;

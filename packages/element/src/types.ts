@@ -1,8 +1,4 @@
-/**
- * An object that can host Reactive Controllers and call their lifecycle callbacks.
- *
- * @internal
- */
+/** An object that can host Reactive Controllers and call their lifecycle callbacks. */
 export interface ReactiveControllerHost {
   /**
    * Adds a controller to the host, which sets up the controller's lifecycle methods to be called with the host's
@@ -35,8 +31,6 @@ export interface ReactiveControllerHost {
  * interface, via the `addController()` method. They can hook their host component's lifecycle by implementing one or
  * more of the lifecycle callbacks, or initiate an update of the host component by calling `requestUpdate()` on the
  * host.
- *
- * @internal
  */
 export interface ReactiveController {
   /**
@@ -97,7 +91,5 @@ export interface PropertyDeclaration {
  *   muted: { type: Boolean },
  *   } satisfies PropertyDeclarationMap<keyof MyElement>;
  *   ```;
- *
- * @internal
  */
 export type PropertyDeclarationMap<K extends string = string> = Record<K, PropertyDeclaration>;

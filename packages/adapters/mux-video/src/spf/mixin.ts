@@ -13,7 +13,6 @@ import type { Constructor } from '@videojs/utils/types';
 
 import { createMuxDrmSystems } from '../drm';
 
-/** @internal */
 export interface MuxAdapterProps {
   src: string;
   source: MuxSourceBase | null;

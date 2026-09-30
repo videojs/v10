@@ -90,8 +90,6 @@ export interface MuxStoryboardParams {
 /**
  * Mux's DRM authoring input: a license token, in place of the license servers `source.drm` normally names. Servers
  * named outright alongside it still win, key by key, for content Mux does not license.
- *
- * @internal
  */
 export interface MuxDrmParams extends DrmSystemsConfig {
   /**
@@ -107,8 +105,6 @@ export interface MuxDrmParams extends DrmSystemsConfig {
  * the stream and derive the URL; `src` is a fallback for playing a non-Mux URL.
  *
  * Each Mux Media extends this with whatever its own engine takes — see `MuxSource` for the hls.js-backed one.
- *
- * @internal
  */
 export interface MuxSourceBase {
   /** Manifest URL. Derived from `playbackId` when there is one. */

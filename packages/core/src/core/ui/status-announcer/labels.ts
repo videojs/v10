@@ -12,7 +12,6 @@ import {
   type InputIndicatorLabels,
 } from '../indicator/labels';
 
-/** @internal */
 export interface StatusAnnouncerLabels extends InputIndicatorLabels {
   /** Formats an announcement containing the current volume value. */
   volumeWithValue: (value: string) => string;
