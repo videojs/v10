@@ -4,7 +4,7 @@ import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../in
 import type { IndicatorCoreProps, IndicatorLifecycleState } from '../indicator/lifecycle';
 import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/lifecycle';
 import { type InputAction, type InputActionEvent, isInputActionIncluded, type MediaSnapshot } from '../input-action';
-import { deriveStatus } from './status';
+import { deriveStatus, type IndicatorStatus } from './status';
 
 export interface StatusIndicatorProps extends IndicatorCoreProps {
   /** Input actions allowed to open the indicator. All supported actions are allowed when omitted. */
@@ -19,11 +19,7 @@ export interface StatusIndicatorState extends IndicatorLifecycleState {
   /** Increments each time a supported input action updates the indicator. */
   generation: number;
   /** Predicted visual status for the handled input action. */
-  status: ReturnType<typeof deriveStatus> extends infer Details
-    ? Details extends { status: infer Status }
-      ? Status | null
-      : never
-    : never;
+  status: IndicatorStatus | null;
   /** Translated label for the predicted status. */
   label: string | null;
   /** Predicted volume percentage for volume actions, otherwise `null`. */

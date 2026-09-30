@@ -8,7 +8,7 @@ import styles from '../../define/video/minimal-skin.css?inline';
 /** Packaged Minimal video UI registered as `<video-minimal-skin>`. */
 export class MinimalVideoSkinElement extends SkinElement {
   static readonly tagName = 'video-minimal-skin';
-  static styles = createShadowStyle(styles);
+  static styles: CSSStyleSheet | string = createShadowStyle(styles);
   static template = template;
 }
 

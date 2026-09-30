@@ -8,7 +8,7 @@ import styles from '../../define/audio/minimal-skin.css?inline';
 /** Packaged Minimal audio UI registered as `<audio-minimal-skin>`. */
 export class MinimalAudioSkinElement extends SkinElement {
   static readonly tagName = 'audio-minimal-skin';
-  static styles = createShadowStyle(styles);
+  static styles: CSSStyleSheet | string = createShadowStyle(styles);
   static template = template;
 }
 
