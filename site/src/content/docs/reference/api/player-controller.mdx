@@ -50,7 +50,7 @@ class PlayButtonElement extends UIElement {
 }
 ```
 
-With a selector, the selector types the value. Without one, the store's members are typed as `unknown`, because `playerContext` does not know the player's features. `createPlayer` returns the same context as `playerContext`, typed for its feature set:
+With a selector, the selector types the value. Without one, `value` is typed as the base player store, with no feature state or actions, because `playerContext` does not know the player's features. For typed access, use the `PlayerController` that `createPlayer` returns, which is already bound to its player, or pass the context `createPlayer` returns, which is the same context as `playerContext` typed for its feature set:
 
 ```ts
 import { createPlayer, PlayerController, UIElement } from "@videojs/html";

@@ -50,7 +50,7 @@ const features = entry.data.features.map((feature) => ({
                 <MarkdownCode>{feature.exportName}</MarkdownCode>
               )}
             </Td>
-            <Td class="align-top">{feature.description ?? '–'}</Td>
+            <Td class="align-top">{feature.description ?? <span class="text-muted">–</span>}</Td>
           </Tr>
         ))}
       </Tbody>

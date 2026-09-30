@@ -38,8 +38,9 @@ const icons = Object.entries(defaultIcons)
 <Table maxWidth={false} outerClass="my-6">
   <Thead>
     <Tr>
-      <Th>Default</Th>
-      <Th>Minimal</Th>
+      {/* The previews are decorative SVGs, meaningless in the Markdown output. */}
+      <Th data-llms-ignore>Default</Th>
+      <Th data-llms-ignore>Minimal</Th>
       {framework === 'html' && <Th>Name</Th>}
       <Th>Export</Th>
     </Tr>
@@ -48,11 +49,13 @@ const icons = Object.entries(defaultIcons)
     {
       icons.map((icon) => (
         <Tr>
-          <Td>
-            <span class="icon-table__preview" set:html={icon.defaultSvg} />
+          <Td data-llms-ignore>
+            <span class="inline-flex size-4.5" set:html={icon.defaultSvg} />
+            <span class="sr-only">{icon.name}, default set</span>
           </Td>
-          <Td>
-            <span class="icon-table__preview" set:html={icon.minimalSvg} />
+          <Td data-llms-ignore>
+            <span class="inline-flex size-4.5" set:html={icon.minimalSvg} />
+            <span class="sr-only">{icon.name}, minimal set</span>
           </Td>
           {framework === 'html' && (
             <Td>
@@ -68,10 +71,3 @@ const icons = Object.entries(defaultIcons)
   </Tbody>
 </Table>
 
-<style>
-  .icon-table__preview {
-    display: inline-flex;
-    width: 18px;
-    height: 18px;
-  }
-</style>
