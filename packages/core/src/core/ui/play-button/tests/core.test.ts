@@ -149,10 +149,11 @@ describe('PlayButtonCore', () => {
 
     it('calls play when ended', async () => {
       const core = new PlayButtonCore();
-      const media = createMediaState({ ended: true });
+      const media = createMediaState({ paused: false, ended: true });
 
       await core.toggle(media);
       expect(media.play).toHaveBeenCalled();
+      expect(media.pause).not.toHaveBeenCalled();
     });
 
     it('does nothing when disabled', async () => {
