@@ -102,7 +102,9 @@ describe('playReadyKeySystem', () => {
     expect([...initData.slice(4, 8)]).toEqual([0x70, 0x73, 0x73, 0x68]); // 'pssh'
     expect(new DataView(initData.buffer).getUint32(8)).toBe(0); // v0, no flags
     // The PlayReady system id, 9a04f079-9840-4286-ab92-e65be0885f95.
-    expect([...initData.slice(12, 16)]).toEqual([0x9a, 0x04, 0xf0, 0x79]);
+    expect([...initData.slice(12, 28)]).toEqual([
+      0x9a, 0x04, 0xf0, 0x79, 0x98, 0x40, 0x42, 0x86, 0xab, 0x92, 0xe6, 0x5b, 0xe0, 0x88, 0x5f, 0x95,
+    ]);
     expect(new DataView(initData.buffer).getUint32(28)).toBe(PSSH_BYTES.length);
     expect([...initData.slice(32)]).toEqual([...PSSH_BYTES]);
   });

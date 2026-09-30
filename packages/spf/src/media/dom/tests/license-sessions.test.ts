@@ -9,7 +9,7 @@ import {
   type SvtaError,
 } from '../../errors';
 import { fetchDrm } from '../eme';
-import { playReadyKeySystem, widevineKeySystem } from '../key-systems';
+import { widevineKeySystem } from '../key-systems';
 import {
   fetchLicense,
   listenForEncryptedInitData,
@@ -73,27 +73,40 @@ describe('fetchLicense', () => {
   it('POSTs the message with the configured headers and credentials, the per-source override composing last', async () => {
     vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([9]));
 
+    const signal = new AbortController().signal;
     const license = await fetchLicense(
       widevineKeySystem,
       {
         licenseUrl: LICENSE_URL,
         headers: { Authorization: 'Bearer t' },
         credentials: 'include',
-        licenseRequest: (request) => ({ ...request, headers: { ...request.headers, 'x-minted': '1' } }),
+        licenseRequest: (request) => ({
+          ...request,
+          headers: {
+            ...request.headers,
+            'x-module-content-type': request.headers['Content-Type']!,
+            'Content-Type': 'application/source-license',
+          },
+        }),
       },
       LICENSE_URL,
       MESSAGE,
-      new AbortController().signal
+      signal
     );
 
     expect(fetchDrm).toHaveBeenCalledWith(
-      expect.objectContaining({
+      {
         url: LICENSE_URL,
         method: 'POST',
         credentials: 'include',
-        headers: expect.objectContaining({ Authorization: 'Bearer t', 'x-minted': '1' }),
-      }),
-      expect.any(AbortSignal)
+        body: MESSAGE,
+        headers: {
+          Authorization: 'Bearer t',
+          'x-module-content-type': 'application/octet-stream',
+          'Content-Type': 'application/source-license',
+        },
+      },
+      signal
     );
     expect(license).toEqual(new Uint8Array([9]));
   });
@@ -119,14 +132,16 @@ describe('fetchLicense', () => {
 
 describe('unwrapLicense', () => {
   it('applies the module default, then the per-source override', async () => {
-    // PlayReady's module unwraps nothing on the way back; the override sees the raw bytes.
     const unwrapped = await unwrapLicense(
-      playReadyKeySystem,
+      {
+        ...widevineKeySystem,
+        licenseResponse: (response) => new Uint8Array([response[0]! * 2]),
+      },
       { licenseUrl: LICENSE_URL, licenseResponse: (response) => new Uint8Array([response[0]! + 1]) },
       new Uint8Array([41])
     );
 
-    expect(unwrapped).toEqual(new Uint8Array([42]));
+    expect(unwrapped).toEqual(new Uint8Array([83]));
   });
 });
 
@@ -236,10 +251,14 @@ describe('observeKeyStatuses', () => {
     session.dispatchEvent(new Event('keystatuschange'));
     session.keyStatuses.set(keyId, 'usable');
     session.dispatchEvent(new Event('keystatuschange'));
+    session.keyStatuses.set(keyId, 'expired');
+    session.dispatchEvent(new Event('keystatuschange'));
+    session.dispatchEvent(new Event('keystatuschange'));
     session.keyStatuses.set(keyId, 'output-restricted');
     session.dispatchEvent(new Event('keystatuschange'));
 
     expect(reports).toEqual([
+      { code: SVTA_LICENSE_EXPIRED, data: { keySystem: 'com.widevine.alpha', status: 'expired', keyId: 'abcd' } },
       { code: SVTA_LICENSE_EXPIRED, data: { keySystem: 'com.widevine.alpha', status: 'expired', keyId: 'abcd' } },
       {
         code: SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
