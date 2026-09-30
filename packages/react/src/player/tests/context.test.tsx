@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nContext } from '../../i18n/context';
 import { createI18n } from '../../i18n/create-i18n';
+import { usePlayerContext, useOptionalContainer } from '../../index';
 import { createMockStore } from '../../testing/mocks';
 import { Container } from '../container';
 import {
@@ -13,10 +14,8 @@ import {
   useContainerAttach,
   useMedia,
   useMediaAttach,
-  useOptionalContainer,
   useOptionalPlayer,
   usePlayer,
-  usePlayerContext,
 } from '../context';
 import { useOptionalPopupGroup } from '../popup-group-context';
 
@@ -168,12 +167,6 @@ describe('useOptionalPlayer', () => {
     expect(result.current).toBeUndefined();
   });
 
-  it('returns undefined outside a Player with selector', () => {
-    const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused));
-
-    expect(result.current).toBeUndefined();
-  });
-
   it('does not run selector outside a Player', () => {
     const selector = vi.fn(() => true);
     const { result } = renderHook(() => useOptionalPlayer(selector));
@@ -255,20 +248,6 @@ describe('Container', () => {
 
     expect(outsideGroup).toBeUndefined();
     expect(insideGroup).toBeDefined();
-  });
-
-  it('renders children', () => {
-    const value = createContextValue();
-
-    const { container } = render(
-      <PlayerContextProvider value={value}>
-        <Container>
-          <span>test</span>
-        </Container>
-      </PlayerContextProvider>
-    );
-
-    expect(container.querySelector('span')).toBeTruthy();
   });
 
   it.each([

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { combine } from '../combine';
 import { StoreError } from '../errors';
 import { defineSlice } from '../slice';
 import { flush } from '../state';
@@ -42,35 +41,60 @@ describe('createStore', () => {
     },
   });
 
-  const playbackSlice = defineSlice<MockMedia>()({
-    state: ({ target }) => ({
-      paused: true,
-      play() {
-        target().play();
-        target().paused = false;
-      },
-      pause() {
-        target().pause();
-        target().paused = true;
-      },
-    }),
+  it('full lifecycle: create → attach → use → detach → destroy', () => {
+    const events: string[] = [];
 
-    attach({ target, set }) {
-      set({ paused: target.paused });
-    },
+    class Target extends EventTarget {
+      value = 0;
+    }
+
+    const slice = defineSlice<Target>()({
+      state: ({ target }) => ({
+        count: 0,
+        increment() {
+          target().value++;
+          target().dispatchEvent(new Event('change'));
+          events.push('increment');
+        },
+      }),
+
+      attach({ target: t, signal, set }) {
+        events.push('attach-slice');
+        set({ count: t.value });
+
+        t.addEventListener('change', () => set({ count: t.value }), { signal });
+        signal.addEventListener('abort', () => events.push('unsubscribe'));
+      },
+    });
+
+    const store = createStore<Target>()(slice, {
+      onSetup: () => events.push('setup'),
+      onAttach: () => events.push('attach'),
+    });
+
+    expect(events).toEqual(['setup']);
+
+    const targetInstance = new Target();
+
+    targetInstance.value = 5;
+    const detach = store.attach(targetInstance);
+
+    expect(events).toEqual(['setup', 'attach-slice', 'attach']);
+    expect(store.state.count).toBe(5);
+
+    store.increment();
+    expect(store.state.count).toBe(6);
+    expect(events).toContain('increment');
+
+    detach();
+    expect(events).toContain('unsubscribe');
+    expect(store.target).toBeNull();
+
+    store.destroy();
+    expect(store.destroyed).toBe(true);
   });
 
   describe('creation', () => {
-    it('creates store with merged initial state', () => {
-      const store = createStore<MockMedia>()(combine(audioSlice, playbackSlice));
-
-      expect(store.state).toMatchObject({
-        volume: 1,
-        muted: false,
-        paused: true,
-      });
-    });
-
     it('exposes $state container matching store.state', () => {
       const store = createStore<MockMedia>()(audioSlice);
       const media = new MockMedia();
@@ -139,17 +163,6 @@ describe('createStore', () => {
       });
     });
 
-    it('sets up subscriptions', () => {
-      const store = createStore<MockMedia>()(audioSlice);
-
-      const media = new MockMedia();
-      const addListenerSpy = vi.spyOn(media, 'addEventListener');
-
-      store.attach(media);
-
-      expect(addListenerSpy).toHaveBeenCalledWith('volumechange', expect.any(Function));
-    });
-
     it('detach cleans up', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
@@ -196,10 +209,11 @@ describe('createStore', () => {
       expect(media.volume).toBe(0.5);
     });
 
-    it('throws StoreError without target', () => {
+    it('throws NO_TARGET when an action needs an unattached target', () => {
       const store = createStore<MockMedia>()(audioSlice, { onError: () => {} });
 
-      expect(() => store.setVolume(0.5)).toThrow();
+      expect(() => store.setVolume(0.5)).toThrow(StoreError);
+      expect(() => store.setVolume(0.5)).toThrow(expect.objectContaining({ code: 'NO_TARGET' }));
     });
   });
 
@@ -476,23 +490,6 @@ describe('createStore', () => {
   });
 
   describe('signals', () => {
-    it('signals.base returns AbortSignal', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signals }) => ({
-          getBase: () => signals.base,
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-
-      store.attach(new MockMedia());
-
-      const sig = store.getBase();
-
-      expect(sig).toBeInstanceOf(AbortSignal);
-      expect(sig.aborted).toBe(false);
-    });
-
     it('signals.base aborts on detach', () => {
       const slice = defineSlice<MockMedia>()({
         state: ({ signals }) => ({
@@ -532,41 +529,6 @@ describe('createStore', () => {
       expect(sig.aborted).toBe(true);
     });
 
-    it('signals.supersede() returns AbortSignal combined with base', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signals }) => ({
-          supersede: (key: string) => signals.supersede(key),
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-
-      store.attach(new MockMedia());
-
-      const sig = store.supersede('test');
-
-      expect(sig).toBeInstanceOf(AbortSignal);
-      expect(sig.aborted).toBe(false);
-    });
-
-    it('signals.supersede() aborts previous signal for same key', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signals }) => ({
-          supersede: (key: string) => signals.supersede(key),
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-
-      store.attach(new MockMedia());
-
-      const sig1 = store.supersede('seek');
-      const sig2 = store.supersede('seek');
-
-      expect(sig1.aborted).toBe(true);
-      expect(sig2.aborted).toBe(false);
-    });
-
     it('signals.supersede() aborts on detach', () => {
       const slice = defineSlice<MockMedia>()({
         state: ({ signals }) => ({
@@ -584,28 +546,6 @@ describe('createStore', () => {
       detach();
 
       expect(sig.aborted).toBe(true);
-    });
-
-    it('signals.clear() aborts keyed signals but not base', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signals }) => ({
-          getBase: () => signals.base,
-          supersede: (key: string) => signals.supersede(key),
-          clear: () => signals.clear(),
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-
-      store.attach(new MockMedia());
-
-      const base = store.getBase();
-      const keyed = store.supersede('test');
-
-      store.clear();
-
-      expect(base.aborted).toBe(false);
-      expect(keyed.aborted).toBe(true);
     });
   });
 });

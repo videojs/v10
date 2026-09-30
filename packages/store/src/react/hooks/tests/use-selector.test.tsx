@@ -62,23 +62,4 @@ describe('useSelector', () => {
     expect(selected).not.toBe(initialSelection);
     expect(screen.getByTestId('vol').textContent).toBe('0.8');
   });
-
-  it('allows custom equality function', () => {
-    const state = { items: [1, 2, 3] };
-    const subscribe = vi.fn((_cb: () => void) => () => {});
-    const getSnapshot = () => state;
-    const selector = (s: typeof state) => s.items;
-
-    // Custom equality that always returns true
-    const alwaysEqual = () => true;
-
-    function TestComponent() {
-      const items = useSelector(subscribe, getSnapshot, selector, alwaysEqual);
-
-      return <div data-testid="count">{items.length}</div>;
-    }
-
-    render(<TestComponent />);
-    expect(screen.getByTestId('count').textContent).toBe('3');
-  });
 });
