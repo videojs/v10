@@ -204,6 +204,49 @@ variant2.m3u8`)
     reactor.destroy();
   });
 
+  it('aborts an unresolved source on replacement and ignores its late response', async () => {
+    let release!: (response: Response) => void;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const manifest = `#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=1000000
+variant1.m3u8`;
+    // Let the old request fulfill after abort to exercise the stale-result guard.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockReturnValueOnce(pendingResponse)
+      .mockResolvedValue(new Response(manifest));
+    const state = makeState({
+      presentation: { url: 'http://example.com/first.m3u8' },
+      preload: 'auto',
+    });
+    const reactor = resolvePresentation.setup({ state, config: baseConfig });
+
+    try {
+      // SAFETY: fetchResolvable always passes a Request to fetch.
+      const request = fetchSpy.mock.calls[0]![0] as Request;
+
+      state.presentation.set({ url: 'http://example.com/second.m3u8' });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const abortedOnReplace = request.signal.aborted;
+
+      release(new Response(manifest));
+      await vi.waitFor(() => expect(state.presentation.get()).toHaveProperty('id'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect.soft(state.presentation.get()?.url).toBe('http://example.com/second.m3u8');
+      expect.soft(abortedOnReplace).toBe(true);
+      // SAFETY: fetchResolvable always passes a Request to fetch.
+      expect(fetchSpy.mock.calls.map(([input]) => (input as Request).url)).toEqual([
+        'http://example.com/first.m3u8',
+        'http://example.com/second.m3u8',
+      ]);
+    } finally {
+      reactor.destroy();
+    }
+  });
+
   describe('preload policy', () => {
     it('resolves when preload is "auto"', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(

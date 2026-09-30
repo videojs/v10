@@ -12,8 +12,9 @@
  *
  * - `'preconditions-unmet'`: no presentation, or presentation has no URL.
  * - `'idle'`: URL present, unresolved, gate unmet (blocking preload + no load-activation). Waits for the gate to open.
- * - `'resolving'`: URL present, unresolved, gate met. Entry starts the fetch and returns the AbortController — the
- *   reactor calls `.abort()` on state exit, so source change / gate-close / destroy all cancel cleanly.
+ * - `'resolving'`: URL present, unresolved, gate met. A presentation-tracking effect starts the fetch and returns the
+ *   AbortController — the reactor calls `.abort()` on presentation replacement or state exit, so source change /
+ *   gate-close / destroy all cancel cleanly. Late results commit only while the input presentation is still current.
  * - `'resolved'`: `state.presentation` holds a resolved `Presentation`.
  *
  * Gate semantics: `state.preload` (or `config.defaultPreload`, default `'metadata'`, when state.preload is unset)
@@ -95,13 +96,15 @@ function resolvePresentationSetup({
       'preconditions-unmet': {},
       idle: {},
       resolving: {
-        entry: () => {
+        effects: () => {
           const presentation = state.presentation.get()!;
           const ac = new AbortController();
 
           fetchResolvable(presentation, { signal: ac.signal })
             .then((response) => getResponseText(response))
             .then((text) => {
+              if (ac.signal.aborted || state.presentation.get() !== presentation) return;
+
               const parsed = parsePresentation(text, presentation);
 
               state.presentation.set(parsed);
