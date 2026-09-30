@@ -678,7 +678,16 @@ import { isHlsJsAdapter } from '@videojs/html/media/hlsjs-video';
 function logLevels(media: Element | null) {
   if (!isHlsJsAdapter(media)) return;
 
-  media.engine?.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => console.log('level', data.level));
+  const onLevelSwitched = (_event: unknown, data: { level: number }) => console.log('level', data.level);
+  // Subscribe to the current engine, and again whenever loading starts, which is when a new one appears.
+  // Removing first keeps a reused engine from getting the listener twice.
+  const subscribe = () => {
+    media.engine?.off(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
+    media.engine?.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
+  };
+
+  subscribe();
+  media.addEventListener('loadstart', subscribe);
 }
 ```
 
