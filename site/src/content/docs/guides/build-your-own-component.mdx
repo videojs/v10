@@ -393,7 +393,7 @@ You're using the standalone `usePlayer` export, which doesn't know which feature
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-You're using the shared `playerContext`, which doesn't know which features your player has. Use the typed `playerContext` returned by `createPlayer`.
+You're passing the `playerContext` exported from `@videojs/html`, which doesn't know which features your player has. Pass the context `createPlayer` returns instead, as `videoPlayerContext` does in [How it works](#how-it-works), or use the `PlayerController` that `createPlayer` returns, which is already bound to it and takes no context argument.
 </FrameworkCase>
 
 ### The component renders but never updates

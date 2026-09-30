@@ -91,8 +91,8 @@ export function App() {
 | Prop | Type | Description |
 | --- | --- | --- |
 | `children` | `ReactNode` | Content placed inside the player context: a skin, the media, and your own components. |
-| `title` | `string \| null` | The title to display. Takes precedence over the title the media reports; `null` clears it. |
-| `poster` | `string \| null` | The poster to display. Takes precedence over the poster the media reports; `null` clears it. |
+| `title` | `string \| null` | The title to display. Takes precedence over the title the media reports; `null` clears your value, so the title falls back to the one the media reports. |
+| `poster` | `string \| null` | The poster to display. Takes precedence over the poster the media reports; `null` clears your value, so the poster falls back to the one the media reports. |
 
 `title` and `poster` come from the <DocsLink slug="reference/api/feature-metadata" anchor="player-inputs">metadata feature</DocsLink>.
 

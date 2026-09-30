@@ -6,7 +6,7 @@ description: How to create API reference pages for the Video.js documentation si
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-This guide covers component references, media references, and util references (hooks, controllers, mixins) under `reference/` in the docs content. Legacy error-code pages are also under `reference/api/`; their content comes from `video.js/errors` rather than the API docs builder.
+This guide covers component references, media references, util references (hooks, controllers, mixins), and preset references under `reference/` in the docs content. Legacy error-code pages are also under `reference/api/`; their content comes from `video.js/errors` rather than the API docs builder.
 
 <Aside type="tip">
 Reference pages use the portable `write-api-reference` agent skill. Invoke `/write-api-reference play-button` in clients that expose skills as slash commands.
@@ -140,7 +140,7 @@ All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted pl
 
 ## Create the MDX reference page
 
-Create the page under `site/src/content/docs/reference/components/` for a UI, skin, media, or extension component, or under `site/src/content/docs/reference/api/` for a hook, feature, controller, factory, or utility. The file is `{name}.mdx` with this structure:
+Create the page under `site/src/content/docs/reference/components/` for a UI, skin, media, or extension component or the icon sets, or under `site/src/content/docs/reference/api/` for a hook, feature, controller, factory, utility, or preset. The file is `{name}.mdx` (`preset-{name}.mdx` for a preset) with this structure:
 
 ### Frontmatter
 
@@ -161,9 +161,9 @@ Add `stability: unstable` when an API works but its shape may still change in a 
 
 An export of a published package is stable only when a reference page documents it. `pnpm -F site check:api-stability` enforces this: every other export must carry `@internal` in its JSDoc, or `@experimental` when a `stability: unstable` page documents it. A page documents:
 
-- its subject: `title`, `frameworkTitle`, and the `component`, `util`, `media`, `feature`, and `react` props of the reference components
+- its subject: `title`, `frameworkTitle`, the `component`, `util`, `media`, `feature`, and `react` props of the reference components, and the `html` prop of `ComponentImports`
 - the subject's companion types, such as `PlayButtonProps`, `PlayButtonState`, `PlayButtonElement`, and `UseHotkeyOptions`
-- parts written against the subject in the page's code, such as `TimeSlider.Chapters`
+- parts written against the subject in the page's code, such as `TimeSlider.Chapters`. The check reads a namespace export like `export * as Slider` member by member, so `Slider.Buffer` is checked as `SliderBuffer` and the page's `Slider.Buffer` covers it
 - on a feature page, the `select*` selectors its code names
 - anything listed in `apis`
 
@@ -176,7 +176,13 @@ apis:
   - '@videojs/react/i18n/locales/*'
 ```
 
-Guides and examples don't make an export stable. The check warns when docs code imports an export that isn't, or imports from an internal package such as `@videojs/core` or `@videojs/utils`.
+Pages document what readers import from `@videojs/react`, `@videojs/html`, and the adapter and extension packages. `@videojs/core`, `@videojs/media`, `@videojs/utils`, and `@videojs/element` are published, but no page documents them directly: an export only they expose is internal even when a page documents a same-named export, and a core type becomes stable when `@videojs/react` or `@videojs/html` re-exports it under a documented name.
+
+The page wins over the tag. A documented export that still carries `@internal`, or `@experimental` on a stable page, fails the check until the tag is removed; `--fix` removes it, or replaces `@internal` with `@experimental` for an unstable page. Each declaration of a merged name, and each overload signature, needs its own tag.
+
+A stable or experimental export must not expose an internal one. The check fails when a documented export's public type surface names another public export that is internal: an `extends` clause, a public property or method, an aliased type, a function's parameters, return type, or type parameters, or a variable's declared type. Private, protected, and `@internal` members don't count. `--fix` can't resolve this; either document the referenced type, usually by adding it to the `apis` of the page that documents the export exposing it, or change the signature so it no longer names it.
+
+Guides and examples don't make an export stable. The check warns when docs code imports an export that isn't, or imports from `@videojs/core`, `@videojs/utils`, or another package no page documents directly.
 
 ### Imports
 
@@ -344,24 +350,46 @@ Feature reference pages document the feature modules passed to `createPlayer`. T
 
 `feature` takes the same key as `<FeatureReference>`. The component derives the export name (`playbackFeature`, importable from `@videojs/react` or `@videojs/html`) and reads the generated preset references to state which preset bundles include the feature, so membership never drifts from the build. A unit test enforces the section on every page that renders `<FeatureReference />`.
 
+## Create a preset reference page
+
+Preset reference pages, `reference/api/preset-{name}.mdx`, document one preset: its player, feature bundle, skins, and media. They are hand-authored. The sections are Import, Usage, Player, Feature bundle, Skins, Media, and Exports, and the Feature bundle section renders the bundle's membership from the generated preset references:
+
+```mdx
+<PresetFeatures preset="live-video" />
+```
+
+List the player, its props type, the feature bundle, and the bundle's type in `apis`. The <DocsLink slug="guides/presets">Presets</DocsLink> guide stays the concept page for presets and links to each reference page.
+
 ## Add to the sidebar
 
-Open `site/src/docs.config.ts` and add your page to the appropriate category under **API Reference**:
+Open `site/src/docs.config.ts` and add your page to a group in the tab that matches its directory. Top-level sections render as sidebar tabs, and each tab writes its llms files to the directory its pages share, so keep every page in its tab's directory. A page from another directory moves those files up to the shared parent.
 
+The **Components** tab holds `reference/components/` pages:
+
+- **Layout** — components that establish a player and lay out its interface
 - **Skins** — the packaged skins each preset ships. Prose-only pages today (no generated skin JSON), opening with `<SkinImports preset="..." react="..." />`
-- **UI Components** — UI component reference pages, sorted alphabetically
-- **Media Components** — media elements that handle streaming protocols and playback
+- **Media** — media elements that handle streaming protocols and playback
 - **Extensions** — extensions that add optional behavior to the player's media, such as Google Cast and Mux Data
-- **Player Features** — feature modules passed to `createPlayer`
-- **Utilities** — hooks, utilities, controllers, and mixins. Keep primary integration APIs at the top level and put lower-level implementation APIs in the single Advanced subgroup.
+- **Buttons**, **Sliders**, **Menus**, **Display**, **Dialogs**, and **Behavior** — UI components, grouped by role
+- **Icons** — the icon sets page, whose table `<IconTable />` renders from the icon exports
 
-Skins, UI Components, Media Components, Extensions, and Player Features are flat by design. Do not add nested subsections to them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
+The **API** tab holds `reference/api/` pages:
+
+- **Player** — player factories, hooks, controllers, and `UIElement`
+- **Presets** — one page per preset
+- **Store** — selectors and the store hooks and controllers
+- **Features** — feature modules passed to `createPlayer`
+- **Menu** and **Gestures** — React hooks behind the menus and gestures
+- **i18n** — translation providers, elements, hooks, and the phrase registry
+- **Utils** — lower-level building blocks for custom components
+- **Error codes** — the legacy error-code pages
+
+Groups are flat by design. Do not add nested subsections to them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
 
 ```ts
 {
-  sidebarLabel: 'UI Components',
+  sidebarLabel: 'Buttons',
   contents: [
-    // sorted alphabetically
     { slug: 'reference/components/play-button' },
     { slug: 'reference/components/your-component' }, // add here
   ],
