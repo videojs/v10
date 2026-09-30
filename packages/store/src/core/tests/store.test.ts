@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { combine } from '../combine';
+import { StoreError } from '../errors';
 import { defineSlice } from '../slice';
 import { flush } from '../state';
 import { createStore, isStore } from '../store';
@@ -360,8 +361,9 @@ describe('createStore', () => {
 
     it('does not commit source state when a derived formula throws', () => {
       const throwingSlice = defineSlice<MockMedia>()({
-        state: ({ set }) => ({
+        state: ({ set, get }) => ({
           value: 1,
+          readSourceValue: () => get().value,
           setValue: (value: number) => set({ value }),
         }),
         derived: {
@@ -383,6 +385,7 @@ describe('createStore', () => {
 
       expect(store.doubled).toBe(2);
       expect(store.state.value).toBe(1);
+      expect(store.readSourceValue()).toBe(1);
       expect(listener).not.toHaveBeenCalled();
     });
   });
@@ -405,7 +408,8 @@ describe('createStore', () => {
 
       store.destroy();
 
-      expect(() => store.attach(new MockMedia())).toThrow();
+      expect(() => store.attach(new MockMedia())).toThrow(StoreError);
+      expect(() => store.attach(new MockMedia())).toThrow(expect.objectContaining({ code: 'DESTROYED' }));
     });
   });
 

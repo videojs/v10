@@ -1,7 +1,8 @@
 import { cleanup, render, renderHook, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useContext } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { I18nContext } from '../../i18n/context';
 import { createI18n } from '../../i18n/create-i18n';
 import { createMockStore } from '../../testing/mocks';
 import { Container } from '../container';
@@ -479,30 +480,24 @@ describe('Container', () => {
     expect(store.attach).not.toHaveBeenCalled();
   });
 
-  it('does not create an i18n provider by default', async () => {
+  it('does not create an i18n provider by default', () => {
     const value = createContextValue();
-    const loader = vi.fn(async (tag: string) => (tag === 'x-container' ? { Play: 'Container play' } : undefined));
-    const { useTranslator } = createI18n({ loader });
+    let context: unknown;
 
-    function Label() {
-      const t = useTranslator();
-
-      return <span>{t('Play')}</span>;
+    function Probe() {
+      context = useContext(I18nContext);
+      return null;
     }
 
     render(
-      <div lang="x-container">
-        <PlayerContextProvider value={value}>
-          <Container>
-            <Label />
-          </Container>
-        </PlayerContextProvider>
-      </div>
+      <PlayerContextProvider value={value}>
+        <Container>
+          <Probe />
+        </Container>
+      </PlayerContextProvider>
     );
 
-    expect(screen.queryByText('Play')).not.toBeNull();
-    await Promise.resolve();
-    expect(loader).not.toHaveBeenCalled();
+    expect(context).toBeNull();
   });
 
   it('does not derive locale from container lang through an ancestor provider', async () => {

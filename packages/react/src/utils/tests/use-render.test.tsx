@@ -78,10 +78,20 @@ describe('renderElement', () => {
     });
 
     it('handles className function returning undefined', () => {
-      const { container } = render(<TestComponent className={(state) => (state.active ? 'active' : undefined)} />);
-      const element = container.firstElementChild;
+      function WithInternalClass() {
+        return renderElement(
+          'div',
+          { className: () => undefined },
+          {
+            state: {},
+            props: [{ className: 'internal' }],
+          }
+        );
+      }
 
-      expect(element?.className).not.toContain('active');
+      const { container } = render(<WithInternalClass />);
+
+      expect(container.firstElementChild?.className).toBe('internal');
     });
 
     it('merges className with props className', () => {

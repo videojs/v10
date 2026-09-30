@@ -324,16 +324,24 @@ describe('createPlayer', () => {
         </Player>
       );
 
+      const serverSpan = container.querySelector('span');
+
+      expect(serverSpan).not.toBeNull();
+      expect(serverSpan?.textContent).toBe('Hydrated title');
+      const onRecoverableError = vi.fn();
+
       const view = render(
         <Player title="Hydrated title">
           <Consumer />
         </Player>,
-        { container, hydrate: true }
+        { container, hydrate: true, onRecoverableError }
       );
 
       await act(async () => {});
 
       expect(container.textContent).toBe('Hydrated title');
+      expect(onRecoverableError).not.toHaveBeenCalled();
+      expect(container.querySelector('span')).toBe(serverSpan);
       view.unmount();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
@@ -519,38 +527,48 @@ describe('createPlayer', () => {
   describe('full integration', () => {
     it('Player → Container → media attach flow', () => {
       const { Player, usePlayer } = createPlayer({ features: [mockSlice] });
-
       let store!: PlayerStore;
+      let setMedia!: (media: HTMLMediaElement | null) => void;
 
-      function TestComponent() {
+      function Consumer() {
         store = usePlayer();
-        return (
-          <Container data-testid="container">
-            <video data-testid="video">
-              <track kind="captions" />
-            </video>
-          </Container>
-        );
+        setMedia = usePlayerContext().setMedia;
+        return null;
       }
 
-      const { container } = render(
+      const { rerender, unmount } = render(
         <Player>
-          <TestComponent />
+          <Consumer />
         </Player>
       );
+      const first = document.createElement('video');
 
-      // Store should exist
-      expect(store).toBeDefined();
+      act(() => setMedia(first));
+      expect(store.target).toEqual({ media: first, container: null });
 
-      // Container should render
-      const containerEl = container.querySelector('[data-testid="container"]');
+      rerender(
+        <Player>
+          <Container data-testid="container" />
+          <Consumer />
+        </Player>
+      );
+      const container = screen.getByTestId('container');
 
-      expect(containerEl).toBeTruthy();
+      expect(store.target).toEqual({ media: first, container });
 
-      // Video should render inside container
-      const videoEl = container.querySelector('[data-testid="video"]');
+      const second = document.createElement('video');
 
-      expect(videoEl).toBeTruthy();
+      act(() => setMedia(second));
+      expect(store.target).toEqual({ media: second, container });
+
+      act(() => setMedia(null));
+      expect(store.target).toBeNull();
+
+      act(() => setMedia(first));
+      expect(store.target).toEqual({ media: first, container });
+      unmount();
+      expect(store.target).toBeNull();
+      expect(store.destroyed).toBe(false);
     });
   });
 });
