@@ -14,8 +14,7 @@ import { escapeRegExp } from 'es-toolkit/string';
 import { DEFAULT_FRAMEWORK, getDefaultStyle, type AnySupportedStyle, type SupportedFramework } from '@/types/docs';
 import { currentInstallationContext } from '@/utils/analytics-events';
 import { getFrameworkPreferenceClient, getStylePreferenceClient } from '@/utils/docs/preferences';
-
-const POSTHOG_PROJECT_KEY = 'phc_5gaDOyX1jWPR1n7JAiGiHdwXwGwfsknwdj1ILI2IiBr';
+import { POSTHOG_PROJECT_KEY } from '@/utils/posthog-project';
 
 /** PostHog's own placeholder, so values it masks and values masked here read the same in insights. */
 const MASKED = '<masked>';
@@ -52,6 +51,7 @@ export interface PostHogConfig {
   mask_personal_data_properties: boolean;
   custom_personal_data_properties: string[];
   advanced_disable_feature_flags: boolean;
+  disable_session_recording: boolean;
   before_send: (event: AnalyticsEvent | null) => AnalyticsEvent | null;
   loaded: (posthog: PostHogClient) => void;
 }
@@ -79,34 +79,62 @@ export function maskPrivateParameters(text: string): string {
   return text.replace(PRIVATE_PARAMETER_PATTERN, `$1${MASKED}`);
 }
 
-function maskValue(value: EventValue): EventValue {
-  if (isString(value)) return maskPrivateParameters(value);
+// Shorter values could match ordinary page text.
+const MIN_PRIVATE_VALUE_LENGTH = 8;
 
-  if (Array.isArray(value)) return value.map(maskValue);
+/**
+ * The private installation values on the current page, as the reader entered them and as the URL encodes them. The
+ * installation store writes every pick to the URL as soon as it settles, so the URL always holds the current values.
+ */
+export function currentPrivateValues(search = globalThis.location?.search ?? ''): string[] {
+  const params = new URLSearchParams(search);
 
-  return isPlainObject(value) ? maskProperties(value) : value;
+  return PRIVATE_INSTALLATION_QUERY_PARAMETERS.flatMap((name) => {
+    const value = params.get(name);
+    if (!value || value.length < MIN_PRIVATE_VALUE_LENGTH) return [];
+
+    return [...new Set([value, encodeURIComponent(value)])];
+  });
 }
 
-function maskProperties(properties: EventProperties): EventProperties {
+/**
+ * Mask private query parameters, and the current private values themselves. Generated code and the preview render the
+ * reader's source URL as page text, which autocapture records as `$el_text` on a dead click or rage click.
+ */
+export function maskPrivateText(text: string, values: readonly string[]): string {
+  return values.reduce((masked, value) => masked.replaceAll(value, MASKED), maskPrivateParameters(text));
+}
+
+function maskValue(value: EventValue, values: readonly string[]): EventValue {
+  if (isString(value)) return maskPrivateText(value, values);
+
+  if (Array.isArray(value)) return value.map((item) => maskValue(item, values));
+
+  return isPlainObject(value) ? maskProperties(value, values) : value;
+}
+
+function maskProperties(properties: EventProperties, values: readonly string[]): EventProperties {
   // Keys too: heatmap batches are keyed by page URL.
   return Object.fromEntries(
-    Object.entries(properties).map(([key, value]) => [maskPrivateParameters(key), maskValue(value)])
+    Object.entries(properties).map(([key, value]) => [maskPrivateText(key, values), maskValue(value, values)])
   );
 }
 
 /**
  * `before_send` hook. PostHog's `custom_personal_data_properties` masks the current URL and heatmap URLs, but not the
- * referrer or the link addresses autocapture records, so a private value would still leave the browser on the next page
- * or on a click. This masks it everywhere in the event.
+ * referrer, the link addresses autocapture records, or element text, so a private value would still leave the browser
+ * on the next page or on a click. This masks it everywhere in the event.
  */
 export function maskPrivateEvent<E extends AnalyticsEvent>(event: E | null): E | null {
   if (!event) return event;
 
+  const values = currentPrivateValues();
+
   return {
     ...event,
-    properties: event.properties && maskProperties(event.properties),
-    $set: event.$set && maskProperties(event.$set),
-    $set_once: event.$set_once && maskProperties(event.$set_once),
+    properties: event.properties && maskProperties(event.properties, values),
+    $set: event.$set && maskProperties(event.$set, values),
+    $set_once: event.$set_once && maskProperties(event.$set_once, values),
   };
 }
 
@@ -137,6 +165,9 @@ export function createPostHogConfig(): PostHogConfig {
     // The site uses no feature flags, and the /flags request sends the initial referrer unmasked, outside
     // `before_send`. Remote config still loads.
     advanced_disable_feature_flags: true,
+    // Replay would record the page text, including the reader's source URL, in payloads `before_send` never sees. Keep
+    // it off here even if the project enables it.
+    disable_session_recording: true,
     before_send: maskPrivateEvent,
     // Runs before the initial $pageview, so that pageview carries the docs context too.
     loaded: (posthog) => posthog.register(pageContext()),

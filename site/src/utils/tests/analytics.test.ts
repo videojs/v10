@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   createPostHogConfig,
+  currentPrivateValues,
   getDocsContext,
   initAnalytics,
   maskPrivateEvent,
@@ -21,6 +22,7 @@ afterEach(() => {
   clearPreferences();
   delete window.posthog;
   vi.unstubAllGlobals();
+  history.replaceState(null, '', '/');
 });
 
 describe('maskPrivateParameters', () => {
@@ -89,8 +91,37 @@ describe('maskPrivateEvent', () => {
     });
   });
 
+  it('masks the current source URL where the page renders it as text', () => {
+    history.replaceState(null, '', `/docs/guides/installation/html?source-url=${SOURCE}`);
+
+    const source = 'https://cdn.example.com/secret.m3u8?token=abc';
+    const result = maskPrivateEvent({
+      properties: {
+        $el_text: source,
+        $elements_chain: `code:text="src=&quot;${source}&quot;"nth-child="1"`,
+      },
+    });
+
+    expect(JSON.stringify(result)).not.toContain('secret.m3u8');
+    expect(result?.properties?.$el_text).toBe('<masked>');
+  });
+
   it('passes a dropped event through', () => {
     expect(maskPrivateEvent(null)).toBeNull();
+  });
+});
+
+describe('currentPrivateValues', () => {
+  it('returns the source URL as entered and as the URL encodes it', () => {
+    expect(currentPrivateValues(`?skin=video&source-url=${SOURCE}`)).toEqual([
+      'https://cdn.example.com/secret.m3u8?token=abc',
+      SOURCE,
+    ]);
+  });
+
+  it('ignores a value short enough to match ordinary text', () => {
+    expect(currentPrivateValues('?source-url=a.mp4')).toEqual([]);
+    expect(currentPrivateValues('?skin=video')).toEqual([]);
   });
 });
 
@@ -116,6 +147,7 @@ describe('createPostHogConfig', () => {
       mask_personal_data_properties: true,
       custom_personal_data_properties: ['source-url'],
       advanced_disable_feature_flags: true,
+      disable_session_recording: true,
       before_send: maskPrivateEvent,
     });
   });
