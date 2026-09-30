@@ -260,6 +260,19 @@ describe('Task', () => {
       expect(cloned.previous).toBe(1);
     });
 
+    it.each([null, undefined])('carries the latest successful nullish value as `previous`: %s', async (latest) => {
+      let value: number | null | undefined = 7;
+      const original = new Task(async () => value);
+
+      await original.run();
+      const cloned = original.clone();
+
+      value = latest;
+      await cloned.run();
+
+      expect(cloned.clone().previous).toBe(latest);
+    });
+
     it('preserves the last successful `previous` across an errored cycle', async () => {
       let n = 0;
       // Cycle 1 → 1, cycle 2 → throws, cycle 3 → 3.
