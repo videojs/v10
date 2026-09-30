@@ -68,6 +68,8 @@ pnpm -F site astro check
 PostHog loads in production only, from `src/components/Posthog.astro`; its config lives in `src/utils/analytics.ts`. It runs cookieless, so there is no durable person: never call `identify`, `alias`, or a person-property API, and expect super properties to last one page load.
 
 - Mark any installation query parameter that can carry reader data as `private` in `@videojs/installation`. The config masks private parameters everywhere in outgoing events.
+- Autocaptured clicks carry `data-ph-capture-attribute-{location,cta,destination}` as event properties. Put `location` on a container (the closest ancestor wins) and `cta` or `destination` on the anchor or button. Use kebab-case and reuse existing values.
+- `src/components/typography/linkDestination.ts` classifies off-site hrefs for `destination`; `A.astro` and `renderInlineMarkdown` apply it to content links.
 
 ## API references
 
