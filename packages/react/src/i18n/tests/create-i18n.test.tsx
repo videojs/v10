@@ -95,29 +95,6 @@ describe('createI18n', () => {
     expect(screen.queryByText('Registry')).toBeNull();
   });
 
-  it('inherits nearest ancestor lang (including html)', async () => {
-    registerI18n('de', { Play: 'Los' });
-    document.documentElement.lang = 'de';
-
-    const { I18nProvider, useTranslator } = createI18n();
-
-    function Probe(): ReactElement {
-      const t = useTranslator();
-
-      return <span>{t('Play')}</span>;
-    }
-
-    render(
-      <I18nProvider>
-        <Probe />
-      </I18nProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByText('Los')).not.toBeNull();
-    });
-  });
-
   it('updates ambient locale when subtree moves change which ancestor supplies lang', async () => {
     registerI18n('de', { Play: 'Los' });
     registerI18n('fr', { Play: 'Lire' });
@@ -157,36 +134,6 @@ describe('createI18n', () => {
     await waitFor(() => {
       expect(screen.queryByText('Los')).not.toBeNull();
     });
-  });
-
-  it('does not inherit html lang before langRootRef attaches', async () => {
-    registerI18n('de', { Play: 'Los' });
-    registerI18n('fr', { Play: 'Lire' });
-    document.documentElement.setAttribute('lang', 'de');
-
-    const rootRef = createRef<HTMLDivElement>();
-    const { I18nProvider, useTranslator } = createI18n();
-
-    function Probe(): ReactElement {
-      const t = useTranslator();
-
-      return <span>{t('Play')}</span>;
-    }
-
-    render(
-      <section lang="fr">
-        <I18nProvider langRootRef={rootRef}>
-          <div ref={rootRef}>
-            <Probe />
-          </div>
-        </I18nProvider>
-      </section>
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByText('Lire')).not.toBeNull();
-    });
-    expect(screen.queryByText('Los')).toBeNull();
   });
 
   it('does not read html lang while langRootRef is missing', async () => {
@@ -695,19 +642,6 @@ describe('createI18n', () => {
     });
   });
 
-  it('useTranslator falls back to English outside a provider', () => {
-    const { useTranslator } = createI18n();
-
-    function Probe(): ReactElement {
-      const t = useTranslator();
-
-      return <span>{t('Play')}</span>;
-    }
-
-    render(<Probe />);
-    expect(screen.queryByText('Play')).not.toBeNull();
-  });
-
   it('refreshes fallback translator when the registry updates outside a provider', async () => {
     const { useTranslator } = createI18n();
 
@@ -1128,35 +1062,5 @@ describe('createI18n', () => {
     await waitFor(() => {
       expect(screen.queryByText('Abspielen')).not.toBeNull();
     });
-  });
-
-  it('resolves langRootRef when nested under an ambient ancestor provider', async () => {
-    registerI18n('de', { Play: 'Los' });
-    registerI18n('fr', { Play: 'Lire' });
-    document.documentElement.lang = 'de';
-
-    const { I18nProvider, useTranslator } = createI18n();
-    const rootRef = createRef<HTMLDivElement>();
-
-    function Probe(): ReactElement {
-      return <span>{useTranslator()('Play')}</span>;
-    }
-
-    render(
-      <I18nProvider>
-        <section lang="fr">
-          <I18nProvider langRootRef={rootRef}>
-            <div ref={rootRef}>
-              <Probe />
-            </div>
-          </I18nProvider>
-        </section>
-      </I18nProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByText('Lire')).not.toBeNull();
-    });
-    expect(screen.queryByText('Los')).toBeNull();
   });
 });

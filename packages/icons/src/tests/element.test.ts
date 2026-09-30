@@ -99,4 +99,40 @@ describe('MediaIconElement', () => {
       icon.remove();
     }
   });
+
+  it('does not request another load when a loaded family omits the icon name', async () => {
+    const family = uniqueFamily();
+    const requestLoad = MediaIconElement.load.bind(MediaIconElement);
+    const load = vi.spyOn(MediaIconElement, 'load').mockImplementation(requestLoad);
+    const first = createIcon();
+    const missing = createIcon();
+
+    MediaIconElement.registerLoader(family, async () => ({ play: '<svg data-icon="loaded"></svg>' }));
+
+    for (const [icon, name] of [
+      [first, 'play'],
+      [missing, 'missing'],
+    ] as const) {
+      icon.setAttribute('family', family);
+      icon.setAttribute('name', name);
+      document.body.append(icon);
+    }
+
+    const requestsWhileLoading = load.mock.calls.length;
+
+    // Record unexpected retries without letting a broken guard create an endless microtask chain.
+    load.mockImplementation(() => new Promise<void>(() => {}));
+
+    try {
+      await requestLoad(family);
+      await Promise.resolve();
+
+      expect(first.querySelector('svg')?.dataset.icon).toBe('loaded');
+      expect(missing.childNodes).toHaveLength(0);
+      expect(load).toHaveBeenCalledTimes(requestsWhileLoading);
+    } finally {
+      first.remove();
+      missing.remove();
+    }
+  });
 });

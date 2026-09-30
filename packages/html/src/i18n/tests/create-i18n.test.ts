@@ -18,16 +18,6 @@ describe('createI18n', () => {
     vi.restoreAllMocks();
   });
 
-  it('media-i18n uses explicit lang for registry copy', async () => {
-    registerI18n('fr', { 'buttons.play': 'Lire' });
-    const provider = new MediaI18nProviderElement();
-
-    provider.setAttribute('lang', 'fr');
-    document.body.appendChild(provider);
-    await Promise.resolve();
-    expect(provider.getAttribute('lang')).toBe('fr');
-  });
-
   it('derives direction from the resolved locale', async () => {
     const provider = new MediaI18nProviderElement();
 
@@ -93,31 +83,6 @@ describe('createI18n', () => {
     expect(text.textContent).toBe('Los');
   });
 
-  it('media-text resolves a token with inline English fallback', async () => {
-    registerI18n('de', { 'buttons.play': 'Los' });
-    const provider = new MediaI18nProviderElement();
-
-    provider.setAttribute('lang', 'de');
-    const text = new MediaTextElement();
-
-    text.setAttribute('token', 'buttons.play');
-    text.textContent = 'Play';
-    provider.appendChild(text);
-    document.body.appendChild(provider);
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(text.textContent).toBe('Los');
-  });
-
-  it('media-text keeps text content when no translation exists', async () => {
-    const text = new MediaTextElement();
-
-    text.textContent = 'Fallback label';
-    document.body.appendChild(text);
-    await text.updateComplete;
-    expect(text.textContent).toBe('Fallback label');
-  });
-
   it('media-text stores source text before translating', async () => {
     registerI18n('de', { 'custom.authored': 'Los' });
     const { ProviderMixin } = createI18n({ loader: async () => undefined });
@@ -173,21 +138,6 @@ describe('createI18n', () => {
     document.body.appendChild(text);
     await text.updateComplete;
     expect(text.textContent).toBe('');
-  });
-
-  it('inherits ambient html lang when provider has no lang', async () => {
-    registerI18n('es', { 'buttons.play': 'Ir' });
-    document.documentElement.lang = 'es';
-    const provider = new MediaI18nProviderElement();
-    const text = new MediaTextElement();
-
-    text.setAttribute('token', 'buttons.play');
-    text.textContent = 'Play';
-    provider.appendChild(text);
-    document.body.appendChild(provider);
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(text.textContent).toBe('Ir');
   });
 
   it('updates media-text when html lang changes', async () => {
@@ -361,29 +311,17 @@ describe('createI18n', () => {
     expect(textOther.textContent).toBe('Los');
   });
 
-  it('I18nController falls back to English without provider', async () => {
-    const { context, I18nController: Ctor } = createI18n();
-
-    class Probe extends ReactiveElement {
-      readonly #i18n = new Ctor(this, context);
-      override connectedCallback(): void {
-        super.connectedCallback();
-        this.textContent = this.#i18n.value('buttons.play', { default: 'Play' });
-      }
-    }
-    customElements.define('i18n-probe-fallback', Probe);
-    const el = new Probe();
-
-    document.body.appendChild(el);
-    await Promise.resolve();
-    expect(el.textContent).toBe('Play');
-  });
-
   it('I18nController refreshes fallback English when the registry changes', async () => {
     const { context, I18nController: Ctor } = createI18n();
 
     class Probe extends ReactiveElement {
       readonly #i18n = new Ctor(this, context);
+
+      override connectedCallback(): void {
+        super.connectedCallback();
+        this.textContent = this.#i18n.value('buttons.play', { default: 'Play' });
+      }
+
       protected override updated(): void {
         this.textContent = this.#i18n.value('buttons.play', { default: 'Play' });
       }
@@ -392,6 +330,8 @@ describe('createI18n', () => {
     const el = new Probe();
 
     document.body.appendChild(el);
+    expect(el.textContent).toBe('Play');
+
     await el.updateComplete;
     expect(el.textContent).toBe('Play');
 

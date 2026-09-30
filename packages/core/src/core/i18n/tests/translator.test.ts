@@ -13,10 +13,13 @@ describe('createTranslator', () => {
     expect(t('buttons.play')).toBe('Start');
   });
 
-  it('interpolates {param} placeholders', () => {
+  it.each([
+    { seconds: 10, expected: 'Jump 10 s' },
+    { seconds: 1.25, expected: 'Jump 1.25 s' },
+  ])('interpolates {param} placeholders for $seconds', ({ seconds, expected }) => {
     const t = createTranslator({ 'seek.forward': 'Jump {seconds} s' }, 'en');
 
-    expect(t('seek.forward', { seconds: 10 })).toBe('Jump 10 s');
+    expect(t('seek.forward', { seconds })).toBe(expected);
   });
 
   it('accepts a Text descriptor and uses its English text as the fallback', () => {
@@ -78,11 +81,5 @@ describe('createTranslator', () => {
     const t = createTranslator({ 'buttons.play': 'Hi {name}' }, 'en');
 
     expect(t('buttons.play')).toBe('Hi {name}');
-  });
-
-  it('coerces numeric params to strings', () => {
-    const t = createTranslator({ 'playback.rate': 'Speed {rate}' }, 'en');
-
-    expect(t('playback.rate', { rate: 1.25 })).toBe('Speed 1.25');
   });
 });

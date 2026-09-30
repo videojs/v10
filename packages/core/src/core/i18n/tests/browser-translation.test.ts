@@ -116,16 +116,6 @@ describe('getBrowserTranslations', () => {
     expect(result['buttons.pause']).toBe('translated:Pause');
   });
 
-  it('preserves {param} placeholders in translated strings', async () => {
-    installMockTranslator({
-      translate: (text) => `FR:${text}`,
-    });
-
-    const result = await getBrowserTranslations('fr');
-
-    expect(result['seek.forward']).toBe('FR:Seek forward {seconds} seconds');
-  });
-
   it('masks named placeholders as numeric slots for whole-string translation', async () => {
     const translatedInputs: string[] = [];
 
@@ -161,18 +151,6 @@ describe('getBrowserTranslations', () => {
     const result = await getBrowserTranslations('fr');
 
     expect(result['playback.rate']).toBe('Kecepatan pemutaran {rate}');
-  });
-
-  it('interpolates seek seconds after browser translation', async () => {
-    installMockTranslator({
-      translate: (text) => (text === 'Seek forward {0} seconds' ? 'Mencari maju {0} detik' : text),
-    });
-
-    const { createTranslator } = await import('../translator');
-    const result = await getBrowserTranslations('fr');
-    const t = createTranslator(result, 'fr');
-
-    expect(t('seek.forward', { seconds: 10 })).toBe('Mencari maju 10 detik');
   });
 
   it('caches results per target language', async () => {

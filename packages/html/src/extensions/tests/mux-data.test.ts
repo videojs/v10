@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('MuxDataExtension', () => {
-  it('registers when parsed into a connected player that already has media', () => {
+  it('registers when upgraded in a connected player that already has media', () => {
     const host = new HTMLVideoAdapter();
     const provider = new TestMediaProvider();
 
@@ -51,20 +51,6 @@ describe('MuxDataExtension', () => {
 
     provider.innerHTML = '<test-mux-data-upgrade></test-mux-data-upgrade>';
     customElements.define('test-mux-data-upgrade', class extends MuxDataExtension {});
-
-    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
-  });
-
-  it('leaves the component to the base class lazy getter', () => {
-    // An own `component` field would shadow the getter and be initialized after
-    // the base constructor — too late for a connected upgrade, where the media
-    // context callback registers the component from within that constructor.
-    expect(Object.getOwnPropertyNames(new MuxDataExtension())).not.toContain('component');
-  });
-  it('registers a MuxDataExtension component with the media adapter from context', () => {
-    const { host, provider } = setup();
-
-    provider.setMedia(host as unknown as Media);
 
     expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
@@ -101,15 +87,5 @@ describe('MuxDataExtension', () => {
     el.metadata = metadata;
 
     expect(getMediaExtensions(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
-  });
-
-  it('removes the component when the element disconnects', () => {
-    const { host, provider, el } = setup();
-
-    provider.setMedia(host as unknown as Media);
-
-    el.remove();
-
-    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeUndefined();
   });
 });

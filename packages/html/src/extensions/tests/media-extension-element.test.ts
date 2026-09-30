@@ -86,6 +86,65 @@ describe('MediaExtensionElement', () => {
     expect(getMediaExtensions(host).get(FakeComponent)).toBeUndefined();
   });
 
+  it('resolves the adapter from a media element adapter property', () => {
+    const host = new HTMLVideoAdapter();
+    const provider = new TestMediaProvider();
+    const el = new TestMediaExtensionElement();
+
+    provider.append(el);
+    document.body.append(provider);
+    provider.setMedia({ adapter: host } as unknown as Media);
+
+    expect(getMediaExtensions(host).get(FakeComponent)).toBe(el.instance);
+  });
+
+  it('removes the component when media is not a media adapter', () => {
+    const host = new HTMLVideoAdapter();
+    const provider = new TestMediaProvider();
+    const el = new TestMediaExtensionElement();
+
+    provider.append(el);
+    document.body.append(provider);
+    provider.setMedia(host as unknown as Media);
+    expect(getMediaExtensions(host).get(FakeComponent)).toBe(el.instance);
+
+    provider.setMedia(document.createElement('video') as unknown as Media);
+
+    expect(getMediaExtensions(host).get(FakeComponent)).toBeUndefined();
+  });
+
+  it('moves the component when the media changes', () => {
+    const host = new HTMLVideoAdapter();
+    const nextHost = new HTMLVideoAdapter();
+    const provider = new TestMediaProvider();
+    const el = new TestMediaExtensionElement();
+
+    provider.append(el);
+    document.body.append(provider);
+    provider.setMedia(host as unknown as Media);
+    expect(getMediaExtensions(host).get(FakeComponent)).toBe(el.instance);
+
+    provider.setMedia(nextHost as unknown as Media);
+
+    expect(getMediaExtensions(host).get(FakeComponent)).toBeUndefined();
+    expect(getMediaExtensions(nextHost).get(FakeComponent)).toBe(el.instance);
+  });
+
+  it('removes the component when the element disconnects', () => {
+    const host = new HTMLVideoAdapter();
+    const provider = new TestMediaProvider();
+    const el = new TestMediaExtensionElement();
+
+    provider.append(el);
+    document.body.append(provider);
+    provider.setMedia(host as unknown as Media);
+    expect(getMediaExtensions(host).get(FakeComponent)).toBe(el.instance);
+
+    el.remove();
+
+    expect(getMediaExtensions(host).get(FakeComponent)).toBeUndefined();
+  });
+
   it('does not create a component when destroyed before use', () => {
     const el = new TestMediaExtensionElement();
 

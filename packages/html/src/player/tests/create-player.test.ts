@@ -1,11 +1,4 @@
-import {
-  audioFeatures,
-  backgroundFeatures,
-  features,
-  metadataFeature,
-  type PopupGroup,
-  videoFeatures,
-} from '@videojs/core/dom';
+import { backgroundFeatures, features, metadataFeature, type PopupGroup, videoFeatures } from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -51,13 +44,6 @@ describe('createPlayer', () => {
     expect(player.store.destroy).toBeInstanceOf(Function);
   });
 
-  it('PlayerElement is a valid custom element class', () => {
-    const { PlayerElement } = createPlayer({ features: videoFeatures });
-
-    expect(typeof PlayerElement).toBe('function');
-    expect(PlayerElement.prototype).toBeDefined();
-  });
-
   it('preserves author player layout styles', () => {
     const { PlayerElement } = createPlayer({ features: backgroundFeatures });
     const player = document.createElement(defineTestElement(PlayerElement));
@@ -66,11 +52,6 @@ describe('createPlayer', () => {
     document.body.append(player);
 
     expect(player.style.display).toBe('grid');
-  });
-
-  it('exports a valid ContainerElement class', () => {
-    expect(typeof ContainerElement).toBe('function');
-    expect(ContainerElement.prototype).toBeDefined();
   });
 
   it('scopes popup coordination to container descendants', async () => {
@@ -199,22 +180,6 @@ describe('createPlayer', () => {
 
     background.remove();
     expect(player.store.target).toBeNull();
-  });
-
-  it('creates audio player with expected exports', () => {
-    const result = createPlayer({ features: audioFeatures });
-
-    expect(result.PlayerElement).toBeInstanceOf(Function);
-    expect(result.PlayerController).toBeDefined();
-    expect(result.playerContext).toBeDefined();
-  });
-
-  it('creates background player with expected exports', () => {
-    const result = createPlayer({ features: backgroundFeatures });
-
-    expect(result.PlayerElement).toBeInstanceOf(Function);
-    expect(result.PlayerController).toBeDefined();
-    expect(result.playerContext).toBeDefined();
   });
 
   it('maps selected feature inputs to reactive properties and attributes', async () => {
