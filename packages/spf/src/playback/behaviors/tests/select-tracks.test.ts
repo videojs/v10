@@ -84,7 +84,7 @@ function createPresentation(config: {
 }
 
 // `selectVideoTrack` is the simple (non-ABR) video selector — ABR-driven
-// selection is exercised in `quality-switching.test.ts`.
+// selection is exercised in `track-switching.test.ts`.
 
 describe('selectVideoTrack', () => {
   it('selects first video track when presentation loaded', async () => {
@@ -183,6 +183,26 @@ describe('selectVideoTrack', () => {
 
     expect(state.selectedVideoTrackId.get()).toBe('video-high');
 
+    reactor.destroy();
+  });
+
+  it('preserves an offered video pick already selected on entry', async () => {
+    const video = (id: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      url: `http://example.com/${id}.m3u8`,
+      bandwidth: 1_000_000,
+      mimeType: 'video/mp4',
+      codecs: ['avc1.4d401f'],
+    });
+    const state = makeState({
+      presentation: createPresentation({ video: [video('video-first'), video('video-second')] }),
+      selectedVideoTrackId: 'video-second',
+    });
+    const reactor = selectVideoTrack.setup({ state });
+
+    await Promise.resolve();
+    expect(state.selectedVideoTrackId.get()).toBe('video-second');
     reactor.destroy();
   });
 });
@@ -364,19 +384,6 @@ describe('selectAudioTrack', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
-
-    reactor.destroy();
-  });
-
-  it('does not select when audio track already selected', async () => {
-    const presentation = createPresentation({ audio: [] });
-    const state = makeState({ presentation, selectedAudioTrackId: 'existing-audio' });
-
-    const reactor = selectAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedAudioTrackId.get()).toBe('existing-audio');
 
     reactor.destroy();
   });

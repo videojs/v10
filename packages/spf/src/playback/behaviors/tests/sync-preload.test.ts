@@ -126,10 +126,13 @@ describe('syncPreload', () => {
 
       it('does not clobber state.preload on presentation.url change when the element has no preload attribute', async () => {
         const state = makeState({ preload: 'none', presentation: { url: 'a.m3u8' } });
-        const context = makeContext({ mediaElement: { preload: 'auto', hasAttribute: () => false } });
+        const mediaElement: MediaElementLike = { preload: 'auto', hasAttribute: () => false };
+        const context = makeContext({ mediaElement });
 
         const cleanup = syncPreload.setup({ state, context });
 
+        // Restore a conflicting property after setup's state-to-DOM write.
+        mediaElement.preload = 'auto';
         state.presentation.set({ url: 'b.m3u8' });
         await Promise.resolve();
 
@@ -154,13 +157,15 @@ describe('syncPreload', () => {
       });
     });
 
-    it('does not clear state.preload when mediaElement is removed', () => {
-      const state = makeState({ preload: 'auto' });
-      const context = makeContext();
+    it('does not clear state.preload when mediaElement is removed', async () => {
+      const state = makeState();
+      const context = makeContext({ mediaElement: { preload: 'auto' } });
 
       const cleanup = syncPreload.setup({ state, context });
 
+      expect(state.preload.get()).toBe('auto');
       context.mediaElement.set(undefined);
+      await Promise.resolve();
 
       expect(state.preload.get()).toBe('auto');
 
@@ -425,13 +430,15 @@ describe('syncPreload', () => {
 
       // After cleanup: neither direction should fire.
       mediaElement.preload = 'none';
-      context.mediaElement.set({ preload: 'metadata' });
+      const replacement: MediaElementLike = { preload: 'metadata' };
+
+      context.mediaElement.set(replacement);
       await Promise.resolve();
       expect(state.preload.get()).toBe('auto');
 
       state.preload.set('none');
       await Promise.resolve();
-      expect(mediaElement.preload).toBe('none'); // last direct mutation above; not from the behavior
+      expect(replacement.preload).toBe('metadata');
     });
   });
 });

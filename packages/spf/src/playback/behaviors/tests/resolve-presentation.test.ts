@@ -440,30 +440,36 @@ variant1.m3u8`)
 
   describe('deduplication', () => {
     it('does not trigger multiple fetches for same presentation', async () => {
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(`#EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=1000000
-variant1.m3u8`)
-      );
-
+      let release!: (response: Response) => void;
+      const pending = new Promise<Response>((resolve) => {
+        release = resolve;
+      });
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(pending);
       const state = makeState({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'auto',
       });
-
       const reactor = resolvePresentation.setup({ state, config: baseConfig });
 
-      // Rapid no-op updates — preload doesn't change semantically.
-      state.preload.set('auto');
-      state.preload.set('auto');
+      try {
+        expect(fetchSpy).toHaveBeenCalledOnce();
+        state.preload.set('metadata');
+        await Promise.resolve();
+        state.loadActivated.set(true);
+        await Promise.resolve();
+        expect(fetchSpy).toHaveBeenCalledOnce();
 
-      await vi.waitFor(() => {
-        expect(state.presentation.get()).toHaveProperty('id');
-      });
-
-      expect(fetchSpy).toHaveBeenCalledOnce();
-
-      reactor.destroy();
+        release(
+          new Response(`#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=1000000
+variant1.m3u8`)
+        );
+        await vi.waitFor(() => expect(state.presentation.get()).toHaveProperty('id'));
+        expect(fetchSpy).toHaveBeenCalledOnce();
+      } finally {
+        reactor.destroy();
+        release(new Response(''));
+      }
     });
 
     it('allows resolving different presentations sequentially', async () => {
