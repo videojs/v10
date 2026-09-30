@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSER_STACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
       BROWSERSTACK_LOCAL_IDENTIFIER: videojs-${{ github.run_id }}-${{ github.run_attempt }}
       BROWSERSTACK_BUILD: ${{ github.ref_name }}-${{ github.sha }}-${{ github.run_attempt }}
 
@@ -26,7 +26,7 @@ jobs:
       - name: Check BrowserStack credentials
         run: |
           if [ -z "$BROWSERSTACK_USERNAME" ] || [ -z "$BROWSERSTACK_ACCESS_KEY" ]; then
-            echo '::error::Add the BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY repository secrets.'
+            echo '::error::Configure the BROWSER_STACK_USERNAME and BROWSER_STACK_ACCESS_KEY repository secrets.'
             exit 1
           fi
 

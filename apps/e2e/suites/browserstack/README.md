@@ -6,7 +6,7 @@ This suite replaces the previous Docker floor job and its pinned Playwright clie
 
 ## Enable CI
 
-1. Add repository secrets `BROWSERSTACK_USERNAME` and `BROWSERSTACK_ACCESS_KEY` for an Automate account.
+1. Use the existing repository secrets `BROWSER_STACK_USERNAME` and `BROWSER_STACK_ACCESS_KEY` for an Automate account. The workflow maps them to the `BROWSERSTACK_USERNAME` and `BROWSERSTACK_ACCESS_KEY` environment variables used by BrowserStack.
 2. Confirm the pinned combinations are available to that account using [BrowserStack's supported browser matrix](https://www.browserstack.com/docs/automate/playwright/browsers-and-os).
 3. Dispatch the BrowserStack workflow. No repository variables are required. Missing credentials fail before dependencies are installed or the app is built.
 
