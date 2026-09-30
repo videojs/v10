@@ -451,11 +451,15 @@ import { Hls } from '@videojs/hlsjs-video';
 const media = document.querySelector('hlsjs-video');
 const onLevelSwitched = (_event, data) => console.log('level', data.level);
 
-// The engine exists once loading starts. Remove first, so a reused engine doesn't get the listener twice.
-media.addEventListener('loadstart', () => {
+// Subscribe to the current engine, and again whenever loading starts, which is when a new one appears.
+// Removing first keeps a reused engine from getting the listener twice.
+const subscribe = () => {
   media.engine?.off(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
   media.engine?.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
-});
+};
+
+subscribe();
+media.addEventListener('loadstart', subscribe);
 ```
 </FrameworkCase>
 
