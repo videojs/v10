@@ -25,7 +25,7 @@ Make a migration checklist before changing your embed:
 - **List the Mux Player attributes or React props you set.** Compare them with the mapping tables below.
 - **Grep your codebase for `mux-player` selectors.** CSS rules and `querySelector` calls that reach into the element — `mux-player::part(…)`, `mux-player [role="slider"]`, `player.shadowRoot` — will silently stop matching after the swap. Plan to restyle with the skin's custom properties or rebuild against Video.js components.
 - **Find your event listeners and imperative calls** (`play()`, `currentTime`, `addChapters`). Media APIs move to the media element; the rest is mapped under [Drive playback](#drive-playback).
-- **Note your theme and CSS variables.** Two skins replace Mux Player's five themes, and `--accent-color` and friends have new names.
+- **Note your theme and CSS variables.** Compare your Mux Player theme with the two Video.js skins, and map its CSS variables.
 - **Check [Known gaps](#known-gaps)** for features your app needs.
 - **Check your catalog for MPEG-TS, raw ADTS AAC, AES-128, low-latency HLS, or DVR streams.** These requirements determine whether the SPF flavor fits. Verify DRM playback with either engine; see [Which Mux media should you use?](#which-mux-media-should-you-use).
 
@@ -65,7 +65,7 @@ From the CDN, load the video <DocsLink slug="guides/presets">preset</DocsLink>, 
       playsinline
       crossorigin="anonymous"
     ></mux-video>
-    <mux-data player-software-name="my-app"></mux-data>
+    <mux-data></mux-data>
   </video-skin>
 </video-player>
 
@@ -134,7 +134,6 @@ export function MyPlayer() {
           crossOrigin="anonymous"
         />
         <MuxData
-          playerSoftwareName="my-app"
           metadata={{ video_title: 'Test VOD', viewer_user_id: 'user-id-007' }}
         />
       </VideoSkin>
@@ -180,11 +179,13 @@ If you leave out `VideoSkin` to build your own UI, add a <DocsLink slug="referen
 
 ```tsx
 import { Container } from '@videojs/react';
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer } from '@videojs/react/video';
 
 <VideoPlayer>
   <Container style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
     <MuxVideo source={{ playbackId: 'YOUR_PLAYBACK_ID' }} />
-    <MyOverlay />
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>Your overlay</div>
   </Container>
 </VideoPlayer>
 ```
@@ -221,6 +222,8 @@ If you leave out `<video-skin>` to build your own UI, add a <DocsLink slug="refe
 Put standard media handlers such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `MuxVideo`. Use <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink> for player-store state. See [Read and control the player](#read-and-control-the-player).
 </Aside>
 </FrameworkCase>
+
+Copy `player-software-name` / `playerSoftwareName` and the software version only if your app already sets them. Otherwise leave them out. Preserve your existing Mux Data metadata when adapting the examples.
 
 ## Three pieces instead of one
 
@@ -303,7 +306,7 @@ Here's where the Mux Player attributes land:
 | `rendition-order` | `source.playback.renditionOrder` |
 | `asset-start-time`, `asset-end-time` | `source.playback.assetStartTime`, `.assetEndTime` |
 | `program-start-time`, `program-end-time` | `source.playback.programStartTime`, `.programEndTime` |
-| `default-subtitles-lang` | `source.playback.defaultSubtitlesLang` |
+| the `default_subtitles_lang` playback parameter | `source.playback.defaultSubtitlesLang` |
 | `playback-token` | `source.playback.token` |
 | `thumbnail-token`, `storyboard-token` | `source.poster.token`, `source.storyboard.token` |
 | `drm-token` | `source.drm.token` |
@@ -428,16 +431,18 @@ import { VideoPlayer } from '@videojs/react/video';
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-`MuxVideo` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL:
+`MuxVideo` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-`<mux-video>` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL:
+`<mux-video>` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 A generated poster becomes available after `MuxVideo` mounts. Pass `poster` to `VideoPlayer` when the image must appear in server-rendered HTML.
 </FrameworkCase>
+
+To show a placeholder while the generated poster loads:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
@@ -489,7 +494,7 @@ Choose the smallest customization that meets your existing UI requirements: a pa
 
 ### Level 1: pick a skin
 
-Two are packaged. The default skin is a modern, frosted look. The minimal skin is closer to a classic control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
+Two are packaged. The Default skin groups settings in a menu. The Minimal skin uses a compact control bar, closer to a classic control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
 
 ### Level 2: restyle it
 
@@ -539,12 +544,14 @@ To migrate `forward-seek-offset` and `backward-seek-offset`, edit the installed 
 To migrate `forwardSeekOffset` and `backwardSeekOffset`, edit the installed skin's hotkey and gesture declarations:
 </FrameworkCase>
 
-These examples use 30 seconds forward and backward. Use your existing offsets:
+Replace the corresponding declarations inside the installed skin's container, including the `j` and `l` shortcuts. These examples use 30 seconds forward and backward; use your existing offsets:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
 <media-hotkey keys="ArrowRight" action="seekStep" value="30"></media-hotkey>
 <media-hotkey keys="ArrowLeft" action="seekStep" value="-30"></media-hotkey>
+<media-hotkey keys="l" action="seekStep" value="30"></media-hotkey>
+<media-hotkey keys="j" action="seekStep" value="-30"></media-hotkey>
 <media-gesture type="doubletap" action="seekStep" value="30" region="right"></media-gesture>
 <media-gesture type="doubletap" action="seekStep" value="-30" region="left"></media-gesture>
 ```
@@ -552,10 +559,16 @@ These examples use 30 seconds forward and backward. Use your existing offsets:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Hotkey keys="ArrowRight" action="seekStep" value={30} />
-<Hotkey keys="ArrowLeft" action="seekStep" value={-30} />
-<Gesture type="doubletap" action="seekStep" value={30} region="right" />
-<Gesture type="doubletap" action="seekStep" value={-30} region="left" />
+import { Gesture, Hotkey } from '@videojs/react';
+
+<>
+  <Hotkey keys="ArrowRight" action="seekStep" value={30} />
+  <Hotkey keys="ArrowLeft" action="seekStep" value={-30} />
+  <Hotkey keys="l" action="seekStep" value={30} />
+  <Hotkey keys="j" action="seekStep" value={-30} />
+  <Gesture type="doubletap" action="seekStep" value={30} region="right" />
+  <Gesture type="doubletap" action="seekStep" value={-30} region="left" />
+</>
 ```
 </FrameworkCase>
 
@@ -576,7 +589,20 @@ import { PlayerController, playerContext, ReactiveElement, selectTime } from '@v
 
 class MyElapsed extends ReactiveElement {
   #time = new PlayerController(this, playerContext, selectTime);
+
+  update(changed) {
+    super.update(changed);
+    this.textContent = `Elapsed: ${(this.#time.value?.currentTime ?? 0).toFixed(1)} s`;
+  }
 }
+
+customElements.define('my-elapsed', MyElapsed);
+```
+
+Render it inside your existing `<video-player>` so it can read that player's state:
+
+```html
+<my-elapsed></my-elapsed>
 ```
 
 </FrameworkCase>
@@ -726,6 +752,8 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 
 You get `targetLiveWindow` and `liveEdgeStart` in player state, plus a live button that jumps to the live edge. The live preset doesn't include `streamType` state and doesn't force a source to be live. The Mux media detects the manifest: `targetLiveWindow` is `NaN` for an on-demand or unknown source, `0` for a sliding live window, and `Infinity` for a live event with playback history. See <DocsLink slug="reference/api/feature-live">the live feature</DocsLink>.
 
+The live skins have no time slider. To preserve DVR scrubbing, add one to custom UI or installed skin source; follow <DocsLink slug="guides/live-streams" anchor="dvr-let-users-scrub-back">the DVR setup</DocsLink>.
+
 The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state. A live skin's settings menu therefore holds captions and nothing else. If you need one of the omitted features on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
@@ -742,12 +770,12 @@ The live skin already includes a live button. If you build your own controls, us
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<script type="module">
-  import '@videojs/html/ui/live-button';
-</script>
+<script type="module" src="{{VJS10_CDN_BASE}}/ui/live-button.js"></script>
 
 <media-live-button class="station-live-button">On air</media-live-button>
 ```
+
+With a bundler, import `@videojs/html/ui/live-button`. Render the button inside your custom player layout.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -837,7 +865,7 @@ The time slider marks the segment containing the current playback time with `dat
 
 ## Signed playback and DRM
 
-For signed playback, follow Mux's [secure video playback guide](https://www.mux.com/docs/guides/secure-video-playback) to create a signing key and generate these tokens on your server. Replace `YOUR_PLAYBACK_ID` with the signed asset's playback ID and replace each named token placeholder with its server-generated token. Each token is a parameter in its own group, and Video.js checks each one's audience before building a URL, so a token in the wrong slot produces no URL rather than a request Mux would reject:
+For signed playback, follow Mux's [secure video playback guide](https://www.mux.com/docs/guides/secure-video-playback) to create a signing key and generate these tokens on your server. Replace `YOUR_PLAYBACK_ID` with the signed asset's playback ID and replace each named token placeholder with its server-generated token. Each token is a parameter in its own group. Video.js checks poster, storyboard, and DRM token audiences locally. Playback tokens are passed through and validated by Mux; a misplaced playback token still produces a stream request that Mux rejects:
 
 ```js
 {
