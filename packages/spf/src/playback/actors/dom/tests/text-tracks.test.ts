@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { effect } from '../../../../core/signals/effect';
 import type { CueSegmentMeta } from '../text-tracks';
 import { createTextTracksActor } from '../text-tracks';
 
@@ -35,15 +36,23 @@ describe('createTextTracksActor', () => {
   });
 
   it('adds cues to the correct TextTrack', async () => {
-    const video = await makeMediaElement(['track-en']);
+    const video = await makeMediaElement(['track-en', 'track-es']);
     const actor = createTextTracksActor(video);
-    const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+    const [en, es] = Array.from(video.textTracks);
 
-    textTrack.mode = 'hidden';
+    try {
+      actor.send({ type: 'add-cues', meta: meta('track-es', 'seg-0'), cues: [new VTTCue(1, 3, 'Hola')] });
 
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
+      expect(Array.from(es!.cues ?? [])).toMatchObject([{ startTime: 1, endTime: 3, text: 'Hola' }]);
+      expect(Array.from(en!.cues ?? [])).toEqual([]);
 
-    expect(textTrack.cues?.length).toBe(1);
+      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
+
+      expect(Array.from(en!.cues ?? [])).toMatchObject([{ startTime: 0, endTime: 2, text: 'Hello' }]);
+      expect(Array.from(es!.cues ?? [])).toMatchObject([{ startTime: 1, endTime: 3, text: 'Hola' }]);
+    } finally {
+      actor.destroy();
+    }
   });
 
   it('preserves cues sent before a srcless native track settles', async () => {
@@ -272,14 +281,22 @@ describe('createTextTracksActor', () => {
 
     const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
 
-    snapshots.push(actor.snapshot.get());
+    const stop = effect(() => {
+      snapshots.push(actor.snapshot.get());
+    });
 
-    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
-    snapshots.push(actor.snapshot.get());
+    try {
+      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
 
-    expect(snapshots[0]!.context.loaded['track-en']).toBeUndefined();
-    expect(snapshots[1]!.context.loaded['track-en']).toHaveLength(1);
-    expect(snapshots[0]!.context.segments['track-en']).toBeUndefined();
-    expect(snapshots[1]!.context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
+      await vi.waitFor(() => expect(snapshots).toHaveLength(2));
+
+      expect(snapshots[0]!.context.loaded['track-en']).toBeUndefined();
+      expect(snapshots[1]!.context.loaded['track-en']).toMatchObject([{ startTime: 0, endTime: 2, text: 'Hello' }]);
+      expect(snapshots[0]!.context.segments['track-en']).toBeUndefined();
+      expect(snapshots[1]!.context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
+    } finally {
+      stop();
+      actor.destroy();
+    }
   });
 });

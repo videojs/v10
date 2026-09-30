@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { signal } from '../../../../core/signals/primitives';
 import {
@@ -56,7 +56,7 @@ function makePresentation(tracks: Array<{ id: string; kind?: string; language?: 
   } as any;
 }
 
-function setup(initialState: State = {}, initialContext: Context = {}) {
+function setup(initialState: State = {}, initialContext: Context = {}, config = baseConfig) {
   const state = {
     presentation: signal<MaybeResolvedPresentation | undefined>(initialState.presentation),
     selectedTextTrackId: signal<string | undefined>(initialState.selectedTextTrackId),
@@ -66,7 +66,7 @@ function setup(initialState: State = {}, initialContext: Context = {}) {
     mediaElement: signal<HTMLMediaElement | undefined>(initialContext.mediaElement),
     textTracksActor: signal<TextTracksActor<VTTCue> | undefined>(initialContext.textTracksActor),
   };
-  const reactor = syncTextTracks.setup({ state, context, config: baseConfig });
+  const reactor = syncTextTracks.setup({ state, context, config });
 
   return { state, context, reactor };
 }
@@ -94,12 +94,26 @@ describe('syncTextTracks', () => {
 
   it('does not create tracks when no mediaElement', async () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
-    const { state, reactor } = setup();
+    const allocate = vi.fn(addSubtitlesTracksToMedia);
+    const { context, reactor } = setup({ presentation }, {}, { ...baseConfig, addSubtitlesTracksToMedia: allocate });
 
-    state.presentation.set(presentation);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(allocate).not.toHaveBeenCalled();
 
-    reactor.destroy();
+      const mediaElement = document.createElement('video');
+
+      context.mediaElement.set(mediaElement);
+
+      await vi.waitFor(() => expect(allocate).toHaveBeenCalledOnce());
+      expect(allocate).toHaveBeenCalledWith(
+        mediaElement,
+        expect.arrayContaining([expect.objectContaining({ id: 'track-en' })])
+      );
+      expect(mediaElement.querySelector('track')?.id).toBe('track-en');
+    } finally {
+      reactor.destroy();
+    }
   });
 
   it('does not create tracks when presentation has no text tracks', async () => {
@@ -308,15 +322,29 @@ describe('syncTextTracks', () => {
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Resolver clears the resolved id (e.g. the picked track's CDN failed). The
-    // mirror disables every track → 'change' shows nothing, which equals the
-    // resolved id (undefined) → echo → no spurious 'off' intent.
-    state.selectedTextTrackId.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    const enEl = mediaElement.querySelector<HTMLTrackElement>('#track-en')!;
+    const esEl = mediaElement.querySelector<HTMLTrackElement>('#track-es')!;
+    const change = vi.fn();
 
-    expect(state.userTextTrackSelection.get()).toBeUndefined();
+    expect(enEl.track.mode).toBe('showing');
+    expect(esEl.track.mode).toBe('disabled');
+    mediaElement.textTracks.addEventListener('change', change);
 
-    reactor.destroy();
+    try {
+      // Observe the native echo caused by the resolver's correction after
+      // the initial allocation and settling window have finished.
+      state.selectedTextTrackId.set(undefined);
+
+      await vi.waitFor(() => {
+        expect(enEl.track.mode).toBe('disabled');
+        expect(esEl.track.mode).toBe('disabled');
+        expect(change).toHaveBeenCalled();
+      });
+      expect(state.userTextTrackSelection.get()).toBeUndefined();
+    } finally {
+      mediaElement.textTracks.removeEventListener('change', change);
+      reactor.destroy();
+    }
   });
 
   it('removes track elements on destroy', async () => {

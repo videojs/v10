@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vite-plus/test';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { resolveVttSegmentMetadata } from '../../../text/resolve-vtt-metadata';
 import { destroyVttResolver, resolveVttSegment, resolveVttSegmentWithMetadata } from '../resolve-vtt-segment';
@@ -161,14 +161,34 @@ Second
 Test
 `);
 
-    await resolveVttSegment(vttDataUrl);
+    const createElement = vi.spyOn(document, 'createElement');
 
-    destroyVttResolver();
+    try {
+      await resolveVttSegment(vttDataUrl);
 
-    const cues = await resolveVttSegment(vttDataUrl);
+      const video = createElement.mock.results.find(({ value }) => value instanceof HTMLVideoElement)!.value;
+      const track = createElement.mock.results.find(({ value }) => value instanceof HTMLTrackElement)!.value;
 
-    expect(cues).toHaveLength(1);
-    expect(cues[0]!.text).toBe('Test');
+      expect(track.parentNode).toBeNull();
+      expect(video.childElementCount).toBe(0);
+
+      createElement.mockClear();
+      destroyVttResolver();
+
+      const cues = await resolveVttSegment(vttDataUrl);
+      const nextVideo = createElement.mock.results.find(({ value }) => value instanceof HTMLVideoElement)?.value;
+      const nextTrack = createElement.mock.results.find(({ value }) => value instanceof HTMLTrackElement)!.value;
+
+      expect(createElement).toHaveBeenCalledWith('video');
+      expect(nextVideo).toBeInstanceOf(HTMLVideoElement);
+      expect(nextVideo).not.toBe(video);
+      expect(nextTrack.parentNode).toBeNull();
+      expect(cues).toHaveLength(1);
+      expect(cues[0]!.text).toBe('Test');
+    } finally {
+      createElement.mockRestore();
+      destroyVttResolver();
+    }
   });
 });
 
