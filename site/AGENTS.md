@@ -68,6 +68,7 @@ pnpm -F site astro check
 PostHog loads in production only, from `src/components/Posthog.astro`; its config lives in `src/utils/analytics.ts`. It runs cookieless, so there is no durable person: never call `identify`, `alias`, or a person-property API, and expect super properties to last one page load.
 
 - Mark any installation query parameter that can carry reader data as `private` in `@videojs/installation`. The config masks private parameters everywhere in outgoing events.
+- Agents read Markdown without running JavaScript, so the `agent-markdown-*` edge functions count those reads server-side through `src/utils/agent-analytics.ts`, in production only. When a Markdown route changes, update those functions' paths too.
 
 ## API references
 

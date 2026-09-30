@@ -13,8 +13,7 @@ import { escapeRegExp } from 'es-toolkit/string';
 
 import { DEFAULT_FRAMEWORK, getDefaultStyle, type AnySupportedStyle, type SupportedFramework } from '@/types/docs';
 import { getFrameworkPreferenceClient, getStylePreferenceClient } from '@/utils/docs/preferences';
-
-const POSTHOG_PROJECT_KEY = 'phc_5gaDOyX1jWPR1n7JAiGiHdwXwGwfsknwdj1ILI2IiBr';
+import { POSTHOG_PROJECT_KEY } from '@/utils/posthog-project';
 
 /** PostHog's own placeholder, so values it masks and values masked here read the same in insights. */
 const MASKED = '<masked>';
