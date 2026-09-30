@@ -25,11 +25,11 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 
 const setVolume = vi.fn();
 
-function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability']): AnyPlayerStore {
+function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability'], volume = 1): AnyPlayerStore {
   return createStore<unknown>()<MediaVolumeState>({
     name: 'volume',
     state: () => ({
-      volume: 1,
+      volume,
       muted: false,
       volumeAvailability,
       // Mute has an availability of its own, and this slider reads the level's;
@@ -93,6 +93,31 @@ describe('VolumeSliderElement', () => {
     expect(wheel.defaultPrevented).toBe(true);
     expect(setVolume).toHaveBeenCalledOnce();
   });
+
+  it.each([
+    { wheelStep: 5, deltaY: 120, expectedVolume: 0.75 },
+    { wheelStep: 5, deltaY: -120, expectedVolume: 0.85 },
+    { wheelStep: 2, deltaY: 120, expectedVolume: 0.78 },
+    { wheelStep: 2, deltaY: -120, expectedVolume: 0.82 },
+  ])(
+    'uses wheel-step=$wheelStep independently of step for deltaY=$deltaY',
+    async ({ wheelStep, deltaY, expectedVolume }) => {
+      const provider = createElement(TestPlayerProviderElement);
+
+      provider.store = createVolumeStore('available', 0.8);
+      const slider = createElement(VolumeSliderElement);
+
+      slider.setAttribute('step', '10');
+      slider.setAttribute('wheel-step', String(wheelStep));
+      document.body.append(provider);
+      provider.append(slider);
+      await slider.updateComplete;
+
+      slider.dispatchEvent(new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true }));
+
+      expect(setVolume).toHaveBeenCalledExactlyOnceWith(expectedVolume);
+    }
+  );
 
   it('sets touch-action and user-select styles on connect', async () => {
     const slider = createElement(VolumeSliderElement);

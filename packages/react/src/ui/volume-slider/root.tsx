@@ -90,7 +90,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
         isDisabled: () => disabledRef.current,
         getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
         getStepPercent: () => core.getWheelStepPercent(),
-        onValueChange: setVolume,
+        onValueChange: (percent) => volumeRef.current?.setVolume(core.rawValueFromPercent(percent) / 100),
       })
     );
 

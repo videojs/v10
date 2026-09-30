@@ -136,6 +136,24 @@ describe('VolumeSliderRoot', () => {
 
     expect(mockVolumeState.setVolume).toHaveBeenLastCalledWith(0.4);
   });
+
+  it.each([
+    { wheelStep: 5, deltaY: 120, expectedVolume: 0.75 },
+    { wheelStep: 5, deltaY: -120, expectedVolume: 0.85 },
+    { wheelStep: 2, deltaY: 120, expectedVolume: 0.78 },
+    { wheelStep: 2, deltaY: -120, expectedVolume: 0.82 },
+  ])('uses wheelStep=$wheelStep independently of step for deltaY=$deltaY', ({ wheelStep, deltaY, expectedVolume }) => {
+    const { Wrapper } = createPlayerWrapper(mockVolumeState);
+    const { getByTestId } = render(
+      <Wrapper>
+        <VolumeSliderRoot step={10} wheelStep={wheelStep} data-testid="root" />
+      </Wrapper>
+    );
+
+    fireEvent.wheel(getByTestId('root'), { deltaY });
+
+    expect(mockVolumeState.setVolume).toHaveBeenCalledExactlyOnceWith(expectedVolume);
+  });
 });
 
 describe('VolumeSlider compound', () => {
