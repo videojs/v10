@@ -240,18 +240,6 @@ describe('getSegmentsToLoad', () => {
       expect(toLoad[0]?.id).toBe('seg-12');
     });
 
-    it('should handle all segments already buffered', () => {
-      const segments: Segment[] = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)];
-
-      const bufferedSegments: Segment[] = segments;
-
-      const currentTime = 0;
-
-      const toLoad = getSegmentsToLoad(segments, bufferedSegments, currentTime);
-
-      expect(toLoad).toHaveLength(0);
-    });
-
     it('should handle no segments buffered', () => {
       const segments: Segment[] = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)];
 

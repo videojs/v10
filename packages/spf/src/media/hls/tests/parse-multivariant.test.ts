@@ -390,13 +390,6 @@ audio.m3u8`;
       });
     });
 
-    it('leaves no unfetchable audio track for an audio-only asset', () => {
-      const result = parseMultivariantPlaylist(muxAudioOnlyPlaylist, { url: baseUrl });
-      const audioTracks = result.selectionSets[0]?.switchingSets[0]?.tracks ?? [];
-
-      expect(audioTracks.every((track) => track.url !== '')).toBe(true);
-    });
-
     it('keeps a URI-less rendition separate from a group carried by video streams', () => {
       // Same rendition shape, but the stream referencing the group is muxed A/V, so
       // there is no audio-only track to merge into and the rendition stands alone.

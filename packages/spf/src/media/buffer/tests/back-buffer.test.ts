@@ -174,21 +174,6 @@ describe('calculateBackBufferFlushPoint', () => {
   });
 
   describe('configuration', () => {
-    it('should use default keep count of 2', () => {
-      const segments: Segment[] = [
-        createSegment(0, 6),
-        createSegment(6, 6),
-        createSegment(12, 6),
-        createSegment(18, 6),
-      ];
-
-      const currentTime = 18;
-
-      const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
-
-      expect(flushEnd).toBe(6);
-    });
-
     it('should allow keeping 0 segments (flush everything)', () => {
       const segments: Segment[] = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)];
 

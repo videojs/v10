@@ -190,17 +190,6 @@ describe('Type Guards', () => {
       expect(isResolvedPresentation(partial)).toBe(false);
     });
 
-    it('returns true when both id and selectionSets are present', () => {
-      const resolved: Presentation = {
-        id: 'presentation-0',
-        url: 'https://example.com/master.m3u8',
-        startTime: 0,
-        selectionSets: [],
-      };
-
-      expect(isResolvedPresentation(resolved)).toBe(true);
-    });
-
     it('returns true when selectionSets is empty (still resolved)', () => {
       // Empty selectionSets is a valid resolved manifest (no playable tracks),
       // distinct from "selectionSets not yet known".
