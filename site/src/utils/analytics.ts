@@ -3,8 +3,7 @@
  * production builds only.
  *
  * PostHog runs in `cookieless_mode: "always"`, so there is no durable person: never call `identify`, `alias`, or a
- * person-property API. Super properties last for one page load, which is why `loaded` registers the reader's docs
- * context on every page.
+ * person-property API.
  */
 
 import { PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
@@ -37,7 +36,6 @@ export interface AnalyticsEvent {
 export interface PostHogClient {
   init(token: string, config: PostHogConfig): void;
   capture(event: string, properties?: EventProperties): void;
-  register(properties: EventProperties): void;
 }
 
 /** The PostHog options the site sets. */
@@ -53,7 +51,6 @@ export interface PostHogConfig {
   advanced_disable_feature_flags: boolean;
   disable_session_recording: boolean;
   before_send: (event: AnalyticsEvent | null) => AnalyticsEvent | null;
-  loaded: (posthog: PostHogClient) => void;
 }
 
 declare global {
@@ -146,9 +143,19 @@ export function getDocsContext(): DocsContext {
   return { docs_framework: framework, docs_style: style };
 }
 
-/** Super properties for the current page: the docs context everywhere, plus the picks on an installation guide. */
+/** Properties that describe the page an event happened on: the docs context, plus the picks on an installation guide. */
 function pageContext(): EventProperties {
   return { ...getDocsContext(), ...currentInstallationContext() };
+}
+
+/**
+ * Stamp the current page context on an event as it is sent. Super properties would go stale: view transitions keep
+ * PostHog loaded across pages, and PostHog sends a navigation's `$pageview` before the new page's scripts run.
+ */
+export function withPageContext<E extends AnalyticsEvent>(event: E | null): E | null {
+  if (!event) return event;
+
+  return { ...event, properties: { ...event.properties, ...pageContext() } };
 }
 
 export function createPostHogConfig(): PostHogConfig {
@@ -168,19 +175,13 @@ export function createPostHogConfig(): PostHogConfig {
     // Replay would record the page text, including the reader's source URL, in payloads `before_send` never sees. Keep
     // it off here even if the project enables it.
     disable_session_recording: true,
-    before_send: maskPrivateEvent,
-    // Runs before the initial $pageview, so that pageview carries the docs context too.
-    loaded: (posthog) => posthog.register(pageContext()),
+    before_send: (event) => maskPrivateEvent(withPageContext(event)),
   };
 }
 
 /** Start PostHog once the browser is idle, so it never competes with the page for the main thread. */
 export function initAnalytics(): void {
   const load = () => window.posthog?.init(POSTHOG_PROJECT_KEY, createPostHogConfig());
-
-  // View transitions keep PostHog loaded across pages, so refresh the context when a link changes framework or opens
-  // an installation guide.
-  document.addEventListener('astro:page-load', () => window.posthog?.register(pageContext()));
 
   if ('requestIdleCallback' in window) requestIdleCallback(load);
   else setTimeout(load, 3000);

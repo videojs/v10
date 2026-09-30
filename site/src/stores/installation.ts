@@ -20,7 +20,6 @@ import {
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { atom, type WritableAtom } from 'nanostores';
 
-import { installationAnalyticsContext, registerAnalyticsContext } from '@/utils/analytics-events';
 import { getFrameworkPreferenceClient } from '@/utils/docs/preferences';
 import { getInstallationRouteSegment, type InstallationRouteSegment } from '@/utils/installation/routes';
 import {
@@ -155,7 +154,6 @@ function writeInstallationUrl(): void {
   syncedUrl = `${location.pathname}${search}`;
   syncInstallationDocument(route, selection);
   syncMarkdownAlternate(search);
-  registerAnalyticsContext(installationAnalyticsContext(route, selection));
 }
 
 /**

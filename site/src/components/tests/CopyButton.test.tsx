@@ -8,7 +8,7 @@ import CopyButton from '../CopyButton';
 let posthog: PostHogClient;
 
 beforeEach(() => {
-  posthog = { init: vi.fn(), capture: vi.fn(), register: vi.fn() };
+  posthog = { init: vi.fn(), capture: vi.fn() };
   window.posthog = posthog;
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn(async () => {}) } });
 });

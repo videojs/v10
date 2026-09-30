@@ -7,7 +7,8 @@ import {
   initAnalytics,
   maskPrivateEvent,
   maskPrivateParameters,
-  type PostHogClient,
+  withPageContext,
+  type AnalyticsEvent,
 } from '../analytics';
 import { FRAMEWORK_COOKIE, STYLE_STORAGE_KEY_PREFIX } from '../docs/preferences';
 
@@ -148,19 +149,44 @@ describe('createPostHogConfig', () => {
       custom_personal_data_properties: ['source-url'],
       advanced_disable_feature_flags: true,
       disable_session_recording: true,
-      before_send: maskPrivateEvent,
     });
   });
 
-  it('registers the docs context when PostHog finishes loading', () => {
+  it('stamps the docs context on each event as it is sent, then masks it', () => {
+    history.replaceState(null, '', `/docs/guides/installation/html?source-url=${SOURCE}`);
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
-    const posthog = { init: vi.fn(), capture: vi.fn(), register: vi.fn() } satisfies PostHogClient;
-    const { loaded } = createPostHogConfig();
+    const { before_send } = createPostHogConfig();
+    const event = before_send({ properties: { $current_url: location.href, docs_framework: 'react' } });
 
-    loaded(posthog);
+    expect(event?.properties).toMatchObject({ docs_framework: 'html', docs_style: 'css' });
+    expect(JSON.stringify(event)).not.toContain('secret.m3u8');
+  });
+});
 
-    expect(posthog.register).toHaveBeenCalledWith({ docs_framework: 'html', docs_style: 'css' });
+describe('withPageContext', () => {
+  it('reads the context when the event is sent, not when PostHog loaded', () => {
+    const event: AnalyticsEvent = { properties: { $pathname: '/' } };
+
+    expect(withPageContext(event)?.properties?.docs_framework).toBe('react');
+
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+
+    expect(withPageContext(event)?.properties?.docs_framework).toBe('html');
+  });
+
+  it('carries the installation picks on an installation guide only', () => {
+    history.replaceState(null, '', '/docs/guides/installation/html?skin=minimal');
+
+    expect(withPageContext({ properties: {} })?.properties).toMatchObject({ installation_route: 'html' });
+
+    history.replaceState(null, '', '/docs/framework/html/guides/why-videojs');
+
+    expect(Object.keys(withPageContext({ properties: {} })?.properties ?? {})).not.toContain('installation_route');
+  });
+
+  it('passes a dropped event through', () => {
+    expect(withPageContext(null)).toBeNull();
   });
 });
 
@@ -169,7 +195,7 @@ describe('initAnalytics', () => {
     const callbacks: (() => void)[] = [];
 
     vi.stubGlobal('requestIdleCallback', (callback: () => void) => callbacks.push(callback));
-    window.posthog = { init: vi.fn(), capture: vi.fn(), register: vi.fn() };
+    window.posthog = { init: vi.fn(), capture: vi.fn() };
 
     initAnalytics();
 

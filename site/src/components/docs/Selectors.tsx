@@ -18,7 +18,7 @@ import {
   STYLE_LABELS,
   SUPPORTED_FRAMEWORKS,
 } from '@/types/docs';
-import { ANALYTICS_EVENTS, registerAnalyticsContext, trackEvent } from '@/utils/analytics-events';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics-events';
 import { DOCS_FRAMEWORK_NAVIGATION_INFO, savePageScrollForNavigation } from '@/utils/docs/navigation';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
@@ -78,7 +78,6 @@ export function Selectors({
       value: newFramework,
       previous: displayedFramework,
     });
-    registerAnalyticsContext({ docs_framework: newFramework });
 
     if (registryFrameworkSelection) {
       // The installation stores are already loaded on the Shadcn guide; importing them here keeps them off other pages.
@@ -117,7 +116,6 @@ export function Selectors({
         value: newStyle,
         previous: displayedStyle,
       });
-      registerAnalyticsContext({ docs_style: newStyle });
     }
 
     // Update localStorage for this framework

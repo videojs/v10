@@ -2,7 +2,8 @@
  * The custom events the site sends to PostHog, on top of autocapture. Keep names and properties stable: insights and
  * funnels filter on them. Add an event to `ANALYTICS_EVENTS` and its properties to `AnalyticsEventProperties`.
  *
- * Both helpers no-op when PostHog is absent, which is every development build, and never throw.
+ * `trackEvent` no-ops when PostHog is absent, which is every development build, and never throws. Page context, such as
+ * the installation picks, is stamped on every event by `withPageContext` in `src/utils/analytics.ts`.
  */
 
 import { getInstallationPreset } from '@videojs/installation';
@@ -89,21 +90,9 @@ export function trackEvent<E extends AnalyticsEventName>(name: E, ...[properties
   }
 }
 
-/** Attach properties to every later event on this page load. */
-export function registerAnalyticsContext(properties: EventProperties): void {
-  if (import.meta.env.DEV) console.debug('[analytics] context', properties);
-
-  try {
-    window.posthog?.register(properties);
-  } catch {
-    // Analytics must never break the page.
-  }
-}
-
 /**
- * The reader's installation picks as super properties, named after the guide's query parameters. Every pick is set,
- * defaults included, so a later event never carries a stale value. The source URL itself stays out; only whether one
- * was given.
+ * The reader's installation picks as event properties, named after the guide's query parameters. Every pick is set,
+ * defaults included. The source URL itself stays out; only whether one was given.
  */
 export function installationAnalyticsContext(
   route: InstallationRouteSegment,
@@ -125,8 +114,9 @@ export function installationAnalyticsContext(
 }
 
 /**
- * The installation context for the current page, read from its URL the way the installation store reads it. PostHog
- * registers this on load, so the first pageview carries the picks before any picker island has loaded the store.
+ * The installation context for the current page, read from its URL the way the installation store reads it. The store
+ * writes every settled pick to the URL, so an event carries the picks in place when it is sent, including a first
+ * pageview sent before any picker island has loaded the store.
  */
 export function currentInstallationContext(): EventProperties {
   const route = getInstallationRouteSegment(location.pathname);

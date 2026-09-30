@@ -7,13 +7,12 @@ import {
   failureReason,
   installationAnalyticsContext,
   isAgentHandoffMethod,
-  registerAnalyticsContext,
   trackEvent,
 } from '../analytics-events';
 import { DEFAULT_SELECTION } from '../installation/url-state';
 
 function stubPostHog(): PostHogClient {
-  const posthog = { init: vi.fn(), capture: vi.fn(), register: vi.fn() } satisfies PostHogClient;
+  const posthog = { init: vi.fn(), capture: vi.fn() } satisfies PostHogClient;
 
   window.posthog = posthog;
 
@@ -47,20 +46,6 @@ describe('trackEvent', () => {
     });
 
     expect(() => trackEvent(ANALYTICS_EVENTS.muxUploadReady)).not.toThrow();
-  });
-});
-
-describe('registerAnalyticsContext', () => {
-  it('registers super properties', () => {
-    const posthog = stubPostHog();
-
-    registerAnalyticsContext({ docs_framework: 'html' });
-
-    expect(posthog.register).toHaveBeenCalledWith({ docs_framework: 'html' });
-  });
-
-  it('does nothing without PostHog', () => {
-    expect(() => registerAnalyticsContext({ docs_style: 'css' })).not.toThrow();
   });
 });
 
