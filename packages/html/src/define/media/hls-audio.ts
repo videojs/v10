@@ -1,6 +1,8 @@
 import { HlsAudio } from '../../media/hls-audio';
 import { safeDefine } from '../../registration/safe-define';
 
+export { isHlsAudioAdapter } from '@videojs/spf/hls-audio';
+
 export class HlsAudioElement extends HlsAudio {
   static readonly tagName = 'hls-audio';
 }

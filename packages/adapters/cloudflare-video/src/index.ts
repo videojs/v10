@@ -2,6 +2,7 @@
 // `engine` getter surfaces.
 
 export * from './adapter';
+export { isCloudflareAdapter } from './predicate';
 export type { CloudflareAdapterProps } from './props';
 export * from './source';
 export type { CloudflareStreamApi, CloudflareStreamPlayerApi } from './stream-api';

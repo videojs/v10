@@ -7,5 +7,6 @@ export type {
   SpotifyPlaybackUpdateEvent,
 } from './iframe-api';
 export * from './adapter';
+export { isSpotifyAdapter } from './predicate';
 export type { SpotifyAdapterProps } from './props';
 export * from './source';

@@ -221,3 +221,31 @@ export function isEngineAdapter<T>(value: T): value is T & EngineAdapter {
 
   return 'engine' in adapter && isFunction(adapter.destroy);
 }
+
+/**
+ * Key under which a media class lists the brands its instances answer to: a static array of the import paths it
+ * identifies as, such as `'@videojs/hlsjs-video'`. The key is a global symbol and the brands are strings, so a brand
+ * still matches when an app bundles two copies of a package.
+ */
+export const MEDIA_BRANDS = Symbol.for('@videojs/media/brands');
+
+/** A media class that lists its brands under {@link MEDIA_BRANDS}. */
+export interface BrandedMediaClass {
+  readonly [MEDIA_BRANDS]: readonly string[];
+}
+
+/**
+ * Whether `value` is media of `brand`: an adapter whose class lists it, as React's `useMedia()` returns, or a custom
+ * media element whose `adapter` does, as HTML registers. Per-media guards such as `isHlsJsAdapter` build on this.
+ */
+export function isBrandedMedia(value: unknown, brand: string): boolean {
+  if (!isObject(value)) return false;
+
+  return hasBrand(value, brand) || ('adapter' in value && isObject(value.adapter) && hasBrand(value.adapter, brand));
+}
+
+function hasBrand(value: object, brand: string): boolean {
+  const brands = (value.constructor as Partial<BrandedMediaClass> | undefined)?.[MEDIA_BRANDS];
+
+  return Array.isArray(brands) && brands.includes(brand);
+}

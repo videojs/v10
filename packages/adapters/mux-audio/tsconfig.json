@@ -8,6 +8,9 @@
   },
   "references": [
     {
+      "path": "../../media"
+    },
+    {
       "path": "../mux-video"
     },
     {

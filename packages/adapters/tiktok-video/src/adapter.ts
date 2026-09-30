@@ -1,7 +1,7 @@
 // Adapted from `tiktok-video-element` in https://github.com/muxinc/media-elements (MIT),
 // ported to TypeScript and reshaped as a media adapter (mirrors `dom/youtube`).
 
-import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type Video } from '@videojs/media';
+import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MEDIA_BRANDS, MediaError, type Video } from '@videojs/media';
 import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
@@ -25,6 +25,7 @@ import {
   type TikTokPlayerCommand,
   type TikTokPlayerError,
 } from './player-api';
+import { TIKTOK_BRAND } from './predicate';
 import type { TikTokAdapterProps } from './props';
 import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } from './source';
 
@@ -33,6 +34,8 @@ import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } f
  *   new value.
  */
 export class TikTokAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [TIKTOK_BRAND];
+
   static readonly defaultProps: TikTokAdapterProps = {
     src: '',
     autoplay: false,

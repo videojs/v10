@@ -2,11 +2,19 @@
 // media adapter (mirrors `dom/youtube`).
 // Source: https://github.com/muxinc/media-elements
 
-import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type TextTrackListLike, type Video } from '@videojs/media';
+import {
+  EMPTY_TEXT_TRACKS,
+  EMPTY_TIME_RANGES,
+  MEDIA_BRANDS,
+  MediaError,
+  type TextTrackListLike,
+  type Video,
+} from '@videojs/media';
 import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 
+import { CLOUDFLARE_BRAND } from './predicate';
 import type { CloudflareAdapterProps } from './props';
 import { buildCloudflareIframeSrc, type CloudflareSource, parseCloudflareSource } from './source';
 import { type CloudflareStreamApi, type CloudflareStreamPlayerApi, loadCloudflareStreamApi } from './stream-api';
@@ -16,6 +24,8 @@ import { type CloudflareStreamApi, type CloudflareStreamPlayerApi, loadCloudflar
  *   new value.
  */
 export class CloudflareAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [CLOUDFLARE_BRAND];
+
   static readonly defaultProps: CloudflareAdapterProps = {
     src: '',
     autoplay: false,

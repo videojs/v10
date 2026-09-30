@@ -4,6 +4,7 @@ import './server-shim';
 import {
   type DrmSystemsConfig,
   type EngineAdapter,
+  MEDIA_BRANDS,
   MediaError,
   type MediaPreloadType,
   type MediaStreamType,
@@ -21,6 +22,7 @@ import shaka from 'shaka-player/dist/shaka-player.compiled-es2021.js';
 
 import { ShakaLiveMixin } from './live';
 import { ShakaMediaTracksMixin } from './media-tracks';
+import { SHAKA_BRAND } from './predicate';
 import { didShimSelf } from './server-shim';
 import { ShakaStreamTypeMixin } from './stream-type';
 
@@ -465,7 +467,9 @@ class ShakaAdapterCore
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when `targetLiveWindow` changes. Read it for the new value.
  */
-export class ShakaAdapter extends ShakaLiveMixin(ShakaStreamTypeMixin(ShakaMediaTracksMixin(ShakaAdapterCore))) {}
+export class ShakaAdapter extends ShakaLiveMixin(ShakaStreamTypeMixin(ShakaMediaTracksMixin(ShakaAdapterCore))) {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [SHAKA_BRAND];
+}
 
 let arePolyfillsInstalled = false;
 

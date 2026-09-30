@@ -619,6 +619,99 @@ Their `source` carries only `src`, `type`, and `drm`, with no `engine`, `preferP
 On `<hls-video>`, `drm` licenses FairPlay, Widevine, and PlayReady, taking the same license servers as [DRM protected sources](#drm-protected-sources). `<hls-audio>` accepts `drm` but ignores it, so one source object serves both.
 </FrameworkCase>
 
+## Reach the running engine
+
+`source.engine` configures an engine before the media builds it. To call the engine itself, read `engine` from the Video.js media object. It's an escape hatch that ties your code to one engine, so prefer player state and media events when they cover what you need.
+
+<FrameworkCase frameworks={["react"]}>
+`useMedia` doesn't know which media component you rendered, so it types the media generically. Check it with the guard exported next to that component, which types `engine` as the component's engine:
+
+```tsx
+import { Hls } from '@videojs/hlsjs-video';
+import { useMedia } from '@videojs/react';
+import { isHlsJsAdapter } from '@videojs/react/media/hlsjs-video';
+import { useEffect } from 'react';
+
+function LevelLogger() {
+  const media = useMedia();
+  const engine = isHlsJsAdapter(media) ? media.engine : null;
+
+  useEffect(() => {
+    if (!engine) return;
+
+    const onLevelSwitched = (_event: unknown, data: { level: number }) => console.log('level', data.level);
+    engine.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
+    return () => engine.off(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
+  }, [engine]);
+
+  return null;
+}
+```
+
+| Media | Guard | `engine` |
+|---|---|---|
+| <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> | `isHlsJsAdapter` | the hls.js instance |
+| <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> | `isHlsVideoAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/native-hls-video">NativeHlsVideo</DocsLink> | `isNativeHlsAdapter` | always `null` |
+| <DocsLink slug="reference/components/dash-video">DashVideo</DocsLink> | `isDashAdapter` | the dash.js player |
+| <DocsLink slug="reference/components/shaka-video">ShakaVideo</DocsLink> | `isShakaAdapter` | the Shaka player |
+| <DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/components/mux-audio">MuxAudio</DocsLink> | `isMuxVideoAdapter`, `isMuxAudioAdapter` | the hls.js instance from `/hls-js`, Video.js's own engine from `/spf` |
+| <DocsLink slug="reference/components/hls-audio">HlsAudio</DocsLink> | `isHlsAudioAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink>, <DocsLink slug="reference/components/mux-background-video">MuxBackgroundVideo</DocsLink> | `isHlsBackgroundVideoAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/youtube-video">YouTubeVideo</DocsLink> | `isYouTubeAdapter` | the YouTube IFrame player |
+| <DocsLink slug="reference/components/vimeo-video">VimeoVideo</DocsLink> | `isVimeoAdapter` | the Vimeo player |
+| <DocsLink slug="reference/components/cloudflare-video">CloudflareVideo</DocsLink> | `isCloudflareAdapter` | the Stream player |
+| <DocsLink slug="reference/components/spotify-audio">SpotifyAudio</DocsLink> | `isSpotifyAdapter` | the Spotify embed controller |
+| <DocsLink slug="reference/components/tiktok-video">TikTokVideo</DocsLink>, <DocsLink slug="reference/components/twitch-video">TwitchVideo</DocsLink> | `isTikTokAdapter`, `isTwitchAdapter` | the embed iframe's `window` |
+| <DocsLink slug="reference/components/wistia-video">WistiaVideo</DocsLink> | `isWistiaAdapter` | none: the media is Wistia's own player element |
+
+A Mux guard recognizes only its own flavor, so import it from the same entry as the component. Mux media also passes its engine's guard: `isHlsJsAdapter` from `/hls-js`, and `isHlsVideoAdapter` or `isHlsAudioAdapter` from `/spf`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+A media element's tag already types it, so `document.querySelector('hlsjs-video')` needs no check. When your code takes whichever media the page renders, check it with the guard exported next to that element, which types `engine` as the element's engine:
+
+```ts
+import { Hls } from '@videojs/hlsjs-video';
+import { isHlsJsAdapter } from '@videojs/html/media/hlsjs-video';
+
+function logLevels(media: Element | null) {
+  if (!isHlsJsAdapter(media)) return;
+
+  const onLevelSwitched = (_event: unknown, data: { level: number }) => console.log('level', data.level);
+  // Subscribe to the current engine, and again whenever loading starts, which is when a new one appears.
+  // Removing first keeps a reused engine from getting the listener twice.
+  const subscribe = () => {
+    media.engine?.off(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
+    media.engine?.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched);
+  };
+
+  subscribe();
+  media.addEventListener('loadstart', subscribe);
+}
+```
+
+| Media | Guard | `engine` |
+|---|---|---|
+| <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink> | `isHlsJsAdapter` | the hls.js instance |
+| <DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink> | `isHlsVideoAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/native-hls-video">`<native-hls-video>`</DocsLink> | `isNativeHlsAdapter` | always `null` |
+| <DocsLink slug="reference/components/dash-video">`<dash-video>`</DocsLink> | `isDashAdapter` | the dash.js player |
+| <DocsLink slug="reference/components/shaka-video">`<shaka-video>`</DocsLink> | `isShakaAdapter` | the Shaka player |
+| <DocsLink slug="reference/components/mux-video">`<mux-video>`</DocsLink>, <DocsLink slug="reference/components/mux-audio">`<mux-audio>`</DocsLink> | `isMuxVideoAdapter`, `isMuxAudioAdapter` | the hls.js instance from `/hls-js`, Video.js's own engine from `/spf` |
+| <DocsLink slug="reference/components/hls-audio">`<hls-audio>`</DocsLink> | `isHlsAudioAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/youtube-video">`<youtube-video>`</DocsLink> | `isYouTubeAdapter` | the YouTube IFrame player |
+| <DocsLink slug="reference/components/vimeo-video">`<vimeo-video>`</DocsLink> | `isVimeoAdapter` | the Vimeo player |
+| <DocsLink slug="reference/components/cloudflare-video">`<cloudflare-video>`</DocsLink> | `isCloudflareAdapter` | the Stream player |
+| <DocsLink slug="reference/components/spotify-audio">`<spotify-audio>`</DocsLink> | `isSpotifyAdapter` | the Spotify embed controller |
+| <DocsLink slug="reference/components/tiktok-video">`<tiktok-video>`</DocsLink>, <DocsLink slug="reference/components/twitch-video">`<twitch-video>`</DocsLink> | `isTikTokAdapter`, `isTwitchAdapter` | the embed iframe's `window` |
+| <DocsLink slug="reference/components/wistia-video">`<wistia-video>`</DocsLink> | `isWistiaAdapter` | none: the media is Wistia's own player element |
+
+A Mux guard recognizes only its own flavor, so import it from the same entry as the element. Mux media also passes its engine's guard: `isHlsJsAdapter` from `/hls-js`, and `isHlsVideoAdapter` or `isHlsAudioAdapter` from `/spf`.
+</FrameworkCase>
+
+Read `engine` when you need it rather than holding on to it. It's `null` while no engine runs, such as when hls.js-backed media hands HLS to the browser, and the media replaces it whenever a source change recreates the engine.
+
 ## See also
 
 <FrameworkCase frameworks={["react"]}>

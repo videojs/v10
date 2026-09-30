@@ -10,6 +10,8 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 import { MuxStoryboard } from './storyboard';
 
+export { isMuxVideoAdapter } from '@videojs/mux-video';
+
 // `source` comes from `MuxVideoAdapterProps` only: `MuxSource` extends `HlsSource` with
 // Mux identity fields, so the narrower type has to win.
 export interface MuxVideoProps

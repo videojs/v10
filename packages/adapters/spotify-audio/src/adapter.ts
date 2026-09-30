@@ -2,7 +2,7 @@
 // TypeScript and reshaped as a media adapter (mirrors `dom/youtube`).
 // Source: https://github.com/muxinc/media-elements — License: MIT
 
-import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type Video } from '@videojs/media';
+import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MEDIA_BRANDS, MediaError, type Video } from '@videojs/media';
 import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
@@ -14,6 +14,7 @@ import {
   type SpotifyIframeApi,
   type SpotifyPlaybackState,
 } from './iframe-api';
+import { SPOTIFY_BRAND } from './predicate';
 import type { SpotifyAdapterProps } from './props';
 import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from './source';
 
@@ -22,6 +23,8 @@ import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from '.
  *   new value.
  */
 export class SpotifyAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [SPOTIFY_BRAND];
+
   static readonly defaultProps: SpotifyAdapterProps = {
     src: '',
     autoplay: false,

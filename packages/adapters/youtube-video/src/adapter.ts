@@ -2,7 +2,14 @@
 // TypeScript and reshaped as a media adapter (mirrors `dom/vimeo`).
 // Source: https://github.com/muxinc/media-elements
 
-import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type TextTrackListLike, type Video } from '@videojs/media';
+import {
+  EMPTY_TEXT_TRACKS,
+  EMPTY_TIME_RANGES,
+  MEDIA_BRANDS,
+  MediaError,
+  type TextTrackListLike,
+  type Video,
+} from '@videojs/media';
 import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, noop, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
@@ -20,6 +27,7 @@ import {
   type YouTubePlayerApi,
   youtubeErrorCodeToMediaErrorCode,
 } from './iframe-api';
+import { YOUTUBE_BRAND } from './predicate';
 import type { YouTubeAdapterProps } from './props';
 import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from './source';
 
@@ -27,6 +35,8 @@ const SEEK_TOLERANCE = 1;
 const SEEK_SETTLE_TIMEOUT = 1_000;
 
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [YOUTUBE_BRAND];
+
   static readonly defaultProps: YouTubeAdapterProps = {
     src: '',
     autoplay: false,

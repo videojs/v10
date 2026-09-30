@@ -1,4 +1,5 @@
 import { HlsJsAdapter, type HlsJsAdapterProps, type HlsSource } from '@videojs/hlsjs-video';
+import { MEDIA_BRANDS } from '@videojs/media';
 import {
   createMuxPosterURL,
   createMuxStoryboardURL,
@@ -13,6 +14,7 @@ import {
 import { shallowEqual } from '@videojs/utils/object';
 
 import { createMuxDrmSystems } from './drm';
+import { MUX_VIDEO_BRAND } from './predicate';
 
 /**
  * Structured Mux source for the hls.js-backed Media: Mux identity and params from {@link MuxSourceBase}, plus everything
@@ -38,6 +40,8 @@ export interface MuxVideoAdapterProps {
  *   loads. Read `contentData` for the new value.
  */
 export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProps {
+  static override readonly [MEDIA_BRANDS]: readonly string[] = [...HlsJsAdapter[MEDIA_BRANDS], MUX_VIDEO_BRAND];
+
   static override readonly defaultProps: Omit<HlsJsAdapterProps, 'source'> & MuxVideoAdapterProps = {
     ...HlsJsAdapter.defaultProps,
     src: '',

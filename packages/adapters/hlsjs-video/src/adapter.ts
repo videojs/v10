@@ -2,6 +2,7 @@ import {
   bridgeEvents,
   type DrmSystemsConfig,
   KeySystems,
+  MEDIA_BRANDS,
   type MediaResolution,
   type MediaStreamType,
   MediaStreamTypes,
@@ -12,6 +13,7 @@ import { deepEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 
 import { HlsJsOnlyAdapter } from './hls-js-only';
+import { HLS_JS_BRAND } from './predicate';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
@@ -166,6 +168,8 @@ class HlsMediaEvent extends Event {}
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
  */
 export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [HLS_JS_BRAND];
+
   static readonly defaultProps: HlsJsAdapterProps = {
     src: '',
     source: null,

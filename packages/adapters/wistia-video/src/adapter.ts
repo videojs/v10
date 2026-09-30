@@ -1,7 +1,9 @@
+import { MEDIA_BRANDS } from '@videojs/media';
 import { WistiaPlayer } from '@wistia/wistia-player';
 
 import { normalizeWistiaPlayer } from './normalize';
 import { type WistiaMediaOptionsProps, wistiaMediaOptions } from './options';
+import { WISTIA_BRAND } from './predicate';
 import type { WistiaAdapterProps } from './props';
 import { type WistiaSource, wistiaPlayerStyle } from './source';
 
@@ -26,6 +28,8 @@ export type { WistiaPlayer };
  * names, spellings, and defaults for.
  */
 export class WistiaAdapter extends WistiaPlayer {
+  static readonly [MEDIA_BRANDS]: readonly string[] = [WISTIA_BRAND];
+
   static readonly defaultProps: WistiaAdapterProps = {
     src: '',
     autoplay: false,

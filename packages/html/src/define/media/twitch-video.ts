@@ -1,6 +1,8 @@
 import { TwitchVideo } from '../../media/twitch-video';
 import { safeDefine } from '../../registration/safe-define';
 
+export { isTwitchAdapter } from '@videojs/twitch-video';
+
 export class TwitchVideoElement extends TwitchVideo {
   static readonly tagName = 'twitch-video';
 }

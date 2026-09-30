@@ -16,3 +16,4 @@ export type {
 export { HlsVideoAdapterCore, HlsVideoMixin } from './mixin';
 export { HlsVideoAdapter } from './adapter';
 export { HlsVideoMediaTracksMixin } from './media-tracks';
+export { isHlsVideoAdapter } from './predicate';

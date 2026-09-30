@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react';
-import { HlsJsAdapter } from '@videojs/hlsjs-video';
+import { HlsJsAdapter, isHlsJsAdapter } from '@videojs/hlsjs-video';
 import { MuxVideoAdapter } from '@videojs/mux-video';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { MuxVideo } from '../mux-video';
+import { isMuxVideoAdapter, MuxVideo } from '../mux-video';
 
 /**
  * Render and capture the host instance the `source` prop was written to, so assertions can read the derived `src` off
@@ -20,6 +20,13 @@ function renderWithMedia(ui: ReactElement) {
 }
 
 describe('MuxVideo', () => {
+  it('creates Mux video over hls.js, which both guards recognize', () => {
+    const { media } = renderWithMedia(<MuxVideo source={{ playbackId: 'abc123' }} />);
+
+    expect(isMuxVideoAdapter(media)).toBe(true);
+    expect(isHlsJsAdapter(media)).toBe(true);
+  });
+
   it('does not spread the source prop onto the element', () => {
     const { container } = render(<MuxVideo source={{ playbackId: 'abc123', preferPlayback: 'native' }} />);
 

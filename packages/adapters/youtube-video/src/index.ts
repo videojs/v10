@@ -2,5 +2,6 @@
 // `engine` getter surfaces.
 export type { YouTubeApi, YouTubePlayerApi } from './iframe-api';
 export * from './adapter';
+export { isYouTubeAdapter } from './predicate';
 export type { YouTubeAdapterProps } from './props';
 export * from './source';
