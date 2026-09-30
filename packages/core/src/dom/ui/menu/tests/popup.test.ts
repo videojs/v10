@@ -85,6 +85,41 @@ describe('createMenuPopup', () => {
     childMenu.destroy();
   });
 
+  it('remeasures settled open content when a DOM item is added', async () => {
+    const popupElement = document.createElement('div');
+    const content = document.createElement('div');
+    const items = document.createElement('div');
+    const { menu } = createTestMenu();
+    const popup = createMenuPopup();
+
+    items.append(document.createElement('button'));
+    content.append(items);
+    popupElement.append(content);
+    document.body.append(popupElement);
+    vi.spyOn(items, 'getBoundingClientRect').mockImplementation(
+      () => new DOMRect(0, 0, 160, items.children.length * 20)
+    );
+    Object.defineProperties(items, {
+      scrollWidth: { configurable: true, get: () => 160 },
+      scrollHeight: { configurable: true, get: () => items.children.length * 20 },
+    });
+    popup.setElement(popupElement);
+    popup.registerContent({ menu, parent: null, element: content });
+    menu.open();
+
+    await vi.waitFor(() => expect(menu.input.current.status).toBe('idle'));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    expect(popupElement.style.getPropertyValue(MenuCSSVars.height)).toBe('20px');
+
+    items.append(document.createElement('button'));
+
+    await vi.waitFor(() => expect(popupElement.style.getPropertyValue(MenuCSSVars.height)).toBe('40px'));
+    expect(menu.input.current).toEqual({ active: true, status: 'idle' });
+
+    popup.destroy();
+    menu.destroy();
+  });
+
   it('includes the vertical scrollbar when sizing the popup', () => {
     const popupElement = document.createElement('div');
     const content = document.createElement('div');

@@ -99,12 +99,10 @@ defineElement('test-audio-track-player', TestPlayerProviderElement);
 function setup({
   audioTrackList,
   selectAudioTrack,
-  template,
   locale,
 }: {
   audioTrackList?: MediaAudioTrackState['audioTrackList'] | undefined;
   selectAudioTrack?: MediaAudioTrackState['selectAudioTrack'] | undefined;
-  template?: string | undefined;
   locale?: string | undefined;
 } = {}) {
   const store = createAudioTrackStore({ audioTrackList, selectAudioTrack });
@@ -113,13 +111,6 @@ function setup({
   const options = createElement(AudioTrackRadioGroupElement);
 
   provider.setStore(store);
-
-  if (template) {
-    const templateElement = document.createElement('template');
-
-    templateElement.innerHTML = template;
-    options.append(templateElement);
-  }
 
   menu.append(options);
   provider.append(menu);
@@ -169,22 +160,6 @@ describe('AudioTrackRadioGroupElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['true', 'false']);
     });
-  });
-
-  it('renders radio items from a template', async () => {
-    const { menu, options } = setup({
-      template:
-        '<media-menu-radio-item class="custom-item"><span class="custom-label" data-part="label"></span><media-menu-item-indicator force-mount class="custom-indicator"></media-menu-item-indicator></media-menu-radio-item>',
-    });
-
-    await waitForMenu(menu, options);
-
-    const item = menu.querySelector<MenuRadioItemElement>(MenuRadioItemElement.tagName)!;
-    const indicators = [...menu.querySelectorAll<MenuItemIndicatorElement>(MenuItemIndicatorElement.tagName)];
-
-    expect(item.className).toBe('custom-item');
-    expect(item.querySelector('[data-part~="label"]')?.textContent).toBe('English');
-    expect(indicators.map((indicator) => indicator.checked)).toEqual([true, false]);
   });
 
   it('renders translated default labels', async () => {

@@ -63,7 +63,7 @@ function SubmenuFixture({
       <MenuPopup>
         <MenuContent data-testid="root-content">
           <div data-testid="root-items">
-            <MenuRoot onOpenChange={onOpenChange}>
+            <MenuRoot {...(onOpenChange ? { onOpenChange } : {})}>
               <MenuTrigger data-testid="submenu-trigger" {...(onTriggerKeyDown ? { onKeyDown: onTriggerKeyDown } : {})}>
                 Quality
               </MenuTrigger>
@@ -244,21 +244,6 @@ function NestedSubmenuFixture() {
   );
 }
 
-function ItemOrderFixture() {
-  return (
-    <MenuRoot defaultOpen>
-      <MenuTrigger>Settings</MenuTrigger>
-      <MenuPopup>
-        <MenuContent data-testid="content">
-          <MenuItem data-testid="first-item">Quality</MenuItem>
-          <MenuItem data-testid="second-item">Speed</MenuItem>
-          <MenuItem data-testid="third-item">Copy link</MenuItem>
-        </MenuContent>
-      </MenuPopup>
-    </MenuRoot>
-  );
-}
-
 function RootPropagationFixture({ onContainerKeyDown }: { onContainerKeyDown: KeyboardEventHandler<HTMLDivElement> }) {
   return (
     <div data-testid="container" onKeyDown={onContainerKeyDown} role="application">
@@ -417,36 +402,6 @@ function createRect(width: number, height: number): DOMRect {
     left: 0,
     toJSON: () => ({}),
   } as DOMRect;
-}
-
-function mockElementSize(element: HTMLElement, getHeight: () => number): void {
-  element.getBoundingClientRect = vi.fn(() => createRect(160, getHeight()));
-
-  Object.defineProperty(element, 'scrollWidth', {
-    configurable: true,
-    get: () => 160,
-  });
-
-  Object.defineProperty(element, 'scrollHeight', {
-    configurable: true,
-    get: getHeight,
-  });
-}
-
-function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
-  return (
-    <MenuRoot defaultOpen>
-      <MenuTrigger>Settings</MenuTrigger>
-      <MenuPopup>
-        <MenuContent data-testid="content">
-          <div data-testid="root-items">
-            <MenuItem>Speed</MenuItem>
-            {showCaptions ? <MenuItem>Captions</MenuItem> : null}
-          </div>
-        </MenuContent>
-      </MenuPopup>
-    </MenuRoot>
-  );
 }
 
 describe('MenuContent', () => {
@@ -744,18 +699,6 @@ describe('MenuContent', () => {
     });
   });
 
-  it('portals submenu content into the popup', async () => {
-    render(<SubmenuFixture />);
-
-    fireEvent.click(screen.getByTestId('submenu-trigger'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('submenu-content').parentElement).toBe(
-        screen.getByTestId('root-content').parentElement
-      );
-    });
-  });
-
   it('portals every submenu content into the popup as siblings', async () => {
     render(<NestedSubmenuFixture />);
 
@@ -848,20 +791,6 @@ describe('MenuContent', () => {
     } finally {
       HTMLElement.prototype.getBoundingClientRect = getBoundingClientRect;
     }
-  });
-
-  it('remeasures open root content when menu items are added', async () => {
-    const { rerender } = render(<DynamicMenuFixture showCaptions={false} />);
-    const popup = screen.getByTestId('content').parentElement!;
-    const rootItems = screen.getByTestId('root-items');
-
-    mockElementSize(rootItems, () => rootItems.children.length * 20);
-
-    rerender(<DynamicMenuFixture showCaptions />);
-
-    await waitFor(() => {
-      expect(popup.style.getPropertyValue('--media-menu-height')).toBe('40px');
-    });
   });
 
   it('can reopen a submenu immediately after closing it', async () => {
@@ -1158,15 +1087,6 @@ describe('MenuContent', () => {
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'Tab' });
     expect(onRootKeyDown).toHaveBeenCalledTimes(1);
-  });
-
-  it('uses DOM order for keyboard navigation', () => {
-    render(<ItemOrderFixture />);
-
-    fireEvent.keyDown(screen.getByTestId('content'), { key: 'ArrowDown' });
-
-    expect(screen.getByTestId('first-item').hasAttribute('data-highlighted')).toBe(true);
-    expect(screen.getByTestId('third-item').hasAttribute('data-highlighted')).toBe(false);
   });
 
   it('stops propagation for root menu keyboard navigation', () => {

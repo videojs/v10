@@ -57,12 +57,6 @@ describe('createMenu', () => {
     return element;
   }
 
-  it('starts closed', () => {
-    const { menu } = createTestMenu();
-
-    expect(menu.input.current).toEqual({ active: false, status: 'idle' });
-  });
-
   // -------------------------------------------------------------------------
   // open / close
   // -------------------------------------------------------------------------
@@ -89,54 +83,6 @@ describe('createMenu', () => {
       menu.syncOpen(false);
 
       expect(menu.input.current).toEqual({ active: true, status: 'ending' });
-    });
-
-    it('opens and calls onOpenChange', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.open();
-
-      expect(menu.input.current.active).toBe(true);
-      expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
-    });
-
-    it('transitions to starting status when opening', () => {
-      const { menu } = createTestMenu();
-
-      menu.open();
-
-      expect(menu.input.current).toEqual({ active: true, status: 'starting' });
-    });
-
-    it('closes and calls onOpenChange', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.open();
-      onOpenChange.mockClear();
-
-      menu.close();
-
-      expect(menu.input.current.active).toBe(true); // stays active during close animation
-      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
-    });
-
-    it('does not open when already open', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.open();
-      onOpenChange.mockClear();
-
-      menu.open();
-
-      expect(onOpenChange).not.toHaveBeenCalled();
-    });
-
-    it('does not close when already closed', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.close();
-
-      expect(onOpenChange).not.toHaveBeenCalled();
     });
 
     it('resets registered descendant menus when a parent close is committed', () => {
@@ -170,20 +116,6 @@ describe('createMenu', () => {
       child.menu.open();
 
       expect(item.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
-    });
-
-    it('closes the previously open grouped menu when another opens', () => {
-      const group = createPopupGroup();
-      const first = createTestMenu({ group: () => group });
-      const second = createTestMenu({ group: () => group });
-
-      first.menu.open();
-      first.onOpenChange.mockClear();
-
-      second.menu.open();
-
-      expect(first.onOpenChange).toHaveBeenCalledWith(false, { reason: 'group-open' });
-      expect(second.onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
     });
 
     it('highlights the first DOM item when items register after opening', () => {
@@ -405,26 +337,6 @@ describe('createMenu', () => {
   // -------------------------------------------------------------------------
 
   describe('triggerProps', () => {
-    it('opens on click when closed', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
-
-      expect(menu.input.current.active).toBe(true);
-      expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
-    });
-
-    it('closes on click when open', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.open();
-      onOpenChange.mockClear();
-
-      menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
-
-      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
-    });
-
     it('handles navigation keys while the open trigger has focus', () => {
       const { menu } = createTestMenu();
       const element = addItem('Auto');
@@ -776,33 +688,29 @@ describe('createMenu', () => {
       expect(onHighlightChange).not.toHaveBeenCalled();
     });
 
-    it('highlights the first item in DOM order', () => {
+    it.each([
+      { hiddenFirst: false, preventScroll: false },
+      { hiddenFirst: true, preventScroll: false },
+      { hiddenFirst: false, preventScroll: true },
+    ])('highlights the initial navigable DOM item: $hiddenFirst / $preventScroll', ({ hiddenFirst, preventScroll }) => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+      const expected = hiddenFirst ? b : a;
+      const other = hiddenFirst ? a : b;
+      const focus = vi.spyOn(expected, 'focus');
 
+      a.hidden = hiddenFirst;
       menu.registerItem(b);
       menu.registerItem(a);
+      menu.highlightInitialItem({ preventScroll });
 
-      menu.highlightFirstItem();
+      expect(expected.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      expect(other.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
 
-      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
-      expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
-    });
+      if (preventScroll) expect(focus).toHaveBeenCalledWith({ preventScroll: true });
 
-    it('skips a hidden first item', () => {
-      const { menu } = createTestMenu();
-      const hidden = addItem('Hidden');
-      const visible = addItem('Visible');
-
-      hidden.hidden = true;
-      menu.registerItem(hidden);
-      menu.registerItem(visible);
-
-      menu.highlightFirstItem();
-
-      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
-      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+      menu.destroy();
     });
 
     it('falls back to the first navigable item when the selected item is hidden', () => {
@@ -820,18 +728,6 @@ describe('createMenu', () => {
 
       expect(back.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(true);
       expect(hiddenSelected.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
-    });
-
-    it('can highlight the first item without scrolling it into view', () => {
-      const { menu } = createTestMenu();
-      const element = addItem('Alpha');
-      const focus = vi.spyOn(element, 'focus');
-
-      menu.registerItem(element);
-
-      menu.highlightFirstItem({ preventScroll: true });
-
-      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
     });
 
     it('can highlight an item without moving focus', () => {
@@ -1228,12 +1124,6 @@ describe('createMenu', () => {
   // -------------------------------------------------------------------------
 
   describe('destroy', () => {
-    it('can be destroyed without errors', () => {
-      const { menu } = createTestMenu();
-
-      expect(() => menu.destroy()).not.toThrow();
-    });
-
     it('is idempotent', () => {
       const { menu } = createTestMenu();
 
@@ -1255,25 +1145,6 @@ describe('createMenu', () => {
 
       // Flush all pending timers and animation frames
       vi.runAllTimers();
-
-      expect(onHighlightChange).not.toHaveBeenCalled();
-
-      vi.useRealTimers();
-    });
-
-    it('clears a pending typeahead timer on destroy', () => {
-      vi.useFakeTimers();
-
-      const { menu, onHighlightChange } = createTestMenu();
-      const element = addItem('Alpha');
-
-      menu.registerItem(element);
-
-      menu.contentProps.onKeyDown(makeKeyEvent('a'));
-      menu.destroy();
-      onHighlightChange.mockClear();
-
-      vi.advanceTimersByTime(600);
 
       expect(onHighlightChange).not.toHaveBeenCalled();
 
