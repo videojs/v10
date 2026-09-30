@@ -403,7 +403,10 @@ describe('syncTextTracks', () => {
     const textTracksActor = createTextTracksActor(mediaElement);
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
-    const { state, reactor } = setup({ presentation }, { mediaElement, textTracksActor });
+    const { state, reactor } = setup(
+      { presentation, selectedTextTrackId: 'track-en' },
+      { mediaElement, textTracksActor }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { CueSegmentMeta } from '../text-tracks';
 import { createTextTracksActor } from '../text-tracks';
 
-function makeMediaElement(trackIds: string[]): HTMLMediaElement {
+async function makeMediaElement(trackIds: string[]): Promise<HTMLMediaElement> {
   const video = document.createElement('video');
 
   for (const id of trackIds) {
@@ -12,6 +12,9 @@ function makeMediaElement(trackIds: string[]): HTMLMediaElement {
     el.id = id;
     el.kind = 'subtitles';
     video.appendChild(el);
+    el.track.mode = 'hidden';
+
+    await vi.waitFor(() => expect(el.readyState).toBe(HTMLTrackElement.ERROR));
   }
 
   return video;
@@ -21,9 +24,9 @@ function meta(trackId: string, id: string, startTime = 0, duration = 10): CueSeg
   return { trackId, id, startTime, duration };
 }
 
-describe('TextTracksActor', () => {
-  it('starts with active status and empty context', () => {
-    const video = makeMediaElement(['track-en']);
+describe('createTextTracksActor', () => {
+  it('starts with active status and empty context', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
 
     expect(actor.snapshot.get().value).toBe('active');
@@ -31,8 +34,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
-  it('adds cues to the correct TextTrack', () => {
-    const video = makeMediaElement(['track-en']);
+  it('adds cues to the correct TextTrack', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -43,8 +46,37 @@ describe('TextTracksActor', () => {
     expect(textTrack.cues?.length).toBe(1);
   });
 
-  it('records added cues in snapshot context', () => {
-    const video = makeMediaElement(['track-en']);
+  it('preserves cues sent before a srcless native track settles', async () => {
+    const video = document.createElement('video');
+    const el = document.createElement('track');
+
+    el.id = 'track-en';
+    el.kind = 'subtitles';
+    video.appendChild(el);
+    document.body.appendChild(video);
+    el.track.mode = 'showing';
+
+    const actor = createTextTracksActor(video);
+
+    try {
+      expect(el.hasAttribute('src')).toBe(false);
+      expect(el.readyState).toBe(HTMLTrackElement.NONE);
+
+      actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
+
+      await vi.waitFor(() => expect(el.readyState).toBe(HTMLTrackElement.ERROR));
+
+      // SAFETY: This slot only contains the VTTCue sent to the actor above.
+      expect(Array.from(el.track.cues ?? [], (cue) => (cue as VTTCue).text)).toEqual(['Hello']);
+      expect(actor.snapshot.get().context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
+    } finally {
+      actor.destroy();
+      video.remove();
+    }
+  });
+
+  it('records added cues in snapshot context', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -63,8 +95,8 @@ describe('TextTracksActor', () => {
     expect(loaded![1]).toMatchObject({ startTime: 2, endTime: 4, text: 'World' });
   });
 
-  it('records segment in snapshot context', () => {
-    const video = makeMediaElement(['track-en']);
+  it('records segment in snapshot context', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -79,8 +111,8 @@ describe('TextTracksActor', () => {
     ]);
   });
 
-  it('deduplicates cues by startTime + endTime + text', () => {
-    const video = makeMediaElement(['track-en']);
+  it('deduplicates cues by startTime + endTime + text', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -93,8 +125,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.loaded['track-en']).toHaveLength(1);
   });
 
-  it('deduplicates segments by id', () => {
-    const video = makeMediaElement(['track-en']);
+  it('deduplicates segments by id', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -106,8 +138,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments['track-en']).toHaveLength(1);
   });
 
-  it('does not update snapshot when both cues and segment are already recorded', () => {
-    const video = makeMediaElement(['track-en']);
+  it('does not update snapshot when both cues and segment are already recorded', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -121,8 +153,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get()).toBe(snapshotAfterFirst);
   });
 
-  it('does not deduplicate cues with different text at the same time range', () => {
-    const video = makeMediaElement(['track-en']);
+  it('does not deduplicate cues with different text at the same time range', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -134,8 +166,8 @@ describe('TextTracksActor', () => {
     expect(textTrack.cues?.length).toBe(2);
   });
 
-  it('tracks cues and segments independently per track ID', () => {
-    const video = makeMediaElement(['track-en', 'track-es']);
+  it('tracks cues and segments independently per track ID', async () => {
+    const video = await makeMediaElement(['track-en', 'track-es']);
     const actor = createTextTracksActor(video);
 
     for (const t of Array.from(video.textTracks)) t.mode = 'hidden';
@@ -153,8 +185,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments['track-es']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
   });
 
-  it('is a no-op when trackId is not found in textTracks', () => {
-    const video = makeMediaElement(['track-en']);
+  it('is a no-op when trackId is not found in textTracks', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
 
     actor.send({ type: 'add-cues', meta: meta('nonexistent', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -163,8 +195,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
-  it('transitions to destroyed on destroy()', () => {
-    const video = makeMediaElement(['track-en']);
+  it('transitions to destroyed on destroy()', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
 
     actor.destroy();
@@ -172,8 +204,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().value).toBe('destroyed');
   });
 
-  it('ignores send() after destroy()', () => {
-    const video = makeMediaElement(['track-en']);
+  it('ignores send() after destroy()', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -187,8 +219,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
-  it("'clear' message wipes loaded + segments context", () => {
-    const video = makeMediaElement(['track-en']);
+  it("'clear' message wipes loaded + segments context", async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -204,13 +236,13 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
-  it("after 'clear', a reused trackId can re-load segments (regression: stale cache across source resets)", () => {
+  it("after 'clear', a reused trackId can re-load segments (regression: stale cache across source resets)", async () => {
     // The actor's lifecycle is bound to mediaElement, so its cache
     // survives source resets. Without a clear on source reset,
     // `getSegmentsToLoad` (which reads the actor's `segments` snapshot)
     // would treat the new source's segments as already-buffered and
     // skip loading them.
-    const video = makeMediaElement(['track-en']);
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
@@ -231,8 +263,8 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.loaded['track-en']?.[0]?.text).toBe('B0');
   });
 
-  it('snapshot is reactive — updates are tracked via signal', () => {
-    const video = makeMediaElement(['track-en']);
+  it('snapshot is reactive — updates are tracked via signal', async () => {
+    const video = await makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
 
