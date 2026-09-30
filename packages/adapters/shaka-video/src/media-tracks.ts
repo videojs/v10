@@ -3,6 +3,7 @@ import type {
   MediaVideoRenditionCapability,
   MediaVideoTrackCapability,
 } from '@videojs/media';
+import type { AudioTrack, VideoRendition } from '@videojs/media/media-tracks';
 import type { Constructor } from '@videojs/utils/types';
 import type shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
 
@@ -79,7 +80,20 @@ export function ShakaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>
 
       const videoTracks = engine.getVideoTracks();
       const key = videoTracksKey(videoTracks);
-      if (key === this.#videoTracksKey) return;
+
+      if (key === this.#videoTracksKey) {
+        // Refresh metadata without rebuilding the list and losing a pinned rendition.
+        for (const rendition of this.videoRenditions) {
+          const track = videoTracks[Number(rendition.id)];
+          if (!track) continue;
+
+          // SAFETY: MediaTracksMixin created these renditions with mutable metadata.
+          (rendition as VideoRendition).frameRate = track.frameRate ?? undefined;
+        }
+
+        this.#onAudioTracksChanged();
+        return;
+      }
 
       this.#videoTracksKey = key;
 
@@ -121,7 +135,18 @@ export function ShakaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>
 
       const audioTracks = engine.getAudioTracks();
       const key = audioTracksKey(audioTracks);
-      if (key === this.#audioTracksKey) return;
+
+      if (key === this.#audioTracksKey) {
+        for (const audioTrack of this.audioTracks) {
+          const track = audioTracks[Number(audioTrack.id)];
+          if (!track) continue;
+
+          // SAFETY: MediaTracksMixin created these audio tracks with mutable metadata.
+          (audioTrack as AudioTrack).kind = track.primary ? 'main' : 'alternative';
+        }
+
+        return;
+      }
 
       this.#audioTracksKey = key;
 
