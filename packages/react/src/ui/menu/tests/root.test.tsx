@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -52,7 +52,9 @@ function MountedOptionMenuFixture() {
 
 function SubmenuFixture({
   onTriggerKeyDown,
+  onOpenChange,
 }: {
+  onOpenChange?: MenuRoot.Props['onOpenChange'];
   onTriggerKeyDown?: KeyboardEventHandler<HTMLButtonElement | HTMLDivElement>;
 }) {
   return (
@@ -61,7 +63,7 @@ function SubmenuFixture({
       <MenuPopup>
         <MenuContent data-testid="root-content">
           <div data-testid="root-items">
-            <MenuRoot>
+            <MenuRoot onOpenChange={onOpenChange}>
               <MenuTrigger data-testid="submenu-trigger" {...(onTriggerKeyDown ? { onKeyDown: onTriggerKeyDown } : {})}>
                 Quality
               </MenuTrigger>
@@ -120,7 +122,9 @@ function SubmenuKeyboardFixture() {
 
 function SubmenuPreventDefaultFixture({
   onSubmenuKeyDown,
+  onOpenChange,
 }: {
+  onOpenChange: NonNullable<MenuRoot.Props['onOpenChange']>;
   onSubmenuKeyDown: KeyboardEventHandler<HTMLDivElement>;
 }) {
   return (
@@ -129,7 +133,7 @@ function SubmenuPreventDefaultFixture({
       <MenuPopup>
         <MenuContent data-testid="root-content">
           <div data-testid="root-items">
-            <MenuRoot>
+            <MenuRoot onOpenChange={onOpenChange}>
               <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
               <MenuContent data-testid="submenu-content" onKeyDown={onSubmenuKeyDown}>
                 <MenuItem data-testid="submenu-item">Auto</MenuItem>
@@ -861,20 +865,33 @@ describe('MenuContent', () => {
   });
 
   it('can reopen a submenu immediately after closing it', async () => {
-    render(<SubmenuFixture />);
+    const onOpenChange = vi.fn();
 
+    render(<SubmenuFixture onOpenChange={onOpenChange} />);
     fireEvent.click(screen.getByTestId('submenu-trigger'));
-    await waitFor(() => {
-      expect(screen.queryByTestId('submenu-content')).not.toBeNull();
-    });
+    await waitFor(() => expect(screen.getByTestId('submenu-content').hasAttribute('data-starting-style')).toBe(false));
 
     fireEvent.click(screen.getByTestId('submenu-back'));
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(true);
+    onOpenChange.mockClear();
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('root-content').hasAttribute('inert')).toBe(true);
-      expect(screen.getByTestId('submenu-content').hasAttribute('hidden')).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(false);
+
+    // Drain more frames than the cancelled close needs, then check the settled page.
+    await act(async () => {
+      for (let frame = 0; frame < 6; frame++) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      }
     });
+
+    expect(screen.getByTestId('submenu-trigger').getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-open')).toBe(true);
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(false);
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-starting-style')).toBe(false);
+    expect(screen.getByTestId('submenu-content').hasAttribute('inert')).toBe(false);
+    expect(screen.getByTestId('root-content').hasAttribute('inert')).toBe(true);
   });
 
   it('resets an open submenu when its parent menu closes', async () => {
@@ -1099,18 +1116,30 @@ describe('MenuContent', () => {
 
   it('honors preventDefault from submenu key handlers', async () => {
     const onSubmenuKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLDivElement>) => event.preventDefault());
+    const onOpenChange = vi.fn();
 
-    render(<SubmenuPreventDefaultFixture onSubmenuKeyDown={onSubmenuKeyDown} />);
-
+    render(<SubmenuPreventDefaultFixture onSubmenuKeyDown={onSubmenuKeyDown} onOpenChange={onOpenChange} />);
     fireEvent.click(screen.getByTestId('submenu-trigger'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('root-content').hasAttribute('inert')).toBe(true);
-    });
+    await waitFor(() => expect(screen.getByTestId('submenu-content').hasAttribute('data-starting-style')).toBe(false));
+    onOpenChange.mockClear();
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
 
+    expect(onSubmenuKeyDown).toHaveBeenCalledOnce();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await act(async () => {
+      for (let frame = 0; frame < 3; frame++) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      }
+    });
     expect(screen.getByTestId('root-content').hasAttribute('inert')).toBe(true);
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(false);
+
+    onSubmenuKeyDown.mockImplementation(() => {});
+    fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'escape' }));
+    await waitFor(() => expect(screen.queryByTestId('submenu-content')).toBeNull());
+    expect(screen.getByTestId('root-content').hasAttribute('inert')).toBe(false);
   });
 
   it('only stops propagation for submenu-owned keyboard events', async () => {

@@ -56,12 +56,29 @@ describe('createMenuPopup', () => {
 
     childMenu.open();
     popup.sync();
+    expect(rootElement.getAttribute('aria-hidden')).toBe('true');
+    expect(rootElement.hasAttribute('inert')).toBe(true);
     childMenu.close();
+    popup.sync();
+    expect(childMenu.input.current.status).toBe('ending');
+    expect(rootElement.hasAttribute(MenuContentDataAttrs.childOpen)).toBe(true);
+
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver((mutations) => records.push(...mutations));
+
+    observer.observe(rootElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-child-open'] });
     childMenu.open();
     popup.sync();
 
     await vi.waitFor(() => expect(childMenu.input.current.status).toBe('idle'));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    records.push(...observer.takeRecords());
+    observer.disconnect();
+
+    // A removal followed by a re-add has a null oldValue on the re-add record.
+    expect(records.every((record) => record.oldValue !== null)).toBe(true);
     expect(rootElement.hasAttribute(MenuContentDataAttrs.childOpen)).toBe(true);
+    expect(childMenu.input.current.active).toBe(true);
 
     popup.destroy();
     rootMenu.destroy();

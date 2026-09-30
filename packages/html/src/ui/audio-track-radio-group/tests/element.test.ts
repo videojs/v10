@@ -208,6 +208,7 @@ describe('AudioTrackRadioGroupElement', () => {
   });
 
   it('keeps authored track labels literal', async () => {
+    registerI18n('x-test-audio', { Default: 'Standard', 'menu.audio': 'Sound' });
     const { menu, options } = setup({
       locale: 'x-test-audio',
       audioTrackList: [
@@ -219,6 +220,7 @@ describe('AudioTrackRadioGroupElement', () => {
     await waitForMenu(menu, options);
 
     await waitForAssertion(() => {
+      expect(options.getAttribute('aria-label')).toBe('Sound');
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
 
       expect(items.map((item) => item.textContent)).toEqual(['Default', 'English']);
