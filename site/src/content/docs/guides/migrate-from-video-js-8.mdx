@@ -74,7 +74,7 @@ Apply these changes to your existing markup:
 - **No `class="video-js"`, no `data-setup`, no `videojs()` call.** The custom elements register themselves and wire up when the browser upgrades them. Nothing scans the page looking for players.
 - **No `controls` attribute.** The skin *is* the controls. Including a skin is how you ask for them, which is also how you opt out: leave it out and you get a player with no UI.
 - **The poster is player metadata, not a media attribute.** Set `poster` on `<video-player>`, and the skin, not the browser, controls how it appears. For more advanced control (like supplying your own image element), see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
-- **Your `<track>` elements don't change.** Captions, subtitles, chapters, and thumbnails are all still tracks, and the skin shows the matching controls when it finds them.
+- **Keep your existing tracks.** Captions and subtitles remain native tracks; the skin supplies their controls.
 
 For the Minimal skin, replace `<video-skin>` with `<video-minimal-skin>`. Load `video-minimal.js` from the CDN, or replace the bundler skin import with `@videojs/html/video/minimal-skin`.
 
@@ -148,6 +148,8 @@ Use `'use client'` at the client boundary in frameworks with React Server Compon
 
 </FrameworkCase>
 
+Add `default` to chapter tracks and to `kind="metadata" label="thumbnails"` tracks in HTML or React so the browser loads their cues. Keep their existing URLs.
+
 ## Three pieces instead of one
 
 Use these three pieces when deciding where a v8 option belongs:
@@ -186,9 +188,11 @@ Move native media settings onto the media component.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
+These prop names apply to video-backed media. YouTube and Vimeo use `autoplay` and render an iframe rather than an `HTMLVideoElement`; call media methods through `useMedia()` inside the player.
+
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `autoplay`, `playsinline`, `crossorigin` | `autoPlay`, `playsInline`, `crossOrigin` on your media |
+| `autoplay`, `playsinline`, `crossorigin` | `autoPlay`, `playsInline`, `crossOrigin` on video-backed media |
 | `muted`, `loop`, `preload` | the same props on your media |
 | `sources: [{ src, type }]` | `src`, or `<source>` children for progressive fallback |
 | `disablePictureInPicture` | `disablePictureInPicture` on your media |
@@ -287,7 +291,8 @@ Choose a media component for each format or provider your v8 techs handled. Chec
 | HLS | VHS | <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink> |
 | HLS with fMP4/CMAF segments | VHS | <DocsLink slug="reference/components/hls-video">SPF HLS video</DocsLink>, after checking its limitations |
 | HLS, native only | native HLS without VHS fallback | <DocsLink slug="reference/components/native-hls-video">native HLS video</DocsLink> |
-| DASH | VHS | <DocsLink slug="reference/components/dash-video">DASH video</DocsLink> |
+| DASH without DRM | VHS | <DocsLink slug="reference/components/dash-video">DASH video</DocsLink> |
+| DASH with DRM | VHS and `videojs-contrib-eme` | <DocsLink slug="reference/components/shaka-video">Shaka video</DocsLink>; see [DRM](#drm) |
 | YouTube, Vimeo | a tech plugin | the YouTube and Vimeo components |
 | Mux | a tech plugin | <DocsLink slug="reference/components/mux-video">Mux Video</DocsLink> |
 
@@ -347,7 +352,9 @@ npm install @videojs/react @videojs/hlsjs-video
 ```
 
 ```tsx
+import '@videojs/react/video/skin.css';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
 
 <VideoPlayer>
   <VideoSkin>
@@ -365,7 +372,7 @@ In v8, customizing meant three different techniques depending on what you wanted
 
 ### Level 1: pick a skin
 
-The default skin is a modern, frosted look. The minimal skin is closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
+The Default skin groups settings in a menu. The Minimal skin uses a compact control bar, closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
 
 Both include AirPlay and Cast buttons. Follow <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast extension.
 
@@ -425,9 +432,55 @@ For a control bar built from scratch, follow <DocsLink slug="guides/ui-component
 v10 has no `videojs.registerPlugin`, `player.myPlugin()`, or plugin lifecycle. Audit each plugin and plan its replacement:
 
 - **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace them with the matching [media component](#techs-become-media-components).
+- **DRM** (`videojs-contrib-eme`, `keySystems`). Configure the media source's license servers; see [DRM](#drm). Plugin callbacks and custom license requests require engine-specific migration.
 - **UI additions** (extra buttons, overlays, custom control bars). Rebuild them in local skin source or with <DocsLink slug="guides/build-your-own-component">your own component</DocsLink>.
 - **Workarounds** for v8 limitations. Check whether the limitation still exists before porting the workaround.
 - **Missing features** such as ads and playlists. Check [Known gaps](#known-gaps) before scheduling the migration. An ads-dependent player has no built-in replacement today.
+
+### DRM
+
+For protected DASH, use Shaka video. The dash.js component has no `source.drm` input. For protected HLS, choose an engine that supports your key systems and browsers; see <DocsLink slug="guides/media-sources" anchor="drm-protected-sources">DRM protected sources</DocsLink>.
+
+Move license URLs from v8's `keySystems` configuration to `source.drm`, keyed by EME key system ID. FairPlay also needs `serverCertificateUrl` unless its CDM is pre-provisioned. Custom `getLicense` callbacks and license authentication do not transfer automatically; preserve them through the chosen engine's APIs and verify playback before switching.
+
+The examples configure Widevine. Replace both URL placeholders and add every key system your supported browsers need.
+
+<FrameworkCase frameworks={["html"]}>
+Install `@videojs/shaka-video` and import `@videojs/html/media/shaka-video` with a bundler. For the CDN, add `{{VJS10_CDN_BASE}}/media/shaka-video.js`. Replace the media inside your player and skin with:
+
+```html
+<shaka-video id="protected-media"></shaka-video>
+```
+
+Run this module after the player markup:
+
+```js
+await customElements.whenDefined('shaka-video');
+document.querySelector('#protected-media').source = {
+  src: 'YOUR_DASH_MANIFEST_URL',
+  drm: {
+    'com.widevine.alpha': { licenseUrl: 'YOUR_WIDEVINE_LICENSE_URL' },
+  },
+};
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Install `@videojs/shaka-video` and replace the media inside your player and skin:
+
+```tsx
+import { ShakaVideo } from '@videojs/react/media/shaka-video';
+
+<ShakaVideo
+  source={{
+    src: 'YOUR_DASH_MANIFEST_URL',
+    drm: {
+      'com.widevine.alpha': { licenseUrl: 'YOUR_WIDEVINE_LICENSE_URL' },
+    },
+  }}
+/>
+```
+</FrameworkCase>
 
 ## Read and control the player
 
@@ -464,7 +517,20 @@ import { PlayerController, playerContext, ReactiveElement, selectTime } from '@v
 
 class MyElapsed extends ReactiveElement {
   #time = new PlayerController(this, playerContext, selectTime);
+
+  update(changed) {
+    super.update(changed);
+    this.textContent = `Elapsed: ${(this.#time.value?.currentTime ?? 0).toFixed(1)} s`;
+  }
 }
+
+customElements.define('my-elapsed', MyElapsed);
+```
+
+Render it inside your existing `<video-player>` so it can read that player's state:
+
+```html
+<my-elapsed></my-elapsed>
 ```
 
 </FrameworkCase>
@@ -549,7 +615,7 @@ Everything the table describes as "the player's" lives on the player element's s
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, `useMedia` returns the Video.js media object.
+For video-backed media, a `ref` reaches the rendered `HTMLVideoElement`. YouTube and Vimeo render iframes, so their refs cannot call media methods; use `useMedia()` inside the player for those calls. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, `useMedia` returns the Video.js media object.
 </FrameworkCase>
 
 `setVolume(value)` also unmutes when `value` is above zero. Use `media.volume = value` to preserve the current mute state.
@@ -585,10 +651,16 @@ See <DocsLink slug="guides/internationalization">Internationalize the player</Do
 To migrate `language: 'ja'`, wrap your player in <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> with `locale="ja"`. To follow `<html lang>`, omit `locale`. For a nearer `lang` on a player wrapper, pass its ref as `langRootRef`. To override individual strings, pass `translations`:
 
 ```tsx
+import '@videojs/react/video/skin.css';
 import { I18nProvider } from '@videojs/react/i18n';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
 
 <I18nProvider locale="en" translations={{ buttons: { play: 'Start video' } }}>
-  {/* … */}
+  <VideoPlayer>
+    <VideoSkin>
+      <Video src="/video.mp4" playsInline />
+    </VideoSkin>
+  </VideoPlayer>
 </I18nProvider>
 ```
 
@@ -634,6 +706,8 @@ For audio, use the audio or live audio preset. For muted video without controls,
 
 You get `targetLiveWindow` and `liveEdgeStart` in state, plus a live button that jumps to the live edge. The live preset does not include `streamType`; add the stream type feature to a custom player when you need it. v8's `liveTracker` tuning has no equivalent ([#1730](https://github.com/videojs/v10/issues/1730)).
 
+The live skins have no time slider. To preserve DVR scrubbing, add one to custom UI or installed skin source; follow <DocsLink slug="guides/live-streams" anchor="dvr-let-users-scrub-back">the DVR setup</DocsLink>.
+
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need an omitted feature on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
@@ -657,6 +731,8 @@ v8 put a handful of utilities on the `videojs` global for anyone building a cust
 | `videojs.obj.merge(a, b)` | No equivalent deep merge. Keep a deep-merge implementation if your configuration needs recursive merging. |
 
 For a shallow merge where `b` overrides `a`, use `{ ...a, ...b }`.
+
+Throttle timing changes: v8 drops calls within the interval and schedules no trailing call. The v10 helper invokes the latest call on the trailing edge by default; `{ leading: true }` also invokes the first call immediately. Keep the old helper if your integration depends on its exact timing.
 
 Use these utilities when extending the player. For example, `formatTime` is the exact digital-clock formatting the packaged skins use for their own time displays, so a custom one will match.
 
@@ -692,7 +768,7 @@ Check these limitations against your required features:
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
 - Player preferences such as volume, captions language, speed, and quality are not persisted automatically ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423). For application-managed persistence, follow <DocsLink slug="guides/user-preferences">Remember user preferences</DocsLink>.
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the SPF HLS component deliberately exposes few of them.
-- Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
+- Chapters render in the time slider from a default `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). The common `inactivityTimeout: 0` case is covered by `visibility="always"` on the controls component in a custom layout or a skin layout in your project.
 - No full-window fullscreen fallback. Test fullscreen on your supported browsers; see <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
 - Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality; picking renditions by resolution won't be added ([#1415](https://github.com/videojs/v10/issues/1415)).
