@@ -137,7 +137,7 @@ LiveButton treats playback as live when the playhead is no more than five second
 
 ## Availability and constraints
 
-- `liveEdgeStart` and `targetLiveWindow` require a live-capable media element, such as the hls.js-based media or SPF's HLS media. A plain `<video>` can report a live `streamType` from its duration, but its live-window values stay `NaN`.
+- `liveEdgeStart` and `targetLiveWindow` require media that implements the live capability. Examples include <DocsLink slug="reference/components/hlsjs-video">hls.js video</DocsLink>, <DocsLink slug="reference/components/hls-video">SPF HLS video</DocsLink>, <DocsLink slug="reference/components/native-hls-video">native HLS video</DocsLink>, and <DocsLink slug="reference/components/shaka-video">Shaka video</DocsLink>. Native HLS video requires browser HLS support. A plain `<video>` can report a live `streamType` from its duration, but its live-window values stay `NaN`.
 - Live playback drifts behind the edge when the network stalls or the tab is backgrounded. Always give users a path back to the edge.
 - Both sliding live windows and growing event histories can support seeking. Check `seekable` for the available range. The built-in time slider starts at zero, so use it only while the seekable history starts at zero; a moving start requires a custom slider.
 - `liveVideoFeatures` omits playback rate control. Add it explicitly if your DVR UI needs it.
