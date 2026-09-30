@@ -739,6 +739,8 @@ http://example.com/audio-seg1.m4s
     globalThis.fetch = mockFetch;
 
     const engine = createHlsVideoEngine();
+
+    expect(engine.state.segmentLoadingBlocked.get()).toBeUndefined();
     const mediaElement = document.createElement('video');
 
     mediaElement.preload = 'auto';
@@ -802,7 +804,7 @@ http://example.com/audio-seg1.m4s
       { timeout: 5000 }
     );
 
-    engine.destroy();
+    await engine.destroy();
   });
 
   it('cleanly replaces source in place via state.presentation overwrite', async () => {

@@ -4,6 +4,7 @@ import {
   SVTA_BAD_LICENSE_REQUEST,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
   SVTA_DRM_LICENSE_RESPONSE_REJECTED,
+  SVTA_DRM_SESSION_ERROR,
   SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
   SVTA_LICENSE_EXPIRED,
   type SvtaError,
@@ -246,6 +247,18 @@ describe('observeKeyStatuses', () => {
 
     observeKeyStatuses(session, 'com.widevine.alpha', (error) => reports.push(error), new AbortController().signal);
 
+    const quietStatuses: MediaKeyStatus[] = [
+      'usable',
+      'output-downscaled',
+      'released',
+      'status-pending',
+      'usable-in-future',
+    ];
+
+    quietStatuses.forEach((status, i) => session.keyStatuses.set(new Uint8Array([0x10 + i]), status));
+    session.dispatchEvent(new Event('keystatuschange'));
+    expect(reports).toEqual([]);
+
     session.keyStatuses.set(keyId, 'expired');
     session.dispatchEvent(new Event('keystatuschange'));
     session.dispatchEvent(new Event('keystatuschange'));
@@ -255,6 +268,7 @@ describe('observeKeyStatuses', () => {
     session.dispatchEvent(new Event('keystatuschange'));
     session.dispatchEvent(new Event('keystatuschange'));
     session.keyStatuses.set(keyId, 'output-restricted');
+    session.keyStatuses.set(new Uint8Array([0x02]), 'internal-error');
     session.dispatchEvent(new Event('keystatuschange'));
 
     expect(reports).toEqual([
@@ -263,6 +277,10 @@ describe('observeKeyStatuses', () => {
       {
         code: SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
         data: { keySystem: 'com.widevine.alpha', status: 'output-restricted', keyId: 'abcd' },
+      },
+      {
+        code: SVTA_DRM_SESSION_ERROR,
+        data: { keySystem: 'com.widevine.alpha', status: 'internal-error', keyId: '02' },
       },
     ]);
   });
