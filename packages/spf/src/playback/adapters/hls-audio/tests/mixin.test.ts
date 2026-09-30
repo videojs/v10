@@ -226,6 +226,34 @@ describe('HlsAudioAdapterCore', () => {
   // play() — WHATWG §4.8.11.8
   // ---------------------------------------------------------------------------
   describe('play()', () => {
+    it.each(['src change', 'detach', 'destroy'] as const)('cancels a pending play retry on %s', async (action) => {
+      const media = new HlsAudioAdapterCore();
+      const el = document.createElement('audio');
+      const play = vi
+        .spyOn(el, 'play')
+        .mockRejectedValueOnce(new Error('no supported sources'))
+        .mockResolvedValue(undefined);
+
+      try {
+        media.attach(el);
+        media.src = 'https://example.com/v1.m3u8';
+        media.play().catch(() => {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(1);
+
+        if (action === 'src change') media.src = 'https://example.com/v2.m3u8';
+        else if (action === 'detach') media.detach();
+        else media.destroy();
+
+        el.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
+        expect(play).toHaveBeenCalledTimes(1);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
+    });
+
     it('returns a Promise', () => {
       const media = new HlsAudioAdapterCore();
 
@@ -485,13 +513,20 @@ describe('HlsAudioAdapterCore', () => {
 
     it('stops promoting conditions after destroy', async () => {
       const media = new TestAdapter();
+      const fired: Event[] = [];
+      const destroy = vi.spyOn(media.engine, 'destroy');
 
+      media.addEventListener('error', (event) => fired.push(event));
       media.destroy();
+      await destroy.mock.results[0]!.value;
 
+      // Write after engine cleanup so clearing its signals cannot hide a live effect.
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }]);
       await flush();
 
+      expect(fired).toHaveLength(0);
       expect(media.error).toBeNull();
+      destroy.mockRestore();
     });
   });
 });

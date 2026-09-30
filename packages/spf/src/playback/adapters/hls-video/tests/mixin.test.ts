@@ -229,17 +229,27 @@ describe('HlsVideoAdapterCore', () => {
     it('cancels pending play listener when src changes', async () => {
       const media = new HlsVideoAdapterCore();
       const el = document.createElement('video');
+      const play = vi
+        .spyOn(el, 'play')
+        .mockRejectedValueOnce(new Error('no supported sources'))
+        .mockResolvedValue(undefined);
 
-      media.attach(el);
-      media.src = 'https://example.com/v1.m3u8';
-      el.play = () => Promise.reject(new Error('no supported sources'));
-      media.play().catch(() => {});
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      try {
+        media.attach(el);
+        media.src = 'https://example.com/v1.m3u8';
+        media.play().catch(() => {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(1);
 
-      const spy = vi.spyOn(el, 'removeEventListener');
+        media.src = 'https://example.com/v2.m3u8';
+        el.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
 
-      media.src = 'https://example.com/v2.m3u8';
-      expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
+        expect(play).toHaveBeenCalledTimes(1);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
     });
 
     it('sets mediaElement in owners when attached', () => {
@@ -371,39 +381,53 @@ describe('HlsVideoAdapterCore', () => {
     it('removes the pending loadstart listener on detach', async () => {
       const media = new HlsVideoAdapterCore();
       const el = document.createElement('video');
+      const play = vi
+        .spyOn(el, 'play')
+        .mockRejectedValueOnce(new Error('no supported sources'))
+        .mockResolvedValue(undefined);
 
-      media.attach(el);
-      media.src = 'https://example.com/v.m3u8';
+      try {
+        media.attach(el);
+        media.src = 'https://example.com/v1.m3u8';
+        media.play().catch(() => {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(1);
 
-      el.play = () => Promise.reject(new Error('no supported sources'));
-      media.play().catch(() => {});
+        media.detach();
+        el.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-      const spy = vi.spyOn(el, 'removeEventListener');
-
-      media.detach();
-
-      expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
+        expect(play).toHaveBeenCalledTimes(1);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
     });
 
     it('removes the pending loadstart listener on destroy', async () => {
       const media = new HlsVideoAdapterCore();
       const el = document.createElement('video');
+      const play = vi
+        .spyOn(el, 'play')
+        .mockRejectedValueOnce(new Error('no supported sources'))
+        .mockResolvedValue(undefined);
 
-      media.attach(el);
-      media.src = 'https://example.com/v.m3u8';
+      try {
+        media.attach(el);
+        media.src = 'https://example.com/v1.m3u8';
+        media.play().catch(() => {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(1);
 
-      el.play = () => Promise.reject(new Error('no supported sources'));
-      media.play().catch(() => {});
+        media.destroy();
+        el.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-      const spy = vi.spyOn(el, 'removeEventListener');
-
-      media.destroy();
-
-      expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
+        expect(play).toHaveBeenCalledTimes(1);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
     });
 
     // TODO: Add integration tests with a real HLS stream once test fixtures are
@@ -440,8 +464,8 @@ describe('HlsVideoAdapterCore', () => {
 
       media.preload = 'auto';
       media.preload = '';
-      // '' only clears #preload so the next engine recreation won't re-apply
-      // an explicit value — it does not patch the current engine state.
+      // Clearing the IDL mirror leaves the recycled engine's loading policy intact.
+      expect(media.preload).toBe('');
       expect(media.engine.state.preload.get()).toBe('auto');
     });
 
@@ -874,6 +898,24 @@ describe('HlsVideoAdapterCore', () => {
 
       expect(media.error).toBeNull();
       media.destroy();
+    });
+
+    it('stops promoting conditions after destroy', async () => {
+      const media = new TestAdapter();
+      const fired: Event[] = [];
+      const destroy = vi.spyOn(media.engine, 'destroy');
+
+      media.addEventListener('error', (event) => fired.push(event));
+      media.destroy();
+      await destroy.mock.results[0]!.value;
+
+      // Write after engine cleanup so clearing its signals cannot hide a live effect.
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(fired).toHaveLength(0);
+      expect(media.error).toBeNull();
+      destroy.mockRestore();
     });
 
     it('surfaces a reported fatal condition as an ErrorLike and fires error', async () => {

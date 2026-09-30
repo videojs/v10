@@ -168,9 +168,15 @@ describe('HlsBackgroundVideoAdapterCore', () => {
       const next = document.createElement('video');
 
       next.loop = false;
+      next.muted = false;
+      next.autoplay = false;
+      next.preload = 'none';
       media.attach(next);
 
       expect(next.loop).toBe(true);
+      expect(next.muted).toBe(true);
+      expect(next.autoplay).toBe(true);
+      expect(next.preload).toBe('auto');
     });
 
     it('leaves the element alone on a src change', () => {
@@ -291,6 +297,24 @@ describe('HlsBackgroundVideoAdapterCore', () => {
 
       expect(media.error).toBeNull();
       media.destroy();
+    });
+
+    it('stops promoting conditions after destroy', async () => {
+      const media = new TestAdapter();
+      const fired: Event[] = [];
+      const destroy = vi.spyOn(media.engine, 'destroy');
+
+      media.addEventListener('error', (event) => fired.push(event));
+      media.destroy();
+      await destroy.mock.results[0]!.value;
+
+      // Write after engine cleanup so clearing its signals cannot hide a live effect.
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(fired).toHaveLength(0);
+      expect(media.error).toBeNull();
+      destroy.mockRestore();
     });
 
     it('surfaces a reported fatal condition and fires error', async () => {
@@ -462,6 +486,34 @@ describe('HlsBackgroundVideoAdapterCore', () => {
   });
 
   describe('play()', () => {
+    it.each(['src change', 'detach', 'destroy'] as const)('cancels a pending play retry on %s', async (action) => {
+      const media = new HlsBackgroundVideoAdapterCore();
+      const el = document.createElement('video');
+      const play = vi
+        .spyOn(el, 'play')
+        .mockRejectedValueOnce(new Error('no supported sources'))
+        .mockResolvedValue(undefined);
+
+      try {
+        media.attach(el);
+        media.src = 'https://example.com/v1.m3u8';
+        media.play().catch(() => {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(1);
+
+        if (action === 'src change') media.src = 'https://example.com/v2.m3u8';
+        else if (action === 'detach') media.detach();
+        else media.destroy();
+
+        el.dispatchEvent(new Event('loadstart'));
+        await Promise.resolve();
+        expect(play).toHaveBeenCalledTimes(1);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
+    });
+
     it('returns a Promise', () => {
       const media = new HlsBackgroundVideoAdapterCore();
 
@@ -470,6 +522,30 @@ describe('HlsBackgroundVideoAdapterCore', () => {
 
       expect(result).toBeInstanceOf(Promise);
       result.catch(() => {});
+    });
+
+    it('retries play() via loadstart when element has no src but adapter has one', async () => {
+      const media = new HlsBackgroundVideoAdapterCore();
+      const el = document.createElement('video');
+      const play = vi
+        .spyOn(el, 'play')
+        .mockRejectedValueOnce(new Error('no supported sources'))
+        .mockResolvedValue(undefined);
+
+      try {
+        media.attach(el);
+        media.src = 'https://example.com/v.m3u8';
+        const pending = media.play();
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        expect(play).toHaveBeenCalledTimes(1);
+        el.dispatchEvent(new Event('loadstart'));
+        await pending;
+        expect(play).toHaveBeenCalledTimes(2);
+      } finally {
+        media.destroy();
+        play.mockRestore();
+      }
     });
 
     it('rejects when no media element is attached', async () => {
