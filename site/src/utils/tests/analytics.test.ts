@@ -120,6 +120,14 @@ describe('currentPrivateValues', () => {
     ]);
   });
 
+  it('includes the HTML-escaped form the generated code renders', () => {
+    const signed = 'https://cdn.example.com/secret.m3u8?token=abc&expires=1';
+
+    expect(currentPrivateValues(`?source-url=${encodeURIComponent(signed)}`)).toContain(
+      'https://cdn.example.com/secret.m3u8?token=abc&amp;expires=1'
+    );
+  });
+
   it('ignores a value short enough to match ordinary text', () => {
     expect(currentPrivateValues('?source-url=a.mp4')).toEqual([]);
     expect(currentPrivateValues('?skin=video')).toEqual([]);
