@@ -6,8 +6,6 @@ import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { compileStyles } from '../../styles/compile';
-import { loadDesignSystem } from '../../styles/design-system';
 import type { ResolvedStyles, ResolvedStyleRule } from '../../styles/resolved';
 import { toPosixPath } from '../../utils/path';
 import { readComponentSource, readModuleStyles } from '../component-meta';
@@ -241,8 +239,12 @@ describe('stylePlugin', () => {
     const id = virtualCssIds(source)[0];
     if (!id) throw new Error('Expected a generated semantic stylesheet.');
 
+    const css = await loadPlugin(styles, id);
+
     expect(styleIds).toContain(id);
-    expect(await loadPlugin(styles, id)).toContain('pointer-events: none');
+    expect(css).toContain('padding: .25rem');
+    expect(css).not.toContain('padding: .75rem');
+    expect(css).toContain('pointer-events: none');
   });
 
   it('rejects non-static style binding usage', async () => {
@@ -259,10 +261,7 @@ describe('stylePlugin', () => {
   });
 
   it('tracks imported design-system files and preserves directives', async () => {
-    const design = await loadDesignSystem(designPath);
-
-    await compileStyles({ design, styles: resolvedStyles });
-    const { source } = await transform(
+    const { source, watchFiles } = await transform(
       `
         'use client';
         import styles from './fixtures/button.styles';
@@ -271,8 +270,14 @@ describe('stylePlugin', () => {
       { resolvedStyles, mode: 'css', stylesheet: { input: designPath } }
     );
 
-    expect(design.watchFiles).toContain(designDependency);
-    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('virtual:vjsc/css'));
+    const directive = source.indexOf(`'use client'`);
+    const cssImport = source.indexOf('virtual:vjsc/css');
+
+    expect(watchFiles).toContain(designPath);
+    expect(watchFiles).toContain(designDependency);
+    expect(directive).toBeGreaterThanOrEqual(0);
+    expect(cssImport).toBeGreaterThanOrEqual(0);
+    expect(directive).toBeLessThan(cssImport);
   });
 
   it('imports runtime base CSS before generated semantic styles', async () => {
@@ -380,7 +385,12 @@ async function transform(
   source: string,
   config: StylePluginConfig = { resolvedStyles, mode: 'tailwind' },
   styles: Plugin = stylePlugin(config)
-): Promise<{ readonly source: string; readonly styleIds: readonly string[]; readonly warnings: readonly string[] }> {
+): Promise<{
+  readonly source: string;
+  readonly styleIds: readonly string[];
+  readonly warnings: readonly string[];
+  readonly watchFiles: readonly string[];
+}> {
   let meta: unknown;
   const warnings: string[] = [];
   const inspect: Plugin = {
@@ -405,7 +415,12 @@ async function transform(
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
-  return { source: output, styleIds: readModuleStyles(meta)?.assets ?? [], warnings };
+  return {
+    source: output,
+    styleIds: readModuleStyles(meta)?.assets ?? [],
+    warnings,
+    watchFiles: await bundle.watchFiles,
+  };
 }
 
 function virtualCssIds(source: string): string[] {

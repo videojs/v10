@@ -153,7 +153,12 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('import type * as TypeOnly from "@fixture/components";');
     expect(source).toContain("import { setup } from './setup';");
     expect(source).not.toContain("from './build-only'");
-    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type'));
+    const directive = source.indexOf(`'use client'`);
+    const typeImport = source.indexOf('import type');
+
+    expect(directive).toBeGreaterThanOrEqual(0);
+    expect(typeImport).toBeGreaterThanOrEqual(0);
+    expect(directive).toBeLessThan(typeImport);
   });
 
   it('types children by the part that renders them', async () => {

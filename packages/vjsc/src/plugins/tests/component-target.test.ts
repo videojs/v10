@@ -239,7 +239,9 @@ describe('componentTargetPlugin', () => {
     const commandFor = /commandfor="([^"]+)"/.exec(source)?.[1];
     const contentId = / id="([^"]+)"/.exec(source)?.[1];
 
+    expect(commandFor).toMatch(/^__vjsc-id-/);
     expect(commandFor).toBe(contentId);
+    expect(source).toContain('>Open</button>');
     expect(source).toContain('<media-optiongroup />');
     expect(source).not.toContain('OptionGroup.Root');
     expect(source).not.toContain('<$.');
@@ -355,7 +357,12 @@ describe('componentTargetPlugin', () => {
       export const play = <$.PlayButton />;
     `);
 
-    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('from "@fixture/react"'));
+    const directive = source.indexOf(`'use client'`);
+    const generatedImport = source.indexOf('from "@fixture/react"');
+
+    expect(directive).toBeGreaterThanOrEqual(0);
+    expect(generatedImport).toBeGreaterThanOrEqual(0);
+    expect(directive).toBeLessThan(generatedImport);
   });
 });
 

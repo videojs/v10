@@ -32,11 +32,14 @@ describe('componentMetaPlugin', () => {
   });
 
   it('starts from path-derived defaults that the authored export may override', async () => {
-    const result = await build(`export const meta = { title: 'Poster' } as const;`, {
+    const options: ComponentMetaPluginOptions = {
       defaults: (module) => ({ name: basename(module.filename, '.tsx').replace(/^\0/, ''), type: 'component' }),
-    });
+    };
+    const defaults = await build(`export const meta = { title: 'Poster' } as const;`, options);
+    const override = await build(`export const meta = { name: 'poster', title: 'Poster' } as const;`, options);
 
-    expect(readComponentMeta(result.meta)).toEqual({ name: 'fixture', type: 'component', title: 'Poster' });
+    expect(readComponentMeta(defaults.meta)).toEqual({ name: 'fixture', type: 'component', title: 'Poster' });
+    expect(readComponentMeta(override.meta)).toEqual({ name: 'poster', type: 'component', title: 'Poster' });
   });
 
   it('rejects metadata that requires evaluation', async () => {
