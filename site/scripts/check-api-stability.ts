@@ -718,7 +718,8 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
 
   // A type no entry exports (a local helper, a mixin's `_base` constant) is still part of the surface that names it, so
   // its own references count as the referrer's, through its heritage when the helper was reached through heritage. A
-  // written-out alias is expanded the same way even though an entry exports it.
+  // written-out alias is expanded the same way even though an entry exports it. A global the packages only augment, such
+  // as `HTMLElementTagNameMap`, isn't a helper: naming it doesn't expose every element registered on it.
   for (const [symbol, record] of bySymbol) {
     const visited = new Set([symbol]);
 
@@ -742,7 +743,11 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
           if (!helper || visited.has(helper)) return;
 
           visited.add(helper);
-          walk(checkedDeclarations(helper).flatMap(publicSurface), heritage);
+
+          const declarations = checkedDeclarations(helper);
+          if (declarations.length < (helper.declarations?.length ?? 0)) return;
+
+          walk(declarations.flatMap(publicSurface), heritage);
         });
       }
     };
