@@ -1,6 +1,8 @@
 import { test as base } from '@playwright/test';
 import playwrightPkg from 'playwright-core/package.json' with { type: 'json' };
 
+import { getIosDevice } from './ios-device.ts';
+
 export interface Options {
   caps: Record<string, string>;
 }
@@ -24,8 +26,13 @@ export const test = base.extend<{}, Options>({
     const key = process.env.BROWSERSTACK_ACCESS_KEY;
     if (!username || !key) throw new Error('Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY.');
 
+    const deviceName = caps.realMobile ? await getIosDevice(caps.osVersion!, username, key) : undefined;
+
+    if (deviceName) console.log(`BrowserStack iOS ${caps.osVersion}: ${deviceName}`);
+
     const capabilities = {
       ...caps,
+      deviceName,
       'browserstack.username': username,
       'browserstack.accessKey': key,
       'browserstack.local': true,

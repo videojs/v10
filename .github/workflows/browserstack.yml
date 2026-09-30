@@ -14,8 +14,6 @@ concurrency:
 
 jobs:
   compatibility:
-    # Enable after adding the secrets and confirming the account's browser matrix.
-    if: vars.BROWSERSTACK_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
@@ -23,9 +21,15 @@ jobs:
       BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
       BROWSERSTACK_LOCAL_IDENTIFIER: videojs-${{ github.run_id }}-${{ github.run_attempt }}
       BROWSERSTACK_BUILD: ${{ github.ref_name }}-${{ github.sha }}-${{ github.run_attempt }}
-      BROWSERSTACK_IOS_DEVICE: ${{ vars.BROWSERSTACK_IOS_DEVICE }}
 
     steps:
+      - name: Check BrowserStack credentials
+        run: |
+          if [ -z "$BROWSERSTACK_USERNAME" ] || [ -z "$BROWSERSTACK_ACCESS_KEY" ]; then
+            echo '::error::Add the BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY repository secrets.'
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v5
 
@@ -45,6 +49,7 @@ jobs:
         run: pnpm exec vp run '@videojs/e2e#prepare:player'
 
       - name: Setup BrowserStack Local
+        id: local
         uses: browserstack/github-actions/setup-local@v1.0.6
         with:
           local-testing: start
@@ -54,7 +59,7 @@ jobs:
         run: pnpm -F @videojs/e2e test:browserstack
 
       - name: Stop BrowserStack Local
-        if: always()
+        if: always() && steps.local.outcome == 'success'
         uses: browserstack/github-actions/setup-local@v1.0.6
         with:
           local-testing: stop

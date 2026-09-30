@@ -2,14 +2,13 @@
 
 Run the packaged HTML and React video, minimal video, and audio pages at the Chrome, Edge, Firefox, and Safari minimums resolved from the root browserslist. Desktop Safari coverage uses WebKit. The checks cover CSS fallbacks, closed popovers, playback, seeking, and opening menus. Playback failure is a test failure, including missing H.264 support.
 
-This suite replaces the previous Docker floor job and its pinned Playwright clients. BrowserStack's desktop WebKit is still an engine approximation, not actual Safari. The optional iOS project runs Safari on a real device. The suite does not currently verify captions or fullscreen.
+This suite replaces the previous Docker floor job and its pinned Playwright clients. BrowserStack's desktop WebKit is still an engine approximation, not actual Safari. The iOS project runs Safari on a real device selected from BrowserStack's device API at the browserslist minimum. Selection uses a stable ordering of matching iPhones and fails if no exact OS version is supported; it never substitutes a newer version. The suite does not currently verify captions or fullscreen.
 
 ## Enable CI
 
 1. Add repository secrets `BROWSERSTACK_USERNAME` and `BROWSERSTACK_ACCESS_KEY` for an Automate account.
 2. Confirm the pinned combinations are available to that account using [BrowserStack's supported browser matrix](https://www.browserstack.com/docs/automate/playwright/browsers-and-os).
-3. To include real iOS Safari, set repository variable `BROWSERSTACK_IOS_DEVICE` to a device available at the minimum iOS version resolved from browserslist. Availability must be confirmed in the account before enabling it; a newer device does not replace floor coverage.
-4. Set repository variable `BROWSERSTACK_ENABLED` to `true` and dispatch the BrowserStack workflow.
+3. Dispatch the BrowserStack workflow. No repository variables are required. Missing credentials fail before dependencies are installed or the app is built.
 
 The workflow runs nightly at 16:00 UTC and can be dispatched against a branch. It does not run on pull requests or have access to fork PR code. It starts and stops a BrowserStack Local tunnel for the generated app. One worker limits remote concurrency. Reports and screenshots are uploaded to Actions; session recordings are available in BrowserStack.
 
@@ -35,4 +34,4 @@ For a cloud run, export the two credentials, start [BrowserStack Local](https://
 pnpm -F @videojs/e2e test:browserstack
 ```
 
-Use `BROWSERSTACK_LOCAL_IDENTIFIER` if the tunnel has another identifier. Set `BROWSERSTACK_IOS_DEVICE` to add the real iOS project locally. Its OS version comes from browserslist.
+Use `BROWSERSTACK_LOCAL_IDENTIFIER` if the tunnel has another identifier. The iOS device is discovered automatically using the same credentials; its OS version comes from browserslist.

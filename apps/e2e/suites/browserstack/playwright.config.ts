@@ -9,6 +9,7 @@ import { versions } from './versions.ts';
 export default defineConfig<{}, Options>({
   ...suiteConfig('browserstack'),
   testDir: resolve(import.meta.dirname, 'tests'),
+  testMatch: '**/*.spec.ts',
   workers: 1,
   retries: 0,
   globalTimeout: 25 * 60_000,
@@ -56,22 +57,13 @@ export default defineConfig<{}, Options>({
             },
           },
         },
-        ...(process.env.BROWSERSTACK_IOS_DEVICE
-          ? [
-              {
-                name: `ios-safari-${versions.ios}`,
-                use: {
-                  caps: {
-                    browser: 'safari',
-                    deviceName: process.env.BROWSERSTACK_IOS_DEVICE,
-                    osVersion: versions.ios,
-                    realMobile: 'true',
-                  },
-                  viewport: null,
-                },
-              },
-            ]
-          : []),
+        {
+          name: `ios-safari-${versions.ios}`,
+          use: {
+            caps: { browser: 'safari', osVersion: versions.ios, realMobile: 'true' },
+            viewport: null,
+          },
+        },
       ],
   webServer: {
     command: 'pnpm exec vp -C suites/player/app dev --host 0.0.0.0 --port 5182 --strictPort',
