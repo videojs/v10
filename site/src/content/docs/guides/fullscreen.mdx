@@ -111,7 +111,7 @@ export default function App() {
 
 Add `orientationLockFeature` to lock screen orientation while the player is fullscreen. It isn't part of `videoFeatures`, so the preset `<video-player>` doesn't include it. It locks to `landscape` by default and unlocks on exit.
 
-Compose a player with `orientationLockFeature` in its feature list through <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink>; the prebuilt `<video-player>` element doesn't include it.
+Register a custom player tag with <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink>:
 
 ```html
 <orientation-player>
@@ -170,9 +170,13 @@ Use the `<media-gesture>` element — the default skins ship this exact binding.
 
 </FrameworkCase>
 
-`region="center"` keeps the gesture off the left and right thirds, which the default skins reserve for double-tap seeking. See <DocsLink slug="guides/keyboard-shortcuts">Add keyboard shortcuts and gestures</DocsLink> for the full gesture surface.
+With left, center, and right double-tap bindings for the same pointer type, `region="center"` covers the middle third, as in the on-demand video skins. A center-only double-tap binding covers the whole surface. See <DocsLink slug="guides/keyboard-shortcuts">Add keyboard shortcuts and gestures</DocsLink> for region behavior.
 
 ## Troubleshooting
+
+### The fullscreen button doesn't render
+
+The button hides while `fullscreenAvailability` is `'unavailable'` or `'unsupported'`. Wait for media attachment, check browser support, and confirm that an embedding iframe permits fullscreen with `allow="fullscreen"`.
 
 ### The fullscreen request is rejected
 

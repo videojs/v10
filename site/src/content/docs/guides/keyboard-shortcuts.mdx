@@ -92,7 +92,9 @@ export default function App() {
 - `<media-status-announcer>` announces action results to screen readers, and the input indicator components render transient on-screen feedback (volume level, captions on/off) the way native players do. The prebuilt skins wire these up.
 </FrameworkCase>
 
-The on-demand video skins bind Space and `k` to playback, `m` to mute, `f` to fullscreen, and `c` to captions. `i` toggles picture-in-picture, arrows seek and change volume, `j`/`l` seek in larger steps, `0`–`9` jump to a percentage, and `<`/`>` change speed. Live video skins retain playback, mute, volume, fullscreen, captions, and picture-in-picture shortcuts, but omit seeking and speed shortcuts.
+The on-demand video skins bind Space and `k` to playback, `m` to mute, `f` to fullscreen, and `c` to captions. `i` toggles picture-in-picture, left/right arrows and `j`/`l` seek 10 seconds, up/down arrows change volume, `0`–`9` jump to a percentage, and `<`/`>` change speed. Live video skins retain playback, mute, volume, fullscreen, captions, and picture-in-picture shortcuts, but omit seeking and speed shortcuts.
+
+Regions depend on the bindings for each gesture type and pointer type. Left and right bindings divide the container into halves. Adding a center binding divides it into thirds. A center-only binding covers the whole container; a left-only or right-only binding covers that half. These regions use the container's width, not the rendered video's width.
 
 ## Availability and constraints
 
@@ -126,7 +128,7 @@ Focus is outside the player container. Click the player first, or move focus int
 
 ### Double-tap seek also toggles pause
 
-Regions overlap: keep single-tap `togglePaused` on `center` only, and double-tap seek on `left` and `right`, as in the skin defaults.
+The built-in recognizer delays a matching single tap and cancels it when a double tap occurs. Check that your tap and double-tap bindings use compatible `pointer` filters. Remove separate click handlers that also toggle playback, and avoid native video controls on the same gesture surface.
 
 ### No visual feedback on keyboard actions
 
