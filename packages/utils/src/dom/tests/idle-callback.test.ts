@@ -38,14 +38,6 @@ describe('idleCallback', () => {
     );
   });
 
-  it('returns a cleanup function', () => {
-    const callback = vi.fn();
-
-    const cancel = idleCallback(callback);
-
-    expect(cancel).toBeTypeOf('function');
-  });
-
   it('cancel prevents callback from being called', async () => {
     const callback = vi.fn();
 

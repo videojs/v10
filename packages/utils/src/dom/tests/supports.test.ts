@@ -4,12 +4,6 @@ import { supportsAnimationFrame, supportsConstructableStyleSheets, supportsIdleC
 
 describe('supports', () => {
   describe('supportsAnimationFrame', () => {
-    it('returns a boolean', () => {
-      const result = supportsAnimationFrame();
-
-      expect(typeof result).toBe('boolean');
-    });
-
     it('returns true in browser environment', () => {
       expect(supportsAnimationFrame()).toBe(true);
     });

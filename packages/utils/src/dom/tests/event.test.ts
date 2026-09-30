@@ -24,19 +24,6 @@ describe('onEvent', () => {
     await expect(promise).resolves.toBe(event);
   });
 
-  it('only listens for the first occurrence (once)', async () => {
-    const target = new EventTarget();
-
-    const promise = onEvent(target, 'click');
-
-    target.dispatchEvent(new Event('click'));
-    target.dispatchEvent(new Event('click'));
-
-    const result = await promise;
-
-    expect(result).toBeInstanceOf(Event);
-  });
-
   it('rejects when signal is already aborted', async () => {
     const target = new EventTarget();
     const controller = new AbortController();

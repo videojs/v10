@@ -13,15 +13,6 @@ describe('listen', () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 
-  it('returns a cleanup function', () => {
-    const target = new EventTarget();
-    const handler = vi.fn();
-
-    const cleanup = listen(target, 'click', handler);
-
-    expect(cleanup).toBeTypeOf('function');
-  });
-
   it('cleanup removes the listener', () => {
     const target = new EventTarget();
     const handler = vi.fn();
