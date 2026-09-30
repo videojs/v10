@@ -6,9 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
 import { UIElement } from '../../ui-element';
-import { SliderBufferElement } from '../buffer';
 import { SliderElement } from '../element';
-import { SliderFillElement } from '../fill';
 import { SliderThumbElement } from '../thumb';
 import { SliderTrackElement } from '../track';
 import { SliderValueElement } from '../value';
@@ -55,10 +53,6 @@ afterEach(() => {
 });
 
 describe('SliderElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderElement.tagName).toBe('media-slider');
-  });
-
   it('initializes with default property values', () => {
     const slider = createElement(SliderElement);
 
@@ -284,10 +278,6 @@ describe('SliderElement', () => {
 });
 
 describe('SliderThumbElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderThumbElement.tagName).toBe('media-slider-thumb');
-  });
-
   it('receives ARIA attributes from slider context', async () => {
     const slider = createElement(SliderElement);
     const thumb = createElement(SliderThumbElement);
@@ -353,10 +343,6 @@ describe('SliderThumbElement', () => {
 });
 
 describe('SliderTrackElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderTrackElement.tagName).toBe('media-slider-track');
-  });
-
   it('receives data attributes from slider context', async () => {
     const slider = createElement(SliderElement);
     const track = createElement(SliderTrackElement);
@@ -370,23 +356,11 @@ describe('SliderTrackElement', () => {
   });
 });
 
-describe('SliderFillElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderFillElement.tagName).toBe('media-slider-fill');
-  });
-});
+describe('SliderFillElement', () => {});
 
-describe('SliderBufferElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderBufferElement.tagName).toBe('media-slider-buffer');
-  });
-});
+describe('SliderBufferElement', () => {});
 
 describe('SliderValueElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderValueElement.tagName).toBe('media-slider-value');
-  });
-
   it('displays the current value from context', async () => {
     const slider = createElement(SliderElement);
     const valueEl = createElement(SliderValueElement);

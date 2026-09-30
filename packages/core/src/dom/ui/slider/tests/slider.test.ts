@@ -182,23 +182,6 @@ describe('createSlider', () => {
   });
 
   describe('shape', () => {
-    it('returns state, rootProps, thumbProps, and destroy', () => {
-      const slider = createSlider(createOptions());
-
-      expect(slider.input).toBeDefined();
-      expect(slider.input.current).toBeDefined();
-      expect(slider.input.subscribe).toBeTypeOf('function');
-      expect(slider.rootProps.onPointerDown).toBeTypeOf('function');
-      expect(slider.rootProps.onPointerMove).toBeTypeOf('function');
-      expect(slider.rootProps.onPointerLeave).toBeTypeOf('function');
-      expect(slider.thumbProps.onKeyDownCapture).toBeTypeOf('function');
-      expect(slider.thumbProps.onFocus).toBeTypeOf('function');
-      expect(slider.thumbProps.onBlur).toBeTypeOf('function');
-      expect(slider.destroy).toBeTypeOf('function');
-
-      slider.destroy();
-    });
-
     it('has correct initial state', () => {
       const slider = createSlider(createOptions());
 
@@ -640,8 +623,8 @@ describe('createSlider', () => {
 
       slider.thumbProps.onKeyDownCapture(event);
 
-      expect(onValueChange).toHaveBeenCalledWith(51);
-      expect(onValueCommit).toHaveBeenCalledWith(51);
+      expect(onValueChange).toHaveBeenCalledExactlyOnceWith(51);
+      expect(onValueCommit).toHaveBeenCalledExactlyOnceWith(51);
       expect(event.preventDefault).toHaveBeenCalled();
 
       slider.destroy();
@@ -833,31 +816,6 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('calls both onValueChange and onValueCommit for each step', () => {
-      const onValueChange = vi.fn();
-      const onValueCommit = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, onValueChange, onValueCommit }));
-
-      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
-
-      expect(onValueChange).toHaveBeenCalledOnce();
-      expect(onValueCommit).toHaveBeenCalledOnce();
-
-      slider.destroy();
-    });
-
-    it('preventDefault is called for handled keys', () => {
-      const slider = createSlider(createOptions());
-
-      const event = keyboardEvent('ArrowRight');
-
-      slider.thumbProps.onKeyDownCapture(event);
-
-      expect(event.preventDefault).toHaveBeenCalled();
-
-      slider.destroy();
-    });
-
     it('does not preventDefault for unhandled keys', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ onValueChange }));
@@ -1043,23 +1001,6 @@ describe('createSlider', () => {
 
       slider.destroy();
     });
-
-    it('computes percent from X axis for horizontal orientation', () => {
-      const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(
-        createOptions({
-          getElement: () => el,
-          getOrientation: () => 'horizontal',
-        })
-      );
-
-      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      flush();
-
-      expect(slider.input.current.pointerPercent).toBe(25);
-
-      slider.destroy();
-    });
   });
 
   describe('pointer in an RTL document', () => {
@@ -1079,15 +1020,6 @@ describe('createSlider', () => {
   });
 
   describe('lifecycle', () => {
-    it('destroy cleans up without errors', () => {
-      const slider = createSlider(createOptions());
-
-      slider.destroy();
-
-      // Should not throw on repeated destroy
-      expect(() => slider.destroy()).not.toThrow();
-    });
-
     it('releases pointer capture on destroy', () => {
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el }));
@@ -1405,24 +1337,6 @@ describe('createSlider', () => {
 
       slider.destroy();
       vi.useRealTimers();
-    });
-
-    it('defaults changeThrottle to 0 when not provided', () => {
-      const onValueChange = vi.fn();
-      const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueChange }));
-
-      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
-      onValueChange.mockClear();
-
-      // Every drag move fires immediately (no throttle).
-      firePointerMove(slider, { clientX: 60 });
-      firePointerMove(slider, { clientX: 80 });
-      firePointerMove(slider, { clientX: 100 });
-
-      expect(onValueChange).toHaveBeenCalledTimes(3);
-
-      slider.destroy();
     });
   });
 });

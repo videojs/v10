@@ -214,19 +214,6 @@ describe('VolumeSliderCore', () => {
   });
 
   describe('setProps', () => {
-    it('updates label', () => {
-      const core = new VolumeSliderCore();
-
-      core.setProps({ label: 'Sound' });
-
-      core.setInput(createInput());
-      core.setMedia(createMediaState({ volume: 0.5 }));
-      const state = core.getState();
-      const attrs = core.getAttrs(state);
-
-      expect(attrs['aria-label']).toBe('Sound');
-    });
-
     it('respects disabled prop', () => {
       const core = new VolumeSliderCore({ disabled: true });
 

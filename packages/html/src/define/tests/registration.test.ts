@@ -209,6 +209,8 @@ describe('composite define registration', () => {
         'media-slider-thumb',
         'media-slider-track',
         'media-slider-value',
+        'media-slider-preview',
+        'media-slider-thumbnail',
         'media-time-slider-chapters',
         'media-time-slider-chapter-title',
         // Time

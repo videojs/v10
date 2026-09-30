@@ -1,7 +1,7 @@
 import { act, fireEvent } from '@testing-library/react';
 import { createStore, flush } from '@videojs/store';
 import type { ReactNode } from 'react';
-import { vi } from 'vite-plus/test';
+import { type Mock, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { PlayerContextProvider } from '../../../player/context';
@@ -64,8 +64,8 @@ export function endDrag(root: HTMLElement): void {
 
 export class ResizeObserverStub {
   static instances: ResizeObserverStub[] = [];
-  observe = vi.fn();
-  disconnect = vi.fn();
+  observe: Mock<(target: Element) => void> = vi.fn();
+  disconnect: Mock<() => void> = vi.fn();
 
   constructor(readonly callback: ResizeObserverCallback) {
     ResizeObserverStub.instances.push(this);

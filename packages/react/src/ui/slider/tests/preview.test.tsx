@@ -14,13 +14,14 @@ afterEach(cleanup);
 describe('SliderPreview', () => {
   it('renders a div element inside SliderRoot context', () => {
     const { container } = render(
-      <SliderRoot>
+      <SliderRoot data-testid="root">
         <SliderPreview data-testid="preview" />
       </SliderRoot>
     );
 
     const el = container.querySelector('[data-testid="preview"]');
 
+    expect(container.querySelector('[data-testid="root"]')).toBeTruthy();
     expect(el).toBeTruthy();
     expect(el?.tagName).toBe('DIV');
   });
@@ -39,20 +40,6 @@ describe('SliderPreview', () => {
     );
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
-  });
-
-  it('sets structural positioning styles', () => {
-    const { container } = render(
-      <SliderRoot>
-        <SliderPreview data-testid="preview" />
-      </SliderRoot>
-    );
-
-    const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
-
-    expect(el.style.position).toBe('absolute');
-    expect(el.style.pointerEvents).toBe('none');
-    expect(el.style.width).toBe('max-content');
   });
 
   it('applies clamped left style by default', () => {
@@ -152,18 +139,5 @@ describe('SliderPreview', () => {
     expect(el.style.position).toBe('absolute');
     expect(el.style.pointerEvents).toBe('none');
     expect(el.style.width).toBe('max-content');
-  });
-
-  it('renders within compound slider with all parts', () => {
-    const { container } = render(
-      <SliderRoot data-testid="root">
-        <SliderPreview data-testid="preview">
-          <span>Time value</span>
-        </SliderPreview>
-      </SliderRoot>
-    );
-
-    expect(container.querySelector('[data-testid="root"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="preview"]')).toBeTruthy();
   });
 });

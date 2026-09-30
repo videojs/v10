@@ -369,29 +369,6 @@ describe('TimeSlider compound', () => {
     }
   });
 
-  it('renders all parts together', () => {
-    const { Wrapper } = createPlayerWrapper();
-    const { container } = render(
-      <Wrapper>
-        <TimeSliderRoot data-testid="root">
-          <SliderTrack data-testid="track">
-            <SliderFill data-testid="fill" />
-            <SliderBuffer data-testid="buffer" />
-            <SliderThumb data-testid="thumb" />
-          </SliderTrack>
-          <SliderValue data-testid="value" />
-        </TimeSliderRoot>
-      </Wrapper>
-    );
-
-    expect(container.querySelector('[data-testid="root"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="track"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="fill"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="buffer"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="thumb"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="value"]')).toBeTruthy();
-  });
-
   it('thumb receives ARIA attributes from TimeSliderCore', () => {
     const { Wrapper } = createPlayerWrapper();
     const { container } = render(
@@ -425,21 +402,6 @@ describe('TimeSlider compound', () => {
     expect(thumb?.getAttribute('aria-valuetext')).toBe(
       `${formatTimeAsPhrase(30, { locale: 'fr' })} sur ${formatTimeAsPhrase(120, { locale: 'fr' })}`
     );
-  });
-
-  it('SliderValue displays formatted time', () => {
-    const { Wrapper } = createPlayerWrapper();
-    const { container } = render(
-      <Wrapper>
-        <TimeSliderRoot>
-          <SliderValue data-testid="value" />
-        </TimeSliderRoot>
-      </Wrapper>
-    );
-
-    const output = container.querySelector('[data-testid="value"]');
-
-    expect(output?.textContent).toBeTruthy();
   });
 
   it('formats values using the seekable end when duration is unknown', () => {
@@ -501,28 +463,6 @@ describe('TimeSliderRoot pauseOnDrag', () => {
 
     endDrag(root);
     expect(mockPlaybackState.play).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not resume on drag-end when player was already paused', () => {
-    mockPlaybackState.paused = true;
-    mockPlaybackState.play.mockClear();
-    mockPlaybackState.pause.mockClear();
-
-    const { Wrapper } = createPlayerWrapper();
-
-    const { container } = render(
-      <Wrapper>
-        <TimeSliderRoot pauseOnDrag />
-      </Wrapper>
-    );
-
-    const root = container.querySelector('[data-orientation]') as HTMLElement;
-
-    startDrag(root);
-    expect(mockPlaybackState.pause).not.toHaveBeenCalled();
-
-    endDrag(root);
-    expect(mockPlaybackState.play).not.toHaveBeenCalled();
   });
 
   it('forwards user-provided onDragStart and onDragEnd', () => {

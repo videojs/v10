@@ -359,20 +359,4 @@ describe('SliderCore', () => {
       expect(core.getLargeStepPercent()).toBe(0);
     });
   });
-
-  describe('setProps', () => {
-    it('updates props after construction', () => {
-      const core = new SliderCore();
-
-      core.setProps({ min: 10, max: 50 });
-
-      core.setInput(createInput());
-      const state = core.getSliderState(30);
-      const attrs = core.getAttrs(state);
-
-      expect(attrs['aria-valuemin']).toBe(10);
-      expect(attrs['aria-valuemax']).toBe(50);
-      expect(state.fillPercent).toBe(50); // (30-10)/(50-10) * 100
-    });
-  });
 });

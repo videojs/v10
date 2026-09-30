@@ -79,16 +79,6 @@ describe('SliderRoot', () => {
 });
 
 describe('SliderTrack', () => {
-  it('renders inside SliderRoot context', () => {
-    const { container } = render(
-      <SliderRoot>
-        <SliderTrack data-testid="track" />
-      </SliderRoot>
-    );
-
-    expect(container.querySelector('[data-testid="track"]')).toBeTruthy();
-  });
-
   it('throws outside of SliderRoot', () => {
     expect(() => render(<SliderTrack />)).toThrow('Slider compound components must be used within a Slider.Root');
   });
@@ -107,48 +97,18 @@ describe('SliderTrack', () => {
 });
 
 describe('SliderFill', () => {
-  it('renders inside SliderRoot context', () => {
-    const { container } = render(
-      <SliderRoot>
-        <SliderFill data-testid="fill" />
-      </SliderRoot>
-    );
-
-    expect(container.querySelector('[data-testid="fill"]')).toBeTruthy();
-  });
-
   it('throws outside of SliderRoot', () => {
     expect(() => render(<SliderFill />)).toThrow('Slider compound components must be used within a Slider.Root');
   });
 });
 
 describe('SliderBuffer', () => {
-  it('renders inside SliderRoot context', () => {
-    const { container } = render(
-      <SliderRoot>
-        <SliderBuffer data-testid="buffer" />
-      </SliderRoot>
-    );
-
-    expect(container.querySelector('[data-testid="buffer"]')).toBeTruthy();
-  });
-
   it('throws outside of SliderRoot', () => {
     expect(() => render(<SliderBuffer />)).toThrow('Slider compound components must be used within a Slider.Root');
   });
 });
 
 describe('SliderThumb', () => {
-  it('renders inside SliderRoot context', () => {
-    const { container } = render(
-      <SliderRoot>
-        <SliderThumb data-testid="thumb" />
-      </SliderRoot>
-    );
-
-    expect(container.querySelector('[data-testid="thumb"]')).toBeTruthy();
-  });
-
   it('throws outside of SliderRoot', () => {
     expect(() => render(<SliderThumb />)).toThrow('Slider compound components must be used within a Slider.Root');
   });

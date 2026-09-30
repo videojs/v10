@@ -62,10 +62,6 @@ afterEach(() => {
 });
 
 describe('VolumeSliderElement', () => {
-  it('has the correct tag name', () => {
-    expect(VolumeSliderElement.tagName).toBe('media-volume-slider');
-  });
-
   it('initializes with default property values', () => {
     const slider = createElement(VolumeSliderElement);
 
@@ -139,19 +135,6 @@ describe('VolumeSliderElement', () => {
     provider.append(slider);
     await slider.updateComplete;
     expect(slider.style.getPropertyValue('--media-slider-fill')).toBe('100.000%');
-  });
-
-  it('connects without errors when no store is available', async () => {
-    const slider = createElement(VolumeSliderElement);
-    const thumb = createElement(SliderThumbElement);
-
-    slider.appendChild(thumb);
-    document.body.appendChild(slider);
-    await slider.updateComplete;
-    await thumb.updateComplete;
-
-    expect(slider.isConnected).toBe(true);
-    expect(thumb.isConnected).toBe(true);
   });
 
   it('hides and disables unavailable volume control', async () => {

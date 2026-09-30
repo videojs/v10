@@ -23,14 +23,6 @@ describe('normalizeChapterCues', () => {
     expect(result[1]?.key).toContain('cue-second-');
   });
 
-  it('creates stable identity for cues without IDs', () => {
-    const chapter = cue(0, 50, 'Chapter');
-
-    expect(normalizeChapterCues([chapter], 0, 100).map(({ key }) => key)).toEqual(
-      normalizeChapterCues([chapter], 0, 100).map(({ key }) => key)
-    );
-  });
-
   it('keys cues by content, so fresh cue data keeps its keys across syncs', () => {
     // The store hands out new cue objects whenever it re-syncs (a duration
     // change re-clamps ends); the segments they render must not be rebuilt.

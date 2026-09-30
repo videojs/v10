@@ -42,10 +42,6 @@ afterEach(() => {
 });
 
 describe('SliderPreviewElement', () => {
-  it('has the correct tag name', () => {
-    expect(SliderPreviewElement.tagName).toBe('media-slider-preview');
-  });
-
   it('defaults overflow to clamp', () => {
     const el = createElement(SliderPreviewElement);
 
@@ -82,7 +78,7 @@ describe('SliderPreviewElement', () => {
 
     // SAFETY: this recording observer receives the contentRect width consumed by the preview.
     observer.callback(
-      [{ target: preview, contentRect: { width: 120 } } as ResizeObserverEntry],
+      [{ target: preview, contentRect: { width: 120 } } as unknown as ResizeObserverEntry],
       observer as unknown as ResizeObserver
     );
     expect(spy.mock.calls.filter(([key]) => key === 'left').at(-1)?.[1]).toBe(
@@ -112,7 +108,7 @@ describe('SliderPreviewElement', () => {
 
     // SAFETY: this recording observer receives the contentRect width consumed by the preview.
     observer.callback(
-      [{ target: preview, contentRect: { width: 120 } } as ResizeObserverEntry],
+      [{ target: preview, contentRect: { width: 120 } } as unknown as ResizeObserverEntry],
       observer as unknown as ResizeObserver
     );
     expect(spy.mock.calls.filter(([key]) => key === 'left').at(-1)?.[1]).toBe(

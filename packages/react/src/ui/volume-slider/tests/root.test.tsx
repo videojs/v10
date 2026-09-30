@@ -3,10 +3,8 @@ import { flush } from '@videojs/store';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { SliderFill } from '../../slider/fill';
 import { createSliderPlayerWrapper as createPlayerWrapper } from '../../slider/tests/support';
 import { SliderThumb } from '../../slider/thumb';
-import { SliderTrack } from '../../slider/track';
 import { SliderValue } from '../../slider/value';
 import { VolumeSliderRoot } from '../root';
 
@@ -141,27 +139,6 @@ describe('VolumeSliderRoot', () => {
 });
 
 describe('VolumeSlider compound', () => {
-  it('renders all parts together', () => {
-    const { Wrapper } = createPlayerWrapper(mockVolumeState);
-    const { container } = render(
-      <Wrapper>
-        <VolumeSliderRoot data-testid="root">
-          <SliderTrack data-testid="track">
-            <SliderFill data-testid="fill" />
-            <SliderThumb data-testid="thumb" />
-          </SliderTrack>
-          <SliderValue data-testid="value" />
-        </VolumeSliderRoot>
-      </Wrapper>
-    );
-
-    expect(container.querySelector('[data-testid="root"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="track"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="fill"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="thumb"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="value"]')).toBeTruthy();
-  });
-
   it('thumb receives ARIA attributes from VolumeSliderCore', () => {
     const { Wrapper } = createPlayerWrapper(mockVolumeState);
     const { container } = render(

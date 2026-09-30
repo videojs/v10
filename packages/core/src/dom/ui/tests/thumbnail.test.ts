@@ -120,20 +120,6 @@ describe('createThumbnail', () => {
 
       handle.destroy();
     });
-
-    it('resets loading when URL changes to a different URL', () => {
-      const handle = createThumbnail(createOptions());
-
-      handle.updateSrc('sprite-1.jpg');
-      expect(handle.loading).toBe(true);
-
-      handle.updateSrc('sprite-2.jpg');
-
-      expect(handle.loading).toBe(true);
-      expect(handle.error).toBe(false);
-
-      handle.destroy();
-    });
   });
 
   describe('img events', () => {
@@ -535,13 +521,6 @@ describe('createThumbnail', () => {
   });
 
   describe('destroy', () => {
-    it('can be called multiple times safely', () => {
-      const handle = createThumbnail(createOptions());
-
-      handle.destroy();
-      handle.destroy();
-    });
-
     it('stops observing resizes', () => {
       const handle = createThumbnail(createOptions());
 

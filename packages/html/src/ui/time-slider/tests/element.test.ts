@@ -134,10 +134,6 @@ afterEach(() => {
 });
 
 describe('TimeSliderElement', () => {
-  it('has the correct tag name', () => {
-    expect(TimeSliderElement.tagName).toBe('media-time-slider');
-  });
-
   it('initializes with default property values', () => {
     const slider = createElement(TimeSliderElement);
 
@@ -301,28 +297,9 @@ describe('TimeSliderElement', () => {
 
     expect(valueEl.textContent).toBe('0:30');
   });
-
-  it('provides ARIA attributes to SliderThumbElement via context', async () => {
-    const slider = createElement(TimeSliderElement);
-    const thumb = createElement(SliderThumbElement);
-
-    slider.appendChild(thumb);
-    document.body.appendChild(slider);
-    await slider.updateComplete;
-    await thumb.updateComplete;
-
-    // Without store, context is not populated so thumb has no ARIA.
-    // This verifies no errors occur in the context chain.
-    expect(thumb.isConnected).toBe(true);
-  });
 });
 
 describe('TimeSlider chapter elements', () => {
-  it('exposes the chapter collection and title tags', () => {
-    expect(TimeSliderChaptersElement.tagName).toBe('media-time-slider-chapters');
-    expect(TimeSliderChapterTitleElement.tagName).toBe('media-time-slider-chapter-title');
-  });
-
   it('only exposes the chapter title to assistive technology during keyboard interaction', async () => {
     const slider = createElement(TestSliderProviderElement);
     const title = createElement(TimeSliderChapterTitleElement);
