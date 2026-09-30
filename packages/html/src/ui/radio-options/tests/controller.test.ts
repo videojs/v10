@@ -16,13 +16,6 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
   if (!customElements.get(tagName)) customElements.define(tagName, Base);
 }
 
-function writeLabel(item: MenuRadioItemElement, label: string): void {
-  const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
-
-  if (labelPart) labelPart.textContent = label;
-  else item.textContent = label;
-}
-
 class TestRadioOptionsElement extends MenuRadioGroupElement {
   static override readonly tagName = 'test-radio-options';
 
@@ -46,7 +39,7 @@ class TestRadioOptionsElement extends MenuRadioGroupElement {
   readonly onValueChange = vi.fn();
 
   readonly #options = new RadioOptionsController<TestOption>(this, {
-    renderItem: (item, label, option) => writeLabel(item, `${label}${option.badge ?? ''}`),
+    renderItem: (item, label, option) => this.setItemLabel(item, `${label}${option.badge ?? ''}`),
     setItemAttributes: (item, option) => item.setAttribute('data-option', option.value),
     getOptionCacheKey: (option) => option.badge ?? '',
     onValueChange: (value) => this.onValueChange(value),
