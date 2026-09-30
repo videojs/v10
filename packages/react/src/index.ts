@@ -6,8 +6,6 @@ export * from './constants';
 export * from '@videojs/core/dom';
 // Media predicates
 export {
-  type DetectedSource,
-  detectSource,
   hasMetadata,
   isMediaAudioTrackCapable,
   isMediaBufferCapable,
@@ -24,8 +22,10 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
+  type MediaType,
   type NodeListLike,
-  type SourceKind,
+  resolveMediaType,
+  resolveMimeType,
 } from '@videojs/media';
 // Media
 export * from '@videojs/media/dom';

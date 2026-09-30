@@ -1,5 +1,5 @@
 export * from './cloudflare';
-export * from './detect';
+export * from './media-type';
 export * from './spotify';
 export * from './tiktok';
 export * from './twitch';
