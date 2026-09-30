@@ -46,17 +46,19 @@ The contract moves to `@videojs/core/dom` and receives the player's resolved tar
 interface PlayerExtension {
   /** Read on every access; may change while attached (e.g. only while a cast session is connected). */
   readonly mediaOverride?: Partial<Video> | null;
-  attach?(target: PlayerTarget): void; // { media, container }
+  attach?(target: PlayerTarget, player: { initTime: number }): void; // { media, container }
   detach?(): void;
   destroy?(): void;
 }
 ```
 
-The owner (element or hook) creates and destroys the instance. The player attaches and detaches it alongside the store and moves it when the media changes. `PlayerExtensionCoordinator` holds one instance per class.
+The owner (element or hook) creates and destroys the instance. The player attaches and detaches it alongside the store and moves it when the media changes; a container-only change leaves it attached. `PlayerExtensionCoordinator` holds one instance per class and is created with the player, so its creation time is the player's `initTime`.
+
+The authoring contract is internal at 10.0 (`@internal`, and not re-exported from `@videojs/react`): it is the part most likely to change as observers and owners split and Cast becomes real media.
 
 ### 2. The player owns attach order
 
-Store features capture members such as `media.remote` once, at attach time. The player therefore attaches extensions before the store, and re-attaches the store when an extension is registered or released, so a late `<google-cast>` takes effect instead of silently never working.
+Store features capture members such as `media.remote` once, at attach time. The player therefore attaches extensions before the store, and re-attaches the store when an extension that declares `mediaOverride` is registered or released, so a late `<google-cast>` takes effect instead of silently never working. An extension without `mediaOverride` is an observer: registering one (Mux Data, including a late CDN script or consent-gated mount) never re-attaches the store.
 
 ```ts
 // packages/html/src/player/element.ts, packages/react/src/player/create-player.tsx
@@ -66,14 +68,16 @@ Store features capture members such as `media.remote` once, at attach time. The 
   this.#detach = store.attach({ media: this.#extensions.wrap(target.media), container: target.container });
 }
 
-#extensions = new PlayerExtensionCoordinator(() => this.#attach(this.#attached)); // on register / release
+#extensions = new PlayerExtensionCoordinator(() => this.#attach(this.#attached)); // on overriding register / release
 ```
 
-Cost: a re-attach resets non-`preserve` store state, the same as a media swap. Dynamic add/remove of an extension is rare.
+Cost: a re-attach resets non-`preserve` store state, the same as a media swap. Only an overriding extension (today, Google Cast) added or removed dynamically pays it.
 
 ### 3. The player intercepts media reads through a facade
 
-`wrap()` returns the raw media while no extension is registered, otherwise a `Proxy` that consults each extension's `mediaOverride` first (first defined member wins) and falls through to the media. Getters run and methods bind against the owner, so DOM accessors and `#private` members keep working; `instanceof`, `in`, `matches(':fullscreen')`, `shadowRoot`, and event dispatch still resolve to the real element.
+`wrap()` returns the raw media unless an extension that declares `mediaOverride` is registered, otherwise a `Proxy` that consults each extension's `mediaOverride` first (first defined member wins) and falls through to the media. One facade is cached per media, so `store.target.media` is stable across re-attaches. Getters run and methods bind against the owner, so DOM accessors and `#private` members keep working; `instanceof`, `in`, `matches(':fullscreen')`, `shadowRoot`, and event dispatch still resolve to the real element.
+
+Identity does not: the facade is never `===` the element. The facade answers the internal `RAW_MEDIA` key (`Symbol.for`, so duplicate package copies agree) with the raw media, and `unwrapMedia()` in `@videojs/media` reads it. Identity checks (controls tap-to-hide, `document.fullscreenElement`, `document.pictureInPictureElement`) and `getMediaElement()` / `getMediaAdapter()` unwrap first. This is a stopgap until Cast becomes real media and the facade goes away.
 
 ```ts
 // Google Cast, simplified: the whole provider while connected, only `remote` otherwise so the cast button can prompt.
@@ -86,7 +90,7 @@ get mediaOverride() {
 
 ### 4. `HTMLMediaAdapter` is a pure host
 
-No registry, no override routing: every member forwards to the target. Extensions reach the adapter or native element behind any media through two public helpers instead of protected access:
+No registry, no override routing: every member forwards to the target. Extensions reach the adapter or native element behind any media through two internal helpers instead of protected access:
 
 ```ts
 import { getMediaAdapter, getMediaElement } from '@videojs/media/dom';
@@ -99,8 +103,8 @@ getMediaAdapter(media); // HTMLMediaAdapter | null — for `engine` and adapter-
 
 The player's attach lifecycle drives both extensions; each decides what a swap means for its own session.
 
-- **Google Cast:** the provider and session persist; the override stays the provider. The next `loadstart` on the new media with a source the receiver does not have loads it there. The provider claims the source before awaiting anything so one local load reaches the receiver once, and releases the claim on failure. Adapter-backed media now also loads locally (paused) rather than short-circuiting the engine rebuild.
-- **Mux Data:** one `view_session_id` and `player_init_time` per instance. Same element, new `src` is a `videochange` on the live monitor; same element, new `engine` swaps the hls.js / dash.js hook; a different native element destroys the monitor and starts one on the new element, because `mux-embed` binds a monitor to an element.
+- **Google Cast:** attaches to any media, embeds included: a receiver can't play a YouTube or Vimeo page, but it can play an explicit `src` set on the extension. An embed never falls back to its own `src`, so without an explicit one nothing is loaded on the receiver. The provider and session persist; the override stays the provider. On every `loadstart` the provider re-binds to the native element behind the media (an adapter can swap it), and a source the receiver does not have loads there. The cast source is the media's `src`, else `currentSrc`, else its first `<source>`. The provider claims the source before awaiting anything so one local load reaches the receiver once, and releases the claim on failure. Adapter-backed media now also loads locally (paused) rather than short-circuiting the engine rebuild.
+- **Mux Data:** one `view_session_id` per instance; `player_init_time` is the player's creation time unless set explicitly. A container change never touches the monitor. Same element, new `src` is a `videochange` on the live monitor; same element, new `engine` swaps the hls.js / dash.js hook; a different native element destroys the monitor and starts one on the new element, because `mux-embed` binds a monitor to an element.
 
 ## Public API changes
 
@@ -108,16 +112,18 @@ The player's attach lifecycle drives both extensions; each decides what a swap m
 | --- | --- |
 | `MediaExtension` with `targetOverride`, `setAdapter(adapter)`, `attach(target)` | `PlayerExtension` with `mediaOverride`, `attach({ media, container })` in `@videojs/core/dom` |
 | `addMediaExtension`, `getMediaExtensions`, `getMediaProp`, `setMediaProp`, `getMediaOwner` | removed; `PlayerExtensionCoordinator` (`register`, `attach`, `detach`, `wrap`, `get`) |
-| — | `getMediaAdapter(media)`, `getMediaElement(media)` |
-| `MediaExtensionElement` / `createComponent()` / `this.component` (`@videojs/html`) | `PlayerExtensionElement` / `createExtension()` / `this.extension` |
-| `useMediaExtension` (`@videojs/react`) | `usePlayerExtension`; `registerExtension` on the player context; `useExtensionRegistrar()` |
+| — | `getMediaAdapter(media)`, `getMediaElement(media)` (internal) |
+| `MediaExtensionElement` / `createComponent()` / `this.component` (`@videojs/html`) | `PlayerExtensionElement` / `createExtension()` / `this.extension` (not exported) |
+| `useMediaExtension` (`@videojs/react`) | removed from the public entry; `usePlayerExtension`, optional `registerExtension` on the player context, and `useExtensionRegistrar()` are internal |
+
+Everything in the right column other than the removals is `@internal`; markup, JSX, and extension props are the public surface.
 
 `@videojs/google-cast` and `@videojs/mux-data` gain a dependency on `@videojs/core`.
 
 ## Open questions
 
 - Is a Proxy facade acceptable given `media/architecture.md`, or should the store instead expose an explicit override hook that features read through?
-- Should the facade always wrap (one code path, `store.target.media !== media` always) or only while an extension is registered (current)?
+
 - `mediaOverride` resolution is first-registered-wins. Is that sufficient, or do extensions need explicit priority?
 - Re-attaching the store on register/release resets transient state. Is that acceptable, or should the store support swapping its media without a full detach?
 - Should `PlayerExtension` live in `@videojs/core/dom`, or in a smaller package so extension packages do not depend on the whole player core?
