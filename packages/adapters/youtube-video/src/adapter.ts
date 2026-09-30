@@ -365,13 +365,32 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
 
     const src = source?.src ?? '';
     const srcChanged = this.#src !== src;
-    // Player parameters are read when the embed is built, so changing them reloads even a matching URL.
+    // Player parameters are read from the embed URL, not by `cueVideoById`/`loadVideoById`.
     const engineChanged = !deepEqual(this.#source?.engine?.youtube ?? null, source?.engine?.youtube ?? null);
 
     this.#source = source;
     this.#src = src;
 
-    if (srcChanged || engineChanged) void this.load();
+    const target = this.#target;
+    const embedSrc =
+      engineChanged && target?.getAttribute('src') ? buildYouTubeIframeSrc(src, this.#snapshotProps()) : '';
+
+    if (target && embedSrc) {
+      // `destroy()` removes the iframe, so keep the host's target in its original position.
+      const parent = target.parentNode;
+      const nextSibling = target.nextSibling;
+
+      this.detach();
+      target.src = embedSrc;
+      parent?.insertBefore(target, nextSibling);
+      this.#target = target;
+
+      this.#beginLoad();
+      this.dispatchEvent(new Event('emptied'));
+      this.#createPlayer();
+    } else if (srcChanged || engineChanged) {
+      void this.load();
+    }
 
     // Assigning is always a source change, so it is always announced.
     this.dispatchEvent(new Event('sourcechange'));

@@ -582,6 +582,30 @@ describe('YouTubeAdapter', () => {
     media.detach();
   });
 
+  it('applies a changed caption policy to the attached embed', async () => {
+    const media = new YouTubeAdapter();
+    const src = 'aqz-KE-bpKQ';
+
+    media.source = { src };
+    const { iframe, player } = await attachAndLoad(media);
+
+    document.body.append(iframe);
+    // The iframe API removes the embed when its player is destroyed.
+    player.destroy.mockImplementation(() => iframe.remove());
+
+    try {
+      expect(new URL(iframe.src).searchParams.get('cc_load_policy')).toBeNull();
+
+      media.source = { src, engine: { youtube: { cc_load_policy: 1 } } };
+
+      expect(new URL(iframe.src).searchParams.get('cc_load_policy')).toBe('1');
+      expect(iframe.isConnected).toBe(true);
+    } finally {
+      media.destroy();
+      iframe.remove();
+    }
+  });
+
   it('defers the load when src changes before the player is ready', async () => {
     const media = new YouTubeAdapter();
 
@@ -1017,21 +1041,6 @@ describe('YouTubeAdapter source', () => {
     media.src = 'dQw4w9WgXcQ';
 
     expect(media.source).toEqual({ engine: { youtube: { cc_load_policy: 1 } }, src: 'dQw4w9WgXcQ' });
-  });
-
-  it('reloads when only YouTube player parameters change', async () => {
-    const media = new YouTubeAdapter();
-
-    media.src = 'aqz-KE-bpKQ';
-    const { player } = await attachAndLoad(media);
-
-    player.cueVideoById.mockClear();
-
-    media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { cc_load_policy: 1 } } };
-    await Promise.resolve();
-
-    expect(player.cueVideoById).toHaveBeenCalledWith({ videoId: 'aqz-KE-bpKQ' });
-    media.detach();
   });
 
   it('serializes YouTube player parameters onto the initial iframe src', () => {
