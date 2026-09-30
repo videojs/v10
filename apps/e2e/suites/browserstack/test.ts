@@ -1,4 +1,4 @@
-import { type BrowserContextOptions, test as base } from '@playwright/test';
+import { type Browser, type BrowserContextOptions, test as base } from '@playwright/test';
 import playwrightPkg from 'playwright-core/package.json' with { type: 'json' };
 
 import { getIosDevice } from './ios-device.ts';
@@ -7,9 +7,9 @@ export interface Options {
   caps: Record<string, string>;
 }
 
-export const test = base.extend<{}, Options>({
+export const test = base.extend<{ session: Browser }, Options>({
   caps: [{}, { option: true, scope: 'worker' }],
-  context: async ({ browser, baseURL, viewport, actionTimeout }, use) => {
+  context: async ({ session: browser, baseURL, viewport, actionTimeout }, use) => {
     const options: BrowserContextOptions = { viewport };
 
     if (baseURL) options.baseURL = baseURL;
@@ -28,7 +28,8 @@ export const test = base.extend<{}, Options>({
       await context.close();
     }
   },
-  browser: async ({ playwright, caps }, use, testInfo) => {
+  // Real iOS sessions permit only one context, so connect separately for each test.
+  session: async ({ playwright, caps }, use, testInfo) => {
     if (process.env.BROWSERSTACK_LOCAL_TEST) {
       const browser = await playwright.chromium.launch();
 
