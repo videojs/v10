@@ -121,9 +121,16 @@ function setup({
 }
 
 describe('resolutionToPixelArea', () => {
-  it('reads a resolution as its 16:9 pixel area', () => {
-    expect(resolutionToPixelArea('720p')).toBe(1280 * 720);
-    expect(resolutionToPixelArea('1080p')).toBe(1920 * 1080);
+  it.each<[MediaResolution, number]>([
+    ['270p', 480 * 270],
+    ['360p', 640 * 360],
+    ['540p', 960 * 540],
+    ['720p', 1280 * 720],
+    ['1080p', 1920 * 1080],
+    ['1440p', 2560 * 1440],
+    ['2160p', 3840 * 2160],
+  ])('reads %s as its 16:9 pixel area', (resolution, pixelArea) => {
+    expect(resolutionToPixelArea(resolution)).toBe(pixelArea);
   });
 
   it('treats an absent cap as unbounded', () => {
