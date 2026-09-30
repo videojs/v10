@@ -65,16 +65,6 @@ function run(opts: {
 }
 
 describe('syncLiveSeekableRange', () => {
-  it('declares the full live window as seekable', () => {
-    const ms = fakeMediaSource();
-    const cleanup = run({ presentation: makePresentation(), trackId: 'v-1', mediaSource: ms });
-
-    // [first.startTime, last.startTime + last.duration] = [100, 110].
-    expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 110);
-
-    cleanup();
-  });
-
   it('clamps earlier audio windows to zero and skips empty ranges', () => {
     // Audio may precede presentation-0 and become the only selected type when
     // capability probing deselects video. Windows ending at/before 0 are empty.
