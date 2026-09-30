@@ -32,11 +32,19 @@ Install Video.js and choose a <DocsLink slug="guides/presets">preset</DocsLink> 
 <FrameworkCase frameworks={["html"]}>
 Remove Media Chrome imports and CDN scripts from the document before loading Video.js HTML, then reload the page. Both libraries register names such as `media-play-button`. A custom-element name can only have one definition per document; Video.js leaves an existing definition in place. This also applies to Media Chrome registrations pulled in by another component. If you need both libraries during migration, isolate them in separate documents, such as an iframe.
 
-For a page without a bundler, load the CDN video preset. It registers the player, UI elements, icons, and i18n element used below:
+For a page without a bundler, load the CDN video preset. It registers the player, UI elements, and icons in the controller example below, plus the i18n element:
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 ```
+
+Elements outside the video skin need their own bundles. For the mapping table below, add the corresponding bundle when you use:
+
+- `media-seek-button`: `{{VJS10_CDN_BASE}}/ui/seek-button.js`
+- `media-playback-rate-button`: `{{VJS10_CDN_BASE}}/ui/playback-rate-button.js`
+- `media-thumbnail`: `{{VJS10_CDN_BASE}}/ui/thumbnail.js`
+
+Load each with `<script type="module" src="…"></script>`. See <DocsLink slug="guides/cdn">Use a CDN</DocsLink> for individual component bundles.
 
 For a bundler installation:
 
@@ -209,7 +217,7 @@ export function MyPlayer() {
 }
 ```
 
-Add `player.css` for layout, button styling, and control visibility:
+Add `player.css` for layout, button styling, and control visibility. If your framework restricts global CSS imports in components, move the import to the application entry point for global styles. Alternatively, add these rules to your app's global stylesheet and remove the `./player.css` import:
 
 ```css title="player.css"
 .app-player-container {
