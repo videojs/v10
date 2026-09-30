@@ -275,12 +275,14 @@ export default styles({
     sliderFill: {
       utilities: [
         'absolute inset-y-0 rounded-[999px] bg-media-primary clip-media-x-[--media-slider-fill] forced-colors:forced-color-adjust-none',
+        'group-data-dragging/slider:clip-media-x-[--media-slider-pointer]',
         'forced-colors:bg-[Canvas] forced-colors:bg-[linear-gradient(Highlight,Highlight)]',
       ],
     },
     sliderThumb: {
       utilities: [
         'absolute left-(--media-slider-fill) size-3 transform-[translateX(-50%)] rounded-[999px] bg-current',
+        'group-data-dragging/slider:left-(--media-slider-pointer)',
         'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current',
         'forced-colors:bg-[Highlight] forced-colors:forced-color-adjust-none',
         'forced-colors:border forced-colors:border-solid forced-colors:border-[CanvasText]',

@@ -19,6 +19,41 @@ test.use({ trace: 'off' });
 test.skip(!WORKSPACE_SKINS, 'The authored skins are only compiled inside the workspace.');
 
 for (const { platform, styling } of CASES) {
+  test(`${platform} starter ${styling} moves the seek thumb before pointer release`, async ({ page }) => {
+    const query = new URLSearchParams({
+      skins: 'authored',
+      styling,
+      skin: 'starter',
+      source: 'mp4-1',
+      preload: 'metadata',
+      autoplay: '0',
+    });
+
+    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
+
+    const root = page.getByRole('group', { name: 'Media player' }).first();
+    const thumb = root.getByRole('slider', { name: 'Seek' });
+    const slider = thumb.locator('..');
+
+    await expect(thumb).toBeEnabled({ timeout: 30_000 });
+
+    const box = await slider.boundingBox();
+    if (!box) throw new Error('Time slider is not visible');
+
+    await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height / 2, { steps: 5 });
+    await expect(slider).toHaveAttribute('data-dragging', '');
+    await expect
+      .poll(async () => {
+        const handle = await thumb.boundingBox();
+
+        return handle ? (handle.x + handle.width / 2 - box.x) / box.width : 0;
+      })
+      .toBeCloseTo(0.6, 1);
+    await page.mouse.up();
+  });
+
   for (const skin of ['default', 'neutral', 'starter'] as const) {
     test(`${platform} ${skin} ${styling} renders the authored skin`, async ({ page }) => {
       const errors: string[] = [];
