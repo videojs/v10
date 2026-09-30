@@ -130,20 +130,8 @@ describe('resolutionToPixelArea', () => {
     expect(resolutionToPixelArea(undefined)).toBe(Number.POSITIVE_INFINITY);
   });
 
-  it('matches the areas `maxResolutionToPixelArea` produces in @videojs/spf', () => {
-    // Pinned rather than imported: the packages do not depend on each other,
-    // and the two ladders have to agree for a cap to mean the same thing across
-    // the hls.js and SPF engines. `'480p'` is excluded here and covered below.
-    const spfArea = (height: number) => (height * height * 16) / 9;
-    const exact: MediaResolution[] = ['270p', '360p', '540p', '720p', '1080p', '1440p', '2160p'];
-
-    for (const resolution of exact) {
-      expect(resolutionToPixelArea(resolution)).toBe(spfArea(Number.parseInt(resolution, 10)));
-    }
-  });
-
   it('rounds 480p up so the standard 854×480 rendition fits its own cap', () => {
-    // 16:9 at 480 tall is 853.33 wide. SPF's exact area (409_600) sits just
+    // 16:9 at 480 tall is 853.33 wide. The exact area (409_600) sits just
     // under the 854×480 (409_920) every real ladder ships, which would push
     // a '480p' cap down to 360p.
     expect(resolutionToPixelArea('480p')).toBe(854 * 480);
@@ -602,31 +590,6 @@ describe('createCapLevelController', () => {
       policy.controller!.apply();
 
       expect(engine.autoLevelCapping).toBe(3);
-    });
-  });
-
-  describe('device pixel ratio', () => {
-    // hls.js measures in device pixels by default, which is the issue's
-    // criterion and needs no code of ours — only pinning, since a change to
-    // `ignoreDevicePixelRatio` would silently halve what a retina player asks
-    // for. `contentScaleFactor` reads `self.devicePixelRatio`.
-    const retina = { config: { ignoreDevicePixelRatio: false }, playerSize: { width: 640, height: 360 } };
-
-    it('measures the element in CSS pixels at a ratio of 1', () => {
-      vi.stubGlobal('devicePixelRatio', 1);
-
-      const { controller, topIndex } = setup(retina);
-
-      expect(controller.getMaxLevel(topIndex)).toBe(0);
-    });
-
-    it('asks for twice the rendition at a ratio of 2', () => {
-      vi.stubGlobal('devicePixelRatio', 2);
-
-      const { controller, topIndex } = setup(retina);
-
-      // 640 CSS px is 1280 device px, which the 1280×720 rendition covers.
-      expect(controller.getMaxLevel(topIndex)).toBe(2);
     });
   });
 

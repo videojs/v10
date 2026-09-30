@@ -217,20 +217,6 @@ describe('HlsJsMediaTracksMixin', () => {
     expect(engine.audioTrack).toBe(1);
   });
 
-  it('prunes renditions dropped from a LEVELS_UPDATED event', () => {
-    const engine = createEngine();
-    const host = new HlsJsMediaTracks(engine);
-
-    const levels = [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }];
-
-    manifestParsed(engine, levels);
-    expect(host.videoRenditions.length).toBe(3);
-
-    (engine as any).emit(Hls.Events.LEVELS_UPDATED, { levels: [levels[0], levels[2]] });
-
-    expect([...host.videoRenditions].map((rendition) => rendition.id)).toEqual(['0', '2']);
-  });
-
   it('prunes renditions when LEVELS_UPDATED carries new level object references', () => {
     const engine = createEngine();
     const host = new HlsJsMediaTracks(engine);

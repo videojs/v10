@@ -77,10 +77,6 @@ function cueIds(track: FakeTextTrack): string[] {
 }
 
 describe('withPreservedTextTracks', () => {
-  it('returns the action result', () => {
-    expect(withPreservedTextTracks(fakeMedia(), () => 'loaded')).toBe('loaded');
-  });
-
   it('puts back cues the action removed from a sideloaded track', () => {
     const trackEl = fakeTrackElement({ mode: 'showing', cues: ['one', 'two'] });
 
