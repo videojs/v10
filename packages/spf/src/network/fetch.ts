@@ -2,18 +2,17 @@
  * HTTP Fetch Wrapper
  *
  * Composable building blocks: - fetchResolvable() — fetch a Resource (handles byte ranges); returns Response -
- * getResponseText() — extract text from Response - fetchResolvableStream() — single-stage async generator over body
- * chunks - fetchStream() — two-stage: await connection establishment, then lazily iterate body chunks. Use when timing
- * the connection start independently of body consumption matters (e.g., observable fetch timing for ABR). -
- * createTrackedFetch() — factory for a fetchStream-shape function that samples bandwidth (via EWMA) per chunk and
- * notifies via callback.
+ * getResponseText() — extract text from Response - fetchStream() — two-stage: await connection establishment, then
+ * lazily iterate body chunks. Use when timing the connection start independently of body consumption matters (e.g.,
+ * observable fetch timing for ABR). - createTrackedFetch() — factory for a fetchStream-shape function that samples
+ * bandwidth (via EWMA) per chunk and notifies via callback.
  */
 
 import { type BandwidthState, sampleBandwidth } from './bandwidth-estimator';
 import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from './chunked-stream-iterable';
 
-/** Minimal Response-like interface for text extraction. Allows testing without full Response object. */
-export interface ResponseLike {
+/** Structural response contract for text extraction. */
+interface ResponseLike {
   text(): Promise<string>;
 }
 
@@ -69,38 +68,6 @@ export async function fetchResolvable(addressable: Resource, options?: RequestIn
 }
 
 /**
- * Fetch resolvable as bytes.
- *
- * Convenience wrapper around fetchResolvable that resolves the body as an ArrayBuffer. Use this when you need the raw
- * bytes (e.g. segment appends). For text or streaming consumption, use fetchResolvable directly.
- */
-export async function fetchResolvableBytes(addressable: Resource, options?: RequestInit): Promise<ArrayBuffer> {
-  const response = await fetchResolvable(addressable, options);
-
-  return response.arrayBuffer();
-}
-
-/**
- * Fetch resolvable as a stream of Uint8Array chunks.
- *
- * Convenience wrapper around fetchResolvable that yields the body as chunks via ChunkedStreamIterable. Headers are
- * awaited before the first chunk is yielded (TTFB is accounted for before iteration begins).
- *
- * Throws if the response body is null (e.g. non-body HTTP status). Errors from the underlying stream propagate
- * naturally as thrown errors.
- */
-export async function* fetchResolvableStream(
-  addressable: Resource,
-  options?: RequestInit & ChunkedStreamIterableOptions
-): AsyncGenerator<Uint8Array> {
-  const { minChunkSize, ...fetchOptions } = options ?? {};
-  const response = await fetchResolvable(addressable, fetchOptions);
-  if (!response.body) throw new Error('Response has no body');
-
-  yield* new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
-}
-
-/**
  * Extract text from Response.
  *
  * Accepts minimal Response-like object (just needs text() method). Returns promise from response.text().
@@ -139,9 +106,8 @@ export const fetchResolvableText: FetchText = async (addressable, options) => {
  * response body. Separating connection start from body iteration makes fetch timing predictable and observable
  * regardless of when downstream consumers begin pulling chunks.
  *
- * Sibling to {@link fetchResolvableStream}, which is single-stage (calls `fetch` only when iteration starts). Pick
- * `fetchStream` when "when did the fetch start" needs to be observable separately from "when did the body begin
- * arriving." Non-OK responses reject before body iteration.
+ * Connection establishment is observable separately from body consumption. Non-OK responses reject before body
+ * iteration.
  */
 export type FetchOptions = RequestInit & ChunkedStreamIterableOptions;
 
