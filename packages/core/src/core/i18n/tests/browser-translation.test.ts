@@ -20,7 +20,7 @@ function installMockTranslator(
 
   const Translator = {
     availability: vi.fn(async () => availability),
-    create: vi.fn(async () => ({
+    create: vi.fn(async (_options: { sourceLanguage: string; targetLanguage: string }) => ({
       translate: vi.fn(async (text: string) => translate(text)),
     })),
   };
@@ -178,10 +178,20 @@ describe('getBrowserTranslations', () => {
   it('caches results per target language', async () => {
     const translator = installMockTranslator();
 
-    await getBrowserTranslations('fr');
-    await getBrowserTranslations('fr');
+    translator.create.mockImplementation(async ({ targetLanguage }: { targetLanguage: string }) => ({
+      translate: vi.fn(async (text: string) => `${targetLanguage}:${text}`),
+    }));
 
-    expect(translator.create).toHaveBeenCalledTimes(1);
+    const french = await getBrowserTranslations('fr');
+    const german = await getBrowserTranslations('de');
+    const frenchAgain = await getBrowserTranslations('fr');
+
+    expect(french['buttons.play']).toBe('fr:Play');
+    expect(german['buttons.play']).toBe('de:Play');
+    expect(frenchAgain['buttons.play']).toBe('fr:Play');
+    expect(translator.create).toHaveBeenCalledTimes(2);
+    expect(translator.create).toHaveBeenNthCalledWith(1, { sourceLanguage: 'en', targetLanguage: 'fr' });
+    expect(translator.create).toHaveBeenNthCalledWith(2, { sourceLanguage: 'en', targetLanguage: 'de' });
   });
 
   it('downloads and translates when downloadIfNeeded is true', async () => {

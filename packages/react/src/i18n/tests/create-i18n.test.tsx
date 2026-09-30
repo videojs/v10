@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import * as coreI18n from '@videojs/core/i18n';
 import { type FlatTranslations, registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { createRef, type ReactElement } from 'react';
@@ -439,12 +439,12 @@ describe('createI18n', () => {
     const { I18nProvider, useTranslator } = createI18n({
       loader: async (tag) => {
         if (tag === 'en') {
-          return { Play: 'EnLazy' };
+          return { Play: 'EnLazy', Pause: 'EnLazyPause' };
         }
 
         if (tag === 'fr') {
           await frBlocked;
-          return { Play: 'FrLazy' };
+          return { Play: 'FrLazy', Pause: 'FrLazyPause' };
         }
 
         return undefined;
@@ -454,7 +454,11 @@ describe('createI18n', () => {
     function Probe(): ReactElement {
       const t = useTranslator();
 
-      return <span>{t('Play')}</span>;
+      return (
+        <span>
+          {t('Play')}:{t('Pause')}
+        </span>
+      );
     }
 
     const { rerender } = render(
@@ -464,7 +468,7 @@ describe('createI18n', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText('EnLazy')).not.toBeNull();
+      expect(screen.queryByText('EnLazy:EnLazyPause')).not.toBeNull();
     });
 
     rerender(
@@ -474,14 +478,14 @@ describe('createI18n', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText('FrReg')).not.toBeNull();
+      expect(screen.queryByText('FrReg:Pause')).not.toBeNull();
     });
-    expect(screen.queryByText('EnLazy')).toBeNull();
+    expect(screen.queryByText('FrReg:EnLazyPause')).toBeNull();
 
     unblockFr();
 
     await waitFor(() => {
-      expect(screen.queryByText('FrReg')).not.toBeNull();
+      expect(screen.queryByText('FrReg:FrLazyPause')).not.toBeNull();
     });
   });
 
@@ -569,12 +573,14 @@ describe('createI18n', () => {
       expect(screen.queryByText('Lecture')).not.toBeNull();
     });
 
-    resolveDe?.({ Play: 'Abspielen' });
-
-    await waitFor(() => {
-      expect(screen.queryByText('Abspielen')).toBeNull();
-      expect(screen.queryByText('Lecture')).not.toBeNull();
+    await act(async () => {
+      resolveDe?.({ Play: 'Abspielen' });
+      await deLoad;
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
+
+    expect(screen.queryByText('Abspielen')).toBeNull();
+    expect(screen.queryByText('Lecture')).not.toBeNull();
   });
 
   it('does not re-notify onActiveLocaleChange when the handler identity changes', async () => {
@@ -602,16 +608,22 @@ describe('createI18n', () => {
     });
 
     const callCountAfterMount = onActiveLocaleChange.mock.calls.length;
+    const nextHandler = vi.fn();
 
     rerender(
-      <I18nProvider langRootRef={rootRef} onActiveLocaleChange={() => {}}>
+      <I18nProvider langRootRef={rootRef} onActiveLocaleChange={nextHandler}>
         <div ref={rootRef}>
           <Probe />
         </div>
       </I18nProvider>
     );
 
-    expect(onActiveLocaleChange.mock.calls.length).toBe(callCountAfterMount);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(nextHandler).not.toHaveBeenCalled();
+    expect(onActiveLocaleChange).toHaveBeenCalledTimes(callCountAfterMount);
   });
 
   it('notifies onActiveLocaleChange when resolved locale changes', async () => {

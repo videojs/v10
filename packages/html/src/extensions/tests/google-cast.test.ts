@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { ContextProvider } from '@videojs/element/context';
 import { GoogleCastExtension as GoogleCastExtensionBase } from '@videojs/google-cast';
 import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
@@ -45,11 +47,17 @@ describe('GoogleCastExtension', () => {
     expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
   });
 
-  it('leaves the component to the base class lazy getter', () => {
-    // An own `component` field would shadow the getter and be initialized after
-    // the base constructor — too late for a connected upgrade, where the media
-    // context callback registers the component from within that constructor.
-    expect(Object.getOwnPropertyNames(new GoogleCastExtension())).not.toContain('component');
+  it('registers when upgraded in a connected player that already has media', () => {
+    const host = new HTMLVideoAdapter();
+    const provider = new TestMediaProvider();
+
+    document.body.append(provider);
+    provider.setMedia(host as unknown as Media);
+
+    provider.innerHTML = '<test-google-cast-upgrade></test-google-cast-upgrade>';
+    customElements.define('test-google-cast-upgrade', class extends GoogleCastExtension {});
+
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
   });
 
   it('resolves the adapter from a media element adapter property', () => {

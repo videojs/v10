@@ -80,24 +80,6 @@ describe('@videojs/html/icons', () => {
     expect(document.querySelector('#bad')?.innerHTML).toBe('');
   });
 
-  it('does not microtask-loop when family has no loader', async () => {
-    const testWindow = new Window();
-
-    vi.stubGlobal('window', testWindow);
-    vi.stubGlobal('document', testWindow.document);
-    vi.stubGlobal('customElements', testWindow.customElements);
-    vi.stubGlobal('HTMLElement', testWindow.HTMLElement);
-
-    document.body.innerHTML = '<media-icon family="__unknown_family__" name="play"></media-icon>';
-
-    await import('../element');
-    await customElements.whenDefined('media-icon');
-
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(document.querySelector('media-icon')?.innerHTML).toBe('');
-  });
-
   it('renders icons from a family-specific import', async () => {
     const testWindow = new Window();
 

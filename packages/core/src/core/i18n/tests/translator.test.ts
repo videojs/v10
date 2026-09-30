@@ -68,9 +68,10 @@ describe('createTranslator', () => {
   });
 
   it('interpolates the source phrase fallback', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     const t = createTranslator({}, 'en');
 
-    expect(t('seek.forward', { seconds: 10 })).toBe('seek.forward');
+    expect(t('Custom {value}', { value: 10 })).toBe('Custom 10');
   });
 
   it('keeps tokens that are not supplied as params', () => {

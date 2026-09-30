@@ -17,6 +17,7 @@ function uniqueFamily(): string {
 
 afterEach(() => {
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe('MediaIconElement', () => {
@@ -78,5 +79,24 @@ describe('MediaIconElement', () => {
     await Promise.resolve();
 
     expect(load).not.toHaveBeenCalled();
+  });
+
+  it('does not request a load when a family has no loader', async () => {
+    const load = vi.spyOn(MediaIconElement, 'load');
+    const icon = createIcon();
+
+    icon.setAttribute('family', uniqueFamily());
+    icon.setAttribute('name', 'play');
+    document.body.append(icon);
+
+    try {
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(load).not.toHaveBeenCalled();
+      expect(icon.childNodes).toHaveLength(0);
+    } finally {
+      // Stop any pending render chain even when a broken guard fails the assertion.
+      icon.remove();
+    }
   });
 });

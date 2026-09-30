@@ -119,26 +119,38 @@ describe('createI18n', () => {
   });
 
   it('media-text stores source text before translating', async () => {
-    registerI18n('de', { 'buttons.play': 'Los' });
-    const provider = new MediaI18nProviderElement();
+    registerI18n('de', { 'custom.authored': 'Los' });
+    const { ProviderMixin } = createI18n({ loader: async () => undefined });
+
+    class SourceProvider extends ProviderMixin(ReactiveElement) {}
+    customElements.define('i18n-source-provider', SourceProvider);
+    const provider = new SourceProvider();
 
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
 
-    text.setAttribute('token', 'buttons.play');
-    text.textContent = 'Play';
+    text.setAttribute('token', 'custom.authored');
+    text.textContent = 'Start this presentation';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await text.updateComplete;
     expect(text.textContent).toBe('Los');
+
+    provider.lang = 'x-none';
+    await vi.waitFor(() => expect(text.textContent).toBe('Start this presentation'));
   });
 
   it('media-text falls back to text content when phrase is missing', async () => {
-    const provider = new MediaI18nProviderElement();
+    const { ProviderMixin } = createI18n({ loader: async () => undefined });
+
+    class MissingTokenProvider extends ProviderMixin(ReactiveElement) {}
+    customElements.define('i18n-missing-token-provider', MissingTokenProvider);
+    const provider = new MissingTokenProvider();
 
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
 
+    text.setAttribute('token', 'custom.missing');
     text.textContent = 'Fallback label';
     provider.appendChild(text);
     document.body.appendChild(provider);
@@ -505,9 +517,10 @@ describe('createI18n', () => {
     await text.updateComplete;
     expect(text.textContent).toBe('Play');
 
-    registerI18n('en', { 'buttons.play': 'RegistryPlay' });
+    registerI18n('en', { Play: 'RegistryPlay' });
 
-    await vi.waitFor(() => expect(text.textContent).toBe('Play'));
+    await text.updateComplete;
+    expect(text.textContent).toBe('Play');
   });
 
   it('registers browser translations when no locale pack exists', async () => {

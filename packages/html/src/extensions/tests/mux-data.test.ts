@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { ContextProvider } from '@videojs/element/context';
 import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
 import { MuxDataExtension as MuxDataExtensionBase } from '@videojs/mux-data';
@@ -47,7 +49,8 @@ describe('MuxDataExtension', () => {
     document.body.append(provider);
     provider.setMedia(host as unknown as Media);
 
-    provider.innerHTML = '<test-mux-data></test-mux-data>';
+    provider.innerHTML = '<test-mux-data-upgrade></test-mux-data-upgrade>';
+    customElements.define('test-mux-data-upgrade', class extends MuxDataExtension {});
 
     expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
