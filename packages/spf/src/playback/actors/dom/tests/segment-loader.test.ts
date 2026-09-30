@@ -67,7 +67,7 @@ const mockFetchBytes = vi.fn(async () => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => {
+describe('createSegmentLoaderActor', () => {
   it('does NOT emit an explicit remove on cross-rendition switch; relies on MSE overwrite-on-append', async () => {
     // Audio renditions share segment IDs and startTimes. Appending the new
     // track's segments at the same timestamps overwrites the old data in
@@ -129,21 +129,22 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
 
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await vi.waitFor(() => {
+      expect(bufferActor.send.mock.calls.map(([message]) => message.type)).toEqual([
+        'append-init',
+        'append-segment',
+        'append-segment',
+      ]);
+      expect(loader.snapshot.get().value).toBe('idle');
+    });
+    const messages = bufferActor.send.mock.calls.map(([message]) => message as SourceBufferMessage);
 
-    const crossRenditionRemove = bufferActor.send.mock.calls
-      .map((c) => c[0] as SourceBufferMessage)
-      .find(
-        (m): m is Extract<SourceBufferMessage, { type: 'remove' }> =>
-          m.type === 'remove' && m.start > 0 && m.end === Infinity
-      );
-
-    // Note: a forward-buffer flush may fire with start === forwardFlushPoint
-    // and end === Infinity, but only when the buffer overflows the forward
-    // target. The cross-rendition flush has start === nextSegmentBoundary.
-    // Since languages match here, NO cross-rendition flush should fire.
-    // (Forward-buffer flush with a small forward-buffer is independent.)
-    expect(crossRenditionRemove?.start).not.toBe(6);
+    expect(messages[0]).toMatchObject({ type: 'append-init', meta: { trackId: 'audio-en-256k', language: 'en' } });
+    expect(messages.filter((message) => message.type === 'append-segment').map((message) => message.meta.id)).toEqual([
+      'audio-en-256k-1',
+      'audio-en-256k-2',
+    ]);
+    expect(messages.filter((message) => message.type === 'remove')).toEqual([]);
 
     loader.destroy();
   });
@@ -158,11 +159,24 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
 
     loader.send({ type: 'load', track, range: { start: 0, end: 20 } });
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await vi.waitFor(() => {
+      expect(bufferActor.send.mock.calls.map(([message]) => message.type)).toEqual([
+        'append-init',
+        'append-segment',
+        'append-segment',
+        'append-segment',
+      ]);
+      expect(loader.snapshot.get().value).toBe('idle');
+    });
+    const messages = bufferActor.send.mock.calls.map(([message]) => message as SourceBufferMessage);
 
-    const removeCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'remove');
-
-    expect(removeCalls).toHaveLength(0);
+    expect(messages[0]).toMatchObject({ type: 'append-init', meta: { trackId: 'audio-en', language: 'en' } });
+    expect(messages.filter((message) => message.type === 'append-segment').map((message) => message.meta.id)).toEqual([
+      'audio-en-0',
+      'audio-en-1',
+      'audio-en-2',
+    ]);
+    expect(messages.filter((message) => message.type === 'remove')).toEqual([]);
 
     loader.destroy();
   });

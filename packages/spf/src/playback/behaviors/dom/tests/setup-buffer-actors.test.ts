@@ -443,11 +443,20 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
 
     expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
 
+    const bufferActor = context.videoBufferActor.get()!;
+    let bufferStateAtLoaderDestroy: string | undefined;
+
+    loaderDestroy.mockImplementation(() => {
+      bufferStateAtLoaderDestroy = bufferActor.snapshot.get().value;
+    });
+
     // Detach mediaSource → state machine transitions to 'preconditions-unmet'
     context.mediaSource.set(undefined);
 
     await vi.waitFor(() => {
       expect(loaderDestroy).toHaveBeenCalled();
+      expect(bufferStateAtLoaderDestroy).toBe('idle');
+      expect(bufferActor.snapshot.get().value).toBe('destroyed');
       expect(context.videoBufferActor.get()).toBeUndefined();
       expect(context.videoSegmentLoaderActor.get()).toBeUndefined();
     });

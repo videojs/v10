@@ -73,6 +73,14 @@ describe('shouldUpdateDuration', () => {
     expect(shouldUpdateDuration({ duration: 60 } as Presentation, openMs)).toBe(true);
   });
 
+  it.each([
+    ['mediaSource', { duration: 60 } as Presentation, undefined],
+    ['presentation', undefined, openMs],
+    ['presentation.duration', {} as Presentation, openMs],
+  ])('returns false when %s is missing', (_name, presentation, mediaSource) => {
+    expect(shouldUpdateDuration(presentation, mediaSource)).toBe(false);
+  });
+
   it('returns false when duration is NaN', () => {
     expect(shouldUpdateDuration({ duration: NaN } as Presentation, openMs)).toBe(false);
   });
