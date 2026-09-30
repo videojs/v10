@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { HlsAudioAdapter, isHlsAudioMedia } from '../index';
+import { HlsAudioAdapter, isHlsAudioAdapter } from '../index';
 
-describe('isHlsAudioMedia', () => {
+describe('isHlsAudioAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new HlsAudioAdapter();
 
-    expect(isHlsAudioMedia(media)).toBe(true);
+    expect(isHlsAudioAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isHlsAudioMedia(new EventTarget())).toBe(false);
-    expect(isHlsAudioMedia({})).toBe(false);
-    expect(isHlsAudioMedia(null)).toBe(false);
+    expect(isHlsAudioAdapter(new EventTarget())).toBe(false);
+    expect(isHlsAudioAdapter({})).toBe(false);
+    expect(isHlsAudioAdapter(null)).toBe(false);
   });
 });

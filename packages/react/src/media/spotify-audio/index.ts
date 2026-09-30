@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isSpotifyMedia } from '@videojs/spotify-audio';
+export { isSpotifyAdapter } from '@videojs/spotify-audio';

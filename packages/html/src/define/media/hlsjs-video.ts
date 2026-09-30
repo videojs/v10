@@ -1,7 +1,7 @@
 import { HlsJsVideo } from '../../media/hlsjs-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export { isHlsJsMedia } from '@videojs/hlsjs-video';
+export { isHlsJsAdapter } from '@videojs/hlsjs-video';
 
 /** Cross-browser HLS media element powered by hls.js and registered as `<hlsjs-video>`. */
 export class HlsJsVideoElement extends HlsJsVideo {

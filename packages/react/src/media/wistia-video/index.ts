@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isWistiaMedia } from '@videojs/wistia-video';
+export { isWistiaAdapter } from '@videojs/wistia-video';

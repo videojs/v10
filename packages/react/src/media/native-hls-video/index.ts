@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isNativeHlsMedia } from '@videojs/native-hls-video';
+export { isNativeHlsAdapter } from '@videojs/native-hls-video';

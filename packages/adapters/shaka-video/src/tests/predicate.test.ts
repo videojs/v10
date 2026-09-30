@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { ShakaAdapter, isShakaMedia } from '../index';
+import { ShakaAdapter, isShakaAdapter } from '../index';
 
-describe('isShakaMedia', () => {
+describe('isShakaAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new ShakaAdapter();
 
-    expect(isShakaMedia(media)).toBe(true);
+    expect(isShakaAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isShakaMedia(new EventTarget())).toBe(false);
-    expect(isShakaMedia({})).toBe(false);
-    expect(isShakaMedia(null)).toBe(false);
+    expect(isShakaAdapter(new EventTarget())).toBe(false);
+    expect(isShakaAdapter({})).toBe(false);
+    expect(isShakaAdapter(null)).toBe(false);
   });
 });

@@ -27,7 +27,7 @@ import {
   type TwitchPlaybackState,
   type TwitchPlayerState,
 } from './player-api';
-import { TWITCH_MEDIA } from './predicate';
+import { TWITCH_BRAND } from './predicate';
 import type { TwitchAdapterProps } from './props';
 import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './source';
 
@@ -36,7 +36,7 @@ import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './so
  *   new value.
  */
 export class TwitchAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [TWITCH_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [TWITCH_BRAND];
 
   static readonly defaultProps: TwitchAdapterProps = {
     src: '',

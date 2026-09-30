@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isCloudflareMedia } from '@videojs/cloudflare-video';
+export { isCloudflareAdapter } from '@videojs/cloudflare-video';

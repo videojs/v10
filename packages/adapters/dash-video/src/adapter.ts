@@ -5,7 +5,7 @@ import { deepEqual } from '@videojs/utils/object';
 import * as dashjs from 'dashjs';
 
 import { DashMediaTracksMixin } from './media-tracks';
-import { DASH_MEDIA } from './predicate';
+import { DASH_BRAND } from './predicate';
 
 /** Structured DASH source: which source to play, plus how to play it. */
 export interface DashSource {
@@ -133,5 +133,5 @@ class DashAdapterCore
  *   new value.
  */
 export class DashAdapter extends DashMediaTracksMixin(DashAdapterCore) {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [DASH_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [DASH_BRAND];
 }

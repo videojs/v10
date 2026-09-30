@@ -1,4 +1,4 @@
 export type { DrmSystemConfig, DrmSystemsConfig, KeySystem } from '@videojs/media';
 export { KeySystems } from '@videojs/media';
 export * from './adapter';
-export { isHlsJsMedia } from './predicate';
+export { isHlsJsAdapter } from './predicate';

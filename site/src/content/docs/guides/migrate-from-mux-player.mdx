@@ -865,16 +865,16 @@ Reading `.engine` couples your app to hls.js and the `/hls-js` flavor. Prefer Vi
 </Aside>
 
 <FrameworkCase frameworks={["react"]}>
-The media component's React ref is the native `HTMLVideoElement`; it has no `.target` or `.host`. Use the player context for the Video.js media object, and check it with `isMuxVideoMedia` from the `/hls-js` entry, which types `engine` as the hls.js instance. <DocsLink slug="guides/media-sources" anchor="reach-the-running-engine">Reach the running engine</DocsLink> lists the guard for every media component.
+The media component's React ref is the native `HTMLVideoElement`; it has no `.target` or `.host`. Use the player context for the Video.js media object, and check it with `isMuxVideoAdapter` from the `/hls-js` entry, which types `engine` as the hls.js instance. <DocsLink slug="guides/media-sources" anchor="reach-the-running-engine">Reach the running engine</DocsLink> lists the guard for every media component.
 
 ```tsx
 import { useMedia } from '@videojs/react';
-import { isMuxVideoMedia } from '@videojs/react/media/mux-video/hls-js';
+import { isMuxVideoAdapter } from '@videojs/react/media/mux-video/hls-js';
 
 function EngineAccess() {
   const media = useMedia();
   // The hls.js instance, or `null` while the browser plays HLS itself.
-  const engine = isMuxVideoMedia(media) ? media.engine : null;
+  const engine = isMuxVideoAdapter(media) ? media.engine : null;
 
   return null;
 }

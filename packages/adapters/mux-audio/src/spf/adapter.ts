@@ -5,7 +5,7 @@ import { MEDIA_BRANDS } from '@videojs/media';
 import { type MuxAdapterProps, MuxMixin } from '@videojs/mux-video/spf';
 import { HlsAudioAdapter, type HlsAudioAdapterProps } from '@videojs/spf/hls-audio';
 
-import { MUX_AUDIO_SPF_MEDIA } from './predicate';
+import { MUX_AUDIO_SPF_BRAND } from './predicate';
 
 /**
  * The Mux Media over the SPF audio-only HLS engine.
@@ -24,7 +24,7 @@ import { MUX_AUDIO_SPF_MEDIA } from './predicate';
  * known shortcoming on the video flavor, which shares the derivation.
  */
 export class MuxAudioAdapter extends MuxMixin(HlsAudioAdapter) {
-  static override readonly [MEDIA_BRANDS]: readonly string[] = [...HlsAudioAdapter[MEDIA_BRANDS], MUX_AUDIO_SPF_MEDIA];
+  static override readonly [MEDIA_BRANDS]: readonly string[] = [...HlsAudioAdapter[MEDIA_BRANDS], MUX_AUDIO_SPF_BRAND];
 
   static override readonly defaultProps: Omit<HlsAudioAdapterProps, 'src' | 'source'> & MuxAdapterProps = {
     ...HlsAudioAdapter.defaultProps,

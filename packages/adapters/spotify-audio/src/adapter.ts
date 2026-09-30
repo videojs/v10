@@ -14,7 +14,7 @@ import {
   type SpotifyIframeApi,
   type SpotifyPlaybackState,
 } from './iframe-api';
-import { SPOTIFY_MEDIA } from './predicate';
+import { SPOTIFY_BRAND } from './predicate';
 import type { SpotifyAdapterProps } from './props';
 import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from './source';
 
@@ -23,7 +23,7 @@ import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from '.
  *   new value.
  */
 export class SpotifyAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [SPOTIFY_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [SPOTIFY_BRAND];
 
   static readonly defaultProps: SpotifyAdapterProps = {
     src: '',

@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isHlsVideoMedia } from '@videojs/spf/hls-video';
+export { isHlsVideoAdapter } from '@videojs/spf/hls-video';

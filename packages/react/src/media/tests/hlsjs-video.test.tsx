@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { HlsJsAdapter } from '@videojs/hlsjs-video';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { HlsJsVideo, isHlsJsMedia } from '../hlsjs-video';
+import { HlsJsVideo, isHlsJsAdapter } from '../hlsjs-video';
 
 describe('HlsJsVideo', () => {
   it('does not re-attach the media when the parent re-renders with a new inline ref', () => {
@@ -21,12 +21,12 @@ describe('HlsJsVideo', () => {
     vi.restoreAllMocks();
   });
 
-  it('creates media that isHlsJsMedia recognizes', () => {
+  it('creates media that isHlsJsAdapter recognizes', () => {
     const attach = vi.spyOn(HlsJsAdapter.prototype, 'attach');
 
     render(<HlsJsVideo />);
 
-    expect(isHlsJsMedia(attach.mock.contexts[0])).toBe(true);
+    expect(isHlsJsAdapter(attach.mock.contexts[0])).toBe(true);
 
     vi.restoreAllMocks();
   });

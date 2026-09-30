@@ -4,10 +4,10 @@ import { MediaTracksMixin } from '@videojs/media/media-tracks';
 
 import { HlsVideoMediaTracksMixin } from './media-tracks';
 import { HlsVideoMixin } from './mixin';
-import { HLS_VIDEO_MEDIA } from './predicate';
+import { HLS_VIDEO_BRAND } from './predicate';
 
 const HlsVideoAdapterBase = HlsVideoMediaTracksMixin(MediaTracksMixin(HlsVideoMixin(HTMLVideoAdapter)));
 
 export class HlsVideoAdapter extends HlsVideoAdapterBase {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [HLS_VIDEO_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [HLS_VIDEO_BRAND];
 }

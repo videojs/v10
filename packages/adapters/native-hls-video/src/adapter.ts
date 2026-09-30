@@ -4,7 +4,7 @@ import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { NativeHlsDrmMixin } from './drm';
 import { NativeHlsErrorsMixin } from './errors';
 import { NativeHlsLiveMixin } from './live';
-import { NATIVE_HLS_MEDIA } from './predicate';
+import { NATIVE_HLS_BRAND } from './predicate';
 import { NativeHlsStreamTypeMixin } from './stream-type';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
@@ -155,5 +155,5 @@ class NativeHlsAdapterCore extends HTMLVideoAdapter implements Omit<NativeHlsAda
 export class NativeHlsAdapter extends NativeHlsLiveMixin(
   NativeHlsStreamTypeMixin(NativeHlsDrmMixin(NativeHlsErrorsMixin(NativeHlsAdapterCore)))
 ) {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [NATIVE_HLS_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [NATIVE_HLS_BRAND];
 }

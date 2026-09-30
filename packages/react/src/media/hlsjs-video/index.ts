@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isHlsJsMedia } from '@videojs/hlsjs-video';
+export { isHlsJsAdapter } from '@videojs/hlsjs-video';

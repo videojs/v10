@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { NativeHlsAdapter, isNativeHlsMedia } from '../index';
+import { NativeHlsAdapter, isNativeHlsAdapter } from '../index';
 
-describe('isNativeHlsMedia', () => {
+describe('isNativeHlsAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new NativeHlsAdapter();
 
-    expect(isNativeHlsMedia(media)).toBe(true);
+    expect(isNativeHlsAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isNativeHlsMedia(new EventTarget())).toBe(false);
-    expect(isNativeHlsMedia({})).toBe(false);
-    expect(isNativeHlsMedia(null)).toBe(false);
+    expect(isNativeHlsAdapter(new EventTarget())).toBe(false);
+    expect(isNativeHlsAdapter({})).toBe(false);
+    expect(isNativeHlsAdapter(null)).toBe(false);
   });
 });

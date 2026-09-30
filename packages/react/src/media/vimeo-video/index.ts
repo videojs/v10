@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isVimeoMedia } from '@videojs/vimeo-video';
+export { isVimeoAdapter } from '@videojs/vimeo-video';

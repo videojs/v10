@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isDashMedia } from './predicate';
+export { isDashAdapter } from './predicate';

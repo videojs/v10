@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isYouTubeMedia } from '@videojs/youtube-video';
+export { isYouTubeAdapter } from '@videojs/youtube-video';

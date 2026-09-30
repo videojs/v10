@@ -25,7 +25,7 @@ import {
   type TikTokPlayerCommand,
   type TikTokPlayerError,
 } from './player-api';
-import { TIKTOK_MEDIA } from './predicate';
+import { TIKTOK_BRAND } from './predicate';
 import type { TikTokAdapterProps } from './props';
 import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } from './source';
 
@@ -34,7 +34,7 @@ import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } f
  *   new value.
  */
 export class TikTokAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [TIKTOK_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [TIKTOK_BRAND];
 
   static readonly defaultProps: TikTokAdapterProps = {
     src: '',

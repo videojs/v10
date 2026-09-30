@@ -27,7 +27,7 @@ import {
   type YouTubePlayerApi,
   youtubeErrorCodeToMediaErrorCode,
 } from './iframe-api';
-import { YOUTUBE_MEDIA } from './predicate';
+import { YOUTUBE_BRAND } from './predicate';
 import type { YouTubeAdapterProps } from './props';
 import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from './source';
 
@@ -35,7 +35,7 @@ const SEEK_TOLERANCE = 1;
 const SEEK_SETTLE_TIMEOUT = 1_000;
 
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [YOUTUBE_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [YOUTUBE_BRAND];
 
   static readonly defaultProps: YouTubeAdapterProps = {
     src: '',

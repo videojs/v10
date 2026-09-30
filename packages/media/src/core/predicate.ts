@@ -236,7 +236,7 @@ export interface BrandedMediaClass {
 
 /**
  * Whether `value` is media of `brand`: an adapter whose class lists it, as React's `useMedia()` returns, or a custom
- * media element whose `adapter` does, as HTML registers. Per-media guards such as `isHlsJsMedia` build on this.
+ * media element whose `adapter` does, as HTML registers. Per-media guards such as `isHlsJsAdapter` build on this.
  */
 export function isBrandedMedia(value: unknown, brand: string): boolean {
   if (!isObject(value)) return false;

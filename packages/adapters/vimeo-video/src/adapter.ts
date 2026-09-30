@@ -16,7 +16,7 @@ import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 
-import { VIMEO_MEDIA } from './predicate';
+import { VIMEO_BRAND } from './predicate';
 
 export { type ParsedVimeoSource, parseVimeoSource, parseVimeoVideoId } from '@videojs/media';
 
@@ -62,7 +62,7 @@ export interface VimeoAdapterProps {
  *   for the new value.
  */
 export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [VIMEO_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [VIMEO_BRAND];
 
   static readonly defaultProps: VimeoAdapterProps = {
     src: '',

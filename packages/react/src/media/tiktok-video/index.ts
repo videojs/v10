@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isTikTokMedia } from '@videojs/tiktok-video';
+export { isTikTokAdapter } from '@videojs/tiktok-video';

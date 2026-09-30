@@ -9,5 +9,5 @@
 export {
   HlsBackgroundVideo as MuxBackgroundVideo,
   type HlsBackgroundVideoProps as MuxBackgroundVideoProps,
-  isHlsBackgroundVideoMedia,
+  isHlsBackgroundVideoAdapter,
 } from '../hls-background-video';

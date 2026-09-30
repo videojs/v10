@@ -1,7 +1,7 @@
 import { ShakaVideo } from '../../media/shaka-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export { isShakaMedia } from '@videojs/shaka-video';
+export { isShakaAdapter } from '@videojs/shaka-video';
 
 export class ShakaVideoElement extends ShakaVideo {
   static readonly tagName = 'shaka-video';

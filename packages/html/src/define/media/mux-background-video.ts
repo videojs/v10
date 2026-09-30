@@ -1,7 +1,7 @@
 import { MuxBackgroundVideo } from '../../media/mux-background-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export { isHlsBackgroundVideoMedia } from '@videojs/spf/hls-background-video';
+export { isHlsBackgroundVideoAdapter } from '@videojs/spf/hls-background-video';
 
 /**
  * `<mux-background-video>` — the Mux-flavored tag for `<hls-background-video>`.

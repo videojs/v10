@@ -629,12 +629,12 @@ On `<hls-video>`, `drm` licenses FairPlay, Widevine, and PlayReady, taking the s
 ```tsx
 import { Hls } from '@videojs/hlsjs-video';
 import { useMedia } from '@videojs/react';
-import { isHlsJsMedia } from '@videojs/react/media/hlsjs-video';
+import { isHlsJsAdapter } from '@videojs/react/media/hlsjs-video';
 import { useEffect } from 'react';
 
 function LevelLogger() {
   const media = useMedia();
-  const engine = isHlsJsMedia(media) ? media.engine : null;
+  const engine = isHlsJsAdapter(media) ? media.engine : null;
 
   useEffect(() => {
     if (!engine) return;
@@ -650,22 +650,22 @@ function LevelLogger() {
 
 | Media | Guard | `engine` |
 |---|---|---|
-| <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> | `isHlsJsMedia` | the hls.js instance |
-| <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> | `isHlsVideoMedia` | Video.js's own engine |
-| <DocsLink slug="reference/components/native-hls-video">NativeHlsVideo</DocsLink> | `isNativeHlsMedia` | always `null` |
-| <DocsLink slug="reference/components/dash-video">DashVideo</DocsLink> | `isDashMedia` | the dash.js player |
-| <DocsLink slug="reference/components/shaka-video">ShakaVideo</DocsLink> | `isShakaMedia` | the Shaka player |
-| <DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/components/mux-audio">MuxAudio</DocsLink> | `isMuxVideoMedia`, `isMuxAudioMedia` | the hls.js instance from `/hls-js`, Video.js's own engine from `/spf` |
-| <DocsLink slug="reference/components/hls-audio">HlsAudio</DocsLink> | `isHlsAudioMedia` | Video.js's own engine |
-| <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink>, <DocsLink slug="reference/components/mux-background-video">MuxBackgroundVideo</DocsLink> | `isHlsBackgroundVideoMedia` | Video.js's own engine |
-| <DocsLink slug="reference/components/youtube-video">YouTubeVideo</DocsLink> | `isYouTubeMedia` | the YouTube IFrame player |
-| <DocsLink slug="reference/components/vimeo-video">VimeoVideo</DocsLink> | `isVimeoMedia` | the Vimeo player |
-| <DocsLink slug="reference/components/cloudflare-video">CloudflareVideo</DocsLink> | `isCloudflareMedia` | the Stream player |
-| <DocsLink slug="reference/components/spotify-audio">SpotifyAudio</DocsLink> | `isSpotifyMedia` | the Spotify embed controller |
-| <DocsLink slug="reference/components/tiktok-video">TikTokVideo</DocsLink>, <DocsLink slug="reference/components/twitch-video">TwitchVideo</DocsLink> | `isTikTokMedia`, `isTwitchMedia` | the embed iframe's `window` |
-| <DocsLink slug="reference/components/wistia-video">WistiaVideo</DocsLink> | `isWistiaMedia` | none: the media is Wistia's own player element |
+| <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink> | `isHlsJsAdapter` | the hls.js instance |
+| <DocsLink slug="reference/components/hls-video">HlsVideo</DocsLink> | `isHlsVideoAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/native-hls-video">NativeHlsVideo</DocsLink> | `isNativeHlsAdapter` | always `null` |
+| <DocsLink slug="reference/components/dash-video">DashVideo</DocsLink> | `isDashAdapter` | the dash.js player |
+| <DocsLink slug="reference/components/shaka-video">ShakaVideo</DocsLink> | `isShakaAdapter` | the Shaka player |
+| <DocsLink slug="reference/components/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/components/mux-audio">MuxAudio</DocsLink> | `isMuxVideoAdapter`, `isMuxAudioAdapter` | the hls.js instance from `/hls-js`, Video.js's own engine from `/spf` |
+| <DocsLink slug="reference/components/hls-audio">HlsAudio</DocsLink> | `isHlsAudioAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink>, <DocsLink slug="reference/components/mux-background-video">MuxBackgroundVideo</DocsLink> | `isHlsBackgroundVideoAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/youtube-video">YouTubeVideo</DocsLink> | `isYouTubeAdapter` | the YouTube IFrame player |
+| <DocsLink slug="reference/components/vimeo-video">VimeoVideo</DocsLink> | `isVimeoAdapter` | the Vimeo player |
+| <DocsLink slug="reference/components/cloudflare-video">CloudflareVideo</DocsLink> | `isCloudflareAdapter` | the Stream player |
+| <DocsLink slug="reference/components/spotify-audio">SpotifyAudio</DocsLink> | `isSpotifyAdapter` | the Spotify embed controller |
+| <DocsLink slug="reference/components/tiktok-video">TikTokVideo</DocsLink>, <DocsLink slug="reference/components/twitch-video">TwitchVideo</DocsLink> | `isTikTokAdapter`, `isTwitchAdapter` | the embed iframe's `window` |
+| <DocsLink slug="reference/components/wistia-video">WistiaVideo</DocsLink> | `isWistiaAdapter` | none: the media is Wistia's own player element |
 
-A Mux guard recognizes only its own flavor, so import it from the same entry as the component. Mux media also passes its engine's guard: `isHlsJsMedia` from `/hls-js`, and `isHlsVideoMedia` or `isHlsAudioMedia` from `/spf`.
+A Mux guard recognizes only its own flavor, so import it from the same entry as the component. Mux media also passes its engine's guard: `isHlsJsAdapter` from `/hls-js`, and `isHlsVideoAdapter` or `isHlsAudioAdapter` from `/spf`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -673,10 +673,10 @@ A media element's tag already types it, so `document.querySelector('hlsjs-video'
 
 ```ts
 import { Hls } from '@videojs/hlsjs-video';
-import { isHlsJsMedia } from '@videojs/html/media/hlsjs-video';
+import { isHlsJsAdapter } from '@videojs/html/media/hlsjs-video';
 
 function logLevels(media: Element | null) {
-  if (!isHlsJsMedia(media)) return;
+  if (!isHlsJsAdapter(media)) return;
 
   media.engine?.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => console.log('level', data.level));
 }
@@ -684,21 +684,21 @@ function logLevels(media: Element | null) {
 
 | Media | Guard | `engine` |
 |---|---|---|
-| <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink> | `isHlsJsMedia` | the hls.js instance |
-| <DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink> | `isHlsVideoMedia` | Video.js's own engine |
-| <DocsLink slug="reference/components/native-hls-video">`<native-hls-video>`</DocsLink> | `isNativeHlsMedia` | always `null` |
-| <DocsLink slug="reference/components/dash-video">`<dash-video>`</DocsLink> | `isDashMedia` | the dash.js player |
-| <DocsLink slug="reference/components/shaka-video">`<shaka-video>`</DocsLink> | `isShakaMedia` | the Shaka player |
-| <DocsLink slug="reference/components/mux-video">`<mux-video>`</DocsLink>, <DocsLink slug="reference/components/mux-audio">`<mux-audio>`</DocsLink> | `isMuxVideoMedia`, `isMuxAudioMedia` | the hls.js instance from `/hls-js`, Video.js's own engine from `/spf` |
-| <DocsLink slug="reference/components/hls-audio">`<hls-audio>`</DocsLink> | `isHlsAudioMedia` | Video.js's own engine |
-| <DocsLink slug="reference/components/youtube-video">`<youtube-video>`</DocsLink> | `isYouTubeMedia` | the YouTube IFrame player |
-| <DocsLink slug="reference/components/vimeo-video">`<vimeo-video>`</DocsLink> | `isVimeoMedia` | the Vimeo player |
-| <DocsLink slug="reference/components/cloudflare-video">`<cloudflare-video>`</DocsLink> | `isCloudflareMedia` | the Stream player |
-| <DocsLink slug="reference/components/spotify-audio">`<spotify-audio>`</DocsLink> | `isSpotifyMedia` | the Spotify embed controller |
-| <DocsLink slug="reference/components/tiktok-video">`<tiktok-video>`</DocsLink>, <DocsLink slug="reference/components/twitch-video">`<twitch-video>`</DocsLink> | `isTikTokMedia`, `isTwitchMedia` | the embed iframe's `window` |
-| <DocsLink slug="reference/components/wistia-video">`<wistia-video>`</DocsLink> | `isWistiaMedia` | none: the media is Wistia's own player element |
+| <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink> | `isHlsJsAdapter` | the hls.js instance |
+| <DocsLink slug="reference/components/hls-video">`<hls-video>`</DocsLink> | `isHlsVideoAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/native-hls-video">`<native-hls-video>`</DocsLink> | `isNativeHlsAdapter` | always `null` |
+| <DocsLink slug="reference/components/dash-video">`<dash-video>`</DocsLink> | `isDashAdapter` | the dash.js player |
+| <DocsLink slug="reference/components/shaka-video">`<shaka-video>`</DocsLink> | `isShakaAdapter` | the Shaka player |
+| <DocsLink slug="reference/components/mux-video">`<mux-video>`</DocsLink>, <DocsLink slug="reference/components/mux-audio">`<mux-audio>`</DocsLink> | `isMuxVideoAdapter`, `isMuxAudioAdapter` | the hls.js instance from `/hls-js`, Video.js's own engine from `/spf` |
+| <DocsLink slug="reference/components/hls-audio">`<hls-audio>`</DocsLink> | `isHlsAudioAdapter` | Video.js's own engine |
+| <DocsLink slug="reference/components/youtube-video">`<youtube-video>`</DocsLink> | `isYouTubeAdapter` | the YouTube IFrame player |
+| <DocsLink slug="reference/components/vimeo-video">`<vimeo-video>`</DocsLink> | `isVimeoAdapter` | the Vimeo player |
+| <DocsLink slug="reference/components/cloudflare-video">`<cloudflare-video>`</DocsLink> | `isCloudflareAdapter` | the Stream player |
+| <DocsLink slug="reference/components/spotify-audio">`<spotify-audio>`</DocsLink> | `isSpotifyAdapter` | the Spotify embed controller |
+| <DocsLink slug="reference/components/tiktok-video">`<tiktok-video>`</DocsLink>, <DocsLink slug="reference/components/twitch-video">`<twitch-video>`</DocsLink> | `isTikTokAdapter`, `isTwitchAdapter` | the embed iframe's `window` |
+| <DocsLink slug="reference/components/wistia-video">`<wistia-video>`</DocsLink> | `isWistiaAdapter` | none: the media is Wistia's own player element |
 
-A Mux guard recognizes only its own flavor, so import it from the same entry as the element. Mux media also passes its engine's guard: `isHlsJsMedia` from `/hls-js`, and `isHlsVideoMedia` or `isHlsAudioMedia` from `/spf`.
+A Mux guard recognizes only its own flavor, so import it from the same entry as the element. Mux media also passes its engine's guard: `isHlsJsAdapter` from `/hls-js`, and `isHlsVideoAdapter` or `isHlsAudioAdapter` from `/spf`.
 </FrameworkCase>
 
 Read `engine` when you need it rather than holding on to it. It's `null` while no engine runs, such as when hls.js-backed media hands HLS to the browser, and the media replaces it whenever a source change recreates the engine.

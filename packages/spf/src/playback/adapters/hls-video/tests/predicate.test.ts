@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { HlsVideoAdapter, isHlsVideoMedia } from '../index';
+import { HlsVideoAdapter, isHlsVideoAdapter } from '../index';
 
-describe('isHlsVideoMedia', () => {
+describe('isHlsVideoAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new HlsVideoAdapter();
 
-    expect(isHlsVideoMedia(media)).toBe(true);
+    expect(isHlsVideoAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isHlsVideoMedia(new EventTarget())).toBe(false);
-    expect(isHlsVideoMedia({})).toBe(false);
-    expect(isHlsVideoMedia(null)).toBe(false);
+    expect(isHlsVideoAdapter(new EventTarget())).toBe(false);
+    expect(isHlsVideoAdapter({})).toBe(false);
+    expect(isHlsVideoAdapter(null)).toBe(false);
   });
 });

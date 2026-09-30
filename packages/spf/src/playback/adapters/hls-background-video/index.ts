@@ -22,4 +22,4 @@ export type {
 } from './mixin';
 export { HlsBackgroundVideoAdapterCore, HlsBackgroundVideoMixin } from './mixin';
 export { HlsBackgroundVideoAdapter } from './adapter';
-export { isHlsBackgroundVideoMedia } from './predicate';
+export { isHlsBackgroundVideoAdapter } from './predicate';

@@ -1,13 +1,13 @@
 import { MEDIA_BRANDS } from '@videojs/media';
 
-import { WISTIA_MEDIA } from './predicate';
+import { WISTIA_BRAND } from './predicate';
 import type { WistiaAdapterProps } from './props';
 import type { WistiaSource } from './source';
 
 export * from './helpers';
 
 export type { WistiaPlayer } from './adapter';
-export { isWistiaMedia } from './predicate';
+export { isWistiaAdapter } from './predicate';
 
 export const WISTIA_PLAYER_TAG = 'wistia-player';
 
@@ -37,7 +37,7 @@ export class WistiaAdapter extends (globalThis.HTMLElement ??
       source: null,
     };
   }) {
-  static readonly [MEDIA_BRANDS]: readonly string[] = [WISTIA_MEDIA];
+  static readonly [MEDIA_BRANDS]: readonly string[] = [WISTIA_BRAND];
 
   src = '';
   source: WistiaSource | null = null;

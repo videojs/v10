@@ -1,17 +1,17 @@
-import { isHlsJsMedia } from '@videojs/hlsjs-video';
-import { isHlsVideoMedia } from '@videojs/spf/hls-video';
+import { isHlsJsAdapter } from '@videojs/hlsjs-video';
+import { isHlsVideoAdapter } from '@videojs/spf/hls-video';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { isMuxVideoMedia, MuxVideoAdapter } from '../index';
-import { isMuxVideoMedia as isSpfMuxVideoMedia, MuxVideoAdapter as SpfMuxVideoAdapter } from '../spf';
+import { isMuxVideoAdapter, MuxVideoAdapter } from '../index';
+import { isMuxVideoAdapter as isSpfMuxVideoAdapter, MuxVideoAdapter as SpfMuxVideoAdapter } from '../spf';
 
-describe('isMuxVideoMedia', () => {
+describe('isMuxVideoAdapter', () => {
   it('recognizes Mux video over hls.js, which is also hls.js media', () => {
     const media = new MuxVideoAdapter();
 
-    expect(isMuxVideoMedia(media)).toBe(true);
-    expect(isHlsJsMedia(media)).toBe(true);
-    expect(isSpfMuxVideoMedia(media)).toBe(false);
+    expect(isMuxVideoAdapter(media)).toBe(true);
+    expect(isHlsJsAdapter(media)).toBe(true);
+    expect(isSpfMuxVideoAdapter(media)).toBe(false);
 
     media.destroy();
   });
@@ -19,10 +19,10 @@ describe('isMuxVideoMedia', () => {
   it('recognizes Mux video over SPF, which is also SPF HLS video', () => {
     const media = new SpfMuxVideoAdapter();
 
-    expect(isSpfMuxVideoMedia(media)).toBe(true);
-    expect(isHlsVideoMedia(media)).toBe(true);
-    expect(isMuxVideoMedia(media)).toBe(false);
-    expect(isHlsJsMedia(media)).toBe(false);
+    expect(isSpfMuxVideoAdapter(media)).toBe(true);
+    expect(isHlsVideoAdapter(media)).toBe(true);
+    expect(isMuxVideoAdapter(media)).toBe(false);
+    expect(isHlsJsAdapter(media)).toBe(false);
 
     media.destroy();
   });

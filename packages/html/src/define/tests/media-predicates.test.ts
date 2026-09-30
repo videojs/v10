@@ -4,38 +4,38 @@
  */
 import { describe, expect, it } from 'vite-plus/test';
 
-import { HlsBackgroundVideoElement, isHlsBackgroundVideoMedia } from '../media/hls-background-video';
-import { isHlsVideoMedia } from '../media/hls-video';
-import { isHlsJsMedia } from '../media/hlsjs-video';
+import { HlsBackgroundVideoElement, isHlsBackgroundVideoAdapter } from '../media/hls-background-video';
+import { isHlsVideoAdapter } from '../media/hls-video';
+import { isHlsJsAdapter } from '../media/hlsjs-video';
 import {
-  isHlsBackgroundVideoMedia as isMuxBackgroundVideoMedia,
+  isHlsBackgroundVideoAdapter as isMuxBackgroundVideoAdapter,
   MuxBackgroundVideoElement,
 } from '../media/mux-background-video';
 
-describe('isHlsJsMedia', () => {
+describe('isHlsJsAdapter', () => {
   it('recognizes <hlsjs-video> and not other media elements', () => {
-    expect(isHlsJsMedia(document.createElement('hlsjs-video'))).toBe(true);
-    expect(isHlsJsMedia(document.createElement('hls-video'))).toBe(false);
-    expect(isHlsJsMedia(document.createElement('video'))).toBe(false);
+    expect(isHlsJsAdapter(document.createElement('hlsjs-video'))).toBe(true);
+    expect(isHlsJsAdapter(document.createElement('hls-video'))).toBe(false);
+    expect(isHlsJsAdapter(document.createElement('video'))).toBe(false);
   });
 });
 
-describe('isHlsVideoMedia', () => {
+describe('isHlsVideoAdapter', () => {
   it('recognizes <hls-video> and not <hlsjs-video>', () => {
-    expect(isHlsVideoMedia(document.createElement('hls-video'))).toBe(true);
-    expect(isHlsVideoMedia(document.createElement('hlsjs-video'))).toBe(false);
+    expect(isHlsVideoAdapter(document.createElement('hls-video'))).toBe(true);
+    expect(isHlsVideoAdapter(document.createElement('hlsjs-video'))).toBe(false);
   });
 });
 
-describe('isHlsBackgroundVideoMedia', () => {
+describe('isHlsBackgroundVideoAdapter', () => {
   // These elements keep their adapter private and register it, not themselves, as the player's media.
   it('recognizes the media both background video tags register, from either entry', () => {
     const hls = new HlsBackgroundVideoElement();
     const mux = new MuxBackgroundVideoElement();
 
-    expect(isHlsBackgroundVideoMedia(hls.getMediaTarget())).toBe(true);
-    expect(isHlsBackgroundVideoMedia(mux.getMediaTarget())).toBe(true);
+    expect(isHlsBackgroundVideoAdapter(hls.getMediaTarget())).toBe(true);
+    expect(isHlsBackgroundVideoAdapter(mux.getMediaTarget())).toBe(true);
 
-    expect(isMuxBackgroundVideoMedia).toBe(isHlsBackgroundVideoMedia);
+    expect(isMuxBackgroundVideoAdapter).toBe(isHlsBackgroundVideoAdapter);
   });
 });

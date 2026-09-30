@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isVimeoMedia } from './predicate';
+export { isVimeoAdapter } from './predicate';

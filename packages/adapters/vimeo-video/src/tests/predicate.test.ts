@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { VimeoAdapter, isVimeoMedia } from '../index';
+import { VimeoAdapter, isVimeoAdapter } from '../index';
 
-describe('isVimeoMedia', () => {
+describe('isVimeoAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new VimeoAdapter();
 
-    expect(isVimeoMedia(media)).toBe(true);
+    expect(isVimeoAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isVimeoMedia(new EventTarget())).toBe(false);
-    expect(isVimeoMedia({})).toBe(false);
-    expect(isVimeoMedia(null)).toBe(false);
+    expect(isVimeoAdapter(new EventTarget())).toBe(false);
+    expect(isVimeoAdapter({})).toBe(false);
+    expect(isVimeoAdapter(null)).toBe(false);
   });
 });

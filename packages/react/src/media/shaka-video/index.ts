@@ -1,2 +1,2 @@
 export * from './adapter';
-export { isShakaMedia } from '@videojs/shaka-video';
+export { isShakaAdapter } from '@videojs/shaka-video';

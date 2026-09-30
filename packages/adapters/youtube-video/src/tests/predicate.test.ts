@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { YouTubeAdapter, isYouTubeMedia } from '../index';
+import { YouTubeAdapter, isYouTubeAdapter } from '../index';
 
-describe('isYouTubeMedia', () => {
+describe('isYouTubeAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new YouTubeAdapter();
 
-    expect(isYouTubeMedia(media)).toBe(true);
+    expect(isYouTubeAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isYouTubeMedia(new EventTarget())).toBe(false);
-    expect(isYouTubeMedia({})).toBe(false);
-    expect(isYouTubeMedia(null)).toBe(false);
+    expect(isYouTubeAdapter(new EventTarget())).toBe(false);
+    expect(isYouTubeAdapter({})).toBe(false);
+    expect(isYouTubeAdapter(null)).toBe(false);
   });
 });

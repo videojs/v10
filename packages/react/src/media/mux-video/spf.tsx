@@ -10,7 +10,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 import { MuxStoryboard } from './storyboard';
 
-export { isMuxVideoMedia } from '@videojs/mux-video/spf';
+export { isMuxVideoAdapter } from '@videojs/mux-video/spf';
 
 // `src` and `source` come from `MuxAdapterProps`: the Mux Adapter owns both, and its
 // `source` is the structured Mux one rather than the generic engine's. Both are

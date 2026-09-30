@@ -1,7 +1,7 @@
 import { WistiaVideo } from '../../media/wistia-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export { isWistiaMedia } from '@videojs/wistia-video';
+export { isWistiaAdapter } from '@videojs/wistia-video';
 
 export class WistiaVideoElement extends WistiaVideo {
   static readonly tagName = 'wistia-video';

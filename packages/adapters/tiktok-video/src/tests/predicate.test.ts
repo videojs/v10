@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { TikTokAdapter, isTikTokMedia } from '../index';
+import { TikTokAdapter, isTikTokAdapter } from '../index';
 
-describe('isTikTokMedia', () => {
+describe('isTikTokAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new TikTokAdapter();
 
-    expect(isTikTokMedia(media)).toBe(true);
+    expect(isTikTokAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isTikTokMedia(new EventTarget())).toBe(false);
-    expect(isTikTokMedia({})).toBe(false);
-    expect(isTikTokMedia(null)).toBe(false);
+    expect(isTikTokAdapter(new EventTarget())).toBe(false);
+    expect(isTikTokAdapter({})).toBe(false);
+    expect(isTikTokAdapter(null)).toBe(false);
   });
 });

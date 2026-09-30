@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { SpotifyAdapter, isSpotifyMedia } from '../index';
+import { SpotifyAdapter, isSpotifyAdapter } from '../index';
 
-describe('isSpotifyMedia', () => {
+describe('isSpotifyAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new SpotifyAdapter();
 
-    expect(isSpotifyMedia(media)).toBe(true);
+    expect(isSpotifyAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isSpotifyMedia(new EventTarget())).toBe(false);
-    expect(isSpotifyMedia({})).toBe(false);
-    expect(isSpotifyMedia(null)).toBe(false);
+    expect(isSpotifyAdapter(new EventTarget())).toBe(false);
+    expect(isSpotifyAdapter({})).toBe(false);
+    expect(isSpotifyAdapter(null)).toBe(false);
   });
 });

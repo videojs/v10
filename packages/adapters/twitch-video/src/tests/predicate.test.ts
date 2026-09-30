@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { TwitchAdapter, isTwitchMedia } from '../index';
+import { TwitchAdapter, isTwitchAdapter } from '../index';
 
-describe('isTwitchMedia', () => {
+describe('isTwitchAdapter', () => {
   it('recognizes the adapter', () => {
     const media = new TwitchAdapter();
 
-    expect(isTwitchMedia(media)).toBe(true);
+    expect(isTwitchAdapter(media)).toBe(true);
 
     media.destroy();
   });
 
   it('rejects other values', () => {
-    expect(isTwitchMedia(new EventTarget())).toBe(false);
-    expect(isTwitchMedia({})).toBe(false);
-    expect(isTwitchMedia(null)).toBe(false);
+    expect(isTwitchAdapter(new EventTarget())).toBe(false);
+    expect(isTwitchAdapter({})).toBe(false);
+    expect(isTwitchAdapter(null)).toBe(false);
   });
 });

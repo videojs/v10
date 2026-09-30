@@ -1,7 +1,7 @@
 import { YouTubeVideo } from '../../media/youtube-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export { isYouTubeMedia } from '@videojs/youtube-video';
+export { isYouTubeAdapter } from '@videojs/youtube-video';
 
 export class YouTubeVideoElement extends YouTubeVideo {
   static readonly tagName = 'youtube-video';
