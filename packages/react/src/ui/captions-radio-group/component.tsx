@@ -1,4 +1,4 @@
-import { type CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs, type MenuOptionState } from '@videojs/core';
+import { CaptionsRadioGroupDataAttrs, type MenuOptionState, type CaptionsRadioGroupState } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { ReactElement, ReactNode } from 'react';
@@ -31,7 +31,7 @@ export interface CaptionsRadioGroupRootProps extends CaptionsOptionsProps {
 }
 
 export interface CaptionsRadioGroupOptionsProps extends Omit<
-  UIComponentProps<'div', CaptionsRadioGroupCore.State>,
+  UIComponentProps<'div', CaptionsRadioGroupState>,
   'children'
 > {
   /** Render one consumer-owned menu radio item for every captions option. */
@@ -160,7 +160,7 @@ export namespace CaptionsRadioGroupValue {
 
 export namespace CaptionsRadioGroupOptions {
   export type Props = CaptionsRadioGroupOptionsProps;
-  export type State = CaptionsRadioGroupCore.State;
+  export type State = CaptionsRadioGroupState;
   export type ItemProps = CaptionsRadioGroupItemProps;
   export type ItemState = CaptionsRadioGroupItemState;
 }

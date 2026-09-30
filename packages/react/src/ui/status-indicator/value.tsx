@@ -1,4 +1,4 @@
-import { getStatusIndicatorDisplayValue, type StatusIndicatorCore } from '@videojs/core';
+import { getStatusIndicatorDisplayValue, type StatusIndicatorState } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
@@ -6,7 +6,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useStatusIndicatorContext } from './context';
 
-export interface StatusIndicatorValueProps extends UIComponentProps<'span', StatusIndicatorCore.State> {}
+export interface StatusIndicatorValueProps extends UIComponentProps<'span', StatusIndicatorState> {}
 
 export const StatusIndicatorValue = forwardRef(function StatusIndicatorValue(
   componentProps: StatusIndicatorValueProps,

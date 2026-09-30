@@ -1,4 +1,9 @@
-import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
+import {
+  createStatusAnnouncerLabels,
+  StatusAnnouncerCore,
+  type StatusAnnouncerProps as CoreStatusAnnouncerProps,
+  type StatusAnnouncerState,
+} from '@videojs/core';
 import { shouldAnnounceStatusChange, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
@@ -10,9 +15,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
 export interface StatusAnnouncerProps
-  extends
-    UIComponentProps<'div', StatusAnnouncerCore.State>,
-    Pick<StatusAnnouncerCore.Props, 'closeDelay' | 'labels'> {}
+  extends UIComponentProps<'div', StatusAnnouncerState>, Pick<CoreStatusAnnouncerProps, 'closeDelay' | 'labels'> {}
 
 export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   componentProps: StatusAnnouncerProps,
@@ -66,5 +69,5 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
 
 export namespace StatusAnnouncer {
   export type Props = StatusAnnouncerProps;
-  export type State = StatusAnnouncerCore.State;
+  export type State = StatusAnnouncerState;
 }

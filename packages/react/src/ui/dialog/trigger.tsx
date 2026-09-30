@@ -1,11 +1,11 @@
-import type { DialogCore } from '@videojs/core';
+import type { DialogState } from '@videojs/core';
 import { forwardRef, useCallback } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useDialogContext } from './context';
 
-export interface DialogTriggerProps extends UIComponentProps<'button', DialogCore.State> {}
+export interface DialogTriggerProps extends UIComponentProps<'button', DialogState> {}
 
 /** Renders a button that opens the dialog. */
 export const DialogTrigger = forwardRef<HTMLButtonElement, DialogTriggerProps>(function DialogTrigger(
@@ -30,5 +30,5 @@ export const DialogTrigger = forwardRef<HTMLButtonElement, DialogTriggerProps>(f
 
 export namespace DialogTrigger {
   export type Props = DialogTriggerProps;
-  export type State = DialogCore.State;
+  export type State = DialogState;
 }

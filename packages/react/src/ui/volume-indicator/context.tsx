@@ -1,8 +1,8 @@
-import type { VolumeIndicatorCore } from '@videojs/core';
+import type { VolumeIndicatorState } from '@videojs/core';
 import { createContext, type ProviderProps, useContext } from 'react';
 
 export interface VolumeIndicatorContextValue {
-  state: VolumeIndicatorCore.State;
+  state: VolumeIndicatorState;
 }
 
 const VolumeIndicatorContext = createContext<VolumeIndicatorContextValue | null>(null);

@@ -1,4 +1,4 @@
-import type { ThumbnailCore } from '@videojs/core';
+import type { ThumbnailState } from '@videojs/core';
 import { forwardRef, type ForwardedRef } from 'react';
 
 import { Thumbnail } from '../../thumbnail';
@@ -24,5 +24,5 @@ export const SliderThumbnailRoot = forwardRef(function SliderThumbnailRoot(
 
 export namespace SliderThumbnailRoot {
   export type Props = SliderThumbnailRootProps;
-  export type State = ThumbnailCore.State;
+  export type State = ThumbnailState;
 }

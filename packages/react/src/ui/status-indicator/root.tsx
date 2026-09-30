@@ -1,4 +1,10 @@
-import { createInputIndicatorLabels, StatusIndicatorCore, StatusIndicatorDataAttrs } from '@videojs/core';
+import {
+  createInputIndicatorLabels,
+  StatusIndicatorCore,
+  StatusIndicatorDataAttrs,
+  type StatusIndicatorProps,
+  type StatusIndicatorState,
+} from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
@@ -9,7 +15,7 @@ import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-ro
 import { StatusIndicatorProvider } from './context';
 
 export interface StatusIndicatorRootProps
-  extends UIComponentProps<'div', StatusIndicatorCore.State>, Omit<StatusIndicatorCore.Props, 'labels'> {}
+  extends UIComponentProps<'div', StatusIndicatorState>, Omit<StatusIndicatorProps, 'labels'> {}
 
 export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
   componentProps: StatusIndicatorRootProps,
@@ -46,5 +52,5 @@ export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
 
 export namespace StatusIndicatorRoot {
   export type Props = StatusIndicatorRootProps;
-  export type State = StatusIndicatorCore.State;
+  export type State = StatusIndicatorState;
 }

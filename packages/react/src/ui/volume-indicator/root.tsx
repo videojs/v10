@@ -1,4 +1,10 @@
-import { createInputIndicatorLabels, VolumeIndicatorCore, VolumeIndicatorDataAttrs } from '@videojs/core';
+import {
+  createInputIndicatorLabels,
+  VolumeIndicatorCore,
+  VolumeIndicatorDataAttrs,
+  type VolumeIndicatorProps,
+  type VolumeIndicatorState,
+} from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
@@ -9,7 +15,7 @@ import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-ro
 import { VolumeIndicatorProvider } from './context';
 
 export interface VolumeIndicatorRootProps
-  extends UIComponentProps<'div', VolumeIndicatorCore.State>, Omit<VolumeIndicatorCore.Props, 'labels'> {}
+  extends UIComponentProps<'div', VolumeIndicatorState>, Omit<VolumeIndicatorProps, 'labels'> {}
 
 export const VolumeIndicatorRoot = forwardRef(function VolumeIndicatorRoot(
   componentProps: VolumeIndicatorRootProps,
@@ -45,5 +51,5 @@ export const VolumeIndicatorRoot = forwardRef(function VolumeIndicatorRoot(
 
 export namespace VolumeIndicatorRoot {
   export type Props = VolumeIndicatorRootProps;
-  export type State = VolumeIndicatorCore.State;
+  export type State = VolumeIndicatorState;
 }
