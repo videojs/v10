@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { testRtlLayout } from './rtl';
+import { testStarterParity } from './starter';
 import {
   buttonInteractionContract,
   captureRendering,
@@ -25,10 +26,11 @@ import {
   waitForStableText,
 } from './vjsc-skin-parity';
 
-const CASES = skinCases('live-audio');
+const CASES = skinCases('live-audio').filter((variant) => !variant.skin.startsWith('starter-'));
 const WIDTHS = [384, 672] as const;
 
 testRtlLayout(CASES);
+testStarterParity('live-audio');
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {
