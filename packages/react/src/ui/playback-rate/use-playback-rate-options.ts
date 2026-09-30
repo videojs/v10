@@ -1,3 +1,5 @@
+'use client';
+
 import {
   PlaybackRateRadioGroupCore as PlaybackRateRadioGroupCoreClass,
   type PlaybackRateRadioGroupOption,

@@ -2,6 +2,7 @@ import { NativeHlsVideo } from '../../media/native-hls-video';
 import { safeDefine } from '../../registration/safe-define';
 
 export type {
+  NativeHlsAdapter,
   NativeHlsAdapterProps,
   NativeHlsConfig,
   NativeHlsEngineConfig,

@@ -24,7 +24,9 @@ import { dialogContext } from './context';
 let idCounter = 0;
 
 export interface DialogElementBaseOptions {
+  /** @internal */
   core?: DialogCore;
+  /** @internal */
   stateAttrMap?: StateAttrMap<DialogState>;
   idPrefix?: string;
   bindTrigger?: boolean;

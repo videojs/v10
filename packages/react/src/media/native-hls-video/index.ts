@@ -1,5 +1,6 @@
 export * from './adapter';
 export type {
+  NativeHlsAdapter,
   NativeHlsAdapterProps,
   NativeHlsConfig,
   NativeHlsEngineConfig,

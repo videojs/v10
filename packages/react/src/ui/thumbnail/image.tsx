@@ -1,3 +1,5 @@
+'use client';
+
 import type {
   ThumbnailFetchPriority,
   ThumbnailImageProps as CoreThumbnailImageProps,

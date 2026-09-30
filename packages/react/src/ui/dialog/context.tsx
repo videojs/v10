@@ -1,3 +1,5 @@
+'use client';
+
 import type { DialogCore, StateAttrMap, DialogState } from '@videojs/core';
 import type { DialogApi } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';

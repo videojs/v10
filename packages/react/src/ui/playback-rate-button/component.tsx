@@ -1,3 +1,5 @@
+'use client';
+
 import {
   PlaybackRateButtonCore,
   PlaybackRateButtonDataAttrs,

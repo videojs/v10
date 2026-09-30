@@ -1,7 +1,7 @@
 import { DashVideo } from '../../media/dash-video';
 import { safeDefine } from '../../registration/safe-define';
 
-export type { DashAdapterProps, DashEngineConfig, DashSource } from '@videojs/dash-video';
+export type { DashAdapter, DashAdapterProps, DashEngineConfig, DashSource } from '@videojs/dash-video';
 
 /**
  * MPEG-DASH media element powered by dash.js and registered as `<dash-video>`.

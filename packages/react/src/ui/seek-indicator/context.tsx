@@ -1,3 +1,5 @@
+'use client';
+
 import type { SeekIndicatorState } from '@videojs/core';
 import { createContext, type ProviderProps, useContext } from 'react';
 

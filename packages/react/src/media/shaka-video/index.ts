@@ -1,2 +1,8 @@
 export * from './adapter';
-export type { ShakaAdapterProps, ShakaConfig, ShakaEngineConfig, ShakaSource } from '@videojs/shaka-video';
+export type {
+  ShakaAdapter,
+  ShakaAdapterProps,
+  ShakaConfig,
+  ShakaEngineConfig,
+  ShakaSource,
+} from '@videojs/shaka-video';

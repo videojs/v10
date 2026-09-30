@@ -1,3 +1,5 @@
+'use client';
+
 import { VolumeSliderCore, VolumeSliderDataAttrs, type VolumeSliderProps, type VolumeSliderState } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';

@@ -1,3 +1,5 @@
+'use client';
+
 import { getVolumeIndicatorDisplayValue, type VolumeIndicatorState } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
