@@ -469,7 +469,6 @@ export function App() {
 
     if (target) {
       postPreferences(target, frameParams);
-      target.postMessage({ type: 'skin-change', skin }, '*');
     }
   };
 

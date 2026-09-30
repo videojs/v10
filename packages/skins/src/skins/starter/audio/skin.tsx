@@ -3,9 +3,9 @@ import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
 import type { SkinDescription } from '../../../meta';
 import { PlaybackHotkeys } from '../../shared/behaviors/playback-hotkeys';
-import { StatusAnnouncer } from '../shared/components';
+import containerStyles from '../shared/container.styles';
 import { ErrorDialog } from '../shared/error-dialog';
-import styles from '../shared/skin.styles';
+import { StatusAnnouncer } from '../shared/status-announcer';
 import { AudioControls } from './controls';
 
 export interface AudioSkinProps extends Omit<PropsOf<typeof $.Container>, 'children'> {
@@ -16,7 +16,7 @@ export interface AudioSkinProps extends Omit<PropsOf<typeof $.Container>, 'child
 export function AudioSkin({ children, className, renderThumbnail, ...props }: AudioSkinProps = {}) {
   return (
     <$.Container
-      className={['media-skin', styles.root, styles.audioRoot, className]}
+      className={['media-skin', containerStyles.root, containerStyles.audio, className]}
       data-theme="starter"
       data-preset="audio"
       {...props}

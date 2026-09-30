@@ -1,7 +1,7 @@
 import * as $ from '@videojs/core/vjsc';
 
-import styles from './skin.styles';
+import titleStyles from './title.styles';
 
 export function Title() {
-  return <$.Title className={styles.title} />;
+  return <$.Title className={titleStyles.root} />;
 }

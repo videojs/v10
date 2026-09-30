@@ -1,8 +1,8 @@
 import * as $ from '@videojs/core/vjsc';
 
-import type { ThumbnailSlot } from '../shared/components';
+import controlsStyles from '../shared/controls.styles';
 import { SeekButton } from '../shared/seek-button';
-import styles from '../shared/skin.styles';
+import type { ThumbnailSlot } from '../shared/time-slider';
 import { VideoControlsContent } from '../shared/video-controls';
 
 export function VideoControls({ renderThumbnail }: ThumbnailSlot = {}) {
@@ -13,16 +13,16 @@ export function VideoControls({ renderThumbnail }: ThumbnailSlot = {}) {
         renderThumbnail={renderThumbnail}
         seekBackward={
           <SeekButton
-            className={[styles.centerButton, styles.centerSeek]}
-            iconClassName={styles.centerSeekIcon}
+            className={[controlsStyles.centerButton, controlsStyles.centerSeek]}
+            iconClassName={controlsStyles.centerSeekIcon}
             seconds={-10}
             tooltip={false}
           />
         }
         seekForward={
           <SeekButton
-            className={[styles.centerButton, styles.centerSeek]}
-            iconClassName={styles.centerSeekIcon}
+            className={[controlsStyles.centerButton, controlsStyles.centerSeek]}
+            iconClassName={controlsStyles.centerSeekIcon}
             seconds={10}
             tooltip={false}
           />

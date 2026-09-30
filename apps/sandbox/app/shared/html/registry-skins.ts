@@ -71,7 +71,7 @@ const registrySkins = {
       import('@registry-html-starter/components/videojs/live-audio/skin.html?raw'),
       import('@registry-html-starter/components/videojs/live-audio/skin'),
     ]),
-} satisfies Partial<Record<`${SkinPreset}/${Skin}`, SkinLoader>>;
+} satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
 
 /** A skin shipped as markup: where the page's media goes, and where a slotted poster image goes. */
 export interface SkinTemplate {
@@ -184,7 +184,6 @@ export async function loadRegistrySkinTag(preset: SkinPreset, skin: Skin): Promi
   if (customElements.get(tagName)) return tagName;
 
   const load = registrySkins[`${preset}/${skin}`];
-  if (!load) throw new Error(`Registry skin ${preset}/${skin} is unavailable.`);
 
   const [module] = await load();
 

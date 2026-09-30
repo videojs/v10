@@ -79,15 +79,13 @@ for (const { platform, styling } of CASES) {
       await expect(root).toHaveAttribute('data-theme', skin);
       await expect(root.getByRole('button', { name: 'Play' }).first()).toBeVisible();
 
-      if (skin !== 'starter') {
-        // The compiled skin carries the theme's control sizing either way; Tailwind reaches it through the recorded
-        // utilities, CSS through the module's own stylesheet.
-        await expect
-          .poll(() =>
-            root.evaluate((element) => getComputedStyle(element).getPropertyValue('--media-control-size').trim())
-          )
-          .not.toBe('');
-      }
+      // The compiled skin carries the theme's control sizing either way; Tailwind reaches it through the recorded
+      // utilities, CSS through the module's own stylesheet.
+      await expect
+        .poll(() =>
+          root.evaluate((element) => getComputedStyle(element).getPropertyValue('--media-control-size').trim())
+        )
+        .not.toBe('');
 
       expect(errors).toEqual([]);
     });

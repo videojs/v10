@@ -9,15 +9,19 @@ import {
 } from '@videojs/icons/vjsc';
 
 import { Button } from './button';
-import { ButtonTooltip } from './components';
-import styles from './skin.styles';
+import buttonStyles from './button.styles';
+import castButtonStyles from './cast-button.styles';
+import fullscreenButtonStyles from './fullscreen-button.styles';
+import pipButtonStyles from './pip-button.styles';
+import { ButtonTooltip } from './tooltip';
+import tooltipStyles from './tooltip.styles';
 
 function CastButton() {
   return (
-    <ButtonTooltip popupClassName={styles.screenTooltipPopup}>
-      <$.CastButton $render={Button} className={styles.castGroup}>
-        <CastEnterIcon className={[styles.icon, styles.castEnterIcon]} />
-        <CastExitIcon className={[styles.icon, styles.castExitIcon]} />
+    <ButtonTooltip popupClassName={tooltipStyles.screenPopup}>
+      <$.CastButton $render={Button} className={castButtonStyles.root}>
+        <CastEnterIcon className={[buttonStyles.icon, castButtonStyles.enterIcon]} />
+        <CastExitIcon className={[buttonStyles.icon, castButtonStyles.exitIcon]} />
       </$.CastButton>
     </ButtonTooltip>
   );
@@ -25,10 +29,10 @@ function CastButton() {
 
 function PiPButton() {
   return (
-    <ButtonTooltip popupClassName={styles.screenTooltipPopup}>
-      <$.PiPButton $render={Button} className={styles.pipGroup}>
-        <PipEnterIcon className={[styles.icon, styles.pipEnterIcon]} />
-        <PipExitIcon className={[styles.icon, styles.pipExitIcon]} />
+    <ButtonTooltip popupClassName={tooltipStyles.screenPopup}>
+      <$.PiPButton $render={Button} className={pipButtonStyles.root}>
+        <PipEnterIcon className={[buttonStyles.icon, pipButtonStyles.enterIcon]} />
+        <PipExitIcon className={[buttonStyles.icon, pipButtonStyles.exitIcon]} />
       </$.PiPButton>
     </ButtonTooltip>
   );
@@ -36,10 +40,10 @@ function PiPButton() {
 
 function FullscreenButton() {
   return (
-    <ButtonTooltip popupClassName={styles.screenTooltipPopup}>
-      <$.FullscreenButton $render={Button} className={styles.fullscreenGroup}>
-        <FullscreenEnterIcon className={[styles.icon, styles.enterFullscreenIcon]} />
-        <FullscreenExitIcon className={[styles.icon, styles.exitFullscreenIcon]} />
+    <ButtonTooltip popupClassName={tooltipStyles.screenPopup}>
+      <$.FullscreenButton $render={Button} className={fullscreenButtonStyles.root}>
+        <FullscreenEnterIcon className={[buttonStyles.icon, fullscreenButtonStyles.enterIcon]} />
+        <FullscreenExitIcon className={[buttonStyles.icon, fullscreenButtonStyles.exitIcon]} />
       </$.FullscreenButton>
     </ButtonTooltip>
   );
@@ -47,10 +51,10 @@ function FullscreenButton() {
 
 export function ScreenControls() {
   return (
-    <$.Controls.Group className={styles.controlsTop}>
+    <>
       <CastButton />
       <PiPButton />
       <FullscreenButton />
-    </$.Controls.Group>
+    </>
   );
 }

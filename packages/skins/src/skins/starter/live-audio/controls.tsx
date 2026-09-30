@@ -1,6 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 
-import { ControlsContent } from '../shared/components';
+import { ControlsContent } from '../shared/controls';
 
 export function LiveAudioControls() {
   return (

@@ -12,7 +12,9 @@ import {
 } from '@videojs/icons/vjsc';
 import { Box, type VjscNode } from 'vjsc/components';
 
-import styles from './skin.styles';
+import indicatorStyles from './indicator.styles';
+import statusIndicatorStyles from './status-indicator.styles';
+import volumeIndicatorStyles from './volume-indicator.styles';
 
 const STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
@@ -23,7 +25,7 @@ const STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInP
  */
 export function Indicators({ children }: { children?: VjscNode } = {}) {
   return (
-    <Box aria-hidden="true" className={styles.indicators}>
+    <Box aria-hidden="true" className={indicatorStyles.group}>
       <VolumeIndicator />
       <StatusIndicator />
       {children}
@@ -33,13 +35,13 @@ export function Indicators({ children }: { children?: VjscNode } = {}) {
 
 function StatusIndicator() {
   return (
-    <$.StatusIndicator.Root actions={STATUS_ACTIONS} className={[styles.indicator, styles.statusIndicator]}>
-      <CaptionsOnIcon className={[styles.statusIcon, styles.captionsOnStatusIcon]} />
-      <CaptionsOffIcon className={[styles.statusIcon, styles.captionsOffStatusIcon]} />
-      <FullscreenEnterIcon className={[styles.statusIcon, styles.fullscreenEnterStatusIcon]} />
-      <FullscreenExitIcon className={[styles.statusIcon, styles.fullscreenExitStatusIcon]} />
-      <PipEnterIcon className={[styles.statusIcon, styles.pipEnterStatusIcon]} />
-      <PipExitIcon className={[styles.statusIcon, styles.pipExitStatusIcon]} />
+    <$.StatusIndicator.Root actions={STATUS_ACTIONS} className={[indicatorStyles.root, statusIndicatorStyles.root]}>
+      <CaptionsOnIcon className={[statusIndicatorStyles.icon, statusIndicatorStyles.captionsOnIcon]} />
+      <CaptionsOffIcon className={[statusIndicatorStyles.icon, statusIndicatorStyles.captionsOffIcon]} />
+      <FullscreenEnterIcon className={[statusIndicatorStyles.icon, statusIndicatorStyles.fullscreenEnterIcon]} />
+      <FullscreenExitIcon className={[statusIndicatorStyles.icon, statusIndicatorStyles.fullscreenExitIcon]} />
+      <PipEnterIcon className={[statusIndicatorStyles.icon, statusIndicatorStyles.pipEnterIcon]} />
+      <PipExitIcon className={[statusIndicatorStyles.icon, statusIndicatorStyles.pipExitIcon]} />
       <$.StatusIndicator.Value />
     </$.StatusIndicator.Root>
   );
@@ -47,12 +49,12 @@ function StatusIndicator() {
 
 function VolumeIndicator() {
   return (
-    <$.VolumeIndicator.Root className={[styles.indicator, styles.volumeIndicator]}>
-      <$.VolumeIndicator.Fill className={styles.volumeIndicatorFill}>
-        <VolumeHighIcon className={[styles.volumeStatusIcon, styles.volumeHighStatusIcon]} />
-        <VolumeLowIcon className={[styles.volumeStatusIcon, styles.volumeLowStatusIcon]} />
-        <VolumeOffIcon className={[styles.volumeStatusIcon, styles.volumeOffStatusIcon]} />
-        <$.VolumeIndicator.Value className={styles.volumeStatusValue} />
+    <$.VolumeIndicator.Root className={[indicatorStyles.root, volumeIndicatorStyles.root]}>
+      <$.VolumeIndicator.Fill className={volumeIndicatorStyles.fill}>
+        <VolumeHighIcon className={[volumeIndicatorStyles.icon, volumeIndicatorStyles.highIcon]} />
+        <VolumeLowIcon className={[volumeIndicatorStyles.icon, volumeIndicatorStyles.lowIcon]} />
+        <VolumeOffIcon className={[volumeIndicatorStyles.icon, volumeIndicatorStyles.offIcon]} />
+        <$.VolumeIndicator.Value className={volumeIndicatorStyles.value} />
       </$.VolumeIndicator.Fill>
     </$.VolumeIndicator.Root>
   );

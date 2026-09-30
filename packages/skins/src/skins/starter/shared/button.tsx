@@ -1,5 +1,5 @@
 import { defineRenderTarget } from 'vjsc/components';
 
-import styles from './skin.styles';
+import buttonStyles from './button.styles';
 
-export const Button = defineRenderTarget([styles.button]);
+export const Button = defineRenderTarget([buttonStyles.root]);

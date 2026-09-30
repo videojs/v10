@@ -4,25 +4,25 @@ const videoStylesheets = {
   default: new URL('@videojs/html/video/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/video/neutral-skin.css', import.meta.url).href,
   starter: new URL('@videojs/html/video/starter-skin.css', import.meta.url).href,
-} satisfies Partial<Record<Skin, string>>;
+} satisfies Record<Skin, string>;
 
 const liveVideoStylesheets = {
   default: new URL('@videojs/html/live-video/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/live-video/neutral-skin.css', import.meta.url).href,
   starter: new URL('@videojs/html/live-video/starter-skin.css', import.meta.url).href,
-} satisfies Partial<Record<Skin, string>>;
+} satisfies Record<Skin, string>;
 
 const audioStylesheets = {
   default: new URL('@videojs/html/audio/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/audio/neutral-skin.css', import.meta.url).href,
   starter: new URL('@videojs/html/audio/starter-skin.css', import.meta.url).href,
-} satisfies Partial<Record<Skin, string>>;
+} satisfies Record<Skin, string>;
 
 const liveAudioStylesheets = {
   default: new URL('@videojs/html/live-audio/skin.css', import.meta.url).href,
   neutral: new URL('@videojs/html/live-audio/neutral-skin.css', import.meta.url).href,
   starter: new URL('@videojs/html/live-audio/starter-skin.css', import.meta.url).href,
-} satisfies Partial<Record<Skin, string>>;
+} satisfies Record<Skin, string>;
 
 const loading = new Map<string, { href: string; promise: Promise<void> }>();
 

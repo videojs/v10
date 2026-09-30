@@ -1,16 +1,16 @@
 import * as $ from '@videojs/core/vjsc';
 
 import { Button } from './button';
-import styles from './skin.styles';
+import dialogStyles from './dialog.styles';
 
 export function ErrorDialog() {
   return (
     <$.ErrorDialog.Root>
-      <$.ErrorDialog.Backdrop className={styles.dialogBackdrop} />
-      <$.ErrorDialog.Popup className={styles.dialogPopup}>
-        <$.ErrorDialog.Title className={styles.dialogTitle} />
-        <$.ErrorDialog.Description className={styles.dialogDescription} />
-        <$.ErrorDialog.Close $render={Button} className={styles.dialogClose} />
+      <$.ErrorDialog.Backdrop className={dialogStyles.backdrop} />
+      <$.ErrorDialog.Popup className={dialogStyles.popup}>
+        <$.ErrorDialog.Title className={dialogStyles.title} />
+        <$.ErrorDialog.Description className={dialogStyles.description} />
+        <$.ErrorDialog.Close $render={Button} className={dialogStyles.close} />
       </$.ErrorDialog.Popup>
     </$.ErrorDialog.Root>
   );

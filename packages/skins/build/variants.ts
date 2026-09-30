@@ -54,6 +54,7 @@ export function variantsFor(filename: string): readonly SkinVariant[] {
         : [];
     }
 
+    // Starter publishes complete editable skins, without standalone UI registry items.
     if (theme === 'starter') return [];
 
     return framework === 'html'

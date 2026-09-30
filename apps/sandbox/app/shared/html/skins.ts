@@ -25,11 +25,10 @@ const packageSkins = {
   'live-audio/default': () => import('@videojs/html/live-audio/skin'),
   'live-audio/neutral': () => import('@videojs/html/live-audio/neutral-skin'),
   'live-audio/starter': () => import('@videojs/html/live-audio/starter-skin'),
-} satisfies Partial<Record<`${SkinPreset}/${Skin}`, () => Promise<unknown>>>;
+} satisfies Record<`${SkinPreset}/${Skin}`, () => Promise<unknown>>;
 
 async function loadPackageSkin({ player, live, skin }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
   const load = packageSkins[`${preset}/${skin}`];
-  if (!load) throw new Error(`Package skin ${preset}/${skin} is unavailable.`);
 
   await load();
   await (player === 'audio' ? loadAudioStylesheets(skin, live) : loadVideoStylesheets(skin, live));

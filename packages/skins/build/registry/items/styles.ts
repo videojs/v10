@@ -17,28 +17,14 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
     meta,
   } satisfies Pick<NonNullable<RegistryStylesOptions['theme']>, 'meta'>;
 
-  if (target.theme === 'starter') {
-    return {
-      theme: {
-        ...shared,
-        name: '_style-starter',
-        target: 'styles/starter/base.css',
-        files: { './styles/starter/base.css': 'styles/starter/base.css' },
-        title: 'Video.js starter styles',
-        description: 'Basic resets used by the editable starter skin.',
-      },
-      files: target.framework === 'react' && target.styling === 'css' ? 'styles' : undefined,
-    };
-  }
-
   const themes = [
     {
       ...shared,
-      name: '_style-neutral',
-      target: 'styles/themes/neutral.css',
-      files: { './styles/themes/neutral.css': 'styles/themes/neutral.css' },
-      title: 'Video.js Neutral theme',
-      description: 'Editable token overrides used only by Neutral skins.',
+      name: `_style-${target.theme}`,
+      target: `styles/themes/${target.theme}.css`,
+      files: { [`./styles/themes/${target.theme}.css`]: `styles/themes/${target.theme}.css` },
+      title: `Video.js ${target.theme} theme`,
+      description: 'Editable token overrides for this skin catalog.',
     },
     {
       ...shared,
@@ -55,12 +41,12 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
     },
     {
       ...shared,
-      name: '_style-video-neutral',
-      target: 'styles/video/neutral.css',
-      files: { './styles/video/neutral.css': 'styles/video/neutral.css' },
-      title: 'Video.js Neutral video styles',
-      description: 'Neutral video stylesheet entry.',
-      registryDependencies: ['@videojs/_style-neutral', '@videojs/_style-video'],
+      name: `_style-video-${target.theme}`,
+      target: `styles/video/${target.theme}.css`,
+      files: { [`./styles/video/${target.theme}.css`]: `styles/video/${target.theme}.css` },
+      title: `Video.js ${target.theme} video styles`,
+      description: 'Video stylesheet entry for this skin catalog.',
+      registryDependencies: [`@videojs/_style-${target.theme}`, '@videojs/_style-video'],
     },
     {
       ...shared,
@@ -76,12 +62,12 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
     },
     {
       ...shared,
-      name: '_style-audio-neutral',
-      target: 'styles/audio/neutral.css',
-      files: { './styles/audio/neutral.css': 'styles/audio/neutral.css' },
-      title: 'Video.js Neutral audio styles',
-      description: 'Neutral audio stylesheet entry.',
-      registryDependencies: ['@videojs/_style-audio', '@videojs/_style-neutral'],
+      name: `_style-audio-${target.theme}`,
+      target: `styles/audio/${target.theme}.css`,
+      files: { [`./styles/audio/${target.theme}.css`]: `styles/audio/${target.theme}.css` },
+      title: `Video.js ${target.theme} audio styles`,
+      description: 'Audio stylesheet entry for this skin catalog.',
+      registryDependencies: ['@videojs/_style-audio', `@videojs/_style-${target.theme}`],
     },
   ] satisfies NonNullable<RegistryStylesOptions['themes']>;
 
@@ -100,7 +86,9 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
       description: 'Editable shared media tokens, resets, preferences, and Tailwind compiler integration.',
       tailwind: target.styling === 'tailwind' ? './styles/tailwind.css' : undefined,
     },
-    themes: themes.filter(({ name }) => target.theme === 'neutral' || !name.endsWith('-neutral')),
+    themes: themes.filter(
+      ({ name }) => target.theme !== 'default' || name === '_style-video' || name === '_style-audio'
+    ),
     files: target.framework === 'react' && target.styling === 'css' ? 'styles' : undefined,
   };
 }

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { isPlainObject } from '@videojs/utils/predicate';
@@ -196,10 +196,7 @@ describe('React registry output', () => {
       for (const preset of ['audio', 'live-audio', 'live-video', 'video'] as const) {
         const source = readItemRoot(cssRegistryDirs[theme], items.get(preset)!);
         const media = preset.endsWith('audio') ? 'audio' : 'video';
-        const base =
-          theme === 'starter'
-            ? '../styles/starter/base.css'
-            : `../styles/${media}/${theme === 'neutral' ? 'neutral' : 'base'}.css`;
+        const base = `../styles/${media}/${theme === 'default' ? 'base' : theme}.css`;
 
         expect(source.indexOf(base), `${theme}/${preset}`).toBeGreaterThanOrEqual(0);
         expect(source.indexOf(base), `${theme}/${preset}`).toBeLessThan(source.indexOf('./skin.css'));
@@ -207,14 +204,26 @@ describe('React registry output', () => {
     }
   });
 
-  it('composes Neutral media styles from theme and preset entries', () => {
-    for (const media of ['audio', 'video'] as const) {
-      const source = readFileSync(
-        resolve(cssRegistryDirs.neutral, `support/files/_style-${media}-neutral/styles/${media}/neutral.css`),
-        'utf8'
-      );
+  it('composes preset media styles from theme and base entries', () => {
+    for (const theme of ['neutral', 'starter'] as const) {
+      for (const media of ['audio', 'video'] as const) {
+        const source = readFileSync(
+          resolve(cssRegistryDirs[theme], `support/files/_style-${media}-${theme}/styles/${media}/${theme}.css`),
+          'utf8'
+        );
 
-      expect(cssImports(source).sort()).toEqual(['../themes/neutral.css', './base.css'].sort());
+        expect(cssImports(source).sort()).toEqual([`../themes/${theme}.css`, './base.css'].sort());
+      }
+    }
+  });
+
+  it('includes the design system and media theme in Starter installation dependencies', () => {
+    for (const preset of ['audio', 'video'] as const) {
+      const closure = itemClosure(registries.starter, preset);
+
+      expect(closure.has('_style-theme')).toBe(true);
+      expect(closure.has('_style-starter')).toBe(true);
+      expect(closure.has(`_style-${preset}-starter`)).toBe(true);
     }
   });
 
@@ -251,7 +260,9 @@ function readRegistryItems(registryDir: string): ReadonlyMap<string, RegistryIte
 
   for (const group of ['skins', 'ui', 'support']) {
     const path = resolve(registryDir, group, 'registry.json');
-    if (!existsSync(path)) continue;
+
+    // Starter intentionally has no standalone UI catalog. All other groups must exist.
+    if (group === 'ui' && registryDir.endsWith('/starter')) continue;
 
     const registry: unknown = JSON.parse(readFileSync(path, 'utf8'));
     if (!isPlainObject(registry) || !Array.isArray(registry.items)) throw new Error(`Invalid ${group} registry.`);

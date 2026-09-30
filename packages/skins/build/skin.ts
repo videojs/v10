@@ -25,22 +25,18 @@ export function skinDirectory(name: SkinName): string {
   return skinPreset(name);
 }
 
-/** Runtime stylesheet entry carrying the shared, preset, and optional Neutral tokens relative to `src/styles`. */
+/** Runtime stylesheet entry carrying the shared, preset, and catalog theme tokens relative to `src/styles`. */
 export function skinBaseStylesheet(preset: SkinPreset, theme: SkinTheme = 'default'): string {
-  if (theme === 'starter') return 'starter/base.css';
-
   const media = skinMedia(preset);
 
-  return `${media}/${theme === 'neutral' ? 'neutral' : 'base'}.css`;
+  return `${media}/${theme === 'default' ? 'base' : theme}.css`;
 }
 
 /** Registry style item that owns one skin's exact stylesheet dependency closure. */
 export function skinStyleItemName(preset: SkinPreset, theme: SkinTheme): string {
-  if (theme === 'starter') return '_style-starter';
-
   const media = skinMedia(preset);
 
-  return `_style-${media}${theme === 'neutral' ? '-neutral' : ''}`;
+  return `_style-${media}${theme === 'default' ? '' : `-${theme}`}`;
 }
 
 export function isSkinPreset(value: string): value is SkinPreset {

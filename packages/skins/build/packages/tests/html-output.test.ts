@@ -41,6 +41,7 @@ describe('generated HTML package skins', () => {
     expect(registeredTags).toEqual(tags);
     // Shared modules can register icons from helpers omitted by this preset.
     expect(registeredIcons).toEqual(expect.arrayContaining(iconNames));
+    expect(stylesheet.length).toBeGreaterThan(10_000);
     expect(stylesheet).toContain('.media-container');
 
     if (skin.endsWith('video')) {
@@ -56,14 +57,7 @@ describe('generated HTML package skins', () => {
       expect(template).toContain('family="starter"');
       expect(registration).toContain("from '../../../icons/starter';");
       expect(tags).toEqual(
-        expect.arrayContaining([
-          'play-button',
-          'mute-button',
-          'volume-popover',
-          'volume-slider',
-          'time',
-          'captions-button',
-        ])
+        expect.arrayContaining(['play-button', 'mute-button', 'volume-popover', 'volume-slider', 'captions-button'])
       );
 
       if (skin !== 'starter-live-audio') expect(tags).toContain('menu');
@@ -76,6 +70,7 @@ describe('generated HTML package skins', () => {
 
     if (skin === 'starter-live-video' || skin === 'starter-live-audio') {
       expect(tags).not.toContain('time-slider');
+      expect(tags).not.toContain('time');
     }
 
     for (const tag of registeredTags) {

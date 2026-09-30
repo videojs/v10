@@ -24,7 +24,7 @@ interface SkinRequest {
 /** One module per preset in `@videojs/react`, exporting both skins, with a stylesheet per skin beside it. */
 const packageSkins: Record<
   SkinPreset,
-  { module: Loader; styles: Partial<Record<Skin, Loader>>; components: Partial<Record<Skin, string>> }
+  { module: Loader; styles: Record<Skin, Loader>; components: Record<Skin, string> }
 > = {
   video: {
     module: () => import('@videojs/react/video'),
@@ -73,7 +73,7 @@ const packageSkins: Record<
 };
 
 /** The Sandbox isolates each pick-one consumer catalog under its own generated alias. */
-const registrySkins: Record<Styling, Partial<Record<SkinKey, Loader>>> = {
+const registrySkins: Record<Styling, Record<SkinKey, Loader>> = {
   tailwind: {
     'video/default': () => import('@registry-react-tailwind-default/components/videojs/video/skin'),
     'video/neutral': () => import('@registry-react-tailwind-neutral/components/videojs/video/skin'),
@@ -104,7 +104,7 @@ const registrySkins: Record<Styling, Partial<Record<SkinKey, Loader>>> = {
   },
 };
 
-const registryComponents: Partial<Record<SkinKey, string>> = {
+const registryComponents: Record<SkinKey, string> = {
   'video/default': 'VideoSkin',
   'video/neutral': 'VideoSkin',
   'video/starter': 'VideoSkin',
@@ -137,7 +137,6 @@ async function loadSkinComponent<Props>(request: SkinRequest): Promise<Component
       const entry = packageSkins[preset];
       const style = entry.styles[skin];
       const component = entry.components[skin];
-      if (!style || !component) throw new Error(`Package skin ${key} is unavailable.`);
 
       const [module] = await Promise.all([entry.module(), style()]);
 
@@ -146,7 +145,6 @@ async function loadSkinComponent<Props>(request: SkinRequest): Promise<Component
     case 'registry': {
       const load = registrySkins[styling][key];
       const component = registryComponents[key];
-      if (!load || !component) throw new Error(`Registry skin ${key} is unavailable.`);
 
       return pickComponent(await load(), component, key);
     }

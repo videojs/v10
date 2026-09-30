@@ -44,6 +44,17 @@ describe('skinModuleTarget', () => {
     );
   });
 
+  it('places Starter shared modules under the installing preset', () => {
+    const root = graphModule('skins/starter/video/skin.tsx');
+
+    expect(skinModuleTarget(graphModule('skins/starter/shared/controls.tsx'), root, 'starter-video')).toBe(
+      'video/shared/controls.tsx'
+    );
+    expect(() => skinModuleTarget(graphModule('skins/unknown/shared/controls.tsx'), root, 'starter-video')).toThrow(
+      'Unsupported registry source'
+    );
+  });
+
   it('places globally shared modules beside the block that installs them', () => {
     expect(skinModuleTarget(graphModule('skins/shared/behaviors/playback-hotkeys.tsx'), root, 'neutral-audio')).toBe(
       'audio/behaviors/playback-hotkeys.tsx'

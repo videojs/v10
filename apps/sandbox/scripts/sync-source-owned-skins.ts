@@ -68,7 +68,7 @@ const installs = [
     alias: '@registry-react-tailwind-starter',
     globalStyles: true,
     presets,
-    baseStyle: 'starter/base.css',
+    baseStyle: 'base.css',
   },
   {
     catalog: 'react/css',
@@ -92,7 +92,7 @@ const installs = [
     alias: '@registry-react-css-starter',
     globalStyles: false,
     presets,
-    baseStyle: 'starter/base.css',
+    baseStyle: 'base.css',
   },
   {
     catalog: 'html',
@@ -116,7 +116,7 @@ const installs = [
     alias: '@registry-html-starter',
     globalStyles: false,
     presets,
-    baseStyle: 'starter/base.css',
+    baseStyle: 'base.css',
   },
 ] as const;
 

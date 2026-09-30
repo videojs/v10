@@ -3,7 +3,9 @@ import { SeekIcon } from '@videojs/icons/vjsc';
 import { Box, type ClassNameValue, Text } from 'vjsc/components';
 
 import { Button } from './button';
-import styles from './skin.styles';
+import buttonStyles from './button.styles';
+import seekButtonStyles from './seek-button.styles';
+import { ButtonTooltip } from './tooltip';
 
 /**
  * Skips playback by a fixed amount. `seconds` has to match the arrow-key hotkey the skin registers, or the engine will
@@ -23,21 +25,20 @@ export function SeekButton({
   const backward = seconds < 0;
 
   return (
-    <$.Tooltip.Root side="top" disabled={!tooltip}>
-      <$.Tooltip.Trigger>
-        <$.SeekButton $render={Button} className={[className]} seconds={seconds}>
-          <Box className={styles.seekContent}>
-            <SeekIcon className={[styles.icon, backward && styles.seekBackwardIcon, iconClassName]} />
-            <Text className={[styles.seekLabel, backward ? styles.seekBackwardLabel : styles.seekForwardLabel]}>
-              {Math.abs(seconds)}
-            </Text>
-          </Box>
-        </$.SeekButton>
-      </$.Tooltip.Trigger>
-      <$.Tooltip.Popup className={[styles.popup, styles.popupSafeArea, styles.popupTransition, styles.tooltipPopup]}>
-        <$.Tooltip.Label />
-        <$.Tooltip.Shortcut className={styles.tooltipShortcut} />
-      </$.Tooltip.Popup>
-    </$.Tooltip.Root>
+    <ButtonTooltip disabled={!tooltip}>
+      <$.SeekButton $render={Button} className={[className]} seconds={seconds}>
+        <Box className={seekButtonStyles.content}>
+          <SeekIcon className={[buttonStyles.icon, backward && seekButtonStyles.backwardIcon, iconClassName]} />
+          <Text
+            className={[
+              seekButtonStyles.label,
+              backward ? seekButtonStyles.backwardLabel : seekButtonStyles.forwardLabel,
+            ]}
+          >
+            {Math.abs(seconds)}
+          </Text>
+        </Box>
+      </$.SeekButton>
+    </ButtonTooltip>
   );
 }
