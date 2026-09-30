@@ -1,6 +1,8 @@
 // @vitest-environment node
+import { escapeRegExp } from 'es-toolkit/string';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { llmsIndexPaths } from '../../../integrations/llms-sections';
 import type { CounterContext } from '../../../src/utils/agent-analytics';
 import agentMarkdownNegotiation, { config as negotiationCounterConfig } from '../agent-markdown-negotiation';
 import agentMarkdownTwins, { config as twinsCounterConfig } from '../agent-markdown-twins';
@@ -17,6 +19,13 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+// Netlify's `*` matches any run of characters, slashes included. Node 22 has no `URLPattern` to check it with.
+function matchesPath(paths: string | string[] | undefined, pathname: string): boolean {
+  return [paths ?? []]
+    .flat()
+    .some((path) => new RegExp(`^${path.split('*').map(escapeRegExp).join('.*')}$`).test(pathname));
+}
 
 function edgeContext(response: Response, deploy = 'production') {
   const pending: Promise<unknown>[] = [];
@@ -67,9 +76,24 @@ describe('agentMarkdownNegotiation', () => {
 });
 
 describe('agentMarkdownTwins', () => {
-  it('covers every Markdown twin and llms.txt', () => {
-    expect(twinsCounterConfig.path).toEqual(['/*.md', '/llms.txt']);
+  it('covers every Markdown twin and every llms index the build writes', () => {
+    for (const path of [...llmsIndexPaths(), '/docs/framework/react/guides/why-videojs.md']) {
+      expect(matchesPath(twinsCounterConfig.path, path), path).toBe(true);
+    }
+
+    expect(matchesPath(twinsCounterConfig.path, '/docs/framework/react/guides/why-videojs')).toBe(false);
     expect(twinsCounterConfig.onError).toBe('bypass');
+  });
+
+  it('labels a section index as llms, not as a twin', async () => {
+    const { context, pending } = edgeContext(new Response('# Guides'));
+
+    await agentMarkdownTwins(new Request('https://videojs.org/docs/framework/html/guides/llms-full.txt'), context);
+    await Promise.all(pending);
+
+    const [, init] = vi.mocked(fetch).mock.calls[0] ?? [];
+
+    expect(JSON.parse(String(init?.body))).toMatchObject({ properties: { markdown_via: 'llms' } });
   });
 
   it('passes the response through and counts the read, missing twins included', async () => {
