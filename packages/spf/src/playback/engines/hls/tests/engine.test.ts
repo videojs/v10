@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { snapshot } from '../../../../core/signals/primitives';
-import type { PartiallyResolvedAudioTrack, PartiallyResolvedVideoTrack, Presentation } from '../../../../media/types';
+import { appendSegment } from '../../../../media/dom/mse/append-segment';
+import { SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
+import type {
+  CanPlayTrack,
+  PartiallyResolvedAudioTrack,
+  PartiallyResolvedVideoTrack,
+  Presentation,
+  VideoTrack,
+} from '../../../../media/types';
 import { createHlsVideoEngine } from '../engine';
 
 // Mock appendSegment to succeed without real MP4 data
@@ -332,6 +340,44 @@ describe('createHlsVideoEngine', () => {
 
     engine.destroy();
   });
+
+  it.each([false, true])(
+    'honors the injected capability verdict for an AVC singleton (playable: %s)',
+    async (playable) => {
+      const track: VideoTrack = {
+        type: 'video',
+        id: '1080p-avc',
+        codecs: ['avc1.640028'],
+        url: 'https://example.com/video.m3u8',
+        bandwidth: 4_800_000,
+        mimeType: 'video/mp4',
+        initialization: { url: 'https://example.com/init.mp4' },
+        segments: [],
+        startTime: 0,
+        duration: 0,
+      };
+      const canPlayTrack = vi.fn<CanPlayTrack>(() => playable);
+      const engine = createHlsVideoEngine({ canPlayTrack });
+
+      try {
+        engine.state.presentation.set({
+          id: 'pres-capability',
+          url: 'https://example.com/master.m3u8',
+          startTime: 0,
+          selectionSets: [{ id: 'v', type: 'video', switchingSets: [{ id: 'vs', type: 'video', tracks: [track] }] }],
+        });
+        await Promise.resolve().then(() => Promise.resolve());
+
+        expect.soft(canPlayTrack.mock.calls.map(([probed]) => probed)).toContainEqual(track);
+        expect(engine.state.selectedVideoTrackId.get()).toBe(playable ? track.id : undefined);
+        expect(engine.state.errors.get()?.map((error) => error.code) ?? []).toEqual(
+          playable ? [] : [SVTA_NO_SUPPORTED_VIDEO_TRACK]
+        );
+      } finally {
+        await engine.destroy();
+      }
+    }
+  );
 
   it('reports playlist conditions through an overridden reporter', async () => {
     // Same default-with-override shape as `canPlayTrack` / `resolveTextTrackSegment`.
@@ -1750,6 +1796,17 @@ http://example.com/text-es-seg1.vtt
   });
 
   it('tracks buffer state separately for video and audio', async () => {
+    let releaseMediaAppends!: () => void;
+    const mediaAppends = new Promise<void>((resolve) => {
+      releaseMediaAppends = resolve;
+    });
+
+    // Init appends must finish so both actors can reach their streaming media
+    // appends. Hold those to keep partial associations observable.
+    vi.mocked(appendSegment).mockImplementation(async (_buffer, _data, signal) => {
+      if (signal) await mediaAppends;
+    });
+
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
 
@@ -1797,55 +1854,65 @@ http://example.com/audio-seg1.m4s
     const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
 
-    mediaElement.preload = 'auto';
+    try {
+      mediaElement.preload = 'auto';
 
-    engine.context.mediaElement.set(mediaElement);
-    engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
-    engine.state.preload.set('auto');
+      engine.context.mediaElement.set(mediaElement);
+      engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
+      engine.state.preload.set('auto');
 
-    await vi.waitFor(
-      () => {
-        // Each actor records only the resolved track selected for its own type.
-        const videoActor = engine.context.videoBufferActor.get();
-        const audioActor = engine.context.audioBufferActor.get();
-        const videoTrackId = engine.state.selectedVideoTrackId.get();
-        const audioTrackId = engine.state.selectedAudioTrackId.get();
+      await vi.waitFor(() => {
+        expect(engine.context.videoBufferActor.get()?.snapshot.get().context.segments[0]?.partial).toBe(true);
+        expect(engine.context.audioBufferActor.get()?.snapshot.get().context.segments[0]?.partial).toBe(true);
+      });
 
-        expect(videoActor).toBeDefined();
-        expect(audioActor).toBeDefined();
-        expect(videoActor).not.toBe(audioActor);
-        expect(videoTrackId).toBeDefined();
-        expect(audioTrackId).toBeDefined();
-        expect(videoTrackId).not.toBe(audioTrackId);
-        const videoCtx = engine.context.videoBufferActor.get()?.snapshot.get().context;
-        const audioCtx = engine.context.audioBufferActor.get()?.snapshot.get().context;
+      const videoTrackId = engine.state.selectedVideoTrackId.get();
+      const audioTrackId = engine.state.selectedAudioTrackId.get();
 
-        // Both video and audio actors should exist
-        expect(videoCtx).toBeDefined();
-        expect(audioCtx).toBeDefined();
+      expect(videoTrackId).toBeDefined();
+      expect(audioTrackId).toBeDefined();
+      expect(videoTrackId).not.toBe(audioTrackId);
+      expect(engine.context.videoBufferActor.get()?.snapshot.get().context.segments[0]?.trackId).toBe(videoTrackId);
+      expect(engine.context.audioBufferActor.get()?.snapshot.get().context.segments[0]?.trackId).toBe(audioTrackId);
 
-        // Each should track init segments (by track ID)
-        expect(videoCtx?.initTrackId).toBe(videoTrackId);
-        expect(audioCtx?.initTrackId).toBe(audioTrackId);
+      releaseMediaAppends();
 
-        // Each should track media segments independently
-        expect(videoCtx?.segments?.length).toBeGreaterThan(0);
-        expect(audioCtx?.segments?.length).toBeGreaterThan(0);
+      await vi.waitFor(
+        () => {
+          // Each actor records only the resolved track selected for its own type.
+          const videoActor = engine.context.videoBufferActor.get();
+          const audioActor = engine.context.audioBufferActor.get();
 
-        for (const [context, trackId] of [
-          [videoCtx, videoTrackId],
-          [audioCtx, audioTrackId],
-        ] as const) {
-          for (const segment of context!.segments!) {
-            expect(segment.id).toEqual(expect.any(String));
-            expect(segment.trackId).toBe(trackId);
+          expect(videoActor).toBeDefined();
+          expect(audioActor).toBeDefined();
+          expect(videoActor).not.toBe(audioActor);
+
+          const videoCtx = videoActor?.snapshot.get().context;
+          const audioCtx = audioActor?.snapshot.get().context;
+
+          expect(videoCtx?.initTrackId).toBe(videoTrackId);
+          expect(audioCtx?.initTrackId).toBe(audioTrackId);
+          expect(videoCtx?.segments?.length).toBeGreaterThan(0);
+          expect(audioCtx?.segments?.length).toBeGreaterThan(0);
+
+          for (const [context, trackId] of [
+            [videoCtx, videoTrackId],
+            [audioCtx, audioTrackId],
+          ] as const) {
+            for (const segment of context!.segments!) {
+              expect(segment.id).toEqual(expect.any(String));
+              expect(segment.trackId).toBe(trackId);
+              expect(segment.partial).not.toBe(true);
+            }
           }
-        }
-      },
-      { timeout: 3000 }
-    );
-
-    await engine.destroy();
+        },
+        { timeout: 3000 }
+      );
+    } finally {
+      releaseMediaAppends();
+      await engine.destroy();
+      vi.mocked(appendSegment).mockResolvedValue(undefined);
+    }
   });
 
   it('projects Apple JSON chapters from EXT-X-SESSION-DATA into a hidden chapters track', async () => {

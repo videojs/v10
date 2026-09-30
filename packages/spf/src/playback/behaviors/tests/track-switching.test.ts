@@ -405,22 +405,22 @@ describe('switchVideoTrack', () => {
       height,
     });
 
-    it('prefers the higher-resolution rendition when bitrates are equal', async () => {
-      // Same bitrate, but the lower-resolution variant is listed first — a
-      // bitrate-only ranker would pick it by manifest order.
+    it.each([false, true])('prefers pixel area over width at equal bitrates (reversed: %s)', async (reversed) => {
+      // Width and pixel area favor opposite tracks; neither width nor manifest
+      // order should decide the fitting rendition's quality.
       const equalBitrate = [
-        withResolution(createVideoTrack('sd', 3_000_000), 640, 360),
-        withResolution(createVideoTrack('hd', 3_000_000), 1920, 1080),
+        withResolution(createVideoTrack('wide', 2_000_000), 1920, 800),
+        withResolution(createVideoTrack('tall', 2_000_000), 1280, 1440),
       ];
       const state = makeState({
-        presentation: createPresentation(equalBitrate),
-        bandwidthState: createBandwidthState(6_000_000),
+        presentation: createPresentation(reversed ? [...equalBitrate].reverse() : equalBitrate),
+        bandwidthState: createBandwidthState(2_500_000),
       });
 
       const reactor = switchVideoTrack.setup({ state });
 
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('hd');
+      expect(state.selectedVideoTrackId.get()).toBe('tall');
 
       reactor.destroy();
     });
@@ -587,6 +587,22 @@ describe('switchVideoTrack', () => {
   });
 
   describe('configuration', () => {
+    it.each([
+      [4_600_000, 'mid'],
+      [4_800_000, 'high'],
+    ] as const)('applies default safety margin at %i bps, selecting %s', async (bandwidth, expected) => {
+      const ladder = [createVideoTrack('mid', 2_000_000), createVideoTrack('high', 4_000_000)];
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: { ...createBandwidthState(bandwidth), fastTotalWeight: 1000, slowTotalWeight: 1000 },
+      });
+      const reactor = switchVideoTrack.setup({ state });
+
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe(expected);
+      reactor.destroy();
+    });
+
     it('includes the exact bandwidth threshold and excludes a rendition just above it', async () => {
       const ladder = [
         createVideoTrack('low', 500_000),

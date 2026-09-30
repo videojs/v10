@@ -265,6 +265,14 @@ describe('syncTextTrackModes', () => {
     expect(track.mode).toBe('disabled');
     expect(track.cues).toBeNull();
 
+    syncTextTrackModes(media.textTracks, 'track-en');
+    expect(track.mode).toBe('showing');
+    expect(readCues()).toEqual(cues);
+
+    syncTextTrackModes(media.textTracks, undefined);
+    expect(track.mode).toBe('disabled');
+    expect(track.cues).toBeNull();
+
     track.mode = 'hidden';
     expect(readCues()).toEqual(cues);
 
