@@ -70,6 +70,7 @@ afterEach(() => {
 type MockEngine = {
   representations: MockRepresentation[];
   currentRepresentation: MockRepresentation | null;
+  settings: Record<string, any>;
   attachView: ReturnType<typeof vi.fn>;
   attachSource: ReturnType<typeof vi.fn>;
   updateSettings: ReturnType<typeof vi.fn>;
@@ -387,7 +388,7 @@ describe('DashAdapter', () => {
       await flush();
 
       expect(change).toHaveBeenCalledOnce();
-      expect(engine.getSettings()).toMatchObject(AUTO_SWITCH_OFF);
+      expect(engine.settings).toMatchObject(AUTO_SWITCH_OFF);
       expect(engine.updateSettings).not.toHaveBeenCalled();
       expect(engine.setRepresentationForTypeById).not.toHaveBeenCalled();
     });
