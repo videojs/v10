@@ -118,7 +118,7 @@ describe('matchesHotkeyEvent', () => {
   });
 
   it('skips Unidentified key events (IME)', () => {
-    const binding = parseHotkeyPattern('k')[0]!;
+    const binding = parseHotkeyPattern('Unidentified')[0]!;
 
     expect(matchesHotkeyEvent(binding, createEvent('Unidentified'))).toBe(false);
   });

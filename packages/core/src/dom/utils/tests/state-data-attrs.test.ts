@@ -147,8 +147,12 @@ describe('applyStateDataAttrs', () => {
 
     applyStateDataAttrs(element, { status: 'loading' });
     expect(element.getAttribute('data-status')).toBe('loading');
-
     applyStateDataAttrs(element, { status: null });
+    expect(element.hasAttribute('data-status')).toBe(false);
+
+    applyStateDataAttrs(element, { status: 'loading' });
+    expect(element.getAttribute('data-status')).toBe('loading');
+    applyStateDataAttrs(element, { status: undefined });
     expect(element.hasAttribute('data-status')).toBe(false);
   });
 

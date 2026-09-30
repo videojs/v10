@@ -97,10 +97,17 @@ describe('HotkeyCoordinator', () => {
 
     it('cleanup is idempotent', () => {
       const c = setup();
+      const notify = vi.fn();
+      const unsubscribe = c.subscribeShortcutChanges(notify);
       const remove = c.add({ keys: 'k', onActivate: vi.fn() });
 
+      expect(notify).toHaveBeenCalledOnce();
       remove();
+      expect(notify).toHaveBeenCalledTimes(2);
       remove();
+      expect(notify).toHaveBeenCalledTimes(2);
+
+      unsubscribe();
     });
   });
 
@@ -110,10 +117,10 @@ describe('HotkeyCoordinator', () => {
       const first = vi.fn();
       const second = vi.fn();
 
-      c.add({ keys: 'k', onActivate: second });
-      c.add({ keys: 'Ctrl+k', onActivate: first });
+      c.add({ keys: '>', onActivate: second });
+      c.add({ keys: 'Shift+>', onActivate: first });
 
-      keydown(container, 'k', { ctrlKey: true });
+      keydown(container, '>', { shiftKey: true });
 
       expect(first).toHaveBeenCalledOnce();
       expect(second).not.toHaveBeenCalled();
@@ -397,10 +404,10 @@ describe('HotkeyCoordinator', () => {
   });
 
   describe('ARIA registry', () => {
-    it('returns undefined for unregistered action', () => {
+    it('returns empty details for unregistered action', () => {
       const c = setup();
 
-      expect(c.getAriaKeys('togglePaused')).toBeUndefined();
+      expect(c.getShortcut('togglePaused')).toEqual({});
     });
 
     it('returns formatted key for registered action', () => {
@@ -424,9 +431,9 @@ describe('HotkeyCoordinator', () => {
       const c = setup();
       const remove = c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
 
+      expect(c.getShortcut('togglePaused')).toEqual({ aria: 'k', shortcut: 'K' });
       remove();
-
-      expect(c.getAriaKeys('togglePaused')).toBeUndefined();
+      expect(c.getShortcut('togglePaused')).toEqual({});
     });
 
     it('returns the latest registered shortcut as the preferred display key', () => {

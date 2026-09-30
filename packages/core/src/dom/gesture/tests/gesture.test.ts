@@ -119,10 +119,20 @@ describe('createTapGesture', () => {
 
   it('double cleanup is safe', () => {
     const container = setup();
-    const cleanup = createTapGesture(container, vi.fn());
+    const removed = vi.fn();
+    const survivor = vi.fn();
+    const cleanup = createTapGesture(container, removed);
 
+    createTapGesture(container, survivor);
     cleanup();
     cleanup();
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(removed).not.toHaveBeenCalled();
+    expect(survivor).toHaveBeenCalledOnce();
   });
 
   it('first registered binding wins when multiple match', () => {
