@@ -469,39 +469,49 @@ Treat engine access as an escape hatch. It couples your app to one engine, so pr
 
 ### YouTube and Vimeo
 
-The embeds take a URL or a bare ID as `src`. Two Vidstack shortcuts don't carry over:
+The embeds take a URL, a bare ID, or one of Vidstack's shorthands as `src`:
 
-- **`youtube/ID` and `vimeo/ID` aren't recognized.** Use the full URL or just the ID.
-- **Vimeo's `?hash=` becomes `?h=`.** Unlisted videos need `?h=HASH` or the hash as the last path segment.
+- **`youtube/ID` plays from the privacy-enhanced host,** `youtube-nocookie.com`, as it did in Vidstack.
+- **`vimeo/ID?hash=HASH` still plays an unlisted video.** In a full Vimeo URL, give the hash as `?h=HASH` or as the last path segment.
 
 Vidstack fetched a poster for embeds automatically. Video.js doesn't ([#3049](https://github.com/videojs/v10/issues/3049)); set `poster` on the player if you want your own image before playback.
 
 <Aside type="caution" title="Embed privacy defaults changed">
-Vidstack loaded YouTube from `youtube-nocookie.com` and asked Vimeo not to track viewers unless you turned cookies on. Video.js uses the standard YouTube host unless your `src` is a `youtube-nocookie.com` URL, and sends Vimeo's `dnt` flag only when you set `source.engine.vimeo.dnt`. Keep the privacy-enhanced behavior by writing `https://www.youtube-nocookie.com/embed/VIDEO_ID` as the YouTube `src` and adding `dnt: true` to the Vimeo engine options.
+Vidstack loaded YouTube from `youtube-nocookie.com` and asked Vimeo not to track viewers unless you turned cookies on. Video.js plays a YouTube URL from the standard host unless it's a `youtube-nocookie.com` URL, and sends Vimeo's `dnt` flag only when you set `source.engine.vimeo.dnt`. Keep the privacy-enhanced behavior by writing YouTube sources as `youtube/VIDEO_ID` shorthands or `youtube-nocookie.com` URLs, and adding `dnt: true` to the Vimeo engine options.
 </Aside>
 
 ### Choose the media from the URL
 
 We're working on a media component that picks and loads the right engine from its source, the way `<media-provider>` did. Its API isn't settled yet; follow [#2160](https://github.com/videojs/v10/issues/2160) for progress.
 
-Until then, choose the component yourself. If your app plays sources from a catalog or from user input, a small switch covers the common cases:
+Until then, <DocsLink slug="reference/api/resolve-adapter-type">`resolveAdapterType`</DocsLink> tells you which media component plays a URL, and you render that component with the same `src`. If your app plays sources from a catalog or from user input, a switch on its result covers the common cases:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 'use client';
 
-import { lazy, Suspense } from 'react';
+import { resolveAdapterType } from '@videojs/react';
 import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+import { lazy, Suspense } from 'react';
 
+const DashVideo = lazy(() => import('@videojs/react/media/dash-video').then((m) => ({ default: m.DashVideo })));
 const HlsJsVideo = lazy(() => import('@videojs/react/media/hlsjs-video').then((m) => ({ default: m.HlsJsVideo })));
 const VimeoVideo = lazy(() => import('@videojs/react/media/vimeo-video').then((m) => ({ default: m.VimeoVideo })));
 const YouTubeVideo = lazy(() => import('@videojs/react/media/youtube-video').then((m) => ({ default: m.YouTubeVideo })));
 
 function Media({ src }: { src: string }) {
-  if (/youtu\.be\/|youtube(-nocookie)?\.com\//.test(src)) return <YouTubeVideo src={src} />;
-  if (/vimeo\.com\//.test(src)) return <VimeoVideo src={src} />;
-  if (/\.m3u8($|[?#])/i.test(src)) return <HlsJsVideo src={src} playsInline />;
-  return <Video src={src} playsInline />;
+  switch (resolveAdapterType(src)) {
+    case 'youtube':
+      return <YouTubeVideo src={src} />;
+    case 'vimeo':
+      return <VimeoVideo src={src} />;
+    case 'hls':
+      return <HlsJsVideo src={src} playsInline />;
+    case 'dash':
+      return <DashVideo src={src} playsInline />;
+    default:
+      return <Video src={src} playsInline />;
+  }
 }
 
 export function Player({ src }: { src: string }) {
@@ -522,21 +532,23 @@ Each embed and streaming component loads with `React.lazy`, so the page only dow
 
 <FrameworkCase frameworks={["html"]}>
 ```js
-import '@videojs/html/media/hlsjs-video';
-import '@videojs/html/media/vimeo-video';
-import '@videojs/html/media/youtube-video';
+import { resolveAdapterType } from '@videojs/html';
 
-function mediaTagFor(src) {
-  if (/youtu\.be\/|youtube(-nocookie)?\.com\//.test(src)) return 'youtube-video';
-  if (/vimeo\.com\//.test(src)) return 'vimeo-video';
-  if (/\.m3u8($|[?#])/i.test(src)) return 'hlsjs-video';
-  return 'video';
-}
+// The tag for each adapter type, and the module that registers it.
+const MEDIA = {
+  youtube: ['youtube-video', () => import('@videojs/html/media/youtube-video')],
+  vimeo: ['vimeo-video', () => import('@videojs/html/media/vimeo-video')],
+  hls: ['hlsjs-video', () => import('@videojs/html/media/hlsjs-video')],
+  dash: ['dash-video', () => import('@videojs/html/media/dash-video')],
+};
 
 let media = document.querySelector('video-skin > video');
 
-function load(src) {
-  const next = document.createElement(mediaTagFor(src));
+async function load(src) {
+  const [tag, register] = MEDIA[resolveAdapterType(src)] ?? ['video'];
+  await register?.();
+
+  const next = document.createElement(tag);
   next.setAttribute('src', src);
   next.setAttribute('playsinline', '');
   media.replaceWith(next);
@@ -544,8 +556,10 @@ function load(src) {
 }
 ```
 
-When the media changes, the player detaches from the old one, resets its state, and attaches to the new one; the skin follows. Every media module you import adds its engine to your bundle, so import the rarely used ones dynamically.
+Each media module loads with `import()`, so the page only downloads the engine its source needs, the way Vidstack's provider loaders did. A plain `<video>` needs no module. When the media changes, the player detaches from the old one, resets its state, and attaches to the new one; the skin follows.
 </FrameworkCase>
+
+`resolveAdapterType` recognizes the URLs and shorthands Vidstack's providers did, plus Wistia, Mux, Cloudflare Stream, Spotify, TikTok, and Twitch, and returns `null` for anything else. Vidstack sent a `HEAD` request when a URL had no file extension; pass the MIME type as the second argument instead. The result names a kind of source, not an engine: `hls` covers every HLS media, so choose one yourself.
 
 For a single source, change the media's `src` or `source` instead. The same media swaps the URL without being replaced.
 
@@ -1335,7 +1349,7 @@ These changes don't throw errors, so test for them:
 - **Controls.** They hide as soon as the pointer leaves the player during playback, where Vidstack waited for its 2-second idle delay.
 - **Hotkeys.** Shift no longer doubles the 10-second seek step, and the speed keys wrap around a fixed list.
 - **Captions.** The captions toggle prefers the browser's language over the `default` track.
-- **Embeds.** YouTube and Vimeo no longer use their privacy-enhanced modes by default.
+- **Embeds.** YouTube URLs and Vimeo no longer use their privacy-enhanced modes by default; `youtube/ID` shorthands still do.
 - **Time.** `currentTime` updates about four times a second instead of every frame.
 - **Live.** Playback counts as live within 5 seconds of the stream's live edge start, not 10 seconds of the seekable end, and live skins have no time slider, quality, audio track, or rate menu.
 - **Volume.** `setVolume()` above 0 also unmutes, and unmuting at 0 restores 25%. Vidstack's controls did the same, but setting its `volume` or `muted` properties didn't.
@@ -1346,7 +1360,7 @@ These changes don't throw errors, so test for them:
 
 Ordered roughly by how likely each is to block a Vidstack migration. Follow [Vidstack Parity](https://github.com/videojs/v10/issues/3035) for progress.
 
-- **No automatic provider selection.** Choose the media component per source ([#2160](https://github.com/videojs/v10/issues/2160)).
+- **No automatic provider selection.** `resolveAdapterType` tells you which media component plays a URL, but you render it yourself ([#2160](https://github.com/videojs/v10/issues/2160)).
 - **Nothing persists** between visits: volume, captions, language, rate, quality, or position ([#944](https://github.com/videojs/v10/issues/944)).
 - **No caption style settings** ([#1437](https://github.com/videojs/v10/issues/1437)), no custom caption renderer ([#3038](https://github.com/videojs/v10/issues/3038)), and WebVTT only: no SRT, SSA/ASS, or JSON captions ([#3037](https://github.com/videojs/v10/issues/3037)). Audio players don't show captions ([#3039](https://github.com/videojs/v10/issues/3039)).
 - **No chapters menu** or chapter title outside the time slider ([#1873](https://github.com/videojs/v10/issues/1873)), and no dedicated API for chapters from code ([#1268](https://github.com/videojs/v10/issues/1268)). Cue points and markers aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
@@ -1359,7 +1373,7 @@ Ordered roughly by how likely each is to block a Vidstack migration. Follow [Vid
 - **No Media Session** metadata from `title`, `artist`, and `artwork` ([#3042](https://github.com/videojs/v10/issues/3042)).
 - **Fixed timing.** The controls hide delay ([#1728](https://github.com/videojs/v10/issues/1728)) and the live edge tolerance ([#1730](https://github.com/videojs/v10/issues/1730)) aren't configurable, and there's no duration override ([#1729](https://github.com/videojs/v10/issues/1729)).
 - **No debug logging** to replace Vidstack's log level ([#1406](https://github.com/videojs/v10/issues/1406)).
-- **Fewer embed conveniences.** No `youtube/ID` or `vimeo/ID` shorthands ([#2160](https://github.com/videojs/v10/issues/2160)), automatic embed posters ([#3049](https://github.com/videojs/v10/issues/3049)), Vimeo chapters ([#3050](https://github.com/videojs/v10/issues/3050)), or Vimeo quality selection ([#3051](https://github.com/videojs/v10/issues/3051)).
+- **Fewer embed conveniences.** No automatic embed posters ([#3049](https://github.com/videojs/v10/issues/3049)), Vimeo chapters ([#3050](https://github.com/videojs/v10/issues/3050)), or Vimeo quality selection ([#3051](https://github.com/videojs/v10/issues/3051)).
 - **Less remote playback detail.** No route type or device name ([#3047](https://github.com/videojs/v10/issues/3047)), and no Cast prompt events or Cast options beyond the receiver ID ([#3048](https://github.com/videojs/v10/issues/3048)).
 - **Fewer time slider and gesture extras.** No video preview in the time slider ([#3045](https://github.com/videojs/v10/issues/3045)), JSON thumbnail storyboards ([#3044](https://github.com/videojs/v10/issues/3044)), or swipe to scrub ([#3046](https://github.com/videojs/v10/issues/3046)).
 - **No request events**, event triggers, or ways to cancel a request, by design.
