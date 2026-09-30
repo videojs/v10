@@ -7,7 +7,12 @@ import {
   MediaStreamTypes,
 } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
-import { type NativeHlsConfig, NativeHlsAdapter, type NativeHlsSource } from '@videojs/native-hls-video';
+import {
+  fetchHlsChaptersDocument,
+  type NativeHlsConfig,
+  NativeHlsAdapter,
+  type NativeHlsSource,
+} from '@videojs/native-hls-video';
 import { deepEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 
@@ -383,6 +388,16 @@ export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps 
     return this.#delegate?.targetLiveWindow ?? Number.NaN;
   }
 
+  /**
+   * Load the chapters document a source's multivariant playlist references, whichever engine plays it. Fetches it by
+   * default; a subclass that already holds the document hands it over instead, so it is not fetched twice.
+   *
+   * @internal
+   */
+  loadChaptersDocument(url: string, signal: AbortSignal): Promise<unknown> {
+    return fetchHlsChaptersDocument(url, signal);
+  }
+
   async load() {
     this.#loadRequested = null;
 
@@ -429,6 +444,7 @@ export class HlsJsAdapter extends HTMLVideoAdapter implements HlsJsAdapterProps 
         : this.#createNativeDelegate(drm, nativeHls, hlsJs);
 
       bridgeEvents(this.#delegate, this);
+      this.#delegate.setChaptersDocumentLoader((url, signal) => this.loadChaptersDocument(url, signal));
 
       // Apply user `streamType` before `attach()` so native delegates do not run
       // synchronous duration-based detection first and emit a transient value.

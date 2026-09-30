@@ -8,6 +8,7 @@ import type {
 } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin, type WithMediaTracks } from '@videojs/media/media-tracks';
+import type { HlsChaptersDocumentLoaderHost } from '@videojs/native-hls-video';
 import type { MixinReturn } from '@videojs/utils/types';
 import Hls, { type HlsConfig } from 'hls.js';
 
@@ -133,7 +134,11 @@ class HlsJsOnlyAdapterCore extends HTMLVideoAdapter implements EngineAdapter<Hls
 }
 
 interface HlsJsMediaCapabilities
-  extends MediaStreamTypeCapability, MediaLiveCapability, Pick<MediaSourceCapability, 'preload'> {
+  extends
+    MediaStreamTypeCapability,
+    MediaLiveCapability,
+    Pick<MediaSourceCapability, 'preload'>,
+    HlsChaptersDocumentLoaderHost {
   readonly error: MediaError | null;
 }
 

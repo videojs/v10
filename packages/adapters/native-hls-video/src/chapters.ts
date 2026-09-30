@@ -7,19 +7,41 @@ import type { NativeHlsHost } from './errors';
 import { fetchPlaylist, findSessionDataUri, isMultivariantPlaylist, looksLikeM3u8 } from './m3u8-utils';
 
 /**
- * Fetch and parse the Apple JSON chapters document at `url`. Chapters are optional and playback never depends on them,
+ * Resolves the chapters document at `url`, or `undefined` when its owner already knows there is none to read (and has
+ * said so). Rejects when the document fails to load.
+ *
+ * @internal
+ */
+export type HlsChaptersDocumentLoader = (url: string, signal: AbortSignal) => Promise<unknown>;
+
+/**
+ * Fetch the chapters document at `url` as JSON: what a loader does unless its owner already holds the document.
+ *
+ * @internal
+ */
+export async function fetchHlsChaptersDocument(url: string, signal: AbortSignal): Promise<unknown> {
+  const response = await fetch(url, { signal });
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+
+  return response.json();
+}
+
+/**
+ * Load and parse the Apple JSON chapters document at `url`. Chapters are optional and playback never depends on them,
  * so a document that won't load or won't parse yields none, announced only in development.
  */
-async function loadHlsJsonChapters(url: string, signal: AbortSignal): Promise<Chapter[]> {
+async function loadHlsJsonChapters(
+  url: string,
+  signal: AbortSignal,
+  loadDocument: HlsChaptersDocumentLoader
+): Promise<Chapter[]> {
   try {
-    const response = await fetch(url, { signal });
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    const document = await loadDocument(url, signal);
+    if (document === undefined) return [];
 
     // The tag's contract is an Apple JSON chapters document; the parser is
     // written for that shape, and anything else lands in the catch below.
-    const document: HlsJsonChapters = await response.json();
-
-    return parseHlsJsonChapters(document, response.url || url);
+    return parseHlsJsonChapters(document as HlsJsonChapters, url);
   } catch (error) {
     if (__DEV__ && !signal.aborted && !isAbortError(error)) {
       console.warn(`[vjs-media] Failed to load the HLS chapters document at ${url}.`, error);
@@ -37,8 +59,15 @@ async function loadHlsJsonChapters(url: string, signal: AbortSignal): Promise<Ch
  *
  * One loader serves one playback engine. Loading a different document replaces the tracks from the last one; loading
  * the same document onto the same element again is a no-op, so a manifest that is announced twice costs one request.
+ *
+ * Shared by the hls.js adapter, not part of this package's public API.
+ *
+ * @internal
  */
 export class HlsChaptersLoader {
+  /** Where documents come from. An owner that already fetched one — Mux's asset metadata — hands it over here. */
+  loadDocument: HlsChaptersDocumentLoader = fetchHlsChaptersDocument;
+
   #media: HTMLMediaElement | null = null;
   #url: string | undefined;
   #request: AbortController | null = null;
@@ -57,7 +86,7 @@ export class HlsChaptersLoader {
 
     const request = (this.#request = new AbortController());
 
-    void loadHlsJsonChapters(url, request.signal).then((chapters) => {
+    void loadHlsJsonChapters(url, request.signal, this.loadDocument).then((chapters) => {
       // A document that settled before the abort still must not project onto
       // an element the loader has since moved away from.
       if (request.signal.aborted) return;
@@ -99,6 +128,16 @@ export function NativeHlsChaptersMixin<Base extends Constructor<NativeHlsHost>>(
     #disconnect: AbortController | null = null;
     #request: AbortController | null = null;
     #currentSrc = '';
+
+    /**
+     * Replace where chapters documents come from; `undefined` goes back to fetching them. For an owner that already
+     * holds the document, so it is not fetched twice.
+     *
+     * @internal
+     */
+    setChaptersDocumentLoader(loader?: HlsChaptersDocumentLoader): void {
+      this.#chapters.loadDocument = loader ?? fetchHlsChaptersDocument;
+    }
 
     attach(target: HTMLVideoElement) {
       super.attach(target);
@@ -164,5 +203,10 @@ export function NativeHlsChaptersMixin<Base extends Constructor<NativeHlsHost>>(
     }
   }
 
-  return NativeHlsChapters as unknown as Base;
+  return NativeHlsChapters as unknown as Base & Constructor<HlsChaptersDocumentLoaderHost>;
+}
+
+/** @internal */
+export interface HlsChaptersDocumentLoaderHost {
+  setChaptersDocumentLoader(loader?: HlsChaptersDocumentLoader): void;
 }

@@ -823,6 +823,38 @@ describe('MuxVideoAdapter', () => {
       media.destroy();
     });
 
+    it('serves a chapters document naming the metadata from the metadata request', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+      const { signal } = new AbortController();
+
+      media.attach(document.createElement('video'));
+      media.source = { playbackId: 'abc123', preferPlayback: 'native', playback: { token: 'jwt' } };
+      await flushLoad();
+
+      // The playlist names the document without the token.
+      await expect(media.loadChaptersDocument('https://stream.mux.com/abc123/metadata.json', signal)).resolves.toEqual(
+        DOCUMENT
+      );
+      expect(metadataRequests(fetchMock)).toEqual(['https://stream.mux.com/abc123/metadata.json?token=jwt']);
+
+      media.destroy();
+    });
+
+    it('fetches any other chapters document', async () => {
+      const fetchMock = stubFetch();
+      const media = new MuxVideoAdapter();
+      const { signal } = new AbortController();
+
+      media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+
+      await media.loadChaptersDocument('https://stream.mux.com/abc123/chapters/metadata.json', signal);
+
+      expect(metadataRequests(fetchMock)).toContain('https://stream.mux.com/abc123/chapters/metadata.json');
+
+      media.destroy();
+    });
+
     it('keeps the title when only image params change', async () => {
       const fetchMock = stubFetch();
       const media = new MuxVideoAdapter();

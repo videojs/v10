@@ -158,6 +158,8 @@ function parseAttributes(list: string): Map<string, string> {
  * The `URI` of the first `#EXT-X-SESSION-DATA` tag carrying `dataId` by reference, as written in the playlist —
  * unresolved, so relative to the playlist's own URL. `undefined` when no such tag points at a resource; an entry
  * carrying its datum inline as `VALUE` is skipped.
+ *
+ * @internal
  */
 export function findSessionDataUri(playlist: string, dataId: string): string | undefined {
   for (const raw of playlist.split(/\r?\n/)) {

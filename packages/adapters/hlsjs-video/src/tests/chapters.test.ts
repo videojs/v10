@@ -1,4 +1,5 @@
 import { HTMLVideoAdapter } from '@videojs/media/dom';
+import type { LoaderCallbacks, PlaylistLoaderConstructor, PlaylistLoaderContext } from 'hls.js';
 import Hls from 'hls.js';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -6,19 +7,46 @@ import { HlsJsChaptersMixin } from '../chapters';
 
 // The loader (fetch, parse, project) is shared with native playback and
 // covered there; here only what the mixin hands it is observed.
-const loader = vi.hoisted(() => ({ load: vi.fn(), reset: vi.fn() }));
+const loader = vi.hoisted(() => ({ load: vi.fn(), reset: vi.fn(), instances: [] as { loadDocument: unknown }[] }));
 
-vi.mock('@videojs/native-hls-video', () => ({
+vi.mock('@videojs/native-hls-video', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@videojs/native-hls-video')>()),
   HlsChaptersLoader: class {
+    loadDocument: unknown = 'default';
     load = loader.load;
     reset = loader.reset;
+
+    constructor() {
+      loader.instances.push(this);
+    }
   },
 }));
 
-function createEngine(): Hls {
+type Callbacks = LoaderCallbacks<PlaylistLoaderContext>;
+
+/** Stands in for hls.js's XHR loader: answers every request with whatever `respond` returns. */
+function createBaseLoader(respond: (context: PlaylistLoaderContext) => string) {
+  return class {
+    context: PlaylistLoaderContext | null = null;
+    stats = {};
+
+    load(context: PlaylistLoaderContext, _config: unknown, callbacks: Callbacks) {
+      callbacks.onSuccess({ url: context.url, data: respond(context) }, this.stats as never, context, null);
+    }
+
+    abort() {}
+    destroy() {}
+  };
+}
+
+/** What the fake network serves, by URL. */
+const playlists = new Map<string, string>();
+
+function createEngine(pLoader?: PlaylistLoaderConstructor): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
 
   return {
+    config: { loader: createBaseLoader((context) => playlists.get(context.url) ?? ''), pLoader },
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
 
@@ -48,15 +76,46 @@ function emit(engine: Hls, event: string, data: unknown = {}) {
   (engine as any).emit(event, data);
 }
 
-function manifestLoaded(sessionData: Record<string, Record<string, string>> | null, url: string) {
-  return { sessionData, url };
+/** Request `url` through the engine's playlist loader, as hls.js does. */
+function requestPlaylist(engine: Hls, type: string, url: string, callbacks: Partial<Callbacks> = {}) {
+  const PlaylistLoader = engine.config.pLoader!;
+  const context = { type, url, responseType: 'text' } as unknown as PlaylistLoaderContext;
+
+  new PlaylistLoader(engine.config).load(context, {} as never, {
+    onSuccess: vi.fn(),
+    onError: vi.fn(),
+    onTimeout: vi.fn(),
+    ...callbacks,
+  });
 }
 
-const CHAPTERS_ENTRY = { 'DATA-ID': 'com.apple.hls.chapters', URI: 'chapters.json' };
+/**
+ * Load a multivariant playlist the way hls.js does: `MANIFEST_LOADING`, the request, then `MANIFEST_LOADED` carrying
+ * the session data hls.js parsed — one entry per `DATA-ID`, the last one written.
+ */
+function loadManifest(
+  engine: Hls,
+  playlist: string,
+  url: string,
+  sessionData?: Record<string, Record<string, string>>
+) {
+  playlists.set(url, playlist);
+  emit(engine, Hls.Events.MANIFEST_LOADING);
+  requestPlaylist(engine, 'manifest', url);
+  emit(engine, Hls.Events.MANIFEST_LOADED, { sessionData: sessionData ?? null, url });
+}
+
+const CHAPTERS_TAG = '#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",URI="chapters.json"';
+
+function multivariant(...tags: string[]) {
+  return ['#EXTM3U', ...tags, '#EXT-X-STREAM-INF:BANDWIDTH=1', 'media.m3u8'].join('\n');
+}
 
 beforeEach(() => {
+  playlists.clear();
   loader.load.mockClear();
   loader.reset.mockClear();
+  loader.instances.length = 0;
 });
 
 describe('HlsJsChaptersMixin', () => {
@@ -66,13 +125,81 @@ describe('HlsJsChaptersMixin', () => {
     const video = document.createElement('video');
 
     host.attach(video);
-    emit(
-      engine,
-      Hls.Events.MANIFEST_LOADED,
-      manifestLoaded({ 'com.apple.hls.chapters': CHAPTERS_ENTRY }, 'https://cdn.example.com/redirected/main.m3u8')
-    );
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://cdn.example.com/redirected/main.m3u8');
 
     expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://cdn.example.com/redirected/main.m3u8');
+  });
+
+  it('reads the first chapters entry with a URI, where hls.js keeps the last', () => {
+    const engine = createEngine();
+    const host = new HlsJsChapters(engine);
+    const video = document.createElement('video');
+
+    host.attach(video);
+    loadManifest(
+      engine,
+      multivariant(
+        '#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",URI="first.json",LANGUAGE="en"',
+        '#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",VALUE="inline",LANGUAGE="fr"'
+      ),
+      'https://example.com/main.m3u8',
+      { 'com.apple.hls.chapters': { 'DATA-ID': 'com.apple.hls.chapters', VALUE: 'inline', LANGUAGE: 'fr' } }
+    );
+
+    expect(loader.load).toHaveBeenCalledWith(video, 'first.json', 'https://example.com/main.m3u8');
+  });
+
+  it("falls back to hls.js's session data when the playlist text never arrived", () => {
+    const engine = createEngine();
+    const host = new HlsJsChapters(engine);
+    const video = document.createElement('video');
+
+    host.attach(video);
+    emit(engine, Hls.Events.MANIFEST_LOADING);
+    emit(engine, Hls.Events.MANIFEST_LOADED, {
+      sessionData: { 'com.apple.hls.chapters': { 'DATA-ID': 'com.apple.hls.chapters', URI: 'chapters.json' } },
+      url: 'https://example.com/main.m3u8',
+    });
+
+    expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://example.com/main.m3u8');
+  });
+
+  it('passes every other playlist request through untouched', () => {
+    const engine = createEngine();
+    const host = new HlsJsChapters(engine);
+    const onSuccess = vi.fn();
+
+    host.attach(document.createElement('video'));
+    playlists.set('https://example.com/media.m3u8', multivariant(CHAPTERS_TAG));
+    emit(engine, Hls.Events.MANIFEST_LOADING);
+    requestPlaylist(engine, 'level', 'https://example.com/media.m3u8', { onSuccess });
+    emit(engine, Hls.Events.MANIFEST_LOADED, { sessionData: null, url: 'https://example.com/main.m3u8' });
+
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(loader.load).not.toHaveBeenCalled();
+  });
+
+  it('wraps a configured playlist loader rather than replacing it', () => {
+    const load = vi.fn();
+    const Custom = class extends createBaseLoader(() => multivariant(CHAPTERS_TAG)) {
+      override load(context: PlaylistLoaderContext, config: unknown, callbacks: Callbacks) {
+        load(context.url);
+        super.load(context, config, callbacks);
+      }
+    };
+    const engine = createEngine(Custom as unknown as PlaylistLoaderConstructor);
+    const host = new HlsJsChapters(engine);
+    const video = document.createElement('video');
+    const onSuccess = vi.fn();
+
+    host.attach(video);
+    emit(engine, Hls.Events.MANIFEST_LOADING);
+    requestPlaylist(engine, 'manifest', 'https://example.com/main.m3u8', { onSuccess });
+    emit(engine, Hls.Events.MANIFEST_LOADED, { sessionData: null, url: 'https://example.com/main.m3u8' });
+
+    expect(load).toHaveBeenCalledWith('https://example.com/main.m3u8');
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://example.com/main.m3u8');
   });
 
   it('does nothing for a manifest without a chapters URI', () => {
@@ -80,14 +207,11 @@ describe('HlsJsChaptersMixin', () => {
     const host = new HlsJsChapters(engine);
 
     host.attach(document.createElement('video'));
-    emit(engine, Hls.Events.MANIFEST_LOADED, manifestLoaded(null, 'https://example.com/main.m3u8'));
-    emit(
+    loadManifest(engine, multivariant(), 'https://example.com/main.m3u8');
+    loadManifest(
       engine,
-      Hls.Events.MANIFEST_LOADED,
-      manifestLoaded(
-        { 'com.apple.hls.chapters': { 'DATA-ID': 'com.apple.hls.chapters', VALUE: '[]' } },
-        'https://example.com/main.m3u8'
-      )
+      multivariant('#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters",VALUE="[]"'),
+      'https://example.com/main.m3u8'
     );
 
     expect(loader.load).not.toHaveBeenCalled();
@@ -98,11 +222,7 @@ describe('HlsJsChaptersMixin', () => {
     const host = new HlsJsChapters(engine);
     const video = document.createElement('video');
 
-    emit(
-      engine,
-      Hls.Events.MANIFEST_LOADED,
-      manifestLoaded({ 'com.apple.hls.chapters': CHAPTERS_ENTRY }, 'https://example.com/main.m3u8')
-    );
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
 
     expect(loader.load).not.toHaveBeenCalled();
 
@@ -115,17 +235,12 @@ describe('HlsJsChaptersMixin', () => {
   it('removes the tracks on detach and projects them again on reattach', () => {
     const engine = createEngine();
     const host = new HlsJsChapters(engine);
-    const video = document.createElement('video');
 
-    host.attach(video);
-    emit(
-      engine,
-      Hls.Events.MANIFEST_LOADED,
-      manifestLoaded({ 'com.apple.hls.chapters': CHAPTERS_ENTRY }, 'https://example.com/main.m3u8')
-    );
+    host.attach(document.createElement('video'));
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
     emit(engine, Hls.Events.MEDIA_DETACHED);
 
-    expect(loader.reset).toHaveBeenCalledOnce();
+    expect(loader.reset).toHaveBeenCalledTimes(2);
 
     emit(engine, Hls.Events.MEDIA_ATTACHED);
 
@@ -137,11 +252,8 @@ describe('HlsJsChaptersMixin', () => {
     const host = new HlsJsChapters(engine);
 
     host.attach(document.createElement('video'));
-    emit(
-      engine,
-      Hls.Events.MANIFEST_LOADED,
-      manifestLoaded({ 'com.apple.hls.chapters': CHAPTERS_ENTRY }, 'https://example.com/main.m3u8')
-    );
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
+    loader.reset.mockClear();
     emit(engine, Hls.Events.MANIFEST_LOADING);
 
     expect(loader.reset).toHaveBeenCalledOnce();
@@ -154,5 +266,20 @@ describe('HlsJsChaptersMixin', () => {
     emit(engine, Hls.Events.DESTROYING);
 
     expect(loader.reset).toHaveBeenCalledTimes(2);
+  });
+
+  it('hands documents to the loader from the owner that set one, and back to fetching without', () => {
+    const host = new HlsJsChapters(createEngine());
+    const [chapters] = loader.instances;
+    const loadDocument = vi.fn();
+
+    host.setChaptersDocumentLoader(loadDocument);
+
+    expect(chapters!.loadDocument).toBe(loadDocument);
+
+    host.setChaptersDocumentLoader();
+
+    expect(chapters!.loadDocument).not.toBe(loadDocument);
+    expect(chapters!.loadDocument).toBeTypeOf('function');
   });
 });

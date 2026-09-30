@@ -1082,6 +1082,30 @@ describe('HlsJsAdapter', () => {
     });
   });
 
+  describe('chapters documents', () => {
+    it('fetches the document by default', async () => {
+      const fetchMock = vi.fn(async () => new Response('[]'));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(
+        new HlsJsAdapter().loadChaptersDocument('https://example.com/chapters.json', new AbortController().signal)
+      ).resolves.toEqual([]);
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/chapters.json', expect.anything());
+    });
+
+    it("routes the engine's chapters requests through `loadChaptersDocument`, so a subclass can serve them", async () => {
+      const setLoader = vi.spyOn(NativeHlsAdapter.prototype, 'setChaptersDocumentLoader');
+      const { media } = setup();
+      const loadChaptersDocument = vi.spyOn(media, 'loadChaptersDocument').mockResolvedValue('document');
+      const { signal } = new AbortController();
+      const loader = setLoader.mock.calls[0]?.[0];
+
+      await expect(loader?.('https://example.com/chapters.json', signal)).resolves.toBe('document');
+      expect(loadChaptersDocument).toHaveBeenCalledWith('https://example.com/chapters.json', signal);
+    });
+  });
+
   describe('disableRemotePlayback', () => {
     /**
      * Jsdom implements neither WebKit's AirPlay APIs nor a `textTracks` list the hls.js mixins can subscribe to, so the

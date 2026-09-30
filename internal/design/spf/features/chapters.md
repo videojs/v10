@@ -72,7 +72,6 @@ Extension boundaries, each a candidate slice on this doc or its own:
 - **Other `DATA-ID`s.** Recorded on the presentation, no consumer. Reading one is `getSessionData(presentation, id)`.
 - **Several chapters entries.** Only the first with a URI is read; merging per-`LANGUAGE` documents would need a
   cue-dedupe policy nothing calls for yet.
-
 - **Live / EVENT chapters.** The open chapter's `MAX_SAFE_INTEGER` end is never clamped while the duration is
   non-finite, and the time-slider UI shows nothing for a non-finite duration.
 - **Language fallback.** Exact BCP-47 match only; no region/base-language collapsing.
@@ -123,10 +122,25 @@ Extension boundaries, each a candidate slice on this doc or its own:
 
 ## Outside SPF
 
-The hls.js adapter (`HlsJsChaptersMixin`, reading `MANIFEST_LOADED`) and native HLS playback
-(`NativeHlsChaptersMixin`, fetching the multivariant playlist itself) project the same tracks through
-`HlsChaptersLoader` in `@videojs/native-hls-video`, which reuses `parseHlsJsonChapters` and
-`addChaptersTracksToMedia`.
+The hls.js adapter (`HlsJsChaptersMixin`) and native HLS playback (`NativeHlsChaptersMixin`, fetching the
+multivariant playlist itself) project the same tracks through the internal `HlsChaptersLoader` in
+`@videojs/native-hls-video`, which reuses `parseHlsJsonChapters` and `addChaptersTracksToMedia`.
+
+- **First entry with a URI, on every path.** hls.js keeps one `sessionData` entry per `DATA-ID`, the last, so the
+  hls.js mixin wraps the playlist loader (`pLoader`) to read the multivariant text and applies the same
+  `findSessionDataUri` native playback does.
+- **Mux fetches its metadata document once.** Mux publishes asset metadata as an Apple JSON chapters document. When
+  the playlist names that document (same host and path as `createMuxMetadataURL`, any query), `MuxVideoAdapter`
+  serves the chapters request from `MuxMetadataLoader`'s request through `HlsJsAdapter.loadChaptersDocument`. The SPF
+  Mux flavor still fetches it twice: `loadChapters` has no document hook.
+- **Safari's own chapter tracks.** WebKit reads the same session data and adds one chapters text track per language
+  after the `<track>` children, holding no cues (measured in Playwright WebKit on macOS, 2026-09-30). The projected
+  track leads, so the store reads it. `apps/e2e/suites/player/tests/hls-chapters.spec.ts` covers this.
+- **A lone chapter draws nothing.** A title-only Mux document projects one open chapter; the time slider renders fewer
+  than two chapters as none, so it shows no section or hover title.
+- **Native HLS must not swallow child errors.** A srcless `<track>` settles by firing `error`, and
+  `NativeHlsErrorsMixin`'s capture listener on the media element used to stop it before it reached the track, so
+  cues were never filled.
 
 ## Related features
 
