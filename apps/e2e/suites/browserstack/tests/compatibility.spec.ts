@@ -26,6 +26,15 @@ for (const target of PAGES) {
     if (caps.browser === 'playwright-webkit') expect(userAgent).toContain(`Version/${versions.safari}`);
 
     if (caps.realMobile) {
+      const session: { os_version: string; browser_version: string; device: string } = JSON.parse(
+        await page.evaluate(() => '', 'browserstack_executor: {"action":"getSessionDetails"}')
+      );
+
+      await testInfo.attach('device', {
+        body: JSON.stringify({ os: session.os_version, browser: session.browser_version, device: session.device }),
+        contentType: 'application/json',
+      });
+
       expect(userAgent).toContain(`OS ${versions.ios.replaceAll('.', '_')}`);
     }
 
@@ -74,7 +83,12 @@ for (const target of PAGES) {
 
     if (target.preset === 'audio') await page.addStyleTag({ content: 'body { padding-top: 320px; }' });
 
-    await player.showControls();
+    await player.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
+
+    if (target.preset === 'video') {
+      await expect.poll(() => player.controls.getAttribute('data-visible')).toBe('');
+    }
+
     await page.locator('[aria-haspopup="menu"]').first().click();
     await expect(page.locator('[role="menu"][data-open]').first()).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('menu.png') });

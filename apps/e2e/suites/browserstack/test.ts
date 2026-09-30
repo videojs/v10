@@ -61,6 +61,10 @@ export const test = base.extend<{}, Options>({
       build: process.env.BROWSERSTACK_BUILD ?? 'local',
       name: testInfo.project.name,
     };
+
+    // The legacy endpoint also accepts these real-device field names.
+    if (deviceName) Object.assign(capabilities, { device: deviceName, os_version: caps.osVersion });
+
     const endpoint = `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(capabilities))}`;
     const type = caps.realMobile ? playwright.webkit : playwright.chromium;
     // Connection errors can include the endpoint, which contains the credentials.
