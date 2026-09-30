@@ -1,6 +1,7 @@
 import { PlayerPage } from '../../../shared/page-objects/player';
 import { deepQuery, PAGES, readProbe } from '../probes.ts';
 import { expect, test } from '../test.ts';
+import { versions } from '../versions.ts';
 
 for (const target of PAGES) {
   test(`${target.path}: skin fallbacks and playback`, async ({ page, caps }, testInfo) => {
@@ -17,16 +18,16 @@ for (const target of PAGES) {
 
     await testInfo.attach('browser', { body: userAgent, contentType: 'text/plain' });
 
-    if (caps.browser === 'chrome') expect(userAgent).toContain('Chrome/111.');
+    if (caps.browser === 'chrome') expect(userAgent).toContain(`Chrome/${versions.chrome}.`);
 
-    if (caps.browser === 'edge') expect(userAgent).toContain('Edg/111.');
+    if (caps.browser === 'edge') expect(userAgent).toContain(`Edg/${versions.edge}.`);
 
-    if (caps.browser === 'playwright-firefox') expect(userAgent).toContain('Firefox/121.');
+    if (caps.browser === 'playwright-firefox') expect(userAgent).toContain(`Firefox/${versions.firefox}.`);
 
-    if (caps.browser === 'playwright-webkit') expect(userAgent).toContain('Version/16.4');
+    if (caps.browser === 'playwright-webkit') expect(userAgent).toContain(`Version/${versions.safari}`);
 
     if (caps.realMobile) {
-      expect(userAgent).toContain(`OS ${caps.osVersion!.replaceAll('.', '_')}`);
+      expect(userAgent).toContain(`OS ${versions.ios.replaceAll('.', '_')}`);
     }
 
     await expect

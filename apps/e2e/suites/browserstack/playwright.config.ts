@@ -4,6 +4,7 @@ import { defineConfig } from '@playwright/test';
 
 import { suiteConfig, WEB_SERVER_SHUTDOWN } from '../../shared/playwright.ts';
 import type { Options } from './test.ts';
+import { versions } from './versions.ts';
 
 export default defineConfig<{}, Options>({
   ...suiteConfig('browserstack'),
@@ -25,15 +26,16 @@ export default defineConfig<{}, Options>({
     ? [{ name: 'local', use: { baseURL: 'http://127.0.0.1:5182' } }]
     : [
         {
-          name: 'chrome-111',
-          use: { caps: { browser: 'chrome', browser_version: '111', os: 'Windows', os_version: '10' } },
+          name: `chrome-${versions.chrome}`,
+          use: { caps: { browser: 'chrome', browser_version: versions.chrome, os: 'Windows', os_version: '10' } },
         },
         {
-          name: 'edge-111',
-          use: { caps: { browser: 'edge', browser_version: '111', os: 'Windows', os_version: '10' } },
+          name: `edge-${versions.edge}`,
+          use: { caps: { browser: 'edge', browser_version: versions.edge, os: 'Windows', os_version: '10' } },
         },
+        // Bundled engines require a Playwright release; version checks reject any drift from browserslist.
         {
-          name: 'firefox-121',
+          name: `firefox-${versions.firefox}`,
           use: {
             caps: {
               browser: 'playwright-firefox',
@@ -44,7 +46,7 @@ export default defineConfig<{}, Options>({
           },
         },
         {
-          name: 'webkit-16.4',
+          name: `webkit-${versions.safari}`,
           use: {
             caps: {
               browser: 'playwright-webkit',
@@ -57,12 +59,12 @@ export default defineConfig<{}, Options>({
         ...(process.env.BROWSERSTACK_IOS_DEVICE
           ? [
               {
-                name: 'ios-safari',
+                name: `ios-safari-${versions.ios}`,
                 use: {
                   caps: {
                     browser: 'safari',
                     deviceName: process.env.BROWSERSTACK_IOS_DEVICE,
-                    osVersion: process.env.BROWSERSTACK_IOS_VERSION || '16.4',
+                    osVersion: versions.ios,
                     realMobile: 'true',
                   },
                   viewport: null,

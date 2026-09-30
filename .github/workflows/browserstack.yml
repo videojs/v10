@@ -24,7 +24,6 @@ jobs:
       BROWSERSTACK_LOCAL_IDENTIFIER: videojs-${{ github.run_id }}-${{ github.run_attempt }}
       BROWSERSTACK_BUILD: ${{ github.ref_name }}-${{ github.sha }}-${{ github.run_attempt }}
       BROWSERSTACK_IOS_DEVICE: ${{ vars.BROWSERSTACK_IOS_DEVICE }}
-      BROWSERSTACK_IOS_VERSION: ${{ vars.BROWSERSTACK_IOS_VERSION }}
 
     steps:
       - name: Checkout code
