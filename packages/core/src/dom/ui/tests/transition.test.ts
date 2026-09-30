@@ -19,17 +19,27 @@ describe('createTransition', () => {
     });
 
     it('transitions to idle after a double-RAF', async () => {
+      vi.useFakeTimers();
       const handler = createTransition();
 
       const promise = handler.open();
 
       expect(handler.state.current.status).toBe('starting');
 
-      await vi.waitFor(() => {
-        expect(handler.state.current.status).toBe('idle');
-      });
+      try {
+        vi.advanceTimersToNextFrame();
+        expect(handler.state.current.status).toBe('starting');
 
-      await promise;
+        vi.advanceTimersToNextFrame();
+        expect(handler.state.current.status).toBe('idle');
+
+        vi.advanceTimersToNextFrame();
+        await promise;
+      } finally {
+        handler.destroy();
+        vi.useRealTimers();
+      }
+
       expect(handler.state.current).toEqual({ active: true, status: 'idle' });
     });
 

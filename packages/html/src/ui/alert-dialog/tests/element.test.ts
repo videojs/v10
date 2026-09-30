@@ -71,8 +71,8 @@ describe('AlertDialogElement', () => {
     el.open = false;
     await el.updateComplete;
 
-    // data-open stays true during the ending transition (active: true, status: 'ending').
-    // Wait for the close transition to fully complete (double RAF + animation wait).
+    expect(el.hasAttribute('data-open')).toBe(true);
+    expect(el.hasAttribute('data-ending-style')).toBe(true);
     await vi.waitFor(() => {
       expect(el.hasAttribute('data-open')).toBe(false);
     });

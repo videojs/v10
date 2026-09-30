@@ -194,7 +194,12 @@ describe('createPopover', () => {
       const second = createTestPopover({ group: () => group });
 
       first.popover.open();
+      const onGroupChange = vi.fn();
+      const unsubscribe = group.subscribe(onGroupChange);
+
       first.popover.destroy();
+      expect(onGroupChange).toHaveBeenCalledOnce();
+      unsubscribe();
       first.onOpenChange.mockClear();
 
       second.popover.open();
@@ -478,7 +483,7 @@ describe('createPopover', () => {
   });
 
   describe('focusout', () => {
-    it('keeps the popover open when blur follows an inside pointerdown', () => {
+    it('keeps the popover open when blur follows an inside pointerdown', async () => {
       const { popover, onOpenChange } = createTestPopover();
       const popup = document.createElement('div');
       const child = document.createElement('button');
@@ -497,6 +502,9 @@ describe('createPopover', () => {
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
       });
+
+      await nextFrame();
+      await nextFrame();
 
       expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
 

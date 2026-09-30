@@ -75,7 +75,7 @@ describe('createTooltip', () => {
   });
 
   describe('onOpenChangeComplete', () => {
-    it('fires after open animation completes', () => {
+    it('fires after open animation completes', async () => {
       const onOpenChangeComplete = vi.fn();
       const { tooltip } = createTestTooltip({ onOpenChangeComplete });
 
@@ -83,6 +83,7 @@ describe('createTooltip', () => {
 
       // Not called synchronously — fires after transition resolves
       expect(onOpenChangeComplete).not.toHaveBeenCalled();
+      await vi.waitFor(() => expect(onOpenChangeComplete).toHaveBeenCalledWith(true));
     });
   });
 
@@ -102,24 +103,6 @@ describe('createTooltip', () => {
       expect(tooltip.triggerProps.onFocusOut).toBeTypeOf('function');
     });
 
-    it('does not open when disabled', () => {
-      const { tooltip, onOpenChange } = createTestTooltip({
-        disabled: () => true,
-      });
-
-      tooltip.triggerProps.onPointerEnter({
-        clientX: 0,
-        clientY: 0,
-        pointerId: 1,
-        pointerType: 'mouse',
-        buttons: 0,
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
-      });
-
-      expect(onOpenChange).not.toHaveBeenCalled();
-    });
-
     describe('touch pointer suppression', () => {
       beforeEach(() => {
         vi.useFakeTimers();
@@ -135,6 +118,66 @@ describe('createTooltip', () => {
       afterEach(() => {
         vi.useRealTimers();
         vi.unstubAllGlobals();
+      });
+
+      it('does not open when disabled', () => {
+        const { tooltip, onOpenChange } = createTestTooltip({
+          disabled: () => true,
+        });
+
+        tooltip.triggerProps.onPointerEnter({
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'mouse',
+          buttons: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        });
+
+        vi.advanceTimersByTime(600);
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+      });
+
+      it('does not open via focus when disabled', () => {
+        const { tooltip, onOpenChange } = createTestTooltip({
+          disabled: () => true,
+        });
+
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+      });
+
+      it.each([true, false])('preserves delayed closure with disableHoverablePopup=%s', (disabled) => {
+        const { tooltip, onOpenChange } = createTestTooltip({
+          disableHoverablePopup: () => disabled,
+          closeDelay: () => 100,
+        });
+        const event = {
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'mouse' as const,
+          buttons: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        };
+
+        tooltip.open();
+        onOpenChange.mockClear();
+        tooltip.triggerProps.onPointerLeave(event);
+        tooltip.popupProps.onPointerEnter(event);
+        vi.advanceTimersByTime(100);
+
+        if (disabled) {
+          expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'hover' });
+        } else {
+          expect(onOpenChange).not.toHaveBeenCalled();
+        }
+
+        tooltip.destroy();
       });
 
       it('does not open on touch pointer enter', () => {
@@ -320,37 +363,6 @@ describe('createTooltip', () => {
         // Later keyboard Tab: flag is clean, focus opens tooltip
         tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
         expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
-      });
-    });
-
-    it('does not open via focus when disabled', () => {
-      const { tooltip, onOpenChange } = createTestTooltip({
-        disabled: () => true,
-      });
-
-      tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
-
-      expect(onOpenChange).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('popupProps', () => {
-    it('onPointerEnter is no-op when disableHoverablePopup is true', () => {
-      const { tooltip } = createTestTooltip({
-        disableHoverablePopup: () => true,
-      });
-
-      tooltip.open();
-
-      // Should not throw — just a no-op
-      tooltip.popupProps.onPointerEnter({
-        clientX: 0,
-        clientY: 0,
-        pointerId: 1,
-        pointerType: 'mouse',
-        buttons: 0,
-        preventDefault: vi.fn(),
-        stopPropagation: vi.fn(),
       });
     });
   });

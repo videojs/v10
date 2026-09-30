@@ -44,9 +44,9 @@ describe('resolveErrorDialogDescription', () => {
   });
 
   it('returns custom message text when context is provided', () => {
-    const error = new MediaError('Custom failure', MediaError.MEDIA_ERR_NETWORK, true, 'hls');
+    const error = new MediaError('Failed to open media', MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, true, 'hls');
 
-    expect(resolveErrorDialogDescription(error, null)).toBe('Custom failure');
+    expect(resolveErrorDialogDescription(error, null)).toBe('Failed to open media');
   });
 
   it('returns custom message text on standard codes without context', () => {
