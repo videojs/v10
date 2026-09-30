@@ -3,15 +3,18 @@
 Browser-ready Video.js bundles for script-tag and self-hosted installations. This package assembles the HTML player,
 selected playback adapters, shared chunks, source maps, and standalone stylesheets in one build graph.
 
-Load a version-pinned player and one media implementation:
+Replace `<version>` with the same exact package version in every CDN URL. The bundles share content-hashed chunks, so
+version ranges can mix files from different releases.
+
+Load a player and one media implementation:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/cdn@10/video.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/cdn@10/media/hlsjs-video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/cdn@<version>/video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/cdn@<version>/media/hlsjs-video.js"></script>
 ```
 
-Every browser-ready media entry uses the same URL shape: `@videojs/cdn@10/media/<media-name>.js`, extensions use
-`@videojs/cdn@10/extensions/<extension-name>.js`, and individual UI elements use `@videojs/cdn@10/ui/<element-name>.js`.
+Every browser-ready media entry uses the same URL shape: `@videojs/cdn@<version>/media/<media-name>.js`, extensions use
+`@videojs/cdn@<version>/extensions/<extension-name>.js`, and individual UI elements use `@videojs/cdn@<version>/ui/<element-name>.js`.
 Adapter and extension runtimes are already included in these bundles, so do not add the npm packages to a script-tag
 installation.
 
