@@ -11,7 +11,7 @@ for (const target of PAGES) {
 
     const player = new PlayerPage(page);
 
-    await page.goto(target.path);
+    await page.goto(target.path, { timeout: 60_000 });
 
     const userAgent = await page.evaluate(() => navigator.userAgent);
 
@@ -40,9 +40,11 @@ for (const target of PAGES) {
 
     await player.waitForMediaReady();
 
+    // Real-device execution needs an explicit return instead of a bare expression string.
     await expect
       .poll(async () => {
-        const probe = await page.evaluate<ReturnType<typeof readProbe>>(
+        const probe = await page.evaluate<ReturnType<typeof readProbe>, string>(
+          (source) => new Function(`return ${source}`)(),
           `(${readProbe.toString()})(${deepQuery.toString()})`
         );
 
@@ -50,7 +52,8 @@ for (const target of PAGES) {
       })
       .toBe(true);
 
-    const probe = await page.evaluate<ReturnType<typeof readProbe>>(
+    const probe = await page.evaluate<ReturnType<typeof readProbe>, string>(
+      (source) => new Function(`return ${source}`)(),
       `(${readProbe.toString()})(${deepQuery.toString()})`
     );
 
