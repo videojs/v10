@@ -73,7 +73,7 @@ The <DocsLink slug="reference/api/feature-quality">quality feature</DocsLink> mi
 
 - `videoRenditionList` holds each rendition's `id`, `width`, `height`, `bitrate`, `frameRate`, `codec`, and whether it's `selected`.
 - `activeVideoRendition` is the rendition currently playing. When the engine doesn't report one directly, the player matches it from the video's current dimensions.
-- `selectVideoRendition(value)` pins one rendition; pass `'auto'` to return control to the engine's adaptive selection.
+- `selectVideoRendition(id)` pins one rendition by its `id` from `videoRenditionList`; pass `'auto'` to return control to the engine's adaptive selection.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -120,13 +120,11 @@ function PinLowestRendition() {
   const renditions = usePlayer((s) => s.videoRenditionList);
   const quality = useQualityOptions();
 
-  const lowest = renditions
-    .map((rendition, index) => ({ ...rendition, value: rendition.id || String(index) }))
-    .sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
+  const lowest = [...renditions].sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
   if (quality?.state.availability !== 'available' || !lowest) return null;
 
   return (
-    <button type="button" onClick={() => store.selectVideoRendition(lowest.value)}>
+    <button type="button" onClick={() => store.selectVideoRendition(lowest.id)}>
       Use lowest quality
     </button>
   );
@@ -153,7 +151,7 @@ Add a button inside the primary example's container:
 <button type="button" id="lowest-quality" disabled>Use lowest quality</button>
 ```
 
-Read the current list from the player store and use the rendition's `id`, falling back to its index. Pass `'auto'` to restore adaptive selection:
+Read the current list from the player store and use the rendition's `id`. Pass `'auto'` to restore adaptive selection:
 
 ```ts
 import '@videojs/html/video/player';
@@ -168,11 +166,9 @@ let lowestValue: string | undefined;
 
 function updateButton() {
   const renditions = selectQuality(store.state)?.videoRenditionList ?? [];
-  const lowest = renditions
-    .map((rendition, index) => ({ ...rendition, value: rendition.id || String(index) }))
-    .sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
+  const lowest = [...renditions].sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
 
-  lowestValue = lowest?.value;
+  lowestValue = lowest?.id;
   button.disabled = renditions.length < 2;
 }
 

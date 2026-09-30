@@ -30,7 +30,7 @@ export default function CaptionsPersistence() {
       lastSelection.current = selection;
 
       if (saved && (desired || saved === 'off')) {
-        store.selectSubtitlesTrack(desired?.id ?? 'off');
+        store.selectSubtitlesTrack(desired?.id ?? null);
       }
 
       return;

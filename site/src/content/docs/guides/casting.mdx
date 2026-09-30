@@ -87,13 +87,13 @@ The <DocsLink slug="reference/api/feature-remote-playback">remote playback featu
 
 - `remotePlaybackAvailability` is `'available'` when a remote device can be reached, `'unavailable'` when the API exists but no device is reachable, and `'unsupported'` when the browser has no remote playback route.
 - `remotePlaybackState` is `'disconnected'`, `'connecting'`, or `'connected'`. The AirPlay route reports only `'disconnected'` and `'connected'`; Google Cast also reports `'connecting'`.
-- `toggleRemotePlayback()` opens the browser's device picker, including during an active session. Use the picker to connect to a device or return to local playback.
+- `promptRemotePlayback()` opens the browser's device picker, including during an active session. Use the picker to connect to a device or return to local playback.
 
 AirPlay uses WebKit's presentation APIs. Google Cast uses a sender and receiver: the browser sends the receiver a media URL and then controls playback. Your UI reads the same Video.js state for either route.
 
 While connected, playback actions — play, pause, seek, volume — proxy to the remote device, and player state keeps reflecting the remote session. Local playback is suspended.
 
-For a custom control, call `toggleRemotePlayback()` directly from the click handler and catch its promise. It rejects when no remote route exists or the browser refuses the request. A canceled Google Cast picker can also resolve without connecting, so show success only when `remotePlaybackState` is `'connected'`. The built-in buttons handle the request for you.
+For a custom control, call `promptRemotePlayback()` directly from the click handler and catch its promise. It rejects when no remote route exists or the browser refuses the request. A canceled Google Cast picker can also resolve without connecting, so show success only when `remotePlaybackState` is `'connected'`. The built-in buttons handle the request for you.
 
 <FrameworkCase frameworks={["react"]}>
 The Google Cast SDK loads only when the `GoogleCast` extension is present in a Chromium browser. Players without that extension and browsers that cannot cast do not load it.

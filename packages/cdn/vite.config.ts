@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
-import { baseConfig } from '../../build/pack.ts';
+import { baseConfig, inlineCssConfig } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import type { BuildPlugin } from '../../build/plugins/types.ts';
 import { cachedTaskInputs, workspaceTaskDependencies } from '../../build/task.ts';
@@ -127,6 +127,7 @@ for (const mode of ['dev', 'prod'] satisfies CdnBuildMode[]) {
 
   cdnPackConfigs.push({
     ...baseConfig,
+    css: inlineCssConfig,
     name: 'cdn',
     entry,
     platform: 'browser',
@@ -192,7 +193,7 @@ cdnPackConfigs.push({
   format: 'es',
   clean: false,
   outDir: packageDir,
-  dts: { emitDtsOnly: true, tsgo: true, tsconfig: 'tsconfig.dts.json' },
+  dts: { emitDtsOnly: true, generator: 'tsgo', tsconfig: 'tsconfig.dts.json' },
   deps: { dts: { alwaysBundle: [/^@videojs\//] } },
 });
 
@@ -205,37 +206,39 @@ export default defineConfig({
       'build:cdn': {
         command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
         dependsOn: workspaceTaskDependencies(),
-        input: [
-          ...cachedTaskInputs,
-          '!src/locales/',
-          '!src/locales/**',
-          '!*.css',
-          '!*.d.ts',
-          '!*.js',
-          '!*.js.map',
-          '!chunks/',
-          '!chunks/**',
-          '!extensions/',
-          '!extensions/**',
-          '!locales/',
-          '!locales/**',
-          '!media/',
-          '!media/**',
-          '!ui/',
-          '!ui/**',
-        ],
-        output: [
-          'src/locales/**',
-          '*.css',
-          '*.d.ts',
-          '*.js',
-          '*.js.map',
-          'chunks/**',
-          'extensions/**',
-          'locales/**',
-          'media/**',
-          'ui/**',
-        ],
+        cache: {
+          input: [
+            ...cachedTaskInputs,
+            '!src/locales/',
+            '!src/locales/**',
+            '!*.css',
+            '!*.d.ts',
+            '!*.js',
+            '!*.js.map',
+            '!chunks/',
+            '!chunks/**',
+            '!extensions/',
+            '!extensions/**',
+            '!locales/',
+            '!locales/**',
+            '!media/',
+            '!media/**',
+            '!ui/',
+            '!ui/**',
+          ],
+          output: [
+            'src/locales/**',
+            '*.css',
+            '*.d.ts',
+            '*.js',
+            '*.js.map',
+            'chunks/**',
+            'extensions/**',
+            'locales/**',
+            'media/**',
+            'ui/**',
+          ],
+        },
       },
       'test:ci': {
         command: 'pnpm test',
@@ -245,6 +248,11 @@ export default defineConfig({
     },
   },
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     environment: 'node',
   },
   pack: cdnPackConfigs,

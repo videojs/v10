@@ -6,9 +6,7 @@ import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, type CaptionsRadioGroupStat
 function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTextTrackState {
   return {
     chaptersCues: [],
-    thumbnailCues: [],
-    thumbnailTrackSrc: null,
-    thumbnailTrackCrossOrigin: null,
+    thumbnailsTrack: null,
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles: vi.fn(() => true),
@@ -59,7 +57,7 @@ describe('CaptionsRadioGroupCore', () => {
     it('marks state disabled when no caption tracks are available', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
-        textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
+        textTrackList: [{ id: 'thumbnails', kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
       });
 
       core.setMedia(media);
@@ -78,7 +76,7 @@ describe('CaptionsRadioGroupCore', () => {
     it('marks availability available when caption tracks exist', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
-        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+        textTrackList: [{ id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
 
       core.setMedia(media);
@@ -90,8 +88,8 @@ describe('CaptionsRadioGroupCore', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
         textTrackList: [
-          { kind: 'captions', label: 'English', language: 'en', mode: 'disabled' },
-          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+          { id: 'captions-en', kind: 'captions', label: 'English', language: 'en', mode: 'disabled' },
+          { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
 
@@ -136,14 +134,19 @@ describe('CaptionsRadioGroupCore', () => {
 
       expect(
         core.getTrackLabel({
+          id: 'subtitles-en',
           kind: 'subtitles',
           label: 'English',
           language: 'en',
           mode: 'disabled',
         })
       ).toBe('English');
-      expect(core.getTrackLabel({ kind: 'subtitles', label: '', language: 'es', mode: 'disabled' })).toBe('es');
-      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toMatchObject({
+      expect(
+        core.getTrackLabel({ id: 'subtitles-es', kind: 'subtitles', label: '', language: 'es', mode: 'disabled' })
+      ).toBe('es');
+      expect(
+        core.getTrackLabel({ id: 'captions', kind: 'captions', label: '', language: '', mode: 'disabled' })
+      ).toMatchObject({
         key: 'menu.captions',
         text: 'Captions',
       });
@@ -174,6 +177,7 @@ describe('CaptionsRadioGroupCore', () => {
 
       expect(
         core.getTrackLabel({
+          id: 'subtitles-en',
           kind: 'subtitles',
           label: 'English',
           language: 'en',
@@ -200,17 +204,17 @@ describe('CaptionsRadioGroupCore', () => {
     it('turns captions off', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
-        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
+        textTrackList: [{ id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
       });
 
       core.select(media, CAPTIONS_OFF_VALUE);
-      expect(media.selectSubtitlesTrack).toHaveBeenCalledWith(CAPTIONS_OFF_VALUE);
+      expect(media.selectSubtitlesTrack).toHaveBeenCalledWith(null);
     });
 
     it('does nothing when disabled', () => {
       const core = new CaptionsRadioGroupCore({ disabled: true });
       const media = createMediaState({
-        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+        textTrackList: [{ id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
 
       core.select(media, 'subtitles-en');
@@ -220,7 +224,7 @@ describe('CaptionsRadioGroupCore', () => {
     it('does nothing for unavailable tracks', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
-        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+        textTrackList: [{ id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
 
       core.select(media, 'subtitles-es');

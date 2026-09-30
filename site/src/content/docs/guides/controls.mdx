@@ -61,7 +61,7 @@ The <DocsLink slug="reference/api/feature-controls">controls feature</DocsLink> 
 
 - `userActive` becomes `true` on pointer movement, keyboard input, or focus entry. It becomes `false` after two seconds without another activity event, or when the mouse leaves the container.
 - `controlsVisible` derives from activity and playback: controls stay visible while paused or while a remote playback session is connecting or connected, regardless of idle state.
-- `toggleControls()` marks the user inactive when controls are visible, and shows them otherwise. Paused playback, a remote session, or an open menu can keep controls visible even when the user is inactive.
+- `toggleControls(forceShow?)` marks the user inactive when controls are visible, and shows them otherwise. Pass `true` to show controls or `false` to mark the user inactive. Paused playback, a remote session, or an open menu can keep controls visible even when the user is inactive.
 
 On touch devices, a tap on the media toggles the controls instead of relying on pointer movement, and mid-gesture movement doesn't flicker visibility.
 

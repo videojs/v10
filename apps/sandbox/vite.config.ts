@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import browserslist from 'browserslist';
+import { browserslistToTargets, Features } from 'lightningcss';
 import { defineConfig, normalizePath, type Plugin, type PluginOption } from 'vite-plus';
 
 import { mirrorTemplatesToSrc } from './scripts/shared';
@@ -15,10 +16,20 @@ import { mirrorTemplatesToSrc } from './scripts/shared';
 // path, so the sandbox also works when the package is installed from a registry.
 // The manifest is the anchor because bundles only exist after `pnpm build:cdn`.
 const cdnDir = normalizePath(dirname(createRequire(__filename).resolve('@videojs/cdn/package.json')));
-const cssTarget = browserslist(undefined, { path: __dirname }).map((browser) => {
+// Vite's `build.cssTarget` takes desktop engine names only; mobile-only names such as `and_chr` track them.
+const viteCssTargets: Readonly<Record<string, string>> = {
+  chrome: 'chrome',
+  edge: 'edge',
+  firefox: 'firefox',
+  safari: 'safari',
+  ios_saf: 'ios',
+  opera: 'opera',
+};
+const cssTarget = browserslist(undefined, { path: __dirname }).flatMap((browser) => {
   const [name, version] = browser.split(' ');
+  const target = viteCssTargets[name!];
 
-  return `${name === 'ios_saf' ? 'ios' : name}${version!.split('-')[0]}`;
+  return target ? [`${target}${version!.split('-')[0]}`] : [];
 });
 const cdnI18nRegistry = `${cdnDir}/i18n.dev.js`;
 const cdnSourceI18n = `${cdnDir}/src/i18n.ts`;
@@ -261,17 +272,19 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
             ...(hasWorkspace ? ['@videojs/core#build'] : []),
             ...(hasWorkspaceSkins ? ['@videojs/skins#build:shadcn'] : []),
           ],
-          // Setup deterministically mirrors tracked templates into the gitignored
-          // scratch tree. Keep that generated tree out of its own fingerprint.
-          input: [
-            'scripts/setup.ts',
-            'scripts/shared.ts',
-            'scripts/generate-cdn-locale-loaders.ts',
-            'scripts/sync-source-owned-skins.ts',
-            'templates/**',
-            { pattern: 'packages/skins/dist/shadcn/r/**', base: 'workspace' },
-          ],
-          output: ['src/**', 'app/_generated/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
+          cache: {
+            // Setup deterministically mirrors tracked templates into the gitignored
+            // scratch tree. Keep that generated tree out of its own fingerprint.
+            input: [
+              'scripts/setup.ts',
+              'scripts/shared.ts',
+              'scripts/generate-cdn-locale-loaders.ts',
+              'scripts/sync-source-owned-skins.ts',
+              'templates/**',
+              { pattern: 'packages/skins/dist/shadcn/r/**', base: 'workspace' },
+            ],
+            output: ['src/**', 'app/_generated/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
+          },
         },
         'test:ci': {
           command: 'pnpm test',
@@ -282,11 +295,13 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         build: {
           command: `vp build${workspaceConfig}`,
           dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/cdn#build:cdn'] : [])],
-          // The app-shell plugin creates this file for the build and removes it
-          // afterwards. Workspace dependencies are fingerprinted through the task
-          // graph, not their mutable package-local node_modules links.
-          input: [...cachedTaskInputs, '!src/index.html', '!node_modules/@videojs', '!node_modules/@videojs/**'],
-          output: [...cachedTaskOutputs, '!src/index.html'],
+          cache: {
+            // The app-shell plugin creates this file for the build and removes it
+            // afterwards. Workspace dependencies are fingerprinted through the task
+            // graph, not their mutable package-local node_modules links.
+            input: [...cachedTaskInputs, '!src/index.html', '!node_modules/@videojs', '!node_modules/@videojs/**'],
+            output: [...cachedTaskOutputs, '!src/index.html'],
+          },
         },
       },
     },
@@ -305,6 +320,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
       __SANDBOX_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
     },
     test: {
+      clearMocks: false,
       // The shell's tables and helpers, not the templates: those run under Playwright from `apps/e2e`.
       root: __dirname,
       include: ['app/tests/**/*.test.ts'],
@@ -402,6 +418,16 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
     server: {
       port: 5173,
       strictPort: true,
+    },
+    // Tailwind's dev output keeps nested rules and newer `color-mix()` syntax for its production optimizer, so lower
+    // every stylesheet in dev too; older supported browsers otherwise drop those rules. Skins keep `:dir()` in
+    // forgiving lists and ship their own `light-dark()` fallbacks, so both stay as written.
+    css: {
+      transformer: 'lightningcss',
+      lightningcss: {
+        targets: browserslistToTargets(browserslist(undefined, { path: __dirname })),
+        exclude: Features.DirSelector | Features.LightDark,
+      },
     },
     build: {
       cssTarget,

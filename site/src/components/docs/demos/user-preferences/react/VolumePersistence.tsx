@@ -47,10 +47,8 @@ function VolumePersistence() {
       if (saved) {
         store.setVolume(saved.volume);
 
-        // Restore mute at the actual level, including platforms that ignore volume.
-        const current = store.state;
-
-        if (saved.muted && current.volume > 0 && !current.muted) store.toggleMuted();
+        // Apply saved mute after setVolume, which unmutes above zero.
+        if (saved.muted) store.setMuted(true);
       }
 
       restored.current = true;

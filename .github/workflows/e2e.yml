@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'release-please--branches--main'
   pull_request:
     types: [opened, labeled, synchronize]
 
@@ -13,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Pull requests run the browser suites when they touch code the suites render; the `test:e2e` label forces them.
+  # Pull requests run the browser suites when they touch code the suites render; the `test:e2e` label forces them. The
+  # release pull request only bumps versions and changelogs on top of `main`, whose push already ran every suite.
   changes:
     name: Changed areas
     if: github.event_name == 'pull_request'
@@ -28,7 +28,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
+          if [ "$HEAD_REF" = 'release-please--branches--main' ]; then
+            printf 'player=false\nskins=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           files=$(gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate --jq '.[].filename')
           flag() {
             if grep -Eq "$2" <<<"$files"; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi
@@ -147,6 +152,78 @@ jobs:
           path: apps/e2e/test-results/
           retention-days: 7
 
+  # The oldest engines the root browserslist supports, each driven by the playwright-core release that shipped it. The
+  # job runs on the host rather than in the Playwright image so Docker can start both releases' images.
+  floor:
+    name: Floor engines
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
+    runs-on: ubuntu-latest
+    # The build job runs in the Playwright image, so its Task cache may not replay at the host's paths.
+    timeout-minutes: 20
+
+    steps:
+      - name: Start the floor engines
+        # Host networking lets the runner reach each engine on 127.0.0.1. Starting in the background lets the image
+        # pulls overlap the install and build replay; the wait step below reports a failed start.
+        run: |
+          nohup sh -c '
+            docker run -d --name floor-1-31 --network host --init --ipc=host mcr.microsoft.com/playwright:v1.31.2-focal \
+              /bin/sh -c "cd /tmp && npx -y playwright@1.31.2 run-server --port 3131"
+            docker run -d --name floor-1-41 --network host --init --ipc=host mcr.microsoft.com/playwright:v1.41.2-jammy \
+              /bin/sh -c "cd /tmp && npx -y playwright@1.41.2 run-server --port 3141"
+          ' > /tmp/floor-engines.log 2>&1 &
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Replay the build
+        run: pnpm build:packages && pnpm exec vp run '@videojs/e2e#prepare:player'
+
+      - name: Wait for the floor engines
+        run: |
+          for name in floor-1-31 floor-1-41; do
+            timeout 300 sh -c "until docker logs $name 2>&1 | grep -q Listening; do sleep 2; done" ||
+              { cat /tmp/floor-engines.log; docker logs "$name"; exit 1; }
+          done
+
+      - name: Run floor tests
+        env:
+          # IPv4 literals: `localhost` can resolve to ::1 first, where the engines do not listen.
+          FLOOR_WS_CHROMIUM: ws://127.0.0.1:3131/
+          FLOOR_WS_WEBKIT: ws://127.0.0.1:3131/
+          FLOOR_WS_FIREFOX: ws://127.0.0.1:3141/
+        run: pnpm -F @videojs/e2e test:floor
+
+      - name: Upload floor screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: floor-screenshots
+          path: apps/e2e/test-results/floor/
+          retention-days: 14
+
   sandbox:
     name: Sandbox
     needs: [changes, build]
@@ -201,7 +278,7 @@ jobs:
           retention-days: 7
 
   skin-parity:
-    name: Skin parity (${{ matrix.preset }}${{ matrix.shards > 1 && format(' {0}/{1}', matrix.shard, matrix.shards) || '' }})
+    name: Skin parity (${{ matrix.name }}${{ matrix.shards > 1 && format(' {0}/{1}', matrix.shard, matrix.shards) || '' }})
     needs: [changes, build]
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
@@ -211,13 +288,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The video preset carries twice the cases of the others, so it runs as two slices.
+        # Slices take about the same time: the video preset carries twice the cases of live-video, and the two audio
+        # presets together about as many as one video slice. Each job costs a runner slot and a minute of setup.
         include:
-          - { preset: video, shard: 1, shards: 2 }
-          - { preset: video, shard: 2, shards: 2 }
-          - { preset: live-video, shard: 1, shards: 1 }
-          - { preset: audio, shard: 1, shards: 1 }
-          - { preset: live-audio, shard: 1, shards: 1 }
+          - { name: video, presets: video, shard: 1, shards: 2 }
+          - { name: video, presets: video, shard: 2, shards: 2 }
+          - { name: live-video, presets: live-video, shard: 1, shards: 1 }
+          - { name: audio, presets: 'audio,live-audio', shard: 1, shards: 1 }
 
     steps:
       - name: Checkout code
@@ -247,14 +324,14 @@ jobs:
       - name: Run skin parity E2E tests
         run: pnpm exec vp run '@videojs/e2e#test:skin-parity'
         env:
-          VJSC_SKIN_PRESET: ${{ matrix.preset }}
+          VJSC_SKIN_PRESET: ${{ matrix.presets }}
           VJSC_SKIN_SHARD: ${{ matrix.shard }}/${{ matrix.shards }}
 
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-skin-parity-${{ matrix.preset }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
+          name: playwright-report-skin-parity-${{ matrix.name }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
           path: apps/e2e/playwright-report/skin-parity/
           retention-days: 14
 
@@ -262,7 +339,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces-skin-parity-${{ matrix.preset }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
+          name: playwright-traces-skin-parity-${{ matrix.name }}${{ matrix.shards > 1 && format('-{0}', matrix.shard) || '' }}
           path: apps/e2e/test-results/skin-parity/
           retention-days: 7
 
