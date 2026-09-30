@@ -24,7 +24,7 @@ Translate every player label, tooltip, and screen-reader announcement. The playe
 
 ## Recommended approach
 
-Wrap the player in the i18n provider. It resolves the locale from your page's `lang` attribute (or an explicit override), lazy-loads the matching locale pack, and every component label follows.
+Wrap the player in the i18n provider. It resolves the locale from your page's `lang` attribute or an explicit override, then lazy-loads the matching locale pack. Every component label follows that locale.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -135,7 +135,7 @@ function StartButton() {
 }
 ```
 
-The `default` is the English text — English ships inside component descriptors, not as a pack, so a bare `t(key)` renders the key itself under `en`. The key selects the translation once a pack is active.
+`default` is the English text. English ships inside component descriptors. There is no built-in `en` pack, so `t(key)` without a `default` renders the key itself under `en`. When a locale pack is active, the key selects its translation.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -153,14 +153,14 @@ The element's text content is the English default; the `token` selects the trans
 <FrameworkCase frameworks={["react"]}>
 - English is built in; every other locale is a lazy-loaded pack. Server rendering needs an explicit `locale` since there's no DOM to resolve from.
 - Locale tags are [BCP 47](https://www.rfc-editor.org/rfc/rfc5646) (`es`, `pt-BR`).
-- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`); the full list lives at <DocsLink slug="reference/api/translation-phrases">Translation phrases</DocsLink> and is typed, so typos in `registerI18n` objects fail in TypeScript. The translator itself accepts any string; a mistyped `t()` key falls back to its `default`.
+- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`). The full list is in <DocsLink slug="reference/api/translation-phrases">Translation phrases</DocsLink>. The keys are typed, so typos in `registerI18n` objects fail in TypeScript. The translator itself accepts any string; a mistyped `t()` key falls back to its `default`.
 - Some strings interpolate parameters; custom translations must keep the placeholders:
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 - English is built in; every other locale is a lazy-loaded pack.
 - Locale tags are [BCP 47](https://www.rfc-editor.org/rfc/rfc5646) (`es`, `pt-BR`).
-- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`); the full list lives at <DocsLink slug="reference/api/translation-phrases">Translation phrases</DocsLink> and is typed, so typos in `registerI18n` objects fail in TypeScript. The translator itself accepts any string; a mistyped `t()` key falls back to its `default`.
+- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`). The full list is in <DocsLink slug="reference/api/translation-phrases">Translation phrases</DocsLink>. The keys are typed, so typos in `registerI18n` objects fail in TypeScript. The translator itself accepts any string; a mistyped `t()` key falls back to its `default`.
 - Some strings interpolate parameters; custom translations must keep the placeholders:
 </FrameworkCase>
 
@@ -180,7 +180,7 @@ registerI18n('es', { seek: { forward: 'Adelantar' } });
 
 <FrameworkCase frameworks={["react"]}>
 
-Pass `translations` on <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. This layer sits above the registry and lazy packs:
+Pass `translations` on <DocsLink slug="reference/api/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. These overrides take precedence over the registry and lazy-loaded packs:
 
 ```tsx
 <I18nProvider locale="ja" translations={{ buttons: { play: '再生', pause: '一時停止' } }}>
@@ -211,13 +211,13 @@ import { registerI18n } from '@videojs/html/i18n';
 registerI18n('ja', { buttons: { play: '再生', pause: '一時停止' } });
 ```
 
-Import the full pack before registering partial overrides so the remaining labels stay in Japanese. Overrides registered after lazy loading apply immediately, but the provider won't reload that pack after a locale switch or remount. Importing `/register` avoids losing the remaining labels.
+Import the full pack before registering partial overrides so the remaining labels stay in Japanese. If you register overrides after the pack lazy-loads, they apply immediately. After a locale switch or remount, the provider will not reload the pack, so the remaining labels can fall back to English. Importing `/register` first preserves those labels.
 
 </FrameworkCase>
 
 ### Register your own locale
 
-Register strings for a locale your application supports. Missing keys fall back to registered parent strings, a shipped parent pack, or English. For example, registering `es-MX` overrides some Mexican Spanish labels while the `es` pack supplies the rest. Registering a tag with its own shipped pack prevents that pack from loading; use the full-pack pattern above for that case.
+Register strings for a locale your application supports. Missing keys fall back to registered parent strings, then a shipped parent pack, then English. For example, register a few `es-MX` labels and the `es` pack supplies the rest. If the tag has its own shipped pack, registering strings for it prevents that pack from loading. Use the full-pack pattern above for that case.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -258,7 +258,7 @@ registerI18n('es-MX', esMX);
 
 ### Register a pack with the bundle
 
-Skip lazy loading by registering a shipped locale at startup with a side-effect import. First paint is synchronous in that language:
+Skip lazy loading by registering a shipped locale at startup with a side-effect import. Labels render in that language on first paint:
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -312,7 +312,7 @@ document.documentElement.lang = 'fr';
 
 <FrameworkCase frameworks={["react"]}>
 
-Ambient switching only applies when `I18nProvider` has no explicit `locale`. To drive it from state:
+Switching through the document language works only when `I18nProvider` has no explicit `locale`. To switch from React state instead:
 
 ```tsx
 import { useState, type ReactNode } from 'react';
@@ -368,7 +368,7 @@ Call `switchTo(next, setLocale)` from your language picker.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Ambient switching only applies when `<media-i18n>` has no explicit `lang` attribute. To switch explicitly, set the provider's `lang`:
+Switching through the document language works only when `<media-i18n>` has no explicit `lang` attribute. To switch explicitly, set the provider's `lang`:
 
 ```js
 document.querySelector('media-i18n').lang = 'fr';
@@ -396,7 +396,7 @@ Set `dir` back to `ltr` when you switch to a left-to-right language. This preven
 
 <FrameworkCase frameworks={["react"]}>
 
-When `I18nProvider` has an explicit `locale`, the player applies its resolved `lang` and `dir` to the container. A `lang` or `dir` passed to that container overrides the rendered DOM boundary only; translations still come from `I18nProvider locale`.
+When `I18nProvider` has an explicit `locale`, the player applies its resolved `lang` and `dir` to the container. A `lang` or `dir` you pass to that container changes only the container's rendered attributes. Translations still come from the `I18nProvider` `locale`.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -411,7 +411,7 @@ Providers without an explicit locale inherit ambient document language and direc
 <html lang="ar" dir="rtl">
 ```
 
-RTL preserves playback control ordering and time-semantic media icons while mirroring menu motion and navigation chevrons. Horizontal time and volume sliders retain a physical left-to-right value scale: Left Arrow decreases the value, Right Arrow increases it, and the minimum remains on the left.
+In RTL layouts, playback controls keep their order and time-related media icons keep their direction. Menu motion and navigation chevrons mirror. Horizontal time and volume sliders retain a physical left-to-right value scale: Left Arrow decreases the value, Right Arrow increases it, and the minimum remains on the left.
 
 ### Replace a component's visible text
 

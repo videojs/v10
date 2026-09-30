@@ -90,11 +90,11 @@ Selecting "Auto" keeps adaptive bitrate switching active: the engine picks the b
 
 ## Availability and constraints
 
-- The live preset omits `qualityFeature`. To add a quality menu to a live player, use `createPlayer` with `[...liveVideoFeatures, qualityFeature]`; the fixed live preset cannot accept extra features. See <DocsLink slug="guides/live-streams">Play live streams</DocsLink> for custom player setup.
+- The live preset omits `qualityFeature` and cannot accept extra features. To add a quality menu to a live player, use `createPlayer` with `[...liveVideoFeatures, qualityFeature]`. See <DocsLink slug="guides/live-streams">Play live streams</DocsLink> for custom player setup.
 - Quality availability is `'unavailable'` for media that doesn't offer a choice — progressive files, streams before the manifest loads, and single-rendition streams. Render quality UI conditionally on that value.
-- Renditions come from the streaming engine, so the list depends on what the manifest declares. A single-rendition stream offers no meaningful selection, so availability stays `'unavailable'`.
+- Renditions come from the streaming engine, so the list depends on what the manifest declares.
 - Pinning a high rendition on a slow connection causes buffering: the engine can no longer step down. Keep "Auto" the default.
-- Rendition lists change on source change; selection resets with them.
+- Loading a new source replaces the rendition list and resets the selection.
 
 ## Common variations
 

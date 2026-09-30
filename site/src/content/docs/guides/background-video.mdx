@@ -73,7 +73,7 @@ Set size, position, and transforms on the decorative wrapper so the poster and v
 - Use a source the browser can play directly, such as MP4 or WebM.
 - Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
 - BackgroundVideo does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
-- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`. The streaming variations below require mounting and unmounting the video instead.
+- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`. For the streaming variations below, stop and restart motion by mounting and unmounting the video.
 - If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
 </FrameworkCase>
 
@@ -81,7 +81,7 @@ Set size, position, and transforms on the decorative wrapper so the poster and v
 - Use a source the browser can play directly, such as MP4 or WebM.
 - Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
 - `<background-video>` does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
-- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`. The streaming variations below require adding and removing the element instead.
+- Provide a way to pause or hide persistent background motion. The example includes that control and follows `prefers-reduced-motion`. For the streaming variations below, stop and restart motion by adding and removing the element.
 - If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
 </FrameworkCase>
 
@@ -110,7 +110,7 @@ Keep the poster and motion button from the primary example. Render the streaming
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Keep the poster and motion button from the primary example. Change `setMotion` to create and append a streaming element only when motion is enabled, and remove it when motion is disabled. Do not set `keep-alive`: removal must destroy playback. Create a fresh element when enabling motion again. These elements expose the inner video as `video`, rather than the native background element's `target`.
+Keep the poster and motion button from the primary example. Change `setMotion` to create and append a streaming element only when motion is enabled, and remove it when motion is disabled. Do not set `keep-alive`: removal must destroy playback. Create a new element each time motion is enabled; do not reuse the removed one. These elements expose the inner video as `video`, rather than the native background element's `target`.
 </FrameworkCase>
 
 ### Play an HLS video

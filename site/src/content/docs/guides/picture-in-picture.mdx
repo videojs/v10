@@ -63,18 +63,18 @@ The <DocsLink slug="reference/api/feature-pip">picture-in-picture feature</DocsL
 
 `pictureInPictureAvailability` starts as `'unavailable'`. It becomes `'available'` when the media supports picture-in-picture and has loaded metadata, or `'unsupported'` when the browser or media has no supported route. Loading a new source returns it to `'unavailable'` until metadata loads.
 
-`requestPictureInPicture()` and `exitPictureInPicture()` change the presentation. Handle rejected promises when the browser blocks a request. An entry request before metadata loads rejects with `InvalidStateError`. Without a supported API, it resolves without opening a window.
+`requestPictureInPicture()` and `exitPictureInPicture()` change the presentation. Handle rejected promises when the browser blocks a request. An entry request before metadata loads rejects with `InvalidStateError`. Without a supported API, the request resolves without opening a window.
 
 Picture-in-picture and fullscreen are exclusive: requesting one exits the other first.
 
 ## Availability and constraints
 
-Video.js reports PiP as `'unsupported'` in Safari standalone web apps when the standard API is exposed. The built-in button hides in that case. Check `pictureInPictureAvailability` in installed web apps as well as browser tabs.
+If a Safari standalone web app exposes the standard Picture-in-Picture API, Video.js still reports picture-in-picture as `'unsupported'`. The built-in button hides in that case. Check `pictureInPictureAvailability` in installed web apps as well as browser tabs.
 
 <FrameworkCase frameworks={["react"]}>
 - Show picture-in-picture controls only when `pictureInPictureAvailability` is `'available'`. PiPButton handles this for you.
 - Requests must come from a user gesture; browsers reject requests outside one.
-- [Firefox 153](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) (July 2026) added the programmatic picture-in-picture API on desktop. Earlier desktop versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users. Check `pictureInPictureAvailability` rather than inferring support from the browser version.
+- [Firefox 153](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) (July 2026) added the programmatic picture-in-picture API on desktop. On earlier desktop versions, including Firefox ESR 140, `pictureInPictureAvailability` is `'unsupported'`, even though Firefox shows users its own picture-in-picture toggle. Check `pictureInPictureAvailability` rather than inferring support from the browser version.
 - On iOS, picture-in-picture is supported on iPhone and iPad through the WebKit presentation mode; the player handles this path for you.
 - The browser owns the floating window: its size, position, and built-in controls aren't yours to style.
 - The user can close the window or return the video at any time. React to `isPictureInPicture` instead of assuming your button is the only entry and exit.
@@ -83,7 +83,7 @@ Video.js reports PiP as `'unsupported'` in Safari standalone web apps when the s
 <FrameworkCase frameworks={["html"]}>
 - Show picture-in-picture controls only when `pictureInPictureAvailability` is `'available'`. `<media-pip-button>` handles this for you.
 - Requests must come from a user gesture; browsers reject requests outside one.
-- [Firefox 153](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) (July 2026) added the programmatic picture-in-picture API on desktop. Earlier desktop versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users. Check `pictureInPictureAvailability` rather than inferring support from the browser version.
+- [Firefox 153](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) (July 2026) added the programmatic picture-in-picture API on desktop. On earlier desktop versions, including Firefox ESR 140, `pictureInPictureAvailability` is `'unsupported'`, even though Firefox shows users its own picture-in-picture toggle. Check `pictureInPictureAvailability` rather than inferring support from the browser version.
 - On iOS, picture-in-picture is supported on iPhone and iPad through the WebKit presentation mode; the player handles this path for you.
 - The browser owns the floating window: its size, position, and built-in controls aren't yours to style.
 - The user can close the window or return the video at any time. React to `isPictureInPicture` instead of assuming your button is the only entry and exit.
@@ -93,7 +93,7 @@ Video.js reports PiP as `'unsupported'` in Safari standalone web apps when the s
 
 ### Open picture-in-picture from your own button
 
-Call the player action from your own button. It uses the standard Picture-in-Picture API or Safari's presentation mode and exits fullscreen first. Call it directly in the click handler so the browser treats it as a user gesture:
+Call `requestPictureInPicture()` directly in your button's click handler so the browser treats the request as a user gesture. The action exits fullscreen first, then uses the standard Picture-in-Picture API or Safari's presentation mode:
 
 <FrameworkCase frameworks={["react"]}>
 

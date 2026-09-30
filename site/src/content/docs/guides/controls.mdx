@@ -63,14 +63,14 @@ The <DocsLink slug="reference/api/feature-controls">controls feature</DocsLink> 
 - `controlsVisible` derives from activity and playback: controls stay visible while paused or while a remote playback session is connecting or connected, regardless of idle state.
 - `toggleControls(forceShow?)` marks the user inactive when controls are visible, and shows them otherwise. Pass `true` to show controls or `false` to mark the user inactive. Paused playback, a remote session, or an open menu can keep controls visible even when the user is inactive.
 
-On touch devices, a tap on the media toggles the controls instead of relying on pointer movement, and mid-gesture movement doesn't flicker visibility.
+On touch devices, pointer movement does not show controls. A tap on the media toggles them, and movement during a gesture does not make them flicker.
 
 The feature needs the player container for activity tracking. Without one, it keeps its initial active and visible state and warns in development.
 
 ## Availability and constraints
 
 - Activity tracking listens on the player container, so controls placed outside it don't keep the player "active" — put control UI inside the container.
-- Focus entry restarts the idle timer; holding focus alone does not keep controls visible. The example uses `:has(:focus-visible)` to keep controls visible while they contain keyboard focus. A mouse click does not hold them open.
+- Focus entry restarts the idle timer; holding focus alone does not keep controls visible. The example uses `:has(:focus-visible)` to keep controls visible while they contain keyboard focus. Focus from a mouse click does not hold them open.
 - Touch and mouse behave differently by design — mouse movement shows controls, touch requires a tap. Test both.
 - The idle delay is fixed at two seconds.
 
@@ -104,7 +104,7 @@ Set `visibility="always"` on <DocsLink slug="reference/components/controls">`<me
 
 ### Custom show/hide styling
 
-Controls hide by state, so you own the transition. Style the visible and hidden states in CSS — fade, slide, or scale — driven by the component's rendered state rather than re-implementing the idle timer.
+Style the visible and hidden states in CSS with a fade, slide, or scale, using the component's `data-visible` attribute. The controls feature handles the idle timer.
 
 Keep controls with keyboard focus visible in your hiding rule:
 
@@ -118,7 +118,12 @@ Keep controls with keyboard focus visible in your hiding rule:
 
 ### Controls never hide
 
-The media is paused (controls intentionally stay visible), a remote playback session is active, an open menu or popover holds a controls lock, or something keeps triggering activity — for example a focused element inside the container receiving repeated events.
+Check for these causes:
+
+- The media is paused. Controls stay visible by design.
+- A remote playback session is active.
+- An open menu or popover holds a controls lock.
+- Something keeps triggering activity, such as a focused element inside the container that receives repeated events.
 
 With the `:has(:focus-visible)` CSS rule above, keyboard focus keeps the controls visible even after activity becomes idle. Move focus out of the controls to let them hide.
 
@@ -128,7 +133,7 @@ A tap on the media toggles controls. If a custom overlay covers the media and sw
 
 ### Controls flicker on Android while tapping
 
-Use the skin gestures (`tap` with the `toggleControls` action) rather than adding your own tap handlers next to the built-in behavior; competing handlers invert each other. See <DocsLink slug="guides/keyboard-shortcuts">Add keyboard shortcuts and gestures</DocsLink>.
+Use the skin gestures (`tap` with the `toggleControls` action). When two handlers both toggle controls, one shows them and the other hides them again. Remove extra tap handlers that duplicate the built-in behavior. See <DocsLink slug="guides/keyboard-shortcuts">Add keyboard shortcuts and gestures</DocsLink>.
 
 ## Related components
 

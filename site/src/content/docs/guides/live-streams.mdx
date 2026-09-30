@@ -128,11 +128,11 @@ Two features describe liveness:
 The <DocsLink slug="reference/api/feature-time">time feature</DocsLink> replaces an infinite media duration with the end of the seekable range. That end advances as new segments become available; the start can also advance as old segments expire.
 
 <FrameworkCase frameworks={["react"]}>
-LiveButton reports playback as live within five seconds before `liveEdgeStart`. If that value is unknown, it uses the last ten seconds of the seekable range. When playback falls behind this threshold, activating the button seeks to the seekable end. The button is disabled (`data-disabled`) for non-live media or without a finite seekable end. At the edge, it is inactive (`aria-disabled="true"`).
+LiveButton treats playback as live when the playhead is no more than five seconds behind `liveEdgeStart`. If `liveEdgeStart` is unknown, the button uses the last ten seconds of the seekable range instead. When playback is farther behind, activating the button seeks to the seekable end. The button is disabled (`data-disabled`) when the media is not live or has no finite seekable end. At the edge, it is inactive (`aria-disabled="true"`).
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-`<media-live-button>` reports playback as live within five seconds before `liveEdgeStart`. If that value is unknown, it uses the last ten seconds of the seekable range. When playback falls behind this threshold, activating the button seeks to the seekable end. The button is disabled (`data-disabled`) for non-live media or without a finite seekable end. At the edge, it is inactive (`aria-disabled="true"`).
+`<media-live-button>` treats playback as live when the playhead is no more than five seconds behind `liveEdgeStart`. If `liveEdgeStart` is unknown, the button uses the last ten seconds of the seekable range instead. When playback is farther behind, activating the button seeks to the seekable end. The button is disabled (`data-disabled`) when the media is not live or has no finite seekable end. At the edge, it is inactive (`aria-disabled="true"`).
 </FrameworkCase>
 
 ## Availability and constraints
@@ -234,11 +234,11 @@ export default function App() {
 ### The live badge never activates
 
 <FrameworkCase frameworks={["react"]}>
-LiveButton reads `targetLiveWindow`, `currentTime`, and `seekable`. Confirm that `targetLiveWindow` is `0` or `Infinity` and that `seekable` has a finite end. Use a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>. Adding `streamTypeFeature` is needed only for your own UI that reads `streamType`.
+LiveButton reads `targetLiveWindow`, `currentTime`, and `seekable`. Confirm that `targetLiveWindow` is `0` or `Infinity` and that `seekable` has a finite end. Use a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">HlsJsVideo</DocsLink>. The live button does not need `streamTypeFeature`; add it only when your own UI reads `streamType`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-`<media-live-button>` reads `targetLiveWindow`, `currentTime`, and `seekable`. Confirm that `targetLiveWindow` is `0` or `Infinity` and that `seekable` has a finite end. Use a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink>. Adding `streamTypeFeature` is needed only for your own UI that reads `streamType`.
+`<media-live-button>` reads `targetLiveWindow`, `currentTime`, and `seekable`. Confirm that `targetLiveWindow` is `0` or `Infinity` and that `seekable` has a finite end. Use a live-capable media element such as <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink>. The live button does not need `streamTypeFeature`; add it only when your own UI reads `streamType`.
 </FrameworkCase>
 
 ### Playback keeps falling behind the edge
@@ -253,7 +253,7 @@ Network throughput can't sustain the stream, or the tab was backgrounded. `<medi
 
 ### The time slider behaves oddly on a live stream
 
-Compare the slider's range with `seekable`. The built-in slider starts at zero, which includes expired history once a sliding window moves past zero. Use a custom slider that follows both range bounds, or keep the live button without a timeline.
+Compare the slider's range with `seekable`. The built-in slider always starts at zero. Once a sliding window moves past zero, the slider's range includes expired history. Use a custom slider that follows both range bounds, or keep the live button without a timeline.
 
 ## Related components
 

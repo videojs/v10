@@ -52,12 +52,12 @@ Set autoplay, muted, and inline playback on the media element, and keep a manual
 
 <FrameworkCase frameworks={["react"]}>
 
-The `autoPlay`, `muted`, and `playsInline` props on <DocsLink slug="reference/components/video">`Video`</DocsLink> and similar media components pass through to the underlying media element. When the media element supports them, they're applied, and playback is requested as soon as the media has enough data.
+The `autoPlay`, `muted`, and `playsInline` props on <DocsLink slug="reference/components/video">`Video`</DocsLink> and similar media components pass through to the underlying media element. The media element applies the props it supports and requests playback as soon as it has enough data.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-The `autoplay`, `muted`, and `playsinline` attributes on `<video>` and similar media components pass through to the underlying media element. When the media element supports them, they're applied, and playback is requested as soon as the media has enough data.
+The `autoplay`, `muted`, and `playsinline` attributes on `<video>` and similar media components pass through to the underlying media element. The media element applies the attributes it supports and requests playback as soon as it has enough data.
 
 </FrameworkCase>
 
@@ -72,7 +72,7 @@ Calling `play()` from player state returns the native promise from the media ele
 - Muted autoplay is broadly allowed. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
 - Without inline playback, iPhone Safari opens the video in fullscreen when playback starts.
 - Low-power mode and data-saver settings can block even muted autoplay. This is why the recommended approach keeps a manual play control.
-- Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/api/feature-volume">volume feature</DocsLink> exposes this as `volumeAvailability: 'available' | 'unavailable' | 'unsupported'`; iOS Safari reports `'unsupported'`, and `'unavailable'` means the feature hasn't attached to a media element yet.
+- Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/api/feature-volume">volume feature</DocsLink> reports support through `volumeAvailability`. It starts as `'unavailable'` before media attachment. On iOS Safari, it reports `'unsupported'`.
 - This guide applies to media components that render a video element (Video, HlsJsVideo, DashVideo, MuxVideo, and the like). Embed components (YouTube, Vimeo, TikTok, Twitch) forward autoplay to the third-party player, which applies its own autoplay rules; muted and inline behavior varies by provider.
 </FrameworkCase>
 
@@ -81,7 +81,7 @@ Calling `play()` from player state returns the native promise from the media ele
 - Muted autoplay is broadly allowed. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
 - Without inline playback, iPhone Safari opens the video in fullscreen when playback starts.
 - Low-power mode and data-saver settings can block even muted autoplay. This is why the recommended approach keeps a manual play control.
-- Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/api/feature-volume">volume feature</DocsLink> exposes this as `volumeAvailability: 'available' | 'unavailable' | 'unsupported'`; iOS Safari reports `'unsupported'`, and `'unavailable'` means the feature hasn't attached to a media element yet.
+- Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/api/feature-volume">volume feature</DocsLink> reports support through `volumeAvailability`. It starts as `'unavailable'` before media attachment. On iOS Safari, it reports `'unsupported'`.
 - This guide applies to media components that render a video element (`<video>`, `<hlsjs-video>`, `<dash-video>`, `<mux-video>`, and the like). Embed components (YouTube, Vimeo, TikTok, Twitch) forward autoplay to the third-party player, which applies its own autoplay rules; muted and inline behavior varies by provider.
 </FrameworkCase>
 
@@ -100,7 +100,7 @@ Use `<background-video>` for an MP4 or WebM file, `<hls-background-video>` for a
 
 </FrameworkCase>
 
-These components default to muted, looping playback without player controls. Provide a separate motion control and respect reduced-motion preferences. Follow <DocsLink slug="guides/background-video">Add a decorative background video</DocsLink> for setup and motion controls, including conditional mounting for streaming backgrounds that always autoplay.
+These components default to muted, looping playback without player controls. Provide a separate motion control and respect reduced-motion preferences. For setup and motion controls, follow <DocsLink slug="guides/background-video">Add a background video</DocsLink>. That guide also covers streaming backgrounds, which always autoplay and need conditional mounting.
 
 ### Autoplay with sound
 

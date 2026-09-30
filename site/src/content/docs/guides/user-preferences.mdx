@@ -98,8 +98,8 @@ Subscribe to the state you want to remember, write it to storage when it changes
 
 <FrameworkCase frameworks={["react"]}>
 - Player state is the single source of truth: it already reflects every change, whatever caused it — your UI, keyboard shortcuts, native controls, or scripts.
-- `store.subscribe(callback)` fires on any state change. Notifications are batched per microtask, so rapid changes (a volume drag) produce one callback per tick, which keeps storage writes cheap. There is no per-key subscription on the store: read the state and diff the slice you care about.
-- `usePlayer(selector)` re-renders only when the selected value changes; pairing it with an effect is the idiomatic save path.
+- `store.subscribe(callback)` fires on any state change. The store batches notifications per microtask, so changes made in the same tick produce one callback. There is no per-key subscription on the store: read the state and diff the slice you care about.
+- `usePlayer(selector)` re-renders only when the selected value changes. To save a value, select it with `usePlayer` and write it to storage in an effect.
 - Feature selectors exported by `@videojs/react` (`selectVolume`, `selectTextTrack`, `selectQuality`, and the rest) read a feature's slice from any store, returning `undefined` when the feature isn't present.
 - Restore through the feature actions (`setVolume`, `setMuted`, `selectSubtitlesTrack`, `selectVideoRendition`) rather than poking the media element, so state and UI stay consistent.
 - Actions need an attached media target: calling one before the store attaches throws. Check `store.target` and defer the restore until it is set, as the examples do.
@@ -107,7 +107,7 @@ Subscribe to the state you want to remember, write it to storage when it changes
 
 <FrameworkCase frameworks={["html"]}>
 - Player state is the single source of truth: it already reflects every change, whatever caused it — your UI, keyboard shortcuts, native controls, or scripts.
-- `store.subscribe(callback)` fires on any state change. Notifications are batched per microtask, so rapid changes (a volume drag) produce one callback per tick, which keeps storage writes cheap. There is no per-key subscription on the store: read the state and diff the slice you care about.
+- `store.subscribe(callback)` fires on any state change. The store batches notifications per microtask, so changes made in the same tick produce one callback. There is no per-key subscription on the store: read the state and diff the slice you care about.
 - Feature selectors exported by `@videojs/html` (`selectVolume`, `selectTextTrack`, `selectQuality`, and the rest) read a feature's slice from any store, returning `undefined` when the feature isn't present.
 - Restore through the feature actions (`setVolume`, `setMuted`, `selectSubtitlesTrack`, `selectVideoRendition`) rather than poking the media element, so state and UI stay consistent.
 - Actions need an attached media target: calling one before the store attaches throws. Check `store.target` and defer the restore until it is set, as the examples do.
@@ -119,7 +119,7 @@ Subscribe to the state you want to remember, write it to storage when it changes
 - `setVolume` clamps to 0–1 and unmutes above zero. Restore volume first, then call `setMuted(true)` if the saved preference is muted. Calling `setMuted(false)` at zero raises the volume to 0.25.
 - The volume examples leave autoplay off. For muted autoplay, defer volume restoration until a user action: restoring a positive volume unmutes the media and can interrupt autoplay, even if you immediately mute it again.
 - `setVolume` and `setMuted` update `store.state` immediately. A React hook's selected value updates on the next render.
-- Restore track and quality selections after the media exposes them: track and rendition lists arrive when the media loads, not at player creation. Subscribe and apply when the saved entry appears in the list.
+- Track and rendition lists arrive when the media loads, not when the player is created. Subscribe and restore a saved selection when its entry appears in the list.
 - On iOS Safari, `volumeAvailability` is `'unsupported'` after attachment. Restoring the volume level has no effect there; mute can still be restored.
 - Local storage is per-origin and can be unavailable (private modes, embedded contexts); guard reads and writes accordingly.
 
@@ -127,7 +127,7 @@ Subscribe to the state you want to remember, write it to storage when it changes
 
 ### Persist caption preference
 
-Save the showing track's `language`, or `'off'` when captions are off. Track ids can change between sources. Restore once when the first caption or subtitle list arrives, then save later selection changes. Do not wait for `canPlay`: with limited preloading, it can stay false until playback starts, and repeated restoration would override a user's earlier selection.
+Save the showing track's `language` because track ids can change between sources. Save `'off'` when captions are off. Restore once when the first caption or subtitle list arrives, then save later selection changes. Do not wait for `canPlay`. With limited preloading, `canPlay` can stay `false` until playback starts. Repeated restoration would override a selection the user already made.
 
 If the saved language is absent from that first list, leave the stored preference intact until the selection changes. This example does not retry restoration when more tracks arrive; adapt the initial loading step if your engine exposes languages in several batches. Browser selection changes after restoration are saved just like user changes.
 
@@ -149,7 +149,12 @@ Omit `default` from these tracks when persisting caption preferences. A default 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`. When the first caption or subtitle list arrives, record the current selection and mark restoration complete before calling `selectSubtitlesTrack` with the saved track's `id` or `null` for off. Skip saving during that first pass. Save later selection changes, preserving an unmatched preference until then. Guard `localStorage` reads and writes, and restart restoration for each new source.
+Apply the same pattern in a store subscription:
+
+1. Inside `store.subscribe`, read the track state with `selectTextTrack(store.state)`.
+2. When the first caption or subtitle list arrives, record the current selection and mark restoration complete. If the saved language is present, call `selectSubtitlesTrack` with that track's `id`. If the saved value is `'off'`, pass `null`. Do not save during this first pass.
+3. After that, save selection changes. If the saved language was absent from the first list, keep the stored preference until the selection changes.
+4. Guard `localStorage` reads and writes, and restart restoration for each new source.
 
 Omit `default` from the tracks when persisting caption preferences. A default track can turn on after restoration, causing the subscription to save its language over a stored `'off'` preference.
 
@@ -162,7 +167,7 @@ Adapt the same restore-then-save pattern to the <DocsLink slug="reference/api/fe
 1. Save `'auto'` or the resolution of the selected entry in `videoRenditionList`. Read `selected`; `activeVideoRendition` can change during automatic playback and does not identify a manual preference.
 2. Wait for the next source's rendition list, then match the saved resolution to an entry. Rendition ids belong to that source, so do not reuse a saved id across sources.
 3. Call `selectVideoRendition` with the matching entry's id, or `'auto'` if no match exists. Every entry in `videoRenditionList` has an id; use it directly.
-4. Finish restoration before saving later selections, so restoring the default does not overwrite the saved choice. Let subsequent changes follow the user.
+4. Do not save until restoration finishes; otherwise the source's default selection overwrites the saved choice. After that, save each change the user makes.
 
 To remember a data-saving limit while preserving automatic switching, persist `maxAutoResolution` and pass it on the next source. It needs the hls.js engine; native HLS playback ignores it. See <DocsLink slug="guides/media-sources" anchor="options-videojs-normalizes">Options Video.js normalizes</DocsLink>.
 

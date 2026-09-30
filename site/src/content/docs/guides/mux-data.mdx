@@ -76,7 +76,7 @@ Mux Data is opt-in. No media element monitors playback on its own, Mux ones incl
 
 ## Set the environment key
 
-Mux Data needs to know which environment a view belongs to. For Mux-hosted playback it works that out on its own: the component reports the Mux playback ID as the view's `video_id`, and Mux attributes the view to the environment that owns that playback ID.
+Mux Data needs to know which environment a view belongs to. For Mux-hosted playback, you do not need to set an environment key. The extension reports the Mux playback ID as the view's `video_id`, and Mux attributes the view to the environment that owns that playback ID.
 
 Set `envKey` when you monitor a source Mux doesn't host, like a self-hosted HLS or DASH stream. Find the key in the [Mux dashboard](https://dashboard.mux.com/settings/data):
 
@@ -103,7 +103,7 @@ function MonitoredHlsVideo() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-For the hls.js example, also install `@videojs/hlsjs-video`. Replace `<mux-video>` in the primary example with `<hlsjs-video>` and keep both elements inside its container:
+For the hls.js example, also install `@videojs/hlsjs-video`. Replace `<mux-video>` in the primary example with `<hlsjs-video>` and keep `<hlsjs-video>` and `<mux-data>` inside the container:
 
 ```bash
 pnpm add @videojs/hlsjs-video
@@ -119,7 +119,7 @@ pnpm add @videojs/hlsjs-video
 ```
 </FrameworkCase>
 
-An explicit key always wins, so set one to send Mux-hosted views to a specific environment.
+An explicit `envKey` overrides the environment Mux infers from the playback ID. Set one to send Mux-hosted views to a specific environment.
 
 ## How it works
 
@@ -131,13 +131,13 @@ The extension attaches to the media the player is using, not to a specific eleme
 The extension attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/components/mux-video">`<mux-video>`</DocsLink>, <DocsLink slug="reference/components/hlsjs-video">`<hlsjs-video>`</DocsLink>, <DocsLink slug="reference/components/dash-video">`<dash-video>`</DocsLink>, and the rest alike.
 </FrameworkCase>
 
-How much it reports depends on the engine playing the stream. Every media gets the playback metrics the media element itself can tell us. On top of that, the component recognizes [hls.js](https://github.com/video-dev/hls.js/) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js) engines and hands them to the Mux Data SDK, which adds stream-level detail: rendition switches, segment request timing and throughput, and engine errors. Media with no JavaScript engine, like native HLS or a plain `<video>`, report the element-level metrics alone.
+How much the extension reports depends on the engine playing the stream. All media report the playback metrics available from the media element. The extension also recognizes [hls.js](https://github.com/video-dev/hls.js/) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js) engines and hands them to the Mux Data SDK, which adds stream-level detail: rendition switches, segment request timing and throughput, and engine errors. Media without a JavaScript engine, like native HLS or a plain `<video>`, report only the element-level metrics.
 
 The `video_id` it reports is the Mux playback ID for streams served from `stream.mux.com`, and the source URL otherwise. Each view also gets a generated `view_session_id`. Override either through `metadata`.
 
 ## Describe the view
 
-Pass Mux Data [metadata](https://www.mux.com/docs/guides/make-your-data-actionable-with-metadata) to label views with your own titles, viewer IDs, and custom dimensions. It's an object, so it's a property rather than an attribute:
+Pass Mux Data [metadata](https://www.mux.com/docs/guides/make-your-data-actionable-with-metadata) to label views with your own titles, viewer IDs, and custom dimensions. `metadata` takes an object. In HTML, set it as a JavaScript property:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

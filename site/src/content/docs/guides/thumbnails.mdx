@@ -40,11 +40,11 @@ With <DocsLink slug="reference/components/mux-video">`<mux-video>`</DocsLink>, t
 ## Recommended approach
 
 <FrameworkCase frameworks={["react"]}>
-Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/components/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink>.
+Add a `<track kind="metadata" label="thumbnails" default>` whose cues reference storyboard images. Then put a slider thumbnail inside the <DocsLink slug="reference/components/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="reference/components/thumbnail">Thumbnail</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/components/time-slider">`<media-time-slider>`</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same attributes as the standalone <DocsLink slug="reference/components/thumbnail">`<media-thumbnail>`</DocsLink>.
+Add a `<track kind="metadata" label="thumbnails" default>` whose cues reference storyboard images. Then put a slider thumbnail inside the <DocsLink slug="reference/components/time-slider">`<media-time-slider>`</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same attributes as the standalone <DocsLink slug="reference/components/thumbnail">`<media-thumbnail>`</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
