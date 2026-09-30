@@ -1,5 +1,32 @@
-import { isUndefined } from '@videojs/utils/predicate';
+import { deepEqual } from '@videojs/utils/object';
+import { isNull, isUndefined } from '@videojs/utils/predicate';
 import { useRef } from 'react';
+
+/**
+ * Whether writing `value` over `current` would change anything the target can observe.
+ *
+ * Identity is the right test for a primitive, and the wrong one for an object: React builds a fresh object every render
+ * for an inline prop, so an identity check reports a change on every render of any ancestor and the setter, which
+ * cannot tell the two apart, treats it as a real one.
+ *
+ * `deepEqual` is the comparison the adapters already use to decide whether an engine needs rebuilding, so the two agree
+ * on what counts as a change. It short-circuits on `Object.is`, so a callback held stable across renders compares equal
+ * while a fresh inline one does not: two inline arrow functions really are different values, and nothing here can know
+ * they behave the same.
+ */
+function isChange(current: unknown, value: unknown): boolean {
+  if (current === value) return false;
+
+  if (typeof current !== 'object' || typeof value !== 'object' || isNull(current) || isNull(value)) return true;
+
+  try {
+    return !deepEqual(current, value);
+  } catch {
+    // A prop value is arbitrary and this runs during render, so a structure deepEqual cannot walk, a self-referential
+    // one above all, must not take the render down with it. Treating it as a change is what happened before the guard.
+    return true;
+  }
+}
 
 export function useSyncProps<Props extends object, Rest extends Record<string, unknown>>(
   target: Props,
@@ -11,7 +38,7 @@ export function useSyncProps<Props extends object, Rest extends Record<string, u
   const prevSyncedRef = useRef<Set<string> | null>(null);
 
   const sync = (key: string, value: unknown) => {
-    if (target[key as keyof Props] !== value) target[key as keyof Props] = value as Props[keyof Props];
+    if (isChange(target[key as keyof Props], value)) target[key as keyof Props] = value as Props[keyof Props];
   };
 
   // Reset props the consumer stopped passing (or passed as `undefined`) back to
