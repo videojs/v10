@@ -197,28 +197,52 @@ describe('NativeHlsErrorsMixin', () => {
     const host = new NativeHlsErrors();
     const video = document.createElement('video');
 
-    let targetDuringError: EventTarget | null = 'unset' as any;
-
-    host.addEventListener('error', () => {
+    let targetDuringError: EventTarget | null = null;
+    let attaching = false;
+    const handler = vi.fn(() => {
+      expect(attaching).toBe(true);
       targetDuringError = host.target;
     });
+    const addEventListener = video.addEventListener.bind(video);
+
+    vi.spyOn(video, 'addEventListener').mockImplementation((type, listener, options) => {
+      addEventListener(type, listener, options);
+
+      if (type === 'error' && typeof options === 'object' && options.capture) {
+        video.dispatchEvent(new Event('error'));
+      }
+    });
+
+    host.addEventListener('error', handler);
 
     Object.defineProperty(video, 'error', {
       value: { code: MediaError.MEDIA_ERR_NETWORK, message: 'fail' },
       configurable: true,
     });
 
+    attaching = true;
     host.attach(video);
-    video.dispatchEvent(new Event('error'));
+    attaching = false;
 
+    expect(handler).toHaveBeenCalledOnce();
     expect(targetDuringError).toBe(video);
   });
 
-  it('does not register listeners when base attach guard rejects same target', () => {
+  it('maintains one active listener set across repeated attachment', () => {
     const host = new NativeHlsErrors();
     const video = document.createElement('video');
 
+    const registrations = vi.spyOn(video, 'addEventListener');
+    const signals = () =>
+      registrations.mock.calls
+        .filter(([type]) => type === 'error' || type === 'emptied')
+        .map(([, , options]) => (typeof options === 'object' ? options.signal : undefined));
+
     host.attach(video);
+    const initialSignals = signals();
+
+    expect(initialSignals).toHaveLength(2);
+    expect(initialSignals.every((signal) => signal?.aborted === false)).toBe(true);
 
     fireNativeError(video, MediaError.MEDIA_ERR_NETWORK, 'first');
     expect(host.error).not.toBeNull();
@@ -226,7 +250,13 @@ describe('NativeHlsErrorsMixin', () => {
     video.dispatchEvent(new Event('emptied'));
     expect(host.error).toBeNull();
 
+    registrations.mockClear();
     host.attach(video);
+    const replacementSignals = signals();
+
+    expect(replacementSignals).toHaveLength(2);
+    expect(initialSignals.every((signal) => signal?.aborted === true)).toBe(true);
+    expect(replacementSignals.every((signal) => signal?.aborted === false)).toBe(true);
 
     const handler = vi.fn();
 
@@ -234,6 +264,10 @@ describe('NativeHlsErrorsMixin', () => {
     fireNativeError(video, MediaError.MEDIA_ERR_DECODE, 'second');
 
     expect(handler).toHaveBeenCalledOnce();
+
+    host.detach();
+
+    expect(replacementSignals.every((signal) => signal?.aborted === true)).toBe(true);
   });
 
   it('re-initializes on re-attach', () => {

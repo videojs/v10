@@ -371,15 +371,25 @@ describe('DashAdapter', () => {
     it('leaves dash.js settings alone when nothing was ever pinned', async () => {
       const { media, engine } = setup();
 
-      media.src = MANIFEST;
+      media.source = { src: MANIFEST, engine: { dashJs: AUTO_SWITCH_OFF } };
       initStream(engine, REPRESENTATIONS);
-      engine.updateSettings.mockClear();
+      await flush();
 
+      const change = vi.fn();
+
+      media.videoRenditions.addEventListener('change', change);
+      engine.updateSettings.mockClear();
+      engine.setRepresentationForTypeById.mockClear();
+
+      // The queued list event sees only the final selection, before the engine ever pins it.
+      media.videoRenditions.selectedIndex = 1;
       media.videoRenditions.selectedIndex = -1;
       await flush();
 
-      // Switching was never turned off, so configured settings are not overruled.
+      expect(change).toHaveBeenCalledOnce();
+      expect(engine.getSettings()).toMatchObject(AUTO_SWITCH_OFF);
       expect(engine.updateSettings).not.toHaveBeenCalled();
+      expect(engine.setRepresentationForTypeById).not.toHaveBeenCalled();
     });
 
     it('re-pins the selected representation when dash.js settings are re-applied', async () => {

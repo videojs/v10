@@ -365,7 +365,7 @@ describe('MuxDataExtension', () => {
   });
 
   it('follows the adapter when registered with another target', async () => {
-    const { sdk, monitor, emit } = createSdk();
+    const { sdk, monitor, emit, updateData } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk });
     const video = document.createElement('video');
     const first = new FakeEngineAdapter();
@@ -384,11 +384,24 @@ describe('MuxDataExtension', () => {
     expect(monitor).toHaveBeenCalledTimes(1);
     expect(emit).toHaveBeenCalledWith('videochange', expect.objectContaining({ video_id: 'def456' }));
 
+    second.src = 'https://stream.mux.com/ghi789.m3u8';
+    monitor.mockClear();
+    updateData.mockClear();
     emit.mockClear();
+
     first.dispatchEvent(new Event('loadstart'));
     await settle();
 
+    expect(monitor).not.toHaveBeenCalled();
+    expect(updateData).not.toHaveBeenCalled();
     expect(emit).not.toHaveBeenCalled();
+
+    second.dispatchEvent(new Event('loadstart'));
+    await settle();
+
+    expect(emit).toHaveBeenCalledExactlyOnceWith('videochange', expect.objectContaining({ video_id: 'ghi789' }));
+    expect(monitor).not.toHaveBeenCalled();
+    expect(updateData).not.toHaveBeenCalled();
   });
 
   it('destroys active monitoring on destroy', () => {
