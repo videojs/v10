@@ -17,14 +17,12 @@ import type {
   MediaVolumeState,
 } from '@videojs/media';
 import type { AnySlice, InferSliceSourceState, Slice, Store, UnionSliceState } from '@videojs/store';
-import type { CamelCase, Simplify, UnionToIntersection } from '@videojs/utils/types';
+import type { CamelCase } from '@videojs/utils/types';
 
 import type { metadataFeature } from './store/features/metadata';
 
-/** @internal */
 export interface MediaContainer extends HTMLElement {}
 
-/** @internal */
 export interface PlayerTarget {
   media: Media;
   container: MediaContainer | null;
@@ -57,8 +55,6 @@ type ConfigStateKey<State> = [State] extends [never] ? PropertyKey : keyof State
 /**
  * Maps provider inputs to feature-owned state actions and detach-persistent keys. Pass the feature's source-state type
  * when declaring a config map so both keys are checked and each action accepts nullable text, including absent input.
- *
- * @internal
  */
 export type PlayerFeatureConfig<State = never> = Record<
   string,
@@ -82,7 +78,6 @@ export type PlayerFeatureConfig<State = never> = Record<
   }
 >;
 
-/** @internal */
 export type PlayerFeature<State, Derived = object, Config extends PlayerFeatureConfig = Record<never, never>> = Slice<
   PlayerTarget,
   State,
@@ -91,7 +86,6 @@ export type PlayerFeature<State, Derived = object, Config extends PlayerFeatureC
   config?: Config;
 };
 
-/** @internal */
 export type AnyPlayerFeature = AnySlice<PlayerTarget> & { config?: PlayerFeatureConfig };
 
 type ConfigInputValue<Feature extends AnyPlayerFeature, Entry> = Entry extends { action: infer Action }
@@ -100,18 +94,13 @@ type ConfigInputValue<Feature extends AnyPlayerFeature, Entry> = Entry extends {
     : never
   : never;
 
-/** @internal */
 export type InferPlayerFeatureConfig<Feature extends AnyPlayerFeature> = Feature extends {
   config?: infer Config extends PlayerFeatureConfig;
 }
   ? { [Key in keyof Config]: ConfigInputValue<Feature, Config[Key]> }
   : object;
 
-/**
- * The same inputs under the names they go by on an HTML element.
- *
- * @internal
- */
+/** The same inputs under the names they go by on an HTML element. */
 export type InferPlayerFeatureHtmlConfig<Feature extends AnyPlayerFeature> = Feature extends {
   config?: infer Config extends PlayerFeatureConfig;
 }
@@ -124,40 +113,39 @@ type HtmlPropertyKey<Key, Entry> = Entry extends { html: { attribute: infer Attr
   ? CamelCase<Attribute>
   : Key;
 
-/** @internal */
+/** Merge a union of per-feature config objects into one flat object type. */
+type MergedConfig<Union> = (Union extends any ? (config: Union) => void : never) extends (config: infer Merged) => void
+  ? { [Key in keyof Merged]: Merged[Key] } & {}
+  : never;
+
 export type UnionPlayerConfig<Features extends readonly AnyPlayerFeature[]> = Features extends readonly []
   ? object
-  : Simplify<UnionToIntersection<InferPlayerFeatureConfig<Features[number]>>>;
+  : MergedConfig<InferPlayerFeatureConfig<Features[number]>>;
 
-/** @internal */
 export type UnionPlayerHtmlConfig<Features extends readonly AnyPlayerFeature[]> = Features extends readonly []
   ? object
-  : Simplify<UnionToIntersection<InferPlayerFeatureHtmlConfig<Features[number]>>>;
+  : MergedConfig<InferPlayerFeatureHtmlConfig<Features[number]>>;
 
 declare const PLAYER_CONFIG: unique symbol;
 declare const PLAYER_HTML_CONFIG: unique symbol;
 
-/** @internal */
 export type PlayerStore<Features extends AnyPlayerFeature[] = []> = Store<PlayerTarget, UnionSliceState<Features>> & {
   readonly [PLAYER_CONFIG]?: UnionPlayerConfig<Features>;
   readonly [PLAYER_HTML_CONFIG]?: UnionPlayerHtmlConfig<Features>;
 };
 
-/** @internal */
 export type InferPlayerConfig<Store> = Store extends {
   readonly [PLAYER_CONFIG]?: infer Config;
 }
   ? Config
   : object;
 
-/** @internal */
 export type InferPlayerHtmlConfig<Store> = Store extends {
   readonly [PLAYER_HTML_CONFIG]?: infer Config;
 }
   ? Config
   : object;
 
-/** @internal */
 export type AnyPlayerStore = Store<PlayerTarget, object>;
 
 // ----------------------------------------
@@ -231,17 +219,12 @@ export type LiveAudioFeatures = [
   typeof metadataFeature,
 ];
 
-/** @internal */
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 
-/** @internal */
 export type AudioPlayerStore = PlayerStore<AudioFeatures>;
 
-/** @internal */
 export type BackgroundPlayerStore = PlayerStore<BackgroundFeatures>;
 
-/** @internal */
 export type LiveVideoPlayerStore = PlayerStore<LiveVideoFeatures>;
 
-/** @internal */
 export type LiveAudioPlayerStore = PlayerStore<LiveAudioFeatures>;

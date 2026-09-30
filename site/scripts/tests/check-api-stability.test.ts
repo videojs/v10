@@ -14,14 +14,16 @@ import {
   type Coverage,
   documentedStability,
   findDeclarations,
-  findInternalReferences,
+  findUnexportedExports,
   findSourceDeclarations,
   findUnstableImports,
   fixSourceFile,
   isCoveredName,
   matchesModulePattern,
   parseFrontmatter,
+  PROPAGATE_THROUGH_HERITAGE,
   type PublicExport,
+  resolveStabilities,
   type Stability,
   type TagChange,
   tagChange,
@@ -278,6 +280,23 @@ describe('tagViolation', () => {
     );
     expect(tagViolation({ declarationTags: [new Set(['internal'])] }, 'experimental')).toBe(
       'is documented on an unstable page but tagged @internal — use @experimental'
+    );
+  });
+
+  it('names the export that made it stable or experimental, counting the others', () => {
+    const referrers = [record('PlayButtonProps'), record('PlayButton'), record('usePlayButton')];
+
+    expect(tagViolation({ declarationTags: [new Set(['internal'])] }, 'stable', referrers.slice(0, 1))).toBe(
+      'is stable because PlayButtonProps (@videojs/react) references it — remove @internal'
+    );
+    expect(tagViolation({ declarationTags: [new Set(['internal'])] }, 'stable', referrers)).toBe(
+      'is stable because PlayButtonProps (@videojs/react) references it (+2 more) — remove @internal'
+    );
+    expect(tagViolation({ declarationTags: [new Set(['internal'])] }, 'experimental', referrers.slice(0, 1))).toBe(
+      'is experimental because PlayButtonProps (@videojs/react) references it — use @experimental instead of @internal'
+    );
+    expect(tagViolation({ declarationTags: [new Set()] }, 'experimental', referrers.slice(0, 1))).toBe(
+      'needs @experimental because PlayButtonProps (@videojs/react) references it'
     );
   });
 });
@@ -554,51 +573,161 @@ describe('collectPublicExports', () => {
   });
 });
 
-describe('findInternalReferences', () => {
+describe('resolveStabilities', () => {
   const root = fixture({
     'packages/core/dist/index.d.ts': [
       'export interface CoreState { paused: boolean }',
-      'export interface CoreOptions { label: string }',
+      'export interface CoreOptions { label: string; nested: CoreOption }',
+      'export interface CoreOption { value: number }',
+      'export interface Secret { value: number }',
+      'export interface Unreached { value: number }',
+      'export interface PreviewState { value: number }',
+      'export declare class BaseCore { base: number }',
       'export declare namespace ButtonCore { export type Props = { disabled: boolean } }',
     ].join('\n'),
     'packages/react/dist/index.d.ts': [
-      "import { ButtonCore, CoreOptions, CoreState } from '../../core/dist/index.js';",
+      "import { BaseCore, ButtonCore, CoreOptions, CoreState, PreviewState, Secret } from '../../core/dist/index.js';",
       // Like bundled output: `export {}` stops a declaration file exporting every top-level declaration.
       'export {};',
-      'interface Helper { state: CoreState }',
-      'export interface PlayButtonProps extends ButtonCore.Props { state: CoreState }',
+      'interface Helper { state: Secret }',
+      'export interface PlayButtonProps { state: CoreState; core: ButtonCore.Props }',
       'export interface PlayButtonState extends Helper {}',
-      'export declare class PlayButtonElement {',
-      '  private secret: CoreState;',
-      '  protected guarded: CoreState;',
+      'export declare class PlayButtonElement extends BaseCore {',
+      '  private secret: Secret;',
+      '  protected guarded: Secret;',
       '  /** @internal */',
-      '  hidden: CoreState;',
+      '  hidden: Secret;',
       '  state: PlayButtonState;',
       '}',
       'export declare function usePlayButton(options: CoreOptions): PlayButtonState;',
+      'export interface DashVideoProps { preview: PreviewState; state: CoreState }',
     ].join('\n'),
   });
   const exports = exportsOf(root, {
     '@videojs/core': 'packages/core/dist/index.d.ts',
     '@videojs/react': 'packages/react/dist/index.d.ts',
   });
-  const docs = coverage({ stable: new Set(['PlayButton', 'usePlayButton', 'CoreState']) });
-  const stabilities = new Map(exports.map((entry) => [entry, documentedStability(entry, docs)]));
-  const references = findInternalReferences(exports, stabilities).map(
-    ({ record, reference }) => `${record.name} -> ${reference.name}`
-  );
+  const docs = coverage({ stable: new Set(['PlayButton', 'usePlayButton']), unstable: new Set(['DashVideo']) });
 
-  it('reports documented exports whose public surface names an internal export', () => {
-    expect(references.sort()).toEqual([
-      'PlayButtonProps -> ButtonCore',
-      'PlayButtonProps -> CoreState',
-      'usePlayButton -> CoreOptions',
-    ]);
+  function resolve(options?: { heritage?: boolean }): Record<string, string> {
+    const resolved = resolveStabilities(exports, docs, options);
+
+    return Object.fromEntries(
+      [...resolved].map(([entry, { stability, referrers }]) => [
+        entry.name,
+        referrers.length > 0 ? `${stability} <- ${referrers.map((referrer) => referrer.name).join(', ')}` : stability,
+      ])
+    );
+  }
+
+  it('makes what a stable export names stable, even when only an internal package exposes it', () => {
+    expect(resolve()).toMatchObject({
+      PlayButtonProps: 'stable',
+      CoreState: 'stable <- PlayButtonProps',
+      ButtonCore: 'stable <- PlayButtonProps',
+      CoreOptions: 'stable <- usePlayButton',
+    });
   });
 
-  it('ignores hidden members, non-exported helpers, and stable references', () => {
-    expect(references.filter((reference) => /^PlayButton(?:Element|State) /.test(reference))).toEqual([]);
-    expect(stabilities.get(byName(exports, 'CoreState'))).toBe('internal');
+  it('propagates through chains of references', () => {
+    expect(resolve().CoreOption).toBe('stable <- CoreOptions');
+  });
+
+  it('makes what only experimental exports name experimental, and keeps stable what a stable export also names', () => {
+    expect(resolve()).toMatchObject({
+      DashVideoProps: 'experimental',
+      PreviewState: 'experimental <- DashVideoProps',
+      CoreState: 'stable <- PlayButtonProps',
+    });
+  });
+
+  it('ignores hidden members, non-exported helpers, and exports nothing names', () => {
+    expect(resolve()).toMatchObject({ Secret: 'internal', Unreached: 'internal' });
+  });
+
+  it('propagates through heritage clauses unless heritage propagation is off', () => {
+    expect(PROPAGATE_THROUGH_HERITAGE).toBe(true);
+    expect(resolve().BaseCore).toBe('stable <- PlayButtonElement');
+    expect(resolve({ heritage: true }).BaseCore).toBe('stable <- PlayButtonElement');
+    expect(resolve({ heritage: false }).BaseCore).toBe('internal');
+  });
+
+  it('fixes the tags of exports a reference made stable or experimental', () => {
+    const tagged = fixture({
+      'packages/core/dist/index.d.ts': 'export interface CoreState {}\nexport interface PreviewState {}\n',
+      'packages/core/src/index.ts':
+        '/** @internal */\nexport interface CoreState {}\n\n/** @internal */\nexport interface PreviewState {}\n',
+      'packages/react/dist/index.d.ts': [
+        "import { CoreState, PreviewState } from '../../core/dist/index.js';",
+        'export interface PlayButtonProps { state: CoreState }',
+        'export interface DashVideoProps { preview: PreviewState }',
+      ].join('\n'),
+    });
+    const records = exportsOf(tagged, {
+      '@videojs/core': 'packages/core/dist/index.d.ts',
+      '@videojs/react': 'packages/react/dist/index.d.ts',
+    });
+    const resolved = resolveStabilities(records, docs);
+    const coreState = byName(records, 'CoreState');
+
+    expect(tagViolation(coreState, 'stable', resolved.get(coreState)!.referrers)).toBe(
+      'is stable because PlayButtonProps (@videojs/react) references it — remove @internal'
+    );
+
+    const fixes = new Map(
+      records.filter((entry) => entry.hasSource).map((entry) => [entry.name, resolved.get(entry)!.stability] as const)
+    );
+
+    fixSourceFile(join(tagged, 'packages/core/src/index.ts'), fixes);
+
+    expect(readFileSync(join(tagged, 'packages/core/src/index.ts'), 'utf8')).toBe(
+      'export interface CoreState {}\n\n/** @experimental */\nexport interface PreviewState {}\n'
+    );
+  });
+});
+
+describe('findUnexportedExports', () => {
+  const root = fixture({
+    'packages/core/dist/index.d.ts': [
+      'export interface CoreState { paused: boolean }',
+      'export interface SharedState { paused: boolean }',
+      'export interface Unreached { value: number }',
+    ].join('\n'),
+    'packages/adapters/hlsjs-video/dist/index.d.ts': 'export interface HlsConfig { debug: boolean }\n',
+    'packages/react/dist/index.d.ts': [
+      "import { CoreState, SharedState } from '../../core/dist/index.js';",
+      "export { SharedState } from '../../core/dist/index.js';",
+      'export interface PlayButtonProps { state: CoreState; shared: SharedState }',
+    ].join('\n'),
+    'packages/react/dist/media/hlsjs-video.d.ts': [
+      "import { HlsConfig } from '../../../adapters/hlsjs-video/dist/index.js';",
+      'export interface HlsJsVideoProps { config: HlsConfig }',
+    ].join('\n'),
+  });
+  const exports = exportsOf(root, {
+    '@videojs/core': 'packages/core/dist/index.d.ts',
+    '@videojs/hlsjs-video': 'packages/adapters/hlsjs-video/dist/index.d.ts',
+    '@videojs/react': 'packages/react/dist/index.d.ts',
+    '@videojs/react/media/hlsjs-video': 'packages/react/dist/media/hlsjs-video.d.ts',
+  });
+  const docs = coverage({ stable: new Set(['PlayButton', 'HlsJsVideo']) });
+  const unexported = findUnexportedExports(resolveStabilities(exports, docs), new Set(['@videojs/hlsjs-video']));
+  const reasons = Object.fromEntries(unexported.map(({ record, reason }) => [record.name, reason]));
+
+  it('reports a stable export only internal packages export', () => {
+    expect(reasons.CoreState).toBe(
+      'is stable (PlayButtonProps references it) but only internal packages export it — re-export it from @videojs/react / @videojs/html'
+    );
+  });
+
+  it("suggests an adapter's media entry for a type only the adapter exports", () => {
+    expect(reasons.HlsConfig).toBe(
+      'is stable (HlsJsVideoProps references it) but only @videojs/hlsjs-video exports it — re-export it from @videojs/react/media/hlsjs-video / @videojs/html/media/hlsjs-video'
+    );
+  });
+
+  it('accepts exports a framework-facing package also exports, and ignores internal ones', () => {
+    expect(Object.keys(reasons).sort()).toEqual(['CoreState', 'HlsConfig']);
   });
 });
 

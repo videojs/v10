@@ -4,6 +4,7 @@ import { createContext } from '@videojs/element/context';
 
 /** @internal */
 export interface MenuContextValue {
+  /** @internal The menu core that owns this menu; parts read `state` instead. */
   core: MenuCore;
   menu: MenuApi;
   popup: MenuPopupApi;

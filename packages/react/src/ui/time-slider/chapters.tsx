@@ -4,6 +4,7 @@ import {
   TimeSliderChapterDataAttrs,
   type TimeSliderChapterRange,
   TimeSliderChaptersCore,
+  type TimeSliderChapterState,
 } from '@videojs/core';
 import { getStateDataAttrs, selectBuffer, selectTextTrack, selectTime } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
@@ -14,8 +15,7 @@ import { usePlayer } from '../../player/context';
 import type { HTMLProps, UIComponentProps } from '../../utils/types';
 import { SliderSegments } from './segments';
 
-/** @internal */
-export type TimeSliderChapterState = TimeSliderChaptersCore.State;
+export type { TimeSliderChapterState } from '@videojs/core';
 
 export interface TimeSliderChaptersState {
   /** Normalized ranges spanning the full slider domain. */

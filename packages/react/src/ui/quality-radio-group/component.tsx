@@ -1,4 +1,4 @@
-import { type MenuOptionState, type QualityRadioGroupCore, QualityRadioGroupDataAttrs } from '@videojs/core';
+import { type MenuOptionState, QualityRadioGroupDataAttrs, type QualityRadioGroupState } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { ReactElement, ReactNode } from 'react';
@@ -26,7 +26,7 @@ export interface QualityRadioGroupRootProps extends QualityOptionsProps {
 }
 
 export interface QualityRadioGroupOptionsProps extends Omit<
-  UIComponentProps<'div', QualityRadioGroupCore.State>,
+  UIComponentProps<'div', QualityRadioGroupState>,
   'children'
 > {
   /** Render one consumer-owned menu radio item for every quality option. */
@@ -155,7 +155,7 @@ export namespace QualityRadioGroupValue {
 
 export namespace QualityRadioGroupOptions {
   export type Props = QualityRadioGroupOptionsProps;
-  export type State = QualityRadioGroupCore.State;
+  export type State = QualityRadioGroupState;
   export type ItemProps = QualityRadioGroupItemProps;
   export type ItemState = QualityRadioGroupItemState;
 }

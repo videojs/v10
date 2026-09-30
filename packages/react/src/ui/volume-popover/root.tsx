@@ -1,4 +1,4 @@
-import { VolumePopoverCore } from '@videojs/core';
+import { VolumePopoverCore, type VolumePopoverState as CoreVolumePopoverState } from '@videojs/core';
 import { selectVolume } from '@videojs/core/dom';
 import type { MediaVolumeState } from '@videojs/media';
 import type { ReactNode } from 'react';
@@ -58,5 +58,5 @@ function VolumePopoverState({ children, ...props }: VolumePopoverRootProps): Rea
 
 export namespace VolumePopoverRoot {
   export type Props = VolumePopoverRootProps;
-  export type State = VolumePopoverCore.State;
+  export type State = CoreVolumePopoverState;
 }

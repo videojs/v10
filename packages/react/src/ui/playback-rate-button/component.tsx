@@ -1,11 +1,16 @@
-import { PlaybackRateButtonCore, PlaybackRateButtonDataAttrs } from '@videojs/core';
+import {
+  PlaybackRateButtonCore,
+  PlaybackRateButtonDataAttrs,
+  type PlaybackRateButtonProps as CorePlaybackRateButtonProps,
+  type PlaybackRateButtonState,
+} from '@videojs/core';
 import { selectPlaybackRate } from '@videojs/core/dom';
 
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
 export interface PlaybackRateButtonProps
-  extends UIComponentProps<'button', PlaybackRateButtonCore.State>, PlaybackRateButtonCore.Props {}
+  extends UIComponentProps<'button', PlaybackRateButtonState>, CorePlaybackRateButtonProps {}
 
 /**
  * A button that cycles through playback rates.
@@ -34,5 +39,5 @@ export const PlaybackRateButton = createMediaButton<PlaybackRateButtonCore, Play
 
 export namespace PlaybackRateButton {
   export type Props = PlaybackRateButtonProps;
-  export type State = PlaybackRateButtonCore.State;
+  export type State = PlaybackRateButtonState;
 }
