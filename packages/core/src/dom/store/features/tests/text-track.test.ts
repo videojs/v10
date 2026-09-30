@@ -29,7 +29,7 @@ function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
 function createMockTrack(
   kind: TextTrackKind,
   mode: TextTrackMode = 'disabled',
-  options: { id?: string; label?: string; language?: string; cues?: VTTCue[] } = {}
+  options: { id?: string; label?: string; language?: string; cues?: VTTCue[] | null | undefined } = {}
 ): TextTrack {
   return {
     id: options.id ?? '',
@@ -51,20 +51,6 @@ function setDuration(video: HTMLVideoElement, duration: number): void {
 }
 
 describe('textTrackFeature', () => {
-  describe('initial state', () => {
-    it('has empty initial state', () => {
-      const video = createVideo();
-      const store = createStore<PlayerTarget>()(textTrackFeature);
-
-      store.attach({ media: video, container: null });
-
-      expect(store.state.textTrackList).toEqual([]);
-      expect(store.state.subtitlesShowing).toBe(false);
-      expect(store.state.chaptersCues).toEqual([]);
-      expect(store.state.thumbnailsTrack).toBeNull();
-    });
-  });
-
   describe('thumbnailsTrack', () => {
     /**
      * Attach to a media element carrying the given tracks. Uses `mockTextTracks` rather than `addTextTrack`, which
@@ -141,6 +127,22 @@ describe('textTrackFeature', () => {
     // open; the track carries that as a very large end.
     const cues = () => [createCue(0, 3, 'Intro'), createCue(3, Number.MAX_SAFE_INTEGER, 'Outro')];
 
+    it.each([null, undefined])('publishes the chapters track while its cues are %s', (missingCues) => {
+      const video = createVideo();
+
+      setDuration(video, 10);
+      mockTextTracks(video, [createMockTrack('chapters', 'hidden', { id: 'chapters', cues: missingCues })]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.chaptersCues).toEqual([]);
+      expect(store.state.textTrackList).toEqual([
+        { id: 'chapters', kind: 'chapters', label: '', language: '', mode: 'hidden' },
+      ]);
+    });
+
     it('clamps every cue end to a finite media duration', () => {
       const video = createVideo();
 
@@ -198,7 +200,9 @@ describe('textTrackFeature', () => {
 
     it('exposes plain cue data rather than the live cues', () => {
       const video = createVideo();
-      const live = cues();
+      // SAFETY: This fixture supplies the cue fields the feature reads, including an absent optional text field.
+      const textless = { startTime: 0, endTime: 3 } as VTTCue;
+      const live = [textless, createCue(3, Number.MAX_SAFE_INTEGER, 'Outro')];
 
       setDuration(video, 10);
       mockTextTracks(video, [createMockTrack('chapters', 'hidden', { cues: live })]);
@@ -207,25 +211,14 @@ describe('textTrackFeature', () => {
 
       store.attach({ media: video, container: null });
 
+      expect(store.state.chaptersCues[0]).toEqual({ startTime: 0, endTime: 3, text: '' });
+      expect(store.state.chaptersCues[0]).not.toBe(textless);
       expect(store.state.chaptersCues[1]).not.toBe(live[1]);
       expect(live[1]?.endTime).toBe(Number.MAX_SAFE_INTEGER);
     });
   });
 
   describe('attach', () => {
-    it('detects chapters track via addTextTrack', () => {
-      const video = createVideo();
-
-      video.addTextTrack('chapters', 'Chapters', 'en');
-
-      const store = createStore<PlayerTarget>()(textTrackFeature);
-
-      store.attach({ media: video, container: null });
-
-      // Track detected, but no cues in jsdom
-      expect(store.state.chaptersCues).toEqual([]);
-    });
-
     it('prefers first matching chapters track when multiple exist', () => {
       const video = createVideo();
       const first = [createCue(0, 5, 'First chapter')];

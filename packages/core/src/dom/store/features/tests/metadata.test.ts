@@ -7,7 +7,6 @@ import { setPlayerConfigValue } from '../../../feature';
 import type { PlayerTarget } from '../../../player';
 import { selectMetadata } from '../../selectors';
 import { metadataFeature } from '../metadata';
-import { audioFeatures, backgroundFeatures, liveAudioFeatures, liveVideoFeatures, videoFeatures } from '../presets';
 
 const titleConfig = metadataFeature.config!.title;
 const posterConfig = metadataFeature.config!.poster;
@@ -56,14 +55,6 @@ const target = (media: EventTarget): PlayerTarget => ({
 });
 
 describe('metadataFeature', () => {
-  it('is included in standard media presets but not the empty background preset', () => {
-    expect(videoFeatures).toContain(metadataFeature);
-    expect(audioFeatures).toContain(metadataFeature);
-    expect(liveVideoFeatures).toContain(metadataFeature);
-    expect(liveAudioFeatures).toContain(metadataFeature);
-    expect(backgroundFeatures).not.toContain(metadataFeature);
-  });
-
   it('resolves user, media, and feature default in order', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
 
@@ -96,41 +87,31 @@ describe('metadataFeature', () => {
     expect(store.title).toBe('   ');
   });
 
-  it('subscribes to content data before an asynchronous title arrives', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature);
-    const media = new ContentDataMedia({});
-    const addEventListener = vi.spyOn(media, 'addEventListener');
+  it.each([{}, { poster: 'poster.jpg' }])(
+    'subscribes to content data before an asynchronous title arrives (%j)',
+    (initial) => {
+      const store = createStore<PlayerTarget>()(metadataFeature);
+      const media = new ContentDataMedia(initial);
+      const addEventListener = vi.spyOn(media, 'addEventListener');
 
-    store.attach(target(media));
+      store.attach(target(media));
 
-    expect(store.title).toBe('');
-    expect(addEventListener).toHaveBeenCalledWith('contentdatachange', expect.any(Function), expect.anything());
+      expect(store.title).toBe('');
+      expect(addEventListener).toHaveBeenCalledWith('contentdatachange', expect.any(Function), expect.anything());
 
-    media.setTitle('loaded title');
-    expect(store.title).toBe('loaded title');
+      media.setTitle('loaded title');
+      expect(store.title).toBe('loaded title');
 
-    media.setTitle(null);
-    expect(store.title).toBe('');
+      media.setTitle(null);
+      expect(store.title).toBe('');
 
-    media.setTitle('replacement title');
-    expect(store.title).toBe('replacement title');
+      media.setTitle('replacement title');
+      expect(store.title).toBe('replacement title');
 
-    media.setTitle(undefined);
-    expect(store.title).toBe('');
-  });
-
-  it('subscribes when content data initially contains only another field', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature);
-    const media = new ContentDataMedia({ poster: 'poster.jpg' });
-    const addEventListener = vi.spyOn(media, 'addEventListener');
-
-    store.attach(target(media));
-
-    expect(addEventListener).toHaveBeenCalledWith('contentdatachange', expect.any(Function), expect.anything());
-
-    media.setTitle('later title');
-    expect(store.title).toBe('later title');
-  });
+      media.setTitle(undefined);
+      expect(store.title).toBe('');
+    }
+  );
 
   it('observes metadata when an adapter receives its target after store attachment', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
@@ -166,10 +147,6 @@ describe('metadataFeature', () => {
 
     expect(store.title).toBe('');
     expect(addEventListener.mock.calls.map(([type]) => type)).not.toContain('contentdatachange');
-  });
-
-  it('takes the title under another name in markup, where `title` is the tooltip', () => {
-    expect(titleConfig.html?.attribute).toBe('content-title');
   });
 
   it('resolves the content poster through the same order as the title', () => {

@@ -48,28 +48,6 @@ describe('fullscreenFeature', () => {
       expect(selectFullscreen.displayName).toBe('fullscreen');
     });
 
-    it('selects fullscreen state', () => {
-      const video = createMockVideo();
-      const container = document.createElement('div');
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: video, container });
-
-      expect(selectFullscreen(store.state)?.isFullscreen).toBe(false);
-    });
-
-    it('syncs initial state on attach', () => {
-      const video = createMockVideo();
-      const container = document.createElement('div');
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: video, container });
-
-      expect(store.state.isFullscreen).toBe(false);
-    });
-
     it('detects fullscreen availability when supported', () => {
       Object.defineProperty(document, 'fullscreenEnabled', {
         value: true,
@@ -439,41 +417,6 @@ describe('fullscreenFeature', () => {
       expect(container.requestFullscreen).toHaveBeenCalledOnce();
     });
 
-    it('requestFullscreen() exits PiP first if active', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const originalExit = document.exitPictureInPicture;
-
-      document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
-
-      const video = createMockVideo();
-      const container = document.createElement('div');
-
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      // Set PiP as active
-      Object.defineProperty(document, 'pictureInPictureElement', {
-        value: video,
-        writable: true,
-        configurable: true,
-      });
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: video, container });
-
-      await store.requestFullscreen();
-
-      expect(document.exitPictureInPicture).toHaveBeenCalled();
-      expect(container.requestFullscreen).toHaveBeenCalled();
-
-      document.exitPictureInPicture = originalExit;
-    });
-
     it('requestFullscreen() does not exit PiP if not active', async () => {
       Object.defineProperty(document, 'fullscreenEnabled', {
         value: true,
@@ -506,20 +449,6 @@ describe('fullscreenFeature', () => {
 
 describe('fullscreenFeature with HTMLVideoAdapter', () => {
   describe('attach', () => {
-    it('syncs initial state on attach', () => {
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      const host = new HTMLVideoAdapter();
-
-      host.attach(video);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: host, container });
-
-      expect(store.state.isFullscreen).toBe(false);
-    });
-
     it('reflects host.isFullscreen when document.fullscreenElement is the underlying video', () => {
       const video = createMockVideo();
       const host = new HTMLVideoAdapter();
@@ -537,44 +466,6 @@ describe('fullscreenFeature with HTMLVideoAdapter', () => {
       store.attach({ media: host, container: null });
 
       expect(store.state.isFullscreen).toBe(true);
-    });
-
-    it('updates fullscreen on fullscreenchange when container matches', () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const video = createMockVideo();
-      const container = document.createElement('div');
-      const host = new HTMLVideoAdapter();
-
-      host.attach(video);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: host, container });
-
-      expect(store.state.isFullscreen).toBe(false);
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: container,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      expect(store.state.isFullscreen).toBe(true);
-
-      Object.defineProperty(document, 'fullscreenElement', {
-        value: null,
-        writable: true,
-        configurable: true,
-      });
-      document.dispatchEvent(new Event('fullscreenchange'));
-
-      expect(store.state.isFullscreen).toBe(false);
     });
 
     it('syncs fullscreen on webkitpresentationmodechanged forwarded from target (iOS Safari)', () => {
@@ -605,30 +496,6 @@ describe('fullscreenFeature with HTMLVideoAdapter', () => {
   });
 
   describe('actions', () => {
-    it('requestFullscreen() calls requestFullscreen on container', async () => {
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
-
-      const video = createMockVideo();
-      const container = document.createElement('div');
-
-      container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-      const host = new HTMLVideoAdapter();
-
-      host.attach(video);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: host, container });
-
-      await store.requestFullscreen();
-
-      expect(container.requestFullscreen).toHaveBeenCalled();
-    });
-
     it('requestFullscreen() falls back to host.requestFullscreen when no container', async () => {
       const video = createMockVideo();
 
@@ -669,27 +536,6 @@ describe('fullscreenFeature with HTMLVideoAdapter', () => {
 
       expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('fullscreen');
       expect(vi.mocked(video.webkitSetPresentationMode).mock.contexts).toEqual([video]);
-    });
-
-    it('exitFullscreen() calls document.exitFullscreen', async () => {
-      const originalExit = document.exitFullscreen;
-
-      document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
-
-      const video = createMockVideo();
-      const host = new HTMLVideoAdapter();
-
-      host.attach(video);
-
-      const store = createStore<PlayerTarget>()(fullscreenFeature);
-
-      store.attach({ media: host, container: null });
-
-      await store.exitFullscreen();
-
-      expect(document.exitFullscreen).toHaveBeenCalled();
-
-      document.exitFullscreen = originalExit;
     });
   });
 

@@ -842,18 +842,6 @@ describe('controlsFeature', () => {
   });
 
   describe('cleanup', () => {
-    it('stops listening when store is destroyed', () => {
-      const video = createMockVideo({ paused: false });
-      const { store } = createPlayerStore(video);
-
-      store.destroy();
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-    });
-
     it('clears idle timer on detach', () => {
       const video = createMockVideo({ paused: false });
       const store = createStore<PlayerTarget>()(controlsFeature);

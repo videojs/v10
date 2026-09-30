@@ -86,7 +86,7 @@ describe('volumeFeature', () => {
   describe('actions', () => {
     describe('setVolume', () => {
       it('sets volume on target', async () => {
-        const video = createMockVideo({});
+        const video = createMockVideo({ muted: false, volume: 0.5 });
         const store = createStore<PlayerTarget>()(volumeFeature);
 
         store.attach({ media: video, container: null });
@@ -95,6 +95,8 @@ describe('volumeFeature', () => {
 
         expect(video.volume).toBe(0.7);
         expect(store.state.volume).toBe(0.7);
+        expect(video.muted).toBe(false);
+        expect(store.state.muted).toBe(false);
         expect(result).toBe(0.7);
       });
 
@@ -143,18 +145,6 @@ describe('volumeFeature', () => {
 
         expect(video.volume).toBe(0);
         expect(video.muted).toBe(true);
-      });
-
-      it('does not change muted when already unmuted', async () => {
-        const video = createMockVideo({ muted: false, volume: 0.5 });
-        const store = createStore<PlayerTarget>()(volumeFeature);
-
-        store.attach({ media: video, container: null });
-
-        await store.setVolume(0.8);
-
-        expect(video.volume).toBe(0.8);
-        expect(video.muted).toBe(false);
       });
     });
 

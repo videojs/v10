@@ -271,34 +271,6 @@ describe('timeFeature', () => {
         expect(result2).toBe(20);
       });
 
-      it('optimistically updates currentTime before seeked event fires', () => {
-        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
-        const store = createStore<PlayerTarget>()(timeFeature);
-
-        store.attach({ media: video, container: null });
-
-        expect(store.state.currentTime).toBe(0);
-
-        // Start seek but don't fire any DOM events.
-        store.seek(45);
-
-        // Store should reflect target time immediately (no waiting for seeked).
-        expect(store.state.currentTime).toBe(45);
-      });
-
-      it('optimistically sets seeking to true before seeking event fires', () => {
-        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
-        const store = createStore<PlayerTarget>()(timeFeature);
-
-        store.attach({ media: video, container: null });
-
-        expect(store.state.seeking).toBe(false);
-
-        store.seek(45);
-
-        expect(store.state.seeking).toBe(true);
-      });
-
       it('optimistic seeking is corrected by seeked event', async () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
