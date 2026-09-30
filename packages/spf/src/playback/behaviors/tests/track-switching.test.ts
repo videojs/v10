@@ -770,6 +770,35 @@ function makeAudioTrack(id: string, overrides: Partial<AudioTrack> = {}): AudioT
 }
 
 describe('switchAudioTrack', () => {
+  it.each([
+    { preferredAudioLanguage: 'es', defaultLanguage: 'en', userLanguage: undefined, expectedLanguage: 'es' },
+    { preferredAudioLanguage: 'fr', defaultLanguage: 'es', userLanguage: undefined, expectedLanguage: 'es' },
+    { preferredAudioLanguage: undefined, defaultLanguage: 'es', userLanguage: undefined, expectedLanguage: 'es' },
+    { preferredAudioLanguage: 'es', defaultLanguage: 'es', userLanguage: 'en', expectedLanguage: 'en' },
+  ])(
+    'selects $expectedLanguage with preferredAudioLanguage=$preferredAudioLanguage, default=$defaultLanguage, user=$userLanguage',
+    async ({ preferredAudioLanguage, defaultLanguage, userLanguage, expectedLanguage }) => {
+      const state = makeAudioState({
+        presentation: createAudioPresentation(
+          ['en', 'es'].map((language) =>
+            makeAudioTrack(`audio-${language}`, { language, default: language === defaultLanguage })
+          )
+        ),
+        userAudioTrackSelection: userLanguage ? { language: userLanguage } : undefined,
+      });
+      const config = { preferredAudioLanguage, canPlayTrack: () => true };
+      const reactor = switchAudioTrack.setup({ state, config });
+
+      try {
+        await flush();
+
+        expect(state.selectedAudioTrackId.get()).toBe(`audio-${expectedLanguage}`);
+      } finally {
+        reactor.destroy();
+      }
+    }
+  );
+
   it('clears selectedAudioTrackId on src unload', async () => {
     const state = makeAudioState({
       presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),

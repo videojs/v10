@@ -1,14 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { snapshot } from '../../../../core/signals/primitives';
-import type {
-  AudioTrack,
-  PartiallyResolvedAudioTrack,
-  PartiallyResolvedVideoTrack,
-  Presentation,
-} from '../../../../media/types';
+import type { PartiallyResolvedAudioTrack, PartiallyResolvedVideoTrack, Presentation } from '../../../../media/types';
 import { createHlsVideoEngine } from '../engine';
-import { createHlsAudioEngine } from '../engine-audio-only';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
@@ -27,57 +21,6 @@ function unmockedFetchFallback(url: string): Promise<Response> {
 
   return Promise.reject(new Error(`Unmocked URL: ${url}`));
 }
-
-describe.each([
-  ['createHlsVideoEngine', createHlsVideoEngine],
-  ['createHlsAudioEngine', createHlsAudioEngine],
-] as const)('%s', (_, create) => {
-  it.each([
-    ['es', 'en'],
-    ['fr', 'es'],
-  ])('honors preferredAudioLanguage=%s with manifest default=%s', async (preferredAudioLanguage, defaultLanguage) => {
-    const engine = create({ preferredAudioLanguage, canPlayTrack: () => true });
-    const audioTrack = (language: string): AudioTrack => ({
-      type: 'audio',
-      id: language,
-      language,
-      name: language,
-      groupId: 'audio',
-      default: language === defaultLanguage,
-      url: `https://example.com/${language}.m3u8`,
-      mimeType: 'audio/mp4',
-      codecs: ['mp4a.40.2'],
-      bandwidth: 128_000,
-      sampleRate: 48_000,
-      channels: 2,
-      startTime: 0,
-      duration: 60,
-      initialization: { url: 'https://example.com/init.mp4' },
-      segments: [],
-    });
-
-    try {
-      engine.state.presentation.set({
-        id: 'presentation',
-        url: 'https://example.com/master.m3u8',
-        startTime: 0,
-        selectionSets: [
-          {
-            id: 'audio',
-            type: 'audio',
-            switchingSets: [{ id: 'audio', type: 'audio', tracks: [audioTrack('en'), audioTrack('es')] }],
-          },
-        ],
-      });
-
-      await vi.waitFor(() => expect(engine.state.selectedAudioTrackId.get()).toBeDefined());
-
-      expect(engine.state.selectedAudioTrackId.get()).toBe('es');
-    } finally {
-      await engine.destroy();
-    }
-  });
-});
 
 describe('createHlsVideoEngine', () => {
   let originalFetch: typeof globalThis.fetch;
