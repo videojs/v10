@@ -29,11 +29,8 @@ const COMPANION_SUFFIXES = ['Props', 'State', 'Element', 'Options', 'Result', 'C
 /** `@videojs/cdn` repackages `@videojs/html` as script-tag bundles, so html owns those declarations. */
 const EXCLUDED_PACKAGES = new Set(['@videojs/cdn']);
 
-/**
- * Packages whose declarations this check leaves alone. SPF is documented for media authors by its own maintainers;
- * store's public surface is still being decided.
- */
-const UNCHECKED_PACKAGE_DIRECTORIES = ['packages/spf/', 'packages/store/'];
+/** Packages whose declarations this check leaves alone. SPF is documented for media authors by its own maintainers. */
+const UNCHECKED_PACKAGE_DIRECTORIES = ['packages/spf/'];
 
 /**
  * Whether a class or interface makes what it `extends` or `implements` stable. Flip this to keep base classes internal

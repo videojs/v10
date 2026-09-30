@@ -1,4 +1,4 @@
-import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
+import type { UnionToIntersection } from '@videojs/utils/types';
 
 import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
@@ -7,6 +7,7 @@ import type { UnknownState } from './state';
 // Attach
 // ----------------------------------------
 
+/** @internal */
 export type Attach<Target, State> = (ctx: AttachContext<Target, State>) => void;
 
 export interface AttachStore {
@@ -90,6 +91,7 @@ type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknow
   [Key in keyof Definitions]: ReturnType<Definitions[Key]>;
 };
 
+/** @internal */
 export interface SliceFactory<Target> {
   <State, const Definitions extends DerivedFunctions<State>>(
     config: Omit<SliceConfig<Target, State, DerivedValues<Definitions>>, 'derived'> & {
@@ -99,6 +101,7 @@ export interface SliceFactory<Target> {
   <State>(config: Omit<SliceConfig<Target, State>, 'derived'> & { derived?: never }): Slice<Target, State>;
 }
 
+/** @internal */
 export function defineSlice<Target>(): SliceFactory<Target> {
   return ((config: SliceConfig<Target, unknown, unknown>) => config) as SliceFactory<Target>;
 }
@@ -107,12 +110,21 @@ export function defineSlice<Target>(): SliceFactory<Target> {
 // Inference
 // ----------------------------------------
 
+/** @internal */
 export type InferSliceTarget<S> = S extends Slice<infer Target, any, any> ? Target : never;
 
-/** Infer from the state factory so intersections with feature metadata preserve exact source state. */
+/**
+ * Infer from the state factory so intersections with feature metadata preserve exact source state.
+ *
+ * @internal
+ */
 export type InferSliceSourceState<S> = S extends { state: (...args: any[]) => infer State } ? State : never;
 
+/** @internal */
 export type InferSliceDerivedState<S> = S extends Slice<any, any, infer Derived> ? Derived : never;
+
+/** Flattens an intersection into one object type for readable hovers. */
+type Simplify<T> = { [Key in keyof T]: T[Key] } & {};
 
 export type PublicSourceState<State> = Pick<State, Extract<keyof State, string>>;
 
@@ -123,11 +135,13 @@ type IntersectSlices<Slices extends readonly AnySlice[], Value> = Slices extends
   ? object
   : Simplify<UnionToIntersection<Value>>;
 
+/** @internal */
 export type UnionSliceSourceState<Slices extends readonly AnySlice[]> = IntersectSlices<
   Slices,
   InferSliceSourceState<Slices[number]>
 >;
 
+/** @internal */
 export type UnionSliceDerivedState<Slices extends readonly AnySlice[]> = IntersectSlices<
   Slices,
   InferSliceDerivedState<Slices[number]>

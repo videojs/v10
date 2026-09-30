@@ -20,6 +20,7 @@ type CombinedTarget<Slices extends readonly AnySlice[]> = Slices extends readonl
  *
  * @param slices - The slices to combine.
  * @returns A new slice that represents the combination of the input slices.
+ * @internal
  */
 export function combine<const Slices extends readonly AnySlice[]>(
   ...slices: Slices
