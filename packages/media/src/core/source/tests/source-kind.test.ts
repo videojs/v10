@@ -56,6 +56,13 @@ describe('resolveSourceKind', () => {
     expect(resolveSourceKind('https://example.com/episode', 'audio/mpeg')).toBe('audio');
   });
 
+  it('ignores MIME type parameters', () => {
+    expect(resolveSourceKind('https://example.com/manifest', 'application/x-mpegURL; charset=utf-8')).toBe('hls');
+    expect(resolveSourceKind('https://example.com/manifest', 'application/dash+xml; profiles=x')).toBe('dash');
+    expect(resolveSourceKind('https://example.com/manifest', 'audio/mpegurl; charset=utf-8')).toBe('hls');
+    expect(resolveSourceKind('https://example.com/clip', 'video/mp4; codecs="avc1.42E01E"')).toBe('video');
+  });
+
   it('prefers the provider over the MIME type', () => {
     expect(
       resolveSourceKind(

@@ -30,7 +30,7 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   }
 
   const shorthandId = SHORTHAND_SRC.exec(src)?.[1];
-  // Vidstack played its `youtube/<id>` shorthand from the privacy-enhanced host, so it keeps doing so.
+  // Shorthands play from the privacy-enhanced host, so a source written as one doesn't set YouTube cookies.
   if (shorthandId) return { id: shorthandId, kind: 'video', listId: null, startTime: null, noCookie: true };
 
   const noCookie = src.includes('-nocookie');

@@ -33,7 +33,7 @@ export type MediaSourceKind =
  *
  * @param src - The source URL, or a `youtube/<id>` or `vimeo/<id>` shorthand.
  * @param type - The source's MIME type, when known. It takes precedence over the file extension, so manifests and files
- *   without one can still be resolved.
+ *   without one can still be resolved. Parameters such as `codecs` are ignored.
  * @public
  */
 export function resolveSourceKind(src: string, type?: string): MediaSourceKind | null {
@@ -101,7 +101,8 @@ function resolveProvider(src: string): MediaSourceKind | null {
 }
 
 function fromMimeType(type: string | null | undefined): MediaSourceKind | null {
-  const mimeType = type?.trim().toLowerCase();
+  // Parameters such as `; codecs=…` don't change which media plays the type.
+  const mimeType = type?.split(';', 1)[0]!.trim().toLowerCase();
   if (!mimeType) return null;
 
   if (HLS_TYPES.has(mimeType)) return 'hls';
