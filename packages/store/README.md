@@ -6,6 +6,8 @@
 
 A reactive store for managing state owned by external systems. Built for media players, streaming libraries, and real-time systems where you don't own the state.
 
+> **Note:** The authoring APIs this README describes, including `createStore`, `defineSlice`, `combine`, and the store error helpers, are internal building blocks of the Video.js player and may change between releases. To read player state, use the player's own APIs, such as `usePlayer` and `PlayerController`.
+
 ```bash
 npm install @videojs/store
 ```

@@ -113,17 +113,16 @@ export function defineSlice<Target>(): SliceFactory<Target> {
 /** @internal */
 export type InferSliceTarget<S> = S extends Slice<infer Target, any, any> ? Target : never;
 
-/**
- * Infer from the state factory so intersections with feature metadata preserve exact source state.
- *
- * @internal
- */
+/** Infer from the state factory so intersections with feature metadata preserve exact source state. */
 export type InferSliceSourceState<S> = S extends { state: (...args: any[]) => infer State } ? State : never;
 
 /** @internal */
 export type InferSliceDerivedState<S> = S extends Slice<any, any, infer Derived> ? Derived : never;
 
-/** Flattens an intersection into one object type for readable hovers. */
+/**
+ * Flattens an intersection into one object type for readable hovers. A local copy of `@videojs/utils`' `Simplify`:
+ * store's public types must not name internal utils types.
+ */
 type Simplify<T> = { [Key in keyof T]: T[Key] } & {};
 
 export type PublicSourceState<State> = Pick<State, Extract<keyof State, string>>;
