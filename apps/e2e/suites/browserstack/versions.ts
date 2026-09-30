@@ -19,5 +19,6 @@ export const versions = {
   edge: minimum('edge'),
   firefox: minimum('firefox'),
   safari: minimum('safari'),
-  ios: minimum('ios_saf'),
+  // BrowserStack selects iOS by major version; round up to stay within the supported range.
+  ios: String(Math.ceil(Number(minimum('ios_saf')))),
 };
