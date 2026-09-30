@@ -1,0 +1,145 @@
+/**
+ * PostHog setup. `src/components/Posthog.astro` defines the snippet's queueing stub and calls `initAnalytics` in
+ * production builds only.
+ *
+ * PostHog runs in `cookieless_mode: "always"`, so there is no durable person: never call `identify`, `alias`, or a
+ * person-property API. Super properties last for one page load, which is why `loaded` registers the reader's docs
+ * context on every page.
+ */
+
+import { PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
+import { isPlainObject, isString } from 'es-toolkit/predicate';
+import { escapeRegExp } from 'es-toolkit/string';
+
+import { DEFAULT_FRAMEWORK, getDefaultStyle, type AnySupportedStyle, type SupportedFramework } from '@/types/docs';
+import { getFrameworkPreferenceClient, getStylePreferenceClient } from '@/utils/docs/preferences';
+
+const POSTHOG_PROJECT_KEY = 'phc_5gaDOyX1jWPR1n7JAiGiHdwXwGwfsknwdj1ILI2IiBr';
+
+/** PostHog's own placeholder, so values it masks and values masked here read the same in insights. */
+const MASKED = '<masked>';
+
+/** A value PostHog serializes into an event payload. */
+export type EventValue = string | number | boolean | null | undefined | EventValue[] | EventProperties;
+
+export interface EventProperties {
+  [name: string]: EventValue;
+}
+
+/** The parts of an outgoing PostHog event that can carry a page URL. */
+export interface AnalyticsEvent {
+  properties?: EventProperties;
+  $set?: EventProperties;
+  $set_once?: EventProperties;
+}
+
+/** The subset of the PostHog instance the site calls. The snippet's stub queues these until the library loads. */
+export interface PostHogClient {
+  init(token: string, config: PostHogConfig): void;
+  register(properties: EventProperties): void;
+}
+
+/** The PostHog options the site sets. */
+export interface PostHogConfig {
+  api_host: string;
+  ui_host: string;
+  defaults: string;
+  cookieless_mode: 'always';
+  capture_dead_clicks: boolean;
+  capture_heatmaps: boolean;
+  mask_personal_data_properties: boolean;
+  custom_personal_data_properties: string[];
+  advanced_disable_feature_flags: boolean;
+  before_send: (event: AnalyticsEvent | null) => AnalyticsEvent | null;
+  loaded: (posthog: PostHogClient) => void;
+}
+
+declare global {
+  interface Window {
+    posthog?: PostHogClient;
+  }
+}
+
+export interface DocsContext {
+  docs_framework: SupportedFramework;
+  docs_style: AnySupportedStyle;
+}
+
+// Stops at the characters that end a query value, or the quote that ends an attribute inside `$elements_chain`. A value
+// PostHog already masked starts with `<`, so it is left alone.
+const PRIVATE_PARAMETER_PATTERN = new RegExp(
+  `([?&](?:${PRIVATE_INSTALLATION_QUERY_PARAMETERS.map(escapeRegExp).join('|')})=)[^&#\\s"'<>]+`,
+  'g'
+);
+
+/** Replace the value of every private installation query parameter in `text`, wherever a URL appears in it. */
+export function maskPrivateParameters(text: string): string {
+  return text.replace(PRIVATE_PARAMETER_PATTERN, `$1${MASKED}`);
+}
+
+function maskValue(value: EventValue): EventValue {
+  if (isString(value)) return maskPrivateParameters(value);
+
+  if (Array.isArray(value)) return value.map(maskValue);
+
+  return isPlainObject(value) ? maskProperties(value) : value;
+}
+
+function maskProperties(properties: EventProperties): EventProperties {
+  // Keys too: heatmap batches are keyed by page URL.
+  return Object.fromEntries(
+    Object.entries(properties).map(([key, value]) => [maskPrivateParameters(key), maskValue(value)])
+  );
+}
+
+/**
+ * `before_send` hook. PostHog's `custom_personal_data_properties` masks the current URL and heatmap URLs, but not the
+ * referrer or the link addresses autocapture records, so a private value would still leave the browser on the next page
+ * or on a click. This masks it everywhere in the event.
+ */
+export function maskPrivateEvent<E extends AnalyticsEvent>(event: E | null): E | null {
+  if (!event) return event;
+
+  return {
+    ...event,
+    properties: event.properties && maskProperties(event.properties),
+    $set: event.$set && maskProperties(event.$set),
+    $set_once: event.$set_once && maskProperties(event.$set_once),
+  };
+}
+
+/** The docs framework and style this reader sees: their saved picks, or the site defaults. */
+export function getDocsContext(): DocsContext {
+  const framework = getFrameworkPreferenceClient() ?? DEFAULT_FRAMEWORK;
+  const style = getStylePreferenceClient(framework) ?? getDefaultStyle(framework);
+
+  return { docs_framework: framework, docs_style: style };
+}
+
+export function createPostHogConfig(): PostHogConfig {
+  return {
+    api_host: '/ph',
+    ui_host: 'https://us.posthog.com',
+    defaults: '2026-01-30',
+    cookieless_mode: 'always',
+    capture_dead_clicks: true,
+    capture_heatmaps: true,
+    // Also masks ad click IDs such as `gclid`. UTM parameters are kept.
+    mask_personal_data_properties: true,
+    custom_personal_data_properties: [...PRIVATE_INSTALLATION_QUERY_PARAMETERS],
+    // The site uses no feature flags, and the /flags request sends the initial referrer unmasked, outside
+    // `before_send`. Remote config still loads.
+    advanced_disable_feature_flags: true,
+    before_send: maskPrivateEvent,
+    // Runs before the initial $pageview, so that pageview carries the docs context too.
+    loaded: (posthog) => posthog.register({ ...getDocsContext() }),
+  };
+}
+
+/** Start PostHog once the browser is idle, so it never competes with the page for the main thread. */
+export function initAnalytics(): void {
+  const load = () => window.posthog?.init(POSTHOG_PROJECT_KEY, createPostHogConfig());
+
+  if ('requestIdleCallback' in window) requestIdleCallback(load);
+  else setTimeout(load, 3000);
+}
