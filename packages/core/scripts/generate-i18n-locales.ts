@@ -15,6 +15,8 @@ const coreLocalesDir = resolve(coreRoot, 'src/core/i18n/locales');
 const htmlLocalesDir = resolve(coreRoot, '../html/src/i18n/locales');
 const reactLocalesDir = resolve(coreRoot, '../react/src/i18n/locales');
 const textDir = resolve(coreRoot, 'src/core/i18n/text');
+const htmlTextDir = resolve(coreRoot, '../html/src/i18n/text');
+const reactTextDir = resolve(coreRoot, '../react/src/i18n/text');
 
 const generatedFiles = new Set<string>();
 const changedFiles = new Set<string>();
@@ -42,7 +44,7 @@ function generateLoadLocaleTs(): string {
     .join('\n');
 
   return `${GENERATED_HEADER}import type { FlatTranslations, Translations } from './params';
-import { findLocaleKeys, getCanonicalLocaleKey, hasRegisteredLocale } from './registry';
+import { findLocaleKeys, getLocaleKey, hasRegisteredLocale } from './registry';
 import { flattenTranslations } from './utils';
 
 const loaders = {
@@ -50,15 +52,17 @@ ${entries}
 } as const satisfies Record<string, () => Promise<{ default: Translations }>>;
 
 /**
- * Lazy-import a shipped locale pack when the tag is not already in the registry.
+ * Lazy-import the built-in locale pack for a tag, or its closest fallback in the {@link findLocaleKeys} chain. Resolves
+ * to \`undefined\` when that chain reaches a registered locale first or no built-in pack matches.
  *
- * @internal
+ * @param tag - BCP 47 tag to load, such as \`fr-CA\`.
+ * @public
  */
 export async function loadLocale(tag: string): Promise<Partial<FlatTranslations> | undefined> {
   if (hasRegisteredLocale(tag)) return undefined;
   for (const chainTag of findLocaleKeys(tag)) {
     if (hasRegisteredLocale(chainTag)) return undefined;
-    const load = loaders[getCanonicalLocaleKey(chainTag) as keyof typeof loaders];
+    const load = loaders[getLocaleKey(chainTag) as keyof typeof loaders];
     if (load) return flattenTranslations((await load()).default);
   }
   return undefined;
@@ -122,7 +126,7 @@ function generateTextModule(entries: [string, string][]): string {
   const exports = entries
     .map(
       ([key, text]) =>
-        `/** @internal */\nexport const ${exportName(key)} = {\n  key: \`\${prefix}${key.slice(prefix.length)}\`,\n  text: ${stringLiteral(text)},\n} as const satisfies Text;`
+        `export const ${exportName(key)} = {\n  key: \`\${prefix}${key.slice(prefix.length)}\`,\n  text: ${stringLiteral(text)},\n} as const satisfies Text;`
     )
     .join('\n\n');
 
@@ -146,7 +150,12 @@ async function validateLocaleCompleteness(): Promise<void> {
   }
 }
 
-function generateTextModules(): void {
+function generatePlatformTextReExport(namespace: string): string {
+  return `${GENERATED_HEADER}export * from '@videojs/core/i18n/text/${namespace}';
+`;
+}
+
+function generateTextModules(): string[] {
   mkdirSync(textDir, { recursive: true });
 
   const namespaces = new Map<string, [string, string][]>();
@@ -165,6 +174,22 @@ function generateTextModules(): void {
 
   for (const file of readdirSync(textDir)) {
     const path = resolve(textDir, file);
+
+    if (file.endsWith('.ts') && !generatedFiles.has(path)) unlinkSync(path);
+  }
+
+  return [...namespaces.keys()];
+}
+
+function syncPlatformTextDir(dir: string, namespaces: string[]): void {
+  mkdirSync(dir, { recursive: true });
+
+  for (const namespace of namespaces) {
+    writeGenerated(resolve(dir, `${namespace}.ts`), generatePlatformTextReExport(namespace));
+  }
+
+  for (const file of readdirSync(dir)) {
+    const path = resolve(dir, file);
 
     if (file.endsWith('.ts') && !generatedFiles.has(path)) unlinkSync(path);
   }
@@ -238,9 +263,12 @@ function syncPlatformLocaleDir(dir: string): void {
 await validateLocaleCompleteness();
 writeGenerated(resolve(coreLocalesDir, 'all.ts'), generateCoreAllTs());
 writeGenerated(resolve(coreRoot, 'src/core/i18n/load-locale.ts'), generateLoadLocaleTs());
-generateTextModules();
+const textNamespaces = generateTextModules();
+
 syncPlatformLocaleDir(htmlLocalesDir);
 syncPlatformLocaleDir(reactLocalesDir);
+syncPlatformTextDir(htmlTextDir, textNamespaces);
+syncPlatformTextDir(reactTextDir, textNamespaces);
 
 if (changedFiles.size > 0) {
   execFileSync('pnpm', ['exec', 'vp', 'check', '--fix', ...changedFiles], {

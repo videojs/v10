@@ -4,13 +4,11 @@ import type { Text } from '../text';
 
 const prefix = 'pip.';
 
-/** @internal */
 export const enterText = {
   key: `${prefix}enter`,
   text: 'Enter picture-in-picture',
 } as const satisfies Text;
 
-/** @internal */
 export const exitText = {
   key: `${prefix}exit`,
   text: 'Exit picture-in-picture',

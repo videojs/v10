@@ -4,19 +4,16 @@ import type { Text } from '../text';
 
 const prefix = 'live.';
 
-/** @internal */
 export const playingText = {
   key: `${prefix}playing`,
   text: 'Playing live',
 } as const satisfies Text;
 
-/** @internal */
 export const seekToEdgeText = {
   key: `${prefix}seekToEdge`,
   text: 'Seek to live edge',
 } as const satisfies Text;
 
-/** @internal */
 export const badgeText = {
   key: `${prefix}badge`,
   text: 'Live',

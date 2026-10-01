@@ -4,25 +4,21 @@ import type { Text } from '../text';
 
 const prefix = 'volume.';
 
-/** @internal */
 export const mutedValueText = {
   key: `${prefix}mutedValue`,
   text: '{percent}, muted',
 } as const satisfies Text;
 
-/** @internal */
 export const mutedText = {
   key: `${prefix}muted`,
   text: 'Muted',
 } as const satisfies Text;
 
-/** @internal */
 export const labelText = {
   key: `${prefix}label`,
   text: 'Volume',
 } as const satisfies Text;
 
-/** @internal */
 export const valueText = {
   key: `${prefix}value`,
   text: 'Volume {value}',

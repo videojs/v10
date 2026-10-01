@@ -4,49 +4,41 @@ import type { Text } from '../text';
 
 const prefix = 'status.';
 
-/** @internal */
 export const captionsOnText = {
   key: `${prefix}captionsOn`,
   text: 'Captions on',
 } as const satisfies Text;
 
-/** @internal */
 export const captionsOffText = {
   key: `${prefix}captionsOff`,
   text: 'Captions off',
 } as const satisfies Text;
 
-/** @internal */
 export const pausedText = {
   key: `${prefix}paused`,
   text: 'Paused',
 } as const satisfies Text;
 
-/** @internal */
 export const playingText = {
   key: `${prefix}playing`,
   text: 'Playing',
 } as const satisfies Text;
 
-/** @internal */
 export const fullscreenText = {
   key: `${prefix}fullscreen`,
   text: 'Fullscreen',
 } as const satisfies Text;
 
-/** @internal */
 export const pipText = {
   key: `${prefix}pip`,
   text: 'Picture in picture',
 } as const satisfies Text;
 
-/** @internal */
 export const exitPipText = {
   key: `${prefix}exitPip`,
   text: 'Exit picture in picture',
 } as const satisfies Text;
 
-/** @internal */
 export const seekedToText = {
   key: `${prefix}seekedTo`,
   text: 'Seeked to {time}',
