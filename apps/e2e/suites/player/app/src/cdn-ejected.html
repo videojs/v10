@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ejected CDN player</title>
+  </head>
+  <body>
+    <video-player>
+      <media-container>
+        <video></video>
+        <media-time-slider>
+          <media-slider-track>
+            <media-slider-buffer></media-slider-buffer>
+            <media-slider-fill></media-slider-fill>
+          </media-slider-track>
+          <media-slider-thumb></media-slider-thumb>
+        </media-time-slider>
+        <media-volume-slider orientation="vertical" thumb-alignment="edge">
+          <media-slider-track>
+            <media-slider-fill></media-slider-fill>
+          </media-slider-track>
+          <media-slider-thumb></media-slider-thumb>
+        </media-volume-slider>
+      </media-container>
+    </video-player>
+    <script type="module" src="/cdn-ejected.ts"></script>
+  </body>
+</html>
