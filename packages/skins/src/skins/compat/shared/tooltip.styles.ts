@@ -17,7 +17,7 @@ export default styles({
     },
     shortcut: {
       utilities: [
-        'min-w-[1.5em] rounded-sm bg-media-muted p-[0.1em] -me-0.5 text-center text-media-sm font-semibold leading-tight font-[inherit]',
+        'min-w-[1.5em] rounded-sm bg-media-muted p-[0.1em] -me-0.5 text-center text-media-sm [font-family:inherit] font-semibold leading-tight',
         'forced-colors:bg-black forced-colors:text-white forced-colors:forced-color-adjust-none',
       ],
     },
