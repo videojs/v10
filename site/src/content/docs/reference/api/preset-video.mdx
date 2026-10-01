@@ -23,7 +23,7 @@ import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
 import '@videojs/react/video/skin.css';
 ```
 
-Each skin has its own stylesheet. Import `@videojs/react/video/minimal-skin.css` instead when you use `MinimalVideoSkin`.
+Each skin has its own stylesheet. Import `@videojs/react/video/neutral-skin.css` instead when you use `NeutralVideoSkin`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -32,13 +32,13 @@ import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 ```
 
-Import `@videojs/html/video/minimal-skin` instead for the minimal skin. Or load one <DocsLink slug="guides/cdn">CDN</DocsLink> bundle that registers the player and a skin together:
+Import `@videojs/html/video/neutral-skin` instead for the neutral skin. Or load one <DocsLink slug="guides/cdn">CDN</DocsLink> bundle that registers the player and a skin together:
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 ```
 
-`video-minimal.js` registers the minimal skin instead, and `video-player.js` registers `<video-player>` alone.
+`video-neutral.js` registers the neutral skin instead, and `video-player.js` registers `<video-player>` alone.
 </FrameworkCase>
 
 ## Usage
@@ -158,7 +158,7 @@ customElements.define('my-video-player', PlayerElement);
 ## Skins
 
 - <DocsLink slug="reference/components/video-skin">VideoSkin</DocsLink> — the default skin, with the modern, frosted look.
-- <DocsLink slug="reference/components/video-minimal-skin">MinimalVideoSkin</DocsLink> — the visually lighter variant, closer to a classic control bar.
+- <DocsLink slug="reference/components/video-neutral-skin">NeutralVideoSkin</DocsLink> — the visually lighter variant, closer to a classic control bar.
 
 ## Media
 
@@ -181,10 +181,10 @@ The preset plays through a native <DocsLink slug="reference/components/video">`<
 | `usePlayer` | The player-store hook, typed to `videoFeatures`. |
 | `videoFeatures` | The [feature bundle](#feature-bundle). |
 | `VideoSkin`, `VideoSkinProps` | The default [skin](#skins). |
-| `MinimalVideoSkin`, `MinimalVideoSkinProps` | The minimal [skin](#skins). |
+| `NeutralVideoSkin`, `NeutralVideoSkinProps` | The neutral [skin](#skins). |
 | `Video`, `VideoProps` | The [media](#media) component. |
 
-Stylesheets: `@videojs/react/video/skin.css` and `@videojs/react/video/minimal-skin.css`.
+Stylesheets: `@videojs/react/video/skin.css` and `@videojs/react/video/neutral-skin.css`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -196,7 +196,7 @@ The preset root, `@videojs/html/video`, has no side effects. Importing it never 
 | `PlayerController` | The player controller, bound to the video player's store. |
 | `videoFeatures` | The [feature bundle](#feature-bundle). |
 | `VideoSkinElement` | The default [skin](#skins) element class. |
-| `MinimalVideoSkinElement` | The minimal [skin](#skins) element class. |
+| `NeutralVideoSkinElement` | The neutral [skin](#skins) element class. |
 
 Registration entry points are side-effect-only:
 
@@ -204,7 +204,7 @@ Registration entry points are side-effect-only:
 | --- | --- |
 | `@videojs/html/video/player` | `<video-player>` |
 | `@videojs/html/video/skin` | `<video-skin>`, `<media-container>`, and the UI elements the skin composes |
-| `@videojs/html/video/minimal-skin` | `<video-minimal-skin>`, `<media-container>`, and the UI elements the minimal skin composes |
+| `@videojs/html/video/neutral-skin` | `<video-neutral-skin>`, `<media-container>`, and the UI elements the neutral skin composes |
 | `@videojs/html/video/ui` | `<media-container>` and the UI elements of the default skin, without the skin, for a layout you write yourself |
-| `@videojs/html/video/minimal-ui` | `<media-container>` and the UI elements of the minimal skin, without the skin |
+| `@videojs/html/video/neutral-ui` | `<media-container>` and the UI elements of the neutral skin, without the skin |
 </FrameworkCase>
