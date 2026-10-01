@@ -20,12 +20,7 @@ import {
   type MaybeResolvedPresentation,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
-import {
-  createHlsVideoEngine,
-  type HlsVideoEngineConfig,
-  type HlsVideoEngineContext,
-  type HlsVideoEngineState,
-} from '../../engines/hls/engine';
+import { createEngine, type EngineConfig, type EngineContext, type EngineState } from '../../engines/hls/engine';
 import {
   DVR_EXPERIMENTAL_MESSAGE,
   LOW_LATENCY_UNSUPPORTED_MESSAGE,
@@ -76,18 +71,18 @@ export interface HlsVideoSource {
 export type HlsVideoAdapterOptions =
   | {
       /**
-       * Engine config forwarded to `createHlsVideoEngine`. Its `drm` merges over the license servers derived from the
-       * current `source.drm`, so an entry here names a server the source does not. With no `keySystems`, `drm` is keyed
-       * by the default systems' ids.
+       * Engine config forwarded to `createEngine`. Its `drm` merges over the license servers derived from the current
+       * `source.drm`, so an entry here names a server the source does not. With no `keySystems`, `drm` is keyed by the
+       * default systems' ids.
        */
-      config?: HlsVideoEngineConfig;
+      config?: EngineConfig;
     }
   | {
       /**
-       * The same, with `keySystems` narrowed. A constructor cannot be generic per call the way `createHlsVideoEngine`
-       * is, so `drm` is keyed by any id here; the engine still negotiates only what `keySystems` composes.
+       * The same, with `keySystems` narrowed. A constructor cannot be generic per call the way `createEngine` is, so
+       * `drm` is keyed by any id here; the engine still negotiates only what `keySystems` composes.
        */
-      config: HlsVideoEngineConfig<readonly KeySystemModule[]> & { keySystems: readonly KeySystemModule[] };
+      config: EngineConfig<readonly KeySystemModule[]> & { keySystems: readonly KeySystemModule[] };
     };
 
 export interface HlsVideoAdapterProps {
@@ -99,7 +94,7 @@ export interface HlsVideoAdapterProps {
 }
 
 export interface HlsVideoAdapterAPI extends HlsVideoAdapterProps {
-  readonly engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
+  readonly engine: Composition<EngineState, EngineContext>;
   readonly error: HlsVideoMediaError | null;
   readonly liveEdgeStart: number;
   readonly targetLiveWindow: number;
@@ -192,8 +187,8 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       return undefined;
     }
 
-    readonly #engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
-    #config: HlsVideoEngineConfig<readonly KeySystemModule[]>;
+    readonly #engine: Composition<EngineState, EngineContext>;
+    #config: EngineConfig<readonly KeySystemModule[]>;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsVideoImpl.defaultProps.preload;
     #disableRemotePlayback: boolean = HlsVideoImpl.defaultProps.disableRemotePlayback;
     #streamType: HlsVideoMediaStreamType = HlsVideoImpl.defaultProps.streamType;
@@ -267,7 +262,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
      * Underlying playback engine — the low-level SPF reactive composition that drives playback. An advanced escape
      * hatch for direct engine access; normal playback is driven through this element's own properties and methods.
      */
-    get engine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
+    get engine(): Composition<EngineState, EngineContext> {
       return this.#engine;
     }
 
@@ -583,8 +578,8 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       }
     }
 
-    #createEngine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
-      return createHlsVideoEngine(this.#config);
+    #createEngine(): Composition<EngineState, EngineContext> {
+      return createEngine(this.#config);
     }
 
     #cancelPendingPlay(): void {

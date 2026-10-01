@@ -8,10 +8,10 @@ import {
   type SvtaError,
 } from '../../../media/errors';
 import {
-  createHlsAudioEngine,
-  type HlsAudioEngineConfig,
-  type HlsAudioEngineContext,
-  type HlsAudioEngineState,
+  createEngine,
+  type EngineConfig,
+  type EngineContext,
+  type EngineState,
 } from '../../engines/hls/engine-audio-only';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
 import {
@@ -24,8 +24,8 @@ import type { HlsVideoSource } from '../hls-video/mixin';
 
 /** What `new HlsAudioAdapter(options)` accepts; see `HlsVideoAdapterOptions` for why it is typed here. */
 export interface HlsAudioAdapterOptions {
-  /** Engine config forwarded to `createHlsAudioEngine`. */
-  config?: HlsAudioEngineConfig;
+  /** Engine config forwarded to `createEngine`. */
+  config?: EngineConfig;
 }
 
 export interface HlsAudioAdapterProps {
@@ -36,7 +36,7 @@ export interface HlsAudioAdapterProps {
 }
 
 export interface HlsAudioAdapterAPI extends HlsAudioAdapterProps {
-  readonly engine: Composition<HlsAudioEngineState, HlsAudioEngineContext>;
+  readonly engine: Composition<EngineState, EngineContext>;
   readonly error: HlsVideoMediaError | null;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
@@ -55,8 +55,8 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  * Mixin that adds SPF audio-only HLS playback to any base class.
  *
  * Parallel to `HlsVideoMixin` with one substantive difference: the underlying engine is the audio-only variant
- * (`createHlsAudioEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback /
- * play() contract per the WHATWG HTML spec is identical to the default adapter.
+ * (`createEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback / play()
+ * contract per the WHATWG HTML spec is identical to the default adapter.
  *
  * Selecting this adapter is the variant decision: instantiating `HlsAudioAdapterCore` opts the consumer into audio-only
  * delivery even when the source is a mixed-AV HLS manifest.
@@ -91,8 +91,8 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       return undefined;
     }
 
-    readonly #engine: Composition<HlsAudioEngineState, HlsAudioEngineContext>;
-    #config: HlsAudioEngineConfig;
+    readonly #engine: Composition<EngineState, EngineContext>;
+    #config: EngineConfig;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsAudioImpl.defaultProps.preload;
     #disableRemotePlayback: boolean = HlsAudioImpl.defaultProps.disableRemotePlayback;
     #error: HlsVideoMediaError | null = null;
@@ -167,7 +167,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
      * Underlying playback engine — the low-level SPF reactive composition that drives playback. An advanced escape
      * hatch for direct engine access; normal playback is driven through this element's own properties and methods.
      */
-    get engine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
+    get engine(): Composition<EngineState, EngineContext> {
       return this.#engine;
     }
 
@@ -317,8 +317,8 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       return withAlternativeMediaSuggestion(message, this);
     }
 
-    #createEngine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
-      return createHlsAudioEngine(this.#config);
+    #createEngine(): Composition<EngineState, EngineContext> {
+      return createEngine(this.#config);
     }
 
     #cancelPendingPlay(): void {
