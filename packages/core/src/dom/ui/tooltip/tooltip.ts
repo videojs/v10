@@ -19,6 +19,7 @@ export interface TooltipChangeDetails {
   event?: Event;
 }
 
+/** @internal */
 export interface TooltipOptions {
   transition: TransitionApi;
   onOpenChange: (open: boolean, details: TooltipChangeDetails) => void;
@@ -33,10 +34,12 @@ export interface TooltipOptions {
   popupGroup?: () => PopupGroup | undefined;
 }
 
+/** @internal */
 export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {
   onPointerDown: (event: UIPointerEvent) => void;
 }
 
+/** @internal */
 export interface TooltipPopupProps extends PopoverPopupProps {}
 
 /** @internal */

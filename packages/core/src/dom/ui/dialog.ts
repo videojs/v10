@@ -6,6 +6,7 @@ import { createDismissLayer } from './dismiss-layer';
 import { lockInteractions } from './interaction-lock';
 import type { TransitionApi } from './transition';
 
+/** @internal */
 export interface DialogOptions {
   /** Transition API for animated open/close. */
   transition: TransitionApi;
@@ -17,6 +18,7 @@ export interface DialogOptions {
   closeOnEscape?: () => boolean;
 }
 
+/** @internal */
 export interface DialogTriggerProps {
   onClick: (event: UIEvent) => void;
 }

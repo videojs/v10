@@ -6,22 +6,14 @@ export type StateAttrMap<State> = {
   [Key in keyof State]?: string;
 };
 
-/**
- * Constraint for core UI classes that compute component state.
- *
- * @internal
- */
+/** Constraint for core UI classes that compute component state. */
 export interface UIComponent<Props = object, State extends object = object> {
   getState(): State;
   setProps?(props: Props): void;
   getAttrs?(state: State): object;
 }
 
-/**
- * Constraint for core UI classes that derive component state from media state.
- *
- * @internal
- */
+/** Constraint for core UI classes that derive component state from media state. */
 export interface MediaUIComponent<Props = object, State extends object = object> extends UIComponent<Props, State> {
   setMedia(media: object): void;
 }
@@ -56,11 +48,7 @@ export interface RadioOptionsState<Option extends RadioOption = RadioOption> ext
   availability: 'available' | 'unavailable';
 }
 
-/**
- * Constraint for media button cores that provide a label derived from state.
- *
- * @internal
- */
+/** Constraint for media button cores that provide a label derived from state. */
 export interface MediaButtonComponent<
   Props = object,
   ComponentState extends ButtonState = ButtonState,

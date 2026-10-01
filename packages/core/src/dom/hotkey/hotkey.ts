@@ -17,6 +17,7 @@ export interface ParsedHotkeyBinding {
   originalKey: string;
 }
 
+/** @internal */
 export interface HotkeyOptions extends Pick<HotkeyProps, 'keys' | 'target' | 'disabled' | 'value'> {
   onActivate: (event: KeyboardEvent, key: string) => void;
   /** Whether `event.repeat` should fire the callback. */

@@ -3,6 +3,7 @@ import { noop } from '@videojs/utils/function';
 
 import type { TransitionState } from '../../core/ui/transition';
 
+/** @internal */
 export interface TransitionApi {
   state: State<TransitionState>;
   open(el?: TransitionElement): Promise<void>;
@@ -11,6 +12,7 @@ export interface TransitionApi {
   destroy(): void;
 }
 
+/** @internal */
 export type TransitionElement = HTMLElement | null | (() => HTMLElement | null);
 
 /**

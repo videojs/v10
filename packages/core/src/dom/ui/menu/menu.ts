@@ -16,6 +16,7 @@ export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
 export type MenuChangeDetails = PopoverChangeDetails;
 
+/** @internal */
 export interface MenuOptions {
   transition: TransitionApi;
   onOpenChange: (open: boolean, details: MenuChangeDetails) => void;

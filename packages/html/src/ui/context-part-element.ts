@@ -4,11 +4,7 @@ import type { PropertyValues } from '@videojs/element';
 
 import { UIElement } from './ui-element';
 
-/**
- * Shape that compound context values must satisfy for parts to consume.
- *
- * @internal
- */
+/** Shape that compound context values must satisfy for parts to consume. */
 export interface PartContextValue<State extends object> {
   state: State;
   stateAttrMap: StateAttrMap<State>;
