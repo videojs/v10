@@ -1,6 +1,6 @@
 import '@videojs/html/video/player';
 import '@videojs/html/ui/container';
-import { PlayerController, playerContext, selectTime, UIElement } from '@videojs/html';
+import { PlayerController, playerContext, type PropertyValues, selectTime, UIElement } from '@videojs/html';
 
 class SeekByElement extends UIElement {
   static readonly tagName = 'demo-seek-by';
@@ -27,7 +27,7 @@ class SeekByElement extends UIElement {
     this.#disconnect = null;
   }
 
-  protected override update(changed: Map<string, unknown>): void {
+  protected override update(changed: PropertyValues): void {
     super.update(changed);
 
     const button = this.querySelector('button');
