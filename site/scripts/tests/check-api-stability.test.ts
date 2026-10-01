@@ -250,6 +250,9 @@ describe('documentedStability', () => {
     expect(documentedStability(record('MenuProps', { file: '/repo/packages/react/src/menu.tsx' }), docs)).toBe(
       'stable'
     );
+    expect(documentedStability(record('MenuProps', { file: 'C:\\repo\\packages\\react\\src\\menu.tsx' }), docs)).toBe(
+      'stable'
+    );
     expect(
       documentedStability(
         record('MenuOptions', { file: '/repo/packages/core/src/menu.ts', specifiers: ['@videojs/html'] }),
