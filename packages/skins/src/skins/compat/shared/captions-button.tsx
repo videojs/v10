@@ -1,4 +1,4 @@
-import type { CaptionsButtonProps } from '@videojs/core';
+import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
@@ -16,7 +16,7 @@ export function CaptionsToggle() {
   );
 }
 
-export function CaptionsButton({ className, ...props }: Props<CaptionsButtonProps> = {}) {
+export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <$.CaptionsButton $render={Button} className={[captionsButtonStyles.root, className]} {...props}>
       <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
