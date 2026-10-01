@@ -7,9 +7,9 @@ export default styles({
     popup: {
       utilities: [
         'pointer-events-none z-20 whitespace-nowrap rounded-md bg-media-popover px-1.5 py-0.5 text-media-popover-foreground',
-        'surface-media [--media-popup-side-offset:var(--media-tooltip-side-offset)] [--media-tooltip-side-offset:24px]',
+        'surface-media [--media-popup-side-offset:var(--media-tooltip-side-offset)] [--media-tooltip-side-offset:calc(var(--media-spacing)*6)]',
         'data-open:flex data-open:items-center data-open:gap-1',
-        'media-opaque:outline forced-colors:outline',
+        'media-high-contrast:outline forced-colors:outline',
       ],
     },
     screenPopup: {
@@ -17,7 +17,7 @@ export default styles({
     },
     shortcut: {
       utilities: [
-        'min-w-[1.5em] rounded-sm bg-media-muted p-[0.1em] -me-0.5 text-center text-[11px] font-semibold leading-tight font-[inherit]',
+        'min-w-[1.5em] rounded-sm bg-media-muted p-[0.1em] -me-0.5 text-center text-media-sm font-semibold leading-tight font-[inherit]',
         'forced-colors:bg-black forced-colors:text-white forced-colors:forced-color-adjust-none',
       ],
     },

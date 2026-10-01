@@ -15,7 +15,8 @@ export default styles({
     },
     label: {
       // The seconds sit inside the arc the icon draws, so they are placed against it, not flowed after it.
-      utilities: 'absolute bottom-[-3px] text-[9px] font-medium tracking-tighter tabular-nums',
+      utilities:
+        'absolute bottom-[calc(var(--media-spacing)*-0.75)] text-[calc(var(--media-spacing)*2.25)] font-medium tracking-tighter tabular-nums',
     },
     backwardLabel: {
       utilities: '-left-px',

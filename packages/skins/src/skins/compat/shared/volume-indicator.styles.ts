@@ -8,7 +8,7 @@ export default styles({
       utilities: [
         'group/volume-status col-start-2 row-start-1 mt-3.5 h-7 w-[min(70%,11rem)] self-start overflow-hidden',
         'rounded-media-pill! bg-[rgba(255,255,255,0.2)]! p-0! text-white',
-        'media-opaque:bg-black! media-opaque:outline media-opaque:outline-white',
+        'media-high-contrast:bg-black! media-high-contrast:outline media-high-contrast:outline-white',
         'forced-colors:bg-[Canvas]! forced-colors:text-[CanvasText] forced-colors:forced-color-adjust-none',
       ],
     },
@@ -23,7 +23,7 @@ export default styles({
     },
     icon: {
       utilities: [
-        'hidden size-[18px] shrink-0 opacity-50 mix-blend-difference media-opaque:opacity-100',
+        'hidden size-4.5 shrink-0 opacity-50 mix-blend-difference media-high-contrast:opacity-100',
         'forced-colors:rounded-media-pill forced-colors:bg-[Canvas] forced-colors:text-[CanvasText] forced-colors:opacity-100 forced-colors:mix-blend-normal',
       ],
     },

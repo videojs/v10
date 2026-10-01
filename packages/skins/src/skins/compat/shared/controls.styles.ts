@@ -17,7 +17,7 @@ export default styles({
     center: {
       utilities: [
         'group-not-data-visible/controls:pointer-events-none pointer-events-auto absolute left-1/2 top-1/2 hidden transform-[translate(-50%,-50%)] items-center rtl:flex-row-reverse gap-3 media-360:flex',
-        'media-opaque:rounded-lg media-opaque:bg-media-background forced-colors:bg-transparent!',
+        'media-high-contrast:rounded-lg media-high-contrast:bg-media-background forced-colors:bg-transparent!',
         transition,
         'motion-safe:group-not-data-visible/controls:transform-[translate(-50%,-50%)_scale(0.9)]',
       ],
@@ -25,7 +25,7 @@ export default styles({
     top: {
       utilities: [
         'group-not-data-visible/controls:pointer-events-none pointer-events-auto absolute end-3 top-2.5 flex items-center gap-1',
-        'media-opaque:rounded-lg media-opaque:bg-media-background forced-colors:rounded-lg forced-colors:bg-[Canvas]',
+        'media-high-contrast:rounded-lg media-high-contrast:bg-media-background forced-colors:rounded-lg forced-colors:bg-[Canvas]',
         'forced-colors:inset-x-0 forced-colors:top-0 forced-colors:justify-end forced-colors:rounded-none! forced-colors:px-3 forced-colors:py-2.5',
         'forced-colors:end-0',
         transition,
@@ -34,14 +34,14 @@ export default styles({
     },
     centerButton: {
       utilities: [
-        'bg-[rgba(0,0,0,0.4)]! media-opaque:bg-media-background! forced-colors:bg-[ButtonFace]!',
+        'bg-[rgba(0,0,0,0.4)]! media-high-contrast:bg-media-background! forced-colors:bg-[ButtonFace]!',
         'hover:bg-[rgba(0,0,0,0.85)]! focus-visible:bg-[rgba(0,0,0,0.85)]! aria-expanded:bg-[rgba(0,0,0,0.85)]!',
-        'media-opaque:hover:bg-media-foreground! media-opaque:focus-visible:bg-media-foreground! media-opaque:aria-expanded:bg-media-foreground!',
+        'media-high-contrast:hover:bg-media-foreground! media-high-contrast:focus-visible:bg-media-foreground! media-high-contrast:aria-expanded:bg-media-foreground!',
         'forced-colors:hover:bg-[Highlight]! forced-colors:focus-visible:bg-[Highlight]! forced-colors:aria-expanded:bg-[Highlight]!',
       ],
     },
     centerPlay: {
-      utilities: 'size-[58px]!',
+      utilities: 'size-14.5!',
     },
     centerPlayIcon: {
       utilities: 'size-7!',
@@ -50,12 +50,12 @@ export default styles({
       utilities: 'hidden size-9! pointer-fine:grid',
     },
     centerSeekIcon: {
-      utilities: 'size-[18px]',
+      utilities: 'size-4.5',
     },
     bottom: {
       utilities: [
         'group-not-data-visible/controls:pointer-events-none pointer-events-auto absolute inset-x-2 bottom-2 flex flex-col gap-0',
-        'media-opaque:rounded-lg media-opaque:bg-media-background forced-colors:rounded-lg forced-colors:bg-[Canvas]',
+        'media-high-contrast:rounded-lg media-high-contrast:bg-media-background forced-colors:rounded-lg forced-colors:bg-[Canvas]',
         transition,
         'motion-safe:group-not-data-visible/controls:transform-[translateY(var(--media-spacing))]',
       ],

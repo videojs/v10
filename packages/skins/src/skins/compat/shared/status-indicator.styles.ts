@@ -8,7 +8,7 @@ export default styles({
       utilities: 'group/input-status col-start-2 row-start-1 self-start mt-3',
     },
     icon: {
-      utilities: 'hidden size-[18px] shrink-0',
+      utilities: 'hidden size-4.5 shrink-0',
     },
     captionsOnIcon: {
       utilities: 'group-data-[status=captions-on]/input-status:block',

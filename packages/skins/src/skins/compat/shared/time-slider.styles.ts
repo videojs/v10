@@ -24,7 +24,7 @@ export default styles({
       utilities: [
         'absolute inset-x-0 isolate h-1 rounded-media-pill forced-colors:h-1.5',
         'before:absolute before:inset-y-0 before:rounded-media-pill before:bg-current before:opacity-20 before:clip-media-chapter-track-x',
-        'media-opaque:before:opacity-50! forced-colors:before:bg-[Canvas] forced-colors:before:opacity-100! forced-colors:before:forced-color-adjust-none',
+        'media-high-contrast:before:opacity-50! forced-colors:before:bg-[Canvas] forced-colors:before:opacity-100! forced-colors:before:forced-color-adjust-none',
         'forced-colors:before:border forced-colors:before:border-solid forced-colors:before:border-[CanvasText]',
       ],
     },
@@ -71,7 +71,7 @@ export default styles({
       utilities: [
         'w-auto! rounded-md bg-media-popover px-1.5! py-0.5 text-media-popover-foreground',
         'surface-media',
-        'media-opaque:outline forced-colors:outline',
+        'media-high-contrast:outline forced-colors:outline',
       ],
     },
     previewLabel: {

@@ -9,11 +9,11 @@ export default styles({
     popup: {
       utilities: [
         'z-20 m-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! rounded-lg border-0 bg-media-popover p-1 text-media-popover-foreground',
-        'surface-media [--media-popup-side-offset:var(--media-popover-side-offset)] [--media-popover-side-offset:24px]',
+        'surface-media [--media-popup-side-offset:var(--media-popover-side-offset)] [--media-popover-side-offset:calc(var(--media-spacing)*6)]',
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         'transition-media-popup media-transitioning:transition-media-popup',
-        'media-opaque:outline forced-colors:outline',
+        'media-high-contrast:outline forced-colors:outline',
       ],
     },
     resizablePopup: {
@@ -24,7 +24,7 @@ export default styles({
         ...menuContent,
         'absolute max-h-full overflow-auto overscroll-none outline-hidden',
         '[clip-path:inset(0)] transition-[transform,filter,clip-path] duration-media-menu ease-out',
-        'not-data-submenu:inset-x-1 not-data-submenu:top-1 not-data-submenu:max-h-[calc(100%-8px)]',
+        'not-data-submenu:inset-x-1 not-data-submenu:top-1 not-data-submenu:max-h-[calc(100%-var(--media-spacing)*2)]',
         'not-data-submenu:data-child-open:transform-[translateX(-100%)]',
         'not-data-submenu:data-child-open:rtl:transform-[translateX(100%)]',
         'not-data-submenu:data-child-open:[clip-path:inset(0_0_0_100%)] not-data-submenu:data-child-open:rtl:[clip-path:inset(0_100%_0_0)]',
@@ -37,14 +37,14 @@ export default styles({
       utilities: [
         'flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-start',
         'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current',
-        'data-highlighted:bg-(--media-button-highlight) media-opaque:data-highlighted:highlight-media forced-colors:data-highlighted:highlight-media',
+        'data-highlighted:bg-(--media-button-highlight) media-high-contrast:data-highlighted:highlight-media forced-colors:data-highlighted:highlight-media',
       ],
     },
     backItem: {
       utilities: [
         'mb-0.5 flex w-full cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm px-2 py-1.5 text-start',
         'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current',
-        'data-highlighted:bg-(--media-button-highlight) media-opaque:data-highlighted:highlight-media forced-colors:data-highlighted:highlight-media',
+        'data-highlighted:bg-(--media-button-highlight) media-high-contrast:data-highlighted:highlight-media forced-colors:data-highlighted:highlight-media',
       ],
     },
     separator: {
@@ -57,10 +57,10 @@ export default styles({
       utilities: 'max-w-24 truncate',
     },
     tier: {
-      utilities: 'ps-0.5 pt-px text-[11px] font-semibold leading-none opacity-70',
+      utilities: 'ps-0.5 pt-px text-media-sm font-semibold leading-none opacity-70',
     },
     badge: {
-      utilities: 'rounded-sm bg-media-muted px-1.5 text-[11px] font-semibold',
+      utilities: 'rounded-sm bg-media-muted px-1.5 text-media-sm font-semibold',
     },
     radioGroup: {
       utilities: 'flex flex-col gap-0.5',
@@ -69,17 +69,17 @@ export default styles({
       utilities: [
         'group/menu-radio flex cursor-pointer items-center justify-between gap-3 rounded-sm px-2 py-1.5',
         'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current',
-        'data-highlighted:bg-(--media-button-highlight) media-opaque:data-highlighted:highlight-media forced-colors:data-highlighted:highlight-media',
+        'data-highlighted:bg-(--media-button-highlight) media-high-contrast:data-highlighted:highlight-media forced-colors:data-highlighted:highlight-media',
       ],
     },
     indicator: {
       utilities: 'ms-auto -me-1 shrink-0 opacity-0 group-aria-checked/menu-radio:opacity-100',
     },
     triggerIcon: {
-      utilities: 'size-[18px] shrink-0 opacity-70',
+      utilities: 'size-4.5 shrink-0 opacity-70',
     },
     radioIcon: {
-      utilities: 'size-[18px] shrink-0 opacity-70',
+      utilities: 'size-4.5 shrink-0 opacity-70',
     },
     forwardChevron: {
       utilities: 'size-4 shrink-0 opacity-70 rtl:transform-[scaleX(-1)]',

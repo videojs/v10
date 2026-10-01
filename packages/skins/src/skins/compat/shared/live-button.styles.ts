@@ -8,7 +8,7 @@ export default styles({
       utilities: [
         // The shared button shell is a centred grid, so the dot and label flow into columns rather than
         // fighting it with a display override.
-        'group/live grid-flow-col w-auto! items-center gap-1.5 px-2.5! text-[11px] font-semibold uppercase tracking-wider',
+        'group/live grid-flow-col w-auto! items-center gap-1.5 px-2.5! text-media-sm font-semibold uppercase tracking-wider',
       ],
     },
     dot: {

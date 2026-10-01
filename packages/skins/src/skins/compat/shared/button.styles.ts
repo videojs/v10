@@ -10,8 +10,8 @@ export default styles({
         'hover:bg-(--media-button-highlight) focus-visible:bg-(--media-button-highlight) aria-expanded:bg-(--media-button-highlight)',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-media-ring',
         'outline-none motion-reduce:transition-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40 disabled:cursor-not-allowed disabled:opacity-40',
-        'media-opaque:hover:bg-media-foreground media-opaque:hover:text-media-background media-opaque:focus-visible:bg-media-foreground media-opaque:focus-visible:text-media-background',
-        'media-opaque:aria-expanded:bg-media-foreground media-opaque:aria-expanded:text-media-background',
+        'media-high-contrast:hover:bg-media-foreground media-high-contrast:hover:text-media-background media-high-contrast:focus-visible:bg-media-foreground media-high-contrast:focus-visible:text-media-background',
+        'media-high-contrast:aria-expanded:bg-media-foreground media-high-contrast:aria-expanded:text-media-background',
         'forced-colors:border forced-colors:border-solid forced-colors:border-[ButtonText] forced-colors:bg-[ButtonFace] forced-colors:text-[ButtonText]',
         'forced-colors:forced-color-adjust-none',
         'forced-colors:hover:bg-[Highlight] forced-colors:hover:text-[HighlightText] forced-colors:focus-visible:bg-[Highlight] forced-colors:focus-visible:text-[HighlightText]',
@@ -20,10 +20,10 @@ export default styles({
       ],
     },
     icon: {
-      utilities: 'col-start-1 row-start-1 size-[18px]',
+      utilities: 'col-start-1 row-start-1 size-4.5',
     },
     iconBase: {
-      utilities: 'col-start-1 row-start-1 hidden size-[18px]',
+      utilities: 'col-start-1 row-start-1 hidden size-4.5',
     },
   },
 });
