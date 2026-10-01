@@ -11,7 +11,7 @@ import {
 import { DEFAULT_KEY_SYSTEMS, fairPlayAirPlayKeySystem, widevineKeySystem } from '../../../../media/dom/key-systems';
 import {
   SVTA_DRM_CERTIFICATE_ERROR,
-  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_LICENSE_REQUEST_GENERATION_ERROR,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
   type SvtaError,
 } from '../../../../media/errors';
@@ -620,7 +620,7 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
     receiverRequest(context.mediaElement.get()!);
 
     await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toContain(SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED)
+      expect(state.errors.get()?.map((error) => error.code)).toContain(SVTA_LICENSE_REQUEST_GENERATION_ERROR)
     );
 
     reactor.destroy();
@@ -648,7 +648,7 @@ describe('setupAirPlayFairPlay legacy fallback', () => {
     receiverRequest(video);
 
     await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toContain(SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED)
+      expect(state.errors.get()?.map((error) => error.code)).toContain(SVTA_LICENSE_REQUEST_GENERATION_ERROR)
     );
 
     reactor.destroy();
