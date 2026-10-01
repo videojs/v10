@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 
+import { CaptionsMenu } from './captions-menu';
 import { ControlsContent, type ControlsSlots } from './controls';
 import controlsStyles from './controls.styles';
 import { ScreenControls } from './screen-controls';
@@ -18,7 +19,7 @@ export function VideoControlsContent({
       <ControlsContent
         center={center}
         live={live}
-        menu={<SettingsMenu />}
+        menu={live ? <CaptionsMenu /> : <SettingsMenu />}
         renderThumbnail={renderThumbnail}
         seekBackward={seekBackward}
         seekForward={seekForward}

@@ -3,7 +3,7 @@ import { Box, type VjscNode } from 'vjsc/components';
 
 import { AirPlayButton } from './airplay-button';
 import audioControlsStyles from './audio-controls.styles';
-import { CaptionsButton } from './captions-button';
+import { CaptionsToggle } from './captions-button';
 import controlsStyles from './controls.styles';
 import { LiveButton } from './live-button';
 import { PlayButton } from './play-button';
@@ -39,7 +39,7 @@ export function ControlsRow({
       </$.Controls.Group>
 
       <$.Controls.Group className={controlsStyles.group}>
-        <CaptionsButton />
+        {(!live || audio) && <CaptionsToggle />}
         {menu ?? (audio && <VolumePopover />)}
         {audio && <AirPlayButton />}
       </$.Controls.Group>

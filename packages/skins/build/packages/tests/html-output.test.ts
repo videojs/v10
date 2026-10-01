@@ -71,6 +71,15 @@ describe('generated HTML package skins', () => {
     if (skin === 'compat-live-video' || skin === 'compat-live-audio') {
       expect(tags).not.toContain('time-slider');
       expect(tags).not.toContain('time');
+      expect(tags).not.toContain('quality-radio-group');
+      expect(tags).not.toContain('audio-track-radio-group');
+      expect(tags).not.toContain('playback-rate-radio-group');
+    }
+
+    if (skin === 'compat-live-video') {
+      expect(tags).toContain('captions-radio-group');
+      expect(template.match(/<media-captions-button\b/g)).toHaveLength(1);
+      expect(template).not.toContain('media-settings-button');
     }
 
     for (const tag of registeredTags) {
