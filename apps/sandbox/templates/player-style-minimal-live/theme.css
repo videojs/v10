@@ -1,0 +1,47 @@
+/*
+ * Live additions. The base look comes from the on-demand sibling's stylesheet, imported alongside this one, so only
+ * what the live branch adds lives here.
+ *
+ * Simplification worth knowing: the original branches again on whether there is a target live window, showing a
+ * scrubber and seek controls only when the stream has DVR. v10 exposes no equivalent of `targetlivewindow` to select
+ * on, so this skin renders the DVR shape and leaves the no-DVR variant unported.
+ */
+
+.ps-live-left,
+.ps-live-right {
+  display: flex;
+  align-items: center;
+}
+
+.ps-live-left {
+  margin-right: auto;
+}
+
+.ps-live-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding-inline: 0.5em;
+  white-space: nowrap;
+}
+
+.ps-live-dot {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 2px;
+  background: currentcolor;
+  fill: currentcolor;
+}
+
+/* At the live edge the indicator is live-red; behind it, dimmed. */
+.ps-live-button[data-live-edge] .ps-live-dot {
+  color: #e00;
+}
+
+.ps-live-button:not([data-live-edge]) .ps-live-dot {
+  opacity: 0.5;
+}
+
+.ps-live-text {
+  font-size: 0.9em;
+}

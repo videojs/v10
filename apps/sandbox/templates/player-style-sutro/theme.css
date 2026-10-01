@@ -1,0 +1,403 @@
+/*
+ * Sutro, ported from `@player.style/sutro` (media-chrome) to Video.js 10 elements.
+ *
+ * The original's stylesheet is only 66 lines: it sets a `--base` scale and a handful of `--media-*` variables, then
+ * lets media-chrome's built-in control styling do the rest. v10 has no equivalents for most of those variables, so the
+ * port has to author what the original got for free — control sizing, the menu surface, the slider parts.
+ *
+ * `--base` steps 18 → 20 → 24px across a width breakpoint and fullscreen. That is exactly what v10's
+ * `--media-scale-unit` does for the packaged skins, but that variable is internal, so the scale is kept local here.
+ */
+
+.ps-sutro {
+  --ps-base: 18px;
+  --ps-primary: #fff;
+  --ps-menu-bg: rgb(28 28 28 / 0.9);
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-sutro / inline-size;
+
+  background: #000;
+  color: var(--ps-primary);
+  font-size: calc(0.75 * var(--ps-base));
+  font-family: Roboto, "helvetica neue", "segoe ui", Arial, sans-serif;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+@container ps-sutro (inline-size >= 480px) {
+  .ps-sutro {
+    --ps-base: 20px;
+  }
+}
+
+.ps-sutro:fullscreen {
+  --ps-base: 24px;
+}
+
+.ps-sutro > video,
+.ps-sutro > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+.ps-gradient {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(0deg, #000000b0, transparent);
+}
+
+/* --- Control bar --- */
+
+.ps-bar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(0.25 * var(--ps-base));
+  padding: 0 calc(0.5 * var(--ps-base)) calc(0.35 * var(--ps-base));
+}
+
+.ps-button {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-content: center;
+  width: calc(2 * var(--ps-base));
+  height: calc(2 * var(--ps-base));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.9;
+  cursor: pointer;
+  transition: opacity 0.1s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.ps-button:hover {
+  opacity: 1;
+}
+
+.ps-button[data-hidden],
+.ps-button[data-availability="unavailable"],
+.ps-button[data-availability="unsupported"] {
+  display: none;
+}
+
+/* Sutro's icons are stroked outlines, not filled shapes. */
+.ps-icon {
+  width: calc(1.2 * var(--ps-base));
+  height: calc(1.2 * var(--ps-base));
+  fill: none;
+  stroke: var(--ps-primary);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ps-icon .svg-shadow {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: 0.15;
+  stroke-width: 2px;
+}
+
+.ps-fs-exit {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-enter {
+  display: none;
+}
+
+.ps-button[data-fullscreen] .ps-fs-exit {
+  display: block;
+}
+
+.ps-time {
+  flex: none;
+  padding: 0 calc(0.35 * var(--ps-base));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Time slider --- */
+
+.ps-range {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: calc(4 * var(--ps-base));
+  height: calc(1.5 * var(--ps-base));
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: calc(0.125 * var(--ps-base));
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.3);
+  transition: height 0.1s;
+}
+
+.ps-range:hover .ps-track {
+  height: calc(0.2 * var(--ps-base));
+}
+
+.ps-buffer,
+.ps-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+}
+
+.ps-buffer {
+  width: var(--media-slider-buffer, 0%);
+  background: rgb(255 255 255 / 0.4);
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+.ps-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: calc(0.7 * var(--ps-base));
+  height: calc(0.7 * var(--ps-base));
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  transition: transform 0.1s;
+}
+
+.ps-range:hover .ps-thumb,
+.ps-range[data-interactive] .ps-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0.25em;
+  margin: 0 0 calc(0.5 * var(--ps-base));
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-chapter,
+.ps-preview-time {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+.ps-chapter:empty {
+  display: none;
+}
+
+/* --- Volume --- */
+
+.ps-volume {
+  display: flex;
+  flex: none;
+  align-items: center;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.2s ease-out;
+}
+
+.ps-bar:hover .ps-volume,
+.ps-volume:focus-within {
+  width: calc(4 * var(--ps-base));
+}
+
+.ps-vslider {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(1.5 * var(--ps-base));
+  margin-inline: calc(0.3 * var(--ps-base));
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-vtrack {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: calc(0.125 * var(--ps-base));
+  transform: translateY(-50%);
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--ps-primary);
+}
+
+.ps-vthumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: calc(0.7 * var(--ps-base));
+  height: calc(0.7 * var(--ps-base));
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--ps-primary);
+}
+
+/* --- Settings menu --- */
+
+.ps-menu {
+  position: absolute;
+  right: calc(0.75 * var(--ps-base));
+  bottom: calc(2.75 * var(--ps-base));
+  min-width: calc(9 * var(--ps-base));
+  padding: calc(0.35 * var(--ps-base)) 0;
+  border-radius: calc(0.35 * var(--ps-base));
+  background: var(--ps-menu-bg);
+  backdrop-filter: blur(8px);
+  color: var(--ps-primary);
+}
+
+.ps-menu:not([data-open]) {
+  display: none;
+}
+
+.ps-menu-content:not([data-open]) {
+  display: none;
+}
+
+.ps-menu-item,
+.ps-menu-back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: calc(0.4 * var(--ps-base)) calc(0.8 * var(--ps-base));
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ps-menu-item:hover,
+.ps-menu-back:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.ps-menu-back {
+  border-bottom: 1px solid rgb(255 255 255 / 0.15);
+  margin-bottom: calc(0.25 * var(--ps-base));
+}
+
+.ps-radio {
+  display: block;
+}
+
+.ps-check {
+  opacity: 0;
+}
+
+.ps-menu-item[aria-checked="true"] .ps-check,
+.ps-menu-item[data-checked] .ps-check {
+  opacity: 1;
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1.4em;
+  border-radius: calc(0.35 * var(--ps-base));
+  background: var(--ps-menu-bg);
+  text-align: center;
+}
+
+.ps-dialog-close {
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--ps-primary);
+  color: #000;
+  font: inherit;
+  font-size: 0.875em;
+  cursor: pointer;
+}

@@ -1,0 +1,521 @@
+/*
+ * Winamp, ported from `@player.style/winamp` (media-chrome) to Video.js 10 elements.
+ *
+ * The artwork is referenced from player.style rather than copied in. That theme is where these assets live; the
+ * media-chrome repo does the same thing, keeping a one-kilobyte example that consumes the published theme rather than
+ * carrying the bitmaps. Pinned to a commit so the comparison does not drift.
+ *
+ * In the original, the entire transport sits outside `media-controller` and binds back with
+ * `mediacontroller="controller"`. v10 resolves player state through DOM ancestry with no id binding, so the controls
+ * are simply descendants of the player and `media-container` wraps only the video region.
+ */
+
+@font-face {
+  font-family: winamp;
+  src: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/winamp.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: winamp-numbers;
+  src: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/winamp-numbers.ttf")
+    format("truetype");
+}
+
+.ps-winamp {
+  --ps-cbuttons: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/CBUTTONS.png");
+  --ps-monoster: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/MONOSTER.png");
+
+  /* The window is a fixed-size skin, not a 16:9 frame — override the sandbox's video framing. */
+  width: 275px;
+  max-width: 100%;
+  margin: 0 auto;
+  aspect-ratio: auto;
+
+  position: relative;
+  display: block;
+  isolation: isolate;
+  background: transparent;
+  color: #00e201;
+  image-rendering: pixelated;
+  line-height: 1;
+  user-select: none;
+}
+
+.ps-container {
+  display: flex;
+  flex-flow: column-reverse wrap;
+  width: 275px;
+}
+
+/* --- Video window --- */
+
+.ps-window {
+  display: flex;
+  flex-direction: column;
+  width: 275px;
+  overflow: hidden;
+}
+
+.ps-wtop,
+.ps-wbottom {
+  display: flex;
+  flex: none;
+  width: 100%;
+  height: 20px;
+}
+
+.ps-wtop :nth-child(1) {
+  flex: none;
+  width: 25px;
+  height: 20px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWTL.png");
+}
+
+.ps-wtop :nth-child(2) {
+  flex-grow: 1;
+  width: 100%;
+  height: 20px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWT.png");
+  background-repeat: no-repeat;
+}
+
+.ps-wtop :nth-child(3) {
+  flex: none;
+  width: 25px;
+  height: 20px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWTR.png");
+}
+
+.ps-wbottom {
+  height: 14px;
+}
+
+.ps-wbottom :nth-child(1) {
+  flex: none;
+  width: 125px;
+  height: 14px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWBL.png");
+}
+
+.ps-wbottom :nth-child(2) {
+  flex-grow: 1;
+  height: 14px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWB.png");
+}
+
+.ps-wbottom :nth-child(3) {
+  flex: none;
+  width: 125px;
+  height: 14px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWBR.png");
+}
+
+.ps-wcenter {
+  display: flex;
+  flex: 1;
+}
+
+.ps-wleft,
+.ps-wright {
+  flex: none;
+  width: 11px;
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWL.png");
+}
+
+.ps-wright {
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/WINDOWR.png");
+}
+
+.ps-wmiddle {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-screen {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+}
+
+.ps-screen > video,
+.ps-screen > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+/* --- Player body --- */
+
+.ps-wrapper {
+  position: relative;
+  width: 275px;
+  height: 116px;
+  background: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/MAIN.png");
+}
+
+.ps-controls {
+  position: absolute;
+  top: 88px;
+  left: 16px;
+  display: flex;
+}
+
+.ps-cbtn {
+  display: block;
+  width: 23px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ps-cbtn > div {
+  width: 23px;
+  height: 18px;
+  background-image: var(--ps-cbuttons);
+}
+
+/* Sprite columns in CBUTTONS.png; the second row is the pressed state. */
+.ps-prev > div {
+  background-position: -136px 0;
+}
+
+.ps-prev:active > div {
+  background-position: -136px -18px;
+}
+
+.ps-play > div {
+  background-position: -114px 0;
+}
+
+.ps-play:active > div {
+  background-position: -114px -18px;
+}
+
+.ps-pause > div {
+  background-position: -91px 0;
+}
+
+.ps-pause:active > div {
+  background-position: -91px -18px;
+}
+
+.ps-stop > div {
+  background-position: -68px 0;
+}
+
+.ps-stop:active > div {
+  background-position: -68px -18px;
+}
+
+.ps-next > div {
+  background-position: -45px 0;
+}
+
+.ps-next:active > div {
+  background-position: -45px -18px;
+}
+
+.ps-fs {
+  width: 22px;
+  height: 16px;
+  margin-top: 1px;
+  margin-left: 6px;
+}
+
+.ps-fs > div {
+  width: 23px;
+  height: 16px;
+  background-position: -22px 0;
+}
+
+.ps-fs:active > div {
+  background-position: -22px -20px;
+}
+
+.ps-time {
+  position: absolute;
+  top: 23px;
+  left: 61px;
+  padding: 0;
+  background: #000;
+  color: #00e201;
+  font-family: winamp-numbers, monaco, monospace;
+  font-size: 83%;
+  line-height: 20px;
+  letter-spacing: -0.04rem;
+  -webkit-font-smoothing: none;
+}
+
+/* --- Position bar --- */
+
+.ps-posbar {
+  position: absolute;
+  top: 71px;
+  left: 17px;
+  width: 248px;
+  height: 12px;
+  padding: 0;
+  background: transparent;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-postrack {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.ps-posthumb {
+  position: absolute;
+  top: 0;
+  left: var(--media-slider-fill, 0%);
+  width: 28px;
+  height: 10px;
+  background: -58px 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/POSBAR.png");
+  transform: translateX(-50%);
+}
+
+/* --- Volume --- */
+
+.ps-volume {
+  position: absolute;
+  top: 58px;
+  left: 108px;
+  width: 68px;
+  height: 10px;
+  padding: 0;
+  background: 0 -2px url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/VOLUME.png");
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-voltrack {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.ps-volthumb {
+  position: absolute;
+  top: 0;
+  left: var(--media-slider-fill, 0%);
+  width: 14px;
+  height: 10px;
+  background: -53px -443px
+    url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/BALANCE.png");
+  transform: translateX(-50%);
+}
+
+/* --- Static skin furniture --- */
+
+.ps-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/HEADER.png");
+}
+
+.ps-display {
+  position: absolute;
+  top: 22px;
+  left: 10px;
+  content: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/DISPLAY.png");
+}
+
+.ps-eq {
+  position: absolute;
+  top: 57px;
+  left: 220px;
+  width: 22px;
+  height: 12px;
+  background: 0 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/EQ.png");
+}
+
+.ps-pl {
+  position: absolute;
+  top: 57px;
+  left: 243px;
+  width: 22px;
+  height: 12px;
+  background: 0 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/PL.png");
+}
+
+.ps-loop {
+  position: absolute;
+  top: 89px;
+  left: 211px;
+  width: 28px;
+  height: 14px;
+  background: 0 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/LOOP.png");
+}
+
+.ps-shuffle {
+  position: absolute;
+  top: 89px;
+  left: 165px;
+  width: 46px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ps-shuffle > div {
+  width: 46px;
+  height: 14px;
+  background: 0 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/SHUFFLE.png")
+    no-repeat;
+}
+
+.ps-balance {
+  position: absolute;
+  top: 58px;
+  left: 177px;
+  width: 37px;
+  height: 10px;
+  background: -9px -2px url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/BALANCE.png");
+}
+
+.ps-monoster {
+  position: absolute;
+  top: 40px;
+  left: 215px;
+  display: flex;
+  width: 50px;
+  height: 15px;
+}
+
+.ps-monoster :first-child {
+  width: 24px;
+  height: 13px;
+  background: -24px -13px var(--ps-monoster);
+}
+
+.ps-monoster :last-child {
+  width: 26px;
+  height: 13px;
+  background: 0 -25px var(--ps-monoster);
+}
+
+.ps-marquee,
+.ps-kbps,
+.ps-khz {
+  position: absolute;
+  width: 153px;
+  color: #00e201;
+  font-family: winamp, monaco, monospace;
+  font-size: 6px;
+  line-height: 1;
+  letter-spacing: 0.02rem;
+  -webkit-font-smoothing: none;
+}
+
+.ps-marquee {
+  top: 27px;
+  left: 111px;
+  overflow: hidden;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ps-marquee span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: ps-marquee 12s linear infinite;
+}
+
+@keyframes ps-marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-marquee span {
+    padding-left: 0;
+    animation: none;
+  }
+}
+
+.ps-kbps {
+  top: 43px;
+  left: 111px;
+}
+
+.ps-khz {
+  top: 43px;
+  left: 156px;
+}
+
+/* --- Play state indicators --- */
+
+.ps-indicator {
+  position: absolute;
+  top: 28px;
+  left: 24px;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: none;
+}
+
+.ps-indicator > div {
+  width: 9px;
+  height: 9px;
+  background: 0 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/STOP.png");
+}
+
+.ps-indicator:not([data-paused]) > div {
+  background-image: url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/PLAY.png");
+}
+
+.ps-vu {
+  position: absolute;
+  top: 40px;
+  left: 20px;
+  width: 88px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: none;
+}
+
+.ps-vu > div {
+  width: 88px;
+  height: 22px;
+  background: none;
+}
+
+/* The meter only animates while playing, which is what the original's paused/playing icon swap amounted to. */
+.ps-vu:not([data-paused]) > div {
+  background: 0 0 url("https://cdn.jsdelivr.net/gh/muxinc/player.style@12c9ad6/themes/winamp/assets/VU.gif");
+}

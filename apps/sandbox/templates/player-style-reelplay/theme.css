@@ -1,0 +1,394 @@
+/*
+ * ReelPlay, ported from `@player.style/reelplay` (media-chrome) to Video.js 10 elements.
+ *
+ * Light DOM through the sandbox's `defineTemplateSkin`, so every rule is scoped under `.ps-reelplay` by hand.
+ *
+ * The original loads its pixel art through player.style's build step, which inlines each PNG with an ejs
+ * `base64()` call. A v10 skin is static markup with no such step, so the assets are inlined here at author time.
+ *
+ * One thing does not carry over: the original nudges its slider thumbs a pixel or two with selectors like
+ * `media-time-range[mediacurrenttime^="0"]`, reading media-chrome's reflected state attributes. v10 does not reflect
+ * currentTime or volume as attributes — it exposes them as CSS variables — so those sub-pixel corrections are dropped.
+ */
+
+.ps-reelplay {
+  --ps-embossed: 0 -1px 0 0 #7b7b7b, 0 -2px 0 0 #000, -1px 0 0 0 #7b7b7b, 1px 0 0 0 #fff, 0 1px 0 0 #fff;
+  --ps-play-active: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAr0lEQVQokZXSMQ7CMAyF4d+Ik/UYYYTrdOvK2lvkGl09JluyJZsZSipEqxIsZfzecyTj7s4AMzP+eRcA7z0iYiJidM4VYBgGvPcANGxm8hM23Np7AjYYY6SU0h2wwRACKSVUlRgjzrnTgA2mlKi1knOmlMI4jqgq0zQdBuxWzTlTa103qInb4wbA/Jw5bAwhAKCq6wY1HYLdHz9bzsAOLrp0gTbyPrlusEGg61K+5wUQC7Be2eoHzQAAAABJRU5ErkJggg==");
+  --ps-play-inactive: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAjUlEQVQokZWSMQ7FIAxDTcWSM2d1zuwxfykobelXQUJCIc+xEY1kSgLJho11jENEZETkNggAkj4LNHdPM4MkmNmjwd2XERrJqS7pclmF7gJHBcxs7lpfRejDYp1W4ermrCUA9NFQG6vYEHH3GQ8A+t1qfaQVMK1WexV6A5YZ/014gAMi+Qm4WD2hrb/6A91NW9lXLWdRAAAAAElFTkSuQmCC");
+  --ps-play-green: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAACXBIWXMAAAsTAAALEwEAmpwYAAAASUlEQVQokZ3SyQ0AIAwDwTWi/5ZNAeSCPCPNx7Yw5vE2gLGmQMgrenbwQhMYog6mqIIlymCLomRLlFWRoqq7EHVlX2iyDv1s7wAoZRYXYSzPZAAAAABJRU5ErkJggg==");
+  --ps-pause-active: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAACXBIWXMAAAsTAAALEwEAmpwYAAABs0lEQVQokVWSO07sQBBFT7XLY2yJQWQQsS0CJEhICBAbYRVsigxIRtZ8JGTGY7mn2/cFaKzHTUunbn2u3d3d6fr6mo+PD66urthut7g7b29vBnB7eysz4/LykrZtubm54f39HZ6fnzWOo8Zx1DAMenx8lJlJEpJ4enpS3/fq+16SdH9/r8ViodB1He7OMAx0XYeZIYmT9vs9TdMwTROfn5+4OzFGPOeMJNq25XA4kHPmf8UYGceRr68vYoxM04SZ4WZGURR8f3+TUkISZjaDTdMAMI4jx+ORGCMhBDyEAEDXdYQQiDH+cUwpUVUVm82GoihwdyThADlndrsdwzCwWCwoy/IPeFolpYSZEUIgxBgpioLVasU0TcQY/7iebnA4HIgxIomUEt40DZI4Ho9st1vMjLquZ7CqKkII7HY76rom5/w78qlL27aUZTm/5qSfnx9yzmw2G9ydsizJOeMpJYB5FIDlcjmDy+WS/X5PzpnVajXXwsXFBS8vL6zXa0IInJ2d0XXdDK7Xa15fX+n7nqZpyDlzfn7+GzlAdV0LUFVVqqpqjtzDw4MAmZnKspS7y931D4B+IeRR9QqaAAAAAElFTkSuQmCC");
+  --ps-pause-inactive: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAgElEQVQokY2Quw0FIQwE59AlLsk1UBK0RkpLhH4REj8/bhNLHvB6/aSUTERordFrjBFVfQByzkce1qaIoKp0eTwwqMMvmj72iafeWAGCB1aNbybHFazaHG+5TsfZMvbJt9wA72nap1Vvju6qHviXd3O8HWoaXEqxWqsdhJnhMPsBzFyriskMNtIAAAAASUVORK5CYII=");
+  --ps-stop-active: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAACXBIWXMAAAsTAAALEwEAmpwYAAABs0lEQVQokU2Qu00sQRRET093jzRoLAwsSIsMCIAMCQFSwGNHC832//+MFatX3lXp3CqVeH5+no+Pj5xOJ6y1bNuG1pp93zHGoLWm1srDwwPv7+98fHzw8/MjeHl5ma212Xuf/yvnPHPOM8Y455zzdDrN19fXCcw5J6q1Ru+dr68v9n0nxkjvnfP5DID3nuM4uFwuXC4XpJQAKIB1XRljUGvFWsucE+89YwyMMaSUkFJSSqH3fgVjjAC01nDOMcYg50wIgdYaMUasteSc2bYNpdQVvLu7Y4xBKYVlWQghYIyhlIK1lpQS1lrGGLcAAKWUQghB750QAs45YoyklEgpAdwa/N0ASghBa40QAiEErLW3gb6/v1mWhZQStVbmnKzregX/vvyZ3nuMMQCUUmit4b2n1kprjVLKFZRSorXGe49zDu89pRS01hzHwbqu/P7+0ntn27Zb1QXAGEPOGeccpRTGGKSU6L2zrisxRs7nM0IIhBDXxForb29vHMeBc46U0m2kz89P7u/vAdj3Ha01T09PAAgp5ey9I6VkzolSCq01vXd679RaEUKgtUYpRQiBOaf4BxvCbUGBdlc6AAAAAElFTkSuQmCC");
+  --ps-stop-inactive: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAbUlEQVQokZ1RMRLAIAiLbDyJN/At3+aXHO0kZy0F2ywMSSSGUmsdvXcwM06mqkJECn0xMTNEBABAHrli5yfIE614e5QikZfANe7wEpgxKiOCbcyiza+Y8aSQOW/lZHdLN0bi9BxRKQ+utTZ+ABcG/775EH3i7gAAAABJRU5ErkJggg==");
+  --ps-stop-green: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAPklEQVQokWNk+M/wn4FEwMLAwMDwn+E/I7EaGBkY/zORagvcJmRTcClEdg1ZNo1qggKUICc2ksmyiZGctAcAEpwMGtOI06QAAAAASUVORK5CYII=");
+  --ps-speaker-active: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAQCAYAAADAvYV+AAAACXBIWXMAAAsTAAALEwEAmpwYAAABK0lEQVQokX2RoXPCMBSHv+4mmGtcIpHUVQ6JndtkJfwHTE4iG9c6IiuHY47K4laHnQyulXNvAihcgb27XO7lvve7L0kgItwro5QwGOC9DwAe7pK1k4/FAqUU1lq5D9dO9uaFPM/Jsqw7Dq40jmBRFADEccxkMsFa20s+gtqvOzCKIqgtZ43aSR90znUZe5MQhiEPdhZ1HicQoGkakiRBa432a9q2PWvY3F7d82u1wihFO3wD4BFg+73lcgcwbUtZVShjCH/chfON+h0Occ5RliXE8wM8X+6CaltdwY33ZFmG1hrqi+T5chf0h5QxPB1eCuIpcONT7CyS8fMYgNf3T3zTQO2wZQsicrXS6Uiq5VS01rLZbKQoChGR23B/IE3T/2ERQWst8Wgkp/4PXbzQXE7ZmasAAAAASUVORK5CYII=");
+  --ps-speaker-inactive: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAQCAYAAADAvYV+AAAACXBIWXMAAAsTAAALEwEAmpwYAAAApklEQVQokX2SOw7FIAwEx3lx4UvlYqbEZ6bkFQmSIZ9tLOFhWTDSe+dDoykA2xsVEb2UMm2SJ+eImBbdHUBuzgNsrTFqRAD0bQUHZGa3E3eAUko3M1prrDXrp6pdVR9BM0NVATiO43yNnC+DuQew58ZQBnOc6YLZJZuMutVaZX2BtxjTUNZh5E3uPsdwd8mXXXWbYK1VcqThCsjj38iRLvAbvjR90T95E3txy+GI1QAAAABJRU5ErkJggg==");
+  --ps-range-thumb: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAk0lEQVQokZWRPQ7FIAyDvzyxcC6O1ZkjsbJypIx5S4P4U6taQkhOiB0sZmZ8gIgQAFprqCoxRlSV1hrXdR15gB8wFfx+4gPQiZRSt5FzBsDMqLVOFsM48W6SZQ0b1bq9UfqEtbYpneC1405vSpM9V7ojs+WclZzwXNac/OH2EU85rTYDQCmlT/PGnPMWrkPc9xf8Ad5BiyG0KQ3gAAAAAElFTkSuQmCC");
+  --ps-seek: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAYAAAAvZezQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAT0lEQVQImUXIuwqAMBQE0dlLCsVHCBH//x9jI0bWQsTp5sg2X2UeHd8kyefdCYC6ZO9b4bo7sUyr29GICGyQbZJkgFzXFwAkeRjTDwAh+QFHpR7KTkYEPAAAAABJRU5ErkJggg==");
+  --ps-handle: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAWCAYAAAAM2IbtAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAgUlEQVQokZ2PMQ4EIQwDR2ibvJmat+VJLrliwypB0Jw7Kxo7ZoZ673POSfYNwN0xM5bcHYAGIAlJ31ESZvYeM7W8pCCpqmSYXS8ZMcdYkyCRJVZmkEgKuXUt33LMdWd5KOadyfjhSpbO6xTbppROdjJ3ciD/62Qn88417RljlGP2P1lNesKvK+nmAAAAAElFTkSuQmCC");
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  isolation: isolate;
+  container: ps-reelplay / inline-size;
+
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  image-rendering: pixelated;
+}
+
+.ps-reelplay > video,
+.ps-reelplay > [slot="media"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.ps-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ps-poster:not([data-visible]) {
+  display: none;
+}
+
+/* --- Window chrome --- */
+
+.ps-top {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  width: 100%;
+}
+
+.ps-titlebar {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 18px;
+  padding-left: 10px;
+  background: linear-gradient(to right, #000084, #0884ce);
+  color: #fff;
+  font-family: monaco, monospace;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.ps-bar {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 2px 4px 2px 20px;
+  border-top: 1px solid #fff;
+  box-shadow: 0 -1px 0 0 #7b7b7b;
+  background: #ccc 5px center var(--ps-handle) no-repeat;
+}
+
+.ps-spacer {
+  flex: 1;
+}
+
+/* --- Transport buttons: three play buttons acting as play, pause and stop --- */
+
+.ps-transport,
+.ps-seek,
+.ps-mute,
+.ps-status {
+  display: grid;
+  place-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ps-transport {
+  margin-right: 2px;
+}
+
+.ps-t-play,
+.ps-t-pause {
+  width: 14px;
+  height: 13px;
+}
+
+/* Each transport button lights up only in the state it acts on; the others read as disabled. */
+.ps-transport:not([data-paused]) .ps-t-play,
+.ps-transport[data-paused] .ps-t-pause {
+  display: none;
+}
+
+.ps-play .ps-t-play {
+  background: 0 0 var(--ps-play-active);
+}
+
+.ps-play .ps-t-pause {
+  background: 0 0 var(--ps-play-inactive);
+  cursor: not-allowed;
+}
+
+.ps-pause .ps-t-play {
+  background: 0 0 var(--ps-pause-inactive);
+  cursor: not-allowed;
+}
+
+.ps-pause .ps-t-pause {
+  background: 0 0 var(--ps-pause-active);
+}
+
+.ps-stop .ps-t-play {
+  background: 0 0 var(--ps-stop-inactive);
+  cursor: not-allowed;
+}
+
+.ps-stop .ps-t-pause {
+  background: 0 0 var(--ps-stop-active);
+}
+
+.ps-seek-icon {
+  display: block;
+  width: 4px;
+  height: 7px;
+  background: 0 0 var(--ps-seek);
+}
+
+.ps-seek-fwd .ps-seek-icon {
+  transform: rotate(180deg);
+}
+
+.ps-spk {
+  display: block;
+  width: 11px;
+  height: 16px;
+}
+
+.ps-spk-off {
+  background: 0 0 var(--ps-speaker-inactive);
+}
+
+.ps-spk-on {
+  background: 0 0 var(--ps-speaker-active);
+}
+
+.ps-mute:not([data-volume-level="off"]) .ps-spk-off,
+.ps-mute[data-volume-level="off"] .ps-spk-on {
+  display: none;
+}
+
+/* --- Sliders: a dotted embossed groove with a pixel-art handle --- */
+
+.ps-range,
+.ps-vrange {
+  position: relative;
+  display: block;
+  height: 13px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ps-range {
+  flex: 1;
+  margin: 0 4px;
+}
+
+.ps-vrange {
+  width: 70px;
+  margin-left: 4px;
+}
+
+.ps-track,
+.ps-vtrack {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  box-shadow: var(--ps-embossed);
+  background:
+    linear-gradient(to right, #000 1px, transparent 1px, transparent 7px) 7px 50% / 7px 3px repeat-x,
+    #c6c6c6;
+}
+
+.ps-fill,
+.ps-vfill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  background:
+    linear-gradient(to right, #000 1px, transparent 1px, transparent 7px) 7px 50% / 7px 3px repeat-x,
+    #008484;
+}
+
+.ps-fill {
+  width: var(--media-slider-fill, 0%);
+}
+
+.ps-vfill {
+  width: var(--media-slider-fill, 0%);
+}
+
+.ps-thumb,
+.ps-vthumb {
+  position: absolute;
+  top: 0;
+  left: var(--media-slider-fill, 0%);
+  width: 13px;
+  height: 13px;
+  background: 0 0 var(--ps-range-thumb);
+  transform: translateX(-50%);
+  transition: transform 0.1s;
+}
+
+.ps-preview {
+  bottom: 100%;
+  display: grid;
+  justify-items: center;
+  margin: 0 0 20px;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.ps-preview[data-pointing] {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ps-thumbnail {
+  display: block;
+  overflow: hidden;
+}
+
+.ps-thumbnail img {
+  display: block;
+}
+
+.ps-preview-time {
+  position: relative;
+  background: #000;
+  color: #0f0;
+  font-family: monaco, monospace;
+  font-size: 13px;
+  line-height: 2;
+}
+
+/* --- Status bar --- */
+
+.ps-bottom {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 3px;
+  width: 100%;
+  padding: 4px 20px;
+  border-top: 1px solid #fff;
+  box-shadow: 0 -1px 0 0 #7b7b7b;
+  background: #ccc 5px center var(--ps-handle) no-repeat;
+  font-family: monaco, monospace;
+}
+
+.ps-bottom > div {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 5px;
+  box-shadow: var(--ps-embossed);
+  background: #000;
+  color: #0f0;
+  font-size: 13px;
+}
+
+.ps-bottom a {
+  color: #0f0;
+}
+
+.ps-status {
+  margin-right: 3px;
+  padding: 1px;
+  background-color: #000;
+}
+
+.ps-s-play,
+.ps-s-pause {
+  width: 13px;
+  height: 13px;
+}
+
+.ps-s-play {
+  background: 0 0 var(--ps-stop-green) no-repeat;
+}
+
+.ps-s-pause {
+  background: 0 0 var(--ps-play-green);
+}
+
+.ps-status:not([data-paused]) .ps-s-play,
+.ps-status[data-paused] .ps-s-pause {
+  display: none;
+}
+
+.ps-time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Error dialog --- */
+
+.ps-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+}
+
+.ps-dialog:not([data-open]) {
+  display: none;
+}
+
+.ps-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.ps-dialog-popup {
+  position: relative;
+  display: grid;
+  gap: 0.6em;
+  justify-items: center;
+  max-width: 32ch;
+  padding: 1em;
+  box-shadow: var(--ps-embossed);
+  background: #ccc;
+  color: #000;
+  font-family: monaco, monospace;
+  font-size: 13px;
+  text-align: center;
+}
+
+.ps-dialog-close {
+  padding: 4px 10px;
+  border: 0;
+  box-shadow: var(--ps-embossed);
+  background: #ccc;
+  color: #000;
+  font: inherit;
+  cursor: pointer;
+}

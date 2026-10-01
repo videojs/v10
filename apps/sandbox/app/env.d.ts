@@ -11,6 +11,13 @@ declare const __SANDBOX_COMMIT__: string;
 
 declare module '*.css';
 
+/** Markup imported as a string, which is how skin templates reach the element that stamps them. */
+declare module '*.html?raw' {
+  const content: string;
+
+  export default content;
+}
+
 // Authored skin modules, addressed by the compiler query; their exports are checked at runtime by name.
 declare module '*&skin=default-video';
 declare module '*&skin=minimal-video';
