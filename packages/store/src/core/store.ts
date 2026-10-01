@@ -1,4 +1,4 @@
-import { isFunction, isNull, isObject } from '@videojs/utils/predicate';
+import { isFunction, isNull, isObject, isPromise } from '@videojs/utils/predicate';
 
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
@@ -161,11 +161,17 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       const cached = actions.get(action);
       if (cached) return cached;
 
+      // Callers receive action failures directly; a configured `onError` also observes them, sync or async.
       const wrapped = function (this: unknown, ...args: unknown[]) {
         try {
-          return action.apply(this, args);
+          const result = action.apply(this, args);
+
+          if (options.onError && isPromise(result)) result.catch(reportError);
+
+          return result;
         } catch (error) {
-          reportError(error);
+          if (options.onError) reportError(error);
+
           throw error;
         }
       };

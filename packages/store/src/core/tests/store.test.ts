@@ -488,6 +488,51 @@ describe('createStore', () => {
       }
     });
 
+    it('reports rejected async actions to onError once and still rejects', async () => {
+      const error = new Error('play failed');
+      const onError = vi.fn();
+      const failingSlice = defineSlice<MockMedia>()({
+        state: () => ({
+          async play() {
+            throw error;
+          },
+        }),
+      });
+      const store = createStore<MockMedia>()(failingSlice, { onError });
+
+      try {
+        await expect(store.play()).rejects.toBe(error);
+        expect(onError).toHaveBeenCalledOnce();
+        expect(onError).toHaveBeenCalledWith({ store, error });
+      } finally {
+        store.destroy();
+      }
+    });
+
+    it('leaves action failures to the caller without onError', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const failingSlice = defineSlice<MockMedia>()({
+        state: () => ({
+          fail() {
+            throw new Error('sync');
+          },
+          async play() {
+            throw new Error('async');
+          },
+        }),
+      });
+      const store = createStore<MockMedia>()(failingSlice);
+
+      try {
+        expect(() => store.fail()).toThrow('sync');
+        await expect(store.play()).rejects.toThrow('async');
+        expect(consoleError).not.toHaveBeenCalled();
+      } finally {
+        store.destroy();
+        consoleError.mockRestore();
+      }
+    });
+
     it.each(['onSetup', 'onAttach'] as const)('reports an action error thrown inside %s once', (callback) => {
       const error = new Error('action failed');
       const onError = vi.fn();
