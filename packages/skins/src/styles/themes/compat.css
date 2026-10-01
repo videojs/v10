@@ -25,7 +25,7 @@
     --media-backdrop-filter-dialog: none;
   }
 
-  .media-skin[data-theme="compat"][data-preset="video"] {
+  .media-skin[data-theme="compat"][data-preset$="video"] {
     --media-frame-border: var(--media-border-color, rgb(0 0 0 / 0.1));
   }
 
@@ -46,7 +46,7 @@
   }
 
   @supports (color: light-dark(red, red)) {
-    .media-skin[data-theme="compat"][data-preset="video"] {
+    .media-skin[data-theme="compat"][data-preset$="video"] {
       --media-frame-border: var(--media-border-color, light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1)));
     }
 
