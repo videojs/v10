@@ -1,0 +1,26 @@
+---
+title: Migrate to Video.js v10
+description: See what changed in Video.js v10 and choose the migration guide for the player you use today
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js v10 brings together the people and lessons behind Video.js, Plyr, Vidstack, Media Chrome, and Mux Player. These projects approached web video from different directions: Video.js made playback work across browsers, Plyr focused on the details of the player UI, Vidstack built for modern frameworks, Media Chrome made controls composable, and Mux Player simplified streaming integration.
+
+Rather than merge their codebases, we rebuilt the player from scratch with what those projects taught us. The result is one shared foundation, with native React and HTML components, customizable skins, and separate layers for player state, controls, and media playback. You can use a ready-made player or compose the pieces your application needs.
+
+That also means v10 is not a drop-in upgrade for any of these players. Migration involves translating your existing configuration, controls, and player API usage into the new components. Start with the guide for the player you're using today.
+
+## Choose your migration guide
+
+- <DocsLink slug="guides/migrate-from-video-js-8">Video.js v8</DocsLink>: Move from the options object, techs, plugins, and player API to v10's composed components and player state.
+- <DocsLink slug="guides/migrate-from-mux-player">Mux Player</DocsLink>: Move from a single player element to separate player, media, and skin components.
+- <DocsLink slug="guides/migrate-from-plyr">Plyr</DocsLink>: Map your existing options, controls, and instance API to v10.
+- <DocsLink slug="guides/migrate-from-media-chrome">Media Chrome</DocsLink>: Map your controller, elements, and attributes to their v10 equivalents.
+- <DocsLink slug="guides/migrate-from-vidstack">Vidstack</DocsLink>: Map your player, providers, layouts, and media store onto v10's composed components.
+
+## Before you start
+
+Video.js v10 ships as `@videojs/react` and `@videojs/html`. The `video.js` package on npm is still v8; updating that package will not move your application to v10.
+
+Review the guide for your current player and check the features, plugins, and integrations your application relies on before replacing it. If you're building a new player rather than migrating an existing one, start with <DocsLink slug="guides/installation">installation</DocsLink>.
