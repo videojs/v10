@@ -48,6 +48,10 @@ describe('generated icon modules', () => {
     const { default: PlayIcon } = (await import(moduleUrl)) as {
       default: (props: SVGProps<SVGSVGElement>) => ReturnType<typeof createElement>;
     };
+
+    // React 19 passes `ref` as a prop to plain components, so rendering alone can't prove React 18 forwarding.
+    expect((PlayIcon as unknown as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for('react.forward_ref'));
+
     const container = document.createElement('div');
     const root = createRoot(container);
     const ref = createRef<SVGSVGElement>();
