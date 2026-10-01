@@ -1,7 +1,7 @@
 import type { Media } from '@videojs/media';
 
 import type { PlayerTarget } from '../player';
-import type { PlayerExtension, PlayerExtensionConstructor, PlayerHandle } from './extension';
+import type { ExtensionPlayer, PlayerExtension, PlayerExtensionConstructor } from './extension';
 import { createPlayerMedia } from './media';
 
 /** Whether `extension` can take over media members, as opposed to only observing the player. */
@@ -13,8 +13,8 @@ function overridesMedia(extension: PlayerExtension | undefined): boolean {
  * Holds one extension per class for a player and keeps them attached to the player's current media.
  *
  * Create one per player, when the player is created: its creation time is the player's `initTime`, and it outlives any
- * store the player replaces. Registered extensions connect to its {@link PlayerHandle}. The player wraps its media with
- * {@link PlayerExtensionCoordinator.wrap} before attaching the store, and re-attaches the store whenever `onChange`
+ * store the player replaces. Registered extensions connect to its {@link ExtensionPlayer}. The player wraps its media
+ * with {@link PlayerExtensionCoordinator.wrap} before attaching the store, and re-attaches the store whenever `onChange`
  * fires so features re-read members an extension now owns (such as `remote`).
  *
  * @internal
@@ -23,7 +23,7 @@ export class PlayerExtensionCoordinator {
   readonly #extensions = new Map<PlayerExtensionConstructor, PlayerExtension>();
   // One facade per media, so `store.target.media` stays the same object across store re-attaches.
   readonly #facades = new WeakMap<Media, Media>();
-  readonly #handle: PlayerHandle = { initTime: Date.now() };
+  readonly #player: ExtensionPlayer = { initTime: Date.now() };
   readonly #onChange: () => void;
   #target: PlayerTarget | null = null;
 
@@ -52,7 +52,7 @@ export class PlayerExtensionCoordinator {
       if (previous) this.#leave(previous);
 
       this.#extensions.set(Extension, extension);
-      extension.connect?.(this.#handle);
+      extension.connect?.(this.#player);
 
       if (this.#target) extension.attach?.(this.#target);
 

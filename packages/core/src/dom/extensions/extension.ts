@@ -2,12 +2,12 @@ import type { PlayerTarget } from '../player';
 import type { MediaOverrideSource } from './media';
 
 /**
- * The player an extension is registered with: facts about the player itself, which hold across media changes. Extends
- * as extensions need more of the player.
+ * The player as an extension sees it, handed over when the extension connects: facts about the player itself, which
+ * hold across media changes. Extends as extensions need more of the player.
  *
  * @internal
  */
-export interface PlayerHandle {
+export interface ExtensionPlayer {
   /** Epoch milliseconds at which the player was created, before any extension or media existed. */
   readonly initTime: number;
 }
@@ -28,7 +28,7 @@ export interface PlayerHandle {
  * @internal
  */
 export interface PlayerExtension extends MediaOverrideSource {
-  connect?(player: PlayerHandle): void;
+  connect?(player: ExtensionPlayer): void;
   disconnect?(): void;
   attach?(target: PlayerTarget): void;
   detach?(): void;

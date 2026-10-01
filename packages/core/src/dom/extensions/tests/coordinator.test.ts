@@ -3,11 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { PlayerTarget } from '../../player';
 import { PlayerExtensionCoordinator } from '../coordinator';
-import type { PlayerExtension, PlayerHandle } from '../extension';
+import type { ExtensionPlayer, PlayerExtension } from '../extension';
 
 /** An observer: declares no `mediaOverride`. */
 class TrackingExtension implements PlayerExtension {
-  connect = vi.fn<(player: PlayerHandle) => void>();
+  connect = vi.fn<(player: ExtensionPlayer) => void>();
   disconnect = vi.fn();
   attach = vi.fn<(target: PlayerTarget) => void>();
   detach = vi.fn();

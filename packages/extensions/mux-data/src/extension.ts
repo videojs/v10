@@ -1,4 +1,4 @@
-import type { PlayerExtension, PlayerHandle, PlayerTarget } from '@videojs/core/dom';
+import type { ExtensionPlayer, PlayerExtension, PlayerTarget } from '@videojs/core/dom';
 import { isEngineAdapter, isMediaSourceCapable, type Media } from '@videojs/media';
 import { getMediaAdapter, getMediaElement } from '@videojs/media/dom';
 import { listen } from '@videojs/utils/dom';
@@ -97,7 +97,7 @@ export class MuxDataExtension implements MuxDataExtensionProps, PlayerExtension 
     Object.assign(this, props);
   }
 
-  connect(player: PlayerHandle) {
+  connect(player: ExtensionPlayer) {
     this.#playerCreatedAt = player.initTime;
   }
 

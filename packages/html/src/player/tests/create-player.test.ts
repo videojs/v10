@@ -1,10 +1,10 @@
 import {
   audioFeatures,
   backgroundFeatures,
+  type ExtensionPlayer,
   features,
   metadataFeature,
   type PlayerExtension,
-  type PlayerHandle,
   type PlayerTarget,
   type PopupGroup,
   videoFeatures,
@@ -210,7 +210,7 @@ describe('createPlayer', () => {
 
     /** Declares no `mediaOverride`, like Mux Data. */
     class ObserverExtension implements PlayerExtension {
-      connect = vi.fn<(player: PlayerHandle) => void>();
+      connect = vi.fn<(player: ExtensionPlayer) => void>();
       disconnect = vi.fn();
       attach = vi.fn<(target: PlayerTarget) => void>();
       detach = vi.fn();
