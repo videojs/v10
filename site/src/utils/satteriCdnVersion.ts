@@ -2,8 +2,8 @@ import { defineMdastPlugin } from 'satteri';
 
 import { VJS10_CDN_ARCHIVE_VERSION, VJS10_CDN_BASE } from '../consts';
 
-export const VJS10_CDN_PLACEHOLDER = '{{VJS10_CDN_BASE}}';
-export const VJS10_CDN_ARCHIVE_VERSION_PLACEHOLDER = '{{VJS10_CDN_ARCHIVE_VERSION}}';
+const VJS10_CDN_PLACEHOLDER = '{{VJS10_CDN_BASE}}';
+const VJS10_CDN_ARCHIVE_VERSION_PLACEHOLDER = '{{VJS10_CDN_ARCHIVE_VERSION}}';
 
 const replacements = new Map([
   [VJS10_CDN_PLACEHOLDER, VJS10_CDN_BASE],
