@@ -134,6 +134,9 @@ describe('collectPageCoverage', () => {
     expect(collectPageCoverage(page('title: PlayButton\nframeworkTitle:\n  html: media-play-button')).names).toEqual(
       new Set(['PlayButton'])
     );
+    expect(collectPageCoverage(page('title: Menus\nframeworkTitle:\n  html: media-menu')).names).toEqual(
+      new Set(['Menus', 'Menu'])
+    );
   });
 
   it('covers parts written against a subject, including nested parts', () => {

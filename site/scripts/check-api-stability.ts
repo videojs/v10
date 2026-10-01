@@ -164,9 +164,9 @@ function pageCode(body: string): string {
 
 /** A page's subject from its title, or from a framework title, where `media-play-button` names `PlayButton`. */
 function subjectName(value: string, isFrameworkTitle = false): string {
-  const name = isFrameworkTitle && value.startsWith('media-') ? value.slice('media-'.length) : value;
+  if (isFrameworkTitle && value.startsWith('media-')) return pascalCase(value.slice('media-'.length));
 
-  return /^[A-Za-z_$][\w$]*$/.test(name) ? name : pascalCase(name);
+  return /^[A-Za-z_$][\w$]*$/.test(value) ? value : pascalCase(value);
 }
 
 /** Names in the first column of the tables under a page's `## Exports` heading. */
