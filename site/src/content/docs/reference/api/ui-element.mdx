@@ -160,6 +160,15 @@ class ClockController implements ReactiveController {
   }
 
   hostDisconnected(): void {
+    this.#stop();
+  }
+
+  // `destroy()` can run while the element is still connected.
+  hostDestroyed(): void {
+    this.#stop();
+  }
+
+  #stop(): void {
     window.clearInterval(this.#timer);
   }
 }

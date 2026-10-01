@@ -12,6 +12,7 @@ import {
   collectPageCoverage,
   collectPublicExports,
   type Coverage,
+  declaredApis,
   documentedStability,
   findDeclarations,
   findStaleApis,
@@ -156,6 +157,13 @@ describe('collectPageCoverage', () => {
       collectPageCoverage(page('title: Volume', `<FeatureReference feature="volume" />\n${body}`)).names
     ).toContain('selectVolume');
     expect(collectPageCoverage(page('title: usePlayer', body)).names).not.toContain('selectVolume');
+  });
+
+  it("doesn't cover a feature page's title, which is a label rather than an export", () => {
+    const { names } = collectPageCoverage(page('title: Volume', '<FeatureReference feature="volume" />'));
+
+    expect(names).toContain('volumeFeature');
+    expect(names).not.toContain('Volume');
   });
 
   it('ignores names that only appear in prose or example code', () => {
@@ -347,6 +355,29 @@ describe('findStaleApis', () => {
   });
 });
 
+describe('declaredApis', () => {
+  it('reads apis entries, code headings, and Exports-table names, so a rename in any of them goes stale', () => {
+    const source = page(
+      'title: Presets\napis: [PlayIcon]',
+      [
+        '### `MinimalVideoSkin`',
+        '',
+        '## Exports',
+        '',
+        '| Export | Description |',
+        '|---|---|',
+        '| `VideoSkin` | The skin |',
+        '',
+        '```ts',
+        '### `NotAHeading`',
+        '```',
+      ].join('\n')
+    );
+
+    expect(declaredApis(source)).toEqual(['PlayIcon', 'MinimalVideoSkin', 'VideoSkin']);
+  });
+});
+
 describe('tagChange', () => {
   it('accepts @internal or @deprecated for internal exports, and replaces @experimental', () => {
     expect(tagChange(new Set(), 'internal')).toEqual({ add: 'internal', remove: [] });
@@ -500,6 +531,19 @@ describe('findDeclarations', () => {
     const [declaration] = findDeclarations(sourceFile, 'default');
 
     expect(declaration && ts.isVariableStatement(declaration)).toBe(true);
+  });
+
+  it('finds names bound by a destructured export, including renamed ones', () => {
+    const sourceFile = ts.createSourceFile(
+      'player.ts',
+      'export const { Player: VideoPlayer, usePlayer } = createPlayer();\n',
+      ts.ScriptTarget.Latest,
+      true
+    );
+
+    expect(findDeclarations(sourceFile, 'VideoPlayer')).toHaveLength(1);
+    expect(findDeclarations(sourceFile, 'usePlayer')).toHaveLength(1);
+    expect(findDeclarations(sourceFile, 'Player')).toHaveLength(0);
   });
 });
 
@@ -980,6 +1024,29 @@ describe('collectImports', () => {
       '@videojs/react#PlayButtonProps',
       '@videojs/react/i18n/locales/de#default',
       '@videojs/react/i18n/locales/ja#default',
+      '@videojs/html/ui/play-button#*',
+    ]);
+  });
+
+  it('collects namespace imports and re-exports, so the internal-package warning sees them', () => {
+    const imports = collectImports(
+      [
+        "import * as Utils from '@videojs/utils/time';",
+        "export { formatTime } from '@videojs/utils/time';",
+        "export * from '@videojs/core/dom';",
+      ].join('\n'),
+      'page.mdx'
+    );
+
+    expect(imports.map(({ name, specifier }) => `${specifier}#${name}`)).toEqual([
+      '@videojs/utils/time#*',
+      '@videojs/utils/time#formatTime',
+      '@videojs/core/dom#*',
+    ]);
+    expect(findUnstableImports(imports, new Map()).map(({ reason }) => reason)).toEqual([
+      'internal package',
+      'internal package',
+      'internal package',
     ]);
   });
 });

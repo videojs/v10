@@ -61,7 +61,7 @@ const INLINE_CODE_PATTERN = /`([^`\n]+)`/g;
 const CODE_HEADING_PATTERN = /^#{2,6}[ \t]+`([A-Za-z_$][\w$]*)`[ \t]*$/gm;
 const CODE_NAME_PATTERN = /`([A-Za-z_$][\w$]*)`/g;
 const IMPORT_PATTERN =
-  /import\s+(?:type\s+)?(?:([\w$]+)\s*,?\s*)?(?:\{([^}]*)\})?\s*(?:from\s+)?['"](@videojs\/[^'"]+)['"]|import\(\s*['"](@videojs\/[^'"]+)['"]\s*\)/g;
+  /(?:import|export)\s+(?:type\s+)?(?:([\w$]+)\s*,?\s*)?(\*\s*(?:as\s+[\w$]+\s*)?)?(?:\{([^}]*)\})?\s*(?:from\s+)?['"](@videojs\/[^'"]+)['"]|import\(\s*['"](@videojs\/[^'"]+)['"]\s*\)/g;
 const SUBJECT_ATTRIBUTE_PATTERN =
   /<(ComponentReference|UtilReference|MediaReference|ComponentImports|FeatureReference|FeatureImports|MediaImports|ModuleImports|ExtensionImports|SkinImports)\b([^>]*)>/g;
 
@@ -193,13 +193,6 @@ export function collectPageCoverage(source: string): { names: Set<string>; modul
   const modules: string[] = [];
   let isFeaturePage = false;
 
-  for (const [title, isFrameworkTitle] of [
-    [frontmatter.title, false] as const,
-    ...frontmatter.frameworkTitle.map((value) => [value, true] as const),
-  ]) {
-    if (title && /^[A-Za-z_$][\w$-]*$/.test(title)) subjects.add(subjectName(title, isFrameworkTitle));
-  }
-
   for (const [, component, attributes] of body.matchAll(SUBJECT_ATTRIBUTE_PATTERN)) {
     for (const [, key, single, list] of attributes!.matchAll(/\b(\w+)=(?:"([^"]*)"|\{\[([^\]]*)\]\})/g)) {
       const values = single !== undefined ? [single] : [...list!.matchAll(/["']([^"']+)["']/g)].map((m) => m[1]!);
@@ -215,6 +208,13 @@ export function collectPageCoverage(source: string): { names: Set<string>; modul
         }
       }
     }
+  }
+
+  // A feature page's title is a prose label (`Volume`, `Error`); its subject is the `*Feature` its reference names.
+  for (const [title, isFrameworkTitle] of isFeaturePage
+    ? []
+    : [[frontmatter.title, false] as const, ...frontmatter.frameworkTitle.map((value) => [value, true] as const)]) {
+    if (title && /^[A-Za-z_$][\w$-]*$/.test(title)) subjects.add(subjectName(title, isFrameworkTitle));
   }
 
   const names = new Set(subjects);
@@ -267,8 +267,8 @@ export interface StaleApi {
 }
 
 /**
- * `apis` entries that document nothing: a name that no framework-facing entry exports, or a module pattern that matches
- * no entry. Renaming or removing an export leaves these behind.
+ * Documented names that match nothing: an `apis` entry, code heading, or Exports-table name that no framework-facing
+ * entry exports, or a module pattern that matches no entry. Renaming or removing an export leaves these behind.
  */
 export function findStaleApis(
   pages: ReadonlyArray<{ file: string; apis: readonly string[] }>,
@@ -304,11 +304,16 @@ export function findStaleApis(
   return pages.flatMap(({ file, apis }) => apis.filter(isStale).map((api) => ({ file, api })));
 }
 
+/** The names a page states outright: `apis` entries, code headings, and Exports-table names. Each must still exist. */
+export function declaredApis(source: string): string[] {
+  const prose = source.replace(/^---\n[\s\S]*?\n---/, '').replace(FENCE_PATTERN, '');
+  const headings = [...prose.matchAll(CODE_HEADING_PATTERN)].map((match) => match[1]!);
+
+  return [...new Set([...parseFrontmatter(source).apis, ...headings, ...exportsTableNames(prose)])];
+}
+
 function collectDeclaredApis(siteDirectory: string): Array<{ file: string; apis: string[] }> {
-  return referencePages(siteDirectory).map((file) => ({
-    file,
-    apis: parseFrontmatter(readFileSync(file, 'utf8')).apis,
-  }));
+  return referencePages(siteDirectory).map((file) => ({ file, apis: declaredApis(readFileSync(file, 'utf8')) }));
 }
 
 /**
@@ -555,9 +560,7 @@ export function findDeclarations(sourceFile: ts.SourceFile, name: string): Docum
     }
 
     if (ts.isVariableStatement(statement)) {
-      return statement.declarationList.declarations.some(
-        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === name
-      );
+      return statement.declarationList.declarations.some((declaration) => bindsName(declaration.name, name));
     }
 
     // SAFETY: only read after the kind guards below confirm a named declaration statement.
@@ -575,6 +578,16 @@ export function findDeclarations(sourceFile: ts.SourceFile, name: string): Docum
       declarationName.text === name
     );
   });
+}
+
+/**
+ * Whether a declaration's name binds `name`, directly or through a destructuring pattern such as `{ Player: VideoPlayer
+ * }`.
+ */
+function bindsName(binding: ts.BindingName, name: string): boolean {
+  if (ts.isIdentifier(binding)) return binding.text === name;
+
+  return binding.elements.some((element) => !ts.isOmittedExpression(element) && bindsName(element.name, name));
 }
 
 /** Drop the implementation of an overloaded function: consumers only see its overload signatures. */
@@ -1320,14 +1333,22 @@ export interface DocsImport {
   specifier: string;
 }
 
-/** Collect `@videojs/*` imports from docs code and demo sources. `default` stands for a default or dynamic import. */
+/**
+ * Collect `@videojs/*` imports and re-exports from docs code and demo sources. `default` stands for a default or
+ * dynamic import, `*` for a namespace or side-effect import.
+ */
 export function collectImports(source: string, file: string): DocsImport[] {
   const imports: DocsImport[] = [];
 
-  for (const [, defaultName, specifiers, staticSpecifier, dynamicSpecifier] of source.matchAll(IMPORT_PATTERN)) {
+  for (const [, defaultName, namespace, specifiers, staticSpecifier, dynamicSpecifier] of source.matchAll(
+    IMPORT_PATTERN
+  )) {
     const specifier = (staticSpecifier ?? dynamicSpecifier)!;
 
     if (defaultName || dynamicSpecifier) imports.push({ file, name: 'default', specifier });
+
+    // A namespace or side-effect import names no export, but still reaches the module.
+    if (namespace || (!defaultName && !specifiers && staticSpecifier)) imports.push({ file, name: '*', specifier });
 
     for (const part of specifiers?.split(',') ?? []) {
       const name = part
@@ -1442,11 +1463,12 @@ function reportPropagated(resolved: ReadonlyMap<PublicExport, ResolvedStability>
 
 function reportStaleApis(stale: readonly StaleApi[]): void {
   for (const { file, api } of stale) {
-    console.error(`✗ ${relative(monorepoRoot, file)}  apis entry ${api} matches no public export`);
+    console.error(`✗ ${relative(monorepoRoot, file)}  ${api} matches no public export`);
   }
 
   console.error(
-    `\n✗ ${stale.length} \`apis\` entries match no public export. Rename them to match the export, or remove them.\n`
+    `\n✗ ${stale.length} documented names match no public export. Rename the \`apis\` entry, code heading, or Exports-table\n` +
+      '  row to match the export, or remove it.\n'
   );
 }
 

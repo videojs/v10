@@ -5,7 +5,7 @@
  * Rows come from the public HTML string exports, so the table follows the icon build without a hand-kept list.
  */
 import * as defaultIcons from '@videojs/html/icons/default';
-import * as minimalIcons from '@videojs/html/icons/minimal';
+import * as neutralIcons from '@videojs/html/icons/neutral';
 
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Table from '@/components/typography/Table.astro';
@@ -17,7 +17,7 @@ import Tr from '@/components/typography/Tr.astro';
 import { resolveDocsFramework } from '@/types/docs';
 
 const framework = resolveDocsFramework(Astro.params.framework);
-const minimal = new Map<string, string>(Object.entries(minimalIcons));
+const neutral = new Map<string, string>(Object.entries(neutralIcons));
 
 const icons = Object.entries(defaultIcons)
   .sort(([a], [b]) => a.localeCompare(b))
@@ -30,7 +30,7 @@ const icons = Object.entries(defaultIcons)
       htmlName,
       reactName: `${base[0]!.toUpperCase()}${base.slice(1)}Icon`,
       defaultSvg,
-      minimalSvg: minimal.get(htmlName) ?? "",
+      neutralSvg: neutral.get(htmlName) ?? "",
     };
   });
 ---
@@ -40,7 +40,7 @@ const icons = Object.entries(defaultIcons)
     <Tr>
       {/* The previews are decorative SVGs, meaningless in the Markdown output. */}
       <Th data-llms-ignore>Default</Th>
-      <Th data-llms-ignore>Minimal</Th>
+      <Th data-llms-ignore>Neutral</Th>
       {framework === 'html' && <Th>Name</Th>}
       <Th>Export</Th>
     </Tr>
@@ -54,8 +54,8 @@ const icons = Object.entries(defaultIcons)
             <span class="sr-only">{icon.name}, default set</span>
           </Td>
           <Td data-llms-ignore>
-            <span class="inline-flex size-4.5" set:html={icon.minimalSvg} />
-            <span class="sr-only">{icon.name}, minimal set</span>
+            <span class="inline-flex size-4.5" set:html={icon.neutralSvg} />
+            <span class="sr-only">{icon.name}, neutral set</span>
           </Td>
           {framework === 'html' && (
             <Td>
