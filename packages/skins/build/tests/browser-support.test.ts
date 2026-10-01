@@ -98,7 +98,7 @@ describe('auditSkinCss', () => {
   it('passes every generated skin stylesheet once lowered like the package builds', () => {
     const files = [
       ...globSync('packages/html/src/internal/skins/*/skin.css', { cwd: workspaceDir }),
-      ...globSync('packages/react/src/presets/*/{skin,neutral-skin,starter-skin}.css', { cwd: workspaceDir }).filter(
+      ...globSync('packages/react/src/presets/*/{skin,neutral-skin,compat-skin}.css', { cwd: workspaceDir }).filter(
         (file) => !file.includes('/background/')
       ),
     ];

@@ -6,7 +6,7 @@ interface RegistryConsumerProjectBase {
   readonly directory: string;
   readonly port: number;
   readonly bundler: RegistryConsumerBundler;
-  readonly theme: 'default' | 'neutral' | 'starter';
+  readonly theme: 'default' | 'neutral' | 'compat';
 }
 
 export type RegistryConsumerProject = RegistryConsumerProjectBase &
@@ -86,29 +86,29 @@ export const registryConsumerProjects = [
     port: 5314,
   },
   {
-    name: 'next-react-tailwind-starter',
-    directory: 'next-react-tailwind-starter',
+    name: 'next-react-tailwind-compat',
+    directory: 'next-react-tailwind-compat',
     framework: 'react',
     styling: 'tailwind',
-    theme: 'starter',
+    theme: 'compat',
     bundler: 'next',
     port: 5317,
   },
   {
-    name: 'next-react-css-starter',
-    directory: 'next-react-css-starter',
+    name: 'next-react-css-compat',
+    directory: 'next-react-css-compat',
     framework: 'react',
     styling: 'css',
-    theme: 'starter',
+    theme: 'compat',
     bundler: 'next',
     port: 5318,
   },
   {
-    name: 'vite-html-css-starter',
-    directory: 'vite-html-css-starter',
+    name: 'vite-html-css-compat',
+    directory: 'vite-html-css-compat',
     framework: 'html',
     styling: 'css',
-    theme: 'starter',
+    theme: 'compat',
     bundler: 'vite',
     port: 5319,
   },

@@ -1,0 +1,144 @@
+@layer base.theme, base.preset, base.preferences;
+
+@layer base.preset {
+  .media-skin[data-theme="compat"] {
+    --media-accent: var(--media-accent-color, var(--media-popover));
+    --media-accent-foreground: var(--media-accent-text-color, white);
+    --media-background: black;
+    --media-border: transparent;
+    --media-foreground: white;
+    --media-muted: rgb(255 255 255 / 0.2);
+    --media-popover: rgb(0 0 0 / 0.85);
+    --media-popover-foreground: white;
+    --media-frame-border: var(--media-border-color, transparent);
+    --media-primary: var(--media-accent-color, white);
+    --media-primary-foreground: var(--media-accent-text-color, black);
+    --media-ring: var(--media-accent-color, white);
+    --media-surface-border: var(--media-border);
+    --media-scrollbar-thumb-color: rgb(255 255 255 / 0.3);
+    --media-shadow-surface: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --media-spacing: calc(var(--media-scale-unit, 16px) / 4);
+    --media-video-border-radius: var(--media-border-radius, 0.75rem);
+
+    --media-backdrop-filter-surface: none;
+    --media-backdrop-filter-indicator: none;
+    --media-backdrop-filter-dialog: none;
+  }
+
+  .media-skin[data-theme="compat"][data-preset$="audio"] {
+    --media-accent-foreground: var(--media-accent-text-color, black);
+    --media-background: white;
+    --media-border: rgb(0 0 0 / 0.1);
+    --media-foreground: black;
+    --media-muted: rgb(0 0 0 / 0.2);
+    --media-popover: white;
+    --media-popover-foreground: black;
+    --media-primary: var(--media-accent-color, black);
+    --media-primary-foreground: var(--media-accent-text-color, white);
+    --media-ring: var(--media-accent-color, black);
+    --media-surface-border: rgb(0 0 0 / 0.05);
+    --media-scrollbar-thumb-color: rgb(0 0 0 / 0.3);
+    --media-shadow-surface: 0 1px 3px rgb(0 0 0 / 0.15);
+  }
+
+  @supports (color: light-dark(red, red)) {
+    .media-skin[data-theme="compat"][data-preset$="audio"] {
+      --media-accent-foreground: var(--media-accent-text-color, light-dark(black, white));
+      --media-background: light-dark(white, black);
+      --media-scrollbar-thumb-color: light-dark(rgb(0 0 0 / 0.3), rgb(255 255 255 / 0.3));
+      --media-border: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
+      --media-foreground: light-dark(black, white);
+      --media-muted: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.2));
+      --media-popover: light-dark(white, black);
+      --media-popover-foreground: light-dark(black, white);
+      --media-primary: var(--media-accent-color, light-dark(black, white));
+      --media-primary-foreground: var(--media-accent-text-color, light-dark(white, black));
+      --media-ring: var(--media-accent-color, light-dark(black, white));
+    }
+  }
+
+  @supports (color: contrast-color(red)) {
+    .media-skin[data-theme="compat"] {
+      --media-accent-foreground: var(--media-accent-text-color, contrast-color(var(--media-accent-color, rgb(0 0 0))));
+      --media-primary-foreground: var(--media-accent-text-color, contrast-color(var(--media-accent-color, white)));
+    }
+
+    .media-skin[data-theme="compat"][data-preset$="audio"] {
+      --media-accent-foreground: var(--media-accent-text-color, var(--media-foreground));
+      --media-primary-foreground: var(
+        --media-accent-text-color,
+        contrast-color(var(--media-accent-color, var(--media-primary)))
+      );
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .media-skin[data-theme="compat"] {
+      --media-duration-instant: 0ms;
+      --media-duration-fast: 0ms;
+      --media-duration-menu: 0ms;
+      --media-hidden-blur: 0px;
+      --media-hidden-popup-blur: 0px;
+      --media-hidden-popup-scale: 1;
+      --media-popup-translate-distance: 0px;
+      --media-spinner-animation: none;
+      --media-icon-airplay-fill-animation: none;
+      --media-icon-airplay-triangle-animation: none;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .media-skin[data-theme="compat"][data-preset] {
+      --media-accent: var(--media-foreground);
+      --media-accent-foreground: var(--media-background);
+      --media-border: var(--media-foreground);
+      --media-surface-border: var(--media-foreground);
+      --media-scrollbar-thumb-color: currentColor;
+      --media-popover: var(--media-background);
+      --media-primary: var(--media-foreground);
+      --media-primary-foreground: var(--media-background);
+      --media-ring: var(--media-foreground);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .media-skin[data-theme="compat"][data-preset] {
+      --media-accent: Highlight;
+      --media-accent-foreground: HighlightText;
+      --media-background: Canvas;
+      --media-border: CanvasText;
+      --media-surface-border: CanvasText;
+      --media-scrollbar-thumb-color: CanvasText;
+      --media-foreground: CanvasText;
+      --media-frame-border: CanvasText;
+      --media-muted: GrayText;
+      --media-popover: Canvas;
+      --media-popover-foreground: CanvasText;
+      --media-primary: Highlight;
+      --media-primary-foreground: HighlightText;
+      --media-ring: CanvasText;
+    }
+  }
+}
+
+@layer components {
+  .media-skin[data-theme="compat"] .media-popup {
+    scale: none;
+  }
+
+  .media-skin[data-theme="compat"] .media-popup[data-starting-style] {
+    transform: translate(var(--media-popup-translate-x-distance, 0), var(--media-popup-translate-y-distance, 0))
+      scale(var(--media-hidden-popup-scale));
+  }
+
+  .media-skin[data-theme="compat"] .media-popup[data-ending-style] {
+    transform: scale(var(--media-hidden-popup-scale));
+  }
+
+  .media-skin[data-theme="compat"] video::-webkit-media-text-track-container {
+    scale: none;
+    translate: none;
+    transform: translateY(var(--media-caption-track-y, 0px)) scale(0.98);
+    transition-property: transform;
+  }
+}

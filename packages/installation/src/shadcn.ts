@@ -9,7 +9,7 @@ import {
 
 export type RegistryFramework = 'html' | 'react';
 export type RegistryStyling = 'css' | 'tailwind';
-export type RegistryTheme = 'default' | 'neutral' | 'starter';
+export type RegistryTheme = 'default' | 'neutral' | 'compat';
 export type RegistryPreset = 'audio' | 'live-audio' | 'live-video' | 'video';
 export type ShadcnRunner = PackageManager;
 
@@ -31,7 +31,7 @@ export const SHADCN_RUNNERS = {
 export const REGISTRY_STYLINGS = ['tailwind', 'css'] as const satisfies readonly RegistryStyling[];
 const HTML_REGISTRY_STYLINGS = ['css'] as const satisfies readonly RegistryStyling[];
 
-export const REGISTRY_THEMES = ['default', 'neutral', 'starter'] as const satisfies readonly RegistryTheme[];
+export const REGISTRY_THEMES = ['default', 'neutral', 'compat'] as const satisfies readonly RegistryTheme[];
 
 export const DEFAULT_REGISTRY_PRESET = 'video' satisfies RegistryPreset;
 
@@ -80,9 +80,9 @@ export const REGISTRY_SKINS: readonly RegistrySkin[] = REGISTRY_PRESETS.flatMap(
   },
   {
     item: preset,
-    label: `Starter ${label}`,
+    label: `Compat ${label}`,
     preset,
-    theme: 'starter',
+    theme: 'compat',
     directory,
   },
 ]);
@@ -250,6 +250,6 @@ export function registrySkinSelection({
 
   return {
     item,
-    theme: skin.startsWith('neutral-') ? 'neutral' : 'default',
+    theme: skin.startsWith('neutral-') ? 'neutral' : skin.startsWith('compat-') ? 'compat' : 'default',
   };
 }

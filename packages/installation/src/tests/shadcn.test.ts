@@ -32,8 +32,8 @@ describe('registryNamespaceUrl', () => {
     expect(registryNamespaceUrl('html', 'css', 'neutral')).toBe(
       'https://shadcn.videojs.org/r/html/neutral/{name}.json'
     );
-    expect(registryNamespaceUrl('react', 'css', 'starter')).toBe(
-      'https://shadcn.videojs.org/r/react/css/starter/{name}.json'
+    expect(registryNamespaceUrl('react', 'css', 'compat')).toBe(
+      'https://shadcn.videojs.org/r/react/css/compat/{name}.json'
     );
   });
 });
@@ -134,6 +134,13 @@ describe('shadcnProjectConfiguration', () => {
 });
 
 describe('registrySkinSelection', () => {
+  it('selects the Compat catalog for source installs', () => {
+    expect(registrySkinSelection({ useCase: 'live-audio', skin: 'compat-audio' })).toEqual({
+      item: 'live-audio',
+      theme: 'compat',
+    });
+  });
+
   it('maps the installation selection onto a theme catalog and stable item name', () => {
     expect(registrySkinSelection({ useCase: 'default-video', skin: 'video' })).toEqual({
       item: 'video',

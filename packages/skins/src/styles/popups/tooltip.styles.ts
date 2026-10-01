@@ -17,7 +17,7 @@ export default styles({
     },
     shortcut: {
       utilities:
-        'min-w-[1.5em] rounded-[--spacing(1)] bg-media-muted p-[0.1em] text-center text-media-sm [font-family:inherit] font-semibold leading-tight',
+        'min-w-[1.5em] rounded-[--spacing(1)] bg-media-muted p-[0.1em] text-center text-media-sm font-[inherit] font-semibold leading-tight',
       variants: { neutral: '-me-1' },
     },
   },

@@ -15,7 +15,7 @@ export interface SkinMeta extends ComponentMeta {
 /** Build-time styling identity of one skin: its CSS scope, theme, and preset. Keyed by skin name in `skinStyles`. */
 export interface SkinStyle {
   readonly scope: string;
-  readonly theme: 'starter' | 'default' | 'neutral';
+  readonly theme: 'compat' | 'default' | 'neutral';
   readonly preset: 'video' | 'audio' | 'live-video' | 'live-audio';
 }
 
@@ -68,24 +68,24 @@ export const skinStyles = {
     theme: 'neutral',
     preset: 'audio',
   },
-  'starter-video': {
-    scope: '.media-skin[data-theme="starter"][data-preset="video"]',
-    theme: 'starter',
+  'compat-video': {
+    scope: '.media-skin[data-theme="compat"][data-preset="video"]',
+    theme: 'compat',
     preset: 'video',
   },
-  'starter-live-video': {
-    scope: '.media-skin[data-theme="starter"][data-preset="live-video"]',
-    theme: 'starter',
+  'compat-live-video': {
+    scope: '.media-skin[data-theme="compat"][data-preset="live-video"]',
+    theme: 'compat',
     preset: 'live-video',
   },
-  'starter-audio': {
-    scope: '.media-skin[data-theme="starter"][data-preset="audio"]',
-    theme: 'starter',
+  'compat-audio': {
+    scope: '.media-skin[data-theme="compat"][data-preset="audio"]',
+    theme: 'compat',
     preset: 'audio',
   },
-  'starter-live-audio': {
-    scope: '.media-skin[data-theme="starter"][data-preset="live-audio"]',
-    theme: 'starter',
+  'compat-live-audio': {
+    scope: '.media-skin[data-theme="compat"][data-preset="live-audio"]',
+    theme: 'compat',
     preset: 'live-audio',
   },
 } as const satisfies Record<string, SkinStyle>;

@@ -44,13 +44,13 @@ describe('skinModuleTarget', () => {
     );
   });
 
-  it('places Starter shared modules under the installing preset', () => {
-    const root = graphModule('skins/starter/video/skin.tsx');
+  it('places Compat shared modules under the installing preset', () => {
+    const root = graphModule('skins/compat/video/skin.tsx');
 
-    expect(skinModuleTarget(graphModule('skins/starter/shared/controls.tsx'), root, 'starter-video')).toBe(
+    expect(skinModuleTarget(graphModule('skins/compat/shared/controls.tsx'), root, 'compat-video')).toBe(
       'video/shared/controls.tsx'
     );
-    expect(() => skinModuleTarget(graphModule('skins/unknown/shared/controls.tsx'), root, 'starter-video')).toThrow(
+    expect(() => skinModuleTarget(graphModule('skins/unknown/shared/controls.tsx'), root, 'compat-video')).toThrow(
       'Unsupported registry source'
     );
   });

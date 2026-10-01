@@ -7,7 +7,7 @@ for (const preset of ['video', 'audio'] as const) {
     const errors: string[] = [];
     const theme = testInfo.project.metadata.theme;
 
-    if (theme !== 'default' && theme !== 'neutral' && theme !== 'starter')
+    if (theme !== 'default' && theme !== 'neutral' && theme !== 'compat')
       throw new Error(`Unknown registry theme: ${String(theme)}.`);
 
     page.on('console', (message) => {
@@ -51,7 +51,7 @@ for (const preset of ['video', 'audio'] as const) {
           element.style.colorScheme = scheme;
         }, colorScheme);
 
-        const surface = theme === 'starter' ? skin : skin.locator('.audio-controls').first();
+        const surface = theme === 'compat' ? skin : skin.locator('.audio-controls').first();
         const hairline = await surface.evaluate((element) => {
           const style = getComputedStyle(element);
           const probe = document.createElement('span');

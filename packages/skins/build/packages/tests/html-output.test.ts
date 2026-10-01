@@ -7,10 +7,10 @@ import { describe, expect, it } from 'vite-plus/test';
 const workspaceDir = resolve(import.meta.dirname, '../../../../..');
 const outputRoot = resolve(workspaceDir, 'packages/html/src/internal/skins');
 const skins = [
-  'starter-video',
-  'starter-audio',
-  'starter-live-video',
-  'starter-live-audio',
+  'compat-video',
+  'compat-audio',
+  'compat-live-video',
+  'compat-live-audio',
   'default-video',
   'neutral-video',
   'default-audio',
@@ -53,22 +53,22 @@ describe('generated HTML package skins', () => {
       expect(tags).not.toContain('title');
     }
 
-    if (skin.startsWith('starter-')) {
-      expect(template).toContain('family="starter"');
-      expect(registration).toContain("from '../../../icons/starter';");
+    if (skin.startsWith('compat-')) {
+      expect(template).toContain('family="compat"');
+      expect(registration).toContain("from '../../../icons/compat';");
       expect(tags).toEqual(
         expect.arrayContaining(['play-button', 'mute-button', 'volume-popover', 'volume-slider', 'captions-button'])
       );
 
-      if (skin !== 'starter-live-audio') expect(tags).toContain('menu');
+      if (skin !== 'compat-live-audio') expect(tags).toContain('menu');
     }
 
-    if (skin === 'starter-video' || skin === 'starter-audio') {
+    if (skin === 'compat-video' || skin === 'compat-audio') {
       expect(tags).toContain('time-slider');
       expect(tags).toContain('time-slider-chapters');
     }
 
-    if (skin === 'starter-live-video' || skin === 'starter-live-audio') {
+    if (skin === 'compat-live-video' || skin === 'compat-live-audio') {
       expect(tags).not.toContain('time-slider');
       expect(tags).not.toContain('time');
     }

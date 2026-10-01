@@ -21,10 +21,10 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/video/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/video/skin'),
     ]),
-  'video/starter': () =>
+  'video/compat': () =>
     Promise.all([
-      import('@registry-html-starter/components/videojs/video/skin.html?raw'),
-      import('@registry-html-starter/components/videojs/video/skin'),
+      import('@registry-html-compat/components/videojs/video/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/video/skin'),
     ]),
   'live-video/default': () =>
     Promise.all([
@@ -36,10 +36,10 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/live-video/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/live-video/skin'),
     ]),
-  'live-video/starter': () =>
+  'live-video/compat': () =>
     Promise.all([
-      import('@registry-html-starter/components/videojs/live-video/skin.html?raw'),
-      import('@registry-html-starter/components/videojs/live-video/skin'),
+      import('@registry-html-compat/components/videojs/live-video/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/live-video/skin'),
     ]),
   'audio/default': () =>
     Promise.all([
@@ -51,10 +51,10 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/audio/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/audio/skin'),
     ]),
-  'audio/starter': () =>
+  'audio/compat': () =>
     Promise.all([
-      import('@registry-html-starter/components/videojs/audio/skin.html?raw'),
-      import('@registry-html-starter/components/videojs/audio/skin'),
+      import('@registry-html-compat/components/videojs/audio/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/audio/skin'),
     ]),
   'live-audio/default': () =>
     Promise.all([
@@ -66,10 +66,10 @@ const registrySkins = {
       import('@registry-html-neutral/components/videojs/live-audio/skin.html?raw'),
       import('@registry-html-neutral/components/videojs/live-audio/skin'),
     ]),
-  'live-audio/starter': () =>
+  'live-audio/compat': () =>
     Promise.all([
-      import('@registry-html-starter/components/videojs/live-audio/skin.html?raw'),
-      import('@registry-html-starter/components/videojs/live-audio/skin'),
+      import('@registry-html-compat/components/videojs/live-audio/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/live-audio/skin'),
     ]),
 } satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
 

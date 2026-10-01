@@ -29,9 +29,9 @@ export const registryTargets = [
   { framework: 'react', styling: 'css', theme: 'neutral', output: 'r/react/css/neutral' },
   { framework: 'html', styling: 'css', theme: 'default', output: 'r/html' },
   { framework: 'html', styling: 'css', theme: 'neutral', output: 'r/html/neutral' },
-  { framework: 'react', styling: 'tailwind', theme: 'starter', output: 'r/react/starter' },
-  { framework: 'react', styling: 'css', theme: 'starter', output: 'r/react/css/starter' },
-  { framework: 'html', styling: 'css', theme: 'starter', output: 'r/html/starter' },
+  { framework: 'react', styling: 'tailwind', theme: 'compat', output: 'r/react/compat' },
+  { framework: 'react', styling: 'css', theme: 'compat', output: 'r/react/css/compat' },
+  { framework: 'html', styling: 'css', theme: 'compat', output: 'r/html/compat' },
 ] as const satisfies readonly RegistryTarget[];
 
 export const packageRequirements = {

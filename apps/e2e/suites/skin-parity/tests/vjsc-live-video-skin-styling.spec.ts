@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { testCompatParity } from './compat';
 import { testRtlLayout } from './rtl';
-import { testStarterParity } from './starter';
 import {
   buttonInteractionContract,
   captureRendering,
@@ -30,11 +30,11 @@ import {
   waitForStableText,
 } from './vjsc-skin-parity';
 
-const CASES = skinCases('live-video').filter((variant) => !variant.skin.startsWith('starter-'));
+const CASES = skinCases('live-video').filter((variant) => !variant.skin.startsWith('compat-'));
 const WIDTHS = [384, 680] as const;
 
 testRtlLayout(CASES);
-testStarterParity('live-video');
+testCompatParity('live-video');
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {

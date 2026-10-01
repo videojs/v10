@@ -19,11 +19,11 @@ test.use({ trace: 'off' });
 test.skip(!WORKSPACE_SKINS, 'The authored skins are only compiled inside the workspace.');
 
 for (const { platform, styling } of CASES) {
-  test(`${platform} starter ${styling} moves the seek thumb before pointer release`, async ({ page }) => {
+  test(`${platform} compat ${styling} moves the seek thumb before pointer release`, async ({ page }) => {
     const query = new URLSearchParams({
       skins: 'authored',
       styling,
-      skin: 'starter',
+      skin: 'compat',
       source: 'mp4-1',
       preload: 'metadata',
       autoplay: '0',
@@ -54,7 +54,7 @@ for (const { platform, styling } of CASES) {
     await page.mouse.up();
   });
 
-  for (const skin of ['default', 'neutral', 'starter'] as const) {
+  for (const skin of ['default', 'neutral', 'compat'] as const) {
     test(`${platform} ${skin} ${styling} renders the authored skin`, async ({ page }) => {
       const errors: string[] = [];
 
@@ -92,11 +92,11 @@ for (const { platform, styling } of CASES) {
   }
 }
 
-test('the starter preview keeps its thumbnail fixed when the chapter title changes', async ({ page }) => {
+test('the compat preview keeps its thumbnail fixed when the chapter title changes', async ({ page }) => {
   const query = new URLSearchParams({
     skins: 'authored',
     styling: 'css',
-    skin: 'starter',
+    skin: 'compat',
     source: 'mp4-1',
     autoplay: '0',
     muted: '1',
@@ -164,12 +164,12 @@ test('the shell offers the authored source and the html Tailwind styling it enab
 
   await page.getByRole('combobox', { name: 'Skin', exact: true }).click();
 
-  const starter = page.getByRole('option', { name: 'Starter' });
+  const compat = page.getByRole('option', { name: 'Compat' });
 
-  await expect(starter).toBeEnabled();
-  await starter.click();
-  await expect(page).toHaveURL(/[?&]skin=starter(?:&|$)/);
+  await expect(compat).toBeEnabled();
+  await compat.click();
+  await expect(page).toHaveURL(/[?&]skin=compat(?:&|$)/);
   await expect(
     page.frameLocator('iframe[title="player demo"]').getByRole('group', { name: 'Media player' }).first()
-  ).toHaveAttribute('data-theme', 'starter');
+  ).toHaveAttribute('data-theme', 'compat');
 });

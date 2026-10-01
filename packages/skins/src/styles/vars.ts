@@ -10,7 +10,7 @@ export interface CssVar {
 export const vars = {
   '--media-button-highlight': {
     kind: 'internal',
-    description: 'Starter button and menu item highlight background.',
+    description: 'Compat button and menu item highlight background.',
   },
   '--media-accent-color': {
     kind: 'public',

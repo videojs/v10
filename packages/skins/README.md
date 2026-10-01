@@ -19,7 +19,7 @@ Follow one skin from source to output.
 | Path                                                             | Owns                                                                                                                                       |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`src/components/`](./src/components)                            | Shared UI grouped as behaviors, buttons, dialogs, display, layout, menus, and sliders.                                                     |
-| [`src/skins/`](./src/skins)                                      | Skin folders grouped by theme and preset (`default/video`, `neutral/audio`, `starter/video`, and so on), with reused parts under `shared/`. |
+| [`src/skins/`](./src/skins)                                      | Skin folders grouped by theme and preset (`default/video`, `neutral/audio`, `compat/video`, and so on), with reused parts under `shared/`. |
 | [`src/styles/`](./src/styles)                                    | Base resets, themes, tokens, the shared Tailwind source, and style modules grouped like the components.                                    |
 | [`src/presets/`](./src/presets)                                  | The handwritten background preset, copied into both packages as is.                                                                        |
 | [`src/meta.ts`](./src/meta.ts)                                   | Skin and component metadata for the registry. Shared parts use `defineRenderTarget` from `vjsc/components`.                              |
@@ -32,10 +32,10 @@ Follow one skin from source to output.
 [`base.css`](./src/styles/base.css) fixes the cascade: `base.theme` holds tokens and `base.preferences` overrides them, so a reduced motion, reduced transparency, or forced colors preference wins regardless of selector specificity.
 
 - [`themes/theme.css`](./src/styles/themes/theme.css) declares every default token, grouped by colors, shadows, controls, motion, popups, sliders, and frame.
-- [`themes/neutral.css`](./src/styles/themes/neutral.css) and [`themes/starter.css`](./src/styles/themes/starter.css) override tokens for their respective skins.
+- [`themes/neutral.css`](./src/styles/themes/neutral.css) and [`themes/compat.css`](./src/styles/themes/compat.css) override tokens for their respective skins.
 - [`video/theme.css`](./src/styles/video/theme.css) and [`audio/theme.css`](./src/styles/audio/theme.css) override tokens per media preset.
 - [`themes/preferences.css`](./src/styles/themes/preferences.css) collapses durations and neutralizes hidden-state values under reduced motion, and switches backdrop filters off under reduced transparency.
-- [`video/base.css`](./src/styles/video/base.css) and [`audio/base.css`](./src/styles/audio/base.css) are the default preset entries. Their adjacent `neutral.css` and `starter.css` entries add the selected theme layer.
+- [`video/base.css`](./src/styles/video/base.css) and [`audio/base.css`](./src/styles/audio/base.css) are the default preset entries. Their adjacent `neutral.css` and `compat.css` entries add the selected theme layer.
 - [`vars.ts`](./src/styles/vars.ts) classifies every token as public, runtime, or internal. [`utilities.ts`](./src/styles/utilities.ts) describes every shared utility, variant, and computed theme key.
 
 ## Tailwind entry files
@@ -59,7 +59,7 @@ Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `util
 
 The normal registry E2E packs the current workspace packages so source and package changes can be tested before release. The Netlify production build additionally runs `pnpm test:e2e:registry:published` from the workspace root. That smoke test creates a fresh Next app, installs the video and audio skins through the stock Shadcn CLI, and builds them against the registry's exact npm package pins without local overrides. It is expected to pass only after those package versions have been published. To compare unreleased registry source with the newest package cut locally, run the same command with `VIDEOJS_REGISTRY_PACKAGE_TAG=latest`; production leaves that override unset.
 
-Each framework and styling has default, `/neutral`, and `/starter` catalogs. All publish the same skin item names (`video`, `audio`, `live-video`, and `live-audio`) and install to the same preset paths under `components/videojs/`. A project chooses one theme by pointing its Shadcn namespace at one catalog; the default catalog keeps the shorter URL. Default and Neutral publish standalone shared UI under `components/videojs/ui/`. Starter publishes complete skins with editable parts beside each preset.
+Each framework and styling has default, `/neutral`, and `/compat` catalogs. All publish the same skin item names (`video`, `audio`, `live-video`, and `live-audio`) and install to the same preset paths under `components/videojs/`. A project chooses one theme by pointing its Shadcn namespace at one catalog; the default catalog keeps the shorter URL. Default and Neutral publish standalone shared UI under `components/videojs/ui/`. Compat publishes complete skins with editable parts beside each preset.
 
 ## Commands
 
