@@ -36,6 +36,7 @@ export class LiveButtonElement extends UIElement {
   disabled = false;
   label: Text | string = '';
 
+  /** @internal */
   protected readonly core = new LiveButtonCore();
 
   protected readonly live = new PlayerController(this, playerContext, selectLive);
