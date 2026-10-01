@@ -65,6 +65,21 @@ describe('renderInlineMarkdown', () => {
     expect(result).toContain('intent:decoration-gold');
   });
 
+  it('tags off-site links with their analytics destination', () => {
+    expect(renderInlineMarkdown('[skills](https://github.com/videojs/skills)')).toContain(
+      'data-ph-capture-attribute-destination="github"'
+    );
+    expect(renderInlineMarkdown('[guide](/docs/framework/html/guides/installation)')).not.toContain(
+      'data-ph-capture-attribute-destination'
+    );
+  });
+
+  it('tags Mux links with the Video.js campaign and the docs placement', () => {
+    expect(renderInlineMarkdown('[Mux Data](https://www.mux.com/data)')).toContain(
+      'href="https://www.mux.com/data?utm_source=videojs&utm_campaign=vjs10&utm_content=docs-content"'
+    );
+  });
+
   it('renders unordered lists', () => {
     const result = renderInlineMarkdown('- item one\n- item two');
 
