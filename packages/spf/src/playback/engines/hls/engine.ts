@@ -35,6 +35,7 @@ import type {
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
+import type { RequestCredentialsPolicy } from '../../../network/credentials-fetch';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
@@ -88,7 +89,6 @@ import {
   switchTextTrack,
   switchVideoTrack,
 } from '../../behaviors/track-switching';
-import type { RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,

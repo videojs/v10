@@ -1,6 +1,6 @@
 import { isFunction } from '@videojs/utils/predicate';
 
-import type { FetchOptions, Resource } from '../../network/fetch';
+import type { FetchOptions, Resource } from './fetch';
 
 /**
  * The `credentials` mode the engine's requests are made with: a fixed mode, or a policy consulted per request that may

@@ -52,6 +52,7 @@ import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils
 import { buildMimeCodec } from '../../../media/utils/tracks';
 import { hasCodecs } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../../network/credentials-fetch';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../network/fetch';
 import {
   createSegmentLoaderActor,
@@ -59,7 +60,6 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
-import { credentialsFetch, type RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { failoverFetch } from '../../primitives/failover-fetch';
 import type { MessagePipelines } from '../../primitives/segment-load-pipeline';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';

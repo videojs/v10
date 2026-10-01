@@ -30,8 +30,8 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation, type Presentation } from '../../media/types';
 import { DEFAULT_PRELOAD, isBlockingPreload, type StandardPreload } from '../../media/utils/preload';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../network/credentials-fetch';
 import { fetchResolvable as defaultFetchResolvable, getResponseText } from '../../network/fetch';
-import { credentialsFetch, type RequestCredentialsPolicy } from '../primitives/credentials-fetch';
 
 export interface PresentationState {
   presentation?: MaybeResolvedPresentation;

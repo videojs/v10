@@ -38,8 +38,8 @@ import {
 } from '../../../media/hls/parse-json-chapters';
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
 import { getSessionData, isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../../network/credentials-fetch';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../../network/fetch';
-import { credentialsFetch, type RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 
 type LoadChaptersFsmState = 'preconditions-unmet' | 'loading';
 

@@ -14,6 +14,7 @@ import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
+import type { RequestCredentialsPolicy } from '../../../network/credentials-fetch';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import {
@@ -46,7 +47,6 @@ import { resolveAudioTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { type SwitchAudioTrackConfig, switchAudioTrack } from '../../behaviors/track-switching';
-import type { RequestCredentialsPolicy } from '../../primitives/credentials-fetch';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,

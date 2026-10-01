@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import type { FetchOptions, FetchText, Resource } from '../../../network/fetch';
 import { credentialsFetch } from '../credentials-fetch';
+import type { FetchOptions, FetchText, Resource } from '../fetch';
 
 const playlist = { url: 'https://cdn.example.com/r.m3u8' };
 
