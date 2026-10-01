@@ -3,9 +3,9 @@ title: Icons
 description: The SVG icon sets used by the packaged skins, as React components, SVG strings, and the media-icon element
 apis:
   - '@videojs/react/icons'
-  - '@videojs/react/icons/minimal'
+  - '@videojs/react/icons/neutral'
   - '@videojs/html/icons'
-  - '@videojs/html/icons/minimal'
+  - '@videojs/html/icons/neutral'
 ---
 
 import DocsLink from "@/components/docs/DocsLink.astro";
@@ -53,7 +53,7 @@ Two sets ship with the same icon names and different designs.
 | Set | Module | Used by |
 |-----|--------|---------|
 | Default | `@videojs/react/icons` | The default skins, such as <DocsLink slug="reference/components/video-skin">`VideoSkin`</DocsLink> |
-| Minimal | `@videojs/react/icons/minimal` | The minimal skins, such as <DocsLink slug="reference/components/video-minimal-skin">`MinimalVideoSkin`</DocsLink> |
+| Neutral | `@videojs/react/icons/neutral` | The neutral skins, such as <DocsLink slug="reference/components/video-neutral-skin">`NeutralVideoSkin`</DocsLink> |
 
 </FrameworkCase>
 
@@ -62,7 +62,7 @@ Two sets ship with the same icon names and different designs.
 | Set | `family` | SVG strings | Used by |
 |-----|----------|-------------|---------|
 | Default | `default` | `@videojs/html/icons` or `@videojs/html/icons/default` | The default skins, such as <DocsLink slug="reference/components/video-skin">`<video-skin>`</DocsLink> |
-| Minimal | `minimal` | `@videojs/html/icons/minimal` | The minimal skins, such as <DocsLink slug="reference/components/video-minimal-skin">`<video-minimal-skin>`</DocsLink> |
+| Neutral | `neutral` | `@videojs/html/icons/neutral` | The neutral skins, such as <DocsLink slug="reference/components/video-neutral-skin">`<video-neutral-skin>`</DocsLink> |
 
 </FrameworkCase>
 
@@ -107,12 +107,12 @@ import { PauseIcon, PlayIcon } from "@videojs/react/icons";
 | Attribute | Default | Description |
 |-----------|---------|-------------|
 | `name` | — | Icon name from the [available icons](#available-icons), such as `play` |
-| `family` | `default` | Icon set to read from, such as `minimal` |
+| `family` | `default` | Icon set to read from, such as `neutral` |
 
 ```html
 <media-play-button>
   <media-icon class="play-icon" name="play"></media-icon>
-  <media-icon class="pause-icon" name="pause" family="minimal"></media-icon>
+  <media-icon class="pause-icon" name="pause" family="neutral"></media-icon>
 </media-play-button>
 ```
 
@@ -122,11 +122,11 @@ Each module below defines `<media-icon>` if it is not already defined:
 |--------|-----------|
 | `@videojs/html/icons/element` | Both sets, loading each one the first time a `<media-icon>` asks for its family |
 | `@videojs/html/icons/element/default` | The default set, up front |
-| `@videojs/html/icons/element/minimal` | The minimal set, up front |
+| `@videojs/html/icons/element/neutral` | The neutral set, up front |
 
 ## SVG strings
 
-Each icon export from `@videojs/html/icons`, `@videojs/html/icons/default`, and `@videojs/html/icons/minimal` is the icon's SVG markup as a string; `@videojs/html/icons` also exports [`registerIcons`](#registericons). Importing them does not define `<media-icon>`.
+Each icon export from `@videojs/html/icons`, `@videojs/html/icons/default`, and `@videojs/html/icons/neutral` is the icon's SVG markup as a string; `@videojs/html/icons` also exports [`registerIcons`](#registericons). Importing them does not define `<media-icon>`.
 
 ```ts
 import { playIcon } from "@videojs/html/icons";
