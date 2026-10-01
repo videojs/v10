@@ -197,13 +197,8 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#signals.context.mediaElement.set(mediaElement);
 
       // Most-recent-wins on attach — see the video mixin.
-      const authored = toMediaCrossOrigin(mediaElement.crossOrigin);
-
-      if (authored !== null) {
-        this.#crossOrigin = authored;
-      } else if (this.#crossOrigin !== null) {
-        mediaElement.crossOrigin = this.#crossOrigin;
-      }
+      this.#crossOrigin = toMediaCrossOrigin(mediaElement.crossOrigin) ?? this.#crossOrigin;
+      mediaElement.crossOrigin = this.#crossOrigin;
     }
 
     detach(): void {
