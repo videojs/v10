@@ -52,7 +52,7 @@ export const PROPAGATE_THROUGH_HERITAGE = true;
 const INTERNAL_PACKAGE_PATTERN = /^@videojs\/(?:core|media|utils|element|icons|skins)(?:\/|$)/;
 
 /** Packages whose declarations can be a documented subject's companion types. */
-const COMPANION_PACKAGE_PATTERN = /\/packages\/(?:react|html|extensions\/[^/]+)\//;
+const COMPANION_PACKAGE_PATTERN = /[\\/]packages[\\/](?:react|html|extensions[\\/][^\\/]+)[\\/]/;
 
 /** Packages readers import stable API from, besides the extension packages. */
 const FRAMEWORK_PACKAGE_PATTERN = /^@videojs\/(?:react|html|store)(?:\/|$)/;
