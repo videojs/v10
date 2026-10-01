@@ -11,9 +11,3 @@ export class NeutralLiveVideoSkinElement extends SkinElement {
   static styles = createShadowStyle(styles);
   static template = template;
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [NeutralLiveVideoSkinElement.tagName]: NeutralLiveVideoSkinElement;
-  }
-}

@@ -33,9 +33,3 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
     }
   }
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [BackgroundVideoSkinElement.tagName]: BackgroundVideoSkinElement;
-  }
-}

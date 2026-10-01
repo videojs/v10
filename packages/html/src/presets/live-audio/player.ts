@@ -12,9 +12,3 @@ export const PlayerController = LiveAudioPlayerController;
 export class LiveAudioPlayerElement extends PlayerElement {
   static readonly tagName = 'live-audio-player';
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [LiveAudioPlayerElement.tagName]: LiveAudioPlayerElement;
-  }
-}

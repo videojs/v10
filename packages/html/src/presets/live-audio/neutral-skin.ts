@@ -11,9 +11,3 @@ export class NeutralLiveAudioSkinElement extends SkinElement {
   static styles = createShadowStyle(styles);
   static template = template;
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [NeutralLiveAudioSkinElement.tagName]: NeutralLiveAudioSkinElement;
-  }
-}
