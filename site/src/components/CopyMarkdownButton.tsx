@@ -8,6 +8,7 @@ import Copy from '@/assets/icons/copy.svg?react';
 import Markdown from '@/assets/icons/markdown.svg?react';
 import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics-events';
 import { getInstallationRouteSegment } from '@/utils/installation/routes';
 import useIsHydrated from '@/utils/useIsHydrated';
 
@@ -121,6 +122,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
       }
 
       setState({ status: 'success' });
+      trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'copy-markdown' });
       setTimeout(() => {
         setState({ status: 'idle' });
       }, 2000);
@@ -155,6 +157,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
           disabled ? 'cursor-wait' : 'cursor-pointer'
         )}
         aria-label={ariaLabel}
+        data-ph-capture-attribute-cta="copy-markdown"
       >
         {state.status === 'success' ? (
           <Check className="text-accent size-4" aria-hidden="true" />
@@ -182,6 +185,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         <Menu.Trigger
           disabled={!isHydrated}
           aria-label="More ways to use this page"
+          data-ph-capture-attribute-cta="markdown-menu"
           className={clsx(
             segmentClass,
             '-ml-px w-8 justify-center rounded-r-lg corner-squircle data-[popup-open]:text-faded-black dark:data-[popup-open]:text-manila-light',
@@ -199,18 +203,32 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
                 'motion-reduce:transition-none'
               )}
             >
-              <Menu.Item className={itemClass} render={<a href={mdUrl} target="_blank" rel="noopener noreferrer" />}>
+              <Menu.Item
+                className={itemClass}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'view-markdown' })}
+                render={
+                  <a
+                    href={mdUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-ph-capture-attribute-cta="view-markdown"
+                  />
+                }
+              >
                 <Markdown className="size-4 shrink-0" aria-hidden="true" />
                 View as Markdown
               </Menu.Item>
               <Menu.Separator className="bg-line my-1 h-px" />
               <Menu.Item
                 className={itemClass}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'open-in-chatgpt' })}
                 render={
                   <a
                     href={`https://chatgpt.com/?hints=search&prompt=${prompt}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-ph-capture-attribute-cta="open-in-chatgpt"
+                    data-ph-capture-attribute-destination="external"
                   />
                 }
               >
@@ -219,7 +237,16 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
               </Menu.Item>
               <Menu.Item
                 className={itemClass}
-                render={<a href={`https://claude.ai/new?q=${prompt}`} target="_blank" rel="noopener noreferrer" />}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'open-in-claude' })}
+                render={
+                  <a
+                    href={`https://claude.ai/new?q=${prompt}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-ph-capture-attribute-cta="open-in-claude"
+                    data-ph-capture-attribute-destination="external"
+                  />
+                }
               >
                 <ClaudeLogo className="size-4 shrink-0" aria-hidden="true" />
                 Open in Claude
