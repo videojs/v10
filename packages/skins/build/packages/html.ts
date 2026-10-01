@@ -8,6 +8,7 @@ import { iconImports } from '../target/html-render.ts';
 import { htmlComponentTarget } from '../target/html.tsx';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
+import { mediaLayers } from './layers.ts';
 import { propertyStyles } from './properties.ts';
 import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
@@ -40,12 +41,14 @@ export async function createHtmlPackageSkins(
     addGenerated(
       generated,
       `${root}/skin.css`,
-      await bundleStyles(graph, skin.modules, {
-        label: name,
-        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
-        // Packaged skins reach browsers without `@scope`; the registry keeps it.
-        flattenScopes: true,
-      })
+      mediaLayers(
+        await bundleStyles(graph, skin.modules, {
+          label: name,
+          files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
+          // Packaged skins reach browsers without `@scope`; the registry keeps it.
+          flattenScopes: true,
+        })
+      )
     );
   }
 

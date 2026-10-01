@@ -7,6 +7,7 @@ import { skinClassNameMergeImport } from '../imports.ts';
 import { skinBaseStylesheet, skinSourceDirectory } from '../skin.ts';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
+import { mediaLayers } from './layers.ts';
 import { addCopiedFiles, addGenerated, generatedFiles } from './utils.ts';
 
 const packageRoot = 'packages/react/src';
@@ -85,12 +86,14 @@ export async function createReactPackageSkins(
     addGenerated(
       generated,
       `${publicRoot}/${publicName}.css`,
-      await bundleStyles(graph, skin.modules, {
-        label: `${skin.theme}-${skin.preset}`,
-        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
-        // Packaged skins reach browsers without `@scope`; the registry keeps it.
-        flattenScopes: true,
-      })
+      mediaLayers(
+        await bundleStyles(graph, skin.modules, {
+          label: `${skin.theme}-${skin.preset}`,
+          files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
+          // Packaged skins reach browsers without `@scope`; the registry keeps it.
+          flattenScopes: true,
+        })
+      )
     );
   }
 
