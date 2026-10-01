@@ -416,13 +416,8 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // Most-recent-wins on attach, as with `preload`: an element authored with
       // `crossorigin` (a React-rendered `<video>`, a standalone attach) is the
       // intent; otherwise what was set before attach reaches the element now.
-      const authored = toMediaCrossOrigin(mediaElement.crossOrigin);
-
-      if (authored !== null) {
-        this.#crossOrigin = authored;
-      } else if (this.#crossOrigin !== null) {
-        mediaElement.crossOrigin = this.#crossOrigin;
-      }
+      this.#crossOrigin = toMediaCrossOrigin(mediaElement.crossOrigin) ?? this.#crossOrigin;
+      mediaElement.crossOrigin = this.#crossOrigin;
     }
 
     detach(): void {
