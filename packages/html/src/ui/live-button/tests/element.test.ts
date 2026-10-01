@@ -1,7 +1,7 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
-import { createStore } from '@videojs/store';
+import { createStore, defineSlice } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
@@ -16,19 +16,21 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 }
 
 function createLiveStore(): AnyPlayerStore {
-  return createStore<unknown>()({
-    name: 'liveButton',
-    state: () => ({
-      liveEdgeStart: 90,
-      targetLiveWindow: 0,
-      currentTime: 80,
-      duration: 100,
-      seeking: false,
-      seek: vi.fn(),
-      buffered: [],
-      seekable: [{ start: 0, end: 100 }],
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createStore<unknown>()(
+    defineSlice<unknown>()({
+      name: 'liveButton',
+      state: () => ({
+        liveEdgeStart: 90,
+        targetLiveWindow: 0,
+        currentTime: 80,
+        duration: 100,
+        seeking: false,
+        seek: vi.fn(),
+        buffered: [],
+        seekable: [{ start: 0, end: 100 }],
+      }),
+    })
+  ) as unknown as AnyPlayerStore;
 }
 
 class TestPlayerProviderElement extends UIElement {

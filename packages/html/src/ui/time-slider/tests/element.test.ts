@@ -1,7 +1,7 @@
 import { SliderDataAttrs, type SliderState } from '@videojs/core';
 import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
-import { createStore } from '@videojs/store';
+import { createStore, defineSlice } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
@@ -34,27 +34,29 @@ class TestSliderProviderElement extends UIElement {
 }
 
 class TestPlayerProviderElement extends UIElement {
-  readonly store = createStore<unknown>()({
-    name: 'timeSlider',
-    state: () => ({
-      currentTime: 0,
-      duration: 0,
-      seeking: false,
-      seek: vi.fn(),
-      buffered: [],
-      seekable: [],
-      paused: true,
-      ended: false,
-      started: false,
-      waiting: false,
-      play: vi.fn(() => Promise.resolve()),
-      pause: vi.fn(),
-      userActive: true,
-      controlsVisible: true,
-      requestControlsLock: vi.fn(() => vi.fn()),
-      toggleControls: vi.fn(),
-    }),
-  }) as unknown as AnyPlayerStore;
+  readonly store = createStore<unknown>()(
+    defineSlice<unknown>()({
+      name: 'timeSlider',
+      state: () => ({
+        currentTime: 0,
+        duration: 0,
+        seeking: false,
+        seek: vi.fn(),
+        buffered: [],
+        seekable: [],
+        paused: true,
+        ended: false,
+        started: false,
+        waiting: false,
+        play: vi.fn(() => Promise.resolve()),
+        pause: vi.fn(),
+        userActive: true,
+        controlsVisible: true,
+        requestControlsLock: vi.fn(() => vi.fn()),
+        toggleControls: vi.fn(),
+      }),
+    })
+  ) as unknown as AnyPlayerStore;
 
   readonly provider = new ContextProvider(this, {
     context: playerContext,
@@ -69,25 +71,27 @@ const timeOnlySeek = vi.fn();
 /** A store without `bufferFeature`, i.e. the documented composition that omits it. */
 class TestTimeOnlyPlayerProviderElement extends UIElement {
   // SAFETY: minimal test store; the element only reads the time and playback slices declared below.
-  readonly store = createStore<PlayerTarget>()({
-    name: 'timeOnly',
-    state: () => ({
-      currentTime: 30,
-      duration: 120,
-      seeking: false,
-      seek: timeOnlySeek,
-      paused: true,
-      ended: false,
-      started: false,
-      waiting: false,
-      play: vi.fn(() => Promise.resolve()),
-      pause: vi.fn(),
-      userActive: true,
-      controlsVisible: true,
-      requestControlsLock: vi.fn(() => vi.fn()),
-      toggleControls: vi.fn(),
-    }),
-  }) as AnyPlayerStore;
+  readonly store = createStore<PlayerTarget>()(
+    defineSlice<PlayerTarget>()({
+      name: 'timeOnly',
+      state: () => ({
+        currentTime: 30,
+        duration: 120,
+        seeking: false,
+        seek: timeOnlySeek,
+        paused: true,
+        ended: false,
+        started: false,
+        waiting: false,
+        play: vi.fn(() => Promise.resolve()),
+        pause: vi.fn(),
+        userActive: true,
+        controlsVisible: true,
+        requestControlsLock: vi.fn(() => vi.fn()),
+        toggleControls: vi.fn(),
+      }),
+    })
+  ) as AnyPlayerStore;
 
   readonly provider = new ContextProvider(this, {
     context: playerContext,
