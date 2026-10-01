@@ -61,7 +61,9 @@ export default styles({
       utilities: [
         'pointer-events-none bottom-full grid max-w-39 origin-bottom justify-items-center gap-1',
         'opacity-0 blur-media-hidden-popup transform-[scale(var(--media-hidden-popup-scale))] transition-media-popup motion-reduce:transition-none group-data-disabled/slider:hidden',
-        'group-data-interactive/slider:opacity-100 group-data-interactive/slider:filter-none group-data-interactive/slider:transform-none',
+        'group-data-pointing/slider:opacity-100 group-data-pointing/slider:filter-none group-data-pointing/slider:transform-none',
+        'group-data-dragging/slider:opacity-100 group-data-dragging/slider:filter-none group-data-dragging/slider:transform-none',
+        'group-has-focus-visible/slider:opacity-100 group-has-focus-visible/slider:filter-none group-has-focus-visible/slider:transform-none',
       ],
     },
     previewMeta: {
