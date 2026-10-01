@@ -1,14 +1,16 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { useTemporaryDirectories } from '../../../tests/temp-directory';
 import { discoverSchema } from '../discover';
+
+const temporaryDirectories = useTemporaryDirectories();
 
 describe('discoverSchema', () => {
   it('discovers component definitions and named source files', () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-discovery-'));
+    const root = temporaryDirectories.createSync('vjsc-schema-discovery-');
     const componentsDir = join(root, 'components');
     const iconsDir = join(root, 'icons');
 

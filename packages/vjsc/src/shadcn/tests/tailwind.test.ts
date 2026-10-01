@@ -1,13 +1,15 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { useTemporaryDirectories } from '../../tests/temp-directory';
 import { readTailwindRegistryTheme } from '../tailwind';
 
+const temporaryDirectories = useTemporaryDirectories();
+
 async function write(source: string): Promise<{ root: string; path: string }> {
-  const root = await mkdtemp(join(tmpdir(), 'vjsc-tailwind-'));
+  const root = await temporaryDirectories.create('vjsc-tailwind-');
   const path = './tailwind.css';
 
   await writeFile(join(root, path), source);

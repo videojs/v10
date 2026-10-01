@@ -1,5 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
@@ -9,6 +8,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import type { ResolvedStyles, ResolvedStyleRule } from '../../styles/resolved';
+import { useTemporaryDirectories } from '../../tests/temp-directory';
 import { toPosixPath } from '../../utils/path';
 import { readComponentSource, readModuleStyles } from '../component-meta';
 import {
@@ -27,6 +27,7 @@ const modulePath = resolve(import.meta.dirname, 'fixtures/button.styles.ts');
 const moduleId = `${filename}?target=react`;
 const designPath = resolve(import.meta.dirname, 'fixtures/design.css');
 const designDependency = resolve(import.meta.dirname, 'fixtures/theme.css');
+const temporaryDirectories = useTemporaryDirectories();
 
 const rules = [rule(['button'], 'media-button', ['grid', 'p-0']), rule(['icon'], 'media-icon', ['size-4', 'shrink-0'])];
 
@@ -54,7 +55,7 @@ describe('renderCandidateManifest', () => {
 
 describe('createCandidateManifest', () => {
   it('lands parallel records as one well-formed manifest', async () => {
-    const path = join(await mkdtemp(join(tmpdir(), 'vjsc-manifest-')), 'vjsc/candidates.css');
+    const path = join(await temporaryDirectories.create('vjsc-manifest-'), 'vjsc/candidates.css');
     const manifest = createCandidateManifest(path);
     const utilities = Array.from({ length: 24 }, (_, index) => `p-${index}`);
 
@@ -109,7 +110,7 @@ describe('stylePlugin', () => {
   });
 
   it('keeps candidates from an earlier session until modules record again', async () => {
-    const manifest = join(await mkdtemp(join(tmpdir(), 'vjsc-candidates-')), 'candidates.css');
+    const manifest = join(await temporaryDirectories.create('vjsc-candidates-'), 'candidates.css');
     const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, manifest);
 
     await writeFile(manifest, renderCandidateManifest([rule(['old'], 'media-old', ['persisted-class'])]));
@@ -125,7 +126,7 @@ describe('stylePlugin', () => {
   });
 
   it('writes a candidate manifest for every resolved style module', async () => {
-    const manifest = join(await mkdtemp(join(tmpdir(), 'vjsc-candidates-')), 'candidates.css');
+    const manifest = join(await temporaryDirectories.create('vjsc-candidates-'), 'candidates.css');
     const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, manifest);
 
     await transform(
