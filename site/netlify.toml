@@ -1525,41 +1525,42 @@
   to = "https://legacy.videojs.org/guides/:splat"
   status = 308
 
-# The index ran to eight pages while it held the pre-v10 posts. Not forced, so pages the v10 blog grows into win.
+# The index ran to eight pages while it held the pre-v10 posts. Temporary and not forced, so pages the v10 blog
+# grows into win and browsers have not cached the hop.
 [[redirects]]
   from = "/blog/2"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/3"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/4"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/5"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/6"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/7"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/8"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 # Authors who only wrote pre-v10 posts; the legacy blog has no author pages.
 [[redirects]]
