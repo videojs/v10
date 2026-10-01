@@ -71,15 +71,19 @@ export const containerContext = createContext<ContainerContextValue, typeof CONT
 // Extension Context
 // ----------------------------------------
 
+/** @internal */
 export const EXTENSION_CONTEXT_KEY = Symbol.for('@videojs/extension');
 
+/** @internal */
 export interface ExtensionContextValue {
   /** Register a player extension with the surrounding player. Returns a release callback for that exact instance. */
   registerExtension: (extension: PlayerExtension) => () => void;
 }
 
+/** @internal */
 export type ExtensionContext = Context<typeof EXTENSION_CONTEXT_KEY, ExtensionContextValue>;
 
+/** @internal */
 export const extensionContext = createContext<ExtensionContextValue, typeof EXTENSION_CONTEXT_KEY>(
   EXTENSION_CONTEXT_KEY
 );
