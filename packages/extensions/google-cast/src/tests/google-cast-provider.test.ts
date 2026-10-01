@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { GoogleCastProvider } from '../google-cast-provider';
 import { GoogleCastExtension } from '../index';
 import { ensureCastFramework } from '../registry';
+import { InvalidStateError, NotSupportedError } from '../utils';
 
 vi.mock('../registry', async (importOriginal) => {
   const original = await importOriginal<typeof import('../registry')>();
@@ -21,6 +22,7 @@ function createTarget(disableRemotePlayback = false) {
   const target = Object.assign(new EventTarget(), {
     textTracks,
     disableRemotePlayback,
+    load: vi.fn(async () => {}),
   }) as unknown as HTMLMediaTargetLike;
 
   return { target, textTracks };
@@ -96,6 +98,36 @@ describe('GoogleCastProvider', () => {
 
     expect(remove).toHaveBeenCalledWith('change', add.mock.calls[0]![1]);
     expect(provider.target).toBeNull();
+  });
+
+  it('loads the attached target while no cast session is active', async () => {
+    const provider = new GoogleCastProvider({});
+    const { target } = createTarget();
+
+    provider.attach(target);
+    await provider.load();
+
+    expect(target.load).toHaveBeenCalledOnce();
+  });
+
+  it('rejects a cast request when remote playback is disabled', async () => {
+    const provider = new GoogleCastProvider({});
+    const { target } = createTarget(true);
+
+    provider.attach(target);
+
+    await expect(provider.requestCastSession()).rejects.toBeInstanceOf(InvalidStateError);
+    expect(ensureCastFramework).not.toHaveBeenCalled();
+  });
+
+  it('rejects a cast request when the platform API is unavailable', async () => {
+    const provider = new GoogleCastProvider({});
+    const { target } = createTarget();
+
+    provider.attach(target);
+
+    await expect(provider.requestCastSession()).rejects.toBeInstanceOf(NotSupportedError);
+    expect(ensureCastFramework).toHaveBeenCalledOnce();
   });
 });
 
