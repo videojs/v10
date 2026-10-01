@@ -1562,61 +1562,62 @@
   to = "https://legacy.videojs.org/blog"
   status = 307
 
-# Authors who only wrote pre-v10 posts; the legacy blog has no author pages.
+# Authors who only wrote pre-v10 posts; the legacy blog has no author pages. Temporary, since an author who writes
+# for v10 gets their page back.
 [[redirects]]
   from = "/blog/authors/matthew-mcclure"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/pat-oneill"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/garrett-singer"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/brandon-casey"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/gary-katsevman"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/jim-whisenant"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/jon-carlos-rivera"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/lahiru-dayananda"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/david-lapalomento"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/michael-roca"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 [[redirects]]
   from = "/blog/authors/greg-smith"
   to = "https://legacy.videojs.org/blog"
-  status = 308
+  status = 307
 
 # Pre-v10 blog posts live on the legacy site. Each post has a .md twin.
 # legacy.videojs.org serves two posts under slugs its build prefixed with the previous post's filename.
