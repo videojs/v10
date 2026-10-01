@@ -1,4 +1,4 @@
-import type { UnionToIntersection } from '@videojs/utils/types';
+import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
 
 import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
@@ -118,12 +118,6 @@ export type InferSliceSourceState<S> = S extends { state: (...args: any[]) => in
 
 /** @internal */
 export type InferSliceDerivedState<S> = S extends Slice<any, any, infer Derived> ? Derived : never;
-
-/**
- * Flattens an intersection into one object type for readable hovers. A local copy of `@videojs/utils`' `Simplify`:
- * store's public types must not name internal utils types.
- */
-type Simplify<T> = { [Key in keyof T]: T[Key] } & {};
 
 export type PublicSourceState<State> = Pick<State, Extract<keyof State, string>>;
 
