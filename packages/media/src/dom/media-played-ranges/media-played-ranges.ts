@@ -37,8 +37,8 @@ export interface MediaPlayedRangesAPI {
  * Mixin that tracks played ranges for media adapters lacking a native `HTMLMediaElement.played` (e.g. iframe-based
  * embeds like Vimeo).
  *
- * Listens for standard media events the host dispatches on itself (`play`, `pause`, `ended`, `seeking`, `seeked`) and
- * derives a `TimeRanges`-like `played` value from the host's `currentTime` / `paused`.
+ * Listens for standard media events the host dispatches on itself (`play`, `pause`, `ended`, `timeupdate`, `seeking`,
+ * `seeked`) and derives a `TimeRanges`-like `played` value from the host's `currentTime` / `paused`.
  *
  * @example
  *   class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) { ... }
@@ -62,6 +62,7 @@ export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { 
       this.addEventListener('play', () => this.#onPlaybackStart(this.#currentTime), options);
       this.addEventListener('pause', () => this.#onPlaybackStop(this.#currentTime), options);
       this.addEventListener('ended', () => this.#onPlaybackStop(this.#currentTime), options);
+      this.addEventListener('timeupdate', () => this.#onPlaybackProgress(this.#currentTime), options);
       this.addEventListener('seeking', () => this.#commitCurrentRange(), options);
       this.addEventListener('seeked', () => this.#onSeeked(this.#currentTime), options);
     }
@@ -82,11 +83,9 @@ export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { 
         this.#currentPlayedRange = { start: time, end: time };
       }
 
-      if (this.#currentPlayedRange && isNumber(time)) {
-        if (time > this.#currentPlayedRange.end) {
-          this.#currentPlayedRange.end = time;
-        }
+      this.#onPlaybackProgress(time);
 
+      if (this.#currentPlayedRange && isNumber(time)) {
         this.#addPlayedRange(this.#currentPlayedRange.start, this.#currentPlayedRange.end);
       }
 
@@ -107,6 +106,12 @@ export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { 
 
       if (!this.#currentPlayedRange) {
         this.#currentPlayedRange = { start: t, end: t };
+      }
+    }
+
+    #onPlaybackProgress(time: number): void {
+      if (this.#currentPlayedRange && isNumber(time) && time > this.#currentPlayedRange.end) {
+        this.#currentPlayedRange.end = time;
       }
     }
 

@@ -11,8 +11,10 @@ export function isSeekIndicatorAction(action: string | null | undefined): action
 }
 
 /** @internal */
-export function formatCurrentTime(snapshot: MediaSnapshot): string {
-  return formatTime(snapshot.currentTime ?? 0, snapshot.duration);
+export function formatCurrentTime(snapshot: MediaSnapshot, locale?: string | string[]): string {
+  const options = locale === undefined ? undefined : { locale };
+
+  return formatTime(snapshot.currentTime ?? 0, snapshot.duration, options);
 }
 
 /** @internal */
