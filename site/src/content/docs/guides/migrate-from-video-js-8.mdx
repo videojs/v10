@@ -78,7 +78,7 @@ Apply these changes to your existing markup:
 - **Move the poster URL to the player.** Set `poster` on `<video-player>`. The skin controls how the poster appears. To supply your own image element, see <DocsLink slug="guides/poster">Add a poster and loading placeholder</DocsLink>.
 - **Keep your existing tracks.** Captions and subtitles remain native tracks; the skin supplies their controls.
 
-For the Minimal skin, replace `<video-skin>` with `<video-minimal-skin>`. Load `video-minimal.js` from the CDN, or replace the bundler skin import with `@videojs/html/video/minimal-skin`.
+For the Neutral skin, replace `<video-skin>` with `<video-neutral-skin>`. Load `video-neutral.js` from the CDN, or replace the bundler skin import with `@videojs/html/video/neutral-skin`.
 
 </FrameworkCase>
 
@@ -146,7 +146,7 @@ Apply these changes to your existing component:
 - **No `controls` prop.** The skin provides the controls. Render a skin to show controls. Leave it out for a player with no UI.
 - **Move the poster URL to the player.** Pass `poster` to `VideoPlayer`. The skin controls how the poster appears.
 
-Use `'use client'` at the client boundary in frameworks with React Server Components. For a smaller control layout, replace `VideoSkin` with `MinimalVideoSkin` and import `minimal-skin.css`.
+Use `'use client'` at the client boundary in frameworks with React Server Components. For a smaller control layout, replace `VideoSkin` with `NeutralVideoSkin` and import `neutral-skin.css`.
 
 </FrameworkCase>
 
@@ -192,7 +192,7 @@ Move native media settings onto the media component.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-The React prop names in this table apply to video-backed media such as `Video` and `HlsJsVideo`. The YouTube and Vimeo components use `autoplay` instead of `autoPlay`. Their refs point to iframes. Call their media methods through `useMedia()` inside the player.
+The React prop names in this table apply to video-backed media such as `Video` and `HlsJsVideo`. The YouTube and Vimeo components use `autoplay` instead of `autoPlay`. Their refs point to iframes. Call their media methods through `mediaRef`, which receives the playback adapter, or through `useMedia()` inside the player.
 
 | Video.js 8 | Video.js v10 |
 |---|---|
@@ -384,7 +384,7 @@ In v8, you customized the player with options, `addChild`, component subclasses,
 
 ### Level 1: pick a skin
 
-The Default skin groups settings in a menu. The Minimal skin has a compact layout like v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
+The Default skin groups settings in a menu. The Neutral skin has a compact layout like v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="guides/skins">Skins</DocsLink>.
 
 Both include AirPlay and Cast buttons. Follow <DocsLink slug="guides/casting">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast extension.
 
@@ -525,9 +525,9 @@ Map v8's player-specific events separately:
 Use <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
 
 ```js
-import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
+import { PlayerController, playerContext, selectTime, UIElement } from '@videojs/html';
 
-class MyElapsed extends ReactiveElement {
+class MyElapsed extends UIElement {
   #time = new PlayerController(this, playerContext, selectTime);
 
   update(changed) {
@@ -632,7 +632,7 @@ Every item the table labels "the player's" is a property of the player element's
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-For video-backed media, a `ref` points to the rendered `HTMLVideoElement`. YouTube and Vimeo refs point to an `HTMLIFrameElement`. To call media methods on those embeds, use `useMedia()` from a component inside the player.
+For video-backed media, a `ref` points to the rendered `HTMLVideoElement`. YouTube and Vimeo refs point to an `HTMLIFrameElement`. To call media methods on those embeds, pass a `mediaRef`, which receives the playback adapter, or call `useMedia()` from a component inside the player.
 
 `useMedia()` returns the Video.js media object. If that object exposes an `engine` property, use it to access the playback engine.
 
@@ -732,49 +732,38 @@ The live skins have no time slider. To preserve DVR scrubbing, add one to custom
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need an omitted feature on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
-Use <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink> to build a player with the features you need. Pass it a feature list, and it returns the mixins for defining your own player element.
+That's what <DocsLink slug="reference/api/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `PlayerElement` class to register as your own player element, plus a `PlayerController` bound to that player's features.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 Use <DocsLink slug="reference/api/create-player">`createPlayer`</DocsLink> to build a player with the features you need. Pass it a feature list, and it returns a `Player` component and a `usePlayer` hook. Every preset uses this same pair.
 </FrameworkCase>
 
-## Moved utilities
+## Replace v8 utilities
 
-v8 put a handful of utilities on the `videojs` global for anyone building a custom component or plugin: `videojs.time.formatTime`, `videojs.dom`, `videojs.fn.throttle`, and a few others. v10 has no `videojs` global. Import these utilities from `@videojs/utils`.
+v8 put a handful of utilities on the `videojs` global for anyone building a custom component or plugin: `videojs.time.formatTime`, `videojs.dom`, `videojs.fn.throttle`, and a few others. v10 has no global and no public replacements, so use a platform API, a short helper of your own, or a utility library you already depend on.
 
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `videojs.time.formatTime(seconds, guide)` | `formatTime(seconds, guide)` from `@videojs/utils/time` |
-| a hand-rolled remaining-time or percent string | `formatTimeAsPhrase(seconds)` and `formatPercent(fraction)`, from `@videojs/utils/time` and `@videojs/utils/percent` |
-| `videojs.fn.throttle(fn, wait)` | `throttle(fn, ms)` from `@videojs/utils/function` |
-| `videojs.dom.isEl(value)` and its type-specific cousins | `isHTMLVideoElement`, `isHTMLMediaElement`, `isDocument`, and other narrowing checks from `@videojs/utils/dom` |
-| `videojs.obj.merge(a, b)` | No equivalent deep merge. Keep a deep-merge implementation if your configuration needs recursive merging. |
+| `videojs.time.formatTime(seconds, guide)` | The <DocsLink slug="reference/components/time">Time</DocsLink> component for an on-screen time display. For a string of your own, a few lines of arithmetic (below), or `Intl.DurationFormat` in browsers that support it |
+| `videojs.fn.throttle(fn, wait)` | Your own helper, or `throttle` from a utility library such as lodash |
+| `videojs.dom.isEl(value)` and its type-specific cousins | `instanceof` checks such as `value instanceof Element`, `value instanceof HTMLMediaElement`, or `value instanceof HTMLVideoElement` |
+| `videojs.obj.merge(a, b)` | Object spread (`{ ...a, ...b }`) for a shallow merge, or `merge({}, a, b)` from a utility library such as lodash for a deep one. Pass the empty object first, because lodash's `merge` mutates its first argument |
 
-For a shallow merge where `b` overrides `a`, use `{ ...a, ...b }`.
-
-Throttle timing changes: v8 drops calls within the interval and schedules no trailing call. The v10 helper invokes the latest call on the trailing edge by default; `{ leading: true }` also invokes the first call immediately. Keep the old helper if your integration depends on its exact timing.
-
-Use these utilities when extending the player. For example, the packaged skins format their time displays with `formatTime`. Use it for a custom time display to match the skins.
-
-The package is split into subpaths, so you can import only the module you need. Other than `time`, it includes `array`, `events`, `i18n`, `jwt`, `predicate`, `string`, `types`, and other subpaths for custom components or plugin replacements.
-
-Import the util function directly in a module `<script>` tag:
-
-```html
-<script type="module">
-  import { formatTime } from '{{VJS10_UTILS_CDN_BASE}}/dist/time.js';
-</script>
-```
-
-Or with a bundler:
-
-```bash
-npm install @videojs/utils
-```
+For example, a clock-style string such as `1:05` or `1:02:03`:
 
 ```js
-import { formatTime } from '@videojs/utils/time';
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return '0:00';
+
+  const total = Math.floor(Math.abs(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor(total / 60) % 60;
+  const s = String(total % 60).padStart(2, '0');
+  const time = h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+
+  return seconds < 0 ? `-${time}` : time;
+}
 ```
 
 ## Known gaps
@@ -793,7 +782,7 @@ Check these limitations against your required features:
 - The controls auto-hide delay isn't configurable, so arbitrary `inactivityTimeout` values have no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)). For `inactivityTimeout: 0`, set `visibility="always"` on the controls component in a custom layout or installed skin source.
 - No full-window fullscreen fallback. Test fullscreen on your supported browsers; see <DocsLink slug="guides/browser-support">Browser support</DocsLink>.
 - Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality.
-- The Default and Minimal skins are available. Runtime theme switching is not supported.
+- The Default, Neutral, and Compat skins are available. Runtime theme switching is not supported.
 - Native controls are not automatically removed when custom controls load ([#1160](https://github.com/videojs/v10/issues/1160)).
 - Debug mode has no equivalent yet ([#1406](https://github.com/videojs/v10/issues/1406)).
 

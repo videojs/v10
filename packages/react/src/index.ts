@@ -1,4 +1,101 @@
-export type { BuiltInIndicatorStatus, IndicatorStatus, InputAction, InputIndicatorLabels } from '@videojs/core';
+// Component state, props, and option types
+export type {
+  AirPlayButtonState,
+  AlertDialogProps,
+  AudioTrackRadioGroupOption,
+  AudioTrackRadioGroupProps,
+  AudioTrackRadioGroupState,
+  BufferingIndicatorState,
+  BuiltInIndicatorStatus,
+  ButtonState,
+  CaptionsButtonState,
+  CaptionsRadioGroupOption,
+  CaptionsRadioGroupProps,
+  CaptionsRadioGroupState,
+  CastButtonState,
+  ControlsProps,
+  ControlsState,
+  ControlsVisibility,
+  DeriveCustomStatus,
+  DialogProps,
+  DialogState,
+  FullscreenButtonState,
+  IndicatorCoreProps,
+  IndicatorDirection,
+  IndicatorLifecycleState,
+  IndicatorStatus,
+  IndicatorVolumeLevel,
+  InputAction,
+  InputActionEvent,
+  InputActionSource,
+  InputIndicatorLabels,
+  LiveButtonState,
+  MediaSnapshot,
+  MenuInput,
+  MenuOptionState,
+  MenuProps,
+  MenuState,
+  MuteButtonState,
+  PiPButtonState,
+  PlaybackRateButtonState,
+  PlaybackRateRadioGroupOption,
+  PlaybackRateRadioGroupProps,
+  PlaybackRateRadioGroupState,
+  PlayButtonState,
+  PopoverAlign,
+  PopoverBoundary,
+  PopoverProps,
+  PopoverSide,
+  PopoverState,
+  PosterState,
+  QualityRadioGroupOption,
+  QualityRadioGroupProps,
+  QualityRadioGroupState,
+  RadioOption,
+  RadioOptionsState,
+  SeekButtonDirection,
+  SeekButtonState,
+  SeekIndicatorProps,
+  SeekIndicatorState,
+  SliderInput,
+  SliderProps,
+  SliderSegmentGeometry,
+  SliderSegmentRange,
+  SliderSegmentState,
+  SliderState,
+  StatusAnnouncerLabels,
+  StatusAnnouncerState,
+  StatusDetails,
+  StatusIndicatorProps,
+  StatusIndicatorState,
+  ThumbnailCoords,
+  ThumbnailCrossOrigin,
+  ThumbnailFetchPriority,
+  ThumbnailImage,
+  ThumbnailLoading,
+  ThumbnailProps,
+  ThumbnailState,
+  TimeProps,
+  TimeSliderChapterRange,
+  TimeSliderProps,
+  TimeSliderState,
+  TimeState,
+  TimeType,
+  TitleState,
+  TooltipGroupProps,
+  TooltipProps,
+  TooltipState,
+  TransitionFlags,
+  TransitionState,
+  TransitionStatus,
+  VolumeIndicatorProps,
+  VolumeIndicatorState,
+  VolumeLevel,
+  VolumePopoverState,
+  VolumeSliderProps,
+  VolumeSliderState,
+} from '@videojs/core';
+export type { TextParams, TranslationKey, TranslationOptions } from '@videojs/core/i18n';
 export * from './constants';
 // Core
 export * from '@videojs/core/dom';
@@ -21,12 +118,113 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
+  MediaError,
   type NodeListLike,
   resolveAdapterType,
   resolveMimeType,
 } from '@videojs/media';
+// Media types
+export type {
+  AudioRenditionLike,
+  AudioRenditionListLike,
+  AudioTrackLike,
+  AudioTrackListLike,
+  CanPlayTypeResult,
+  CommonMedia,
+  CommonMediaEvents,
+  EngineAdapter,
+  ErrorLike,
+  EventLike,
+  EventTargetLike,
+  MediaAudioRenditionCapability,
+  MediaAudioTrack,
+  MediaAudioTrackCapability,
+  MediaAudioTrackState,
+  MediaAutoplayCapability,
+  MediaBufferCapability,
+  MediaBufferEvents,
+  MediaBufferState,
+  MediaContentData,
+  MediaContentDataCapability,
+  MediaContentDataEvents,
+  MediaContentValue,
+  MediaControlsCapability,
+  MediaControlsState,
+  MediaErrorCapability,
+  MediaErrorEvents,
+  MediaErrorState,
+  MediaEvents,
+  MediaFullscreenCapability,
+  MediaFullscreenState,
+  MediaLiveCapability,
+  MediaLiveEvents,
+  MediaLiveState,
+  MediaMetadataState,
+  MediaPauseCapability,
+  MediaPauseEvents,
+  MediaPictureInPictureCapability,
+  MediaPictureInPictureEvents,
+  MediaPictureInPictureState,
+  MediaPlaybackCapability,
+  MediaPlaybackEvents,
+  MediaPlaybackRateCapability,
+  MediaPlaybackRateEvents,
+  MediaPlaybackRateState,
+  MediaPlaybackState,
+  MediaPlayedCapability,
+  MediaPlaysInlineCapability,
+  MediaPosterCapability,
+  MediaPreloadType,
+  MediaQualityState,
+  MediaReadyStateValue,
+  MediaRemotePlaybackCapability,
+  MediaRemotePlaybackState,
+  MediaResolution,
+  MediaSeekCapability,
+  MediaSeekEvents,
+  MediaSourceCapability,
+  MediaSourceEvents,
+  MediaSourceState,
+  MediaStreamType,
+  MediaStreamTypeCapability,
+  MediaStreamTypeEvents,
+  MediaStreamTypeState,
+  MediaTargetLike,
+  MediaTextCue,
+  MediaTextTrack,
+  MediaTextTrackCapability,
+  MediaTextTrackState,
+  MediaThumbnailsTrack,
+  MediaTimeState,
+  MediaVideoDimensionsCapability,
+  MediaVideoDimensionsEvents,
+  MediaVideoRendition,
+  MediaVideoRenditionCapability,
+  MediaVideoTrackCapability,
+  MediaVolumeCapability,
+  MediaVolumeEvents,
+  MediaVolumeState,
+  RemotePlaybackConnectionState,
+  RemotePlaybackEvents,
+  RemotePlaybackLike,
+  TextCueLike,
+  TextCueListLike,
+  TextTrackKind,
+  TextTrackLike,
+  TextTrackListEvents,
+  TextTrackListLike,
+  TextTrackMode,
+  TimeRangeLike,
+  VideoEvents,
+  VideoRenditionLike,
+  VideoRenditionListLike,
+  VideoTargetLike,
+  VideoTrackLike,
+  VideoTrackListLike,
+} from '@videojs/media';
 // Media
 export * from '@videojs/media/dom';
+export type { WithMediaTracks } from '@videojs/media/media-tracks';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
@@ -85,14 +283,14 @@ export {
   type AudioTrackOptionsResult,
   useAudioTrackOptions,
 } from './ui/audio-track';
-export { AudioTrackRadioGroupLegacy as AudioTrackRadioGroup } from './ui/audio-track-radio-group';
+export { AudioTrackRadioGroup } from './ui/audio-track-radio-group';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/component';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/component';
 export {
-  CaptionsRadioGroupLegacy as CaptionsRadioGroup,
   type CaptionsOption,
   type CaptionsOptionsProps,
   type CaptionsOptionsResult,
+  CaptionsRadioGroup,
   useCaptionsOptions,
 } from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/component';
@@ -123,7 +321,7 @@ export {
   usePlaybackRateOptions,
 } from './ui/playback-rate';
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/component';
-export { PlaybackRateRadioGroupLegacy as PlaybackRateRadioGroup } from './ui/playback-rate-radio-group';
+export { PlaybackRateRadioGroup } from './ui/playback-rate-radio-group';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster } from './ui/poster';
 export type { PosterImageProps } from './ui/poster/image';
@@ -134,7 +332,7 @@ export {
   type QualityOptionsResult,
   useQualityOptions,
 } from './ui/quality';
-export { QualityRadioGroupLegacy as QualityRadioGroup } from './ui/quality-radio-group';
+export { QualityRadioGroup } from './ui/quality-radio-group';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/component';
 export { SeekIndicator } from './ui/seek-indicator';
 export type { SeekIndicatorRootProps } from './ui/seek-indicator/root';
@@ -184,6 +382,8 @@ export {
   type MediaEventProps,
   useMediaEvents,
 } from './utils/use-media-events';
-export { useMediaExtension } from './utils/use-media-extension';
 export { useMediaInstance } from './utils/use-media-instance';
+export { type MediaRefProps, useMediaRef } from './utils/use-media-ref';
+
 export { renderElement } from './utils/use-render';
+export * from './version';

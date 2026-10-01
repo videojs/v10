@@ -448,7 +448,7 @@ Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slide
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. With a bundler, import `@videojs/html/icons/element` to use `<media-icon>`; the CDN video preset already registers it. See the example in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
+Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. With a bundler, import `@videojs/html/icons/element` to use `<media-icon>`; the CDN video preset already registers it. See the example in [Map the controller](#map-the-controller). Set `family="neutral"` or `family="compat"` to use the Neutral or Compat skin's icon designs. You can also use your own text or SVG.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -595,7 +595,7 @@ function FullscreenShortcut() {
 Keep native media calls such as `video.play()` and assignments such as `video.currentTime = 30`. Video.js updates player state from media events. Set `src` on the media component to change content, and replace the component when the source needs a different playback engine.
 
 <FrameworkCase frameworks={["react"]}>
-For video-backed media, a `ref` points to the rendered `HTMLVideoElement`. YouTube and Vimeo refs point to an `HTMLIFrameElement`. To call media methods on those embeds, use `useMedia()` from a component inside the player.
+For video-backed media, a `ref` points to the rendered `HTMLVideoElement`. YouTube and Vimeo refs point to an `HTMLIFrameElement`. To call media methods on those embeds, pass a `mediaRef`, which receives the playback adapter, or call `useMedia()` from a component inside the player.
 
 `useMedia()` returns the Video.js media object. If that object exposes an `engine` property, use it to access the playback engine.
 </FrameworkCase>

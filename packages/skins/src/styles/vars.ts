@@ -8,6 +8,10 @@ export interface CssVar {
 
 /** Classification for every `--media-*` custom property used by a Skin. */
 export const vars = {
+  '--media-button-highlight': {
+    kind: 'internal',
+    description: 'Compat button and menu item highlight background.',
+  },
   '--media-accent-color': {
     kind: 'public',
     description: 'Accent color used by highlighted controls, menu items, slider fills, and primary actions.',
@@ -239,7 +243,7 @@ export const vars = {
   },
   '--media-indicator-gradient': {
     kind: 'internal',
-    description: 'Theme gradient painted behind Minimal status and volume indicators.',
+    description: 'Theme gradient painted behind Neutral status and volume indicators.',
   },
   '--media-backdrop-filter-surface': {
     kind: 'internal',

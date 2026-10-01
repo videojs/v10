@@ -31,16 +31,20 @@ const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 const cdnPresets = [
   'video',
   'video-player',
-  'video-minimal',
+  'video-neutral',
+  'video-compat',
   'live-video',
   'live-video-player',
-  'live-video-minimal',
+  'live-video-neutral',
+  'live-video-compat',
   'audio',
   'audio-player',
-  'audio-minimal',
+  'audio-neutral',
+  'audio-compat',
   'live-audio',
   'live-audio-player',
-  'live-audio-minimal',
+  'live-audio-neutral',
+  'live-audio-compat',
   'background',
 ];
 
@@ -69,7 +73,8 @@ function cdnStylesheetName(file: string): string | null {
 
   if (preset === 'background') return name === 'skin' ? 'background.css' : null;
 
-  const suffix = name === 'skin' ? '' : name === 'minimal-skin' ? '-minimal' : null;
+  const suffix =
+    name === 'skin' ? '' : name === 'neutral-skin' ? '-neutral' : name === 'compat-skin' ? '-compat' : null;
   if (suffix === null) return null;
 
   return `${preset}${suffix}.css`;

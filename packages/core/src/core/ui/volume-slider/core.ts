@@ -24,7 +24,11 @@ export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, '
   hidden: boolean;
 }
 
-/** Volume-domain slider: maps media volume/mute state to slider state. */
+/**
+ * Volume-domain slider: maps media volume/mute state to slider state.
+ *
+ * @internal
+ */
 export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     ...SliderCore.defaultProps,
@@ -33,6 +37,7 @@ export class VolumeSliderCore extends SliderCore {
     wheelStep: DEFAULT_VOLUME_STEP,
   };
 
+  #wheelStep = VolumeSliderCore.defaultProps.wheelStep;
   #media: MediaVolumeState | null = null;
   #formatLocale: string | string[] | undefined;
 
@@ -43,7 +48,10 @@ export class VolumeSliderCore extends SliderCore {
   }
 
   override setProps(props: VolumeSliderProps): void {
-    super.setProps(defaults(props, VolumeSliderCore.defaultProps));
+    const resolvedProps = defaults(props, VolumeSliderCore.defaultProps);
+
+    this.#wheelStep = resolvedProps.wheelStep;
+    super.setProps(resolvedProps);
   }
 
   setMedia(media: MediaVolumeState): void {
@@ -79,10 +87,10 @@ export class VolumeSliderCore extends SliderCore {
 
   /** Wheel step as a percentage of the slider range. */
   getWheelStepPercent(): number {
-    const props = this.props as NonNullableObject<VolumeSliderProps>;
-    const range = props.max - props.min;
+    const { min, max } = this.props;
+    const range = max - min;
 
-    return range > 0 ? (props.wheelStep / range) * 100 : 0;
+    return range > 0 ? (this.#wheelStep / range) * 100 : 0;
   }
 
   override getLabel(state: SliderState): Text | string {
@@ -107,6 +115,7 @@ export class VolumeSliderCore extends SliderCore {
   }
 }
 
+/** @internal */
 export namespace VolumeSliderCore {
   export type Props = VolumeSliderProps;
   export type State = VolumeSliderState;
