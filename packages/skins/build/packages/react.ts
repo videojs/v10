@@ -4,7 +4,7 @@ import { bundleStyles, relativeImport, rewriteImports, stripStyleImports } from 
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import { skinCatalogEntry } from '../catalog.ts';
 import { skinClassNameMergeImport } from '../imports.ts';
-import { skinBaseStylesheet, skinPresets, skinSourceDirectory } from '../skin.ts';
+import { skinBaseStylesheet, skinSourceDirectory } from '../skin.ts';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { addCopiedFiles, addGenerated, generatedFiles } from './utils.ts';
@@ -103,18 +103,8 @@ export async function createReactPackageSkins(
 }
 
 export function reactPackageSkinOwnedPaths(): string[] {
-  const publicPaths = skinPresets.flatMap((preset) =>
-    ['skin.tsx', 'skin.css', 'neutral-skin.tsx', 'neutral-skin.css'].map(
-      (filename) => `${packageRoot}/presets/${preset}/${filename}`
-    )
-  );
-
-  return [
-    internalRoot,
-    ...publicPaths,
-    `${packageRoot}/presets/background/skin.tsx`,
-    `${packageRoot}/presets/background/skin.css`,
-  ];
+  // Every preset skin wrapper and stylesheet is generated, so a renamed theme's old outputs are removed too.
+  return [internalRoot, `${packageRoot}/presets/*/*skin.tsx`, `${packageRoot}/presets/*/*skin.css`];
 }
 
 function reactModulePath(
