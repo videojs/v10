@@ -1,7 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'display.css',
+  file: 'indicators.css',
   prefix: 'media-status-announcer',
   rules: {
     root: {
