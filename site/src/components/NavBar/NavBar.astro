@@ -5,6 +5,7 @@ import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
 import AppearanceMenu from '@/components/AppearanceMenu';
+import type { LinkDestination } from '@/components/typography/linkDestination';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import Search from '../Search';
 import GetStartedLink from './GetStartedLink';
@@ -19,10 +20,11 @@ type NavLink = {
   label: string;
   matchPath: string | null;
   external?: boolean;
+  destination?: LinkDestination;
 };
 const navLinks: NavLink[] = [
   { href: '/docs', label: 'Docs', matchPath: '/docs' },
-  { href: '/blog', label: 'Blog', matchPath: '/blog' },
+  { href: '/blog', label: 'Blog', matchPath: '/blog', destination: 'blog' },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -33,6 +35,7 @@ const { class: className } = Astro.props;
 
 <nav
   aria-label="Video.js"
+  data-ph-capture-attribute-location="nav"
   class:list={[
     "flex justify-between",
     "mx-auto w-full max-w-305 items-center px-5 py-7 md:py-10",
@@ -59,6 +62,7 @@ const { class: className } = Astro.props;
       otherNavLinks.map((link) => (
         <a
           href={link.href}
+          data-ph-capture-attribute-destination={link.destination}
           class:list={[
             "flex items-center rounded-md corner-squircle px-4 py-2 font-display font-bold uppercase intent:bg-hover",
           ]}
@@ -73,6 +77,7 @@ const { class: className } = Astro.props;
     <AppearanceMenu client:idle />
     <a
       href={DISCORD_INVITE_URL}
+      data-ph-capture-attribute-destination="discord"
       class={clsx(
         "flex items-center rounded-md corner-squircle px-2.5 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
@@ -84,6 +89,7 @@ const { class: className } = Astro.props;
     </a>
     <a
       href={GITHUB_REPO_URL}
+      data-ph-capture-attribute-destination="github"
       class={clsx(
         "flex items-center rounded-md corner-squircle px-2.5 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
