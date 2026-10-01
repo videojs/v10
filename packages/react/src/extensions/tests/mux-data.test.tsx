@@ -1,55 +1,87 @@
 import { render } from '@testing-library/react';
-import type { Media } from '@videojs/media';
-import { getMediaExtensions } from '@videojs/media/dom';
 import { MuxDataExtension } from '@videojs/mux-data';
-import { MuxVideoAdapter } from '@videojs/mux-video';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../testing/mocks';
 import { MuxData } from '../mux-data';
 
-function setup() {
-  const media = new MuxVideoAdapter();
-  const { value, Wrapper } = createPlayerWrapper();
-
-  value.media = media as unknown as Media;
-  return { media, Wrapper };
-}
-
 describe('MuxData', () => {
-  it('syncs props to the component', () => {
-    const { media, Wrapper } = setup();
+  it('registers a MuxDataExtension with the surrounding player', () => {
+    const { extensions, Wrapper } = createPlayerWrapper();
 
-    const { rerender } = render(<MuxData envKey="test-key" playerSoftwareName="mux-video" disableCookies />, {
-      wrapper: Wrapper,
-    });
+    render(<MuxData />, { wrapper: Wrapper });
 
-    const component = getMediaExtensions(media).get(MuxDataExtension)!;
+    expect(extensions.get(MuxDataExtension)).toBeInstanceOf(MuxDataExtension);
+  });
 
-    expect(component.envKey).toBe('test-key');
-    expect(component.playerSoftwareName).toBe('mux-video');
-    expect(component.disableCookies).toBe(true);
+  it('syncs props to the extension', () => {
+    const { extensions, Wrapper } = createPlayerWrapper();
 
-    rerender(<MuxData />);
-    expect(component.disableCookies).toBe(false);
+    render(<MuxData envKey="test-key" playerSoftwareName="mux-video" disableCookies />, { wrapper: Wrapper });
+
+    const extension = extensions.get(MuxDataExtension)!;
+
+    expect(extension.envKey).toBe('test-key');
+    expect(extension.playerSoftwareName).toBe('mux-video');
+    expect(extension.disableCookies).toBe(true);
   });
 
   it('disables monitoring when MuxDataSdk is explicitly undefined', () => {
-    const { media, Wrapper } = setup();
+    const { extensions, Wrapper } = createPlayerWrapper();
     const MuxDataSdk = {
       monitor: vi.fn(),
       utils: { now: () => 0 },
     } as unknown as NonNullable<MuxDataExtension['MuxDataSdk']>;
 
     const { rerender } = render(<MuxData MuxDataSdk={MuxDataSdk} />, { wrapper: Wrapper });
-    const component = getMediaExtensions(media).get(MuxDataExtension)!;
+    const extension = extensions.get(MuxDataExtension)!;
 
-    expect(component.MuxDataSdk).toBe(MuxDataSdk);
+    expect(extension.MuxDataSdk).toBe(MuxDataSdk);
 
     rerender(<MuxData MuxDataSdk={undefined} />);
-    expect(component.MuxDataSdk).toBeUndefined();
+    expect(extension.MuxDataSdk).toBeUndefined();
 
     rerender(<MuxData />);
-    expect(component.MuxDataSdk).toBeDefined();
+    expect(extension.MuxDataSdk).toBeDefined();
+  });
+
+  it('resets a removed prop to its default', () => {
+    const { extensions, Wrapper } = createPlayerWrapper();
+
+    const { rerender } = render(<MuxData disableCookies />, { wrapper: Wrapper });
+
+    rerender(<MuxData />);
+
+    expect(extensions.get(MuxDataExtension)!.disableCookies).toBe(false);
+  });
+
+  it('keeps the extension alive across media changes while mounted', () => {
+    const { extensions, Wrapper } = createPlayerWrapper();
+    const destroy = vi.spyOn(MuxDataExtension.prototype, 'destroy');
+    const first = document.createElement('video');
+    const second = document.createElement('video');
+
+    render(<MuxData MuxDataSdk={undefined} />, { wrapper: Wrapper });
+
+    const extension = extensions.get(MuxDataExtension)!;
+
+    extensions.attach({ media: first, container: null });
+    extensions.attach({ media: second, container: null });
+
+    // The player moves the extension between media; only unmount destroys it.
+    expect(destroy).not.toHaveBeenCalled();
+    expect(extensions.get(MuxDataExtension)).toBe(extension);
+
+    destroy.mockRestore();
+  });
+
+  it('releases the extension on unmount', () => {
+    const { extensions, Wrapper } = createPlayerWrapper();
+
+    const { unmount } = render(<MuxData />, { wrapper: Wrapper });
+
+    unmount();
+
+    expect(extensions.get(MuxDataExtension)).toBeUndefined();
   });
 });

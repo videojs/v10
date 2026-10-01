@@ -63,6 +63,16 @@ pnpm -F site astro check
 - React context does not cross Astro islands.
 - Never expose `context.locals.accessToken` to client code. Auth and Mux integration are only for the installation uploader; trace the middleware and server actions before changing that flow.
 
+## Analytics
+
+PostHog loads only in production builds for videojs.org and the pre-release site (main.videojs.org), not deploy previews, from `src/components/Posthog.astro`; its config lives in `src/utils/analytics.ts`. It runs cookieless, so there is no durable person: never call `identify`, `alias`, or a person-property API. Add page context in `withPageContext`, which stamps each event as it is sent; registered super properties go stale across view transitions.
+
+- Mark any installation query parameter that can carry reader data as `private` in `@videojs/installation`. The config masks private parameters, and their current values wherever the page renders them, everywhere in outgoing events. Keep session replay off: it records page text outside `before_send`.
+- Autocaptured clicks carry `data-ph-capture-attribute-{location,cta,destination}` as event properties. Put `location` on a container (the closest ancestor wins) and `cta` or `destination` on the anchor or button. Use kebab-case and reuse existing values.
+- `src/components/typography/linkDestination.ts` classifies off-site hrefs for `destination`; `A.astro` and `renderInlineMarkdown` apply it to content links.
+- Wrap hardcoded links to Mux pages in `withMuxAttribution` from `src/utils/mux/attribution.ts` with their placement; content links get `docs-content` or `blog-content` automatically. In MDX, write links as Markdown or `<A>`, not raw `<a>`. After a build, `pnpm -F site check:link-analytics` fails on an untagged off-site or Mux link.
+- Agents read Markdown without running JavaScript, so the `agent-markdown-*` edge functions count those reads server-side through `src/utils/agent-analytics.ts`, in production only. When a Markdown route changes, update those functions' paths too.
+
 ## API references
 
 Generated reference JSON is gitignored and rebuilt by `pnpm -F site api-docs`, `pnpm dev:site --prepare`, the root `pnpm dev`, and build. `pnpm dev:site` reuses existing output and only generates it when missing, so refresh it after changing package source or JSDoc. Do not hand-edit it. Change the TypeScript/JSDoc input or the builder, run the generator, and inspect the output. Keep the builder E2E suite passing.

@@ -1,31 +1,14 @@
-// @vitest-environment jsdom
-
-import { ContextProvider } from '@videojs/element/context';
-import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
 import { MuxDataExtension as MuxDataExtensionBase } from '@videojs/mux-data';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { mediaContext } from '../../player/context';
-import { UIElement } from '../../ui/ui-element';
 import { MuxDataExtension } from '../mux-data';
+import { TestExtensionProvider } from './test-utils';
 
-class TestMediaProvider extends UIElement {
-  readonly #provider = new ContextProvider(this, {
-    context: mediaContext,
-    initialValue: { media: null, registerMedia: () => () => {} },
-  });
-
-  setMedia(media: Media | null) {
-    this.#provider.setValue({ media, registerMedia: () => () => {} });
-  }
-}
-
-customElements.define('test-mux-data-provider', TestMediaProvider);
+customElements.define('test-mux-data-provider', TestExtensionProvider);
 customElements.define('test-mux-data', MuxDataExtension);
 
 function setup() {
-  const host = new HTMLVideoAdapter();
-  const provider = new TestMediaProvider();
+  const provider = new TestExtensionProvider();
   const el = new MuxDataExtension();
 
   // Prevent the real Mux SDK from initializing (and beaconing) in tests.
@@ -34,7 +17,7 @@ function setup() {
   provider.append(el);
   document.body.append(provider);
 
-  return { host, provider, el };
+  return { provider, el };
 }
 
 afterEach(() => {
@@ -42,23 +25,30 @@ afterEach(() => {
 });
 
 describe('MuxDataExtension', () => {
-  it('registers when upgraded in a connected player that already has media', () => {
-    const host = new HTMLVideoAdapter();
-    const provider = new TestMediaProvider();
+  it('registers when parsed into a connected player', () => {
+    const provider = new TestExtensionProvider();
 
     document.body.append(provider);
-    provider.setMedia(host as unknown as Media);
+    provider.innerHTML = '<test-mux-data></test-mux-data>';
 
-    provider.innerHTML = '<test-mux-data-upgrade></test-mux-data-upgrade>';
-    customElements.define('test-mux-data-upgrade', class extends MuxDataExtension {});
-
-    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
+    expect(provider.extensions.get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
-  it('forwards attributes to the component', () => {
-    const { host, provider, el } = setup();
+  it('leaves the extension to the base class lazy getter', () => {
+    // An own `extension` field would shadow the getter and be initialized after
+    // the base constructor — too late for a connected upgrade, where the context
+    // callback registers the extension from within that constructor.
+    expect(Object.getOwnPropertyNames(new MuxDataExtension())).not.toContain('extension');
+  });
 
-    provider.setMedia(host as unknown as Media);
+  it('registers a MuxDataExtension with the surrounding player', () => {
+    const { provider } = setup();
+
+    expect(provider.extensions.get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
+  });
+
+  it('forwards attributes to the extension', () => {
+    const { provider, el } = setup();
 
     el.setAttribute('env-key', 'test-key');
     el.setAttribute('player-software-name', 'mux-video');
@@ -66,26 +56,31 @@ describe('MuxDataExtension', () => {
     el.setAttribute('debug', '');
     el.setAttribute('disable-cookies', '');
 
-    const component = getMediaExtensions(host).get(MuxDataExtensionBase)!;
+    const extension = provider.extensions.get(MuxDataExtensionBase)!;
 
-    expect(component.envKey).toBe('test-key');
-    expect(component.playerSoftwareName).toBe('mux-video');
-    expect(component.playerInitTime).toBe(1234);
-    expect(component.debug).toBe(true);
-    expect(component.disableCookies).toBe(true);
-    // Properties read back from the component.
+    expect(extension.envKey).toBe('test-key');
+    expect(extension.playerSoftwareName).toBe('mux-video');
+    expect(extension.playerInitTime).toBe(1234);
+    expect(extension.debug).toBe(true);
+    expect(extension.disableCookies).toBe(true);
+    // Properties read back from the extension.
     expect(el.envKey).toBe('test-key');
   });
 
-  it('forwards the metadata property to the component', () => {
-    const { host, provider, el } = setup();
-
-    provider.setMedia(host as unknown as Media);
-
+  it('forwards the metadata property to the extension', () => {
+    const { provider, el } = setup();
     const metadata = { video_title: 'Test' };
 
     el.metadata = metadata;
 
-    expect(getMediaExtensions(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
+    expect(provider.extensions.get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
+  });
+
+  it('releases the extension when the element disconnects', () => {
+    const { provider, el } = setup();
+
+    el.remove();
+
+    expect(provider.extensions.get(MuxDataExtensionBase)).toBeUndefined();
   });
 });
