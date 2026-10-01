@@ -9,8 +9,8 @@ import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack }
 import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
+import { credentialsFetch, type RequestCredentialsPolicy } from '../../network/credentials-fetch';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
-import { credentialsFetch, type RequestCredentialsPolicy } from '../primitives/credentials-fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
 import type { GateFirstParse } from '../primitives/gate-first-parse';
 import type { ReportUnsupportedTrackConditions } from '../primitives/report-track-conditions';
