@@ -1,6 +1,8 @@
 ---
 title: UIElement
 description: Base class for custom elements that read player state through reactive controllers
+apis:
+  - DestroyMixin
 ---
 
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -26,12 +28,12 @@ import { UIElement } from "@videojs/html";
 Extend `UIElement`, add a <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> for the player state the element needs, and write DOM in `update()`. The controller requests an update whenever its selected state changes.
 
 ```ts
-import { PlayerController, playerContext, selectTime, UIElement } from "@videojs/html";
+import { PlayerController, playerContext, selectTime, UIElement, type PropertyValues } from "@videojs/html";
 
 class CurrentTimeElement extends UIElement {
   readonly #time = new PlayerController(this, playerContext, selectTime);
 
-  protected override update(changed: Map<string, unknown>): void {
+  protected override update(changed: PropertyValues): void {
     super.update(changed);
 
     const time = this.#time.value;
