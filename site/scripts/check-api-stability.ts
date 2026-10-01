@@ -55,6 +55,8 @@ const MEMBER_PATTERN = /\b([A-Z][\w$]*)((?:\.[A-Z][\w$]*)+)/g;
 const SELECTOR_PATTERN = /\bselect[A-Z][\w$]*/g;
 const FENCE_PATTERN = /^([ \t]*)(`{3,}|~{3,})[^\n]*\n([\s\S]*?)^\1\2[ \t]*$/gm;
 const INLINE_CODE_PATTERN = /`([^`\n]+)`/g;
+const CODE_HEADING_PATTERN = /^#{2,6}[ \t]+`([A-Za-z_$][\w$]*)`[ \t]*$/gm;
+const CODE_NAME_PATTERN = /`([A-Za-z_$][\w$]*)`/g;
 const IMPORT_PATTERN =
   /import\s+(?:type\s+)?(?:([\w$]+)\s*,?\s*)?(?:\{([^}]*)\})?\s*(?:from\s+)?['"](@videojs\/[^'"]+)['"]|import\(\s*['"](@videojs\/[^'"]+)['"]\s*\)/g;
 const SUBJECT_ATTRIBUTE_PATTERN =
@@ -163,10 +165,25 @@ function subjectName(value: string): string {
   return /^[A-Za-z_$][\w$]*$/.test(name) ? name : pascalCase(name);
 }
 
-/** Collect what one reference page documents: its subjects, their parts, feature selectors, and declared `apis`. */
+/** Names in the first column of the tables under a page's `## Exports` heading. */
+function exportsTableNames(prose: string): string[] {
+  const section = prose.split(/^(?=## )/m).find((part) => /^## Exports[ \t]*$/m.test(part.split('\n', 1)[0]!));
+  if (!section) return [];
+
+  return section
+    .split('\n')
+    .filter((line) => line.startsWith('|'))
+    .flatMap((line) => [...line.split('|')[1]!.matchAll(CODE_NAME_PATTERN)].map((match) => match[1]!));
+}
+
+/**
+ * Collect what one reference page documents: its subjects, their parts, feature selectors, the names its headings and
+ * Exports tables give in code, and declared `apis`.
+ */
 export function collectPageCoverage(source: string): { names: Set<string>; modules: string[]; unstable: boolean } {
   const frontmatter = parseFrontmatter(source);
   const body = source.replace(/^---\n[\s\S]*?\n---/, '');
+  const prose = body.replace(FENCE_PATTERN, '');
   const code = pageCode(body);
   const subjects = new Set<string>();
   const modules: string[] = [];
@@ -206,6 +223,10 @@ export function collectPageCoverage(source: string): { names: Set<string>; modul
 
   if (isFeaturePage) for (const [selector] of code.matchAll(SELECTOR_PATTERN)) names.add(selector);
 
+  for (const [, name] of prose.matchAll(CODE_HEADING_PATTERN)) names.add(name!);
+
+  for (const name of exportsTableNames(prose)) names.add(name);
+
   for (const api of frontmatter.apis) {
     if (api.startsWith('@')) modules.push(api);
     else names.add(api);
@@ -214,10 +235,14 @@ export function collectPageCoverage(source: string): { names: Set<string>; modul
   return { names, modules, unstable: frontmatter.stability === 'unstable' };
 }
 
+function referencePages(siteDirectory: string): string[] {
+  return walkFiles(join(siteDirectory, 'src/content/docs/reference'), (path) => path.endsWith('.mdx'));
+}
+
 export function collectCoverage(siteDirectory: string): Coverage {
   const coverage: Coverage = { stable: new Set(), unstable: new Set(), stableModules: [], unstableModules: [] };
 
-  for (const file of walkFiles(join(siteDirectory, 'src/content/docs/reference'), (path) => path.endsWith('.mdx'))) {
+  for (const file of referencePages(siteDirectory)) {
     const page = collectPageCoverage(readFileSync(file, 'utf8'));
     const names = page.unstable ? coverage.unstable : coverage.stable;
 
@@ -227,6 +252,56 @@ export function collectCoverage(siteDirectory: string): Coverage {
   }
 
   return coverage;
+}
+
+export interface StaleApi {
+  file: string;
+  api: string;
+}
+
+/**
+ * `apis` entries that document nothing: a name that no framework-facing entry exports, or a module pattern that matches
+ * no entry. Renaming or removing an export leaves these behind.
+ */
+export function findStaleApis(
+  pages: ReadonlyArray<{ file: string; apis: readonly string[] }>,
+  surface: {
+    exports: ReadonlyArray<Pick<PublicExport, 'name' | 'exportedNames' | 'specifiers'>>;
+    unresolved: readonly string[];
+  }
+): StaleApi[] {
+  const names = new Set<string>();
+  const specifiers = new Set<string>();
+
+  for (const key of surface.unresolved) {
+    const separator = key.lastIndexOf('#');
+
+    specifiers.add(key.slice(0, separator));
+    names.add(key.slice(separator + 1));
+  }
+
+  for (const record of surface.exports) {
+    const publicSpecifiers = [...record.specifiers].filter((specifier) => !INTERNAL_PACKAGE_PATTERN.test(specifier));
+    if (publicSpecifiers.length === 0) continue;
+
+    for (const name of [record.name, ...record.exportedNames]) names.add(name);
+
+    for (const specifier of publicSpecifiers) specifiers.add(specifier);
+  }
+
+  const isStale = (api: string) =>
+    api.startsWith('@')
+      ? ![...specifiers].some((specifier) => matchesModulePattern(specifier, [api]))
+      : !names.has(api);
+
+  return pages.flatMap(({ file, apis }) => apis.filter(isStale).map((api) => ({ file, api })));
+}
+
+function collectDeclaredApis(siteDirectory: string): Array<{ file: string; apis: string[] }> {
+  return referencePages(siteDirectory).map((file) => ({
+    file,
+    apis: parseFrontmatter(readFileSync(file, 'utf8')).apis,
+  }));
 }
 
 export function isCoveredName(name: string, covered: ReadonlySet<string>): boolean {
@@ -775,10 +850,12 @@ export function documentedStability(
   if (specifiers.length === 0) return 'internal';
 
   const names = [record.name, ...record.exportedNames].filter((name) => name !== 'default');
-  const modules = record.name === 'default' ? specifiers : [];
+  // An exact entry point documents everything it exports; a `*` pattern documents each matched module's default export.
+  const coversModule = (pattern: string) =>
+    (record.name === 'default' || !pattern.includes('*')) &&
+    specifiers.some((specifier) => matchesModulePattern(specifier, [pattern]));
   const covers = (set: ReadonlySet<string>, patterns: readonly string[]) =>
-    names.some((name) => isCoveredName(name, set)) ||
-    modules.some((specifier) => matchesModulePattern(specifier, patterns));
+    names.some((name) => isCoveredName(name, set)) || patterns.some(coversModule);
   if (covers(coverage.stable, coverage.stableModules)) return 'stable';
 
   if (covers(coverage.unstable, coverage.unstableModules)) return 'experimental';
@@ -1328,6 +1405,16 @@ function reportPropagated(resolved: ReadonlyMap<PublicExport, ResolvedStability>
   console.log('');
 }
 
+function reportStaleApis(stale: readonly StaleApi[]): void {
+  for (const { file, api } of stale) {
+    console.error(`✗ ${relative(monorepoRoot, file)}  apis entry ${api} matches no public export`);
+  }
+
+  console.error(
+    `\n✗ ${stale.length} \`apis\` entries match no public export. Rename them to match the export, or remove them.\n`
+  );
+}
+
 function main(): void {
   const fix = process.argv.includes('--fix');
   const siteDirectory = resolve(scriptPath, '..', '..');
@@ -1343,7 +1430,8 @@ function main(): void {
   }
 
   const coverage = collectCoverage(siteDirectory);
-  const { exports, unresolved } = collectPublicExports(entries);
+  const surface = collectPublicExports(entries);
+  const { exports, unresolved } = surface;
   const resolved = resolveStabilities(exports, coverage);
   const importStabilities = new Map<string, Stability>();
   const violations: Array<{ record: PublicExport; stability: Stability; reason: string }> = [];
@@ -1378,6 +1466,8 @@ function main(): void {
     extensions: packageNamesIn('extensions'),
   });
 
+  const stale = findStaleApis(collectDeclaredApis(siteDirectory), surface);
+
   reportPropagated(resolved);
 
   const counts = { stable: 0, experimental: 0, internal: 0 };
@@ -1391,7 +1481,7 @@ function main(): void {
 
   violations.sort((a, b) => a.record.file.localeCompare(b.record.file) || a.record.name.localeCompare(b.record.name));
 
-  if (violations.length === 0 && unexported.length === 0) {
+  if (violations.length === 0 && unexported.length === 0 && stale.length === 0) {
     console.log(`✓ All ${exports.length} checked public exports are documented, referenced, or tagged.`);
     return;
   }
@@ -1425,7 +1515,9 @@ function main(): void {
 
     if (unexported.length > 0) reportUnexported(unexported);
 
-    if (unfixable.length > 0 || unexported.length > 0) process.exit(1);
+    if (stale.length > 0) reportStaleApis(stale);
+
+    if (unfixable.length > 0 || unexported.length > 0 || stale.length > 0) process.exit(1);
 
     return;
   }
@@ -1445,6 +1537,8 @@ function main(): void {
   }
 
   if (unexported.length > 0) reportUnexported(unexported);
+
+  if (stale.length > 0) reportStaleApis(stale);
 
   process.exit(1);
 }
