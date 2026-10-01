@@ -21,8 +21,6 @@ export interface Destroyable {
  * Mirrors `addController`/`removeController` to track controllers (needed because `ReactiveElement.#controllers` is
  * hard-private), calls `hostDestroyed()` on all tracked controllers in `destroyCallback`, and guards `performUpdate()`
  * so no updates run after destruction.
- *
- * @internal
  */
 export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElement>(SuperClass: Base) {
   class DestroyableElement extends SuperClass {
