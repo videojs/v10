@@ -117,6 +117,7 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
+  MediaError,
   type NodeListLike,
 } from '@videojs/media';
 // Media types
@@ -146,7 +147,6 @@ export type {
   MediaContentValue,
   MediaControlsCapability,
   MediaControlsState,
-  MediaError,
   MediaErrorCapability,
   MediaErrorEvents,
   MediaErrorState,

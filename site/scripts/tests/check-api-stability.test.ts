@@ -75,11 +75,12 @@ function coverage(overrides: Partial<Coverage> = {}): Coverage {
   return { stable: new Set(), unstable: new Set(), stableModules: [], unstableModules: [], ...overrides };
 }
 
-function record(name: string, options: { exportedNames?: string[]; specifiers?: string[] } = {}) {
+function record(name: string, options: { exportedNames?: string[]; specifiers?: string[]; file?: string } = {}) {
   return {
     name,
     exportedNames: new Set(options.exportedNames ?? [name]),
     specifiers: new Set(options.specifiers ?? ['@videojs/react']),
+    file: options.file,
   };
 }
 
@@ -126,6 +127,13 @@ describe('collectPageCoverage', () => {
     );
 
     expect([...names]).toEqual(expect.arrayContaining(['PlayButton', 'PlayButtonIcon']));
+  });
+
+  it('names an HTML element subject without its `media-` prefix only from the framework title', () => {
+    expect([...collectPageCoverage(page('title: media-text')).names]).toEqual(['MediaText']);
+    expect(collectPageCoverage(page('title: PlayButton\nframeworkTitle:\n  html: media-play-button')).names).toEqual(
+      new Set(['PlayButton'])
+    );
   });
 
   it('covers parts written against a subject, including nested parts', () => {
@@ -231,6 +239,26 @@ describe('documentedStability', () => {
     expect(documentedStability(record('VideoProps'), docs)).toBe('stable');
     expect(documentedStability(record('DashVideo'), docs)).toBe('experimental');
     expect(documentedStability(record('createButton'), docs)).toBe('internal');
+  });
+
+  it("covers a companion only when the subject's framework package declares it", () => {
+    const docs = coverage({ stable: new Set(['Menu', 'useStore']) });
+
+    expect(documentedStability(record('MenuProps', { file: '/repo/packages/react/src/menu.tsx' }), docs)).toBe(
+      'stable'
+    );
+    expect(
+      documentedStability(
+        record('MenuOptions', { file: '/repo/packages/core/src/menu.ts', specifiers: ['@videojs/html'] }),
+        docs
+      )
+    ).toBe('internal');
+    expect(
+      documentedStability(
+        record('StoreOptions', { file: '/repo/packages/store/src/store.ts', specifiers: ['@videojs/store'] }),
+        docs
+      )
+    ).toBe('internal');
   });
 
   it('covers an export under any of its public names', () => {
@@ -674,13 +702,15 @@ describe('resolveStabilities', () => {
       'export declare class AdapterCore { src: string }',
       'export interface MixinOptions { value: number }',
       'export interface PreviewState { value: number }',
-      'export declare class BaseCore { base: number }',
+      'export interface Guarded { value: number }',
+      'export interface Narrowed { value: number }',
+      'export declare class BaseCore { base: number; protected narrowed: object }',
       'export declare namespace ButtonCore { export type Props = { disabled: boolean } }',
     ].join('\n'),
     'packages/react/dist/index.d.ts': [
       'import {',
       '  AdapterCore, Aliased, BaseCore, Bound, ButtonCore, Contract, CoreOptions, CoreState, Fallback, Hidden,',
-      '  MixinOptions, PreviewState, Secret,',
+      '  Guarded, MixinOptions, Narrowed, PreviewState, Secret,',
       "} from '../../core/dist/index.js';",
       // Like bundled output: `export {}` stops a declaration file exporting every top-level declaration.
       'export {};',
@@ -700,7 +730,8 @@ describe('resolveStabilities', () => {
       'export declare class HlsVideo extends HlsVideo_base {}',
       'export declare class PlayButtonElement extends BaseCore {',
       '  private secret: Secret;',
-      '  protected guarded: Secret;',
+      '  protected guarded: Guarded;',
+      '  protected narrowed: Narrowed;',
       '  /** @internal */',
       '  hidden: Secret;',
       '  state: PlayButtonState;',
@@ -813,6 +844,10 @@ describe('resolveStabilities', () => {
 
   it('ignores hidden members and exports nothing names', () => {
     expect(resolve()).toMatchObject({ Hidden: 'internal', Unreached: 'internal' });
+  });
+
+  it('propagates through protected members, but not through a narrower redeclaration of an inherited one', () => {
+    expect(resolve()).toMatchObject({ Guarded: 'stable <- PlayButtonElement', Narrowed: 'internal' });
   });
 
   it('propagates through heritage clauses unless heritage propagation is off', () => {

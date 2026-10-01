@@ -38,7 +38,9 @@ export type {
   InputIndicatorLabels,
   LiveButtonProps,
   LiveButtonState,
+  MediaButtonComponent,
   MediaSnapshot,
+  MediaUIComponent,
   MenuInput,
   MenuOptionState,
   MenuProps,
@@ -103,6 +105,7 @@ export type {
   TransitionFlags,
   TransitionState,
   TransitionStatus,
+  UIComponent,
   VolumeIndicatorProps,
   VolumeIndicatorState,
   VolumeLevel,
@@ -142,6 +145,7 @@ export {
   isMediaVideoRenditionCapable,
   isMediaVolumeCapable,
   isQuerySelectorAllCapable,
+  MediaError,
   type NodeListLike,
 } from '@videojs/media';
 // Media types
@@ -171,7 +175,6 @@ export type {
   MediaContentValue,
   MediaControlsCapability,
   MediaControlsState,
-  MediaError,
   MediaErrorCapability,
   MediaErrorEvents,
   MediaErrorState,
