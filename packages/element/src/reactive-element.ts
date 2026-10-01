@@ -12,8 +12,8 @@ const HTMLElementBase = globalThis.HTMLElement ?? class {};
 /**
  * Lightweight reactive custom element base class.
  *
- * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`, attribute reflection, batched async
- * updates, and reactive controllers. No Shadow DOM, no `static styles`, no decorators.
+ * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`, attribute-to-property conversion, batched
+ * async updates, and reactive controllers. No Shadow DOM, no `static styles`, no decorators.
  *
  * Updates are batched using the same Promise-based scheduling as Lit: property changes enqueue a microtask, and the
  * update is gated behind `connectedCallback` so the first update only runs once the element is in the document.
