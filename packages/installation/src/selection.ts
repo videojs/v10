@@ -506,7 +506,7 @@ export function resolveInstallationSelection(
         field: 'skin',
         value: skinFlag,
         message: 'Shadcn installs editable skin source, so the `none` skin is not available.',
-        hint: `Use ${syntax.options(['skin', 'default'])} or ${syntax.options(['skin', 'neutral'])} or ${syntax.options(['skin', 'compat'])}, or ${syntax.options(['method', 'packaged'])} for a skinless player.`,
+        hint: `Use ${syntax.options(['skin', 'default'])}, ${syntax.options(['skin', 'neutral'])}, or ${syntax.options(['skin', 'compat'])}, or ${syntax.options(['method', 'packaged'])} for a skinless player.`,
       });
     }
 
