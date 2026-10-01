@@ -8,7 +8,7 @@
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -808,7 +808,9 @@ ${list(source)}
 
 console.log('[generate-pages] Generating Vite test pages...');
 
-if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
+// The pages directory is wholly generated; clearing it drops pages whose names changed.
+rmSync(OUT_DIR, { recursive: true, force: true });
+mkdirSync(OUT_DIR, { recursive: true });
 
 let count = 0;
 

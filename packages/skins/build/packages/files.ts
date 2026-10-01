@@ -22,7 +22,7 @@ export async function syncGeneratedFiles(
 
   for (const path of ownedPaths) {
     if (path.includes('*')) {
-      for (const file of globSync(path, { cwd: workspaceDir })) existing.add(file);
+      for (const file of globSync(path, { cwd: workspaceDir })) existing.add(file.replaceAll('\\', '/'));
 
       continue;
     }

@@ -23,10 +23,15 @@ describe('syncGeneratedFiles', () => {
     await writeFile(resolve(root, 'presets/video/retired-skin.tsx'), 'stale');
     await writeFile(resolve(root, 'presets/video/index.ts'), 'authored');
 
-    await syncGeneratedFiles(root, [{ path: 'presets/video/skin.tsx', content: 'generated' }], ['presets/*/*skin.tsx']);
+    const files = [{ path: 'presets/video/skin.tsx', content: 'generated' }];
+    const owned = ['presets/*/*skin.tsx'];
 
+    expect(await syncGeneratedFiles(root, files, owned)).toBe(2);
     expect(existsSync(resolve(root, 'presets/video/retired-skin.tsx'))).toBe(false);
     expect(readFileSync(resolve(root, 'presets/video/skin.tsx'), 'utf8')).toBe('generated');
     expect(readFileSync(resolve(root, 'presets/video/index.ts'), 'utf8')).toBe('authored');
+
+    // A glob match that is still generated stays in place rather than being deleted and rewritten.
+    expect(await syncGeneratedFiles(root, files, owned)).toBe(0);
   });
 });
