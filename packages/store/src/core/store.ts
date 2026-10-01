@@ -18,6 +18,7 @@ import { createState } from './state';
 const STORE_SYMBOL = Symbol.for('@videojs/store');
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
+/** @internal */
 export interface StoreOptions<Target, State> extends StoreCallbacks<Target, State> {}
 
 /** @internal */
