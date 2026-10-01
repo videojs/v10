@@ -1,21 +1,23 @@
 'use client';
 
-import type { StateAttrMap, TooltipCore } from '@videojs/core';
+import type { StateAttrMap, TooltipCore, TooltipState } from '@videojs/core';
 import type { MediaContainer, PositioningBoundary, TooltipApi } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
+/** @internal */
 export interface TooltipContent {
   label?: string | undefined;
   shortcut?: string | undefined;
 }
 
+/** @internal */
 export interface TooltipContextValue {
   core: TooltipCore;
   tooltip: TooltipApi;
-  state: TooltipCore.State;
-  preferredSide: TooltipCore.State['side'];
-  setPositionedSide: (side: TooltipCore.State['side']) => void;
-  stateAttrMap: StateAttrMap<TooltipCore.State>;
+  state: TooltipState;
+  preferredSide: TooltipState['side'];
+  setPositionedSide: (side: TooltipState['side']) => void;
+  stateAttrMap: StateAttrMap<TooltipState>;
   anchorName: string;
   popupId: string;
   content: TooltipContent | undefined;
@@ -28,7 +30,11 @@ const TooltipContext = createContext<TooltipContextValue | null>(null);
 
 export const TooltipContextProvider = TooltipContext.Provider;
 
-/** Returns the current tooltip compound-component context. Throws outside `Tooltip.Root`. */
+/**
+ * Returns the current tooltip compound-component context. Throws outside `Tooltip.Root`.
+ *
+ * @internal
+ */
 export function useTooltipContext(): TooltipContextValue {
   const ctx = useContext(TooltipContext);
   if (!ctx) throw new Error('Tooltip compound components must be used within a Tooltip.Root');

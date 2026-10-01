@@ -62,6 +62,7 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 - Keep dev-only warnings, debug helpers, and `displayName` assignments behind `__DEV__`.
 - Comments and JSDoc should explain non-obvious intent or contracts, not restate TypeScript or the next line.
 - API-reference exports need richer JSDoc because the site builder extracts it; use `write-api-reference` for those changes.
+- A published export is stable when a site reference page documents it or a stable export's types reference it. Tag every other export `@internal`, or `@experimental` when only a `stability: unstable` page or an experimental export's types reference it; `pnpm -F site check:api-stability` enforces this (SPF is not checked).
 
 ## Design records
 
@@ -86,6 +87,7 @@ Checked-in skills are direct children of `.agents/skills/`. `pnpm install` expos
 - Toolchain workflows: `configure-vite-plus`
 - Skin parity: `maintain-vjsc-skin-gaps`
 - Delivery: `investigate-issue`, `create-issue`, `review-branch`, `commit-pr`
+- Tests: `maintain-tests`
 - SPF behaviors: `create-spf-behavior`, `change-spf-behavior`
 - SPF registry: `document-spf-feature`, `document-spf-use-case`, `implement-spf-feature`, `implement-spf-use-case`
 - Agent guidance: `maintain-agent-docs`, `create-skill`

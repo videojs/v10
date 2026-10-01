@@ -6,7 +6,7 @@ interface RegistryConsumerProjectBase {
   readonly directory: string;
   readonly port: number;
   readonly bundler: RegistryConsumerBundler;
-  readonly theme: 'default' | 'minimal';
+  readonly theme: 'default' | 'neutral' | 'compat';
 }
 
 export type RegistryConsumerProject = RegistryConsumerProjectBase &
@@ -41,11 +41,11 @@ export const registryConsumerProjects = [
     port: 5310,
   },
   {
-    name: 'next-react-tailwind-minimal',
-    directory: 'next-react-tailwind-minimal',
+    name: 'next-react-tailwind-neutral',
+    directory: 'next-react-tailwind-neutral',
     framework: 'react',
     styling: 'tailwind',
-    theme: 'minimal',
+    theme: 'neutral',
     bundler: 'next',
     port: 5316,
   },
@@ -54,7 +54,7 @@ export const registryConsumerProjects = [
     directory: 'next-react-css',
     framework: 'react',
     styling: 'css',
-    theme: 'minimal',
+    theme: 'neutral',
     bundler: 'next',
     port: 5311,
   },
@@ -81,8 +81,35 @@ export const registryConsumerProjects = [
     directory: 'rspack-html-css',
     framework: 'html',
     styling: 'css',
-    theme: 'minimal',
+    theme: 'neutral',
     bundler: 'rspack',
     port: 5314,
+  },
+  {
+    name: 'next-react-tailwind-compat',
+    directory: 'next-react-tailwind-compat',
+    framework: 'react',
+    styling: 'tailwind',
+    theme: 'compat',
+    bundler: 'next',
+    port: 5317,
+  },
+  {
+    name: 'next-react-css-compat',
+    directory: 'next-react-css-compat',
+    framework: 'react',
+    styling: 'css',
+    theme: 'compat',
+    bundler: 'next',
+    port: 5318,
+  },
+  {
+    name: 'vite-html-css-compat',
+    directory: 'vite-html-css-compat',
+    framework: 'html',
+    styling: 'css',
+    theme: 'compat',
+    bundler: 'vite',
+    port: 5319,
   },
 ] as const satisfies readonly RegistryConsumerProject[];

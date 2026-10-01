@@ -1,17 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
-  defaultInstallationTemplate,
   defaultRegistryStyling,
   REGISTRY_PRESETS,
   REGISTRY_SKINS,
-  INSTALLATION_TEMPLATES,
-  installationTemplates,
   installationTemplatesForMethod,
   registryNamespaceUrl,
   registrySkinSelection,
   registryStylings,
-  resolveInstallationTemplate,
   resolveRegistryStyling,
   shadcnAddCommand,
   shadcnCommand,
@@ -27,14 +23,17 @@ describe('registryNamespaceUrl', () => {
     expect(registryNamespaceUrl('react', 'tailwind')).toBe('https://shadcn.videojs.org/r/react/{name}.json');
     expect(registryNamespaceUrl('react', 'css')).toBe('https://shadcn.videojs.org/r/react/css/{name}.json');
     expect(registryNamespaceUrl('html', 'css')).toBe('https://shadcn.videojs.org/r/html/{name}.json');
-    expect(registryNamespaceUrl('react', 'tailwind', 'minimal')).toBe(
-      'https://shadcn.videojs.org/r/react/minimal/{name}.json'
+    expect(registryNamespaceUrl('react', 'tailwind', 'neutral')).toBe(
+      'https://shadcn.videojs.org/r/react/neutral/{name}.json'
     );
-    expect(registryNamespaceUrl('react', 'css', 'minimal')).toBe(
-      'https://shadcn.videojs.org/r/react/css/minimal/{name}.json'
+    expect(registryNamespaceUrl('react', 'css', 'neutral')).toBe(
+      'https://shadcn.videojs.org/r/react/css/neutral/{name}.json'
     );
-    expect(registryNamespaceUrl('html', 'css', 'minimal')).toBe(
-      'https://shadcn.videojs.org/r/html/minimal/{name}.json'
+    expect(registryNamespaceUrl('html', 'css', 'neutral')).toBe(
+      'https://shadcn.videojs.org/r/html/neutral/{name}.json'
+    );
+    expect(registryNamespaceUrl('react', 'css', 'compat')).toBe(
+      'https://shadcn.videojs.org/r/react/css/compat/{name}.json'
     );
   });
 });
@@ -66,8 +65,8 @@ describe('shadcnAddCommand', () => {
 
 describe('shadcnRegistryAddCommand', () => {
   it('sets the selected catalog through the Shadcn CLI', () => {
-    expect(shadcnRegistryAddCommand('pnpm', 'react', 'css', 'minimal')).toBe(
-      'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/css/minimal/{name}.json'
+    expect(shadcnRegistryAddCommand('pnpm', 'react', 'css', 'neutral')).toBe(
+      'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/css/neutral/{name}.json'
     );
     expect(shadcnRegistryAddCommand('npm', 'html', 'css')).toBe(
       'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
@@ -76,45 +75,10 @@ describe('shadcnRegistryAddCommand', () => {
 });
 
 describe('shadcnInitCommand', () => {
-  it('owns the complete app-template vocabulary outside the Shadcn model', () => {
-    expect(INSTALLATION_TEMPLATES).toEqual([
-      'none',
-      'next',
-      'vite',
-      'start',
-      'react-router',
-      'astro',
-      'laravel',
-      'nuxt',
-      'sveltekit',
-    ]);
-  });
-
-  it('defaults each app framework to a suitable project template', () => {
-    expect(defaultInstallationTemplate('react')).toBe('next');
-    expect(defaultInstallationTemplate('html')).toBe('vite');
-    expect(defaultInstallationTemplate('vue')).toBe('vite');
-    expect(defaultInstallationTemplate('svelte')).toBe('vite');
-  });
-
-  it('offers compatible app templates for each project framework', () => {
-    expect(installationTemplates('react')).toEqual(['next', 'vite', 'start', 'react-router', 'astro', 'laravel']);
-    expect(installationTemplates('html')).toEqual(['vite', 'astro', 'laravel', 'none']);
-    expect(installationTemplates('vue')).toEqual(['vite', 'astro', 'nuxt']);
-    expect(installationTemplates('svelte')).toEqual(['vite', 'astro', 'sveltekit']);
-  });
-
   it('keeps the no-scaffold setup out of Shadcn', () => {
     expect(installationTemplatesForMethod('html', 'packaged')).toContain('none');
     expect(installationTemplatesForMethod('html', 'cdn')).toEqual(['vite', 'none']);
     expect(installationTemplatesForMethod('html', 'shadcn')).toEqual(['vite', 'astro', 'laravel']);
-  });
-
-  it('falls back when a project template does not support the source framework', () => {
-    expect(resolveInstallationTemplate('html', 'next')).toBe('vite');
-    expect(resolveInstallationTemplate('html', 'astro')).toBe('astro');
-    expect(resolveInstallationTemplate('react', 'next')).toBe('next');
-    expect(resolveInstallationTemplate('react', null)).toBe('next');
   });
 
   it('sets the selected project template', () => {
@@ -170,18 +134,25 @@ describe('shadcnProjectConfiguration', () => {
 });
 
 describe('registrySkinSelection', () => {
+  it('selects the Compat catalog for source installs', () => {
+    expect(registrySkinSelection({ useCase: 'live-audio', skin: 'compat-audio' })).toEqual({
+      item: 'live-audio',
+      theme: 'compat',
+    });
+  });
+
   it('maps the installation selection onto a theme catalog and stable item name', () => {
     expect(registrySkinSelection({ useCase: 'default-video', skin: 'video' })).toEqual({
       item: 'video',
       theme: 'default',
     });
-    expect(registrySkinSelection({ useCase: 'default-video', skin: 'minimal-video' })).toEqual({
+    expect(registrySkinSelection({ useCase: 'default-video', skin: 'neutral-video' })).toEqual({
       item: 'video',
-      theme: 'minimal',
+      theme: 'neutral',
     });
-    expect(registrySkinSelection({ useCase: 'live-audio', skin: 'minimal-audio' })).toEqual({
+    expect(registrySkinSelection({ useCase: 'live-audio', skin: 'neutral-audio' })).toEqual({
       item: 'live-audio',
-      theme: 'minimal',
+      theme: 'neutral',
     });
   });
 
@@ -197,14 +168,18 @@ describe('REGISTRY_SKINS', () => {
     expect(REGISTRY_SKINS.map((skin) => skin.item)).toEqual([
       'video',
       'video',
+      'video',
+      'audio',
       'audio',
       'audio',
       'live-video',
       'live-video',
+      'live-video',
+      'live-audio',
       'live-audio',
       'live-audio',
     ]);
-    expect(REGISTRY_SKINS.find((skin) => skin.item === 'video' && skin.theme === 'minimal')?.directory).toBe(
+    expect(REGISTRY_SKINS.find((skin) => skin.item === 'video' && skin.theme === 'neutral')?.directory).toBe(
       'components/videojs/video'
     );
   });

@@ -1,6 +1,6 @@
 'use client';
 
-import { type AudioTrackRadioGroupCore, AudioTrackRadioGroupDataAttrs, type MenuOptionState } from '@videojs/core';
+import { AudioTrackRadioGroupDataAttrs, type MenuOptionState, type AudioTrackRadioGroupState } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { ReactElement, ReactNode } from 'react';
@@ -33,7 +33,7 @@ export interface AudioTrackRadioGroupRootProps extends AudioTrackOptionsProps {
 }
 
 export interface AudioTrackRadioGroupOptionsProps extends Omit<
-  UIComponentProps<'div', AudioTrackRadioGroupCore.State>,
+  UIComponentProps<'div', AudioTrackRadioGroupState>,
   'children'
 > {
   /** Render one consumer-owned menu radio item for every audio track. */
@@ -41,8 +41,6 @@ export interface AudioTrackRadioGroupOptionsProps extends Omit<
 }
 
 export type AudioTrackRadioGroupValueProps = UIComponentProps<'span', AudioTrackOptionsResult>;
-
-export interface AudioTrackRadioGroupLegacyProps extends AudioTrackRadioGroupOptionsProps, AudioTrackOptionsProps {}
 
 const AudioTrackRadioGroupContext = createContext<AudioTrackOptionsResult | null | undefined>(undefined);
 
@@ -124,17 +122,6 @@ export const AudioTrackRadioGroupOptions = forwardRef<HTMLDivElement, AudioTrack
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
-export const AudioTrackRadioGroupLegacy = forwardRef<HTMLDivElement, AudioTrackRadioGroupLegacyProps>(
-  function AudioTrackRadioGroupLegacy({ label, formatTrack, disabled, ...props }, forwardedRef) {
-    return (
-      <AudioTrackRadioGroupRoot label={label} formatTrack={formatTrack} disabled={disabled}>
-        <AudioTrackRadioGroupOptions {...props} ref={forwardedRef} />
-      </AudioTrackRadioGroupRoot>
-    );
-  }
-);
-
 function useAudioTrackRadioGroupContext(): AudioTrackOptionsResult | null {
   const audioTrack = useContext(AudioTrackRadioGroupContext);
 
@@ -165,7 +152,7 @@ export namespace AudioTrackRadioGroupValue {
 
 export namespace AudioTrackRadioGroupOptions {
   export type Props = AudioTrackRadioGroupOptionsProps;
-  export type State = AudioTrackRadioGroupCore.State;
+  export type State = AudioTrackRadioGroupState;
   export type ItemProps = AudioTrackRadioGroupItemProps;
   export type ItemState = AudioTrackRadioGroupItemState;
 }

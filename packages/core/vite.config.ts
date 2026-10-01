@@ -4,6 +4,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { vjscComponentSchemaPlugin } from '../vjsc/src/plugins/component-schema.ts';
+import packageJson from './package.json' with { type: 'json' };
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
 import en from './src/core/i18n/locales/en.ts';
 
@@ -44,6 +45,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   },
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
 });
 
@@ -59,6 +61,8 @@ export default defineConfig({
           // to Core's locale generators or package build.
           input: [
             ...cachedTaskInputs,
+            // Listed explicitly: without them, a cache hit after a generator change restored stale generated sources.
+            'scripts/**',
             { pattern: '!packages/cdn/*.css', base: 'workspace' },
             { pattern: '!packages/cdn/*.d.ts', base: 'workspace' },
             { pattern: '!packages/cdn/*.js', base: 'workspace' },
@@ -78,6 +82,8 @@ export default defineConfig({
             'src/core/i18n/text/**',
             { pattern: 'packages/html/src/i18n/locales/**', base: 'workspace' },
             { pattern: 'packages/react/src/i18n/locales/**', base: 'workspace' },
+            { pattern: 'packages/html/src/i18n/text/**', base: 'workspace' },
+            { pattern: 'packages/react/src/i18n/text/**', base: 'workspace' },
           ],
         },
       },
@@ -86,6 +92,7 @@ export default defineConfig({
   },
   define: {
     __DEV__: 'true',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
   test: {
     // Vitest v4 compatibility: preserve mock call history.

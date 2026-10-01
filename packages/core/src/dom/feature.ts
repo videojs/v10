@@ -15,7 +15,11 @@ type PlayerFeatureDefinition<State, Derived, Config extends PlayerFeatureConfig>
   config?: Config;
 };
 
-/** Define a player feature with derived state and optional configuration inputs. */
+/**
+ * Define a player feature with derived state and optional configuration inputs.
+ *
+ * @internal
+ */
 export function definePlayerFeature<
   State,
   const Definitions extends DerivedFunctions<State>,
@@ -25,22 +29,34 @@ export function definePlayerFeature<
     derived: Definitions;
   }
 ): PlayerFeature<State, DerivedValues<Definitions>, Config>;
-/** Define a player feature with optional configuration inputs. */
+/**
+ * Define a player feature with optional configuration inputs.
+ *
+ * @internal
+ */
 export function definePlayerFeature<State, const Config extends PlayerFeatureConfig = Record<never, never>>(
   definition: Omit<PlayerFeatureDefinition<State, object, Config>, 'derived'> & { derived?: never }
 ): PlayerFeature<State, object, Config>;
+/** @internal */
 export function definePlayerFeature<State>(
   definition: PlayerFeatureDefinition<State, object, PlayerFeatureConfig>
 ): PlayerFeature<State> {
   const preserved = Object.values(definition.config ?? {}).map((entry) => entry.state);
 
-  return {
+  const feature: SliceConfig<PlayerTarget, State> & { config?: PlayerFeatureConfig } = {
     ...definition,
     ...(preserved.length > 0 ? { preserve: preserved } : {}),
-  } as PlayerFeature<State>;
+  };
+
+  // SAFETY: the slice brand is type-only, so a config is already a feature at runtime.
+  return feature as PlayerFeature<State>;
 }
 
-/** Merge the configuration declarations from the selected player features. */
+/**
+ * Merge the configuration declarations from the selected player features.
+ *
+ * @internal
+ */
 export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[]): PlayerFeatureConfig {
   const definitions = features.map((feature) => feature.config ?? {});
 
@@ -61,7 +77,11 @@ export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[
   return Object.assign({}, ...definitions);
 }
 
-/** Forward one configuration input through its feature-owned private action. */
+/**
+ * Forward one configuration input through its feature-owned private action.
+ *
+ * @internal
+ */
 export function setPlayerConfigValue(store: object, entry: PlayerFeatureConfig[string], value: unknown): void {
   const action = (store as Record<PropertyKey, unknown>)[entry.action];
   if (typeof action !== 'function') throw new TypeError(`Missing config action "${String(entry.action)}"`);

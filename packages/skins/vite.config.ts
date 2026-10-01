@@ -11,8 +11,10 @@ const generatedPackageOutputs = [
   { pattern: 'packages/react/src/internal/skins/**', base: 'workspace' as const },
   { pattern: 'packages/react/src/presets/*/skin.tsx', base: 'workspace' as const },
   { pattern: 'packages/react/src/presets/*/skin.css', base: 'workspace' as const },
-  { pattern: 'packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' as const },
-  { pattern: 'packages/react/src/presets/*/minimal-skin.css', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/neutral-skin.tsx', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/neutral-skin.css', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/compat-skin.tsx', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/compat-skin.css', base: 'workspace' as const },
 ] as const;
 
 export default defineConfig({
@@ -87,7 +89,8 @@ export default defineConfig({
       },
       'test:ci': {
         ...packageTestTask('pnpm run test:types && vp test run'),
-        dependsOn: ['generate'],
+        // The React target test imports `@videojs/react` exports, which skins doesn't otherwise depend on.
+        dependsOn: ['generate', '@videojs/react#build'],
       },
     },
   },

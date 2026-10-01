@@ -82,7 +82,7 @@ Note the nesting. A Vidstack layout sits *next to* `<media-provider>`; a Video.j
 |---|---|
 | Player | Player, which only holds state, plus the skin's container |
 | Provider | Media, and its playback **engine** |
-| Layout (Default, Plyr) | Skin (Default, Minimal) |
+| Layout (Default, Plyr) | Skin (Default, Neutral) |
 | Video or audio layout, matched by view type | The video or audio **preset**, chosen when you import it |
 | Default Theme | Skin source you add to your project |
 | Slots | Editing skin source |
@@ -230,7 +230,7 @@ In Vue, list the exact Video.js tags in `isCustomElement` instead of Vidstack's 
 
 </FrameworkCase>
 
-If you used the Plyr Layout, start from the Minimal skin instead. It's the closer match to a classic control bar, and <DocsLink slug="guides/migrate-from-plyr">Migrate from Plyr</DocsLink> maps the Plyr options that layout mirrored.
+If you used the Plyr Layout, start from the Neutral skin instead. It's the closer match to a classic control bar, and <DocsLink slug="guides/migrate-from-plyr">Migrate from Plyr</DocsLink> maps the Plyr options that layout mirrored.
 
 <FrameworkCase frameworks={["html"]}>
 `VidstackPlayer.create()` has no equivalent factory. Write the markup, or build the same elements from script and move your existing `<video>` inside them:
@@ -474,6 +474,21 @@ The embeds take a URL, a bare ID, or one of Vidstack's shorthands as `src`:
 - **`youtube/ID` plays from the privacy-enhanced host,** `youtube-nocookie.com`, as it did in Vidstack.
 - **`vimeo/ID?hash=HASH` still plays an unlisted video.** In a full Vimeo URL, give the hash as `?h=HASH` or as the last path segment.
 
+<FrameworkCase frameworks={["react"]}>
+A `ref` on `YouTubeVideo` or `VimeoVideo` is the `<iframe>`, which can't play or seek. Where you called methods on Vidstack's YouTube or Vimeo provider, pass `mediaRef` to get the adapter that drives the embed:
+
+```tsx
+import type { YouTubeAdapter } from '@videojs/youtube-video';
+
+const mediaRef = useRef<YouTubeAdapter>(null);
+
+<YouTubeVideo mediaRef={mediaRef} src="youtube/aqz-KE-bpKQ" />
+
+// In an event handler
+if (mediaRef.current) mediaRef.current.currentTime = 30;
+```
+</FrameworkCase>
+
 Vidstack fetched a poster for embeds automatically. Video.js doesn't ([#3049](https://github.com/videojs/v10/issues/3049)); set `poster` on the player if you want your own image before playback.
 
 <Aside type="caution" title="Embed privacy defaults changed">
@@ -579,7 +594,7 @@ Vidstack rendered the audio and video layouts side by side and matched one at ru
 | `DefaultVideoLayout` | `VideoSkin` from `@videojs/react/video` |
 | `DefaultVideoLayout` playing a live stream | `LiveVideoSkin` from `@videojs/react/live-video` |
 | `DefaultAudioLayout` | `AudioSkin` from `@videojs/react/audio` |
-| `PlyrLayout` | `MinimalVideoSkin` or `MinimalAudioSkin` |
+| `PlyrLayout` | `NeutralVideoSkin` or `NeutralAudioSkin` |
 | A custom layout with no controls | `BackgroundVideoSkin` from `@videojs/react/background` |
 </FrameworkCase>
 
@@ -589,7 +604,7 @@ Vidstack rendered the audio and video layouts side by side and matched one at ru
 | `<media-video-layout>` | `<video-skin>` from `@videojs/html/video/skin` |
 | `<media-video-layout>` playing a live stream | `<live-video-skin>` from `@videojs/html/live-video/skin` |
 | `<media-audio-layout>` | `<audio-skin>` from `@videojs/html/audio/skin` |
-| `<media-plyr-layout>` | `<video-minimal-skin>` or `<audio-minimal-skin>` |
+| `<media-plyr-layout>` | `<video-neutral-skin>` or `<audio-neutral-skin>` |
 | A custom layout with no controls | `<background-video-skin>` from `@videojs/html/background/skin` |
 </FrameworkCase>
 
@@ -657,7 +672,7 @@ Vidstack customization climbed from layout props, through CSS variables and slot
 
 #### Level 1: pick a skin
 
-Choose Default or Minimal for video, audio, live video, or live audio. See <DocsLink slug="guides/skins">Skins</DocsLink>.
+Choose Default, Neutral, or Compat for video, audio, live video, or live audio. See <DocsLink slug="guides/skins">Skins</DocsLink>.
 
 #### Level 2: restyle it
 
@@ -778,7 +793,7 @@ Vidstack's `colorScheme` toggled light and dark classes on the layout. Video.js 
 ### Icons
 
 <FrameworkCase frameworks={["react"]}>
-`@vidstack/react/icons` becomes `@videojs/react/icons`, with a smaller set of 25 icons in Default and Minimal families. Icons take standard SVG props; there's no `size` prop. Several names changed:
+`@vidstack/react/icons` becomes `@videojs/react/icons`, with a smaller set of 25 icons in Default, Neutral, and Compat families. Icons take standard SVG props; there's no `size` prop. Several names changed:
 
 | Vidstack | Video.js 10 |
 |---|---|
@@ -794,7 +809,7 @@ Vidstack's `colorScheme` toggled light and dark classes on the layout. Video.js 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-`<media-icon type="…">` becomes `<media-icon name="…">`, registered by `@videojs/html/icons/element`, with a smaller set of 25 icons. Add `family="minimal"` for the Minimal set. Several names changed:
+`<media-icon type="…">` becomes `<media-icon name="…">`, registered by `@videojs/html/icons/element`, with a smaller set of 25 icons. Add `family="neutral"` or `family="compat"` for the Neutral or Compat set. Several names changed:
 
 | Vidstack `type` | Video.js 10 `name` |
 |---|---|
@@ -942,7 +957,7 @@ The <DocsLink slug="reference/api/player-store">player store reference</DocsLink
 | `useMediaState('paused', playerRef)`, outside the player | Render `VideoPlayer` higher, around the component that reads state |
 | `useMediaRemote()` | `usePlayer((state) => state.seek)`, or any other action |
 | `useMediaPlayer()` | `usePlayer()` for state and actions, `useContainer()` for the element |
-| `useMediaProvider()` | `useMedia()` |
+| `useMediaProvider()` | `useMedia()` inside the player, or `mediaRef` on the media component |
 | `player.subscribe(callback)` | `usePlayer().subscribe(callback)`, reading values off the store inside |
 
 ```tsx
@@ -1030,6 +1045,19 @@ Vidstack's remote control dispatched request events that the player satisfied. V
 The store has no toggles apart from `toggleSubtitles()` and `toggleControls()`, so call the pair you need, as in `paused ? play() : pause()`. Hotkeys and gestures keep the toggle names, so `togglePaused` still works as their action.
 
 Vidstack methods took an optional trigger event as their last argument. Video.js actions don't, so wrap them in a handler, as in `onClick={() => seek(30)}`. Passing an action straight to `onClick` would hand it the click event.
+
+<FrameworkCase frameworks={["react"]}>
+Where you called `play()` or set `currentTime` through a `MediaPlayerInstance` ref, pass `mediaRef` to the media component instead. It receives the element for `Video`, `HlsJsVideo`, and other `<video>`-backed media, and the playback adapter for embeds:
+
+```tsx
+const mediaRef = useRef<HTMLVideoElement>(null);
+
+<HlsJsVideo mediaRef={mediaRef} src="https://example.com/stream.m3u8" />
+
+// In an event handler
+mediaRef.current?.play();
+```
+</FrameworkCase>
 
 State keys follow the same pattern. The common renames:
 
@@ -1247,7 +1275,7 @@ See <DocsLink slug="guides/live-streams">Live streams</DocsLink>.
 The video skins include AirPlay and Cast buttons. Both call one action, `promptRemotePlayback()`, and each button shows only on the platform that supports it. Without the Google Cast extension, the Cast button uses the browser's Remote Playback API.
 
 <FrameworkCase frameworks={["react"]}>
-Vidstack's `googleCast` prop becomes the `GoogleCast` extension, placed next to the media:
+Vidstack's `googleCast` prop becomes the `GoogleCast` extension, placed anywhere inside the player:
 
 ```tsx
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
@@ -1262,7 +1290,7 @@ import { GoogleCast } from '@videojs/react/extensions/google-cast';
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Vidstack's `googleCast` property becomes the `<google-cast>` extension, placed next to the media:
+Vidstack's `googleCast` property becomes the `<google-cast>` extension, placed anywhere inside the player:
 
 ```html
 <video-skin>

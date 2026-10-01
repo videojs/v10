@@ -4,6 +4,8 @@
 
 A reactive store for managing state owned by external systems. Built for media players, streaming libraries, and real-time systems where you don't own the state.
 
+> **Note:** The authoring APIs this README describes, including `createStore`, `defineSlice`, `combine`, `createState`, `flush`, `isState`, `InferStoreTarget`, and the store error helpers, are internal building blocks of the Video.js player and may change between releases. To read player state, use the player's own APIs, such as `usePlayer` and `PlayerController`. The store APIs that are stable and documented are `useStore`, `useSelector`, `useSnapshot`, `createSelector`, `shallowEqual`, `StoreController`, `SnapshotController`, and `SubscriptionController`; see the [API reference](https://videojs.org/docs/framework/react).
+
 ```bash
 npm install @videojs/store
 ```
@@ -263,7 +265,7 @@ export const signalKeys = {
 
 ## Error Handling
 
-Handle errors locally via `try/catch`, or globally via `onError`:
+Handle errors locally via `try/catch`, or globally via `onError`. An action that throws or rejects always fails for its caller; when `onError` is set, it also receives that error once. Errors from `onSetup`, `onAttach`, or a slice's `attach` have no caller, so they go to `onError`, or to `console.error` without one.
 
 ```ts
 import { isStoreError } from '@videojs/store';
@@ -300,7 +302,7 @@ All store errors include a `code` for programmatic handling:
 
 ## State Primitives
 
-The store uses explicit state containers internally. You can use these primitives directly:
+The store uses explicit state containers internally. These primitives are internal too, and may change between releases:
 
 ```ts
 import { createState, flush, isState } from '@videojs/store';

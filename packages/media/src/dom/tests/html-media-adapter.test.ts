@@ -1,99 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLAudioAdapter } from '../html-audio-adapter';
-import { addMediaExtension, type MediaExtension } from '../html-media-adapter';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-class MutedOverride implements MediaExtension {
-  get targetOverride() {
-    return { muted: true };
-  }
-}
-
-class VolumeOverride implements MediaExtension {
-  get targetOverride() {
-    return { volume: 0.5 };
-  }
-}
-
-class ContentDataOverride implements MediaExtension {
-  get targetOverride() {
-    return { contentData: { title: 'Component title' } };
-  }
-}
-
-class AttachTracking implements MediaExtension {
-  attach = vi.fn();
-  detach = vi.fn();
-  destroy = vi.fn();
-}
-
-class CastLikeOverride implements MediaExtension {
-  readonly api = {
-    muted: false,
-    playCount: 0,
-    play() {
-      this.playCount++;
-      return Promise.resolve();
-    },
-  };
-
-  get targetOverride() {
-    return this.api;
-  }
-}
-
 describe('HTMLMediaAdapter', () => {
-  describe('component overrides', () => {
-    it('returns the override value when a component exposes the property', () => {
-      const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
-
-      audio.muted = false;
-      host.attach(audio);
-
-      addMediaExtension(host, new MutedOverride());
-
-      expect(host.muted).toBe(true);
-    });
-
-    it('falls through to the target when the override lacks the property', () => {
-      const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
-
-      audio.defaultMuted = true;
-      host.attach(audio);
-
-      addMediaExtension(host, new MutedOverride());
-
-      // `defaultMuted` isn't overridden, so it reads from the target.
-      expect(host.defaultMuted).toBe(true);
-    });
-
-    it('falls through to the target when no component overrides the property', () => {
+  describe('target forwarding', () => {
+    it('reads from the attached target', () => {
       const host = new HTMLAudioAdapter();
       const audio = document.createElement('audio');
 
       audio.muted = true;
+      Object.defineProperty(audio, 'paused', { value: false });
       host.attach(audio);
 
       expect(host.muted).toBe(true);
-    });
-
-    it('falls through to the target for properties the override does not own', () => {
-      const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
-
-      audio.muted = true;
-      host.attach(audio);
-
-      addMediaExtension(host, new VolumeOverride());
-
-      expect(host.volume).toBe(0.5);
-      expect(host.muted).toBe(true);
+      expect(host.paused).toBe(false);
     });
 
     it('falls back to the default when nothing is attached', () => {
@@ -106,119 +30,57 @@ describe('HTMLMediaAdapter', () => {
 
     it('reads content data independently from the legacy title property', () => {
       const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
+      const audio = document.createElement('audio') as HTMLAudioElement & {
+        contentData?: Record<string, string | null>;
+      };
 
       audio.title = 'Legacy title';
       host.attach(audio);
 
       expect(host.contentData).toBeUndefined();
 
-      addMediaExtension(host, new ContentDataOverride());
+      audio.contentData = { title: 'Media title' };
 
-      expect(host.contentData).toEqual({ title: 'Component title' });
+      expect(host.contentData).toEqual({ title: 'Media title' });
       expect(host.title).toBe('Legacy title');
     });
 
-    it('writes setter values to the override when it owns the property', () => {
-      const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
-
-      audio.muted = false;
-      host.attach(audio);
-
-      const component = new CastLikeOverride();
-
-      addMediaExtension(host, component);
-
-      host.muted = true;
-
-      expect(component.api.muted).toBe(true);
-      expect(audio.muted).toBe(false);
-    });
-
-    it('writes setter values to the target when no override owns the property', () => {
+    it('writes setter values to the target', () => {
       const host = new HTMLAudioAdapter();
       const audio = document.createElement('audio');
 
       host.attach(audio);
 
       host.muted = true;
+      host.volume = 0.5;
 
       expect(audio.muted).toBe(true);
+      expect(audio.volume).toBe(0.5);
     });
 
-    it('attaches a late-added component to the current target', () => {
-      const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
-
-      host.attach(audio);
-
-      const component = new AttachTracking();
-
-      addMediaExtension(host, component);
-
-      expect(component.attach).toHaveBeenCalledWith(audio);
-    });
-
-    it('does not attach an added component when no target is attached', () => {
+    it('ignores setter values when nothing is attached', () => {
       const host = new HTMLAudioAdapter();
 
-      const component = new AttachTracking();
+      host.muted = true;
 
-      addMediaExtension(host, component);
-
-      expect(component.attach).not.toHaveBeenCalled();
-    });
-
-    it('detaches and unregisters components on destroy', () => {
-      const host = new HTMLAudioAdapter();
-      const audio = document.createElement('audio');
-
-      audio.muted = false;
-      host.attach(audio);
-
-      const component = new AttachTracking();
-
-      addMediaExtension(host, component);
-      addMediaExtension(host, new MutedOverride());
-
-      host.destroy();
-
-      expect(component.detach).toHaveBeenCalledTimes(1);
-
-      // The unregistered override no longer participates in property resolution.
-      host.attach(audio);
       expect(host.muted).toBe(false);
     });
 
-    it('does not destroy components it does not own on destroy', () => {
-      const host = new HTMLAudioAdapter();
-
-      host.attach(document.createElement('audio'));
-
-      const component = new AttachTracking();
-
-      addMediaExtension(host, component);
-
-      host.destroy();
-
-      // `<mux-data>` / `MuxDataExtension` own their component and may outlive the host.
-      expect(component.destroy).not.toHaveBeenCalled();
-    });
-
-    it('invokes the override method when it owns the property', async () => {
+    it('stops forwarding events from a detached target', () => {
       const host = new HTMLAudioAdapter();
       const audio = document.createElement('audio');
+      const listener = vi.fn();
 
+      host.addEventListener('play', listener);
       host.attach(audio);
+      audio.dispatchEvent(new Event('play'));
 
-      const component = new CastLikeOverride();
+      expect(listener).toHaveBeenCalledOnce();
 
-      addMediaExtension(host, component);
+      host.destroy();
+      audio.dispatchEvent(new Event('play'));
 
-      await host.play();
-
-      expect(component.api.playCount).toBe(1);
+      expect(listener).toHaveBeenCalledOnce();
     });
   });
 
@@ -236,6 +98,23 @@ describe('HTMLMediaAdapter', () => {
 
       await expect(host.play()).rejects.toBeInstanceOf(DOMException);
     });
+  });
+
+  it('stops forwarding from the target after destroy', () => {
+    const host = new HTMLAudioAdapter();
+    const audio = document.createElement('audio');
+    const listener = vi.fn();
+
+    host.attach(audio);
+    host.addEventListener('play', listener);
+    audio.dispatchEvent(new Event('play'));
+    expect(listener).toHaveBeenCalledOnce();
+
+    host.destroy();
+    listener.mockClear();
+    audio.dispatchEvent(new Event('play'));
+
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('forwards contentdatachange from the attached media target', () => {

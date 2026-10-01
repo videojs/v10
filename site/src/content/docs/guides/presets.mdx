@@ -49,7 +49,17 @@ For example, the `@videojs/html/background` preset includes a media element with
 
 The default presets are `/video` and `/audio`. These cover the baseline controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases — the `/background` preset, for example, needs layout but not controls. Over time we'll add more: short-form players, podcast players, TV streaming players, and others.
 
+The video, audio, live video, and live audio presets also export Compat skins. For example, React exports `CompatVideoSkin` with `@videojs/react/video/compat-skin.css`; HTML registers `<video-compat-skin>` through `@videojs/html/video/compat-skin`.
+
 <PresetReference />
+
+Each preset has a reference page that lists its player, feature bundle, skins, media, and exports:
+
+- <DocsLink slug="reference/api/preset-video">Video preset</DocsLink>
+- <DocsLink slug="reference/api/preset-audio">Audio preset</DocsLink>
+- <DocsLink slug="reference/api/preset-live-video">Live video preset</DocsLink>
+- <DocsLink slug="reference/api/preset-live-audio">Live audio preset</DocsLink>
+- <DocsLink slug="reference/api/preset-background">Background preset</DocsLink>
 
 ## What's in a preset
 
@@ -87,7 +97,7 @@ are side-effect-only; import classes, controllers, and types from the preset roo
 ```ts
 import '@videojs/html/video/player'; // <video-player> only
 import '@videojs/html/video/skin';   // <video-skin> + container + video UI
-// Import '@videojs/html/video/minimal-skin' instead for the minimal skin.
+// Import '@videojs/html/video/neutral-skin' instead for the neutral skin.
 ```
 
 A complete player imports `video/player` and one skin. Each skin registration includes its container and UI dependencies but does not register the player.

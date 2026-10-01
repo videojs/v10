@@ -1,6 +1,6 @@
 'use client';
 
-import { type MenuOptionState, type QualityRadioGroupCore, QualityRadioGroupDataAttrs } from '@videojs/core';
+import { type MenuOptionState, QualityRadioGroupDataAttrs, type QualityRadioGroupState } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { ReactElement, ReactNode } from 'react';
@@ -28,7 +28,7 @@ export interface QualityRadioGroupRootProps extends QualityOptionsProps {
 }
 
 export interface QualityRadioGroupOptionsProps extends Omit<
-  UIComponentProps<'div', QualityRadioGroupCore.State>,
+  UIComponentProps<'div', QualityRadioGroupState>,
   'children'
 > {
   /** Render one consumer-owned menu radio item for every quality option. */
@@ -36,8 +36,6 @@ export interface QualityRadioGroupOptionsProps extends Omit<
 }
 
 export type QualityRadioGroupValueProps = UIComponentProps<'span', QualityOptionsResult>;
-
-export interface QualityRadioGroupLegacyProps extends QualityRadioGroupOptionsProps, QualityOptionsProps {}
 
 const QualityRadioGroupContext = createContext<QualityOptionsResult | null | undefined>(undefined);
 
@@ -119,17 +117,6 @@ export const QualityRadioGroupOptions = forwardRef<HTMLDivElement, QualityRadioG
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
-export const QualityRadioGroupLegacy = forwardRef<HTMLDivElement, QualityRadioGroupLegacyProps>(
-  function QualityRadioGroupLegacy({ label, formatRendition, disabled, ...props }, forwardedRef) {
-    return (
-      <QualityRadioGroupRoot label={label} formatRendition={formatRendition} disabled={disabled}>
-        <QualityRadioGroupOptions {...props} ref={forwardedRef} />
-      </QualityRadioGroupRoot>
-    );
-  }
-);
-
 function useQualityRadioGroupContext(): QualityOptionsResult | null {
   const quality = useContext(QualityRadioGroupContext);
   if (quality === undefined) throw new Error('QualityRadioGroup parts must be used within QualityRadioGroup.Root');
@@ -157,7 +144,7 @@ export namespace QualityRadioGroupValue {
 
 export namespace QualityRadioGroupOptions {
   export type Props = QualityRadioGroupOptionsProps;
-  export type State = QualityRadioGroupCore.State;
+  export type State = QualityRadioGroupState;
   export type ItemProps = QualityRadioGroupItemProps;
   export type ItemState = QualityRadioGroupItemState;
 }
