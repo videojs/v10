@@ -99,7 +99,7 @@ Never edit source or tests while Vitest is watching the checkout.
 
 1. Tests resolve workspace packages from built output. In a fresh worktree, run `pnpm install` and `pnpm build:packages` first; rebuild a dependency after changing it.
 2. Run the smallest owner and sibling tests with `pnpm -F <pkg> test <path-or-pattern>`. Timing-sensitive tests can fail under load; rerun a failure alone before recording it.
-3. For removed greps or inventory assertions, run the executable that owns the real contract, such as `pnpm check:workspace`, `pnpm -F <pkg> build`, or `pnpm -F site api-docs`.
+3. For removed greps or inventory assertions, run the executable that owns the real contract, such as `pnpm check:workspace`, `pnpm exec vp run <pkg>#build`, or `pnpm -F site api-docs`.
 4. After removing exports, build the package and run `pnpm typecheck`.
 5. Run `pnpm lint:fix:file <file>` on changed files, then `git diff --check`.
 6. Inspect `git diff --numstat`; report production and tooling separately from tests and test support.
