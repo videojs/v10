@@ -24,7 +24,6 @@ import {
   createHlsVideoEngine,
   type HlsVideoEngineConfig,
   type HlsVideoEngineContext,
-  type HlsVideoEngineSignals,
   type HlsVideoEngineState,
 } from '../../engines/hls/engine';
 import {
@@ -195,7 +194,6 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     readonly #engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
     #config: HlsVideoEngineConfig<readonly KeySystemModule[]>;
-    #signals!: HlsVideoEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsVideoImpl.defaultProps.preload;
     #disableRemotePlayback: boolean = HlsVideoImpl.defaultProps.disableRemotePlayback;
     #streamType: HlsVideoMediaStreamType = HlsVideoImpl.defaultProps.streamType;
@@ -247,10 +245,10 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // NOT cached here — it's derived at read time (the store re-reads it on
       // `timeupdate`/`progress`), so a sliding window needs no event churn.
       this.#stopLiveSync = effect(() => {
-        const presentation = this.#signals.state.presentation.get();
+        const presentation = this.#engine.state.presentation.get();
 
         this.#setDetectedStreamType(presentation?.streamType ?? MediaStreamTypes.UNKNOWN);
-        this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
+        this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#engine.state)));
         this.#reportDeliveryNotices(presentation);
       });
 
@@ -259,7 +257,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // resets the slot per source, so a new source starts with no error without
       // this needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
-        const errors = this.#signals.state.errors.get();
+        const errors = this.#engine.state.errors.get();
 
         this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
@@ -300,7 +298,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     set streamType(value: HlsVideoMediaStreamType) {
       if (value === MediaStreamTypes.UNKNOWN) {
         this.#isUserStreamType = false;
-        this.#updateStreamType(this.#signals.state.presentation.get()?.streamType ?? MediaStreamTypes.UNKNOWN);
+        this.#updateStreamType(this.#engine.state.presentation.get()?.streamType ?? MediaStreamTypes.UNKNOWN);
         return;
       }
 
@@ -316,7 +314,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
      */
     get liveEdgeStart(): number {
       const edge = getLiveEdge({
-        state: this.#signals.state as LiveWindowState,
+        state: this.#engine.state as LiveWindowState,
         config: { resolveLiveLatency },
       });
 
@@ -397,12 +395,12 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
-      this.#signals.context.mediaElement.set(mediaElement);
+      this.#engine.context.mediaElement.set(mediaElement);
     }
 
     detach(): void {
       this.#cancelPendingPlay();
-      this.#signals.context.mediaElement.set(undefined);
+      this.#engine.context.mediaElement.set(undefined);
       super.detach?.();
     }
 
@@ -426,7 +424,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#preload = value;
 
       if (value) {
-        this.#signals.state.preload.set(value);
+        this.#engine.state.preload.set(value);
       }
       // value = '' resets the IDL mirror (so `get preload` reflects '') but does
       // not patch state — the engine keeps its current preload until an explicit
@@ -449,7 +447,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     set disableRemotePlayback(value: boolean) {
       this.#disableRemotePlayback = value;
-      this.#signals.state.disableRemotePlayback.set(value);
+      this.#engine.state.disableRemotePlayback.set(value);
     }
 
     // -------------------------------------------------------------------------
@@ -463,7 +461,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     get src(): string {
-      return this.#signals.state.presentation.get()?.url ?? '';
+      return this.#engine.state.presentation.get()?.url ?? '';
     }
 
     set src(value: string) {
@@ -509,7 +507,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       if (value === this.src) return;
 
       this.#cancelPendingPlay();
-      this.#signals.state.presentation.set(value ? { url: value } : undefined);
+      this.#engine.state.presentation.set(value ? { url: value } : undefined);
     }
 
     // -------------------------------------------------------------------------
@@ -518,11 +516,11 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     play(): Promise<void> {
-      const mediaElement = this.#signals.context.mediaElement.get();
+      const mediaElement = this.#engine.context.mediaElement.get();
       if (!mediaElement) return Promise.reject(new Error('HlsVideoAdapterCore: no media element attached'));
 
       // Signal play intent — enables loading even with preload="none"
-      this.#signals.state.loadActivated.set(true);
+      this.#engine.state.loadActivated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
         // If we have a pending HLS source, the rejection may be because MSE
@@ -567,7 +565,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
         return;
       }
 
-      const trackId = liveTrackId(this.#signals.state);
+      const trackId = liveTrackId(this.#engine.state);
       const track = trackId ? findTrackById(presentation, trackId) : undefined;
       if (!track || !isResolvedTrack(track)) return;
 
@@ -586,18 +584,13 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     #createEngine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
-      return createHlsVideoEngine({
-        ...this.#config,
-        onSignalsReady: (signals) => {
-          this.#signals = signals;
-        },
-      });
+      return createHlsVideoEngine(this.#config);
     }
 
     #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
 
-      const mediaElement = this.#signals.context.mediaElement.get();
+      const mediaElement = this.#engine.context.mediaElement.get();
 
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;

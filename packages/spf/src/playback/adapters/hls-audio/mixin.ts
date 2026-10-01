@@ -11,7 +11,6 @@ import {
   createHlsAudioEngine,
   type HlsAudioEngineConfig,
   type HlsAudioEngineContext,
-  type HlsAudioEngineSignals,
   type HlsAudioEngineState,
 } from '../../engines/hls/engine-audio-only';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
@@ -94,7 +93,6 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     readonly #engine: Composition<HlsAudioEngineState, HlsAudioEngineContext>;
     #config: HlsAudioEngineConfig;
-    #signals!: HlsAudioEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsAudioImpl.defaultProps.preload;
     #disableRemotePlayback: boolean = HlsAudioImpl.defaultProps.disableRemotePlayback;
     #error: HlsVideoMediaError | null = null;
@@ -119,7 +117,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // resets the slot per source, so a new source starts with no error without
       // this needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
-        const errors = this.#signals.state.errors.get();
+        const errors = this.#engine.state.errors.get();
 
         this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
@@ -179,12 +177,12 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
-      this.#signals.context.mediaElement.set(mediaElement);
+      this.#engine.context.mediaElement.set(mediaElement);
     }
 
     detach(): void {
       this.#cancelPendingPlay();
-      this.#signals.context.mediaElement.set(undefined);
+      this.#engine.context.mediaElement.set(undefined);
       super.detach?.();
     }
 
@@ -207,7 +205,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#preload = value;
 
       if (value) {
-        this.#signals.state.preload.set(value);
+        this.#engine.state.preload.set(value);
       }
     }
 
@@ -227,7 +225,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     set disableRemotePlayback(value: boolean) {
       this.#disableRemotePlayback = value;
-      this.#signals.state.disableRemotePlayback.set(value);
+      this.#engine.state.disableRemotePlayback.set(value);
     }
 
     // -------------------------------------------------------------------------
@@ -241,7 +239,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     get src(): string {
-      return this.#signals.state.presentation.get()?.url ?? '';
+      return this.#engine.state.presentation.get()?.url ?? '';
     }
 
     set src(value: string) {
@@ -280,7 +278,7 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       if (value === this.src) return;
 
       this.#cancelPendingPlay();
-      this.#signals.state.presentation.set(value ? { url: value } : undefined);
+      this.#engine.state.presentation.set(value ? { url: value } : undefined);
     }
 
     // -------------------------------------------------------------------------
@@ -288,10 +286,10 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     play(): Promise<void> {
-      const mediaElement = this.#signals.context.mediaElement.get();
+      const mediaElement = this.#engine.context.mediaElement.get();
       if (!mediaElement) return Promise.reject(new Error('HlsAudioAdapterCore: no media element attached'));
 
-      this.#signals.state.loadActivated.set(true);
+      this.#engine.state.loadActivated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
         if (this.src) {
@@ -320,18 +318,13 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     #createEngine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
-      return createHlsAudioEngine({
-        ...this.#config,
-        onSignalsReady: (signals) => {
-          this.#signals = signals;
-        },
-      });
+      return createHlsAudioEngine(this.#config);
     }
 
     #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
 
-      const mediaElement = this.#signals.context.mediaElement.get();
+      const mediaElement = this.#engine.context.mediaElement.get();
 
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
