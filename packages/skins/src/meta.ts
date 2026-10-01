@@ -4,74 +4,76 @@ export interface SkinComponentMeta extends ComponentMeta {
   readonly type: 'component';
   readonly title: string;
   readonly description: string;
+  /** Registry category, taken from the component's directory at build time. */
+  readonly category: string;
+  /** Installed only as a dependency of the public components that use it. */
+  readonly private?: boolean | undefined;
 }
 
 export interface SkinMeta extends ComponentMeta {
+  /** Validated against the published skins when the module compiles. */
+  readonly name: SkinName;
   readonly type: 'skin';
   readonly title: string;
   readonly description: string;
 }
 
-/** Build-time styling identity of one skin: its CSS scope, theme, and preset. Keyed by skin name in `skinStyles`. */
-export interface SkinStyle {
-  readonly scope: string;
-  readonly theme: 'default' | 'minimal';
-  readonly preset: 'video' | 'audio' | 'live-video' | 'live-audio';
+/** A shared helper module installed as a dependency, never on its own. */
+export interface SkinSupportMeta extends ComponentMeta {
+  readonly type: 'support';
+  readonly title: string;
+  readonly description: string;
 }
 
-export type SkinModuleMeta = SkinComponentMeta | SkinMeta;
+export type SkinModuleMeta = SkinComponentMeta | SkinMeta | SkinSupportMeta;
 
-/** What a component module authors: `name` and `type` come from its path at build time. */
-export type SkinComponentDescription = Pick<SkinComponentMeta, 'title' | 'description'>;
+/** What a component module authors: `name`, `type`, and `category` come from its path at build time. */
+export type SkinComponentDescription = Pick<SkinComponentMeta, 'title' | 'description' | 'private'>;
 
 /** What a skin module authors: `name` and `type` come from its path at build time. */
 export type SkinDescription = Pick<SkinMeta, 'title' | 'description'>;
 
-export const skinStyles = {
-  'default-video': {
-    scope: '.media-skin[data-theme="default"][data-preset="video"]',
-    theme: 'default',
-    preset: 'video',
-  },
-  'minimal-video': {
-    scope: '.media-skin[data-theme="minimal"][data-preset="video"]',
-    theme: 'minimal',
-    preset: 'video',
-  },
-  'default-live-video': {
-    scope: '.media-skin[data-theme="default"][data-preset="live-video"]',
-    theme: 'default',
-    preset: 'live-video',
-  },
-  'minimal-live-video': {
-    scope: '.media-skin[data-theme="minimal"][data-preset="live-video"]',
-    theme: 'minimal',
-    preset: 'live-video',
-  },
-  'default-live-audio': {
-    scope: '.media-skin[data-theme="default"][data-preset="live-audio"]',
-    theme: 'default',
-    preset: 'live-audio',
-  },
-  'minimal-live-audio': {
-    scope: '.media-skin[data-theme="minimal"][data-preset="live-audio"]',
-    theme: 'minimal',
-    preset: 'live-audio',
-  },
-  'default-audio': {
-    scope: '.media-skin[data-theme="default"][data-preset="audio"]',
-    theme: 'default',
-    preset: 'audio',
-  },
-  'minimal-audio': {
-    scope: '.media-skin[data-theme="minimal"][data-preset="audio"]',
-    theme: 'minimal',
-    preset: 'audio',
-  },
-} as const satisfies Record<string, SkinStyle>;
+/** What a support module authors: it overrides the `component` type its path would give it. */
+export type SkinSupportDescription = Pick<SkinSupportMeta, 'type' | 'title' | 'description'>;
 
-export type SkinName = keyof typeof skinStyles;
+/** Visual themes every preset ships in. */
+export const skinThemes = ['default', 'minimal'] as const;
 
-export function isSkinName(value: string): value is SkinName {
-  return value in skinStyles;
+/** Player layouts every theme ships, in the order skins are listed. */
+export const skinPresets = ['video', 'live-video', 'live-audio', 'audio'] as const;
+
+export type SkinTheme = (typeof skinThemes)[number];
+export type SkinPreset = (typeof skinPresets)[number];
+export type SkinName = `${SkinTheme}-${SkinPreset}`;
+
+/** Build-time styling identity of one skin: its CSS scope, theme, and preset. Keyed by skin name in `skinStyles`. */
+export interface SkinStyle {
+  readonly scope: string;
+  readonly theme: SkinTheme;
+  readonly preset: SkinPreset;
+}
+
+/** The CSS scope of a theme, or of one of its presets. Every skin renders inside its `.media-skin` host. */
+export function skinScope(theme: SkinTheme, preset?: SkinPreset): string {
+  return `.media-skin[data-theme="${theme}"]${preset ? `[data-preset="${preset}"]` : ''}`;
+}
+
+/** Every published skin: each preset in each theme. */
+export const skinStyles: Readonly<Record<SkinName, SkinStyle>> = Object.fromEntries(
+  skinPresets.flatMap((preset) =>
+    skinThemes.map((theme) => [`${theme}-${preset}`, { scope: skinScope(theme, preset), theme, preset }] as const)
+  )
+) as Record<SkinName, SkinStyle>;
+
+export function isSkinName(value: unknown): value is SkinName {
+  return typeof value === 'string' && Object.hasOwn(skinStyles, value);
+}
+
+export function isSkinPreset(value: unknown): value is SkinPreset {
+  return skinPresets.some((preset) => preset === value);
+}
+
+/** The media a preset plays: live and on-demand presets share their media's styles. */
+export function skinMedia(preset: SkinPreset): 'audio' | 'video' {
+  return preset === 'audio' || preset === 'live-audio' ? 'audio' : 'video';
 }
