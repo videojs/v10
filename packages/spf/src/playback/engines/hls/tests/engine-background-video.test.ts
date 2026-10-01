@@ -11,13 +11,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { snapshot } from '../../../../core/signals/primitives';
 import { SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { createBackgroundVideoEngine } from '../engine-background-video';
+import { createEngine } from '../engine-background-video';
 
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('createBackgroundVideoEngine', () => {
+describe('createEngine', () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('createBackgroundVideoEngine', () => {
   });
 
   it('creates an engine with state, context, and destroy()', () => {
-    const engine = createBackgroundVideoEngine();
+    const engine = createEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
@@ -39,14 +39,14 @@ describe('createBackgroundVideoEngine', () => {
   });
 
   it('seeds loadActivated: true so preload gates pass from frame 0', () => {
-    const engine = createBackgroundVideoEngine();
+    const engine = createEngine();
 
     expect(engine.state.loadActivated.get()).toBe(true);
     engine.destroy();
   });
 
   it('omits subtracted state slots — no audio/text/userVideoTrackSelection signals', () => {
-    const engine = createBackgroundVideoEngine();
+    const engine = createEngine();
     const state = snapshot(engine.state) as Record<string, unknown>;
 
     // selectedAudioTrackId is declared by calculatePresentationDuration so
@@ -99,7 +99,7 @@ describe('createBackgroundVideoEngine', () => {
     });
 
     it('declares the errors slot', () => {
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       expect('errors' in (snapshot(engine.state) as Record<string, unknown>)).toBe(true);
       engine.destroy();
@@ -109,7 +109,7 @@ describe('createBackgroundVideoEngine', () => {
     // emptied set reports 2011. The cause (1004) precedes it in the real flow, where
     // the track is picked and resolves first; this presentation starts pre-relabeled.
     it('makes no pick for an unplayable container', async () => {
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       engine.state.presentation.set(unplayablePresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -123,7 +123,7 @@ describe('createBackgroundVideoEngine', () => {
     // before anything is picked and nothing resolves to report a cause. The emptied
     // survivor set is the only thing left to report, which is why 2011 covers it.
     it('reports for a ladder the environment cannot decode', async () => {
-      const engine = createBackgroundVideoEngine({ canPlayTrack: () => false });
+      const engine = createEngine({ canPlayTrack: () => false });
 
       engine.state.presentation.set(undecodablePresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -178,7 +178,7 @@ describe('createBackgroundVideoEngine', () => {
     // nothing reports. `reportAbsentTrackType` at the head of the constraint chain
     // is what covers it, composed because this engine is video-only.
     it('reports for a source with no video renditions at all', async () => {
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       engine.state.presentation.set(audioOnlyPresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -223,7 +223,7 @@ describe('createBackgroundVideoEngine', () => {
     it('reports the absent type once, not on every presentation write', async () => {
       // The constraint chain runs inside a `computed` that re-derives on every
       // write, and the sequence keeps duplicates, so the guard is load-bearing.
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       engine.state.presentation.set(audioOnlyPresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -235,7 +235,7 @@ describe('createBackgroundVideoEngine', () => {
     });
 
     it('clears the sequence on src unload so the next source starts clean', async () => {
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       engine.state.presentation.set(audioOnlyPresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -250,7 +250,7 @@ describe('createBackgroundVideoEngine', () => {
   });
 
   it('omits subtracted context slots — no audio segment loader / text actors', () => {
-    const engine = createBackgroundVideoEngine();
+    const engine = createEngine();
     const context = snapshot(engine.context) as Record<string, unknown>;
 
     // `audioBufferActor` IS declared by `endOfStream` (cross-type EOS
@@ -271,7 +271,7 @@ describe('createBackgroundVideoEngine', () => {
   // whatever the test runner's screen happens to be: the default chain caps to it,
   // so an ambient reading would make the expected pick machine-dependent.
   it('defaults the rule chain to the largest rendition that fits the screen', async () => {
-    const engine = createBackgroundVideoEngine();
+    const engine = createEngine();
 
     // Roomy enough that the cap admits both, leaving the ranker to decide.
     engine.state.screenResolution.set({ width: 3840, height: 2160 });
@@ -331,7 +331,7 @@ describe('createBackgroundVideoEngine', () => {
   });
 
   it('caps the default pick to the screen', async () => {
-    const engine = createBackgroundVideoEngine();
+    const engine = createEngine();
 
     // 921,600 px: the 1080p rung's 2,073,600 is over it, the 480p rung's 409,920 fits.
     engine.state.screenResolution.set({ width: 1280, height: 720 });
@@ -380,7 +380,7 @@ describe('createBackgroundVideoEngine', () => {
     // Two tracks, so overriding is observable: the default chain
     // (`[screenResolutionCap, preferHighestResolution]`) would take 720p on any
     // screen that fits it, and this rule takes 480p regardless.
-    const engine = createBackgroundVideoEngine({
+    const engine = createEngine({
       videoRules: [(tracks) => tracks.filter((track) => track.id === '480p')],
     });
 
@@ -455,7 +455,7 @@ describe('createBackgroundVideoEngine', () => {
       // The cap needs the screen from frame 0, not once a source arrives — the
       // slot is independent of the presentation lifecycle.
       stubScreen(1440, 900, 2);
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       expect(engine.state.screenResolution.get()).toEqual({ width: 2880, height: 1800 });
 
@@ -464,7 +464,7 @@ describe('createBackgroundVideoEngine', () => {
 
     it('honors useDevicePixelRatio from engine config', () => {
       stubScreen(1440, 900, 2);
-      const engine = createBackgroundVideoEngine({ useDevicePixelRatio: false });
+      const engine = createEngine({ useDevicePixelRatio: false });
 
       expect(engine.state.screenResolution.get()).toEqual({ width: 1440, height: 900 });
 
@@ -473,7 +473,7 @@ describe('createBackgroundVideoEngine', () => {
 
     it('tracks the screen changing under the window', () => {
       const screen = stubScreen(1440, 900);
-      const engine = createBackgroundVideoEngine();
+      const engine = createEngine();
 
       screen.width = 3840;
       screen.height = 2160;
