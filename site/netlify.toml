@@ -1999,12 +1999,12 @@
   status = 308
 
 [[redirects]]
-  from = "/blog/video-js-5-the-only-thing-that’s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name"
+  from = "/blog/video-js-5-the-only-thing-that%E2%80%99s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name"
   to = "https://legacy.videojs.org/blog/video-js-5-the-only-thing-that%E2%80%99s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name"
   status = 308
 
 [[redirects]]
-  from = "/blog/video-js-5-the-only-thing-that’s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name.md"
+  from = "/blog/video-js-5-the-only-thing-that%E2%80%99s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name.md"
   to = "https://legacy.videojs.org/blog/video-js-5-the-only-thing-that%E2%80%99s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name"
   status = 308
 
