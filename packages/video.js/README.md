@@ -15,6 +15,56 @@ Unlike `@videojs/html`, importing this package's root has side effects: it regis
 
 Legacy detection lives only in this package. The `@videojs/*` packages never carry it, so they never pay for it in bundle size.
 
+## Usage
+
+Import the package once, then write the player markup:
+
+```ts
+import 'video.js';
+```
+
+```html
+<video-player>
+  <video-skin style="aspect-ratio: 16 / 9">
+    <video src="https://example.com/video.mp4" playsinline></video>
+  </video-skin>
+</video-player>
+```
+
+To drive the player from script, wait for the element to upgrade and read its `store`. TypeScript types `document.querySelector('video-player')` for you, and the selectors come from the same import:
+
+```ts
+import { selectPlayback } from 'video.js';
+
+await customElements.whenDefined('video-player');
+
+const { store } = document.querySelector('video-player')!;
+
+store.subscribe(() => {
+  console.log(selectPlayback(store.state)?.paused);
+});
+```
+
+Actions such as `play()` and `setVolume()` need attached media, so check `store.target` before calling them.
+
+## AI Quickstart
+
+Using an AI coding agent? Print the steps to install the [Video.js skill](https://github.com/videojs/skills), which teaches your agent to read the docs that match this package version before writing code:
+
+```sh
+npx @videojs/cli@<version> agents skills
+```
+
+Then print HTML installation instructions:
+
+```sh
+npx @videojs/cli@<version> agents init --framework html
+```
+
+Replace `<version>` with your installed `video.js` version. Video.js packages release together, and the CLI checks `@videojs/html` and `@videojs/react` but not `video.js`, so pinning it is what keeps the instructions matched. Neither command changes your project.
+
+The instructions install `@videojs/html`, the granular package the docs use. This package already depends on it, so keep the version `video.js` brings rather than adding a second one.
+
 ## License
 
 [Apache-2.0](../../LICENSE)
