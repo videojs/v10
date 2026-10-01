@@ -418,7 +418,7 @@ media.source = { src: '/stream.m3u8', engine: { hlsJs: { maxBufferLength: 60 } }
 `source` is replaced, not merged. Changing hls.js options rebuilds the engine; dash.js and Shaka apply new settings to the running one. See <DocsLink slug="guides/media-sources">Media sources</DocsLink> for the options every engine shares, such as `preferPlayback`, rendition caps, and DRM.
 
 <FrameworkCase frameworks={["react"]}>
-Where you used `provider.instance` or `onInstance`, read the engine from the media object that `useMedia` returns. `useMedia` doesn't know which media component you rendered, so check the media with `instanceof HlsJsAdapter` first; that types `engine` as the hls.js instance. Vidstack re-dispatched hls.js events as `onHls*` callbacks; Video.js doesn't forward engine events, so subscribe on the engine itself:
+Where you used `provider.instance` or `onInstance`, read the engine from the media object that `useMedia` returns. `useMedia` doesn't know which media component you rendered, so check the media with `instanceof HlsJsAdapter` first; that types `engine` as the hls.js instance. `HlsJsAdapter` and `Hls` come from `@videojs/hlsjs-video`, the package you installed for `HlsJsVideo`, which exports them for this kind of low-level access. Vidstack re-dispatched hls.js events as `onHls*` callbacks; Video.js doesn't forward engine events, so subscribe on the engine itself:
 
 ```tsx
 import { useMedia } from '@videojs/react';
@@ -443,7 +443,7 @@ function LevelLogger() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Where you used `provider.instance` or `onInstance`, read `.engine` on the media element. Vidstack re-dispatched hls.js events as `hls-*` events on the player; Video.js doesn't forward engine events, so subscribe on the engine itself:
+Where you used `provider.instance` or `onInstance`, read `.engine` on the media element. For hls.js's event names, import `Hls` from `@videojs/hlsjs-video`, the package you installed for `<hlsjs-video>`, which exports it for this kind of low-level access. Vidstack re-dispatched hls.js events as `hls-*` events on the player; Video.js doesn't forward engine events, so subscribe on the engine itself:
 
 ```js
 import { Hls } from '@videojs/hlsjs-video';
