@@ -37,6 +37,9 @@ jobs:
       - name: Test package selector
         run: node --test .github/scripts/tests/package-test-matrix.test.js
 
+      - name: Test canary release script
+        run: node --test .github/scripts/tests/canary.test.js
+
       - name: Select affected package tests
         id: selection
         env:

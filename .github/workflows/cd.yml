@@ -23,6 +23,8 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
+    outputs:
+      released: ${{ steps.target.outputs.released }}
 
     steps:
       # release-please needs a token other than GITHUB_TOKEN so the release
@@ -216,3 +218,97 @@ jobs:
       - name: Update site/v10 branch
         if: ${{ steps.target.outputs.released == 'true' }}
         run: git push origin HEAD:refs/heads/site/v10 --force
+
+  # Every push to main that does not cut a release publishes a canary of the
+  # linked packages. It runs in this workflow, after the release job, so it
+  # shares the trusted publisher npm already accepts and the `production`
+  # concurrency group, and can never race a release for the `next` dist-tag.
+  canary:
+    needs: release
+    if: ${{ github.event_name == 'push' && needs.release.outputs.released != 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Moving a dist-tag through trusted publishing (OIDC) needs npm 11.21.0+.
+      - name: Update npm
+        run: npm install -g npm@^11.21.0
+
+      - name: Install
+        run: pnpm i --frozen-lockfile
+
+      # Set the version before building: core, html, and react bake it into
+      # their bundles. This checkout is disposable, so nothing is committed.
+      - name: Set canary version
+        id: version
+        run: echo "version=$(node .github/scripts/canary.js version)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Build
+        run: .github/scripts/run-logged.sh build-packages pnpm build:packages
+
+      - name: Build CDN bundles
+        run: .github/scripts/run-logged.sh build-cdn pnpm build:cdn
+
+      - name: Check CDN bundles are self-contained
+        run: pnpm -F @videojs/cdn check:cdn
+
+      # Canaries ship the same bundled markdown docs as releases.
+      - name: Build site (required by html/react prepack)
+        run: .github/scripts/run-logged.sh build-site pnpm build:site
+
+      # pnpm skips versions already on the registry, so re-running this job
+      # finishes a canary that failed partway through publishing.
+      - name: Publish
+        run: pnpm --fail-if-no-match -r publish --filter "./packages/**" --access public --provenance --no-git-checks --tag canary
+
+      # `next` follows `canary` until cd.yml publishes a minor or major
+      # prerelease there, and again once that prerelease ships as `latest`.
+      # Requires "Allow npm dist-tag" on each package's trusted publisher.
+      - name: Point next at the canary
+        run: |
+          set -o pipefail
+
+          follow=$(npm view @videojs/core dist-tags --json | node .github/scripts/canary.js follow-next)
+          if [ "$follow" != 'true' ]; then
+            echo "Leaving next on $(npm view @videojs/core dist-tags.next)"
+            exit 0
+          fi
+
+          node .github/scripts/canary.js packages | while read -r name; do
+            npm dist-tag add "$name@$VERSION" next
+          done
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Summarize
+        run: |
+          {
+            echo "### Canary \`$VERSION\`"
+            echo
+            echo '```sh'
+            echo "npm install @videojs/html@canary"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}

@@ -226,6 +226,18 @@ Use this to try a change in a real project before it is released. Previews are v
 
 Because a preview is an installable artifact carrying the Video.js name, it is only published for code someone with repository access pushed or vouched for. Pull requests from a branch in this repo publish automatically; **pull requests from a fork publish only once a maintainer approves them**. The approval has to be written against the pull request's latest commit, so any new commit needs a fresh approval before it is published.
 
+### 🐤 Canary Releases
+
+Every commit on `main` that does not cut a release also publishes the public packages to npm under the `canary` dist-tag:
+
+```sh
+npm install @videojs/html@canary
+```
+
+Canaries are versioned `<next patch>-canary.<UTC commit time>-<short sha>` (for example `10.0.1-canary.20261001093000-a1b2c3d`), so they sort in commit order and never satisfy a range for a stable release. Unlike previews, they ship with the bundled markdown docs.
+
+`next` follows `canary` except while a minor or major prerelease (alpha, beta, rc) is in progress: once a release publishes one to `next`, canaries stop moving it until that version ships as `latest`.
+
 ### ✅ Workspace Consistency
 
 Before opening a PR, run the workspace consistency check to catch common mistakes (CI coverage, scope mismatches, broken define imports, etc.):
