@@ -38,9 +38,10 @@ export function testCompatParity(preset: SkinPreset) {
       for (const panel of comparison.panels) {
         await alignToPixelGrid(panel.root);
         await panel.root.evaluate((element) => element.setAttribute('dir', 'rtl'));
+        // Live video has no settings menu; its captions menu is the popup to compare.
         const trigger = panel.root.getByRole('button', {
-          name: audio ? (live ? /Mute|Unmute/ : /Playback rate/) : 'Settings',
-          exact: !audio,
+          name: audio ? (live ? /Mute|Unmute/ : /Playback rate/) : live ? /captions/i : 'Settings',
+          exact: true,
         });
 
         if (audio && live) {
