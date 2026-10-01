@@ -4,8 +4,10 @@ description: The SVG icon sets used by the packaged skins, as React components, 
 apis:
   - '@videojs/react/icons'
   - '@videojs/react/icons/neutral'
+  - '@videojs/react/icons/compat'
   - '@videojs/html/icons'
   - '@videojs/html/icons/neutral'
+  - '@videojs/html/icons/compat'
 ---
 
 import DocsLink from "@/components/docs/DocsLink.astro";
@@ -46,7 +48,7 @@ import { playIcon } from "@videojs/html/icons";
 
 ## Icon sets
 
-Two sets ship with the same icon names and different designs.
+Three sets ship with the same icon names and different designs.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -54,6 +56,7 @@ Two sets ship with the same icon names and different designs.
 |-----|--------|---------|
 | Default | `@videojs/react/icons` | The default skins, such as <DocsLink slug="reference/components/video-skin">`VideoSkin`</DocsLink> |
 | Neutral | `@videojs/react/icons/neutral` | The neutral skins, such as <DocsLink slug="reference/components/video-neutral-skin">`NeutralVideoSkin`</DocsLink> |
+| Compat | `@videojs/react/icons/compat` | The compat skins, such as <DocsLink slug="reference/components/video-compat-skin">`CompatVideoSkin`</DocsLink> |
 
 </FrameworkCase>
 
@@ -63,6 +66,7 @@ Two sets ship with the same icon names and different designs.
 |-----|----------|-------------|---------|
 | Default | `default` | `@videojs/html/icons` or `@videojs/html/icons/default` | The default skins, such as <DocsLink slug="reference/components/video-skin">`<video-skin>`</DocsLink> |
 | Neutral | `neutral` | `@videojs/html/icons/neutral` | The neutral skins, such as <DocsLink slug="reference/components/video-neutral-skin">`<video-neutral-skin>`</DocsLink> |
+| Compat | `compat` | `@videojs/html/icons/compat` | The compat skins, such as <DocsLink slug="reference/components/video-compat-skin">`<video-compat-skin>`</DocsLink> |
 
 </FrameworkCase>
 
@@ -120,13 +124,14 @@ Each module below defines `<media-icon>` if it is not already defined:
 
 | Module | Registers |
 |--------|-----------|
-| `@videojs/html/icons/element` | Both sets, loading each one the first time a `<media-icon>` asks for its family |
+| `@videojs/html/icons/element` | Every set, loading each one the first time a `<media-icon>` asks for its family |
 | `@videojs/html/icons/element/default` | The default set, up front |
 | `@videojs/html/icons/element/neutral` | The neutral set, up front |
+| `@videojs/html/icons/element/compat` | The compat set, up front |
 
 ## SVG strings
 
-Each icon export from `@videojs/html/icons`, `@videojs/html/icons/default`, and `@videojs/html/icons/neutral` is the icon's SVG markup as a string; `@videojs/html/icons` also exports [`registerIcons`](#registericons). Importing them does not define `<media-icon>`.
+Each icon export from `@videojs/html/icons`, `@videojs/html/icons/default`, `@videojs/html/icons/neutral`, and `@videojs/html/icons/compat` is the icon's SVG markup as a string; `@videojs/html/icons` also exports [`registerIcons`](#registericons). Importing them does not define `<media-icon>`.
 
 ```ts
 import { playIcon } from "@videojs/html/icons";
