@@ -47,6 +47,8 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     // Stable wrappers keep unchanged public snapshots from notifying subscribers.
     const actions = new WeakMap<(...args: any[]) => any, (...args: any[]) => any>();
+    // An action error is reported where it is thrown; enclosing actions and lifecycle callbacks rethrow it unreported.
+    const reportedErrors = new WeakSet<object>();
 
     let sourceState: Readonly<SourceState>;
 
@@ -259,6 +261,12 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     }
 
     function reportError(error: unknown): void {
+      if (isObject(error)) {
+        if (reportedErrors.has(error)) return;
+
+        reportedErrors.add(error);
+      }
+
       if (options.onError) {
         options.onError({ store, error });
       } else {

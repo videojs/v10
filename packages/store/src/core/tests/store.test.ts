@@ -487,6 +487,31 @@ describe('createStore', () => {
         store.destroy();
       }
     });
+
+    it.each(['onSetup', 'onAttach'] as const)('reports an action error thrown inside %s once', (callback) => {
+      const error = new Error('action failed');
+      const onError = vi.fn();
+      const failingSlice = defineSlice<MockMedia>()({
+        state: () => ({
+          fail() {
+            throw error;
+          },
+        }),
+      });
+      const store = createStore<MockMedia>()(failingSlice, {
+        onError,
+        [callback]: ({ store }: { store: { fail: () => void } }) => store.fail(),
+      });
+
+      try {
+        if (callback === 'onAttach') store.attach(new MockMedia());
+
+        expect(onError).toHaveBeenCalledOnce();
+        expect(onError).toHaveBeenCalledWith({ store, error });
+      } finally {
+        store.destroy();
+      }
+    });
   });
 
   describe('signals', () => {
