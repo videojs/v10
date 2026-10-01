@@ -7,7 +7,6 @@ import { CaptionsToggle } from './captions-button';
 import controlsStyles from './controls.styles';
 import { LiveButton } from './live-button';
 import { PlayButton } from './play-button';
-import { PlaybackRatePopover } from './playback-rate-popover';
 import { TimeSlider } from './time-slider';
 import { type ThumbnailSlot } from './time-slider';
 import timeStyles from './time.styles';
@@ -17,6 +16,7 @@ export function ControlsRow({
   audio = false,
   live = false,
   menu,
+  rate,
   seekBackward,
   seekForward,
 }: ControlsSlots & { audio?: boolean; live?: boolean; menu?: VjscNode } = {}) {
@@ -27,7 +27,7 @@ export function ControlsRow({
         {seekBackward}
         {seekForward}
         {live && <LiveButton />}
-        {audio ? !live && <PlaybackRatePopover /> : <VolumePopover />}
+        {audio ? rate : <VolumePopover />}
         {!live && (
           <$.Time.Group className={timeStyles.group}>
             <$.Time.Value className={timeStyles.toggle} type="current" toggle />
@@ -48,6 +48,8 @@ export function ControlsRow({
 }
 
 export interface ControlsSlots extends ThumbnailSlot {
+  /** The playback-rate control, supplied by the on-demand audio preset. */
+  rate?: VjscNode;
   /** The skip-back control, supplied by the presets that have a timeline. */
   seekBackward?: VjscNode;
   /** The skip-forward control, supplied by the presets that have a timeline. */
@@ -59,6 +61,7 @@ export function ControlsContent({
   center = false,
   live = false,
   menu,
+  rate,
   renderThumbnail,
   seekBackward,
   seekForward,
@@ -87,6 +90,7 @@ export function ControlsContent({
             audio={audio}
             live={live}
             menu={menu}
+            rate={rate}
             seekBackward={center ? undefined : seekBackward}
             seekForward={center ? undefined : seekForward}
           />
