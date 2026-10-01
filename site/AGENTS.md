@@ -65,7 +65,7 @@ pnpm -F site astro check
 
 ## Analytics
 
-PostHog loads only in production builds for videojs.org, not deploy previews or the pre-release site, from `src/components/Posthog.astro`; its config lives in `src/utils/analytics.ts`. It runs cookieless, so there is no durable person: never call `identify`, `alias`, or a person-property API. Add page context in `withPageContext`, which stamps each event as it is sent; registered super properties go stale across view transitions.
+PostHog loads only in production builds for videojs.org and the pre-release site (main.videojs.org), not deploy previews, from `src/components/Posthog.astro`; its config lives in `src/utils/analytics.ts`. It runs cookieless, so there is no durable person: never call `identify`, `alias`, or a person-property API. Add page context in `withPageContext`, which stamps each event as it is sent; registered super properties go stale across view transitions.
 
 - Mark any installation query parameter that can carry reader data as `private` in `@videojs/installation`. The config masks private parameters, and their current values wherever the page renders them, everywhere in outgoing events. Keep session replay off: it records page text outside `before_send`.
 
