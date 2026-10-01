@@ -51,6 +51,9 @@ export const PROPAGATE_THROUGH_HERITAGE = true;
 /** Packages docs examples must not import from; their public parts are re-exported by `@videojs/html` and `/react`. */
 const INTERNAL_PACKAGE_PATTERN = /^@videojs\/(?:core|media|utils|element|icons|skins)(?:\/|$)/;
 
+/** Packages whose declarations can be a documented subject's companion types. */
+const COMPANION_PACKAGE_PATTERN = /\/packages\/(?:react|html|extensions\/[^/]+)\//;
+
 /** Packages readers import stable API from, besides the extension packages. */
 const FRAMEWORK_PACKAGE_PATTERN = /^@videojs\/(?:react|html|store)(?:\/|$)/;
 
@@ -162,8 +165,9 @@ function pageCode(body: string): string {
   return blocks.join('\n');
 }
 
-function subjectName(value: string): string {
-  const name = value.startsWith('media-') ? pascalCase(value.slice('media-'.length)) : value;
+/** A page's subject from its title, or from a framework title, where `media-play-button` names `PlayButton`. */
+function subjectName(value: string, isFrameworkTitle = false): string {
+  const name = isFrameworkTitle && value.startsWith('media-') ? value.slice('media-'.length) : value;
 
   return /^[A-Za-z_$][\w$]*$/.test(name) ? name : pascalCase(name);
 }
@@ -192,8 +196,11 @@ export function collectPageCoverage(source: string): { names: Set<string>; modul
   const modules: string[] = [];
   let isFeaturePage = false;
 
-  for (const title of [frontmatter.title, ...frontmatter.frameworkTitle]) {
-    if (title && /^[A-Za-z_$][\w$-]*$/.test(title)) subjects.add(subjectName(title));
+  for (const [title, isFrameworkTitle] of [
+    [frontmatter.title, false] as const,
+    ...frontmatter.frameworkTitle.map((value) => [value, true] as const),
+  ]) {
+    if (title && /^[A-Za-z_$][\w$-]*$/.test(title)) subjects.add(subjectName(title, isFrameworkTitle));
   }
 
   for (const [, component, attributes] of body.matchAll(SUBJECT_ATTRIBUTE_PATTERN)) {
@@ -307,10 +314,14 @@ function collectDeclaredApis(siteDirectory: string): Array<{ file: string; apis:
   }));
 }
 
-export function isCoveredName(name: string, covered: ReadonlySet<string>): boolean {
+/**
+ * Whether a page covers `name`: by the name itself or, when `companions` holds, as a companion of a covered subject
+ * (`PlayButtonProps` of `PlayButton`).
+ */
+export function isCoveredName(name: string, covered: ReadonlySet<string>, companions = true): boolean {
   const candidates = [name];
 
-  for (const suffix of COMPANION_SUFFIXES) {
+  for (const suffix of companions ? COMPANION_SUFFIXES : []) {
     if (name.length > suffix.length && name.endsWith(suffix)) candidates.push(name.slice(0, -suffix.length));
   }
 
@@ -607,26 +618,41 @@ function hasTag(node: ts.Node, name: string): boolean {
 
 function isPublicMember(member: ts.ClassElement | ts.TypeElement): boolean {
   const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
-  const isHidden = modifiers?.some(
-    (modifier) => modifier.kind === ts.SyntaxKind.PrivateKeyword || modifier.kind === ts.SyntaxKind.ProtectedKeyword
-  );
-  if (isHidden || (member.name && ts.isPrivateIdentifier(member.name))) return false;
+  // Protected members stay: they are the contract a subclass overrides or implements.
+  const isPrivate = modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.PrivateKeyword);
+  if (isPrivate || (member.name && ts.isPrivateIdentifier(member.name))) return false;
 
   return !hasTag(member, 'internal');
 }
 
 /**
- * The parts of a built declaration a consumer's code can name: heritage clauses and public members of an interface or
- * class, the aliased type, a function's parameters, return type, and type parameters, and a variable's declared type.
+ * Whether a protected member re-declares one a base class already declares, as `PlayButtonElement`'s `core` implements
+ * `MediaButtonElement`'s abstract `core`. The base's declaration is the contract a subclass works against; the narrower
+ * type the subclass gives it is an implementation detail.
  */
-function publicSurface(declaration: ts.Declaration): readonly ts.Node[] {
+function isInheritedProtected(member: ts.ClassElement | ts.TypeElement, checker: ts.TypeChecker): boolean {
+  const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
+  const name = member.name && ts.isIdentifier(member.name) ? member.name.text : undefined;
+  if (!name || !modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ProtectedKeyword)) return false;
+
+  const type = checker.getTypeAtLocation(member.parent);
+
+  return (checker.getBaseTypes(type as ts.InterfaceType) ?? []).some((base) => checker.getPropertyOfType(base, name));
+}
+
+/**
+ * The parts of a built declaration a consumer's code can name: heritage clauses and public and protected members of an
+ * interface or class, the aliased type, a function's parameters, return type, and type parameters, and a variable's
+ * declared type.
+ */
+function publicSurface(declaration: ts.Declaration, checker: ts.TypeChecker): readonly ts.Node[] {
   if (ts.isInterfaceDeclaration(declaration) || ts.isClassDeclaration(declaration)) {
     const members: ReadonlyArray<ts.ClassElement | ts.TypeElement> = declaration.members;
 
     return [
       ...(declaration.typeParameters ?? []),
       ...(declaration.heritageClauses ?? []),
-      ...members.filter(isPublicMember),
+      ...members.filter((member) => isPublicMember(member) && !isInheritedProtected(member, checker)),
     ];
   }
 
@@ -822,12 +848,18 @@ export function collectPublicExports(entries: readonly PublicEntry[], root = mon
           const declarations = checkedDeclarations(helper);
           if (declarations.length < (helper.declarations?.length ?? 0)) return;
 
-          walk(declarations.flatMap(publicSurface), heritage);
+          walk(
+            declarations.flatMap((declaration) => publicSurface(declaration, checker)),
+            heritage
+          );
         });
       }
     };
 
-    walk(checkedDeclarations(symbol).flatMap(publicSurface), false);
+    walk(
+      checkedDeclarations(symbol).flatMap((declaration) => publicSurface(declaration, checker)),
+      false
+    );
   }
 
   return { exports: [...exports.values()], unresolved };
@@ -846,19 +878,22 @@ export type StabilityTag = 'experimental' | 'internal';
  * this.
  */
 export function documentedStability(
-  record: Pick<PublicExport, 'name' | 'exportedNames' | 'specifiers'>,
+  record: Pick<PublicExport, 'name' | 'exportedNames' | 'specifiers'> & Partial<Pick<PublicExport, 'file'>>,
   coverage: Coverage
 ): Stability {
   const specifiers = [...record.specifiers].filter((specifier) => !INTERNAL_PACKAGE_PATTERN.test(specifier));
   if (specifiers.length === 0) return 'internal';
 
   const names = [record.name, ...record.exportedNames].filter((name) => name !== 'default');
+  // Companions are the subject's own types, declared beside it. A same-named type from core or store, such as core's
+  // `MenuOptions` for the `Menu` page, is the contract of an internal building block, not part of the subject.
+  const companions = record.file === undefined || COMPANION_PACKAGE_PATTERN.test(record.file);
   // An exact entry point documents everything it exports; a `*` pattern documents each matched module's default export.
   const coversModule = (pattern: string) =>
     (record.name === 'default' || !pattern.includes('*')) &&
     specifiers.some((specifier) => matchesModulePattern(specifier, [pattern]));
   const covers = (set: ReadonlySet<string>, patterns: readonly string[]) =>
-    names.some((name) => isCoveredName(name, set)) || patterns.some(coversModule);
+    names.some((name) => isCoveredName(name, set, companions)) || patterns.some(coversModule);
   if (covers(coverage.stable, coverage.stableModules)) return 'stable';
 
   if (covers(coverage.unstable, coverage.unstableModules)) return 'experimental';
