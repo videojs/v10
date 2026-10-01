@@ -9,6 +9,7 @@ import {
   freezeSliderState,
   openComparison,
   openSourceComparison,
+  seekToLiveEdge,
   type SkinPanel,
   skinCases,
 } from './vjsc-skin-parity';
@@ -86,9 +87,7 @@ async function prepare({ root, section }: SkinPanel) {
   const live = root.getByRole('button', { name: /live/i });
 
   if (await live.count()) {
-    if (await live.isEnabled()) await live.click();
-
-    await expect(live).toHaveAttribute('data-live-edge', '');
+    await seekToLiveEdge(live);
     // Live frames differ between players; keep only the controls in the rendering comparison.
     await section.locator('video, img').evaluateAll((elements: HTMLElement[]) => {
       for (const element of elements) element.style.visibility = 'hidden';

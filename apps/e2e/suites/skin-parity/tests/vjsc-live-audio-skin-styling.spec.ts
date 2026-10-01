@@ -17,6 +17,7 @@ import {
   openSourceComparison,
   popupAncestor,
   popupContract,
+  seekToLiveEdge,
   type SkinCase,
   skinCases,
   type SkinComparison,
@@ -193,22 +194,6 @@ async function preparePanel({ root, section }: SkinPanel, width: number, expectP
     for (const element of elements) element.pause();
   });
   await root.page().evaluate(() => document.fonts.ready.then(() => undefined));
-}
-
-/** Both panels must report the same live-edge state before any paint is compared, so pull each one to the edge. */
-async function seekToLiveEdge(live: Locator) {
-  await expect(live).toBeVisible({ timeout: 20_000 });
-
-  if ((await live.getAttribute('data-live-edge')) === null && (await live.isEnabled())) {
-    try {
-      await live.click({ timeout: 2_000 });
-    } catch (error) {
-      // The stream can reach its edge and disable the button between the enabled check and the click.
-      if ((await live.getAttribute('data-live-edge')) === null) throw error;
-    }
-  }
-
-  await expect(live).toHaveAttribute('data-live-edge', '', { timeout: 20_000 });
 }
 
 async function layoutContract(root: Locator) {
