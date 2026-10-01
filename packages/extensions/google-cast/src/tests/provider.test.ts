@@ -331,7 +331,7 @@ describe('GoogleCastExtension', () => {
 
     // The extension's override must expose `remote` as an accessor so player
     // reads reach the provider's lazy-loading getter.
-    void (coordinator.wrap(video) as unknown as HTMLMediaTargetLike).remote;
+    void (coordinator.getStoreMedia(video) as unknown as HTMLMediaTargetLike).remote;
 
     expect(ensureCastFramework).toHaveBeenCalled();
   });
@@ -347,7 +347,7 @@ describe('GoogleCastExtension', () => {
     coordinator.attach({ media: video, container: null });
     coordinator.detach();
 
-    void (coordinator.wrap(video) as unknown as HTMLMediaTargetLike).remote;
+    void (coordinator.getStoreMedia(video) as unknown as HTMLMediaTargetLike).remote;
 
     expect(ensureCastFramework).not.toHaveBeenCalled();
   });

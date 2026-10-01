@@ -224,7 +224,7 @@ describe('controlsFeature', () => {
       container.append(video);
       extensions.register({ mediaOverride: null });
 
-      const media = extensions.wrap(video);
+      const media = extensions.getStoreMedia(video);
       const store = createStore<PlayerTarget>()(controlsFeature);
 
       expect(media).not.toBe(video);

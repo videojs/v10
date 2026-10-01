@@ -2,7 +2,7 @@ import type { Media } from '@videojs/media';
 
 import type { PlayerTarget } from '../player';
 import type { ExtensionPlayer, PlayerExtension, PlayerExtensionConstructor } from './extension';
-import { createPlayerMedia } from './media';
+import { createMediaFacade } from './media';
 
 /** Whether `extension` can take over media members, as opposed to only observing the player. */
 function overridesMedia(extension: PlayerExtension | undefined): boolean {
@@ -14,8 +14,8 @@ function overridesMedia(extension: PlayerExtension | undefined): boolean {
  *
  * Create one per player, when the player is created: its creation time is the player's `initTime`, and it outlives any
  * store the player replaces. Registered extensions connect to its {@link ExtensionPlayer}. The player wraps its media
- * with {@link PlayerExtensionCoordinator.wrap} before attaching the store, and re-attaches the store whenever `onChange`
- * fires so features re-read members an extension now owns (such as `remote`).
+ * with {@link PlayerExtensionCoordinator.getStoreMedia} before attaching the store, and re-attaches the store whenever
+ * `onChange` fires so features re-read members an extension now owns (such as `remote`).
  *
  * @internal
  */
@@ -105,13 +105,13 @@ export class PlayerExtensionCoordinator {
    * The media as the store should see it: `media` itself unless a registered extension can override media members,
    * otherwise a facade that routes each member through the extensions' overrides first.
    */
-  wrap<T extends Media>(media: T): T {
+  getStoreMedia<T extends Media>(media: T): T {
     if (!this.#hasMediaOverrides()) return media;
 
     let facade = this.#facades.get(media);
 
     if (!facade) {
-      facade = createPlayerMedia(media, () => this.#extensions.values());
+      facade = createMediaFacade(media, () => this.#extensions.values());
       this.#facades.set(media, facade);
     }
 

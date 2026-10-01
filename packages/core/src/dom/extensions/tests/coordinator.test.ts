@@ -1,4 +1,4 @@
-import { unwrapMedia } from '@videojs/media';
+import { getRegisteredMedia } from '@videojs/media';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { PlayerTarget } from '../../player';
@@ -230,7 +230,7 @@ describe('PlayerExtensionCoordinator', () => {
     const coordinator = new PlayerExtensionCoordinator(() => {});
     const { media } = createTarget();
 
-    expect(coordinator.wrap(media)).toBe(media);
+    expect(coordinator.getStoreMedia(media)).toBe(media);
   });
 
   it('returns the media itself while only observers are registered', () => {
@@ -239,19 +239,19 @@ describe('PlayerExtensionCoordinator', () => {
 
     coordinator.register(new TrackingExtension());
 
-    expect(coordinator.wrap(media)).toBe(media);
+    expect(coordinator.getStoreMedia(media)).toBe(media);
   });
 
   it('wraps the media once an extension that overrides media is registered', () => {
     const coordinator = new PlayerExtensionCoordinator(() => {});
     const video = document.createElement('video');
     const remove = coordinator.register(new MutedExtension());
-    const wrapped = coordinator.wrap(video);
+    const wrapped = coordinator.getStoreMedia(video);
 
     expect(wrapped).not.toBe(video);
     expect(wrapped.muted).toBe(true);
     expect(wrapped instanceof HTMLVideoElement).toBe(true);
-    expect(unwrapMedia(wrapped)).toBe(video);
+    expect(getRegisteredMedia(wrapped)).toBe(video);
 
     // The facade tracks the live registry, so removal shows through without re-wrapping.
     remove();
@@ -264,7 +264,7 @@ describe('PlayerExtensionCoordinator', () => {
 
     coordinator.register(new IdleOverrideExtension());
 
-    expect(coordinator.wrap(video)).not.toBe(video);
+    expect(coordinator.getStoreMedia(video)).not.toBe(video);
   });
 
   it('returns the same facade for the same media', () => {
@@ -273,7 +273,7 @@ describe('PlayerExtensionCoordinator', () => {
 
     coordinator.register(new MutedExtension());
 
-    expect(coordinator.wrap(video)).toBe(coordinator.wrap(video));
-    expect(coordinator.wrap(document.createElement('video'))).not.toBe(coordinator.wrap(video));
+    expect(coordinator.getStoreMedia(video)).toBe(coordinator.getStoreMedia(video));
+    expect(coordinator.getStoreMedia(document.createElement('video'))).not.toBe(coordinator.getStoreMedia(video));
   });
 });

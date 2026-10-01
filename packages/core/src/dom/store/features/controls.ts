@@ -1,5 +1,5 @@
 import type { MediaControlsState } from '@videojs/media';
-import { isMediaPauseCapable, isMediaRemotePlaybackCapable, unwrapMedia } from '@videojs/media';
+import { isMediaPauseCapable, isMediaRemotePlaybackCapable, getRegisteredMedia } from '@videojs/media';
 import { isPointInElement, listen } from '@videojs/utils/dom';
 import { isNull } from '@videojs/utils/predicate';
 
@@ -185,7 +185,7 @@ export const controlsFeature = definePlayerFeature({
 
         // Inline touch tap-to-toggle for standalone use (no gestures). `media` may be the player's facade, which is
         // never the event target.
-        const isMediaOrContainer = [unwrapMedia(media), container].includes(event.target as HTMLElement);
+        const isMediaOrContainer = [getRegisteredMedia(media), container].includes(event.target as HTMLElement);
 
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();

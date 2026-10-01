@@ -3,12 +3,13 @@ import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { PlayerExtensionCoordinator } from '../../extensions/coordinator';
 import { isFullscreen } from '../fullscreen';
 
-function wrap(video: HTMLVideoElement) {
+/** The media as the store sees it while a playback owner such as Google Cast is registered. */
+function toStoreMedia(video: HTMLVideoElement) {
   const extensions = new PlayerExtensionCoordinator(() => {});
 
   extensions.register({ mediaOverride: null });
 
-  return extensions.wrap(video);
+  return extensions.getStoreMedia(video);
 }
 
 describe('isFullscreen', () => {
@@ -19,7 +20,7 @@ describe('isFullscreen', () => {
 
   it('recognizes the media behind a player facade as the fullscreen element', () => {
     const video = document.createElement('video');
-    const media = wrap(video);
+    const media = toStoreMedia(video);
 
     expect(isFullscreen(null, media)).toBe(false);
 
@@ -33,6 +34,6 @@ describe('isFullscreen', () => {
 
     Object.defineProperty(document, 'webkitFullscreenElement', { value: video, configurable: true });
 
-    expect(isFullscreen(null, wrap(video))).toBe(true);
+    expect(isFullscreen(null, toStoreMedia(video))).toBe(true);
   });
 });

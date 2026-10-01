@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { RAW_MEDIA } from '../../core/unwrap-media';
+import { REGISTERED_MEDIA } from '../../core/registered-media';
 import { CustomMediaElement } from '../custom-media-element';
 import { HTMLVideoAdapter } from '../html-video-adapter';
 import { getMediaAdapter, getMediaElement } from '../utils/media-target';
 
 class TestVideoAdapter extends HTMLVideoAdapter {}
 
-/** A stand-in for the player's facade: answers `RAW_MEDIA` with `raw` and shadows everything else. */
+/** A stand-in for the player's facade: answers `REGISTERED_MEDIA` with `raw` and shadows everything else. */
 function createFacade<T extends object>(raw: T, shadow: Record<PropertyKey, unknown> = {}): T {
   return new Proxy(raw, {
-    get: (target, prop) => (prop === RAW_MEDIA ? target : (shadow[prop] ?? Reflect.get(target, prop))),
+    get: (target, prop) => (prop === REGISTERED_MEDIA ? target : (shadow[prop] ?? Reflect.get(target, prop))),
   });
 }
 

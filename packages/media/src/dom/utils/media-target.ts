@@ -1,6 +1,6 @@
 import { isObject } from '@videojs/utils/predicate';
 
-import { unwrapMedia } from '../../core/unwrap-media';
+import { getRegisteredMedia } from '../../core/registered-media';
 import { type AnyHTMLMediaAdapter, HTMLMediaAdapter } from '../html-media-adapter';
 
 /**
@@ -10,7 +10,7 @@ import { type AnyHTMLMediaAdapter, HTMLMediaAdapter } from '../html-media-adapte
  * @internal
  */
 export function getMediaAdapter(media: unknown): AnyHTMLMediaAdapter | null {
-  media = unwrapMedia(media);
+  media = getRegisteredMedia(media);
 
   if (media instanceof HTMLMediaAdapter) return media;
 
@@ -27,7 +27,7 @@ export function getMediaAdapter(media: unknown): AnyHTMLMediaAdapter | null {
  */
 export function getMediaElement(media: unknown): HTMLMediaElement | null {
   // A player facade passes `instanceof` for the element it wraps, and its `target` may resolve through an override.
-  media = unwrapMedia(media);
+  media = getRegisteredMedia(media);
 
   if (media instanceof HTMLMediaElement) return media;
 

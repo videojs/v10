@@ -258,7 +258,7 @@ export function createPlayerElement<Store extends PlayerStore>(
       this.#detach?.();
       this.#attached = target;
       this.#extensions.attach(target);
-      this.#detach = store.attach({ media: this.#extensions.wrap(target.media), container: target.container });
+      this.#detach = store.attach({ media: this.#extensions.getStoreMedia(target.media), container: target.container });
     }
 
     /**

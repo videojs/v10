@@ -58,7 +58,7 @@ function setup() {
 
   const provider = mocks.FakeProvider.instances.at(-1)!;
   // What the player's store sees once the extension is registered.
-  const media = coordinator.wrap(video);
+  const media = coordinator.getStoreMedia(video);
 
   return { video, media, googleCast, provider };
 }

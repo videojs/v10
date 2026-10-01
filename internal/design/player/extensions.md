@@ -69,7 +69,7 @@ Store features capture members such as `media.remote` once, at attach time. The 
 #attach(target: PlayerTarget) {
   this.#detach?.();
   this.#extensions.attach(target);
-  this.#detach = store.attach({ media: this.#extensions.wrap(target.media), container: target.container });
+  this.#detach = store.attach({ media: this.#extensions.getStoreMedia(target.media), container: target.container });
 }
 
 #extensions = new PlayerExtensionCoordinator(() => this.#attach(this.#attached)); // on overriding register / release
@@ -79,9 +79,9 @@ Cost: a re-attach resets non-`preserve` store state, the same as a media swap. O
 
 ### 3. The player intercepts media reads through a facade
 
-`wrap()` returns the raw media unless an extension that declares `mediaOverride` is registered, otherwise a `Proxy` that consults each extension's `mediaOverride` first (first defined member wins) and falls through to the media. One facade is cached per media, so `store.target.media` is stable across re-attaches. Getters run and methods bind against the owner, so DOM accessors and `#private` members keep working; `instanceof`, `in`, `matches(':fullscreen')`, `shadowRoot`, and event dispatch still resolve to the real element.
+`getStoreMedia()` returns the registered media itself unless an extension that declares `mediaOverride` is registered, otherwise a `Proxy` that consults each extension's `mediaOverride` first (first defined member wins) and falls through to the media. One facade is cached per media, so `store.target.media` is stable across re-attaches. Getters run and methods bind against the owner, so DOM accessors and `#private` members keep working; `instanceof`, `in`, `matches(':fullscreen')`, `shadowRoot`, and event dispatch still resolve to the real element.
 
-Identity does not: the facade is never `===` the element. The facade answers the internal `RAW_MEDIA` key (`Symbol.for`, so duplicate package copies agree) with the raw media, and `unwrapMedia()` in `@videojs/media` reads it. Identity checks (controls tap-to-hide, `document.fullscreenElement`, `document.pictureInPictureElement`) and `getMediaElement()` / `getMediaAdapter()` unwrap first. This is a stopgap until Cast becomes real media and the facade goes away.
+Identity does not: the facade is never `===` the element. The facade answers the internal `REGISTERED_MEDIA` key (`Symbol.for`, so duplicate package copies agree) with the registered media, and `getRegisteredMedia()` in `@videojs/media` reads it. Identity checks (controls tap-to-hide, `document.fullscreenElement`, `document.pictureInPictureElement`) and `getMediaElement()` / `getMediaAdapter()` compare against or start from the registered media. This is a stopgap until Cast becomes real media and the facade goes away.
 
 ```ts
 // Google Cast, simplified: the whole provider while connected, only `remote` otherwise so the cast button can prompt.
@@ -115,7 +115,7 @@ The player's attach lifecycle drives both extensions; each decides what a swap m
 | Before (`@videojs/media/dom`) | After |
 | --- | --- |
 | `MediaExtension` with `targetOverride`, `setAdapter(adapter)`, `attach(target)` | `PlayerExtension` with `mediaOverride`, `attach({ media, container })` in `@videojs/core/dom` |
-| `addMediaExtension`, `getMediaExtensions`, `getMediaProp`, `setMediaProp`, `getMediaOwner` | removed; `PlayerExtensionCoordinator` (`register`, `attach`, `detach`, `wrap`, `get`) |
+| `addMediaExtension`, `getMediaExtensions`, `getMediaProp`, `setMediaProp`, `getMediaOwner` | removed; `PlayerExtensionCoordinator` (`register`, `attach`, `detach`, `getStoreMedia`, `get`) |
 | — | `getMediaAdapter(media)`, `getMediaElement(media)` (internal) |
 | `MediaExtensionElement` / `createComponent()` / `this.component` (`@videojs/html`) | `PlayerExtensionElement` / `createExtension()` / `this.extension` (not exported) |
 | `useMediaExtension` (`@videojs/react`) | removed from the public entry; `usePlayerExtension`, optional `registerExtension` on the player context, and `useExtensionRegistrar()` are internal |

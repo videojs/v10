@@ -169,13 +169,13 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
       extensions.attach(target);
 
-      let detach = store.attach({ media: extensions.wrap(media), container });
+      let detach = store.attach({ media: extensions.getStoreMedia(media), container });
 
       // Features hold members read at attach time (such as `remote`), so an extension
       // that overrides media members, added or removed later, re-attaches the store.
       reattach.current = () => {
         detach();
-        detach = store.attach({ media: extensions.wrap(media), container });
+        detach = store.attach({ media: extensions.getStoreMedia(media), container });
       };
 
       return () => {

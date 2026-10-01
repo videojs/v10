@@ -1,4 +1,4 @@
-import { type Media, RAW_MEDIA, type Video } from '@videojs/media';
+import { type Media, REGISTERED_MEDIA, type Video } from '@videojs/media';
 import { isFunction, isNil, isUndefined } from '@videojs/utils/predicate';
 
 // `internal/design/media/architecture.md` rejects Proxy machinery for custom media implementations because it hides
@@ -23,16 +23,16 @@ export interface MediaOverrideSource {
 /**
  * Wrap `media` so reads, writes, and method calls consult each source's `mediaOverride` first (the first source with a
  * defined value for the member wins) and otherwise reach the media itself. The result still satisfies `instanceof`,
- * `in`, and Element methods for the underlying media, and answers `RAW_MEDIA` with it so `unwrapMedia()` can see
- * through for identity checks.
+ * `in`, and Element methods for the underlying media, and answers `REGISTERED_MEDIA` with it so `getRegisteredMedia()`
+ * can see through for identity checks.
  *
  * `sources` is called on every access, so a live collection can grow and shrink without rebuilding the facade.
  */
-export function createPlayerMedia<T extends Media>(media: T, sources: () => Iterable<MediaOverrideSource>): T {
+export function createMediaFacade<T extends Media>(media: T, sources: () => Iterable<MediaOverrideSource>): T {
   return new Proxy(media, {
     get(target, prop) {
-      // Ahead of the overrides so no extension can shadow the way back to the raw media.
-      if (prop === RAW_MEDIA) return target;
+      // Ahead of the overrides so no extension can shadow the way back to the registered media.
+      if (prop === REGISTERED_MEDIA) return target;
 
       const owner = findOverride(sources, prop) ?? target;
       const value = (owner as Record<PropertyKey, unknown>)[prop];

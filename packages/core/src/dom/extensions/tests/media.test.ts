@@ -1,7 +1,7 @@
-import { RAW_MEDIA, unwrapMedia } from '@videojs/media';
+import { REGISTERED_MEDIA, getRegisteredMedia } from '@videojs/media';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { createPlayerMedia, type MediaOverride, type MediaOverrideSource } from '../media';
+import { createMediaFacade, type MediaOverride, type MediaOverrideSource } from '../media';
 
 class MutedOverride implements MediaOverrideSource {
   get mediaOverride() {
@@ -60,13 +60,13 @@ function createVideo(): HTMLVideoElement {
   return document.createElement('video');
 }
 
-describe('createPlayerMedia', () => {
+describe('createMediaFacade', () => {
   it('reads from the media when no source overrides the member', () => {
     const video = createVideo();
 
     video.muted = true;
 
-    const media = createPlayerMedia(video, () => []);
+    const media = createMediaFacade(video, () => []);
 
     expect(media.paused).toBe(true);
     expect(media.muted).toBe(true);
@@ -77,7 +77,7 @@ describe('createPlayerMedia', () => {
 
     video.muted = false;
 
-    const media = createPlayerMedia(video, () => [new MutedOverride()]);
+    const media = createMediaFacade(video, () => [new MutedOverride()]);
 
     expect(media.muted).toBe(true);
   });
@@ -88,7 +88,7 @@ describe('createPlayerMedia', () => {
     video.muted = true;
     video.defaultMuted = true;
 
-    const media = createPlayerMedia(video, () => [new VolumeOverride()]);
+    const media = createMediaFacade(video, () => [new VolumeOverride()]);
 
     expect(media.volume).toBe(0.5);
     expect(media.muted).toBe(true);
@@ -97,7 +97,7 @@ describe('createPlayerMedia', () => {
 
   it('lets the first source with a defined value own the member', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => [
+    const media = createMediaFacade(video, () => [
       { mediaOverride: { volume: 0.25 } },
       { mediaOverride: { volume: 0.75, muted: true } },
     ]);
@@ -114,7 +114,7 @@ describe('createPlayerMedia', () => {
         return this.connected ? { muted: true, volume: 0.5 } : null;
       },
     };
-    const media = createPlayerMedia(video, () => [source]);
+    const media = createMediaFacade(video, () => [source]);
 
     expect(media.muted).toBe(false);
     expect(media.volume).toBe(1);
@@ -132,7 +132,7 @@ describe('createPlayerMedia', () => {
   it('consults the live source collection on every access', () => {
     const video = createVideo();
     const registry = new Map<string, MediaOverrideSource>();
-    const media = createPlayerMedia(video, () => registry.values());
+    const media = createMediaFacade(video, () => registry.values());
 
     expect(media.muted).toBe(false);
 
@@ -147,7 +147,7 @@ describe('createPlayerMedia', () => {
 
   it('writes to the media when no source owns the member', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => []);
+    const media = createMediaFacade(video, () => []);
 
     media.volume = 0.5;
 
@@ -157,7 +157,7 @@ describe('createPlayerMedia', () => {
   it('writes to the override that owns the member', () => {
     const video = createVideo();
     const source = new CastLikeOverride();
-    const media = createPlayerMedia(video, () => [source]);
+    const media = createMediaFacade(video, () => [source]);
 
     media.volume = 0.5;
     media.muted = true;
@@ -172,7 +172,7 @@ describe('createPlayerMedia', () => {
     const video = createVideo();
     const play = vi.spyOn(video, 'play').mockResolvedValue(undefined);
     const source = new CastLikeOverride();
-    const media = createPlayerMedia(video, () => [source]);
+    const media = createMediaFacade(video, () => [source]);
 
     await media.play();
 
@@ -182,7 +182,7 @@ describe('createPlayerMedia', () => {
 
   it('binds media methods to the media rather than the facade', () => {
     const raw = new PrivateMedia();
-    const media = createPlayerMedia(raw, () => []);
+    const media = createMediaFacade(raw, () => []);
 
     media.pause();
 
@@ -192,7 +192,7 @@ describe('createPlayerMedia', () => {
 
   it('never lets an override shadow Object.prototype members', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => [{ mediaOverride: { remote: new EventTarget() } as MediaOverride }]);
+    const media = createMediaFacade(video, () => [{ mediaOverride: { remote: new EventTarget() } as MediaOverride }]);
 
     expect(media.constructor).toBe(HTMLVideoElement);
     expect(String(media)).toBe('[object HTMLVideoElement]');
@@ -204,7 +204,7 @@ describe('createPlayerMedia', () => {
 
     video.append(track);
 
-    const media = createPlayerMedia(video, () => [new MutedOverride()]);
+    const media = createMediaFacade(video, () => [new MutedOverride()]);
 
     expect(media instanceof HTMLVideoElement).toBe(true);
     expect(media instanceof Element).toBe(true);
@@ -220,7 +220,7 @@ describe('createPlayerMedia', () => {
 
     root.append(document.createElement('track'));
 
-    const media = createPlayerMedia(host, () => []);
+    const media = createMediaFacade(host, () => []);
 
     expect(media instanceof HTMLElement).toBe(true);
     expect(media.shadowRoot).toBe(root);
@@ -229,7 +229,7 @@ describe('createPlayerMedia', () => {
 
   it('reports members an override supplies as present', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => [{ mediaOverride: { remote: new EventTarget() } as MediaOverride }]);
+    const media = createMediaFacade(video, () => [{ mediaOverride: { remote: new EventTarget() } as MediaOverride }]);
 
     expect('remote' in media).toBe(true);
     expect('paused' in media).toBe(true);
@@ -238,7 +238,7 @@ describe('createPlayerMedia', () => {
 
   it('delivers events dispatched on the media to listeners added through the facade', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => []);
+    const media = createMediaFacade(video, () => []);
     const listener = vi.fn();
 
     media.addEventListener('play', listener);
@@ -252,18 +252,18 @@ describe('createPlayerMedia', () => {
     expect(listener).toHaveBeenCalledOnce();
   });
 
-  it('unwraps to the raw media', () => {
+  it('leads back to the registered media', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => []);
+    const media = createMediaFacade(video, () => []);
 
     expect(media).not.toBe(video);
-    expect(unwrapMedia(media)).toBe(video);
+    expect(getRegisteredMedia(media)).toBe(video);
   });
 
-  it('never lets an override shadow the raw media key', () => {
+  it('never lets an override shadow the registered media key', () => {
     const video = createVideo();
-    const media = createPlayerMedia(video, () => [{ mediaOverride: { [RAW_MEDIA]: {} } as MediaOverride }]);
+    const media = createMediaFacade(video, () => [{ mediaOverride: { [REGISTERED_MEDIA]: {} } as MediaOverride }]);
 
-    expect(unwrapMedia(media)).toBe(video);
+    expect(getRegisteredMedia(media)).toBe(video);
   });
 });

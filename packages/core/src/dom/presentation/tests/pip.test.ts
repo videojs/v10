@@ -14,7 +14,7 @@ describe('isPictureInPicture', () => {
 
     extensions.register({ mediaOverride: null });
 
-    const media = extensions.wrap(video);
+    const media = extensions.getStoreMedia(video);
 
     expect(isPictureInPicture(media)).toBe(false);
 
