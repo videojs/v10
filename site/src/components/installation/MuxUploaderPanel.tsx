@@ -12,8 +12,10 @@ import CloudUpload from '@/assets/icons/cloud-upload.svg?react';
 import MuxLogo from '@/assets/logos/mux-small.svg?react';
 import { MUX_URL } from '@/consts';
 import { muxPlaybackId, media, sourceUrl } from '@/stores/installation';
+import { ANALYTICS_EVENTS, failureReason, trackEvent } from '@/utils/analytics-events';
+import { withMuxAttribution } from '@/utils/mux/attribution';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
-import { pollForPlaybackId } from '@/utils/mux/polling';
+import { ASSET_PROCESSING_FAILED, pollForPlaybackId, UPLOAD_PROCESSING_FAILED } from '@/utils/mux/polling';
 
 import type { UploaderState } from './UploaderOverlay';
 import UploaderOverlay from './UploaderOverlay';
@@ -27,6 +29,11 @@ import UploaderOverlay from './UploaderOverlay';
  * login overlay, wait for auth, retry 4. Upload begins with returned URL 5. On success: poll for playback ID 6. When
  * ready: update renderer to 'hls', store playback ID in nanostore
  */
+/** Polling passes Mux API error text through, which can name the upload or asset, so only its own failures are kept. */
+function processingFailureReason(message: string): string {
+  return message === UPLOAD_PROCESSING_FAILED || message === ASSET_PROCESSING_FAILED ? message : 'request_failed';
+}
+
 export default function MuxUploaderPanel() {
   // Local state for upload flow (not shared across islands)
   // 'idle' | 'needs_login' | 'uploading' | 'preparing' | 'ready' | 'polling_error';
@@ -39,15 +46,24 @@ export default function MuxUploaderPanel() {
   const loginResolverRef = useRef<((url: string) => void) | null>(null);
   // Ref to the MuxUploader element for dispatching reset events
   const uploaderRef = useRef<HTMLElement>(null);
+  // MuxUploader also reports an error from `getEndpoint`, which records its own failure, so only a transfer that
+  // actually started counts as an upload failure.
+  const transferStartedRef = useRef(false);
 
   /**
    * Endpoint function called by MuxUploader when file is selected. Returns a Promise that resolves with the upload URL.
    * The upload waits for this Promise before starting.
    */
   const getEndpoint = useCallback(async (): Promise<string> => {
+    transferStartedRef.current = false;
+
     // Try to create upload - will fail with 401 if not authenticated
     const result = await actions.mux.createDirectUpload({
       corsOrigin: window.location.origin,
+    });
+
+    trackEvent(ANALYTICS_EVENTS.muxUploadRequested, {
+      signed_in: !result.error || result.error.code !== 'UNAUTHORIZED',
     });
 
     if (result.error) {
@@ -62,20 +78,26 @@ export default function MuxUploaderPanel() {
       }
 
       // Other error - throw and let MuxUploader display its native error UI
+      trackEvent(ANALYTICS_EVENTS.muxUploadFailed, { stage: 'create_upload', reason: failureReason(result.error) });
       throw new Error(result.error.message);
     }
 
     // Authenticated - store upload ID and proceed
     setUploadId(result.data.uploadId);
     setState('uploading');
+    transferStartedRef.current = true;
+    trackEvent(ANALYTICS_EVENTS.muxUploadStarted);
     return result.data.uploadUrl;
   }, []);
 
   /** Handles OAuth login via popup. On success: fetches upload URL and resolves the pending Promise. */
   const handleLogin = useCallback(async () => {
+    trackEvent(ANALYTICS_EVENTS.muxLoginClicked);
+
     const result = await actions.auth.initiateLogin();
 
     if (result.error) {
+      trackEvent(ANALYTICS_EVENTS.muxAuthFailed, { stage: 'initiate', reason: failureReason(result.error) });
       setError(result.error.message);
       setState('polling_error');
       return;
@@ -84,12 +106,18 @@ export default function MuxUploaderPanel() {
     initiateAuthPopup({
       authorizationUrl: result.data.authorizationUrl,
       onSuccess: async () => {
+        trackEvent(ANALYTICS_EVENTS.muxAuthSucceeded);
+
         // Now authenticated - fetch upload URL
         const uploadResult = await actions.mux.createDirectUpload({
           corsOrigin: window.location.origin,
         });
 
         if (uploadResult.error) {
+          trackEvent(ANALYTICS_EVENTS.muxUploadFailed, {
+            stage: 'create_upload',
+            reason: failureReason(uploadResult.error),
+          });
           setError(uploadResult.error.message);
           setState('polling_error');
           return;
@@ -98,13 +126,27 @@ export default function MuxUploaderPanel() {
         // Store upload ID and resolve the pending Promise
         setUploadId(uploadResult.data.uploadId);
         setState('uploading');
+        transferStartedRef.current = true;
+        trackEvent(ANALYTICS_EVENTS.muxUploadStarted);
         loginResolverRef.current?.(uploadResult.data.uploadUrl);
       },
       onError: (errorMessage) => {
+        trackEvent(ANALYTICS_EVENTS.muxAuthFailed, {
+          stage: 'popup',
+          reason: failureReason({ message: errorMessage }),
+        });
         setError(errorMessage);
         setState('polling_error');
       },
     });
+  }, []);
+
+  // The uploader's messages can name the upload URL, so only the step is recorded.
+  const handleUploadError = useCallback(() => {
+    if (!transferStartedRef.current) return;
+
+    transferStartedRef.current = false;
+    trackEvent(ANALYTICS_EVENTS.muxUploadFailed, { stage: 'upload', reason: 'transfer_failed' });
   }, []);
 
   /** Polls Mux API for playback ID after upload completes. Updates renderer to 'mux' and stores playback ID on success. */
@@ -112,6 +154,7 @@ export default function MuxUploaderPanel() {
     if (!uploadId) return;
 
     setState('preparing');
+    trackEvent(ANALYTICS_EVENTS.muxUploadCompleted);
 
     const result = await pollForPlaybackId({
       uploadId,
@@ -140,6 +183,10 @@ export default function MuxUploaderPanel() {
     });
 
     if (result.status === 'error') {
+      trackEvent(ANALYTICS_EVENTS.muxUploadFailed, {
+        stage: 'processing',
+        reason: processingFailureReason(result.message),
+      });
       setError(result.message);
       setState('polling_error');
       return;
@@ -148,6 +195,7 @@ export default function MuxUploaderPanel() {
     // Success! Update local state and nanostores (for cross-island use)
     setPlaybackId(result.playbackId);
     setState('ready');
+    trackEvent(ANALYTICS_EVENTS.muxUploadReady);
     media.set('hls');
     muxPlaybackId.set(result.playbackId);
     sourceUrl.set(`https://stream.mux.com/${result.playbackId}.m3u8`);
@@ -155,6 +203,8 @@ export default function MuxUploaderPanel() {
 
   /** Resets uploader to try again after error */
   const handleRetry = useCallback(() => {
+    trackEvent(ANALYTICS_EVENTS.muxUploadRetried);
+
     // Reset MuxUploader's internal state
     uploaderRef.current?.dispatchEvent(new CustomEvent('reset'));
 
@@ -166,7 +216,10 @@ export default function MuxUploaderPanel() {
   }, []);
 
   return (
-    <div className="corner-squircle border-line-strong bg-surface relative isolate w-full overflow-hidden rounded-xl border border-dashed">
+    <div
+      className="corner-squircle border-line-strong bg-surface relative isolate w-full overflow-hidden rounded-xl border border-dashed"
+      data-ph-capture-attribute-location="mux-uploader"
+    >
       <MuxUploader
         // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
@@ -178,6 +231,7 @@ export default function MuxUploaderPanel() {
         noRetry
         endpoint={getEndpoint}
         onSuccess={handleUploadSuccess}
+        onUploadError={handleUploadError}
       />
       {/* Custom Mux Uploader UI */}
       <MuxUploaderDrop
@@ -203,6 +257,7 @@ export default function MuxUploaderPanel() {
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
+            data-ph-capture-attribute-cta="mux-select-file"
             className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-accent intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
           >
             Select a file
@@ -214,7 +269,8 @@ export default function MuxUploaderPanel() {
         <span className="text-p4 dark:text-muted mt-2 inline-flex items-center gap-1.5">
           Powered by{' '}
           <a
-            href={MUX_URL}
+            href={withMuxAttribution(MUX_URL, 'mux-uploader')}
+            data-ph-capture-attribute-destination="mux"
             target="_blank"
             rel="noopener"
             aria-label="Mux"
