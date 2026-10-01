@@ -51,6 +51,10 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   // Keep URL-only option changes pending until a valid source can rebuild the embed.
   #pendingEmbedOptions = false;
   #restorePlayerSettings = false;
+  // Cached settings mirror a player only after one reported them; before that they are defaults.
+  #playerSettingsRead = false;
+  // Counts embed recreations, so a pending `play()` follows the replacement rather than a superseding load.
+  #recreations = 0;
   #pendingWrites: ((player: YouTubePlayerApi) => void)[] = [];
   #loadComplete = createPublicPromise<void>();
   // Guards async player creation across attach/detach cycles.
@@ -124,6 +128,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#pendingLoad = false;
     this.#creatingPlayer = false;
     this.#restorePlayerSettings = false;
+    this.#playerSettingsRead = false;
     this.#pendingWrites = [];
     this.#target = null;
     // Unblock callers awaiting load; they re-check `#player` (now null) and no-op.
@@ -246,7 +251,13 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   }
 
   async play() {
-    await this.#loadComplete;
+    let recreations: number;
+
+    // Recreating the embed replaces the load barrier; follow it to the replacement player.
+    do {
+      recreations = this.#recreations;
+      await this.#loadComplete;
+    } while (recreations !== this.#recreations && this.#target);
 
     // The embed still holds the stopped video, so playing it would resume a cleared source.
     if (!this.#src) return;
@@ -395,6 +406,8 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       const muted = this.#muted;
       const playbackRate = this.#playbackRate;
       const pendingWrites = this.#pendingWrites;
+      // Before a player reports its settings the cached values are defaults; queued writes still replay.
+      const restorePlayerSettings = this.#playerSettingsRead;
 
       this.detach();
       target.src = embedSrc;
@@ -404,8 +417,10 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       this.#volume = volume;
       this.#muted = muted;
       this.#playbackRate = playbackRate;
-      this.#restorePlayerSettings = true;
+      this.#restorePlayerSettings = restorePlayerSettings;
+      this.#playerSettingsRead = restorePlayerSettings;
       this.#pendingWrites = pendingWrites;
+      this.#recreations++;
 
       this.#beginLoad();
       this.dispatchEvent(new Event('emptied'));
@@ -631,6 +646,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       this.#muted = player.isMuted();
       this.#volume = player.getVolume() / 100;
       this.#playbackRate = player.getPlaybackRate();
+      this.#playerSettingsRead = true;
     }
 
     for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {

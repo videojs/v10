@@ -591,6 +591,43 @@ describe('YouTubeAdapter', () => {
     }
   );
 
+  it.each(['pending play', 'default mute'])('recreates before readiness without losing the %s', async (scenario) => {
+    const media = new YouTubeAdapter();
+    const src = 'aqz-KE-bpKQ';
+    const iframe = createIframe();
+
+    media.defaultMuted = scenario === 'default mute';
+    media.src = src;
+    document.body.append(iframe);
+    media.attach(iframe);
+    const player = await waitForEngine(media);
+
+    // The iframe API removes the embed when its player is destroyed.
+    player.destroy.mockImplementation(() => iframe.remove());
+
+    try {
+      const pending = media.play();
+
+      media.source = { src, engine: { youtube: { cc_load_policy: 1 } } };
+      const replacement = await vi.waitFor(() => {
+        const engine = media.engine;
+        if (!(engine instanceof MockPlayer) || engine === player) throw new Error('replacement not created yet');
+
+        return engine;
+      });
+
+      replacement.ready();
+      await pending;
+
+      expect(replacement.playVideo).toHaveBeenCalledTimes(1);
+      expect(new URL(iframe.src).searchParams.get('mute')).toBe(scenario === 'default mute' ? '1' : '0');
+      expect(replacement.unMute).not.toHaveBeenCalled();
+    } finally {
+      media.destroy();
+      iframe.remove();
+    }
+  });
+
   it('defers the load when src changes before the player is ready', async () => {
     const media = new YouTubeAdapter();
 
