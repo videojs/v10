@@ -19,10 +19,15 @@ for (const preset of ['video', 'audio'] as const) {
 
     const consumer = page.locator(`[data-registry-skin="${preset}"]`);
     const skin = consumer.locator('.media-skin');
+    const controls = skin.locator('media-controls, .video-controls, .audio-controls').first();
     const media = consumer.locator(preset);
 
     await expect(skin).toBeVisible();
     await expect(skin).toHaveAttribute('data-theme', theme);
+
+    // Compat's Tailwind output carries no semantic controls class; the play button checks below cover its controls.
+    if (theme !== 'compat') await expect(controls).toBeAttached();
+
     await expect(media).toBeAttached();
     await expect(skin).toHaveCSS('position', 'relative');
     await expect(skin).toHaveCSS('display', 'block');
