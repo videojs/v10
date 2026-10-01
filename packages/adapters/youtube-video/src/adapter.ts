@@ -26,6 +26,10 @@ import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from '.
 const SEEK_TOLERANCE = 1;
 const SEEK_SETTLE_TIMEOUT = 1_000;
 
+type PlayerSetting = 'volume' | 'muted' | 'playbackRate';
+
+const PLAYER_SETTINGS: readonly PlayerSetting[] = ['volume', 'muted', 'playbackRate'];
+
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
   static readonly defaultProps: YouTubeAdapterProps = {
     src: '',
@@ -50,7 +54,10 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
   #creatingPlayer = false;
   // Keep URL-only option changes pending until a valid source can rebuild the embed.
   #pendingEmbedOptions = false;
-  #restorePlayerSettings = false;
+  // Settings to apply to a replacement player before it reports its own.
+  #restoreSettings: ReadonlySet<PlayerSetting> = new Set();
+  // Settings written through setters since attach; before a player reports, only these are real.
+  #writtenSettings = new Set<PlayerSetting>();
   // Cached settings mirror a player only after one reported them; before that they are defaults.
   #playerSettingsRead = false;
   // Counts embed recreations, so a pending `play()` follows the replacement rather than a superseding load.
@@ -127,7 +134,8 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#playerReady = false;
     this.#pendingLoad = false;
     this.#creatingPlayer = false;
-    this.#restorePlayerSettings = false;
+    this.#restoreSettings = new Set();
+    this.#writtenSettings = new Set();
     this.#playerSettingsRead = false;
     this.#pendingWrites = [];
     this.#target = null;
@@ -302,6 +310,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     if (this.#volume === value) return;
 
     this.#volume = value;
+    this.#writtenSettings.add('volume');
     this.#afterLoad((p) => p.setVolume(value * 100));
   }
 
@@ -312,6 +321,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     if (this.#muted === value) return;
 
     this.#muted = value;
+    this.#writtenSettings.add('muted');
     this.#afterLoad((p) => (value ? p.mute() : p.unMute()));
   }
 
@@ -322,6 +332,7 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     if (this.#playbackRate === value) return;
 
     this.#playbackRate = value;
+    this.#writtenSettings.add('playbackRate');
     this.#afterLoad((p) => p.setPlaybackRate(value));
   }
 
@@ -406,8 +417,10 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       const muted = this.#muted;
       const playbackRate = this.#playbackRate;
       const pendingWrites = this.#pendingWrites;
-      // Before a player reports its settings the cached values are defaults; queued writes still replay.
-      const restorePlayerSettings = this.#playerSettingsRead;
+      const playerSettingsRead = this.#playerSettingsRead;
+      const writtenSettings = this.#writtenSettings;
+      // Before a player reports its settings, only values written through setters are real.
+      const restoreSettings = new Set<PlayerSetting>(playerSettingsRead ? PLAYER_SETTINGS : writtenSettings);
 
       this.detach();
       target.src = embedSrc;
@@ -417,8 +430,9 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
       this.#volume = volume;
       this.#muted = muted;
       this.#playbackRate = playbackRate;
-      this.#restorePlayerSettings = restorePlayerSettings;
-      this.#playerSettingsRead = restorePlayerSettings;
+      this.#restoreSettings = restoreSettings;
+      this.#writtenSettings = writtenSettings;
+      this.#playerSettingsRead = playerSettingsRead;
       this.#pendingWrites = pendingWrites;
       this.#recreations++;
 
@@ -604,21 +618,24 @@ export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implemen
     this.#playerReady = true;
 
     const player = this.#player;
+    const restore = this.#restoreSettings;
 
-    if (this.#restorePlayerSettings && player) {
+    if (restore.size && player) {
       // Restore before metadata reads the replacement player's default settings.
       const volume = this.#volume;
       const muted = this.#muted;
       const playbackRate = this.#playbackRate;
 
-      this.#restorePlayerSettings = false;
+      this.#restoreSettings = new Set();
       tryCall(() => {
-        player.setVolume(volume * 100);
+        if (restore.has('volume')) player.setVolume(volume * 100);
 
-        if (muted) player.mute();
-        else player.unMute();
+        if (restore.has('muted')) {
+          if (muted) player.mute();
+          else player.unMute();
+        }
 
-        player.setPlaybackRate(playbackRate);
+        if (restore.has('playbackRate')) player.setPlaybackRate(playbackRate);
       });
     }
 
