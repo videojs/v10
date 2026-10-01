@@ -126,7 +126,7 @@ Each module below defines `<media-icon>` if it is not already defined:
 
 ## SVG strings
 
-Each export from `@videojs/html/icons`, `@videojs/html/icons/default`, and `@videojs/html/icons/minimal` is the icon's SVG markup as a string. Importing them does not define `<media-icon>`.
+Each icon export from `@videojs/html/icons`, `@videojs/html/icons/default`, and `@videojs/html/icons/minimal` is the icon's SVG markup as a string; `@videojs/html/icons` also exports [`registerIcons`](#registericons). Importing them does not define `<media-icon>`.
 
 ```ts
 import { playIcon } from "@videojs/html/icons";

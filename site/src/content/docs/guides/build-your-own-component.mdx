@@ -64,12 +64,12 @@ Your element needs to be inside <DocsLink slug="reference/components/player">`<v
 Extend `UIElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
 
 ```ts
-import { UIElement, PlayerController, playerContext, selectTime } from '@videojs/html';
+import { UIElement, PlayerController, playerContext, selectTime, type PropertyValues } from '@videojs/html';
 
 class SkipIntroButtonElement extends UIElement {
   #player = new PlayerController(this, playerContext, selectTime);
 
-  update(changed: Map<string, unknown>) {
+  update(changed: PropertyValues) {
     super.update(changed);
     const time = this.#player.value;
   }
@@ -177,6 +177,7 @@ export default function App() {
       playerContext,
       selectTime,
       selectPlayback,
+      type PropertyValues,
     } from '@videojs/html';
 
     class SkipIntroButtonElement extends UIElement {
@@ -205,7 +206,7 @@ export default function App() {
         this.#disconnect = null;
       }
 
-      update(changed: Map<string, unknown>) {
+      update(changed: PropertyValues) {
         super.update(changed);
         const time = this.#time.value;
         const playback = this.#playback.value;
