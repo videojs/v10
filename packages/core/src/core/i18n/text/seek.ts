@@ -4,13 +4,11 @@ import type { Text } from '../text';
 
 const prefix = 'seek.';
 
-/** @internal */
 export const forwardText = {
   key: `${prefix}forward`,
   text: 'Seek forward {seconds} seconds',
 } as const satisfies Text;
 
-/** @internal */
 export const backwardText = {
   key: `${prefix}backward`,
   text: 'Seek backward {seconds} seconds',

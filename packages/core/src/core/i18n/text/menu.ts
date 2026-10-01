@@ -4,73 +4,61 @@ import type { Text } from '../text';
 
 const prefix = 'menu.';
 
-/** @internal */
 export const settingsText = {
   key: `${prefix}settings`,
   text: 'Settings',
 } as const satisfies Text;
 
-/** @internal */
 export const qualityText = {
   key: `${prefix}quality`,
   text: 'Quality',
 } as const satisfies Text;
 
-/** @internal */
 export const audioText = {
   key: `${prefix}audio`,
   text: 'Audio',
 } as const satisfies Text;
 
-/** @internal */
 export const defaultText = {
   key: `${prefix}default`,
   text: 'Default',
 } as const satisfies Text;
 
-/** @internal */
 export const speedText = {
   key: `${prefix}speed`,
   text: 'Speed',
 } as const satisfies Text;
 
-/** @internal */
 export const captionsText = {
   key: `${prefix}captions`,
   text: 'Captions',
 } as const satisfies Text;
 
-/** @internal */
 export const playbackRateText = {
   key: `${prefix}playbackRate`,
   text: 'Playback rate',
 } as const satisfies Text;
 
-/** @internal */
 export const backText = {
   key: `${prefix}back`,
   text: 'Back',
 } as const satisfies Text;
 
-/** @internal */
 export const offText = {
   key: `${prefix}off`,
   text: 'Off',
 } as const satisfies Text;
 
-/** @internal */
 export const autoText = {
   key: `${prefix}auto`,
   text: 'Auto',
 } as const satisfies Text;
 
-/** @internal */
 export const autoWithLabelText = {
   key: `${prefix}autoWithLabel`,
   text: 'Auto ({label})',
 } as const satisfies Text;
 
-/** @internal */
 export const subtitlesText = {
   key: `${prefix}subtitles`,
   text: 'Subtitles',

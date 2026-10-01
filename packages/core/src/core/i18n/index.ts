@@ -18,7 +18,7 @@ export const translations = en;
 export type * from './params';
 export {
   findLocaleKeys,
-  getCanonicalLocaleKey,
+  getLocaleKey,
   getI18nTranslations,
   hasRegisteredLocale,
   onI18nRegistryChange,

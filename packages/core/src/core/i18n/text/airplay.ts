@@ -4,13 +4,11 @@ import type { Text } from '../text';
 
 const prefix = 'airplay.';
 
-/** @internal */
 export const startText = {
   key: `${prefix}start`,
   text: 'Start AirPlay',
 } as const satisfies Text;
 
-/** @internal */
 export const stopText = {
   key: `${prefix}stop`,
   text: 'Stop AirPlay',

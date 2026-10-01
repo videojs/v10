@@ -4,7 +4,6 @@ import type { Text } from '../text';
 
 const prefix = 'slider.';
 
-/** @internal */
 export const seekText = {
   key: `${prefix}seek`,
   text: 'Seek',
