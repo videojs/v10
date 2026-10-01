@@ -19,6 +19,7 @@
     --media-shadow-surface: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --media-spacing: calc(var(--media-scale-unit, 16px) / 4);
     --media-video-border-radius: var(--media-border-radius, 0.75rem);
+    --media-button-highlight: rgb(255 255 255 / 0.15);
 
     --media-backdrop-filter-surface: none;
     --media-backdrop-filter-indicator: none;
@@ -43,6 +44,7 @@
     --media-surface-border: rgb(0 0 0 / 0.05);
     --media-scrollbar-thumb-color: rgb(0 0 0 / 0.3);
     --media-shadow-surface: 0 1px 3px rgb(0 0 0 / 0.15);
+    --media-button-highlight: rgb(0 0 0 / 0.1);
   }
 
   @supports (color: light-dark(red, red)) {
@@ -62,6 +64,7 @@
       --media-primary: var(--media-accent-color, light-dark(black, white));
       --media-primary-foreground: var(--media-accent-text-color, light-dark(white, black));
       --media-ring: var(--media-accent-color, light-dark(black, white));
+      --media-button-highlight: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
     }
   }
 
@@ -80,18 +83,10 @@
     }
   }
 
+  /* The shared preferences collapse the other motion tokens; Compat also zeroes the instant duration they resolve to. */
   @media (prefers-reduced-motion: reduce) {
     .media-skin[data-theme="compat"] {
       --media-duration-instant: 0ms;
-      --media-duration-fast: 0ms;
-      --media-duration-menu: 0ms;
-      --media-hidden-blur: 0px;
-      --media-hidden-popup-blur: 0px;
-      --media-hidden-popup-scale: 1;
-      --media-popup-translate-distance: 0px;
-      --media-spinner-animation: none;
-      --media-icon-airplay-fill-animation: none;
-      --media-icon-airplay-triangle-animation: none;
     }
   }
 
@@ -101,8 +96,6 @@
       --media-accent-foreground: var(--media-background);
       --media-border: var(--media-foreground);
       --media-surface-border: var(--media-foreground);
-      --media-scrollbar-thumb-color: currentColor;
-      --media-popover: var(--media-background);
       --media-primary: var(--media-foreground);
       --media-primary-foreground: var(--media-background);
       --media-ring: var(--media-foreground);
@@ -114,39 +107,12 @@
       --media-accent: Highlight;
       --media-accent-foreground: HighlightText;
       --media-background: Canvas;
-      --media-border: CanvasText;
       --media-surface-border: CanvasText;
       --media-scrollbar-thumb-color: CanvasText;
       --media-foreground: CanvasText;
-      --media-frame-border: CanvasText;
       --media-muted: GrayText;
-      --media-popover: Canvas;
-      --media-popover-foreground: CanvasText;
       --media-primary: Highlight;
       --media-primary-foreground: HighlightText;
-      --media-ring: CanvasText;
     }
-  }
-}
-
-@layer components {
-  .media-skin[data-theme="compat"] .media-popup {
-    scale: none;
-  }
-
-  .media-skin[data-theme="compat"] .media-popup[data-starting-style] {
-    transform: translate(var(--media-popup-translate-x-distance, 0), var(--media-popup-translate-y-distance, 0))
-      scale(var(--media-hidden-popup-scale));
-  }
-
-  .media-skin[data-theme="compat"] .media-popup[data-ending-style] {
-    transform: scale(var(--media-hidden-popup-scale));
-  }
-
-  .media-skin[data-theme="compat"] video::-webkit-media-text-track-container {
-    scale: none;
-    translate: none;
-    transform: translateY(var(--media-caption-track-y, 0px)) scale(0.98);
-    transition-property: transform;
   }
 }

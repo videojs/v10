@@ -19,6 +19,12 @@ export default styles({
       ],
       variants: {
         neutral: 'data-starting-style:filter-none',
+        // Compat combines translate and scale into one transform for browsers without individual transform properties.
+        compat: [
+          'media-transitioning:scale-none!',
+          'data-starting-style:transform-[translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))_scale(var(--media-hidden-popup-scale))]',
+          'data-ending-style:transform-[scale(var(--media-hidden-popup-scale))]',
+        ],
       },
     },
     safeArea: {
