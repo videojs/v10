@@ -8,6 +8,7 @@ import {
   getMediaSubpath,
   isPresetRenderer,
   isVideoLikeRenderer,
+  needsCrossOrigin,
   type Renderer,
 } from './renderers';
 import type { InstallMethod } from './selection';
@@ -181,24 +182,38 @@ export function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): strin
   return getSkinFile(skin) === 'neutral-skin' ? `${prefix}-neutral-skin` : `${prefix}-skin`;
 }
 
+/** Attributes after the source on generated HTML media. */
+function htmlMediaAttributes(renderer: Renderer): string {
+  const crossOrigin = needsCrossOrigin(renderer) ? ' crossorigin="anonymous"' : '';
+
+  return `${crossOrigin}${isVideoLikeRenderer(renderer) ? ' playsinline' : ''}`;
+}
+
+/** Props after the source on generated React media. */
+function reactMediaProps(renderer: Renderer): string {
+  const crossOrigin = needsCrossOrigin(renderer) ? ' crossOrigin="anonymous"' : '';
+
+  return `${crossOrigin}${isVideoLikeRenderer(renderer) ? ' playsInline' : ''}`;
+}
+
 function generateMediaMarkup(
   tag: string,
   src: string,
-  playsInline: string,
+  attributes: string,
   extensions: readonly InstallationExtension[],
   indent: string
 ): string {
-  return generateMediaMarkupWithSource(tag, `src="${escapeHTMLAttribute(src)}"`, playsInline, extensions, indent);
+  return generateMediaMarkupWithSource(tag, `src="${escapeHTMLAttribute(src)}"`, attributes, extensions, indent);
 }
 
 function generateMediaMarkupWithSource(
   tag: string,
   sourceAttribute: string,
-  playsInline: string,
+  attributes: string,
   extensions: readonly InstallationExtension[],
   indent: string
 ): string {
-  const mediaEl = `${indent}<${tag} ${sourceAttribute}${playsInline}></${tag}>`;
+  const mediaEl = `${indent}<${tag} ${sourceAttribute}${attributes}></${tag}>`;
   const extensionMarkup = extensions.map((extension) => {
     const { htmlTag } = getInstallationExtension(extension);
 
@@ -226,10 +241,10 @@ function generateHTMLMarkup(
   const playerTag = getPlayerTag(useCase);
   const tag = getRendererTag(renderer);
   const src = resolveInstallationSourceUrl(url, renderer, useCase);
-  const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  const attributes = htmlMediaAttributes(renderer);
   const mediaMarkup = (indent: string) =>
     mediaSlot === undefined
-      ? generateMediaMarkup(tag, src, playsInline, extensions, indent)
+      ? generateMediaMarkup(tag, src, attributes, extensions, indent)
       : indentBlock(mediaSlot, indent);
 
   const skinMediaComment = `    <!--
@@ -497,9 +512,9 @@ export function generateVueUsageCode(
   const componentName = getInstallationPlayerComponentName(opts.useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.media, opts.useCase);
   const tag = getRendererTag(opts.media);
-  const playsInline = isVideoLikeRenderer(opts.media) ? ' playsinline' : '';
+  const attributes = htmlMediaAttributes(opts.media);
   const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
-  const media = generateMediaMarkup(tag, source, playsInline, extensions, '');
+  const media = generateMediaMarkup(tag, source, attributes, extensions, '');
 
   return {
     'App.vue': `<script setup lang="ts">
@@ -555,9 +570,9 @@ export function generateSvelteUsageCode(
   const componentName = getInstallationPlayerComponentName(opts.useCase);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, opts.media, opts.useCase);
   const tag = getRendererTag(opts.media);
-  const playsInline = isVideoLikeRenderer(opts.media) ? ' playsinline' : '';
+  const attributes = htmlMediaAttributes(opts.media);
   const extensions = opts.extensions ?? defaultInstallationExtensions(opts.media);
-  const media = generateMediaMarkupWithSource(tag, `src={${JSON.stringify(source)}}`, playsInline, extensions, '');
+  const media = generateMediaMarkupWithSource(tag, `src={${JSON.stringify(source)}}`, attributes, extensions, '');
   const component = (path: string) => `<script lang="ts">
   import ${componentName} from '${path}';
 </script>
@@ -627,9 +642,7 @@ export function generateReactCreateCode(
   const isNoSkin = skin === 'none';
   const group = getInstallationPreset(useCase).group;
 
-  const rendererProps = isVideoLikeRenderer(renderer)
-    ? `src={${JSON.stringify(source)}} playsInline`
-    : `src={${JSON.stringify(source)}}`;
+  const rendererProps = `src={${JSON.stringify(source)}}${reactMediaProps(renderer)}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
   const skinLayout = isSizedVideoPlayer(useCase) ? reactVideoLayout : '';
   const containerLayout = isSizedVideoPlayer(useCase) ? reactContainerVideoLayout : '';
@@ -722,9 +735,7 @@ export function generateSourceReactCreateCode(
   // A registry theme changes the source behind the stable item name. Both the Default and Neutral catalogs export the
   // same local component (`VideoSkin`, `AudioSkin`, and so on).
   const skinComponent = `${preset.componentPrefix}Skin`;
-  const rendererProps = isVideoLikeRenderer(renderer)
-    ? `src={${JSON.stringify(source)}} playsInline`
-    : `src={${JSON.stringify(source)}}`;
+  const rendererProps = `src={${JSON.stringify(source)}}${reactMediaProps(renderer)}`;
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
   const skinLayout = isSizedVideoPlayer(useCase)
     ? opts.styling === 'tailwind'
@@ -794,7 +805,7 @@ export function generateSourceHTMLUsageCode(
   const mediaSubpath = getMediaSubpath(renderer);
   const tag = getRendererTag(renderer);
   const source = resolveInstallationSourceUrl(opts.sourceUrl, renderer, useCase);
-  const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  const attributes = htmlMediaAttributes(renderer);
   const skinFile = `${opts.componentsDirectory ?? 'components'}/videojs/${preset.flag}/skin.html`;
   const skinPlaceholder = `<!-- Paste the contents of ${skinFile} here. -->`;
   const imports = [
@@ -808,7 +819,7 @@ export function generateSourceHTMLUsageCode(
 
   return {
     imports,
-    media: generateMediaMarkup(tag, source, playsInline, extensions, ''),
+    media: generateMediaMarkup(tag, source, attributes, extensions, ''),
     container: isSizedVideoPlayer(useCase)
       ? { anchor: '<media-container', code: `<media-container${htmlVideoLayout}` }
       : null,
