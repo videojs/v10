@@ -28,9 +28,7 @@ const packageSkins = {
 } satisfies Record<`${SkinPreset}/${Skin}`, () => Promise<unknown>>;
 
 async function loadPackageSkin({ player, live, skin }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
-  const load = packageSkins[`${preset}/${skin}`];
-
-  await load();
+  await packageSkins[`${preset}/${skin}`]();
   await (player === 'audio' ? loadAudioStylesheets(skin, live) : loadVideoStylesheets(skin, live));
 
   return packageSkinTag(preset, skin);

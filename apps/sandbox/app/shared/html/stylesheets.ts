@@ -61,15 +61,9 @@ function loadStylesheet(id: string, url: string): Promise<void> {
 }
 
 export function loadVideoStylesheets(skin: Skin, live = false): Promise<void> {
-  const url = (live ? liveVideoStylesheets : videoStylesheets)[skin];
-  if (!url) throw new Error(`Video skin stylesheet ${skin} is unavailable.`);
-
-  return loadStylesheet('video-skin', url);
+  return loadStylesheet('video-skin', (live ? liveVideoStylesheets : videoStylesheets)[skin]);
 }
 
 export function loadAudioStylesheets(skin: Skin, live = false): Promise<void> {
-  const url = (live ? liveAudioStylesheets : audioStylesheets)[skin];
-  if (!url) throw new Error(`Audio skin stylesheet ${skin} is unavailable.`);
-
-  return loadStylesheet('audio-skin', url);
+  return loadStylesheet('audio-skin', (live ? liveAudioStylesheets : audioStylesheets)[skin]);
 }
