@@ -3,6 +3,7 @@ import DialNav from '@/components/DialNav';
 import Footer from '@/components/Footer.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import { MUX_URL } from '@/consts';
+import { withMuxAttribution } from '@/utils/mux/attribution';
 import Base from '@/layouts/Base.astro';
 
 interface Props {
@@ -18,7 +19,7 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
 <Base easterEgg {title} {description} withCompact>
   <div class="flex flex-col" style={{ minHeight: "80dvh" }}>
     <NavBar />
-    <main id="main-content" class="w-full">
+    <main id="main-content" class="w-full" data-ph-capture-attribute-location="error-page">
       <div
         class="mx-auto grid w-full max-w-305 justify-between gap-8 px-5 py-10 md:flex md:pt-32 md:pb-16"
       >
@@ -38,15 +39,16 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
           client:load
           left={[
             { href: "/", label: "Home", angle: -60 },
-            { href: "/docs", label: "Docs", angle: -120 },
+            { href: "/docs", label: "Docs", angle: -120, destination: "docs" },
           ]}
           right={[
             {
-              href: MUX_URL,
+              href: withMuxAttribution(MUX_URL, 'error-page'),
               label: "mux.com",
               angle: 60,
+              destination: "mux",
             },
-            { href: "/blog", label: "Blog", angle: 120 },
+            { href: "/blog", label: "Blog", angle: 120, destination: "blog" },
           ]}
         />
       </div>
