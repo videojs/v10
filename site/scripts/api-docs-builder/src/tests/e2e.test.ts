@@ -1533,7 +1533,7 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skins).toEqual(
         expect.arrayContaining([
           { name: 'VideoSkinElement', tagName: 'video-skin' },
-          { name: 'MinimalVideoSkinElement', tagName: 'video-minimal-skin' },
+          { name: 'NeutralVideoSkinElement', tagName: 'video-neutral-skin' },
         ])
       );
     });
@@ -1556,7 +1556,7 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skins).toEqual(
         expect.arrayContaining([
           { name: 'VideoSkin', cssImport: '@videojs/react/video/skin.css' },
-          { name: 'MinimalVideoSkin', cssImport: '@videojs/react/video/minimal-skin.css' },
+          { name: 'NeutralVideoSkin', cssImport: '@videojs/react/video/neutral-skin.css' },
         ])
       );
     });
