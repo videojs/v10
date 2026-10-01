@@ -101,6 +101,7 @@ export * from './constants';
 export * from '@videojs/core/dom';
 // Media predicates
 export {
+  type AdapterType,
   hasMetadata,
   isMediaAudioTrackCapable,
   isMediaBufferCapable,
@@ -119,6 +120,8 @@ export {
   isQuerySelectorAllCapable,
   MediaError,
   type NodeListLike,
+  resolveAdapterType,
+  resolveMimeType,
 } from '@videojs/media';
 // Media types
 export type {

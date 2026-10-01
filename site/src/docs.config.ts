@@ -147,6 +147,7 @@ export const sidebar: Sidebar = [
           { slug: 'guides/migrate-from-mux-player', sidebarLabel: 'Mux Player' },
           { slug: 'guides/migrate-from-plyr', sidebarLabel: 'Plyr' },
           { slug: 'guides/migrate-from-media-chrome', sidebarLabel: 'Media Chrome' },
+          { slug: 'guides/migrate-from-vidstack', sidebarLabel: 'Vidstack' },
         ],
       },
     ],
@@ -416,10 +417,13 @@ export const sidebar: Sidebar = [
       {
         sidebarLabel: 'Utils',
         llmsDescription: {
-          react: 'Lower-level building blocks for custom components: refs, buttons, sliders, and rendering.',
-          html: 'Lower-level building blocks for custom components: the keyboard shortcut controller.',
+          react:
+            'Lower-level building blocks: adapter and MIME type resolution, and refs, buttons, sliders, and rendering for custom components.',
+          html: 'Lower-level building blocks: adapter and MIME type resolution, and the keyboard shortcut controller for custom components.',
         },
         contents: [
+          { slug: 'reference/api/resolve-adapter-type', sidebarLabel: 'resolveAdapterType' },
+          { slug: 'reference/api/resolve-mime-type', sidebarLabel: 'resolveMimeType' },
           { slug: 'reference/api/use-button', frameworks: ['react'] },
           { slug: 'reference/api/use-slider', frameworks: ['react'] },
           { slug: 'reference/api/use-composed-refs', frameworks: ['react'] },
