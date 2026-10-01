@@ -383,6 +383,7 @@ export {
   useMediaEvents,
 } from './utils/use-media-events';
 export { useMediaInstance } from './utils/use-media-instance';
+export { type MediaRefProps, useMediaRef } from './utils/use-media-ref';
 
 export { renderElement } from './utils/use-render';
 export * from './version';
