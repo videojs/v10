@@ -311,6 +311,36 @@ describe('syncTextTracks', () => {
     expect(mediaElement.children.length).toBe(0);
   });
 
+  it('detaches cleanly after an earlier reactor is destroyed', async () => {
+    const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
+    const first = setup({ presentation }, { mediaElement: document.createElement('video') });
+    const mediaElement = document.createElement('video');
+    const second = setup({ presentation }, { mediaElement });
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+
+    window.addEventListener('error', onError);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mediaElement.children.length).toBe(1);
+
+      // Disposing earlier effects reorders the shared watcher's pending queue.
+      first.reactor.destroy();
+      second.context.mediaElement.set(undefined);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(errors).toEqual([]);
+      expect(mediaElement.children.length).toBe(0);
+    } finally {
+      window.removeEventListener('error', onError);
+      second.reactor.destroy();
+    }
+  });
+
   it('removes track elements on src unload', async () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);

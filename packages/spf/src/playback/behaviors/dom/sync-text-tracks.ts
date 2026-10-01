@@ -126,10 +126,15 @@ function syncTextTracksSetup({
           // slots before provisioning the new element. Presentation updates
           // and selection changes must not reallocate slots within this state.
           () => {
-            const mediaElement = context.mediaElement.get()!;
+            const mediaElement = context.mediaElement.get();
+            const presentation = peek(state.presentation);
+            // Disposed effects reorder the shared watcher, so this can run before
+            // the monitor leaves the state; recheck the inputs it tracks.
+            if (!mediaElement || !presentation) return;
+
             // SAFETY: getTracksByType filters selection sets to text tracks;
             // its declared return type is the wider track union.
-            const modelTextTracks = getTracksByType(peek(state.presentation)!, 'text') as readonly (
+            const modelTextTracks = getTracksByType(presentation, 'text') as readonly (
               | PartiallyResolvedTextTrack
               | TextTrack
             )[];

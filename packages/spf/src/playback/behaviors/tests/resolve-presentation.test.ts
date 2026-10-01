@@ -59,6 +59,24 @@ variant2.m3u8`)
     reactor.destroy();
   });
 
+  it('fetches once after an earlier reactor is destroyed', async () => {
+    const body = '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1000000\nvariant1.m3u8';
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(body));
+    const first = resolvePresentation.setup({ state: makeState({ preload: 'auto' }), config: baseConfig });
+    const state = makeState({ preload: 'auto' });
+    const reactor = resolvePresentation.setup({ state, config: baseConfig });
+
+    // Disposing earlier effects reorders the shared watcher's pending queue.
+    first.destroy();
+    state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
+
+    await vi.waitFor(() => expect(state.presentation.get()).toHaveProperty('id'));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    reactor.destroy();
+  });
+
   it('does not trigger resolution when other state fields change', async () => {
     // The new discrete-signals shape eliminates the "any unrelated field
     // change re-runs the effect" footgun by construction — each derived

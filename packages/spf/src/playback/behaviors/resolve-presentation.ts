@@ -97,7 +97,11 @@ function resolvePresentationSetup({
       idle: {},
       resolving: {
         effects: () => {
-          const presentation = state.presentation.get()!;
+          const presentation = state.presentation.get();
+          // Disposed effects reorder the shared watcher, so this can run before
+          // the monitor leaves the state; never fetch a cleared or resolved one.
+          if (!presentation?.url || isResolvedPresentation(presentation)) return;
+
           const ac = new AbortController();
 
           fetchResolvable(presentation, { signal: ac.signal })

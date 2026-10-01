@@ -96,9 +96,13 @@ function loadChaptersSetup({
         // Track element identity to abort and remove the old projection on
         // replacement. Presentation updates within this state must not refetch.
         effects: () => {
-          const mediaElement = context.mediaElement.get()!;
-          const presentation = peek(state.presentation)!;
-          const uri = findChaptersDocument(presentation)!;
+          const mediaElement = context.mediaElement.get();
+          const presentation = peek(state.presentation);
+          const uri = presentation && findChaptersDocument(presentation);
+          // Disposed effects reorder the shared watcher, so this can run before
+          // the monitor leaves the state; recheck the inputs it reads.
+          if (!mediaElement || !uri) return;
+
           const controller = new AbortController();
 
           void loadChaptersDocument(uri, controller.signal).then((chapters) => {

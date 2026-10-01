@@ -88,6 +88,36 @@ describe('loadChapters', () => {
     vi.restoreAllMocks();
   });
 
+  it('detaches cleanly after an earlier reactor is destroyed', async () => {
+    stubFetch();
+    const first = setup({ presentation: makePresentation(), mediaElement: document.createElement('video') });
+    const mediaElement = document.createElement('video');
+    const second = setup({ presentation: makePresentation(), mediaElement });
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+
+    window.addEventListener('error', onError);
+
+    try {
+      await settle();
+      expect(chaptersTracks(mediaElement).length).toBeGreaterThan(0);
+
+      // Disposing earlier effects reorders the shared watcher's pending queue.
+      first.reactor.destroy();
+      second.context.mediaElement.set(undefined);
+      await settle();
+
+      expect(errors).toEqual([]);
+      expect(chaptersTracks(mediaElement)).toEqual([]);
+    } finally {
+      window.removeEventListener('error', onError);
+      second.reactor.destroy();
+    }
+  });
+
   it('does nothing without a media element', async () => {
     const fetchMock = stubFetch();
     const { reactor } = setup({ presentation: makePresentation() });
