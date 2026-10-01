@@ -31,23 +31,41 @@ describe('composeRefs', () => {
     expect(callbackRef).toHaveBeenCalledWith('test-value');
   });
 
-  it('clears RefObject on cleanup', () => {
+  it('never returns a cleanup, which React 18 would warn about', () => {
+    const composed = composeRefs(
+      vi.fn(() => vi.fn()),
+      createMutableRef<string>()
+    );
+
+    expect(composed('test-value')).toBeUndefined();
+  });
+
+  it('on null, runs cleanups inner refs returned and clears the rest', () => {
     const cleanup = vi.fn();
-    const callbackRef = vi.fn().mockReturnValue(cleanup);
+    const cleanupRef = vi.fn().mockReturnValue(cleanup);
+    const callbackRef = vi.fn();
     const refObject = createMutableRef<string>();
-    const composed = composeRefs(callbackRef, refObject);
+    const composed = composeRefs(cleanupRef, callbackRef, refObject);
 
-    const returnedCleanup = composed('test-value') as (() => void) | void;
-
-    expect(refObject.current).toBe('test-value');
-    expect(returnedCleanup).toBeTypeOf('function');
-
-    if (typeof returnedCleanup === 'function') {
-      returnedCleanup();
-    }
+    composed('test-value');
+    composed(null);
 
     expect(cleanup).toHaveBeenCalledOnce();
+    expect(cleanupRef).toHaveBeenCalledExactlyOnceWith('test-value');
+    expect(callbackRef).toHaveBeenLastCalledWith(null);
     expect(refObject.current).toBeNull();
+  });
+
+  it('runs a previous cleanup before handing over a new value', () => {
+    const cleanup = vi.fn();
+    const callbackRef = vi.fn().mockReturnValue(cleanup);
+    const composed = composeRefs(callbackRef);
+
+    composed('first');
+    composed('second');
+
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(callbackRef).toHaveBeenLastCalledWith('second');
   });
 });
 
