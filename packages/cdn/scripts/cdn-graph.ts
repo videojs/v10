@@ -6,7 +6,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 
 /** Static `import`/`export … from`, and dynamic `import()`, specifiers. */
 const SPECIFIER = /(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/g;
@@ -33,12 +33,16 @@ function isLikelySpecifier(value: string): boolean {
 
 export function collectSpecifiers(code: string): string[] {
   return [...code.replace(JSDOC_BLOCK, '').matchAll(SPECIFIER)]
-    .map((match) => match[1] as string)
+    .flatMap((match) => (match[1] === undefined ? [] : [match[1]]))
     .filter(isLikelySpecifier);
 }
 
 function isAbsoluteSpecifier(specifier: string): boolean {
   return /^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(specifier);
+}
+
+function isOutsideDirectory(path: string): boolean {
+  return path === '..' || path.startsWith(`..${sep}`) || isAbsolute(path);
 }
 
 /**
@@ -52,7 +56,9 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
   const queue = [...roots];
 
   while (queue.length > 0) {
-    const file = queue.pop() as string;
+    const file = queue.pop();
+    if (file === undefined) break;
+
     if (seen.has(file)) continue;
 
     const path = resolve(dir, file);
@@ -63,7 +69,14 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
     for (const specifier of collectSpecifiers(readFileSync(path, 'utf8'))) {
       if (!specifier.startsWith('.')) continue;
 
-      queue.push(relative(dir, resolve(dirname(path), specifier)));
+      const target = resolve(dirname(path), specifier);
+      const relativeTarget = relative(dir, target);
+
+      if (isOutsideDirectory(relativeTarget)) {
+        throw new Error(`${file}: "${specifier}" resolves outside the build (${relativeTarget})`);
+      }
+
+      queue.push(relativeTarget);
     }
   }
 
@@ -93,9 +106,12 @@ export function findUnresolvableSpecifiers(dir: string, files: Iterable<string>)
       }
 
       const target = resolve(dirname(path), specifier);
+      const relativeTarget = relative(dir, target);
 
-      if (!existsSync(target)) {
-        problems.push(`${file}: "${specifier}" resolves outside the build (${relative(dir, target)})`);
+      if (isOutsideDirectory(relativeTarget)) {
+        problems.push(`${file}: "${specifier}" resolves outside the build (${relativeTarget})`);
+      } else if (!existsSync(target)) {
+        problems.push(`${file}: missing relative specifier "${specifier}" (${relativeTarget})`);
       }
     }
   }
