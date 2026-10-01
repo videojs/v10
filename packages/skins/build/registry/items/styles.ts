@@ -1,3 +1,4 @@
+import { pascalCase } from '@videojs/utils/string';
 import type { RegistryStylesOptions } from 'vjsc/shadcn';
 
 import { registryDocsUrl } from '../docs.ts';
@@ -16,6 +17,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
   const shared = {
     meta,
   } satisfies Pick<NonNullable<RegistryStylesOptions['theme']>, 'meta'>;
+  const label = pascalCase(target.theme);
 
   const themes = [
     {
@@ -23,7 +25,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
       name: `_style-${target.theme}`,
       target: `styles/themes/${target.theme}.css`,
       files: { [`./styles/themes/${target.theme}.css`]: `styles/themes/${target.theme}.css` },
-      title: `Video.js ${target.theme} theme`,
+      title: `Video.js ${label} theme`,
       description: 'Editable token overrides for this skin catalog.',
     },
     {
@@ -44,7 +46,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
       name: `_style-video-${target.theme}`,
       target: `styles/video/${target.theme}.css`,
       files: { [`./styles/video/${target.theme}.css`]: `styles/video/${target.theme}.css` },
-      title: `Video.js ${target.theme} video styles`,
+      title: `Video.js ${label} video styles`,
       description: 'Video stylesheet entry for this skin catalog.',
       registryDependencies: [`@videojs/_style-${target.theme}`, '@videojs/_style-video'],
     },
@@ -65,7 +67,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
       name: `_style-audio-${target.theme}`,
       target: `styles/audio/${target.theme}.css`,
       files: { [`./styles/audio/${target.theme}.css`]: `styles/audio/${target.theme}.css` },
-      title: `Video.js ${target.theme} audio styles`,
+      title: `Video.js ${label} audio styles`,
       description: 'Audio stylesheet entry for this skin catalog.',
       registryDependencies: ['@videojs/_style-audio', `@videojs/_style-${target.theme}`],
     },
