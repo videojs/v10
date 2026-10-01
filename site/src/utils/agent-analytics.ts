@@ -7,13 +7,13 @@
  * counts distinct clients within a day and nothing longer. The IP address is never read or sent.
  */
 
-import { INSTALLATION_QUERY_PARAMETERS, PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
+import { PRIVATE_INSTALLATION_QUERY_PARAMETERS } from '@videojs/installation';
 
+import { installationContextForUrl } from './installation/analytics-context.ts';
 import { POSTHOG_PROJECT_KEY } from './posthog-project.ts';
 
 const CAPTURE_URL = 'https://us.i.posthog.com/i/v0/e/';
 const USER_AGENT_LIMIT = 256;
-const VALUE_LIMIT = 100;
 
 export const MARKDOWN_FETCH_EVENT = 'markdown_fetched';
 
@@ -106,6 +106,10 @@ export async function markdownFetchEvent({
   const userAgent = (request.headers.get('user-agent') ?? '').slice(0, USER_AGENT_LIMIT);
   const hasPrivateInput = PRIVATE_INSTALLATION_QUERY_PARAMETERS.some((parameter) => url.searchParams.has(parameter));
 
+  // The same picks the browser stamps on a reader's events, so agent and human install plans line up. Read before the
+  // private input is dropped, so `installation_custom_source` still says whether one was given.
+  const installation = installationContextForUrl(url.pathname, url.search);
+
   for (const parameter of PRIVATE_INSTALLATION_QUERY_PARAMETERS) url.searchParams.delete(parameter);
 
   const properties: CaptureBody['properties'] = {
@@ -129,11 +133,7 @@ export async function markdownFetchEvent({
 
   if (framework) properties.docs_framework = framework;
 
-  for (const parameter of INSTALLATION_QUERY_PARAMETERS) {
-    const value = url.searchParams.get(parameter);
-
-    if (value) properties[`installation_${parameter.replaceAll('-', '_')}`] = value.slice(0, VALUE_LIMIT);
-  }
+  Object.assign(properties, installation);
 
   return {
     api_key: POSTHOG_PROJECT_KEY,
