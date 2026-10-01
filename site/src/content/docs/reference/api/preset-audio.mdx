@@ -23,7 +23,7 @@ import { Audio, AudioPlayer, AudioSkin } from '@videojs/react/audio';
 import '@videojs/react/audio/skin.css';
 ```
 
-Each skin has its own stylesheet. Import `@videojs/react/audio/minimal-skin.css` instead when you use `MinimalAudioSkin`.
+Each skin has its own stylesheet. Import `@videojs/react/audio/neutral-skin.css` instead when you use `NeutralAudioSkin`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -32,13 +32,13 @@ import '@videojs/html/audio/player';
 import '@videojs/html/audio/skin';
 ```
 
-Import `@videojs/html/audio/minimal-skin` instead for the minimal skin. Or load one <DocsLink slug="guides/cdn">CDN</DocsLink> bundle that registers the player and a skin together:
+Import `@videojs/html/audio/neutral-skin` instead for the neutral skin. Or load one <DocsLink slug="guides/cdn">CDN</DocsLink> bundle that registers the player and a skin together:
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/audio.js"></script>
 ```
 
-`audio-minimal.js` registers the minimal skin instead, and `audio-player.js` registers `<audio-player>` alone.
+`audio-neutral.js` registers the neutral skin instead, and `audio-player.js` registers `<audio-player>` alone.
 </FrameworkCase>
 
 ## Usage
@@ -158,7 +158,7 @@ customElements.define('my-audio-player', PlayerElement);
 ## Skins
 
 - <DocsLink slug="reference/components/audio-skin">AudioSkin</DocsLink> — the default skin, with the modern, frosted look.
-- <DocsLink slug="reference/components/audio-minimal-skin">MinimalAudioSkin</DocsLink> — the visually lighter variant, closer to a classic control bar.
+- <DocsLink slug="reference/components/audio-neutral-skin">NeutralAudioSkin</DocsLink> — the visually lighter variant, closer to a classic control bar.
 
 ## Media
 
@@ -181,10 +181,10 @@ The preset plays through a native <DocsLink slug="reference/components/audio">`<
 | `usePlayer` | The player-store hook, typed to `audioFeatures`. |
 | `audioFeatures` | The [feature bundle](#feature-bundle). |
 | `AudioSkin`, `AudioSkinProps` | The default [skin](#skins). |
-| `MinimalAudioSkin`, `MinimalAudioSkinProps` | The minimal [skin](#skins). |
+| `NeutralAudioSkin`, `NeutralAudioSkinProps` | The neutral [skin](#skins). |
 | `Audio`, `AudioProps` | The [media](#media) component. |
 
-Stylesheets: `@videojs/react/audio/skin.css` and `@videojs/react/audio/minimal-skin.css`.
+Stylesheets: `@videojs/react/audio/skin.css` and `@videojs/react/audio/neutral-skin.css`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -196,7 +196,7 @@ The preset root, `@videojs/html/audio`, has no side effects. Importing it never 
 | `PlayerController` | The player controller, bound to the audio player's store. |
 | `audioFeatures` | The [feature bundle](#feature-bundle). |
 | `AudioSkinElement` | The default [skin](#skins) element class. |
-| `MinimalAudioSkinElement` | The minimal [skin](#skins) element class. |
+| `NeutralAudioSkinElement` | The neutral [skin](#skins) element class. |
 
 Registration entry points are side-effect-only:
 
@@ -204,7 +204,7 @@ Registration entry points are side-effect-only:
 | --- | --- |
 | `@videojs/html/audio/player` | `<audio-player>` |
 | `@videojs/html/audio/skin` | `<audio-skin>`, `<media-container>`, and the UI elements the skin composes |
-| `@videojs/html/audio/minimal-skin` | `<audio-minimal-skin>`, `<media-container>`, and the UI elements the minimal skin composes |
+| `@videojs/html/audio/neutral-skin` | `<audio-neutral-skin>`, `<media-container>`, and the UI elements the neutral skin composes |
 | `@videojs/html/audio/ui` | `<media-container>` and the UI elements of the default skin, without the skin, for a layout you write yourself |
-| `@videojs/html/audio/minimal-ui` | `<media-container>` and the UI elements of the minimal skin, without the skin |
+| `@videojs/html/audio/neutral-ui` | `<media-container>` and the UI elements of the neutral skin, without the skin |
 </FrameworkCase>
