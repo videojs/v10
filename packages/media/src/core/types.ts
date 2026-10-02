@@ -120,6 +120,8 @@ export type MediaCrossOriginType = 'anonymous' | 'use-credentials';
  * Normalize a `crossorigin` value the way the element's IDL attribute reflects it: missing stays `null`,
  * `use-credentials` in any ASCII case is itself, and everything else — the empty string and unknown keywords included —
  * is `anonymous`. A custom element delivers the raw attribute string, so this is where author spelling is settled.
+ *
+ * @internal
  */
 export function toMediaCrossOrigin(value: string | null | undefined): MediaCrossOriginType | null {
   if (isNil(value)) return null;
