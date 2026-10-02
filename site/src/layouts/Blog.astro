@@ -14,12 +14,15 @@ interface Props {
 }
 
 const { title, description, canonical, image, twitterImage } = Astro.props;
-const analyticsLocation = Astro.url.pathname.startsWith('/changelog') ? 'changelog' : 'blog';
+const isChangelog = Astro.url.pathname.startsWith('/changelog');
+const analyticsLocation = isChangelog ? 'changelog' : 'blog';
+const section = isChangelog ? 'Changelog' : 'Blog';
 ---
 
 <Base
   easterEgg
   title={title}
+  {section}
   description={description}
   canonical={canonical}
   image={image}

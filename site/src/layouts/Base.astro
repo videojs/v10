@@ -24,6 +24,8 @@ interface Props {
   canonical?: string;
   /** SEO title suffix. Pass `false` to keep the title to `Page | Video.js`. */
   suffix?: string | false;
+  /** Site section folded into the title's brand segment, e.g. `Blog` → `Post | Video.js Blog`. */
+  section?: string;
   withCompact?: boolean;
   /**
    * Pin the color-block easter egg behind the page so it is only revealed when the document rubber-bands past its
@@ -33,7 +35,7 @@ interface Props {
   /** Extra classes for the pinned color blocks, for example to keep them under one column of a layout. */
   easterEggClass?: string;
 }
-const { canonical, suffix, easterEgg = false, easterEggClass } = Astro.props;
+const { canonical, suffix, section, easterEgg = false, easterEggClass } = Astro.props;
 const canonicalURL = canonical || new URL(Astro.url.pathname, PRODUCTION_URL).href;
 
 const { title, description, image, twitterImage, withCompact } = Astro.props;
@@ -58,7 +60,7 @@ const resolvedTwitterImage = twitterImage
     ? resolveImageUrl(image)
     : autoTwitterImage;
 
-const fullTitle = buildPageTitle(title, suffix);
+const fullTitle = buildPageTitle(title, { suffix, section });
 ---
 
 <html lang="en">
