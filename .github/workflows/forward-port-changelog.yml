@@ -7,9 +7,9 @@ name: Forward-port changelog and blog
 # between releases, and production has to pick them up the same way.
 #
 # This job closes that gap by cherry-picking whole commits onto site/v10. A commit
-# qualifies only when every file it touches is changelog or blog content: the
-# changelog folder, the root CHANGELOG.md, the blog's content and asset folders,
-# and the authors file that posts reference. A commit that also touches anything
+# qualifies only when every file it touches is site changelog or blog content:
+# the changelog folder, the blog's content and asset folders, and the authors
+# file that posts reference. A commit that also touches anything
 # else is left alone in full, never split, because forwarding only part of it
 # would ship a change to production without the redirects, components, or config
 # it was merged with. Such commits wait for the next release, or for a hand
@@ -26,7 +26,6 @@ on:
     # Only a push touching one of the forwarded paths can hold a qualifying
     # commit. Keep this list in sync with is_forwardable below.
     paths:
-      - 'CHANGELOG.md'
       - 'site/src/content/changelog/**'
       - 'site/src/content/blog/**'
       - 'site/src/assets/blog/**'
@@ -74,8 +73,7 @@ jobs:
 
             while IFS= read -r file; do
               case "$file" in
-                CHANGELOG.md \
-                  | site/src/content/changelog/* \
+                site/src/content/changelog/* \
                   | site/src/content/blog/* \
                   | site/src/assets/blog/* \
                   | site/src/content/authors.json) ;;
