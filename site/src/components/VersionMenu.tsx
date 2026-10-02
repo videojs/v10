@@ -113,9 +113,11 @@ export default function VersionMenu({ className, version, channel, currentPath }
                     <span className="flex size-4 shrink-0 items-center justify-center">
                       {isSelected && <Check className="text-accent size-4" aria-hidden="true" />}
                     </span>
-                    <span className="font-medium">{option.label}</span>
+                    <span className="inline-flex items-center gap-1 font-medium">
+                      {option.label}
+                      {option.external && <ArrowUpRight className="text-muted size-3.5" aria-hidden="true" />}
+                    </span>
                     <span className="text-muted ml-auto">{option.description}</span>
-                    {option.external && <ArrowUpRight className="text-muted size-3.5" aria-hidden="true" />}
                   </Menu.Item>
                 </Fragment>
               );
