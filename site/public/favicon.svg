@@ -1,7 +1,7 @@
-<svg viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
-  <path fill="#ffa81b" d="M0 0h210v210H0z" />
-  <path fill="#ff6200" d="M0 75h210v135H0z" />
-  <path fill="#eb3132" d="M0 135h210v75H0z" />
-  <path fill="#cc3566" d="M0 180h210v30H0z" />
-  <path d="M167.89 105L65.44 170.63V39.38L167.89 105z" fill="#ebe4c1" />
+<svg viewBox="0 0 209 209" xmlns="http://www.w3.org/2000/svg">
+  <path fill="#ffa81b" d="M0 0h209v209H0z" />
+  <path fill="#ff6200" d="M0 80h209v129H0z" />
+  <path fill="#eb3132" d="M0 142h209v67H0z" />
+  <path fill="#cc3566" d="M0 187h209v22H0z" />
+  <path d="M167.09 104.5L65.13 169.81V39.19l101.96 65.31z" fill="#ebe4c1" />
 </svg>
