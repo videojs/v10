@@ -11,7 +11,7 @@ type OptionalRef<T> = Ref<T> | undefined;
  *
  * Handles both callback refs and RefObject(s).
  *
- * @returns Cleanup function if the ref callback returned one (React 19 callback refs)
+ * @returns Cleanup function if the ref callback returned one (React 19+)
  */
 function setRef<T>(ref: OptionalRef<T>, value: T): (() => void) | void | undefined {
   if (isFunction(ref)) {
@@ -24,10 +24,6 @@ function setRef<T>(ref: OptionalRef<T>, value: T): (() => void) | void | undefin
 /**
  * Compose multiple refs into a single callback ref.
  *
- * The composed ref never returns a cleanup: React 18 ignores one and warns on every mount. Detach is handled on the
- * `null` call that both React 18 and 19 make when no cleanup is returned, which runs any cleanup an inner callback ref
- * handed back (React 19 style) and clears every other ref.
- *
  * @example
  *   ```tsx
  *   const composedRef = composeRefs(ref1, ref2, ref3);
@@ -38,23 +34,25 @@ function setRef<T>(ref: OptionalRef<T>, value: T): (() => void) | void | undefin
  */
 export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): RefCallback<T> {
   const flatRefs = refs.flat();
-  let cleanups: ((() => void) | void | undefined)[] = [];
 
-  return (node) => {
-    const previous = cleanups;
+  return (node): (() => void) | void => {
+    const cleanups = flatRefs.map((ref) => setRef(ref, node));
 
-    cleanups = [];
+    // Only return cleanup if any refs returned one (React 19+).
+    // React 18 handles cleanup by calling the ref callback with null.
+    if (cleanups.some(isFunction)) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
 
-    for (let i = 0; i < flatRefs.length; i++) {
-      const cleanup = previous[i];
-
-      if (isFunction(cleanup)) cleanup();
-      else if (node === null) setRef(flatRefs[i], null);
+          if (isFunction(cleanup)) {
+            cleanup();
+          } else {
+            setRef(flatRefs[i], null);
+          }
+        }
+      };
     }
-
-    if (node === null) return;
-
-    cleanups = flatRefs.map((ref) => setRef(ref, node));
   };
 }
 

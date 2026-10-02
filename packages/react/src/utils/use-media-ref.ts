@@ -1,7 +1,7 @@
 'use client';
 
 import type { Ref, RefCallback } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { composeRefs } from './use-composed-refs';
 
@@ -26,8 +26,5 @@ export interface MediaRefProps<Media> {
  * @internal
  */
 export function useMediaRef<Media>(media: Media, mediaRef: Ref<Media> | undefined): RefCallback<Element> {
-  // One composed ref per consumer ref, so a cleanup it returns on mount is still there to run on unmount.
-  const setMediaRef = useMemo(() => composeRefs(mediaRef), [mediaRef]);
-
-  return useCallback((element) => setMediaRef(element ? media : null), [media, setMediaRef]);
+  return useCallback((element) => composeRefs(mediaRef)(element ? media : null), [media, mediaRef]);
 }

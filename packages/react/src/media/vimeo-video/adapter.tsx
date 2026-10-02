@@ -18,16 +18,11 @@ export interface VimeoVideoProps
 }
 
 export const VimeoVideo = forwardRef<HTMLIFrameElement, VimeoVideoProps>(function VimeoVideo(
-  { children, mediaRef, autoPlay, ...rawProps },
+  { children, mediaRef, autoPlay = false, autoplay = autoPlay, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(VimeoAdapter);
-  const props: Partial<VimeoAdapterProps> & Record<string, unknown> = {
-    // Before anything reads the props, so the initial embed URL sees it too. Only when given: an `undefined`
-    // would override the default the URL builders spread these over.
-    ...(autoPlay !== undefined && { autoplay: autoPlay }),
-    ...rawProps,
-  };
+  const props: Partial<VimeoAdapterProps> & Record<string, unknown> = { ...rawProps, autoplay };
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildVimeoIframeSrc(props.src || props.source?.src || '', { ...VimeoAdapter.defaultProps, ...props })

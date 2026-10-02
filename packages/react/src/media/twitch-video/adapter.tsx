@@ -18,16 +18,11 @@ export interface TwitchVideoProps
 }
 
 export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(function TwitchVideo(
-  { children, mediaRef, autoPlay, ...rawProps },
+  { children, mediaRef, autoPlay = false, autoplay = autoPlay, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(TwitchAdapter);
-  const props: Partial<TwitchAdapterProps> & Record<string, unknown> = {
-    // Before anything reads the props, so the initial embed URL sees it too. Only when given: an `undefined`
-    // would override the default the URL builders spread these over.
-    ...(autoPlay !== undefined && { autoplay: autoPlay }),
-    ...rawProps,
-  };
+  const props: Partial<TwitchAdapterProps> & Record<string, unknown> = { ...rawProps, autoplay };
   const [initialSrc] = useState(() =>
     // Server rendering has no `location` to name as the embed's parent, and Twitch
     // refuses to play in a page its URL never named. Rendering no `src` leaves the

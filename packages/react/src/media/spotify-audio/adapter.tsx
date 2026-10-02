@@ -18,16 +18,11 @@ export interface SpotifyAudioProps
 }
 
 export const SpotifyAudio = forwardRef<HTMLIFrameElement, SpotifyAudioProps>(function SpotifyAudio(
-  { children, mediaRef, autoPlay, ...rawProps },
+  { children, mediaRef, autoPlay = false, autoplay = autoPlay, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(SpotifyAdapter);
-  const props: Partial<SpotifyAdapterProps> & Record<string, unknown> = {
-    // Before anything reads the props, so the initial embed URL sees it too. Only when given: an `undefined`
-    // would override the default the URL builders spread these over.
-    ...(autoPlay !== undefined && { autoplay: autoPlay }),
-    ...rawProps,
-  };
+  const props: Partial<SpotifyAdapterProps> & Record<string, unknown> = { ...rawProps, autoplay };
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name an entity, so honor it when `src` is absent.
     buildSpotifyIframeSrc(props.src || props.source?.src || '', { ...SpotifyAdapter.defaultProps, ...props })

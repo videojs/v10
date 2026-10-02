@@ -18,16 +18,11 @@ export interface TikTokVideoProps
 }
 
 export const TikTokVideo = forwardRef<HTMLIFrameElement, TikTokVideoProps>(function TikTokVideo(
-  { children, mediaRef, autoPlay, ...rawProps },
+  { children, mediaRef, autoPlay = false, autoplay = autoPlay, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(TikTokAdapter);
-  const props: Partial<TikTokAdapterProps> & Record<string, unknown> = {
-    // Before anything reads the props, so the initial embed URL sees it too. Only when given: an `undefined`
-    // would override the default the URL builders spread these over.
-    ...(autoPlay !== undefined && { autoplay: autoPlay }),
-    ...rawProps,
-  };
+  const props: Partial<TikTokAdapterProps> & Record<string, unknown> = { ...rawProps, autoplay };
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildTikTokIframeSrc(props.src || props.source?.src || '', {
