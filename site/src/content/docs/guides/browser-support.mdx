@@ -1,39 +1,83 @@
 ---
 title: Browser support
-description: Browsers and rendering environments supported by Video.js 10, and how the packaged skins reach them
+description: Which browsers Video.js 10 supports, what looks different in older versions, and how to build the skins for your own browser targets
 ---
 
+import Aside from '@/components/Aside.astro';
 import BrowserSupportTable from '@/components/docs/BrowserSupportTable.astro';
+import BrowserVersions from '@/components/docs/BrowserVersions.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Video.js 10 supports current versions of the major browsers, back to the versions below. This page covers which versions we support, what looks different in older ones, and what to change when you build the skin CSS yourself.
+
+## Supported browsers
 
 <BrowserSupportTable kind="browsers" />
 
 <BrowserSupportTable kind="coverage" />
 
-We test in and fix bugs for these versions. Each minimum comes from a feature with no fallback: `:has()` sets Firefox, [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) and [`oklch()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch) set Chrome and Edge (Chrome 111, Firefox 113, Safari 16.2), and the JavaScript sets Safari, because it uses ES2022 syntax and [`adoptedStyleSheets`](https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets). Newer JavaScript APIs are feature-detected.
+We test in and fix bugs for these versions. They apply to every skin: Default, Neutral, and Compat.
 
-## CSS requirements
+### Why these versions
 
-The packaged skins are generated CSS, and the build lowers them for the browsers above. It flattens CSS nesting, adds vendor prefixes such as `-webkit-backdrop-filter`, and writes each skin's scope as a [`:where()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where) selector, which adds no specificity, rather than [`@scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope).
+Each minimum is the first version that has something Video.js can't work without:
 
-Skins you add as source through the <DocsLink slug="guides/installation-shadcn">Shadcn registry</DocsLink> keep `@scope`, which reads more clearly in files you edit. Their plain CSS versions need Chrome and Edge 118, Firefox 146, and Safari and iOS 17.4 unless you [flatten `@scope` in your build](#flatten-scope-in-registry-skins); the Tailwind versions style elements with utility classes and follow the versions above.
+| Browser | Minimum set by |
+|---|---|
+| Chrome and Edge | The `color-mix()` and `oklch()` color functions |
+| Firefox | The `:has()` selector |
+| Safari and Safari on iOS | The JavaScript, which uses ES2022 syntax and [`adoptedStyleSheets`](https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets) |
 
-Newer color functions get a fallback, and the original declaration moves inside [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports), so browsers that have the function still use it:
-
-- [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark) uses its light color. The audio skins render their light theme, and the video skins keep the light hairline border.
-- [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color) uses each theme's default text color on primary buttons and the inherited text color elsewhere. The fallback cannot read a custom accent, so set `--media-accent-text-color` whenever you set `--media-accent-color`; see <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>.
-- [Relative colors](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors) that keep their origin's channels, which build the scrims behind the controls, become `color-mix()`. Subtle shadows derived from `currentColor` have no equivalent and are left out.
-
-Tooltips, menus, and popovers use the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) where it exists (Chrome 114, Firefox 125, Safari 17). In older supported versions they stay inside the player instead of the top layer: the skins hide them while closed and position them against the player while open, so on the video skins a menu taller than the player is cut off.
-
-The table reads the first fully supporting version of each feature from [caniuse-lite](https://github.com/browserslist/caniuse-lite) when the docs build, and feature names link to [caniuse.com](https://caniuse.com/). **Required** features have no fallback. **Degrades** features lose one visual detail. **Has a fallback** features keep working another way: anchor positioning falls back to positions computed in JavaScript, `:dir()` sits beside `[dir="rtl"]` selectors, and the packaged skins flatten `@scope` into `:where()` selectors.
+Newer JavaScript APIs are feature-detected, so they don't raise the minimum. The skins need every CSS feature in this table, and none of them has a fallback:
 
 <BrowserSupportTable kind="requirements" />
 
-Older browsers than the baseline are not tested. Without `:has()`, `@container`, `@layer`, `color-mix()`, or `oklch()`, the skins lose focus states, layout, or colors.
+We don't test browsers older than these minimums. In them, the skins break in the ways the last column describes.
+
+## What looks different in older versions
+
+Every supported browser plays media and shows every control. A few CSS features the skins use arrived after the minimums. Browsers with them get the full design, and older ones get a fallback:
+
+| Feature | Who gets the fallback | What you see instead |
+|---|---|---|
+| [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) | <BrowserVersions feature="popover" show="missing" /> | Tooltips, menus, and popovers open inside the player instead of above the page. On video skins, a menu taller than the player is cut off. |
+| [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark) | <BrowserVersions feature="light-dark" show="missing" /> | Light colors only. Audio skins show their light theme, and video skins keep a light hairline border. |
+| [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color) | <BrowserVersions feature="contrast-color" show="missing" /> | Buttons use the theme's default text color instead of one picked to contrast with the accent color. |
+| [Relative colors](https://caniuse.com/css-relative-colors) | <BrowserVersions feature="css-relative-colors" show="missing" /> | The scrims behind the controls are built with `color-mix()` instead, and subtle shadows are left out. |
+| [Scrollbar styling](https://caniuse.com/css-scrollbar) | <BrowserVersions feature="css-scrollbar" show="missing" /> | Menus show the browser's default scrollbars. |
+| [Anchor positioning](https://caniuse.com/css-anchor-positioning) | <BrowserVersions feature="css-anchor-positioning" show="missing" /> | JavaScript positions popups, so they look the same. In Default and Neutral, the menu highlight jumps between items instead of sliding. |
+| [`:dir()`](https://caniuse.com/css-dir-pseudo) | <BrowserVersions feature="css-dir-pseudo" show="missing" /> | Nothing, as long as the `dir` attribute sets the text direction. |
+
+The skins keep each newer declaration inside an [`@supports`](https://developer.mozilla.org/en-US/docs/Web/CSS/@supports) check, so browsers that have the feature still use it.
+
+<Aside type="caution" title="Set the accent text color whenever you set the accent color.">
+The `contrast-color()` fallback can't read a custom accent color. When you set `--media-accent-color`, also set `--media-accent-text-color`. See <DocsLink slug="guides/customize-skins" anchor="set-the-skins-styles">Customize skins</DocsLink>.
+</Aside>
+
+### Choose Compat for fewer differences
+
+Default and Neutral add two details that depend on browser support. Compat leaves both out:
+
+| Detail | Default | Neutral | Compat |
+|---|---|---|---|
+| Menu highlight | Slides between items with anchor positioning, and jumps without it | Slides between items with anchor positioning, and jumps without it | Jumps between items |
+| Control corners | Rounded | Smooth squircle corners with [`corner-shape`](https://developer.mozilla.org/en-US/docs/Web/CSS/corner-shape), and rounded without it | Rounded |
+
+Compat still uses the other features in the table above, so it gets the same popover and color fallbacks. See <DocsLink slug="guides/skins">Skins</DocsLink> to compare the skins in full.
+
+## Skins from the Shadcn registry
+
+Packaged skins don't use [`@scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope): our build rewrites it into [`:where()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where) selectors. Skins you add as source through the <DocsLink slug="guides/installation-shadcn">Shadcn registry</DocsLink> keep it, because it reads more clearly in files you edit. That raises the minimums for one style:
+
+| Registry skin | Supported browsers |
+|---|---|
+| Tailwind | The supported browsers above. Utility classes style each element, so there's no `@scope`. |
+| Plain CSS | <BrowserVersions feature="css-cascade-scope" show="first" />. To reach the full list, [flatten `@scope` in your build](#flatten-scope-in-registry-skins). |
 
 ## Build the skin CSS yourself
+
+We build the packaged skins for the supported browsers, so most projects need no changes. Your own build only matters when it processes the skin CSS.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -43,11 +87,20 @@ Skins are stylesheets you import, such as `@videojs/react/video/skin.css`, so yo
 
 <FrameworkCase frameworks={["html"]}>
 
-Packaged HTML skins inline their CSS into JavaScript, so <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the skin source to your project</DocsLink> first. The added `skin.css` can pass through your CSS pipeline. CDN bundles inline their CSS too; to recompile it, move to a <DocsLink slug="guides/self-hosting">self-hosted build</DocsLink> and use the skin source instead of the prebuilt CDN skin.
+Packaged HTML skins inline their CSS into JavaScript, so your build doesn't touch them. To process the CSS yourself, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">add the skin source to your project</DocsLink>; its `skin.css` passes through your CSS pipeline. CDN bundles inline their CSS too. To recompile it, move to a <DocsLink slug="guides/self-hosting">self-hosted build</DocsLink> and use the skin source.
 
 </FrameworkCase>
 
-[Lightning CSS](https://lightningcss.dev/transpilation.html), which Vite uses to minify CSS, rewrites `light-dark()` and `:dir()` for every browser when its targets include older ones, not only for those older browsers. Its `light-dark()` output depends on a `color-scheme` declaration the skins do not make, so the skin colors break. The skins keep `light-dark()` inside `@supports` checks, which Lightning CSS 1.32 and earlier leave alone but 1.33 and later rewrite anyway. The skins already handle both features, so exclude them:
+### Turn off two Lightning CSS rewrites
+
+Vite minifies CSS with [Lightning CSS](https://lightningcss.dev/transpilation.html). When your browser targets include older versions, it rewrites two features the skins already handle, in every browser rather than only the older ones:
+
+| Feature | What goes wrong |
+|---|---|
+| `light-dark()` | The rewrite depends on a `color-scheme` declaration the skins don't make, so the skin colors break. Lightning CSS 1.33 and later rewrite it even inside `@supports` checks. |
+| `:dir()` | The rewrite turns it into a list of right-to-left languages, so right-to-left styles can apply because of the page's `lang` instead of its text direction. The skins already pair `:dir()` with `[dir]` selectors, so they don't need the rewrite. |
+
+Exclude both:
 
 ```ts title="vite.config.ts"
 import { Features } from 'lightningcss';
@@ -62,11 +115,15 @@ export default defineConfig({
 
 ### Flatten `@scope` in registry skins
 
-Registry skins in plain CSS keep `@scope`, and Lightning CSS passes it through unchanged. To reach browsers without `@scope`, add a PostCSS plugin that rewrites each block into descendant selectors prefixed with [`:where(root)`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where), which adds no specificity. Vite, Next.js, and most bundlers pick it up from `postcss.config.mjs` and run it before Lightning CSS:
+Lightning CSS leaves `@scope` alone. To support browsers without it, add a small PostCSS plugin that rewrites each `@scope` block into ordinary selectors, the same way we build the packaged skins. Most bundlers, including Vite and Next.js, run PostCSS before Lightning CSS.
+
+Install PostCSS and its selector parser:
 
 ```bash
 npm install --save-dev postcss postcss-selector-parser
 ```
+
+Add the plugin to `postcss.config.mjs`:
 
 ```js title="postcss.config.mjs"
 import selectorParser from 'postcss-selector-parser';
@@ -116,35 +173,25 @@ flattenScope.postcss = true;
 export default { plugins: [flattenScope()] };
 ```
 
-Flattening trades scope proximity for source order, the same way the packaged skins do. Keep the Lightning CSS `exclude` setting above so the colors still work.
+Flattened rules apply in source order instead of by `@scope` proximity, the same as in the packaged skins. Keep the [Lightning CSS setting above](#turn-off-two-lightning-css-rewrites) so the colors still work.
 
 {/* Reveal inside `<StyleCase styles={['tailwind']}>` once the docs offer a Tailwind style.
 
 Tailwind skins have one more step. Tailwind's Vite plugin runs Lightning CSS only for production builds, so its dev server sends nested rules that Safari before 17.2 drops, and the time slider track disappears. Test older browsers against a production build, or lower dev CSS as well by setting `css.transformer: 'lightningcss'` with `css.lightningcss.targets` from your browserslist.
 */}
 
-## Rendering contexts
+## Other environments
 
-### WebViews
-
-A WebView is a browser engine embedded inside a native app. WebViews on iOS ([WKWebView](https://developer.apple.com/documentation/webkit/wkwebview)) and Android ([Android WebView](https://developer.android.com/reference/android/webkit/WebView)) can behave differently from the full browser; autoplay policies, fullscreen APIs, and hardware acceleration can vary.
-
-Video.js 10 targets standard browser environments. If you embed a player inside a native app, test it on each platform and WebView version you support.
-
-### Progressive Web Apps
-
-Installed Progressive Web Apps (PWAs) use the browser engine, but their standalone display mode and platform policies can affect fullscreen, media sessions, and other browser integration. Test playback both in a browser tab and in the installed app.
-
-### Smart TVs and set-top boxes
-
-TV platforms run embedded browsers with limited standards support. Video.js 10's core is not tied to any specific platform, which makes future TV adapters possible, but TV is not a supported target today.
-
-### Server-side rendering
-
-Video.js components render valid markup on the server. Interactivity — state management, media playback, and event handling — requires the browser and kicks in after hydration.
+| Environment | Supported | What to know |
+|---|---|---|
+| Server-side rendering | Yes | Components render valid markup on the server. Playback, state, and events start in the browser after hydration. |
+| Progressive Web Apps | Yes | Installed apps use the browser engine, but standalone mode can change fullscreen and media session behavior. Test in a browser tab and in the installed app. |
+| WebViews | Untested | [WKWebView](https://developer.apple.com/documentation/webkit/wkwebview) on iOS and [Android WebView](https://developer.android.com/reference/android/webkit/WebView) can differ from the full browser in autoplay, fullscreen, and hardware acceleration. Test each platform and WebView version you support. |
+| Smart TVs and set-top boxes | No | Their embedded browsers have limited standards support. The core isn't tied to a platform, so TV adapters are possible later. |
 
 ## Related guides
 
+- <DocsLink slug="guides/skins">Skins</DocsLink>
 - <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>
 - <DocsLink slug="guides/installation">Installation</DocsLink>
 - <DocsLink slug="guides/bundlers">Bundlers</DocsLink>

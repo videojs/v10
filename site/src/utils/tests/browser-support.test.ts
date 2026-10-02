@@ -4,7 +4,12 @@ import {
   BROWSERSLIST_QUERY,
   CSS_REQUIREMENTS,
   cssRequirementSupport,
+  featureFirstVersions,
   featureSupport,
+  featureUrl,
+  firstVersions,
+  missingVersions,
+  type ResolvedBrowser,
   resolveSupportedBrowsers,
   SUPPORT_BROWSERS,
   supportedCoverage,
@@ -42,35 +47,82 @@ describe('resolveSupportedBrowsers', () => {
   });
 });
 
-describe('featureSupport', () => {
-  it('reads @scope support, which only the registry CSS skins need', () => {
-    const scope = featureSupport(CSS_REQUIREMENTS.find((requirement) => requirement.id === 'css-cascade-scope')!);
+describe('featureFirstVersions', () => {
+  it('reads the first fully supporting version per browser from caniuse-lite', () => {
+    const has = featureFirstVersions('css-has');
 
-    expect(scope.firstVersion.chrome).toBe('118');
-    expect(scope.firstVersion.safari).toBe('17.4');
-    expect(versionNumber(scope.firstVersion.firefox!)).toBeGreaterThanOrEqual(146);
-    expect(scope.caniuseUrl).toBe('https://caniuse.com/css-cascade-scope');
+    expect(has.chrome).toBe('105');
+    expect(has.firefox).toBe('121');
+    expect(has.safari).toBe('15.4');
   });
 
-  it('reads the first fully supporting version per browser from caniuse-lite', () => {
-    const has = featureSupport(CSS_REQUIREMENTS.find((requirement) => requirement.id === 'css-has')!);
-
-    expect(has.firstVersion.chrome).toBe('105');
-    expect(has.firstVersion.firefox).toBe('121');
-    expect(has.firstVersion.safari).toBe('15.4');
-    expect(has.globalSupport).toBeGreaterThan(50);
-    expect(has.caniuseUrl).toBe('https://caniuse.com/css-has');
+  it('reads features caniuse does not track from MDN data', () => {
+    expect(featureFirstVersions('popover')).toEqual({
+      chrome: '114',
+      edge: '114',
+      firefox: '125',
+      safari: '17',
+      ios_saf: '17',
+    });
   });
 
   it('rejects unknown feature ids', () => {
-    expect(() => featureSupport({ id: 'not-a-feature', label: 'x', kind: 'required', effect: '' })).toThrow(
-      /Unknown caniuse feature/
+    expect(() => featureFirstVersions('not-a-feature')).toThrow(/Unknown caniuse feature/);
+  });
+});
+
+describe('featureUrl', () => {
+  it('links caniuse features to caniuse.com and the rest to MDN', () => {
+    expect(featureUrl('css-has')).toBe('https://caniuse.com/css-has');
+    expect(featureUrl('color-mix')).toBe('https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix');
+  });
+});
+
+describe('featureSupport', () => {
+  it('pairs a requirement with its versions and support page', () => {
+    const has = featureSupport(CSS_REQUIREMENTS.find((requirement) => requirement.id === 'css-has')!);
+
+    expect(has.firstVersion).toEqual(featureFirstVersions('css-has'));
+    expect(has.url).toBe('https://caniuse.com/css-has');
+  });
+});
+
+describe('firstVersions', () => {
+  it('phrases @scope support, which only the registry CSS skins need', () => {
+    expect(firstVersions('css-cascade-scope')).toMatch(/^Chrome and Edge 118, Firefox \d+, Safari and iOS 17\.4$/);
+  });
+});
+
+describe('missingVersions', () => {
+  const browsers = (minimums: Record<string, string | null>): ResolvedBrowser[] =>
+    resolveSupportedBrowsers().map((browser) => ({ ...browser, minimum: minimums[browser.id] ?? null }));
+
+  it('names the supported versions that lack a feature, grouped like the tables', () => {
+    const supported = browsers({ chrome: '111', edge: '111', firefox: '121', safari: '16.4', ios_saf: '16.4' });
+
+    expect(missingVersions('popover', supported)).toBe(
+      'Chrome and Edge before 114, Firefox before 125, Safari and iOS before 17'
     );
+    expect(missingVersions('light-dark', supported)).toBe('Chrome and Edge before 123, Safari and iOS before 17.5');
+  });
+
+  it('names paired browsers separately when they differ', () => {
+    const supported = browsers({ chrome: '111', edge: '125', firefox: '147', safari: '26', ios_saf: '26' });
+
+    expect(missingVersions('css-anchor-positioning', supported)).toBe('Chrome before 125');
+  });
+
+  it('returns null when every supported version has the feature', () => {
+    expect(missingVersions('css-has')).toBeNull();
+  });
+
+  it('ignores browsers the query does not name', () => {
+    expect(missingVersions('popover', browsers({ chrome: '111' }))).toBe('Chrome before 114');
   });
 });
 
 describe('cssRequirementSupport', () => {
-  it('resolves every listed requirement', () => {
+  it('resolves every listed requirement, each supported by every supported browser', () => {
     const support = cssRequirementSupport();
 
     expect(support).toHaveLength(CSS_REQUIREMENTS.length);
@@ -79,6 +131,8 @@ describe('cssRequirementSupport', () => {
       for (const browser of SUPPORT_BROWSERS) {
         expect(entry.firstVersion[browser.id], `${entry.requirement.id} ${browser.id}`).not.toBeUndefined();
       }
+
+      expect(missingVersions(entry.requirement.id), entry.requirement.id).toBeNull();
     }
   });
 });
