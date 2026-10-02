@@ -3,3 +3,9 @@ import { safeDefine } from '../../registration/safe-define';
 import '../../internal/skins/compat-audio/register';
 
 safeDefine(CompatAudioSkinElement);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [CompatAudioSkinElement.tagName]: CompatAudioSkinElement;
+  }
+}

@@ -3,3 +3,9 @@ import { safeDefine } from '../../registration/safe-define';
 import '../../internal/skins/default-live-audio/register';
 
 safeDefine(LiveAudioSkinElement);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [LiveAudioSkinElement.tagName]: LiveAudioSkinElement;
+  }
+}

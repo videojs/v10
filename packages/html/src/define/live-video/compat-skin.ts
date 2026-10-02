@@ -3,3 +3,9 @@ import { safeDefine } from '../../registration/safe-define';
 import '../../internal/skins/compat-live-video/register';
 
 safeDefine(CompatLiveVideoSkinElement);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [CompatLiveVideoSkinElement.tagName]: CompatLiveVideoSkinElement;
+  }
+}

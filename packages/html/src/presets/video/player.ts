@@ -18,9 +18,3 @@ export const PlayerController = VideoPlayerController;
 export class VideoPlayerElement extends PlayerElement {
   static readonly tagName = 'video-player';
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [VideoPlayerElement.tagName]: VideoPlayerElement;
-  }
-}

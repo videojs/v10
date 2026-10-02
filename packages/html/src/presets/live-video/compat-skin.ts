@@ -11,9 +11,3 @@ export class CompatLiveVideoSkinElement extends SkinElement {
   static styles = createShadowStyle(styles);
   static template = template;
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [CompatLiveVideoSkinElement.tagName]: CompatLiveVideoSkinElement;
-  }
-}

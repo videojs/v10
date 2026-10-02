@@ -12,9 +12,3 @@ export const PlayerController = AudioPlayerController;
 export class AudioPlayerElement extends PlayerElement {
   static readonly tagName = 'audio-player';
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [AudioPlayerElement.tagName]: AudioPlayerElement;
-  }
-}

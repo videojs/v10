@@ -11,9 +11,3 @@ export class VideoSkinElement extends SkinElement {
   static styles: CSSStyleSheet | string = createShadowStyle(styles);
   static template = template;
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [VideoSkinElement.tagName]: VideoSkinElement;
-  }
-}

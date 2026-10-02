@@ -11,9 +11,3 @@ export class CompatLiveAudioSkinElement extends SkinElement {
   static styles = createShadowStyle(styles);
   static template = template;
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [CompatLiveAudioSkinElement.tagName]: CompatLiveAudioSkinElement;
-  }
-}
