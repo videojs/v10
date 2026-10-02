@@ -3,6 +3,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import FormattedDate from '@/components/FormattedDate.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import Blog from '@/layouts/Blog.astro';
@@ -39,20 +40,16 @@ const description =
     <header
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
-      <div
-        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+      <p
+        class="mb-2 font-display text-h4 uppercase text-accent"
         data-llms-ignore
+        data-search-ignore
       >
-        <FormattedDate date={entry.data.date} />
-        {
-          entry.data.breaking && (
-            <>
-              <span class="hidden sm:inline">&bull;</span>
-              <span>Breaking changes</span>
-            </>
-          )
-        }
-      </div>
+        <a href="/changelog" class="inline-flex items-center gap-1.5 intent:underline">
+          Changelog
+          <ChevronRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+        </a>
+      </p>
       <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
         {title}
       </h1>
@@ -70,6 +67,9 @@ const description =
       >
         Compare changes on GitHub <ArrowUpRight className="size-4" aria-hidden="true" />
       </a>
+      <div data-llms-ignore>
+        <FormattedDate date={entry.data.date} />
+      </div>
     </header>
     <Content components={{ ...defaultMarkdownComponents }} />
   </article>
