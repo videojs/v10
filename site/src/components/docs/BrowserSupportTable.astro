@@ -14,11 +14,11 @@ import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import {
   caniuseVersion,
-  type CssRequirementKind,
   cssRequirementSupport,
   resolveSupportedBrowsers,
-  supportedCoverage,
+  SUPPORT_GROUPS,
   type SupportBrowserId,
+  supportedCoverage,
 } from '@/utils/browser-support';
 
 interface Props {
@@ -31,25 +31,9 @@ const browsers = resolveSupportedBrowsers();
 const support = cssRequirementSupport();
 const coverage = supportedCoverage();
 
-const KIND_LABEL = {
-  required: 'Required',
-  degrades: 'Degrades',
-  guarded: 'Has a fallback',
-} satisfies Record<CssRequirementKind, string>;
-
 const percent = (value: number) => `${value.toFixed(1)}%`;
 
 const UNSUPPORTED = 'Not supported';
-
-/**
- * Column groups for the requirements table. Chrome and Edge, and Safari and Safari on iOS, ship features together, so
- * each pair shares a column; a cell shows both values only when they differ.
- */
-const COLUMN_GROUPS = [
-  { label: 'Chrome and Edge', ids: ['chrome', 'edge'] },
-  { label: 'Firefox', ids: ['firefox'] },
-  { label: 'Safari and iOS', ids: ['safari', 'ios_saf'] },
-] as const satisfies readonly { label: string; ids: readonly SupportBrowserId[] }[];
 
 function groupCell(values: Record<SupportBrowserId, string | null>, ids: readonly SupportBrowserId[]): string {
   const shown = ids.map((id) => values[id] ?? UNSUPPORTED);
@@ -97,31 +81,27 @@ function groupCell(values: Record<SupportBrowserId, string | null>, ids: readonl
   kind === 'requirements' && (
     <Table>
       <caption class="sr-only">
-        First browser version that fully supports each CSS feature the packaged skins use, with the share of global web
-        usage on supporting browsers. Feature names link to their caniuse.com support data. "Not supported" means the
-        browser has no full support. Paired browsers share a column and show two values only when they differ.
+        First browser version that fully supports each CSS feature the skins need, and what breaks without it. Feature
+        names link to their support data on caniuse.com or MDN. Paired browsers share a column and show two values only when they
+        differ.
       </caption>
       <Thead>
         <Tr>
           <Th scope="col">Feature</Th>
-          {COLUMN_GROUPS.map((group) => <Th scope="col">{group.label}</Th>)}
-          <Th scope="col">Global support</Th>
+          {SUPPORT_GROUPS.map((group) => <Th scope="col">{group.label}</Th>)}
+          <Th scope="col">Without it</Th>
         </Tr>
       </Thead>
       <Tbody>
-        {support.map(({ requirement, firstVersion, globalSupport, caniuseUrl }) => (
+        {support.map(({ requirement, firstVersion, url }) => (
           <Tr>
             <Td as="th" scope="row" class="text-left font-medium">
-              <A href={caniuseUrl}>
-                <MarkdownCode>{requirement.label}</MarkdownCode>
+              <A href={url}>
+                {requirement.code ? <MarkdownCode>{requirement.label}</MarkdownCode> : requirement.label}
               </A>
-              {/* A block element, so the note separates from the link when the table is exported as Markdown. */}
-              <div class="mt-1 text-p4 font-normal">
-                {KIND_LABEL[requirement.kind]}. {requirement.effect}.
-              </div>
             </Td>
-            {COLUMN_GROUPS.map((group) => <Td class="tabular-nums">{groupCell(firstVersion, group.ids)}</Td>)}
-            <Td class="tabular-nums">{percent(globalSupport)}</Td>
+            {SUPPORT_GROUPS.map((group) => <Td class="tabular-nums">{groupCell(firstVersion, group.ids)}</Td>)}
+            <Td>{requirement.effect}</Td>
           </Tr>
         ))}
       </Tbody>

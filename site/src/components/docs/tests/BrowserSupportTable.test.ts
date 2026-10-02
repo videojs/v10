@@ -2,7 +2,7 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { CSS_REQUIREMENTS, SUPPORT_BROWSERS } from '@/utils/browser-support';
+import { CSS_REQUIREMENTS, featureUrl, SUPPORT_BROWSERS } from '@/utils/browser-support';
 
 import BrowserSupportTable from '../BrowserSupportTable.astro';
 
@@ -33,7 +33,7 @@ describe('BrowserSupportTable', () => {
     expect(html).toMatch(/caniuse-lite<\/a> 1\.0\.\d+/);
   });
 
-  it('renders one row per requirement and same-tab caniuse links', async () => {
+  it('renders one row per requirement and same-tab support data links', async () => {
     const html = await render('requirements');
 
     expect(html).toContain('<caption class="sr-only">');
@@ -44,7 +44,7 @@ describe('BrowserSupportTable', () => {
     expect(html).not.toContain('target="_blank"');
 
     for (const requirement of CSS_REQUIREMENTS) {
-      expect(html).toContain(`https://caniuse.com/${requirement.id}`);
+      expect(html).toContain(featureUrl(requirement.id));
     }
   });
 });
