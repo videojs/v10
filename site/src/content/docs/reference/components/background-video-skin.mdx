@@ -28,7 +28,7 @@ The only skin of the background preset: a chrome-less surface that sizes ambient
 
 <SkinImports preset="background" react="BackgroundVideoSkin" />
 
-## Usage
+## Anatomy
 
 The skin goes between the player and the media element. It sizes the ambient video and renders no visible controls.
 
@@ -36,7 +36,7 @@ The skin goes between the player and the media element. It sizes the ambient vid
 ```tsx
 <BackgroundVideoPlayer>
   <BackgroundVideoSkin>
-    <BackgroundVideo src="video.mp4" />
+    <BackgroundVideo />
   </BackgroundVideoSkin>
 </BackgroundVideoPlayer>
 ```
@@ -46,11 +46,15 @@ The skin goes between the player and the media element. It sizes the ambient vid
 ```html
 <background-video-player>
   <background-video-skin>
-    <background-video src="video.mp4"></background-video>
+    <background-video></background-video>
   </background-video-skin>
 </background-video-player>
 ```
 </FrameworkCase>
+
+## Styling
+
+Packaged skins style themselves and expose a small set of public CSS custom properties. Everything else inside the skin is private and may change between releases. <DocsLink slug="guides/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> documents the properties.
 
 ## Examples
 
@@ -78,10 +82,6 @@ The skin goes between the player and the media element. It sizes the ambient vid
     </Demo>
   </StyleCase>
 </FrameworkCase>
-
-## Styling
-
-Packaged skins style themselves and expose a small set of public CSS custom properties. Everything else inside the skin is private and may change between releases. <DocsLink slug="guides/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> documents the properties.
 
 ## Own the UI
 
