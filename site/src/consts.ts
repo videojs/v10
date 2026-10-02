@@ -35,7 +35,6 @@ export const THEME_COLORS = {
   soft: '#1e1d1d',
   deep: '#151414',
 } as const;
-export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 export const BLOG_PAGE_SIZE = 10;
 export const CDN_URL_BASE = `https://cdn.jsdelivr.net/npm`;
 export const VJS10_VERSION = htmlPackage.version;
