@@ -1,0 +1,20 @@
+---
+/**
+ * Inline browser versions for one feature, read from `caniuse-lite` or MDN data at build time so guide prose and table
+ * cells move with dependency updates instead of hand edits.
+ */
+import { firstVersions, missingVersions } from '@/utils/browser-support';
+
+interface Props {
+  /** A caniuse feature id, such as `css-relative-colors`, or an MDN feature key from `browser-support.ts`. */
+  feature: string;
+  /** `first`: the first supporting versions. `missing`: the supported versions that lack the feature. */
+  show: 'first' | 'missing';
+}
+
+const { feature, show } = Astro.props;
+
+const text = show === 'first' ? firstVersions(feature) : (missingVersions(feature) ?? 'None');
+---
+
+<span class="tabular-nums">{text}</span>
