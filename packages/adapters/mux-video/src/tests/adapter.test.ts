@@ -123,6 +123,15 @@ describe('MuxVideoAdapter', () => {
     expect(media.source).toEqual({ playbackId: 'abc123' });
   });
 
+  it('parses source from a Mux stream src without the .m3u8 extension', () => {
+    const media = new MuxVideoAdapter();
+
+    media.src = 'https://stream.mux.com/abc123?max_resolution=1080p';
+
+    expect(media.source).toEqual({ playbackId: 'abc123', playback: { maxResolution: '1080p' } });
+    expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp');
+  });
+
   it('parses the custom domain and playback params from a Mux stream src', () => {
     const media = new MuxVideoAdapter();
 

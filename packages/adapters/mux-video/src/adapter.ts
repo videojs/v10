@@ -56,8 +56,9 @@ export class MuxVideoAdapter extends HlsJsAdapter implements MuxVideoAdapterProp
   }
 
   /**
-   * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the playback
-   * ID and query params into `source`; other URLs are kept as a plain `source.src`.
+   * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`, with or without the
+   * `.m3u8` extension) extracts the playback ID and query params into `source`; other URLs are kept as a plain
+   * `source.src`.
    *
    * Only playback options carry over. Mux identity comes from the URL, and the signed `poster`, `storyboard`, and `drm`
    * tokens are scoped to a playback ID, so carrying them onto a different source would build rejected URLs.
