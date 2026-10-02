@@ -10,6 +10,8 @@ export const PRODUCTION_URL = new URL('https://videojs.org');
 // Pre-release docs host (branch deploy of `main`). Keep references centralized
 // here so the hostname can move without touching components.
 export const PRERELEASE_URL = new URL('https://main.videojs.org');
+// Docs for Video.js 8 and earlier.
+export const LEGACY_URL = new URL('https://legacy.videojs.org');
 export const SITE_TITLE = 'Video.js';
 export const SEO_SUFFIX = 'Open Source Video Player';
 /** Month (`YYYY-MM`) of the first Video.js 10 blog post; earlier posts document Video.js 1 through 8. */
