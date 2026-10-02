@@ -1,8 +1,17 @@
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxVideo } from '../mux-video';
 
 customElements.define('test-mux-video', MuxVideo);
+
+beforeEach(() => {
+  // Loading a Mux source fetches optional metadata and may probe native HLS playlists.
+  // Keep URL-shaping tests offline and leave no request pending at teardown.
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.reject(new Error('offline')))
+  );
+});
 
 function createMuxVideo() {
   const el = new MuxVideo();
@@ -13,6 +22,7 @@ function createMuxVideo() {
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.unstubAllGlobals();
 });
 
 describe('MuxVideo', () => {
