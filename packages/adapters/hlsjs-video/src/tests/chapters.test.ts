@@ -5,17 +5,21 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HlsJsChaptersMixin } from '../chapters';
 
-// The loader (fetch, parse, project) is shared with native playback and
-// covered there; here only what the mixin hands it is observed.
-const loader = vi.hoisted(() => ({ load: vi.fn(), reset: vi.fn() }));
+// The load (fetch, parse, add tracks) is shared with native playback and
+// covered there; here only what the mixin hands it, and when it aborts, is observed.
+const loadChaptersTracks = vi.hoisted(() =>
+  vi.fn((..._args: Parameters<typeof import('@videojs/native-hls-video').loadChaptersTracks>) => {})
+);
 
 vi.mock('@videojs/native-hls-video', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@videojs/native-hls-video')>()),
-  HlsChaptersLoader: class {
-    load = loader.load;
-    reset = loader.reset;
-  },
+  loadChaptersTracks,
 }));
+
+/** The signal of the most recent load. */
+function lastSignal(): AbortSignal {
+  return loadChaptersTracks.mock.lastCall![2];
+}
 
 type Callbacks = LoaderCallbacks<PlaylistLoaderContext>;
 
@@ -108,8 +112,7 @@ function multivariant(...tags: string[]) {
 
 beforeEach(() => {
   playlists.clear();
-  loader.load.mockClear();
-  loader.reset.mockClear();
+  loadChaptersTracks.mockClear();
 });
 
 describe('HlsJsChaptersMixin', () => {
@@ -121,7 +124,12 @@ describe('HlsJsChaptersMixin', () => {
     host.attach(video);
     loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://cdn.example.com/redirected/main.m3u8');
 
-    expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://cdn.example.com/redirected/main.m3u8');
+    expect(loadChaptersTracks).toHaveBeenCalledWith(
+      video,
+      'https://cdn.example.com/redirected/chapters.json',
+      expect.any(AbortSignal),
+      { preferredLanguage: undefined }
+    );
   });
 
   it('reads the first chapters entry with a URI, where hls.js keeps the last', () => {
@@ -140,7 +148,9 @@ describe('HlsJsChaptersMixin', () => {
       { 'com.apple.hls.chapters': { 'DATA-ID': 'com.apple.hls.chapters', VALUE: 'inline', LANGUAGE: 'fr' } }
     );
 
-    expect(loader.load).toHaveBeenCalledWith(video, 'first.json', 'https://example.com/main.m3u8');
+    expect(loadChaptersTracks).toHaveBeenCalledWith(video, 'https://example.com/first.json', expect.any(AbortSignal), {
+      preferredLanguage: undefined,
+    });
   });
 
   it("falls back to hls.js's session data when the playlist text never arrived", () => {
@@ -155,7 +165,12 @@ describe('HlsJsChaptersMixin', () => {
       url: 'https://example.com/main.m3u8',
     });
 
-    expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://example.com/main.m3u8');
+    expect(loadChaptersTracks).toHaveBeenCalledWith(
+      video,
+      'https://example.com/chapters.json',
+      expect.any(AbortSignal),
+      { preferredLanguage: undefined }
+    );
   });
 
   it('passes every other playlist request through untouched', () => {
@@ -170,7 +185,7 @@ describe('HlsJsChaptersMixin', () => {
     emit(engine, Hls.Events.MANIFEST_LOADED, { sessionData: null, url: 'https://example.com/main.m3u8' });
 
     expect(onSuccess).toHaveBeenCalledOnce();
-    expect(loader.load).not.toHaveBeenCalled();
+    expect(loadChaptersTracks).not.toHaveBeenCalled();
   });
 
   it('wraps a configured playlist loader rather than replacing it', () => {
@@ -193,7 +208,12 @@ describe('HlsJsChaptersMixin', () => {
 
     expect(load).toHaveBeenCalledWith('https://example.com/main.m3u8');
     expect(onSuccess).toHaveBeenCalledOnce();
-    expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://example.com/main.m3u8');
+    expect(loadChaptersTracks).toHaveBeenCalledWith(
+      video,
+      'https://example.com/chapters.json',
+      expect.any(AbortSignal),
+      { preferredLanguage: undefined }
+    );
   });
 
   it('does nothing for a manifest without a chapters URI', () => {
@@ -208,7 +228,7 @@ describe('HlsJsChaptersMixin', () => {
       'https://example.com/main.m3u8'
     );
 
-    expect(loader.load).not.toHaveBeenCalled();
+    expect(loadChaptersTracks).not.toHaveBeenCalled();
   });
 
   it('waits for media before loading a manifest that arrived first', () => {
@@ -218,12 +238,28 @@ describe('HlsJsChaptersMixin', () => {
 
     loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
 
-    expect(loader.load).not.toHaveBeenCalled();
+    expect(loadChaptersTracks).not.toHaveBeenCalled();
 
     host.attach(video);
     emit(engine, Hls.Events.MEDIA_ATTACHED);
 
-    expect(loader.load).toHaveBeenCalledWith(video, 'chapters.json', 'https://example.com/main.m3u8');
+    expect(loadChaptersTracks).toHaveBeenCalledWith(
+      video,
+      'https://example.com/chapters.json',
+      expect.any(AbortSignal),
+      { preferredLanguage: undefined }
+    );
+  });
+
+  it('projects once while media stays attached', () => {
+    const engine = createEngine();
+    const host = new HlsJsChapters(engine);
+
+    host.attach(document.createElement('video'));
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
+    emit(engine, Hls.Events.MEDIA_ATTACHED);
+
+    expect(loadChaptersTracks).toHaveBeenCalledOnce();
   });
 
   it('removes the tracks on detach and projects them again on reattach', () => {
@@ -232,33 +268,62 @@ describe('HlsJsChaptersMixin', () => {
 
     host.attach(document.createElement('video'));
     loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
+    const signal = lastSignal();
+
     emit(engine, Hls.Events.MEDIA_DETACHED);
 
-    expect(loader.reset).toHaveBeenCalledTimes(2);
+    expect(signal.aborted).toBe(true);
 
     emit(engine, Hls.Events.MEDIA_ATTACHED);
 
-    expect(loader.load).toHaveBeenCalledTimes(2);
+    expect(loadChaptersTracks).toHaveBeenCalledTimes(2);
   });
 
-  it('forgets the chapters when a new source starts loading, and on destroy', () => {
+  it('forgets the chapters when a new source starts loading', () => {
     const engine = createEngine();
     const host = new HlsJsChapters(engine);
 
     host.attach(document.createElement('video'));
     loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
-    loader.reset.mockClear();
+    const signal = lastSignal();
+
     emit(engine, Hls.Events.MANIFEST_LOADING);
 
-    expect(loader.reset).toHaveBeenCalledOnce();
+    expect(signal.aborted).toBe(true);
 
     // Nothing left to project once media reattaches.
     emit(engine, Hls.Events.MEDIA_ATTACHED);
 
-    expect(loader.load).toHaveBeenCalledOnce();
+    expect(loadChaptersTracks).toHaveBeenCalledOnce();
+  });
 
+  it('removes the tracks on destroy', () => {
+    const engine = createEngine();
+    const host = new HlsJsChapters(engine);
+
+    host.attach(document.createElement('video'));
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
     emit(engine, Hls.Events.DESTROYING);
 
-    expect(loader.reset).toHaveBeenCalledTimes(2);
+    expect(lastSignal().aborted).toBe(true);
+  });
+
+  it("leads with hls.js's subtitle preference", () => {
+    const engine = createEngine();
+    const host = new HlsJsChapters(engine);
+    const video = document.createElement('video');
+
+    engine.config.subtitlePreference = { lang: 'es' };
+    host.attach(video);
+    loadManifest(engine, multivariant(CHAPTERS_TAG), 'https://example.com/main.m3u8');
+
+    expect(loadChaptersTracks).toHaveBeenCalledWith(
+      video,
+      'https://example.com/chapters.json',
+      expect.any(AbortSignal),
+      {
+        preferredLanguage: 'es',
+      }
+    );
   });
 });

@@ -123,14 +123,16 @@ Extension boundaries, each a candidate slice on this doc or its own:
 ## Outside SPF
 
 The hls.js adapter (`HlsJsChaptersMixin`) and native HLS playback (`NativeHlsChaptersMixin`, fetching the
-multivariant playlist itself) project the same tracks through the internal `HlsChaptersLoader` in
+multivariant playlist itself) load the same tracks through the internal `loadChaptersTracks(media, url, signal)` in
 `@videojs/native-hls-video`, which reuses `parseHlsJsonChapters` and `addChaptersTracksToMedia`.
 
 - **First entry with a URI, on every path.** hls.js keeps one `sessionData` entry per `DATA-ID`, the last, so the
   hls.js mixin wraps the playlist loader (`pLoader`) to read the multivariant text and applies the same
   `findSessionDataUri` native playback does.
+- **Language preference.** The hls.js mixin leads with hls.js's own `subtitlePreference.lang`, the counterpart of
+  SPF's `preferredSubtitleLanguage`. Native HLS has no preference to read, so `und`, then first-seen, leads.
 - **Mux's metadata document is fetched twice.** Mux publishes asset metadata as an Apple JSON chapters document, so
-  when a playlist names it as its chapters, `MuxMetadataLoader` and the chapters loader each fetch it. Sharing the
+  when a playlist names it as its chapters, `MuxMetadataLoader` and `loadChaptersTracks` each fetch it. Sharing the
   request would need a hook between the adapters for a small, cacheable (`max-age=300`) document.
 - **Safari's own chapter tracks.** WebKit reads the same session data and adds one chapters text track per language
   after the `<track>` children, holding no cues (measured in Playwright WebKit on macOS, 2026-09-30). The projected

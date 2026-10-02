@@ -1,7 +1,7 @@
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { HlsChaptersLoader, NativeHlsChaptersMixin } from '../chapters';
+import { loadChaptersTracks, NativeHlsChaptersMixin } from '../chapters';
 
 // Jsdom has no text track implementation; the projection itself is SPF's and
 // covered in a real browser there. Here it is observed at the boundary.
@@ -62,46 +62,34 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('HlsChaptersLoader', () => {
-  it('fetches the document resolved against the playlist URL and projects its chapters', async () => {
+describe('loadChaptersTracks', () => {
+  it('fetches the document and loads its chapters, the preferred language leading', async () => {
     const fetchMock = stubFetch({ 'https://cdn.example.com/a/chapters.json': DOCUMENT });
     const media = document.createElement('video');
-    const loader = new HlsChaptersLoader();
 
-    loader.load(media, 'chapters.json', 'https://cdn.example.com/a/main.m3u8');
+    loadChaptersTracks(media, 'https://cdn.example.com/a/chapters.json', new AbortController().signal, {
+      preferredLanguage: 'es',
+    });
 
     await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledOnce());
     expect(requestedUrls(fetchMock)).toEqual(['https://cdn.example.com/a/chapters.json']);
-    expect(addChaptersTracksToMedia).toHaveBeenCalledWith(media, CHAPTERS);
+    expect(addChaptersTracksToMedia).toHaveBeenCalledWith(media, CHAPTERS, { preferredLanguage: 'es' });
   });
 
-  it('loads the same document onto the same element once', async () => {
-    const fetchMock = stubFetch({ 'https://example.com/chapters.json': DOCUMENT });
+  it('removes the loaded tracks on abort', async () => {
+    stubFetch({ 'https://example.com/chapters.json': DOCUMENT });
     const media = document.createElement('video');
-    const loader = new HlsChaptersLoader();
+    const controller = new AbortController();
 
-    loader.load(media, 'https://example.com/chapters.json', 'https://example.com/main.m3u8');
-    loader.load(media, 'chapters.json', 'https://example.com/other.m3u8');
-
-    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledOnce());
-    expect(fetchMock).toHaveBeenCalledOnce();
-  });
-
-  it('replaces the tracks of a previous document', async () => {
-    stubFetch({ 'https://example.com/a.json': DOCUMENT, 'https://example.com/b.json': DOCUMENT });
-    const media = document.createElement('video');
-    const loader = new HlsChaptersLoader();
-
-    loader.load(media, 'a.json', 'https://example.com/main.m3u8');
+    loadChaptersTracks(media, 'https://example.com/chapters.json', controller.signal);
     await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledOnce());
 
-    loader.load(media, 'b.json', 'https://example.com/main.m3u8');
+    controller.abort();
 
     expect(removeAllChaptersTracksFromMedia).toHaveBeenCalledWith(media);
-    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledTimes(2));
   });
 
-  it('aborts a request in flight on reset and projects nothing', async () => {
+  it('cancels a request in flight on abort and loads nothing', async () => {
     let signal: AbortSignal | undefined;
     let release!: () => void;
     const released = new Promise<void>((resolve) => {
@@ -119,15 +107,14 @@ describe('HlsChaptersLoader', () => {
     );
 
     const media = document.createElement('video');
-    const loader = new HlsChaptersLoader();
+    const controller = new AbortController();
 
-    loader.load(media, 'https://example.com/chapters.json', 'https://example.com/main.m3u8');
+    loadChaptersTracks(media, 'https://example.com/chapters.json', controller.signal);
     await vi.waitFor(() => expect(signal).toBeDefined());
 
-    loader.reset();
+    controller.abort();
 
     expect(signal!.aborted).toBe(true);
-    expect(removeAllChaptersTracksFromMedia).toHaveBeenCalledWith(media);
 
     release();
     await settle();
@@ -135,7 +122,17 @@ describe('HlsChaptersLoader', () => {
     expect(addChaptersTracksToMedia).not.toHaveBeenCalled();
   });
 
-  it('projects nothing and warns when the document fails to load or parse', async () => {
+  it('does nothing for a signal that is already aborted', async () => {
+    const fetchMock = stubFetch({ 'https://example.com/chapters.json': DOCUMENT });
+
+    loadChaptersTracks(document.createElement('video'), 'https://example.com/chapters.json', AbortSignal.abort());
+    await settle();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(removeAllChaptersTracksFromMedia).not.toHaveBeenCalled();
+  });
+
+  it('loads nothing and warns when the document fails to load or parse', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     stubFetch({
@@ -147,7 +144,7 @@ describe('HlsChaptersLoader', () => {
     const media = document.createElement('video');
 
     for (const name of ['missing', 'garbage', 'object']) {
-      new HlsChaptersLoader().load(media, `${name}.json`, 'https://example.com/main.m3u8');
+      loadChaptersTracks(media, `https://example.com/${name}.json`, new AbortController().signal);
     }
 
     await vi.waitFor(() => expect(warn).toHaveBeenCalledTimes(3));
@@ -186,7 +183,7 @@ describe('NativeHlsChaptersMixin', () => {
 
     host.attach(video);
 
-    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledWith(video, CHAPTERS));
+    await vi.waitFor(() => expect(addChaptersTracksToMedia).toHaveBeenCalledWith(video, CHAPTERS, {}));
     expect(requestedUrls(fetchMock)).toEqual([
       'https://stream.example.com/main.m3u8',
       'https://stream.example.com/chapters.json',

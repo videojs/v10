@@ -1,4 +1,8 @@
-import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '@videojs/spf/dom';
+import {
+  type AddChaptersTracksOptions,
+  addChaptersTracksToMedia,
+  removeAllChaptersTracksFromMedia,
+} from '@videojs/spf/dom';
 import { APPLE_HLS_CHAPTERS_DATA_ID, type Chapter, type HlsJsonChapters, parseHlsJsonChapters } from '@videojs/spf/hls';
 import { isAbortError } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
@@ -30,76 +34,45 @@ async function loadHlsJsonChapters(url: string, signal: AbortSignal): Promise<Ch
 }
 
 /**
- * Projects the Apple JSON chapters an HLS source references (`#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters"`)
- * onto a media element: one hidden `<track kind="chapters">` per title language, built by SPF's
- * `addChaptersTracksToMedia` so every HLS path — SPF, hls.js, and the browser's own — produces the same tracks. The
- * open last chapter ends at `Number.MAX_SAFE_INTEGER`; readers clamp it to the media duration.
+ * Load the Apple JSON chapters document at `url` onto `mediaElement`: one hidden `<track kind="chapters">` per title
+ * language, built by SPF's `addChaptersTracksToMedia` so every HLS path — SPF, hls.js, and the browser's own — produces
+ * the same tracks, with `options.preferredLanguage` leading. The open last chapter ends at `Number.MAX_SAFE_INTEGER`;
+ * readers clamp it to the media duration.
  *
- * One loader serves one playback engine. Loading a different document replaces the tracks from the last one; loading
- * the same document onto the same element again is a no-op, so a manifest that is announced twice costs one request.
+ * Aborting `signal` cancels a request in flight and removes the tracks loaded so far. Callers own deduplication — load
+ * again only for a different document or element.
  *
  * Shared by the hls.js adapter, not part of this package's public API.
  *
  * @internal
  */
-export class HlsChaptersLoader {
-  #media: HTMLMediaElement | null = null;
-  #url: string | undefined;
-  #request: AbortController | null = null;
+export function loadChaptersTracks(
+  mediaElement: HTMLMediaElement,
+  url: string,
+  signal: AbortSignal,
+  options: AddChaptersTracksOptions = {}
+): void {
+  if (signal.aborted) return;
 
-  /**
-   * Load the chapters document `uri` names, resolved against `baseUrl` — the URL the multivariant playlist was served
-   * from, after redirects.
-   */
-  load(media: HTMLMediaElement, uri: string, baseUrl: string): void {
-    const url = resolveUrl(uri, baseUrl);
-    if (!url || (media === this.#media && url === this.#url)) return;
+  signal.addEventListener('abort', () => removeAllChaptersTracksFromMedia(mediaElement), { once: true });
 
-    this.reset();
-    this.#media = media;
-    this.#url = url;
+  void loadHlsJsonChapters(url, signal).then((chapters) => {
+    // A document that settled before the abort still must not load onto an
+    // element that has since been cleaned up.
+    if (signal.aborted) return;
 
-    const request = (this.#request = new AbortController());
-
-    void loadHlsJsonChapters(url, request.signal).then((chapters) => {
-      // A document that settled before the abort still must not project onto
-      // an element the loader has since moved away from.
-      if (request.signal.aborted) return;
-
-      this.#request = null;
-
-      if (chapters.length > 0) addChaptersTracksToMedia(media, chapters);
-    });
-  }
-
-  /** Abort a request in flight and remove the tracks projected so far. */
-  reset(): void {
-    this.#request?.abort();
-    this.#request = null;
-
-    if (this.#media) removeAllChaptersTracksFromMedia(this.#media);
-
-    this.#media = null;
-    this.#url = undefined;
-  }
-}
-
-function resolveUrl(uri: string, baseUrl: string): string | undefined {
-  try {
-    return new URL(uri, baseUrl).href;
-  } catch {
-    return undefined;
-  }
+    if (chapters.length > 0) addChaptersTracksToMedia(mediaElement, chapters, options);
+  });
 }
 
 /**
  * Chapters for native HLS playback. The browser never exposes the multivariant playlist's session data, so the playlist
- * is fetched here — once per source, on `loadstart` — and the chapters document it references is handed to an
- * {@link HlsChaptersLoader}. The tracks leave with the source (`emptied`) and with the element (`detach`, `destroy`).
+ * is fetched here — once per source, on `loadstart` — and the chapters document it references is loaded with
+ * {@link loadChaptersTracks}. One request signal spans both fetches, so the tracks leave with the source (`emptied`) and
+ * with the element (`detach`, `destroy`).
  */
 export function NativeHlsChaptersMixin<Base extends Constructor<NativeHlsHost>>(BaseClass: Base) {
   class NativeHlsChapters extends (BaseClass as Constructor<NativeHlsHost>) {
-    #chapters = new HlsChaptersLoader();
     #disconnect: AbortController | null = null;
     #request: AbortController | null = null;
     #currentSrc = '';
@@ -129,7 +102,6 @@ export function NativeHlsChaptersMixin<Base extends Constructor<NativeHlsHost>>(
       this.#request?.abort();
       this.#request = null;
       this.#currentSrc = '';
-      this.#chapters.reset();
     }
 
     #init(target: HTMLMediaElement) {
@@ -159,11 +131,9 @@ export function NativeHlsChaptersMixin<Base extends Constructor<NativeHlsHost>>(
 
         const uri = findSessionDataUri(playlist.text, APPLE_HLS_CHAPTERS_DATA_ID);
 
-        if (uri) this.#chapters.load(target, uri, playlist.url);
+        if (uri) loadChaptersTracks(target, new URL(uri, playlist.url).href, request.signal);
       } catch {
-        // Network / CORS errors leave the source without chapters.
-      } finally {
-        if (this.#request === request) this.#request = null;
+        // Network / CORS errors and an unresolvable URI leave the source without chapters.
       }
     }
   }
