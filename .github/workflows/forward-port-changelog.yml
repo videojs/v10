@@ -6,19 +6,27 @@ name: Forward-port changelog and blog
 # reach videojs.org. Blog posts land on main whenever they are ready, usually
 # between releases, and production has to pick them up the same way.
 #
-# This job closes that gap. It runs after the release is finished, touches only
-# the changelog folder, the blog's content and asset folders, and the authors
-# file that posts reference, and pushes to site/v10 rather than main, so it
-# cannot delay, block, or re-trigger a release. Anything else under site/ still
-# waits for the next release, or for a hand cherry-pick onto site/v10. A blog
-# post that imports a component new to main needs that route too, since only
-# these paths are copied.
+# This job closes that gap by cherry-picking whole commits onto site/v10. A commit
+# qualifies only when every file it touches is changelog or blog content: the
+# changelog folder, the root CHANGELOG.md, the blog's content and asset folders,
+# and the authors file that posts reference. A commit that also touches anything
+# else is left alone in full, never split, because forwarding only part of it
+# would ship a change to production without the redirects, components, or config
+# it was merged with. Such commits wait for the next release, or for a hand
+# cherry-pick onto site/v10.
+#
+# The job pushes to site/v10 rather than main, so it cannot delay, block, or
+# re-trigger a release. A blog-only commit that imports a component new to main
+# still qualifies, so a post like that needs the component on site/v10 first.
 
 on:
   push:
     branches:
       - main
+    # Only a push touching one of the forwarded paths can hold a qualifying
+    # commit. Keep this list in sync with is_forwardable below.
     paths:
+      - 'CHANGELOG.md'
       - 'site/src/content/changelog/**'
       - 'site/src/content/blog/**'
       - 'site/src/assets/blog/**'
@@ -39,7 +47,8 @@ jobs:
     # version's changelog off videojs.org until its packages are really on npm.
     #
     # This matches release-please's squashed release commit, `chore: release main
-    # (#1234)`. If that title ever changes, update this condition with it.
+    # (#1234)`. If that title ever changes, update this condition and the
+    # per-commit check below with it.
     if: "${{ !startsWith(github.event.head_commit.message, 'chore: release main') }}"
     runs-on: ubuntu-latest
     permissions:
@@ -51,71 +60,105 @@ jobs:
           ref: site/v10
           fetch-depth: 0
 
-      - name: Copy the changelog and blog from main onto site/v10
+      - name: Cherry-pick changelog- and blog-only commits onto site/v10
         env:
           BEFORE: ${{ github.event.before }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          is_forwardable() {
+            local files
+            files=$(git diff-tree --no-commit-id --name-only -r "$1")
+            [ -n "$files" ] || return 1
+
+            while IFS= read -r file; do
+              case "$file" in
+                CHANGELOG.md \
+                  | site/src/content/changelog/* \
+                  | site/src/content/blog/* \
+                  | site/src/assets/blog/* \
+                  | site/src/content/authors.json) ;;
+                *) return 1 ;;
+              esac
+            done <<< "$files"
+          }
+
           # Merging the release PR trips this workflow and the release job at the
           # same time, and the release job force-pushes main onto site/v10 when it
           # finishes. If that lands mid-run our push is rejected, so re-read
-          # site/v10 and try again. Replacing the folder wholesale keeps every
-          # attempt idempotent.
+          # site/v10 and try again. Commits already on site/v10 are skipped, so
+          # every attempt is idempotent.
           for attempt in 1 2 3; do
             git fetch origin \
               '+refs/heads/main:refs/remotes/origin/main' \
               '+refs/heads/site/v10:refs/remotes/origin/site/v10'
             git reset --hard origin/site/v10
 
-            # Copy only the paths this push changed. The changelog folder changes
-            # on main through the release commit, skipped above, and through the
-            # prose PRs that follow a published release; a blog-only push must
-            # leave it alone, or a post merged while the release job is still
-            # publishing would carry the new version's changelog to production
-            # ahead of its packages. main only ever holds changelog files for
-            # released versions, so the folder itself needs no reconciling.
-            #
-            # Blog posts publish the moment they merge to main. A post that is not
-            # ready for videojs.org stays on a branch, or sets `devOnly: true` in
-            # its frontmatter so the production build leaves it out. Posts keep
-            # their images under src/assets/blog and reference authors.json, so
-            # both travel with them.
-            changed=''
-            for path in \
-              site/src/content/changelog \
-              site/src/content/blog \
-              site/src/assets/blog \
-              site/src/content/authors.json
-            do
-              # A null BEFORE means the branch was created or force-pushed; copy
-              # everything rather than guess.
-              if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
-                || ! git diff --quiet "$BEFORE" "$GITHUB_SHA" -- "$path"; then
-                changed="$changed $path"
+            # A null or unreachable BEFORE means main was created or force-pushed;
+            # only the head commit is known to be new.
+            if [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+              && git merge-base --is-ancestor "$BEFORE" "$GITHUB_SHA" 2>/dev/null; then
+              commits=$(git rev-list --reverse --first-parent "$BEFORE..$GITHUB_SHA")
+            else
+              commits="$GITHUB_SHA"
+            fi
+
+            picked=0
+            for sha in $commits; do
+              subject=$(git log -1 --format=%s "$sha")
+
+              # Release commits reach site/v10 through the release job; see the
+              # job condition above.
+              case "$subject" in
+                'chore: release main'*)
+                  echo "skip ${sha::7} (release commit): $subject"
+                  continue
+                  ;;
+              esac
+              if git rev-parse --verify --quiet "$sha^2" > /dev/null; then
+                echo "skip ${sha::7} (merge commit): $subject"
+                continue
               fi
+              if ! is_forwardable "$sha"; then
+                echo "skip ${sha::7} (touches more than changelog and blog): $subject"
+                continue
+              fi
+
+              # The release job's force-push carries main's commits as they are,
+              # and earlier runs and hand cherry-picks leave an -x line behind.
+              if git merge-base --is-ancestor "$sha" HEAD \
+                || git log --format=%B "$(git merge-base origin/main HEAD)..HEAD" \
+                  | grep -qF "(cherry picked from commit $sha)"; then
+                echo "skip ${sha::7} (already on site/v10): $subject"
+                continue
+              fi
+
+              if ! git cherry-pick --no-commit "$sha"; then
+                git reset --hard
+                echo "::error::${sha::7} ($subject) does not apply cleanly to site/v10; cherry-pick it by hand"
+                exit 1
+              fi
+              if git diff --cached --quiet; then
+                echo "skip ${sha::7} (already on site/v10): $subject"
+                git reset --hard
+                continue
+              fi
+
+              git log -1 --format=%B "$sha" > "$RUNNER_TEMP/message"
+              printf '\n(cherry picked from commit %s)\n' "$sha" >> "$RUNNER_TEMP/message"
+              git commit --quiet --file="$RUNNER_TEMP/message" \
+                --author="$(git log -1 --format='%an <%ae>' "$sha")" \
+                --date="$(git log -1 --format=%aI "$sha")"
+              echo "picked ${sha::7}: $subject"
+              picked=$((picked + 1))
             done
 
-            if [ -z "$changed" ]; then
-              echo "this push changed none of the forwarded paths — nothing to do"
-              exit 0
-            fi
-            echo "forwarding:$changed"
-
-            # shellcheck disable=SC2086
-            rm -rf $changed
-            # shellcheck disable=SC2086
-            git checkout origin/main -- $changed
-            # shellcheck disable=SC2086
-            git add -A $changed
-
-            if git diff --cached --quiet; then
-              echo "site/v10 changelog and blog already match main — nothing to do"
+            if [ "$picked" -eq 0 ]; then
+              echo "no new changelog- or blog-only commits to forward — nothing to do"
               exit 0
             fi
 
-            git commit -m 'chore(site): forward-port changelog and blog to site/v10'
             if git push origin HEAD:site/v10; then
               exit 0
             fi
