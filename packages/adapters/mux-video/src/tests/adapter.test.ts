@@ -531,6 +531,23 @@ describe('MuxVideoAdapter', () => {
     expect(media.source).toEqual({ playbackId: 'abc123', poster: { time: 5 } });
   });
 
+  it('ignores an extension-less src that describes the current source', () => {
+    const media = new MuxVideoAdapter();
+
+    media.source = { playbackId: 'abc123', poster: { time: 5 } };
+
+    const onSourceChange = vi.fn();
+
+    media.addEventListener('sourcechange', onSourceChange);
+
+    // `src` reads back as the `.m3u8` form, so React re-syncs the authored URL on
+    // every render.
+    media.src = 'https://stream.mux.com/abc123';
+
+    expect(onSourceChange).not.toHaveBeenCalled();
+    expect(media.source).toEqual({ playbackId: 'abc123', poster: { time: 5 } });
+  });
+
   describe('drm', () => {
     const DRM_TOKEN = fakeJwt({ aud: 'd' });
     const PLAYBACK_TOKEN = fakeJwt({ aud: 'v' });
