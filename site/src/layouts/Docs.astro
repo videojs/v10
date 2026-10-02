@@ -56,7 +56,6 @@ const isInstallationGuide = getInstallationRouteSegment(Astro.url.pathname) !== 
 
 <Base
   title={getDocTitle(doc, framework)}
-  section="Docs"
   suffix={conciseMetadata ? false : `Open Source ${FRAMEWORK_LABELS[framework]} Video Player`}
   description={conciseMetadata ? description : `${description} — Video.js ${seoCategory}.`}
   easterEgg="thin"
