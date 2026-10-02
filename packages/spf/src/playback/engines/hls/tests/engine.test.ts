@@ -552,7 +552,6 @@ describe('createEngine', () => {
   it('accepts custom configuration', () => {
     const engine = createEngine({
       initialBandwidth: 3_000_000,
-      preferredAudioLanguage: 'es',
     });
 
     // Engine should be created successfully with config

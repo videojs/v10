@@ -22,12 +22,13 @@ import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import {
   DEFAULT_VIDEO_CONSTRAINTS,
-  type SwitchVideoTrackConfig,
-  type SwitchVideoTrackRule,
   setupTrackSwitching,
   switchAudioTrack,
+  type SwitchAudioTrackConfig,
   switchTextTrack,
   switchVideoTrack,
+  type SwitchVideoTrackConfig,
+  type SwitchVideoTrackRule,
   type TrackSwitchingStateMap,
 } from '../track-switching';
 
@@ -2064,9 +2065,10 @@ describe('per-type chain config', () => {
     // The whole point of per-type keys: the engine hands one config to every
     // variant, so a video override must leave audio's chain alone.
     const state = makeAudioState({ presentation: createAudioPresentation([makeAudioTrack('audio-en')]) });
-    // A variable, not a literal: the engine config carries video keys the audio
-    // config type does not name, and that is exactly what is being pinned.
-    const config = { videoConstraints: [pruneAll], videoRules: [pruneAll] };
+    // The engine config carries video keys the audio config type does not name,
+    // and that is exactly what is being pinned.
+    // SAFETY: deliberately shares no key with `SwitchAudioTrackConfig`, which TypeScript rejects for an all-optional type.
+    const config = { videoConstraints: [pruneAll], videoRules: [pruneAll] } as SwitchAudioTrackConfig;
     const reactor = switchAudioTrack.setup({ state, config });
 
     await flush();
