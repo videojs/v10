@@ -424,6 +424,41 @@ audio.m3u8`;
       });
     });
 
+    it('collapses every variant sharing the rendition playlist and keeps the highest bandwidth', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Audio",DEFAULT=YES,AUTOSELECT=YES,URI="audio.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=64000,CODECS="mp4a.40.2",AUDIO="audio"
+./audio.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+audio.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioTracks = result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks;
+
+      expect(audioTracks).toHaveLength(1);
+      expect(audioTracks?.[0]).toMatchObject({
+        url: 'https://example.com/audio.m3u8',
+        groupId: 'audio',
+        name: 'Audio',
+        bandwidth: 128000,
+        default: true,
+        autoselect: true,
+      });
+    });
+
+    it('keeps a variant sharing a rendition URI when it belongs to a different group', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="english",NAME="English",URI="audio.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="commentary"
+audio.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioTracks = result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks;
+
+      expect(audioTracks).toHaveLength(2);
+      expect(audioTracks?.map((track) => track.groupId)).toEqual(['english', 'commentary']);
+    });
+
     it('keeps an audio-only variant whose URI differs from the renditions in its group', () => {
       const text = `#EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",DEFAULT=YES,AUTOSELECT=YES,URI="en.m3u8"

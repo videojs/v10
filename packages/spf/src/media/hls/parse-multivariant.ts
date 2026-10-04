@@ -376,18 +376,15 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     }
 
     // An audio-only variant in this group that resolves to the same playlist is
-    // this rendition, not a second track. The variant is what carries bandwidth;
-    // the media tag does not. Keep the named rendition and drop the variant's
-    // "Default" entry. A URI-less rendition is handled above, where the variant
-    // is the only track with a URL.
-    const duplicate = audioOnlyTracks.find(
-      (candidate) => candidate.groupId === rendition.groupId && candidate.url === track.url
-    );
+    // this rendition, not a second track. Keep the named rendition and the
+    // highest bandwidth advertised by its variants. A URI-less rendition is
+    // handled above, where the variant is the only track with a URL.
+    for (let index = audioOnlyTracks.length - 1; index >= 0; index--) {
+      const candidate = audioOnlyTracks[index]!;
+      if (candidate.groupId !== rendition.groupId || candidate.url !== track.url) continue;
 
-    if (duplicate) {
-      if (duplicate.bandwidth > track.bandwidth) track.bandwidth = duplicate.bandwidth;
-
-      audioOnlyTracks.splice(audioOnlyTracks.indexOf(duplicate), 1);
+      track.bandwidth = Math.max(track.bandwidth, candidate.bandwidth);
+      audioOnlyTracks.splice(index, 1);
     }
 
     return [track];
