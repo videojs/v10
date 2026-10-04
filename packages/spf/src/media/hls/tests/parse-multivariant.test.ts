@@ -390,6 +390,53 @@ audio.m3u8`;
       });
     });
 
+    // Same collapse when the rendition does name a playlist, and an audio-only
+    // variant in its group resolves to that same URI. Both entries are one media
+    // playlist; emitting both shows the rendition beside a second "Default" track.
+    it('collapses an audio-only variant that shares a rendition URI in its group', () => {
+      const text = `#EXTM3U
+#EXT-X-INDEPENDENT-SEGMENTS
+#EXT-X-VERSION:4
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Audio",DEFAULT=YES,AUTOSELECT=YES,CHANNELS="2",URI="audio.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=778000,RESOLUTION=854x480,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio"
+480p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=328000,RESOLUTION=426x240,CODECS="avc1.4d401f,mp4a.40.2",AUDIO="audio"
+240p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+audio.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const videoTracks = result.selectionSets.find((s) => s.type === 'video')?.switchingSets[0]?.tracks;
+      const audioTracks = result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks;
+
+      expect(videoTracks).toHaveLength(2);
+      expect(audioTracks).toHaveLength(1);
+      expect(audioTracks?.[0]).toMatchObject({
+        type: 'audio',
+        url: 'https://example.com/audio.m3u8',
+        bandwidth: 128000,
+        groupId: 'audio',
+        name: 'Audio',
+        default: true,
+        autoselect: true,
+        channels: 2,
+        codecs: ['mp4a.40.2'],
+      });
+    });
+
+    it('keeps an audio-only variant whose URI differs from the renditions in its group', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",DEFAULT=YES,AUTOSELECT=YES,URI="en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+commentary.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioTracks = result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks;
+
+      expect(audioTracks).toHaveLength(2);
+      expect(audioTracks?.map((track) => track.name)).toEqual(['English', 'Default']);
+    });
+
     it('keeps a URI-less rendition separate from a group carried by video streams', () => {
       // Same rendition shape, but the stream referencing the group is muxed A/V, so
       // there is no audio-only track to merge into and the rendition stands alone.
