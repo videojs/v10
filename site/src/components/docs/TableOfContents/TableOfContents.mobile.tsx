@@ -4,27 +4,60 @@ import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
+import type { RailGeometry } from './utils';
 import { calculateRailGeometry } from './utils';
 
 interface TableOfContentsMobileProps {
   headings: MarkdownHeading[];
   activeId: string;
   onNavigate: (slug: string) => void;
+  /** Stay available at every width and sit in the page margin instead of beside the docs sidebar. */
+  railOnly?: boolean;
   className?: string;
 }
 
 type RailStripeStyle = React.CSSProperties & Record<'--w' | '--lg-w', string>;
 
-export function TableOfContentsMobile({ headings, activeId, onNavigate, className }: TableOfContentsMobileProps) {
+// Standalone rails sit in the page margin beside body copy, so wide viewports get heavier marks.
+const WIDE_RAIL_GEOMETRY: RailGeometry = { stripeHeight: 2, gap: 6 };
+const WIDE_RAIL_MEDIA = '(min-width: 64rem)';
+
+// Keep a standalone rail 2.5rem outside the centered max-w-3xl column, or at the viewport edge once the margin runs out.
+const MARGIN_RAIL_LEFT = 'max(0px, calc(50% - 24rem - 2.5rem - 1.5rem))';
+
+function getStripeWidths(depth: number, wide: boolean) {
+  if (wide) {
+    const width = depth === 2 ? 16 : depth === 3 ? 10 : 6;
+
+    return { width, largeWidth: width };
+  }
+
+  const width = depth === 2 ? 10 : depth === 3 ? 8 : 4;
+
+  return { width, largeWidth: depth === 2 ? 12 : width };
+}
+
+export function TableOfContentsMobile({
+  headings,
+  activeId,
+  onNavigate,
+  railOnly = false,
+  className,
+}: TableOfContentsMobileProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [wide, setWide] = useState(false);
   const [viewportLayout, setViewportLayout] = useState({
     availableHeight: 400,
     railTop: null as number | null,
   });
 
-  const railGeometry = calculateRailGeometry(headings.length, viewportLayout.availableHeight);
+  const railGeometry = calculateRailGeometry(
+    headings.length,
+    viewportLayout.availableHeight,
+    wide ? WIDE_RAIL_GEOMETRY : undefined
+  );
 
   useEffect(() => {
     const updateViewportLayout = () => {
@@ -58,6 +91,20 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
   }, []);
 
   useEffect(() => {
+    if (!railOnly) return;
+
+    const wideMedia = window.matchMedia(WIDE_RAIL_MEDIA);
+    const updateWide = () => setWide(wideMedia.matches);
+
+    updateWide();
+    wideMedia.addEventListener('change', updateWide);
+
+    return () => wideMedia.removeEventListener('change', updateWide);
+  }, [railOnly]);
+
+  useEffect(() => {
+    if (railOnly) return;
+
     const desktopMedia = window.matchMedia('(min-width: 80rem)');
     const closeAtDesktopBreakpoint = (event: MediaQueryListEvent) => {
       if (event.matches) setOpen(false);
@@ -65,7 +112,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
 
     desktopMedia.addEventListener('change', closeAtDesktopBreakpoint);
     return () => desktopMedia.removeEventListener('change', closeAtDesktopBreakpoint);
-  }, []);
+  }, [railOnly]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,11 +136,13 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
         aria-label="On this page"
         data-ph-capture-attribute-location="docs-toc"
         className={clsx(
-          'fixed left-0 z-20 flex min-h-6 w-6 items-center justify-start intent:text-manila-dark md:left-70 dark:intent:text-manila-dark lg:left-75',
+          'fixed left-0 z-20 flex min-h-6 w-6 items-center justify-start intent:text-manila-dark dark:intent:text-manila-dark',
+          !railOnly && 'md:left-70 lg:left-75',
           open ? 'text-manila-dark dark:text-manila-dark' : 'text-manila-75 dark:text-warm-gray',
           className
         )}
         style={{
+          left: railOnly ? MARGIN_RAIL_LEFT : undefined,
           top: viewportLayout.railTop ?? 'calc(50dvh + 1.625rem)',
           transform: 'translateY(-50%)',
           cursor: 'pointer',
@@ -102,8 +151,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
         <span aria-hidden="true" className="flex flex-col items-start pl-1" style={{ gap: railGeometry.gap }}>
           {headings.map((heading) => {
             const isActive = activeId === heading.slug;
-            const width = heading.depth === 2 ? 10 : heading.depth === 3 ? 8 : 4;
-            const largeWidth = heading.depth === 2 ? 12 : width;
+            const { width, largeWidth } = getStripeWidths(heading.depth, wide);
             const stripeStyle = {
               '--w': `${width}px`,
               '--lg-w': `${largeWidth}px`,
