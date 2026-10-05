@@ -1,0 +1,103 @@
+name: Cherry-pick to site/v10
+
+# videojs.org deploys from site/v10, which the release job resets to main on
+# every release. A merged PR labeled `cherry-pick:site` is cherry-picked onto
+# site/v10 so it reaches production before the next release. Nothing is picked
+# without the label: every other change waits for the release, or for a hand
+# cherry-pick.
+#
+# The label can go on before or after the merge. The changelog prose bot adds it
+# to every PR it opens.
+#
+# pull_request_target, not pull_request, so PRs from forks still get a token that
+# can push. This job never checks out or runs PR code: it picks the commit main
+# already has.
+
+on:
+  pull_request_target:
+    types: [closed, labeled]
+    branches:
+      - main
+
+# Per PR: a shared group keeps only one pending run, so a burst of merges would
+# drop picks. Concurrent pushes are handled by the retry below.
+concurrency:
+  group: cherry-pick-site-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cherry-pick:
+    if: >-
+      github.event.pull_request.merged == true && (
+        (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'cherry-pick:site')) ||
+        (github.event.action == 'labeled' && github.event.label.name == 'cherry-pick:site')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: site/v10
+          fetch-depth: 0
+
+      - name: Cherry-pick the merge commit onto site/v10
+        env:
+          COMMIT: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # The release job force-pushes main onto site/v10. If that lands
+          # mid-run our push is rejected, so re-read site/v10 and try again.
+          for attempt in 1 2 3; do
+            git fetch origin \
+              '+refs/heads/main:refs/remotes/origin/main' \
+              '+refs/heads/site/v10:refs/remotes/origin/site/v10'
+            git reset --hard origin/site/v10
+
+            # Already there through a release, or through an earlier pick.
+            if git merge-base --is-ancestor "$COMMIT" HEAD \
+              || git log --format=%B origin/main..HEAD | grep -qF "(cherry picked from commit $COMMIT)"; then
+              echo "site/v10 already has $COMMIT — nothing to do"
+              exit 0
+            fi
+
+            # Squash merges have one parent; a merge commit picks its main-side diff.
+            pick_args=(-x)
+            if [ "$(git rev-list --parents -n 1 "$COMMIT" | wc -w)" -gt 2 ]; then
+              pick_args+=(-m 1)
+            fi
+
+            if ! git cherry-pick "${pick_args[@]}" "$COMMIT"; then
+              # No conflicts and nothing staged: a hand pick without -x got there first.
+              if [ -z "$(git ls-files --unmerged)" ] && git diff --cached --quiet; then
+                git cherry-pick --abort
+                echo "site/v10 already has the changes in $COMMIT — nothing to do"
+                exit 0
+              fi
+              git cherry-pick --abort
+              echo "::error::$COMMIT does not apply cleanly to site/v10. Cherry-pick it by hand, or wait for the next release."
+              exit 1
+            fi
+
+            if git push origin HEAD:site/v10; then
+              exit 0
+            fi
+            echo "::notice::site/v10 moved under us (attempt ${attempt}) — retrying"
+          done
+
+          echo "::error::Could not push to site/v10 after 3 attempts"
+          exit 1
+
+      - name: Report a failed pick on the PR
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" \
+            --body "Could not cherry-pick this PR onto \`site/v10\` ([run]($RUN_URL)). Cherry-pick it by hand, or it ships with the next release."
