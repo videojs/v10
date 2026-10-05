@@ -78,7 +78,12 @@ The site deploys via Netlify from two branches:
 
 On each release, the CD workflow force-pushes `main` to `site/v10`, keeping production docs in sync with published packages.
 
-**Shipping a change between releases:** Add the `cherry-pick:site` label to its PR. When the PR is merged (or when the label goes on after the merge), the [Cherry-pick to site/v10](../.github/workflows/cherry-pick-site.yml) workflow cherry-picks its commit onto `site/v10`. The changelog prose bot adds the label to every PR it opens, since prose lands after its release is already in production; remove it to hold the prose until the next release. If the pick doesn't apply cleanly, the workflow comments on the PR and you cherry-pick by hand. Nothing else reaches production between releases.
+**Shipping a change between releases:** The [Cherry-pick to site/v10](../.github/workflows/cherry-pick-site.yml) workflow cherry-picks a change from `main` onto `site/v10`. Ask for it either way:
+
+- Add the `cherry-pick:site` label to the PR. It's picked when the PR merges, or right away if it already has. The changelog prose bot adds the label to every PR it opens, since prose lands after its release is already in production; remove it to hold the prose until the next release.
+- Run the workflow from the Actions tab with a merged PR number or a commit SHA on `main`, at any point after the merge (`gh workflow run cherry-pick-site.yml -f target=1234`).
+
+If the pick doesn't apply cleanly, the workflow comments on the PR and you cherry-pick by hand. Nothing else reaches production between releases.
 
 **Cherry-picking by hand:** Land the change on `main` first, then `git cherry-pick -x` it onto `site/v10`. The next release's force-push already includes the change (since it came from `main`), so nothing gets lost. Treat `site/v10` as bot-owned — it is rewritten from `main` on every release, so anything pushed there that isn't also on `main` disappears at the next cut.
 

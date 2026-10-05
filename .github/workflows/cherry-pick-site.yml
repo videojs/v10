@@ -1,13 +1,17 @@
 name: Cherry-pick to site/v10
 
 # videojs.org deploys from site/v10, which the release job resets to main on
-# every release. A merged PR labeled `cherry-pick:site` is cherry-picked onto
-# site/v10 so it reaches production before the next release. Nothing is picked
-# without the label: every other change waits for the release, or for a hand
+# every release. This workflow cherry-picks one change from main onto site/v10
+# so it reaches production before the next release. Nothing is picked unless
+# someone asks: every other change waits for the release, or for a hand
 # cherry-pick.
 #
-# The label can go on before or after the merge. The changelog prose bot adds it
-# to every PR it opens.
+# Two ways to ask, both running the same pick:
+# - Label a PR `cherry-pick:site`, before or after it merges. The changelog
+#   prose bot adds it to every PR it opens.
+# - Run this workflow from the Actions tab (or `gh workflow run
+#   cherry-pick-site.yml -f target=1234`) with a merged PR number or a commit
+#   SHA on main, at any point after the merge.
 #
 # pull_request_target, not pull_request, so PRs from forks still get a token that
 # can push. This job never checks out or runs PR code: it picks the commit main
@@ -18,19 +22,27 @@ on:
     types: [closed, labeled]
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Merged PR number (e.g. 1234), or a commit SHA on main'
+        required: true
+        type: string
 
-# Per PR: a shared group keeps only one pending run, so a burst of merges would
-# drop picks. Concurrent pushes are handled by the retry below.
+# Per change: a shared group keeps only one pending run, so a burst of merges
+# would drop picks. Concurrent pushes are handled by the retry below.
 concurrency:
-  group: cherry-pick-site-${{ github.event.pull_request.number }}
+  group: cherry-pick-site-${{ github.event.pull_request.number || inputs.target }}
   cancel-in-progress: false
 
 jobs:
   cherry-pick:
     if: >-
-      github.event.pull_request.merged == true && (
-        (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'cherry-pick:site')) ||
-        (github.event.action == 'labeled' && github.event.label.name == 'cherry-pick:site')
+      github.event_name == 'workflow_dispatch' || (
+        github.event.pull_request.merged == true && (
+          (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'cherry-pick:site')) ||
+          (github.event.action == 'labeled' && github.event.label.name == 'cherry-pick:site')
+        )
       )
     runs-on: ubuntu-latest
     permissions:
@@ -43,9 +55,48 @@ jobs:
           ref: site/v10
           fetch-depth: 0
 
-      - name: Cherry-pick the merge commit onto site/v10
+      - name: Resolve the commit to pick
+        id: target
         env:
-          COMMIT: ${{ github.event.pull_request.merge_commit_sha }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_COMMIT: ${{ github.event.pull_request.merge_commit_sha }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
+            pr="$PR_NUMBER"
+            commit="$PR_COMMIT"
+          elif [[ "$TARGET" =~ ^#?[0-9]+$ ]]; then
+            pr="${TARGET#\#}"
+            read -r state base commit < <(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" \
+              --json state,baseRefName,mergeCommit \
+              --jq '"\(.state) \(.baseRefName) \(.mergeCommit.oid // "")"')
+            if [ "$state" != MERGED ] || [ "$base" != main ]; then
+              echo "::error::PR #$pr is not merged into main (state: $state, base: $base)"
+              exit 1
+            fi
+          elif [[ "$TARGET" =~ ^[0-9a-f]{7,40}$ ]]; then
+            git fetch origin '+refs/heads/main:refs/remotes/origin/main'
+            if ! commit=$(git rev-parse --verify --quiet "$TARGET^{commit}") \
+              || ! git merge-base --is-ancestor "$commit" origin/main; then
+              echo "::error::$TARGET is not a commit on main"
+              exit 1
+            fi
+            # Find the PR it came from, if any, so a failed pick can be reported there.
+            pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit/pulls" \
+              --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].number // empty') || true
+          else
+            echo "::error::Expected a PR number or a commit SHA, got: $TARGET"
+            exit 1
+          fi
+
+          echo "Picking $commit${pr:+ (#$pr)}"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Cherry-pick onto site/v10
+        env:
+          COMMIT: ${{ steps.target.outputs.commit }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -93,10 +144,10 @@ jobs:
           exit 1
 
       - name: Report a failed pick on the PR
-        if: failure()
+        if: failure() && steps.target.outputs.pr != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
+          PR: ${{ steps.target.outputs.pr }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" \
