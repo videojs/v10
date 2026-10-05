@@ -23,7 +23,7 @@
  * the asset title; the request is cacheable, and each side stays ignorant of the other.
  */
 
-import { defineBehavior } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/define-behavior';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
