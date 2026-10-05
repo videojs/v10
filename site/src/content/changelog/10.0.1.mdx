@@ -3,17 +3,15 @@ description: "Improves the docs site and fixes React media refs, embeds, and ext
 date: 2026-10-02
 version: "10.0.1"
 prerelease: false
-breaking: true
+breaking: false
 compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0...@videojs/core@10.0.1"
 ---
 
 10.0.1 smooths the first upgrade path after Video.js 10, with clearer documentation and fixes for React media and Mux streams.
 
-## Breaking changes
-
-- **`mediaRef` on adapter-backed React media now receives the playback adapter** ([#3141](https://github.com/videojs/v10/pull/3141)). If your code expects an `HTMLVideoElement` or `HTMLAudioElement` from `mediaRef` on components such as `HlsJsVideo`, `MuxVideo`, `DashVideo`, or SPF-backed HLS media, move that DOM work to `ref`. Use `mediaRef` for the adapter and its `engine`. Native `Video`, `Audio`, `BackgroundVideo`, and `WistiaVideo` keep returning their rendered element through both refs.
-
 ## React media and playback
+
+Adapter-backed React media now hand `mediaRef` the playback adapter, as intended, matching what embeds already did and what `useMedia()` returns. On `HlsJsVideo`, `MuxVideo`, `DashVideo`, and other adapter-backed components, `mediaRef.current` is the adapter, so `mediaRef.current?.engine` reaches the underlying engine; use `ref` when you need the rendered `<video>` or `<audio>` element. `Video` and `Audio` keep handing `mediaRef` their element ([#3141](https://github.com/videojs/v10/pull/3141)).
 
 Embed components now honor React's `autoPlay` prop, so YouTube, Vimeo, Spotify, Twitch, TikTok, Cloudflare, and Wistia embeds behave like native media without leaving a stray `autoplay` attribute on the iframe. The same update removes callback-ref cleanup warnings in React 18 ([#3136](https://github.com/videojs/v10/pull/3136)). Unmounting `YouTubeVideo` also no longer lets the YouTube IFrame API remove an iframe before React cleans it up ([#3154](https://github.com/videojs/v10/pull/3154)).
 
