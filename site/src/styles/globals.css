@@ -390,6 +390,43 @@ html.dark[data-tone="deep"] {
   }
 }
 
+/*
+ * A footnote definition shown beside its reference. The script that creates it sets `position-anchor`. A block-axis-only
+ * area spans the viewport's width, so `anchor-center` can slide the box back inside it near either edge.
+ */
+@utility footnote-popover {
+  inset: auto;
+  margin: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+  position-area: block-start;
+  justify-self: anchor-center;
+  position-try-fallbacks: flip-block;
+  width: max-content;
+  max-width: min(28rem, 100% - var(--spacing) * 8);
+  /* The same scale-and-fade as the Base UI popups, with discrete transitions so it also runs on close. */
+  transition:
+    opacity 150ms ease-out,
+    scale 150ms ease-out,
+    display 100ms allow-discrete,
+    overlay 100ms allow-discrete;
+
+  &:not(:popover-open) {
+    opacity: 0;
+    scale: 0.95;
+    transition-duration: 100ms;
+  }
+
+  @starting-style {
+    &:popover-open {
+      opacity: 0;
+      scale: 0.95;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 @utility data-bar {
   width: var(--data-bar-width, 100%);
   height: 2.5rem;

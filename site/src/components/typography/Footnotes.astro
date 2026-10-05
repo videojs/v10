@@ -1,0 +1,27 @@
+---
+import Hr from './Hr.astro';
+
+/**
+ * Footnote definitions section, produced from GFM footnotes by `satteriFootnotes`. Owns the `footnote-label` heading
+ * that each `FootnoteRef` points at with `aria-describedby`.
+ */
+---
+
+<section data-footnotes aria-labelledby="footnote-label" class="mx-auto my-6 w-full max-w-3xl">
+  <Hr maxWidth={false} />
+  <h2 id="footnote-label" class="mb-3 font-display text-h4 uppercase text-muted select-none" data-search-ignore>
+    Footnotes
+  </h2>
+  <div
+    class="text-p3 [&_li]:rounded-sm [&_li]:target:bg-hover [&_li>p]:my-1 [&_li>p]:max-w-none [&_ol]:max-w-none"
+  >
+    <slot />
+  </div>
+</section>
+
+<script>
+  import { enhanceFootnotes } from './footnotePopovers';
+
+  enhanceFootnotes();
+  document.addEventListener('astro:page-load', () => enhanceFootnotes());
+</script>
