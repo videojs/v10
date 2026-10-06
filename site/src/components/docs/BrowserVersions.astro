@@ -1,0 +1,28 @@
+---
+/**
+ * Inline browser versions for one feature, read from `caniuse-lite` or MDN data at build time so guide prose and table
+ * cells move with dependency updates instead of hand edits.
+ */
+import {
+  COMPAT_BROWSERSLIST_QUERY,
+  firstVersions,
+  missingVersions,
+  resolveSupportedBrowsers,
+} from '@/utils/browser-support';
+
+interface Props {
+  /** A caniuse feature id, such as `css-relative-colors`, or an MDN feature key from `browser-support.ts`. */
+  feature: string;
+  /** `first`: the first supporting versions. `missing`: the supported versions that lack the feature. */
+  show: 'first' | 'missing';
+  /** For `missing`, read the Compat skins' supported versions instead of the other skins'. */
+  skin?: 'compat';
+}
+
+const { feature, show, skin } = Astro.props;
+
+const browsers = resolveSupportedBrowsers(skin === 'compat' ? COMPAT_BROWSERSLIST_QUERY : undefined);
+const text = show === 'first' ? firstVersions(feature) : (missingVersions(feature, browsers) ?? 'None');
+---
+
+<span class="tabular-nums">{text}</span>

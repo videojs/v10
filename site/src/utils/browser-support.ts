@@ -15,75 +15,84 @@ export const SUPPORT_BROWSERS = [
 
 export type SupportBrowserId = (typeof SUPPORT_BROWSERS)[number]['id'];
 
-export type CssRequirementKind = 'required' | 'degrades' | 'guarded';
+/**
+ * Browsers that ship CSS features together share one docs column: Chrome with Edge, and Safari with Safari on iOS. Text
+ * names both only when their versions differ.
+ */
+export const SUPPORT_GROUPS = [
+  { label: 'Chrome and Edge', ids: ['chrome', 'edge'] },
+  { label: 'Firefox', ids: ['firefox'] },
+  { label: 'Safari and iOS', ids: ['safari', 'ios_saf'] },
+] as const satisfies readonly { label: string; ids: readonly SupportBrowserId[] }[];
 
 /**
- * A CSS feature the packaged skins use, keyed by its caniuse feature id so the docs read support data from
- * `caniuse-lite` at build time instead of a hand-maintained table.
+ * First supporting versions from MDN browser-compat-data for features caniuse does not track. caniuse has no entry for
+ * these color functions (`css-lch-lab` covers `lab()` and `lch()` only) or for the Popover API.
  */
+const MDN_FEATURES = new Map<string, { url: string; versions: Record<SupportBrowserId, string> }>([
+  [
+    'color-mix',
+    {
+      url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix',
+      versions: { chrome: '111', edge: '111', firefox: '113', safari: '16.2', ios_saf: '16.2' },
+    },
+  ],
+  [
+    'oklch',
+    {
+      url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch',
+      versions: { chrome: '111', edge: '111', firefox: '113', safari: '15.4', ios_saf: '15.4' },
+    },
+  ],
+  [
+    'light-dark',
+    {
+      url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark',
+      versions: { chrome: '123', edge: '123', firefox: '120', safari: '17.5', ios_saf: '17.5' },
+    },
+  ],
+  [
+    'contrast-color',
+    {
+      url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color',
+      versions: { chrome: '147', edge: '147', firefox: '146', safari: '26', ios_saf: '26' },
+    },
+  ],
+  [
+    'popover',
+    {
+      url: 'https://developer.mozilla.org/en-US/docs/Web/API/Popover_API',
+      versions: { chrome: '114', edge: '114', firefox: '125', safari: '17', ios_saf: '17' },
+    },
+  ],
+]);
+
+/** A CSS feature the skins need, keyed by its caniuse feature id or an `MDN_FEATURES` key. */
 export interface CssRequirement {
   id: string;
   label: string;
-  kind: CssRequirementKind;
+  /** Whether the label is CSS syntax, such as `@layer`, rather than a feature name. */
+  code: boolean;
   /** What a reader sees in a browser without the feature. */
   effect: string;
 }
 
 /**
- * Features found in the generated skin stylesheets after the build lowers them, which removes nesting and `@scope`.
- * `required` features have no fallback and the skin does not render without them; `degrades` features lose one visual
- * detail; `guarded` features fall back through `@supports` or a second selector.
- *
- * Only features caniuse tracks belong here. `oklch()`, `color-mix()`, `light-dark()`, `@property`, and
- * `contrast-color()` have no caniuse entry (`css-lch-lab` covers `lab()` and `lch()` only), so the guide describes them
- * in prose with MDN data instead.
+ * Features in the generated skin stylesheets that have no fallback, so every supported browser must have them. The
+ * guide describes features with a fallback and reads their versions through `missingVersions()`.
  */
 export const CSS_REQUIREMENTS: readonly CssRequirement[] = [
-  {
-    id: 'css-cascade-scope',
-    label: '@scope',
-    kind: 'guarded',
-    effect: 'Packaged skins use :where() selectors instead; registry CSS skins need it',
-  },
-  { id: 'css-cascade-layers', label: '@layer', kind: 'required', effect: 'No component styling' },
-  { id: 'css-has', label: ':has()', kind: 'required', effect: 'Menu and slider focus states are lost' },
-  {
-    id: 'css-container-queries',
-    label: '@container',
-    kind: 'required',
-    effect: 'Controls do not adapt to player width',
-  },
+  { id: 'css-cascade-layers', label: '@layer', code: true, effect: 'No component styling' },
+  { id: 'css-container-queries', label: '@container', code: true, effect: 'Controls do not adapt to player width' },
   {
     id: 'css-media-range-syntax',
     label: 'Media query range syntax',
-    kind: 'required',
+    code: false,
     effect: 'Large-screen sizing is lost',
   },
-  {
-    id: 'css-dir-pseudo',
-    label: ':dir()',
-    kind: 'guarded',
-    effect: 'Right-to-left layout follows the dir attribute instead',
-  },
-  {
-    id: 'css-relative-colors',
-    label: 'Relative color syntax',
-    kind: 'degrades',
-    effect: 'Control scrims fall back to color-mix(), and subtle shadows are lost',
-  },
-  {
-    id: 'css-scrollbar',
-    label: 'scrollbar-color and scrollbar-width',
-    kind: 'degrades',
-    effect: 'Menus show default scrollbars',
-  },
-  { id: 'css-backdrop-filter', label: 'backdrop-filter', kind: 'degrades', effect: 'Surfaces lose their blur' },
-  {
-    id: 'css-anchor-positioning',
-    label: 'Anchor positioning',
-    kind: 'guarded',
-    effect: 'Popups are positioned by JavaScript',
-  },
+  { id: 'css-has', label: ':has()', code: true, effect: 'Menu and slider focus states are lost' },
+  { id: 'color-mix', label: 'color-mix()', code: true, effect: 'Skin colors are lost' },
+  { id: 'oklch', label: 'oklch()', code: true, effect: 'Skin colors are lost' },
 ];
 
 export interface ResolvedBrowser {
@@ -99,6 +108,9 @@ export interface ResolvedBrowser {
 
 /** The browserslist query the repository builds against, from the root `package.json`. */
 export const BROWSERSLIST_QUERY: readonly string[] = rootPackage.browserslist;
+
+/** The older browsers the packaged Compat skins support, from the root `package.json`. */
+export const COMPAT_BROWSERSLIST_QUERY: readonly string[] = rootPackage.compatBrowserslist;
 
 /** Numeric sort key for caniuse version strings such as `17.4`, `150`, or `15.0-15.1`. */
 export function versionNumber(version: string): number {
@@ -140,9 +152,8 @@ export interface FeatureSupport {
   requirement: CssRequirement;
   /** First fully supporting version per policy browser, or `null` when the browser has no full support. */
   firstVersion: Record<SupportBrowserId, string | null>;
-  /** Share of global web usage on browsers with full support, as a percentage. */
-  globalSupport: number;
-  caniuseUrl: string;
+  /** The feature's caniuse.com page, or its MDN page when caniuse does not track it. */
+  url: string;
 }
 
 function isFullSupport(stat: string | undefined): boolean {
@@ -156,38 +167,95 @@ function featureData(id: string) {
   return caniuse.feature(packed);
 }
 
-/** Read first-supporting versions and global usage for one requirement from caniuse-lite. */
-export function featureSupport(requirement: CssRequirement): FeatureSupport {
-  const data = featureData(requirement.id);
+/** First fully supporting version of a feature per policy browser, or `null` when a browser has none. */
+export function featureFirstVersions(id: string): Record<SupportBrowserId, string | null> {
+  const mdn = MDN_FEATURES.get(id);
+  if (mdn) return mdn.versions;
+
+  const data = featureData(id);
+
   // SAFETY: the entries are built from SUPPORT_BROWSERS, so every SupportBrowserId key is present exactly once.
-  const firstVersion = Object.fromEntries(
-    SUPPORT_BROWSERS.map(({ id }) => {
-      const stats = data.stats[id] ?? {};
-      const versions = caniuse.agents[id]?.versions.filter((version): version is string => version !== null) ?? [];
+  return Object.fromEntries(
+    SUPPORT_BROWSERS.map(({ id: browser }) => {
+      const stats = data.stats[browser] ?? {};
+      const versions = caniuse.agents[browser]?.versions.filter((version): version is string => version !== null) ?? [];
       const first = versions.find((version) => isFullSupport(stats[version]));
 
-      return [id, first ? displayVersion(first) : null];
+      return [browser, first ? displayVersion(first) : null];
     })
   ) as Record<SupportBrowserId, string | null>;
+}
 
-  let globalSupport = 0;
+/** The support data page for a feature id. */
+export function featureUrl(id: string): string {
+  return MDN_FEATURES.get(id)?.url ?? `https://caniuse.com/${id}`;
+}
 
-  for (const [agentId, agent] of Object.entries(caniuse.agents)) {
-    if (!agent) continue;
-
-    const stats = data.stats[agentId] ?? {};
-
-    for (const [version, usage] of Object.entries(agent.usage_global)) {
-      if (isFullSupport(stats[version])) globalSupport += usage ?? 0;
-    }
-  }
-
-  return { requirement, firstVersion, globalSupport, caniuseUrl: `https://caniuse.com/${requirement.id}` };
+/** Read first-supporting versions for one requirement. */
+export function featureSupport(requirement: CssRequirement): FeatureSupport {
+  return { requirement, firstVersion: featureFirstVersions(requirement.id), url: featureUrl(requirement.id) };
 }
 
 /** Support data for every requirement, in table order. */
 export function cssRequirementSupport(requirements: readonly CssRequirement[] = CSS_REQUIREMENTS): FeatureSupport[] {
   return requirements.map(featureSupport);
+}
+
+function browserName(id: SupportBrowserId): string {
+  return SUPPORT_BROWSERS.find((browser) => browser.id === id)?.name ?? id;
+}
+
+/** Phrase one value per group, naming each browser separately only when a group's browsers disagree. */
+function joinGroups(
+  valueOf: (id: SupportBrowserId) => string | null,
+  phrase: (name: string, value: string) => string
+): string | null {
+  const phrases = SUPPORT_GROUPS.flatMap(({ label, ids }) => {
+    const values = ids.map(valueOf);
+    if (new Set(values).size === 1) return values[0] ? [phrase(label, values[0])] : [];
+
+    return ids.flatMap((id, index) => (values[index] ? [phrase(browserName(id), values[index])] : []));
+  });
+
+  return phrases.length > 0 ? phrases.join(', ') : null;
+}
+
+/** First fully supporting version of a feature, such as `Chrome and Edge 118, Firefox 146, Safari and iOS 17.4`. */
+export function firstVersions(id: string): string {
+  const versions = featureFirstVersions(id);
+  const text = joinGroups(
+    (browser) => versions[browser] ?? 'none',
+    (name, version) => (version === 'none' ? `no ${name} version` : `${name} ${version}`)
+  );
+
+  return text ?? '';
+}
+
+/**
+ * Supported browser versions that lack a feature, such as `Chrome and Edge before 131, Safari and iOS before 18`, or
+ * `null` when every supported version has it.
+ */
+export function missingVersions(
+  id: string,
+  browsers: readonly ResolvedBrowser[] = resolveSupportedBrowsers()
+): string | null {
+  const versions = featureFirstVersions(id);
+  const missing = new Map(
+    browsers.map(({ id: browser, minimum }) => {
+      const first = versions[browser];
+
+      if (!minimum) return [browser, null];
+
+      if (!first) return [browser, 'all'];
+
+      return [browser, versionNumber(first) > versionNumber(minimum) ? first : null];
+    })
+  );
+
+  return joinGroups(
+    (browser) => missing.get(browser) ?? null,
+    (name, first) => (first === 'all' ? `all ${name} versions` : `${name} before ${first}`)
+  );
 }
 
 /** The `caniuse-lite` data version the numbers come from. */
