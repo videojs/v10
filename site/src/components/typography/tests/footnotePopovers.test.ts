@@ -114,6 +114,44 @@ describe('enhanceFootnotes', () => {
     expect(popover.matches(':popover-open')).toBe(true);
   });
 
+  it('keeps a clicked popover open when interest is lost, but not a hovered one', () => {
+    const [reference] = renderFootnotes();
+
+    enhanceFootnotes();
+
+    const popover = popoverFor(reference!);
+    const loseInterest = () => {
+      const event = new Event('loseinterest', { cancelable: true });
+
+      popover.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+
+    popover.showPopover();
+
+    expect(loseInterest()).toBe(false);
+
+    reference!.click();
+
+    expect(loseInterest()).toBe(true);
+  });
+
+  it('stays closed when light dismiss closes a pinned popover between pointerdown and click', () => {
+    const [reference] = renderFootnotes();
+
+    enhanceFootnotes();
+
+    const popover = popoverFor(reference!);
+
+    reference!.click();
+    reference!.dispatchEvent(new Event('pointerdown'));
+    popover.hidePopover();
+    popover.dispatchEvent(Object.assign(new Event('toggle'), { newState: 'closed' }));
+    reference!.click();
+
+    expect(popover.matches(':popover-open')).toBe(false);
+  });
+
   it('marks the reference while its popover is open', () => {
     const [reference] = renderFootnotes();
 
