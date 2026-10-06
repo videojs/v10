@@ -1,0 +1,6 @@
+/*
+ * Intentionally empty. Bundlers resolve the Video.js 8 stylesheet import, `video.js/dist/video-js.css`, to this file
+ * through the package `exports`, so a stale import builds instead of failing before the `videojs()` stub can throw its
+ * VJS8_LEGACY_INIT code. Video.js 10 skins style themselves. CDNs ignore `exports` and serve the Video.js 8 redirect
+ * at the literal `dist/video-js.css` path. See https://videojs.org/docs/how-to/migrate-from-video-js-8
+ */

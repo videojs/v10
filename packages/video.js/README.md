@@ -57,6 +57,9 @@ major version to install it:
 npm install video.js@8
 ```
 
+Loading v8 from a CDN? Pin the major version in the URL too, such as `https://unpkg.com/video.js@8/dist/video.min.js`.
+Unversioned URLs follow npm's `latest` tag, so they now reach this package, which redirects them to `video.js@8`.
+
 For v8 setup, releases, and issues, see the [Video.js 8 repository][v8-repo] and the [v8 docs][v8-docs].
 
 Ready to move a v8 player to Video.js 10? Follow the migration guide for [HTML][html-migrate] or [React][react-migrate].
@@ -67,16 +70,20 @@ This package has no player and no dependencies. `@videojs/core` depends on it, s
 and `@videojs/react` install, but nothing imports it, so it adds nothing to your bundle.
 
 Importing it registers no elements and doesn't scan the page, so v8 markup such as
-`<video class="video-js" data-setup="{}">` does nothing. It contains only shims, so v8 code that runs against Video.js 10
-fails with a searchable code instead of "undefined is not a function":
+`<video class="video-js" data-setup="{}">` does nothing. It contains only shims for v8 code that reaches Video.js 10:
 
 - **The v8 module surface.** The `videojs()` default export, `registerPlugin`, `getPlugin`, `registerComponent`,
-  `getComponent`, `getPlayer`, and `options` each throw a `VJS8_LEGACY_*` code that links to its error page. Development
-  builds add the explanation and the HTML and React equivalents; production builds throw only the code and link.
+  `getComponent`, `getPlayer`, and `options` each throw a `VJS8_LEGACY_*` code that links to its error page, instead of
+  failing with "undefined is not a function". Development builds add the explanation and the HTML and React
+  equivalents; production builds throw only the code and link.
 - **`video.js/errors`.** The registry behind those codes: one entry per code with an explanation, the HTML and React
   equivalents, and the stay-on-v8 line.
-- **`video.js/dist/video-js.css`.** The v8 stylesheet path, resolving to an empty file so a leftover import doesn't fail
-  the build.
+- **`video.js/dist/video-js.css`.** The v8 stylesheet import. Bundlers resolve it to an empty file, so a leftover
+  import doesn't fail the build.
+- **v8 CDN paths.** Unversioned CDN URLs such as `https://unpkg.com/video.js/dist/video.min.js` follow npm's `latest`
+  tag, so they now reach this package. Each v8 script and stylesheet path in `dist/` loads the same file from
+  `video.js@8` on the same CDN and logs a warning to pin `video.js@8`, so those pages keep running v8. The v8 language
+  `.json` files and font files aren't redirected.
 
 ## Community
 

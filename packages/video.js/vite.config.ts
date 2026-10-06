@@ -4,6 +4,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
+import { cdnRedirectsPlugin } from './scripts/cdn-redirects-plugin.ts';
 
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
@@ -14,13 +15,15 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   plugins: isDevBuildMode(mode)
     ? []
     : [
-        // The Video.js 8 stylesheet path, served once from the package root.
+        // Bundlers resolve the Video.js 8 stylesheet import here through `exports`.
         copyCssPlugin({
           outDir: 'dist',
-          pattern: 'src/legacy/video-js.css',
+          pattern: 'src/legacy/empty.css',
           inline: false,
-          rename: () => 'video-js.css',
+          rename: () => 'empty.css',
         }),
+        // CDNs serve files by path, so the Video.js 8 paths, `dist/video-js.css` included, redirect to video.js@8.
+        cdnRedirectsPlugin({ outDir: 'dist', template: 'src/legacy/cdn-redirect.js' }),
       ],
 });
 

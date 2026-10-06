@@ -4,7 +4,7 @@
 
 ## Choose the package
 
-- **Video.js 8 project** (`videojs()` calls, `class="video-js"` markup, or `data-setup`): unless the user asks to migrate, keep it on v8 by pinning `video.js@8`. Brightcove maintains v8 with security and bug fixes; see https://github.com/videojs/video.js and https://legacy.videojs.org.
+- **Video.js 8 project** (`videojs()` calls, `class="video-js"` markup, or `data-setup`): unless the user asks to migrate, keep it on v8 by pinning `video.js@8`. Brightcove maintains v8 with security and bug fixes; see https://github.com/videojs/video.js and https://legacy.videojs.org. Pin CDN URLs too: unversioned ones such as `https://unpkg.com/video.js/dist/video.min.js` now reach `video.js@10`, which only redirects them to `video.js@8`.
 - **HTML, Web Components, Vue, Svelte, or another framework**: install `@videojs/html`.
 - **React**: install `@videojs/react`.
 - **Script tag without a bundler**: load `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/cdn@<version>/video.js"></script>` with the same exact version in every CDN URL. Don't install an npm package.
@@ -26,4 +26,4 @@ Run `agents init` without flags to list every option and the order to decide the
 
 The code means v8 code ran against `video.js@10`. Either pin `video.js@8`, or migrate the call site. Development builds print the HTML and React replacements, and every code links to its page at `https://videojs.org/docs/reference/api/<code-slug>`. The full migration guide is at https://videojs.org/docs/framework/html/guides/migrate-from-video-js-8 (swap `html` for `react`).
 
-`video.js/dist/video-js.css` is an empty file. Remove its import when migrating.
+Bundlers resolve `video.js/dist/video-js.css` to an empty file. Remove its import when migrating.
