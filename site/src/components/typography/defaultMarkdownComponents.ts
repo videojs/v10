@@ -4,6 +4,7 @@ import A from './A.astro';
 import Blockquote from './Blockquote.astro';
 import CodeFrame from './CodeFrame.astro';
 import Em from './Em.astro';
+import Figure from './Figure.astro';
 import FootnoteBackref from './FootnoteBackref.astro';
 import FootnoteRef from './FootnoteRef.astro';
 import Footnotes from './Footnotes.astro';
@@ -47,6 +48,7 @@ const defaultMarkdownComponents = {
   img: Img,
   code: MarkdownCode,
   CodeFrame,
+  Figure,
   Footnotes,
   FootnoteRef,
   FootnoteBackref,
