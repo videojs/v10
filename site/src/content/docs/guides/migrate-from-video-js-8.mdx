@@ -11,6 +11,8 @@ Move your Video.js 8 setup to v10 by replacing `videojs()` with a player, media 
 
 Video.js 10 ships as scoped `@videojs/*` packages. Since version 10, the `video.js` npm package contains no player; it throws a coded error when Video.js 8 code calls it. To stay on Video.js 8, install `video.js@8`. Its [repository](https://github.com/videojs/video.js) and [docs](https://legacy.videojs.org) remain available.
 
+Pages that load Video.js 8 from an unversioned CDN URL, such as `https://unpkg.com/video.js/dist/video.min.js`, keep running v8: those paths in `video.js@10` redirect to `video.js@8`. Pin `video.js@8` in the URL to skip the redirect.
+
 ## Before you migrate
 
 - List the options, techs, plugins, custom controls, and event handlers your app uses.
