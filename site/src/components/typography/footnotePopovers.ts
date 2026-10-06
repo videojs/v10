@@ -50,7 +50,7 @@ function enhanceReference(reference: HTMLAnchorElement): void {
   // Opened by a click rather than by interest, so a second click closes it instead of interest re-showing it.
   let pinned = false;
   // Light dismiss can close the popover between pointerdown and click, so read its state before then.
-  let openAtPointerDown: boolean | undefined;
+  let stateAtPointerDown: { open: boolean; pinned: boolean } | undefined;
 
   reference.setAttribute('aria-expanded', 'false');
 
@@ -64,8 +64,13 @@ function enhanceReference(reference: HTMLAnchorElement): void {
     if (!open) pinned = false;
   });
 
+  // A popover that opened on hover and was then clicked stays open when the pointer leaves.
+  popover.addEventListener('loseinterest', (event) => {
+    if (pinned) event.preventDefault();
+  });
+
   reference.addEventListener('pointerdown', () => {
-    openAtPointerDown = popover.matches(':popover-open');
+    stateAtPointerDown = { open: popover.matches(':popover-open'), pinned };
   });
 
   reference.addEventListener('click', (event) => {
@@ -74,12 +79,18 @@ function enhanceReference(reference: HTMLAnchorElement): void {
 
     event.preventDefault();
 
-    const wasOpen = openAtPointerDown ?? popover.matches(':popover-open');
+    const { open: wasOpen, pinned: wasPinned } = stateAtPointerDown ?? {
+      open: popover.matches(':popover-open'),
+      pinned,
+    };
 
-    openAtPointerDown = undefined;
+    stateAtPointerDown = undefined;
 
-    if (wasOpen && pinned) {
-      popover.hidePopover();
+    if (wasOpen && wasPinned) {
+      pinned = false;
+
+      if (popover.matches(':popover-open')) popover.hidePopover();
+
       return;
     }
 
