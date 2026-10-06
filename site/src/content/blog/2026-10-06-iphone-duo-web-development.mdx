@@ -4,6 +4,8 @@ description: 'A weekend with the iPhone Duo simulator: the Device Posture and Vi
 authors: [darius-cepulis]
 ---
 
+import netflixFoldedPlayer from '../../assets/blog/2026-10-06-iphone-duo-web-development/netflix-folded-player.png';
+
 You would think our first post after the [Video.js v10.0.0 release](/blog/videojs-10) would be some fascinating deep dive on our composable architecture, or our compiler, or maybe a multi-part series on our library agentic experience research.
 
 But you know what? We've been working really hard to get Video.js out the door. So instead of writing a real blog post, I decided to spend the weekend on a little side project: digging into the web APIs that we'll have access to on the iPhone Duo.
@@ -71,7 +73,9 @@ Which would create an effect like this
 
 Ok, that's all fine and good, but let me tell you why we're *really* here. After the Apple media event, I saw a few folks try out the new Netflix app for iPhone Duo and the folded player made perfect sense. Video in the top half, controls in the bottom, and a subtle flourish that reflected the video onto the bottom screen.
 
-![A hand holding a partially folded iPhone Duo playing Netflix, with video on the top half and large controls on the bottom half](../../assets/blog/2026-10-06-iphone-duo-web-development/netflix-folded-player.png)
+<Figure src={netflixFoldedPlayer} alt="A hand holding a partially folded iPhone Duo playing Netflix, with video on the top half and large controls on the bottom half">
+  Screenshot from Dave2D's "iPhone Duo Impressions – They NAILED This" on YouTube.
+</Figure>
 
 Having spent the year in Video.js, obviously my first thought was "can we do this?"
 
