@@ -19,7 +19,7 @@ const { href, id } = Astro.props;
     id={id}
     aria-describedby="footnote-label"
     data-footnote-ref
-    class:list={[shared.a, "rounded-sm px-0.5 target:bg-hover"]}
+    class:list={[shared.a, "rounded-sm px-0.5 target:bg-hover data-[popup-open]:bg-hover"]}
     ><slot /></a
   ></sup
 >

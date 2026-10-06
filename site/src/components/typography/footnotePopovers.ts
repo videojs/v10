@@ -52,8 +52,16 @@ function enhanceReference(reference: HTMLAnchorElement): void {
   // Light dismiss can close the popover between pointerdown and click, so read its state before then.
   let openAtPointerDown: boolean | undefined;
 
+  reference.setAttribute('aria-expanded', 'false');
+
+  // Mirror the Base UI triggers' `data-popup-open` so the reference shows its popover is open, however it opened.
   popover.addEventListener('toggle', (event) => {
-    if ((event as ToggleEvent).newState === 'closed') pinned = false;
+    const open = (event as ToggleEvent).newState === 'open';
+
+    reference.toggleAttribute('data-popup-open', open);
+    reference.setAttribute('aria-expanded', String(open));
+
+    if (!open) pinned = false;
   });
 
   reference.addEventListener('pointerdown', () => {
