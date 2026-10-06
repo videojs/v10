@@ -1,15 +1,20 @@
 interface Page {
   readonly path: string;
   readonly preset: 'video' | 'audio';
+  readonly skin: 'default' | 'neutral' | 'compat';
 }
 
 export const PAGES: readonly Page[] = [
-  { path: '/pages/html-video-mp4.html', preset: 'video' },
-  { path: '/pages/react-video-mp4.html', preset: 'video' },
-  { path: '/pages/html-video-neutral-mp4.html', preset: 'video' },
-  { path: '/pages/react-video-neutral-mp4.html', preset: 'video' },
-  { path: '/pages/html-audio-mp4.html', preset: 'audio' },
-  { path: '/pages/react-audio-mp4.html', preset: 'audio' },
+  { path: '/pages/html-video-mp4.html', preset: 'video', skin: 'default' },
+  { path: '/pages/react-video-mp4.html', preset: 'video', skin: 'default' },
+  { path: '/pages/html-video-neutral-mp4.html', preset: 'video', skin: 'neutral' },
+  { path: '/pages/react-video-neutral-mp4.html', preset: 'video', skin: 'neutral' },
+  { path: '/pages/html-audio-mp4.html', preset: 'audio', skin: 'default' },
+  { path: '/pages/react-audio-mp4.html', preset: 'audio', skin: 'default' },
+  { path: '/pages/html-video-compat-mp4.html', preset: 'video', skin: 'compat' },
+  { path: '/pages/react-video-compat-mp4.html', preset: 'video', skin: 'compat' },
+  { path: '/pages/html-audio-compat-mp4.html', preset: 'audio', skin: 'compat' },
+  { path: '/pages/react-audio-compat-mp4.html', preset: 'audio', skin: 'compat' },
 ];
 
 /** Values read from the page. Each is a computed style, so an invalid or missing fallback shows as its initial value. */
@@ -44,7 +49,8 @@ export function readProbe(query: typeof deepQuery): Probe | null {
   if (!skin) return null;
 
   const backdrop = query(document, '.video-controls-backdrop');
-  const buffer = query(document, '.media-slider-buffer');
+  // Compat names its time slider parts after the time slider.
+  const buffer = query(document, '.media-slider-buffer, .media-time-slider-buffer');
   const surfaces: Element[] = [];
   const blurRoots: (Document | ShadowRoot)[] = [document];
 

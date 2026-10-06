@@ -5,10 +5,16 @@ import { getIosDevice } from './ios-device.ts';
 
 export interface Options {
   caps: Record<string, string>;
+  /** The browser version the project must launch, checked against the user agent. */
+  version: string;
+  /** The skins whose pages the project runs. */
+  skins: readonly string[];
 }
 
 export const test = base.extend<{ session: Browser }, Options>({
   caps: [{}, { option: true, scope: 'worker' }],
+  version: ['', { option: true, scope: 'worker' }],
+  skins: [['default', 'neutral', 'compat'], { option: true, scope: 'worker' }],
   context: async ({ session: browser, baseURL, viewport, actionTimeout }, use) => {
     const options: BrowserContextOptions = { viewport };
 

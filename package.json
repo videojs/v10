@@ -83,5 +83,16 @@
     "node": ">=22.19.0",
     "npm": ">=10.9.3"
   },
-  "packageManager": "pnpm@12.6.0"
+  "packageManager": "pnpm@12.6.0",
+  "compatBrowserslist": [
+    "chrome >= 99",
+    "edge >= 99",
+    "firefox >= 103",
+    "safari >= 16.4",
+    "ios_saf >= 16.4",
+    "and_chr >= 99",
+    "and_ff >= 103",
+    "samsung >= 18",
+    "opera >= 85"
+  ]
 }
