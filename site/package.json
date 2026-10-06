@@ -53,7 +53,7 @@
     "schema-dts": "^1.1.5",
     "sharp": "^0.35.3",
     "shiki": "^4.3.1",
-    "simple-git": "^3.36.0",
+    "simple-git": "^4.0.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "catalog:",
     "video.js": "workspace:*",
