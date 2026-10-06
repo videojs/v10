@@ -62,7 +62,9 @@ export function TableOfContentsMobile({
     const updateViewportLayout = () => {
       const computedStyle = triggerRef.current ? getComputedStyle(triggerRef.current) : null;
       const bannerHeight = Number.parseFloat(computedStyle?.getPropertyValue('--banner-height') ?? '') || 0;
-      const navHeight = Number.parseFloat(computedStyle?.getPropertyValue('--nav-h') ?? '') || 52;
+      const parsedNavHeight = Number.parseFloat(computedStyle?.getPropertyValue('--nav-h') ?? '');
+      // --nav-h is 0px outside the docs layout. Docs leaves it as an unresolved calc(), which parses as NaN and falls back.
+      const navHeight = Number.isNaN(parsedNavHeight) ? 52 : parsedNavHeight;
       const stickyHeaderHeight = bannerHeight + navHeight;
       const contentHeight = Math.max(0, window.innerHeight - stickyHeaderHeight);
 
@@ -130,7 +132,7 @@ export function TableOfContentsMobile({
         )}
         style={{
           left: railOnly ? MARGIN_RAIL_LEFT : undefined,
-          top: viewportLayout.railTop ?? 'calc(50dvh + 1.625rem)',
+          top: viewportLayout.railTop ?? 'calc(50dvh + (var(--banner-height) + var(--nav-h)) / 2)',
           transform: 'translateY(-50%)',
           cursor: 'pointer',
         }}
