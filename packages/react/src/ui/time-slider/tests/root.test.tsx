@@ -173,6 +173,13 @@ describe('TimeSliderRoot', () => {
       expect(thumbRender).not.toHaveBeenCalled();
       expect(thumb.getAttribute('aria-valuenow')).toBe('30');
 
+      const shown = ref.current!.style.getPropertyValue('--media-slider-fill');
+
+      measureSlider(ref.current!);
+      pointer(ref.current!, 'pointermove', 100, 0);
+      pointer(ref.current!, 'pointermove', 120, 0);
+      expect(ref.current!.style.getPropertyValue('--media-slider-fill')).toBe(shown);
+
       update({ currentTime: 31 });
       expect(thumbRender).toHaveBeenCalled();
       expect(thumb.getAttribute('aria-valuenow')).toBe('31');

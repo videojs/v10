@@ -96,7 +96,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       return () => core.endDrag(playbackRef.current);
     }, [core]);
 
-    const { state, input, adjustForAlignment, rootRef, thumbRef, rootProps, rootStyle, thumbProps } =
+    const { state, styleState, input, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } =
       useSlider<TimeSliderState>({
         computeState: (input) => {
           core.setInput(input);
@@ -122,6 +122,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         changeThrottle,
         adjustPercent: (rawPercent, thumbSize, trackSize) =>
           core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
+        getStyleState: () => core.getState(visual.currentTime),
         getCSSVars: getTimeSliderCSSVars,
         onValueCommit: (percent) => {
           const media = mediaRef.current;
@@ -192,9 +193,6 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       [state, input, core, thumbRef, thumbProps, translator, locale, label]
     );
 
-    const visualState = core.getState(visual.currentTime);
-    const cssVars = getTimeSliderCSSVars(adjustForAlignment(visualState));
-
     if (!time) {
       if (__DEV__) logMissingFeature('TimeSlider', 'time');
 
@@ -207,7 +205,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
           'div',
           { render, className, style },
           {
-            state: visualState,
+            state: styleState,
             stateAttrMap: TimeSliderDataAttrs,
             ref: [forwardedRef, rootRef, element],
             props: [

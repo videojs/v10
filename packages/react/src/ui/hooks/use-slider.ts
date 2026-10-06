@@ -33,6 +33,8 @@ export interface UseSliderOptions<State extends SliderState = SliderState> exten
   | 'onDragEnd'
 > {
   computeState: (input: SliderInput) => State;
+  /** Optional visual projection, separate from semantic slider state. */
+  getStyleState?: ((state: State) => State) | undefined;
   orientation?: 'horizontal' | 'vertical' | undefined;
   disabled?: boolean | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Called for fill and pointer percents. */
@@ -45,7 +47,7 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   state: State;
   input: SliderApi['input'];
   cssVars: Record<string, string>;
-  adjustForAlignment: SliderApi['adjustForAlignment'];
+  styleState: State;
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
   rootProps: SliderRootProps;
@@ -131,7 +133,8 @@ export function useSlider<State extends SliderState = SliderState>(
   }, [state.thumbAlignment]);
 
   // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
-  const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
+  const styleState = options.getStyleState?.(state) ?? state;
+  const cssVars = options.getCSSVars(slider.adjustForAlignment(styleState));
 
   const syncStyles = useCallback(
     (element = rootElementRef.current) => {
@@ -143,8 +146,9 @@ export function useSlider<State extends SliderState = SliderState>(
       if (!dragging && !pointing) return;
 
       const next = optionsRef.current.computeState(slider.input.current);
+      const visual = optionsRef.current.getStyleState?.(next) ?? next;
 
-      applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
+      applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(visual)));
     },
     [slider]
   );
@@ -171,7 +175,7 @@ export function useSlider<State extends SliderState = SliderState>(
     state,
     input: slider.input,
     cssVars,
-    adjustForAlignment: slider.adjustForAlignment,
+    styleState,
     rootRef,
     thumbRef,
     rootProps: slider.rootProps,
