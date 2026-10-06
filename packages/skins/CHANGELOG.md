@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.1.0](https://github.com/videojs/v10/compare/@videojs/skins@10.0.1...@videojs/skins@10.1.0) (2026-10-06)
+
+
+### Features
+
+* **skin:** publish the button tooltip as a registry component ([#3194](https://github.com/videojs/v10/issues/3194)) ([f16a42d](https://github.com/videojs/v10/commit/f16a42d4dbce7cc758d414284dda5366ed4d645e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/core bumped to 10.1.0
+    * @videojs/element bumped to 10.1.0
+    * @videojs/icons bumped to 10.1.0
+    * @videojs/installation bumped to 10.1.0
+    * @videojs/utils bumped to 10.1.0
+
 ## [10.0.1](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0...@videojs/skins@10.0.1) (2026-10-02)
 
 

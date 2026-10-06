@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.1.0](https://github.com/videojs/v10/compare/@videojs/icons@10.0.1...@videojs/icons@10.1.0) (2026-10-06)
+
+
+### Bug Fixes
+
+* **icons:** optically center the compat play icon ([#3146](https://github.com/videojs/v10/issues/3146)) ([04d29bc](https://github.com/videojs/v10/commit/04d29bc44d6275396c22618613546b00f55fadb4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.1.0
+
 ## [10.0.1](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0...@videojs/icons@10.0.1) (2026-10-02)
 
 

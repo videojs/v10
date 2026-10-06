@@ -1,5 +1,56 @@
 # Changelog
 
+## [10.1.0](https://github.com/videojs/v10/compare/@videojs/react@10.0.1...@videojs/react@10.1.0) (2026-10-06)
+
+
+### Features
+
+* **spf:** send credentials with hls requests for crossorigin="use-credentials" ([#2870](https://github.com/videojs/v10/issues/2870)) ([897901b](https://github.com/videojs/v10/commit/897901b88359dca0dc3e59fcecd766cb59f8fe24))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.1.0
+    * @videojs/media bumped to 10.1.0
+    * @videojs/native-hls-video bumped to 10.1.0
+    * @videojs/spf bumped to 10.1.0
+    * @videojs/store bumped to 10.1.0
+    * @videojs/utils bumped to 10.1.0
+  * devDependencies
+    * @videojs/cloudflare-video bumped to 10.1.0
+    * @videojs/dash-video bumped to 10.1.0
+    * @videojs/google-cast bumped to 10.1.0
+    * @videojs/hlsjs-video bumped to 10.1.0
+    * @videojs/icons bumped to 10.1.0
+    * @videojs/mux-audio bumped to 10.1.0
+    * @videojs/mux-data bumped to 10.1.0
+    * @videojs/mux-video bumped to 10.1.0
+    * @videojs/shaka-video bumped to 10.1.0
+    * @videojs/spf bumped to 10.1.0
+    * @videojs/spotify-audio bumped to 10.1.0
+    * @videojs/tiktok-video bumped to 10.1.0
+    * @videojs/twitch-video bumped to 10.1.0
+    * @videojs/vimeo-video bumped to 10.1.0
+    * @videojs/wistia-video bumped to 10.1.0
+    * @videojs/youtube-video bumped to 10.1.0
+  * peerDependencies
+    * @videojs/cloudflare-video bumped to 10.1.0
+    * @videojs/dash-video bumped to 10.1.0
+    * @videojs/google-cast bumped to 10.1.0
+    * @videojs/hlsjs-video bumped to 10.1.0
+    * @videojs/mux-audio bumped to 10.1.0
+    * @videojs/mux-data bumped to 10.1.0
+    * @videojs/mux-video bumped to 10.1.0
+    * @videojs/shaka-video bumped to 10.1.0
+    * @videojs/spotify-audio bumped to 10.1.0
+    * @videojs/tiktok-video bumped to 10.1.0
+    * @videojs/twitch-video bumped to 10.1.0
+    * @videojs/vimeo-video bumped to 10.1.0
+    * @videojs/wistia-video bumped to 10.1.0
+    * @videojs/youtube-video bumped to 10.1.0
+
 ## [10.0.1](https://github.com/videojs/v10/compare/@videojs/react@10.0.0...@videojs/react@10.0.1) (2026-10-02)
 
 

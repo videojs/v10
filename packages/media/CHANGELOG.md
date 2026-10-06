@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.1.0](https://github.com/videojs/v10/compare/@videojs/media@10.0.1...@videojs/media@10.1.0) (2026-10-06)
+
+
+### Features
+
+* **spf:** send credentials with hls requests for crossorigin="use-credentials" ([#2870](https://github.com/videojs/v10/issues/2870)) ([897901b](https://github.com/videojs/v10/commit/897901b88359dca0dc3e59fcecd766cb59f8fe24))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.1.0
+
 ## [10.0.1](https://github.com/videojs/v10/compare/@videojs/media@10.0.0...@videojs/media@10.0.1) (2026-10-02)
 
 

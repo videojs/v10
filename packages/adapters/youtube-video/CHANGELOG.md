@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.1.0](https://github.com/videojs/v10/compare/@videojs/youtube-video@10.0.1...@videojs/youtube-video@10.1.0) (2026-10-06)
+
+
+### Miscellaneous Chores
+
+* **@videojs/youtube-video:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.1.0
+    * @videojs/utils bumped to 10.1.0
+
 ## [10.0.1](https://github.com/videojs/v10/compare/@videojs/youtube-video@10.0.0...@videojs/youtube-video@10.0.1) (2026-10-02)
 
 
