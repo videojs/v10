@@ -114,6 +114,28 @@ describe('enhanceFootnotes', () => {
     expect(popover.matches(':popover-open')).toBe(true);
   });
 
+  it('marks the reference while its popover is open', () => {
+    const [reference] = renderFootnotes();
+
+    enhanceFootnotes();
+
+    const popover = popoverFor(reference!);
+    const toggle = (newState: 'open' | 'closed') =>
+      popover.dispatchEvent(Object.assign(new Event('toggle'), { newState }));
+
+    expect(reference!.getAttribute('aria-expanded')).toBe('false');
+
+    toggle('open');
+
+    expect(reference!.hasAttribute('data-popup-open')).toBe(true);
+    expect(reference!.getAttribute('aria-expanded')).toBe('true');
+
+    toggle('closed');
+
+    expect(reference!.hasAttribute('data-popup-open')).toBe(false);
+    expect(reference!.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('lets modified clicks follow the link', () => {
     const [reference] = renderFootnotes();
 
