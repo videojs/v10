@@ -82,7 +82,18 @@ for (const target of PAGES) {
       // Compat hides its center play button without container queries, so click whichever play button is visible.
       // The `:visible` pseudo-class also works on the older Playwright servers the bundled engines run on.
       await page.locator('media-play-button:visible, .media-play-button:visible').first().click();
-      await expect.poll(() => player.playButton.getAttribute('data-paused'), { timeout: 5_000 }).toBeNull();
+      // Firefox's pinned server lacks the attribute matcher, and real-device iOS throws for a missing attribute.
+      await expect
+        .poll(
+          () =>
+            player.playButton.getAttribute('data-paused').catch((error: Error) => {
+              if (error.message.includes(`Attribute 'data-paused' not found`)) return null;
+
+              throw error;
+            }),
+          { timeout: 5_000 }
+        )
+        .toBeNull();
       await player.waitForPlayback(0.5);
       await player.playButton.dispatchEvent('click');
       // Poll the value directly: WebKit's pinned server lacks the newer attribute-value matcher.
