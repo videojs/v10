@@ -4,8 +4,8 @@ import type { HlsConfig } from 'hls.js';
 export type CrossOriginSource = () => string | null | undefined;
 
 /** Whether the element's CORS-settings attribute asks for cookies on its resource fetches. */
-function isCredentialed(crossOrigin: CrossOriginSource): boolean {
-  return crossOrigin()?.toLowerCase() === 'use-credentials';
+export function isCredentialed(crossOrigin: string | null | undefined): boolean {
+  return crossOrigin?.toLowerCase() === 'use-credentials';
 }
 
 /**
@@ -28,12 +28,12 @@ export function withRequestCredentials(
 
   return {
     async xhrSetup(xhr, url) {
-      if (isCredentialed(crossOrigin)) xhr.withCredentials = true;
+      if (isCredentialed(crossOrigin())) xhr.withCredentials = true;
 
       await xhrSetup?.(xhr, url);
     },
     fetchSetup(context, initParams) {
-      if (isCredentialed(crossOrigin)) initParams.credentials = 'include';
+      if (isCredentialed(crossOrigin())) initParams.credentials = 'include';
 
       return fetchSetup ? fetchSetup(context, initParams) : new Request(context.url, initParams);
     },
