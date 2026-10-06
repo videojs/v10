@@ -83,8 +83,10 @@ Extension boundaries, each a candidate slice on this doc or its own:
 
 | Piece | File | Responsibility |
 |---|---|---|
-| `loadChapters` | `packages/spf/src/playback/behaviors/dom/load-chapters.ts` | Reactor gated on media element + resolved presentation + a chapters entry with a URI; fetches, parses, projects; aborts and removes the tracks on exit |
+| `loadChapters` | `packages/spf/src/playback/behaviors/dom/load-chapters.ts` | Reactor gated on media element + resolved presentation + a chapters entry with a URI; hands its controller's signal to `loadChaptersTracks`, aborting it on exit |
+| `loadChaptersTracks` | `packages/spf/src/media/dom/text/load-chapters-tracks.ts` | Fetches, parses, and adds one document's tracks; aborting its signal cancels the fetch and removes them. Also used by the hls.js and native HLS adapters |
 | `parseMultivariantPlaylist` | `packages/spf/src/media/hls/parse-multivariant.ts` | Records `#EXT-X-SESSION-DATA` as `SessionDataEntry[]` under `presentation.metadata` |
+| `parseSessionData` / `findSessionDataUri` | `packages/spf/src/media/hls/session-data.ts` | One tag → `SessionDataEntry`; the first entry's resolved `URI` read straight from playlist text, for native HLS |
 | `getSessionData` / `getMultivariantPlaylistMetadata` | `packages/spf/src/media/types/index.ts` | Typed reads of the recorded entries |
 | `parseHlsJsonChapters` | `packages/spf/src/media/hls/parse-json-chapters.ts` | Apple JSON (typed as its schema, `HlsJsonChapters`) → `Chapter[]`, document order, `duration` or next start as end, images resolved |
 | `addChaptersTracksToMedia` / `removeAllChaptersTracksFromMedia` | `packages/spf/src/media/dom/text/chapters-tracks.ts` | Per-language hidden tracks, ordering, settle-then-fill, `OPEN_CHAPTER_END`, ownership tag |
@@ -108,6 +110,9 @@ Extension boundaries, each a candidate slice on this doc or its own:
   entries without titles.
 - `packages/spf/src/media/dom/text/tests/chapters-tracks.test.ts` — element shape, ordering, settle-then-fill,
   `change` after fill, the `OPEN_CHAPTER_END` end, ownership isolation from subtitle tracks.
+- `packages/spf/src/media/hls/tests/session-data.test.ts` — `findSessionDataUri`: resolution, first entry with a URI.
+- `packages/spf/src/media/dom/text/tests/load-chapters-tracks.test.ts` — preferred language, removal and
+  cancellation on abort, an already-aborted signal.
 - `packages/spf/src/playback/behaviors/dom/tests/load-chapters.test.ts` — gating (media element, entry),
   projection, first-entry selection, quiet failure, abort on source change, cleanup on unload and destroy.
 - `packages/spf/src/playback/engines/hls/tests/engine.test.ts`, `engine-audio-only.test.ts` — end to end from a
@@ -123,12 +128,12 @@ Extension boundaries, each a candidate slice on this doc or its own:
 ## Outside SPF
 
 The hls.js adapter (`HlsJsChaptersMixin`) and native HLS playback (`NativeHlsChaptersMixin`, fetching the
-multivariant playlist itself) load the same tracks through the internal `loadChaptersTracks(media, url, signal)` in
-`@videojs/native-hls-video`, which reuses `parseHlsJsonChapters` and `addChaptersTracksToMedia`.
+multivariant playlist itself) load the same tracks through SPF's `loadChaptersTracks(media, url, signal)` from
+`@videojs/spf/dom`; native HLS finds the document with `findSessionDataUri` from `@videojs/spf/hls`.
 
-- **First entry with a URI, on every path.** hls.js keeps one `sessionData` entry per `DATA-ID`, the last, so the
-  hls.js mixin wraps the playlist loader (`pLoader`) to read the multivariant text and applies the same
-  `findSessionDataUri` native playback does.
+- **hls.js reads the last entry.** hls.js keeps one `sessionData` entry per `DATA-ID`, the last, and the mixin reads
+  it as-is rather than reparsing the playlist. SPF and native HLS read the first entry with a `URI`, so the paths
+  differ only for a playlist naming several chapters documents.
 - **Language preference.** The hls.js mixin leads with hls.js's own `subtitlePreference.lang`, the counterpart of
   SPF's `preferredSubtitleLanguage`. Native HLS has no preference to read, so `und`, then first-seen, leads.
 - **Mux's metadata document is fetched twice.** Mux publishes asset metadata as an Apple JSON chapters document, so

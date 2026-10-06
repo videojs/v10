@@ -1,57 +1,20 @@
-import { findSessionDataUri, loadChaptersTracks } from '@videojs/native-hls-video';
+import { loadChaptersTracks } from '@videojs/spf/dom';
 import { APPLE_HLS_CHAPTERS_DATA_ID } from '@videojs/spf/hls';
 import { isString } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
-import type {
-  HlsConfig,
-  Loader,
-  LoaderCallbacks,
-  LoaderConfiguration,
-  ManifestLoadedData,
-  PlaylistLoaderConstructor,
-  PlaylistLoaderContext,
-} from 'hls.js';
+import type { ManifestLoadedData } from 'hls.js';
 import Hls from 'hls.js';
 
 import type { HlsEngineHost } from './types';
 
 /**
- * Wrap a playlist loader so the multivariant playlist's text reaches `onManifest` before hls.js parses it. Every other
- * playlist request goes through untouched.
- */
-function withManifestText(
-  BaseLoader: PlaylistLoaderConstructor,
-  onManifest: (text: string) => void
-): PlaylistLoaderConstructor {
-  return class extends (BaseLoader as new (config: HlsConfig) => Loader<PlaylistLoaderContext>) {
-    load(
-      context: PlaylistLoaderContext,
-      config: LoaderConfiguration,
-      callbacks: LoaderCallbacks<PlaylistLoaderContext>
-    ): void {
-      // `PlaylistContextType` is a const enum hls.js does not ship at runtime.
-      if ((context.type as string) !== 'manifest') return super.load(context, config, callbacks);
-
-      super.load(context, config, {
-        ...callbacks,
-        onSuccess(response, stats, loaderContext, networkDetails) {
-          if (isString(response.data)) onManifest(response.data);
-
-          callbacks.onSuccess(response, stats, loaderContext, networkDetails);
-        },
-      });
-    }
-  };
-}
-
-/**
  * Chapters for hls.js playback: the Apple JSON chapters document the multivariant playlist references
- * (`#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters"`), loaded as hidden `<track kind="chapters">` elements by the
- * same `loadChaptersTracks` native playback uses. The track in hls.js's `subtitlePreference` language leads, as SPF's
- * leads in its `preferredSubtitleLanguage`.
+ * (`#EXT-X-SESSION-DATA:DATA-ID="com.apple.hls.chapters"`), loaded as hidden `<track kind="chapters">` elements by
+ * SPF's `loadChaptersTracks`, as SPF and native HLS playback do. The track in hls.js's `subtitlePreference` language
+ * leads, as SPF's leads in its `preferredSubtitleLanguage`.
  *
- * Hls.js keeps one session-data entry per `DATA-ID` — the last — so the playlist text is read here instead, through a
- * wrapped playlist loader, and the first chapters entry carrying a `URI` wins, as it does for native playback and SPF.
+ * Read from hls.js's own `sessionData`, which keeps one entry per `DATA-ID` — the last. SPF and native HLS read the
+ * first entry with a `URI`, so the paths differ only for a playlist naming several chapters documents.
  *
  * Read on `MANIFEST_LOADED`, whose `url` is the response URL, so a relative `URI` resolves past redirects. The tracks
  * go with the source (`MANIFEST_LOADING`) and the element (`MEDIA_DETACHED`, `DESTROYING`); a manifest that loaded
@@ -59,7 +22,6 @@ function withManifestText(
  */
 export function HlsJsChaptersMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsChapters extends (BaseClass as Constructor<HlsEngineHost>) {
-    #manifestText: string | null = null;
     #chaptersUrl: string | null = null;
     #chapters: AbortController | null = null;
 
@@ -69,19 +31,11 @@ export function HlsJsChaptersMixin<Base extends Constructor<HlsEngineHost>>(Base
       const { engine } = this;
       if (!engine) return;
 
-      const { config } = engine;
-
-      config.pLoader = withManifestText(config.pLoader ?? (config.loader as PlaylistLoaderConstructor), (text) => {
-        this.#manifestText = text;
-      });
-
       engine.on(Hls.Events.MANIFEST_LOADING, () => this.#reset());
       engine.on(Hls.Events.MANIFEST_LOADED, (_event: string, data: ManifestLoadedData) => {
-        const uri = isString(this.#manifestText)
-          ? findSessionDataUri(this.#manifestText, APPLE_HLS_CHAPTERS_DATA_ID)
-          : data.sessionData?.[APPLE_HLS_CHAPTERS_DATA_ID]?.URI;
+        const uri = data.sessionData?.[APPLE_HLS_CHAPTERS_DATA_ID]?.URI;
 
-        this.#stop();
+        this.#reset();
         this.#chaptersUrl = isString(uri) && uri ? resolveUrl(uri, data.url) : null;
         this.#load();
       });
@@ -107,7 +61,6 @@ export function HlsJsChaptersMixin<Base extends Constructor<HlsEngineHost>>(Base
     }
 
     #reset(): void {
-      this.#manifestText = null;
       this.#chaptersUrl = null;
       this.#stop();
     }
