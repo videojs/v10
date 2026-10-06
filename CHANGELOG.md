@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.1.0] - 2026-10-06
+
+### 🚀 Features
+- *(skin)* Publish the button tooltip as a registry component ([#3194](https://github.com/videojs/v10/pull/3194)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Support hls json chapters in hls.js and native hls ([#2993](https://github.com/videojs/v10/pull/2993)) by [@luwes](https://github.com/luwes)
+- *(site)* Add the popover TOC rail to blog and changelog posts ([#3168](https://github.com/videojs/v10/pull/3168)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Render footnotes with popovers in rich content ([#3166](https://github.com/videojs/v10/pull/3166)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add Figure component for captioned images ([#3200](https://github.com/videojs/v10/pull/3200)) by [@decepulis](https://github.com/decepulis)
+- *(spf)* Send credentials with hls requests for crossorigin="use-credentials" ([#2870](https://github.com/videojs/v10/pull/2870)) by [@luwes](https://github.com/luwes)
+
+### 🐛 Bug Fixes
+- *(icons)* Optically center the compat play icon ([#3146](https://github.com/videojs/v10/pull/3146)) by [@luwes](https://github.com/luwes)
+- *(hlsjs-video)* Bump hls.js ([#3171](https://github.com/videojs/v10/pull/3171)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(site)* Drop section from page titles and break OG titles at clauses ([#3157](https://github.com/videojs/v10/pull/3157)) by [@decepulis](https://github.com/decepulis)
+
+### 📚 Documentation
+- *(site)* Add changelog prose for 10.0.1 ([#3155](https://github.com/videojs/v10/pull/3155)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(core)* Replace contributor steps with getting started and AI quickstart ([#3191](https://github.com/videojs/v10/pull/3191)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Add iphone duo blog post ([#3199](https://github.com/videojs/v10/pull/3199)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Note that wistia loads sentry on playback errors ([#2943](https://github.com/videojs/v10/pull/2943)) by [@sampotts](https://github.com/sampotts)
+
+### ⚙️ Miscellaneous Tasks
+- Give favicon graduated bar proportions ([#3159](https://github.com/videojs/v10/pull/3159)) by [@decepulis](https://github.com/decepulis)
+- *(changelog-prose)* Defer to the raw changelog for breaking changes and frontmatter ([#3165](https://github.com/videojs/v10/pull/3165)) by [@decepulis](https://github.com/decepulis)
+- Replace changelog/blog forward-port with on-demand cherry-picks ([#3184](https://github.com/videojs/v10/pull/3184)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.1] - 2026-10-02
 
 ### 🚀 Features
@@ -2250,6 +2276,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.1.0]: https://github.com/videojs/v10/compare/@videojs/core@10.0.1...@videojs/core@10.1.0
 [@videojs/core@10.0.1]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0...@videojs/core@10.0.1
 [@videojs/core@10.0.0]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.5...@videojs/core@10.0.0
 [@videojs/core@10.0.0-rc.5]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.4...@videojs/core@10.0.0-rc.5
