@@ -5,3 +5,4 @@ suites/player/app/src/_generated/
 suites/player/app/src/pages/
 suites/player/app/src/index.html
 suites/registry/.generated/
+suites/video-js-cdn/.generated/

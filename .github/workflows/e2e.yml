@@ -21,6 +21,7 @@ jobs:
     outputs:
       player: ${{ steps.filter.outputs.player }}
       skins: ${{ steps.filter.outputs.skins }}
+      videojs: ${{ steps.filter.outputs.videojs }}
     steps:
       - name: Detect e2e-relevant changes
         id: filter
@@ -31,7 +32,7 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           if [ "$HEAD_REF" = 'release-please--branches--main' ]; then
-            printf 'player=false\nskins=false\n' >> "$GITHUB_OUTPUT"
+            printf 'player=false\nskins=false\nvideojs=false\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           files=$(gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate --jq '.[].filename')
@@ -41,6 +42,8 @@ jobs:
           # The player suite renders the built packages; skin parity compiles the authored skins in the sandbox.
           flag player '^(apps/e2e/|apps/sandbox/|packages/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
           flag skins '^(apps/e2e/(shared|suites/skin-parity)/|apps/sandbox/|packages/(skins|vjsc|html|react)/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
+          # The video.js CDN suite serves the packed video.js tarball and the pinned Video.js 8 release.
+          flag videojs '^(apps/e2e/(shared|suites/video-js-cdn)/|packages/video\.js/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
 
   # Every browser job replays this run's Vite Task cache, so the packages, CDN bundles, generated skins, and sandbox
   # setup compile once per run instead of once per job.
@@ -321,6 +324,58 @@ jobs:
         with:
           name: e2e-snapshots
           path: apps/e2e/suites/player/tests/**/*-snapshots/
+          retention-days: 7
+
+  video-js-cdn:
+    name: video.js CDN paths
+    needs: [changes]
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.videojs == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-video-js-cdn-${{ github.sha }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Load Video.js 8 embeds through video.js@10 CDN paths
+        run: pnpm exec vp run '@videojs/e2e#test:video-js-cdn'
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-video-js-cdn
+          path: apps/e2e/playwright-report/video-js-cdn/
+          retention-days: 14
+
+      - name: Upload test traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-video-js-cdn
+          path: apps/e2e/test-results/video-js-cdn/
           retention-days: 7
 
   registry:

@@ -2,7 +2,13 @@ import { defineConfig } from 'vite-plus';
 
 import { cachedTaskInputs, workspaceTaskDependencies } from '../../build/task.ts';
 
-const testInputs = [...cachedTaskInputs, '!playwright-report/**', '!test-results/**', '!suites/registry/.generated/**'];
+const testInputs = [
+  ...cachedTaskInputs,
+  '!playwright-report/**',
+  '!test-results/**',
+  '!suites/registry/.generated/**',
+  '!suites/video-js-cdn/.generated/**',
+];
 
 export default defineConfig({
   test: {
@@ -65,6 +71,12 @@ export default defineConfig({
       'test:registry:full': {
         command: 'playwright test --config suites/registry/playwright.config.ts',
         dependsOn: ['@videojs/skins#build:shadcn', '@videojs/react#build', '@videojs/html#build'],
+        cache: false,
+      },
+      // Serves the packed `video.js` tarball as npm CDNs serve the `latest` tag and loads Video.js 8 embeds through it.
+      'test:video-js-cdn': {
+        command: 'playwright test --config suites/video-js-cdn/playwright.config.ts',
+        dependsOn: ['video.js#build'],
         cache: false,
       },
       'test:registry:published': {
