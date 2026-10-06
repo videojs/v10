@@ -450,6 +450,18 @@ Most <mark>salamanders</mark> are nocturnal, and hunt for insects, worms, and ot
 
 
 ## Other custom components
+### `<Figure>` for images with a caption
+
+Use `<Figure>` when an image needs a credit or context under it. The children are the caption, so Markdown links work there. Keep the description of the image itself in `alt`.
+
+```mdx
+import screenshot from '../../assets/blog/my-post/screenshot.png';
+
+<Figure src={screenshot} alt="A folded phone playing video">
+  Screenshot from [the source video](https://example.com).
+</Figure>
+```
+
 ### Asides / Callouts / Admonitions
 
 Use the `<Aside>` component to highlight important information. It supports four types: `note`, `tip`, `caution`, and `danger`.

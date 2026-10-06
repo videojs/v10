@@ -1,0 +1,25 @@
+---
+import type { ImageMetadata } from 'astro';
+import { twMerge } from '@/utils/twMerge';
+
+import Img from './Img.astro';
+
+/**
+ * Image with a caption, for credits and context that belong under the picture rather than in its alt text. The slot is
+ * the caption, so it can hold Markdown links. Available in MDX without an import.
+ */
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  class?: string;
+}
+
+const { src, alt, class: className } = Astro.props;
+---
+
+<figure class={twMerge('mx-auto my-8 max-w-3xl', className)}>
+  <Img src={src} alt={alt} class="my-0" />
+  <figcaption class="mt-2 text-center text-p3 text-muted [&_p]:my-0">
+    <slot />
+  </figcaption>
+</figure>
