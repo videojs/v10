@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import {
   BROWSERSLIST_QUERY,
+  COMPAT_BROWSERSLIST_QUERY,
   CSS_REQUIREMENTS,
   cssRequirementSupport,
   featureFirstVersions,
@@ -40,9 +41,20 @@ describe('resolveSupportedBrowsers', () => {
     expect(rows.find((row) => row.id === 'firefox')).toMatchObject({ versions: [], range: '—', minimum: null });
   });
 
-  it('resolves the repository query to a minimum for every policy browser', () => {
-    for (const row of resolveSupportedBrowsers(BROWSERSLIST_QUERY)) {
-      expect(row.minimum, row.id).not.toBeNull();
+  it('resolves the repository queries to a minimum for every policy browser', () => {
+    for (const query of [BROWSERSLIST_QUERY, COMPAT_BROWSERSLIST_QUERY]) {
+      for (const row of resolveSupportedBrowsers(query)) {
+        expect(row.minimum, row.id).not.toBeNull();
+      }
+    }
+  });
+
+  it('never resolves a Compat minimum newer than the other skins minimum', () => {
+    const main = resolveSupportedBrowsers(BROWSERSLIST_QUERY);
+    const compat = resolveSupportedBrowsers(COMPAT_BROWSERSLIST_QUERY);
+
+    for (const [index, row] of compat.entries()) {
+      expect(versionNumber(row.minimum!), row.id).toBeLessThanOrEqual(versionNumber(main[index]!.minimum!));
     }
   });
 });

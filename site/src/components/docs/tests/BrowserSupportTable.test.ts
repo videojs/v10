@@ -17,18 +17,20 @@ describe('BrowserSupportTable', () => {
     const html = await render('browsers');
 
     expect(html).toContain('<caption class="sr-only">');
-    expect(html.match(/<th[^>]*scope="col"/g)).toHaveLength(2);
+    expect(html.match(/<th[^>]*scope="col"/g)).toHaveLength(3);
+    expect(html).toContain('Default and Neutral');
+    expect(html).toContain('Compat');
     expect(html.match(/<th[^>]*scope="row"/g)).toHaveLength(SUPPORT_BROWSERS.length);
 
     for (const browser of SUPPORT_BROWSERS) expect(html).toContain(browser.name);
 
-    expect(html).toMatch(/\d[\d.]* and later/);
+    expect(html.match(/\d[\d.]* and later/g)).toHaveLength(SUPPORT_BROWSERS.length * 2);
   });
 
-  it('renders the coverage paragraph with percentages and the data version', async () => {
+  it('renders the coverage of both browser lists and the data version', async () => {
     const html = await render('coverage');
 
-    expect(html.match(/\d+\.\d%/g)).toHaveLength(1);
+    expect(html.match(/\d+\.\d%/g)).toHaveLength(2);
     expect(html).toContain('https://github.com/browserslist/caniuse-lite');
     expect(html).toMatch(/caniuse-lite<\/a> 1\.0\.\d+/);
   });

@@ -9,7 +9,7 @@ import BrowserVersions from '@/components/docs/BrowserVersions.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-Video.js 10 supports current versions of the major browsers, back to the versions below. This page covers which versions we support, what looks different in older ones, and what to change when you build the skin CSS yourself.
+Video.js 10 supports current versions of the major browsers, back to the versions below. The Compat skin goes further back in Chrome, Edge, and Firefox. This page covers which versions we support, what looks different in older ones, and what to change when you build the skin CSS yourself.
 
 ## Supported browsers
 
@@ -17,19 +17,21 @@ Video.js 10 supports current versions of the major browsers, back to the version
 
 <BrowserSupportTable kind="coverage" />
 
-We test in and fix bugs for these versions. They apply to every skin: Default, Neutral, and Compat.
+We test in and fix bugs for these versions. To reach older Chrome, Edge, or Firefox versions, use Compat. Its older versions apply to the packaged Compat skins, not to [skins from the Shadcn registry](#skins-from-the-shadcn-registry).
 
 ### Why these versions
 
-Each minimum is the first version that has something Video.js can't work without:
+Each minimum is the first version that has something the skin can't work without:
 
-| Browser | Minimum set by |
-|---|---|
-| Chrome and Edge | The `color-mix()` and `oklch()` color functions |
-| Firefox | The `:has()` selector |
-| Safari and Safari on iOS | The JavaScript, which uses ES2022 syntax and [`adoptedStyleSheets`](https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets) |
+| Browser | Default and Neutral | Compat |
+|---|---|---|
+| Chrome and Edge | The `color-mix()` and `oklch()` color functions | Cascade layers (`@layer`) |
+| Firefox | The `:has()` selector | The oldest Firefox our automated tests can run |
+| Safari and Safari on iOS | The JavaScript, which uses ES2022 syntax and [`adoptedStyleSheets`](https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets) | The same JavaScript |
 
-Newer JavaScript APIs are feature-detected, so they don't raise the minimum. The skins need every CSS feature in this table, and none of them has a fallback:
+Compat sets its colors with plain values, so it doesn't need the newer color functions. Newer JavaScript APIs are feature-detected, so they don't raise any minimum.
+
+Default and Neutral need every CSS feature in this table, and none of them has a fallback. Compat needs only `@layer`; [without the others](#what-looks-different-in-older-versions), it loses a few layout details:
 
 <BrowserSupportTable kind="requirements" />
 
@@ -55,16 +57,24 @@ The skins keep each newer declaration inside an [`@supports`](https://developer.
 The `contrast-color()` fallback can't read a custom accent color. When you set `--media-accent-color`, also set `--media-accent-text-color`. See <DocsLink slug="guides/customize-skins" anchor="set-the-skins-styles">Customize skins</DocsLink>.
 </Aside>
 
-### Choose Compat for fewer differences
+Compat's older versions also lack three features the other skins require:
 
-Default and Neutral add two details that depend on browser support. Compat leaves both out:
+| Feature | Who gets the fallback | What you see instead |
+|---|---|---|
+| [Container queries](https://caniuse.com/css-container-queries) | Compat in <BrowserVersions feature="css-container-queries" show="missing" skin="compat" /> | The narrowest layout at every player size: no center play and seek buttons, and the time shows as a toggle instead of "current / duration". |
+| [Media query range syntax](https://caniuse.com/css-media-range-syntax) | Compat in <BrowserVersions feature="css-media-range-syntax" show="missing" skin="compat" /> | In fullscreen, the controls don't grow on large screens. |
+| [`:has()`](https://caniuse.com/css-has) | Compat in <BrowserVersions feature="css-has" show="missing" skin="compat" /> | Focusing the time slider with the keyboard doesn't show the thumbnail preview. |
+
+### Choose Compat for older browsers
+
+Compat supports the oldest browsers, as the [supported browsers table](#supported-browsers) shows. It also leaves out two details that Default and Neutral add, which depend on browser support:
 
 | Detail | Default | Neutral | Compat |
 |---|---|---|---|
 | Menu highlight | Slides between items with anchor positioning, and jumps without it | Slides between items with anchor positioning, and jumps without it | Jumps between items |
 | Control corners | Rounded | Smooth squircle corners with [`corner-shape`](https://developer.mozilla.org/en-US/docs/Web/CSS/corner-shape), and rounded without it | Rounded |
 
-Compat still uses the other features in the table above, so it gets the same popover and color fallbacks. See <DocsLink slug="guides/skins">Skins</DocsLink> to compare the skins in full.
+Compat still gets the popover and color fallbacks in the first table. See <DocsLink slug="guides/skins">Skins</DocsLink> to compare the skins in full.
 
 ## Skins from the Shadcn registry
 
@@ -72,7 +82,7 @@ Packaged skins don't use [`@scope`](https://developer.mozilla.org/en-US/docs/Web
 
 | Registry skin | Supported browsers |
 |---|---|
-| Tailwind | The supported browsers above. Utility classes style each element, so there's no `@scope`. |
+| Tailwind | The Default and Neutral versions above, for every skin. Utility classes style each element, so there's no `@scope`. |
 | Plain CSS | <BrowserVersions feature="css-cascade-scope" show="first" />. To reach the full list, [flatten `@scope` in your build](#flatten-scope-in-registry-skins). |
 
 ## Build the skin CSS yourself

@@ -109,6 +109,9 @@ export interface ResolvedBrowser {
 /** The browserslist query the repository builds against, from the root `package.json`. */
 export const BROWSERSLIST_QUERY: readonly string[] = rootPackage.browserslist;
 
+/** The older browsers the packaged Compat skins support, from the root `package.json`. */
+export const COMPAT_BROWSERSLIST_QUERY: readonly string[] = rootPackage.compatBrowserslist;
+
 /** Numeric sort key for caniuse version strings such as `17.4`, `150`, or `15.0-15.1`. */
 export function versionNumber(version: string): number {
   return Number.parseFloat(version.split('-')[0] ?? version);
