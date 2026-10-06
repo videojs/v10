@@ -76,7 +76,8 @@ export default defineConfig({
       // Serves the packed `video.js` tarball as npm CDNs serve the `latest` tag and loads Video.js 8 embeds through it.
       'test:video-js-cdn': {
         command: 'playwright test --config suites/video-js-cdn/playwright.config.ts',
-        dependsOn: ['video.js#build'],
+        // Global setup imports `@videojs/utils`, which resolves to its built output.
+        dependsOn: ['video.js#build', '@videojs/utils#build'],
         cache: false,
       },
       'test:registry:published': {
