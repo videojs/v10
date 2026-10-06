@@ -16,23 +16,20 @@ interface TableOfContentsMobileProps {
   className?: string;
 }
 
-type RailStripeStyle = React.CSSProperties & Record<'--w' | '--lg-w', string>;
+type RailStyle = React.CSSProperties & Record<'--gap' | '--lg-gap', string>;
+type RailStripeStyle = React.CSSProperties & Record<'--w' | '--lg-w' | '--h' | '--lg-h', string>;
 
-// Standalone rails sit in the page margin beside body copy, so wide viewports get heavier marks.
+// Standalone rails sit in the page margin beside body copy, so the lg breakpoint gets heavier marks.
+// Breakpoint sizes stay in CSS so server-rendered rails match hydrated ones.
 const WIDE_RAIL_GEOMETRY: RailGeometry = { stripeHeight: 2, gap: 6 };
-const WIDE_RAIL_MEDIA = '(min-width: 64rem)';
 
 // Keep a standalone rail 2.5rem outside the centered max-w-3xl column, or at the viewport edge once the margin runs out.
 const MARGIN_RAIL_LEFT = 'max(0px, calc(50% - 24rem - 2.5rem - 1.5rem))';
 
-function getStripeWidths(depth: number, wide: boolean) {
-  if (wide) {
-    const width = depth === 2 ? 16 : depth === 3 ? 10 : 6;
-
-    return { width, largeWidth: width };
-  }
-
+function getStripeWidths(depth: number, railOnly: boolean) {
   const width = depth === 2 ? 10 : depth === 3 ? 8 : 4;
+
+  if (railOnly) return { width, largeWidth: depth === 2 ? 16 : depth === 3 ? 10 : 6 };
 
   return { width, largeWidth: depth === 2 ? 12 : width };
 }
@@ -47,17 +44,19 @@ export function TableOfContentsMobile({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [wide, setWide] = useState(false);
   const [viewportLayout, setViewportLayout] = useState({
     availableHeight: 400,
     railTop: null as number | null,
   });
 
-  const railGeometry = calculateRailGeometry(
-    headings.length,
-    viewportLayout.availableHeight,
-    wide ? WIDE_RAIL_GEOMETRY : undefined
-  );
+  const railGeometry = calculateRailGeometry(headings.length, viewportLayout.availableHeight);
+  const largeRailGeometry = railOnly
+    ? calculateRailGeometry(headings.length, viewportLayout.availableHeight, WIDE_RAIL_GEOMETRY)
+    : railGeometry;
+  const railStyle = {
+    '--gap': `${railGeometry.gap}px`,
+    '--lg-gap': `${largeRailGeometry.gap}px`,
+  } satisfies RailStyle;
 
   useEffect(() => {
     const updateViewportLayout = () => {
@@ -89,18 +88,6 @@ export function TableOfContentsMobile({
       window.visualViewport?.removeEventListener('resize', updateViewportLayout);
     };
   }, []);
-
-  useEffect(() => {
-    if (!railOnly) return;
-
-    const wideMedia = window.matchMedia(WIDE_RAIL_MEDIA);
-    const updateWide = () => setWide(wideMedia.matches);
-
-    updateWide();
-    wideMedia.addEventListener('change', updateWide);
-
-    return () => wideMedia.removeEventListener('change', updateWide);
-  }, [railOnly]);
 
   useEffect(() => {
     if (railOnly) return;
@@ -148,21 +135,26 @@ export function TableOfContentsMobile({
           cursor: 'pointer',
         }}
       >
-        <span aria-hidden="true" className="flex flex-col items-start pl-1" style={{ gap: railGeometry.gap }}>
+        <span
+          aria-hidden="true"
+          className="flex flex-col items-start gap-(--gap) pl-1 lg:gap-(--lg-gap)"
+          style={railStyle}
+        >
           {headings.map((heading) => {
             const isActive = activeId === heading.slug;
-            const { width, largeWidth } = getStripeWidths(heading.depth, wide);
+            const { width, largeWidth } = getStripeWidths(heading.depth, railOnly);
             const stripeStyle = {
               '--w': `${width}px`,
               '--lg-w': `${largeWidth}px`,
-              height: railGeometry.stripeHeight,
+              '--h': `${railGeometry.stripeHeight}px`,
+              '--lg-h': `${largeRailGeometry.stripeHeight}px`,
             } satisfies RailStripeStyle;
 
             return (
               <span
                 key={heading.slug}
                 className={clsx(
-                  'block w-(--w) lg:w-(--lg-w)',
+                  'block h-(--h) w-(--w) lg:h-(--lg-h) lg:w-(--lg-w)',
                   isActive ? 'bg-faded-black dark:bg-manila-light' : 'bg-current'
                 )}
                 style={stripeStyle}
